@@ -1,0 +1,8 @@
+extends layout
+
+block append head
+  script(src='/javascripts/OneSignalExamplePage.js')
+
+block content
+  h1= title
+  include OneSignalExamplePage.html
