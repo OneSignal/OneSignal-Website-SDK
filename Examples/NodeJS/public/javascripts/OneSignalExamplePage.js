@@ -29,7 +29,7 @@ var consoleStrValue = "";
 
 function getIds() {  
   OneSignal.getIdsAvailable(function(ids) {
-	console.log("GameThirve GetIdsAvailable");
+	console.log("OneSignal getIdsAvailable");
 	console.log(ids);
 	consoleStrValue += "getIdsAvailable:"
 					+ "\nUserID: " + ids.userId
@@ -53,7 +53,7 @@ function sendTag() {
 }
 
 OneSignal.addListenerForNotificationOpened(function(data) {
-	console.log("Received GT_NOTIFICATION_OPENED:");
+	console.log("Received ONE_SIGNAL_NOTIFICATION_OPENED:");
 	console.log(data);
 });
 
