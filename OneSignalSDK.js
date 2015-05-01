@@ -34,7 +34,7 @@ if (typeof OneSignal !== "undefined")
    _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10102,
+  _VERSION: 10103,
   _HOST_URL: "https://onesignal.com/api/v1/",
   
   _app_id: null,
@@ -53,6 +53,10 @@ var OneSignal = {
   _httpRegistration: false,
   
   _main_page_port: null,
+  
+  _iframeIsContinuedSession: false,
+  
+  _isNotificationEnabledCallback: null,
   
   LOGGING: false,
   
@@ -251,8 +255,9 @@ var OneSignal = {
              OneSignal._delete_db_value("Ids", "userId");
              sessionStorage.removeItem("ONE_SIGNAL_SESSION");
            }
-           // Only register for push notifications once per session or if the user changes notification permission to ask or allow.
+           // HTTPS - Only register for push notifications once per session or if the user changes notification permission to ask or allow.
            else if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
+                   && !options.subdomainName
                    && (Notification.permission == "denied"
                       || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission))
              return;
@@ -289,6 +294,7 @@ var OneSignal = {
     var creator = opener || parent;
     
     if (creator) {
+      // Setting up message channel to receive message from host page.
       var messageChannel = new MessageChannel();
       messageChannel.port1.onmessage = function(event) {
         OneSignal._log("_initHttp.messageChannel.port1.onmessage", event);
@@ -307,7 +313,8 @@ var OneSignal = {
               creator.postMessage({openedNotification: value.target.result.data}, OneSignal._init_options.origin);
             }
           });
-        }
+        } else if (event.data.getNotificationPermission)
+          creator.postMessage({currentNotificationPermission: Notification.permission}, OneSignal._init_options.origin);
       };
       
       creator.postMessage({oneSignalInitPageReady: true}, OneSignal._init_options.origin, [messageChannel.port2]);
@@ -315,6 +322,11 @@ var OneSignal = {
     
     OneSignal._initSaveState();
     OneSignal._httpRegistration = true;
+    if (location.search.indexOf("?session=true") == 0) {
+      OneSignal._iframeIsContinuedSession
+      return;
+    }
+    
     OneSignal._log("Before navigator.serviceWorker.register");
     navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
     OneSignal._log("After navigator.serviceWorker.register");
@@ -338,7 +350,8 @@ var OneSignal = {
       
       // If HTTP and not localhost
       if (OneSignal._isHttpSite() || OneSignal._init_options.subdomainName) {
-        // DEV HTTP TEST MODE: var initOneSignalHttp = 'http://localhost:3000/sdks/initOneSignalHttp';
+        // DEV HTTP TEST MODE:
+        //var initOneSignalHttp = 'http://localhost:3000/sdks/initOneSignalHttp';
         var initOneSignalHttp = 'https://' + OneSignal._init_options.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
         if (fromRegisterFor) {
           var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;
@@ -346,8 +359,8 @@ var OneSignal = {
           
           var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
           var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
-          var childWidth = 450;
-          var childHeight = 165;
+          var childWidth = 550;
+          var childHeight = 310;
           
           var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
           var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
@@ -361,7 +374,9 @@ var OneSignal = {
             if (userIdEvent.target.result) {
               var node = document.createElement("iframe");
               node.style.display = "none";
-              node.src = initOneSignalHttp;
+              node.src = initOneSignalHttp + "Iframe";
+              if (sessionStorage.getItem("ONE_SIGNAL_SESSION"))
+                node.src += "?session=true";
               document.body.appendChild(node);
             }
           });
@@ -652,7 +667,8 @@ var OneSignal = {
     OneSignal._log("_listener_receiveMessage: ");
     OneSignal._log(event);
     
-    // Dev HTTP TEST MODE: if (event.origin !== "" && event.origin !== "http://localhost:3000")
+    // Dev HTTP TEST MODE:
+    //if (event.origin !== "" && event.origin !== "http://localhost:3000")
     if (event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._init_options.subdomainName + ".onesignal.com")
       return;
     
@@ -668,6 +684,16 @@ var OneSignal = {
         OneSignal._log("Posting message to port[0]", event.ports[0]);
         event.ports[0].postMessage({initOptions: options});
       });
+      
+      OneSignal._iframePort = event.ports[0];
+      if (OneSignal._isNotificationEnabledCallback)
+        OneSignal._iframePort.postMessage({getNotificationPermission: true});
+    }
+    else if (event.data.currentNotificationPermission) {
+      if (OneSignal._isNotificationEnabledCallback) {
+        OneSignal._isNotificationEnabledCallback(event.data.currentNotificationPermission == "granted");
+        OneSignal._isNotificationEnabledCallback = null;
+      }
     }
     else if (event.data.idsAvailable) { // Only called on HTTP pages.
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
@@ -725,13 +751,16 @@ var OneSignal = {
   isPushNotificationsEnabled: function(callback) {
     OneSignal._get_db_value("Ids", "registrationId", function(registrationIdEvent) {
       if (registrationIdEvent.target.result) {
-         if (!OneSignal._isHttpSite() && (!OneSignal._init_options || !OneSignal._init_options.subdomainName))
-            callback(Notification.permission == "granted");
-         else
-            callback(true);
+        if (!OneSignal._isHttpSite() && (!OneSignal._init_options || !OneSignal._init_options.subdomainName))
+          callback(Notification.permission == "granted");
+        else {
+          OneSignal._isNotificationEnabledCallback = callback;
+          if (OneSignal._iframePort)
+            OneSignal._iframePort.postMessage({getNotificationPermission: true});
+        }
       }
       else
-         callback(false);
+        callback(false);
     });
   },
   
@@ -762,18 +791,44 @@ var OneSignal = {
 if (typeof  window !== "undefined")
   window.addEventListener("message", OneSignal._listener_receiveMessage, false);
 else { // if imported from the service worker.
+  importScripts('serviceworker-cache-polyfill.js');
+
   self.addEventListener('push', function(event) {
     OneSignal._handleGCMMessage(self, event);
   });
   self.addEventListener('notificationclick', function(event) {
     OneSignal._handleNotificationOpened(event);
   });
+  
   self.addEventListener('install', function(event) {
     OneSignal._log("OneSignal Installed service worker: " + OneSignal._VERSION);
     if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
       OneSignal._put_db_value("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
     else
       OneSignal._put_db_value("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
+    
+    event.waitUntil(
+      caches.open("OneSignal_" + OneSignal._VERSION).then(function(cache) {
+        return cache.addAll([
+          '/sdks/initOneSignalHttpIframe',
+          '/sdks/initOneSignalHttpIframe?session=*',
+          '/sdks/manifest_json']);
+      })
+    );
+  });
+  
+  self.addEventListener('fetch', function(event) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(function(response) {
+          // Cache hit - return response
+          if (response)
+            return response;
+
+          return fetch(event.request);
+        }
+      )
+    );
   });
 }
 
