@@ -34,7 +34,7 @@ if (typeof OneSignal !== "undefined")
    _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10103,
+  _VERSION: 10105,
   _HOST_URL: "https://onesignal.com/api/v1/",
   
   _app_id: null,
@@ -669,6 +669,8 @@ var OneSignal = {
     
     // Dev HTTP TEST MODE:
     //if (event.origin !== "" && event.origin !== "http://localhost:3000")
+    if (OneSignal._init_options == undefined)
+      return;
     if (event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._init_options.subdomainName + ".onesignal.com")
       return;
     
@@ -791,7 +793,7 @@ var OneSignal = {
 if (typeof  window !== "undefined")
   window.addEventListener("message", OneSignal._listener_receiveMessage, false);
 else { // if imported from the service worker.
-  importScripts('serviceworker-cache-polyfill.js');
+  importScripts('https://cdn.onesignal.com/sdks/serviceworker-cache-polyfill.js');
 
   self.addEventListener('push', function(event) {
     OneSignal._handleGCMMessage(self, event);
