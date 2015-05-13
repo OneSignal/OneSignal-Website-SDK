@@ -34,7 +34,7 @@ if (typeof OneSignal !== "undefined")
    _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10200,
+  _VERSION: 10201,
   _HOST_URL: "https://onesignal.com/api/v1/",
   
   _app_id: null,
@@ -841,6 +841,8 @@ else { // if imported from the service worker.
     OneSignal._handleNotificationOpened(event);
   });
   
+  var isSWonSubdomain = location.href.match(/https\:\/\/.*\.onesignal.com\/sdks\//) != null;
+  
   self.addEventListener('install', function(event) {
     OneSignal._log("OneSignal Installed service worker: " + OneSignal._VERSION);
     if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
@@ -848,29 +850,33 @@ else { // if imported from the service worker.
     else
       OneSignal._put_db_value("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
     
-    event.waitUntil(
-      caches.open("OneSignal_" + OneSignal._VERSION).then(function(cache) {
-        return cache.addAll([
-          '/sdks/initOneSignalHttpIframe',
-          '/sdks/initOneSignalHttpIframe?session=*',
-          '/sdks/manifest_json']);
-      })
-    );
+    if (isSWonSubdomain) {
+      event.waitUntil(
+        caches.open("OneSignal_" + OneSignal._VERSION).then(function(cache) {
+          return cache.addAll([
+            '/sdks/initOneSignalHttpIframe',
+            '/sdks/initOneSignalHttpIframe?session=*',
+            '/sdks/manifest_json']);
+        })
+      );
+    }
   });
   
-  self.addEventListener('fetch', function(event) {
-    event.respondWith(
-      caches.match(event.request)
-        .then(function(response) {
-          // Cache hit - return response
-          if (response)
-            return response;
+  if (isSWonSubdomain) {
+    self.addEventListener('fetch', function(event) {
+      event.respondWith(
+        caches.match(event.request)
+          .then(function(response) {
+            // Cache hit - return response
+            if (response)
+              return response;
 
-          return fetch(event.request);
-        }
-      )
-    );
-  });
+            return fetch(event.request);
+          }
+        )
+      );
+    });
+  }
 }
 
 if (_temp_OneSignal)
