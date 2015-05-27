@@ -34,7 +34,7 @@ if (typeof OneSignal !== "undefined")
    _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10201,
+  _VERSION: 10204,
   _HOST_URL: "https://onesignal.com/api/v1/",
   
   _app_id: null,
@@ -123,7 +123,7 @@ var OneSignal = {
     });
   },
   
-  _sendToOneSignalApi: function(url, action, inData, callback) {
+  _sendToOneSignalApi: function(url, action, inData, callback, failedCallback) {
     var contents = {
       method: action,
       //mode: 'no-cors', // no-cors is disabled for non-serviceworker.
@@ -149,6 +149,8 @@ var OneSignal = {
     })
     .catch(function (error) {
       OneSignal._log('Request failed', error);
+      if (failedCallback != null)
+        failedCallback();
     });
   },
   
@@ -607,6 +609,7 @@ var OneSignal = {
         
         OneSignal._put_db_value("NotificationOpened", {url: launchURL, data: notificationData});
         clients.openWindow(launchURL).catch(function(error) {
+          // Should only fall into here if going to an external URL on Chrome older than 43.
           clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
         });
       })
@@ -645,53 +648,60 @@ var OneSignal = {
       OneSignal._log('Received data.json: ', event.data.json());
     }
     
-    OneSignal._getLastNotification(function(response, appId) {
-      var notificationData = {
-        id: response.custom.i,
-        message: response.alert,
-        additionalData: response.custom.a
-      };
-      
-      if (response.custom.u)
-        notificationData.launchURL = response.custom.u;
-      
-      OneSignal._getTitle(response.title, function(title) {
-        notificationData.title = title;
-        OneSignal._get_db_value("Options", "defaultIcon", function(event) {
-          var icon = null;
-          if (event.target.result)
-            icon = event.target.result.value;
-          
-          if (response.icon) {
-            icon = response.icon;
-            notificationData.icon = response.icon;
-          }
-          
-          serviceWorker.registration.showNotification(title, {
-            body: response.alert,
-            icon: icon,
-            tag: JSON.stringify(notificationData)
+    event.waitUntil(new Promise(
+      function(resolve, reject) {
+        OneSignal._getTitle(null, function(title) {
+          OneSignal._get_db_value("Options", "defaultIcon", function(eventIcon) {
+            OneSignal._getLastNotifications(function(response, appId) {
+              var notificationData = {
+                id: response.custom.i,
+                message: response.alert,
+                additionalData: response.custom.a
+              };
+              
+              if (response.title)
+                notificationData.title = response.title;
+              else
+                notificationData.title = title;
+              
+              if (response.custom.u)
+                notificationData.launchURL = response.custom.u;
+              
+              if (response.icon)
+                notificationData.icon = response.icon;
+              else if (eventIcon.target.result)
+                notificationData.icon = eventIcon.target.result.value;
+                
+              // Never nest the following line in a callback from the point of entering from _getLastNotifications
+              serviceWorker.registration.showNotification(notificationData.title, {
+                body: response.alert,
+                icon: notificationData.icon,
+                tag: JSON.stringify(notificationData)
+              }).then(resolve);
+              
+              OneSignal._get_db_value("Options", "defaultUrl", function(eventUrl) {
+                if (eventUrl.target.result)
+                  OneSignal._defaultLaunchURL = eventUrl.target.result.value;
+              });
+            }, resolve);
           });
         });
-      });
-      
-      OneSignal._get_db_value("Options", "defaultUrl", function(event) {
-        if (event.target.result)
-          OneSignal._defaultLaunchURL = event.target.result.value;
-      });
-    });
+      }
+    ));
   },
   
-  _getLastNotification: function(callback) {
+  _getLastNotifications: function(itemCallback, completeCallback) {
     OneSignal._get_db_value("Ids", "userId", function(event) {
       if (event.target.result) {
         OneSignal._sendToOneSignalApi("players/" + event.target.result.id + "/chromeweb_notification", "GET", null, function(response) {
           for(var i = 0; i < response.length; i++)
-            callback(JSON.parse(response[i]));
-        });
+            itemCallback(JSON.parse(response[i]));
+        }, function() { completeCallback(); });  // Failed callback
       }
-      else
+      else {
         OneSignal._log("Error: could not get notificationId");
+        completeCallback();
+      }
     });
   },
   
