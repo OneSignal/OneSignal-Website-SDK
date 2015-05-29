@@ -34,7 +34,7 @@ if (typeof OneSignal !== "undefined")
    _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10204,
+  _VERSION: 10205,
   _HOST_URL: "https://onesignal.com/api/v1/",
   
   _app_id: null,
@@ -246,36 +246,43 @@ var OneSignal = {
   init: function(options) {
     OneSignal._init_options = options;
     
-    if (!('Notification' in window))
+    if (!('Notification' in window)) {
+       OneSignal._log("ERROR: Your browser does not support notifications.");
        return;
-    
-    window.addEventListener('load', function() {
-      OneSignal._get_db_value("Ids", "appId", function(appIdEvent) {
-         OneSignal._get_db_value("Ids", "registrationId", function(regIdEvent) { 
-           // If AppId changed delete playerId and continue.
-           if (appIdEvent.target.result && appIdEvent.target.result.id != OneSignal._init_options.appId) {
-             OneSignal._delete_db_value("Ids", "userId");
-             sessionStorage.removeItem("ONE_SIGNAL_SESSION");
-           }
-           // HTTPS - Only register for push notifications once per session or if the user changes notification permission to ask or allow.
-           else if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
-                   && !options.subdomainName
-                   && (Notification.permission == "denied"
-                      || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission))
-             return;
-           
-           sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
-           
-           if (OneSignal._init_options.autoRegister == false && !regIdEvent.target.result)
-             return;
-           
-           if (document.visibilityState != "visible") {
-             document.addEventListener("visibilitychange", OneSignal._visibilitychange);
-             return;
-           }
-           
-           OneSignal._sessionInit({});
-         });
+    }
+     
+    if (document.readyState === "complete")
+      OneSignal._internalInit();
+    else
+      window.addEventListener('load', OneSignal._internalInit);
+  },
+  
+  _internalInit: function() {
+    OneSignal._get_db_value("Ids", "appId", function(appIdEvent) {
+      OneSignal._get_db_value("Ids", "registrationId", function(regIdEvent) { 
+        // If AppId changed delete playerId and continue.
+        if (appIdEvent.target.result && appIdEvent.target.result.id != OneSignal._init_options.appId) {
+          OneSignal._delete_db_value("Ids", "userId");
+          sessionStorage.removeItem("ONE_SIGNAL_SESSION");
+        }
+        // HTTPS - Only register for push notifications once per session or if the user changes notification permission to ask or allow.
+        else if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
+                && !OneSignal._init_options.subdomainName
+                && (Notification.permission == "denied"
+                   || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission))
+          return;
+        
+        sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
+        
+        if (OneSignal._init_options.autoRegister == false && !regIdEvent.target.result)
+          return;
+        
+        if (document.visibilityState != "visible") {
+          document.addEventListener("visibilitychange", OneSignal._visibilitychange);
+          return;
+        }
+        
+        OneSignal._sessionInit({});
       });
     });
   },
