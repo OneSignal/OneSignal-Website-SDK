@@ -34,7 +34,7 @@ if (typeof OneSignal !== "undefined")
    _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10205,
+  _VERSION: 10206,
   _HOST_URL: "https://onesignal.com/api/v1/",
   
   _app_id: null,
@@ -516,7 +516,7 @@ var OneSignal = {
   _subscribeForPush: function(serviceWorkerRegistration) {
     OneSignal._log("navigator.serviceWorker.ready.then");
     
-    serviceWorkerRegistration.pushManager.subscribe()
+    serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true})
     .then(function(subscription) {
       sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
       
@@ -526,7 +526,10 @@ var OneSignal = {
         
         var registrationId = null;
         if (subscription) {
-          registrationId = subscription.subscriptionId;
+          if (subscription.endpoint && subscription.endpoint.startsWith("https://android.googleapis.com/gcm/send/")) // Chrome 44+
+            registrationId = subscription.endpoint.replace("https://android.googleapis.com/gcm/send/", "");
+          else // Chrome 43 & older
+            registrationId = subscription.subscriptionId;
           OneSignal._log('registration id is:' + registrationId);
         }
         else
