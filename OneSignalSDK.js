@@ -33,7 +33,7 @@ if (typeof OneSignal !== "undefined")
   _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10303,
+  _VERSION: 10305,
   _HOST_URL: "https://onesignal.com/api/v1/",
   _IS_DEV: false,
 
@@ -216,11 +216,7 @@ var OneSignal = {
 
           if (responseJSON.id) {
             OneSignal._put_db_value("Ids", {type: "userId", id: responseJSON.id});
-
-            if (OneSignal._tagsToSendOnRegister) {
-              OneSignal.sendTags(OneSignal._tagsToSendOnRegister);
-              _tagsToSendOnRegister = null;
-            }
+            OneSignal._sendUnsentTags();
           }
 
           OneSignal._getPlayerId(responseJSON.id, function (userId) {
@@ -247,6 +243,13 @@ var OneSignal = {
     });
     });
   },
+  
+  _sendUnsentTags: function() {
+    if (OneSignal._tagsToSendOnRegister) {
+      OneSignal.sendTags(OneSignal._tagsToSendOnRegister);
+      OneSignal._tagsToSendOnRegister = null;
+    }
+  },
 
   setDefaultNotificationUrl: function (url) {
     OneSignal._put_db_value("Options", {key: "defaultUrl", value: url});
@@ -269,6 +272,16 @@ var OneSignal = {
 
   init: function (options) {
     OneSignal._init_options = options;
+    
+    OneSignal._useHttpMode = OneSignal._isHttpSite() || OneSignal._init_options.subdomainName;
+
+    if (OneSignal._useHttpMode)
+      OneSignal._initOneSignalHttp = 'https://' + OneSignal._init_options.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+    else
+      OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
+    
+    if (OneSignal._IS_DEV)
+      OneSignal._initOneSignalHttp = 'https://192.168.1.181:3000/dev_sdks/initOneSignalHttp';
 
     if (!OneSignal.isPushNotificationsSupported()) {
       OneSignal._log("ERROR: Your browser does not support push notifications.");
@@ -282,16 +295,6 @@ var OneSignal = {
   },
 
   _internalInit: function () {
-    OneSignal._useHttpMode = OneSignal._isHttpSite() || OneSignal._init_options.subdomainName;
-
-    if (OneSignal._useHttpMode)
-      OneSignal._initOneSignalHttp = 'https://' + OneSignal._init_options.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
-    else
-      OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
-    
-    if (OneSignal._IS_DEV)
-      OneSignal._initOneSignalHttp = 'https://192.168.1.181:3000/dev_sdks/initOneSignalHttp';
-    
     OneSignal._get_db_value("Ids", "appId", function (appIdEvent) {
       OneSignal._get_db_value("Ids", "registrationId", function (regIdEvent) {
         // If AppId changed delete playerId and continue.
@@ -826,6 +829,7 @@ var OneSignal = {
         OneSignal._put_db_value("Ids", {type: "registrationId", id: eventData.registrationId});
       
       OneSignal._fireNotificationEnabledCallback(eventData.isPushEnabled);
+      OneSignal._sendUnsentTags();
     }
     else if (event.data.currentNotificationPermission) // Subdomain Only
       OneSignal._fireNotificationEnabledCallback(event.data.currentNotificationPermission.isPushEnabled);
@@ -838,6 +842,7 @@ var OneSignal = {
         OneSignal._idsAvailable_callback({userId: event.data.idsAvailable.userId, registrationId: event.data.idsAvailable.registrationId});
         OneSignal._idsAvailable_callback = null;
       }
+      OneSignal._sendUnsentTags();
     }
     else if (event.data.httpsPromptAccepted) { // HTTPS Only
       OneSignal.registerForPushNotifications();
