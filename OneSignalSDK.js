@@ -25,7 +25,7 @@
  * THE SOFTWARE.
  */
 
-// Requires Chrome version 42+
+// Requires Chrome 42+, Safari 7+, or Firefox 44+
 // Web push notifications are supported on Mac OSX, Windows, Linux, and Android.
 var _temp_OneSignal = null;
 
@@ -33,7 +33,7 @@ if (typeof OneSignal !== "undefined")
   _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 10400,
+  _VERSION: 10500,
   _HOST_URL: "https://onesignal.com/api/v1/",
   _IS_DEV: false,
 
@@ -75,7 +75,7 @@ var OneSignal = {
       if (typeof args !== "undefined")
         console.log(message, args);
       else
-        console.log(message);
+      console.log(message);
     }
   },
 
@@ -188,7 +188,9 @@ var OneSignal = {
       return "Chrome";
     if (navigator.appVersion.match("Version/(.*) (Safari)"))
       return "Safari";
-      
+    if (navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/))
+      return "Firefox";
+    
     return "";
   },
 
@@ -203,7 +205,7 @@ var OneSignal = {
         language: OneSignal._getLanguage(),
         timezone: new Date().getTimezoneOffset() * -60,
         device_model: navigator.platform + " " + OneSignal._getBrowserName(),
-        device_os: (navigator.appVersion.match(/Chrome\/(.*?) /) || navigator.appVersion.match("Version/(.*) Safari"))[1],
+        device_os: (navigator.appVersion.match(/Chrome\/(.*?) /) || navigator.appVersion.match("Version/(.*) Safari") || navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/))[1],
         sdk: OneSignal._VERSION
       };
 
@@ -226,7 +228,7 @@ var OneSignal = {
           if (responseJSON.id) {
             OneSignal._put_db_value("Ids", {type: "userId", id: responseJSON.id});
             OneSignal._sendUnsentTags();
-          }
+            }
 
           OneSignal._getPlayerId(responseJSON.id, function (userId) {
             if (OneSignal._idsAvailable_callback) {
@@ -378,13 +380,13 @@ var OneSignal = {
             OneSignal.setDefaultIcon(event.data.initOptions.defaultIcon);
 
           OneSignal._log("document.URL", event.data.initOptions.parent_url);
-        OneSignal._get_db_value("NotificationOpened", event.data.initOptions.parent_url, function (value) {
+          OneSignal._get_db_value("NotificationOpened", event.data.initOptions.parent_url, function (value) {
             OneSignal._log("_initHttp NotificationOpened db", value);
             if (value.target.result) {
               OneSignal._delete_db_value("NotificationOpened", event.data.initOptions.parent_url);
-            OneSignal._log("OneSignal._safePostMessage:targetOrigin:", OneSignal._init_options.origin);
-            
-            OneSignal._safePostMessage(creator, {openedNotification: value.target.result.data}, OneSignal._init_options.origin, null);
+              OneSignal._log("OneSignal._safePostMessage:targetOrigin:", OneSignal._init_options.origin);
+              
+              OneSignal._safePostMessage(creator, {openedNotification: value.target.result.data}, OneSignal._init_options.origin, null);
             }
           });
       }
@@ -485,6 +487,7 @@ var OneSignal = {
           OneSignal._init_options.safari_web_id,
           {app_id: OneSignal._app_id},
           function(data) {
+            OneSignal._log(data);
             if (data.deviceToken)
               OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
             else
@@ -521,7 +524,7 @@ var OneSignal = {
         document.getElementById("notif-permission").appendChild(iframeNode);
       });
     }
-    else if ('serviceWorker' in navigator && navigator.userAgent.toLowerCase().indexOf('chrome') > -1) // If HTTPS - Show native prompt
+    else if ('serviceWorker' in navigator) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
     else
       OneSignal._log('Service workers are not supported in this browser.');
@@ -604,13 +607,13 @@ var OneSignal = {
     OneSignal._log("_enableNotifications: ", existingServiceWorkerRegistration);
 
     if (!('PushManager' in window)) {
-      OneSignal._log("Push messaging is not supported.");
+      OneSignal._log("Push messaging is not supported. No PushManager.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
       return;
     }
 
     if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-      OneSignal._log("Notifications are not supported.");
+      OneSignal._log("Notifications are not supported. showNotification not available in ServiceWorkerRegistration.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
       return;
     }
@@ -640,16 +643,16 @@ var OneSignal = {
 
           var registrationId = null;
           if (subscription) {
-            if (subscription.endpoint && subscription.endpoint.startsWith("https://android.googleapis.com/gcm/send/")) // Chrome 44+
-              registrationId = subscription.endpoint.replace("https://android.googleapis.com/gcm/send/", "");
-            else // Chrome 43 & older
+            if (typeof subscription.subscriptionId != "undefined") // Chrome 43 & 42
               registrationId = subscription.subscriptionId;
+            else  // Chrome 44+ and FireFox
+              registrationId = subscription.endpoint.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
             OneSignal._log('registration id is:' + registrationId);
           }
           else
-            OneSignal._log('Error could not subscribe to GCM!');
-
-          OneSignal._registerWithOneSignal(appId, registrationId, 5);
+            OneSignal._log('Error could not subscribe your browser for push!');
+          
+          OneSignal._registerWithOneSignal(appId, registrationId, OneSignal._isSupportedFireFox() ? 8 : 5);
         });
       })
       .catch(function (err) {
@@ -970,8 +973,18 @@ var OneSignal = {
       return false;
     return (parseInt(safariVersion[1]) > 6);
   },
+  
+  _isSupportedFireFox: function() {
+    var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
+    if (fireFoxVersion)
+      return parseInt(fireFoxVersion[2].substring(0, 2)) > 43;
+    return false;
+  },
 
-  isPushNotificationsSupported: function () {
+  isPushNotificationsSupported: function() {
+    if (OneSignal._isSupportedFireFox())
+      return true;
+    
     if (OneSignal._isSupportedSafari())
       return true;
     
@@ -1035,7 +1048,10 @@ var OneSignal = {
         tOrigin = tOrigin.replace(validPreURLRegex, queryDict["hostPageProtocol"]);
     }
     
-    creator.postMessage(data, tOrigin, receiver);
+    if (receiver)
+      creator.postMessage(data, tOrigin, receiver);
+    else
+      creator.postMessage(data, tOrigin);
   },
 
   _process_pushes: function (array) {
