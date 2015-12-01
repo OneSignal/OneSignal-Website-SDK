@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OneSignal Web Push SDK</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.6/semantic.min.css">
+  <!-- For HTTPS sites; HTTP sites will not be affected by this entry -->
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    .ui.grid + .ui.grid {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div style="height:25px;"></div>
+<div class="ui centered grid">
+  <div class="ui segment">
+    <h4 class="ui header">Gasoline</h4>
+    <button id="preset-dev-http" class="ui basic purple button">Development (HTTP)</button>
+    <button id="preset-dev-https" class="ui basic purple button">Development (HTTPS)</button>
+    <button id="preset-prod" class="ui basic violet button">Production</button>
+  </div>
+</div>
+<div class="ui centered grid">
+  <div class="ui segment">
+    <h4 class="ui header">1. Choose OneSignal SDK</h4>
+    <button id="btn-development-sdk" class="ui basic button">Development</button>
+    <button id="btn-production-sdk" class="ui basic button">Production</button>
+  </div>
+</div>
+<div class="ui centered grid">
+  <div class="ui segment" style="text-align: initial;">
+    <h4 class="ui header" style="text-align: center;">2. Set Parameters</h4>
+    <form class="ui form">
+      <div class="inline field">
+        <div class="ui checkbox">
+          <input id="enable-logging" type="checkbox" tabindex="0" checked="true">
+          <label>Enable Logging</label>
+        </div>
+      </div>
+      <div class="inline field">
+        <div class="ui checkbox">
+          <input id="use-modal" type="checkbox" tabindex="1">
+          <label>Use modal prompt for HTTPS</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>App ID</label>
+        <input id="appId" type="text">
+      </div>
+      <div class="field">
+        <label>Subdomain</label>
+        <input id="subdomain" type="text">
+      </div>
+      <div class="field">
+        <label>Safari Web ID</label>
+        <input id="safariId" type="text">
+      </div>
+    </form>
+  </div>
+</div>
+<div class="ui centered grid">
+  <div class="ui segment">
+    <h4 class="ui header">3. Choose <code>init()</code> Subroutine</h4>
+    <button id="btn-http" class="ui basic button">HTTP</button>
+    <button id="btn-https" class="ui basic button">HTTPS</button>
+  </div>
+</div>
+<div class="ui centered grid">
+  <div class="ui segment">
+    <button id="btn-register" class="ui basic button"><code>registerForPushNotifications()</code></button>
+    <button id="btn-supported" class="ui basic button"><code>isPushNotificationsSupported()</code></button>
+    <button id="btn-enabled" class="ui basic button"><code>isPushNotificationsEnabled()</code></button>
+  </div>
+</div>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.6/semantic.min.js"></script>
+<script>
+  var DEV_HOST = 'https://localhost:8181';
+
+  $(function() {
+    $('#preset-dev-http').click(function() {
+      $(window).on('webpushtest.sdkloaded', function() {
+        $('#appId').val('665c2638-77f8-489d-9226-49e5858eace0');
+        $('#subdomain').val('s-onesignalexample');
+        $('#safariId').val('web.com.onesignal.example');
+        $('#btn-http').click();
+      });
+      $('#btn-development-sdk').click();
+    });
+    $('#preset-dev-https').click(function() {
+      $(window).on('webpushtest.sdkloaded', function() {
+        $('#appId').val('33b3562a-d33b-42ee-88bc-1436e780311f');
+        $('#safariId').val('web.onesignal.auto.009a4322-838f-4341-bf26-c81fd75aa063');
+        $('#btn-http').click();
+      });
+      $('#btn-development-sdk').click();
+    });
+    $('#preset-prod').click(function() {
+      $(window).on('webpushtest.sdkloaded', function() {
+        $('#appId').val('7b6053e0-9911-4003-a0a4-a33e417ad663');
+        $('#safariId').val('web.onesignal.auto.3cfe9839-ceab-4809-9212-172318dbfb2e');
+        $('#btn-https').click();
+      });
+      $('#btn-production-sdk').click();
+    });
+
+    $('#btn-development-sdk').click(function() {
+      $.getScript( DEV_HOST + "/OneSignalSDK.js", function( data, textStatus, code ) {
+        console.info('Loading development OneSignal SDK script: ', code);
+        window.OneSignal = window.OneSignal || [];
+        window.OneSignal._IS_DEV = true;
+        $(window).trigger('webpushtest.sdkloaded');
+      });
+    });
+    $('#btn-production-sdk').click(function() {
+      $.getScript( "https://cdn.onesignal.com/sdks/OneSignalSDK.js", function( data, textStatus, code ) {
+        console.info('Loading production OneSignal SDK script: ', code);
+        window.OneSignal = window.OneSignal || [];
+        $(window).trigger('webpushtest.sdkloaded');
+      });
+    });
+    $('#btn-http, #btn-https').click(function() {
+      OneSignal.LOGGING = $('#enable-logging').is(':checked');
+      //OneSignal.LOGGING_TRACING = $('#enable-logging').is(':checked');
+      OneSignal.LOGGING_VERBOSE = $('#enable-logging').is(':checked');
+      var options = {};
+      options['path'] = '/';
+      options['appId'] = $('#appId').val();
+      options['autoRegister'] = false;
+      if ($('#subdomain').val())
+        options['subdomainName'] =  $('#subdomain').val();;
+      if ($('#safariId').val())
+        options['safari_web_id'] = $('#safariId').val();
+      OneSignal.push(["init", options]);
+    });
+    $('#btn-register').click(function() {
+      if ($('#use-modal').is(':checked')) {
+        OneSignal.registerForPushNotifications({ modalPrompt: true });
+      }
+      else {
+        OneSignal.registerForPushNotifications();
+      }
+    });
+    $('#btn-supported').click(function() { console.log('isPushNotificationsSupported(): ', OneSignal.isPushNotificationsSupported()); });
+    $('#btn-enabled').click(function() { OneSignal.isPushNotificationsEnabled(function(enabled) { console.log('isPushNotificationsEnabled(): ', enabled); }); });
+  });
+</script>
+</body>
+</html>

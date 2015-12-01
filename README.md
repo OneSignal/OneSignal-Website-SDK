@@ -1,8 +1,34 @@
-OneSignal Website Push Notification SDK
-====================================
+# OneSignal Web Push SDK
 
-OneSignal is a free push notification service for web and mobile apps. This SDK makes it easy to integrate your website with OneSignal Push Notifications.
+OneSignal is a free push notification service for web and mobile apps.
 
-- See http://documentation.onesignal.com/v2.0/docs/website-sdk-installation for Chrome setup documentation.
+This SDK allows your site's visitors to receive push notifications from you. Send visitors custom notification content, target specific users, and send automatically based on triggers.
 
-- See http://documentation.onesignal.com/v2.0/docs/website-sdk-api for OneSignal API documentation.
+View our [website](https://onesignal.com) and our [documentation](https://documentation.onesignal.com/docs/website-sdk-overview) to get started.
+
+## Structure
+
+`+-- src/`
+
+Sources for web SDK. `entry.js` is the entry point that requires other files.
+
+`+-- test/`
+
+Sources for web SDK tests. `entry.js` is the entry point that requires other files.
+
+`+-- dist/`
+
+Contains the production (minified) and development versions of the transpiled web SDK.
+
+`+-- public/`
+
+The dist/ web SDK is copied here, along with a sandbox HTML page.
+
+## Contributing
+
+1. `git clone git@github.com:one-signal/OneSignal-Website-SDK.git`
+2. `npm install`
+3. `npm install -g gulp webpack`  (installs `gulp` and `webpack` globally for use)
+4. `gulp`
+
+The `src/` and `test/` directories are watched and automatically re-transpiled when changed. The compiled SDK go to `dist/`. The compiled test sources go to `test/bundle.js`.
