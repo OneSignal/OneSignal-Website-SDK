@@ -185,12 +185,11 @@ var OneSignal = {
         return response.json();
       })
       .then(function (jsonData) {
-        log.debug(jsonData);
         if (callback != null)
           callback(jsonData);
       })
       .catch(function (e) {
-        log.error('Request failed:', e);
+        log.error('OneSignal._sendToOneSignalApi() failed:', e);
         if (failedCallback != null)
           failedCallback();
       });
@@ -289,8 +288,6 @@ var OneSignal = {
                   if (opener)
                     window.close();
                 }
-                else
-                  log.debug("NO opener");
               });
             }
           );
@@ -376,12 +373,12 @@ var OneSignal = {
 
     if (((lastPermission === 'default' || lastPermission === 'denied' || lastPermission === null) && currentPermission === 'granted' &&
         currentId !== null &&
-        currentSubscriptionState == true
+        currentSubscriptionState === true
       ) ||
       (
-        (lastSubscriptionState == false && currentSubscriptionState == true) &&
+        (lastSubscriptionState === false && currentSubscriptionState === true) &&
         currentId != null &&
-        currentPermission == 'granted'
+        currentPermission === 'granted'
       )) {
       newSubscriptionState = true;
     }
@@ -394,7 +391,6 @@ var OneSignal = {
     }
 
     if (newSubscriptionState !== "unchanged") {
-      log.debug('SubscriptionChanged event fired, new state is now:', newSubscriptionState);
       var lastTriggerTimes = LimitStore.put('event.subscriptionchanged.lastriggered', Date.now());
       var currentTime = lastTriggerTimes[lastTriggerTimes.length - 1];
       var lastTriggerTime = lastTriggerTimes[lastTriggerTimes.length - 2];
@@ -407,16 +403,8 @@ var OneSignal = {
       // If event already triggered within the last second, don't re-trigger.
       var shouldNotTriggerEvent = (lastTriggerTime != null && (elapsedTimeSeconds <= 1)) || (currentState === lastState);
       if (shouldNotTriggerEvent === false) {
-        log.info('Triggering event onesignal.subscription.changed:', newSubscriptionState);
         OneSignal._triggerEvent_subscriptionChanged(newSubscriptionState)
-      } else {
-        if (elapsedTimeSeconds <= 1)
-          log.debug('SubscriptionChanged event fired, but because last event was fired in the last ', elapsedTimeSeconds, ' seconds, skipping event firing.');
-        if (currentState === lastState)
-          log.debug('SubscriptionChanged event fired, but because the new subscription state (' + currentState + ') is the same as the last subscription state (' + lastState + '), skipping event firing.');
       }
-    } else {
-      log.debug('SubscriptionChanged event fired, but new state is unchanged, so returning.');
     }
   },
 
@@ -666,7 +654,7 @@ var OneSignal = {
 
 
   _sessionInit: function (options) {
-    log.debug("_sessionInit:", options);
+    log.debug("Called OneSignal._sessionInit():", options);
     OneSignal._initSaveState();
 
     var hostPageProtocol = location.origin.match(/^http(s|):\/\/(www\.|)/)[0];
@@ -878,8 +866,6 @@ var OneSignal = {
   },
 
   _enableNotifications: function (existingServiceWorkerRegistration) { // is ServiceWorkerRegistration type
-    log.debug("_enableNotifications: ", existingServiceWorkerRegistration);
-
     if (!('PushManager' in window)) {
       log.debug("Push messaging is not supported. No PushManager.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
@@ -898,7 +884,7 @@ var OneSignal = {
     }
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-      log.debug(serviceWorkerRegistration);
+      log.info('Service worker active:', serviceWorkerRegistration);
 
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
@@ -976,8 +962,6 @@ var OneSignal = {
   },
 
   _subscribeForPush: function (serviceWorkerRegistration) {
-    log.debug('_subscribeForPush:', 'navigator.serviceWorker.ready.then');
-
     var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
     serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true})
       .then(function (subscription) {
@@ -986,7 +970,7 @@ var OneSignal = {
         OneSignal._getDbValue('Ids', 'appId')
           .then(function _subscribeForPush_GotAppId(appIdResult) {
             var appId = appIdResult.id;
-            log.debug("serviceWorkerRegistration.pushManager.subscribe()");
+            log.debug("Called OneSignal._subscribeForPush() -> serviceWorkerRegistration.pushManager.subscribe().");
 
             var registrationId = null;
             if (subscription) {
@@ -994,10 +978,9 @@ var OneSignal = {
                 registrationId = subscription.subscriptionId;
               else  // Chrome 44+ and FireFox
                 registrationId = subscription.endpoint.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
-              log.debug('registration id is:' + registrationId);
             }
             else
-              log.debug('Error could not subscribe your browser for push!');
+              log.warn('Could not subscribe your browser for push notifications.');
 
             OneSignal._registerWithOneSignal(appId, registrationId, OneSignal._isSupportedFireFox() ? 8 : 5);
 
@@ -1009,7 +992,7 @@ var OneSignal = {
           });
       })
       .catch(function (e) {
-        log.error('Error during subscribe():', e);
+        log.error('Error while subscribing for push:', e);
 
         if (!OneSignal._usingNativePermissionHook)
           OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
