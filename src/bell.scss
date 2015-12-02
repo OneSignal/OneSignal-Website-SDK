@@ -1,0 +1,47 @@
+@import "../node_modules/tether-drop/dist/css/drop-theme-arrows.css";
+@import "../node_modules/tether-drop/dist/css/drop-theme-arrows-bounce.css";
+
+$red: #e54b4d;
+$bell-size: 20px;
+$container-size: 30px;
+$container-border-color: lighten($red, 25%);
+$container-border-color-hover: lighten($red, 15%);
+$container-background: transparent;
+$transition-duration: 175ms;
+$hover-size-increase: 1.25;
+$offset-x: 15px;
+$offset-y: 15px;
+
+@mixin bell-icon() {
+    background: url('./bell.svg') no-repeat center center;
+    background-size: $bell-size;
+    transition: transform $transition-duration ease-in-out,
+                border $transition-duration ease-in-out;
+
+    &:hover {
+        transform: scale(1.2);
+    }
+}
+
+@mixin bell-container() {
+    @include bell-icon();
+    width: $container-size;
+    height: $container-size;
+    border-radius: 50%;
+    border: 1px solid $container-border-color;
+    background-color: $container-background;
+    margin: 0;
+
+    &:hover {
+        transform: scale(1.2);
+        border: 1px solid $container-border-color-hover;
+    }
+}
+
+#onesignal-bell {
+    position: absolute;
+    left: $offset-x;
+    bottom: $offset-y;
+    z-index: 2147483647;
+    @include bell-container();
+}

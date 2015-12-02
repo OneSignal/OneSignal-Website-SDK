@@ -1,6 +1,7 @@
 import log from 'loglevel';
-import LimitStore from './limitStore.js'
-import "./events.js"
+import LimitStore from './limitStore.js';
+import "./events.js";
+import showBell from "./bellSubscribe.js";
 
 /**
  * Modified MIT License
@@ -432,6 +433,10 @@ var OneSignal = {
     if (!OneSignal.isPushNotificationsSupported()) {
       log.warn("Your browser does not support push notifications.");
       return;
+    }
+
+    if (__DEV__ && __BROWSER_ENV__) {
+      showBell();
     }
 
     if (navigator.permissions && !(OneSignal._isBrowserFirefox() && OneSignal._getFirefoxVersion() <= 45)) {

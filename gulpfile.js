@@ -13,7 +13,7 @@ gulp.task("default", function() {
 });
 
 gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
-  gulp.watch(['src/assets/OneSignalSDKWorker.*.js'], ['copy-assets']);
+  gulp.watch(['assets/OneSignalSDKWorker.*.js'], ['copy-assets']);
   gulp.watch('dist/*.js', ['copy-js']);
 });
 
@@ -30,10 +30,10 @@ gulp.task("transpile-javascript", shell.task([
  */
 gulp.task("copy-assets", function() {
   var fileSuffix = IS_PRODUCTION_BUILD ? '.prod.js' : '.dev.js';
-  gulp.src('src/assets/OneSignalSDKWorker' + fileSuffix)
+  gulp.src('assets/OneSignalSDKWorker' + fileSuffix)
     .pipe(rename("OneSignalSDKWorker.js"))
     .pipe(gulp.dest(oneSignalSourceDir + '/public'));
-  gulp.src('src/assets/OneSignalSDKWorker' + fileSuffix)
+  gulp.src('assets/OneSignalSDKWorker' + fileSuffix)
     .pipe(rename("OneSignalSDKUpdaterWorker.js"))
     .pipe(gulp.dest(oneSignalSourceDir + '/public'));
 });
