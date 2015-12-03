@@ -10,7 +10,7 @@ if (typeof OneSignal !== "undefined")
   _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 109000,
+  _VERSION: 109002,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -43,7 +43,6 @@ var OneSignal = {
         request.onsuccess = function (event) {
           var database = event.target.result;
           OneSignal._oneSignal_db = database;
-          log.debug('Succesfully opened IndexedDB.');
           resolve(database);
         };
         request.onerror = function (event) {
@@ -138,6 +137,7 @@ var OneSignal = {
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
+    log.debug(`Calling ${action} ${OneSignal._HOST_URL + url} with data:`, inData);
     var contents = {
       method: action,
       //mode: 'no-cors', // no-cors is disabled for non-serviceworker.
@@ -308,10 +308,14 @@ var OneSignal = {
   _onSubscriptionChanged: function (event) {
     log.debug('Event onesignal.subscription.changed:', event.detail);
     if (OneSignal._isNewVisitor && event.detail === true) {
-      log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
       OneSignal._getDbValue('Ids', 'userId')
         .then(function (result) {
-          sendNotification(OneSignal._app_id, [result.id], {'en': 'Thanks for subscribing!'}, {'en': "You'll get new content updates!"})
+          if (OneSignal._initOptions['welcome_notification'] && OneSignal._initOptions['welcome_notification']['message']) {
+            log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
+            var title = OneSignal._initOptions['welcome_notification']['title'];
+            var message = OneSignal._initOptions['welcome_notification']['message'];
+            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message})
+          }
         })
         .catch(function (e) {
           log.error(e);
@@ -407,7 +411,6 @@ var OneSignal = {
     }
 
     if (navigator.permissions && !(OneSignal._isBrowserFirefox() && OneSignal._getFirefoxVersion() <= 45)) {
-      log.info("Using browser's native PermissionStatus.onChange() to hook permission change event.");
       OneSignal._usingNativePermissionHook = true;
       var currentNotificationPermission = OneSignal._getNotificationPermission();
       LimitStore.put('notification.permission', currentNotificationPermission);
@@ -855,6 +858,8 @@ var OneSignal = {
   },
 
   _enableNotifications: function (existingServiceWorkerRegistration) { // is ServiceWorkerRegistration type
+    if (existingServiceWorkerRegistration)
+      log.debug('There is an older ServiceWorker:', existingServiceWorkerRegistration);
     if (!('PushManager' in window)) {
       log.debug("Push messaging is not supported. No PushManager.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);

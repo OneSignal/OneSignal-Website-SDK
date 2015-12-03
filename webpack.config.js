@@ -4,6 +4,7 @@ var babelPolyfill = require('babel-polyfill');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var IS_PROD = process.argv.indexOf('--production-build') >= 0;
 
+
 Date.prototype.timeNow = function () {
   var hours = this.getHours();
   var ampm = (hours >= 12 ? 'PM' : 'AM');
@@ -35,49 +36,50 @@ module.exports = {
     }]
   },
   debug: !IS_PROD,
-  plugins: IS_PROD ? [
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.AggressiveMergingPlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: false,
-      compress: {
-        sequences: false,
-        dead_code: false,
-        conditionals: true,
-        booleans: false,
-        unused: false,
-        if_return: true,
-        join_vars: true,
-        drop_console: false
-      },
-      mangle: {
-        except: ['$super', '$', 'exports', 'require']
-      },
-      output: {
-        comments: false
+  plugins: [
+    new webpack.ProvidePlugin({
+      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+    })
+  ].concat(IS_PROD ? [
+      new webpack.optimize.DedupePlugin(),
+      new webpack.optimize.AggressiveMergingPlugin(),
+      new webpack.optimize.UglifyJsPlugin({
+        sourceMap: false,
+        compress: {
+          sequences: false,
+          dead_code: false,
+          conditionals: true,
+          booleans: false,
+          unused: false,
+          if_return: true,
+          join_vars: true,
+          drop_console: false
+        },
+        mangle: {
+          except: ['$super', '$', 'exports', 'require']
+        },
+        output: {
+          comments: false
+        }
+      }),
+      new webpack.DefinePlugin({
+        'process.env': {
+          'NODE_ENV': JSON.stringify('production'),
+        },
+        __DEV__: false,
+        __VERSION__: JSON.stringify(require("./package.json").version)
+      }),
+    ] : [new webpack.DefinePlugin({
+      __DEV__: true,
+      __VERSION__: JSON.stringify(require("./package.json").version)
+    }),
+      function () {
+        this.plugin('watch-run', function (watching, callback) {
+          console.log();
+          console.log('Recompiling assets starting ' + new Date()
+              .timeNow() + "...");
+          callback();
+        })
       }
-    }),
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify('production'),
-      },
-      __DEV__: false,
-    }),
-    new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-    })
-  ] : [new webpack.DefinePlugin({
-    __DEV__: true,
-  }),
-    function () {
-      this.plugin('watch-run', function (watching, callback) {
-        console.log();
-        console.log('Recompiling assets starting ' + new Date().timeNow() + "...");
-        callback();
-      })
-    },
-    new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-    })
-  ]
+    ])
 };
