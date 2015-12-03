@@ -10,7 +10,7 @@ if (typeof OneSignal !== "undefined")
   _temp_OneSignal = OneSignal;
 
 var OneSignal = {
-  _VERSION: 109002,
+  _VERSION: 109006,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -344,6 +344,7 @@ var OneSignal = {
   },
 
   _checkTrigger_eventSubscriptionChanged: function () {
+    log.debug('Called _checkTrigger_eventSubscriptionChanged().');
     var permissions = LimitStore.get('notification.permission');
     var lastPermission = permissions[permissions.length - 2];
     var currentPermission = permissions[permissions.length - 1];
@@ -418,10 +419,9 @@ var OneSignal = {
       //     use it instead of our SDK method
       navigator.permissions.query({name: 'notifications'}).then(function (permissionStatus) {
         permissionStatus.onchange = function () {
-          var recentPermissions = LimitStore.put('notification.permission', this.state);
+          var recentPermissions = LimitStore.get('notification.permission');
           var permissionBeforePrompt = recentPermissions[0];
-          var permissionsAfterPrompt = recentPermissions[1];
-          OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt, permissionsAfterPrompt);
+          OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt);
         };
       })
         .catch(function (e) {
@@ -932,6 +932,7 @@ var OneSignal = {
       to = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
     }
     if (from !== to) {
+      var recentPermissions = LimitStore.put('notification.permission', to);
       OneSignal._triggerEvent('onesignal.prompt.native.permissionchanged', {
         from: from,
         to: to
@@ -978,8 +979,9 @@ var OneSignal = {
 
             OneSignal._registerWithOneSignal(appId, registrationId, OneSignal._isSupportedFireFox() ? 8 : 5);
 
-            if (!OneSignal._usingNativePermissionHook)
+            if (!OneSignal._usingNativePermissionHook) {
               OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
+            }
           })
           .catch(function (e) {
             log.error(e);

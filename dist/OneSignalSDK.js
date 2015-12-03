@@ -1,2 +1,2226 @@
-!function(e){function t(n){if(i[n])return i[n].exports;var o=i[n]={exports:{},id:n,loaded:false};e[n].call(o.exports,o,o.exports,t);o.loaded=true;return o.exports}var i={};t.m=e;t.c=i;t.p="";return t(0)}([function(e,exports,t){"use strict";t(1);t(9)},function(e,exports,t){(function(i){"use strict";function n(e){return e&&e.__esModule?e:{"default":e}}var o=t(3),r=t(5),a=t(6),s=n(a),u=t(7),l=n(u);t(8);var d=null;"undefined"!=typeof c&&(d=c);var c={_VERSION:109002,_HOST_URL:o.HOST_URL,_app_id:null,_tagsToSendOnRegister:null,_notificationOpened_callback:null,_idsAvailable_callback:[],_defaultLaunchURL:null,_initOptions:null,_httpRegistration:false,_main_page_port:null,_isNotificationEnabledCallback:null,_subscriptionSet:true,_initOneSignalHttp:null,_sessionIframeAdded:false,_useHttpMode:null,_windowWidth:550,_windowHeight:480,_isNewVisitor:false,LOGGING:false,SERVICE_WORKER_UPDATER_PATH:"OneSignalSDKUpdaterWorker.js",SERVICE_WORKER_PATH:"OneSignalSDKWorker.js",SERVICE_WORKER_PARAM:{},_ensureDbInstance:function p(){return new Promise(function(e,t){if(c._oneSignal_db)e(c._oneSignal_db);else{var i=indexedDB.open("ONE_SIGNAL_SDK_DB",1);i.onsuccess=function(t){var i=t.target.result;c._oneSignal_db=i;e(i)};i.onerror=function(e){s["default"].error("Unable to open IndexedDB.",e);t(e)};i.onupgradeneeded=function(e){s["default"].debug("Rebuilding schema in IndexedDB...");var t=e.target.result;t.createObjectStore("Ids",{keyPath:"type"});t.createObjectStore("NotificationOpened",{keyPath:"url"});t.createObjectStore("Options",{keyPath:"key"})}}})},_getDbValue:function g(e,t){return new Promise(function(i,n){c._ensureDbInstance().then(function(o){var r=o.transaction(e).objectStore(e).get(t);r.onsuccess=function(e){r.result&&c._triggerEvent_dbValueRetrieved(r.result);i(r.result)};r.onerror=function(e){n(r.errorCode)}})["catch"](function(e){s["default"].error(e.stack)})})},_getDbValues:function _(e){return new Promise(function(t,i){c._ensureDbInstance().then(function(n){var o={},r=n.transaction(e).objectStore(e).openCursor();r.onsuccess=function(e){var i=e.target.result;if(i){c._triggerEvent_dbValueRetrieved(i);o[i.key]=i.value.value;i["continue"]()}else t(o)};r.onerror=function(e){i(r.errorCode)}})["catch"](function(e){s["default"].error(e.stack)})})},_putDbValue:function h(e,t){return new Promise(function(i,n){c._ensureDbInstance().then(function(n){n.transaction([e],"readwrite").objectStore(e).put(t);c._triggerEvent_dbValueSet(t);i(t)})["catch"](function(e){s["default"].error(e.stack)})})},_deleteDbValue:function v(e,t){return new Promise(function(i,n){c._ensureDbInstance().then(function(n){n.transaction([e],"readwrite").objectStore(e)["delete"](t);i(t)})["catch"](function(e){s["default"].error(e.stack)})})},_sendToOneSignalApi:function b(e,t,n,o,r){s["default"].debug("Calling "+t+" "+(c._HOST_URL+e)+" with data:",n);var a={method:t};if(n){a.headers={"Content-type":"application/json;charset=UTF-8"};a.body=JSON.stringify(n)}i(c._HOST_URL+e,a).then(function u(e){return e.status>=200&&e.status<300?Promise.resolve(e):Promise.reject(new Error(e.statusText))}).then(function l(e){return e.json()}).then(function(e){null!=o&&o(e)})["catch"](function(e){s["default"].error("OneSignal._sendToOneSignalApi() failed:",e);null!=r&&r()})},_getLanguage:function m(){return navigator.language?navigator.language.length>3?navigator.language.substring(0,2):navigator.language:"en"},_getPlayerId:function S(e,t){e?t(e):c._getDbValue("Ids","userId").then(function i(e){t(e?e.id:null)})["catch"](function(e){s["default"].error(e.stack)})},_getBrowserName:function O(){return navigator.appVersion.match(/Chrome\/(.*?) /)?"Chrome":navigator.appVersion.match("Version/(.*) (Safari)")?"Safari":navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/)?"Firefox":""},_registerWithOneSignal:function E(e,t,i){c._getDbValue("Ids","userId").then(function n(o){c._getNotificationTypes(function(n){var r="players",a={app_id:e,device_type:i,language:c._getLanguage(),timezone:-60*(new Date).getTimezoneOffset(),device_model:navigator.platform+" "+c._getBrowserName(),device_os:(navigator.appVersion.match(/Chrome\/(.*?) /)||navigator.appVersion.match("Version/(.*) Safari")||navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/))[1],sdk:c._VERSION};if(o){r="players/"+o.id+"/on_session";a.notification_types=n}else 1!=n&&(a.notification_types=n);if(t){a.identifier=t;c._putDbValue("Ids",{type:"registrationId",id:t})}c._sendToOneSignalApi(r,"POST",a,function u(e){sessionStorage.setItem("ONE_SIGNAL_SESSION",true);if(e.id){c._putDbValue("Ids",{type:"userId",id:e.id});c._sendUnsentTags()}c._getPlayerId(e.id,function(e){if(c._idsAvailable_callback.length>0)for(;c._idsAvailable_callback.length>0;){var i=c._idsAvailable_callback.pop();i({userId:e,registrationId:t})}if(c._httpRegistration){s["default"].debug("Sending player Id and registrationId back to host page");s["default"].debug(c._initOptions);var n=opener||parent;c._safePostMessage(n,{idsAvailable:{userId:e,registrationId:t}},c._initOptions.origin,null);opener&&window.close()}})})})})["catch"](function(e){s["default"].error(e.stack)})},_sendUnsentTags:function I(){if(c._tagsToSendOnRegister){c.sendTags(c._tagsToSendOnRegister);c._tagsToSendOnRegister=null}},setDefaultNotificationUrl:function w(e){c._putDbValue("Options",{key:"defaultUrl",value:e})},setDefaultIcon:function y(e){c._putDbValue("Options",{key:"defaultIcon",value:e})},setDefaultTitle:function R(e){c._putDbValue("Options",{key:"defaultTitle",value:e})},_visibilitychange:function N(){if("visible"==document.visibilityState){document.removeEventListener("visibilitychange",c._visibilitychange);c._sessionInit({})}},onNativePromptChanged:function P(e){s["default"].debug("Event onesignal.prompt.native.permissionchanged:",e.detail);c._checkTrigger_eventSubscriptionChanged()},_onSubscriptionChanged:function T(e){s["default"].debug("Event onesignal.subscription.changed:",e.detail);c._isNewVisitor&&true===e.detail&&c._getDbValue("Ids","userId").then(function(e){if(c._initOptions.welcome_notification&&c._initOptions.welcome_notification.message){s["default"].debug("Because this user is a new site visitor, a welcome notification will be sent.");var t=c._initOptions.welcome_notification.title,i=c._initOptions.welcome_notification.message;(0,r.sendNotification)(c._app_id,[e.id],{en:t},{en:i})}})["catch"](function(e){s["default"].error(e)})},_onDbValueRetrieved:function V(e){s["default"].debug("Event onesignal.db.retrieved:",e.detail)},_onDbValueSet:function A(e){s["default"].debug("Event onesignal.db.valueset:",e.detail);var t=e.detail;if("userId"===t.type){l["default"].put("db.ids.userId",t.id);c._checkTrigger_eventSubscriptionChanged()}},_onInternalSubscriptionSet:function D(e){s["default"].debug("Event onesignal.internal.subscriptionset:",e.detail);var t=e.detail;l["default"].put("subscription.value",t);c._checkTrigger_eventSubscriptionChanged()},_checkTrigger_eventSubscriptionChanged:function k(){var e=l["default"].get("notification.permission"),t=e[e.length-2],i=e[e.length-1],n=l["default"].get("db.ids.userId"),o=n[n.length-2],r=n[n.length-1],a=l["default"].get("subscription.value"),s=a[a.length-2],u=a[a.length-1],d="unchanged";(("default"===t||"denied"===t||null===t)&&"granted"===i&&null!==r&&true===u||false===s&&true===u&&null!=r&&"granted"===i)&&(d=true);("denied"!==t&&"denied"===i||"granted"===t&&"granted"!==i||null!==o&&null===r||false!==s&&false===u)&&(d=false);if("unchanged"!==d){var f=l["default"].put("event.subscriptionchanged.lastriggered",Date.now()),p=f[f.length-1],g=f[f.length-2],_=(p-g)/1e3,h=l["default"].put("event.subscriptionchanged.laststates",d),v=h[h.length-1],b=h[h.length-2],m=null!=g&&1>=_||v===b;false===m&&c._triggerEvent_subscriptionChanged(d)}},init:function C(e){c._initOptions=e;c.LOGGING?s["default"].enableAll():s["default"].disableAll();s["default"].info("OneSignal Web SDK loaded (version "+c._VERSION+").");if(c.isPushNotificationsSupported()){if(!navigator.permissions||c._isBrowserFirefox()&&c._getFirefoxVersion()<=45){var t=c._getNotificationPermission();l["default"].put("notification.permission",t)}else{c._usingNativePermissionHook=true;var t=c._getNotificationPermission();l["default"].put("notification.permission",t);navigator.permissions.query({name:"notifications"}).then(function(e){e.onchange=function(){var e=l["default"].put("notification.permission",this.state),t=e[0],i=e[1];c._triggerEvent_nativePromptPermissionChanged(t,i)}})["catch"](function(e){s["default"].error(e.stack)})}c._getDbValue("Ids","userId").then(function(e){void 0===e&&(c._isNewVisitor=true);var t=e?e.id:null;l["default"].put("db.ids.userId",t)});c._getSubscription(function(e){l["default"].put("subscription.value",e)});window.addEventListener("onesignal.prompt.native.permissionchanged",c.onNativePromptChanged);window.addEventListener("onesignal.subscription.changed",c._onSubscriptionChanged);window.addEventListener("onesignal.db.valueretrieved",c._onDbValueRetrieved);window.addEventListener("onesignal.db.valueset",c._onDbValueSet);window.addEventListener("onesignal.db.valueset",c._onDbValueSet);window.addEventListener("onesignal.internal.subscriptionset",c._onInternalSubscriptionSet);c._useHttpMode=!c._isSupportedSafari()&&(!c._supportsDirectPermission()||c._initOptions.subdomainName);c._useHttpMode?c._initOneSignalHttp="https://"+c._initOptions.subdomainName+".onesignal.com/sdks/initOneSignalHttp":c._initOneSignalHttp="https://onesignal.com/sdks/initOneSignalHttps";if(c._isSupportedSafari()&&"undefined"==typeof window.fetch){var i=document.createElement("script");i.setAttribute("src","https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");document.head.appendChild(i)}"complete"===document.readyState?c._internalInit():window.addEventListener("load",c._internalInit)}else s["default"].warn("Your browser does not support push notifications.")},_internalInit:function L(){Promise.all([c._getDbValue("Ids","appId"),c._getDbValue("Ids","registrationId"),c._getDbValue("Options","subscription")]).then(function e(t){var i=t[0],n=t[1],o=t[2];if(i&&i.id!=c._initOptions.appId){c._deleteDbValue("Ids","userId");sessionStorage.removeItem("ONE_SIGNAL_SESSION")}if(!sessionStorage.getItem("ONE_SIGNAL_SESSION")||c._initOptions.subdomainName||"denied"!=Notification.permission&&sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION")!=Notification.permission){sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION",Notification.permission);(false!=c._initOptions.autoRegister||n||null!=c._initOptions.subdomainName)&&("visible"==document.visibilityState?c._sessionInit({}):document.addEventListener("visibilitychange",c._visibilitychange))}})["catch"](function(e){s["default"].error(e.stack)})},registerForPushNotifications:function x(e){if(c.isPushNotificationsSupported()){e||(e={});e.fromRegisterFor=true;c._sessionInit(e)}else s["default"].warn("Your browser does not support push notifications.")},_initHttp:function W(e){c._initOptions=e;e.continuePressed&&c.setSubscription(true);var t=null!=parent&&parent!=window,i=opener||parent;if(i){var n=new MessageChannel;n.port1.onmessage=function(e){s["default"].debug("_initHttp.messageChannel.port1.onmessage",e);if(e.data.initOptions){c.setDefaultNotificationUrl(e.data.initOptions.defaultUrl);c.setDefaultTitle(e.data.initOptions.defaultTitle);e.data.initOptions.defaultIcon&&c.setDefaultIcon(e.data.initOptions.defaultIcon);s["default"].debug("document.URL",e.data.initOptions.parent_url);c._getDbValue("NotificationOpened",e.data.initOptions.parent_url).then(function t(n){s["default"].debug("_initHttp NotificationOpened db",n);if(n){c._deleteDbValue("NotificationOpened",e.data.initOptions.parent_url);s["default"].debug("OneSignal._safePostMessage:targetOrigin:",c._initOptions.origin);c._safePostMessage(i,{openedNotification:n.data},c._initOptions.origin,null)}})["catch"](function(e){s["default"].error(e.stack)})}else e.data.getNotificationPermission?c._getSubdomainState(function(e){c._safePostMessage(i,{currentNotificationPermission:e},c._initOptions.origin,null)}):e.data.setSubdomainState&&c.setSubscription(e.data.setSubdomainState.setSubscription)};c._getSubdomainState(function(e){e.isIframe=t;c._safePostMessage(i,{oneSignalInitPageReady:e},c._initOptions.origin,[n.port2])});c._initSaveState();c._httpRegistration=true;0!=location.search.indexOf("?session=true")&&c._getPlayerId(null,function(e){if(!t||e){s["default"].debug("Before navigator.serviceWorker.register");navigator.serviceWorker.register(c.SERVICE_WORKER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError);s["default"].debug("After navigator.serviceWorker.register")}})}else s["default"].debug("ERROR:_initHttp: No opener or parent found!")},_getSubdomainState:function H(e){var t={};Promise.all([c._getDbValue("Ids","userId"),c._getDbValue("Ids","registrationId"),c._getDbValue("Options","subscription")]).then(function i(t){var i=t[0],n=t[1],o=t[2];e({userId:i?i.id:null,registrationId:n?n.id:null,notifPermssion:Notification.permission,subscriptionSet:o?o.value:null,isPushEnabled:"granted"==Notification.permission&&i&&n&&(o&&o.value||null==o)})})["catch"](function(e){s["default"].error(e.stack)})},_initSaveState:function U(){c._app_id=c._initOptions.appId;c._putDbValue("Ids",{type:"appId",id:c._app_id});c._putDbValue("Options",{key:"pageTitle",value:document.title})},_supportsDirectPermission:function M(){return c._isSupportedSafari()||"https:"==location.protocol||0==location.host.indexOf("localhost")||0==location.host.indexOf("127.0.0.1")},_sessionInit:function F(e){s["default"].debug("Called OneSignal._sessionInit():",e);c._initSaveState();var t=location.origin.match(/^http(s|):\/\/(www\.|)/)[0];if(c._useHttpMode)if(e.fromRegisterFor){var i=void 0!=window.screenLeft?window.screenLeft:screen.left,n=void 0!=window.screenTop?window.screenTop:screen.top,o=window.innerWidth?window.innerWidth:document.documentElement.clientWidth?document.documentElement.clientWidth:screen.width,r=window.innerHeight?window.innerHeight:document.documentElement.clientHeight?document.documentElement.clientHeight:screen.height,a=c._windowWidth,u=c._windowHeight,l=o/2-a/2+i,d=r/2-u/2+n;s["default"].debug("Opening popup window.");var f=c._initOptions.promptOptions,p="";if(f)for(var g=["actionMessage","exampleNotificationTitleDesktop","exampleNotificationMessageDesktop","exampleNotificationTitleMobile","exampleNotificationMessageMobile","exampleNotificationCaption","acceptButtonText","cancelButtonText"],_=0;_<g.length;_++){var h=g[_],v=f[h],b=encodeURIComponent(v);(v||""===v)&&(p+="&"+h+"="+b)}var m=window.open(c._initOneSignalHttp+"?"+p+"&hostPageProtocol="+t,"_blank","scrollbars=yes, width="+a+", height="+u+", top="+d+", left="+l);m&&m.focus()}else{s["default"].debug("Opening iFrame.");c._addSessionIframe(t)}else{if(c._isSupportedSafari()){if(c._initOptions.safari_web_id){var S=c._getNotificationPermission(c._initOptions.safari_web_id);window.safari.pushNotification.requestPermission(c._HOST_URL+"safari",c._initOptions.safari_web_id,{app_id:c._app_id},function(e){s["default"].debug(e);var t=c._getNotificationPermission(c._initOptions.safari_web_id);e.deviceToken?c._registerWithOneSignal(c._app_id,e.deviceToken.toLowerCase(),7):sessionStorage.setItem("ONE_SIGNAL_SESSION",true);c._triggerEvent_nativePromptPermissionChanged(S)})}}else if(e.modalPrompt&&e.fromRegisterFor){if(!c.isPushNotificationsSupported()){s["default"].warn("An attempt was made to open the HTTPS modal permission prompt, but push notifications are not supported on this browser. Opening canceled.");return}c.isPushNotificationsEnabled(function(e){var i=document.createElement("div");i.setAttribute("id","OneSignal-iframe-modal");i.innerHTML='<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000; display: block"></div>';document.body.appendChild(i);var n=document.createElement("style");n.innerHTML="@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} }@media (min-width: 561px) { .OneSignal-permission-iframe { top: 50%; left: 50%; margin-left: -275px; margin-top: -248px;} }";document.getElementsByTagName("head")[0].appendChild(n);var o=document.createElement("iframe");o.className="OneSignal-permission-iframe";o.style.cssText="background: rgba(255, 255, 255, 1); position: fixed;";o.src=c._initOneSignalHttp+"?id="+c._app_id+"&httpsPrompt=true&pushEnabled="+e+"&permissionBlocked="+("undefined"==typeof Notification||"denied"==Notification.permission)+"&hostPageProtocol="+t;o.setAttribute("frameborder","0");o.width=c._windowWidth.toString();o.height=c._windowHeight.toString();s["default"].debug("Opening HTTPS modal prompt.");document.getElementById("notif-permission").appendChild(o)})}else"serviceWorker"in navigator?c._registerForW3CPush(e):s["default"].debug("Service workers are not supported in this browser.");c._triggerEvent("onesignal.sdk.initialized",null)}},_registerForW3CPush:function B(e){c._getDbValue("Ids","registrationId").then(function t(i){i&&e.fromRegisterFor&&"granted"==Notification.permission||navigator.serviceWorker.getRegistration().then(function(e){var t="";c._initOptions.path&&(t=c._initOptions.path);"undefined"==typeof e?navigator.serviceWorker.register(t+c.SERVICE_WORKER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError):e.active?e.active.scriptURL.indexOf(t+c.SERVICE_WORKER_PATH)>-1?c._getDbValue("Ids","WORKER1_ONE_SIGNAL_SW_VERSION").then(function(i){i&&i.id!=c._VERSION?e.unregister().then(function(){navigator.serviceWorker.register(t+c.SERVICE_WORKER_UPDATER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError)})["catch"](function(e){s["default"].error(e)}):navigator.serviceWorker.register(t+c.SERVICE_WORKER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError)})["catch"](function(e){s["default"].error(e)}):e.active.scriptURL.indexOf(t+c.SERVICE_WORKER_UPDATER_PATH)>-1&&c._getDbValue("Ids","WORKER1_ONE_SIGNAL_SW_VERSION").then(function(i){i&&i.id!=c._VERSION?e.unregister().then(function(){navigator.serviceWorker.register(t+c.SERVICE_WORKER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError)}):navigator.serviceWorker.register(t+c.SERVICE_WORKER_UPDATER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError)})["catch"](function(e){s["default"].error(e)}):null==e.installing&&navigator.serviceWorker.register(t+c.SERVICE_WORKER_PATH,c.SERVICE_WORKER_PARAM).then(c._enableNotifications,c._registerError)})["catch"](function(e){s["default"].error(e)})})["catch"](function(e){s["default"].error(e)})},_addSessionIframe:function j(e){var t=document.createElement("iframe");t.style.display="none";t.src=c._initOneSignalHttp+"Iframe";sessionStorage.getItem("ONE_SIGNAL_SESSION")?t.src+="?session=true&hostPageProtocol="+e:t.src+="?hostPageProtocol="+e;document.body.appendChild(t);s["default"].debug("Adding session iFrame.");c._sessionIframeAdded=true},_registerError:function G(e){s["default"].debug("navigator.serviceWorker.register:ERROR: "+e)},_enableNotifications:function K(e){e&&s["default"].debug("There is an older ServiceWorker:",e);if("PushManager"in window)if("showNotification"in ServiceWorkerRegistration.prototype)"denied"!==Notification.permission?navigator.serviceWorker.ready.then(function(e){s["default"].info("Service worker active:",e);c._subscribeForPush(e)})["catch"](function(e){s["default"].error(e)}):s["default"].warn("The user has disabled notifications.");else{s["default"].debug("Notifications are not supported. showNotification not available in ServiceWorkerRegistration.");sessionStorage.setItem("ONE_SIGNAL_SESSION",true)}else{s["default"].debug("Push messaging is not supported. No PushManager.");sessionStorage.setItem("ONE_SIGNAL_SESSION",true)}},_getNotificationPermission:function q(e){return window.safari?e?window.safari.pushNotification.permission(e).permission:"default":Notification.permission},_triggerEvent:function z(e,t){if("undefined"!=typeof window){var i=new CustomEvent(e,{bubbles:true,cancelable:true,details:t});window.dispatchEvent(i)}else s["default"].debug("Skipping triggering of event:",e,"because we are running in a ServiceWorker context.")},_triggerEvent_customPromptClicked:function J(e){c._triggerEvent("onesignal.prompt.custom.clicked",{result:e})},_triggerEvent_nativePromptPermissionChanged:function Y(e,t){void 0===t&&(t=c._getNotificationPermission(c._initOptions.safari_web_id));e!==t&&c._triggerEvent("onesignal.prompt.native.permissionchanged",{from:e,to:t})},_triggerEvent_subscriptionChanged:function X(e){c._triggerEvent("onesignal.subscription.changed",e)},_triggerEvent_dbValueRetrieved:function Q(e){c._triggerEvent("onesignal.db.valueretrieved",e)},_triggerEvent_dbValueSet:function Z(e){c._triggerEvent("onesignal.db.valueset",e)},_triggerEvent_internalSubscriptionSet:function ee(e){c._triggerEvent("onesignal.internal.subscriptionset",e)},_subscribeForPush:function te(e){var t=c._getNotificationPermission(c._initOptions.safari_web_id);e.pushManager.subscribe({userVisibleOnly:true}).then(function(e){sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION",Notification.permission);c._getDbValue("Ids","appId").then(function i(n){var o=n.id;s["default"].debug("Called OneSignal._subscribeForPush() -> serviceWorkerRegistration.pushManager.subscribe().");var r=null;e?r="undefined"!=typeof e.subscriptionId?e.subscriptionId:e.endpoint.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"),""):s["default"].warn("Could not subscribe your browser for push notifications.");c._registerWithOneSignal(o,r,c._isSupportedFireFox()?8:5);c._usingNativePermissionHook||c._triggerEvent_nativePromptPermissionChanged(t)})["catch"](function(e){s["default"].error(e)})})["catch"](function(e){s["default"].error("Error while subscribing for push:",e);c._usingNativePermissionHook||c._triggerEvent_nativePromptPermissionChanged(t);20==e.code&&opener&&c._httpRegistration&&window.close()})},sendTag:function ie(e,t){var i={};i[e]=t;c.sendTags(i)},sendTags:function ne(e){c._getDbValue("Ids","userId").then(function t(i){if(i)c._sendToOneSignalApi("players/"+i.id,"PUT",{app_id:c._app_id,tags:e});else if(null==c._tagsToSendOnRegister)c._tagsToSendOnRegister=e;else{var n={};for(var o in c._tagsToSendOnRegister)n[o]=c._tagsToSendOnRegister[o];for(var o in e)n[o]=e[o];c._tagsToSendOnRegister=n}})["catch"](function(e){s["default"].error("sendTags:",e)})},deleteTag:function oe(e){c.deleteTags([e])},deleteTags:function re(e){for(var t={},i=e.length,n=0;i>n;n++)t[e[n]]="";c.sendTags(t)},_handleNotificationOpened:function ae(e){var t=JSON.parse(e.notification.tag);e.notification.close();Promise.all([c._getDbValue("Ids","appId"),c._getDbValue("Ids","userId")]).then(function i(e){var i=e[0],n=e[1];i&&n&&c._sendToOneSignalApi("notifications/"+t.id,"PUT",{app_id:i.id,player_id:n.id,opened:true})})["catch"](function(e){s["default"].error(e)});e.waitUntil(clients.matchAll({type:"window"}).then(function(e){var i=registration.scope;c._defaultLaunchURL&&(i=c._defaultLaunchURL);t.launchURL&&(i=t.launchURL);for(var n=0;n<e.length;n++){var o=e[n];if("focus"in o&&o.url==i){o.focus();o.postMessage(t);return}}if("javascript:void(0);"!==i&&"do_not_open"!==i){c._putDbValue("NotificationOpened",{url:i,data:t});clients.openWindow(i)["catch"](function(e){clients.openWindow(registration.scope+"redirector.html?url="+i)})}})["catch"](function(e){s["default"].error(e)}))},_getTitle:function se(e,t){null==e?Promise.all([c._getDbValue("Options","defaultTitle"),c._getDbValue("Options","pageTitle")]).then(function i(e){var i=e[0],n=e[1];t(i?i.value:n&&null!=n.value?n.value:"")})["catch"](function(e){s["default"].error(e)}):t(e)},_handleGCMMessage:function ue(e,t){if(t.data&&"{"==t.data.text()[0]){s["default"].debug("Received data.text: ",t.data.text());s["default"].debug("Received data.json: ",t.data.json())}t.waitUntil(new Promise(function(t,i){c._getTitle(null,function(i){c._getDbValue("Options","defaultIcon").then(function n(o){c._getLastNotifications(function(n,r){var a={id:n.custom.i,message:n.alert,additionalData:n.custom.a};n.title?a.title=n.title:a.title=i;n.custom.u&&(a.launchURL=n.custom.u);n.icon?a.icon=n.icon:o&&(a.icon=o.value);e.registration.showNotification(a.title,{body:n.alert,icon:a.icon,tag:JSON.stringify(a)}).then(t)["catch"](function(e){s["default"].error(e)});c._getDbValue("Options","defaultUrl").then(function(e){e&&(c._defaultLaunchURL=e.value)})["catch"](function(e){s["default"].error(e)})},t)})["catch"](function(e){s["default"].error(e)})})}))},_getLastNotifications:function le(e,t){c._getDbValue("Ids","userId").then(function i(n){if(n)c._sendToOneSignalApi("players/"+n.id+"/chromeweb_notification","GET",null,function(t){for(var i=0;i<t.length;i++)e(JSON.parse(t[i]))},function(){t()});else{s["default"].debug("Error: could not get notificationId");t()}})["catch"](function(e){s["default"].error(e)})},_listener_receiveMessage:function de(e){s["default"].debug("_listener_receiveMessage: ",e);if(void 0!=c._initOptions&&(""===e.origin||"https://onesignal.com"===e.origin||e.origin==="https://"+c._initOptions.subdomainName+".onesignal.com"))if(e.data.oneSignalInitPageReady){c._getDbValues("Options").then(function n(t){s["default"].debug("current options",t);t.defaultUrl||(t.defaultUrl=document.URL);t.defaultTitle||(t.defaultTitle=document.title);t.parent_url=document.URL;s["default"].debug("Posting message to port[0]",e.ports[0]);e.ports[0].postMessage({initOptions:t})})["catch"](function(e){s["default"].error("_listener_receiveMessage:",e)});var t=e.data.oneSignalInitPageReady;t.isIframe&&(c._iframePort=e.ports[0]);t.userId&&c._putDbValue("Ids",{type:"userId",id:t.userId});t.registrationId&&c._putDbValue("Ids",{type:"registrationId",id:t.registrationId});c._fireNotificationEnabledCallback(t.isPushEnabled);c._sendUnsentTags()}else if(e.data.currentNotificationPermission)c._fireNotificationEnabledCallback(e.data.currentNotificationPermission.isPushEnabled);else if(e.data.idsAvailable){sessionStorage.setItem("ONE_SIGNAL_SESSION",true);c._putDbValue("Ids",{type:"userId",id:e.data.idsAvailable.userId});c._putDbValue("Ids",{type:"registrationId",id:e.data.idsAvailable.registrationId});if(c._idsAvailable_callback.length>0)for(;c._idsAvailable_callback.length>0;){var i=c._idsAvailable_callback.pop();i({userId:e.data.idsAvailable.userId,registrationId:e.data.idsAvailable.registrationId})}c._sendUnsentTags()}else if(e.data.httpsPromptAccepted){c.registerForPushNotifications();c.setSubscription(true);(elem=document.getElementById("OneSignal-iframe-modal")).parentNode.removeChild(elem);c._triggerEvent_customPromptClicked("granted")}else if(e.data.httpsPromptCanceled){(elem=document.getElementById("OneSignal-iframe-modal")).parentNode.removeChild(elem);c._triggerEvent_customPromptClicked("denied")}else e.data.httpPromptAccepted?c._triggerEvent_customPromptClicked("granted"):e.data.httpPromptCanceled?c._triggerEvent_customPromptClicked("denied"):c._notificationOpened_callback&&c._notificationOpened_callback(e.data)},addListenerForNotificationOpened:function ce(e){c._notificationOpened_callback=e;window&&c._getDbValue("NotificationOpened",document.URL).then(function(e){if(e){c._deleteDbValue("NotificationOpened",document.URL);c._notificationOpened_callback(e.data)}})["catch"](function(e){s["default"].error(e)})},_fireNotificationEnabledCallback:function fe(e){if(c._isNotificationEnabledCallback){c._isNotificationEnabledCallback(e);c._isNotificationEnabledCallback=null}},getIdsAvailable:function pe(e){if(void 0!==e){c._idsAvailable_callback.push(e);Promise.all([c._getDbValue("Ids","userId"),c._getDbValue("Ids","registrationId")]).then(function t(e){var t=e[0],i=e[1];if(t)if(i)for(;c._idsAvailable_callback.length>0;){var n=c._idsAvailable_callback.pop();n({userId:t.id,registrationId:i.id})}else for(;c._idsAvailable_callback.length>0;){var n=c._idsAvailable_callback.pop();n({userId:t.id,registrationId:null})}})["catch"](function(e){s["default"].error(e)})}},getTags:function ge(e){c._getDbValue("Ids","userId").then(function(t){t&&c._sendToOneSignalApi("players/"+t.id,"GET",null,function(t){e(t.tags)})})["catch"](function(e){s["default"].error(e)})},isPushNotificationsEnabled:function _e(e){if(c.isPushNotificationsSupported())if(!c._initOptions.subdomainName||c._isBrowserSafari())Promise.all([c._getDbValue("Ids","registrationId"),c._getDbValue("Options","subscription")]).then(function(t){var i=t[0],n=t[1];if(i){if(n&&!n.value)return e(false);e("granted"==Notification.permission)}else e(false)})["catch"](function(e){s["default"].error(e)});else{c._isNotificationEnabledCallback=e;c._iframePort&&c._iframePort.postMessage({getNotificationPermission:true})}else s["default"].warn("Your browser does not support push notifications.")},_isSupportedSafari:function he(){var e=navigator.appVersion.match("Version/([0-9]?).* Safari");return null==e?false:/iPhone|iPad|iPod/i.test(navigator.userAgent)?false:parseInt(e[1])>6},_isBrowserSafari:function ve(){var e=navigator.appVersion.match("Version/([0-9]?).* Safari");return null!=e},_isSupportedFireFox:function be(){var e=navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);return e?parseInt(e[2].substring(0,2))>43:false},_isBrowserFirefox:function me(){var e=navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);return null!=e},_getFirefoxVersion:function Se(){var e=navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);return e?parseInt(e[2].substring(0,2)):-1},isPushNotificationsSupported:function Oe(){var e=navigator.appVersion.match(/Chrome\/(.*?) /);return c._isSupportedFireFox()?true:c._isSupportedSafari()?true:e?navigator.appVersion.match(/Edge/)?false:navigator.appVersion.match(/ wv/)?false:navigator.appVersion.match(/OPR\//)?false:/iPad|iPhone|iPod/.test(navigator.platform)?false:parseInt(e[1].substring(0,2))>41:false},_getNotificationTypes:function Ee(e){c._getSubscription(function(t){e(t?1:-2)})},setSubscription:function Ie(e){c._iframePort?c._iframePort.postMessage({setSubdomainState:{setSubscription:e}}):c._getSubscription(function(t){if(t!=e){c._putDbValue("Options",{key:"subscription",value:e});c._getDbValue("Ids","userId").then(function(t){t&&c._sendToOneSignalApi("players/"+t.id,"PUT",{app_id:c._app_id,notification_types:e?1:-2},function i(){c._triggerEvent_internalSubscriptionSet(e)})})["catch"](function(e){s["default"].error(e)})}})},_getSubscription:function we(e){c._getDbValue("Options","subscription").then(function(t){e(!(t&&false==t.value))})["catch"](function(e){s["default"].error(e)})},_safePostMessage:function ye(e,t,i,n){var o=i.toLowerCase();if(o.startsWith("http://")){var r={};location.search.substr(1).split("&").forEach(function(e){r[e.split("=")[0]]=e.split("=")[1]});var a=/^http(s|):\/\/(www\.|)/;o=o.replace(a,r.hostPageProtocol)}n?e.postMessage(t,o,n):e.postMessage(t,o)},_process_pushes:function Re(e){for(var t=0;t<e.length;t++)c.push(e[t])},push:function Ne(e){if("function"==typeof e)e();else{var t=e.shift();c[t].apply(null,e)}}};if("undefined"!=typeof window)window.addEventListener("message",c._listener_receiveMessage,false);else{importScripts("https://cdn.onesignal.com/sdks/serviceworker-cache-polyfill.js");self.addEventListener("push",function(e){c._handleGCMMessage(self,e)});self.addEventListener("notificationclick",function(e){c._handleNotificationOpened(e)});var f=null!=location.href.match(/https\:\/\/.*\.onesignal.com\/sdks\//);self.addEventListener("install",function(e){s["default"].debug("OneSignal Installed service worker: "+c._VERSION);self.location.pathname.indexOf("OneSignalSDKWorker.js")>-1?c._putDbValue("Ids",{type:"WORKER1_ONE_SIGNAL_SW_VERSION",id:c._VERSION}):c._putDbValue("Ids",{type:"WORKER2_ONE_SIGNAL_SW_VERSION",id:c._VERSION});f&&e.waitUntil(caches.open("OneSignal_"+c._VERSION).then(function(e){return e.addAll(["/sdks/initOneSignalHttpIframe","/sdks/initOneSignalHttpIframe?session=*","/sdks/manifest_json"]);
-})["catch"](function(e){s["default"].error(e)}))});f&&self.addEventListener("fetch",function(e){e.respondWith(caches.match(e.request).then(function(t){return t?t:i(e.request)})["catch"](function(e){s["default"].error(e)}))})}d&&c._process_pushes(d);e.exports=c}).call(exports,t(2))},function(e,exports){(function(t){(function(){!function(){"use strict";function e(e){"string"!=typeof e&&(e=String(e));if(/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(e))throw new TypeError("Invalid character in header field name");return e.toLowerCase()}function t(e){"string"!=typeof e&&(e=String(e));return e}function i(e){this.map={};e instanceof i?e.forEach(function(e,t){this.append(t,e)},this):e&&Object.getOwnPropertyNames(e).forEach(function(t){this.append(t,e[t])},this)}function n(e){if(e.bodyUsed)return Promise.reject(new TypeError("Already read"));e.bodyUsed=true}function o(e){return new Promise(function(t,i){e.onload=function(){t(e.result)};e.onerror=function(){i(e.error)}})}function r(e){var t=new FileReader;t.readAsArrayBuffer(e);return o(t)}function a(e){var t=new FileReader;t.readAsText(e);return o(t)}function s(){this.bodyUsed=false;this._initBody=function(e){this._bodyInit=e;if("string"==typeof e)this._bodyText=e;else if(p.blob&&Blob.prototype.isPrototypeOf(e))this._bodyBlob=e;else if(p.formData&&FormData.prototype.isPrototypeOf(e))this._bodyFormData=e;else if(e){if(!p.arrayBuffer||!ArrayBuffer.prototype.isPrototypeOf(e))throw new Error("unsupported BodyInit type")}else this._bodyText=""};if(p.blob){this.blob=function(){var e=n(this);if(e)return e;if(this._bodyBlob)return Promise.resolve(this._bodyBlob);if(this._bodyFormData)throw new Error("could not read FormData body as blob");return Promise.resolve(new Blob([this._bodyText]))};this.arrayBuffer=function(){return this.blob().then(r)};this.text=function(){var e=n(this);if(e)return e;if(this._bodyBlob)return a(this._bodyBlob);if(this._bodyFormData)throw new Error("could not read FormData body as text");return Promise.resolve(this._bodyText)}}else this.text=function(){var e=n(this);return e?e:Promise.resolve(this._bodyText)};p.formData&&(this.formData=function(){return this.text().then(d)});this.json=function(){return this.text().then(JSON.parse)};return this}function u(e){var t=e.toUpperCase();return g.indexOf(t)>-1?t:e}function l(e,t){t=t||{};var n=t.body;if(l.prototype.isPrototypeOf(e)){if(e.bodyUsed)throw new TypeError("Already read");this.url=e.url;this.credentials=e.credentials;t.headers||(this.headers=new i(e.headers));this.method=e.method;this.mode=e.mode;if(!n){n=e._bodyInit;e.bodyUsed=true}}else this.url=e;this.credentials=t.credentials||this.credentials||"omit";(t.headers||!this.headers)&&(this.headers=new i(t.headers));this.method=u(t.method||this.method||"GET");this.mode=t.mode||this.mode||null;this.referrer=null;if(("GET"===this.method||"HEAD"===this.method)&&n)throw new TypeError("Body not allowed for GET or HEAD requests");this._initBody(n)}function d(e){var t=new FormData;e.trim().split("&").forEach(function(e){if(e){var i=e.split("="),n=i.shift().replace(/\+/g," "),o=i.join("=").replace(/\+/g," ");t.append(decodeURIComponent(n),decodeURIComponent(o))}});return t}function c(e){var t=new i,n=e.getAllResponseHeaders().trim().split("\n");n.forEach(function(e){var i=e.trim().split(":"),n=i.shift().trim(),o=i.join(":").trim();t.append(n,o)});return t}function f(e,t){t||(t={});this._initBody(e);this.type="default";this.status=t.status;this.ok=this.status>=200&&this.status<300;this.statusText=t.statusText;this.headers=t.headers instanceof i?t.headers:new i(t.headers);this.url=t.url||""}if(!self.fetch){i.prototype.append=function(i,n){i=e(i);n=t(n);var o=this.map[i];if(!o){o=[];this.map[i]=o}o.push(n)};i.prototype["delete"]=function(t){delete this.map[e(t)]};i.prototype.get=function(t){var i=this.map[e(t)];return i?i[0]:null};i.prototype.getAll=function(t){return this.map[e(t)]||[]};i.prototype.has=function(t){return this.map.hasOwnProperty(e(t))};i.prototype.set=function(i,n){this.map[e(i)]=[t(n)]};i.prototype.forEach=function(e,t){Object.getOwnPropertyNames(this.map).forEach(function(i){this.map[i].forEach(function(n){e.call(t,n,i,this)},this)},this)};var p={blob:"FileReader"in self&&"Blob"in self&&function(){try{new Blob;return true}catch(e){return false}}(),formData:"FormData"in self,arrayBuffer:"ArrayBuffer"in self},g=["DELETE","GET","HEAD","OPTIONS","POST","PUT"];l.prototype.clone=function(){return new l(this)};s.call(l.prototype);s.call(f.prototype);f.prototype.clone=function(){return new f(this._bodyInit,{status:this.status,statusText:this.statusText,headers:new i(this.headers),url:this.url})};f.error=function(){var e=new f(null,{status:0,statusText:""});e.type="error";return e};var _=[301,302,303,307,308];f.redirect=function(e,t){if(-1===_.indexOf(t))throw new RangeError("Invalid status code");return new f(null,{status:t,headers:{location:e}})};self.Headers=i;self.Request=l;self.Response=f;self.fetch=function(e,t){return new Promise(function(i,n){function o(){return"responseURL"in a?a.responseURL:/^X-Request-URL:/m.test(a.getAllResponseHeaders())?a.getResponseHeader("X-Request-URL"):void 0}var r;r=l.prototype.isPrototypeOf(e)&&!t?e:new l(e,t);var a=new XMLHttpRequest;a.onload=function(){var e=1223===a.status?204:a.status;if(100>e||e>599)n(new TypeError("Network request failed"));else{var t={status:e,statusText:a.statusText,headers:c(a),url:o()},r="response"in a?a.response:a.responseText;i(new f(r,t))}};a.onerror=function(){n(new TypeError("Network request failed"))};a.open(r.method,r.url,true);"include"===r.credentials&&(a.withCredentials=true);"responseType"in a&&p.blob&&(a.responseType="blob");r.headers.forEach(function(e,t){a.setRequestHeader(t,e)});a.send("undefined"==typeof r._bodyInit?null:r._bodyInit)})};self.fetch.polyfill=true}}();e.exports=t.fetch}).call(t)}).call(exports,function(){return this}())},function(e,exports,t){"use strict";Object.defineProperty(exports,"__esModule",{value:true});exports.HOST_URL=exports.PROD_HOST=exports.DEV_HOST=void 0;var i=t(4),n=exports.DEV_HOST="https://192.168.1.206:3000",o=exports.PROD_HOST="https://onesignal.com",r=exports.HOST_URL=((0,i.isDev)()?n:o)+"/api/v1/"},function(e,exports,t){"use strict";function i(e){function t(e){return e>1?"s":""}var i=Math.floor(e/1e3),n=Math.floor(i/31536e3);if(n)return n+" year"+t(n);var o=Math.floor((i%=31536e3)/86400);if(o)return o+" day"+t(o);var r=Math.floor((i%=86400)/3600);if(r)return r+" hour"+t(r);var a=Math.floor((i%=3600)/60);if(a)return a+" minute"+t(a);var s=i%60;return s?s+" second"+t(s):"just now"}function n(){return"undefined"==typeof window}function o(){return false}Object.defineProperty(exports,"__esModule",{value:true});exports.getHumanizedTimeDuration=i;exports.isServiceWorkerContext=n;exports.isDev=o},function(e,exports,t){(function(e){"use strict";function i(e){return e&&e.__esModule?e:{"default":e}}function n(t,i,n){var o=new Headers;o.append("Content-Type","application/json;charset=UTF-8");var a={method:i||"NO_METHOD_SPECIFIED",headers:o,cache:"no-cache",body:JSON.stringify(n)};return new Promise(function(i,n){e(r.HOST_URL+t,a).then(function o(e){e.status>=200&&e.status<300?i(e.json()):n(new Error(e.statusText))})["catch"](function(e){n(e)})})}function o(e,t,i,o){var r={app_id:e,headings:i,contents:o,include_player_ids:t,isAnyWeb:true,url:"javascript:void(0);"};return n("notifications","POST",r)}Object.defineProperty(exports,"__esModule",{value:true});exports.apiCall=n;exports.sendNotification=o;var r=t(3),a=t(6),s=i(a)}).call(exports,t(2))},function(e,exports,t){var i,n;!function(o,r){"use strict";"object"==typeof e&&e.exports&&true?e.exports=r():!(i=r,n="function"==typeof i?i.call(exports,t,exports,e):i,void 0!==n&&(e.exports=n))}(this,function(){"use strict";function e(e){return typeof console===s?false:void 0!==console[e]?t(console,e):void 0!==console.log?t(console,"log"):a}function t(e,t){var i=e[t];if("function"==typeof i.bind)return i.bind(e);try{return Function.prototype.bind.call(i,e)}catch(n){return function(){return Function.prototype.apply.apply(i,[e,arguments])}}}function i(e,t,i){return function(){if(typeof console!==s){n.call(this,t,i);this[e].apply(this,arguments)}}}function n(e,t){for(var i=0;i<u.length;i++){var n=u[i];this[n]=e>i?a:this.methodFactory(n,e,t)}}function o(t,n,o){return e(t)||i.apply(this,arguments)}function r(e,t,i){function r(e){var t=(u[e]||"silent").toUpperCase();try{window.localStorage[c]=t;return}catch(i){}try{window.document.cookie=encodeURIComponent(c)+"="+t+";"}catch(i){}}function a(){var e;try{e=window.localStorage[c]}catch(t){}if(typeof e===s)try{var i=window.document.cookie,n=i.indexOf(encodeURIComponent(c)+"=");n&&(e=/^([^;]+)/.exec(i.slice(n))[1])}catch(t){}void 0===l.levels[e]&&(e=void 0);return e}var l=this,d,c="loglevel";e&&(c+=":"+e);l.levels={TRACE:0,DEBUG:1,INFO:2,WARN:3,ERROR:4,SILENT:5};l.methodFactory=i||o;l.getLevel=function(){return d};l.setLevel=function(t,i){"string"==typeof t&&void 0!==l.levels[t.toUpperCase()]&&(t=l.levels[t.toUpperCase()]);if(!("number"==typeof t&&t>=0&&t<=l.levels.SILENT))throw"log.setLevel() called with invalid level: "+t;d=t;false!==i&&r(t);n.call(l,t,e);return typeof console===s&&t<l.levels.SILENT?"No console available for logging":void 0};l.setDefaultLevel=function(e){a()||l.setLevel(e,false)};l.enableAll=function(e){l.setLevel(l.levels.TRACE,e)};l.disableAll=function(e){l.setLevel(l.levels.SILENT,e)};var f=a();null==f&&(f=null==t?"WARN":t);l.setLevel(f,false)}var a=function(){},s="undefined",u=["trace","debug","info","warn","error"],l=new r,d={};l.getLogger=function f(e){if("string"!=typeof e||""===e)throw new TypeError("You must supply a name when creating a logger.");var t=d[e];t||(t=d[e]=new r(e,l.getLevel(),l.methodFactory));return t};var c=typeof window!==s?window.log:void 0;l.noConflict=function(){typeof window!==s&&window.log===l&&(window.log=c);return l};return l})},function(e,exports){"use strict";function t(){}Object.defineProperty(exports,"__esModule",{value:true});t.store={};t.LIMIT=2;t.put=function(e,i){void 0===t.store[e]&&(t.store[e]=[null,null]);t.store[e].push(i);t.store[e].length==t.LIMIT+1&&t.store[e].shift();return t.store[e]};t.get=function(e){return t.store[e]};exports["default"]=t},function(e,exports){"use strict";"undefined"!=typeof window&&!function(){function e(e,t){t=t||{bubbles:false,cancelable:false,details:void 0};var i=document.createEvent("CustomEvent");i.initCustomEvent(e,t.bubbles,t.cancelable,t.details);return i}e.prototype=window.Event.prototype;window.CustomEvent=e}()},function(e,exports,t){(function(i){e.exports=i.OneSignal=t(1)}).call(exports,function(){return this}())}]);
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	__webpack_require__(1);
+
+	__webpack_require__(9);
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(fetch) {'use strict';
+
+	var _vars = __webpack_require__(3);
+
+	var _api = __webpack_require__(5);
+
+	var _loglevel = __webpack_require__(6);
+
+	var _loglevel2 = _interopRequireDefault(_loglevel);
+
+	var _limitStore = __webpack_require__(7);
+
+	var _limitStore2 = _interopRequireDefault(_limitStore);
+
+	__webpack_require__(8);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var _temp_OneSignal = null;
+
+	if (typeof OneSignal !== "undefined") _temp_OneSignal = OneSignal;
+
+	var OneSignal = {
+	  _VERSION: 109006,
+	  _HOST_URL: _vars.HOST_URL,
+	  _app_id: null,
+	  _tagsToSendOnRegister: null,
+	  _notificationOpened_callback: null,
+	  _idsAvailable_callback: [],
+	  _defaultLaunchURL: null,
+	  _initOptions: null,
+	  _httpRegistration: false,
+	  _main_page_port: null,
+	  _isNotificationEnabledCallback: null,
+	  _subscriptionSet: true,
+	  _initOneSignalHttp: null,
+	  _sessionIframeAdded: false,
+	  _useHttpMode: null,
+	  _windowWidth: 550,
+	  _windowHeight: 480,
+	  _isNewVisitor: false,
+	  LOGGING: false,
+	  SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
+	  SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
+	  SERVICE_WORKER_PARAM: {},
+
+	  _ensureDbInstance: function _ensureDbInstance() {
+	    return new Promise(function (resolve, reject) {
+	      if (OneSignal._oneSignal_db) {
+	        resolve(OneSignal._oneSignal_db);
+	      } else {
+	        var request = indexedDB.open("ONE_SIGNAL_SDK_DB", 1);
+	        request.onsuccess = function (event) {
+	          var database = event.target.result;
+	          OneSignal._oneSignal_db = database;
+	          resolve(database);
+	        };
+	        request.onerror = function (event) {
+	          _loglevel2.default.error('Unable to open IndexedDB.', event);
+	          reject(event);
+	        };
+
+	        request.onupgradeneeded = function (event) {
+	          _loglevel2.default.debug('Rebuilding schema in IndexedDB...');
+	          var db = event.target.result;
+	          db.createObjectStore("Ids", { keyPath: "type" });
+	          db.createObjectStore("NotificationOpened", { keyPath: "url" });
+	          db.createObjectStore("Options", { keyPath: "key" });
+	        };
+	      }
+	    });
+	  },
+
+	  _getDbValue: function _getDbValue(table, key) {
+	    return new Promise(function (resolve, reject) {
+	      OneSignal._ensureDbInstance().then(function (database) {
+	        var request = database.transaction(table).objectStore(table).get(key);
+	        request.onsuccess = function (event) {
+	          if (request.result) OneSignal._triggerEvent_dbValueRetrieved(request.result);
+	          resolve(request.result);
+	        };
+	        request.onerror = function (event) {
+	          reject(request.errorCode);
+	        };
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e.stack);
+	      });
+	      ;
+	    });
+	  },
+
+	  _getDbValues: function _getDbValues(table) {
+	    return new Promise(function (resolve, reject) {
+	      OneSignal._ensureDbInstance().then(function (database) {
+	        var jsonResult = {};
+	        var cursor = database.transaction(table).objectStore(table).openCursor();
+	        cursor.onsuccess = function (event) {
+	          var cursor = event.target.result;
+	          if (cursor) {
+	            OneSignal._triggerEvent_dbValueRetrieved(cursor);
+	            jsonResult[cursor.key] = cursor.value.value;
+	            cursor.continue();
+	          } else resolve(jsonResult);
+	        };
+	        cursor.onerror = function (event) {
+	          reject(cursor.errorCode);
+	        };
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e.stack);
+	      });
+	    });
+	  },
+
+	  _putDbValue: function _putDbValue(table, value) {
+	    return new Promise(function (resolve, reject) {
+	      OneSignal._ensureDbInstance().then(function (database) {
+	        database.transaction([table], "readwrite").objectStore(table).put(value);
+	        OneSignal._triggerEvent_dbValueSet(value);
+	        resolve(value);
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e.stack);
+	      });
+	    });
+	  },
+
+	  _deleteDbValue: function _deleteDbValue(table, key) {
+	    return new Promise(function (resolve, reject) {
+	      OneSignal._ensureDbInstance().then(function (database) {
+	        database.transaction([table], "readwrite").objectStore(table).delete(key);
+	        resolve(key);
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e.stack);
+	      });
+	      ;
+	    });
+	  },
+
+	  _sendToOneSignalApi: function _sendToOneSignalApi(url, action, inData, callback, failedCallback) {
+	    _loglevel2.default.debug('Calling ' + action + ' ' + (OneSignal._HOST_URL + url) + ' with data:', inData);
+	    var contents = {
+	      method: action
+	    };
+
+	    //mode: 'no-cors', // no-cors is disabled for non-serviceworker.
+	    if (inData) {
+	      contents.headers = { "Content-type": "application/json;charset=UTF-8" };
+	      contents.body = JSON.stringify(inData);
+	    }
+
+	    fetch(OneSignal._HOST_URL + url, contents).then(function status(response) {
+	      if (response.status >= 200 && response.status < 300) return Promise.resolve(response);else return Promise.reject(new Error(response.statusText));
+	    }).then(function status(response) {
+	      return response.json();
+	    }).then(function (jsonData) {
+	      if (callback != null) callback(jsonData);
+	    }).catch(function (e) {
+	      _loglevel2.default.error('OneSignal._sendToOneSignalApi() failed:', e);
+	      if (failedCallback != null) failedCallback();
+	    });
+	  },
+
+	  _getLanguage: function _getLanguage() {
+	    return navigator.language ? navigator.language.length > 3 ? navigator.language.substring(0, 2) : navigator.language : 'en';
+	  },
+
+	  _getPlayerId: function _getPlayerId(value, callback) {
+	    if (value) callback(value);else {
+	      OneSignal._getDbValue('Ids', 'userId').then(function _getPlayerId_gotUserId(result) {
+	        if (result) callback(result.id);else callback(null);
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e.stack);
+	      });
+	      ;
+	    }
+	  },
+
+	  _getBrowserName: function _getBrowserName() {
+	    if (navigator.appVersion.match(/Chrome\/(.*?) /)) return "Chrome";
+	    if (navigator.appVersion.match("Version/(.*) (Safari)")) return "Safari";
+	    if (navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/)) return "Firefox";
+
+	    return "";
+	  },
+
+	  _registerWithOneSignal: function _registerWithOneSignal(appId, registrationId, deviceType) {
+
+	    OneSignal._getDbValue('Ids', 'userId').then(function _registerWithOneSignal_GotUserId(userIdResult) {
+	      OneSignal._getNotificationTypes(function (notif_types) {
+	        var requestUrl = 'players';
+
+	        var jsonData = {
+	          app_id: appId,
+	          device_type: deviceType,
+	          language: OneSignal._getLanguage(),
+	          timezone: new Date().getTimezoneOffset() * -60,
+	          device_model: navigator.platform + " " + OneSignal._getBrowserName(),
+	          device_os: (navigator.appVersion.match(/Chrome\/(.*?) /) || navigator.appVersion.match("Version/(.*) Safari") || navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/))[1],
+	          sdk: OneSignal._VERSION
+	        };
+
+	        if (userIdResult) {
+	          requestUrl = 'players/' + userIdResult.id + '/on_session';
+	          jsonData.notification_types = notif_types;
+	        } else if (notif_types != 1) jsonData.notification_types = notif_types;
+
+	        if (registrationId) {
+	          jsonData.identifier = registrationId;
+	          OneSignal._putDbValue("Ids", { type: "registrationId", id: registrationId });
+	        }
+
+	        OneSignal._sendToOneSignalApi(requestUrl, 'POST', jsonData, function registeredCallback(responseJSON) {
+	          sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+
+	          if (responseJSON.id) {
+	            OneSignal._putDbValue("Ids", { type: "userId", id: responseJSON.id });
+	            OneSignal._sendUnsentTags();
+	          }
+
+	          OneSignal._getPlayerId(responseJSON.id, function (userId) {
+	            if (OneSignal._idsAvailable_callback.length > 0) {
+	              while (OneSignal._idsAvailable_callback.length > 0) {
+	                var curr_callback = OneSignal._idsAvailable_callback.pop();
+	                curr_callback({ userId: userId, registrationId: registrationId });
+	              }
+	            }
+
+	            if (OneSignal._httpRegistration) {
+	              _loglevel2.default.debug("Sending player Id and registrationId back to host page");
+	              _loglevel2.default.debug(OneSignal._initOptions);
+	              var creator = opener || parent;
+	              OneSignal._safePostMessage(creator, {
+	                idsAvailable: {
+	                  userId: userId,
+	                  registrationId: registrationId
+	                }
+	              }, OneSignal._initOptions.origin, null);
+
+	              if (opener) window.close();
+	            }
+	          });
+	        });
+	      });
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e.stack);
+	    });
+	    ;
+	  },
+
+	  _sendUnsentTags: function _sendUnsentTags() {
+	    if (OneSignal._tagsToSendOnRegister) {
+	      OneSignal.sendTags(OneSignal._tagsToSendOnRegister);
+	      OneSignal._tagsToSendOnRegister = null;
+	    }
+	  },
+
+	  setDefaultNotificationUrl: function setDefaultNotificationUrl(url) {
+	    OneSignal._putDbValue("Options", { key: "defaultUrl", value: url });
+	  },
+
+	  setDefaultIcon: function setDefaultIcon(icon) {
+	    OneSignal._putDbValue("Options", { key: "defaultIcon", value: icon });
+	  },
+
+	  setDefaultTitle: function setDefaultTitle(title) {
+	    OneSignal._putDbValue("Options", { key: "defaultTitle", value: title });
+	  },
+
+	  _visibilitychange: function _visibilitychange() {
+	    if (document.visibilityState == "visible") {
+	      document.removeEventListener("visibilitychange", OneSignal._visibilitychange);
+	      OneSignal._sessionInit({});
+	    }
+	  },
+
+	  onNativePromptChanged: function onNativePromptChanged(event) {
+	    _loglevel2.default.debug('Event onesignal.prompt.native.permissionchanged:', event.detail);
+	    OneSignal._checkTrigger_eventSubscriptionChanged();
+	  },
+
+	  _onSubscriptionChanged: function _onSubscriptionChanged(event) {
+	    _loglevel2.default.debug('Event onesignal.subscription.changed:', event.detail);
+	    if (OneSignal._isNewVisitor && event.detail === true) {
+	      OneSignal._getDbValue('Ids', 'userId').then(function (result) {
+	        if (OneSignal._initOptions['welcome_notification'] && OneSignal._initOptions['welcome_notification']['message']) {
+	          _loglevel2.default.debug('Because this user is a new site visitor, a welcome notification will be sent.');
+	          var title = OneSignal._initOptions['welcome_notification']['title'];
+	          var message = OneSignal._initOptions['welcome_notification']['message'];
+	          (0, _api.sendNotification)(OneSignal._app_id, [result.id], { 'en': title }, { 'en': message });
+	        }
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e);
+	      });
+	    }
+	  },
+
+	  _onDbValueRetrieved: function _onDbValueRetrieved(event) {
+	    _loglevel2.default.debug('Event onesignal.db.retrieved:', event.detail);
+	  },
+
+	  _onDbValueSet: function _onDbValueSet(event) {
+	    _loglevel2.default.debug('Event onesignal.db.valueset:', event.detail);
+	    var info = event.detail;
+	    if (info.type === 'userId') {
+	      _limitStore2.default.put('db.ids.userId', info.id);
+	      OneSignal._checkTrigger_eventSubscriptionChanged();
+	    }
+	  },
+
+	  _onInternalSubscriptionSet: function _onInternalSubscriptionSet(event) {
+	    _loglevel2.default.debug('Event onesignal.internal.subscriptionset:', event.detail);
+	    var newSubscriptionValue = event.detail;
+	    _limitStore2.default.put('subscription.value', newSubscriptionValue);
+	    OneSignal._checkTrigger_eventSubscriptionChanged();
+	  },
+
+	  _checkTrigger_eventSubscriptionChanged: function _checkTrigger_eventSubscriptionChanged() {
+	    _loglevel2.default.debug('Called _checkTrigger_eventSubscriptionChanged().');
+	    var permissions = _limitStore2.default.get('notification.permission');
+	    var lastPermission = permissions[permissions.length - 2];
+	    var currentPermission = permissions[permissions.length - 1];
+
+	    var ids = _limitStore2.default.get('db.ids.userId');
+	    var lastId = ids[ids.length - 2];
+	    var currentId = ids[ids.length - 1];
+
+	    var subscriptionStates = _limitStore2.default.get('subscription.value');
+	    var lastSubscriptionState = subscriptionStates[subscriptionStates.length - 2];
+	    var currentSubscriptionState = subscriptionStates[subscriptionStates.length - 1];
+
+	    var newSubscriptionState = 'unchanged';
+
+	    if ((lastPermission === 'default' || lastPermission === 'denied' || lastPermission === null) && currentPermission === 'granted' && currentId !== null && currentSubscriptionState === true || lastSubscriptionState === false && currentSubscriptionState === true && currentId != null && currentPermission === 'granted') {
+	      newSubscriptionState = true;
+	    }
+
+	    if (lastPermission !== 'denied' && currentPermission === 'denied' || lastPermission === 'granted' && currentPermission !== 'granted' || lastId !== null && currentId === null || lastSubscriptionState !== false && currentSubscriptionState === false) {
+	      newSubscriptionState = false;
+	    }
+
+	    if (newSubscriptionState !== "unchanged") {
+	      var lastTriggerTimes = _limitStore2.default.put('event.subscriptionchanged.lastriggered', Date.now());
+	      var currentTime = lastTriggerTimes[lastTriggerTimes.length - 1];
+	      var lastTriggerTime = lastTriggerTimes[lastTriggerTimes.length - 2];
+	      var elapsedTimeSeconds = (currentTime - lastTriggerTime) / 1000;
+
+	      var lastEventStates = _limitStore2.default.put('event.subscriptionchanged.laststates', newSubscriptionState);
+	      var currentState = lastEventStates[lastEventStates.length - 1];
+	      var lastState = lastEventStates[lastEventStates.length - 2];
+
+	      // If event already triggered within the last second, don't re-trigger.
+	      var shouldNotTriggerEvent = lastTriggerTime != null && elapsedTimeSeconds <= 1 || currentState === lastState;
+	      if (shouldNotTriggerEvent === false) {
+	        OneSignal._triggerEvent_subscriptionChanged(newSubscriptionState);
+	      }
+	    }
+	  },
+
+	  init: function init(options) {
+	    OneSignal._initOptions = options;
+
+	    if (OneSignal.LOGGING) _loglevel2.default.enableAll();else _loglevel2.default.disableAll();
+
+	    _loglevel2.default.info('OneSignal Web SDK loaded (version ' + OneSignal._VERSION + ').');
+	    if (!OneSignal.isPushNotificationsSupported()) {
+	      _loglevel2.default.warn("Your browser does not support push notifications.");
+	      return;
+	    }
+
+	    if (navigator.permissions && !(OneSignal._isBrowserFirefox() && OneSignal._getFirefoxVersion() <= 45)) {
+	      OneSignal._usingNativePermissionHook = true;
+	      var currentNotificationPermission = OneSignal._getNotificationPermission();
+	      _limitStore2.default.put('notification.permission', currentNotificationPermission);
+	      // If the browser natively supports hooking the subscription prompt permission change event
+	      //     use it instead of our SDK method
+	      navigator.permissions.query({ name: 'notifications' }).then(function (permissionStatus) {
+	        permissionStatus.onchange = function () {
+	          var recentPermissions = _limitStore2.default.get('notification.permission');
+	          var permissionBeforePrompt = recentPermissions[0];
+	          OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt);
+	        };
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e.stack);
+	      });
+	    } else {
+	      var currentNotificationPermission = OneSignal._getNotificationPermission();
+	      _limitStore2.default.put('notification.permission', currentNotificationPermission);
+	    }
+
+	    // Store the current value of Ids:registrationId, so that we can see if the value changes in the future
+	    OneSignal._getDbValue('Ids', 'userId').then(function (result) {
+	      if (result === undefined) {
+	        OneSignal._isNewVisitor = true;
+	      }
+	      var storeValue = result ? result.id : null;
+	      _limitStore2.default.put('db.ids.userId', storeValue);
+	    });
+
+	    // Store the current value of subscription, so that we can see if the value changes in the future
+	    OneSignal._getSubscription(function (currentSubscription) {
+	      _limitStore2.default.put('subscription.value', currentSubscription);
+	    });
+
+	    window.addEventListener('onesignal.prompt.native.permissionchanged', OneSignal.onNativePromptChanged);
+	    window.addEventListener('onesignal.subscription.changed', OneSignal._onSubscriptionChanged);
+	    window.addEventListener('onesignal.db.valueretrieved', OneSignal._onDbValueRetrieved);
+	    window.addEventListener('onesignal.db.valueset', OneSignal._onDbValueSet);
+	    window.addEventListener('onesignal.db.valueset', OneSignal._onDbValueSet);
+	    window.addEventListener('onesignal.internal.subscriptionset', OneSignal._onInternalSubscriptionSet);
+
+	    OneSignal._useHttpMode = !OneSignal._isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
+
+	    if (OneSignal._useHttpMode) OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';else OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
+
+	    if (false) OneSignal._initOneSignalHttp = _vars.DEV_HOST + '/dev_sdks/initOneSignalHttp';
+
+	    // If Safari - add 'fetch' pollyfill if it isn't already added.
+	    if (OneSignal._isSupportedSafari() && typeof window.fetch == "undefined") {
+	      var s = document.createElement('script');
+	      s.setAttribute('src', "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");
+	      document.head.appendChild(s);
+	    }
+
+	    if (document.readyState === "complete") OneSignal._internalInit();else window.addEventListener('load', OneSignal._internalInit);
+	  },
+
+	  _internalInit: function _internalInit() {
+	    Promise.all([OneSignal._getDbValue('Ids', 'appId'), OneSignal._getDbValue('Ids', 'registrationId'), OneSignal._getDbValue('Options', 'subscription')]).then(function _internalInit_GotAppRegistrationSubscriptionIds(result) {
+	      var appIdResult = result[0];
+	      var registrationIdResult = result[1];
+	      var subscriptionResult = result[2];
+
+	      // If AppId changed delete playerId and continue.
+	      if (appIdResult && appIdResult.id != OneSignal._initOptions.appId) {
+	        OneSignal._deleteDbValue("Ids", "userId");
+	        sessionStorage.removeItem("ONE_SIGNAL_SESSION");
+	      }
+
+	      // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
+	      if (sessionStorage.getItem("ONE_SIGNAL_SESSION") && !OneSignal._initOptions.subdomainName && (Notification.permission == "denied" || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission)) return;
+
+	      sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
+
+	      if (OneSignal._initOptions.autoRegister == false && !registrationIdResult && OneSignal._initOptions.subdomainName == null) return;
+
+	      if (document.visibilityState != "visible") {
+	        document.addEventListener("visibilitychange", OneSignal._visibilitychange);
+	        return;
+	      }
+
+	      OneSignal._sessionInit({});
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e.stack);
+	    });
+	  },
+
+	  registerForPushNotifications: function registerForPushNotifications(options) {
+	    if (!OneSignal.isPushNotificationsSupported()) {
+	      _loglevel2.default.warn("Your browser does not support push notifications.");
+	      return;
+	    }
+	    // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
+	    //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
+	    if (!options) options = {};
+	    options.fromRegisterFor = true;
+	    OneSignal._sessionInit(options);
+	  },
+
+	  // Http only - Only called from iframe's init.js
+	  _initHttp: function _initHttp(options) {
+	    OneSignal._initOptions = options;
+
+	    if (options.continuePressed) {
+	      OneSignal.setSubscription(true);
+	    }
+
+	    var isIframe = parent != null && parent != window;
+	    var creator = opener || parent;
+
+	    if (!creator) {
+	      _loglevel2.default.debug("ERROR:_initHttp: No opener or parent found!");
+	      return;
+	    }
+	    // Setting up message channel to receive message from host page.
+	    var messageChannel = new MessageChannel();
+	    messageChannel.port1.onmessage = function (event) {
+	      _loglevel2.default.debug("_initHttp.messageChannel.port1.onmessage", event);
+
+	      if (event.data.initOptions) {
+	        OneSignal.setDefaultNotificationUrl(event.data.initOptions.defaultUrl);
+	        OneSignal.setDefaultTitle(event.data.initOptions.defaultTitle);
+	        if (event.data.initOptions.defaultIcon) OneSignal.setDefaultIcon(event.data.initOptions.defaultIcon);
+
+	        _loglevel2.default.debug("document.URL", event.data.initOptions.parent_url);
+	        OneSignal._getDbValue("NotificationOpened", event.data.initOptions.parent_url).then(function registerForPushNotifications_GotNotificationOpened(notificationOpenedResult) {
+	          _loglevel2.default.debug("_initHttp NotificationOpened db", notificationOpenedResult);
+	          if (notificationOpenedResult) {
+	            OneSignal._deleteDbValue("NotificationOpened", event.data.initOptions.parent_url);
+	            _loglevel2.default.debug("OneSignal._safePostMessage:targetOrigin:", OneSignal._initOptions.origin);
+
+	            OneSignal._safePostMessage(creator, { openedNotification: notificationOpenedResult.data }, OneSignal._initOptions.origin, null);
+	          }
+	        }).catch(function (e) {
+	          _loglevel2.default.error(e.stack);
+	        });
+	        ;
+	      } else if (event.data.getNotificationPermission) {
+	        OneSignal._getSubdomainState(function (curState) {
+	          OneSignal._safePostMessage(creator, { currentNotificationPermission: curState }, OneSignal._initOptions.origin, null);
+	        });
+	      } else if (event.data.setSubdomainState) OneSignal.setSubscription(event.data.setSubdomainState.setSubscription);
+	    };
+
+	    OneSignal._getSubdomainState(function (curState) {
+	      curState["isIframe"] = isIframe;
+	      OneSignal._safePostMessage(creator, { oneSignalInitPageReady: curState }, OneSignal._initOptions.origin, [messageChannel.port2]);
+	    });
+
+	    OneSignal._initSaveState();
+	    OneSignal._httpRegistration = true;
+	    if (location.search.indexOf("?session=true") == 0) return;
+
+	    OneSignal._getPlayerId(null, function (player_id) {
+	      if (!isIframe || player_id) {
+	        _loglevel2.default.debug("Before navigator.serviceWorker.register");
+	        navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	        _loglevel2.default.debug("After navigator.serviceWorker.register");
+	      }
+	    });
+	  },
+
+	  _getSubdomainState: function _getSubdomainState(callback) {
+	    var state = {};
+
+	    Promise.all([OneSignal._getDbValue('Ids', 'userId'), OneSignal._getDbValue('Ids', 'registrationId'), OneSignal._getDbValue('Options', 'subscription')]).then(function _internalInit_GotAppRegistrationSubscriptionIds(result) {
+	      var userIdResult = result[0];
+	      var registrationIdResult = result[1];
+	      var subscriptionResult = result[2];
+
+	      callback({
+	        userId: userIdResult ? userIdResult.id : null,
+	        registrationId: registrationIdResult ? registrationIdResult.id : null,
+	        notifPermssion: Notification.permission,
+	        subscriptionSet: subscriptionResult ? subscriptionResult.value : null,
+	        isPushEnabled: Notification.permission == "granted" && userIdResult && registrationIdResult && (subscriptionResult && subscriptionResult.value || subscriptionResult == null)
+	      });
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e.stack);
+	    });
+	    ;
+	  },
+
+	  _initSaveState: function _initSaveState() {
+	    OneSignal._app_id = OneSignal._initOptions.appId;
+	    OneSignal._putDbValue("Ids", { type: "appId", id: OneSignal._app_id });
+	    OneSignal._putDbValue("Options", { key: "pageTitle", value: document.title });
+	  },
+
+	  _supportsDirectPermission: function _supportsDirectPermission() {
+	    return OneSignal._isSupportedSafari() || location.protocol == 'https:' || location.host.indexOf("localhost") == 0 || location.host.indexOf("127.0.0.1") == 0;
+	  },
+
+	  _sessionInit: function _sessionInit(options) {
+	    _loglevel2.default.debug("Called OneSignal._sessionInit():", options);
+	    OneSignal._initSaveState();
+
+	    var hostPageProtocol = location.origin.match(/^http(s|):\/\/(www\.|)/)[0];
+
+	    // If HTTP or using subdomain mode
+	    if (OneSignal._useHttpMode) {
+	      if (options.fromRegisterFor) {
+	        var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;
+	        var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;
+
+	        var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+	        var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+	        var childWidth = OneSignal._windowWidth;
+	        var childHeight = OneSignal._windowHeight;
+
+	        var left = thisWidth / 2 - childWidth / 2 + dualScreenLeft;
+	        var top = thisHeight / 2 - childHeight / 2 + dualScreenTop;
+
+	        _loglevel2.default.debug('Opening popup window.');
+	        var message_localization_opts = OneSignal._initOptions['promptOptions'];
+	        var message_localization_opts_str = '';
+	        if (message_localization_opts) {
+	          var message_localization_params = ['actionMessage', 'exampleNotificationTitleDesktop', 'exampleNotificationMessageDesktop', 'exampleNotificationTitleMobile', 'exampleNotificationMessageMobile', 'exampleNotificationCaption', 'acceptButtonText', 'cancelButtonText'];
+	          for (var i = 0; i < message_localization_params.length; i++) {
+	            var key = message_localization_params[i];
+	            var value = message_localization_opts[key];
+	            var encoded_value = encodeURIComponent(value);
+	            if (value || value === '') {
+	              message_localization_opts_str += '&' + key + '=' + encoded_value;
+	            }
+	          }
+	        }
+	        var childWindow = window.open(OneSignal._initOneSignalHttp + "?" + message_localization_opts_str + "&hostPageProtocol=" + hostPageProtocol, "_blank", 'scrollbars=yes, width=' + childWidth + ', height=' + childHeight + ', top=' + top + ', left=' + left);
+
+	        if (childWindow) childWindow.focus();
+	      } else {
+	        _loglevel2.default.debug('Opening iFrame.');
+	        OneSignal._addSessionIframe(hostPageProtocol);
+	      }
+
+	      return;
+	    }
+
+	    if (OneSignal._isSupportedSafari()) {
+	      if (OneSignal._initOptions.safari_web_id) {
+	        var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+	        window.safari.pushNotification.requestPermission(OneSignal._HOST_URL + 'safari', OneSignal._initOptions.safari_web_id, { app_id: OneSignal._app_id }, function (data) {
+	          _loglevel2.default.debug(data);
+	          var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+	          if (data.deviceToken) {
+	            OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
+	          } else {
+	            sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+	          }
+	          OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
+	        });
+	      }
+	    } else if (options.modalPrompt && options.fromRegisterFor) {
+	      // If HTTPS - Show modal
+	      if (!OneSignal.isPushNotificationsSupported()) {
+	        _loglevel2.default.warn('An attempt was made to open the HTTPS modal permission prompt, but push notifications are not supported on this browser. Opening canceled.');
+	        return;
+	      }
+	      OneSignal.isPushNotificationsEnabled(function (pushEnabled) {
+	        var element = document.createElement('div');
+	        element.setAttribute('id', 'OneSignal-iframe-modal');
+	        element.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000; display: block"></div>';
+	        document.body.appendChild(element);
+
+	        var iframeStyle = document.createElement('style');
+	        iframeStyle.innerHTML = "@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} }" + "@media (min-width: 561px) { .OneSignal-permission-iframe { top: 50%; left: 50%; margin-left: -275px; margin-top: -248px;} }";
+	        document.getElementsByTagName('head')[0].appendChild(iframeStyle);
+
+	        var iframeNode = document.createElement("iframe");
+	        iframeNode.className = "OneSignal-permission-iframe";
+	        iframeNode.style.cssText = "background: rgba(255, 255, 255, 1); position: fixed;";
+	        iframeNode.src = OneSignal._initOneSignalHttp + '?id=' + OneSignal._app_id + '&httpsPrompt=true' + '&pushEnabled=' + pushEnabled + '&permissionBlocked=' + (typeof Notification === "undefined" || Notification.permission == "denied") + '&hostPageProtocol=' + hostPageProtocol;
+	        iframeNode.setAttribute('frameborder', '0');
+	        iframeNode.width = OneSignal._windowWidth.toString();
+	        iframeNode.height = OneSignal._windowHeight.toString();
+
+	        _loglevel2.default.debug('Opening HTTPS modal prompt.');
+	        document.getElementById("notif-permission").appendChild(iframeNode);
+	      });
+	    } else if ('serviceWorker' in navigator) // If HTTPS - Show native prompt
+	      OneSignal._registerForW3CPush(options);else _loglevel2.default.debug('Service workers are not supported in this browser.');
+
+	    OneSignal._triggerEvent('onesignal.sdk.initialized', null);
+	  },
+
+	  _registerForW3CPush: function _registerForW3CPush(options) {
+
+	    OneSignal._getDbValue('Ids', 'registrationId').then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
+	      if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted") {
+	        navigator.serviceWorker.getRegistration().then(function (event) {
+	          var sw_path = "";
+
+	          if (OneSignal._initOptions.path) sw_path = OneSignal._initOptions.path;
+
+	          if (typeof event === "undefined") // Nothing registered, very first run
+	            navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);else {
+	            if (event.active) {
+	              if (event.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
+
+	                OneSignal._getDbValue('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION').then(function (versionResult) {
+	                  if (versionResult) {
+	                    if (versionResult.id != OneSignal._VERSION) {
+	                      event.unregister().then(function () {
+	                        navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	                      }).catch(function (e) {
+	                        _loglevel2.default.error(e);
+	                      });
+	                      ;
+	                    } else navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	                  } else navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	                }).catch(function (e) {
+	                  _loglevel2.default.error(e);
+	                });
+	                ;
+	              } else if (event.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
+
+	                OneSignal._getDbValue('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION').then(function (versionResult) {
+	                  if (versionResult) {
+	                    if (versionResult.id != OneSignal._VERSION) {
+	                      event.unregister().then(function () {
+	                        navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	                      });
+	                    } else navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	                  } else navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	                }).catch(function (e) {
+	                  _loglevel2.default.error(e);
+	                });
+	                ;
+	              }
+	            } else if (event.installing == null) navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+	          }
+	        }).catch(function (e) {
+	          _loglevel2.default.error(e);
+	        });
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+	  },
+
+	  _addSessionIframe: function _addSessionIframe(hostPageProtocol) {
+
+	    var node = document.createElement("iframe");
+	    node.style.display = "none";
+	    node.src = OneSignal._initOneSignalHttp + "Iframe";
+	    if (sessionStorage.getItem("ONE_SIGNAL_SESSION")) node.src += "?session=true" + "&hostPageProtocol=" + hostPageProtocol;else node.src += "?hostPageProtocol=" + hostPageProtocol;
+	    document.body.appendChild(node);
+	    _loglevel2.default.debug('Adding session iFrame.');
+
+	    OneSignal._sessionIframeAdded = true;
+	  },
+
+	  _registerError: function _registerError(err) {
+	    _loglevel2.default.debug("navigator.serviceWorker.register:ERROR: " + err);
+	  },
+
+	  _enableNotifications: function _enableNotifications(existingServiceWorkerRegistration) {
+	    // is ServiceWorkerRegistration type
+	    if (existingServiceWorkerRegistration) _loglevel2.default.debug('There is an older ServiceWorker:', existingServiceWorkerRegistration);
+	    if (!('PushManager' in window)) {
+	      _loglevel2.default.debug("Push messaging is not supported. No PushManager.");
+	      sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+	      return;
+	    }
+
+	    if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
+	      _loglevel2.default.debug("Notifications are not supported. showNotification not available in ServiceWorkerRegistration.");
+	      sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+	      return;
+	    }
+
+	    if (Notification.permission === 'denied') {
+	      _loglevel2.default.warn("The user has disabled notifications.");
+	      return;
+	    }
+
+	    navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+	      _loglevel2.default.info('Service worker active:', serviceWorkerRegistration);
+
+	      OneSignal._subscribeForPush(serviceWorkerRegistration);
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+	  },
+
+	  /*
+	   Returns the current browser-agnostic notification permission as "default", "granted", "denied".
+	   safariWebId: Used only to get the current notification permission state in Safari (required as part of the spec).
+	   */
+	  _getNotificationPermission: function _getNotificationPermission(safariWebId) {
+	    if (window.safari) {
+	      // The user is on Safari
+	      // A web ID is required to determine the current notificiation permission
+	      if (safariWebId) {
+	        return window.safari.pushNotification.permission(safariWebId).permission;
+	      } else {
+	        // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
+	        return "default";
+	      }
+	    } else {
+	      // Identical API on Firefox and Chrome
+	      return Notification.permission;
+	    }
+	  },
+
+	  _triggerEvent: function _triggerEvent(eventName, data) {
+	    if (typeof window === "undefined") {
+	      _loglevel2.default.debug('Skipping triggering of event:', eventName, 'because we are running in a ServiceWorker context.');
+	      return;
+	    }
+	    var event = new CustomEvent(eventName, {
+	      bubbles: true, cancelable: true, details: data
+	    });
+	    window.dispatchEvent(event);
+	  },
+
+	  _triggerEvent_customPromptClicked: function _triggerEvent_customPromptClicked(clickResult) {
+	    OneSignal._triggerEvent('onesignal.prompt.custom.clicked', {
+	      result: clickResult
+	    });
+	  },
+
+	  _triggerEvent_nativePromptPermissionChanged: function _triggerEvent_nativePromptPermissionChanged(from, to) {
+	    if (to === undefined) {
+	      to = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+	    }
+	    if (from !== to) {
+	      var recentPermissions = _limitStore2.default.put('notification.permission', to);
+	      OneSignal._triggerEvent('onesignal.prompt.native.permissionchanged', {
+	        from: from,
+	        to: to
+	      });
+	    }
+	  },
+
+	  _triggerEvent_subscriptionChanged: function _triggerEvent_subscriptionChanged(to) {
+	    OneSignal._triggerEvent('onesignal.subscription.changed', to);
+	  },
+
+	  _triggerEvent_dbValueRetrieved: function _triggerEvent_dbValueRetrieved(value) {
+	    OneSignal._triggerEvent('onesignal.db.valueretrieved', value);
+	  },
+
+	  _triggerEvent_dbValueSet: function _triggerEvent_dbValueSet(value) {
+	    OneSignal._triggerEvent('onesignal.db.valueset', value);
+	  },
+
+	  _triggerEvent_internalSubscriptionSet: function _triggerEvent_internalSubscriptionSet(value) {
+	    OneSignal._triggerEvent('onesignal.internal.subscriptionset', value);
+	  },
+
+	  _subscribeForPush: function _subscribeForPush(serviceWorkerRegistration) {
+	    var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+	    serviceWorkerRegistration.pushManager.subscribe({ userVisibleOnly: true }).then(function (subscription) {
+	      sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
+
+	      OneSignal._getDbValue('Ids', 'appId').then(function _subscribeForPush_GotAppId(appIdResult) {
+	        var appId = appIdResult.id;
+	        _loglevel2.default.debug("Called OneSignal._subscribeForPush() -> serviceWorkerRegistration.pushManager.subscribe().");
+
+	        var registrationId = null;
+	        if (subscription) {
+	          if (typeof subscription.subscriptionId != "undefined") // Chrome 43 & 42
+	            registrationId = subscription.subscriptionId;else // Chrome 44+ and FireFox
+	            registrationId = subscription.endpoint.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
+	        } else _loglevel2.default.warn('Could not subscribe your browser for push notifications.');
+
+	        OneSignal._registerWithOneSignal(appId, registrationId, OneSignal._isSupportedFireFox() ? 8 : 5);
+
+	        if (!OneSignal._usingNativePermissionHook) {
+	          OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
+	        }
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e);
+	      });
+	    }).catch(function (e) {
+	      _loglevel2.default.error('Error while subscribing for push:', e);
+
+	      if (!OneSignal._usingNativePermissionHook) OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
+
+	      if (e.code == 20 && opener && OneSignal._httpRegistration) window.close();
+	    });
+	  },
+
+	  sendTag: function sendTag(key, value) {
+	    var jsonKeyValue = {};
+	    jsonKeyValue[key] = value;
+	    OneSignal.sendTags(jsonKeyValue);
+	  },
+
+	  sendTags: function sendTags(jsonPair) {
+	    OneSignal._getDbValue('Ids', 'userId').then(function sendTags_GotUserId(userIdResult) {
+	      if (userIdResult) OneSignal._sendToOneSignalApi("players/" + userIdResult.id, "PUT", {
+	        app_id: OneSignal._app_id,
+	        tags: jsonPair
+	      });else {
+	        if (OneSignal._tagsToSendOnRegister == null) OneSignal._tagsToSendOnRegister = jsonPair;else {
+	          var resultObj = {};
+	          for (var _obj in OneSignal._tagsToSendOnRegister) {
+	            resultObj[_obj] = OneSignal._tagsToSendOnRegister[_obj];
+	          }for (var _obj in jsonPair) {
+	            resultObj[_obj] = jsonPair[_obj];
+	          }OneSignal._tagsToSendOnRegister = resultObj;
+	        }
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error('sendTags:', e);
+	    });
+	  },
+
+	  deleteTag: function deleteTag(key) {
+	    OneSignal.deleteTags([key]);
+	  },
+
+	  deleteTags: function deleteTags(keyArray) {
+	    var jsonPair = {};
+	    var length = keyArray.length;
+	    for (var i = 0; i < length; i++) {
+	      jsonPair[keyArray[i]] = "";
+	    }OneSignal.sendTags(jsonPair);
+	  },
+
+	  _handleNotificationOpened: function _handleNotificationOpened(event) {
+	    var notificationData = JSON.parse(event.notification.tag);
+	    event.notification.close();
+
+	    Promise.all([OneSignal._getDbValue('Ids', 'appId'), OneSignal._getDbValue('Ids', 'userId')]).then(function _handleNotificationOpened_GotAppUserIds(results) {
+	      var appIdResult = results[0];
+	      var userIdResult = results[1];
+	      if (appIdResult && userIdResult) {
+	        OneSignal._sendToOneSignalApi("notifications/" + notificationData.id, "PUT", {
+	          app_id: appIdResult.id,
+	          player_id: userIdResult.id,
+	          opened: true
+	        });
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+
+	    event.waitUntil(clients.matchAll({ type: "window" }).then(function (clientList) {
+	      var launchURL = registration.scope;
+	      if (OneSignal._defaultLaunchURL) launchURL = OneSignal._defaultLaunchURL;
+	      if (notificationData.launchURL) launchURL = notificationData.launchURL;
+
+	      for (var i = 0; i < clientList.length; i++) {
+	        var client = clientList[i];
+	        if ('focus' in client && client.url == launchURL) {
+	          client.focus();
+
+	          // targetOrigin not valid here as the service worker owns the page.
+	          client.postMessage(notificationData);
+	          return;
+	        }
+	      }
+
+	      if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
+	        OneSignal._putDbValue("NotificationOpened", { url: launchURL, data: notificationData });
+	        clients.openWindow(launchURL).catch(function (error) {
+	          // Should only fall into here if going to an external URL on Chrome older than 43.
+	          clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
+	        });
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    }));
+	  },
+
+	  _getTitle: function _getTitle(incomingTitle, callback) {
+	    if (incomingTitle != null) {
+	      callback(incomingTitle);
+	      return;
+	    }
+
+	    Promise.all([OneSignal._getDbValue('Options', 'defaultTitle'), OneSignal._getDbValue('Options', 'pageTitle')]).then(function _getTitle_GotDefaultPageTitles(results) {
+	      var defaultTitleResult = results[0];
+	      var pageTitleResult = results[1];
+
+	      if (defaultTitleResult) {
+	        callback(defaultTitleResult.value);
+	        return;
+	      } else if (pageTitleResult && pageTitleResult.value != null) {
+	        callback(pageTitleResult.value);
+	        return;
+	      } else {
+	        callback('');
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	  },
+
+	  // Displays notification from content received from OneSignal.
+	  // This method is only called by ServiceWorker
+	  _handleGCMMessage: function _handleGCMMessage(serviceWorker, event) {
+	    // TODO: Read data from the GCM payload when Chrome no longer requires the below command line parameter.
+	    // --enable-push-message-payload
+	    // The command line param is required even on Chrome 43 nightly build 2015/03/17.
+	    if (event.data && event.data.text()[0] == "{") {
+	      _loglevel2.default.debug('Received data.text: ', event.data.text());
+	      _loglevel2.default.debug('Received data.json: ', event.data.json());
+	    }
+
+	    event.waitUntil(new Promise(function (resolve, reject) {
+	      OneSignal._getTitle(null, function (title) {
+	        OneSignal._getDbValue('Options', 'defaultIcon').then(function _handleGCMMessage_GotDefaultIcon(defaultIconResult) {
+	          OneSignal._getLastNotifications(function (response, appId) {
+	            var notificationData = {
+	              id: response.custom.i,
+	              message: response.alert,
+	              additionalData: response.custom.a
+	            };
+
+	            if (response.title) notificationData.title = response.title;else notificationData.title = title;
+
+	            if (response.custom.u) notificationData.launchURL = response.custom.u;
+
+	            if (response.icon) notificationData.icon = response.icon;else if (defaultIconResult) notificationData.icon = defaultIconResult.value;
+
+	            // Never nest the following line in a callback from the point of entering from _getLastNotifications
+	            serviceWorker.registration.showNotification(notificationData.title, {
+	              body: response.alert,
+	              icon: notificationData.icon,
+	              tag: JSON.stringify(notificationData)
+	            }).then(resolve).catch(function (e) {
+	              _loglevel2.default.error(e);
+	            });
+
+	            OneSignal._getDbValue('Options', 'defaultUrl').then(function (defaultUrlResult) {
+	              if (defaultUrlResult) OneSignal._defaultLaunchURL = defaultUrlResult.value;
+	            }).catch(function (e) {
+	              _loglevel2.default.error(e);
+	            });
+	            ;
+	          }, resolve);
+	        }).catch(function (e) {
+	          _loglevel2.default.error(e);
+	        });
+	      });
+	    }));
+	  },
+
+	  _getLastNotifications: function _getLastNotifications(itemCallback, completeCallback) {
+	    OneSignal._getDbValue('Ids', 'userId').then(function _getLastNotifications_GotUserId(userIdResult) {
+	      if (userIdResult) {
+	        OneSignal._sendToOneSignalApi("players/" + userIdResult.id + "/chromeweb_notification", "GET", null, function (response) {
+	          for (var i = 0; i < response.length; i++) {
+	            itemCallback(JSON.parse(response[i]));
+	          }
+	        }, function () {
+	          completeCallback();
+	        }); // Failed callback
+	      } else {
+	          _loglevel2.default.debug("Error: could not get notificationId");
+	          completeCallback();
+	        }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+	  },
+
+	  // HTTP & HTTPS - Runs on main page
+	  _listener_receiveMessage: function receiveMessage(event) {
+	    _loglevel2.default.debug("_listener_receiveMessage: ", event);
+
+	    if (OneSignal._initOptions == undefined) return;
+
+	    if (!(false) && event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._initOptions.subdomainName + ".onesignal.com") return;
+
+	    if (event.data.oneSignalInitPageReady) {
+	      // Only called on HTTP pages.
+	      OneSignal._getDbValues("Options").then(function _listener_receiveMessage(options) {
+	        _loglevel2.default.debug("current options", options);
+	        if (!options.defaultUrl) options.defaultUrl = document.URL;
+	        if (!options.defaultTitle) options.defaultTitle = document.title;
+
+	        options.parent_url = document.URL;
+	        _loglevel2.default.debug("Posting message to port[0]", event.ports[0]);
+	        event.ports[0].postMessage({ initOptions: options });
+	      }).catch(function (e) {
+	        _loglevel2.default.error('_listener_receiveMessage:', e);
+	      });
+
+	      var eventData = event.data.oneSignalInitPageReady;
+
+	      if (eventData.isIframe) OneSignal._iframePort = event.ports[0];
+
+	      if (eventData.userId) OneSignal._putDbValue("Ids", { type: "userId", id: eventData.userId });
+	      if (eventData.registrationId) OneSignal._putDbValue("Ids", { type: "registrationId", id: eventData.registrationId });
+
+	      OneSignal._fireNotificationEnabledCallback(eventData.isPushEnabled);
+	      OneSignal._sendUnsentTags();
+	    } else if (event.data.currentNotificationPermission) // Subdomain Only
+	      OneSignal._fireNotificationEnabledCallback(event.data.currentNotificationPermission.isPushEnabled);else if (event.data.idsAvailable) {
+	      // Only called on HTTP pages.
+	      sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+	      OneSignal._putDbValue("Ids", { type: "userId", id: event.data.idsAvailable.userId });
+	      OneSignal._putDbValue("Ids", { type: "registrationId", id: event.data.idsAvailable.registrationId });
+
+	      if (OneSignal._idsAvailable_callback.length > 0) {
+	        while (OneSignal._idsAvailable_callback.length > 0) {
+	          var curr_callback = OneSignal._idsAvailable_callback.pop();
+	          curr_callback({
+	            userId: event.data.idsAvailable.userId,
+	            registrationId: event.data.idsAvailable.registrationId
+	          });
+	        }
+	      }
+	      OneSignal._sendUnsentTags();
+	    } else if (event.data.httpsPromptAccepted) {
+	      // HTTPS Only
+	      OneSignal.registerForPushNotifications();
+	      OneSignal.setSubscription(true);
+	      (elem = document.getElementById('OneSignal-iframe-modal')).parentNode.removeChild(elem);
+	      OneSignal._triggerEvent_customPromptClicked('granted');
+	    } else if (event.data.httpsPromptCanceled) {
+	      // HTTPS Only
+	      (elem = document.getElementById('OneSignal-iframe-modal')).parentNode.removeChild(elem);
+	      OneSignal._triggerEvent_customPromptClicked('denied');
+	    } else if (event.data.httpPromptAccepted) {
+	      // HTTP Only
+	      OneSignal._triggerEvent_customPromptClicked('granted');
+	    } else if (event.data.httpPromptCanceled) {
+	      // HTTP Only
+	      OneSignal._triggerEvent_customPromptClicked('denied');
+	    } else if (OneSignal._notificationOpened_callback) // HTTP and HTTPS
+	      OneSignal._notificationOpened_callback(event.data);
+	  },
+
+	  addListenerForNotificationOpened: function addListenerForNotificationOpened(callback) {
+	    OneSignal._notificationOpened_callback = callback;
+	    if (window) {
+	      OneSignal._getDbValue("NotificationOpened", document.URL).then(function (notificationOpenedResult) {
+	        if (notificationOpenedResult) {
+	          OneSignal._deleteDbValue("NotificationOpened", document.URL);
+	          OneSignal._notificationOpened_callback(notificationOpenedResult.data);
+	        }
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e);
+	      });
+	      ;
+	    }
+	  },
+
+	  // Subdomain - Fired from message received from iframe.
+	  _fireNotificationEnabledCallback: function _fireNotificationEnabledCallback(notifPermssion) {
+	    if (OneSignal._isNotificationEnabledCallback) {
+	      OneSignal._isNotificationEnabledCallback(notifPermssion);
+	      OneSignal._isNotificationEnabledCallback = null;
+	    }
+	  },
+
+	  getIdsAvailable: function getIdsAvailable(callback) {
+	    if (callback === undefined) return;
+
+	    OneSignal._idsAvailable_callback.push(callback);
+
+	    Promise.all([OneSignal._getDbValue('Ids', 'userId'), OneSignal._getDbValue('Ids', 'registrationId')]).then(function getIdsAvailable_GotUserRegistrationIds(results) {
+	      var userIdResult = results[0];
+	      var registrationIdResult = results[1];
+
+	      if (userIdResult) {
+	        if (registrationIdResult) {
+	          while (OneSignal._idsAvailable_callback.length > 0) {
+	            var curr_callback = OneSignal._idsAvailable_callback.pop();
+	            curr_callback({
+	              userId: userIdResult.id,
+	              registrationId: registrationIdResult.id
+	            });
+	          }
+	        } else while (OneSignal._idsAvailable_callback.length > 0) {
+	          var curr_callback = OneSignal._idsAvailable_callback.pop();
+	          curr_callback({ userId: userIdResult.id, registrationId: null });
+	        }
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+	  },
+
+	  getTags: function getTags(callback) {
+	    OneSignal._getDbValue('Ids', 'userId').then(function (userIdResult) {
+	      if (userIdResult) {
+	        OneSignal._sendToOneSignalApi("players/" + userIdResult.id, 'GET', null, function (response) {
+	          callback(response.tags);
+	        });
+	      }
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+	  },
+
+	  isPushNotificationsEnabled: function isPushNotificationsEnabled(callback) {
+	    if (!OneSignal.isPushNotificationsSupported()) {
+	      _loglevel2.default.warn("Your browser does not support push notifications.");
+	      return;
+	    }
+
+	    // If Subdomain
+	    if (OneSignal._initOptions.subdomainName && !OneSignal._isBrowserSafari()) {
+	      OneSignal._isNotificationEnabledCallback = callback;
+	      if (OneSignal._iframePort) OneSignal._iframePort.postMessage({ getNotificationPermission: true });
+	      return;
+	    }
+
+	    // If HTTPS
+
+	    Promise.all([OneSignal._getDbValue('Ids', 'registrationId'), OneSignal._getDbValue('Options', 'subscription')]).then(function (results) {
+	      var registrationIdResult = results[0];
+	      var subscriptionResult = results[1];
+
+	      if (registrationIdResult) {
+	        if (subscriptionResult && !subscriptionResult.value) return callback(false);
+
+	        callback(Notification.permission == "granted");
+	      } else callback(false);
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	  },
+
+	  _isSupportedSafari: function _isSupportedSafari() {
+	    var safariVersion = navigator.appVersion.match("Version/([0-9]?).* Safari");
+	    if (safariVersion == null) return false;
+	    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) return false;
+	    return parseInt(safariVersion[1]) > 6;
+	  },
+
+	  _isBrowserSafari: function _isBrowserSafari() {
+	    var safariVersion = navigator.appVersion.match("Version/([0-9]?).* Safari");
+	    return safariVersion != null;
+	  },
+
+	  _isSupportedFireFox: function _isSupportedFireFox() {
+	    var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
+	    if (fireFoxVersion) return parseInt(fireFoxVersion[2].substring(0, 2)) > 43;
+	    return false;
+	  },
+
+	  _isBrowserFirefox: function _isBrowserFirefox() {
+	    var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
+	    return fireFoxVersion != null;
+	  },
+
+	  _getFirefoxVersion: function _getFirefoxVersion() {
+	    var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
+	    if (fireFoxVersion) return parseInt(fireFoxVersion[2].substring(0, 2));else return -1;
+	  },
+
+	  isPushNotificationsSupported: function isPushNotificationsSupported() {
+	    var chromeVersion = navigator.appVersion.match(/Chrome\/(.*?) /);
+
+	    if (OneSignal._isSupportedFireFox()) return true;
+
+	    if (OneSignal._isSupportedSafari()) return true;
+
+	    // Chrome is not found in appVersion.
+	    if (!chromeVersion) return false;
+
+	    // Microsoft Edge
+	    if (navigator.appVersion.match(/Edge/)) return false;
+
+	    // Android Chrome WebView
+	    if (navigator.appVersion.match(/ wv/)) return false;
+
+	    // Opera
+	    if (navigator.appVersion.match(/OPR\//)) return false;
+
+	    // The user is on iOS
+	    if (/iPad|iPhone|iPod/.test(navigator.platform)) return false;
+
+	    return parseInt(chromeVersion[1].substring(0, 2)) > 41;
+	  },
+
+	  _getNotificationTypes: function _getNotificationTypes(callback) {
+	    OneSignal._getSubscription(function (db_subscriptionSet) {
+	      callback(db_subscriptionSet ? 1 : -2);
+	    });
+	  },
+
+	  setSubscription: function setSubscription(newSubscription) {
+	    if (OneSignal._iframePort) OneSignal._iframePort.postMessage({ setSubdomainState: { setSubscription: newSubscription } });else {
+	      OneSignal._getSubscription(function (currentSubscription) {
+	        if (currentSubscription != newSubscription) {
+	          OneSignal._putDbValue("Options", { key: "subscription", value: newSubscription });
+	          OneSignal._getDbValue('Ids', 'userId').then(function (userIdResult) {
+	            if (userIdResult) OneSignal._sendToOneSignalApi("players/" + userIdResult.id, "PUT", {
+	              app_id: OneSignal._app_id,
+	              notification_types: newSubscription ? 1 : -2
+	            }, function setSubscriptionSetCallback() {
+	              OneSignal._triggerEvent_internalSubscriptionSet(newSubscription);
+	            });
+	          }).catch(function (e) {
+	            _loglevel2.default.error(e);
+	          });
+	        }
+	      });
+	    }
+	  },
+
+	  _getSubscription: function _getSubscription(callback) {
+	    OneSignal._getDbValue('Options', 'subscription').then(function (subscriptionResult) {
+	      callback(!(subscriptionResult && subscriptionResult.value == false));
+	    }).catch(function (e) {
+	      _loglevel2.default.error(e);
+	    });
+	    ;
+	  },
+
+	  _safePostMessage: function _safePostMessage(creator, data, targetOrigin, receiver) {
+	    var tOrigin = targetOrigin.toLowerCase();
+
+	    // If we are trying to target a http site allow the https version. (w/ or w/o 'wwww.' too)
+	    if (tOrigin.startsWith("http://")) {
+	      var queryDict = {};
+	      location.search.substr(1).split("&").forEach(function (item) {
+	        queryDict[item.split("=")[0]] = item.split("=")[1];
+	      });
+	      var validPreURLRegex = /^http(s|):\/\/(www\.|)/;
+	      tOrigin = tOrigin.replace(validPreURLRegex, queryDict["hostPageProtocol"]);
+	    }
+
+	    if (receiver) creator.postMessage(data, tOrigin, receiver);else creator.postMessage(data, tOrigin);
+	  },
+
+	  _process_pushes: function _process_pushes(array) {
+	    for (var i = 0; i < array.length; i++) {
+	      OneSignal.push(array[i]);
+	    }
+	  },
+
+	  push: function push(item) {
+	    if (typeof item == "function") item();else {
+	      var functionName = item.shift();
+	      OneSignal[functionName].apply(null, item);
+	    }
+	  }
+	};
+
+	// If imported on your page.
+	if (typeof window !== "undefined") window.addEventListener("message", OneSignal._listener_receiveMessage, false);else {
+	  // if imported from the service worker.
+	  importScripts('https://cdn.onesignal.com/sdks/serviceworker-cache-polyfill.js');
+
+	  self.addEventListener('push', function (event) {
+	    OneSignal._handleGCMMessage(self, event); // Can handle messages from any browser (except Safari), rename method
+	  });
+	  self.addEventListener('notificationclick', function (event) {
+	    // Also only by SW
+	    OneSignal._handleNotificationOpened(event);
+	  });
+
+	  var isSWonSubdomain = location.href.match(/https\:\/\/.*\.onesignal.com\/sdks\//) != null;
+	  if (false) isSWonSubdomain = true;
+
+	  self.addEventListener('install', function (event) {
+	    _loglevel2.default.debug("OneSignal Installed service worker: " + OneSignal._VERSION);
+	    if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1) OneSignal._putDbValue("Ids", { type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION });else OneSignal._putDbValue("Ids", { type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION });
+
+	    if (isSWonSubdomain) {
+	      event.waitUntil(caches.open("OneSignal_" + OneSignal._VERSION).then(function (cache) {
+	        return cache.addAll(['/sdks/initOneSignalHttpIframe', '/sdks/initOneSignalHttpIframe?session=*', '/sdks/manifest_json']);
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e);
+	      }));
+	    }
+	  });
+
+	  if (isSWonSubdomain) {
+	    self.addEventListener('fetch', function (event) {
+	      event.respondWith(caches.match(event.request).then(function (response) {
+	        // Cache hit - return response
+	        if (response) return response;
+
+	        return fetch(event.request);
+	      }).catch(function (e) {
+	        _loglevel2.default.error(e);
+	      }));
+	    });
+	  }
+	}
+
+	if (_temp_OneSignal) OneSignal._process_pushes(_temp_OneSignal);
+
+	module.exports = OneSignal;
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/*** IMPORTS FROM imports-loader ***/
+	(function() {
+
+	(function() {
+	  'use strict';
+
+	  if (self.fetch) {
+	    return
+	  }
+
+	  function normalizeName(name) {
+	    if (typeof name !== 'string') {
+	      name = String(name)
+	    }
+	    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
+	      throw new TypeError('Invalid character in header field name')
+	    }
+	    return name.toLowerCase()
+	  }
+
+	  function normalizeValue(value) {
+	    if (typeof value !== 'string') {
+	      value = String(value)
+	    }
+	    return value
+	  }
+
+	  function Headers(headers) {
+	    this.map = {}
+
+	    if (headers instanceof Headers) {
+	      headers.forEach(function(value, name) {
+	        this.append(name, value)
+	      }, this)
+
+	    } else if (headers) {
+	      Object.getOwnPropertyNames(headers).forEach(function(name) {
+	        this.append(name, headers[name])
+	      }, this)
+	    }
+	  }
+
+	  Headers.prototype.append = function(name, value) {
+	    name = normalizeName(name)
+	    value = normalizeValue(value)
+	    var list = this.map[name]
+	    if (!list) {
+	      list = []
+	      this.map[name] = list
+	    }
+	    list.push(value)
+	  }
+
+	  Headers.prototype['delete'] = function(name) {
+	    delete this.map[normalizeName(name)]
+	  }
+
+	  Headers.prototype.get = function(name) {
+	    var values = this.map[normalizeName(name)]
+	    return values ? values[0] : null
+	  }
+
+	  Headers.prototype.getAll = function(name) {
+	    return this.map[normalizeName(name)] || []
+	  }
+
+	  Headers.prototype.has = function(name) {
+	    return this.map.hasOwnProperty(normalizeName(name))
+	  }
+
+	  Headers.prototype.set = function(name, value) {
+	    this.map[normalizeName(name)] = [normalizeValue(value)]
+	  }
+
+	  Headers.prototype.forEach = function(callback, thisArg) {
+	    Object.getOwnPropertyNames(this.map).forEach(function(name) {
+	      this.map[name].forEach(function(value) {
+	        callback.call(thisArg, value, name, this)
+	      }, this)
+	    }, this)
+	  }
+
+	  function consumed(body) {
+	    if (body.bodyUsed) {
+	      return Promise.reject(new TypeError('Already read'))
+	    }
+	    body.bodyUsed = true
+	  }
+
+	  function fileReaderReady(reader) {
+	    return new Promise(function(resolve, reject) {
+	      reader.onload = function() {
+	        resolve(reader.result)
+	      }
+	      reader.onerror = function() {
+	        reject(reader.error)
+	      }
+	    })
+	  }
+
+	  function readBlobAsArrayBuffer(blob) {
+	    var reader = new FileReader()
+	    reader.readAsArrayBuffer(blob)
+	    return fileReaderReady(reader)
+	  }
+
+	  function readBlobAsText(blob) {
+	    var reader = new FileReader()
+	    reader.readAsText(blob)
+	    return fileReaderReady(reader)
+	  }
+
+	  var support = {
+	    blob: 'FileReader' in self && 'Blob' in self && (function() {
+	      try {
+	        new Blob();
+	        return true
+	      } catch(e) {
+	        return false
+	      }
+	    })(),
+	    formData: 'FormData' in self,
+	    arrayBuffer: 'ArrayBuffer' in self
+	  }
+
+	  function Body() {
+	    this.bodyUsed = false
+
+
+	    this._initBody = function(body) {
+	      this._bodyInit = body
+	      if (typeof body === 'string') {
+	        this._bodyText = body
+	      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+	        this._bodyBlob = body
+	      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+	        this._bodyFormData = body
+	      } else if (!body) {
+	        this._bodyText = ''
+	      } else if (support.arrayBuffer && ArrayBuffer.prototype.isPrototypeOf(body)) {
+	        // Only support ArrayBuffers for POST method.
+	        // Receiving ArrayBuffers happens via Blobs, instead.
+	      } else {
+	        throw new Error('unsupported BodyInit type')
+	      }
+	    }
+
+	    if (support.blob) {
+	      this.blob = function() {
+	        var rejected = consumed(this)
+	        if (rejected) {
+	          return rejected
+	        }
+
+	        if (this._bodyBlob) {
+	          return Promise.resolve(this._bodyBlob)
+	        } else if (this._bodyFormData) {
+	          throw new Error('could not read FormData body as blob')
+	        } else {
+	          return Promise.resolve(new Blob([this._bodyText]))
+	        }
+	      }
+
+	      this.arrayBuffer = function() {
+	        return this.blob().then(readBlobAsArrayBuffer)
+	      }
+
+	      this.text = function() {
+	        var rejected = consumed(this)
+	        if (rejected) {
+	          return rejected
+	        }
+
+	        if (this._bodyBlob) {
+	          return readBlobAsText(this._bodyBlob)
+	        } else if (this._bodyFormData) {
+	          throw new Error('could not read FormData body as text')
+	        } else {
+	          return Promise.resolve(this._bodyText)
+	        }
+	      }
+	    } else {
+	      this.text = function() {
+	        var rejected = consumed(this)
+	        return rejected ? rejected : Promise.resolve(this._bodyText)
+	      }
+	    }
+
+	    if (support.formData) {
+	      this.formData = function() {
+	        return this.text().then(decode)
+	      }
+	    }
+
+	    this.json = function() {
+	      return this.text().then(JSON.parse)
+	    }
+
+	    return this
+	  }
+
+	  // HTTP methods whose capitalization should be normalized
+	  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+	  function normalizeMethod(method) {
+	    var upcased = method.toUpperCase()
+	    return (methods.indexOf(upcased) > -1) ? upcased : method
+	  }
+
+	  function Request(input, options) {
+	    options = options || {}
+	    var body = options.body
+	    if (Request.prototype.isPrototypeOf(input)) {
+	      if (input.bodyUsed) {
+	        throw new TypeError('Already read')
+	      }
+	      this.url = input.url
+	      this.credentials = input.credentials
+	      if (!options.headers) {
+	        this.headers = new Headers(input.headers)
+	      }
+	      this.method = input.method
+	      this.mode = input.mode
+	      if (!body) {
+	        body = input._bodyInit
+	        input.bodyUsed = true
+	      }
+	    } else {
+	      this.url = input
+	    }
+
+	    this.credentials = options.credentials || this.credentials || 'omit'
+	    if (options.headers || !this.headers) {
+	      this.headers = new Headers(options.headers)
+	    }
+	    this.method = normalizeMethod(options.method || this.method || 'GET')
+	    this.mode = options.mode || this.mode || null
+	    this.referrer = null
+
+	    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+	      throw new TypeError('Body not allowed for GET or HEAD requests')
+	    }
+	    this._initBody(body)
+	  }
+
+	  Request.prototype.clone = function() {
+	    return new Request(this)
+	  }
+
+	  function decode(body) {
+	    var form = new FormData()
+	    body.trim().split('&').forEach(function(bytes) {
+	      if (bytes) {
+	        var split = bytes.split('=')
+	        var name = split.shift().replace(/\+/g, ' ')
+	        var value = split.join('=').replace(/\+/g, ' ')
+	        form.append(decodeURIComponent(name), decodeURIComponent(value))
+	      }
+	    })
+	    return form
+	  }
+
+	  function headers(xhr) {
+	    var head = new Headers()
+	    var pairs = xhr.getAllResponseHeaders().trim().split('\n')
+	    pairs.forEach(function(header) {
+	      var split = header.trim().split(':')
+	      var key = split.shift().trim()
+	      var value = split.join(':').trim()
+	      head.append(key, value)
+	    })
+	    return head
+	  }
+
+	  Body.call(Request.prototype)
+
+	  function Response(bodyInit, options) {
+	    if (!options) {
+	      options = {}
+	    }
+
+	    this._initBody(bodyInit)
+	    this.type = 'default'
+	    this.status = options.status
+	    this.ok = this.status >= 200 && this.status < 300
+	    this.statusText = options.statusText
+	    this.headers = options.headers instanceof Headers ? options.headers : new Headers(options.headers)
+	    this.url = options.url || ''
+	  }
+
+	  Body.call(Response.prototype)
+
+	  Response.prototype.clone = function() {
+	    return new Response(this._bodyInit, {
+	      status: this.status,
+	      statusText: this.statusText,
+	      headers: new Headers(this.headers),
+	      url: this.url
+	    })
+	  }
+
+	  Response.error = function() {
+	    var response = new Response(null, {status: 0, statusText: ''})
+	    response.type = 'error'
+	    return response
+	  }
+
+	  var redirectStatuses = [301, 302, 303, 307, 308]
+
+	  Response.redirect = function(url, status) {
+	    if (redirectStatuses.indexOf(status) === -1) {
+	      throw new RangeError('Invalid status code')
+	    }
+
+	    return new Response(null, {status: status, headers: {location: url}})
+	  }
+
+	  self.Headers = Headers;
+	  self.Request = Request;
+	  self.Response = Response;
+
+	  self.fetch = function(input, init) {
+	    return new Promise(function(resolve, reject) {
+	      var request
+	      if (Request.prototype.isPrototypeOf(input) && !init) {
+	        request = input
+	      } else {
+	        request = new Request(input, init)
+	      }
+
+	      var xhr = new XMLHttpRequest()
+
+	      function responseURL() {
+	        if ('responseURL' in xhr) {
+	          return xhr.responseURL
+	        }
+
+	        // Avoid security warnings on getResponseHeader when not allowed by CORS
+	        if (/^X-Request-URL:/m.test(xhr.getAllResponseHeaders())) {
+	          return xhr.getResponseHeader('X-Request-URL')
+	        }
+
+	        return;
+	      }
+
+	      xhr.onload = function() {
+	        var status = (xhr.status === 1223) ? 204 : xhr.status
+	        if (status < 100 || status > 599) {
+	          reject(new TypeError('Network request failed'))
+	          return
+	        }
+	        var options = {
+	          status: status,
+	          statusText: xhr.statusText,
+	          headers: headers(xhr),
+	          url: responseURL()
+	        }
+	        var body = 'response' in xhr ? xhr.response : xhr.responseText;
+	        resolve(new Response(body, options))
+	      }
+
+	      xhr.onerror = function() {
+	        reject(new TypeError('Network request failed'))
+	      }
+
+	      xhr.open(request.method, request.url, true)
+
+	      if (request.credentials === 'include') {
+	        xhr.withCredentials = true
+	      }
+
+	      if ('responseType' in xhr && support.blob) {
+	        xhr.responseType = 'blob'
+	      }
+
+	      request.headers.forEach(function(value, name) {
+	        xhr.setRequestHeader(name, value)
+	      })
+
+	      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+	    })
+	  }
+	  self.fetch.polyfill = true
+	})();
+
+
+	/*** EXPORTS FROM exports-loader ***/
+	module.exports = global.fetch
+	}.call(global));
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.HOST_URL = exports.PROD_HOST = exports.DEV_HOST = undefined;
+
+	var _utils = __webpack_require__(4);
+
+	var DEV_HOST = exports.DEV_HOST = 'https://192.168.1.206:3000';
+	var PROD_HOST = exports.PROD_HOST = 'https://onesignal.com';
+	var HOST_URL = exports.HOST_URL = ((0, _utils.isDev)() ? DEV_HOST : PROD_HOST) + '/api/v1/';
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.getHumanizedTimeDuration = getHumanizedTimeDuration;
+	exports.isServiceWorkerContext = isServiceWorkerContext;
+	exports.isDev = isDev;
+	function getHumanizedTimeDuration(timeDurationInMilliseconds) {
+	  function addPluralSuffix(number) {
+	    return number > 1 ? 's' : '';
+	  }
+	  var duration = Math.floor(timeDurationInMilliseconds / 1000);
+
+	  var years = Math.floor(duration / 31536000);
+	  if (years) return years + ' year' + addPluralSuffix(years);
+
+	  var days = Math.floor((duration %= 31536000) / 86400);
+	  if (days) return days + ' day' + addPluralSuffix(days);
+
+	  var hours = Math.floor((duration %= 86400) / 3600);
+	  if (hours) return hours + ' hour' + addPluralSuffix(hours);
+
+	  var minutes = Math.floor((duration %= 3600) / 60);
+	  if (minutes) return minutes + ' minute' + addPluralSuffix(minutes);
+
+	  var seconds = duration % 60;
+	  if (seconds) return seconds + ' second' + addPluralSuffix(seconds);
+
+	  return 'just now';
+	}
+
+	function isServiceWorkerContext() {
+	  return typeof window === "undefined";
+	}
+
+	function isDev() {
+	  return (false);
+	}
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(fetch) {'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.apiCall = apiCall;
+	exports.sendNotification = sendNotification;
+
+	var _vars = __webpack_require__(3);
+
+	var _loglevel = __webpack_require__(6);
+
+	var _loglevel2 = _interopRequireDefault(_loglevel);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function apiCall(action, method, data) {
+	  var headers = new Headers();
+	  headers.append('Content-Type', 'application/json;charset=UTF-8');
+
+	  var contents = {
+	    method: method || 'NO_METHOD_SPECIFIED',
+	    headers: headers,
+	    cache: 'no-cache',
+	    body: JSON.stringify(data)
+	  };
+
+	  return new Promise(function (resolve, reject) {
+	    fetch(_vars.HOST_URL + action, contents).then(function status(response) {
+	      if (response.status >= 200 && response.status < 300) resolve(response.json());else reject(new Error(response.statusText));
+	    }).catch(function (e) {
+	      reject(e);
+	    });
+	  });
+	}
+
+	function sendNotification(appId, playerIds, titles, contents) {
+	  var params = {
+	    'app_id': appId,
+	    'headings': titles,
+	    'contents': contents,
+	    'include_player_ids': playerIds,
+	    'isAnyWeb': true,
+	    'url': 'javascript:void(0);'
+	  };
+	  return apiCall('notifications', 'POST', params);
+	}
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
+	* loglevel - https://github.com/pimterry/loglevel
+	*
+	* Copyright (c) 2013 Tim Perry
+	* Licensed under the MIT license.
+	*/
+	(function (root, definition) {
+	    "use strict";
+	    if (typeof module === 'object' && module.exports && "function" === 'function') {
+	        module.exports = definition();
+	    } else if (true) {
+	        !(__WEBPACK_AMD_DEFINE_FACTORY__ = (definition), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    } else {
+	        root.log = definition();
+	    }
+	}(this, function () {
+	    "use strict";
+	    var noop = function() {};
+	    var undefinedType = "undefined";
+
+	    function realMethod(methodName) {
+	        if (typeof console === undefinedType) {
+	            return false; // We can't build a real method without a console to log to
+	        } else if (console[methodName] !== undefined) {
+	            return bindMethod(console, methodName);
+	        } else if (console.log !== undefined) {
+	            return bindMethod(console, 'log');
+	        } else {
+	            return noop;
+	        }
+	    }
+
+	    function bindMethod(obj, methodName) {
+	        var method = obj[methodName];
+	        if (typeof method.bind === 'function') {
+	            return method.bind(obj);
+	        } else {
+	            try {
+	                return Function.prototype.bind.call(method, obj);
+	            } catch (e) {
+	                // Missing bind shim or IE8 + Modernizr, fallback to wrapping
+	                return function() {
+	                    return Function.prototype.apply.apply(method, [obj, arguments]);
+	                };
+	            }
+	        }
+	    }
+
+	    // these private functions always need `this` to be set properly
+
+	    function enableLoggingWhenConsoleArrives(methodName, level, loggerName) {
+	        return function () {
+	            if (typeof console !== undefinedType) {
+	                replaceLoggingMethods.call(this, level, loggerName);
+	                this[methodName].apply(this, arguments);
+	            }
+	        };
+	    }
+
+	    function replaceLoggingMethods(level, loggerName) {
+	        /*jshint validthis:true */
+	        for (var i = 0; i < logMethods.length; i++) {
+	            var methodName = logMethods[i];
+	            this[methodName] = (i < level) ?
+	                noop :
+	                this.methodFactory(methodName, level, loggerName);
+	        }
+	    }
+
+	    function defaultMethodFactory(methodName, level, loggerName) {
+	        /*jshint validthis:true */
+	        return realMethod(methodName) ||
+	               enableLoggingWhenConsoleArrives.apply(this, arguments);
+	    }
+
+	    var logMethods = [
+	        "trace",
+	        "debug",
+	        "info",
+	        "warn",
+	        "error"
+	    ];
+
+	    function Logger(name, defaultLevel, factory) {
+	      var self = this;
+	      var currentLevel;
+	      var storageKey = "loglevel";
+	      if (name) {
+	        storageKey += ":" + name;
+	      }
+
+	      function persistLevelIfPossible(levelNum) {
+	          var levelName = (logMethods[levelNum] || 'silent').toUpperCase();
+
+	          // Use localStorage if available
+	          try {
+	              window.localStorage[storageKey] = levelName;
+	              return;
+	          } catch (ignore) {}
+
+	          // Use session cookie as fallback
+	          try {
+	              window.document.cookie =
+	                encodeURIComponent(storageKey) + "=" + levelName + ";";
+	          } catch (ignore) {}
+	      }
+
+	      function getPersistedLevel() {
+	          var storedLevel;
+
+	          try {
+	              storedLevel = window.localStorage[storageKey];
+	          } catch (ignore) {}
+
+	          if (typeof storedLevel === undefinedType) {
+	              try {
+	                  var cookie = window.document.cookie;
+	                  var location = cookie.indexOf(
+	                      encodeURIComponent(storageKey) + "=");
+	                  if (location) {
+	                      storedLevel = /^([^;]+)/.exec(cookie.slice(location))[1];
+	                  }
+	              } catch (ignore) {}
+	          }
+
+	          // If the stored level is not valid, treat it as if nothing was stored.
+	          if (self.levels[storedLevel] === undefined) {
+	              storedLevel = undefined;
+	          }
+
+	          return storedLevel;
+	      }
+
+	      /*
+	       *
+	       * Public API
+	       *
+	       */
+
+	      self.levels = { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3,
+	          "ERROR": 4, "SILENT": 5};
+
+	      self.methodFactory = factory || defaultMethodFactory;
+
+	      self.getLevel = function () {
+	          return currentLevel;
+	      };
+
+	      self.setLevel = function (level, persist) {
+	          if (typeof level === "string" && self.levels[level.toUpperCase()] !== undefined) {
+	              level = self.levels[level.toUpperCase()];
+	          }
+	          if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
+	              currentLevel = level;
+	              if (persist !== false) {  // defaults to true
+	                  persistLevelIfPossible(level);
+	              }
+	              replaceLoggingMethods.call(self, level, name);
+	              if (typeof console === undefinedType && level < self.levels.SILENT) {
+	                  return "No console available for logging";
+	              }
+	          } else {
+	              throw "log.setLevel() called with invalid level: " + level;
+	          }
+	      };
+
+	      self.setDefaultLevel = function (level) {
+	          if (!getPersistedLevel()) {
+	              self.setLevel(level, false);
+	          }
+	      };
+
+	      self.enableAll = function(persist) {
+	          self.setLevel(self.levels.TRACE, persist);
+	      };
+
+	      self.disableAll = function(persist) {
+	          self.setLevel(self.levels.SILENT, persist);
+	      };
+
+	      // Initialize with the right level
+	      var initialLevel = getPersistedLevel();
+	      if (initialLevel == null) {
+	          initialLevel = defaultLevel == null ? "WARN" : defaultLevel;
+	      }
+	      self.setLevel(initialLevel, false);
+	    }
+
+	    /*
+	     *
+	     * Package-level API
+	     *
+	     */
+
+	    var defaultLogger = new Logger();
+
+	    var _loggersByName = {};
+	    defaultLogger.getLogger = function getLogger(name) {
+	        if (typeof name !== "string" || name === "") {
+	          throw new TypeError("You must supply a name when creating a logger.");
+	        }
+
+	        var logger = _loggersByName[name];
+	        if (!logger) {
+	          logger = _loggersByName[name] = new Logger(
+	            name, defaultLogger.getLevel(), defaultLogger.methodFactory);
+	        }
+	        return logger;
+	    };
+
+	    // Grab the current global log variable in case of overwrite
+	    var _log = (typeof window !== undefinedType) ? window.log : undefined;
+	    defaultLogger.noConflict = function() {
+	        if (typeof window !== undefinedType &&
+	               window.log === defaultLogger) {
+	            window.log = _log;
+	        }
+
+	        return defaultLogger;
+	    };
+
+	    return defaultLogger;
+	}));
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/*
+	 LimitStore.put('colorado', 'rocky');
+	 ["rocky"]
+	 LimitStore.put('colorado', 'mountain');
+	 ["rocky", "mountain"]
+	 LimitStore.put('colorado', 'national');
+	 ["mountain", "national"]
+	 LimitStore.put('colorado', 'park');
+	 ["national", "park"]
+	 */
+	function LimitStore() {}
+
+	LimitStore.store = {};
+	LimitStore.LIMIT = 2;
+
+	LimitStore.put = function (key, value) {
+	  if (LimitStore.store[key] === undefined) {
+	    LimitStore.store[key] = [null, null];
+	  }
+	  LimitStore.store[key].push(value);
+	  if (LimitStore.store[key].length == LimitStore.LIMIT + 1) {
+	    LimitStore.store[key].shift();
+	  }
+	  return LimitStore.store[key];
+	};
+
+	LimitStore.get = function (key) {
+	  return LimitStore.store[key];
+	};
+
+	exports.default = LimitStore;
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	if (typeof window !== "undefined") {
+	  (function () {
+	    function CustomEvent(event, params) {
+	      params = params || { bubbles: false, cancelable: false, details: undefined };
+	      var evt = document.createEvent('CustomEvent');
+	      evt.initCustomEvent(event, params.bubbles, params.cancelable, params.details);
+	      return evt;
+	    }
+
+	    CustomEvent.prototype = window.Event.prototype;
+
+	    window.CustomEvent = CustomEvent;
+	  })();
+	}
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["OneSignal"] = __webpack_require__(1);
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ }
+/******/ ]);

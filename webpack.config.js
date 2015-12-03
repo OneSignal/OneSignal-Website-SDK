@@ -22,7 +22,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: IS_PROD ? '' : 'eval-source-map',
+  devtool: IS_PROD ? '' : 'inline-source-map',
   module: {
     loaders: [{
       test: /\.js$/,
@@ -41,27 +41,27 @@ module.exports = {
       'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
     })
   ].concat(IS_PROD ? [
-      new webpack.optimize.DedupePlugin(),
-      new webpack.optimize.AggressiveMergingPlugin(),
-      new webpack.optimize.UglifyJsPlugin({
-        sourceMap: false,
-        compress: {
-          sequences: false,
-          dead_code: false,
-          conditionals: true,
-          booleans: false,
-          unused: false,
-          if_return: true,
-          join_vars: true,
-          drop_console: false
-        },
-        mangle: {
-          except: ['$super', '$', 'exports', 'require']
-        },
-        output: {
-          comments: false
-        }
-      }),
+      //new webpack.optimize.DedupePlugin(),
+      //new webpack.optimize.AggressiveMergingPlugin(),
+      //new webpack.optimize.UglifyJsPlugin({
+      //  sourceMap: false,
+      //  compress: {
+      //    sequences: false,
+      //    dead_code: false,
+      //    conditionals: false,
+      //    booleans: false,
+      //    unused: false,
+      //    if_return: false,
+      //    join_vars: false,
+      //    drop_console: false
+      //  },
+      //  mangle: {
+      //    except: ['$super', '$', 'exports', 'require']
+      //  },
+      //  output: {
+      //    comments: false
+      //  }
+      //}),
       new webpack.DefinePlugin({
         'process.env': {
           'NODE_ENV': JSON.stringify('production'),
