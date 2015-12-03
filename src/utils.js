@@ -26,3 +26,11 @@ export function getHumanizedTimeDuration(timeDurationInMilliseconds) {
 
   return 'just now';
 }
+
+export function isServiceWorkerContext() {
+  return typeof window === "undefined";
+}
+
+export function isDev() {
+  return __DEV__;
+}

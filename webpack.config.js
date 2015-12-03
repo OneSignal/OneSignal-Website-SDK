@@ -21,7 +21,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: IS_PROD ? '' : 'inline-source-map',
+  devtool: IS_PROD ? '' : 'eval-source-map',
   module: {
     loaders: [{
       test: /\.js$/,
@@ -62,10 +62,12 @@ module.exports = {
         'NODE_ENV': JSON.stringify('production'),
       },
       __DEV__: false,
+    }),
+    new webpack.ProvidePlugin({
+      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
     })
   ] : [new webpack.DefinePlugin({
     __DEV__: true,
-    __DEV_HOST__: JSON.stringify('https://192.168.1.206:3000')
   }),
     function () {
       this.plugin('watch-run', function (watching, callback) {
@@ -73,6 +75,9 @@ module.exports = {
         console.log('Recompiling assets starting ' + new Date().timeNow() + "...");
         callback();
       })
-    }
+    },
+    new webpack.ProvidePlugin({
+      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+    })
   ]
 };

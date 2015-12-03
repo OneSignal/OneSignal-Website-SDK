@@ -1,36 +1,9 @@
+import { DEV_HOST, PROD_HOST, HOST_URL } from './vars.js';
+import { sendNotification } from './api.js';
 import log from 'loglevel';
-import LimitStore from './limitStore.js'
-import "./events.js"
+import LimitStore from './limitStore.js';
+import "./events.js";
 
-/**
- * Modified MIT License
- *
- * Copyright 2015 OneSignal
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * 1. The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * 2. All copies of substantial portions of the Software may only be used in connection
- * with services provided by OneSignal.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-// Requires Chrome 42+, Safari 7+, or Firefox 44+
-// Web push notifications are supported on Mac OSX, Windows, Linux, and Android.
 var _temp_OneSignal = null;
 
 if (typeof OneSignal !== "undefined")
@@ -38,7 +11,7 @@ if (typeof OneSignal !== "undefined")
 
 var OneSignal = {
   _VERSION: 109000,
-  _HOST_URL: __DEV__ ? __DEV_HOST__ + '/api/v1/' : "https://onesignal.com/api/v1/",
+  _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
   _notificationOpened_callback: null,
@@ -54,6 +27,7 @@ var OneSignal = {
   _useHttpMode: null,
   _windowWidth: 550,
   _windowHeight: 480,
+  _isNewVisitor: false,
   LOGGING: false,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
@@ -333,6 +307,16 @@ var OneSignal = {
 
   _onSubscriptionChanged: function (event) {
     log.debug('Event onesignal.subscription.changed:', event.detail);
+    if (OneSignal._isNewVisitor && event.detail === true) {
+      log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
+      OneSignal._getDbValue('Ids', 'userId')
+        .then(function (result) {
+          sendNotification(OneSignal._app_id, [result.id], {'en': 'Thanks for subscribing!'}, {'en': "You'll get new content updates!"})
+        })
+        .catch(function (e) {
+          log.error(e);
+        });
+    }
   },
 
   _onDbValueRetrieved: function (event) {
@@ -449,6 +433,9 @@ var OneSignal = {
     // Store the current value of Ids:registrationId, so that we can see if the value changes in the future
     OneSignal._getDbValue('Ids', 'userId')
       .then(function (result) {
+        if (result === undefined) {
+          OneSignal._isNewVisitor = true;
+        }
         var storeValue = result ? result.id : null;
         LimitStore.put('db.ids.userId', storeValue);
       });
@@ -474,7 +461,7 @@ var OneSignal = {
       OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
 
     if (__DEV__)
-      OneSignal._initOneSignalHttp = __DEV_HOST__ + '/dev_sdks/initOneSignalHttp';
+      OneSignal._initOneSignalHttp = DEV_HOST + '/dev_sdks/initOneSignalHttp';
 
     // If Safari - add 'fetch' pollyfill if it isn't already added.
     if (OneSignal._isSupportedSafari() && typeof window.fetch == "undefined") {
@@ -765,6 +752,8 @@ var OneSignal = {
       OneSignal._registerForW3CPush(options);
     else
       log.debug('Service workers are not supported in this browser.');
+
+    OneSignal._triggerEvent('onesignal.sdk.initialized', null);
   },
 
   _registerForW3CPush: function (options) {
@@ -1086,11 +1075,13 @@ var OneSignal = {
             }
           }
 
-          OneSignal._putDbValue("NotificationOpened", {url: launchURL, data: notificationData});
-          clients.openWindow(launchURL).catch(function (error) {
-            // Should only fall into here if going to an external URL on Chrome older than 43.
-            clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
-          });
+          if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
+            OneSignal._putDbValue("NotificationOpened", {url: launchURL, data: notificationData});
+            clients.openWindow(launchURL).catch(function (error) {
+              // Should only fall into here if going to an external URL on Chrome older than 43.
+              clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
+            });
+          }
         })
         .catch(function (e) {
           log.error(e);
@@ -1127,6 +1118,7 @@ var OneSignal = {
   },
 
   // Displays notification from content received from OneSignal.
+  // This method is only called by ServiceWorker
   _handleGCMMessage: function (serviceWorker, event) {
     // TODO: Read data from the GCM payload when Chrome no longer requires the below command line parameter.
     // --enable-push-message-payload
@@ -1539,10 +1531,6 @@ var OneSignal = {
   }
 };
 
-if (__DEV__) {
-  OneSignal._HOST_URL = __DEV_HOST__ + "/api/v1/";
-}
-
 // If imported on your page.
 if (typeof window !== "undefined")
   window.addEventListener("message", OneSignal._listener_receiveMessage, false);
@@ -1550,9 +1538,10 @@ else { // if imported from the service worker.
   importScripts('https://cdn.onesignal.com/sdks/serviceworker-cache-polyfill.js');
 
   self.addEventListener('push', function (event) {
-    OneSignal._handleGCMMessage(self, event);
+    OneSignal._handleGCMMessage(self, event); // Can handle messages from any browser (except Safari), rename method
   });
   self.addEventListener('notificationclick', function (event) {
+    // Also only by SW
     OneSignal._handleNotificationOpened(event);
   });
 
