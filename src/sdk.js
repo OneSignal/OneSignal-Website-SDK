@@ -1598,7 +1598,4 @@ else { // if imported from the service worker.
   }
 }
 
-if (_temp_OneSignal)
-  OneSignal._process_pushes(_temp_OneSignal);
-
 module.exports = OneSignal;
