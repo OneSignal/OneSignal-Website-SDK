@@ -4,13 +4,8 @@ import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import "./events.js";
 
-var _temp_OneSignal = null;
-
-if (typeof OneSignal !== "undefined")
-  _temp_OneSignal = OneSignal;
-
 var OneSignal = {
-  _VERSION: 109006,
+  _VERSION: 109007,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -1597,8 +1592,5 @@ else { // if imported from the service worker.
     });
   }
 }
-
-if (_temp_OneSignal)
-  OneSignal._process_pushes(_temp_OneSignal);
 
 module.exports = OneSignal;

@@ -1,3 +1,4 @@
+var fs = require('fs');
 var gulp = require("gulp");
 var gutil = require('gulp-util');
 var shell = require('gulp-shell');
@@ -52,8 +53,19 @@ gulp.task("copy-js", function() {
   gulp.src("./dist/OneSignalSDK.js")
     .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
 
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
+
   // Copy to OneSignal's public/(dev_)sdks/OneSignalSDKWorker.js
   gulp.src("./dist/OneSignalSDK.js")
     .pipe(rename("/OneSignalSDKWorker.js"))
     .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+      .pipe(rename("/OneSignalSDKWorker.js.map"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
 });
