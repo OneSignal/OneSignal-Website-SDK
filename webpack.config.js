@@ -54,9 +54,7 @@ module.exports = {
         join_vars: false,
         drop_console: false
       },
-      mangle: {
-        except: ['$super', '$', 'exports', 'require']
-      },
+      mangle: false,
       output: {
         comments: false
       }
