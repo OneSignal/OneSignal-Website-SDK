@@ -305,13 +305,14 @@ var OneSignal = {
     if (OneSignal._isNewVisitor && event.detail === true) {
       OneSignal._getDbValue('Ids', 'userId')
         .then(function (result) {
-          let welcome_notification_opts = OneSignal._initOptions['welcome_notification'];
+          let welcome_notification_opts = OneSignal._initOptions['welcomeNotification'];
           let welcome_notification_disabled = (welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true);
           let title = (welcome_notification_opts !== undefined && welcome_notification_opts['title'] !== undefined && welcome_notification_opts['title'] !== null) ? welcome_notification_opts['title'] : '';
           let message = (welcome_notification_opts !== undefined && welcome_notification_opts['message'] !== undefined && welcome_notification_opts['message'] !== null && welcome_notification_opts['message'].length > 0) ? welcome_notification_opts['message'] : 'Thanks for subscribing!';
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
             sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message})
+            OneSignal._isNewVisitor = false;
           }
         })
         .catch(function (e) {
