@@ -305,10 +305,12 @@ var OneSignal = {
     if (OneSignal._isNewVisitor && event.detail === true) {
       OneSignal._getDbValue('Ids', 'userId')
         .then(function (result) {
-          if (OneSignal._initOptions['welcome_notification'] && OneSignal._initOptions['welcome_notification']['message']) {
+          let welcome_notification_opts = OneSignal._initOptions['welcome_notification'];
+          let welcome_notification_disabled = (welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true);
+          let title = (welcome_notification_opts !== undefined && welcome_notification_opts['title'] !== undefined && welcome_notification_opts['title'] !== null) ? welcome_notification_opts['title'] : '';
+          let message = (welcome_notification_opts !== undefined && welcome_notification_opts['message'] !== undefined && welcome_notification_opts['message'] !== null && welcome_notification_opts['message'].length > 0) ? welcome_notification_opts['message'] : 'Thanks for subscribing!';
+          if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
-            var title = OneSignal._initOptions['welcome_notification']['title'];
-            var message = OneSignal._initOptions['welcome_notification']['message'];
             sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message})
           }
         })
