@@ -50,8 +50,6 @@
 
 	__webpack_require__(9);
 
-	if (_temp_OneSignal) OneSignal._process_pushes(_temp_OneSignal);
-
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
@@ -1411,6 +1409,8 @@
 	    });
 	  }
 	}
+
+	if (_temp_OneSignal) OneSignal._process_pushes(_temp_OneSignal);
 
 	module.exports = OneSignal;
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
