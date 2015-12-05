@@ -5,7 +5,7 @@ import LimitStore from './limitStore.js';
 import "./events.js";
 
 var OneSignal = {
-  _VERSION: 109010,
+  _VERSION: 109012,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -71,7 +71,7 @@ var OneSignal = {
           };
         })
         .catch(function (e) {
-          log.error(e.stack);
+          log.error(e);
         });
       ;
     });
@@ -98,7 +98,7 @@ var OneSignal = {
           };
         })
         .catch(function (e) {
-          log.error(e.stack);
+          log.error(e);
         });
     });
   },
@@ -112,7 +112,7 @@ var OneSignal = {
           resolve(value);
         })
         .catch(function (e) {
-          log.error(e.stack);
+          log.error(e);
         });
     });
   },
@@ -125,7 +125,7 @@ var OneSignal = {
           resolve(key);
         })
         .catch(function (e) {
-          log.error(e.stack);
+          log.error(e);
         });
       ;
     });
@@ -180,7 +180,7 @@ var OneSignal = {
             callback(null);
         })
         .catch(function (e) {
-          log.error(e.stack);
+          log.error(e);
         });
       ;
     }
@@ -264,7 +264,7 @@ var OneSignal = {
         });
       })
       .catch(function (e) {
-        log.error(e.stack);
+        log.error(e);
       });
     ;
   },
@@ -406,7 +406,7 @@ var OneSignal = {
     if (OneSignal.LOGGING)
       log.enableAll();
     else
-      log.disableAll();
+      log.setLevel('error');
 
     log.info(`OneSignal Web SDK loaded (version ${OneSignal._VERSION}).`);
     if (!OneSignal.isPushNotificationsSupported()) {
@@ -428,7 +428,7 @@ var OneSignal = {
         };
       })
         .catch(function (e) {
-          log.error(e.stack);
+          log.error(e);
         });
     }
     else {
@@ -518,7 +518,7 @@ var OneSignal = {
         OneSignal._sessionInit({});
       })
       .catch(function (e) {
-        log.error(e.stack);
+        log.error(e);
       });
   },
 
@@ -573,7 +573,7 @@ var OneSignal = {
             }
           })
           .catch(function (e) {
-            log.error(e.stack);
+            log.error(e);
           });
         ;
       }
@@ -628,7 +628,7 @@ var OneSignal = {
         });
       })
       .catch(function (e) {
-        log.error(e.stack);
+        log.error(e);
       });
     ;
   },
