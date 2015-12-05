@@ -5,7 +5,7 @@ import LimitStore from './limitStore.js';
 import "./events.js";
 
 var OneSignal = {
-  _VERSION: 109008,
+  _VERSION: 109009,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -1269,11 +1269,13 @@ var OneSignal = {
     else if (event.data.httpsPromptAccepted) { // HTTPS Only
       OneSignal.registerForPushNotifications();
       OneSignal.setSubscription(true);
-      (elem = document.getElementById('OneSignal-iframe-modal')).parentNode.removeChild(elem);
+      let elem = document.getElementById('OneSignal-iframe-modal');
+      elem.parentNode.removeChild(elem);
       OneSignal._triggerEvent_customPromptClicked('granted');
     }
     else if (event.data.httpsPromptCanceled) { // HTTPS Only
-      (elem = document.getElementById('OneSignal-iframe-modal')).parentNode.removeChild(elem);
+      let elem = document.getElementById('OneSignal-iframe-modal');
+      elem.parentNode.removeChild(elem);
       OneSignal._triggerEvent_customPromptClicked('denied');
     }
     else if (event.data.httpPromptAccepted) { // HTTP Only
