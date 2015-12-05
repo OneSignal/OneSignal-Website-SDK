@@ -5,7 +5,7 @@ import LimitStore from './limitStore.js';
 import "./events.js";
 
 var OneSignal = {
-  _VERSION: 109009,
+  _VERSION: 109010,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -295,6 +295,11 @@ var OneSignal = {
     }
   },
 
+  onCustomPromptClicked: function (event) {
+    log.debug('Event onesignal.prompt.custom.clicked:', event.detail);
+    OneSignal._checkTrigger_eventSubscriptionChanged();
+  },
+
   onNativePromptChanged: function (event) {
     log.debug('Event onesignal.prompt.native.permissionchanged:', event.detail);
     OneSignal._checkTrigger_eventSubscriptionChanged();
@@ -447,6 +452,7 @@ var OneSignal = {
     });
 
 
+    window.addEventListener('onesignal.prompt.custom.clicked', OneSignal.onCustomPromptClicked);
     window.addEventListener('onesignal.prompt.native.permissionchanged', OneSignal.onNativePromptChanged);
     window.addEventListener('onesignal.subscription.changed', OneSignal._onSubscriptionChanged);
     window.addEventListener('onesignal.db.valueretrieved', OneSignal._onDbValueRetrieved);
@@ -920,6 +926,7 @@ var OneSignal = {
   },
 
   _triggerEvent_customPromptClicked: function (clickResult) {
+    var recentPermissions = LimitStore.put('notification.permission', clickResult);
     OneSignal._triggerEvent('onesignal.prompt.custom.clicked', {
       result: clickResult
     });
