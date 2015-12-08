@@ -7,7 +7,6 @@ var runSequence = require('run-sequence');
 
 var oneSignalSourceDir = "/Users/jpang/code/OneSignal";
 var IS_PRODUCTION_BUILD = process.argv.indexOf('--production') >= 0 || false;
-var IS_TEST_BUILD = process.argv.indexOf('--test') >= 0 || false;
 
 
 gulp.task("default", function() {
@@ -20,7 +19,7 @@ gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
 });
 
 gulp.task("transpile-javascript", shell.task([
-  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production-build' : '') + (IS_TEST_BUILD ? '--test-build' : '')
+  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production-build' : '')
 ]));
 
 /*

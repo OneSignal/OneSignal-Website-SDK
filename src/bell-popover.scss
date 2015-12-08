@@ -23,12 +23,6 @@ $popover-forecolor: white;
     position: absolute;
     display: none;
 
-    &:hover {
-        body svg {
-            display: none !important;
-        }
-    }
-
     &.onesignal-popover-theme {
         max-width: 100%;
         max-height: 100%;
@@ -37,12 +31,6 @@ $popover-forecolor: white;
         -webkit-transition: opacity 100ms;
         transition: opacity 100ms;
         opacity: 0;
-
-        &:hover {
-            svg {
-                display: none !important;
-            }
-        }
 
 
         .onesignal-popover-content {
@@ -59,16 +47,10 @@ $popover-forecolor: white;
             line-height: 1.5em;
             -webkit-transform: scale(0) translateZ(0);
             transform: scale(0) translateZ(0);
-            cursor: pointer;
             -webkit-filter: drop-shadow(0 2px 4px rgba(34, 36, 38, 0.35));
             filter: drop-shadow(0 2px 4px rgba(34, 36, 38, 0.35));
             @include unselectable();
-
-            &:hover {
-                svg {
-                    display: none !important;
-                }
-            }
+            @include default-cursor();
 
             &:before {
                 content: "";
