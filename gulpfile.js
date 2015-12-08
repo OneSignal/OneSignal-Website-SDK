@@ -1,3 +1,4 @@
+var fs = require('fs');
 var gulp = require("gulp");
 var gutil = require('gulp-util');
 var shell = require('gulp-shell');
@@ -6,6 +7,7 @@ var runSequence = require('run-sequence');
 
 var oneSignalSourceDir = "/Users/jpang/code/OneSignal";
 var IS_PRODUCTION_BUILD = process.argv.indexOf('--production') >= 0 || false;
+var IS_TEST_BUILD = process.argv.indexOf('--test') >= 0 || false;
 
 
 gulp.task("default", function() {
@@ -18,7 +20,7 @@ gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
 });
 
 gulp.task("transpile-javascript", shell.task([
-  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production-build' : '')
+  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production-build' : '') + (IS_TEST_BUILD ? '--test-build' : '')
 ]));
 
 /*
@@ -52,8 +54,19 @@ gulp.task("copy-js", function() {
   gulp.src("./dist/OneSignalSDK.js")
     .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
 
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
+
   // Copy to OneSignal's public/(dev_)sdks/OneSignalSDKWorker.js
   gulp.src("./dist/OneSignalSDK.js")
     .pipe(rename("/OneSignalSDKWorker.js"))
     .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+      .pipe(rename("/OneSignalSDKWorker.js.map"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
 });

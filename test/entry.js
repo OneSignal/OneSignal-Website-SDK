@@ -1,1 +1,1 @@
-// Nothing here yet
+require('./api.js');
