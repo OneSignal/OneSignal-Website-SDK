@@ -3,6 +3,8 @@ var path = require('path');
 var babelPolyfill = require('babel-polyfill');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var IS_PROD = process.argv.indexOf('--production-build') >= 0;
+var IS_TEST = process.argv.indexOf('--test-build') >= 0;
+
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
   var ampm = (hours >= 12 ? 'PM' : 'AM');
@@ -10,11 +12,19 @@ Date.prototype.timeNow = function() {
   hours = hours ? hours : 12; // the hour '0' should be '12'
   return ((hours < 10) ? "0" : "") + hours + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + " " + ampm;
 };
+
+var entries = {
+  OneSignalSDK: './src/entry.js',
+};
+if (IS_TEST)
+  entries['test'] = './test/entry.js';
+
+var includePaths = [path.resolve(__dirname, "./src")];
+if (IS_TEST)
+  includePaths.push(path.resolve(__dirname, "./test"));
+
 module.exports = {
-  entry: {
-    OneSignalSDK: './src/entry.js',
-    test: './test/entry.js'
-  },
+  entry: entries,
   output: {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
@@ -23,7 +33,7 @@ module.exports = {
   module: {
     loaders: [{
       test: /\.js$/,
-      include: [path.resolve(__dirname, "./src"), path.resolve(__dirname, "./test")],
+      include: includePaths,
       exclude: /(node_modules|bower_components)/,
       loader: 'babel-loader',
       query: {
@@ -33,7 +43,7 @@ module.exports = {
     },
     {
       test: /\.scss$/,
-      loaders: IS_PROD ? ["style", "css", "sass"] : ["style", "css?sourceMap", "sass?sourceMap"]
+      loaders: IS_PROD ? ["style", "css", "sass"] : ["style", "css", "sass"]
     }]
   },
   sassLoader: {

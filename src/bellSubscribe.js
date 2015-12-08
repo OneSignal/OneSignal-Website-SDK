@@ -3,6 +3,7 @@ import LimitStore from './limitStore.js';
 
 if (isBrowserEnv()) {
   require("./bell.scss");
+  var Tether = require('tether');
   var Drop = require('tether-drop');
   var log = require('loglevel');
   var bell = require('raw!./test.svg');
@@ -16,8 +17,7 @@ if (isBrowserEnv()) {
       if (!isPushNotificationsSupported())
         return;
 
-      document.getElementsByTagName('body')[0]
-        .insertAdjacentHTML('beforeend', `<div id="onesignal-bell">${bell}</div>`);
+      document.getElementsByTagName('body')[0].insertAdjacentHTML('beforeend', `<div id="onesignal-bell">${bell}</div>`);
       let contextedDrop = Drop.createContext({
         classPrefix: 'onesignal-popover'
       });
@@ -56,6 +56,11 @@ if (isBrowserEnv()) {
           this.setPopoverContent('Subscribe to notifications')
         }
       });
+
+      //document.querySelector('.onesignal-popover').style.display = 'none';
+      //this.popover.open();
+      //this.popover.close();
+      //document.querySelector('.onesignal-popover').style.display = 'block';
     }
 
     setPopoverContent(content) {
