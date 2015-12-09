@@ -495,7 +495,7 @@ var OneSignal = {
       });
       OneSignal.bell.create();
       OneSignal.bell.setBadge('1');
-      OneSignal.bell.displayMessage('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eleifend varius nisl sit amet porta.');
+      OneSignal.bell.setMessage('Subscribe to notifications');
     }
   },
 
