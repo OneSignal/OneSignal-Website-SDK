@@ -62,9 +62,6 @@ if (isBrowserEnv()) {
       // Install events
       this.launcherButton.addEventListener('mouseover', () => {
         addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
-        if (!document.querySelector("#onesignal-bell-container .pulse-ring")) {
-          addDomElement(this.launcherButton, 'beforeend', '<div class="pulse-ring"></div>');
-        }
         this.showMessage();
         addCssClass(this.launcherMessage, 'onesignal-bell-launcher-message-opened');
         addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
@@ -72,12 +69,13 @@ if (isBrowserEnv()) {
 
       this.launcherButton.addEventListener('mouseleave', () => {
         removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
-        removeDomElement('#onesignal-bell-container .pulse-ring');
         this.hideMessage();
         removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
       });
 
       this.launcherButton.addEventListener('mousedown', () => {
+        removeDomElement('.pulse-ring');
+        addDomElement(this.launcherButton, 'beforeend', '<div class="pulse-ring"></div>');
         addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-active');
         addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-active');
       });

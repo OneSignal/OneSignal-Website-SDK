@@ -29,7 +29,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: 'source-map',
+  devtool: '',
   module: {
     loaders: [{
       test: /\.js$/,

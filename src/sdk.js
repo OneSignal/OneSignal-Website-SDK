@@ -490,8 +490,8 @@ var OneSignal = {
       log.info('Showing bell.');
       OneSignal.bell = new Bell({
         size: 'medium',
-        position: 'bottom-right',
-        theme: 'red-on-white'
+        position: 'bottom-left',
+        theme: 'white-on-red'
       });
       OneSignal.bell.create();
       OneSignal.bell.setBadge('1');

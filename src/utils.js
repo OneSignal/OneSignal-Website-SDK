@@ -101,9 +101,10 @@ export function isSupportedSafari() {
 }
 
 export function removeDomElement(selector) {
-  var el = document.querySelector(selector);
-  if (el) {
-    el.parentNode.removeChild(document.querySelector(selector));
+  var els = document.querySelectorAll(selector);
+  if (els.length > 0) {
+    for (let i = 0; i < els.length; i++)
+      els[i].parentNode.removeChild(els[i]);
   }
 }
 
