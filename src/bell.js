@@ -9,10 +9,11 @@ if (isBrowserEnv()) {
   /*
     {
       size = ['small', 'medium', 'large'],
-      position = 'top-left', 'bottom-left', 'top-right', 'bottom-right'],
+      position = 'bottom-left', 'bottom-right'],
       offset = '15px 15px',
       theme = ['red-white', 'white-red'],
       inactiveOpacity: 0.75,
+      showLauncherAfter: 1000,
       messages: {
           'unsubscribed': 'Subscribe to notifications',
           'subscribed': 'You're subscribed to notifications'
@@ -23,37 +24,17 @@ if (isBrowserEnv()) {
     constructor({
         size = 'small',
         position = 'bottom-left',
-        theme = 'red-white'
+        theme = 'red-white',
+        showLauncherAfter = 750,
+        showBadgeAfter = 300,
       } = {}) {
       this.options = {
         size: size,
         position: position,
-        theme: theme
+        theme: theme,
+        showLauncherAfter: showLauncherAfter,
+        showBadgeAfter: showBadgeAfter
       };
-    }
-
-    get container() {
-      return document.querySelector('#onesignal-bell-container');
-    }
-
-    get launcher() {
-      return this.container.querySelector('#onesignal-bell-launcher');
-    }
-
-    get launcherButton() {
-      return this.launcher.querySelector('.onesignal-bell-launcher-button');
-    }
-
-    get launcherBadge() {
-      return this.launcher.querySelector('.onesignal-bell-launcher-badge');
-    }
-
-    get launcherMessage() {
-      return this.launcher.querySelector('.onesignal-bell-launcher-message');
-    }
-
-    get launcherMessageBody() {
-      return this.launcher.querySelector('.onesignal-bell-launcher-message-body');
     }
 
     create() {
@@ -157,21 +138,49 @@ if (isBrowserEnv()) {
       }
 
 
-      var now = new Date().getTime();
-      var page_load_time = now - performance.timing.navigationStart;
-      if (page_load_time > 1000) {
-        addCssClass(this.launcher, 'onesignal-bell-launcher-active');
-      } else {
-        setTimeout(() => {
-          addCssClass(this.launcher, 'onesignal-bell-launcher-active');
-        }, 1000 - page_load_time);
+      var durationSinceNavigation = new Date().getTime() - performance.timing.navigationStart;
+      if (durationSinceNavigation > this.options.showLauncherAfter)
+        this.showLauncher();
+      else {
+        this._scheduleEvent(Math.max(this.options.showLauncherAfter - durationSinceNavigation, 0), () => {
+          this.showLauncher();
+        })
+        .then(() => {
+            return this._scheduleEvent(this.options.showBadgeAfter, () => {
+              this.showBadge();
+            });
+          })
+        .catch((e) => {
+            log.error(e);
+        });
       }
     }
 
-    setMessage(message) {
-      if (message) {
-        this.launcherMessageBody.innerHTML = message;
+    _scheduleEvent(msInFuture, task) {
+      if (typeof task !== 'function')
+        throw new Error('Task to be scheduled must be a function.');
+      if (msInFuture <= 0) {
+        task();
+        return Promise.resolve();
       }
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          task();
+          resolve();
+        }, msInFuture);
+      });
+    }
+
+    showLauncher() {
+      addCssClass(this.launcher, 'onesignal-bell-launcher-active');
+    }
+
+    hideLauncher() {
+      removeCssClass(this.launcher, 'onesignal-bell-launcher-active');
+    }
+
+    setMessage(message) {
+      this.launcherMessageBody.innerHTML = message;
     }
 
     showMessage() {
@@ -184,6 +193,38 @@ if (isBrowserEnv()) {
 
     setBadge(content) {
       this.launcherBadge.innerHTML = content;
+    }
+
+    showBadge() {
+      addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-opened');
+    }
+
+    hideBadge() {
+      removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-opened');
+    }
+
+    get container() {
+      return document.querySelector('#onesignal-bell-container');
+    }
+
+    get launcher() {
+      return this.container.querySelector('#onesignal-bell-launcher');
+    }
+
+    get launcherButton() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-button');
+    }
+
+    get launcherBadge() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-badge');
+    }
+
+    get launcherMessage() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-message');
+    }
+
+    get launcherMessageBody() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-message-body');
     }
   }
 

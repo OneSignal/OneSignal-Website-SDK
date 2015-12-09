@@ -96,11 +96,19 @@ $arrow-size: 12px;
             -webkit-filter: $badge-shadow;
             filter: $badge-shadow;
             transition: transform $transition-duration ease-in-out,
-            border $transition-duration ease-in-out;
+            border $transition-duration ease-in-out,
+            opacity $transition-duration * 1.2 ease-in-out;
             z-index: 1047;
+            opacity: 0;
+            transform: scale(0.01);
 
             &.onesignal-bell-launcher-badge-hover {
                 cursor: pointer;
+            }
+
+            &.onesignal-bell-launcher-badge-opened {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 

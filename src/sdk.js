@@ -489,9 +489,9 @@ var OneSignal = {
     if (__DEV__ && isBrowserEnv()) {
       log.info('Showing bell.');
       OneSignal.bell = new Bell({
-        size: 'large',
-        position: 'bottom-left',
-        theme: 'white-on-red'
+        size: 'medium',
+        position: 'bottom-right',
+        theme: 'red-on-white'
       });
       OneSignal.bell.create();
       OneSignal.bell.setBadge('1');
