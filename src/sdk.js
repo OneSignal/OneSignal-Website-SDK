@@ -3,7 +3,7 @@ import { sendNotification } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import "./events.js";
-import Bell from "./bellSubscribe.js";
+import Bell from "./bell.js";
 import { isBrowserEnv, isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari } from './utils.js';
 
 var OneSignal = {
@@ -488,7 +488,14 @@ var OneSignal = {
 
     if (__DEV__ && isBrowserEnv()) {
       log.info('Showing bell.');
-      OneSignal.bell = new Bell();
+      OneSignal.bell = new Bell({
+        size: 'large',
+        position: 'bottom-left',
+        theme: 'white-on-red'
+      });
+      OneSignal.bell.create();
+      OneSignal.bell.setBadge('1');
+      OneSignal.bell.displayMessage('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eleifend varius nisl sit amet porta.');
     }
   },
 

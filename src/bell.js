@@ -1,0 +1,166 @@
+import { isBrowserEnv, isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, removeCssClass } from './utils.js';
+import LimitStore from './limitStore.js';
+import log from 'loglevel';
+
+if (isBrowserEnv()) {
+  require("./bell.scss");
+  var logoSvg = require('raw!./bell.svg');
+
+  /*
+    {
+      size = ['small', 'medium', 'large'],
+      position = 'top-left', 'bottom-left', 'top-right', 'bottom-right'],
+      offset = '15px 15px',
+      theme = ['red-white', 'white-red'],
+      inactiveOpacity: 0.75,
+      messages: {
+          'unsubscribed': 'Subscribe to notifications',
+          'subscribed': 'You're subscribed to notifications'
+        }
+    }
+   */
+  class Bell {
+    constructor({
+        size = 'small',
+        position = 'bottom-left',
+        theme = 'red-white'
+      } = {}) {
+      this.options = {
+        size: size,
+        position: position,
+        theme: theme
+      };
+    }
+
+    get container() {
+      return document.querySelector('#onesignal-bell-container');
+    }
+
+    get launcher() {
+      return this.container.querySelector('#onesignal-bell-launcher');
+    }
+
+    get launcherButton() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-button');
+    }
+
+    get launcherBadge() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-badge');
+    }
+
+    get launcherMessage() {
+      return this.launcher.querySelector('.onesignal-bell-launcher-message');
+    }
+
+    create() {
+      if (!isPushNotificationsSupported())
+        return;
+
+      // Remove any existing bell
+      if (this.container) {
+        removeDomElement('onesignal-bell-container');
+      }
+
+      window.addDomElement = addDomElement;
+      // Insert the bell container
+      addDomElement('body', 'beforeend', '<div id="onesignal-bell-container" class="onesignal-bell-container onesignal-bell-reset"></div>');
+      // Insert the bell launcher
+      addDomElement(this.container, 'beforeend', '<div id="onesignal-bell-launcher" class="onesignal-bell-launcher"></div>');
+      // Insert the bell launcher button
+      addDomElement(this.launcher, 'beforeend', '<div class="onesignal-bell-launcher-button"></div>');
+      // Insert the bell launcher badge
+      addDomElement(this.launcher, 'beforeend', '<div class="onesignal-bell-launcher-badge"></div>');
+      // Insert the bell launcher message
+      addDomElement(this.launcher, 'beforeend', '<div class="onesignal-bell-launcher-message"></div>');
+
+      // Install events
+      this.launcherButton.addEventListener('mouseover', () => {
+        addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
+        addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
+      });
+
+      this.launcherButton.addEventListener('mouseleave', () => {
+        removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
+        removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
+      });
+
+      this.launcherButton.addEventListener('mousedown', () => {
+        addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-active');
+        addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-active');
+      });
+
+      this.launcherButton.addEventListener('mouseup', () => {
+        removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-active');
+        removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-active');
+      });
+
+      this.launcherBadge.addEventListener('mouseover', () => {
+        addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
+        addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
+      });
+
+      this.launcherBadge.addEventListener('mouseleave', () => {
+        removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
+        removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
+      });
+
+      this.launcherBadge.addEventListener('mousedown', () => {
+        addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-active');
+        addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-active');
+      });
+
+      this.launcherBadge.addEventListener('mouseup', () => {
+        removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-active');
+        removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-active');
+      });
+
+      // Add visual elements
+      addDomElement(this.launcherButton, 'beforeEnd', logoSvg);
+
+      // Add default classes
+      if (this.options.size === 'small') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-sm')
+      }
+      else if (this.options.size === 'medium') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-md')
+      }
+      else if (this.options.size === 'large') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-lg')
+      }
+
+      if (this.options.position === 'bottom-left') {
+        addCssClass(this.container, 'onesignal-bell-container-bottom-left')
+        addCssClass(this.launcher, 'onesignal-bell-launcher-bottom-left')
+      }
+      else if (this.options.position === 'bottom-right') {
+        addCssClass(this.container, 'onesignal-bell-container-bottom-right')
+        addCssClass(this.launcher, 'onesignal-bell-launcher-bottom-right')
+      }
+
+      if (this.options.theme === 'white-on-red') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-theme-whiteonred')
+      }
+      else if (this.options.theme === 'red-on-white') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-theme-redonwhite')
+      }
+
+
+      // All ready to go now
+      addCssClass(this.launcher, 'onesignal-bell-launcher-active');
+    }
+
+    setMessage() {
+
+    }
+
+    displayMessage(message) {
+      this.launcherMessage.innerHTML = message;
+    }
+
+    setBadge(content) {
+      this.launcherBadge.innerHTML = content;
+    }
+  }
+
+  module.exports = Bell;
+}

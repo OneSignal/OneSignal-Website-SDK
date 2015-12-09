@@ -37,8 +37,6 @@
     "run-sequence": "^1.1.5",
     "sass-loader": "^3.1.2",
     "style-loader": "^0.13.0",
-    "tether": "^1.1.1",
-    "tether-drop": "^1.4.1",
     "url-loader": "^0.5.7",
     "webmidi": "^1.0.0-beta.4",
     "webpack": "^1.12.9",

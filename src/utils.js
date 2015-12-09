@@ -99,3 +99,34 @@ export function isSupportedSafari() {
     return false;
   return (parseInt(safariVersion[1]) > 6);
 }
+
+export function removeDomElement(selector) {
+  document.querySelector(selector).parentNode.removeChild(document.querySelector(selector));
+}
+
+export function addDomElement(targetSelectorOrElement, addOrder, elementHtml) {
+  if (typeof targetSelectorOrElement === 'string')
+    document.querySelector(targetSelectorOrElement).insertAdjacentHTML(addOrder, elementHtml);
+  else if (typeof targetSelectorOrElement === 'object')
+    targetSelectorOrElement.insertAdjacentHTML(addOrder, elementHtml);
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
+export function addCssClass(targetSelectorOrElement, cssClass) {
+  if (typeof targetSelectorOrElement === 'string')
+    document.querySelector(targetSelectorOrElement).classList.add(cssClass);
+  else if (typeof targetSelectorOrElement === 'object')
+    targetSelectorOrElement.classList.add(cssClass);
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
+export function removeCssClass(targetSelectorOrElement, cssClass) {
+  if (typeof targetSelectorOrElement === 'string')
+    document.querySelector(targetSelectorOrElement).classList.remove(cssClass);
+  else if (typeof targetSelectorOrElement === 'object')
+    targetSelectorOrElement.classList.remove(cssClass);
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
