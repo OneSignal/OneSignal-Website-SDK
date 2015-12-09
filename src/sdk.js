@@ -5,7 +5,7 @@ import LimitStore from './limitStore.js';
 import "./events.js";
 
 var OneSignal = {
-  _VERSION: 109012,
+  _VERSION: 109013,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -768,66 +768,54 @@ var OneSignal = {
     OneSignal._getDbValue('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
         if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted") {
-          navigator.serviceWorker.getRegistration().then(function (event) {
+          navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
             var sw_path = "";
 
             if (OneSignal._initOptions.path)
               sw_path = OneSignal._initOptions.path;
 
-            if (typeof event === "undefined") // Nothing registered, very first run
-              navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+            if (typeof serviceWorkerRegistration === "undefined") // Nothing registered, very first run
+              OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
             else {
-              if (event.active) {
-                if (event.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
+              if (serviceWorkerRegistration.active) {
+                if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
 
                   OneSignal._getDbValue('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
-                        if (versionResult.id != OneSignal._VERSION) {
-                          event.unregister().then(function () {
-                            navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
-                          })
-                            .catch(function (e) {
-                              log.error(e);
-                            });
-                          ;
-                        }
+                        if (versionResult.id != OneSignal._VERSION)
+                          OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                         else
-                          navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+                          OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                       }
                       else
-                        navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
 
                     })
                     .catch(function (e) {
                       log.error(e);
                     });
-                  ;
                 }
-                else if (event.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
+                else if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
 
-                  OneSignal._getDbValue('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
+                  OneSignal._getDbValue('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
-                        if (versionResult.id != OneSignal._VERSION) {
-                          event.unregister().then(function () {
-                            navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
-                          });
-                        }
+                        if (versionResult.id != OneSignal._VERSION)
+                          OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                         else
-                          navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+                          OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                       }
                       else
-                        navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                     })
                     .catch(function (e) {
                       log.error(e);
                     });
-                  ;
                 }
               }
-              else if (event.installing == null)
-                navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+              else if (serviceWorkerRegistration.installing == null)
+                OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
             }
           })
             .catch(function (e) {
@@ -839,6 +827,10 @@ var OneSignal = {
         log.error(e);
       });
     ;
+  },
+  
+  _registerServiceWorker: function(full_sw_and_path) {
+    navigator.serviceWorker.register(full_sw_and_path, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
   },
 
   _addSessionIframe: function (hostPageProtocol) {
@@ -1564,7 +1556,7 @@ else { // if imported from the service worker.
     isSWonSubdomain = true;
 
   self.addEventListener('install', function (event) {
-    log.debug("OneSignal Installed service worker: " + OneSignal._VERSION);
+    log.debug("OneSignal Installed service worker " + self.location.pathname + ":" + OneSignal._VERSION);
     if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
       OneSignal._putDbValue("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
     else
