@@ -489,7 +489,7 @@ var OneSignal = {
     if (__DEV__ && isBrowserEnv()) {
       log.info('Showing bell.');
       OneSignal.bell = new Bell({
-        size: 'medium',
+        size: 'large',
         position: 'bottom-right',
         theme: 'inverse'
       });
