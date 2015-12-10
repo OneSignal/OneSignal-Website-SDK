@@ -87,11 +87,14 @@ if (isBrowserEnv()) {
 
       this.launcherBadge.addEventListener('mouseover', () => {
         addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
+        this.showMessage();
+        addCssClass(this.launcherMessage, 'onesignal-bell-launcher-message-opened');
         addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
       });
 
       this.launcherBadge.addEventListener('mouseleave', () => {
         removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
+        this.hideMessage();
         removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
       });
 
@@ -118,6 +121,9 @@ if (isBrowserEnv()) {
       else if (this.options.size === 'large') {
         addCssClass(this.launcher, 'onesignal-bell-launcher-lg')
       }
+      else {
+        throw new Error('Invalid OneSignal bell size ' + this.options.size);
+      }
 
       if (this.options.position === 'bottom-left') {
         addCssClass(this.container, 'onesignal-bell-container-bottom-left')
@@ -127,12 +133,18 @@ if (isBrowserEnv()) {
         addCssClass(this.container, 'onesignal-bell-container-bottom-right')
         addCssClass(this.launcher, 'onesignal-bell-launcher-bottom-right')
       }
-
-      if (this.options.theme === 'white-on-red') {
-        addCssClass(this.launcher, 'onesignal-bell-launcher-theme-whiteonred')
+      else {
+        throw new Error('Invalid OneSignal bell position ' + this.options.position);
       }
-      else if (this.options.theme === 'red-on-white') {
-        addCssClass(this.launcher, 'onesignal-bell-launcher-theme-redonwhite')
+
+      if (this.options.theme === 'default') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-theme-default')
+      }
+      else if (this.options.theme === 'inverse') {
+        addCssClass(this.launcher, 'onesignal-bell-launcher-theme-inverse')
+      }
+      else {
+        throw new Error('Invalid OneSignal bell theme ' + this.options.theme);
       }
 
 

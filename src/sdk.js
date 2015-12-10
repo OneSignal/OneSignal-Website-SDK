@@ -490,12 +490,12 @@ var OneSignal = {
       log.info('Showing bell.');
       OneSignal.bell = new Bell({
         size: 'medium',
-        position: 'bottom-left',
-        theme: 'white-on-red'
+        position: 'bottom-right',
+        theme: 'inverse'
       });
       OneSignal.bell.create();
       OneSignal.bell.setBadge('1');
-      OneSignal.bell.setMessage('Subscribe to notifications');
+      OneSignal.bell.setMessage("You're subscribed to notifications");
     }
   },
 
