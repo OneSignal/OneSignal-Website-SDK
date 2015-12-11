@@ -1,3 +1,9 @@
+import log from 'loglevel';
+
+export function isArray(variable) {
+  return Object.prototype.toString.call( variable ) === '[object Array]';
+}
+
 export function getHumanizedTimeDuration(timeDurationInMilliseconds) {
   function addPluralSuffix(number) {
     return (number > 1) ? 's' : '';
@@ -131,6 +137,87 @@ export function removeCssClass(targetSelectorOrElement, cssClass) {
     document.querySelector(targetSelectorOrElement).classList.remove(cssClass);
   else if (typeof targetSelectorOrElement === 'object')
     targetSelectorOrElement.classList.remove(cssClass);
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
+export function on(targetSelectorOrElement, event, task) {
+  if (!event) {
+    log.error('Cannot call on() with no event: ', event);
+  }
+  if (!task) {
+    log.error('Cannot call on() with no task: ', task)
+  }
+  log.debug('Debug me here.');
+  if (typeof targetSelectorOrElement === 'string') {
+    let els = document.querySelectorAll(selector);
+    if (els.length > 0) {
+      for (let i = 0; i < els.length; i++)
+        on(els[i], task);
+    }
+  }
+  else if (isArray(targetSelectorOrElement)) {
+    for (let i = 0; i < targetSelectorOrElement.length; i++)
+      on(targetSelectorOrElement[i], task);
+  }
+  else if (typeof targetSelectorOrElement === 'object')
+    targetSelectorOrElement.addEventListener(event, task);
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
+export function once(targetSelectorOrElement, event, task) {
+  if (!event) {
+    log.error('Cannot call on() with no event: ', event);
+  }
+  if (!task) {
+    log.error('Cannot call on() with no task: ', task)
+  }
+  if (typeof targetSelectorOrElement === 'string') {
+    let els = document.querySelectorAll(selector);
+    if (els.length > 0) {
+      for (let i = 0; i < els.length; i++)
+        once(els[i], task);
+    }
+  }
+  else if (isArray(targetSelectorOrElement)) {
+    for (let i = 0; i < targetSelectorOrElement.length; i++)
+      once(targetSelectorOrElement[i], task);
+  }
+  else if (typeof targetSelectorOrElement === 'object') {
+    var taskWrapper = function(e) {
+      task(e);
+      e.target.removeEventListener(e.type, taskWrapper);
+    };
+    targetSelectorOrElement.addEventListener(event, taskWrapper);
+  }
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
+/**
+ * Removes event handler from selector.
+ * @param targetSelectorOrElement Selector to target one or multiple elements, or a single or array of DOMElement.
+ * @param event The event to target (e.g. 'transitionend')
+ * @param task A single function callback to unbind, or leave empty to remove all event handlers.
+ */
+export function off(targetSelectorOrElement, event, task) {
+  if (typeof targetSelectorOrElement === 'string') {
+    let els = document.querySelectorAll(selector);
+    if (els.length > 0) {
+      for (let i = 0; i < els.length; i++)
+        off(els[i], task);
+    }
+  }
+  else if (isArray(targetSelectorOrElement)) {
+    for (let i = 0; i < targetSelectorOrElement.length; i++)
+      off(targetSelectorOrElement[i], task);
+  }
+  else if (typeof targetSelectorOrElement === 'object')
+    if (task)
+      targetSelectorOrElement.removeEventListener(event, task);
+    else
+      targetSelectorOrElement.removeEventListener(event);
   else
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }

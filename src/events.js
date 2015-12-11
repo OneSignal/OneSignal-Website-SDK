@@ -1,14 +1,12 @@
-if (typeof window !== "undefined") {
-  (function () {
-    function CustomEvent(event, params) {
-      params = params || {bubbles: false, cancelable: false, details: undefined};
-      var evt = document.createEvent('CustomEvent');
-      evt.initCustomEvent(event, params.bubbles, params.cancelable, params.details);
-      return evt;
-    }
+import log from 'loglevel';
 
-    CustomEvent.prototype = window.Event.prototype;
-
-    window.CustomEvent = CustomEvent;
-  })();
+export function triggerEvent (eventName, data) {
+  if (typeof window === "undefined") {
+    log.debug('Skipping triggering of event:', eventName, 'because we are running in a ServiceWorker context.');
+    return;
+  }
+  var event = new CustomEvent(eventName, {
+    bubbles: true, cancelable: true, details: data
+  });
+  window.dispatchEvent(event);
 }

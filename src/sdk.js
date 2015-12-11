@@ -2,7 +2,8 @@ import { DEV_HOST, PROD_HOST, HOST_URL } from './vars.js';
 import { sendNotification } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
-import "./events.js";
+import "./events-polyfill.js";
+import { triggerEvent } from "./events.js";
 import Bell from "./bell.js";
 import { isBrowserEnv, isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari } from './utils.js';
 
@@ -26,7 +27,7 @@ var OneSignal = {
   _windowHeight: 480,
   _isNewVisitor: false,
   bell: null,
-  LOGGING: false,
+  LOGGING: true,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
@@ -491,11 +492,11 @@ var OneSignal = {
       OneSignal.bell = new Bell({
         size: 'large',
         position: 'bottom-right',
-        theme: 'inverse'
+        theme: 'default'
       });
       OneSignal.bell.create();
       OneSignal.bell.setBadge('1');
-      OneSignal.bell.setMessage("You're subscribed to notifications");
+      //OneSignal.bell.setInactive(true);
     }
   },
 
@@ -776,7 +777,7 @@ var OneSignal = {
     else
       log.debug('Service workers are not supported in this browser.');
 
-    OneSignal._triggerEvent('onesignal.sdk.initialized', null);
+    triggerEvent('onesignal.sdk.initialized', null);
   },
 
   _registerForW3CPush: function (options) {
@@ -930,20 +931,9 @@ var OneSignal = {
     }
   },
 
-  _triggerEvent: function (eventName, data) {
-    if (typeof window === "undefined") {
-      log.debug('Skipping triggering of event:', eventName, 'because we are running in a ServiceWorker context.');
-      return;
-    }
-    var event = new CustomEvent(eventName, {
-      bubbles: true, cancelable: true, details: data
-    });
-    window.dispatchEvent(event);
-  },
-
   _triggerEvent_customPromptClicked: function (clickResult) {
     var recentPermissions = LimitStore.put('notification.permission', clickResult);
-    OneSignal._triggerEvent('onesignal.prompt.custom.clicked', {
+    triggerEvent('onesignal.prompt.custom.clicked', {
       result: clickResult
     });
   },
@@ -954,7 +944,7 @@ var OneSignal = {
     }
     if (from !== to) {
       var recentPermissions = LimitStore.put('notification.permission', to);
-      OneSignal._triggerEvent('onesignal.prompt.native.permissionchanged', {
+      triggerEvent('onesignal.prompt.native.permissionchanged', {
         from: from,
         to: to
       });
@@ -962,19 +952,19 @@ var OneSignal = {
   },
 
   _triggerEvent_subscriptionChanged: function (to) {
-    OneSignal._triggerEvent('onesignal.subscription.changed', to);
+    triggerEvent('onesignal.subscription.changed', to);
   },
 
   _triggerEvent_dbValueRetrieved: function (value) {
-    OneSignal._triggerEvent('onesignal.db.valueretrieved', value);
+    triggerEvent('onesignal.db.valueretrieved', value);
   },
 
   _triggerEvent_dbValueSet: function (value) {
-    OneSignal._triggerEvent('onesignal.db.valueset', value);
+    triggerEvent('onesignal.db.valueset', value);
   },
 
   _triggerEvent_internalSubscriptionSet: function (value) {
-    OneSignal._triggerEvent('onesignal.internal.subscriptionset', value);
+    triggerEvent('onesignal.internal.subscriptionset', value);
   },
 
   _subscribeForPush: function (serviceWorkerRegistration) {

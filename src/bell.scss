@@ -1,3 +1,4 @@
+@import 'reset';
 @import 'helpers';
 
 $red: #e54b4d;
@@ -42,7 +43,7 @@ $sizes: (
 );
 
 
-#onesignal-bell-container {
+#onesignal-bell-container.onesignal-reset {
     z-index: 2147483000;
     position: fixed;
 
@@ -103,11 +104,6 @@ $sizes: (
                     &:after {
                         #{opposite-direction($leftOrRight)}: 100%;
                         border-#{opposite-direction($leftOrRight)}-color: black;
-                        @if $position == 'bottom-left' {
-                            transform-origin: left center;
-                        } @else if $position == 'bottom-right' {
-                            transform-origin: 900px 900px;
-                        }
                     }
                 }
 
@@ -123,7 +119,10 @@ $sizes: (
             bottom: 0;
             border-radius: 50%;
             transition: transform $transition-duration ease-in-out,
-            border $transition-duration ease-in-out;
+            border $transition-duration ease-in-out,
+            width $transition-duration ease-in-out,
+            height $transition-duration ease-in-out;
+            cursor: pointer;
 
             svg {
                 width: 100%;
@@ -149,7 +148,14 @@ $sizes: (
             filter: $badge-shadow;
             transition: transform $transition-duration ease-in-out,
             border $transition-duration ease-in-out,
-            opacity $transition-duration * 1.2 ease-in-out;
+            opacity $transition-duration * 1.2 ease-in-out,
+            width $transition-duration * 1.2 ease-in-out,
+            height $transition-duration * 1.2 ease-in-out,
+            position $transition-duration * 1.2 ease-in-out,
+            right $transition-duration * 1.2 ease-in-out,
+            top $transition-duration * 1.2 ease-in-out,
+            bottom $transition-duration * 1.2 ease-in-out,
+            left $transition-duration * 1.2 ease-in-out;
             z-index: 1047;
             opacity: 0;
             transform: scale(0.01);
@@ -322,8 +328,27 @@ $sizes: (
         opacity: 1;
     }
 
-    .onesignal-bell-launcher-inactive {
+    .onesignal-bell-launcher-disabled {
         visibility: hidden;
+    }
+
+    .onesignal-bell-launcher-inactive {
+        opacity: 0.6;
+    }
+
+    .pulse-ring {
+        border: 7px solid rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        -webkit-animation: pulse 0.35s ease-in-out ;
+        -webkit-animation-iteration-count: 1;
+        opacity: 0;
+        z-index: 1000;
+        pointer-events: none;
     }
 }
 
@@ -331,20 +356,6 @@ $sizes: (
     #onesignal-bell-container {
         display: none;
     }
-}
-
-.pulse-ring {
-    border: 7px solid rgba(255, 255, 255, 0.4);
-    border-radius: 50%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    -webkit-animation: pulse 0.35s ease-in-out ;
-    -webkit-animation-iteration-count: 1;
-    opacity: 0;
-    z-index: 1000;
 }
 
 @-webkit-keyframes pulse {
