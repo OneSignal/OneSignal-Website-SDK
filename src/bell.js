@@ -31,7 +31,8 @@ if (isBrowserEnv()) {
         messages = {
             'unsubscribed': 'Subscribe to notifications',
             'subscribed': "You're subscribed to notifications"
-          }
+          },
+        prenotify = true
       } = {}) {
       this.options = {
         size: size,
@@ -39,11 +40,13 @@ if (isBrowserEnv()) {
         theme: theme,
         showLauncherAfter: showLauncherAfter,
         showBadgeAfter: showBadgeAfter,
-        messages: messages
+        messages: messages,
+        prenotify: prenotify
       };
       this.size = this.options.size;
       this.position = this.options.position;
       this.messages = this.options.messages;
+      this.messages.queued = [];
       if (!this.messages.unsubscribed) {
         this.messages.unsubscribed = 'Subscribe to notifications'
       }
@@ -62,8 +65,54 @@ if (isBrowserEnv()) {
         console.info('onesignal.bell.state.changed', state.detail);
       });
 
+      window.addEventListener('onesignal.bell.clicked', () => {
+        if (this.state === 'unsubscribed') {
+          OneSignal.registerForPushNotifications();
+        }
+      });
+
+      window.addEventListener('onesignal.bell.hovering', () => {
+        if (this.isInactive()) {
+          this.wasInactive = true;
+          this.setInactive(false);
+        }
+        // If there's already a message being force shown, do not override
+        if (this.isMessageOpened()) {
+          console.debug('There is already a message being displayed; wait until it is hidden again.');
+          return;
+        }
+        if (messages.queued.length > 0) {
+          let dequeuedMessage = this.dequeueMessage();
+          this.setMessage(dequeuedMessage);
+        } else {
+          this.setMessage(this.messages[this.state]);
+        }
+        this.showMessage();
+      });
+
+      window.addEventListener('onesignal.bell.hovered', () => {
+        this.hideMessage()
+        .then(() => {
+            this.setMessage(this.messages[this.state]);
+            if (this.wasInactive) {
+              this.setInactive(true);
+              this.wasInactive = undefined;
+            }
+          });
+      });
+
       window.addEventListener('onesignal.subscription.changed', (e) => {
         this.setState(e.detail ? 'subscribed' : 'unsubscribed');
+      });
+
+      window.addEventListener('onesignal.actions.welcomenotificationsent', (e) => {
+        this.displayMessage("Thanks for subscribing!", 2500)
+        .then(() => {
+            this.setInactive(true);
+          })
+        .catch((e) => {
+            log.error(e);
+          });
       });
 
       this.updateState();
@@ -93,15 +142,20 @@ if (isBrowserEnv()) {
 
       // Install events
       this.launcherButton.addEventListener('mouseover', () => {
+        var isHoveringData = LimitStore.get('bell.launcherButton.mouse', 'over');
+        if (isHoveringData === undefined || isHoveringData[isHoveringData.length - 1] === 'out') {
+          triggerEvent('onesignal.bell.hovering');
+        }
+        LimitStore.put('bell.launcherButton.mouse', 'over');
         addCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
-        this.showMessage();
         addCssClass(this.launcherMessage, 'onesignal-bell-launcher-message-opened');
         addCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
       });
 
       this.launcherButton.addEventListener('mouseleave', () => {
+        LimitStore.put('bell.launcherButton.mouse', 'out');
+        triggerEvent('onesignal.bell.hovered');
         removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-hover');
-        this.hideMessage();
         removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-hover');
       });
 
@@ -115,6 +169,16 @@ if (isBrowserEnv()) {
       this.launcherButton.addEventListener('mouseup', () => {
         removeCssClass(this.launcherButton, 'onesignal-bell-launcher-button-active');
         removeCssClass(this.launcherBadge, 'onesignal-bell-launcher-badge-active');
+      });
+
+      this.launcherButton.addEventListener('click', () => {
+        triggerEvent('onesignal.bell.button.clicked');
+        triggerEvent('onesignal.bell.clicked');
+      });
+
+      this.launcherBadge.addEventListener('click', () => {
+        triggerEvent('onesignal.bell.badge.clicked');
+        triggerEvent('onesignal.bell.clicked');
       });
 
       this.launcherBadge.addEventListener('mouseover', () => {
@@ -168,18 +232,34 @@ if (isBrowserEnv()) {
         throw new Error('Invalid OneSignal bell theme ' + this.options.theme);
       }
 
-      this._scheduleEvent(this.options.showLauncherAfter, () => {
-        log.info('Shown');
-        this.showLauncher();
-      })
-        .then(() => {
-          return this._scheduleEvent(this.options.showBadgeAfter, () => {
-            this.showBadge();
-          });
-        })
-        .catch((e) => {
-          log.error(e);
+      OneSignal.isPushNotificationsEnabled((isPushEnabled) => {
+        if (isPushEnabled) {
+          console.log('isPushEnabled', isPushEnabled);
+          var promise = this.setInactive(true);
+        } else {
+          var promise = new Promise.resolve(); // Do nothing, returns a promise that executes immediately
+        }
+
+        promise.then(() => {
+          this._scheduleEvent(this.options.showLauncherAfter, () => {
+            this.showLauncher();
+          })
+            .then(() => {
+              return this._scheduleEvent(this.options.showBadgeAfter, () => {
+                if (this.options.prenotify) {
+                  if (!isPushEnabled) {
+                    this.enqueueMessage('Click to subscribe to notifications');
+                    this.showBadge();
+                  }
+                }
+                this.initialized = true;
+              });
+            })
+            .catch((e) => {
+              log.error(e);
+            });
         });
+      });
     }
 
     _scheduleEvent(msInFuture, task) {
@@ -215,15 +295,50 @@ if (isBrowserEnv()) {
         let lastState = this.state;
         this.state = newState;
         if (lastState !== newState) {
-          triggerEvent('onesignal.bell.state.changed', {from: lastState, to: newState });
-
+          triggerEvent('onesignal.bell.state.changed', {from: lastState, to: newState});
           // Update anything that should be changed here in the new state
-          this.setMessage(this.messages[newState]);
         }
+
+        // Update anything that should be reset to the same state
+        this.setMessage(this.messages[newState]);
       }
       else {
         log.error('Cannot update to invalid new state', newState);
       }
+    }
+
+    enqueueMessage(message, notify = false) {
+      this.messages.queued.push(message);
+      if (this.isBadgeOpen()) {
+        this.hideBadge()
+        .then(() => {
+            this.incrementBadge();
+            this.showBadge();
+          });
+      } else {
+        this.incrementBadge();
+        // Special case so the badge doesn't immediately render
+        if (this.initialized) {
+          this.showBadge();
+        }
+      }
+    }
+
+    dequeueMessage(message) {
+      let dequeuedMessage = this.messages.queued.pop(message);
+      if (this.isBadgeOpen()) {
+        this.hideBadge()
+          .then(() => {
+            this.decrementBadge();
+            this.showBadge();
+          });
+      } else {
+        let newBadgeNumber = this.decrementBadge();
+        if (newBadgeNumber <= 0) {
+          this.hideBadge();
+        }
+      }
+      return dequeuedMessage;
     }
 
     showLauncher() {
@@ -244,6 +359,51 @@ if (isBrowserEnv()) {
 
     hideMessage() {
       removeCssClass(this.launcherMessage, 'onesignal-bell-launcher-message-opened');
+      return new Promise((resolve, reject) => {
+        once(this.launcher, 'transitionend', (e) => {
+          if (e.target === this.launcherMessage && e.propertyName === 'opacity') {
+            return resolve(e);
+          }
+        })
+      });
+    }
+
+    isMessageOpened() {
+      return document.querySelector('.onesignal-bell-launcher-message-opened');
+    }
+
+    displayMessage(content, hideAfter = 0) {
+      return new Promise((resolve, reject) => {
+        if (this.isMessageOpened()) {
+          this.hideMessage()
+            .then(() => {
+              this.setMessage(content);
+              this.showMessage();
+              if (hideAfter) {
+                setTimeout(() => {
+                  this.hideMessage();
+                  return resolve();
+                }, hideAfter);
+              } else {
+                return resolve();
+              }
+            })
+            .catch(function (e) {
+              log.error(e);
+            });
+        } else {
+          this.setMessage(content);
+          this.showMessage();
+          if (hideAfter) {
+            setTimeout(() => {
+              this.hideMessage();
+              return resolve();
+            }, hideAfter);
+          } else {
+            return resolve();
+          }
+        }
+      });
     }
 
     setBadge(content) {
@@ -256,8 +416,38 @@ if (isBrowserEnv()) {
       }
     }
 
+    isBadgeOpen() {
+      return document.querySelector('.onesignal-bell-badge-opened');
+    }
+
     badgeHasContent() {
       return this.launcherBadge.innerHTML.length > 0;
+    }
+
+    getBadgeContent() {
+      return this.launcherBadge.innerHTML;
+    }
+
+    incrementBadge() {
+      let content = this.getBadgeContent();
+      // If it IS a number (is not not a number)
+      if (!isNaN(content)) {
+        let badgeNumber = +content; // Coerce to int
+        badgeNumber += 1;
+        this.setBadge(badgeNumber)
+        return badgeNumber;
+      }
+    }
+
+    decrementBadge() {
+      let content = this.getBadgeContent();
+      // If it IS a number (is not not a number)
+      if (!isNaN(content)) {
+        let badgeNumber = +content; // Coerce to int
+        badgeNumber -= 1;
+        this.setBadge(badgeNumber)
+        return badgeNumber;
+      }
     }
 
     hideBadge() {
@@ -273,10 +463,15 @@ if (isBrowserEnv()) {
       });
     }
 
+    isInactive() {
+      return document.querySelector('.onesignal-bell-launcher-inactive');
+    }
+
     setInactive(isInactive) {
       if (isInactive) {
+        this.hideMessage();
         if (this.badgeHasContent()) {
-          this.hideBadge()
+          return this.hideBadge()
             .then(() => {
               addCssClass(this.launcher, 'onesignal-bell-launcher-inactive');
               this.setSize('small');
@@ -300,11 +495,20 @@ if (isBrowserEnv()) {
         else {
           addCssClass(this.launcher, 'onesignal-bell-launcher-inactive');
           this.setSize('small');
+          var launcher = this.launcher;
+          return new Promise((resolve, reject) => {
+            // Once the launcher has finished shrinking down
+            once(this.launcher, 'transitionend', (e) => {
+              if (e.target === this.launcher && e.propertyName === 'opacity') {
+                return resolve(e);
+              }
+            })
+          });
         }
       }
       else {
         if (this.badgeHasContent()) {
-          this.hideBadge()
+          return this.hideBadge()
             .then(() => {
               removeCssClass(this.launcher, 'onesignal-bell-launcher-inactive');
               this.setSize(this.options.size);
@@ -327,6 +531,15 @@ if (isBrowserEnv()) {
         } else {
           removeCssClass(this.launcher, 'onesignal-bell-launcher-inactive');
           this.setSize(this.options.size);
+          var launcher = this.launcher;
+          return new Promise((resolve, reject) => {
+            // Once the launcher has finished shrinking down
+            once(this.launcher, 'transitionend', (e) => {
+              if (e.target === this.launcher && e.propertyName === 'opacity') {
+                return resolve(e);
+              }
+            })
+          });
         }
       }
     }

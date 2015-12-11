@@ -26,6 +26,7 @@ var OneSignal = {
   _windowWidth: 550,
   _windowHeight: 480,
   _isNewVisitor: false,
+  _isInitialized: false,
   bell: null,
   LOGGING: true,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
@@ -321,6 +322,7 @@ var OneSignal = {
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
             sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message})
+            triggerEvent('onesignal.actions.welcomenotificationsent', {title: title, message: message});
             OneSignal._isNewVisitor = false;
           }
         })
@@ -406,6 +408,10 @@ var OneSignal = {
   },
 
   init: function (options) {
+    if (OneSignal._isInitialized) {
+      log.warn('OneSignal.init() was called again, but the SDK is already initialized. Skipping initialization.');
+      return;
+    }
     OneSignal._initOptions = options;
 
     if (OneSignal.LOGGING)
@@ -495,9 +501,9 @@ var OneSignal = {
         theme: 'default'
       });
       OneSignal.bell.create();
-      OneSignal.bell.setBadge('1');
-      //OneSignal.bell.setInactive(true);
     }
+
+    OneSignal._isInitialized = true;
   },
 
   _internalInit: function () {
