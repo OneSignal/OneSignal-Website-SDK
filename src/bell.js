@@ -117,16 +117,17 @@ if (isBrowserEnv()) {
       });
 
       window.addEventListener('onesignal.bell.hovered', () => {
-        console.trace('Hovered');
-        this.hideMessage()
-        .then(() => {
-            console.trace('Inside hovered.');
-            this.setMessage(this.messages[this.state]);
-            if (this.wasInactive && !this.isDialogOpened()) {
-              this.setInactive(true);
-              this.wasInactive = undefined;
-            }
-          });
+        if (this.isMessageOpened()) {
+          this.hideMessage()
+            .then(() => {
+              console.trace('Inside hovered.');
+              this.setMessage(this.messages[this.state]);
+              if (this.wasInactive && !this.isDialogOpened()) {
+                this.setInactive(true);
+                this.wasInactive = undefined;
+              }
+            });
+        }
       });
 
       window.addEventListener('onesignal.subscription.changed', (e) => {
