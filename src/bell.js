@@ -435,6 +435,7 @@ if (isBrowserEnv()) {
     }
 
     displayMessage(content, hideAfter = 0) {
+      log.info('Displaying message.');
       return new Promise((resolve, reject) => {
         if (this.isMessageOpened()) {
           this.hideMessage()
@@ -507,7 +508,10 @@ if (isBrowserEnv()) {
       if (!isNaN(content)) {
         let badgeNumber = +content; // Coerce to int
         badgeNumber -= 1;
-        this.setBadge(badgeNumber)
+        if (badgeNumber > 0)
+          this.setBadge(badgeNumber)
+        else
+          this.setBadge("");
         return badgeNumber;
       }
     }
@@ -560,7 +564,6 @@ if (isBrowserEnv()) {
         }
         else {
           addCssClass(this.launcher, 'onesignal-bell-launcher-inactive');
-          this.setSize('small');
           this.setSize('small');
           var launcher = this.launcher;
           return new Promise((resolve, reject) => {
