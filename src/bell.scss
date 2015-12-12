@@ -113,8 +113,6 @@ $sizes: (
                             &:after {
                                 right: #{ceil(($size-amount / 2)) - 5 - ceil(($arrow-size / 2))};
                             }
-
-                            transform-origin: #{$leftOrRight} center;
                         }
                     }
                 }
@@ -251,7 +249,7 @@ $sizes: (
             transform: scale(0, 0) translateZ(0);
             transition: transform $transition-duration ease-in-out,
             opacity $transition-duration ease-in-out;
-            transform-origin: bottom center;
+            transform-origin: right bottom;
             z-index: 2147481000;
 
             &:after, &:before {

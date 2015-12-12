@@ -166,7 +166,7 @@ export function on(targetSelectorOrElement, event, task) {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
-export function once(targetSelectorOrElement, event, task) {
+export function once(targetSelectorOrElement, event, task, manualDestroy=false) {
   if (!event) {
     log.error('Cannot call on() with no event: ', event);
   }
@@ -187,8 +187,13 @@ export function once(targetSelectorOrElement, event, task) {
   else if (typeof targetSelectorOrElement === 'object') {
     var taskWrapper = (function () {
       var internalTaskFunction = function (e) {
-        targetSelectorOrElement.removeEventListener(e.type, taskWrapper);
-        task(e);
+        var destroyEventListener = function() {
+          targetSelectorOrElement.removeEventListener(e.type, taskWrapper);
+        };
+        if (!manualDestroy) {
+          destroyEventListener();
+        }
+        task(e, destroyEventListener);
       };
       return internalTaskFunction;
     })();

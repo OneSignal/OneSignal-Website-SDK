@@ -66,34 +66,50 @@ if (isBrowserEnv()) {
       });
 
       window.addEventListener('onesignal.bell.click', () => {
-        this.hideMessage();
-        if (this.state === 'unsubscribed') {
-          OneSignal.registerForPushNotifications();
-        } else {
-          this.showDialog()
-            .then((e) => {
-              var self = this;
-              once(document, 'click', (e) => {
-                let wasDialogClicked = self.launcherDialog.contains(e.target);
-                if (wasDialogClicked) {
-                } else {
-                  self.hideDialog()
-                  .then((e) =>
-                  {
-                    if (this.wasInactive) {
-                      this.setInactive(true);
-                      this.wasInactive = undefined;
+        var originalCall = () => {
+          this.hideMessage();
+          if (this.state === 'unsubscribed') {
+            OneSignal.registerForPushNotifications();
+          } else {
+            if (!this.isDialogOpened()) {
+              this.showDialog()
+                .then((e) => {
+                  var self = this;
+                  once(document, 'click', (e, destroyEventListener) => {
+                    let wasDialogClicked = self.launcherDialog.contains(e.target);
+                    if (wasDialogClicked) {
+                    } else {
+                      destroyEventListener();
+                      self.hideDialog()
+                        .then((e) => {
+                          if (this.wasInactive) {
+                            this.setInactive(true);
+                            this.wasInactive = undefined;
+                          }
+                        })
+                        .catch((e) => {
+                          log.error(e);
+                        });
                     }
-                  })
-                  .catch((e) => {
-                      log.error(e);
-                    });
-                }
-              });
+                  }, true);
+                })
+                .catch((e) => {
+                  log.error(e);
+                });
+            }
+          }
+        };
+        if (this.isInactive()) {
+          this.wasInactive = true;
+          this.setInactive(false)
+            .then(function () {
+              originalCall();
             })
-            .catch((e) => {
+            .catch(function (e) {
               log.error(e);
-            });
+            })
+        } else {
+          originalCall();
         }
       });
 
@@ -120,7 +136,6 @@ if (isBrowserEnv()) {
         if (this.isMessageOpened()) {
           this.hideMessage()
             .then(() => {
-              console.trace('Inside hovered.');
               this.setMessage(this.messages[this.state]);
               if (this.wasInactive && !this.isDialogOpened()) {
                 this.setInactive(true);
