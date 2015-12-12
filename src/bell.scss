@@ -4,7 +4,7 @@
 $red: #e54b4d;
 $orange: #e7924c;
 
-$sm-size: 32px;
+$sm-size: 36px;
 $md-size: 48px;
 $lg-size: 64px;
 $dock-offset: 20px;
@@ -34,6 +34,14 @@ $message-max-width: 420px;
 $offset-x: 15px;
 $offset-y: 15px;
 
+$dialog-background: white;
+$dialog-border-width: 2px;
+$dialog-border-color: rgba(0, 0, 0, 0.1);
+//$dialog-border-color: rgba($red, 0.1);
+$dialog-shadow: drop-shadow(0px 2px 2px rgba(34,36,38,.15));
+
+$font-sans-serif: Helvetica Neue, Helvetica, Arial, sans-serif;
+
 $positions: 'bottom-left' 'bottom-right';
 
 $sizes: (
@@ -61,7 +69,7 @@ $sizes: (
         @include unselectable();
         position: absolute;
         z-index: 2147483000;
-        font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+        font-family: $font-sans-serif;
         transform: scale(0.01) translateZ(0);
         opacity: 0;
         transition: transform $transition-duration ease-in-out,
@@ -81,17 +89,32 @@ $sizes: (
                 #{$leftOrRight}: $dock-offset;
 
                 @each $size-name, $size-amount in $sizes {
-                    $arrow-size: $size-amount * 0.20625;
+                    $arrow-size: ceil($size-amount * 0.20625);
                     @if $position == 'bottom-left' {
-                        $transform-origin-x-offset: #{$size-amount / 2};
+                        $transform-origin-x-offset: #{ceil($size-amount / 2)};
                     } @else if $position == 'bottom-right' {
-                        $transform-origin-x-offset: #{$launcher-width - ($size-amount / 2)};
+                        $transform-origin-x-offset: #{$launcher-width - (ceil($size-amount / 2))};
                     }
+
                     &.onesignal-bell-launcher-#{$size-name} {
                         transform-origin: $transform-origin-x-offset center;
 
                         .onesignal-bell-launcher-message {
                             #{$leftOrRight}: #{($size-amount + $arrow-size) + 3px};
+                        }
+
+                        .onesignal-bell-launcher-dialog {
+                            bottom: #{$size-amount + $arrow-size};
+
+                            &:before {
+                                right: #{ceil(($size-amount / 2)) - 5 - ($dialog-border-width + (ceil($arrow-size / 2)))};
+                            }
+
+                            &:after {
+                                right: #{ceil(($size-amount / 2)) - 5 - ceil(($arrow-size / 2))};
+                            }
+
+                            transform-origin: #{$leftOrRight} center;
                         }
                     }
                 }
@@ -105,6 +128,8 @@ $sizes: (
                         #{opposite-direction($leftOrRight)}: 100%;
                         border-#{opposite-direction($leftOrRight)}-color: black;
                     }
+
+                    transform-origin: #{$leftOrRight} center;
                 }
 
                 .onesignal-bell-launcher-button {
@@ -177,14 +202,12 @@ $sizes: (
             color: white;
             background: black;
             cursor: pointer;
-            max-width: 0px;
             border-radius: 5px;
-            transform: translateY(-50%);
+            transform: translateY(-50%) scaleX(0) translateZ(0);
             opacity: 0;
             pointer-events: none;
-            transition: transform $transition-duration * 2 ease-in-out,
-            max-width $transition-duration * 2 ease-in-out,
-            opacity $transition-duration * 2 ease-in-out;
+            transition: transform $transition-duration ease-in-out,
+            opacity $transition-duration ease-in-out;
             top: 50%;
             z-index: 2147481000;
 
@@ -209,10 +232,49 @@ $sizes: (
 
             &.onesignal-bell-launcher-message-opened {
                 pointer-events: auto;
-                visibility: visible;
                 opacity: 1;
-                max-width: $message-max-width;
-                transform: translateY(-50%);
+                transform: translateY(-50%) scaleX(1) translateZ(0);
+            }
+        }
+
+        .onesignal-bell-launcher-dialog {
+            cursor: pointer;
+            position: absolute;
+            right: 0;
+            background-color: $dialog-background;
+            border-radius: 5px;
+            border: 1px solid $dialog-border-color;
+            -webkit-filter: $dialog-shadow;
+            filter: $dialog-shadow;
+            opacity: 0;
+
+            transform: scale(0, 0) translateZ(0);
+            transition: transform $transition-duration ease-in-out,
+            opacity $transition-duration ease-in-out;
+            transform-origin: bottom center;
+            z-index: 2147481000;
+
+            &:after, &:before {
+                top: 100%;
+                border: solid transparent;
+                content: " ";
+                height: 0;
+                width: 0;
+                position: absolute;
+            }
+
+            .onesignal-bell-launcher-dialog-body {
+                z-index: 2147482000;
+                max-width: 100%;
+                white-space: nowrap;
+                // overflow: hidden;  # Re-enable this if things get janky
+                text-overflow: ellipsis;
+                font-family: $font-sans-serif;
+            }
+
+            &.onesignal-bell-launcher-dialog-opened {
+                transform: scale(1, 1) translateZ(0);
+                opacity: 1;
             }
         }
 
@@ -254,6 +316,27 @@ $sizes: (
 
                     .onesignal-bell-launcher-message-body {
                         font-size: $message-font-size-base;
+                    }
+                }
+
+                .onesignal-bell-launcher-dialog {
+                    $arrow-size: $size-amount * 0.20625;
+                    padding: $size-amount * 0.1 $size-amount * 0.3;
+
+                    &:after {
+                        border-top-color: $dialog-background;
+                        border-width: $arrow-size;
+                    }
+
+                    &:before {
+                        border-top-color: $dialog-border-color;
+                        border-width: #{$arrow-size + $dialog-border-width};
+                    }
+
+                    .onesignal-bell-launcher-dialog-body {
+                        font-size: $message-font-size-base;
+
+                        h1 { font-size: $message-font-size-base; }
                     }
                 }
             }

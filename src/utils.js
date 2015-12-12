@@ -185,10 +185,13 @@ export function once(targetSelectorOrElement, event, task) {
       once(targetSelectorOrElement[i], task);
   }
   else if (typeof targetSelectorOrElement === 'object') {
-    var taskWrapper = function(e) {
-      task(e);
-      e.target.removeEventListener(e.type, taskWrapper);
-    };
+    var taskWrapper = (function () {
+      var internalTaskFunction = function (e) {
+        targetSelectorOrElement.removeEventListener(e.type, taskWrapper);
+        task(e);
+      };
+      return internalTaskFunction;
+    })();
     targetSelectorOrElement.addEventListener(event, taskWrapper);
   }
   else
