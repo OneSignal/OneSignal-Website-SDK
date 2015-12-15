@@ -5,7 +5,7 @@ import LimitStore from './limitStore.js';
 import "./events.js";
 
 var OneSignal = {
-  _VERSION: 109013,
+  _VERSION: 109014,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -711,7 +711,7 @@ var OneSignal = {
           {app_id: OneSignal._app_id},
           function (data) {
             log.info('Safari requestPermission() callback:', data);
-            
+
             var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
             if (data.deviceToken) {
               OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
