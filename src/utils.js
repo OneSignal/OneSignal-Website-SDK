@@ -123,6 +123,22 @@ export function addDomElement(targetSelectorOrElement, addOrder, elementHtml) {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
+export function clearDomElementChildren(targetSelectorOrElement) {
+  if (typeof targetSelectorOrElement === 'string') {
+    var element = document.querySelector(targetSelectorOrElement);
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  }
+  else if (typeof targetSelectorOrElement === 'object') {
+    while (targetSelectorOrElement.firstChild) {
+      targetSelectorOrElement.removeChild(targetSelectorOrElement.firstChild);
+    }
+  }
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
 export function addCssClass(targetSelectorOrElement, cssClass) {
   if (typeof targetSelectorOrElement === 'string')
     document.querySelector(targetSelectorOrElement).classList.add(cssClass);

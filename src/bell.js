@@ -1,4 +1,4 @@
-import { isBrowserEnv, isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, removeCssClass, once, on, off } from './utils.js';
+import { isBrowserEnv, isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off } from './utils.js';
 import LimitStore from './limitStore.js';
 import log from 'loglevel';
 import { triggerEvent } from './events.js'
@@ -54,21 +54,26 @@ if (isBrowserEnv()) {
         this.messages.subscribed = "You're subscribed to notifications"
       }
       this.states = {
-        'uninitialized': 'The bell is loading.',
-        'subscribed': 'The user is subscribed',
-        'unsubscribed': 'The user is unsubscribed'
+        uninitialized: 'The bell is loading.',
+        subscribed: 'The user is subscribed',
+        unsubscribed: 'The user is unsubscribed',
+        blocked: 'The user has blocked us.'
       };
       this.state = 'uninitialized';
 
       // Install event hooks
       window.addEventListener('onesignal.bell.state.changed', (state) => {
-        console.info('onesignal.bell.state.changed', state.detail);
+        log.info('onesignal.bell.state.changed', state.detail);
       });
 
       window.addEventListener('onesignal.bell.click', () => {
         var originalCall = () => {
+          log.debug('Bell was clicked.');
+          let currentSetSubscriptionState = this._getCurrentSetSubscriptionState();
           this.hideMessage();
           if (this.state === 'unsubscribed') {
+
+            //&& currentSetSubscriptionState === true
             OneSignal.registerForPushNotifications();
           } else {
             if (!this.isDialogOpened()) {
@@ -187,25 +192,6 @@ if (isBrowserEnv()) {
       addDomElement(this.launcher, 'beforeend', '<div class="onesignal-bell-launcher-dialog"></div>');
       addDomElement(this.launcherDialog, 'beforeend', '<div class="onesignal-bell-launcher-dialog-body"></div>');
 
-      addDomElement(this.launcherDialogBody, 'beforeend',
-        `
-        <h1>Manage Site Notifications</h1>
-        <div class="push-notification">
-          <div class="push-notification-icon"></div>
-          <div class="push-notification-text-container">
-            <div class="push-notification-text-short"></div>
-            <div class="push-notification-text"></div>
-            <div class="push-notification-text"></div>
-          </div>
-        </div>
-        <div class="action-container">
-          <button type="button" id="action-button">Unsubscribe</button>
-        </div>
-        <div class="divider"></div>
-        <div class="kickback">Powered by OneSignal</div>
-        `
-      );
-
       // Install events
       this.launcherButton.addEventListener('mouseover', () => {
         var isHoveringData = LimitStore.get('bell.launcherButton.mouse', 'over');
@@ -295,6 +281,66 @@ if (isBrowserEnv()) {
       });
     }
 
+    _getCurrentSetSubscriptionState() {
+      let setSubscriptionState = LimitStore.get('setsubscription.value');
+      var currentSetSubscription = setSubscriptionState[setSubscriptionState.length - 1];
+      return currentSetSubscription;
+    }
+
+    updateBellLauncherDialogBody() {
+      return new Promise((resolve, reject) => {
+        clearDomElementChildren(this.launcherDialogBody);
+
+        let currentSetSubscription = this._getCurrentSetSubscriptionState();
+        let contents = 'Nothing to show.';
+
+        if (this.state === 'subscribed' && currentSetSubscription === true ||
+            this.state === 'unsubscribed' && currentSetSubscription === false) {
+          contents = `
+                  <h1>Manage Site Notifications</h1>
+                  <div class="push-notification">
+                    <div class="push-notification-icon"></div>
+                    <div class="push-notification-text-container">
+                      <div class="push-notification-text-short"></div>
+                      <div class="push-notification-text"></div>
+                      <div class="push-notification-text"></div>
+                    </div>
+                  </div>
+                  <div class="action-container">
+                    <button type="button" id="action-button">${(this.state === 'subscribed') ? 'Unsubscribe' : 'Subscribe'}</button>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="kickback">Powered by OneSignal</div>
+                `;
+        }
+        else if (this.state === 'blocked') {
+          contents = `
+                  <h1>Receiving Notifications</h1>
+                  <div class="blurb">
+                    <p>To receive notifications:</p>
+                  </div>
+                  <div class="push-notification">
+                    <div class="push-notification-icon"></div>
+                    <div class="push-notification-text-container">
+                      <div class="push-notification-text-short"></div>
+                      <div class="push-notification-text"></div>
+                      <div class="push-notification-text"></div>
+                    </div>
+                  </div>
+                  <div class="action-container">
+                    <button type="button" id="action-button">${(this.state === 'subscribed') ? 'Unsubscribe' : 'Subscribe'}</button>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="kickback">Powered by OneSignal</div>
+                `;
+        }
+
+
+        addDomElement(this.launcherDialogBody, 'beforeend', contents);
+        resolve();
+      });
+    }
+
     _scheduleEvent(msInFuture, task) {
       if (typeof task !== 'function')
         throw new Error('Task to be scheduled must be a function.');
@@ -314,7 +360,10 @@ if (isBrowserEnv()) {
      * Updates the current state to the correct new current state. Returns a promise.
      */
     updateState() {
+      debugger;
       OneSignal.isPushNotificationsEnabled((isEnabled) => {
+        console.info('Finally called this callback back.');
+        debugger;
         this.setState(isEnabled ? 'subscribed' : 'unsubscribed');
       });
     }
@@ -375,14 +424,19 @@ if (isBrowserEnv()) {
     }
 
     showDialog() {
-      addCssClass(this.launcherDialog, 'onesignal-bell-launcher-dialog-opened');
       return new Promise((resolve, reject) => {
-        once(this.launcherDialog, 'transitionend', (e) => {
-          if (e.target === this.launcherDialog) {
-            e.stopPropagation();
-            return resolve(e);
-          }
+        this.updateBellLauncherDialogBody().then(() => {
+          addCssClass(this.launcherDialog, 'onesignal-bell-launcher-dialog-opened');
+          once(this.launcherDialog, 'transitionend', (e) => {
+            if (e.target === this.launcherDialog) {
+              e.stopPropagation();
+              return resolve(e);
+            }
+          })
         })
+        .catch((e) => {
+            log.error(e);
+          });
       });
     }
 

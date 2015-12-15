@@ -29,7 +29,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: 'inline-source-map',
+  devtool: IS_PROD ? 'source-map' : 'inline-source-map',
   module: {
     loaders: [{
       test: /\.js$/,
@@ -66,7 +66,8 @@ module.exports = {
         unused: false,
         if_return: false,
         join_vars: false,
-        drop_console: false
+        drop_console: false,
+        drop_debugger: false
       },
       mangle: false,
       output: {
