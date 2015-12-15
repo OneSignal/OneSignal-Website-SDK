@@ -24,6 +24,7 @@ var OneSignal = {
   _windowHeight: 480,
   _isNewVisitor: false,
   LOGGING: false,
+  log: log,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
@@ -406,7 +407,7 @@ var OneSignal = {
     if (OneSignal.LOGGING)
       log.enableAll();
     else
-      log.setLevel('error');
+      log.setDefaultLevel('error');
 
     log.info(`OneSignal Web SDK loaded (version ${OneSignal._VERSION}).`);
     if (!OneSignal.isPushNotificationsSupported()) {
@@ -709,7 +710,8 @@ var OneSignal = {
           OneSignal._initOptions.safari_web_id,
           {app_id: OneSignal._app_id},
           function (data) {
-            log.debug(data);
+            log.info('Safari requestPermission() callback:', data);
+            
             var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
             if (data.deviceToken) {
               OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
