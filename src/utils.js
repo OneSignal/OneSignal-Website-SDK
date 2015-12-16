@@ -33,10 +33,6 @@ export function getHumanizedTimeDuration(timeDurationInMilliseconds) {
   return 'just now';
 }
 
-export function isBrowserEnv() {
-  return typeof window !== "undefined";
-}
-
 export function isDev() {
   return __DEV__;
 }
@@ -271,6 +267,10 @@ export function getConsoleStyle(style) {
   } else if (style == 'event') {
     return `
     color: green;
+    `;
+  } else if (style == 'postmessage') {
+    return `
+    color: orange;
     `;
   }
 }

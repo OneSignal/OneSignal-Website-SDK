@@ -1,9 +1,10 @@
-import { isBrowserEnv, isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off } from './utils.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle } from './utils.js';
+import Environment from './environment.js';
 import LimitStore from './limitStore.js';
 import log from 'loglevel';
 import { triggerEvent } from './events.js'
 
-if (isBrowserEnv()) {
+if (Environment.isBrowser()) {
   require("./bell.scss");
   var logoSvg = require('raw!./bell.svg');
 
@@ -63,7 +64,6 @@ if (isBrowserEnv()) {
 
       // Install event hooks
       window.addEventListener('onesignal.bell.state.changed', (state) => {
-        log.info('onesignal.bell.state.changed', state.detail);
       });
 
       window.addEventListener('onesignal.bell.click', () => {
@@ -253,7 +253,6 @@ if (isBrowserEnv()) {
 
       OneSignal.isPushNotificationsEnabled((isPushEnabled) => {
         if (isPushEnabled) {
-          console.log('isPushEnabled', isPushEnabled);
           var promise = this.setInactive(true);
         } else {
           var promise = Promise.resolve(); // Do nothing, returns a promise that executes immediately
@@ -360,9 +359,7 @@ if (isBrowserEnv()) {
      * Updates the current state to the correct new current state. Returns a promise.
      */
     updateState() {
-      debugger;
       OneSignal.isPushNotificationsEnabled((isEnabled) => {
-        log.info('%cFinally called this callback back.', getConsoleStyle('alert'));
         this.setState(isEnabled ? 'subscribed' : 'unsubscribed');
       });
     }
@@ -488,7 +485,6 @@ if (isBrowserEnv()) {
     }
 
     displayMessage(content, hideAfter = 0) {
-      log.info('Displaying message.');
       return new Promise((resolve, reject) => {
         if (this.isMessageOpened()) {
           this.hideMessage()

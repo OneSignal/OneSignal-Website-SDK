@@ -89,13 +89,13 @@ module.exports = {
             'NODE_ENV': JSON.stringify('production'),
           },
           __DEV__: false,
-          __VERSION__: JSON.stringify(require("./package.json").version)
+          __VERSION__: JSON.stringify(require("./package.json").version),
         }),
       ] :
       [
         new webpack.DefinePlugin({
           __DEV__: true,
-          __VERSION__: JSON.stringify(require("./package.json").version)
+          __VERSION__: JSON.stringify(require("./package.json").version),
         })
       ])
 };
