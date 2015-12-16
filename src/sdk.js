@@ -5,10 +5,10 @@ import LimitStore from './limitStore.js';
 import "./events-polyfill.js";
 import { triggerEvent } from "./events.js";
 import Bell from "./bell.js";
-import { isBrowserEnv, isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari } from './utils.js';
+import { isBrowserEnv, isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
 
 var OneSignal = {
-  _VERSION: 109014,
+  _VERSION: 109017,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -28,7 +28,8 @@ var OneSignal = {
   _isNewVisitor: false,
   _isInitialized: false,
   bell: null,
-  LOGGING: true,
+  LOGGING: __DEV__,
+  log: log,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
@@ -301,17 +302,17 @@ var OneSignal = {
   },
 
   onCustomPromptClicked: function (event) {
-    log.debug('Event onesignal.prompt.custom.clicked:', event.detail);
+    log.debug('%conesignal.prompt.custom.clicked:', getConsoleStyle('event'), event.detail);
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
   onNativePromptChanged: function (event) {
-    log.debug('Event onesignal.prompt.native.permissionchanged:', event.detail);
+    log.debug('%conesignal.prompt.native.permissionchanged:', getConsoleStyle('event'), event.detail);
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
   _onSubscriptionChanged: function (event) {
-    log.debug('Event onesignal.subscription.changed:', event.detail);
+    log.debug('%conesignal.subscription.changed:', getConsoleStyle('event'), event.detail);
     if (OneSignal._isNewVisitor && event.detail === true) {
       OneSignal._getDbValue('Ids', 'userId')
         .then(function (result) {
@@ -334,11 +335,11 @@ var OneSignal = {
   },
 
   _onDbValueRetrieved: function (event) {
-    log.debug('Event onesignal.db.retrieved:', event.detail);
+    log.debug('%conesignal.db.retrieved:', getConsoleStyle('event'), event.detail);
   },
 
   _onDbValueSet: function (event) {
-    log.debug('Event onesignal.db.valueset:', event.detail);
+    log.debug('%conesignal.db.valueset:', getConsoleStyle('event'), event.detail);
     var info = event.detail;
     if (info.type === 'userId') {
       LimitStore.put('db.ids.userId', info.id);
@@ -347,14 +348,14 @@ var OneSignal = {
   },
 
   _onInternalSubscriptionSet: function (event) {
-    log.debug('Event onesignal.internal.subscriptionset:', event.detail);
+    log.debug('%conesignal.internal.subscriptionset:', getConsoleStyle('event'), event.detail);
     var newSubscriptionValue = event.detail;
     LimitStore.put('setsubscription.value', newSubscriptionValue);
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
   _onSdkInitialized: function() {
-    if (isBrowserEnv()) {
+    if (isBrowserEnv() && !OneSignal.bell) {
       log.info('Showing bell.');
       OneSignal.bell = new Bell({
         size: 'large',
@@ -514,7 +515,7 @@ var OneSignal = {
   },
 
   _internalInit: function () {
-    log.trace('Called _internalInit()');
+    log.debug('Called %c_internalInit()', getConsoleStyle('code'));
     Promise.all([OneSignal._getDbValue('Ids', 'appId'),
       OneSignal._getDbValue('Ids', 'registrationId'),
       OneSignal._getDbValue('Options', 'subscription')])
@@ -538,8 +539,10 @@ var OneSignal = {
 
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
-        if (OneSignal._initOptions.autoRegister == false && !registrationIdResult && OneSignal._initOptions.subdomainName == null)
+        if (OneSignal._initOptions.autoRegister == false && !registrationIdResult && OneSignal._initOptions.subdomainName == null) {
+          triggerEvent('onesignal.sdk.initialized');
           return;
+        }
 
         if (document.visibilityState != "visible") {
           document.addEventListener("visibilitychange", OneSignal._visibilitychange);
@@ -568,6 +571,7 @@ var OneSignal = {
 
   // Http only - Only called from iframe's init.js
   _initHttp: function (options) {
+    log.debug('Called %c _initHttp', getConsoleStyle('code'), '. Initializing <iframe>.');
     OneSignal._initOptions = options;
 
     if (options.continuePressed) {
@@ -578,13 +582,13 @@ var OneSignal = {
     var creator = opener || parent;
 
     if (!creator) {
-      log.debug("ERROR:_initHttp: No opener or parent found!");
+      log.error('_initHttp (from <iframe>):', 'No opener or parent found!');
       return;
     }
     // Setting up message channel to receive message from host page.
     var messageChannel = new MessageChannel();
     messageChannel.port1.onmessage = function (event) {
-      log.debug("_initHttp.messageChannel.port1.onmessage", event);
+      log.info("%cMessage from host:", getConsoleStyle('bold'), event.data);
 
       if (event.data.initOptions) {
         OneSignal.setDefaultNotificationUrl(event.data.initOptions.defaultUrl);
@@ -600,7 +604,6 @@ var OneSignal = {
               OneSignal._deleteDbValue("NotificationOpened", event.data.initOptions.parent_url);
               log.debug("OneSignal._safePostMessage:targetOrigin:", OneSignal._initOptions.origin);
 
-              debugger;
               OneSignal._safePostMessage(creator, {openedNotification: notificationOpenedResult.data}, OneSignal._initOptions.origin, null);
             }
           })
@@ -610,10 +613,8 @@ var OneSignal = {
         ;
       }
       else if (event.data.getNotificationPermission) {
-        debugger;
-        log.warn("I FINALLY GOT HERE OMGGGGG");
+        //log.info('%cIn the <iframe>: getNotificationPermission message was received.', getConsoleStyle('alert'));
         OneSignal._getSubdomainState(function (curState) {
-          debugger;
           OneSignal._safePostMessage(creator, {currentNotificationPermission: curState}, OneSignal._initOptions.origin, null);
         });
       }
@@ -734,7 +735,6 @@ var OneSignal = {
       }
 
     }
-<<<<<<< HEAD
     else {
       if (isSupportedSafari()) {
         if (OneSignal._initOptions.safari_web_id) {
@@ -744,7 +744,7 @@ var OneSignal = {
             OneSignal._initOptions.safari_web_id,
             {app_id: OneSignal._app_id},
             function (data) {
-              log.debug(data);
+              log.info('Safari requestPermission() callback:', data);
               var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
               if (data.deviceToken) {
                 OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
@@ -753,25 +753,6 @@ var OneSignal = {
                 sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
               }
               OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
-=======
-
-    if (OneSignal._isSupportedSafari()) {
-      if (OneSignal._initOptions.safari_web_id) {
-        var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-        window.safari.pushNotification.requestPermission(
-          OneSignal._HOST_URL + 'safari',
-          OneSignal._initOptions.safari_web_id,
-          {app_id: OneSignal._app_id},
-          function (data) {
-            log.info('Safari requestPermission() callback:', data);
-
-            var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-            if (data.deviceToken) {
-              OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
-            }
-            else {
-              sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
->>>>>>> 6ac7672... Up version level.
             }
           );
         }
@@ -1253,7 +1234,7 @@ var OneSignal = {
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
   _listener_receiveMessage: function receiveMessage(event) {
-    log.debug("_listener_receiveMessage: ", event);
+    log.debug("%c Received message from iFrame/popup: ", getConsoleStyle('bold'), event.data);
 
     if (OneSignal._initOptions == undefined)
       return;
@@ -1273,7 +1254,6 @@ var OneSignal = {
       if (eventData.registrationId)
         OneSignal._putDbValue("Ids", {type: "registrationId", id: eventData.registrationId});
 
-      debugger;
       OneSignal._fireNotificationEnabledCallback(eventData.isPushEnabled);
       OneSignal._sendUnsentTags();
 
@@ -1296,8 +1276,10 @@ var OneSignal = {
           log.error('_listener_receiveMessage:', e);
         });
     }
-    else if (event.data.currentNotificationPermission) // Subdomain Only
+    else if (event.data.currentNotificationPermission) { // Subdomain Only
+      debugger;
       OneSignal._fireNotificationEnabledCallback(event.data.currentNotificationPermission.isPushEnabled);
+    }
     else if (event.data.idsAvailable) { // Only called on HTTP pages.
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
       OneSignal._putDbValue("Ids", {type: "userId", id: event.data.idsAvailable.userId});
@@ -1420,7 +1402,6 @@ var OneSignal = {
     if (OneSignal._initOptions.subdomainName && !isBrowserSafari()) {
       OneSignal._isNotificationEnabledCallback = callback;
       if (OneSignal._iframePort) {
-        debugger;
         OneSignal._iframePort.postMessage({getNotificationPermission: true});
       }
       return;

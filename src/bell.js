@@ -362,8 +362,7 @@ if (isBrowserEnv()) {
     updateState() {
       debugger;
       OneSignal.isPushNotificationsEnabled((isEnabled) => {
-        console.info('Finally called this callback back.');
-        debugger;
+        log.info('%cFinally called this callback back.', getConsoleStyle('alert'));
         this.setState(isEnabled ? 'subscribed' : 'unsubscribed');
       });
     }
