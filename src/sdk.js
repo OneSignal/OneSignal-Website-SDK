@@ -27,6 +27,7 @@ var OneSignal = {
   _useHttpMode: null,
   _windowWidth: 550,
   _windowHeight: 480,
+  _isUninitiatedVisitor: false,
   _isNewVisitor: false,
   _isInitialized: false,
   bell: null,
@@ -69,6 +70,7 @@ var OneSignal = {
 
         request.onupgradeneeded = function (event) {
           log.info('The OneSignal SDK is rebuilding its IndexedDB schema from a clean slate.');
+          OneSignal._isNewVisitor = true;
           var db = event.target.result;
           db.createObjectStore("Ids", {keyPath: "type"});
           db.createObjectStore("NotificationOpened", {keyPath: "url"});
@@ -332,7 +334,7 @@ var OneSignal = {
   },
 
   _onSubscriptionChanged: function (event) {
-    if (OneSignal._isNewVisitor && event.detail === true) {
+    if (OneSignal._isUninitiatedVisitor && event.detail === true) {
       OneSignal._getDbValue('Ids', 'userId')
         .then(function (result) {
           let welcome_notification_opts = OneSignal._initOptions['welcomeNotification'];
@@ -343,7 +345,7 @@ var OneSignal = {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
             sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message})
             Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message});
-            OneSignal._isNewVisitor = false;
+            OneSignal._isUninitiatedVisitor = false;
           }
         })
         .catch(function (e) {
@@ -498,7 +500,7 @@ var OneSignal = {
     OneSignal._getDbValue('Ids', 'userId')
       .then(function (result) {
         if (result === undefined) {
-          OneSignal._isNewVisitor = true;
+          OneSignal._isUninitiatedVisitor = true;
         }
         var storeValue = result ? result.id : null;
         LimitStore.put('db.ids.userId', storeValue);

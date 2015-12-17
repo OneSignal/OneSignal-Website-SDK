@@ -32,4 +32,17 @@ LimitStore.get = function (key) {
   return LimitStore.store[key];
 };
 
+LimitStore.getFirst = function (key) {
+  return LimitStore.get(key)[0];
+};
+
+LimitStore.getLast = function (key) {
+  return LimitStore.get(key)[1];
+};
+
+LimitStore.isEmpty = function(key) {
+  let values = LimitStore.get(key);
+  return values[0] === null && values[1] === null;
+};
+
 export default LimitStore;

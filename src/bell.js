@@ -34,6 +34,15 @@ if (Environment.isBrowser()) {
       };
     }
 
+    static get STATES() {
+      return {
+        UNINITIALIZED: 'uninitialized',
+        SUBSCRIBED: 'subscribed',
+        UNSUBSCRIBED: 'unsubscribed',
+        BLOCKED: 'blocked'
+      };
+    }
+
     constructor({
       size = 'small',
       position = 'bottom-left',
@@ -42,7 +51,8 @@ if (Environment.isBrowser()) {
       showBadgeAfter = 300,
       messages = {
         'unsubscribed': 'Subscribe to notifications',
-        'subscribed': "You're subscribed to notifications"
+        'subscribed': "You're subscribed to notifications",
+        'blocked': "You've blocked notifications"
       },
       prenotify = true
       } = {}) {
@@ -60,36 +70,31 @@ if (Environment.isBrowser()) {
       this.messages = this.options.messages;
       this.messages.queued = [];
       if (!this.messages.unsubscribed) {
-        this.messages.unsubscribed = 'Subscribe to notifications'
+        this.messages[Bell.STATES.UNSUBSCRIBED] = 'Subscribe to notifications'
       }
       if (!this.messages.subscribed) {
-        this.messages.subscribed = "You're subscribed to notifications"
+        this.messages[Bell.STATES.SUBSCRIBED] = "You're subscribed to notifications"
       }
-      this.states = {
-        uninitialized: 'The bell is loading.',
-        subscribed: 'The user is subscribed',
-        unsubscribed: 'The user is unsubscribed',
-        blocked: 'The user has blocked us.'
-      };
-      this.state = 'uninitialized';
+      if (!this.messages.blocked) {
+        this.messages[Bell.STATES.BLOCKED] = "Notifications have been blocked"
+      }
+      this.state = Bell.STATES.UNINITIALIZED;
 
       // Install event hooks
       window.addEventListener(Bell.EVENTS.STATE_CHANGED, (state) => {
       });
-
-      window.addEventListener()
 
       window.addEventListener(Bell.EVENTS.CLICK, () => {
         var originalCall = () => {
           log.debug('Bell was clicked.');
           let currentSetSubscriptionState = this._getCurrentSetSubscriptionState();
           this.hideMessage();
-          if (this.state === 'unsubscribed') {
+          if (this.state === Bell.STATES.UNSUBSCRIBED) {
 
             //&& currentSetSubscriptionState === true
             OneSignal.registerForPushNotifications();
           }
-          else if (this.state === 'subscribed') {
+          else if (this.state === Bell.STATES.SUBSCRIBED) {
             if (!this.isDialogOpened()) {
               this.showDialog()
                 .then((e) => {
@@ -117,7 +122,7 @@ if (Environment.isBrowser()) {
                 });
             }
           }
-          else if (this.state === 'blocked') {
+          else if (this.state === Bell.STATES.BLOCKED) {
             if (!this.isDialogOpened()) {
               this.showDialog()
                 .then((e) => {
@@ -193,7 +198,11 @@ if (Environment.isBrowser()) {
       });
 
       window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, (e) => {
-        this.setState(e.detail ? 'subscribed' : 'unsubscribed');
+        this.setState(e.detail ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+      });
+
+      window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {
+        this.updateState();
       });
 
       window.addEventListener(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
@@ -236,8 +245,8 @@ if (Environment.isBrowser()) {
 
       // Install events
       this.launcherButton.addEventListener('mouseover', () => {
-        var isHoveringData = LimitStore.get('bell.launcherButton.mouse', 'over');
-        if (isHoveringData === undefined || isHoveringData[isHoveringData.length - 1] === 'out') {
+        let eventName = 'bell.launcherButton.mouse';
+        if (LimitStore.isEmpty(eventName) || LimitStore.getLast(eventName) === 'out') {
           Event.trigger(Bell.EVENTS.HOVERING);
         }
         LimitStore.put('bell.launcherButton.mouse', 'over');
@@ -306,7 +315,7 @@ if (Environment.isBrowser()) {
           })
             .then(() => {
               return this._scheduleEvent(this.options.showBadgeAfter, () => {
-                if (this.options.prenotify) {
+                if (this.options.prenotify && OneSignal._isNewVisitor) {
                   if (!isPushEnabled) {
                     this.enqueueMessage('Click to subscribe to notifications');
                     this.showBadge();
@@ -335,8 +344,8 @@ if (Environment.isBrowser()) {
         let currentSetSubscription = this._getCurrentSetSubscriptionState();
         let contents = 'Nothing to show.';
 
-        if (this.state === 'subscribed' && currentSetSubscription === true ||
-          this.state === 'unsubscribed' && currentSetSubscription === false) {
+        if (this.state === Bell.STATES.SUBSCRIBED && currentSetSubscription === true ||
+          this.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
           contents = `
                   <h1>Manage Site Notifications</h1>
                   <div class="push-notification">
@@ -348,13 +357,13 @@ if (Environment.isBrowser()) {
                     </div>
                   </div>
                   <div class="action-container">
-                    <button type="button" id="action-button">${(this.state === 'subscribed') ? 'Unsubscribe' : 'Subscribe'}</button>
+                    <button type="button" id="action-button">${(this.state === Bell.STATES.SUBSCRIBED) ? 'Unsubscribe' : 'Subscribe'}</button>
                   </div>
                   <div class="divider"></div>
                   <div class="kickback">Powered by OneSignal</div>
                 `;
         }
-        else if (this.state === 'blocked') {
+        else if (this.state === Bell.STATES.BLOCKED) {
           contents = `
                   <h1>Receiving Notifications</h1>
                   <div class="blurb">
@@ -369,7 +378,7 @@ if (Environment.isBrowser()) {
                     </div>
                   </div>
                   <div class="action-container">
-                    <button type="button" id="action-button">${(this.state === 'subscribed') ? 'Unsubscribe' : 'Subscribe'}</button>
+                    <button type="button" id="action-button">${(this.state === Bell.STATES.SUBSCRIBED) ? 'Unsubscribe' : 'Subscribe'}</button>
                   </div>
                   <div class="divider"></div>
                   <div class="kickback">Powered by OneSignal</div>
@@ -402,8 +411,12 @@ if (Environment.isBrowser()) {
      */
     updateState() {
       OneSignal.isPushNotificationsEnabled((isEnabled) => {
-        this.setState(isEnabled ? 'subscribed' : 'unsubscribed');
+        this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+        if (LimitStore.getLast('notification.permission') === 'denied') {
+          this.setState(Bell.STATES.BLOCKED);
+        }
       });
+
     }
 
     /**
@@ -411,20 +424,15 @@ if (Environment.isBrowser()) {
      * @param newState One of ['subscribed', 'unsubscribed'].
      */
     setState(newState) {
-      if (this.states.hasOwnProperty(newState)) {
-        let lastState = this.state;
-        this.state = newState;
-        if (lastState !== newState) {
-          Event.trigger(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
-          // Update anything that should be changed here in the new state
-        }
+      let lastState = this.state;
+      this.state = newState;
+      if (lastState !== newState) {
+        Event.trigger(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
+        // Update anything that should be changed here in the new state
+      }
 
-        // Update anything that should be reset to the same state
-        this.setMessage(this.messages[newState]);
-      }
-      else {
-        log.error('Cannot update to invalid new state', newState);
-      }
+      // Update anything that should be reset to the same state
+      this.setMessage(this.messages[newState]);
     }
 
     enqueueMessage(message, notify = false) {
