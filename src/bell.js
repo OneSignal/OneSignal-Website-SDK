@@ -2,7 +2,7 @@ import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDom
 import Environment from './environment.js';
 import LimitStore from './limitStore.js';
 import log from 'loglevel';
-import { triggerEvent } from './events.js'
+import Event from './events.js'
 
 if (Environment.isBrowser()) {
   require("./bell.scss");
@@ -23,6 +23,17 @@ if (Environment.isBrowser()) {
     }
    */
   class Bell {
+
+    static get EVENTS() {
+      return {
+        STATE_CHANGED: 'onesignal.bell.state.changed',
+        CLICK: 'onesignal.bell.click',
+        BUTTON_CLICK: 'onesignal.bell.button.click',
+        HOVERING: 'onesignal.bell.hovering',
+        HOVERED: 'onesignal.bell.hovered'
+      };
+    }
+
     constructor({
         size = 'small',
         position = 'bottom-left',
@@ -63,10 +74,12 @@ if (Environment.isBrowser()) {
       this.state = 'uninitialized';
 
       // Install event hooks
-      window.addEventListener('onesignal.bell.state.changed', (state) => {
+      window.addEventListener(Bell.EVENTS.STATE_CHANGED, (state) => {
       });
 
-      window.addEventListener('onesignal.bell.click', () => {
+      window.addEventListener()
+
+      window.addEventListener(Bell.EVENTS.CLICK, () => {
         var originalCall = () => {
           log.debug('Bell was clicked.');
           let currentSetSubscriptionState = this._getCurrentSetSubscriptionState();
@@ -75,7 +88,36 @@ if (Environment.isBrowser()) {
 
             //&& currentSetSubscriptionState === true
             OneSignal.registerForPushNotifications();
-          } else {
+          }
+          else if (this.state === 'subscribed') {
+            if (!this.isDialogOpened()) {
+              this.showDialog()
+                .then((e) => {
+                  var self = this;
+                  once(document, 'click', (e, destroyEventListener) => {
+                    let wasDialogClicked = self.launcherDialog.contains(e.target);
+                    if (wasDialogClicked) {
+                    } else {
+                      destroyEventListener();
+                      self.hideDialog()
+                        .then((e) => {
+                          if (this.wasInactive) {
+                            this.setInactive(true);
+                            this.wasInactive = undefined;
+                          }
+                        })
+                        .catch((e) => {
+                          log.error(e);
+                        });
+                    }
+                  }, true);
+                })
+                .catch((e) => {
+                  log.error(e);
+                });
+            }
+          }
+          else if (this.state === 'blocked') {
             if (!this.isDialogOpened()) {
               this.showDialog()
                 .then((e) => {
@@ -118,7 +160,7 @@ if (Environment.isBrowser()) {
         }
       });
 
-      window.addEventListener('onesignal.bell.hovering', () => {
+      window.addEventListener(Bell.EVENTS.HOVERING, () => {
         if (this.isInactive()) {
           this.wasInactive = true;
           this.setInactive(false);
@@ -137,7 +179,7 @@ if (Environment.isBrowser()) {
         this.showMessage();
       });
 
-      window.addEventListener('onesignal.bell.hovered', () => {
+      window.addEventListener(Bell.EVENTS.HOVERED, () => {
         if (this.isMessageOpened()) {
           this.hideMessage()
             .then(() => {
@@ -150,11 +192,11 @@ if (Environment.isBrowser()) {
         }
       });
 
-      window.addEventListener('onesignal.subscription.changed', (e) => {
+      window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, (e) => {
         this.setState(e.detail ? 'subscribed' : 'unsubscribed');
       });
 
-      window.addEventListener('onesignal.actions.welcomenotificationsent', (e) => {
+      window.addEventListener(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
         this.displayMessage("Thanks for subscribing!", 2500)
         .then(() => {
             this.setInactive(true);
@@ -196,14 +238,14 @@ if (Environment.isBrowser()) {
       this.launcherButton.addEventListener('mouseover', () => {
         var isHoveringData = LimitStore.get('bell.launcherButton.mouse', 'over');
         if (isHoveringData === undefined || isHoveringData[isHoveringData.length - 1] === 'out') {
-          triggerEvent('onesignal.bell.hovering');
+ Event.trigger(Bell.EVENTS.HOVERING);
         }
         LimitStore.put('bell.launcherButton.mouse', 'over');
       });
 
       this.launcherButton.addEventListener('mouseleave', () => {
         LimitStore.put('bell.launcherButton.mouse', 'out');
-        triggerEvent('onesignal.bell.hovered');
+        Event.trigger(Bell.EVENTS.HOVERED);
       });
 
       this.launcherButton.addEventListener('mousedown', () => {
@@ -219,8 +261,8 @@ if (Environment.isBrowser()) {
       });
 
       this.launcherButton.addEventListener('click', () => {
-        triggerEvent('onesignal.bell.button.click');
-        triggerEvent('onesignal.bell.click');
+        Event.trigger(Bell.EVENTS.BUTTON_CLICK);
+        Event.trigger(Bell.EVENTS.CLICK);
       });
 
       // Add visual elements
@@ -373,7 +415,7 @@ if (Environment.isBrowser()) {
         let lastState = this.state;
         this.state = newState;
         if (lastState !== newState) {
-          triggerEvent('onesignal.bell.state.changed', {from: lastState, to: newState});
+          Event.triggerggerEvent(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
           // Update anything that should be changed here in the new state
         }
 

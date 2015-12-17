@@ -26,6 +26,9 @@ LimitStore.put = function (key, value) {
 };
 
 LimitStore.get = function (key) {
+  if (LimitStore.store[key] === undefined) {
+    LimitStore.store[key] = [null, null];
+  }
   return LimitStore.store[key];
 };
 
