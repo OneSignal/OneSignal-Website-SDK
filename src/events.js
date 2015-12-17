@@ -1,16 +1,15 @@
 import log from 'loglevel';
 import Environment from './environment.js';
-import Bell from './bell.js';
 import { getConsoleStyle } from './utils.js';
 
+
 const SILENT_EVENTS = [
-  Bell.EVENTS.HOVERING,
-  Bell.EVENTS.HOVERED,
-  Bell.EVENTS.BUTTON_CLICK,
-  Bell.EVENTS.CLICK,
-  OneSignal.EVENTS.DB_VALUE_RETRIEVED,
-  OneSignal.EVENTS.DB_VALUE_SET
-];
+  'onesignal.bell.hovering',
+  'onesignal.bell.hovered',
+  'onesignal.bell.button.click',
+  'onesignal.bell.click',
+  'onesignal.db.valueretrieved',
+  'onesignal.db.valueset'];
 
 export default class Event {
   static trigger(eventName, data) {

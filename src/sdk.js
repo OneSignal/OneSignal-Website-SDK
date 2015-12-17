@@ -474,6 +474,9 @@ var OneSignal = {
   },
 
   init: function (options) {
+    if (Environment.isBrowser() && window.localStorage["onesignal.debugger.init"]) {
+      debugger;
+    }
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
     if (OneSignal._isInitialized) {
       log.warn('OneSignal.init() was called again, but the SDK is already initialized. Skipping initialization.');

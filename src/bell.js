@@ -9,18 +9,18 @@ if (Environment.isBrowser()) {
   var logoSvg = require('raw!./bell.svg');
 
   /*
-    {
-      size = ['small', 'medium', 'large'],
-      position = 'bottom-left', 'bottom-right'],
-      offset = '15px 15px',
-      theme = ['red-white', 'white-red'],
-      inactiveOpacity: 0.75,
-      showLauncherAfter: 1000,
-      messages: {
-          'unsubscribed': 'Subscribe to notifications',
-          'subscribed': 'You're subscribed to notifications'
-        }
-    }
+   {
+   size = ['small', 'medium', 'large'],
+   position = 'bottom-left', 'bottom-right'],
+   offset = '15px 15px',
+   theme = ['red-white', 'white-red'],
+   inactiveOpacity: 0.75,
+   showLauncherAfter: 1000,
+   messages: {
+   'unsubscribed': 'Subscribe to notifications',
+   'subscribed': 'You're subscribed to notifications'
+   }
+   }
    */
   class Bell {
 
@@ -35,16 +35,16 @@ if (Environment.isBrowser()) {
     }
 
     constructor({
-        size = 'small',
-        position = 'bottom-left',
-        theme = 'red-white',
-        showLauncherAfter = 10,
-        showBadgeAfter = 300,
-        messages = {
-            'unsubscribed': 'Subscribe to notifications',
-            'subscribed': "You're subscribed to notifications"
-          },
-        prenotify = true
+      size = 'small',
+      position = 'bottom-left',
+      theme = 'red-white',
+      showLauncherAfter = 10,
+      showBadgeAfter = 300,
+      messages = {
+        'unsubscribed': 'Subscribe to notifications',
+        'subscribed': "You're subscribed to notifications"
+      },
+      prenotify = true
       } = {}) {
       this.options = {
         size: size,
@@ -198,10 +198,10 @@ if (Environment.isBrowser()) {
 
       window.addEventListener(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
         this.displayMessage("Thanks for subscribing!", 2500)
-        .then(() => {
+          .then(() => {
             this.setInactive(true);
           })
-        .catch((e) => {
+          .catch((e) => {
             log.error(e);
           });
       });
@@ -238,7 +238,7 @@ if (Environment.isBrowser()) {
       this.launcherButton.addEventListener('mouseover', () => {
         var isHoveringData = LimitStore.get('bell.launcherButton.mouse', 'over');
         if (isHoveringData === undefined || isHoveringData[isHoveringData.length - 1] === 'out') {
- Event.trigger(Bell.EVENTS.HOVERING);
+          Event.trigger(Bell.EVENTS.HOVERING);
         }
         LimitStore.put('bell.launcherButton.mouse', 'over');
       });
@@ -336,7 +336,7 @@ if (Environment.isBrowser()) {
         let contents = 'Nothing to show.';
 
         if (this.state === 'subscribed' && currentSetSubscription === true ||
-            this.state === 'unsubscribed' && currentSetSubscription === false) {
+          this.state === 'unsubscribed' && currentSetSubscription === false) {
           contents = `
                   <h1>Manage Site Notifications</h1>
                   <div class="push-notification">
@@ -415,7 +415,7 @@ if (Environment.isBrowser()) {
         let lastState = this.state;
         this.state = newState;
         if (lastState !== newState) {
-          Event.triggerggerEvent(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
+          Event.trigger(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
           // Update anything that should be changed here in the new state
         }
 
@@ -431,7 +431,7 @@ if (Environment.isBrowser()) {
       this.messages.queued.push(message);
       if (this.isBadgeOpen()) {
         this.hideBadge()
-        .then(() => {
+          .then(() => {
             this.incrementBadge();
             this.showBadge();
           });
@@ -472,7 +472,7 @@ if (Environment.isBrowser()) {
             }
           })
         })
-        .catch((e) => {
+          .catch((e) => {
             log.error(e);
           });
       });
@@ -617,10 +617,10 @@ if (Environment.isBrowser()) {
           }
         })
       })
-      .catch(function (e) {
+        .catch(function (e) {
           log.error(e);
           reject(e);
-      });
+        });
     }
 
     isInactive() {
@@ -634,7 +634,8 @@ if (Environment.isBrowser()) {
           return this.hideBadge()
             .then(() => {
               addCssClass(this.launcher, 'onesignal-bell-launcher-inactive');
-              this.setSize('small');;
+              this.setSize('small');
+              ;
               var launcher = this.launcher;
               return new Promise((resolve, reject) => {
                 // Once the launcher has finished shrinking down

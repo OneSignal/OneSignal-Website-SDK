@@ -3,7 +3,5 @@ if (typeof OneSignal !== "undefined")
 
 require("expose?OneSignal!./sdk.js");
 
-window.hihi = 'test';
-
 if (predefinedOneSignalPushes)
   OneSignal._process_pushes(predefinedOneSignalPushes);
