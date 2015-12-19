@@ -1,4 +1,4 @@
-import { DEV_HOST, PROD_HOST, HOST_URL } from './vars.js';
+import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import './string.js'
 import { sendNotification } from './api.js';
@@ -10,8 +10,8 @@ import Bell from "./bell.js";
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
 
 var OneSignal = {
-  _VERSION: 109018,
-  _HOST_URL: HOST_URL,
+  _VERSION: 109019,
+  _API_URL: API_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
   _notificationOpened_callback: null,
@@ -33,6 +33,7 @@ var OneSignal = {
   bell: null,
   store: LimitStore,
   environment: Environment,
+  event: Event,
   LOGGING: __DEV__,
   log: log,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
@@ -156,7 +157,7 @@ var OneSignal = {
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
-    log.debug(`Calling ${action} ${OneSignal._HOST_URL + url} with data:`, inData);
+    log.debug(`Calling ${action} ${OneSignal._API_URL + url} with data:`, inData);
     var contents = {
       method: action,
       //mode: 'no-cors', // no-cors is disabled for non-serviceworker.
@@ -167,7 +168,7 @@ var OneSignal = {
       contents.body = JSON.stringify(inData);
     }
 
-    fetch(OneSignal._HOST_URL + url, contents)
+    fetch(OneSignal._API_URL + url, contents)
       .then(function status(response) {
         if (response.status >= 200 && response.status < 300)
           return Promise.resolve(response);
@@ -387,6 +388,14 @@ var OneSignal = {
     log.trace('OneSignal SDK has been fully initialized.');
   },
 
+  _checkTrigger_nativePermissionChanged: function() {
+    let currentPermission = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+    let lastPermission = LimitStore.getLast('notification.permission');
+    if (lastPermission !== currentPermission) {
+      OneSignal._triggerEvent_nativePromptPermissionChanged(lastPermission, currentPermission);
+    }
+  },
+
   _checkTrigger_eventSubscriptionChanged: function () {
     log.debug('Called %c_checkTrigger_eventSubscriptionChanged()', getConsoleStyle('code'));
     var permissions = LimitStore.get('notification.permission');
@@ -455,8 +464,7 @@ var OneSignal = {
       //     use it instead of our SDK method
       navigator.permissions.query({name: 'notifications'}).then(function (permissionStatus) {
         permissionStatus.onchange = function () {
-          var recentPermissions = LimitStore.get('notification.permission');
-          var permissionBeforePrompt = recentPermissions[0];
+          var permissionBeforePrompt = LimitStore.getFirst('notification.permission');
           OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt);
 
           // If we are not the main page, send this event back to main page
@@ -479,19 +487,22 @@ var OneSignal = {
     if (Environment.isBrowser() && window.localStorage["onesignal.debugger.init"]) {
       debugger;
     }
+
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
+
     if (OneSignal._isInitialized) {
       log.warn('OneSignal.init() was called again, but the SDK is already initialized. Skipping initialization.');
       return;
     }
     OneSignal._initOptions = options;
+    OneSignal._app_id = OneSignal._initOptions.appId;
 
     if (!isPushNotificationsSupported()) {
       log.warn("Your browser does not support push notifications.");
       return;
     }
 
-    var currentNotificationPermission = OneSignal._getNotificationPermission();
+    var currentNotificationPermission = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
     LimitStore.put('notification.permission', currentNotificationPermission);
 
     OneSignal._installNativePromptPermissionChangedHook();
@@ -767,7 +778,7 @@ var OneSignal = {
         if (OneSignal._initOptions.safari_web_id) {
           var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
           window.safari.pushNotification.requestPermission(
-            OneSignal._HOST_URL + 'safari',
+            OneSignal._API_URL + 'safari',
             OneSignal._initOptions.safari_web_id,
             {app_id: OneSignal._app_id},
             function (data) {
@@ -1593,6 +1604,7 @@ else { // if imported from the service worker.
 
   if (isSWonSubdomain) {
     self.addEventListener('fetch', function (event) {
+
       event.respondWith(
         caches.match(event.request)
           .then(function (response) {

@@ -274,3 +274,14 @@ export function getConsoleStyle(style) {
     `;
   }
 }
+
+/**
+ * Returns a promise for the setTimeout() method.
+ * @param durationMs
+ * @returns {Promise} Returns a promise that resolves when the timeout is complete.
+ */
+export function timeout(durationMs) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, durationMs)
+  });
+}

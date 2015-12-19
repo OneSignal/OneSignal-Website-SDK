@@ -1,4 +1,4 @@
-import { HOST_URL } from './vars.js'
+import { API_URL } from './vars.js'
 import log from 'loglevel';
 
 export function apiCall(action, method, data) {
@@ -13,7 +13,7 @@ export function apiCall(action, method, data) {
   };
 
   return new Promise((resolve, reject) => {
-    fetch(HOST_URL + action, contents)
+    fetch(API_URL + action, contents)
       .then(function status(response) {
         if (response.status >= 200 && response.status < 300)
           resolve(response.json());

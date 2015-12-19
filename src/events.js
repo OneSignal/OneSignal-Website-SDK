@@ -22,7 +22,7 @@ export default class Event {
         if (typeof IDBCursorWithValue !== "undefined" && displayData instanceof IDBCursorWithValue) {
           displayData = data.value;
         }
-        if (displayData) {
+        if (displayData || displayData === false) {
           log.debug(`%c${eventName}:`, getConsoleStyle('event'), displayData);
         } else {
           log.debug(`%c${eventName}`, getConsoleStyle('event'));
