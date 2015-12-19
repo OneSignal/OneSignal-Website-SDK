@@ -6,11 +6,11 @@ import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import "./events-polyfill.js";
 import Event from "./events.js";
-import Bell from "./bell.js";
+import Bell from "./bell/bell.js";
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
 
 var OneSignal = {
-  _VERSION: 109019,
+  _VERSION: __VERSION__,
   _API_URL: API_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -1184,70 +1184,6 @@ var OneSignal = {
       });
   },
 
-  // Displays notification from content received from OneSignal.
-  // This method is only called by ServiceWorker
-  _handleGCMMessage: function (serviceWorker, event) {
-    // TODO: Read data from the GCM payload when Chrome no longer requires the below command line parameter.
-    // --enable-push-message-payload
-    // The command line param is required even on Chrome 43 nightly build 2015/03/17.
-    if (event.data && event.data.text()[0] == "{") {
-      log.debug('Received data.text: ', event.data.text());
-      log.debug('Received data.json: ', event.data.json());
-    }
-
-    event.waitUntil(new Promise(
-      function (resolve, reject) {
-        OneSignal._getTitle(null, function (title) {
-          OneSignal._getDbValue('Options', 'defaultIcon')
-            .then(function _handleGCMMessage_GotDefaultIcon(defaultIconResult) {
-              OneSignal._getLastNotifications(function (response, appId) {
-                var notificationData = {
-                  id: response.custom.i,
-                  message: response.alert,
-                  additionalData: response.custom.a
-                };
-
-                if (response.title)
-                  notificationData.title = response.title;
-                else
-                  notificationData.title = title;
-
-                if (response.custom.u)
-                  notificationData.launchURL = response.custom.u;
-
-                if (response.icon)
-                  notificationData.icon = response.icon;
-                else if (defaultIconResult)
-                  notificationData.icon = defaultIconResult.value;
-
-                // Never nest the following line in a callback from the point of entering from _getLastNotifications
-                serviceWorker.registration.showNotification(notificationData.title, {
-                  body: response.alert,
-                  icon: notificationData.icon,
-                  tag: JSON.stringify(notificationData)
-                }).then(resolve)
-                  .catch(function (e) {
-                    log.error(e);
-                  });
-
-                OneSignal._getDbValue('Options', 'defaultUrl')
-                  .then(function (defaultUrlResult) {
-                    if (defaultUrlResult)
-                      OneSignal._defaultLaunchURL = defaultUrlResult.value;
-                  })
-                  .catch(function (e) {
-                    log.error(e);
-                  });
-                ;
-              }, resolve);
-            })
-            .catch(function (e) {
-              log.error(e);
-            });
-        });
-      }))
-  },
-
   _getLastNotifications: function (itemCallback, completeCallback) {
     OneSignal._getDbValue('Ids', 'userId')
       .then(function _getLastNotifications_GotUserId(userIdResult) {
@@ -1566,61 +1502,7 @@ var OneSignal = {
 if (Environment.isBrowser())
   window.addEventListener("message", OneSignal._listener_receiveMessage, false);
 else { // if imported from the service worker.
-  importScripts('https://cdn.onesignal.com/sdks/serviceworker-cache-polyfill.js');
 
-  self.addEventListener('push', function (event) {
-    OneSignal._handleGCMMessage(self, event); // Can handle messages from any browser (except Safari), rename method
-  });
-  self.addEventListener('notificationclick', function (event) {
-    // Also only by SW
-    OneSignal._handleNotificationOpened(event);
-  });
-
-  var isSWonSubdomain = location.href.match(/https\:\/\/.*\.onesignal.com\/sdks\//) != null;
-  if (__DEV__)
-    isSWonSubdomain = true;
-
-  self.addEventListener('install', function (event) {
-    log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${OneSignal._VERSION})`);
-    if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
-      OneSignal._putDbValue("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
-    else
-      OneSignal._putDbValue("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
-
-    if (isSWonSubdomain) {
-      event.waitUntil(
-        caches.open("OneSignal_" + OneSignal._VERSION).then(function (cache) {
-          return cache.addAll([
-            '/sdks/initOneSignalHttpIframe',
-            '/sdks/initOneSignalHttpIframe?session=*',
-            '/sdks/manifest_json']);
-        })
-          .catch(function (e) {
-            log.error(e);
-          })
-      );
-    }
-  });
-
-  if (isSWonSubdomain) {
-    self.addEventListener('fetch', function (event) {
-
-      event.respondWith(
-        caches.match(event.request)
-          .then(function (response) {
-            // Cache hit - return response
-            if (response)
-              return response;
-
-            return fetch(event.request);
-          }
-        )
-          .catch(function (e) {
-            log.error(e);
-          })
-      );
-    });
-  }
 }
 
 if (OneSignal.LOGGING)

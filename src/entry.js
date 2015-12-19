@@ -1,7 +1,18 @@
-if (typeof OneSignal !== "undefined")
-  var predefinedOneSignalPushes = OneSignal;
+import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
+import Environment from './environment.js'
 
-require("expose?OneSignal!./sdk.js");
+if (Environment.isBrowser()) {
+  // We're running in the host page, iFrame of the host page, or popup window
+  // Load OneSignal's web SDK
+  if (typeof OneSignal !== "undefined")
+    var predefinedOneSignalPushes = OneSignal;
 
-if (predefinedOneSignalPushes)
-  OneSignal._process_pushes(predefinedOneSignalPushes);
+  require("expose?OneSignal!./sdk.js");
+
+  if (predefinedOneSignalPushes)
+    OneSignal._process_pushes(predefinedOneSignalPushes);
+}
+else if (Environment.isServiceWorker()) {
+  // We're running as the service worker
+  require("expose?ServiceWorker!./ServiceWorker.js");
+}

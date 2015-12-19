@@ -280,8 +280,20 @@ export function getConsoleStyle(style) {
  * @param durationMs
  * @returns {Promise} Returns a promise that resolves when the timeout is complete.
  */
-export function timeout(durationMs) {
+export function delay(durationMs) {
   return new Promise((resolve) => {
     setTimeout(resolve, durationMs)
   });
+}
+
+export function nothing() {
+  return Promise.resolve();
+}
+
+export function when(condition, promiseIfTrue, promiseIfFalse) {
+  if (promiseIfTrue === undefined)
+    promiseIfTrue = nothing();
+  if (promiseIfFalse === undefined)
+    promiseIfFalse = nothing();
+  return condition ? promiseIfTrue : promiseIfFalse;
 }

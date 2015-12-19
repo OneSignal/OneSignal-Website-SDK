@@ -1,6 +1,6 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once } from './utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once } from '../utils.js';
 import log from 'loglevel';
-import Event from './events.js'
+import Event from '../events.js'
 
 
 export default class AnimatedElement {
@@ -10,7 +10,7 @@ export default class AnimatedElement {
    * @param selector {string} The CSS selector of the element.
    * @param showClass {string} The CSS class name to add to show the element.
    * @param hideClass {string} The CSS class name to remove to hide the element.
-   * @param state {string} The current state of the element, defaults to SHOWN.
+   * @param state {string} The current state of the element, defaults to 'shown'.
    * @param targetTransitionEvent {string} A single property (e.g. 'transform' or 'opacity') to look for on transitionend of show() and hide() to know the transition is complete.
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
@@ -28,7 +28,9 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   show() {
-    return new Promise((resolve) => {
+    if (this.shown)
+      return Promise.resolve(this);
+    else return new Promise((resolve) => {
       this.state = 'showing';
       Event.trigger(AnimatedElement.EVENTS.SHOWING, this);
       if (this.hideClass)
@@ -53,7 +55,9 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   hide() {
-    return new Promise((resolve) => {
+    if (this.hidden)
+      return Promise.resolve(this);
+    else return new Promise((resolve) => {
       this.state = 'hiding';
       Event.trigger(AnimatedElement.EVENTS.HIDING, this);
       if (this.showClass)
@@ -78,19 +82,16 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   waitUntilShown() {
-    if (this.state === 'shown') {
+    if (this.state === 'shown')
       return Promise.resolve(this);
-    }
-    else {
-      return new Promise((resolve) => {
-        once(window, AnimatedElement.EVENTS.SHOWN, (event, destroyListenerFn) => {
-          if (event.details === this) {
-            destroyListenerFn();
-            return resolve(this);
-          }
-        }, true);
-      });
-    }
+    else return new Promise((resolve) => {
+      once(window, AnimatedElement.EVENTS.SHOWN, (event, destroyListenerFn) => {
+        if (event.details === this) {
+          destroyListenerFn();
+          return resolve(this);
+        }
+      }, true);
+    });
   }
 
   /**
@@ -98,19 +99,16 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   waitUntilHidden() {
-    if (this.state === 'hidden') {
+    if (this.state === 'hidden')
       return Promise.resolve(this);
-    }
-    else {
-      return new Promise((resolve) => {
-        once(window, AnimatedElement.EVENTS.HIDDEN, (event, destroyListenerFn) => {
-          if (event.details === this) {
-            destroyListenerFn();
-            return resolve(this);
-          }
-        }, true);
-      });
-    }
+    else return new Promise((resolve) => {
+      once(window, AnimatedElement.EVENTS.HIDDEN, (event, destroyListenerFn) => {
+        if (event.details === this) {
+          destroyListenerFn();
+          return resolve(this);
+        }
+      }, true);
+    });
   }
 
   static get EVENTS() {
@@ -128,9 +126,9 @@ export default class AnimatedElement {
    */
   get content() {
     if (this.nestedContentSelector)
-      return element.querySelector(this.nestedContentSelector).innerHTML;
+      return this.element.querySelector(this.nestedContentSelector).innerHTML;
     else
-      return element.innerHTML;
+      return this.element.innerHTML;
   }
 
   /**
@@ -139,9 +137,9 @@ export default class AnimatedElement {
    */
   set content(value) {
     if (this.nestedContentSelector)
-      element.querySelector(this.nestedContentSelector).innerHTML = value;
+      this.element.querySelector(this.nestedContentSelector).innerHTML = value;
     else
-      element.innerHTML = value;
+      this.element.innerHTML = value;
   }
 
 
