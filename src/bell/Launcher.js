@@ -30,17 +30,22 @@ export default class Launcher extends ActiveAnimatedElement {
     else {
       throw new Error('Invalid OneSignal bell size ' + size);
     }
-    return new Promise((resolve) => {
-      // Once the launcher has finished shrinking down
-      once(this.element, 'transitionend', (event, destroyListenerFn) => {
-        if (event.target === this.element &&
-          event.propertyName === this.targetTransitionEvent) {
-          // Uninstall the event listener for transitionend
-          destroyListenerFn();
-          return resolve(this);
-        }
-      }, true);
-    });
+    if (!this.shown) {
+      return Promise.resolve(this);
+    }
+    else {
+      return new Promise((resolve) => {
+        // Once the launcher has finished shrinking down
+        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          if (event.target === this.element &&
+            event.propertyName === this.targetTransitionEvent) {
+            // Uninstall the event listener for transitionend
+            destroyListenerFn();
+            return resolve(this);
+          }
+        }, true);
+      });
+    }
   }
 
   activateIfInactive() {

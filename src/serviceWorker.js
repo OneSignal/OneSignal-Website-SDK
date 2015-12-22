@@ -1,9 +1,10 @@
 import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
-import { sendNotification } from './api.js';
+import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import "./cache-polyfill.js";
+import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
 
 class ServiceWorker {
@@ -27,84 +28,153 @@ class ServiceWorker {
    */
   static onPushReceived(event) {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
-    event.waitUntil(new Promise(
-      function (resolve, reject) {
-        OneSignal._getTitle(null, function (title) {
-          OneSignal._getDbValue('Options', 'defaultIcon')
-            .then(function _handleGCMMessage_GotDefaultIcon(defaultIconResult) {
-              OneSignal._getLastNotifications(function (response, appId) {
-                var notificationData = {
-                  id: response.custom.i,
-                  message: response.alert,
-                  additionalData: response.custom.a
-                };
+    lug('onPushReceived');
 
-                if (response.title)
-                  notificationData.title = response.title;
-                else
-                  notificationData.title = title;
+    event.waitUntil(new Promise((resolve, reject) => {
+      var extra = { };
+      ServiceWorker._getTitle()
+        .then(title => {
+          extra.title = title;
+          return Database.get('Options', 'defaultIcon');
+          lug('onPushReceived');
+        })
+        .then(defaultIconResult => {
+          extra.defaultIconResult = defaultIconResult
+          return extra;
+          lug('onPushReceived');
+        })
+        .then(extra => {
+          return ServiceWorker._getLastNotifications();
+          lug('onPushReceived');
+        })
+        .then(notifications => {
+          lug('onPushReceived');
+          // At this point, we have an array of notification objects (all the JSON is parsed)
+          // We want to fire a notification for each object
+          // We need to use event.waitUntil() to extend the life of the service worker (workers can be killed if idling)
+          // We want to extend the service worker lifetime until all promises for showNotification resolve
+          let notificationEventPromises = [];
 
-                if (response.custom.u)
-                  notificationData.launchURL = response.custom.u;
+          for (let notification of notifications) {
+            let data = {
+              id: notification.custom.i,
+              message: notification.alert,
+              additionalData: notification.custom.a
+            };
 
-                if (response.icon)
-                  notificationData.icon = response.icon;
-                else if (defaultIconResult)
-                  notificationData.icon = defaultIconResult.value;
+            if (notification.title)
+              data.title = notification.title;
+            else
+              data.title = extra.title;
 
-                // Never nest the following line in a callback from the point of entering from _getLastNotifications
-                serviceWorker.registration.showNotification(notificationData.title, {
-                  body: response.alert,
-                  icon: notificationData.icon,
-                  tag: JSON.stringify(notificationData)
-                }).then(resolve)
-                  .catch(function (e) {
-                    log.error(e);
-                  });
+            if (notification.custom.u)
+              data.launchURL = notification.custom.u;
 
-                OneSignal._getDbValue('Options', 'defaultUrl')
-                  .then(function (defaultUrlResult) {
-                    if (defaultUrlResult)
-                      OneSignal._defaultLaunchURL = defaultUrlResult.value;
-                  })
-                  .catch(function (e) {
-                    log.error(e);
-                  });
-                ;
-              }, resolve);
-            })
-            .catch(function (e) {
-              log.error(e);
+            if (notification.icon)
+              data.icon = notification.icon;
+            else if (extra.defaultIconResult)
+              data.icon = extra.defaultIconResult;
+
+            // Never nest the following line in a callback from the point of entering from _getLastNotifications
+            let notificationEventPromise = self.registration.showNotification(data.title, {
+              body: data.message,
+              icon: data.icon,
+              tag: JSON.stringify(data)
             });
-        });
-      }));
+
+            notificationEventPromises.push(notificationEventPromise);
+            return Promise.all(notificationEventPromises);
+          }
+        })
+        .then(resolve)
+        .catch(e => log.error(e));
+    }));
   }
 
   static onNotificationClicked(event) {
-    log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
+    log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
+    lug('onNotificationClicked');
+    var notificationData = JSON.parse(event.notification.tag);
+    event.notification.close();
 
+    event.waitUntil(
+      Database.get('Options', 'defaultUrl')
+        .then(defaultUrlResult => {
+          lug('onNotificationClicked');
+          if (defaultUrlResult)
+            ServiceWorker.defaultLaunchUrl = defaultUrlResult.value;
+        })
+        .then(() => { lug('onPushReceived'); return clients.matchAll({type: 'window'}); })
+        .then(clientList => {
+          lug('onNotificationClicked');
+          var launchURL = registration.scope;
+          if (ServiceWorker.defaultLaunchUrl)
+            launchURL = ServiceWorker.defaultLaunchUrl;
+          if (notificationData.launchURL)
+            launchURL = notificationData.launchURL;
+
+          for (let i = 0; i < clientList.length; i++) {
+            var client = clientList[i];
+            if ('focus' in client && client.url == launchURL) {
+              client.focus();
+
+              // targetOrigin not valid here as the service worker owns the page.
+              client.postMessage(notificationData);
+              return;
+            }
+          }
+
+          if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
+            return Database.put("NotificationOpened", {url: launchURL, data: notificationData})
+              .then(() => {
+                lug('onNotificationClicked');
+                clients.openWindow(launchURL).catch(function (error) {
+                  // Should only fall into here if going to an external URL on Chrome older than 43.
+                  clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
+                });
+              });
+          }
+        })
+        .then(() => { lug('onNotificationClicked'); return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')]) })
+        .then(results => {
+        lug('onNotificationClicked');
+          var [ appIdResult, userIdResult ] = results;
+          if (appIdResult && userIdResult) {
+            apiCall("notifications/" + notificationData.id, "PUT", {
+              app_id: appIdResult.id,
+              player_id: userIdResult.id,
+              opened: true
+            });
+          }
+        })
+        .catch(e => log.error(e))
+    );
   }
 
   static onServiceWorkerInstalled(event) {
     log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
-    log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${OneSignal._VERSION})`);
+    log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
+
     if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
-      OneSignal._putDbValue("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
+      var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION'
     else
-      OneSignal._putDbValue("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: OneSignal._VERSION});
+      var serviceWorkerVersionType = 'WORKER2_ONE_SIGNAL_SW_VERSION';
 
     if (ServiceWorker.onOurSubdomain) {
       event.waitUntil(
-        caches.open("OneSignal_" + OneSignal._VERSION).then(function (cache) {
-          return cache.addAll([
-            '/sdks/initOneSignalHttpIframe',
-            '/sdks/initOneSignalHttpIframe?session=*',
-            '/sdks/manifest_json']);
-        })
-          .catch(function (e) {
-            log.error(e);
+        Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
+        .then(() => { lug('onServiceWorkerInstalled'); return caches.open("OneSignal_" + __VERSION__) })
+        .then(cache => {
+            lug('onServiceWorkerInstalled');
+            return cache.addAll([
+              '/sdks/initOneSignalHttpIframe',
+              '/sdks/initOneSignalHttpIframe?session=*',
+              '/sdks/manifest_json']);
           })
+        .catch(e => log.error(e))
       );
+    } else {
+      event.waitUntil(Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__}));
     }
   }
 
@@ -125,6 +195,85 @@ class ServiceWorker {
   static get onOurSubdomain() {
     return __DEV__ || location.href.match(/https:\/\/.*\.onesignal.com\/sdks\//) !== null;
   }
+
+  /**
+  * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
+  */
+  static _getTitle() {
+    return new Promise((resolve, reject) => {
+      Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
+        .then((results) => {
+          var [ defaultTitleResult, pageTitleResult ] = results;
+
+          if (defaultTitleResult) {
+            resolve(defaultTitleResult.value);
+          }
+          else if (pageTitleResult && pageTitleResult.value != null) {
+            resolve(pageTitleResult.value);
+          }
+          else {
+            resolve('');
+          }
+        })
+        .catch(function (e) {
+          log.error(e);
+          reject(e);
+        });
+    });
+  }
+
+  /**
+  * Returns a promise that is fulfilled with the JSON result of chrome notifications.
+  */
+  static _getLastNotifications() {
+    return new Promise((resolve, reject) => {
+      var notifications = [];
+      // Each entry is like:
+      /*
+       Object {custom: Object, icon: "https://onesignal.com/images/notification_logo.png", alert: "asd", title: "ss"}
+           alert: "asd"
+           custom: Object
+           i: "6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"
+           __proto__: Object
+           icon: "https://onesignal.com/images/notification_logo.png"
+           title: "ss"
+           __proto__: Object
+       */
+      Database.get('Ids', 'userId')
+        .then(userIdResult => {
+          if (userIdResult) {
+            return apiCall("players/" + userIdResult.id + "/chromeweb_notification", "GET");
+          }
+          else {
+            log.error('Tried to get last notifications, but there was no userId found in the database.');
+            reject(new Error('Tried to get last notifications, but there was no userId found in the database.'));
+          }
+        })
+        .then(response => {
+          // The response is an array literal -- response.json() has been called by apiCall()
+          // The result looks like this:
+          // apiCall("players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification", "GET").then(function(response) { console.log(response); });
+          // ["{"custom":{"i":"6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"},"icon":"https://onesignal.com/images/notification_logo.png","alert":"asd","title":"ss"}"]
+          // ^ Notice this is an array literal with JSON data inside
+          for (var i = 0; i < response.length; i++) {
+            notifications.push(JSON.parse(response[i]));
+          }
+          resolve(notifications);
+        })
+        .catch(e => {
+          log.error(e);
+          reject(e);
+        });
+    });
+  }
+}
+
+function lug(prefix) {
+  if (!ServiceWorker.lugCounter)
+    ServiceWorker.lugCounter = {};
+  if (!ServiceWorker.lugCounter.prefix)
+    ServiceWorker.lugCounter.prefix = 1;
+  log.debug('(' + performance.now() + ') ' + prefix + ':' + ServiceWorker.lugCounter.prefix++);
 }
 
 // Expose this class to the global scope

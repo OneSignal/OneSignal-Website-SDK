@@ -7,6 +7,8 @@ import LimitStore from './limitStore.js';
 import "./events-polyfill.js";
 import Event from "./events.js";
 import Bell from "./bell/bell.js";
+import Database from './database.js';
+import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
 
 var OneSignal = {
@@ -35,6 +37,7 @@ var OneSignal = {
   environment: Environment,
   event: Event,
   LOGGING: __DEV__,
+  browser: Browser,
   log: log,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
@@ -46,114 +49,8 @@ var OneSignal = {
     NATIVE_PROMPT_PERMISSIONCHANGED: 'onesignal.prompt.native.permissionchanged',
     SUBSCRIPTION_CHANGED: 'onesignal.subscription.changed',
     WELCOME_NOTIFICATION_SENT: 'onesignal.actions.welcomenotificationsent',
-    DB_VALUE_RETRIEVED: 'onesignal.db.valueretrieved',
-    DB_VALUE_SET: 'onesignal.db.valueset',
     INTERNAL_SUBSCRIPTIONSET: 'onesignal.internal.subscriptionset',
     SDK_INITIALIZED: 'onesignal.sdk.initialized'
-  },
-
-  _ensureDbInstance: function () {
-    return new Promise(function (resolve, reject) {
-      if (OneSignal._oneSignal_db) {
-        resolve(OneSignal._oneSignal_db);
-      }
-      else {
-        var request = indexedDB.open("ONE_SIGNAL_SDK_DB", 1);
-        request.onsuccess = function (event) {
-          var database = event.target.result;
-          OneSignal._oneSignal_db = database;
-          resolve(database);
-        };
-        request.onerror = function (event) {
-          log.error('Unable to open IndexedDB.', event);
-          reject(event);
-        };
-
-        request.onupgradeneeded = function (event) {
-          log.info('The OneSignal SDK is rebuilding its IndexedDB schema from a clean slate.');
-          OneSignal._isNewVisitor = true;
-          var db = event.target.result;
-          db.createObjectStore("Ids", {keyPath: "type"});
-          db.createObjectStore("NotificationOpened", {keyPath: "url"});
-          db.createObjectStore("Options", {keyPath: "key"});
-        };
-      }
-    });
-  },
-
-  _getDbValue: function (table, key) {
-    return new Promise(function (resolve, reject) {
-      OneSignal._ensureDbInstance()
-        .then(function (database) {
-          var request = database.transaction(table).objectStore(table).get(key);
-          request.onsuccess = function (event) {
-            if (request.result)
-              OneSignal._triggerEvent_dbValueRetrieved(request.result);
-            resolve(request.result);
-          };
-          request.onerror = function (event) {
-            reject(request.errorCode);
-          };
-        })
-        .catch(function (e) {
-          log.error(e);
-        });
-      ;
-    });
-  },
-
-  _getDbValues: function (table) {
-    return new Promise(function (resolve, reject) {
-      OneSignal._ensureDbInstance()
-        .then(function (database) {
-          var jsonResult = {};
-          var cursor = database.transaction(table).objectStore(table).openCursor();
-          cursor.onsuccess = function (event) {
-            var cursor = event.target.result;
-            if (cursor) {
-              OneSignal._triggerEvent_dbValueRetrieved(cursor);
-              jsonResult[cursor.key] = cursor.value.value;
-              cursor.continue();
-            }
-            else
-              resolve(jsonResult);
-          };
-          cursor.onerror = function (event) {
-            reject(cursor.errorCode);
-          };
-        })
-        .catch(function (e) {
-          log.error(e);
-        });
-    });
-  },
-
-  _putDbValue: function (table, value) {
-    return new Promise(function (resolve, reject) {
-      OneSignal._ensureDbInstance()
-        .then(function (database) {
-          database.transaction([table], "readwrite").objectStore(table).put(value);
-          OneSignal._triggerEvent_dbValueSet(value);
-          resolve(value);
-        })
-        .catch(function (e) {
-          log.error(e);
-        });
-    });
-  },
-
-  _deleteDbValue: function (table, key) {
-    return new Promise(function (resolve, reject) {
-      OneSignal._ensureDbInstance()
-        .then(function (database) {
-          database.transaction([table], "readwrite").objectStore(table).delete(key);
-          resolve(key);
-        })
-        .catch(function (e) {
-          log.error(e);
-        });
-      ;
-    });
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
@@ -197,7 +94,7 @@ var OneSignal = {
     if (value)
       callback(value)
     else {
-      OneSignal._getDbValue('Ids', 'userId')
+      Database.get('Ids', 'userId')
         .then(function _getPlayerId_gotUserId(result) {
           if (result)
             callback(result.id);
@@ -211,20 +108,9 @@ var OneSignal = {
     }
   },
 
-  _getBrowserName: function () {
-    if (navigator.appVersion.match(/Chrome\/(.*?) /))
-      return "Chrome";
-    if (navigator.appVersion.match("Version/(.*) (Safari)"))
-      return "Safari";
-    if (navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/))
-      return "Firefox";
-
-    return "";
-  },
-
   _registerWithOneSignal: function (appId, registrationId, deviceType) {
 
-    OneSignal._getDbValue('Ids', 'userId')
+    Database.get('Ids', 'userId')
       .then(function _registerWithOneSignal_GotUserId(userIdResult) {
         OneSignal._getNotificationTypes(function (notif_types) {
           var requestUrl = 'players';
@@ -234,8 +120,8 @@ var OneSignal = {
             device_type: deviceType,
             language: OneSignal._getLanguage(),
             timezone: new Date().getTimezoneOffset() * -60,
-            device_model: navigator.platform + " " + OneSignal._getBrowserName(),
-            device_os: (navigator.appVersion.match(/Chrome\/(.*?) /) || navigator.appVersion.match("Version/(.*) Safari") || navigator.userAgent.match(/Firefox\/([0-9]{2,}\.[0-9]{1,})/))[1],
+            device_model: navigator.platform + " " + Browser.name,
+            device_os: Browser.version,
             sdk: OneSignal._VERSION
           };
 
@@ -248,7 +134,7 @@ var OneSignal = {
 
           if (registrationId) {
             jsonData.identifier = registrationId;
-            OneSignal._putDbValue("Ids", {type: "registrationId", id: registrationId});
+            Database.put("Ids", {type: "registrationId", id: registrationId});
           }
 
           OneSignal._sendToOneSignalApi(requestUrl, 'POST', jsonData,
@@ -256,7 +142,7 @@ var OneSignal = {
               sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
 
               if (responseJSON.id) {
-                OneSignal._putDbValue("Ids", {type: "userId", id: responseJSON.id});
+                Database.put("Ids", {type: "userId", id: responseJSON.id});
                 OneSignal._sendUnsentTags();
               }
 
@@ -308,15 +194,15 @@ var OneSignal = {
   },
 
   setDefaultNotificationUrl: function (url) {
-    OneSignal._putDbValue("Options", {key: "defaultUrl", value: url});
+    Database.put("Options", {key: "defaultUrl", value: url});
   },
 
   setDefaultIcon: function (icon) {
-    OneSignal._putDbValue("Options", {key: "defaultIcon", value: icon});
+    Database.put("Options", {key: "defaultIcon", value: icon});
   },
 
   setDefaultTitle: function (title) {
-    OneSignal._putDbValue("Options", {key: "defaultTitle", value: title});
+    Database.put("Options", {key: "defaultTitle", value: title});
   },
 
   _visibilitychange: function () {
@@ -336,7 +222,7 @@ var OneSignal = {
 
   _onSubscriptionChanged: function (event) {
     if (OneSignal._isUninitiatedVisitor && event.detail === true) {
-      OneSignal._getDbValue('Ids', 'userId')
+      Database.get('Ids', 'userId')
         .then(function (result) {
           let welcome_notification_opts = OneSignal._initOptions['welcomeNotification'];
           let welcome_notification_disabled = (welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true);
@@ -357,6 +243,8 @@ var OneSignal = {
   },
 
   _onDbValueRetrieved: function (event) {
+    //debugger;
+    log.warn(`Event: %c${JSON.stringify(event.bubbles)}`, getConsoleStyle('alert'));
   },
 
   _onDbValueSet: function (event) {
@@ -386,6 +274,10 @@ var OneSignal = {
 
     OneSignal._isInitialized = true;
     log.trace('OneSignal SDK has been fully initialized.');
+  },
+
+  _onDatabaseRebuilt: function() {
+    OneSignal._isNewVisitor = true;
   },
 
   _checkTrigger_nativePermissionChanged: function() {
@@ -508,7 +400,7 @@ var OneSignal = {
     OneSignal._installNativePromptPermissionChangedHook();
 
     // Store the current value of Ids:registrationId, so that we can see if the value changes in the future
-    OneSignal._getDbValue('Ids', 'userId')
+    Database.get('Ids', 'userId')
       .then(function (result) {
         if (result === undefined) {
           OneSignal._isUninitiatedVisitor = true;
@@ -518,18 +410,19 @@ var OneSignal = {
       });
 
     // Store the current value of subscription, so that we can see if the value changes in the future
-    OneSignal._getSubscription(function (currentSubscription) {
-      LimitStore.put('setsubscription.value', currentSubscription);
-    });
+    //OneSignal._getSubscription.then((currentSubscription) => {
+    //  LimitStore.put('setsubscription.value', currentSubscription);
+    //});
 
 
     window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
     window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
     window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    window.addEventListener(OneSignal.EVENTS.DB_VALUE_RETRIEVED, OneSignal._onDbValueRetrieved);
-    window.addEventListener(OneSignal.EVENTS.DB_VALUE_SET, OneSignal._onDbValueSet);
+    window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
+    window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
     window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
     window.addEventListener(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
+    window.addEventListener(Database.EVENTS.REBUILT, OneSignal.onDatabaseRebuilt);
 
     OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
 
@@ -555,10 +448,11 @@ var OneSignal = {
   },
 
   _internalInit: function () {
+    window.Database = Database;
     log.debug('Called %c_internalInit()', getConsoleStyle('code'));
-    Promise.all([OneSignal._getDbValue('Ids', 'appId'),
-      OneSignal._getDbValue('Ids', 'registrationId'),
-      OneSignal._getDbValue('Options', 'subscription')])
+    Promise.all([Database.get('Ids', 'appId'),
+      Database.get('Ids', 'registrationId'),
+      Database.get('Options', 'subscription')])
       .then(function _internalInit_GotAppRegistrationSubscriptionIds(result) {
         var appIdResult = result[0];
         var registrationIdResult = result[1];
@@ -566,7 +460,7 @@ var OneSignal = {
 
         // If AppId changed delete playerId and continue.
         if (appIdResult && appIdResult.id != OneSignal._initOptions.appId) {
-          OneSignal._deleteDbValue("Ids", "userId");
+          Database.remove("Ids", "userId");
           sessionStorage.removeItem("ONE_SIGNAL_SESSION");
         }
 
@@ -639,10 +533,10 @@ var OneSignal = {
         if (event.data.initOptions.defaultIcon)
           OneSignal.setDefaultIcon(event.data.initOptions.defaultIcon);
 
-        OneSignal._getDbValue("NotificationOpened", event.data.initOptions.parent_url)
+        Database.get("NotificationOpened", event.data.initOptions.parent_url)
           .then(function registerForPushNotifications_GotNotificationOpened(notificationOpenedResult) {
             if (notificationOpenedResult) {
-              OneSignal._deleteDbValue("NotificationOpened", event.data.initOptions.parent_url);
+              Database.remove("NotificationOpened", event.data.initOptions.parent_url);
               log.debug("OneSignal._safePostMessage:targetOrigin:", OneSignal._initOptions.origin);
 
               OneSignal._safePostMessage(creator, {openedNotification: notificationOpenedResult.data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
@@ -683,9 +577,9 @@ var OneSignal = {
   _getSubdomainState: function (callback) {
     var state = {};
 
-    Promise.all([OneSignal._getDbValue('Ids', 'userId'),
-      OneSignal._getDbValue('Ids', 'registrationId'),
-      OneSignal._getDbValue('Options', 'subscription')])
+    Promise.all([Database.get('Ids', 'userId'),
+      Database.get('Ids', 'registrationId'),
+      Database.get('Options', 'subscription')])
       .then(function _internalInit_GotAppRegistrationSubscriptionIds(result) {
         var userIdResult = result[0];
         var registrationIdResult = result[1];
@@ -710,8 +604,8 @@ var OneSignal = {
 
   _initSaveState: function () {
     OneSignal._app_id = OneSignal._initOptions.appId;
-    OneSignal._putDbValue("Ids", {type: "appId", id: OneSignal._app_id});
-    OneSignal._putDbValue("Options", {key: "pageTitle", value: document.title});
+    Database.put("Ids", {type: "appId", id: OneSignal._app_id});
+    Database.put("Options", {key: "pageTitle", value: document.title});
   },
 
   _supportsDirectPermission: function () {
@@ -839,7 +733,7 @@ var OneSignal = {
 
   _registerForW3CPush: function (options) {
 
-    OneSignal._getDbValue('Ids', 'registrationId')
+    Database.get('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
         if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted") {
           navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
@@ -854,7 +748,7 @@ var OneSignal = {
               if (serviceWorkerRegistration.active) {
                 if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
 
-                  OneSignal._getDbValue('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
+                  Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
                         if (versionResult.id != OneSignal._VERSION)
@@ -872,7 +766,7 @@ var OneSignal = {
                 }
                 else if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
 
-                  OneSignal._getDbValue('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
+                  Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
                         if (versionResult.id != OneSignal._VERSION)
@@ -1005,11 +899,11 @@ var OneSignal = {
   },
 
   _triggerEvent_dbValueRetrieved: function (value) {
-    Event.trigger(OneSignal.EVENTS.DB_VALUE_RETRIEVED, value);
+    Event.trigger(Database.EVENTS.RETRIEVED, value);
   },
 
   _triggerEvent_dbValueSet: function (value) {
-    Event.trigger(OneSignal.EVENTS.DB_VALUE_SET, value);
+    Event.trigger(Database.EVENTS.SET, value);
   },
 
   _triggerEvent_internalSubscriptionSet: function (value) {
@@ -1022,7 +916,7 @@ var OneSignal = {
       .then(function (subscription) {
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
-        OneSignal._getDbValue('Ids', 'appId')
+        Database.get('Ids', 'appId')
           .then(function _subscribeForPush_GotAppId(appIdResult) {
             var appId = appIdResult.id;
             log.debug("Called OneSignal._subscribeForPush() -> serviceWorkerRegistration.pushManager.subscribe().");
@@ -1065,7 +959,7 @@ var OneSignal = {
   },
 
   sendTags: function (jsonPair) {
-    OneSignal._getDbValue('Ids', 'userId')
+    Database.get('Ids', 'userId')
       .then(function sendTags_GotUserId(userIdResult) {
         if (userIdResult)
           OneSignal._sendToOneSignalApi("players/" + userIdResult.id, "PUT", {
@@ -1105,7 +999,7 @@ var OneSignal = {
     var notificationData = JSON.parse(event.notification.tag);
     event.notification.close();
 
-    Promise.all([OneSignal._getDbValue('Ids', 'appId'), OneSignal._getDbValue('Ids', 'userId')])
+    Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])
       .then(function _handleNotificationOpened_GotAppUserIds(results) {
         var appIdResult = results[0];
         var userIdResult = results[1];
@@ -1143,7 +1037,7 @@ var OneSignal = {
           }
 
           if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
-            OneSignal._putDbValue("NotificationOpened", {url: launchURL, data: notificationData});
+            Database.put("NotificationOpened", {url: launchURL, data: notificationData});
             clients.openWindow(launchURL).catch(function (error) {
               // Should only fall into here if going to an external URL on Chrome older than 43.
               clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
@@ -1154,56 +1048,6 @@ var OneSignal = {
           log.error(e);
         })
     );
-  },
-
-  _getTitle: function (incomingTitle, callback) {
-    if (incomingTitle != null) {
-      callback(incomingTitle);
-      return;
-    }
-
-    Promise.all([OneSignal._getDbValue('Options', 'defaultTitle'), OneSignal._getDbValue('Options', 'pageTitle')])
-      .then(function _getTitle_GotDefaultPageTitles(results) {
-        var defaultTitleResult = results[0];
-        var pageTitleResult = results[1];
-
-        if (defaultTitleResult) {
-          callback(defaultTitleResult.value);
-          return;
-        }
-        else if (pageTitleResult && pageTitleResult.value != null) {
-          callback(pageTitleResult.value);
-          return;
-        }
-        else {
-          callback('');
-        }
-      })
-      .catch(function (e) {
-        log.error(e);
-      });
-  },
-
-  _getLastNotifications: function (itemCallback, completeCallback) {
-    OneSignal._getDbValue('Ids', 'userId')
-      .then(function _getLastNotifications_GotUserId(userIdResult) {
-        if (userIdResult) {
-          OneSignal._sendToOneSignalApi("players/" + userIdResult.id + "/chromeweb_notification", "GET", null, function (response) {
-            for (var i = 0; i < response.length; i++)
-              itemCallback(JSON.parse(response[i]));
-          }, function () {
-            completeCallback();
-          });  // Failed callback
-        }
-        else {
-          log.debug("Error: could not get notificationId");
-          completeCallback();
-        }
-      })
-      .catch(function (e) {
-        log.error(e);
-      });
-    ;
   },
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
@@ -1229,14 +1073,14 @@ var OneSignal = {
       }
 
       if (eventData.userId)
-        OneSignal._putDbValue("Ids", {type: "userId", id: eventData.userId});
+        Database.put("Ids", {type: "userId", id: eventData.userId});
       if (eventData.registrationId)
-        OneSignal._putDbValue("Ids", {type: "registrationId", id: eventData.registrationId});
+        Database.put("Ids", {type: "registrationId", id: eventData.registrationId});
 
       OneSignal._fireNotificationEnabledCallback(eventData.isPushEnabled);
       OneSignal._sendUnsentTags();
 
-      OneSignal._getDbValues("Options")
+      Database.get("Options")
         .then(function _listener_receiveMessage(options) {
           if (!options.defaultUrl)
             options.defaultUrl = document.URL;
@@ -1258,8 +1102,8 @@ var OneSignal = {
     }
     else if (event.data.idsAvailable) { // Only called on HTTP pages.
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
-      OneSignal._putDbValue("Ids", {type: "userId", id: event.data.idsAvailable.userId});
-      OneSignal._putDbValue("Ids", {type: "registrationId", id: event.data.idsAvailable.registrationId});
+      Database.put("Ids", {type: "userId", id: event.data.idsAvailable.userId});
+      Database.put("Ids", {type: "registrationId", id: event.data.idsAvailable.registrationId});
 
       if (OneSignal._idsAvailable_callback.length > 0) {
         while (OneSignal._idsAvailable_callback.length > 0) {
@@ -1303,10 +1147,10 @@ var OneSignal = {
   addListenerForNotificationOpened: function (callback) {
     OneSignal._notificationOpened_callback = callback;
     if (window) {
-      OneSignal._getDbValue("NotificationOpened", document.URL)
+      Database.get("NotificationOpened", document.URL)
         .then(function (notificationOpenedResult) {
           if (notificationOpenedResult) {
-            OneSignal._deleteDbValue("NotificationOpened", document.URL);
+            Database.remove("NotificationOpened", document.URL);
             OneSignal._notificationOpened_callback(notificationOpenedResult.data);
           }
         })
@@ -1333,7 +1177,7 @@ var OneSignal = {
 
     OneSignal._idsAvailable_callback.push(callback);
 
-    Promise.all([OneSignal._getDbValue('Ids', 'userId'), OneSignal._getDbValue('Ids', 'registrationId')])
+    Promise.all([Database.get('Ids', 'userId'), Database.get('Ids', 'registrationId')])
       .then(function getIdsAvailable_GotUserRegistrationIds(results) {
         var userIdResult = results[0];
         var registrationIdResult = results[1];
@@ -1362,7 +1206,7 @@ var OneSignal = {
   },
 
   getTags: function (callback) {
-    OneSignal._getDbValue('Ids', 'userId')
+    Database.get('Ids', 'userId')
       .then(function (userIdResult) {
         if (userIdResult) {
           OneSignal._sendToOneSignalApi("players/" + userIdResult.id, 'GET', null, function (response) {
@@ -1393,7 +1237,7 @@ var OneSignal = {
 
     // If HTTPS
 
-    Promise.all([OneSignal._getDbValue('Ids', 'registrationId'), OneSignal._getDbValue('Options', 'subscription')])
+    Promise.all([Database.get('Ids', 'registrationId'), Database.get('Options', 'subscription')])
       .then(function (results) {
         var registrationIdResult = results[0];
         var subscriptionResult = results[1];
@@ -1413,51 +1257,65 @@ var OneSignal = {
   },
 
   _getNotificationTypes: function (callback) {
-    OneSignal._getSubscription(function (db_subscriptionSet) {
-      callback(db_subscriptionSet ? 1 : -2);
+    OneSignal._getSubscription((currentSubscription) => {
+      callback(currentSubscription ? 1 : -2);
     });
   },
 
   setSubscription: function (newSubscription) {
-    if (OneSignal._iframePort)
-      OneSignal._iframePort.postMessage({setSubdomainState: {setSubscription: newSubscription}, from: Environment.getEnv()});
-    else {
-      OneSignal._getSubscription(function (currentSubscription) {
-        if (currentSubscription != newSubscription) {
-          OneSignal._putDbValue("Options", {key: "subscription", value: newSubscription});
-          OneSignal._getDbValue('Ids', 'userId')
-            .then(function (userIdResult) {
-              if (userIdResult)
-                OneSignal._sendToOneSignalApi("players/" + userIdResult.id, "PUT", {
-                  app_id: OneSignal._app_id,
-                  notification_types: newSubscription ? 1 : -2
-                }, function setSubscriptionSetCallback() {
-                  OneSignal._triggerEvent_internalSubscriptionSet(newSubscription);
-                });
-            })
-            .catch(function (e) {
+    return new Promise((resolve, reject) => {
+      if (OneSignal._iframePort)
+        OneSignal._iframePort.postMessage({setSubdomainState: {setSubscription: newSubscription}, from: Environment.getEnv()});
+      else {
+        OneSignal._getSubscription()
+          .then((currentSubscription) => {
+            if (currentSubscription != newSubscription) {
+              return Database.put("Options", {key: "subscription", value: newSubscription});
+            } else reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no change, so skipping call.');
+          })
+          .then(() => Database.get('Ids', 'userId'))
+          .then((userIdResult) => {
+            if (userIdResult) {
+              return apiCall("players/" + userIdResult.id, "PUT", {
+                app_id: OneSignal._app_id,
+                notification_types: newSubscription ? 1 : -2
+              });
+            }
+            else reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no user ID, so the result was not forwarded to OneSignal.');
+          })
+          .then(() => {
+            OneSignal._triggerEvent_internalSubscriptionSet(newSubscription);
+            resolve();
+          })
+          .catch((e) => {
+            if (e.constructor.name === 'Error') {
               log.error(e);
-            });
-        }
-      });
-    }
+              reject(e);
+            } else {
+              resolve(e);
+            }
+          });
+      }
+    });
   },
 
   /**
-   * Returns false if setSubscription(false) has been explicitly called at any point in time. Otherwise returns true.
+   * Returns a promise that resolves to false if setSubscription(false) has been explicitly called at any point in time. Otherwise returns true.
    * This means a return value of true does not mean the user is subscribed, only that the user did not call setSubcription(false).
-   * @param callback
    * @private
+   * @returns {Promise}
    */
-  _getSubscription: function (callback) {
-    OneSignal._getDbValue('Options', 'subscription')
-      .then(function (subscriptionResult) {
-        callback(!(subscriptionResult && subscriptionResult.value == false))
-      })
-      .catch(function (e) {
-        log.error(e);
-      });
-    ;
+  _getSubscription: function () {
+    return new Promise((resolve, reject) => {
+      Database.get('Options', 'subscription')
+        .then(subscriptionResult => {
+          resolve(!(subscriptionResult && subscriptionResult.value == false))
+        })
+        .catch(e => {
+          log.error(e);
+          reject(e);
+        });
+    });
   },
 
   _safePostMessage: function (creator, data, targetOrigin, receiver) {

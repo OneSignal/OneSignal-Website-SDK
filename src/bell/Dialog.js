@@ -1,9 +1,10 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, clearDomElementChildren, once } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
-import bowser from 'bowser';
+import * as Browser from 'bowser';
 import Bell from './bell.js';
+import LimitStore from '../limitStore.js';
 
 
 export default class Dialog extends AnimatedElement {
@@ -59,25 +60,47 @@ export default class Dialog extends AnimatedElement {
 
   getPlatformNotificationIcon() {
     if (this.notificationIcons) {
-      if (bowser.chrome || bowser.firefox) {
+      if (Browser.chrome || Browser.firefox) {
         return this.notificationIcons.chrome || this.notificationIcons.safari;
       }
-      else if (bowser.safari) {
+      else if (Browser.safari) {
         return this.notificationIcons.safari || this.notificationIcons.chrome;
       }
     }
     else return null;
   }
 
+  show() {
+    return this.updateBellLauncherDialogBody()
+      .then(() => super.show())
+      .catch(e => log.error(e));
+  }
+
+  static get subscribeButtonSelectorId() {
+    return 'subscribe-button';
+  }
+
+  static get unsubscribeButtonSelectorId() {
+    return 'unsubscribe-button';
+  }
+
+  static get subscribeButton() {
+    return this.bell.querySelector('#' + Dialog.subscribeButtonSelector);
+  }
+
+  static get unsubscribeButton() {
+    return document.querySelector('#' + Dialog.unsubscribeButtonSelector);
+  }
+
   updateBellLauncherDialogBody() {
     return new Promise((resolve, reject) => {
-      clearDomElementChildren(this.launcherDialogBody);
+      clearDomElementChildren(document.querySelector(this.nestedContentSelector));
 
-      let currentSetSubscription = this._getCurrentSetSubscriptionState();
+      let currentSetSubscription = LimitStore.getLast('setsubscription.value');
       let contents = 'Nothing to show.';
 
-      if (this.state === Bell.STATES.SUBSCRIBED && currentSetSubscription === true ||
-        this.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
+      if (this.bell.state === Bell.STATES.SUBSCRIBED && currentSetSubscription === true ||
+        this.bell.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
 
         let notificationIconHtml = '';
         let imageUrl = this.getPlatformNotificationIcon();
@@ -88,14 +111,14 @@ export default class Dialog extends AnimatedElement {
         }
 
         let buttonHtml = '';
-        if (this.state !== Bell.STATES.SUBSCRIBED)
-          buttonHtml = `<button type="button" class="action" id="subscribe-button">${this.text['dialog.main.button.subscribe']}</button>`;
+        if (this.bell.state !== Bell.STATES.SUBSCRIBED)
+          buttonHtml = `<button type="button" class="action" id="${Dialog.subscribeButtonSelectorId}">${this.bell.text['dialog.main.button.subscribe']}</button>`;
         else
-          buttonHtml = `<button type="button" class="action" id="unsubscribe-button">${this.text['dialog.main.button.unsubscribe']}</button>`;
+          buttonHtml = `<button type="button" class="action" id="${Dialog.unsubscribeButtonSelectorId}">${this.bell.text['dialog.main.button.unsubscribe']}</button>`;
 
 
         contents = `
-                  <h1>${this.text['dialog.main.title']}</h1>
+                  <h1>${this.bell.text['dialog.main.title']}</h1>
                   <div class="divider"></div>
                   <div class="push-notification">
                     ${notificationIconHtml}
@@ -114,13 +137,13 @@ export default class Dialog extends AnimatedElement {
                   <div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>
                 `;
       }
-      else if (this.state === Bell.STATES.BLOCKED) {
+      else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
-        if (bowser.chrome)
+        if (Browser.chrome)
           imageUrl = HOST_URL + '/bell/chrome-unblock.jpg';
-        else if (bowser.firefox)
+        else if (Browser.firefox)
           imageUrl = HOST_URL + '/bell/firefox-unblock.jpg';
-        else if (bowser.safari)
+        else if (Browser.safari)
           imageUrl = HOST_URL + '/bell/safari-unblock.jpg';
 
         let instructionsHtml = '';
@@ -132,10 +155,10 @@ export default class Dialog extends AnimatedElement {
             `;
         }
         contents = `
-                  <h1>${this.text['dialog.blocked.title']}</h1>
+                  <h1>${this.bell.text['dialog.blocked.title']}</h1>
                   <div class="divider"></div>
                   <div class="instructions">
-                  <p>${this.text['dialog.blocked.message']}</p>
+                  <p>${this.bell.text['dialog.blocked.message']}</p>
                   ${instructionsHtml}
                   </div>
                   <div class="divider"></div>
@@ -143,8 +166,8 @@ export default class Dialog extends AnimatedElement {
                 `;
       }
 
-      addDomElement(this.launcherDialogBody, 'beforeend', contents);
+      addDomElement(document.querySelector(this.nestedContentSelector), 'beforeend', contents);
       resolve();
-    });
+    }).catch(e => log.error(e));
   }
 }

@@ -28,8 +28,9 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   show() {
-    if (this.shown)
+    if (!this.hidden) {
       return Promise.resolve(this);
+    }
     else return new Promise((resolve) => {
       this.state = 'showing';
       Event.trigger(AnimatedElement.EVENTS.SHOWING, this);
@@ -55,8 +56,9 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   hide() {
-    if (this.hidden)
+    if (!this.shown) {
       return Promise.resolve(this);
+    }
     else return new Promise((resolve) => {
       this.state = 'hiding';
       Event.trigger(AnimatedElement.EVENTS.HIDING, this);

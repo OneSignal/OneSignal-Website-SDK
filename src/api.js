@@ -8,17 +8,21 @@ export function apiCall(action, method, data) {
   let contents = {
     method: method || 'NO_METHOD_SPECIFIED',
     headers: headers,
-    cache: 'no-cache',
-    body: JSON.stringify(data)
+    cache: 'no-cache'
   };
+  if (data)
+    contents.body = JSON.stringify(data);
 
   return new Promise((resolve, reject) => {
     fetch(API_URL + action, contents)
       .then(function status(response) {
         if (response.status >= 200 && response.status < 300)
-          resolve(response.json());
+          return response.json();
         else
           reject(new Error(response.statusText));
+      })
+      .then(jsonResponse => {
+        resolve(jsonResponse);
       })
       .catch(function (e) {
         reject(e);

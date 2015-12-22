@@ -30,8 +30,9 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   activate() {
-    if (this.active)
+    if (!this.inactive || !this.shown) {
       return Promise.resolve(this);
+    }
     else return new Promise((resolve) => {
       this.activeState = 'activating';
       Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
@@ -39,16 +40,23 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         removeCssClass(this.element, this.inactiveClass);
       if (this.activeClass)
         addCssClass(this.element, this.activeClass);
-      once(this.element, 'transitionend', (event, destroyListenerFn) => {
-        if (event.target === this.element &&
-          event.propertyName === this.targetTransitionEvent) {
-          // Uninstall the event listener for transitionend
-          destroyListenerFn();
-          this.activeState = 'active';
-          Event.trigger(AnimatedElement.EVENTS.ACTIVE, this);
-          return resolve(this);
-        }
-      }, true);
+      if (this.shown) {
+        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          if (event.target === this.element &&
+            event.propertyName === this.targetTransitionEvent) {
+            // Uninstall the event listener for transitionend
+            destroyListenerFn();
+            this.activeState = 'active';
+            Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+            return resolve(this);
+          }
+        }, true);
+      }
+      else {
+        this.activeState = 'active';
+        Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+        return resolve(this);
+      }
     });
   }
 
@@ -57,8 +65,9 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   inactivate() {
-    if (this.inactive)
+    if (!this.active) {
       return Promise.resolve(this);
+    }
     else return new Promise((resolve) => {
       this.activeState = 'inactivating';
       Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
@@ -66,16 +75,23 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         removeCssClass(this.element, this.activeClass);
       if (this.inactiveClass)
         addCssClass(this.element, this.inactiveClass);
-      once(this.element, 'transitionend', (event, destroyListenerFn) => {
-        if (event.target === this.element &&
-          event.propertyName === this.targetTransitionEvent) {
-          // Uninstall the event listener for transitionend
-          destroyListenerFn();
-          this.activeState = 'inactive';
-          Event.trigger(AnimatedElement.EVENTS.INACTIVE, this);
-          return resolve(this);
-        }
-      }, true);
+      if (this.shown) {
+        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          if (event.target === this.element &&
+            event.propertyName === this.targetTransitionEvent) {
+            // Uninstall the event listener for transitionend
+            destroyListenerFn();
+            this.activeState = 'inactive';
+            Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+            return resolve(this);
+          }
+        }, true);
+      }
+      else {
+        this.activeState = 'inactive';
+        Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+        return resolve(this);
+      }
     });
   }
 
@@ -87,7 +103,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.active)
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      once(window, AnimatedElement.EVENTS.ACTIVE, (event, destroyListenerFn) => {
+      once(window, ActiveAnimatedElement.EVENTS.ACTIVE, (event, destroyListenerFn) => {
         if (event.details === this) {
           destroyListenerFn();
           return resolve(this);
@@ -104,7 +120,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.inactive)
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      once(window, AnimatedElement.EVENTS.INACTIVE, (event, destroyListenerFn) => {
+      once(window, ActiveAnimatedElement.EVENTS.INACTIVE, (event, destroyListenerFn) => {
         if (event.details === this) {
           destroyListenerFn();
           return resolve(this);
