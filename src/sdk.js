@@ -4,7 +4,7 @@ import log from 'loglevel';
 import LimitStore from './limitStore.js';
 
 var OneSignal = {
-  _VERSION: 109014,
+  _VERSION: 109016,
   _HOST_URL: HOST_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
@@ -919,17 +919,17 @@ var OneSignal = {
   },
 
   _triggerEvent_customPromptClicked: function (clickResult) {
-    var recentPermissions = LimitStore.put('notification.permission', clickResult);
+    var recentPermissions = LimitStore.put('onesignal.prompt.custom.clicked', clickResult);
     OneSignal._triggerEvent('onesignal.prompt.custom.clicked', {
       result: clickResult
     });
   },
 
-  _triggerEvent_nativePromptPermissionChanged: function (from, to) {
+  _triggerEvent_nativePromptPermissionChanged: function (from, to, updateIfIdentical = false) {
     if (to === undefined) {
       to = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
     }
-    if (from !== to) {
+    if (from !== to || updateIfIdentical) {
       var recentPermissions = LimitStore.put('notification.permission', to);
       OneSignal._triggerEvent('onesignal.prompt.native.permissionchanged', {
         from: from,
@@ -987,6 +987,14 @@ var OneSignal = {
       })
       .catch(function (e) {
         log.error('Error while subscribing for push:', e);
+
+        // New addition (12/22/2015), adding support for detecting the cancel 'X'
+        // Chrome doesn't show when the user clicked 'X' for cancel
+        // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
+        if (OneSignal._getNotificationPermission() === 'default') {
+          // The user clicked 'X'
+          OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest, undefined, true);
+        }
 
         if (!OneSignal._usingNativePermissionHook)
           OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
