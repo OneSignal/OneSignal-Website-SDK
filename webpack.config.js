@@ -52,7 +52,8 @@ module.exports = {
         unused: false,
         if_return: false,
         join_vars: false,
-        drop_console: false
+        drop_console: false,
+        drop_debugger: false
       },
       mangle: false,
       output: {

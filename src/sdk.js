@@ -2,7 +2,6 @@ import { DEV_HOST, PROD_HOST, HOST_URL } from './vars.js';
 import { sendNotification } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
-import "./events.js";
 
 var OneSignal = {
   _VERSION: 109014,
@@ -914,7 +913,7 @@ var OneSignal = {
       return;
     }
     var event = new CustomEvent(eventName, {
-      bubbles: true, cancelable: true, details: data
+      bubbles: true, cancelable: true, detail: data
     });
     window.dispatchEvent(event);
   },
