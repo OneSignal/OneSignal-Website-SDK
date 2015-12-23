@@ -76,20 +76,20 @@ export default class Dialog extends AnimatedElement {
       .catch(e => log.error(e));
   }
 
-  static get subscribeButtonSelectorId() {
+  get subscribeButtonSelectorId() {
     return 'subscribe-button';
   }
 
-  static get unsubscribeButtonSelectorId() {
+  get unsubscribeButtonSelectorId() {
     return 'unsubscribe-button';
   }
 
-  static get subscribeButton() {
-    return this.bell.querySelector('#' + Dialog.subscribeButtonSelector);
+  get subscribeButton() {
+    return this.element.querySelector('#' + this.subscribeButtonSelectorId);
   }
 
-  static get unsubscribeButton() {
-    return document.querySelector('#' + Dialog.unsubscribeButtonSelector);
+  get unsubscribeButton() {
+    return this.element.querySelector('#' + this.unsubscribeButtonSelectorId);
   }
 
   updateBellLauncherDialogBody() {
@@ -112,9 +112,9 @@ export default class Dialog extends AnimatedElement {
 
         let buttonHtml = '';
         if (this.bell.state !== Bell.STATES.SUBSCRIBED)
-          buttonHtml = `<button type="button" class="action" id="${Dialog.subscribeButtonSelectorId}">${this.bell.text['dialog.main.button.subscribe']}</button>`;
+          buttonHtml = `<button type="button" class="action" id="${this.subscribeButtonSelectorId}">${this.bell.text['dialog.main.button.subscribe']}</button>`;
         else
-          buttonHtml = `<button type="button" class="action" id="${Dialog.unsubscribeButtonSelectorId}">${this.bell.text['dialog.main.button.unsubscribe']}</button>`;
+          buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.text['dialog.main.button.unsubscribe']}</button>`;
 
 
         contents = `

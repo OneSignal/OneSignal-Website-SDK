@@ -28,27 +28,27 @@ class ServiceWorker {
    */
   static onPushReceived(event) {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
-    lug('onPushReceived');
+
 
     event.waitUntil(new Promise((resolve, reject) => {
-      var extra = { };
+      var extra = {};
       ServiceWorker._getTitle()
         .then(title => {
           extra.title = title;
           return Database.get('Options', 'defaultIcon');
-          lug('onPushReceived');
+
         })
         .then(defaultIconResult => {
           extra.defaultIconResult = defaultIconResult
           return extra;
-          lug('onPushReceived');
+
         })
         .then(extra => {
           return ServiceWorker._getLastNotifications();
-          lug('onPushReceived');
+
         })
         .then(notifications => {
-          lug('onPushReceived');
+
           // At this point, we have an array of notification objects (all the JSON is parsed)
           // We want to fire a notification for each object
           // We need to use event.waitUntil() to extend the life of the service worker (workers can be killed if idling)
@@ -93,20 +93,22 @@ class ServiceWorker {
 
   static onNotificationClicked(event) {
     log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
-    lug('onNotificationClicked');
+
     var notificationData = JSON.parse(event.notification.tag);
     event.notification.close();
 
     event.waitUntil(
       Database.get('Options', 'defaultUrl')
         .then(defaultUrlResult => {
-          lug('onNotificationClicked');
+
           if (defaultUrlResult)
             ServiceWorker.defaultLaunchUrl = defaultUrlResult.value;
         })
-        .then(() => { lug('onPushReceived'); return clients.matchAll({type: 'window'}); })
+        .then(() => {
+          return clients.matchAll({type: 'window'});
+        })
         .then(clientList => {
-          lug('onNotificationClicked');
+
           var launchURL = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)
             launchURL = ServiceWorker.defaultLaunchUrl;
@@ -127,7 +129,7 @@ class ServiceWorker {
           if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
             return Database.put("NotificationOpened", {url: launchURL, data: notificationData})
               .then(() => {
-                lug('onNotificationClicked');
+
                 clients.openWindow(launchURL).catch(function (error) {
                   // Should only fall into here if going to an external URL on Chrome older than 43.
                   clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
@@ -135,9 +137,11 @@ class ServiceWorker {
               });
           }
         })
-        .then(() => { lug('onNotificationClicked'); return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')]) })
+        .then(() => {
+          return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])
+        })
         .then(results => {
-        lug('onNotificationClicked');
+
           var [ appIdResult, userIdResult ] = results;
           if (appIdResult && userIdResult) {
             apiCall("notifications/" + notificationData.id, "PUT", {
@@ -163,15 +167,17 @@ class ServiceWorker {
     if (ServiceWorker.onOurSubdomain) {
       event.waitUntil(
         Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
-        .then(() => { lug('onServiceWorkerInstalled'); return caches.open("OneSignal_" + __VERSION__) })
-        .then(cache => {
-            lug('onServiceWorkerInstalled');
+          .then(() => {
+            return caches.open("OneSignal_" + __VERSION__)
+          })
+          .then(cache => {
+
             return cache.addAll([
               '/sdks/initOneSignalHttpIframe',
               '/sdks/initOneSignalHttpIframe?session=*',
               '/sdks/manifest_json']);
           })
-        .catch(e => log.error(e))
+          .catch(e => log.error(e))
       );
     } else {
       event.waitUntil(Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__}));
@@ -197,8 +203,8 @@ class ServiceWorker {
   }
 
   /**
-  * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
-  */
+   * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
+   */
   static _getTitle() {
     return new Promise((resolve, reject) => {
       Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
@@ -223,21 +229,21 @@ class ServiceWorker {
   }
 
   /**
-  * Returns a promise that is fulfilled with the JSON result of chrome notifications.
-  */
+   * Returns a promise that is fulfilled with the JSON result of chrome notifications.
+   */
   static _getLastNotifications() {
     return new Promise((resolve, reject) => {
       var notifications = [];
       // Each entry is like:
       /*
        Object {custom: Object, icon: "https://onesignal.com/images/notification_logo.png", alert: "asd", title: "ss"}
-           alert: "asd"
-           custom: Object
-           i: "6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"
-           __proto__: Object
-           icon: "https://onesignal.com/images/notification_logo.png"
-           title: "ss"
-           __proto__: Object
+       alert: "asd"
+       custom: Object
+       i: "6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"
+       __proto__: Object
+       icon: "https://onesignal.com/images/notification_logo.png"
+       title: "ss"
+       __proto__: Object
        */
       Database.get('Ids', 'userId')
         .then(userIdResult => {
@@ -266,14 +272,6 @@ class ServiceWorker {
         });
     });
   }
-}
-
-function lug(prefix) {
-  if (!ServiceWorker.lugCounter)
-    ServiceWorker.lugCounter = {};
-  if (!ServiceWorker.lugCounter.prefix)
-    ServiceWorker.lugCounter.prefix = 1;
-  log.debug('(' + performance.now() + ') ' + prefix + ':' + ServiceWorker.lugCounter.prefix++);
 }
 
 // Expose this class to the global scope

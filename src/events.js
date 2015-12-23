@@ -17,7 +17,8 @@ const SILENT_EVENTS = [
   'onesignal.bell.activeanimatedelement.inactivating',
   'onesignal.bell.activeanimatedelement.inactive',
   //'onesignal.db.retrieved',
-  'onesignal.db.set'];
+  //'onesignal.db.set'
+  ];
 
 export default class Event {
   static trigger(eventName, data) {

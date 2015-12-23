@@ -63,8 +63,10 @@ export default class Bell {
       'tip.state.unsubscribed': 'Subscribe to notifications',
       'tip.state.subscribed': "You're subscribed to notifications",
       'tip.state.blocked': "You've blocked notifications",
-      'tip.action.subscribed': "Thanks for subscribing!",
-      'tip.action.unsubscribed': "You won't receive notifications again",
+      'message.action.subscribing': "Click <strong>Allow</strong> to receive notifications",
+      'message.action.subscribed': "Thanks for subscribing!",
+      'message.action.resubscribed': "You're subscribed to notifications",
+      'message.action.unsubscribed': "You won't receive notifications again",
       'dialog.main.title': 'Manage Site Notifications',
       'dialog.main.button.subscribe': 'SUBSCRIBE',
       'dialog.main.button.unsubscribe': 'UNSUBSCRIBE',
@@ -95,18 +97,20 @@ export default class Bell {
     this.size = this.options.size;
     this.position = this.options.position;
     this.text = this.options.text;
-    this.messages = {};
-    this.messages.queued = [];
     if (!this.text['tip.state.unsubscribed'])
       this.text['tip.state.unsubscribed'] = 'Subscribe to notifications';
     if (!this.text['tip.state.subscribed'])
       this.text['tip.state.subscribed'] = "You're subscribed to notifications";
     if (!this.text['tip.state.blocked'])
       this.text['tip.state.blocked'] = "You've blocked notifications";
-    if (!this.text['tip.action.subscribed'])
-      this.text['tip.action.subscribed'] = "Thanks for subscribing!";
-    if (!this.text['tip.action.unsubscribed'])
-      this.text['tip.action.unsubscribed'] = "You won't receive notifications again";
+    if (!this.text['message.action.subscribed'])
+      this.text['message.action.subscribed'] = "Thanks for subscribing!";
+    if (!this.text['message.action.resubscribed'])
+      this.text['message.action.resubscribed'] = "You're subscribed to notifications";
+    if (!this.text['message.action.subscribing'])
+      this.text['message.action.subscribing'] = "Click <strong>Allow</strong> to receive notifications";
+    if (!this.text['message.action.unsubscribed'])
+      this.text['message.action.unsubscribed'] = "You won't receive notifications again";
     if (!this.text['dialog.main.title'])
       this.text['dialog.main.title'] = 'Manage Site Notifications';
     if (!this.text['dialog.main.button.subscribe'])
@@ -115,9 +119,6 @@ export default class Bell {
       this.text['dialog.main.button.unsubscribe'] = 'UNSUBSCRIBE';
     if (!this.text['dialog.blocked.title'])
       this.text['dialog.blocked.title'] = 'Unblock Notifications';
-    this.messages[Bell.STATES.UNSUBSCRIBED] = this.text['tip.state.unsubscribed'];
-    this.messages[Bell.STATES.SUBSCRIBED] = this.text['tip.state.subscribed'];
-    this.messages[Bell.STATES.BLOCKED] = this.text['tip.state.blocked'];
     this.state = Bell.STATES.UNINITIALIZED;
 
     // Install event hooks
@@ -127,6 +128,11 @@ export default class Bell {
     });
 
     window.addEventListener(Bell.EVENTS.LAUNCHER_CLICK, (event) => {
+      if (this.message.shown && this.message.contentType == Message.TYPES.MESSAGE) {
+        // A message is being shown, it'll disappear soon
+        return;
+      }
+
       this.launcher.activateIfInactive()
         .then(() => this.message.hide())
         .then(() => {
@@ -139,6 +145,7 @@ export default class Bell {
             else {
               // The user is actually subscribed, register him for notifications
               OneSignal.registerForPushNotifications();
+              this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], 2500);
             }
           }
           else if (this.subscribed) {
@@ -152,25 +159,35 @@ export default class Bell {
     });
 
     window.addEventListener(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
-      Dialog.subscribeButton.disabled = true;
-      OneSignal.setSubscription(true);
+      this.dialog.subscribeButton.disabled = true;
+      OneSignal.setSubscription(true)
+        .then(() => {
+          this.dialog.subscribeButton.disabled = false;
+          return OneSignal.bell.dialog.hide();
+        })
+        .then(() => {
+          return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], 2500);
+        })
+        .then(() => {
+            this.launcher.clearIfWasInactive();
+            return this.launcher.inactivate();
+        });
     });
 
     window.addEventListener(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
-      this.launcher.activateIfInactive();
-
-      // If there's already a message being force shown, do not override
-      if (this.message.shown || this.dialog.shown) {
-        return;
-      }
-
-      Promise.resolve(() => {
-        if (this.messages.queued.length > 0) {
-          return this.message.dequeue().then((msg) => this.message.content = msg);
-        } else {
-          return Promise.resolve(() => this.message.content = this.messages[this.state]);
-        }
-      }).then(() => this.message.show())
+      this.dialog.unsubscribeButton.disabled = true;
+      OneSignal.setSubscription(false)
+        .then(() => {
+          this.dialog.unsubscribeButton.disabled = false;
+          return OneSignal.bell.dialog.hide();
+        })
+        .then(() => {
+          this.message.display(Message.TYPES.MESSAGE, this.text['message.action.unsubscribed'], 2500);
+        })
+        .then(() => {
+          this.launcher.clearIfWasInactive();
+          return this.launcher.activate();
+        });
     });
 
     window.addEventListener(Bell.EVENTS.HOVERING, () => {
@@ -181,20 +198,39 @@ export default class Bell {
         return;
       }
 
-      Promise.resolve(() => {
-        if (this.messages.queued.length > 0) {
-          return this.message.dequeue().then((msg) => this.message.content = msg);
+      // If the message is a message and not a tip, don't show it (only show tips)
+      // Messages will go away on their own
+      if (this.message.contentType === Message.TYPES.MESSAGE) {
+        return;
+      }
+
+      new Promise((resolve, reject) => {
+        // If a message is being shown
+        if (this.message.queued.length > 0) {
+          return this.message.dequeue().then((msg) => {
+            this.message.content = msg;
+            this.messsage.contentType = Message.TYPES.QUEUED;
+            resolve();
+          });
         } else {
-          return Promise.resolve(() => this.message.content = this.messages[this.state]);
+          this.message.content = this.message.getTipForState();
+          this.message.contentType = Message.TYPES.TIP;
+          resolve();
         }
-      }).then(() => this.message.show())
+      }).then(() => {
+          return this.message.show();
+        })
     });
 
     window.addEventListener(Bell.EVENTS.HOVERED, () => {
+      // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
+      if (this.message.contentType === Message.TYPES.MESSAGE) {
+        return;
+      }
+
       if (this.message.shown) {
         this.message.hide()
           .then(() => {
-            this.message.content = this.messages[this.state];
             if (this.launcher.wasInactive && !this.dialog.shown) {
               this.launcher.inactivate();
               this.launcher.wasInactive = null;
@@ -213,7 +249,7 @@ export default class Bell {
     });
 
     window.addEventListener(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
-      this.message.display(this.text['tip.action.subscribed'], 2500)
+      this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribed'], 2500)
         .then(() => {
           this.launcher.inactivate();
         })
@@ -360,9 +396,6 @@ export default class Bell {
     }
 
     // Update anything that should be reset to the same state
-    // Unless a display message is being set
-    this.message.waitUntilHidden()
-      .then(() => this.message.content = this.messages[newState]);
   }
 
   get container() {

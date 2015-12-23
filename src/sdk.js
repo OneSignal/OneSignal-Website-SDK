@@ -1,7 +1,7 @@
 import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import './string.js'
-import { sendNotification } from './api.js';
+import { apiCall, sendNotification } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
@@ -242,8 +242,6 @@ var OneSignal = {
   },
 
   _onDbValueRetrieved: function (event) {
-    //debugger;
-    log.warn(`Event: %c${JSON.stringify(event.bubbles)}`, getConsoleStyle('alert'));
   },
 
   _onDbValueSet: function (event) {
@@ -409,9 +407,9 @@ var OneSignal = {
       });
 
     // Store the current value of subscription, so that we can see if the value changes in the future
-    //OneSignal._getSubscription.then((currentSubscription) => {
-    //  LimitStore.put('setsubscription.value', currentSubscription);
-    //});
+    OneSignal._getSubscription().then((currentSubscription) => {
+      LimitStore.put('setsubscription.value', currentSubscription);
+    });
 
 
     window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
@@ -1264,8 +1262,12 @@ var OneSignal = {
   },
 
   _getNotificationTypes: function (callback) {
-    OneSignal._getSubscription((currentSubscription) => {
-      callback(currentSubscription ? 1 : -2);
+    return new Promise((resolve, reject) => {
+      OneSignal._getSubscription().then(currentSubscription => {
+        let notificationType = currentSubscription ? 1 : -2;
+        resolve(notificationType);
+        callback(notificationType);
+      });
     });
   },
 
@@ -1278,7 +1280,9 @@ var OneSignal = {
           .then((currentSubscription) => {
             if (currentSubscription != newSubscription) {
               return Database.put("Options", {key: "subscription", value: newSubscription});
-            } else reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no change, so skipping call.');
+            } else {
+              return Promise.reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no change, so skipping call.');
+            }
           })
           .then(() => Database.get('Ids', 'userId'))
           .then((userIdResult) => {

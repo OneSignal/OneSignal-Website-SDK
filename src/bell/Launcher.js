@@ -64,6 +64,10 @@ export default class Launcher extends ActiveAnimatedElement {
     else return nothing();
   }
 
+  clearIfWasInactive() {
+    this.wasInactive = false;
+  }
+
   inactivate() {
     return this.bell.message.hide()
       .then(() => {
