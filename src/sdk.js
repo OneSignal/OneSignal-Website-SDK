@@ -270,7 +270,7 @@ var OneSignal = {
     }
 
     OneSignal._isInitialized = true;
-    log.trace('OneSignal SDK has been fully initialized.');
+    log.debug('OneSignal SDK has been fully initialized.');
   },
 
   _onDatabaseRebuilt: function() {

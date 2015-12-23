@@ -16,14 +16,14 @@ const SILENT_EVENTS = [
   'onesignal.bell.activeanimatedelement.active',
   'onesignal.bell.activeanimatedelement.inactivating',
   'onesignal.bell.activeanimatedelement.inactive',
-  //'onesignal.db.retrieved',
-  //'onesignal.db.set'
+  'onesignal.db.retrieved',
+  'onesignal.db.set'
   ];
 
 export default class Event {
   static trigger(eventName, data) {
     if (!eventName) {
-      log.trace();
+      log.trace('Missing event name.');
     }
     if (SILENT_EVENTS.indexOf(eventName) == -1) {
       if (!Environment.isBrowser()) {

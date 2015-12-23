@@ -16,20 +16,7 @@ import Message from './Message.js';
 import "./bell.scss";
 var logoSvg = require('raw!./bell.svg');
 
-/*
- {
- size = ['small', 'medium', 'large'],
- position = 'bottom-left', 'bottom-right'],
- offset = '15px 15px',
- theme = ['red-white', 'white-red'],
- inactiveOpacity: 0.75,
- showLauncherAfter: 1000,
- messages: {
- 'unsubscribed': 'Subscribe to notifications',
- 'subscribed': 'You're subscribed to notifications'
- }
- }
- */
+
 export default class Bell {
 
   static get EVENTS() {
@@ -73,7 +60,8 @@ export default class Bell {
       'dialog.blocked.title': 'Unblock Notifications',
       'dialog.blocked.message': "Follow these instructions to allow notifications:"
     },
-    prenotify = true
+    prenotify = true,
+    showCredit = true
     } = {}) {
     this.options = {
       size: size,
@@ -82,7 +70,8 @@ export default class Bell {
       showLauncherAfter: showLauncherAfter,
       showBadgeAfter: showBadgeAfter,
       text: text,
-      prenotify: prenotify
+      prenotify: prenotify,
+      showCredit: showCredit
     };
     if (['small', 'medium', 'large'].indexOf(this.options.size) < 0)
       throw new Error(`Invalid size ${this.options.size} for bell. Choose among 'small', 'medium', or 'large'.`);
@@ -145,7 +134,14 @@ export default class Bell {
             else {
               // The user is actually subscribed, register him for notifications
               OneSignal.registerForPushNotifications();
-              this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], 2500);
+              if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
+                this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], 2500)
+                  .then(() => {
+                    this.launcher.inactivate();
+                  });
+              } else {
+                this.launcher.inactivate();
+              }
             }
           }
           else if (this.subscribed) {
@@ -166,7 +162,7 @@ export default class Bell {
           return OneSignal.bell.dialog.hide();
         })
         .then(() => {
-          return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], 2500);
+          this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], 2500);
         })
         .then(() => {
             this.launcher.clearIfWasInactive();
@@ -387,7 +383,6 @@ export default class Bell {
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
   setState(newState) {
-    console.trace('%cCalled setState().', getConsoleStyle('bold'));
     let lastState = this.state;
     this.state = newState;
     if (lastState !== newState) {

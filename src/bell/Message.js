@@ -24,15 +24,20 @@ export default class Message extends AnimatedElement {
   }
 
   display(type, content, duration = 0) {
+    log.debug(`Calling %cdisplay(${type}, ${content}, ${duration}).`, getConsoleStyle('code'));
     return new Promise((resolve, reject) => {
-      this.shown ? this.hide() : nothing()
+      (this.shown ? this.hide() : nothing())
         .then(() => {
           this.content = content;
           this.contentType = type;
         })
-        .then(() => this.show())
+        .then(() => {
+          return this.show();
+        })
         .then(() => delay(duration))
-        .then(() => this.hide())
+        .then(() => {
+          return this.hide();
+        })
         .then(() => {
           // Reset back to normal content type so stuff can show a gain
           this.content = this.getTipForState();

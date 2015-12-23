@@ -29,7 +29,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: IS_PROD ? 'source-map' : 'source-map',
+  devtool: IS_PROD ? 'source-map' : 'eval-source-map',
   module: {
     loaders: [{
       test: /\.js$/,
@@ -43,7 +43,7 @@ module.exports = {
     },
     {
       test: /\.scss$/,
-      loaders: IS_PROD ? ["style", "css", "sass"] : ["style", "css", "sass"]
+      loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
     }]
   },
   sassLoader: {

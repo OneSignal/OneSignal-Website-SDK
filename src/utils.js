@@ -295,5 +295,5 @@ export function when(condition, promiseIfTrue, promiseIfFalse) {
     promiseIfTrue = nothing();
   if (promiseIfFalse === undefined)
     promiseIfFalse = nothing();
-  return condition ? promiseIfTrue : promiseIfFalse;
+  return (condition ? promiseIfTrue : promiseIfFalse);
 }

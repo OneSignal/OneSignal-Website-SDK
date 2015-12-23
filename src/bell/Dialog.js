@@ -4,6 +4,7 @@ import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
 import * as Browser from 'bowser';
 import Bell from './bell.js';
+import { HOST_URL } from '../vars.js';
 import LimitStore from '../limitStore.js';
 
 
@@ -99,6 +100,12 @@ export default class Dialog extends AnimatedElement {
       let currentSetSubscription = LimitStore.getLast('setsubscription.value');
       let contents = 'Nothing to show.';
 
+      var footer = '';
+      if (this.bell.options.showCredits) {
+        footer = `<div class="divider"></div>
+                  <div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`;
+      }
+
       if (this.bell.state === Bell.STATES.SUBSCRIBED && currentSetSubscription === true ||
         this.bell.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
 
@@ -116,7 +123,6 @@ export default class Dialog extends AnimatedElement {
         else
           buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.text['dialog.main.button.unsubscribe']}</button>`;
 
-
         contents = `
                   <h1>${this.bell.text['dialog.main.title']}</h1>
                   <div class="divider"></div>
@@ -133,8 +139,7 @@ export default class Dialog extends AnimatedElement {
                   <div class="action-container">
                     ${buttonHtml}
                   </div>
-                  <div class="divider"></div>
-                  <div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>
+                  ${footer}
                 `;
       }
       else if (this.bell.state === Bell.STATES.BLOCKED) {
@@ -161,8 +166,7 @@ export default class Dialog extends AnimatedElement {
                   <p>${this.bell.text['dialog.blocked.message']}</p>
                   ${instructionsHtml}
                   </div>
-                  <div class="divider"></div>
-                  <div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>
+                  ${footer}
                 `;
       }
 
