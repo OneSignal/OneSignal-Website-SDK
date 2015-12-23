@@ -472,6 +472,12 @@ var OneSignal = {
 
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
+        if (OneSignal._supportsDirectPermission() && OneSignal._initOptions.autoRegister === false) {
+          log.debug('Skipping auto register.');
+          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+          return;
+        }
+
         if (OneSignal._initOptions.autoRegister == false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
           Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
           return;
