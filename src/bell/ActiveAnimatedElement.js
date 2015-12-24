@@ -15,11 +15,11 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @param inactiveClass {string} The CSS class name to remove to inactivate the element.
    * @param state {string} The current state of the element, defaults to 'shown'.
    * @param activeState {string} The current state of the element, defaults to 'active'.
-   * @param targetTransitionEvent {string} A single property (e.g. 'transform' or 'opacity') to look for on transitionend of show() and hide() to know the transition is complete.
+   * @param targetTransitionEvents {string} An array of properties (e.g. ['transform', 'opacity']) to look for on transitionend of show() and hide() to know the transition is complete. As long as one matches, the transition is considered complete.
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
-  constructor(selector, showClass, hideClass, activeClass, inactiveClass, state = 'shown', activeState = 'active', targetTransitionEvent = 'opacity', nestedContentSelector = null) {
-    super(selector, showClass, hideClass, state, targetTransitionEvent, nestedContentSelector);
+  constructor(selector, showClass, hideClass, activeClass, inactiveClass, state = 'shown', activeState = 'active', targetTransitionEvents = ['opacity', 'transform'], nestedContentSelector = null) {
+    super(selector, showClass, hideClass, state, targetTransitionEvents, nestedContentSelector);
     this.activeClass = activeClass;
     this.inactiveClass = inactiveClass;
     this.activeState = activeState;
@@ -41,18 +41,27 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       if (this.activeClass)
         addCssClass(this.element, this.activeClass);
       if (this.shown) {
-        once(this.element, 'transitionend', (event, destroyListenerFn) => {
-          if (event.target === this.element &&
-            event.propertyName === this.targetTransitionEvent) {
-            // Uninstall the event listener for transitionend
-            destroyListenerFn();
-            this.activeState = 'active';
-            Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
-            return resolve(this);
-          }
-        }, true);
+        if (this.targetTransitionEvents.length == 0) {
+          return resolve(this);
+        } else {
+          var timerId = setTimeout(() => {
+            log.warn(`${this.constructor.name} did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
+          }, this.transitionCheckTimeout);
+          once(this.element, 'transitionend', (event, destroyListenerFn) => {
+            if (event.target === this.element &&
+              this.targetTransitionEvents.includes(event.propertyName)) {
+              clearTimeout(timerId);
+              // Uninstall the event listener for transitionend
+              destroyListenerFn();
+              this.activeState = 'active';
+              Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+              return resolve(this);
+            }
+          }, true);
+        }
       }
       else {
+        call.warn(`Ending activate() transition (alternative).`);
         this.activeState = 'active';
         Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
         return resolve(this);
@@ -65,6 +74,9 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   inactivate() {
+    if (this.constructor.name === 'Button') {
+      //debugger;
+    }
     if (!this.active) {
       return Promise.resolve(this);
     }
@@ -76,16 +88,24 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       if (this.inactiveClass)
         addCssClass(this.element, this.inactiveClass);
       if (this.shown) {
-        once(this.element, 'transitionend', (event, destroyListenerFn) => {
-          if (event.target === this.element &&
-            event.propertyName === this.targetTransitionEvent) {
-            // Uninstall the event listener for transitionend
-            destroyListenerFn();
-            this.activeState = 'inactive';
-            Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
-            return resolve(this);
-          }
-        }, true);
+        if (this.targetTransitionEvents.length == 0) {
+          return resolve(this);
+        } else {
+          var timerId = setTimeout(() => {
+            log.warn(`${this.constructor.name} did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
+          }, this.transitionCheckTimeout);
+          once(this.element, 'transitionend', (event, destroyListenerFn) => {
+            if (event.target === this.element &&
+              this.targetTransitionEvents.includes(event.propertyName)) {
+              clearTimeout(timerId);
+              // Uninstall the event listener for transitionend
+              destroyListenerFn();
+              this.activeState = 'inactive';
+              Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+              return resolve(this);
+            }
+          }, true);
+        }
       }
       else {
         this.activeState = 'inactive';

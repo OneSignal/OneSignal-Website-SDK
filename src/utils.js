@@ -153,6 +153,15 @@ export function removeCssClass(targetSelectorOrElement, cssClass) {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
+export function hasCssClass(targetSelectorOrElement, cssClass) {
+  if (typeof targetSelectorOrElement === 'string')
+    return document.querySelector(targetSelectorOrElement).classList.contains(cssClass);
+  else if (typeof targetSelectorOrElement === 'object')
+    return targetSelectorOrElement.classList.contains(cssClass);
+  else
+    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+}
+
 export function on(targetSelectorOrElement, event, task) {
   if (!event) {
     log.error('Cannot call on() with no event: ', event);

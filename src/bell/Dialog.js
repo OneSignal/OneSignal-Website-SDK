@@ -11,7 +11,7 @@ import LimitStore from '../limitStore.js';
 export default class Dialog extends AnimatedElement {
 
   constructor(bell) {
-    super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', null, 'hidden', 'opacity', '.onesignal-bell-launcher-dialog-body');
+    super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', null, 'hidden', ['opacity', 'transform'], '.onesignal-bell-launcher-dialog-body');
 
     this.bell = bell;
     this.subscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #subscribe-button';

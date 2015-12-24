@@ -270,7 +270,7 @@ var OneSignal = {
     }
 
     OneSignal._isInitialized = true;
-    log.debug('OneSignal SDK has been fully initialized.');
+    log.debug('OneSignal SDK initialized.');
   },
 
   _onDatabaseRebuilt: function() {
@@ -1298,7 +1298,7 @@ var OneSignal = {
                 notification_types: newSubscription ? 1 : -2
               });
             }
-            else reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no user ID, so the result was not forwarded to OneSignal.');
+            else return Promise.reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no user ID, so the result was not forwarded to OneSignal.');
           })
           .then(() => {
             OneSignal._triggerEvent_internalSubscriptionSet(newSubscription);

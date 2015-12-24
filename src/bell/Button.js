@@ -9,7 +9,7 @@ import LimitStore from '../limitStore.js';
 export default class Button extends ActiveAnimatedElement {
 
   constructor(bell) {
-    super('.onesignal-bell-launcher-button', null, null, 'onesignal-bell-launcher-button-active', null, 'shown');
+    super('.onesignal-bell-launcher-button', null, null, 'onesignal-bell-launcher-button-active', null, 'shown', []);
 
     this.bell = bell;
     this.events = {

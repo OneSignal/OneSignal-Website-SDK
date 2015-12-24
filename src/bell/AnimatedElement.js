@@ -11,16 +11,17 @@ export default class AnimatedElement {
    * @param showClass {string} The CSS class name to add to show the element.
    * @param hideClass {string} The CSS class name to remove to hide the element.
    * @param state {string} The current state of the element, defaults to 'shown'.
-   * @param targetTransitionEvent {string} A single property (e.g. 'transform' or 'opacity') to look for on transitionend of show() and hide() to know the transition is complete.
+   * @param targetTransitionEvents {string} An array of properties (e.g. ['transform', 'opacity']) to look for on transitionend of show() and hide() to know the transition is complete. As long as one matches, the transition is considered complete.
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
-  constructor(selector, showClass, hideClass, state = 'shown', targetTransitionEvent = 'opacity', nestedContentSelector = null) {
+  constructor(selector, showClass, hideClass, state = 'shown', targetTransitionEvents = ['opacity', 'transform'], nestedContentSelector = null) {
     this.selector = selector;
     this.showClass = showClass;
     this.hideClass = hideClass;
     this.state = state;
-    this.targetTransitionEvent = targetTransitionEvent;
+    this.targetTransitionEvents = targetTransitionEvents;
     this.nestedContentSelector = nestedContentSelector;
+    this.transitionCheckTimeout = 500;
   }
 
   /**
@@ -38,16 +39,24 @@ export default class AnimatedElement {
         removeCssClass(this.element, this.hideClass);
       if (this.showClass)
         addCssClass(this.element, this.showClass);
-      once(this.element, 'transitionend', (event, destroyListenerFn) => {
-        if (event.target === this.element &&
-            event.propertyName === this.targetTransitionEvent) {
-          // Uninstall the event listener for transitionend
-          destroyListenerFn();
-          this.state = 'shown';
-          Event.trigger(AnimatedElement.EVENTS.SHOWN, this);
-          return resolve(this);
-        }
-      }, true);
+      if (this.targetTransitionEvents.length == 0) {
+        return resolve(this);
+      } else {
+        var timerId = setTimeout(() => {
+          log.warn(`${this.constructor.name} did not completely show (state: ${this.state}, activeState: ${this.activeState}).`)
+        }, this.transitionCheckTimeout);
+        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          if (event.target === this.element &&
+            this.targetTransitionEvents.includes(event.propertyName)) {
+            clearTimeout(timerId);
+            // Uninstall the event listener for transitionend
+            destroyListenerFn();
+            this.state = 'shown';
+            Event.trigger(AnimatedElement.EVENTS.SHOWN, this);
+            return resolve(this);
+          }
+        }, true);
+      }
     });
   }
 
@@ -66,16 +75,24 @@ export default class AnimatedElement {
         removeCssClass(this.element, this.showClass);
       if (this.hideClass)
         addCssClass(this.element, this.hideClass);
-      once(this.element, 'transitionend', (event, destroyListenerFn) => {
-        if (event.target === this.element &&
-          event.propertyName === this.targetTransitionEvent) {
-          // Uninstall the event listener for transitionend
-          destroyListenerFn();
-          this.state = 'hidden';
-          Event.trigger(AnimatedElement.EVENTS.HIDDEN, this);
-          return resolve(this);
-        }
-      }, true);
+      if (this.targetTransitionEvents.length == 0) {
+        return resolve(this);
+      } else {
+        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          var timerId = setTimeout(() => {
+            log.warn(`${this.constructor.name} did not completely hide (state: ${this.state}, activeState: ${this.activeState}).`)
+          }, this.transitionCheckTimeout);
+          if (event.target === this.element &&
+            this.targetTransitionEvents.includes(event.propertyName)) {
+            clearTimeout(timerId);
+            // Uninstall the event listener for transitionend
+            destroyListenerFn();
+            this.state = 'hidden';
+            Event.trigger(AnimatedElement.EVENTS.HIDDEN, this);
+            return resolve(this);
+          }
+        }, true);
+      }
     });
   }
 

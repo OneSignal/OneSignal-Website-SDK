@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, nothing } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, hasCssClass, addCssClass, removeCssClass, once, nothing } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
@@ -15,6 +15,12 @@ export default class Launcher extends ActiveAnimatedElement {
   }
 
   resize(size) {
+    // If the size is the same, do nothing and resolve an empty promise
+    if ((size === 'small' && hasCssClass(this.element, 'onesignal-bell-launcher-sm')) ||
+        (size === 'medium' && hasCssClass(this.element, 'onesignal-bell-launcher-md')) ||
+        (size === 'large' && hasCssClass(this.element, 'onesignal-bell-launcher-lg'))) {
+      return Promise.resolve(this);
+    }
     removeCssClass(this.element, 'onesignal-bell-launcher-sm');
     removeCssClass(this.element, 'onesignal-bell-launcher-md');
     removeCssClass(this.element, 'onesignal-bell-launcher-lg');
@@ -36,14 +42,22 @@ export default class Launcher extends ActiveAnimatedElement {
     else {
       return new Promise((resolve) => {
         // Once the launcher has finished shrinking down
-        once(this.element, 'transitionend', (event, destroyListenerFn) => {
-          if (event.target === this.element &&
-            event.propertyName === this.targetTransitionEvent) {
-            // Uninstall the event listener for transitionend
-            destroyListenerFn();
-            return resolve(this);
-          }
-        }, true);
+        if (this.targetTransitionEvents.length == 0) {
+          return resolve(this);
+        } else {
+          var timerId = setTimeout(() => {
+            log.warn(`${this.constructor.name} did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
+          }, this.transitionCheckTimeout);
+          once(this.element, 'transitionend', (event, destroyListenerFn) => {
+            if (event.target === this.element &&
+              this.targetTransitionEvents.includes(event.propertyName)) {
+              clearTimeout(timerId);
+              // Uninstall the event listener for transitionend
+              destroyListenerFn();
+              return resolve(this);
+            }
+          }, true);
+        }
       });
     }
   }
@@ -84,7 +98,6 @@ export default class Launcher extends ActiveAnimatedElement {
   }
 
   activate() {
-    debugger;
     if (this.bell.badge.content.length > 0) {
       return this.bell.badge.hide()
         .then(() => Promise.all([super.activate(), this.resize(this.bell.options.size)]))

@@ -3,7 +3,7 @@ import Environment from '../environment.js';
 import LimitStore from '../limitStore.js';
 import log from 'loglevel';
 import Event from '../events.js';
-import bowser from 'bowser';
+import * as Browser from 'bowser';
 import { HOST_URL } from '../vars.js';
 import AnimatedElement from './AnimatedElement.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
@@ -40,6 +40,42 @@ export default class Bell {
     };
   }
 
+  static get TEXT_SUBS() {
+    return {
+      'prompt.native.grant': {
+        default: 'Allow',
+        chrome: 'Allow',
+        firefox: 'Always Receive Notifications',
+        safari: 'Allow'
+      }
+    }
+  }
+
+  substituteText() {
+    // key: 'message.action.subscribing'
+    // value: 'Click <strong>{{prompt.native.grant}}</strong> to receive notifications'
+    for (var key in this.text) {
+      if (this.text.hasOwnProperty(key)) {
+        let value = this.text[key];
+        // browserName could be 'chrome' or 'firefox' or 'safari'
+        let browserName = Browser.name.toLowerCase();
+
+        // tKey: 'prompt.native.grant'  (from TEXT_SUBS)
+        // tValue: { chrome: 'Allow', firefox: 'Al... }
+        // zValue: 'Allow', if browserName === 'chrome'
+        for (var tKey in Bell.TEXT_SUBS) {
+          if (Bell.TEXT_SUBS.hasOwnProperty(tKey)) {
+            let tValue = Bell.TEXT_SUBS[tKey];
+            let zValue = tValue[browserName];
+            if (value.includes('{{')) {
+              this.text[key] = value.replace(`{{${tKey}}}`, (zValue !== undefined ? zValue : tValue['default']));
+            }
+          }
+        }
+      }
+    }
+  }
+
   constructor({
     size = 'small',
     position = 'bottom-left',
@@ -50,7 +86,7 @@ export default class Bell {
       'tip.state.unsubscribed': 'Subscribe to notifications',
       'tip.state.subscribed': "You're subscribed to notifications",
       'tip.state.blocked': "You've blocked notifications",
-      'message.action.subscribing': "Click <strong>Allow</strong> to receive notifications",
+      'message.action.subscribing': "Click <strong>{{prompt.native.grant}}</strong> to receive notifications",
       'message.action.subscribed': "Thanks for subscribing!",
       'message.action.resubscribed': "You're subscribed to notifications",
       'message.action.unsubscribed': "You won't receive notifications again",
@@ -97,7 +133,7 @@ export default class Bell {
     if (!this.text['message.action.resubscribed'])
       this.text['message.action.resubscribed'] = "You're subscribed to notifications";
     if (!this.text['message.action.subscribing'])
-      this.text['message.action.subscribing'] = "Click <strong>Allow</strong> to receive notifications";
+      this.text['message.action.subscribing'] = "Click <strong>{{prompt.native.grant}}</strong> to receive notifications";
     if (!this.text['message.action.unsubscribed'])
       this.text['message.action.unsubscribed'] = "You won't receive notifications again";
     if (!this.text['dialog.main.title'])
@@ -108,6 +144,7 @@ export default class Bell {
       this.text['dialog.main.button.unsubscribe'] = 'UNSUBSCRIBE';
     if (!this.text['dialog.blocked.title'])
       this.text['dialog.blocked.title'] = 'Unblock Notifications';
+    this.substituteText();
     this.state = Bell.STATES.UNINITIALIZED;
 
     // Install event hooks
@@ -122,6 +159,9 @@ export default class Bell {
         return;
       }
 
+      if (window.debugFlag) {
+        debugger;
+      }
       this.launcher.activateIfInactive()
         .then(() => this.message.hide())
         .then(() => {
@@ -134,14 +174,24 @@ export default class Bell {
             else {
               // The user is actually subscribed, register him for notifications
               OneSignal.registerForPushNotifications();
-              if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
-                this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], 2500)
-                  .then(() => {
-                    this.launcher.inactivate();
-                  });
-              } else {
-                this.launcher.inactivate();
-              }
+              //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
+              //if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
+              //  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], 2500)
+              //}
+
+              once(window, OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (event, destroyListenerFn) => {
+                destroyListenerFn();
+                let permission = event.detail.to;
+                if (permission === 'granted') {
+                  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribed'], Message.TIMEOUT)
+                    .then(() => {
+                      this.launcher.inactivate();
+                    })
+                    .catch((e) => {
+                      log.error(e);
+                    });
+                }
+              }, true);
             }
           }
           else if (this.subscribed) {
@@ -162,7 +212,7 @@ export default class Bell {
           return OneSignal.bell.dialog.hide();
         })
         .then(() => {
-          this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], 2500);
+          return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], Message.TIMEOUT);
         })
         .then(() => {
             this.launcher.clearIfWasInactive();
@@ -178,11 +228,11 @@ export default class Bell {
           return OneSignal.bell.dialog.hide();
         })
         .then(() => {
-          this.message.display(Message.TYPES.MESSAGE, this.text['message.action.unsubscribed'], 2500);
-        })
-        .then(() => {
           this.launcher.clearIfWasInactive();
           return this.launcher.activate();
+        })
+        .then(() => {
+          return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.unsubscribed'], Message.TIMEOUT);
         });
     });
 
@@ -245,13 +295,6 @@ export default class Bell {
     });
 
     window.addEventListener(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
-      this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribed'], 2500)
-        .then(() => {
-          this.launcher.inactivate();
-        })
-        .catch((e) => {
-          log.error(e);
-        });
     });
 
     this.updateState();
@@ -261,18 +304,23 @@ export default class Bell {
     if (!this.dialog.shown) {
       this.dialog.show()
         .then((e) => {
+          //var id = Math.random().toString(36).substring(7, 11);
+          //console.warn(`Generating %cshowDialogProcedure(${id}):`, getConsoleStyle('code'), '.');
           once(document, 'click', (e, destroyEventListener) => {
             let wasDialogClicked = this.dialog.element.contains(e.target);
             if (wasDialogClicked) {
             } else {
+              //console.warn(`%cshowDialogProcedure(${id}):`, getConsoleStyle('code'), 'A destroying click was detected.');
               destroyEventListener();
-              this.dialog.hide()
-                .then((e) => {
-                  this.launcher.inactivateIfWasInactive();
-                })
-                .catch((e) => {
-                  log.error(e);
-                });
+              if (this.dialog.shown) {
+                this.dialog.hide()
+                  .then((e) => {
+                    this.launcher.inactivateIfWasInactive();
+                  })
+                  .catch((e) => {
+                    log.error(e);
+                  });
+              }
             }
           }, true);
         })
@@ -336,16 +384,15 @@ export default class Bell {
         throw new Error('Invalid OneSignal bell theme ' + this.options.theme);
       }
 
-      //this.launcher.inactivate()
-      //  .then((result) => {
-      //    console.info('Promise resolved yay! Result: ', result);
-      //  })
-
       OneSignal.isPushNotificationsEnabled((pushEnabled) => {
         (pushEnabled ? this.launcher.inactivate() : nothing())
           .then(() => delay(this.options.showLauncherAfter))
-          .then(() => this.launcher.show())
-          .then(() => delay(this.options.showBadgeAfter))
+          .then(() => {
+            return this.launcher.show();
+          })
+          .then(() => {
+            return delay(this.options.showBadgeAfter);
+          })
           .then(() => {
             if (this.options.prenotify && !pushEnabled && OneSignal._isNewVisitor) {
               return this.message.enqueue('Click to subscribe to notifications')
@@ -356,7 +403,7 @@ export default class Bell {
           .then(() => this.initialized = true)
           .catch((e) => log.error(e));
       });
-    });
+    }).catch(e => log.error(e));
   }
 
   _getCurrentSetSubscriptionState() {

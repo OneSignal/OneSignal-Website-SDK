@@ -25,7 +25,7 @@ export default class Database {
         request.onsuccess = (event) => {
           let database = event.target.result;
           Database._instance = database;
-          console.debug('Returning a new opened instance of IndexedDB.');
+          console.debug('Opening IndexedDB instance.');
           resolve(database);
         };
         request.onerror = (event) => {

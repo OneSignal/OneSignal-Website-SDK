@@ -8,11 +8,15 @@ import Bell from './bell.js';
 export default class Message extends AnimatedElement {
 
   constructor(bell) {
-    super('.onesignal-bell-launcher-message', 'onesignal-bell-launcher-message-opened', null, 'hidden', 'opacity', '.onesignal-bell-launcher-message-body');
+    super('.onesignal-bell-launcher-message', 'onesignal-bell-launcher-message-opened', null, 'hidden', ['opacity', 'transform'], '.onesignal-bell-launcher-message-body');
 
     this.bell = bell;
     this.contentType = '';
     this.queued = [];
+  }
+
+  static get TIMEOUT() {
+    return 825;
   }
 
   static get TYPES() {
