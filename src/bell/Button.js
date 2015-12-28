@@ -16,14 +16,14 @@ export default class Button extends ActiveAnimatedElement {
       mouse: 'bell.launcher.button.mouse'
     };
 
-    this.element.addEventListener('mouseover', () => {
+    this.element.addEventListener('touchstart mouseenter', () => {
       if (LimitStore.isEmpty(this.events.mouse) || LimitStore.getLast(this.events.mouse) === 'out') {
         Event.trigger(Bell.EVENTS.HOVERING);
       }
       LimitStore.put(this.events.mouse, 'over');
     });
 
-    this.element.addEventListener('mouseleave', () => {
+    this.element.addEventListener('mouseleave touchmove click', () => {
       LimitStore.put(this.events.mouse, 'out');
       Event.trigger(Bell.EVENTS.HOVERED);
     });

@@ -261,11 +261,7 @@ var OneSignal = {
   _onSdkInitialized: function() {
     if (Environment.isBrowser() && !OneSignal.bell) {
       log.info('Showing bell.');
-      OneSignal.bell = new Bell({
-        size: 'large',
-        position: 'bottom-right',
-        theme: 'default'
-      });
+      OneSignal.bell = new Bell(OneSignal._initOptions.bell);
       OneSignal.bell.create();
     }
 

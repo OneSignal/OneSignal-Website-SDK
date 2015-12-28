@@ -77,8 +77,8 @@ export default class Bell {
   }
 
   constructor({
-    size = 'small',
-    position = 'bottom-left',
+    size = 'large',
+    position = 'bottom-right',
     theme = 'default',
     showLauncherAfter = 10,
     showBadgeAfter = 300,
