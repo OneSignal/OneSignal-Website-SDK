@@ -16,33 +16,62 @@ export default class Button extends ActiveAnimatedElement {
       mouse: 'bell.launcher.button.mouse'
     };
 
-    this.element.addEventListener('touchstart mouseenter', () => {
-      if (LimitStore.isEmpty(this.events.mouse) || LimitStore.getLast(this.events.mouse) === 'out') {
-        Event.trigger(Bell.EVENTS.HOVERING);
-      }
-      LimitStore.put(this.events.mouse, 'over');
+    this.element.addEventListener('touchstart', (e) => {
+      this.onHovering(e);
+      this.onTap(e);
     });
 
-    this.element.addEventListener('mouseleave touchmove click', () => {
-      LimitStore.put(this.events.mouse, 'out');
-      Event.trigger(Bell.EVENTS.HOVERED);
+    this.element.addEventListener('mouseenter', (e) => {
+      this.onHovering(e);
     });
 
-    this.element.addEventListener('mousedown', () => {
-      this.pulse();
-      this.activate();
-      this.bell.badge.activate();
+    this.element.addEventListener('mouseleave', (e) => {
+      this.onHovered(e);
+    });
+    this.element.addEventListener('touchmove', (e) => {
+      this.onHovered(e);
     });
 
-    this.element.addEventListener('mouseup', () => {
-      this.inactivate();
-      this.bell.badge.inactivate();
+    this.element.addEventListener('mousedown', (e) => {
+      this.onTap(e);
     });
 
-    this.element.addEventListener('click', () => {
-      Event.trigger(Bell.EVENTS.BELL_CLICK);
-      Event.trigger(Bell.EVENTS.LAUNCHER_CLICK);
+    this.element.addEventListener('mouseup', (e) => {
+      this.onEndTap(e);
     });
+
+    this.element.addEventListener('click', (e) => {
+      this.onHovered(e);
+      this.onClick(e);
+    });
+  }
+
+  onHovering(e) {
+    if (LimitStore.isEmpty(this.events.mouse) || LimitStore.getLast(this.events.mouse) === 'out') {
+      Event.trigger(Bell.EVENTS.HOVERING);
+    }
+    LimitStore.put(this.events.mouse, 'over');
+  }
+
+  onHovered(e) {
+    LimitStore.put(this.events.mouse, 'out');
+    Event.trigger(Bell.EVENTS.HOVERED);
+  }
+
+  onTap(e) {
+    this.pulse();
+    this.activate();
+    this.bell.badge.activate();
+  }
+
+  onEndTap(e) {
+    this.inactivate();
+    this.bell.badge.inactivate();
+  }
+
+  onClick(e) {
+    Event.trigger(Bell.EVENTS.BELL_CLICK);
+    Event.trigger(Bell.EVENTS.LAUNCHER_CLICK);
   }
 
   pulse() {
