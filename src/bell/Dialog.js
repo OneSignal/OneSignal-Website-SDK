@@ -101,7 +101,7 @@ export default class Dialog extends AnimatedElement {
       let contents = 'Nothing to show.';
 
       var footer = '';
-      if (this.bell.options.showCredits) {
+      if (this.bell.options.showCredit) {
         footer = `<div class="divider"></div>
                   <div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`;
       }
@@ -144,8 +144,11 @@ export default class Dialog extends AnimatedElement {
       }
       else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
-        if (Browser.chrome)
-          imageUrl = HOST_URL + '/bell/chrome-unblock.jpg';
+        if (Browser.chrome) {
+          if (!Browser.mobile && !Browser.tablet) {
+            imageUrl = HOST_URL + '/bell/chrome-unblock.jpg';
+          }
+        }
         else if (Browser.firefox)
           imageUrl = HOST_URL + '/bell/firefox-unblock.jpg';
         else if (Browser.safari)
@@ -154,10 +157,21 @@ export default class Dialog extends AnimatedElement {
         let instructionsHtml = '';
         if (imageUrl) {
           instructionsHtml = `
-            <div class="instructions">
-              <a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>
-            </div>
+
+            <a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>
             `;
+        }
+
+        if ((Browser.mobile || Browser.tablet) && Browser.chrome) {
+          instructionsHtml = `
+            <ol>
+            <li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li>
+            <li>Click <strong>Site settings</strong> under Advanced.</li>
+            <li>Click <strong>Notifications</strong>.</li>
+            <li>Find and click this entry for this website.</li>
+            <li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li>
+            </ol>
+          `;
         }
         contents = `
                   <h1>${this.bell.text['dialog.blocked.title']}</h1>

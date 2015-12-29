@@ -21,6 +21,17 @@ class ServiceWorker {
     }
   }
 
+  static get CACHE_URLS() {
+    return [
+      '/sdks/initOneSignalHttpIframe',
+      '/sdks/initOneSignalHttpIframe?session=*',
+      '/sdks/manifest_json',
+      '/dev_sdks/initOneSignalHttpIframe',
+      '/dev_sdks/initOneSignalHttpIframe?session=*',
+      '/dev_sdks/manifest_json'
+      ];
+  }
+
   /**
    * Occurs when a push message is received.
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle notifications.
@@ -172,10 +183,7 @@ class ServiceWorker {
           })
           .then(cache => {
 
-            return cache.addAll([
-              '/sdks/initOneSignalHttpIframe',
-              '/sdks/initOneSignalHttpIframe?session=*',
-              '/sdks/manifest_json']);
+            return cache.addAll(ServiceWorker.CACHE_URLS);
           })
           .catch(e => log.error(e))
       );
@@ -185,17 +193,22 @@ class ServiceWorker {
   }
 
   static onFetch(event) {
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          // Cache hit -- return response
-          if (response) {
-            return response;
-          }
-          return fetch(event.request);
-        })
-        .catch((e) => log.error(e))
-    );
+    let url = event.request.url;
+    for (let cacheUrl of ServiceWorker.CACHE_URLS) {
+      if (url.indexOf(cacheUrl) > -1) {
+        event.respondWith(
+          caches.match(event.request)
+            .then((response) => {
+              // Cache hit -- return response
+              if (response) {
+                return response;
+              }
+              return fetch(event.request);
+            })
+            .catch((e) => log.error(e))
+        );
+      }
+    }
   }
 
   static get onOurSubdomain() {

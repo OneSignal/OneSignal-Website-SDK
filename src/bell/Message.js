@@ -16,7 +16,7 @@ export default class Message extends AnimatedElement {
   }
 
   static get TIMEOUT() {
-    return 825;
+    return 2500;
   }
 
   static get TYPES() {
@@ -84,7 +84,13 @@ export default class Message extends AnimatedElement {
       if (this.bell.badge.shown) {
         this.bell.badge.hide()
           .then(() => this.bell.badge.decrement())
-          .then(() => this.bell.badge.show())
+          .then((numMessagesLeft) => {
+            if (numMessagesLeft > 0) {
+              return this.bell.badge.show()
+            } else {
+              return Promise.resolve(this);
+            }
+          })
           .then(resolve(dequeuedMessage));
       } else {
         this.bell.badge.decrement();

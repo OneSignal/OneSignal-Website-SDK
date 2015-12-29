@@ -77,7 +77,8 @@ export default class Bell {
   }
 
   constructor({
-    size = 'large',
+    disable = false,
+    size = 'medium',
     position = 'bottom-right',
     theme = 'default',
     showLauncherAfter = 10,
@@ -86,6 +87,7 @@ export default class Bell {
       'tip.state.unsubscribed': 'Subscribe to notifications',
       'tip.state.subscribed': "You're subscribed to notifications",
       'tip.state.blocked': "You've blocked notifications",
+      'message.prenotify': 'Click to subscribe to notifications',
       'message.action.subscribing': "Click <strong>{{prompt.native.grant}}</strong> to receive notifications",
       'message.action.subscribed': "Thanks for subscribing!",
       'message.action.resubscribed': "You're subscribed to notifications",
@@ -100,6 +102,7 @@ export default class Bell {
     showCredit = true
     } = {}) {
     this.options = {
+      disable: disable,
       size: size,
       position: position,
       theme: theme,
@@ -109,6 +112,10 @@ export default class Bell {
       prenotify: prenotify,
       showCredit: showCredit
     };
+
+    if (this.options.disable)
+      return;
+
     if (['small', 'medium', 'large'].indexOf(this.options.size) < 0)
       throw new Error(`Invalid size ${this.options.size} for bell. Choose among 'small', 'medium', or 'large'.`);
     if (['bottom-left', 'bottom-right'].indexOf(this.options.position) < 0)
@@ -128,6 +135,8 @@ export default class Bell {
       this.text['tip.state.subscribed'] = "You're subscribed to notifications";
     if (!this.text['tip.state.blocked'])
       this.text['tip.state.blocked'] = "You've blocked notifications";
+    if (!this.text['message.prenotify'])
+      this.text['message.prenotify'] = "Click to subscribe to notifications";
     if (!this.text['message.action.subscribed'])
       this.text['message.action.subscribed'] = "Thanks for subscribing!";
     if (!this.text['message.action.resubscribed'])
@@ -159,9 +168,6 @@ export default class Bell {
         return;
       }
 
-      if (window.debugFlag) {
-        debugger;
-      }
       this.launcher.activateIfInactive()
         .then(() => this.message.hide())
         .then(() => {
@@ -176,7 +182,7 @@ export default class Bell {
               OneSignal.registerForPushNotifications();
               //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
               //if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
-              //  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], 2500)
+              //  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], Message.TIMEOUT)
               //}
 
               once(window, OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (event, destroyListenerFn) => {
@@ -237,16 +243,19 @@ export default class Bell {
     });
 
     window.addEventListener(Bell.EVENTS.HOVERING, () => {
+      this.hovering = true;
       this.launcher.activateIfInactive();
 
       // If there's already a message being force shown, do not override
       if (this.message.shown || this.dialog.shown) {
+        this.hovering = false;
         return;
       }
 
       // If the message is a message and not a tip, don't show it (only show tips)
       // Messages will go away on their own
       if (this.message.contentType === Message.TYPES.MESSAGE) {
+        this.hovering = false;
         return;
       }
 
@@ -255,7 +264,7 @@ export default class Bell {
         if (this.message.queued.length > 0) {
           return this.message.dequeue().then((msg) => {
             this.message.content = msg;
-            this.messsage.contentType = Message.TYPES.QUEUED;
+            this.message.contentType = Message.TYPES.QUEUED;
             resolve();
           });
         } else {
@@ -266,6 +275,9 @@ export default class Bell {
       }).then(() => {
           return this.message.show();
         })
+        .then(() => {
+          this.hovering = false;
+        })
     });
 
     window.addEventListener(Bell.EVENTS.HOVERED, () => {
@@ -273,6 +285,22 @@ export default class Bell {
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
       }
+
+      if (this.hovering) {
+        this.hovering = false;
+        // Only happens on mobile where the message could still be showing (i.e. animating) when a HOVERED event fires
+        // Basically only happens if HOVERING and HOVERED fire within a few milliseconds of each other
+        this.message.waitUntilShown()
+          .then(() => delay(Message.TIMEOUT))
+          .then(() => this.message.hide())
+          .then(() => {
+            if (this.launcher.wasInactive && !this.dialog.shown) {
+              this.launcher.inactivate();
+              this.launcher.wasInactive = null;
+            }
+          });
+      }
+
 
       if (this.message.shown) {
         this.message.hide()
@@ -334,6 +362,9 @@ export default class Bell {
     if (!isPushNotificationsSupported())
       return;
 
+    if (this.options.disable)
+      return;
+
     // Remove any existing bell
     if (this.container) {
       removeDomElement('onesignal-bell-container');
@@ -384,6 +415,8 @@ export default class Bell {
         throw new Error('Invalid OneSignal bell theme ' + this.options.theme);
       }
 
+      log.info('Showing bell.');
+
       OneSignal.isPushNotificationsEnabled((pushEnabled) => {
         (pushEnabled ? this.launcher.inactivate() : nothing())
           .then(() => delay(this.options.showLauncherAfter))
@@ -395,7 +428,7 @@ export default class Bell {
           })
           .then(() => {
             if (this.options.prenotify && !pushEnabled && OneSignal._isNewVisitor) {
-              return this.message.enqueue('Click to subscribe to notifications')
+              return this.message.enqueue(this.text['message.prenotify'])
                 .then(() => this.badge.show());
             }
             else return nothing();

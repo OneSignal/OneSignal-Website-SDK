@@ -2,8 +2,9 @@ var webpack = require("webpack");
 var path = require('path');
 var babelPolyfill = require('babel-polyfill');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var IS_PROD = process.argv.indexOf('--production-build') >= 0;
-var IS_TEST = process.argv.indexOf('--test-build') >= 0;
+var IS_PROD = process.argv.indexOf('--production') >= 0;
+var IS_TEST = process.argv.indexOf('--test') >= 0;
+var IS_BETA = process.argv.indexOf('--beta') >= 0;
 
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
@@ -13,9 +14,12 @@ Date.prototype.timeNow = function() {
   return ((hours < 10) ? "0" : "") + hours + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + " " + ampm;
 };
 
-var entries = {
-  OneSignalSDK: './src/entry.js',
-};
+var entries = { };
+if (IS_BETA)
+  entries['OneSignalSDKBeta'] = './src/entry.js';
+else
+  entries['OneSignalSDK'] = './src/entry.js';
+
 if (IS_TEST)
   entries['test'] = './test/entry.js';
 

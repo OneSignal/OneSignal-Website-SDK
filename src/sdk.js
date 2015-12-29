@@ -260,13 +260,11 @@ var OneSignal = {
 
   _onSdkInitialized: function() {
     if (Environment.isBrowser() && !OneSignal.bell) {
-      log.info('Showing bell.');
       OneSignal.bell = new Bell(OneSignal._initOptions.bell);
       OneSignal.bell.create();
     }
 
     OneSignal._isInitialized = true;
-    log.debug('OneSignal SDK initialized.');
   },
 
   _onDatabaseRebuilt: function() {
@@ -415,7 +413,7 @@ var OneSignal = {
     window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
     window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
     window.addEventListener(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
-    window.addEventListener(Database.EVENTS.REBUILT, OneSignal.onDatabaseRebuilt);
+    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
 
     OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
 
@@ -470,6 +468,7 @@ var OneSignal = {
 
         if (OneSignal._supportsDirectPermission() && OneSignal._initOptions.autoRegister === false) {
           log.debug('Skipping auto register.');
+          OneSignal._sessionInit({});
           Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
           return;
         }

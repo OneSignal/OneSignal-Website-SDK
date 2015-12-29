@@ -30,8 +30,8 @@ $bell-shadow: drop-shadow(0 2px 4px rgba(34,36,38,0.35));
 $badge-shadow: drop-shadow(0 2px 4px rgba(34,36,38,0));
 $transition-duration: 175ms;
 $hover-size-increase: 1.15;
-$launcher-width: 530px;
-$message-max-width: 420px;
+$launcher-width: 330px;
+$max-launcher-width: 70vmin;
 $offset-x: 15px;
 $offset-y: 15px;
 
@@ -106,13 +106,15 @@ $sizes: (
 
                         .onesignal-bell-launcher-dialog {
                             bottom: #{$size-amount + $arrow-size};
+                            #{$leftOrRight}: 0;
+                            transform-origin: #{$leftOrRight} bottom;
 
                             &:before {
-                                right: #{ceil(($size-amount / 2)) - 5 - ($dialog-border-width + (ceil($arrow-size / 2)))};
+                                #{$leftOrRight}: #{ceil(($size-amount / 2)) - 5 - ($dialog-border-width + (ceil($arrow-size / 2)))};
                             }
 
                             &:after {
-                                right: #{ceil(($size-amount / 2)) - 5 - ceil(($arrow-size / 2))};
+                                #{$leftOrRight}: #{ceil(($size-amount / 2)) - 5 - ceil(($arrow-size / 2))};
                             }
                         }
                     }
@@ -239,7 +241,6 @@ $sizes: (
         .onesignal-bell-launcher-dialog {
             cursor: pointer;
             position: absolute;
-            right: 0;
             background-color: $dialog-background;
             border-radius: 5px;
             border: 1px solid $dialog-border-color;
@@ -250,8 +251,25 @@ $sizes: (
             transform: scale(0, 0) translateZ(0);
             transition: transform $transition-duration ease-in-out,
             opacity $transition-duration ease-in-out;
-            transform-origin: right bottom;
             z-index: 2147481000;
+
+            ol {
+                counter-reset: foo;
+                display: table;
+                border-spacing: 0.3em 0.75em;
+            }
+
+            ol > li {
+                counter-increment: foo;
+                display: table-row;
+                margin-bottom: 0.75em;
+            }
+
+            ol > li::before {
+                content: counter(foo) ".";
+                display: table-cell; /* aha! */
+                text-align: right;
+            }
 
             &:after, &:before {
                 top: 100%;
@@ -404,13 +422,14 @@ $sizes: (
                         }
 
                         .instructions {
+                            max-width: 95vw;
+                            max-height: 70vh;
                             font-family: $font-sans-serif;
                             font-weight: 400;
                             font-size: $message-font-size-base;
 
                             img {
-                                max-width: $launcher-width * 1.5;
-                                max-height: $launcher-width * 1.5;
+                                width: 100%;
                             }
                         }
 

@@ -105,7 +105,8 @@ export default class AnimatedElement {
       return Promise.resolve(this);
     else return new Promise((resolve) => {
       once(window, AnimatedElement.EVENTS.SHOWN, (event, destroyListenerFn) => {
-        if (event.details === this) {
+        var self = this;
+        if (event.detail === this) {
           destroyListenerFn();
           return resolve(this);
         }
@@ -122,7 +123,7 @@ export default class AnimatedElement {
       return Promise.resolve(this);
     else return new Promise((resolve) => {
       once(window, AnimatedElement.EVENTS.HIDDEN, (event, destroyListenerFn) => {
-        if (event.details === this) {
+        if (event.detail === this) {
           destroyListenerFn();
           return resolve(this);
         }
