@@ -77,7 +77,7 @@ export default class Bell {
   }
 
   constructor({
-    disable = false,
+    enable = false,
     size = 'medium',
     position = 'bottom-right',
     theme = 'default',
@@ -103,7 +103,7 @@ export default class Bell {
     showCredit = true
     } = {}) {
     this.options = {
-      disable: disable,
+      enable: enable,
       size: size,
       position: position,
       theme: theme,
@@ -115,7 +115,7 @@ export default class Bell {
       modalPrompt: modalPrompt,
     };
 
-    if (this.options.disable)
+    if (!this.options.enable)
       return;
 
     if (['small', 'medium', 'large'].indexOf(this.options.size) < 0)
@@ -359,7 +359,7 @@ export default class Bell {
     if (!isPushNotificationsSupported())
       return;
 
-    if (this.options.disable)
+    if (!this.options.enable)
       return;
 
     // Remove any existing bell

@@ -376,7 +376,8 @@ $sizes: (
 
                 .onesignal-bell-launcher-dialog {
                     $arrow-size: $size-amount * 0.20625;
-                    padding: $size-amount * 0.1 $size-amount * 0.3;
+                    //padding: $size-amount * 0.1 $size-amount * 0.3;
+                    padding: 0.5em 1em;
                     color: rgb(51, 51, 51);
 
                     &:after {
