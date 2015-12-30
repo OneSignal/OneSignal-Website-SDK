@@ -40,6 +40,10 @@ LimitStore.getLast = function (key) {
   return LimitStore.get(key)[1];
 };
 
+LimitStore.remove = function (key) {
+  delete LimitStore[key];
+};
+
 LimitStore.isEmpty = function(key) {
   let values = LimitStore.get(key);
   return values[0] === null && values[1] === null;

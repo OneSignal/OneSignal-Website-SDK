@@ -134,4 +134,16 @@ export default class Database {
       });
     });
   }
+
+  static printIds() {
+    Promise.all([
+      Database.get('Ids', 'appId'),
+      Database.get('Ids', 'registrationId'),
+      Database.get('Ids', 'userId')
+    ]).then(function(contents) {
+      log.info('appId:', contents[0]);
+      log.info('registrationId:', contents[1]);
+      log.info('userId:', contents[2]);
+    });
+  }
 }

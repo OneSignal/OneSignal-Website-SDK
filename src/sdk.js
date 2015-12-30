@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once } from './utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid } from './utils.js';
 
 
 var OneSignal = {
@@ -35,6 +35,7 @@ var OneSignal = {
   bell: null,
   store: LimitStore,
   environment: Environment,
+  database: Database,
   event: Event,
   LOGGING: __DEV__,
   browser: Browser,
@@ -156,23 +157,27 @@ var OneSignal = {
 
                 if (OneSignal._httpRegistration) {
                   // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP prompt!!
-                  log.debug("Sending player Id and registrationId back to host page");
-                  log.debug(OneSignal._initOptions);
-                  var creator = opener || parent;
-                  OneSignal._safePostMessage(creator, {
-                    idsAvailable: {
-                      userId: userId,
-                      registrationId: registrationId
-                    },
-                    from: Environment.getEnv()
-                  }, OneSignal._initOptions.origin, null);
-                  OneSignal._safePostMessage(creator, {
-                    httpNativePromptPermissionChanged: OneSignal._getNotificationPermission(),
-                    from: Environment.getEnv()
-                  }, OneSignal._initOptions.origin, null);
+                  OneSignal._getNotificationPermission()
+                    .then((permission) => {
+                      log.debug("Sending player Id and registrationId back to host page");
+                      log.debug(OneSignal._initOptions);
+                      var creator = opener || parent;
+                      OneSignal._safePostMessage(creator, {
+                        idsAvailable: {
+                          userId: userId,
+                          registrationId: registrationId
+                        },
+                        from: Environment.getEnv()
+                      }, OneSignal._initOptions.origin, null);
+                      OneSignal._safePostMessage(creator, {
+                        httpNativePromptPermissionChanged: permission,
+                        from: Environment.getEnv()
+                      }, OneSignal._initOptions.origin, null);
 
-                  if (opener)
-                    window.close();
+                      if (opener)
+                        window.close();
+                    })
+                    .catch(e => log.error(e));
                 }
               });
             }
@@ -270,15 +275,19 @@ var OneSignal = {
   },
 
   _checkTrigger_nativePermissionChanged: function() {
-    let currentPermission = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-    let lastPermission = LimitStore.getLast('notification.permission');
-    if (lastPermission !== currentPermission) {
-      OneSignal._triggerEvent_nativePromptPermissionChanged(lastPermission, currentPermission);
-    }
+    OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id)
+      .then((permission) => {
+        let currentPermission = permission;
+        let lastPermission = LimitStore.getLast('notification.permission');
+        if (lastPermission !== currentPermission) {
+          OneSignal._triggerEvent_nativePromptPermissionChanged(lastPermission, currentPermission);
+        }
+      })
+      .catch(e => log.error(e));
   },
 
   _checkTrigger_eventSubscriptionChanged: function () {
-    log.debug('Called %c_checkTrigger_eventSubscriptionChanged()', getConsoleStyle('code'));
+    log.debug('Called %c_checkTrigger_eventSubscriptionChanged()', getConsoleStyle('code'), 'in', Environment.getEnv());
     var permissions = LimitStore.get('notification.permission');
     var lastPermission = permissions[permissions.length - 2];
     var currentPermission = permissions[permissions.length - 1];
@@ -347,16 +356,6 @@ var OneSignal = {
         permissionStatus.onchange = function () {
           var permissionBeforePrompt = LimitStore.getFirst('notification.permission');
           OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt);
-
-          // 12/29/15: Uncommenting this causes the httpNativePromptPermissionChanged message to be posted back to the host page an extra time, which causes the host page to post an extra message back in reply .. this eventually messes up the events.
-          // If we are not the main page, send this event back to main page
-          // if (!Environment.isHost()) {
-          //  let creator = opener || parent;
-          //  OneSignal._safePostMessage(creator, {
-          //    httpNativePromptPermissionChanged: OneSignal._getNotificationPermission(),
-          //    from: Environment.getEnv()
-          //  }, OneSignal._initOptions.origin, null);
-          //}
         };
       })
         .catch(function (e) {
@@ -385,60 +384,63 @@ var OneSignal = {
       return;
     }
 
-    var currentNotificationPermission = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-    LimitStore.put('notification.permission', currentNotificationPermission);
+    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
 
-    OneSignal._installNativePromptPermissionChangedHook();
+    OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id)
+      .then(permission => {
+        LimitStore.put('notification.permission', permission);
+        OneSignal._installNativePromptPermissionChangedHook();
 
-    // Store the current value of Ids:registrationId, so that we can see if the value changes in the future
-    Database.get('Ids', 'userId')
+        // Store the current value of Ids:registrationId, so that we can see if the value changes in the future
+        return Database.get('Ids', 'userId');
+      })
       .then(function (result) {
         if (result === undefined) {
           OneSignal._isUninitiatedVisitor = true;
         }
         var storeValue = result ? result.id : null;
         LimitStore.put('db.ids.userId', storeValue);
-      });
 
-    // Store the current value of subscription, so that we can see if the value changes in the future
-    OneSignal._getSubscription().then((currentSubscription) => {
-      LimitStore.put('setsubscription.value', currentSubscription);
-    });
+        // Store the current value of subscription, so that we can see if the value changes in the future
+        return OneSignal._getSubscription();
+      })
+      .then((currentSubscription) => {
+        LimitStore.put('setsubscription.value', currentSubscription);
+        window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
+        window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
+        window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
+        window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
+        window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
+        window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
+        window.addEventListener(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
+        window.addEventListener('focus', (event) => {
+          // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
+          OneSignal._checkTrigger_nativePermissionChanged();
+        });
 
-    window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
-    window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
-    window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
-    window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
-    window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
-    window.addEventListener(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
-    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
-    window.addEventListener('focus', (event) => {
-      // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
-      OneSignal._checkTrigger_nativePermissionChanged();
-    });
+        OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
 
-    OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
+        if (OneSignal._useHttpMode)
+          OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+        else
+          OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
 
-    if (OneSignal._useHttpMode)
-      OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
-    else
-      OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
+        if (__DEV__)
+          OneSignal._initOneSignalHttp = DEV_HOST + '/dev_sdks/initOneSignalHttp';
 
-    if (__DEV__)
-      OneSignal._initOneSignalHttp = DEV_HOST + '/dev_sdks/initOneSignalHttp';
+        // If Safari - add 'fetch' pollyfill if it isn't already added.
+        if (isSupportedSafari() && typeof window.fetch == "undefined") {
+          var s = document.createElement('script');
+          s.setAttribute('src', "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");
+          document.head.appendChild(s);
+        }
 
-    // If Safari - add 'fetch' pollyfill if it isn't already added.
-    if (isSupportedSafari() && typeof window.fetch == "undefined") {
-      var s = document.createElement('script');
-      s.setAttribute('src', "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");
-      document.head.appendChild(s);
-    }
-
-    if (document.readyState === "complete")
-      OneSignal._internalInit();
-    else
-      window.addEventListener('load', OneSignal._internalInit);
+        if (document.readyState === "complete")
+          OneSignal._internalInit();
+        else
+          window.addEventListener('load', OneSignal._internalInit);
+      })
+      .catch(e => log.error(e));
   },
 
   _internalInit: function () {
@@ -558,20 +560,30 @@ var OneSignal = {
           });
         ;
       }
-      else if (event.data.getNotificationPermission) {
+      else if (event.data.getNotificationPermission) { // This is not used for OneSignal._getNotificationPermission, even though the naming is similar
         //log.info('%cIn the <iframe>: getNotificationPermission message was received.', getConsoleStyle('alert'));
         OneSignal._getSubdomainState(function (curState) {
           OneSignal._safePostMessage(creator, {currentNotificationPermission: curState, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
         });
       }
+      else if (event.data.remoteGetNotificationPermission) {
+        let safariWebId = event.data.safariWebId;
+        let promiseId = event.data.promiseId;
+        OneSignal._getNotificationPermission(safariWebId)
+          .then((permission) => {
+            OneSignal._safePostMessage(creator, {remoteGetNotificationPermissionResponse: permission, promiseId: promiseId, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+          })
+          .catch(e => log.error(e));
+      }
       else if (event.data.setSubdomainState) {
+        let promiseId = event.data.promiseId;
         OneSignal.setSubscription(event.data.setSubdomainState.setSubscription)
           .then(() => {
             // Let main page know setSubscription is complete so promise can be fulfilled
-            OneSignal._safePostMessage(creator, {setSubscriptionComplete: true, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+            OneSignal._safePostMessage(creator, {setSubscriptionComplete: true, from: Environment.getEnv(), promiseId: promiseId}, OneSignal._initOptions.origin, null);
           })
           .catch(() => {
-            OneSignal._safePostMessage(creator, {setSubscriptionComplete: false, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+            OneSignal._safePostMessage(creator, {setSubscriptionComplete: false, from: Environment.getEnv(), promiseId: promiseId}, OneSignal._initOptions.origin, null);
           });
       }
     };
@@ -694,23 +706,26 @@ var OneSignal = {
     else {
       if (isSupportedSafari()) {
         if (OneSignal._initOptions.safari_web_id) {
-          var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-          window.safari.pushNotification.requestPermission(
-            OneSignal._API_URL + 'safari',
-            OneSignal._initOptions.safari_web_id,
-            {app_id: OneSignal._app_id},
-            function (data) {
-              log.info('Safari requestPermission() callback:', data);
-              var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-              if (data.deviceToken) {
-                OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
-              }
-              else {
-                sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
-              }
-              OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
-            }
-          );
+          OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id)
+            .then(permission => {
+              window.safari.pushNotification.requestPermission(
+                OneSignal._API_URL + 'safari',
+                OneSignal._initOptions.safari_web_id,
+                {app_id: OneSignal._app_id},
+                function (data) {
+                  log.info('Safari requestPermission() callback:', data);
+                  var notificationPermissionAfterRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+                  if (data.deviceToken) {
+                    OneSignal._registerWithOneSignal(OneSignal._app_id, data.deviceToken.toLowerCase(), 7);
+                  }
+                  else {
+                    sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+                  }
+                  OneSignal._triggerEvent_nativePromptPermissionChanged(permission);
+                }
+              );
+            })
+            .catch(e => log.error(e));
         }
       }
       else if (options.modalPrompt && options.fromRegisterFor) { // If HTTPS - Show modal
@@ -885,21 +900,47 @@ var OneSignal = {
    safariWebId: Used only to get the current notification permission state in Safari (required as part of the spec).
    */
   _getNotificationPermission: function (safariWebId) {
-    if (window.safari) {
-      // The user is on Safari
-      // A web ID is required to determine the current notificiation permission
-      if (safariWebId) {
-        return window.safari.pushNotification.permission(safariWebId).permission;
+    /*
+     For the following conditions, get directly and return:
+     - Safari, because the permission property is not scoped by origin
+     - HTTPS without a subdomain, because the permission is then accessed directly
+
+     Otherwise use a postmessage for:
+     - HTTP, this one is obvious
+     - HTTPS with a subdomain, when someone wants to consolidate multiple HTTPS sites under a subdomain
+     */
+    return new Promise((resolve, reject) => {
+      let isHttpsProtocol = (location.protocol === 'https:');
+      let noSubdomain = !OneSignal._useHttpMode;
+      if (Browser.safari ||
+        (isHttpsProtocol && noSubdomain)) {
+        if (window.safari) {
+          // The user is on Safari
+          // A web ID is required to determine the current notificiation permission
+          if (safariWebId) {
+            resolve(window.safari.pushNotification.permission(safariWebId).permission);
+          }
+          else {
+            // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
+            resolve("default");
+          }
+        }
+        else {
+          // Identical API on Firefox and Chrome
+          resolve(Notification.permission);
+        }
+      } else {
+        let uid = guid();
+        LimitStore.put(`_getNotificationPermissionPromiseResolve.${uid}`, resolve);
+        if (OneSignal._iframePort) {
+          OneSignal._iframePort.postMessage({remoteGetNotificationPermission: true, safariWebId: safariWebId, promiseId: uid, from: Environment.getEnv()});
+          // This promise will eventually be resolved by _listener_receiveMessage
+        } else {
+          // This entire function was called before an iFrame port is even available
+          resolve("default");
+        }
       }
-      else {
-        // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
-        return "default";
-      }
-    }
-    else {
-      // Identical API on Firefox and Chrome
-      return Notification.permission;
-    }
+    });
   },
 
   _triggerEvent_customPromptClicked: function (clickResult) {
@@ -911,15 +952,22 @@ var OneSignal = {
 
   _triggerEvent_nativePromptPermissionChanged: function (from, to, updateIfIdentical = false) {
     if (to === undefined) {
-      to = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
+      var promise = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id).then((permission) => {
+        to = permission;
+      })
+        .catch(e => log.error(e));
+    } else {
+      var promise = Promise.resolve();
     }
-    if (from !== to || updateIfIdentical) {
-      var recentPermissions = LimitStore.put('notification.permission', to);
-      Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-        from: from,
-        to: to
-      });
-    }
+    promise.then(() => {
+      if (from !== to || updateIfIdentical) {
+        var recentPermissions = LimitStore.put('notification.permission', to);
+        Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
+          from: from,
+          to: to
+        });
+      }
+    });
   },
 
   _triggerEvent_subscriptionChanged: function (to) {
@@ -939,8 +987,14 @@ var OneSignal = {
   },
 
   _subscribeForPush: function (serviceWorkerRegistration) {
-    var notificationPermissionBeforeRequest = OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id);
-    serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true})
+    var notificationPermissionBeforeRequest = '';
+
+    OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id).then((permission) => {
+        notificationPermissionBeforeRequest = permission;
+      })
+      .then(() => {
+        return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
+      })
       .then(function (subscription) {
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
@@ -975,16 +1029,19 @@ var OneSignal = {
         // New addition (12/22/2015), adding support for detecting the cancel 'X'
         // Chrome doesn't show when the user clicked 'X' for cancel
         // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
-        if (OneSignal._getNotificationPermission() === 'default') {
-          // The user clicked 'X'
-          OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest, undefined, true);
-        }
+        OneSignal._getNotificationPermission().then((permission) => {
+          if (permission === 'default') {
+            // The user clicked 'X'
+            OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest, permission, true);
+          }
 
-        if (!OneSignal._usingNativePermissionHook)
-          OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
+          if (!OneSignal._usingNativePermissionHook)
+            OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest, permission);
 
-        if (e.code == 20 && opener && OneSignal._httpRegistration)
-          window.close();
+          if (e.code == 20 && opener && OneSignal._httpRegistration)
+            window.close();
+        })
+        .catch(e => log.error(e));
       });
   },
 
@@ -1136,11 +1193,24 @@ var OneSignal = {
     else if (event.data.currentNotificationPermission) { // Subdomain Only
       OneSignal._fireNotificationEnabledCallback(event.data.currentNotificationPermission.isPushEnabled);
     }
+    else if (event.data.remoteGetNotificationPermissionResponse) {
+      let permission = event.data.remoteGetNotificationPermissionResponse;
+      let promiseId = event.data.promiseId;
+      let promiseResolve = LimitStore.getLast(`_getNotificationPermissionPromiseResolve.${promiseId}`);
+      if (!promiseResolve) {
+        log.warn('When _getNotificationPermission() was previously called, no Promise was stored to be called back now.');
+      } else {
+        LimitStore.remove(`_getNotificationPermissionPromiseResolve.${promiseId}`);
+        promiseResolve(permission);
+      }
+    }
     else if (event.data.setSubscriptionComplete) { // Subdomain to Host page notifying setSubscription(trueOrFalse) is complete
-      let promiseResolve = LimitStore.getLast('setSubscriptionPromiseResolve');
+      let promiseId = event.data.promiseId;
+      let promiseResolve = LimitStore.getLast(`setSubscriptionPromiseResolve.${promiseId}`);
       if (!promiseResolve) {
         log.warn('When setSubscription() was previously called, no Promise was stored to be called back now.');
       } else {
+        LimitStore.remove(`setSubscriptionPromiseResolve.${promiseId}`);
         promiseResolve();
       }
     }
@@ -1323,8 +1393,9 @@ var OneSignal = {
   setSubscription: function (newSubscription) {
     return new Promise((resolve, reject) => {
       if (OneSignal._iframePort) {
-        LimitStore.put('setSubscriptionPromiseResolve', resolve);
-        OneSignal._iframePort.postMessage({setSubdomainState: {setSubscription: newSubscription}, from: Environment.getEnv()});
+        let uid = guid();
+        LimitStore.put(`setSubscriptionPromiseResolve.${uid}`, resolve);
+        OneSignal._iframePort.postMessage({setSubdomainState: {setSubscription: newSubscription}, promiseId: uid, from: Environment.getEnv()});
         // This promise will eventually be resolved when the iFrame replies with setSubscriptionComplete
       }
       else {
@@ -1333,20 +1404,30 @@ var OneSignal = {
             if (currentSubscription != newSubscription) {
               return Database.put("Options", {key: "subscription", value: newSubscription});
             } else {
-              return Promise.reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no change, so skipping call.');
+              log.debug(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no change, so skipping call.');
+              resolve();
             }
           })
-          .then(() => Database.get('Ids', 'userId'))
+          .then(() => {
+            return Database.get('Ids', 'userId');
+          })
           .then((userIdResult) => {
+            log.debug(userIdResult);
             if (userIdResult) {
+              log.debug(3);
               return apiCall("players/" + userIdResult.id, "PUT", {
                 app_id: OneSignal._app_id,
                 notification_types: newSubscription ? 1 : -2
               });
             }
-            else return Promise.reject(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no user ID, so the result was not forwarded to OneSignal.');
+            else {
+              log.debug(2);
+              log.error(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no user ID, so the result was not forwarded to OneSignal.');
+              reject('No user ID.');
+            }
           })
           .then(() => {
+            log.debug(1);
             OneSignal._triggerEvent_internalSubscriptionSet(newSubscription);
             resolve();
           })
