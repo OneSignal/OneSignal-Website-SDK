@@ -137,7 +137,10 @@ class ServiceWorker {
             }
           }
 
-          if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
+          let launchURLObject = new URL(launchURL);
+          if (launchURL !== 'javascript:void(0);' &&
+              launchURL !== 'do_not_open' &&
+              !launchURLObject.search.includes('_osp=do_not_open')) {
             return Database.put("NotificationOpened", {url: launchURL, data: notificationData})
               .then(() => {
 

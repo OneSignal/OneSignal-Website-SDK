@@ -48,12 +48,12 @@ export default class Dialog extends AnimatedElement {
           return response.json()
         }).then(function(data) {
           if (data.errors) {
-            console.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
+            log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
             reject(null);
           }
           resolve(data);
         }).catch(function(ex) {
-          console.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
+          log.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
           reject(null);
         })
     });

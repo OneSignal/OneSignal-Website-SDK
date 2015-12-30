@@ -1,5 +1,6 @@
 import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
-import Environment from './environment.js'
+import Environment from './environment.js';
+
 
 if (Environment.isBrowser()) {
   // We're running in the host page, iFrame of the host page, or popup window

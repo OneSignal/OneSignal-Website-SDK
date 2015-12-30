@@ -30,14 +30,18 @@ export function apiCall(action, method, data) {
   });
 }
 
-export function sendNotification(appId, playerIds, titles, contents) {
+export function sendNotification(appId, playerIds, titles, contents, url) {
   var params = {
-    'app_id': appId,
-    'headings': titles,
-    'contents': contents,
-    'include_player_ids': playerIds,
-    'isAnyWeb': true,
-    'url': 'javascript:void(0);'
+    app_id: appId,
+    contents: contents,
+    include_player_ids: playerIds,
+    isAnyWeb: true
   };
+  if (titles) {
+    params.headings = titles;
+  }
+  if (url) {
+    params.url = url;
+  }
   return apiCall('notifications', 'POST', params);
 }

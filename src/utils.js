@@ -169,7 +169,6 @@ export function on(targetSelectorOrElement, event, task) {
   if (!task) {
     log.error('Cannot call on() with no task: ', task)
   }
-  log.debug('Debug me here.');
   if (typeof targetSelectorOrElement === 'string') {
     let els = document.querySelectorAll(selector);
     if (els.length > 0) {

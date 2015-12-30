@@ -83,6 +83,7 @@ export default class Bell {
     theme = 'default',
     showLauncherAfter = 10,
     showBadgeAfter = 300,
+    modalPrompt = false,
     text = {
       'tip.state.unsubscribed': 'Subscribe to notifications',
       'tip.state.subscribed': "You're subscribed to notifications",
@@ -110,7 +111,8 @@ export default class Bell {
       showBadgeAfter: showBadgeAfter,
       text: text,
       prenotify: prenotify,
-      showCredit: showCredit
+      showCredit: showCredit,
+      modalPrompt: modalPrompt,
     };
 
     if (this.options.disable)
@@ -157,11 +159,6 @@ export default class Bell {
     this.state = Bell.STATES.UNINITIALIZED;
 
     // Install event hooks
-    window.addEventListener('focus', (event) => {
-      // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
-      OneSignal._checkTrigger_nativePermissionChanged();
-    });
-
     window.addEventListener(Bell.EVENTS.LAUNCHER_CLICK, (event) => {
       if (this.message.shown && this.message.contentType == Message.TYPES.MESSAGE) {
         // A message is being shown, it'll disappear soon
@@ -179,7 +176,7 @@ export default class Bell {
             }
             else {
               // The user is actually subscribed, register him for notifications
-              OneSignal.registerForPushNotifications();
+              OneSignal.registerForPushNotifications({modalPrompt: this.options.modalPrompt});
               //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
               //if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
               //  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], Message.TIMEOUT)
