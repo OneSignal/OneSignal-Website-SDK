@@ -525,6 +525,10 @@ $sizes: (
                         }
                     }
                 }
+
+                .pulse-ring {
+                    border: 7px solid rgba(255, 255, 255, 0.4);
+                }
             }
 
             .onesignal-bell-launcher-badge {
@@ -560,6 +564,10 @@ $sizes: (
                         }
                     }
                 }
+
+                .pulse-ring {
+                    border: 7px solid rgba(229, 75, 77, 0.4);
+                }
             }
 
             .onesignal-bell-launcher-badge {
@@ -584,7 +592,6 @@ $sizes: (
     }
 
     .pulse-ring {
-        border: 7px solid rgba(255, 255, 255, 0.4);
         border-radius: 50%;
         position: absolute;
         left: 0;
