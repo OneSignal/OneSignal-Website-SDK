@@ -736,7 +736,7 @@ var OneSignal = {
         OneSignal.isPushNotificationsEnabled(function (pushEnabled) {
           var element = document.createElement('div');
           element.setAttribute('id', 'OneSignal-iframe-modal');
-          element.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9000; display: block"></div>';
+          element.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3000000000; display: block"></div>';
           document.body.appendChild(element);
 
           var iframeStyle = document.createElement('style');
