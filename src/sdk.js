@@ -32,7 +32,7 @@ var OneSignal = {
   _isUninitiatedVisitor: false,
   _isNewVisitor: false,
   _isInitialized: false,
-  bell: null,
+  notifyButton: null,
   store: LimitStore,
   environment: Environment,
   database: Database,
@@ -218,6 +218,23 @@ var OneSignal = {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
+  _sendSelfNotification: function(title, message, url) {
+    if (!title) {
+      title = 'OneSignal Test Message';
+    }
+    if (!message) {
+      message = 'This is an example notification.';
+    }
+    Database.get('Ids', 'userId')
+      .then(function (result) {
+        if (result && result.id) {
+          sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url)
+        } else {
+          log.warn('Could not send self a test notification because there is no valid user ID.');
+        }
+      });
+  },
+
   _onSubscriptionChanged: function (event) {
     if (OneSignal._isUninitiatedVisitor && event.detail === true) {
       Database.get('Ids', 'userId')
@@ -260,9 +277,15 @@ var OneSignal = {
   },
 
   _onSdkInitialized: function() {
-    if (!OneSignal._isInitialized && Environment.isBrowser() && !OneSignal.bell) {
-      OneSignal.bell = new Bell(OneSignal._initOptions.bell);
-      OneSignal.bell.create();
+    if (!OneSignal._isInitialized && Environment.isBrowser() && !OneSignal.notifyButton) {
+      OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
+      if (OneSignal._initOptions.bell) {
+        // If both bell and notifyButton, notifyButton's options take precedence
+        Object.assign(OneSignal._initOptions.bell, OneSignal._initOptions.notifyButton);
+        Object.assign(OneSignal._initOptions.notifyButton, OneSignal._initOptions.bell);
+      }
+      OneSignal.notifyButton = new Bell(OneSignal._initOptions.notifyButton);
+      OneSignal.notifyButton.create();
       OneSignal._isInitialized = true;
     }
     else if (OneSignal._isInitialized) {

@@ -5,18 +5,18 @@ import './string.js';
 
 
 const SILENT_EVENTS = [
-  'onesignal.bell.hovering',
-  'onesignal.bell.hovered',
-  'onesignal.bell.launcher.button.click',
-  'onesignal.bell.launcher.click',
-  'onesignal.bell.animatedelement.hiding',
-  'onesignal.bell.animatedelement.hidden',
-  'onesignal.bell.animatedelement.showing',
-  'onesignal.bell.animatedelement.shown',
-  'onesignal.bell.activeanimatedelement.activating',
-  'onesignal.bell.activeanimatedelement.active',
-  'onesignal.bell.activeanimatedelement.inactivating',
-  'onesignal.bell.activeanimatedelement.inactive',
+  'onesignal.nb.hovering',
+  'onesignal.nb.hovered',
+  'onesignal.nb.launcher.button.click',
+  'onesignal.nb.launcher.click',
+  'onesignal.nb.animatedelement.hiding',
+  'onesignal.nb.animatedelement.hidden',
+  'onesignal.nb.animatedelement.showing',
+  'onesignal.nb.animatedelement.shown',
+  'onesignal.nb.activeanimatedelement.activating',
+  'onesignal.nb.activeanimatedelement.active',
+  'onesignal.nb.activeanimatedelement.inactivating',
+  'onesignal.nb.activeanimatedelement.inactive',
   'onesignal.db.retrieved',
   'onesignal.db.set'
   ];

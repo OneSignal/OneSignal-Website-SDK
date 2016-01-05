@@ -88,6 +88,9 @@ class ServiceWorker {
 
             // Never nest the following line in a callback from the point of entering from _getLastNotifications
             let notificationEventPromise = self.registration.showNotification(data.title, {
+              // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
+              // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
+              requireInteraction: true,
               body: data.message,
               icon: data.icon,
               tag: JSON.stringify(data)

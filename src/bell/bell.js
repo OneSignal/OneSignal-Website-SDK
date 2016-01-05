@@ -21,13 +21,13 @@ export default class Bell {
 
   static get EVENTS() {
     return {
-      STATE_CHANGED: 'onesignal.bell.state.changed',
-      LAUNCHER_CLICK: 'onesignal.bell.launcher.click',
-      BELL_CLICK: 'onesignal.bell.launcher.button.click',
-      SUBSCRIBE_CLICK: 'onesignal.bell.launcher.dialog.button.subscribe.click',
-      UNSUBSCRIBE_CLICK: 'onesignal.bell.launcher.dialog.button.unsubscribe.click',
-      HOVERING: 'onesignal.bell.hovering',
-      HOVERED: 'onesignal.bell.hovered',
+      STATE_CHANGED: 'onesignal.nb.state.changed',
+      LAUNCHER_CLICK: 'onesignal.nb.launcher.click',
+      BELL_CLICK: 'onesignal.nb.launcher.button.click',
+      SUBSCRIBE_CLICK: 'onesignal.nb.launcher.dialog.button.subscribe.click',
+      UNSUBSCRIBE_CLICK: 'onesignal.nb.launcher.dialog.button.unsubscribe.click',
+      HOVERING: 'onesignal.nb.hovering',
+      HOVERED: 'onesignal.nb.hovered',
     };
   }
 
@@ -119,15 +119,15 @@ export default class Bell {
       return;
 
     if (['small', 'medium', 'large'].indexOf(this.options.size) < 0)
-      throw new Error(`Invalid size ${this.options.size} for bell. Choose among 'small', 'medium', or 'large'.`);
+      throw new Error(`Invalid size ${this.options.size} for notify button. Choose among 'small', 'medium', or 'large'.`);
     if (['bottom-left', 'bottom-right'].indexOf(this.options.position) < 0)
-      throw new Error(`Invalid position ${this.options.position} for bell. Choose either 'bottom-left', or 'bottom-right'.`);
+      throw new Error(`Invalid position ${this.options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`);
     if (['default', 'inverse'].indexOf(this.options.theme) < 0)
-      throw new Error(`Invalid theme ${this.options.theme} for bell. Choose either 'default', or 'inverse'.`);
+      throw new Error(`Invalid theme ${this.options.theme} for notify button. Choose either 'default', or 'inverse'.`);
     if (this.options.showLauncherAfter < 0)
-      throw new Error(`Invalid delay duration of ${this.options.showLauncherAfter} for showing the bell. Choose a value above 0.`);
+      throw new Error(`Invalid delay duration of ${this.options.showLauncherAfter} for showing the notify button. Choose a value above 0.`);
     if (this.options.showBadgeAfter < 0)
-      throw new Error(`Invalid delay duration of ${this.options.showBadgeAfter} for showing the bell's badge. Choose a value above 0.`);
+      throw new Error(`Invalid delay duration of ${this.options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`);
     this.size = this.options.size;
     this.position = this.options.position;
     this.text = this.options.text;
@@ -214,7 +214,7 @@ export default class Bell {
       OneSignal.setSubscription(true)
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
-          return OneSignal.bell.dialog.hide();
+          return this.dialog.hide();
         })
         .then(() => {
           return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], Message.TIMEOUT);
@@ -230,7 +230,7 @@ export default class Bell {
       OneSignal.setSubscription(false)
         .then(() => {
           this.dialog.unsubscribeButton.disabled = false;
-          return OneSignal.bell.dialog.hide();
+          return this.dialog.hide();
         })
         .then(() => {
           this.launcher.clearIfWasInactive();
@@ -401,7 +401,7 @@ export default class Bell {
         addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right')
       }
       else {
-        throw new Error('Invalid OneSignal bell position ' + this.options.position);
+        throw new Error('Invalid OneSignal notify button position ' + this.options.position);
       }
 
       if (this.options.theme === 'default') {
@@ -411,10 +411,10 @@ export default class Bell {
         addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse')
       }
       else {
-        throw new Error('Invalid OneSignal bell theme ' + this.options.theme);
+        throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
       }
 
-      log.info('Showing bell.');
+      log.info('Showing the notify button.');
 
       OneSignal.isPushNotificationsEnabled((pushEnabled) => {
         (pushEnabled ? this.launcher.inactivate() : nothing())

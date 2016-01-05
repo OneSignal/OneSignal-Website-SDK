@@ -1,1 +1,1 @@
-importScripts('https://192.168.1.206:3001/dev_sdks/OneSignalSDK.js');
+importScripts('https://192.168.1.205:3001/dev_sdks/OneSignalSDK.js');

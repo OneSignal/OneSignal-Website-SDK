@@ -151,10 +151,10 @@ export default class ActiveAnimatedElement extends AnimatedElement {
 
   static get EVENTS() {
     return Object.assign({}, AnimatedElement.EVENTS, {
-      ACTIVATING: 'onesignal.bell.activeanimatedelement.activating',
-      ACTIVE: 'onesignal.bell.activeanimatedelement.active',
-      INACTIVATING: 'onesignal.bell.activeanimatedelement.inactivating',
-      INACTIVE: 'onesignal.bell.activeanimatedelement.inactive',
+      ACTIVATING: 'onesignal.nb.activeanimatedelement.activating',
+      ACTIVE: 'onesignal.nb.activeanimatedelement.active',
+      INACTIVATING: 'onesignal.nb.activeanimatedelement.inactivating',
+      INACTIVE: 'onesignal.nb.activeanimatedelement.inactive',
     });
   }
 

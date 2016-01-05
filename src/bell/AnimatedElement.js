@@ -133,10 +133,10 @@ export default class AnimatedElement {
 
   static get EVENTS() {
     return {
-      SHOWING: 'onesignal.bell.animatedelement.showing',
-      SHOWN: 'onesignal.bell.animatedelement.shown',
-      HIDING: 'onesignal.bell.animatedelement.hiding',
-      HIDDEN: 'onesignal.bell.animatedelement.hidden',
+      SHOWING: 'onesignal.nb.animatedelement.showing',
+      SHOWN: 'onesignal.nb.animatedelement.shown',
+      HIDING: 'onesignal.nb.animatedelement.hiding',
+      HIDDEN: 'onesignal.nb.animatedelement.hidden',
     };
   }
 
