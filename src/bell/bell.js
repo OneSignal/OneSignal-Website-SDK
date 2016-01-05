@@ -155,6 +155,8 @@ export default class Bell {
       this.text['dialog.main.button.unsubscribe'] = 'UNSUBSCRIBE';
     if (!this.text['dialog.blocked.title'])
       this.text['dialog.blocked.title'] = 'Unblock Notifications';
+    if (!this.text['dialog.blocked.message'])
+      this.text['dialog.blocked.message'] = 'Follow these instructions to allow notifications:';
     this.substituteText();
     this.state = Bell.STATES.UNINITIALIZED;
 
