@@ -399,6 +399,10 @@ var OneSignal = {
       return;
     }
 
+    if (!options.path) {
+      options.path = '/';
+    }
+
     OneSignal._initOptions = options;
     OneSignal._app_id = OneSignal._initOptions.appId;
 
@@ -443,8 +447,13 @@ var OneSignal = {
 
         OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
 
-        if (OneSignal._useHttpMode)
+        if (OneSignal._useHttpMode) {
+          if (!OneSignal._initOptions.subdomainName) {
+            log.error('Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+            return;
+          }
           OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+        }
         else
           OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
 
@@ -903,7 +912,7 @@ var OneSignal = {
     }
 
     if (Notification.permission === 'denied') {
-      log.warn("The user has disabled notifications.");
+      log.warn("The user has blocked notifications.");
       return;
     }
 
