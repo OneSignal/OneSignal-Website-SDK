@@ -225,6 +225,9 @@ var OneSignal = {
     if (!message) {
       message = 'This is an example notification.';
     }
+    if (!url) {
+      url = new URL(location.href).origin + '?_osp=do_not_open';
+    }
     Database.get('Ids', 'userId')
       .then(function (result) {
         if (result && result.id) {
