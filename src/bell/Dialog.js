@@ -94,10 +94,8 @@ export default class Dialog extends AnimatedElement {
   }
 
   updateBellLauncherDialogBody() {
-    return new Promise((resolve, reject) => {
+    return OneSignal._getSubscription().then((currentSetSubscription) => {
       clearDomElementChildren(document.querySelector(this.nestedContentSelector));
-
-      let currentSetSubscription = LimitStore.getLast('setsubscription.value');
       let contents = 'Nothing to show.';
 
       var footer = '';
@@ -183,9 +181,7 @@ export default class Dialog extends AnimatedElement {
                   ${footer}
                 `;
       }
-
       addDomElement(document.querySelector(this.nestedContentSelector), 'beforeend', contents);
-      resolve();
-    }).catch(e => log.error(e));
+    });
   }
 }

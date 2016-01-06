@@ -59,8 +59,8 @@ export default class Database {
   static get(table, key) {
     if (key) {
       // Return a table-key value
-      return new Promise(function (resolve, reject) {
-        Database.getInstance().then((database) => {
+      return Database.getInstance().then((database) => {
+        return new Promise(function (resolve, reject) {
           var request = database.transaction(table).objectStore(table).get(key);
           request.onsuccess = () => {
             Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: request.result});
@@ -69,9 +69,6 @@ export default class Database {
           request.onerror = () => {
             reject(request.errorCode);
           };
-        }).catch(function (e) {
-          log.error(e);
-          reject(e);
         });
       });
     } else {
@@ -107,15 +104,10 @@ export default class Database {
    * @param key
    */
   static put(table, value) {
-    return new Promise(function (resolve, reject) {
-      Database.getInstance().then((database) => {
-        database.transaction([table], 'readwrite').objectStore(table).put(value);
-        Event.trigger(Database.EVENTS.SET, value);
-        resolve(value);
-      }).catch(function (e) {
-        log.error(e);
-        reject(e);
-      });
+    return Database.getInstance().then((database) => {
+      database.transaction([table], 'readwrite').objectStore(table).put(value);
+      Event.trigger(Database.EVENTS.SET, value);
+      return value;
     });
   }
 
@@ -124,14 +116,9 @@ export default class Database {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   static remove(table, key) {
-    return new Promise(function (resolve) {
-      Database.getInstance().then((database) => {
-        database.transaction([table], 'readwrite').objectStore(table).delete(key);
-        resolve(key);
-      }).catch(function (e) {
-        log.error(e);
-        reject(e);
-      });
+    return Database.getInstance().then((database) => {
+      database.transaction([table], 'readwrite').objectStore(table).delete(key);
+      return key;
     });
   }
 
