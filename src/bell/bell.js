@@ -169,9 +169,14 @@ export default class Bell {
 
       this.launcher.activateIfInactive()
         .then(() => this.message.hide())
-        .then(() => {
+         .then(() => {
+          // Can't retrieve the subscription state via a promise because that makes Chrome think the popup needs to be blocked
+          // return OneSignal._getSubscription();
+          return LimitStore.getLast('setsubscription.value');
+        })
+        .then((setSubscriptionState) => {
+          console.log('Current Subscription State:', setSubscriptionState);
           if (this.unsubscribed) {
-            let setSubscriptionState = LimitStore.getLast('setsubscription.value');
             if (setSubscriptionState === false) {
               // The user manually called setSubscription(false), but the user is actually subscribed
               this.showDialogProcedure();
@@ -285,15 +290,21 @@ export default class Bell {
         return;
       }
 
+      if (!this.dialog.hidden) {
+        // If the dialog is being brought up when clicking button, don't shrink
+        return;
+      }
+
       if (this.hovering) {
         this.hovering = false;
-        // Only happens on mobile where the message could still be showing (i.e. animating) when a HOVERED event fires
+        // Hovering still being true here happens on mobile where the message could still be showing (i.e. animating) when a HOVERED event fires
+        // In other words, you tap on mobile, HOVERING fires, and then HOVERED fires immediately after because of the way mobile click events work
         // Basically only happens if HOVERING and HOVERED fire within a few milliseconds of each other
         this.message.waitUntilShown()
           .then(() => delay(Message.TIMEOUT))
           .then(() => this.message.hide())
           .then(() => {
-            if (this.launcher.wasInactive && !this.dialog.shown) {
+            if (this.launcher.wasInactive && this.dialog.hidden) {
               this.launcher.inactivate();
               this.launcher.wasInactive = null;
             }
@@ -304,7 +315,7 @@ export default class Bell {
       if (this.message.shown) {
         this.message.hide()
           .then(() => {
-            if (this.launcher.wasInactive && !this.dialog.shown) {
+            if (this.launcher.wasInactive && this.dialog.hidden) {
               this.launcher.inactivate();
               this.launcher.wasInactive = null;
             }
@@ -436,12 +447,6 @@ export default class Bell {
           .catch((e) => log.error(e));
       });
     }).catch(e => log.error(e));
-  }
-
-  _getCurrentSetSubscriptionState() {
-    let setSubscriptionState = LimitStore.get('setsubscription.value');
-    var currentSetSubscription = setSubscriptionState[setSubscriptionState.length - 1];
-    return currentSetSubscription;
   }
 
   /**

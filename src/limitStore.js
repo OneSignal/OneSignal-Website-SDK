@@ -41,7 +41,7 @@ LimitStore.getLast = function (key) {
 };
 
 LimitStore.remove = function (key) {
-  delete LimitStore[key];
+  delete LimitStore.store[key];
 };
 
 LimitStore.isEmpty = function(key) {

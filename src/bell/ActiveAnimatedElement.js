@@ -74,9 +74,6 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   inactivate() {
-    if (this.constructor.name === 'Button') {
-      //debugger;
-    }
     if (!this.active) {
       return Promise.resolve(this);
     }
