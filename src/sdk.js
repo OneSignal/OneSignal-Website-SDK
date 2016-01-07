@@ -16,7 +16,7 @@ var OneSignal = {
   _API_URL: API_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
-  _notificationOpened_callback: null,
+  _notificationOpened_callback: [],
   _idsAvailable_callback: [],
   _defaultLaunchURL: null,
   _initOptions: null,
@@ -1349,18 +1349,24 @@ var OneSignal = {
       OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt, event.data.httpNativePromptPermissionChanged);
     }
     else if (OneSignal._notificationOpened_callback) { // HTTP and HTTPS
-      OneSignal._notificationOpened_callback(event.data);
+      while (OneSignal._notificationOpened_callback.length > 0) {
+        let callback = OneSignal._notificationOpened_callback.pop();
+        callback(event.data);
+      }
     }
   },
 
   addListenerForNotificationOpened: function (callback) {
-    OneSignal._notificationOpened_callback = callback;
-    if (window) {
+    OneSignal._notificationOpened_callback.push(callback);
+    if (Environment.isHost()) {
       Database.get("NotificationOpened", document.URL)
-        .then(function (notificationOpenedResult) {
+        .then(notificationOpenedResult => {
           if (notificationOpenedResult) {
             Database.remove("NotificationOpened", document.URL);
-            OneSignal._notificationOpened_callback(notificationOpenedResult.data);
+            while (OneSignal._notificationOpened_callback.length > 0) {
+              let callback = OneSignal._notificationOpened_callback.pop();
+              callback(notificationOpenedResult.data);
+            }
           }
         })
         .catch(function (e) {

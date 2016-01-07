@@ -119,10 +119,11 @@ class ServiceWorker {
             ServiceWorker.defaultLaunchUrl = defaultUrlResult.value;
         })
         .then(() => {
-          return clients.matchAll({type: 'window'});
+          return clients.matchAll();
         })
         .then(clientList => {
 
+          debugger;
           var launchURL = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)
             launchURL = ServiceWorker.defaultLaunchUrl;
@@ -135,6 +136,7 @@ class ServiceWorker {
               client.focus();
 
               // targetOrigin not valid here as the service worker owns the page.
+              console.info('onNotificationClicked() notificationData:', notificationData);
               client.postMessage(notificationData);
               return;
             }
