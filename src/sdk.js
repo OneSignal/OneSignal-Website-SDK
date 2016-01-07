@@ -285,12 +285,17 @@ var OneSignal = {
    * @private
    */
   _onSdkInitialized: function() {
+    if (OneSignal.initialized) {
+      log.warn('SDK initialized event occured more than once, so skipping running init trigger code.');
+      return;
+    }
+
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
 
-    if (!OneSignal.initialized && Environment.isBrowser() && !OneSignal.notifyButton) {
+    if (Environment.isBrowser() && !OneSignal.notifyButton) {
       OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
       if (OneSignal._initOptions.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
@@ -300,9 +305,6 @@ var OneSignal = {
       OneSignal.notifyButton = new Bell(OneSignal._initOptions.notifyButton);
       OneSignal.notifyButton.create();
       OneSignal.initialized = true;
-    }
-    else if (OneSignal.initialized) {
-      log.warn('SDK initialized event occured more than once.');
     }
   },
 
@@ -1358,7 +1360,7 @@ var OneSignal = {
 
   addListenerForNotificationOpened: function (callback) {
     OneSignal._notificationOpened_callback.push(callback);
-    if (Environment.isHost()) {
+    if (Environment.isBrowser()) {
       Database.get("NotificationOpened", document.URL)
         .then(notificationOpenedResult => {
           if (notificationOpenedResult) {
