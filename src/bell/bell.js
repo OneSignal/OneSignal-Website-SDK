@@ -401,34 +401,41 @@ export default class Bell {
     // Add visual elements
     addDomElement(this.button.selector, 'beforeEnd', logoSvg);
 
-    // Add default classes
-    this.launcher.resize(this.options.size).then(() => {
-      if (this.options.position === 'bottom-left') {
-        addCssClass(this.container, 'onesignal-bell-container-bottom-left')
-        addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-left')
-      }
-      else if (this.options.position === 'bottom-right') {
-        addCssClass(this.container, 'onesignal-bell-container-bottom-right')
-        addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right')
-      }
-      else {
-        throw new Error('Invalid OneSignal notify button position ' + this.options.position);
-      }
+    new Promise(resolve => {
+      OneSignal.isPushNotificationsEnabled((isPushEnabled) => {
+        resolve(isPushEnabled)
+      });
+    })
+    .then(isPushEnabled => {
+      // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
+      let resizeTo = (isPushEnabled ? 'small' : this.options.size);
+      // Add default classes
+      this.launcher.resize(resizeTo).then(() => {
+        if (this.options.position === 'bottom-left') {
+          addCssClass(this.container, 'onesignal-bell-container-bottom-left')
+          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-left')
+        }
+        else if (this.options.position === 'bottom-right') {
+          addCssClass(this.container, 'onesignal-bell-container-bottom-right')
+          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right')
+        }
+        else {
+          throw new Error('Invalid OneSignal notify button position ' + this.options.position);
+        }
 
-      if (this.options.theme === 'default') {
-        addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-default')
-      }
-      else if (this.options.theme === 'inverse') {
-        addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse')
-      }
-      else {
-        throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
-      }
+        if (this.options.theme === 'default') {
+          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-default')
+        }
+        else if (this.options.theme === 'inverse') {
+          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse')
+        }
+        else {
+          throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
+        }
 
-      log.info('Showing the notify button.');
+        log.info('Showing the notify button.');
 
-      OneSignal.isPushNotificationsEnabled((pushEnabled) => {
-        (pushEnabled ? this.launcher.inactivate() : nothing())
+        (isPushEnabled ? this.launcher.inactivate() : nothing())
           .then(() => delay(this.options.showLauncherAfter))
           .then(() => {
             return this.launcher.show();
@@ -437,7 +444,7 @@ export default class Bell {
             return delay(this.options.showBadgeAfter);
           })
           .then(() => {
-            if (this.options.prenotify && !pushEnabled && OneSignal._isNewVisitor) {
+            if (this.options.prenotify && !isPushEnabled && OneSignal._isNewVisitor) {
               return this.message.enqueue(this.text['message.prenotify'])
                 .then(() => this.badge.show());
             }
@@ -445,8 +452,8 @@ export default class Bell {
           })
           .then(() => this.initialized = true)
           .catch((e) => log.error(e));
-      });
-    }).catch(e => log.error(e));
+      }).catch(e => log.error(e));
+    });
   }
 
   /**
