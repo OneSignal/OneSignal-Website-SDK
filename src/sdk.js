@@ -37,7 +37,6 @@ var OneSignal = {
   environment: Environment,
   database: Database,
   event: Event,
-  LOGGING: __DEV__,
   browser: Browser,
   log: log,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
@@ -962,7 +961,6 @@ var OneSignal = {
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
       log.info('Service worker now active:', serviceWorkerRegistration);
-
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
       .catch(function (e) {
@@ -1600,6 +1598,27 @@ var OneSignal = {
     }
   }
 };
+
+Object.defineProperty(OneSignal, 'LOGGING', {
+  get: function() {
+    if (!OneSignal._LOGGING) {
+      OneSignal._LOGGING = false;
+    }
+    return OneSignal._LOGGING;
+  },
+  set: function(logLevel) {
+    if (logLevel) {
+      log.setDefaultLevel(log.levels.TRACE);
+      OneSignal._LOGGING = true;
+    }
+    else {
+      log.setDefaultLevel(log.levels.ERROR);
+      OneSignal._LOGGING = false;
+    }
+  },
+  enumerable: true,
+  configurable: true
+});
 
 // If imported on your page.
 if (Environment.isBrowser()) {

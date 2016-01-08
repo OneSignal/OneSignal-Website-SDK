@@ -175,7 +175,7 @@ export default class Bell {
           return LimitStore.getLast('setsubscription.value');
         })
         .then((setSubscriptionState) => {
-          console.log('Current Subscription State:', setSubscriptionState);
+          log.debug('Current Subscription State:', setSubscriptionState);
           if (this.unsubscribed) {
             if (setSubscriptionState === false) {
               // The user manually called setSubscription(false), but the user is actually subscribed
