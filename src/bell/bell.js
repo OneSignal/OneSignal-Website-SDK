@@ -161,59 +161,6 @@ export default class Bell {
     this.state = Bell.STATES.UNINITIALIZED;
 
     // Install event hooks
-    window.addEventListener(Bell.EVENTS.LAUNCHER_CLICK, (event) => {
-      if (this.message.shown && this.message.contentType == Message.TYPES.MESSAGE) {
-        // A message is being shown, it'll disappear soon
-        return;
-      }
-
-      this.launcher.activateIfInactive()
-        .then(() => this.message.hide())
-         .then(() => {
-          // Can't retrieve the subscription state via a promise because that makes Chrome think the popup needs to be blocked
-          // return OneSignal._getSubscription();
-          return LimitStore.getLast('setsubscription.value');
-        })
-        .then((setSubscriptionState) => {
-          log.debug('Current Subscription State:', setSubscriptionState);
-          if (this.unsubscribed) {
-            if (setSubscriptionState === false) {
-              // The user manually called setSubscription(false), but the user is actually subscribed
-              this.showDialogProcedure();
-            }
-            else {
-              // The user is actually subscribed, register him for notifications
-              OneSignal.registerForPushNotifications({modalPrompt: this.options.modalPrompt});
-              //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
-              //if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
-              //  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribing'], Message.TIMEOUT)
-              //}
-
-              once(window, OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (event, destroyListenerFn) => {
-                destroyListenerFn();
-                let permission = event.detail.to;
-                if (permission === 'granted') {
-                  this.message.display(Message.TYPES.MESSAGE, this.text['message.action.subscribed'], Message.TIMEOUT)
-                    .then(() => {
-                      this.launcher.inactivate();
-                    })
-                    .catch((e) => {
-                      log.error(e);
-                    });
-                }
-              }, true);
-            }
-          }
-          else if (this.subscribed) {
-            this.showDialogProcedure();
-          }
-          else if (this.blocked) {
-            this.showDialogProcedure();
-          }
-        })
-        .catch((e) => log.error(e));
-    });
-
     window.addEventListener(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       OneSignal.setSubscription(true)
