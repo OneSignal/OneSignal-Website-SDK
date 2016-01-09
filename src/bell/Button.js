@@ -90,11 +90,13 @@ export default class Button extends ActiveAnimatedElement {
     if (this.bell.unsubscribed) {
       if (setSubscriptionState === false) {
         // The user manually called setSubscription(false), but the user is actually subscribed
-        this.bell.showDialogProcedure();
+        this.bell.launcher.activateIfInactive().then(() => {
+          this.bell.showDialogProcedure();
+        });
       }
       else {
         // The user is actually subscribed, register him for notifications
-        OneSignal.registerForPushNotifications({modalPrompt: this.bell.options.modalPrompt});
+        OneSignal.registerForPushNotifications();
         //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
         //if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
         //  this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribing'], Message.TIMEOUT)
@@ -116,10 +118,14 @@ export default class Button extends ActiveAnimatedElement {
       }
     }
     else if (this.bell.subscribed) {
-      this.bell.showDialogProcedure();
+      this.bell.launcher.activateIfInactive().then(() => {
+        this.bell.showDialogProcedure();
+      });
     }
     else if (this.bell.blocked) {
-      this.bell.showDialogProcedure();
+      this.bell.launcher.activateIfInactive().then(() => {
+        this.bell.showDialogProcedure();
+      });
     }
     return this.bell.message.hide().catch((e) => log.error(e));
   }

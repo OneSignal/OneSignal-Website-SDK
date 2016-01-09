@@ -83,7 +83,6 @@ export default class Bell {
     theme = 'default',
     showLauncherAfter = 10,
     showBadgeAfter = 300,
-    modalPrompt = false,
     text = {
       'tip.state.unsubscribed': 'Subscribe to notifications',
       'tip.state.subscribed': "You're subscribed to notifications",
@@ -112,7 +111,6 @@ export default class Bell {
       text: text,
       prenotify: prenotify,
       showCredit: showCredit,
-      modalPrompt: modalPrompt,
     };
 
     if (!this.options.enable)
