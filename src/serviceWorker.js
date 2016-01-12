@@ -13,6 +13,7 @@ class ServiceWorker {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
+    self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
 
     // If the user is proxying through our subdomain (e.g. website.onesignal.com/sdks/)
     if (ServiceWorker.onOurSubdomain) {
@@ -38,7 +39,7 @@ class ServiceWorker {
    * @param event
    */
   static onPushReceived(event) {
-    log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
+    log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
 
     event.waitUntil(new Promise((resolve, reject) => {
@@ -106,7 +107,7 @@ class ServiceWorker {
   }
 
   static onNotificationClicked(event) {
-    log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
+    log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
     var notificationData = JSON.parse(event.notification.tag);
     event.notification.close();
@@ -130,28 +131,37 @@ class ServiceWorker {
 
           for (let i = 0; i < clientList.length; i++) {
             var client = clientList[i];
-            if ('focus' in client && client.url == launchURL) {
+            if ('focus' in client && client.url === launchURL) {
               client.focus();
 
-              // targetOrigin not valid here as the service worker owns the page.
+              /*
+               Note: If an existing browser tab, with *exactly* the same URL as launchURL, that tab will be focused and posted a message.
+               This event rarely occurs. More than likely, the below will happen.
+               */
               client.postMessage(notificationData);
               return;
             }
           }
 
-          let launchURLObject = new URL(launchURL);
-          if (launchURL !== 'javascript:void(0);' &&
-              launchURL !== 'do_not_open' &&
-              !launchURLObject.search.includes('_osp=do_not_open')) {
-            return Database.put("NotificationOpened", {url: launchURL, data: notificationData})
-              .then(() => {
-
+          /*
+           addListenerForNotificationOpened() stuff:
+           - A value is stored in IndexedDB, marking this notification's click
+               - If the launchURL isn't one of a couple special "don't open anything" values, a new window is then opened to the launchURL
+               - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
+               - The addListenerForNotificationOpened() will be fired
+           */
+          return Database.put("NotificationOpened", {url: launchURL, data: notificationData})
+            .then(() => {
+              let launchURLObject = new URL(launchURL);
+              if (launchURL !== 'javascript:void(0);' &&
+                launchURL !== 'do_not_open' &&
+                !launchURLObject.search.includes('_osp=do_not_open')) {
                 clients.openWindow(launchURL).catch(function (error) {
                   // Should only fall into here if going to an external URL on Chrome older than 43.
                   clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
                 });
-              });
-          }
+              }
+            });
         })
         .then(() => {
           return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])
@@ -172,7 +182,8 @@ class ServiceWorker {
   }
 
   static onServiceWorkerInstalled(event) {
-    log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)})`, getConsoleStyle('code'));
+    // At this point, the old service worker is still in control
+    log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
     log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
 
     if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
@@ -187,14 +198,26 @@ class ServiceWorker {
             return caches.open("OneSignal_" + __VERSION__)
           })
           .then(cache => {
-
             return cache.addAll(ServiceWorker.CACHE_URLS);
           })
+          .then(() => self.skipWaiting())
           .catch(e => log.error(e))
       );
     } else {
-      event.waitUntil(Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__}));
+      event.waitUntil(
+        Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
+          .then(() => self.skipWaiting())
+      );
     }
+  }
+
+  /*
+      1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
+   */
+  static onServiceWorkerActivated(event) {
+    // The old service worker is gone now
+    log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    event.waitUntil(self.clients.claim());
   }
 
   static onFetch(event) {

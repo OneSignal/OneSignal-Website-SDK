@@ -14,7 +14,7 @@ Sources for web SDK. `entry.js` is the entry point that requires other files.
 
 `+-- test/`
 
-Sources for web SDK tests. `entry.js` is the entry point that requires other files.
+Sources for web SDK tests. `entry.js` is the entry point that requires other files. Currently unused.
 
 `+-- dist/`
 
@@ -28,7 +28,3 @@ Contains the production (minified) and development versions of the transpiled we
 4. `gulp`
 
 The `src/` and `test/` directories are watched and automatically re-transpiled when changed. The compiled SDK go to `dist/`. The compiled test sources go to `dist/test.js`.
-
-## Testing
-
-Run `dist/test.html`, which loads and runs `test.js`.

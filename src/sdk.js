@@ -442,7 +442,11 @@ var OneSignal = {
 
     if (OneSignal._useHttpMode) {
       if (!OneSignal._initOptions.subdomainName) {
-        log.error('Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+        log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+        return;
+      }
+      if (OneSignal._initOptions.subdomainName.includes('.')) {
+        log.error('OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), ". Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
         return;
       }
       OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
@@ -850,8 +854,8 @@ var OneSignal = {
   },
 
   _registerForW3CPush: function (options) {
-
-    Database.get('Ids', 'registrationId')
+    log.debug(`Called %c_registerForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
+    return Database.get('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
         if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted") {
           navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
@@ -864,13 +868,16 @@ var OneSignal = {
               OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
             else {
               if (serviceWorkerRegistration.active) {
-                if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
-
+                let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
+                if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+                  // OneSignalSDKWorker.js was installed
                   Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
-                        if (versionResult.id != OneSignal._VERSION)
+                        if (versionResult.id != OneSignal._VERSION) {
+                          log.info(`Installing new service worker (${versionResult.id} -> ${OneSignal._VERSION})`);
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                        }
                         else
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                       }
@@ -882,13 +889,15 @@ var OneSignal = {
                       log.error(e);
                     });
                 }
-                else if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
-
+                else if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                  // OneSignalSDKUpdaterWorker.js was installed
                   Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
-                        if (versionResult.id != OneSignal._VERSION)
+                        if (versionResult.id != OneSignal._VERSION) {
+                          log.info(`Installing new service worker (${versionResult.id} -> ${OneSignal._VERSION})`);
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                        }
                         else
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                       }
@@ -898,6 +907,10 @@ var OneSignal = {
                     .catch(function (e) {
                       log.error(e);
                     });
+                } else {
+                  // Some other service worker not belonging to us was installed
+                  // Install ours over it
+                  OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                 }
               }
               else if (serviceWorkerRegistration.installing == null)
@@ -916,6 +929,7 @@ var OneSignal = {
   },
 
   _registerServiceWorker: function(full_sw_and_path) {
+    log.debug(`Called %c_registerServiceWorker(${JSON.stringify(full_sw_and_path, null, 4)})`, getConsoleStyle('code'));
     navigator.serviceWorker.register(full_sw_and_path, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
   },
 
@@ -968,6 +982,15 @@ var OneSignal = {
       });
     ;
   },
+
+  ///**
+  // * Returns a promise that resolves to the browser's current notification permission as 'default', 'granted', or 'denied'.
+  // * @param callback A callback function that will be called when the browser's current notification permission has been obtained. On failure, the first argument will be an Error object indicating the failure. On success, the first argument will be null.
+  // */
+  //getNotificationPermission: function (onComplete) {
+  //  let safariWebId = OneSignal._initOptions.safari_web_id;
+  //  let result = OneSignal._getNotificationPermission(safariWebId);
+  //},
 
   /*
    Returns the current browser-agnostic notification permission as "default", "granted", "denied".
@@ -1162,75 +1185,20 @@ var OneSignal = {
     OneSignal.sendTags(jsonPair);
   },
 
-  _handleNotificationOpened: function (event) {
-    var notificationData = JSON.parse(event.notification.tag);
-    event.notification.close();
-
-    Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])
-      .then(function _handleNotificationOpened_GotAppUserIds(results) {
-        var appIdResult = results[0];
-        var userIdResult = results[1];
-        if (appIdResult && userIdResult) {
-          OneSignal._sendToOneSignalApi("notifications/" + notificationData.id, "PUT", {
-            app_id: appIdResult.id,
-            player_id: userIdResult.id,
-            opened: true
-          });
-        }
-      })
-      .catch(function (e) {
-        log.error(e);
-      });
-    ;
-
-    event.waitUntil(
-      clients.matchAll({type: "window"})
-        .then(function (clientList) {
-          var launchURL = registration.scope;
-          if (OneSignal._defaultLaunchURL)
-            launchURL = OneSignal._defaultLaunchURL;
-          if (notificationData.launchURL)
-            launchURL = notificationData.launchURL;
-
-          for (var i = 0; i < clientList.length; i++) {
-            var client = clientList[i];
-            if ('focus' in client && client.url == launchURL) {
-              client.focus();
-
-              // targetOrigin not valid here as the service worker owns the page.
-              client.postMessage(notificationData);
-              return;
-            }
-          }
-
-          if (launchURL !== 'javascript:void(0);' && launchURL !== 'do_not_open') {
-            Database.put("NotificationOpened", {url: launchURL, data: notificationData});
-            clients.openWindow(launchURL).catch(function (error) {
-              // Should only fall into here if going to an external URL on Chrome older than 43.
-              clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
-            });
-          }
-        })
-        .catch(function (e) {
-          log.error(e);
-        })
-    );
-  },
-
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
   _listener_receiveMessage: function receiveMessage(event) {
+    if (OneSignal._initOptions === undefined)
+      return;
+
+    if (!__DEV__ && event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._initOptions.subdomainName + ".onesignal.com")
+      return;
+
     if (event.data.from) {
       var from = event.data.from.capitalize()
     } else {
       var from = 'IFrame/Popup';
     }
     log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ${from}:`, getConsoleStyle('postmessage'), event.data);
-
-    if (OneSignal._initOptions == undefined)
-      return;
-
-    if (!__DEV__ && event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._initOptions.subdomainName + ".onesignal.com")
-      return;
 
     if (event.data.oneSignalInitPageReady) { // Only called on HTTP pages.
       var eventData = event.data.oneSignalInitPageReady;
@@ -1348,7 +1316,7 @@ var OneSignal = {
       var permissionBeforePrompt = recentPermissions[0];
       OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt, event.data.httpNativePromptPermissionChanged);
     }
-    else if (OneSignal._notificationOpened_callback) { // HTTP and HTTPS
+    else if (OneSignal.openedNotification) { // HTTP and HTTPS
       while (OneSignal._notificationOpened_callback.length > 0) {
         let callback = OneSignal._notificationOpened_callback.pop();
         callback(event.data);
