@@ -868,11 +868,9 @@ var OneSignal = {
               OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
             else {
               if (serviceWorkerRegistration.active) {
-                let workerUrl = new URL(serviceWorkerRegistration.active.scriptURL);
-                if (workerUrl.search.includes('roost_action=worker')) {
-                  OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
-                }
-                else if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
+                let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
+                if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+                  // OneSignalSDKWorker.js was installed
                   Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
@@ -891,8 +889,8 @@ var OneSignal = {
                       log.error(e);
                     });
                 }
-                else if (serviceWorkerRegistration.active.scriptURL.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
-
+                else if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                  // OneSignalSDKUpdaterWorker.js was installed
                   Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
                       if (versionResult) {
@@ -909,6 +907,10 @@ var OneSignal = {
                     .catch(function (e) {
                       log.error(e);
                     });
+                } else {
+                  // Some other service worker not belonging to us was installed
+                  // Install ours over it
+                  OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                 }
               }
               else if (serviceWorkerRegistration.installing == null)
@@ -918,8 +920,6 @@ var OneSignal = {
             .catch(function (e) {
               log.error(e);
             });
-        } else {
-          log.debug(1.2);
         }
       })
       .catch(function (e) {
