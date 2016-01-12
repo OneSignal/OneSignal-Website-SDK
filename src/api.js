@@ -19,11 +19,11 @@ export function apiCall(action, method, data) {
       status = response.status;
       return response.json();
     })
-    .then(response => {
+    .then(json => {
       if (status >= 200 && status < 300)
-        return response;
+        return json;
       else
-        return Promise.reject(response);
+        return Promise.reject(json);
     });
 }
 

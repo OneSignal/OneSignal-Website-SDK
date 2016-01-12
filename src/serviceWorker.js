@@ -128,12 +128,9 @@ class ServiceWorker {
             launchURL = ServiceWorker.defaultLaunchUrl;
           if (notificationData.launchURL)
             launchURL = notificationData.launchURL;
-          //log.debug('Launch URL:', notificationData.launchURL);
 
-          //log.debug('Number of Clients:', clientList.length);
           for (let i = 0; i < clientList.length; i++) {
             var client = clientList[i];
-            //log.debug(`Client: ${i}`, client, `(client url is: ${client.url})`);
             if ('focus' in client && client.url === launchURL) {
               client.focus();
 
@@ -141,8 +138,6 @@ class ServiceWorker {
                Note: If an existing browser tab, with *exactly* the same URL as launchURL, that tab will be focused and posted a message.
                This event rarely occurs. More than likely, the below will happen.
                */
-
-              //log.debug(`Calling postMessage() with notificationData:`, notificationData);
               client.postMessage(notificationData);
               return;
             }
@@ -205,9 +200,7 @@ class ServiceWorker {
           .then(cache => {
             return cache.addAll(ServiceWorker.CACHE_URLS);
           })
-          .then(() => {
-            return self.skipWaiting();
-          })
+          .then(() => self.skipWaiting())
           .catch(e => log.error(e))
       );
     } else {

@@ -446,7 +446,7 @@ var OneSignal = {
         return;
       }
       if (OneSignal._initOptions.subdomainName.includes('.')) {
-        log.error("OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), '. Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
+        log.error('OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), ". Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
         return;
       }
       OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
