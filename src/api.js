@@ -13,21 +13,18 @@ export function apiCall(action, method, data) {
   if (data)
     contents.body = JSON.stringify(data);
 
-  return new Promise((resolve, reject) => {
-    fetch(API_URL + action, contents)
-      .then(function status(response) {
-        if (response.status >= 200 && response.status < 300)
-          return response.json();
-        else
-          reject(new Error(response.statusText));
-      })
-      .then(jsonResponse => {
-        resolve(jsonResponse);
-      })
-      .catch(function (e) {
-        reject(e);
-      });
-  });
+  var status;
+  return fetch(API_URL + action, contents)
+    .then(response => {
+      status = response.status;
+      return response.json();
+    })
+    .then(response => {
+      if (status >= 200 && status < 300)
+        return response;
+      else
+        return Promise.reject(response);
+    });
 }
 
 export function sendNotification(appId, playerIds, titles, contents, url) {
@@ -43,5 +40,13 @@ export function sendNotification(appId, playerIds, titles, contents, url) {
   if (url) {
     params.url = url;
   }
-  return apiCall('notifications', 'POST', params);
+  return apiCall('notifications', 'POST', params)
+    .catch(e => {
+      for (let warning of e.warnings) {
+        if (warning.includes('Received ERROR 401 (Unauthorized, check your App auth_key.)')) {
+          log.error("OneSignal: Your Google Server API Key is either invalid, is missing the required 'Google Cloud Messaging for Android' API, or is only accepting requests from certain IPs. (See: https://documentation.onesignal.com/docs/website-push-common-problems#received-error-401-unauthorized-check-your-app-aut)")
+        }
+      }
+      log.error('Failed to send notification:', e);
+    });
 }
