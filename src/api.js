@@ -42,9 +42,11 @@ export function sendNotification(appId, playerIds, titles, contents, url) {
   }
   return apiCall('notifications', 'POST', params)
     .catch(e => {
-      for (let warning of e.warnings) {
-        if (warning.includes('Received ERROR 401 (Unauthorized, check your App auth_key.)')) {
-          log.error("OneSignal: Your Google Server API Key is either invalid, is missing the required 'Google Cloud Messaging for Android' API, or is only accepting requests from certain IPs. (See: https://documentation.onesignal.com/docs/website-push-common-problems#received-error-401-unauthorized-check-your-app-aut)")
+      if (e.warnings) {
+        for (let warning of e.warnings) {
+          if (warning.includes('Received ERROR 401 (Unauthorized, check your App auth_key.)')) {
+            log.error("OneSignal: Your Google Server API Key is either invalid, is missing the required 'Google Cloud Messaging for Android' API, or is only accepting requests from certain IPs. (See: https://documentation.onesignal.com/docs/website-push-common-problems#received-error-401-unauthorized-check-your-app-aut)")
+          }
         }
       }
       log.error('Failed to send notification:', e);
