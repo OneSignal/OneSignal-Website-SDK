@@ -6,6 +6,7 @@ import LimitStore from './limitStore.js';
 import "./cache-polyfill.js";
 import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
+//import swivel from 'swivel';
 
 class ServiceWorker {
 
@@ -20,6 +21,9 @@ class ServiceWorker {
       // Cache resources?
       self.addEventListener('fetch', ServiceWorker.onFetch);
     }
+
+    // Install messaging event handlers for page <-> service worker communication
+    //swivel.on('data', ServiceWorker.onMessageReceived);
   }
 
   static get CACHE_URLS() {
@@ -32,6 +36,23 @@ class ServiceWorker {
       '/dev_sdks/manifest_json'
       ];
   }
+
+  ///**
+  // * Occurs when a message is received from the host page.
+  // * @param context Used to reply to the host page.
+  // * @param data The message contents.
+  // */
+  //static onMessageReceived(context, data) {
+  //  log.debug(`Called %conMessageReceived(${JSON.stringify(data, null, 4)}):`, getConsoleStyle('code'), context, data);
+  //  if (data === 'notification.closeall') {
+  //    self.registration.getNotifications().then(notifications => {
+  //      for (let notification of notifications) {
+  //        notification.close();
+  //      }
+  //    });
+  //  }
+  //  context.reply('data', 'Got your message: ' + data);
+  //}
 
   /**
    * Occurs when a push message is received.

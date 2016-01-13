@@ -1,6 +1,6 @@
 {
   "name": "onesignal-web-sdk",
-  "version": "109050",
+  "version": "109052",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.js",
   "dependencies": {},
@@ -39,6 +39,7 @@
     "run-sequence": "^1.1.5",
     "sass-loader": "^3.1.2",
     "style-loader": "^0.13.0",
+    "swivel": "^4.0.0",
     "url-loader": "^0.5.7",
     "webmidi": "^1.0.0-beta.4",
     "webpack": "^1.12.9",

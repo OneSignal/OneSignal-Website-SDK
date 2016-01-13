@@ -9,6 +9,7 @@ import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid } from './utils.js';
+//import swivel from 'swivel';
 
 
 var OneSignal = {
@@ -236,6 +237,22 @@ var OneSignal = {
       });
   },
 
+  //_closeAllNotifications: function() {
+  //  navigator.serviceWorker.getRegistration()
+  //    .then(registration => {
+  //      if (registration === undefined || !registration.active) {
+  //        log.debug('There is no active service worker.');
+  //        return Promise.reject();
+  //      } else {
+  //        var channel = swivel.at(registration.active);
+  //        channel.on('data', function handler (context, data) {
+  //          log.warn('Received data from serviceworker!:', data);
+  //        });
+  //        channel.emit('data', 'notification.closeall');
+  //      }
+  //    });
+  //},
+
   _onSubscriptionChanged: function (event) {
     if (OneSignal._isUninitiatedVisitor && event.detail === true) {
       Database.get('Ids', 'userId')
@@ -422,6 +439,11 @@ var OneSignal = {
 
     if (!isPushNotificationsSupported()) {
       log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    if (Browser.safari && !OneSignal._initOptions.safari_web_id) {
+      log.warn("You're browsing on Safari, and %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), so not initializing the SDK.');
       return;
     }
 
