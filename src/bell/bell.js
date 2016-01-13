@@ -67,7 +67,7 @@ export default class Bell {
           if (Bell.TEXT_SUBS.hasOwnProperty(tKey)) {
             let tValue = Bell.TEXT_SUBS[tKey];
             let zValue = tValue[browserName];
-            if (value.includes('{{')) {
+            if (value && value.indexOf('{{') > -1) {
               this.text[key] = value.replace(`{{${tKey}}}`, (zValue !== undefined ? zValue : tValue['default']));
             }
           }

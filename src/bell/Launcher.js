@@ -50,7 +50,7 @@ export default class Launcher extends ActiveAnimatedElement {
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
-              this.targetTransitionEvents.includes(event.propertyName)) {
+              this.targetTransitionEvents.indexOf(event.propertyName) > -1) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();

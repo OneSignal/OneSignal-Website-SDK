@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid } from './utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, assign } from './utils.js';
 //import swivel from 'swivel';
 
 
@@ -315,8 +315,8 @@ var OneSignal = {
       OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
       if (OneSignal._initOptions.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
-        Object.assign(OneSignal._initOptions.bell, OneSignal._initOptions.notifyButton);
-        Object.assign(OneSignal._initOptions.notifyButton, OneSignal._initOptions.bell);
+        assign(OneSignal._initOptions.bell, OneSignal._initOptions.notifyButton);
+        assign(OneSignal._initOptions.notifyButton, OneSignal._initOptions.bell);
       }
       OneSignal.notifyButton = new Bell(OneSignal._initOptions.notifyButton);
       OneSignal.notifyButton.create();
@@ -467,7 +467,7 @@ var OneSignal = {
         log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
         return;
       }
-      if (OneSignal._initOptions.subdomainName.includes('.')) {
+      if (OneSignal._initOptions.subdomainName.indexOf('.') > -1) {
         log.error('OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), ". Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
         return;
       }
@@ -891,7 +891,7 @@ var OneSignal = {
             else {
               if (serviceWorkerRegistration.active) {
                 let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
-                if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+                if (previousWorkerUrl.indexOf(sw_path + OneSignal.SERVICE_WORKER_PATH) > -1) {
                   // OneSignalSDKWorker.js was installed
                   Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
@@ -911,7 +911,7 @@ var OneSignal = {
                       log.error(e);
                     });
                 }
-                else if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                else if (previousWorkerUrl.indexOf(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH) > -1) {
                   // OneSignalSDKUpdaterWorker.js was installed
                   Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
@@ -1157,7 +1157,7 @@ var OneSignal = {
           if (!OneSignal._usingNativePermissionHook)
             OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest, permission);
 
-          if (e.code == 20 && opener && OneSignal._httpRegistration)
+          if (opener && OneSignal._httpRegistration)
             window.close();
         })
         .catch(e => log.error(e));
@@ -1209,11 +1209,14 @@ var OneSignal = {
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
   _listener_receiveMessage: function receiveMessage(event) {
-    if (OneSignal._initOptions === undefined)
+    if (!(OneSignal._initOptions && OneSignal._initOptions.subdomainName &&
+        (__DEV__ ||
+         event.origin === '' ||
+         event.origin === 'https://onesignal.com' ||
+         event.origin === `https://${OneSignal._initOptions.subdomainName}.onesignal.com`)
+       )) {
       return;
-
-    if (!__DEV__ && event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._initOptions.subdomainName + ".onesignal.com")
-      return;
+    }
 
     if (event.data.from) {
       var from = event.data.from.capitalize()

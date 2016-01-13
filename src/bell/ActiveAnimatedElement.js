@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, assign } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
@@ -49,7 +49,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
-              this.targetTransitionEvents.includes(event.propertyName)) {
+              this.targetTransitionEvents.indexOf(event.propertyName) > -1) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();
@@ -93,7 +93,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
-              this.targetTransitionEvents.includes(event.propertyName)) {
+              this.targetTransitionEvents.indexOf(event.propertyName) > -1) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();
@@ -147,7 +147,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
   }
 
   static get EVENTS() {
-    return Object.assign({}, AnimatedElement.EVENTS, {
+    return assign({}, AnimatedElement.EVENTS, {
       ACTIVATING: 'onesignal.nb.activeanimatedelement.activating',
       ACTIVE: 'onesignal.nb.activeanimatedelement.active',
       INACTIVATING: 'onesignal.nb.activeanimatedelement.inactivating',

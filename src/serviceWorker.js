@@ -176,7 +176,7 @@ class ServiceWorker {
               let launchURLObject = new URL(launchURL);
               if (launchURL !== 'javascript:void(0);' &&
                 launchURL !== 'do_not_open' &&
-                !launchURLObject.search.includes('_osp=do_not_open')) {
+                launchURLObject.search.indexOf('_osp=do_not_open') === -1) {
                 clients.openWindow(launchURL).catch(function (error) {
                   // Should only fall into here if going to an external URL on Chrome older than 43.
                   clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);

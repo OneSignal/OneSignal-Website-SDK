@@ -44,7 +44,7 @@ export function sendNotification(appId, playerIds, titles, contents, url) {
     .catch(e => {
       if (e.warnings) {
         for (let warning of e.warnings) {
-          if (warning.includes('Received ERROR 401 (Unauthorized, check your App auth_key.)')) {
+          if (warning.indexOf('Received ERROR 401 (Unauthorized, check your App auth_key.)') > -1) {
             log.error("OneSignal: Your Google Server API Key is either invalid, is missing the required 'Google Cloud Messaging for Android' API, or is only accepting requests from certain IPs. (See: https://documentation.onesignal.com/docs/website-push-common-problems#received-error-401-unauthorized-check-your-app-aut)")
           }
         }
