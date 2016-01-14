@@ -505,50 +505,53 @@ var OneSignal = {
 
         // If AppId changed delete playerId and continue.
         if (appIdResult && appIdResult.id != OneSignal._initOptions.appId) {
-          Database.remove("Ids", "userId");
-          sessionStorage.removeItem("ONE_SIGNAL_SESSION");
-        }
-
-        // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
-        if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
-          && !OneSignal._initOptions.subdomainName
-          && (Notification.permission == "denied"
-          || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission)) {
-          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          return;
-        }
-
-        sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
-
-        if (Browser.safari && OneSignal._initOptions.autoRegister === false) {
-          log.debug('On Safari and autoregister is false, skipping sessionInit().');
-          log.debug('Use http mode: ', OneSignal._useHttpMode);
-          // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
-          // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
-          if (!OneSignal._useHttpMode) {
+          log.warn(`%cWARNING: Because your app ID changed from ${appIdResult.id} ⤑ ${OneSignal._initOptions.appId}, all IndexedDB and SessionStorage data will be wiped.`, getConsoleStyle('alert'));
+          sessionStorage.clear();
+          Database.rebuild().then(() => {
+            OneSignal.init(OneSignal._initOptions);
+          }).catch(e => log.error(e));
+        } else {
+          // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
+          if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
+            && !OneSignal._initOptions.subdomainName
+            && (Notification.permission == "denied"
+            || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission)) {
             Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+            return;
           }
-          return;
-        }
 
-        if (OneSignal._initOptions.autoRegister === false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
-          log.debug('No autoregister, no registration ID, no subdomain > skip _internalInit().')
-          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          return;
-        }
+          sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
-        if (document.visibilityState !== "visible") {
-          once(document, 'visibilitychange', (e, destroyEventListener) => {
-            if (document.visibilityState === 'visible') {
-              destroyEventListener();
-              OneSignal._sessionInit({});
+          if (Browser.safari && OneSignal._initOptions.autoRegister === false) {
+            log.debug('On Safari and autoregister is false, skipping sessionInit().');
+            log.debug('Use http mode: ', OneSignal._useHttpMode);
+            // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
+            // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
+            if (!OneSignal._useHttpMode) {
+              Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             }
-          }, true);
-          return;
-        }
+            return;
+          }
 
-        log.debug('Calling _sessionInit() normally from _internalInit().');
-        OneSignal._sessionInit({});
+          if (OneSignal._initOptions.autoRegister === false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
+            log.debug('No autoregister, no registration ID, no subdomain > skip _internalInit().')
+            Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+            return;
+          }
+
+          if (document.visibilityState !== "visible") {
+            once(document, 'visibilitychange', (e, destroyEventListener) => {
+              if (document.visibilityState === 'visible') {
+                destroyEventListener();
+                OneSignal._sessionInit({});
+              }
+            }, true);
+            return;
+          }
+
+          log.debug('Calling _sessionInit() normally from _internalInit().');
+          OneSignal._sessionInit({});
+        }
       })
       .catch(function (e) {
         log.error(e);

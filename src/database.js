@@ -8,7 +8,8 @@ export default class Database {
     return {
       REBUILT: 'onesignal.db.rebuilt',
       RETRIEVED: 'onesignal.db.retrieved',
-      SET: 'onesignal.db.set'
+      SET: 'onesignal.db.set',
+      REMOVED: 'onesignal.db.removed'
     };
   }
 
@@ -46,6 +47,9 @@ export default class Database {
           });
           Event.trigger(Database.EVENTS.REBUILT);
         };
+        request.onversionchange = (event) => {
+          log.warn('The database is about to be deleted.');
+        };
       }
     });
   }
@@ -59,7 +63,7 @@ export default class Database {
   static get(table, key) {
     if (key) {
       // Return a table-key value
-      return Database.getInstance().then((database) => {
+      return Database.getInstance().then(database => {
         return new Promise(function (resolve, reject) {
           var request = database.transaction(table).objectStore(table).get(key);
           request.onsuccess = () => {
@@ -73,8 +77,8 @@ export default class Database {
       });
     } else {
       // Return all values in table
-      return new Promise(function (resolve, reject) {
-        Database.getInstance().then((database) => {
+      return Database.getInstance().then(database => {
+        return new Promise(function (resolve, reject) {
           let jsonResult = {};
           let cursor = database.transaction(table).objectStore(table).openCursor();
           cursor.onsuccess = (event) => {
@@ -90,9 +94,6 @@ export default class Database {
           cursor.onerror = (event) => {
             reject(cursor.errorCode);
           };
-        }).catch(function (e) {
-          log.error(e);
-          reject(e);
         });
       });
     }
@@ -103,23 +104,69 @@ export default class Database {
    * @param table
    * @param key
    */
-  static put(table, value) {
+  static put(table, key) {
     return Database.getInstance().then((database) => {
-      database.transaction([table], 'readwrite').objectStore(table).put(value);
-      Event.trigger(Database.EVENTS.SET, value);
-      return value;
+      return new Promise((resolve, reject) => {
+        try {
+          let request = database.transaction([table], 'readwrite').objectStore(table).put(key);
+          request.onsuccess = (event) => {
+            Event.trigger(Database.EVENTS.SET, key);
+            resolve(key);
+          };
+          request.onerror = (e) => {
+            log.error('Database PUT Transaction Error:', e);
+            reject(e);
+          };
+        } catch (e) {
+          log.error('Database PUT Error:', e);
+          reject(e);
+        }
+      });
     });
   }
 
   /**
-   * Asynchronously removes the specified key from the table.
+   * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   static remove(table, key) {
+    if (key) {
+      // Remove a single key from a table
+      var method = "delete";
+    } else {
+      // Remove all keys from the table (wipe the table)
+      var method = "clear";
+    }
     return Database.getInstance().then((database) => {
-      database.transaction([table], 'readwrite').objectStore(table).delete(key);
-      return key;
+      return new Promise((resolve, reject) => {
+        try {
+          let request = database.transaction([table], 'readwrite').objectStore(table)[method](key);
+          request.onsuccess = (event) => {
+            Event.trigger(Database.EVENTS.REMOVED, [table, key]);
+            resolve(key);
+          };
+          request.onerror = (e) => {
+            log.error('Database REMOVE Transaction Error:', e);
+            reject(e);
+          };
+        } catch (e) {
+          log.error('Database REMOVE Error:', e);
+          reject(e);
+        }
+      });
     });
+  }
+
+  /**
+   * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
+   * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
+   */
+  static rebuild() {
+    return Promise.all([
+      Database.remove('Ids'),
+      Database.remove('NotificationOpened'),
+      Database.remove('Options'),
+    ]);
   }
 
   static printIds() {
