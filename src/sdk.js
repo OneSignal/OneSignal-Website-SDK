@@ -1209,11 +1209,18 @@ var OneSignal = {
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
   _listener_receiveMessage: function receiveMessage(event) {
-    if (!(OneSignal._initOptions && OneSignal._initOptions.subdomainName &&
-        (__DEV__ ||
-         event.origin === '' ||
+    /*
+         Note:
+         We can receive postMessage() events at any time, not only from our SDK.
+         For HTTP sites, the postMessage() events we listen to come from the popup.
+         For HTTPS sites, the postMessage() events we listen to come from the modal prompt, which is an actually an <iframe> with an origin pointing to "https://onesignal.com"
+         We want to filter out messages that aren't these two cases.
+     */
+    if (!(OneSignal._initOptions &&
+        (event.origin === '' ||
          event.origin === 'https://onesignal.com' ||
-         event.origin === `https://${OneSignal._initOptions.subdomainName}.onesignal.com`)
+         event.origin === `https://${OneSignal._initOptions.subdomainName || ''}.onesignal.com` ||
+         (__DEV__ && event.origin === DEV_FRAME_HOST))
        )) {
       return;
     }
