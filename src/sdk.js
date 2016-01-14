@@ -8,7 +8,8 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid } from './utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
+import objectAssign from 'object-assign';
 //import swivel from 'swivel';
 
 
@@ -315,8 +316,8 @@ var OneSignal = {
       OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
       if (OneSignal._initOptions.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
-        Object.assign(OneSignal._initOptions.bell, OneSignal._initOptions.notifyButton);
-        Object.assign(OneSignal._initOptions.notifyButton, OneSignal._initOptions.bell);
+        objectAssign(OneSignal._initOptions.bell, OneSignal._initOptions.notifyButton);
+        objectAssign(OneSignal._initOptions.notifyButton, OneSignal._initOptions.bell);
       }
       OneSignal.notifyButton = new Bell(OneSignal._initOptions.notifyButton);
       OneSignal.notifyButton.create();
@@ -467,7 +468,7 @@ var OneSignal = {
         log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
         return;
       }
-      if (OneSignal._initOptions.subdomainName.includes('.')) {
+      if (contains(OneSignal._initOptions.subdomainName, '.')) {
         log.error('OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), ". Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
         return;
       }
@@ -505,50 +506,53 @@ var OneSignal = {
 
         // If AppId changed delete playerId and continue.
         if (appIdResult && appIdResult.id != OneSignal._initOptions.appId) {
-          Database.remove("Ids", "userId");
-          sessionStorage.removeItem("ONE_SIGNAL_SESSION");
-        }
-
-        // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
-        if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
-          && !OneSignal._initOptions.subdomainName
-          && (Notification.permission == "denied"
-          || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission)) {
-          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          return;
-        }
-
-        sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
-
-        if (Browser.safari && OneSignal._initOptions.autoRegister === false) {
-          log.debug('On Safari and autoregister is false, skipping sessionInit().');
-          log.debug('Use http mode: ', OneSignal._useHttpMode);
-          // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
-          // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
-          if (!OneSignal._useHttpMode) {
+          log.warn(`%cWARNING: Because your app ID changed from ${appIdResult.id} ⤑ ${OneSignal._initOptions.appId}, all IndexedDB and SessionStorage data will be wiped.`, getConsoleStyle('alert'));
+          sessionStorage.clear();
+          Database.rebuild().then(() => {
+            OneSignal.init(OneSignal._initOptions);
+          }).catch(e => log.error(e));
+        } else {
+          // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
+          if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
+            && !OneSignal._initOptions.subdomainName
+            && (Notification.permission == "denied"
+            || sessionStorage.getItem("ONE_SIGNAL_NOTIFICATION_PERMISSION") == Notification.permission)) {
             Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+            return;
           }
-          return;
-        }
 
-        if (OneSignal._initOptions.autoRegister === false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
-          log.debug('No autoregister, no registration ID, no subdomain > skip _internalInit().')
-          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          return;
-        }
+          sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
-        if (document.visibilityState !== "visible") {
-          once(document, 'visibilitychange', (e, destroyEventListener) => {
-            if (document.visibilityState === 'visible') {
-              destroyEventListener();
-              OneSignal._sessionInit({});
+          if (Browser.safari && OneSignal._initOptions.autoRegister === false) {
+            log.debug('On Safari and autoregister is false, skipping sessionInit().');
+            log.debug('Use http mode: ', OneSignal._useHttpMode);
+            // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
+            // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
+            if (!OneSignal._useHttpMode) {
+              Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             }
-          }, true);
-          return;
-        }
+            return;
+          }
 
-        log.debug('Calling _sessionInit() normally from _internalInit().');
-        OneSignal._sessionInit({});
+          if (OneSignal._initOptions.autoRegister === false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
+            log.debug('No autoregister, no registration ID, no subdomain > skip _internalInit().')
+            Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+            return;
+          }
+
+          if (document.visibilityState !== "visible") {
+            once(document, 'visibilitychange', (e, destroyEventListener) => {
+              if (document.visibilityState === 'visible') {
+                destroyEventListener();
+                OneSignal._sessionInit({});
+              }
+            }, true);
+            return;
+          }
+
+          log.debug('Calling _sessionInit() normally from _internalInit().');
+          OneSignal._sessionInit({});
+        }
       })
       .catch(function (e) {
         log.error(e);
@@ -891,7 +895,7 @@ var OneSignal = {
             else {
               if (serviceWorkerRegistration.active) {
                 let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
-                if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+                if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
                   // OneSignalSDKWorker.js was installed
                   Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
@@ -911,7 +915,7 @@ var OneSignal = {
                       log.error(e);
                     });
                 }
-                else if (previousWorkerUrl.includes(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
                   // OneSignalSDKUpdaterWorker.js was installed
                   Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                     .then(function (versionResult) {
@@ -1157,7 +1161,7 @@ var OneSignal = {
           if (!OneSignal._usingNativePermissionHook)
             OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest, permission);
 
-          if (e.code == 20 && opener && OneSignal._httpRegistration)
+          if (opener && OneSignal._httpRegistration)
             window.close();
         })
         .catch(e => log.error(e));
@@ -1209,11 +1213,21 @@ var OneSignal = {
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
   _listener_receiveMessage: function receiveMessage(event) {
-    if (OneSignal._initOptions === undefined)
+    /*
+         Note:
+         We can receive postMessage() events at any time, not only from our SDK.
+         For HTTP sites, the postMessage() events we listen to come from the popup.
+         For HTTPS sites, the postMessage() events we listen to come from the modal prompt, which is an actually an <iframe> with an origin pointing to "https://onesignal.com"
+         We want to filter out messages that aren't these two cases.
+     */
+    if (!(OneSignal._initOptions &&
+        (event.origin === '' ||
+         event.origin === 'https://onesignal.com' ||
+         event.origin === `https://${OneSignal._initOptions.subdomainName || ''}.onesignal.com` ||
+         (__DEV__ && event.origin === DEV_FRAME_HOST))
+       )) {
       return;
-
-    if (!__DEV__ && event.origin !== "" && event.origin !== "https://onesignal.com" && event.origin !== "https://" + OneSignal._initOptions.subdomainName + ".onesignal.com")
-      return;
+    }
 
     if (event.data.from) {
       var from = event.data.from.capitalize()

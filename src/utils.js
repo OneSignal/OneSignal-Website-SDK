@@ -312,3 +312,12 @@ export function guid() {
     return v.toString(16);
   });
 }
+
+/**
+ * Returns true if match is in string; otherwise, returns false.
+ */
+export function contains(indexOfAble, match) {
+  if (!indexOfAble)
+    return false;
+  return indexOfAble.indexOf(match) !== -1;
+}

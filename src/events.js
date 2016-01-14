@@ -1,6 +1,6 @@
 import log from 'loglevel';
 import Environment from './environment.js';
-import { getConsoleStyle } from './utils.js';
+import { getConsoleStyle, contains } from './utils.js';
 import './string.js';
 
 
@@ -33,7 +33,7 @@ export default class Event {
     if (!eventName) {
       log.warn('Missing event name.');
     }
-    if (SILENT_EVENTS.indexOf(eventName) === -1) {
+    if (!contains(SILENT_EVENTS, eventName)) {
       if (!Environment.isBrowser()) {
         log.debug(`(${Environment.getEnv().capitalize()}) » %c${eventName}:`, getConsoleStyle('event'), data, '(not triggered in a ServiceWorker environment)');
         return;
@@ -66,7 +66,7 @@ export default class Event {
           log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
         } else {
           // But only if the event matches certain events
-          if (RETRIGGER_REMOTE_EVENTS.indexOf(eventName) !== -1) {
+          if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
             OneSignal._safePostMessage(creator, {remoteEvent: eventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
           }
         }
