@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing } from '../utils.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains } from '../utils.js';
 import Environment from '../environment.js';
 import LimitStore from '../limitStore.js';
 import log from 'loglevel';
@@ -67,7 +67,7 @@ export default class Bell {
           if (Bell.TEXT_SUBS.hasOwnProperty(tKey)) {
             let tValue = Bell.TEXT_SUBS[tKey];
             let zValue = tValue[browserName];
-            if (value && value.indexOf('{{') > -1) {
+            if (value && contains(value, '{{')) {
               this.text[key] = value.replace(`{{${tKey}}}`, (zValue !== undefined ? zValue : tValue['default']));
             }
           }
@@ -116,11 +116,11 @@ export default class Bell {
     if (!this.options.enable)
       return;
 
-    if (['small', 'medium', 'large'].indexOf(this.options.size) < 0)
+    if (!contains(['small', 'medium', 'large'], this.options.size))
       throw new Error(`Invalid size ${this.options.size} for notify button. Choose among 'small', 'medium', or 'large'.`);
-    if (['bottom-left', 'bottom-right'].indexOf(this.options.position) < 0)
+    if (!contains(['bottom-left', 'bottom-right'], this.options.position))
       throw new Error(`Invalid position ${this.options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`);
-    if (['default', 'inverse'].indexOf(this.options.theme) < 0)
+    if (!contains(['default', 'inverse'], this.options.theme))
       throw new Error(`Invalid theme ${this.options.theme} for notify button. Choose either 'default', or 'inverse'.`);
     if (this.options.showLauncherAfter < 0)
       throw new Error(`Invalid delay duration of ${this.options.showLauncherAfter} for showing the notify button. Choose a value above 0.`);

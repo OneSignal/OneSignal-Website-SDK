@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js'
 
@@ -47,7 +47,7 @@ export default class AnimatedElement {
         }, this.transitionCheckTimeout);
         once(this.element, 'transitionend', (event, destroyListenerFn) => {
           if (event.target === this.element &&
-            this.targetTransitionEvents.indexOf(event.propertyName) > -1) {
+            contains(this.targetTransitionEvents, event.propertyName)) {
             clearTimeout(timerId);
             // Uninstall the event listener for transitionend
             destroyListenerFn();
@@ -83,7 +83,7 @@ export default class AnimatedElement {
             log.warn(`${this.constructor.name} did not completely hide (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           if (event.target === this.element &&
-            this.targetTransitionEvents.indexOf(event.propertyName) > -1) {
+            contains(this.targetTransitionEvents, event.propertyName)) {
             clearTimeout(timerId);
             // Uninstall the event listener for transitionend
             destroyListenerFn();

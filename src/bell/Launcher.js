@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, hasCssClass, addCssClass, removeCssClass, once, nothing } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, hasCssClass, addCssClass, removeCssClass, once, nothing, contains } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
@@ -50,7 +50,7 @@ export default class Launcher extends ActiveAnimatedElement {
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
-              this.targetTransitionEvents.indexOf(event.propertyName) > -1) {
+              contains(this.targetTransitionEvents, event.propertyName)) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();

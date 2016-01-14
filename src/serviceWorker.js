@@ -5,7 +5,7 @@ import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import "./cache-polyfill.js";
 import Database from './database.js';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle } from './utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains } from './utils.js';
 //import swivel from 'swivel';
 
 class ServiceWorker {
@@ -176,7 +176,7 @@ class ServiceWorker {
               let launchURLObject = new URL(launchURL);
               if (launchURL !== 'javascript:void(0);' &&
                 launchURL !== 'do_not_open' &&
-                launchURLObject.search.indexOf('_osp=do_not_open') === -1) {
+                !contains(launchURLObject.search, '_osp=do_not_open')) {
                 clients.openWindow(launchURL).catch(function (error) {
                   // Should only fall into here if going to an external URL on Chrome older than 43.
                   clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
@@ -207,7 +207,7 @@ class ServiceWorker {
     log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
     log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
 
-    if (self.location.pathname.indexOf("OneSignalSDKWorker.js") > -1)
+    if (contains(self.location.pathname, "OneSignalSDKWorker.js"))
       var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION'
     else
       var serviceWorkerVersionType = 'WORKER2_ONE_SIGNAL_SW_VERSION';
@@ -244,7 +244,7 @@ class ServiceWorker {
   static onFetch(event) {
     let url = event.request.url;
     for (let cacheUrl of ServiceWorker.CACHE_URLS) {
-      if (url.indexOf(cacheUrl) > -1) {
+      if (contains(url, cacheUrl)) {
         event.respondWith(
           caches.match(event.request)
             .then((response) => {

@@ -1,3 +1,5 @@
+import { contains } from './utils.js';
+
 export default class Environment {
   static get SERVICE_WORKER() {
     return 'ServiceWorker';
@@ -23,7 +25,7 @@ export default class Environment {
     else {
       // If the window is the root top-most level
       if (window.self === window.top) {
-        if (location.href.indexOf("initOneSignal") > -1)
+        if (contains(location.href, "initOneSignal"))
           return Environment.POPUP;
         else
           return Environment.HOST;
