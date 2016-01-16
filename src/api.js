@@ -28,12 +28,13 @@ export function apiCall(action, method, data) {
     });
 }
 
-export function sendNotification(appId, playerIds, titles, contents, url) {
+export function sendNotification(appId, playerIds, titles, contents, url, data) {
   var params = {
     app_id: appId,
     contents: contents,
     include_player_ids: playerIds,
-    isAnyWeb: true
+    isAnyWeb: true,
+    data: data
   };
   if (titles) {
     params.headings = titles;

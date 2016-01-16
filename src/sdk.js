@@ -218,7 +218,7 @@ var OneSignal = {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
-  _sendSelfNotification: function(title, message, url) {
+  _sendSelfNotification: function(title, message, url, data) {
     if (!title) {
       title = 'OneSignal Test Message';
     }
@@ -228,10 +228,13 @@ var OneSignal = {
     if (!url) {
       url = new URL(location.href).origin + '?_osp=do_not_open';
     }
+    if (!data) {
+      data = {};
+    }
     Database.get('Ids', 'userId')
       .then(function (result) {
         if (result && result.id) {
-          sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url)
+          sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, data)
         } else {
           log.warn('Could not send self a test notification because there is no valid user ID.');
         }
@@ -480,6 +483,28 @@ var OneSignal = {
 
     if (__DEV__)
       OneSignal._initOneSignalHttp = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';
+
+    if (OneSignal._initOptions.persistNotification === false) {
+      Database.put('Options', {key: 'persistNotification', value: false})
+    } else {
+      Database.put('Options', {key: 'persistNotification', value: true})
+    }
+
+    let webhookPromises = [];
+    let webhookOptions = OneSignal._initOptions.webhooks;
+    ['notification.displayed', 'notification.clicked'].forEach(event => {
+      if (webhookOptions && webhookOptions[event]) {
+        webhookPromises.push(Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]}));
+      } else {
+        webhookPromises.push(Database.put('Options', {key: `webhooks.${event}`, value: false}));
+      }
+    });
+    if (webhookOptions && webhookOptions.cors) {
+      webhookPromises.push(Database.put('Options', {key: `webhooks.cors`, value: true}));
+    } else {
+      webhookPromises.push(Database.put('Options', {key: `webhooks.cors`, value: false}));
+    }
+    Promise.all(webhookPromises);
 
     // If Safari - add 'fetch' pollyfill if it isn't already added.
     if (isSupportedSafari() && typeof window.fetch == "undefined") {

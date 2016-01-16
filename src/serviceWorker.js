@@ -62,33 +62,32 @@ class ServiceWorker {
   static onPushReceived(event) {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-
     event.waitUntil(new Promise((resolve, reject) => {
       var extra = {};
-      ServiceWorker._getTitle()
-        .then(title => {
-          extra.title = title;
-          return Database.get('Options', 'defaultIcon');
-
+      Promise.all([
+        ServiceWorker._getTitle(),
+        Database.get('Options', 'defaultIcon'),
+        Database.get('Options', 'persistNotification')
+      ])
+        .then(results => {
+          extra.title = results[0];
+          extra.defaultIconResult = results[1];
+          if (extra.defaultIconResult)
+            extra.defaultIconResult = extra.defaultIconResult.value;
+          extra.persistNotification = results[2];
+          if (extra.persistNotification)
+            extra.persistNotification = extra.persistNotification.value;
         })
-        .then(defaultIconResult => {
-          extra.defaultIconResult = defaultIconResult
-          return extra;
-
-        })
-        .then(extra => {
-          return ServiceWorker._getLastNotifications();
-
-        })
+        .then(() => ServiceWorker._getLastNotifications())
         .then(notifications => {
-
           // At this point, we have an array of notification objects (all the JSON is parsed)
           // We want to fire a notification for each object
           // We need to use event.waitUntil() to extend the life of the service worker (workers can be killed if idling)
           // We want to extend the service worker lifetime until all promises for showNotification resolve
-          let notificationEventPromises = [];
+          let notificationEventPromiseFns = [];
 
           for (let notification of notifications) {
+            // notification is the raw object returned by the OneSignal API
             let data = {
               id: notification.custom.i,
               message: notification.alert,
@@ -109,22 +108,61 @@ class ServiceWorker {
               data.icon = extra.defaultIconResult;
 
             // Never nest the following line in a callback from the point of entering from _getLastNotifications
-            let notificationEventPromise = self.registration.showNotification(data.title, {
+            notificationEventPromiseFns.push((data => self.registration.showNotification(data.title, {
               // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
               // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
-              requireInteraction: true,
+              requireInteraction: extra.persistNotification,
               body: data.message,
               icon: data.icon,
               tag: JSON.stringify(data)
-            });
-
-            notificationEventPromises.push(notificationEventPromise);
-            return Promise.all(notificationEventPromises);
+            })).bind(null, data));
+            notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
+            var promise = Promise.resolve();
           }
+          return notificationEventPromiseFns.reduce(function(p, fn) {
+            return p = p.then(fn);
+          }, promise);
         })
         .then(resolve)
         .catch(e => log.error(e));
     }));
+  }
+
+  static executeWebhooks(event, notification) {
+    var isServerCorsEnabled = false;
+    return Database.get('Options', 'webhooks.cors')
+      .then(corsResult => {
+        isServerCorsEnabled = corsResult && corsResult.value;
+      })
+      .then(() => Database.get('Options', `webhooks.${event}`))
+      .then(webhookUrlQuery => {
+        if (webhookUrlQuery && webhookUrlQuery.value) {
+          let url = webhookUrlQuery.value;
+          let postData = {
+            event: event,
+            id: notification.id,
+            heading: notification.title,
+            content: notification.message,
+            url: notification.launchURL,
+            icon: notification.icon,
+            data: notification.additionalData
+          };
+          let fetchOptions = {
+            method: 'post',
+            mode: 'no-cors',
+            body: JSON.stringify(postData)
+          };
+          if (isServerCorsEnabled) {
+            fetchOptions.mode = 'cors';
+            fetchOptions.headers = {
+              'X-OneSignal-Event': event,
+              'Content-Type': 'application/json'
+            };
+          }
+          log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${url}`, getConsoleStyle('code'), ':', postData);
+          return fetch(url, fetchOptions);
+        }
+      });
   }
 
   static onNotificationClicked(event) {
@@ -191,12 +229,16 @@ class ServiceWorker {
 
           var [ appIdResult, userIdResult ] = results;
           if (appIdResult && userIdResult) {
-            apiCall("notifications/" + notificationData.id, "PUT", {
+            return apiCall("notifications/" + notificationData.id, "PUT", {
               app_id: appIdResult.id,
               player_id: userIdResult.id,
               opened: true
             });
           }
+        })
+        .then(() => {
+          let notificationData = JSON.parse(event.notification.tag);
+          return ServiceWorker.executeWebhooks('notification.clicked', notificationData);
         })
         .catch(e => log.error(e))
     );
