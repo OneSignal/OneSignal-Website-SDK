@@ -75,6 +75,7 @@ class ServiceWorker {
 
     event.waitUntil(new Promise((resolve, reject) => {
       var extra = {};
+      var promise = Promise.resolve();
       Promise.all([
         ServiceWorker._getTitle(),
         Database.get('Options', 'defaultIcon'),
@@ -128,7 +129,6 @@ class ServiceWorker {
               tag: JSON.stringify(data)
             })).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
-            var promise = Promise.resolve();
           }
           return notificationEventPromiseFns.reduce(function(p, fn) {
             return p = p.then(fn);
