@@ -180,4 +180,13 @@ export default class Database {
       log.info('userId:', contents[2]);
     });
   }
+
+  static _wipeBetaSettings() {
+    Promise.all([
+      Database.remove('Options', 'persistNotification'),
+      Database.remove('Options', 'webhooks.cors'),
+      Database.remove('Options', 'webhooks.notification.displayed'),
+      Database.remove('Options', 'webhooks.notification.clicked'),
+    ]);
+  }
 }

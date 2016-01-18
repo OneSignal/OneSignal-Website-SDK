@@ -2,13 +2,24 @@ import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
-import LimitStore from './limitStore.js';
 import "./cache-polyfill.js";
 import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains } from './utils.js';
 //import swivel from 'swivel';
 
 class ServiceWorker {
+
+  static get VERSION() {
+    return __VERSION__;
+  }
+
+  static get environment() {
+    return Environment;
+  }
+
+  static get log() {
+    return log;
+  }
 
   static run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
@@ -379,7 +390,7 @@ class ServiceWorker {
 }
 
 // Expose this class to the global scope
-self.OneSignalServiceWorker = ServiceWorker;
+self.OneSignalWorker = ServiceWorker;
 
 // Set logging to the appropriate level
 log.setDefaultLevel(__DEV__ ? log.levels.TRACE : log.levels.ERROR);
