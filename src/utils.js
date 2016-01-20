@@ -280,6 +280,10 @@ export function getConsoleStyle(style) {
     return `
     color: orange;
     `;
+  } else if (style == 'serviceworkermessage') {
+    return `
+    color: purple;
+    `;
   }
 }
 
@@ -320,4 +324,21 @@ export function contains(indexOfAble, match) {
   if (!indexOfAble)
     return false;
   return indexOfAble.indexOf(match) !== -1;
+}
+
+/**
+ * Returns the current object without keys that have undefined values.
+ * Regardless of whether the return result is used, the passed-in object is destructively modified.
+ * Only affects keys that the object directly contains (i.e. not those inherited via the object's prototype).
+ * @param object
+ */
+export function trimUndefined(object) {
+  for (var property in object) {
+    if (object.hasOwnProperty(property)) {
+      if (object[property] === undefined) {
+        delete object[property];
+      }
+    }
+  }
+  return object;
 }

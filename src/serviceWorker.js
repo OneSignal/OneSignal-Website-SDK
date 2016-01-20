@@ -4,8 +4,8 @@ import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
 import "./cache-polyfill.js";
 import Database from './database.js';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains } from './utils.js';
-//import swivel from 'swivel';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
+import swivel from 'swivel';
 
 class ServiceWorker {
 
@@ -21,6 +21,10 @@ class ServiceWorker {
     return log;
   }
 
+  static get swivel() {
+    return swivel;
+  }
+
   static run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
@@ -34,7 +38,7 @@ class ServiceWorker {
     }
 
     // Install messaging event handlers for page <-> service worker communication
-    //swivel.on('data', ServiceWorker.onMessageReceived);
+    swivel.on('data', ServiceWorker.onMessageReceived);
   }
 
   static get CACHE_URLS() {
@@ -48,22 +52,21 @@ class ServiceWorker {
       ];
   }
 
-  ///**
-  // * Occurs when a message is received from the host page.
-  // * @param context Used to reply to the host page.
-  // * @param data The message contents.
-  // */
-  //static onMessageReceived(context, data) {
-  //  log.debug(`Called %conMessageReceived(${JSON.stringify(data, null, 4)}):`, getConsoleStyle('code'), context, data);
-  //  if (data === 'notification.closeall') {
-  //    self.registration.getNotifications().then(notifications => {
-  //      for (let notification of notifications) {
-  //        notification.close();
-  //      }
-  //    });
-  //  }
-  //  context.reply('data', 'Got your message: ' + data);
-  //}
+  /**
+   * Occurs when a message is received from the host page.
+   * @param context Used to reply to the host page.
+   * @param data The message contents.
+   */
+  static onMessageReceived(context, data) {
+    log.debug(`%c${Environment.getEnv().capitalize()} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
+    if (data === 'notification.closeall') {
+      self.registration.getNotifications().then(notifications => {
+        for (let notification of notifications) {
+          notification.close();
+        }
+      });
+    }
+  }
 
   /**
    * Occurs when a push message is received.
@@ -149,6 +152,8 @@ class ServiceWorker {
       .then(webhookUrlQuery => {
         if (webhookUrlQuery && webhookUrlQuery.value) {
           let url = webhookUrlQuery.value;
+          // JSON.stringify() does not include undefined values
+          // Our response will not contain those fields here which have undefined values
           let postData = {
             event: event,
             id: notification.id,
@@ -199,6 +204,16 @@ class ServiceWorker {
           if (notificationData.launchURL)
             launchURL = notificationData.launchURL;
 
+          let eventData = {
+            id: notificationData.id,
+            heading: notificationData.title,
+            content: notificationData.message,
+            url: notificationData.launchURL,
+            icon: notificationData.icon,
+            data: notificationData.additionalData
+          };
+          trimUndefined(eventData);
+
           for (let i = 0; i < clientList.length; i++) {
             var client = clientList[i];
             if ('focus' in client && client.url === launchURL) {
@@ -208,7 +223,7 @@ class ServiceWorker {
                Note: If an existing browser tab, with *exactly* the same URL as launchURL, that tab will be focused and posted a message.
                This event rarely occurs. More than likely, the below will happen.
                */
-              client.postMessage(notificationData);
+              swivel.emit(client.id, 'notification.clicked', eventData);
               return;
             }
           }
@@ -220,7 +235,7 @@ class ServiceWorker {
                - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
                - The addListenerForNotificationOpened() will be fired
            */
-          return Database.put("NotificationOpened", {url: launchURL, data: notificationData})
+          return Database.put("NotificationOpened", {url: launchURL, data: eventData})
             .then(() => {
               let launchURLObject = new URL(launchURL);
               if (launchURL !== 'javascript:void(0);' &&

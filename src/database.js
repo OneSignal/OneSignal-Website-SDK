@@ -24,17 +24,23 @@ export default class Database {
       } else {
         let request = indexedDB.open("ONE_SIGNAL_SDK_DB", 1);
         request.onsuccess = (event) => {
-          let database = event.target.result;
-          Database._instance = database;
-          log.debug('Opening IndexedDB instance.');
-          resolve(database);
+          if (Database._instance) {
+            let redundantDb = event.target.result;
+            redundantDb.close();
+            resolve(Database._instance);
+          } else {
+            let database = event.target.result;
+            Database._instance = database;
+            log.debug('Opening IndexedDB instance.');
+            resolve(database);
+          }
         };
         request.onerror = (event) => {
           log.error('Unable to open IndexedDB.', event);
           reject(event);
         };
         request.onupgradeneeded = (event) => {
-          log.info('The OneSignal SDK is rebuilding its IndexedDB schema from a clean slate.');
+          log.info('OneSignal: IndexedDB is being rebuilt or upgraded.', event);
           let db = event.target.result;
           db.createObjectStore("Ids", {
             keyPath: "type"

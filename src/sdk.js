@@ -10,7 +10,7 @@ import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
 import objectAssign from 'object-assign';
-//import swivel from 'swivel';
+import swivel from 'swivel';
 
 
 var OneSignal = {
@@ -18,7 +18,7 @@ var OneSignal = {
   _API_URL: API_URL,
   _app_id: null,
   _tagsToSendOnRegister: null,
-  _notificationOpened_callback: [],
+  _notificationOpenedCallbacks: [],
   _idsAvailable_callback: [],
   _defaultLaunchURL: null,
   _initOptions: null,
@@ -33,6 +33,7 @@ var OneSignal = {
   _windowHeight: 480,
   _isUninitiatedVisitor: false,
   _isNewVisitor: false,
+  _channel: null,
   initialized: false,
   notifyButton: null,
   store: LimitStore,
@@ -41,6 +42,7 @@ var OneSignal = {
   event: Event,
   browser: Browser,
   log: log,
+  swivel: swivel,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
@@ -228,9 +230,6 @@ var OneSignal = {
     if (!url) {
       url = new URL(location.href).origin + '?_osp=do_not_open';
     }
-    if (!data) {
-      data = {};
-    }
     Database.get('Ids', 'userId')
       .then(function (result) {
         if (result && result.id) {
@@ -241,21 +240,21 @@ var OneSignal = {
       });
   },
 
-  //_closeAllNotifications: function() {
-  //  navigator.serviceWorker.getRegistration()
-  //    .then(registration => {
-  //      if (registration === undefined || !registration.active) {
-  //        log.debug('There is no active service worker.');
-  //        return Promise.reject();
-  //      } else {
-  //        var channel = swivel.at(registration.active);
-  //        channel.on('data', function handler (context, data) {
-  //          log.warn('Received data from serviceworker!:', data);
-  //        });
-  //        channel.emit('data', 'notification.closeall');
-  //      }
-  //    });
-  //},
+  _closeAllNotifications: function() {
+    navigator.serviceWorker.getRegistration()
+      .then(registration => {
+        if (registration === undefined || !registration.active) {
+          log.debug('There is no active service worker.');
+          return Promise.reject();
+        } else {
+          if (OneSignal._channel) {
+            OneSignal._channel.emit('data', 'notification.closeall');
+          } else {
+            log.error("Please initialize the SDK before trying to communicate with the service worker. The communication channel isn't initialized yet.");
+          }
+        }
+      });
+  },
 
   _onSubscriptionChanged: function (event) {
     if (OneSignal._isUninitiatedVisitor && event.detail === true) {
@@ -265,12 +264,13 @@ var OneSignal = {
           let welcome_notification_disabled = (welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true);
           let title = (welcome_notification_opts !== undefined && welcome_notification_opts['title'] !== undefined && welcome_notification_opts['title'] !== null) ? welcome_notification_opts['title'] : '';
           let message = (welcome_notification_opts !== undefined && welcome_notification_opts['message'] !== undefined && welcome_notification_opts['message'] !== null && welcome_notification_opts['message'].length > 0) ? welcome_notification_opts['message'] : 'Thanks for subscribing!';
+          let unopenableWelcomeNotificationUrl = new URL(location.href);
+          unopenableWelcomeNotificationUrl = unopenableWelcomeNotificationUrl.origin + '?_osp=do_not_open';
+          let url = (welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0) ? welcome_notification_opts['url'] : unopenableWelcomeNotificationUrl;
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
-            let welcomeNotificationUrl = new URL(location.href);
-            welcomeNotificationUrl = welcomeNotificationUrl.origin + '?_osp=do_not_open';
-            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, welcomeNotificationUrl)
-            Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message});
+            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url);
+            Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
             OneSignal._isUninitiatedVisitor = false;
           }
         })
@@ -314,6 +314,24 @@ var OneSignal = {
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
+
+    navigator.serviceWorker.getRegistration()
+      .then(registration => {
+        if (registration && registration.active) {
+          if (OneSignal._channel) {
+            OneSignal._channel.off('data');
+            OneSignal._channel.off('notification.clicked');
+          }
+          OneSignal._channel = swivel.at(registration.active);
+          OneSignal._channel.on('data', function handler(context, data) {
+            log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+          });
+          OneSignal._channel.on('notification.clicked', function handler(context, data) {
+            OneSignal._fireNotificationOpenedCallbacks(data);
+          });
+          log.info('Service worker messaging channel established!');
+        }
+      });
 
     if (Environment.isBrowser() && !OneSignal.notifyButton) {
       OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
@@ -1026,6 +1044,20 @@ var OneSignal = {
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
       log.info('Service worker now active:', serviceWorkerRegistration);
+
+      if (OneSignal._channel) {
+        OneSignal._channel.off('data');
+        OneSignal._channel.off('notification.clicked');
+      }
+      OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
+      OneSignal._channel.on('data', function handler(context, data) {
+        log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+      });
+      OneSignal._channel.on('notification.clicked', function handler(context, data) {
+        OneSignal._fireNotificationOpenedCallbacks(data);
+      });
+      log.info('Service worker channel now established!');
+
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
       .catch(function (e) {
@@ -1378,30 +1410,28 @@ var OneSignal = {
       OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt, event.data.httpNativePromptPermissionChanged);
     }
     else if (OneSignal.openedNotification) { // HTTP and HTTPS
-      while (OneSignal._notificationOpened_callback.length > 0) {
-        let callback = OneSignal._notificationOpened_callback.pop();
-        callback(event.data);
-      }
+      OneSignal._fireNotificationOpenedCallbacks(event,data);
+    }
+  },
+
+  _fireNotificationOpenedCallbacks: function(data) {
+    while (OneSignal._notificationOpenedCallbacks.length > 0) {
+      let callback = OneSignal._notificationOpenedCallbacks.pop();
+      callback(data);
     }
   },
 
   addListenerForNotificationOpened: function (callback) {
-    OneSignal._notificationOpened_callback.push(callback);
+    OneSignal._notificationOpenedCallbacks.push(callback);
     if (Environment.isBrowser()) {
       Database.get("NotificationOpened", document.URL)
         .then(notificationOpenedResult => {
           if (notificationOpenedResult) {
             Database.remove("NotificationOpened", document.URL);
-            while (OneSignal._notificationOpened_callback.length > 0) {
-              let callback = OneSignal._notificationOpened_callback.pop();
-              callback(notificationOpenedResult.data);
-            }
+            OneSignal._fireNotificationOpenedCallbacks(notificationOpenedResult.data);
           }
         })
-        .catch(function (e) {
-          log.error(e);
-        });
-      ;
+        .catch(e => log.error(e));
     }
   },
 

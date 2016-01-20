@@ -1,6 +1,6 @@
 import { API_URL } from './vars.js'
 import log from 'loglevel';
-import { contains } from './utils.js'
+import { contains, trimUndefined } from './utils.js'
 
 export function apiCall(action, method, data) {
   let headers = new Headers();
@@ -36,6 +36,7 @@ export function sendNotification(appId, playerIds, titles, contents, url, data) 
     isAnyWeb: true,
     data: data
   };
+  trimUndefined(params);
   if (titles) {
     params.headings = titles;
   }
