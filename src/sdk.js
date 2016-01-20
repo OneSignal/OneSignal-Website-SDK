@@ -315,23 +315,25 @@ var OneSignal = {
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
 
-    navigator.serviceWorker.getRegistration()
-      .then(registration => {
-        if (registration && registration.active) {
-          if (OneSignal._channel) {
-            OneSignal._channel.off('data');
-            OneSignal._channel.off('notification.clicked');
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.getRegistration()
+        .then(registration => {
+          if (registration && registration.active) {
+            if (OneSignal._channel) {
+              OneSignal._channel.off('data');
+              OneSignal._channel.off('notification.clicked');
+            }
+            OneSignal._channel = swivel.at(registration.active);
+            OneSignal._channel.on('data', function handler(context, data) {
+              log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+            });
+            OneSignal._channel.on('notification.clicked', function handler(context, data) {
+              OneSignal._fireNotificationOpenedCallbacks(data);
+            });
+            log.info('Service worker messaging channel established!');
           }
-          OneSignal._channel = swivel.at(registration.active);
-          OneSignal._channel.on('data', function handler(context, data) {
-            log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
-          });
-          OneSignal._channel.on('notification.clicked', function handler(context, data) {
-            OneSignal._fireNotificationOpenedCallbacks(data);
-          });
-          log.info('Service worker messaging channel established!');
-        }
-      });
+        });
+    }
 
     if (Environment.isBrowser() && !OneSignal.notifyButton) {
       OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
