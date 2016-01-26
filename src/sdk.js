@@ -399,7 +399,8 @@ var OneSignal = {
 
     var newSubscriptionState = 'unchanged';
 
-    if (((lastPermission === 'default' || lastPermission === 'denied' || lastPermission === null) && currentPermission === 'granted' &&
+    if (
+      (lastPermission !== 'granted' && currentPermission === 'granted' &&
         currentId !== null &&
         currentSubscriptionState === true
       ) ||
@@ -407,7 +408,18 @@ var OneSignal = {
         (lastSubscriptionState === false && currentSubscriptionState === true) &&
         currentId != null &&
         currentPermission === 'granted'
-      )) {
+      ) ||
+      (
+         (lastPermission === 'granted' && currentPermission === 'granted') &&
+         (currentSubscriptionState === true && lastSubscriptionState !== true) &&
+         (currentId !== null && lastId !== null)
+      ) ||
+      (
+        (lastPermission === 'granted' && currentPermission === 'granted') &&
+        (currentSubscriptionState === true && lastSubscriptionState !== true) &&
+        (currentId !== null && lastId === null)
+      )
+      ) {
       newSubscriptionState = true;
     }
 
@@ -418,15 +430,18 @@ var OneSignal = {
       newSubscriptionState = false;
     }
 
+    //log.warn(`%cnewSubscriptionState: ${newSubscriptionState}.`, getConsoleStyle('alert'));
     if (newSubscriptionState !== "unchanged") {
       var lastTriggerTimes = LimitStore.put('event.subscriptionchanged.lastriggered', Date.now());
       var currentTime = lastTriggerTimes[lastTriggerTimes.length - 1];
       var lastTriggerTime = lastTriggerTimes[lastTriggerTimes.length - 2];
       var elapsedTimeSeconds = (currentTime - lastTriggerTime) / 1000;
 
+      //log.warn(`%cPutting event.subscriptionchanged.laststates: ${newSubscriptionState}.`, getConsoleStyle('alert'));
       var lastEventStates = LimitStore.put('event.subscriptionchanged.laststates', newSubscriptionState);
       var currentState = lastEventStates[lastEventStates.length - 1];
       var lastState = lastEventStates[lastEventStates.length - 2];
+      //log.warn(`%cevent.subscriptionchanged.laststates: ${lastState} -> ${currentState}.`, getConsoleStyle('alert'));
 
       // If event already triggered within the last second, don't re-trigger.
       var shouldNotTriggerEvent = (lastTriggerTime != null && (elapsedTimeSeconds <= 1)) || (currentState === lastState);
@@ -1216,10 +1231,6 @@ var OneSignal = {
               log.warn('Could not subscribe your browser for push notifications.');
 
             OneSignal._registerWithOneSignal(appId, registrationId, isSupportedFireFox() ? 8 : 5);
-
-            if (!OneSignal._usingNativePermissionHook) {
-              OneSignal._triggerEvent_nativePromptPermissionChanged(notificationPermissionBeforeRequest);
-            }
           })
           .catch(function (e) {
             log.error(e);
