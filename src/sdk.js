@@ -202,14 +202,29 @@ var OneSignal = {
   },
 
   setDefaultNotificationUrl: function (url) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     Database.put("Options", {key: "defaultUrl", value: url});
   },
 
   setDefaultIcon: function (icon) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     Database.put("Options", {key: "defaultIcon", value: icon});
   },
 
   setDefaultTitle: function (title) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     Database.put("Options", {key: "defaultTitle", value: title});
   },
 
@@ -315,23 +330,25 @@ var OneSignal = {
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
 
-    navigator.serviceWorker.getRegistration()
-      .then(registration => {
-        if (registration && registration.active) {
-          if (OneSignal._channel) {
-            OneSignal._channel.off('data');
-            OneSignal._channel.off('notification.clicked');
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.getRegistration()
+        .then(registration => {
+          if (registration && registration.active) {
+            if (OneSignal._channel) {
+              OneSignal._channel.off('data');
+              OneSignal._channel.off('notification.clicked');
+            }
+            OneSignal._channel = swivel.at(registration.active);
+            OneSignal._channel.on('data', function handler(context, data) {
+              log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+            });
+            OneSignal._channel.on('notification.clicked', function handler(context, data) {
+              OneSignal._fireNotificationOpenedCallbacks(data);
+            });
+            log.info('Service worker messaging channel established!');
           }
-          OneSignal._channel = swivel.at(registration.active);
-          OneSignal._channel.on('data', function handler(context, data) {
-            log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
-          });
-          OneSignal._channel.on('notification.clicked', function handler(context, data) {
-            OneSignal._fireNotificationOpenedCallbacks(data);
-          });
-          log.info('Service worker messaging channel established!');
-        }
-      });
+        });
+    }
 
     if (Environment.isBrowser() && !OneSignal.notifyButton) {
       OneSignal._initOptions.notifyButton = OneSignal._initOptions.notifyButton || {};
@@ -621,6 +638,11 @@ var OneSignal = {
 
     if (Environment.isBrowser() && window.localStorage["onesignal.debugger._initHttp"]) {
       debugger;
+    }
+
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
     }
 
     OneSignal._initOptions = options;
@@ -1226,12 +1248,22 @@ var OneSignal = {
   },
 
   sendTag: function (key, value) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     var jsonKeyValue = {};
     jsonKeyValue[key] = value;
     OneSignal.sendTags(jsonKeyValue);
   },
 
   sendTags: function (jsonPair) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     Database.get('Ids', 'userId')
       .then(function sendTags_GotUserId(userIdResult) {
         if (userIdResult)
@@ -1256,10 +1288,20 @@ var OneSignal = {
   },
 
   deleteTag: function (key) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     OneSignal.deleteTags([key]);
   },
 
   deleteTags: function (keyArray) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     var jsonPair = {};
     var length = keyArray.length;
     for (var i = 0; i < length; i++)
@@ -1422,6 +1464,11 @@ var OneSignal = {
   },
 
   addListenerForNotificationOpened: function (callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     OneSignal._notificationOpenedCallbacks.push(callback);
     if (Environment.isBrowser()) {
       Database.get("NotificationOpened", document.URL)
@@ -1448,6 +1495,11 @@ var OneSignal = {
   getIdsAvailable: function (callback) {
     if (callback === undefined)
       return;
+
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
 
     OneSignal._idsAvailable_callback.push(callback);
 
@@ -1480,6 +1532,11 @@ var OneSignal = {
   },
 
   getTags: function (callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     Database.get('Ids', 'userId')
       .then(function (userIdResult) {
         if (userIdResult) {
@@ -1541,6 +1598,11 @@ var OneSignal = {
   },
 
   setSubscription: function (newSubscription) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
     return new Promise((resolve, reject) => {
       if (OneSignal._iframePort) {
         let uid = guid();
