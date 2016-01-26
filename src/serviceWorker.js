@@ -82,7 +82,8 @@ class ServiceWorker {
       Promise.all([
         ServiceWorker._getTitle(),
         Database.get('Options', 'defaultIcon'),
-        Database.get('Options', 'persistNotification')
+        Database.get('Options', 'persistNotification'),
+        Database.get('Ids', 'appId'),
       ])
         .then(results => {
           extra.title = results[0];
@@ -92,6 +93,11 @@ class ServiceWorker {
           extra.persistNotification = results[2];
           if (extra.persistNotification)
             extra.persistNotification = extra.persistNotification.value;
+          extra.appId = results[3];
+          if (extra.appId)
+            extra.appId = extra.appId.id;
+          else
+            log.error('There was no app ID stored when trying to display the notification. An app ID is required.');
         })
         .then(() => ServiceWorker._getLastNotifications())
         .then(notifications => {
@@ -129,7 +135,8 @@ class ServiceWorker {
               requireInteraction: extra.persistNotification,
               body: data.message,
               icon: data.icon,
-              tag: JSON.stringify(data)
+              tag: 'notification-tag-' + extra.appId,
+              data: data
             })).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
           }
@@ -184,7 +191,7 @@ class ServiceWorker {
   static onNotificationClicked(event) {
     log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    var notificationData = JSON.parse(event.notification.tag);
+    var notificationData = event.notification.data;
     event.notification.close();
 
     event.waitUntil(
@@ -263,7 +270,6 @@ class ServiceWorker {
           }
         })
         .then(() => {
-          let notificationData = JSON.parse(event.notification.tag);
           return ServiceWorker.executeWebhooks('notification.clicked', notificationData);
         })
         .catch(e => log.error(e))

@@ -220,7 +220,7 @@ var OneSignal = {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
-  _sendSelfNotification: function(title, message, url, data) {
+  _sendSelfNotification: function(title, message, url, icon, data) {
     if (!title) {
       title = 'OneSignal Test Message';
     }
@@ -233,7 +233,7 @@ var OneSignal = {
     Database.get('Ids', 'userId')
       .then(function (result) {
         if (result && result.id) {
-          sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, data)
+          sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, icon, data)
         } else {
           log.warn('Could not send self a test notification because there is no valid user ID.');
         }

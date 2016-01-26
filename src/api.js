@@ -28,7 +28,7 @@ export function apiCall(action, method, data) {
     });
 }
 
-export function sendNotification(appId, playerIds, titles, contents, url, data) {
+export function sendNotification(appId, playerIds, titles, contents, url, icon, data) {
   var params = {
     app_id: appId,
     contents: contents,
@@ -36,13 +36,17 @@ export function sendNotification(appId, playerIds, titles, contents, url, data) 
     isAnyWeb: true,
     data: data
   };
-  trimUndefined(params);
   if (titles) {
     params.headings = titles;
   }
   if (url) {
     params.url = url;
   }
+  if (icon) {
+    params.chrome_web_icon = icon;
+    params.firefox_icon = icon;
+  }
+  trimUndefined(params);
   return apiCall('notifications', 'POST', params)
     .catch(e => {
       if (e.warnings) {

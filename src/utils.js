@@ -99,7 +99,7 @@ export function isSupportedSafari() {
     return false;
   if (/iPhone|iPad|iPod/i.test(navigator.userAgent))
     return false;
-  return (parseInt(safariVersion[1]) > 6);
+  return (parseInt(safariVersion[1]) > 7);
 }
 
 export function removeDomElement(selector) {
