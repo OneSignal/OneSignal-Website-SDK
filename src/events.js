@@ -58,6 +58,8 @@ export default class Event {
         bubbles: true, cancelable: true, detail: data
       });
       window.dispatchEvent(event);
+      let simplifiedEventName = eventName.replace('onesignal.', '');
+      OneSignal.emit(simplifiedEventName, data);
 
       // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
       if (!Environment.isHost()) {

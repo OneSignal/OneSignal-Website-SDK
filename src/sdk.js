@@ -10,6 +10,8 @@ import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
 import objectAssign from 'object-assign';
+import EventEmitter from 'wolfy87-eventemitter';
+import heir from 'heir';
 import swivel from 'swivel';
 
 
@@ -54,7 +56,7 @@ var OneSignal = {
     SUBSCRIPTION_CHANGED: 'onesignal.subscription.changed',
     WELCOME_NOTIFICATION_SENT: 'onesignal.actions.welcomenotificationsent',
     INTERNAL_SUBSCRIPTIONSET: 'onesignal.internal.subscriptionset',
-    SDK_INITIALIZED: 'onesignal.sdk.initialized'
+    SDK_INITIALIZED: 'initialized'
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
@@ -508,7 +510,7 @@ var OneSignal = {
     window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
     window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
     window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
-    window.addEventListener(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
     window.addEventListener('focus', (event) => {
       // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
       OneSignal._checkTrigger_nativePermissionChanged();
@@ -1103,14 +1105,28 @@ var OneSignal = {
     ;
   },
 
-  ///**
-  // * Returns a promise that resolves to the browser's current notification permission as 'default', 'granted', or 'denied'.
-  // * @param callback A callback function that will be called when the browser's current notification permission has been obtained. On failure, the first argument will be an Error object indicating the failure. On success, the first argument will be null.
-  // */
-  //getNotificationPermission: function (onComplete) {
-  //  let safariWebId = OneSignal._initOptions.safari_web_id;
-  //  let result = OneSignal._getNotificationPermission(safariWebId);
-  //},
+  /**
+   * Returns a promise that resolves to the browser's current notification permission as 'default', 'granted', or 'denied'.
+   * @param callback A callback function that will be called when the browser's current notification permission has been obtained, with one of 'default', 'granted', or 'denied'.
+   */
+  getNotificationPermission: function (onComplete) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    let safariWebId = null;
+    if (OneSignal._initOptions) {
+      safariWebId = OneSignal._initOptions.safari_web_id;
+    }
+    let result = OneSignal._getNotificationPermission(safariWebId);
+    return result.then((permission) => {
+      if (onComplete) {
+        onComplete(permission);
+      }
+      return permission;
+    });
+  },
 
   /*
    Returns the current browser-agnostic notification permission as "default", "granted", "denied".
@@ -1569,7 +1585,7 @@ var OneSignal = {
     }
 
     // If Subdomain
-    if (OneSignal._initOptions.subdomainName && !isBrowserSafari()) {
+    if (OneSignal._initOptions && OneSignal._initOptions.subdomainName && !isBrowserSafari()) {
       OneSignal._isNotificationEnabledCallback.push(callback);
       if (OneSignal._iframePort) {
         OneSignal._iframePort.postMessage({getNotificationPermission: true, from: Environment.getEnv()});
@@ -1663,7 +1679,66 @@ var OneSignal = {
   },
 
   /**
-   * Returns a promise that resolves to false if setSubscription(false) has been explicitly called at any point in time. Otherwise returns true.
+   * Returns a promise that resolves to false if setSubscription(false) is "in effect". Otherwise returns true.
+   * This means a return value of true does not mean the user is subscribed, only that the user did not call setSubcription(false).
+   * @private
+   * @returns {Promise}
+   */
+  isOptedOut: function(callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    return OneSignal._getSubscription().then(manualSubscriptionStatus => {
+      if (callback) {
+        callback(!manualSubscriptionStatus);
+      }
+      return !manualSubscriptionStatus;
+    });
+  },
+
+  /**
+   * Returns a promise that resolves once the manual subscription override has been set.
+   * @private
+   * @returns {Promise}
+   */
+  optOut: function(doOptOut, callback) {
+    if (doOptOut !== false || doOptOut !== true) {
+      throw new Error(`Invalid parameter '${doOptOut}' passed to OneSignal.optOut(). You must specify true or false.`);
+    }
+    return OneSignal.setSubscription(doOptOut).then(() => {
+        if (callback) {
+          callback();
+        }
+      }
+    );
+  },
+
+  getUserId: function(callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    return Database.get('Ids', 'userId').then(userIdResult => {
+      if (userIdResult) {
+        let userId = userIdResult.id;
+        if (callback) {
+          callback(userId)
+        }
+        return userId;
+      } else {
+        if (callback) {
+          callback(null);
+        }
+        return null;
+      }
+    });
+  },
+
+  /**
+   * Returns a promise that resolves to false if setSubscription(false) is "in effect". Otherwise returns true.
    * This means a return value of true does not mean the user is subscribed, only that the user did not call setSubcription(false).
    * @private
    * @returns {Promise}
@@ -1751,6 +1826,8 @@ Object.defineProperty(OneSignal, 'LOGGING', {
   enumerable: true,
   configurable: true
 });
+
+heir.merge(OneSignal, new EventEmitter());
 
 // If imported on your page.
 if (Environment.isBrowser()) {

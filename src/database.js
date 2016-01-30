@@ -1,4 +1,6 @@
 import log from 'loglevel';
+import EventEmitter from 'wolfy87-eventemitter';
+import heir from 'heir';
 import Event from './events.js';
 
 
@@ -196,3 +198,5 @@ export default class Database {
     ]);
   }
 }
+
+heir.merge(Database, new EventEmitter());
