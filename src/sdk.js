@@ -479,10 +479,11 @@ var OneSignal = {
       debugger;
     }
 
-    if (OneSignal.initialized) {
-      log.warn('OneSignal.init() was called again, but the SDK is already initialized. Skipping initialization.');
+    if (OneSignal._initCalled) {
+      log.error(`OneSignal: Please don't call init() more than once. Any extra calls to init() are ignored. The following parameters were not processed: %c${JSON.stringify(Object.keys(options))}`, getConsoleStyle('code'));
       return;
     }
+    OneSignal._initCalled = true;
 
     if (!options.path) {
       options.path = '/';
