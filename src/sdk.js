@@ -1237,7 +1237,18 @@ var OneSignal = {
           });
       })
       .catch(function (e) {
-        log.error('Error while subscribing for push:', e);
+        if (e.message === 'Registration failed - no sender id provided') {
+          let manifestParentTagname = document.querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
+          let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
+          let manifestLocation = document.querySelector('link[rel=manifest]').href;
+          if (manifestParentTagname !== 'head') {
+            log.error(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
+          } else {
+            log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+          }
+        } else {
+          log.error('Error while subscribing for push:', e);
+        }
 
         // New addition (12/22/2015), adding support for detecting the cancel 'X'
         // Chrome doesn't show when the user clicked 'X' for cancel
