@@ -70,4 +70,16 @@ gulp.task("copy-js", function() {
       .pipe(rename("/OneSignalSDKWorker.js.map"))
       .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
   }
+
+  if (IS_TEST_BUILD) {
+    gulp.src("./dist/OneSignalSDKTests.js")
+      .pipe(rename("/OneSignalSDKTests.js"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+
+    if (fs.existsSync("./dist/OneSignalSDKTests.js.map")) {
+      gulp.src("./dist/OneSignalSDKTests.js.map")
+        .pipe(rename("/OneSignalSDKTests.js.map"))
+        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+    }
+  }
 });

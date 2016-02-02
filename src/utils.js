@@ -37,6 +37,14 @@ export function isDev() {
   return __DEV__;
 }
 
+export function isPushNotificationsSupportedAndWarn() {
+  let isSupported = isPushNotificationsSupported();
+  if (!isSupported) {
+    log.warn("Your browser does not support push notifications.");
+  }
+  return isSupported;
+}
+
 export function isPushNotificationsSupported () {
   var chromeVersion = navigator.appVersion.match(/Chrome\/(.*?) /);
 

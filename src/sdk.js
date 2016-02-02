@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 
@@ -17,7 +17,8 @@ var OneSignal = {
   _VERSION: __VERSION__,
   _API_URL: API_URL,
   _app_id: null,
-  _tagsToSendOnRegister: null,
+  _futureSendTags: null,
+  _futureSendTagsPromiseResolve: null,
   _notificationOpenedCallbacks: [],
   _idsAvailable_callback: [],
   _defaultLaunchURL: null,
@@ -195,9 +196,9 @@ var OneSignal = {
   },
 
   _sendUnsentTags: function () {
-    if (OneSignal._tagsToSendOnRegister) {
-      OneSignal.sendTags(OneSignal._tagsToSendOnRegister);
-      OneSignal._tagsToSendOnRegister = null;
+    if (OneSignal._futureSendTags) {
+      OneSignal.sendTags(OneSignal._futureSendTags);
+      OneSignal._futureSendTags = null;
     }
   },
 
@@ -1239,13 +1240,18 @@ var OneSignal = {
       })
       .catch(function (e) {
         if (e.message === 'Registration failed - no sender id provided') {
-          let manifestParentTagname = document.querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
-          let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
-          let manifestLocation = document.querySelector('link[rel=manifest]').href;
-          if (manifestParentTagname !== 'head') {
-            log.error(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
-          } else {
-            log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+          let manifestDom = document.querySelector('link[rel=manifest]');
+          if (manifestDom) {
+            let manifestParentTagname = document.querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
+            let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
+            let manifestLocation = document.querySelector('link[rel=manifest]').href;
+            if (manifestParentTagname !== 'head') {
+              log.error(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
+            } else {
+              log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+            }
+          } else if (location.protocol === 'https:') {
+            log.error(`OneSignal: You must reference a %cmanifest.json`, getConsoleStyle('code'), "in <head>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
           }
         } else {
           log.error('Error while subscribing for push:', e);
@@ -1270,67 +1276,93 @@ var OneSignal = {
       });
   },
 
-  sendTag: function (key, value) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  sendTag: function (key, value, callback) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
+    }
+
+    // Our backend considers false as removing a tag, so this allows false to be stored as a value
+    if (value === false) {
+      value = "false";
     }
 
     var jsonKeyValue = {};
     jsonKeyValue[key] = value;
-    OneSignal.sendTags(jsonKeyValue);
+    return OneSignal.sendTags(jsonKeyValue, callback);
   },
 
-  sendTags: function (jsonPair) {
+  sendTags: function (jsonPair, callback) {
     if (!isPushNotificationsSupported()) {
       log.warn("Your browser does not support push notifications.");
       return;
     }
 
-    Database.get('Ids', 'userId')
-      .then(function sendTags_GotUserId(userIdResult) {
-        if (userIdResult)
-          OneSignal._sendToOneSignalApi("players/" + userIdResult.id, "PUT", {
-            app_id: OneSignal._app_id,
-            tags: jsonPair
-          });
-        else {
-          if (OneSignal._tagsToSendOnRegister == null)
-            OneSignal._tagsToSendOnRegister = jsonPair;
-          else {
-            var resultObj = {};
-            for (var _obj in OneSignal._tagsToSendOnRegister) resultObj[_obj] = OneSignal._tagsToSendOnRegister[_obj];
-            for (var _obj in jsonPair) resultObj[_obj] = jsonPair[_obj];
-            OneSignal._tagsToSendOnRegister = resultObj;
+    return new Promise((resolve, reject) => {
+      return Database.get('Ids', 'userId')
+        .then(userIdResult => {
+          if (userIdResult) {
+            return apiCall("players/" + userIdResult.id, "PUT", {
+              app_id: OneSignal._app_id,
+              tags: jsonPair
+            });
           }
-        }
-      })
-      .catch(function (e) {
-        log.error('sendTags:', e);
-      });
+          else {
+            if (!OneSignal._futureSendTags) {
+              OneSignal._futureSendTags = {};
+            }
+            objectAssign(OneSignal._futureSendTags, jsonPair);
+            OneSignal._futureSendTagsPromiseResolve = resolve;
+          }
+        })
+        .then(() => {
+          if (callback) {
+            callback(jsonPair);
+          }
+          resolve(jsonPair);
+        })
+        .catch(e => {
+          log.error('sendTags:', e);
+          reject(e);
+        });
+    });
   },
 
-  deleteTag: function (key) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  deleteTag: function (tag) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
 
-    OneSignal.deleteTags([key]);
+    if (typeof tag === 'string' || tag instanceof String) {
+      return OneSignal.deleteTags([tag]);
+    } else {
+      return Promise.reject(new Error(`OneSignal: Invalid tag '${tag}' to delete. You must pass in a string.`));
+    }
   },
 
-  deleteTags: function (keyArray) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  deleteTags: function (tags, callback) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
 
-    var jsonPair = {};
-    var length = keyArray.length;
-    for (var i = 0; i < length; i++)
-      jsonPair[keyArray[i]] = "";
+    return new Promise((resolve, reject) => {
+      if (tags instanceof Array && tags.length > 0) {
+        var jsonPair = {};
+        var length = tags.length;
+        for (var i = 0; i < length; i++)
+          jsonPair[tags[i]] = "";
 
-    OneSignal.sendTags(jsonPair);
+        return OneSignal.sendTags(jsonPair)
+          .then(emptySentTagsObj => {
+            let emptySentTags = Object.keys(emptySentTagsObj);
+            if (callback) {
+              callback(emptySentTags);
+            }
+            resolve(emptySentTags);
+          })
+      } else {
+        reject(new Error(`OneSignal: Invalid tags '${tags}' to delete. You must pass in array of strings with at least one tag string to be deleted.`));
+      }
+    });
   },
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
@@ -1560,18 +1592,20 @@ var OneSignal = {
       return;
     }
 
-    Database.get('Ids', 'userId')
+    return Database.get('Ids', 'userId')
       .then(function (userIdResult) {
         if (userIdResult) {
-          OneSignal._sendToOneSignalApi("players/" + userIdResult.id, 'GET', null, function (response) {
-            callback(response.tags);
-          });
+          return apiCall("players/" + userIdResult.id, 'GET', null)
+            .then(response => {
+              if (callback) {
+                callback(response.tags);
+              }
+              return response.tags;
+            });
+        } else {
+          return Promise.reject(new Error('Could not get tags because you are not registered with OneSignal (no user ID).'));
         }
-      })
-      .catch(function (e) {
-        log.error(e);
       });
-    ;
   },
 
   isPushNotificationsEnabled: function (callback) {
