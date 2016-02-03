@@ -1,4 +1,5 @@
 import log from 'loglevel';
+import StackTrace from 'stacktrace-js';
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -35,6 +36,26 @@ export function getHumanizedTimeDuration(timeDurationInMilliseconds) {
 
 export function isDev() {
   return __DEV__;
+}
+
+export function isPushNotificationsSupportedAndWarn() {
+  let isSupported = isPushNotificationsSupported();
+  if (!isSupported) {
+    log.warn("Your browser does not support push notifications.");
+  }
+  return isSupported;
+}
+
+export function logError(e) {
+  StackTrace.fromError(e).then(s => {
+    if (s && s.length > 0) {
+      let stackInfo = s[0];
+      let filename = stackInfo.fileName.replace('webpack:///', 'webpack:///./');
+      log.error(e, `@ ${filename}:${stackInfo.lineNumber}:${stackInfo.columnNumber}`);
+    } else {
+      log.error(e);
+    }
+  });
 }
 
 export function isPushNotificationsSupported () {

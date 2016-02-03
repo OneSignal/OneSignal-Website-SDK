@@ -21,7 +21,7 @@ else
   entries['OneSignalSDK'] = './src/entry.js';
 
 if (IS_TEST)
-  entries['test'] = './test/entry.js';
+  entries['OneSignalSDKTests'] = './test/entry.js';
 
 var includePaths = [path.resolve(__dirname, "./src")];
 if (IS_TEST)
