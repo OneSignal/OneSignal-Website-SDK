@@ -1,16 +1,20 @@
-import expect from 'chai';
+import chai, { expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
-import { guid, delay, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn } from '../src/utils.js';
+import { guid, delay, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, logError } from '../src/utils.js';
 import {APP_ID, PLAYER_ID} from './vars.js';
+
+chai.use(chaiAsPromised);
 
 describe('sdk.js', function(done) {
   describe('Environment', () => {
     it('isPushNotificationsSupported() should return true', () => {
-      isPushNotificationsSupported().should.be.true;
+      expect(isPushNotificationsSupported()).to.be.true;
     });
 
     it('isPushNotificationsSupportedAndWarn() should return true', () => {
-      isPushNotificationsSupportedAndWarn().should.be.true;
+      expect(isPushNotificationsSupportedAndWarn()).to.be.true;
     });
   });
 
@@ -52,22 +56,24 @@ describe('sdk.js', function(done) {
 
       expectedTagsUnsent = ['null', 'undefined', 'array.empty', 'object.empty'];
 
-      tagsToCheckDeepEqual = Object.keys(sentTags).filter(x => expectedTagsUnsent.concat(['string']).indexOf(x) < 0);
+      tagsToCheckDeepEqual = Object.keys(sentTags).filter(x => expectedTagsUnsent.concat(['string', 'false']).indexOf(x) < 0);
     });
 
     it('should successfully send, receive, and delete tags via promises', function () {
-      return OneSignal.sendTags(sentTags)
+      expect(OneSignal.sendTags(sentTags)
         .then(() => OneSignal.getTags())
         .then(receivedTags => {
+          expect(receivedTags).to.not.be.undefined;
           expectedTagsUnsent.forEach(tag => {
-            (expectedTags.hasOwnProperty(tag)).should.be.false;
+            expect(receivedTags.hasOwnProperty(tag)).to.be.false;
           });
-          expectedTags['string'].should.equal(sentTags['string']);
+          expect(receivedTags['string']).to.equal(sentTags['string']);
+          expect(receivedTags['false']).to.equal(sentTags['false'].toString());
           tagsToCheckDeepEqual.forEach(key => {
             if (key.startsWith('object')) {
-              JSON.parse(expectedTags[key]).should.deep.equal(JSON.parse(sentTags[key]));
+              expect(JSON.parse(receivedTags[key])).to.deep.equal(JSON.parse(sentTags[key]));
             } else {
-              JSON.parse(expectedTags[key]).should.deep.equal(sentTags[key]);
+              expect(JSON.parse(receivedTags[key])).to.deep.equal(sentTags[key]);
             }
           });
         })
@@ -75,59 +81,57 @@ describe('sdk.js', function(done) {
         .then(() => OneSignal.getTags())
         .then(receivedTags => {
           Object.keys(expectedTags).forEach(tag => {
-            (receivedTags.hasOwnProperty(tag)).should.be.false;
+            expect(receivedTags.hasOwnProperty(tag)).to.be.false;
           });
         })
         .then(() => "successful")
-        .catch(e => {
-          log.error(e);
-          return Promise.reject();
-        }).should.eventually.become('successful');
+        .catch(e => logError(e))).to.eventually.become('successful');
     });
 
     it('should successfully send, receive, and delete tags via callbacks', done => {
-      return new Promise((resolve, reject) => {
+      expect(new Promise((resolve, reject) => {
         try {
           function getTagsCallback(receivedTags) {
+            expect(receivedTags).to.not.be.undefined;
             expectedTagsUnsent.forEach(tag => {
-              (expectedTags.hasOwnProperty(tag)).should.be.false;
+              expect(receivedTags.hasOwnProperty(tag)).to.be.false;
             });
-            expectedTags['string'].should.equal(sentTags['string']);
+            expect(receivedTags['string']).to.equal(sentTags['string']);
+            expect(receivedTags['false']).to.equal(sentTags['false'].toString());
             tagsToCheckDeepEqual.forEach(key => {
               if (key.startsWith('object')) {
-                JSON.parse(expectedTags[key]).should.deep.equal(JSON.parse(sentTags[key]));
+                expect(JSON.parse(receivedTags[key])).to.deep.equal(JSON.parse(sentTags[key]));
               } else {
-                JSON.parse(expectedTags[key]).should.deep.equal(sentTags[key]);
+                expect(JSON.parse(receivedTags[key])).to.deep.equal(sentTags[key]);
               }
             });
             OneSignal.deleteTags(Object.keys(expectedTags), deleteTagsCallback);
           }
 
           function deleteTagsCallback(receivedTags) {
-            receivedTags.should.deep.equal(Object.keys(expectedTags));
+            expect(receivedTags).to.deep.equal(Object.keys(expectedTags));
             OneSignal.getTags(getTagsAfterDeletingCallback);
           }
 
           function getTagsAfterDeletingCallback(receivedTags) {
             Object.keys(expectedTags).forEach(tag => {
-              (receivedTags.hasOwnProperty(tag)).should.be.false;
+              expect(receivedTags.hasOwnProperty(tag)).to.be.false;
             });
             resolve("successful");
             done();
           }
 
           function onSendTagsComplete(tagsSent) {
-            tagsSent.should.deep.equal(sentTags);
+            expect(tagsSent).to.deep.equal(sentTags);
             OneSignal.getTags(getTagsCallback);
           }
 
           OneSignal.sendTags(sentTags, onSendTagsComplete);
         }
-        catch (e) {
+        catch(e) {
           log.error(e);
-          return Promise.reject();
         }
-      }).should.eventually.become('successful');
+      })).to.eventually.become('successful');
     });
 
     it('should return a Promise', () => {
@@ -136,7 +140,7 @@ describe('sdk.js', function(done) {
       let sendTagsReturnValue = OneSignal.sendTags();
       let deleteTagReturnValue = OneSignal.deleteTag('');
       let deleteTagsReturnValue = OneSignal.deleteTags(['']);
-      [getTagsReturnValue, sendTagReturnValue, sendTagsReturnValue, deleteTagReturnValue, deleteTagsReturnValue].forEach(x => x.constructor.name.should.equal('Promise'));
+      [getTagsReturnValue, sendTagReturnValue, sendTagsReturnValue, deleteTagReturnValue, deleteTagsReturnValue].forEach(x => expect(x.constructor.name).to.equal('Promise'));
     });
   })
 });

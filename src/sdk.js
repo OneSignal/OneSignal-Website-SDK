@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 
@@ -35,6 +35,7 @@ var OneSignal = {
   _isUninitiatedVisitor: false,
   _isNewVisitor: false,
   _channel: null,
+  logError: logError,
   initialized: false,
   notifyButton: null,
   store: LimitStore,
@@ -1281,20 +1282,21 @@ var OneSignal = {
       return;
     }
 
-    // Our backend considers false as removing a tag, so this allows false to be stored as a value
-    if (value === false) {
-      value = "false";
-    }
-
-    var jsonKeyValue = {};
-    jsonKeyValue[key] = value;
-    return OneSignal.sendTags(jsonKeyValue, callback);
+    return OneSignal.sendTags({key: value}, callback);
   },
 
-  sendTags: function (jsonPair, callback) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  sendTags: function (tags, callback) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
+    }
+
+    // Our backend considers false as removing a tag, so this allows false to be stored as a value
+    if (tags) {
+      Object.keys(tags).forEach(key => {
+        if (tags[key] === false) {
+          tags[key] = "false";
+        }
+      });
     }
 
     return new Promise((resolve, reject) => {
@@ -1303,22 +1305,22 @@ var OneSignal = {
           if (userIdResult) {
             return apiCall("players/" + userIdResult.id, "PUT", {
               app_id: OneSignal._app_id,
-              tags: jsonPair
+              tags: tags
             });
           }
           else {
             if (!OneSignal._futureSendTags) {
               OneSignal._futureSendTags = {};
             }
-            objectAssign(OneSignal._futureSendTags, jsonPair);
+            objectAssign(OneSignal._futureSendTags, tags);
             OneSignal._futureSendTagsPromiseResolve = resolve;
           }
         })
         .then(() => {
           if (callback) {
-            callback(jsonPair);
+            callback(tags);
           }
-          resolve(jsonPair);
+          resolve(tags);
         })
         .catch(e => {
           log.error('sendTags:', e);
@@ -1595,17 +1597,18 @@ var OneSignal = {
     return Database.get('Ids', 'userId')
       .then(function (userIdResult) {
         if (userIdResult) {
-          return apiCall("players/" + userIdResult.id, 'GET', null)
-            .then(response => {
-              if (callback) {
-                callback(response.tags);
-              }
-              return response.tags;
-            });
+          return apiCall("players/" + userIdResult.id, 'GET', null);
         } else {
-          return Promise.reject(new Error('Could not get tags because you are not registered with OneSignal (no user ID).'));
+          throw new Error('Could not get tags because you are not registered with OneSignal (no user ID).');
         }
-      });
+      })
+      .then(response => {
+        if (callback) {
+          callback(response.tags);
+        }
+        return response.tags;
+      })
+      .catch(e => { logError(e); return Promise.reject(e) });
   },
 
   isPushNotificationsEnabled: function (callback) {
