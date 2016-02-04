@@ -453,7 +453,7 @@ class ServiceWorker {
           }
 
           if (ServiceWorker._breakOnPushReceived) {
-            log.warn('Received notificationsn from server, but intentionally breaking %conPushReceived', getConsoleStyle('code'), 'without displaying a notification.', response);
+            log.warn('Received notifications from server, but intentionally breaking %conPushReceived', getConsoleStyle('code'), 'without displaying a notification.', response);
             throw new Error('push.mute intentionally not returning any notifications.');
           } else {
             resolve(notifications);

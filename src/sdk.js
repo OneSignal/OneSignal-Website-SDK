@@ -978,7 +978,6 @@ var OneSignal = {
   },
 
   _registerForW3CPush: function (options) {
-    debugger;
     log.debug(`Called %c_registerForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
     return Database.get('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
