@@ -1298,7 +1298,9 @@ var OneSignal = {
       return;
     }
 
-    return OneSignal.sendTags({key: value}, callback);
+    let tag = {};
+    tag[key] = value;
+    return OneSignal.sendTags(tag, callback);
   },
 
   sendTags: function (tags, callback) {
