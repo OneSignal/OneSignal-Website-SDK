@@ -134,6 +134,25 @@ describe('sdk.js', function(done) {
       })).to.eventually.become('successful');
     });
 
+    it('should successfully send, receive, and delete tags via the singular sendTag() and getTag() method', () => {
+      let tagKey = 'string';
+      let tagValue = sentTags[tagKey];
+      expect(OneSignal.sendTag(tagKey, tagValue)
+        .then(() => OneSignal.getTags())
+        .then(receivedTags => {
+          expect(receivedTags).to.not.be.undefined;
+          expect(receivedTags[tagKey]).to.equal(tagValue);
+        })
+        .then(() => OneSignal.deleteTag(tagKey))
+        .then(() => OneSignal.getTags())
+        .then(receivedTags => {
+          expect(receivedTags).to.not.be.undefined;
+          expect(receivedTags[tagKey]).to.be.undefined;
+        })
+        .then(() => "successful")
+        .catch(e => logError(e))).to.eventually.become('successful');
+    });
+
     it('should return a Promise', () => {
       let getTagsReturnValue = OneSignal.getTags();
       let sendTagReturnValue = OneSignal.sendTags();

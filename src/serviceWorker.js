@@ -5,6 +5,7 @@ import log from 'loglevel';
 import "./cache-polyfill.js";
 import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
+import objectAssign from 'object-assign';
 import swivel from 'swivel';
 
 class ServiceWorker {
@@ -65,6 +66,21 @@ class ServiceWorker {
           notification.close();
         }
       });
+    } else if (data === 'push.mute') {
+      ServiceWorker._breakOnPushReceived = true;
+    } else if (data === 'push.restore') {
+      ServiceWorker._breakOnPushReceived = false;
+    } else if (data === 'push.status') {
+      Database.get('Ids', 'backupNotification')
+        .then(backupNotificationResult => {
+          if (backupNotificationResult && backupNotificationResult.id) {
+            var backupNotification = backupNotificationResult.id;
+          }
+          swivel.broadcast('data', {
+            backupNotification: backupNotification,
+            isPushIntentionallyBroken: ServiceWorker._breakOnPushReceived
+          });
+        });
     }
   }
 
@@ -128,6 +144,15 @@ class ServiceWorker {
             else if (extra.defaultIconResult)
               data.icon = extra.defaultIconResult;
 
+            let saveAsBackupNotification = true;
+            if (data.additionalData && data.additionalData.__isOneSignalWelcomeNotification) {
+              saveAsBackupNotification = false;
+            }
+            if (saveAsBackupNotification) {
+              let backupData = objectAssign({}, data, {displayedTime: Date.now()})
+              Database.put('Ids', {type: 'backupNotification', id: data });
+            }
+
             // Never nest the following line in a callback from the point of entering from _getLastNotifications
             notificationEventPromiseFns.push((data => self.registration.showNotification(data.title, {
               // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
@@ -140,12 +165,38 @@ class ServiceWorker {
             })).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
           }
-          return notificationEventPromiseFns.reduce(function(p, fn) {
+          return notificationEventPromiseFns.reduce(function (p, fn) {
             return p = p.then(fn);
           }, promise);
         })
         .then(resolve)
-        .catch(e => log.error(e));
+        .catch(e => {
+          log.error('Failed to display a notification:', e);
+          log.warn("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+
+          Database.get('Ids', 'backupNotification')
+            .then(backupNotificationResult => {
+              if (backupNotificationResult && backupNotificationResult.id) {
+                let backupNotification = backupNotificationResult.id;
+                self.registration.showNotification(backupNotification.title, {
+                  requireInteraction: false, // Don't persist our backup notification
+                  body: backupNotification.message,
+                  icon: backupNotification.icon,
+                  tag: 'notification-tag-' + extra.appId,
+                  data: backupNotification
+                });
+              } else {
+                self.registration.showNotification(extra.title, {
+                  requireInteraction: false, // Don't persist our backup notification
+                  body: 'You have new updates.',
+                  icon: extra.defaultIconResult,
+                  tag: 'notification-tag-' + extra.appId,
+                  data: {backupNotification: true}
+                });
+              }
+            });
+
+        });
     }));
   }
 
@@ -400,7 +451,13 @@ class ServiceWorker {
           for (var i = 0; i < response.length; i++) {
             notifications.push(JSON.parse(response[i]));
           }
-          resolve(notifications);
+
+          if (ServiceWorker._breakOnPushReceived) {
+            log.warn('Received notifications from server, but intentionally breaking %conPushReceived', getConsoleStyle('code'), 'without displaying a notification.', response);
+            throw new Error('push.mute intentionally not returning any notifications.');
+          } else {
+            resolve(notifications);
+          }
         })
         .catch(e => {
           log.error(e);
