@@ -55,7 +55,7 @@ export function logError(e) {
     } else {
       log.error(e);
     }
-  });
+  }).catch(x => log.error(e));
 }
 
 export function isPushNotificationsSupported () {

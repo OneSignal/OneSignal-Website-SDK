@@ -264,13 +264,17 @@ var OneSignal = {
           log.debug('There is no active service worker.');
           return Promise.reject();
         } else {
-          if (OneSignal._channel) {
-            OneSignal._channel.emit('data', 'notification.closeall');
-          } else {
-            log.error("Please initialize the SDK before trying to communicate with the service worker. The communication channel isn't initialized yet.");
-          }
+          OneSignal._messageServiceWorker('notification.closeall');
         }
       });
+  },
+
+  _messageServiceWorker(message) {
+    if (OneSignal._channel) {
+      return OneSignal._channel.emit('data', message);
+    } else {
+      log.error("Please initialize the SDK before trying to communicate with the service worker. The communication channel isn't initialized yet.");
+    }
   },
 
   _onSubscriptionChanged: function (event) {
@@ -286,7 +290,7 @@ var OneSignal = {
           let url = (welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0) ? welcome_notification_opts['url'] : unopenableWelcomeNotificationUrl;
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
-            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url);
+            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, null, { __isOneSignalWelcomeNotification: true });
             Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
             OneSignal._isUninitiatedVisitor = false;
           }
@@ -348,6 +352,17 @@ var OneSignal = {
               OneSignal._fireNotificationOpenedCallbacks(data);
             });
             log.info('Service worker messaging channel established!');
+          }
+        })
+        .catch(e => {
+          if (e.code === 9) { // Only secure origins are allowed
+            if (location.protocol === 'http:' || Environment.isIframe()) {
+              // This site is an HTTP site with an <iframe>
+              // We can no longer register service workers since Chrome 42
+              log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
+            }
+          } else {
+            log.error(`Error getting Service Worker registration on ${location.href}:`, e);
           }
         });
     }
@@ -963,6 +978,7 @@ var OneSignal = {
   },
 
   _registerForW3CPush: function (options) {
+    debugger;
     log.debug(`Called %c_registerForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
     return Database.get('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
