@@ -489,6 +489,23 @@ var OneSignal = {
     }
   },
 
+  _fixWordpressManifestIfMisplaced: function() {
+    var manifests = document.querySelectorAll('link[rel=manifest]');
+    if (!manifests || manifests.length <= 1) {
+      // Multiple manifests do not exist on this webpage; there is no issue
+      return;
+    }
+    for (let i = 0; i < manifests.length; i++) {
+      let manifest = manifests[i];
+      let url = manifest.href;
+      if (contains(url, 'gcm_sender_id')) {
+        // Move the <manifest> to the first thing in <head>
+        document.querySelector('head').insertBefore(manifest, document.querySelector('head').children[0]);
+        log.warn('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
+      }
+    }
+  },
+
   init: function (options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
@@ -513,6 +530,8 @@ var OneSignal = {
       log.warn("Your browser does not support push notifications.");
       return;
     }
+
+    OneSignal._fixWordpressManifestIfMisplaced();
 
     if (Browser.safari && !OneSignal._initOptions.safari_web_id) {
       log.warn("You're browsing on Safari, and %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), so not initializing the SDK.');
