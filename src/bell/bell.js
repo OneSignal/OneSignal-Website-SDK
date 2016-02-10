@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains } from '../utils.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, logError } from '../utils.js';
 import Environment from '../environment.js';
 import LimitStore from '../limitStore.js';
 import log from 'loglevel';
@@ -99,7 +99,8 @@ export default class Bell {
       'dialog.blocked.message': "Follow these instructions to allow notifications:"
     },
     prenotify = true,
-    showCredit = true
+    showCredit = true,
+    colors = null
     } = {}) {
     this.options = {
       enable: enable,
@@ -111,6 +112,7 @@ export default class Bell {
       text: text,
       prenotify: prenotify,
       showCredit: showCredit,
+      colors: colors
     };
 
     if (!this.options.enable)
@@ -378,6 +380,8 @@ export default class Bell {
           throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
         }
 
+        this.setCustomColorsIfSpecified();
+
         log.info('Showing the notify button.');
 
         (isPushEnabled ? this.launcher.inactivate() : nothing())
@@ -397,8 +401,36 @@ export default class Bell {
           })
           .then(() => this.initialized = true)
           .catch((e) => log.error(e));
-      }).catch(e => log.error(e));
+      }).catch(e => logError(e));
     });
+  }
+
+  setCustomColorsIfSpecified() {
+    if (this.options.colors) {
+      let colors = this.options.colors;
+      if (colors['circle.background']) {
+        this.graphic.querySelector('.background').style.cssText += `fill: ${colors['circle.background']} !important;`;
+      }
+      if (colors['circle.foreground']) {
+        let foregroundElements = this.graphic.querySelectorAll('.foreground');
+        for (let i = 0; i < foregroundElements.length; i++) {
+          let element = foregroundElements[i];
+          element.style.cssText += `fill: ${colors['circle.foreground']} !important;`;
+        }
+        this.graphic.querySelector('.stroke').style.cssText += `stroke: ${colors['circle.foreground']} !important;`;
+      }
+      if (colors['badge.background']) {
+        this.badge.element.style.cssText += `background: ${colors['badge.background']} !important;`;
+      }
+      if (colors['badge.bordercolor']) {
+        this.badge.element.style.cssText += `border-color: ${colors['badge.bordercolor']} !important;`;
+      }
+      if (colors['badge.foreground']) {
+        this.badge.element.style.color += colors['badge.foreground'] + ' !important;';
+        this.badge.element.style.cssText += `color: ${colors['badge.foreground']} !important;`;
+      }
+      // Note: Because the pulse animation is added via removal->addition of the .pulse-ring class (done to trigger a document reflow to re-trigger animation), the rest of this method is there
+    }
   }
 
   /**
@@ -431,6 +463,10 @@ export default class Bell {
 
   get container() {
     return document.querySelector('#onesignal-bell-container');
+  }
+
+  get graphic() {
+    return this.button.element.querySelector('svg');
   }
 
   get launcher() {
