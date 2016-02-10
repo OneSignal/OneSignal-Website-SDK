@@ -406,31 +406,84 @@ export default class Bell {
   }
 
   setCustomColorsIfSpecified() {
+    // Some common vars first
+    let dialogButton = this.dialog.element.querySelector('button.action');
+    let pulseRing = this.button.element.querySelector('.pulse-ring');
+    // Reset added styles first
+    this.graphic.querySelector('.background').style.cssText = '';
+    let foregroundElements = this.graphic.querySelectorAll('.foreground');
+    for (let i = 0; i < foregroundElements.length; i++) {
+      let element = foregroundElements[i];
+      element.style.cssText = '';
+    }
+    this.graphic.querySelector('.stroke').style.cssText = '';
+    this.badge.element.style.cssText = '';
+    if (dialogButton) {
+      dialogButton.style.cssText = '';
+      dialogButton.style.cssText = '';
+    }
+    if (pulseRing) {
+      pulseRing.style.cssText = '';
+    }
+
+    // Set new styles
     if (this.options.colors) {
       let colors = this.options.colors;
       if (colors['circle.background']) {
-        this.graphic.querySelector('.background').style.cssText += `fill: ${colors['circle.background']} !important;`;
+        this.graphic.querySelector('.background').style.cssText += `fill: ${colors['circle.background']}`;
       }
       if (colors['circle.foreground']) {
         let foregroundElements = this.graphic.querySelectorAll('.foreground');
         for (let i = 0; i < foregroundElements.length; i++) {
           let element = foregroundElements[i];
-          element.style.cssText += `fill: ${colors['circle.foreground']} !important;`;
+          element.style.cssText += `fill: ${colors['circle.foreground']}`;
         }
-        this.graphic.querySelector('.stroke').style.cssText += `stroke: ${colors['circle.foreground']} !important;`;
+        this.graphic.querySelector('.stroke').style.cssText += `stroke: ${colors['circle.foreground']}`;
       }
       if (colors['badge.background']) {
-        this.badge.element.style.cssText += `background: ${colors['badge.background']} !important;`;
+        this.badge.element.style.cssText += `background: ${colors['badge.background']}`;
       }
       if (colors['badge.bordercolor']) {
-        this.badge.element.style.cssText += `border-color: ${colors['badge.bordercolor']} !important;`;
+        this.badge.element.style.cssText += `border-color: ${colors['badge.bordercolor']}`;
       }
       if (colors['badge.foreground']) {
-        this.badge.element.style.color += colors['badge.foreground'] + ' !important;';
-        this.badge.element.style.cssText += `color: ${colors['badge.foreground']} !important;`;
+        this.badge.element.style.cssText += `color: ${colors['badge.foreground']}`;
       }
-      // Note: Because the pulse animation is added via removal->addition of the .pulse-ring class (done to trigger a document reflow to re-trigger animation), the rest of this method is there
+      if (dialogButton) {
+        if (colors['dialog.button.background']) {
+          this.dialog.element.querySelector('button.action').style.cssText += `background: ${colors['dialog.button.background']}`;
+        }
+        if (colors['dialog.button.foreground']) {
+          this.dialog.element.querySelector('button.action').style.cssText += `color: ${colors['dialog.button.foreground']}`;
+        }
+        if (colors['dialog.button.background.hovering']) {
+          this.addCssToHead('onesignal-background-hover-style', `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:hover { background: ${colors['dialog.button.background.hovering']} !important; }`);
+        }
+        if (colors['dialog.button.background.active']) {
+          this.addCssToHead('onesignal-background-active-style', `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${colors['dialog.button.background.active']} !important; }`);
+        }
+      }
+      if (pulseRing) {
+        if (colors['pulse.color']) {
+          this.button.element.querySelector('.pulse-ring').style.cssText = `border-color: ${colors['pulse.color']}`;
+        }
+      }
     }
+  }
+
+  addCssToHead(id, css) {
+    let existingStyleDom = document.getElementById(id);
+    if (existingStyleDom)
+      return;
+    let styleDom = document.createElement('style');
+    styleDom.id = id;
+    styleDom.type = 'text/css';
+    if (styleDom.styleSheet) {
+      styleDom.styleSheet.cssText = css;
+    } else {
+      styleDom.appendChild(document.createTextNode(css));
+    }
+    document.head.appendChild(styleDom);
   }
 
   /**

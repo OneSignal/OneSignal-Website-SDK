@@ -133,8 +133,6 @@ export default class Button extends ActiveAnimatedElement {
   pulse() {
     removeDomElement('.pulse-ring');
     addDomElement(this.element, 'beforeend', '<div class="pulse-ring"></div>');
-    if (this.bell.options.colors && this.bell.options.colors['pulse.color']) {
-      this.bell.button.element.querySelector('.pulse-ring').style.cssText = `border-color: ${this.bell.options.colors['pulse.color']} !important`;
-    }
+    this.bell.setCustomColorsIfSpecified();
   }
 }
