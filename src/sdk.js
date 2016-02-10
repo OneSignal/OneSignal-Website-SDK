@@ -1283,7 +1283,13 @@ var OneSignal = {
             if (manifestParentTagname !== 'head') {
               log.error(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
             } else {
-              log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+              let manifestLocationOrigin = new URL(manifestLocation).origin;
+              let currentOrigin = location.origin;
+              if (currentOrigin !== manifestLocationOrigin) {
+                log.error(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is different from the current page's origin of ${currentOrigin}. Please serve your manifest from the same origin as your page's. If you are using a content delivery network (CDN), please add an exception so that the manifest is not served by your CDN. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)`);
+              } else {
+                log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+              }
             }
           } else if (location.protocol === 'https:') {
             log.error(`OneSignal: You must reference a %cmanifest.json`, getConsoleStyle('code'), "in <head>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");

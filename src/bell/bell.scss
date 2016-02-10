@@ -621,6 +621,7 @@ $sizes: (
 @-webkit-keyframes pulse {
     0% {
         -webkit-transform: scale(0.1);
+        transform: scale(0.1);
         opacity: 0.0;
         border-width: 10px;
     }
@@ -630,6 +631,7 @@ $sizes: (
     }
     100% {
         -webkit-transform: scale(1.2);
+        transform: scale(1.2);
         opacity: 0.0;
         border-width: 1px;
     }
