@@ -100,7 +100,8 @@ export default class Bell {
     },
     prenotify = true,
     showCredit = true,
-    colors = null
+    colors = null,
+    offset = null
     } = {}) {
     this.options = {
       enable: enable,
@@ -112,7 +113,8 @@ export default class Bell {
       text: text,
       prenotify: prenotify,
       showCredit: showCredit,
-      colors: colors
+      colors: colors,
+      offset: offset,
     };
 
     if (!this.options.enable)
@@ -380,6 +382,7 @@ export default class Bell {
           throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
         }
 
+        this.applyOffsetIfSpecified();
         this.setCustomColorsIfSpecified();
 
         log.info('Showing the notify button.');
@@ -403,6 +406,29 @@ export default class Bell {
           .catch((e) => log.error(e));
       }).catch(e => logError(e));
     });
+  }
+
+  applyOffsetIfSpecified() {
+    let offset = this.options.offset;
+    if (offset) {
+      // Reset styles first
+      this.launcher.element.style.cssText = '';
+
+      if (offset.bottom) {
+        this.launcher.element.style.cssText += `bottom: ${offset.bottom};`;
+      }
+
+      if (this.options.position === 'bottom-right') {
+        if (offset.right) {
+          this.launcher.element.style.cssText += `right: ${offset.right};`;
+        }
+      }
+      else if (this.options.position === 'bottom-left') {
+        if (offset.left) {
+          this.launcher.element.style.cssText += `left: ${offset.left};`;
+        }
+      }
+    }
   }
 
   setCustomColorsIfSpecified() {
