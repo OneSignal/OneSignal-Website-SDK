@@ -1052,8 +1052,12 @@ var OneSignal = {
                     });
                 } else {
                   // Some other service worker not belonging to us was installed
-                  // Install ours over it
-                  OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                  // Install ours over it after unregistering theirs to get a different registration token and avoid mismatchsenderid error
+                  log.info('Unregistering previous service worker:', serviceWorkerRegistration);
+                  serviceWorkerRegistration.unregister().then(unregistrationSuccessful => {
+                    log.info('Result of unregistering:', unregistrationSuccessful);
+                    OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                  });
                 }
               }
               else if (serviceWorkerRegistration.installing == null)
