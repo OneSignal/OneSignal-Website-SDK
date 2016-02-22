@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 
@@ -506,6 +506,14 @@ var OneSignal = {
     }
   },
 
+  _init_getNormalizedSubdomain: function(subdomain) {
+    if (!subdomain) {
+      log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+      throw new Error('OneSignal: Missing required init parameter subdomainName. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+    }
+    return normalizeSubdomain(subdomain);
+  },
+
   init: function (options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
@@ -554,15 +562,12 @@ var OneSignal = {
     OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
 
     if (OneSignal._useHttpMode) {
-      if (!OneSignal._initOptions.subdomainName) {
-        log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
-        return;
+      let inputSubdomain = OneSignal._initOptions.subdomainName;
+      let normalizedSubdomain = OneSignal._init_getNormalizedSubdomain(inputSubdomain);
+      if (normalizedSubdomain !== inputSubdomain) {
+        log.warn(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
       }
-      if (contains(OneSignal._initOptions.subdomainName, '.')) {
-        log.error('OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), ". Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
-        return;
-      }
-      OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+      OneSignal._initOneSignalHttp = 'https://' + normalizedSubdomain + '.onesignal.com/sdks/initOneSignalHttp';
     }
     else {
       OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';

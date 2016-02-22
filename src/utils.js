@@ -363,3 +363,22 @@ export function trimUndefined(object) {
   }
   return object;
 }
+
+/**
+ * Returns the correct subdomain if 'https://subdomain.onesignal.com' or something similar is passed.
+ */
+export function normalizeSubdomain(subdomain) {
+  subdomain = subdomain.trim();
+  let removeSubstrings = [
+    'http://www.',
+    'https://www.',
+    'http://',
+    'https://',
+    '.onesignal.com/',
+    '.onesignal.com'
+  ];
+  for (let removeSubstring of removeSubstrings) {
+    subdomain = subdomain.replace(removeSubstring, '');
+  }
+  return subdomain;
+}
