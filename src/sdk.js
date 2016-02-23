@@ -567,7 +567,8 @@ var OneSignal = {
       if (normalizedSubdomain !== inputSubdomain) {
         log.warn(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
       }
-      OneSignal._initOneSignalHttp = 'https://' + normalizedSubdomain + '.onesignal.com/sdks/initOneSignalHttp';
+      OneSignal._initOptions.subdomainName = normalizedSubdomain;
+      OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
     }
     else {
       OneSignal._initOneSignalHttp = 'https://onesignal.com/sdks/initOneSignalHttps';
