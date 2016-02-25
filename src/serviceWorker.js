@@ -26,6 +26,14 @@ class ServiceWorker {
     return swivel;
   }
 
+  static get database() {
+    return Database;
+  }
+
+  static get apiUrl() {
+    return API_URL;
+  }
+
   static run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
@@ -117,6 +125,10 @@ class ServiceWorker {
         })
         .then(() => ServiceWorker._getLastNotifications())
         .then(notifications => {
+          if (!notifications || notifications.length == 0) {
+            log.warn('Push signal received, but there were no messages after calling chromeweb_notification().')
+            ServiceWorker.logPush("chromeweb_notification_no_results", 'last_occurred');
+          }
           // At this point, we have an array of notification objects (all the JSON is parsed)
           // We want to fire a notification for each object
           // We need to use event.waitUntil() to extend the life of the service worker (workers can be killed if idling)
@@ -130,6 +142,8 @@ class ServiceWorker {
               message: notification.alert,
               additionalData: notification.custom.a
             };
+
+            let retrievedPushLogPromise = ServiceWorker.logPush(data.id, 'retrieved');
 
             if (notification.title)
               data.title = notification.title;
@@ -145,7 +159,8 @@ class ServiceWorker {
               data.icon = extra.defaultIconResult;
 
             let saveAsBackupNotification = true;
-            if (data.additionalData && data.additionalData.__isOneSignalWelcomeNotification) {
+            let isOneSignalWelcomeNotification = data.additionalData && data.additionalData.__isOneSignalWelcomeNotification;
+            if (isOneSignalWelcomeNotification) {
               saveAsBackupNotification = false;
             }
             if (saveAsBackupNotification) {
@@ -154,15 +169,18 @@ class ServiceWorker {
             }
 
             // Never nest the following line in a callback from the point of entering from _getLastNotifications
-            notificationEventPromiseFns.push((data => self.registration.showNotification(data.title, {
-              // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
-              // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
-              requireInteraction: extra.persistNotification,
-              body: data.message,
-              icon: data.icon,
-              tag: 'notification-tag-' + extra.appId,
-              data: data
-            })).bind(null, data));
+            notificationEventPromiseFns.push((data => {
+              let showNotificationPromise = self.registration.showNotification(data.title, {
+                // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
+                // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
+                requireInteraction: extra.persistNotification || isOneSignalWelcomeNotification,
+                body: data.message,
+                icon: data.icon,
+                tag: 'notification-tag-' + extra.appId,
+                data: data
+              });
+              return showNotificationPromise.then(() => retrievedPushLogPromise).then(() => ServiceWorker.logPush(data.id, 'displayed'));
+            }).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
           }
           return notificationEventPromiseFns.reduce(function (p, fn) {
@@ -200,9 +218,43 @@ class ServiceWorker {
     }));
   }
 
+  static logPush(notificationId, action) {
+    var currentPushLog = {};
+
+    return Database.get("Options", "pushLog")
+      .then(pushLogResult => {
+        if (pushLogResult) {
+          currentPushLog = pushLogResult.value;
+          // Note: Because we're storing consistent data, each "entry" takes up 156 characters stringified
+          // Let's only store the last 5000 pushes
+          let estimateBytesPerUnicodeChar = 2.5*1024*1024/4;
+          if (JSON.stringify(currentPushLog).length > 156 * 500) {
+            log.warn('Clearing push log because it grew too large.');
+            currentPushLog = {};
+          }
+        }
+
+        // Add to our pushlog
+        if (!currentPushLog.hasOwnProperty(notificationId)) {
+          currentPushLog[notificationId] = {};
+        }
+
+        // Might be currentPushLog[id]['displayed'] = Tue Feb 23 2016 20:26:01 GMT-0800 (PST)  (a Date object)
+        currentPushLog[notificationId][action] = new Date();
+      })
+      .then(() => Database.put("Options", {key: "pushLog", value: currentPushLog}));
+  }
+
   static executeWebhooks(event, notification) {
     var isServerCorsEnabled = false;
-    return Database.get('Options', 'webhooks.cors')
+    var userId = null;
+    return Database.get('Ids', 'userId')
+      .then(userIdResult => {
+        if (userIdResult) {
+          userId = userIdResult.id;
+        }
+      })
+      .then(() => Database.get('Options', 'webhooks.cors'))
       .then(corsResult => {
         isServerCorsEnabled = corsResult && corsResult.value;
       })
@@ -215,6 +267,7 @@ class ServiceWorker {
           let postData = {
             event: event,
             id: notification.id,
+            userId: userId,
             heading: notification.title,
             content: notification.message,
             url: notification.launchURL,
@@ -246,7 +299,8 @@ class ServiceWorker {
     event.notification.close();
 
     event.waitUntil(
-      Database.get('Options', 'defaultUrl')
+        ServiceWorker.logPush(notificationData.id, 'clicked')
+        .then(() => Database.get('Options', 'defaultUrl'))
         .then(defaultUrlResult => {
 
           if (defaultUrlResult)
