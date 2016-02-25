@@ -1031,7 +1031,7 @@ var OneSignal = {
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                       }
                       else
-                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
 
                     })
                     .catch(function (e) {
@@ -1051,7 +1051,7 @@ var OneSignal = {
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                       }
                       else
-                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                     })
                     .catch(function (e) {
                       log.error(e);
