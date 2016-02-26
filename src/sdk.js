@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -19,7 +19,8 @@ var OneSignal = {
   _VERSION: __VERSION__,
   _API_URL: API_URL,
   _app_id: null,
-  _tagsToSendOnRegister: null,
+  _futureSendTags: null,
+  _futureSendTagsPromiseResolve: null,
   _notificationOpenedCallbacks: [],
   _idsAvailable_callback: [],
   _defaultLaunchURL: null,
@@ -36,6 +37,7 @@ var OneSignal = {
   _isUninitiatedVisitor: false,
   _isNewVisitor: false,
   _channel: null,
+  logError: logError,
   initialized: false,
   notifyButton: null,
   store: LimitStore,
@@ -197,9 +199,9 @@ var OneSignal = {
   },
 
   _sendUnsentTags: function () {
-    if (OneSignal._tagsToSendOnRegister) {
-      OneSignal.sendTags(OneSignal._tagsToSendOnRegister);
-      OneSignal._tagsToSendOnRegister = null;
+    if (OneSignal._futureSendTags) {
+      OneSignal.sendTags(OneSignal._futureSendTags);
+      OneSignal._futureSendTags = null;
     }
   },
 
@@ -264,13 +266,17 @@ var OneSignal = {
           log.debug('There is no active service worker.');
           return Promise.reject();
         } else {
-          if (OneSignal._channel) {
-            OneSignal._channel.emit('data', 'notification.closeall');
-          } else {
-            log.error("Please initialize the SDK before trying to communicate with the service worker. The communication channel isn't initialized yet.");
-          }
+          OneSignal._messageServiceWorker('notification.closeall');
         }
       });
+  },
+
+  _messageServiceWorker(message) {
+    if (OneSignal._channel) {
+      return OneSignal._channel.emit('data', message);
+    } else {
+      log.error("Please initialize the SDK before trying to communicate with the service worker. The communication channel isn't initialized yet.");
+    }
   },
 
   _onSubscriptionChanged: function (event) {
@@ -286,7 +292,7 @@ var OneSignal = {
           let url = (welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0) ? welcome_notification_opts['url'] : unopenableWelcomeNotificationUrl;
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
-            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url);
+            sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, null, { __isOneSignalWelcomeNotification: true });
             Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
             OneSignal._isUninitiatedVisitor = false;
           }
@@ -348,6 +354,17 @@ var OneSignal = {
               OneSignal._fireNotificationOpenedCallbacks(data);
             });
             log.info('Service worker messaging channel established!');
+          }
+        })
+        .catch(e => {
+          if (e.code === 9) { // Only secure origins are allowed
+            if (location.protocol === 'http:' || Environment.isIframe()) {
+              // This site is an HTTP site with an <iframe>
+              // We can no longer register service workers since Chrome 42
+              log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
+            }
+          } else {
+            log.error(`Error getting Service Worker registration on ${location.href}:`, e);
           }
         });
     }
@@ -474,6 +491,31 @@ var OneSignal = {
     }
   },
 
+  _fixWordpressManifestIfMisplaced: function() {
+    var manifests = document.querySelectorAll('link[rel=manifest]');
+    if (!manifests || manifests.length <= 1) {
+      // Multiple manifests do not exist on this webpage; there is no issue
+      return;
+    }
+    for (let i = 0; i < manifests.length; i++) {
+      let manifest = manifests[i];
+      let url = manifest.href;
+      if (contains(url, 'gcm_sender_id')) {
+        // Move the <manifest> to the first thing in <head>
+        document.querySelector('head').insertBefore(manifest, document.querySelector('head').children[0]);
+        log.warn('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
+      }
+    }
+  },
+
+  _init_getNormalizedSubdomain: function(subdomain) {
+    if (!subdomain) {
+      log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+      throw new Error('OneSignal: Missing required init parameter subdomainName. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+    }
+    return normalizeSubdomain(subdomain);
+  },
+
   init: function (options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
@@ -481,10 +523,11 @@ var OneSignal = {
       debugger;
     }
 
-    if (OneSignal.initialized) {
-      log.warn('OneSignal.init() was called again, but the SDK is already initialized. Skipping initialization.');
+    if (OneSignal._initCalled) {
+      log.error(`OneSignal: Please don't call init() more than once. Any extra calls to init() are ignored. The following parameters were not processed: %c${JSON.stringify(Object.keys(options))}`, getConsoleStyle('code'));
       return;
     }
+    OneSignal._initCalled = true;
 
     if (!options.path) {
       options.path = '/';
@@ -497,6 +540,8 @@ var OneSignal = {
       log.warn("Your browser does not support push notifications.");
       return;
     }
+
+    OneSignal._fixWordpressManifestIfMisplaced();
 
     if (Browser.safari && !OneSignal._initOptions.safari_web_id) {
       log.warn("You're browsing on Safari, and %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), so not initializing the SDK.');
@@ -519,14 +564,12 @@ var OneSignal = {
     OneSignal._useHttpMode = !isSupportedSafari() && (!OneSignal._supportsDirectPermission() || OneSignal._initOptions.subdomainName);
 
     if (OneSignal._useHttpMode) {
-      if (!OneSignal._initOptions.subdomainName) {
-        log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
-        return;
+      let inputSubdomain = OneSignal._initOptions.subdomainName;
+      let normalizedSubdomain = OneSignal._init_getNormalizedSubdomain(inputSubdomain);
+      if (normalizedSubdomain !== inputSubdomain) {
+        log.warn(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
       }
-      if (contains(OneSignal._initOptions.subdomainName, '.')) {
-        log.error('OneSignal: Invalid parameter %csubdomainName', getConsoleStyle('code'), ". Do not include dots or '.onesignal.com' as part of your subdomain name. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)")
-        return;
-      }
+      OneSignal._initOptions.subdomainName = normalizedSubdomain;
       OneSignal._initOneSignalHttp = 'https://' + OneSignal._initOptions.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
     }
     else {
@@ -611,8 +654,8 @@ var OneSignal = {
             return;
           }
 
-          if (OneSignal._initOptions.autoRegister === false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
-            log.debug('No autoregister, no registration ID, no subdomain > skip _internalInit().')
+          if (OneSignal._initOptions.autoRegister === false && !OneSignal._initOptions.subdomainName) {
+            log.debug('No autoregister and no subdomain -> skip _internalInit().')
             Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             return;
           }
@@ -990,7 +1033,7 @@ var OneSignal = {
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                       }
                       else
-                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
 
                     })
                     .catch(function (e) {
@@ -1010,15 +1053,19 @@ var OneSignal = {
                           OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                       }
                       else
-                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                        OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
                     })
                     .catch(function (e) {
                       log.error(e);
                     });
                 } else {
                   // Some other service worker not belonging to us was installed
-                  // Install ours over it
-                  OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                  // Install ours over it after unregistering theirs to get a different registration token and avoid mismatchsenderid error
+                  log.info('Unregistering previous service worker:', serviceWorkerRegistration);
+                  serviceWorkerRegistration.unregister().then(unregistrationSuccessful => {
+                    log.info('Result of unregistering:', unregistrationSuccessful);
+                    OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                  });
                 }
               }
               else if (serviceWorkerRegistration.installing == null)
@@ -1253,7 +1300,29 @@ var OneSignal = {
           });
       })
       .catch(function (e) {
-        log.error('Error while subscribing for push:', e);
+        if (e.message === 'Registration failed - no sender id provided') {
+          let manifestDom = document.querySelector('link[rel=manifest]');
+          if (manifestDom) {
+            let manifestParentTagname = document.querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
+            let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
+            let manifestLocation = document.querySelector('link[rel=manifest]').href;
+            if (manifestParentTagname !== 'head') {
+              log.error(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
+            } else {
+              let manifestLocationOrigin = new URL(manifestLocation).origin;
+              let currentOrigin = location.origin;
+              if (currentOrigin !== manifestLocationOrigin) {
+                log.error(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is different from the current page's origin of ${currentOrigin}. Please serve your manifest from the same origin as your page's. If you are using a content delivery network (CDN), please add an exception so that the manifest is not served by your CDN. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)`);
+              } else {
+                log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+              }
+            }
+          } else if (location.protocol === 'https:') {
+            log.error(`OneSignal: You must reference a %cmanifest.json`, getConsoleStyle('code'), "in <head>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+          }
+        } else {
+          log.error('Error while subscribing for push:', e);
+        }
 
         // New addition (12/22/2015), adding support for detecting the cancel 'X'
         // Chrome doesn't show when the user clicked 'X' for cancel
@@ -1274,67 +1343,96 @@ var OneSignal = {
       });
   },
 
-  sendTag: function (key, value) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  sendTag: function (key, value, callback) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
 
-    var jsonKeyValue = {};
-    jsonKeyValue[key] = value;
-    OneSignal.sendTags(jsonKeyValue);
+    let tag = {};
+    tag[key] = value;
+    return OneSignal.sendTags(tag, callback);
   },
 
-  sendTags: function (jsonPair) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  sendTags: function (tags, callback) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
 
-    Database.get('Ids', 'userId')
-      .then(function sendTags_GotUserId(userIdResult) {
-        if (userIdResult)
-          OneSignal._sendToOneSignalApi("players/" + userIdResult.id, "PUT", {
-            app_id: OneSignal._app_id,
-            tags: jsonPair
-          });
-        else {
-          if (OneSignal._tagsToSendOnRegister == null)
-            OneSignal._tagsToSendOnRegister = jsonPair;
-          else {
-            var resultObj = {};
-            for (var _obj in OneSignal._tagsToSendOnRegister) resultObj[_obj] = OneSignal._tagsToSendOnRegister[_obj];
-            for (var _obj in jsonPair) resultObj[_obj] = jsonPair[_obj];
-            OneSignal._tagsToSendOnRegister = resultObj;
-          }
+    // Our backend considers false as removing a tag, so this allows false to be stored as a value
+    if (tags) {
+      Object.keys(tags).forEach(key => {
+        if (tags[key] === false) {
+          tags[key] = "false";
         }
-      })
-      .catch(function (e) {
-        log.error('sendTags:', e);
       });
+    }
+
+    return new Promise((resolve, reject) => {
+      return Database.get('Ids', 'userId')
+        .then(userIdResult => {
+          if (userIdResult) {
+            return apiCall("players/" + userIdResult.id, "PUT", {
+              app_id: OneSignal._app_id,
+              tags: tags
+            });
+          }
+          else {
+            if (!OneSignal._futureSendTags) {
+              OneSignal._futureSendTags = {};
+            }
+            objectAssign(OneSignal._futureSendTags, tags);
+            OneSignal._futureSendTagsPromiseResolve = resolve;
+          }
+        })
+        .then(() => {
+          if (callback) {
+            callback(tags);
+          }
+          resolve(tags);
+        })
+        .catch(e => {
+          log.error('sendTags:', e);
+          reject(e);
+        });
+    });
   },
 
-  deleteTag: function (key) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  deleteTag: function (tag) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
 
-    OneSignal.deleteTags([key]);
+    if (typeof tag === 'string' || tag instanceof String) {
+      return OneSignal.deleteTags([tag]);
+    } else {
+      return Promise.reject(new Error(`OneSignal: Invalid tag '${tag}' to delete. You must pass in a string.`));
+    }
   },
 
-  deleteTags: function (keyArray) {
-    if (!isPushNotificationsSupported()) {
-      log.warn("Your browser does not support push notifications.");
+  deleteTags: function (tags, callback) {
+    if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
 
-    var jsonPair = {};
-    var length = keyArray.length;
-    for (var i = 0; i < length; i++)
-      jsonPair[keyArray[i]] = "";
+    return new Promise((resolve, reject) => {
+      if (tags instanceof Array && tags.length > 0) {
+        var jsonPair = {};
+        var length = tags.length;
+        for (var i = 0; i < length; i++)
+          jsonPair[tags[i]] = "";
 
-    OneSignal.sendTags(jsonPair);
+        return OneSignal.sendTags(jsonPair)
+          .then(emptySentTagsObj => {
+            let emptySentTags = Object.keys(emptySentTagsObj);
+            if (callback) {
+              callback(emptySentTags);
+            }
+            resolve(emptySentTags);
+          })
+      } else {
+        reject(new Error(`OneSignal: Invalid tags '${tags}' to delete. You must pass in array of strings with at least one tag string to be deleted.`));
+      }
+    });
   },
 
   // HTTP & HTTPS - Runs on main page (receives events from iframe / popup)
@@ -1564,18 +1662,21 @@ var OneSignal = {
       return;
     }
 
-    Database.get('Ids', 'userId')
+    return Database.get('Ids', 'userId')
       .then(function (userIdResult) {
         if (userIdResult) {
-          OneSignal._sendToOneSignalApi("players/" + userIdResult.id, 'GET', null, function (response) {
-            callback(response.tags);
-          });
+          return apiCall("players/" + userIdResult.id, 'GET', null);
+        } else {
+          throw new Error('Could not get tags because you are not registered with OneSignal (no user ID).');
         }
       })
-      .catch(function (e) {
-        log.error(e);
-      });
-    ;
+      .then(response => {
+        if (callback) {
+          callback(response.tags);
+        }
+        return response.tags;
+      })
+      .catch(e => { logError(e); return Promise.reject(e) });
   },
 
   isPushNotificationsEnabled: function (callback) {

@@ -5,6 +5,7 @@ import log from 'loglevel';
 import "./cache-polyfill.js";
 import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
+import objectAssign from 'object-assign';
 import swivel from 'swivel';
 
 class ServiceWorker {
@@ -23,6 +24,14 @@ class ServiceWorker {
 
   static get swivel() {
     return swivel;
+  }
+
+  static get database() {
+    return Database;
+  }
+
+  static get apiUrl() {
+    return API_URL;
   }
 
   static run() {
@@ -65,6 +74,21 @@ class ServiceWorker {
           notification.close();
         }
       });
+    } else if (data === 'push.mute') {
+      ServiceWorker._breakOnPushReceived = true;
+    } else if (data === 'push.restore') {
+      ServiceWorker._breakOnPushReceived = false;
+    } else if (data === 'push.status') {
+      Database.get('Ids', 'backupNotification')
+        .then(backupNotificationResult => {
+          if (backupNotificationResult && backupNotificationResult.id) {
+            var backupNotification = backupNotificationResult.id;
+          }
+          swivel.broadcast('data', {
+            backupNotification: backupNotification,
+            isPushIntentionallyBroken: ServiceWorker._breakOnPushReceived
+          });
+        });
     }
   }
 
@@ -101,6 +125,10 @@ class ServiceWorker {
         })
         .then(() => ServiceWorker._getLastNotifications())
         .then(notifications => {
+          if (!notifications || notifications.length == 0) {
+            log.warn('Push signal received, but there were no messages after calling chromeweb_notification().')
+            ServiceWorker.logPush("chromeweb_notification_no_results", 'last_occurred');
+          }
           // At this point, we have an array of notification objects (all the JSON is parsed)
           // We want to fire a notification for each object
           // We need to use event.waitUntil() to extend the life of the service worker (workers can be killed if idling)
@@ -115,6 +143,8 @@ class ServiceWorker {
               additionalData: notification.custom.a
             };
 
+            let retrievedPushLogPromise = ServiceWorker.logPush(data.id, 'retrieved');
+
             if (notification.title)
               data.title = notification.title;
             else
@@ -128,30 +158,103 @@ class ServiceWorker {
             else if (extra.defaultIconResult)
               data.icon = extra.defaultIconResult;
 
+            let saveAsBackupNotification = true;
+            let isOneSignalWelcomeNotification = data.additionalData && data.additionalData.__isOneSignalWelcomeNotification;
+            if (isOneSignalWelcomeNotification) {
+              saveAsBackupNotification = false;
+            }
+            if (saveAsBackupNotification) {
+              let backupData = objectAssign({}, data, {displayedTime: Date.now()})
+              Database.put('Ids', {type: 'backupNotification', id: data });
+            }
+
             // Never nest the following line in a callback from the point of entering from _getLastNotifications
-            notificationEventPromiseFns.push((data => self.registration.showNotification(data.title, {
-              // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
-              // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
-              requireInteraction: extra.persistNotification,
-              body: data.message,
-              icon: data.icon,
-              tag: 'notification-tag-' + extra.appId,
-              data: data
-            })).bind(null, data));
+            notificationEventPromiseFns.push((data => {
+              let showNotificationPromise = self.registration.showNotification(data.title, {
+                // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
+                // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
+                requireInteraction: extra.persistNotification,
+                body: data.message,
+                icon: data.icon,
+                tag: 'notification-tag-' + extra.appId,
+                data: data
+              });
+              return showNotificationPromise.then(() => retrievedPushLogPromise).then(() => ServiceWorker.logPush(data.id, 'displayed'));
+            }).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
           }
-          return notificationEventPromiseFns.reduce(function(p, fn) {
+          return notificationEventPromiseFns.reduce(function (p, fn) {
             return p = p.then(fn);
           }, promise);
         })
         .then(resolve)
-        .catch(e => log.error(e));
+        .catch(e => {
+          log.error('Failed to display a notification:', e);
+          log.warn("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+
+          Database.get('Ids', 'backupNotification')
+            .then(backupNotificationResult => {
+              if (backupNotificationResult && backupNotificationResult.id) {
+                let backupNotification = backupNotificationResult.id;
+                self.registration.showNotification(backupNotification.title, {
+                  requireInteraction: false, // Don't persist our backup notification
+                  body: backupNotification.message,
+                  icon: backupNotification.icon,
+                  tag: 'notification-tag-' + extra.appId,
+                  data: backupNotification
+                });
+              } else {
+                self.registration.showNotification(extra.title, {
+                  requireInteraction: false, // Don't persist our backup notification
+                  body: 'You have new updates.',
+                  icon: extra.defaultIconResult,
+                  tag: 'notification-tag-' + extra.appId,
+                  data: {backupNotification: true}
+                });
+              }
+            });
+
+        });
     }));
+  }
+
+  static logPush(notificationId, action) {
+    var currentPushLog = {};
+
+    return Database.get("Options", "pushLog")
+      .then(pushLogResult => {
+        if (pushLogResult) {
+          currentPushLog = pushLogResult.value;
+          // Note: Because we're storing consistent data, each "entry" takes up 156 characters stringified
+          // Let's only store the last 5000 pushes
+          let estimateBytesPerUnicodeChar = 2.5*1024*1024/4;
+          if (JSON.stringify(currentPushLog).length > 156 * 500) {
+            log.warn('Clearing push log because it grew too large.');
+            currentPushLog = {};
+          }
+        }
+
+        // Add to our pushlog
+        if (!currentPushLog.hasOwnProperty(notificationId)) {
+          currentPushLog[notificationId] = {};
+        }
+
+        // Might be currentPushLog[id]['displayed'] = Tue Feb 23 2016 20:26:01 GMT-0800 (PST)  (a Date object)
+        currentPushLog[notificationId][action] = new Date();
+      })
+      .then(() => Database.put("Options", {key: "pushLog", value: currentPushLog}));
   }
 
   static executeWebhooks(event, notification) {
     var isServerCorsEnabled = false;
-    return Database.get('Options', 'webhooks.cors')
+    var userId = null;
+    return Database.get('Ids', 'userId')
+      .then(userIdResult => {
+        if (userIdResult) {
+          userId = userIdResult.id;
+        }
+      })
+      .then(() => Database.get('Options', 'webhooks.cors'))
       .then(corsResult => {
         isServerCorsEnabled = corsResult && corsResult.value;
       })
@@ -164,6 +267,7 @@ class ServiceWorker {
           let postData = {
             event: event,
             id: notification.id,
+            userId: userId,
             heading: notification.title,
             content: notification.message,
             url: notification.launchURL,
@@ -195,7 +299,8 @@ class ServiceWorker {
     event.notification.close();
 
     event.waitUntil(
-      Database.get('Options', 'defaultUrl')
+        ServiceWorker.logPush(notificationData.id, 'clicked')
+        .then(() => Database.get('Options', 'defaultUrl'))
         .then(defaultUrlResult => {
 
           if (defaultUrlResult)
@@ -400,7 +505,13 @@ class ServiceWorker {
           for (var i = 0; i < response.length; i++) {
             notifications.push(JSON.parse(response[i]));
           }
-          resolve(notifications);
+
+          if (ServiceWorker._breakOnPushReceived) {
+            log.warn('Received notifications from server, but intentionally breaking %conPushReceived', getConsoleStyle('code'), 'without displaying a notification.', response);
+            throw new Error('push.mute intentionally not returning any notifications.');
+          } else {
+            resolve(notifications);
+          }
         })
         .catch(e => {
           log.error(e);

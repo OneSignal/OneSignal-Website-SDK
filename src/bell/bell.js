@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains } from '../utils.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, logError } from '../utils.js';
 import Environment from '../environment.js';
 import LimitStore from '../limitStore.js';
 import log from 'loglevel';
@@ -99,7 +99,9 @@ export default class Bell {
       'dialog.blocked.message': "Follow these instructions to allow notifications:"
     },
     prenotify = true,
-    showCredit = true
+    showCredit = true,
+    colors = null,
+    offset = null
     } = {}) {
     this.options = {
       enable: enable,
@@ -111,6 +113,8 @@ export default class Bell {
       text: text,
       prenotify: prenotify,
       showCredit: showCredit,
+      colors: colors,
+      offset: offset,
     };
 
     if (!this.options.enable)
@@ -378,6 +382,9 @@ export default class Bell {
           throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
         }
 
+        this.applyOffsetIfSpecified();
+        this.setCustomColorsIfSpecified();
+
         log.info('Showing the notify button.');
 
         (isPushEnabled ? this.launcher.inactivate() : nothing())
@@ -397,8 +404,112 @@ export default class Bell {
           })
           .then(() => this.initialized = true)
           .catch((e) => log.error(e));
-      }).catch(e => log.error(e));
+      }).catch(e => logError(e));
     });
+  }
+
+  applyOffsetIfSpecified() {
+    let offset = this.options.offset;
+    if (offset) {
+      // Reset styles first
+      this.launcher.element.style.cssText = '';
+
+      if (offset.bottom) {
+        this.launcher.element.style.cssText += `bottom: ${offset.bottom};`;
+      }
+
+      if (this.options.position === 'bottom-right') {
+        if (offset.right) {
+          this.launcher.element.style.cssText += `right: ${offset.right};`;
+        }
+      }
+      else if (this.options.position === 'bottom-left') {
+        if (offset.left) {
+          this.launcher.element.style.cssText += `left: ${offset.left};`;
+        }
+      }
+    }
+  }
+
+  setCustomColorsIfSpecified() {
+    // Some common vars first
+    let dialogButton = this.dialog.element.querySelector('button.action');
+    let pulseRing = this.button.element.querySelector('.pulse-ring');
+    // Reset added styles first
+    this.graphic.querySelector('.background').style.cssText = '';
+    let foregroundElements = this.graphic.querySelectorAll('.foreground');
+    for (let i = 0; i < foregroundElements.length; i++) {
+      let element = foregroundElements[i];
+      element.style.cssText = '';
+    }
+    this.graphic.querySelector('.stroke').style.cssText = '';
+    this.badge.element.style.cssText = '';
+    if (dialogButton) {
+      dialogButton.style.cssText = '';
+      dialogButton.style.cssText = '';
+    }
+    if (pulseRing) {
+      pulseRing.style.cssText = '';
+    }
+
+    // Set new styles
+    if (this.options.colors) {
+      let colors = this.options.colors;
+      if (colors['circle.background']) {
+        this.graphic.querySelector('.background').style.cssText += `fill: ${colors['circle.background']}`;
+      }
+      if (colors['circle.foreground']) {
+        let foregroundElements = this.graphic.querySelectorAll('.foreground');
+        for (let i = 0; i < foregroundElements.length; i++) {
+          let element = foregroundElements[i];
+          element.style.cssText += `fill: ${colors['circle.foreground']}`;
+        }
+        this.graphic.querySelector('.stroke').style.cssText += `stroke: ${colors['circle.foreground']}`;
+      }
+      if (colors['badge.background']) {
+        this.badge.element.style.cssText += `background: ${colors['badge.background']}`;
+      }
+      if (colors['badge.bordercolor']) {
+        this.badge.element.style.cssText += `border-color: ${colors['badge.bordercolor']}`;
+      }
+      if (colors['badge.foreground']) {
+        this.badge.element.style.cssText += `color: ${colors['badge.foreground']}`;
+      }
+      if (dialogButton) {
+        if (colors['dialog.button.background']) {
+          this.dialog.element.querySelector('button.action').style.cssText += `background: ${colors['dialog.button.background']}`;
+        }
+        if (colors['dialog.button.foreground']) {
+          this.dialog.element.querySelector('button.action').style.cssText += `color: ${colors['dialog.button.foreground']}`;
+        }
+        if (colors['dialog.button.background.hovering']) {
+          this.addCssToHead('onesignal-background-hover-style', `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:hover { background: ${colors['dialog.button.background.hovering']} !important; }`);
+        }
+        if (colors['dialog.button.background.active']) {
+          this.addCssToHead('onesignal-background-active-style', `#onesignal-bell-container.onesignal-reset .onesignal-bell-launcher .onesignal-bell-launcher-dialog button.action:active { background: ${colors['dialog.button.background.active']} !important; }`);
+        }
+      }
+      if (pulseRing) {
+        if (colors['pulse.color']) {
+          this.button.element.querySelector('.pulse-ring').style.cssText = `border-color: ${colors['pulse.color']}`;
+        }
+      }
+    }
+  }
+
+  addCssToHead(id, css) {
+    let existingStyleDom = document.getElementById(id);
+    if (existingStyleDom)
+      return;
+    let styleDom = document.createElement('style');
+    styleDom.id = id;
+    styleDom.type = 'text/css';
+    if (styleDom.styleSheet) {
+      styleDom.styleSheet.cssText = css;
+    } else {
+      styleDom.appendChild(document.createTextNode(css));
+    }
+    document.head.appendChild(styleDom);
   }
 
   /**
@@ -431,6 +542,10 @@ export default class Bell {
 
   get container() {
     return document.querySelector('#onesignal-bell-container');
+  }
+
+  get graphic() {
+    return this.button.element.querySelector('svg');
   }
 
   get launcher() {

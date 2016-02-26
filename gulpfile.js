@@ -12,8 +12,16 @@ var IS_BETA_BUILD = process.argv.indexOf('--beta') >= 0 || false;
 
 
 gulp.task("default", function() {
-  runSequence(['reload-changes', 'transpile-javascript']);
+  if (IS_BETA_BUILD) {
+    runSequence(['reload-changes', 'transpile-javascript', 'transfer-beta-sdk']);
+  } else {
+    runSequence(['reload-changes', 'transpile-javascript']);
+  }
 });
+
+gulp.task("transfer-beta-sdk", shell.task([
+  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@104.130.21.142:/var/www/OneSignal/current/public/sdks/'
+]));
 
 gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
   gulp.watch(['assets/OneSignalSDKWorker.*.js'], ['copy-assets']);
@@ -69,5 +77,17 @@ gulp.task("copy-js", function() {
     gulp.src("./dist/OneSignalSDK.js.map")
       .pipe(rename("/OneSignalSDKWorker.js.map"))
       .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
+
+  if (IS_TEST_BUILD) {
+    gulp.src("./dist/OneSignalSDKTests.js")
+      .pipe(rename("/OneSignalSDKTests.js"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+
+    if (fs.existsSync("./dist/OneSignalSDKTests.js.map")) {
+      gulp.src("./dist/OneSignalSDKTests.js.map")
+        .pipe(rename("/OneSignalSDKTests.js.map"))
+        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+    }
   }
 });
