@@ -1,6 +1,6 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
-import Environment from './environment.js'
-import './string.js'
+import Environment from './environment.js';
+import './string.js';
 import { apiCall, sendNotification } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
