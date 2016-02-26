@@ -652,8 +652,8 @@ var OneSignal = {
             return;
           }
 
-          if (OneSignal._initOptions.autoRegister === false && !registrationIdResult && !OneSignal._initOptions.subdomainName) {
-            log.debug('No autoregister, no registration ID, no subdomain > skip _internalInit().')
+          if (OneSignal._initOptions.autoRegister === false && !OneSignal._initOptions.subdomainName) {
+            log.debug('No autoregister and no subdomain -> skip _internalInit().')
             Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             return;
           }
