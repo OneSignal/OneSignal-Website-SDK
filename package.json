@@ -1,6 +1,6 @@
 {
   "name": "onesignal-web-sdk",
-  "version": "109130",
+  "version": "109131",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.js",
   "dependencies": {},
