@@ -52,13 +52,57 @@ var OneSignal = {
   SERVICE_WORKER_PARAM: {},
 
   /* Event Definitions */
+
+  // Legacy event name constants using window.addEventListener('...')
   EVENTS: {
-    CUSTOM_PROMPT_CLICKED: 'onesignal.prompt.custom.clicked',
-    NATIVE_PROMPT_PERMISSIONCHANGED: 'onesignal.prompt.native.permissionchanged',
-    SUBSCRIPTION_CHANGED: 'onesignal.subscription.changed',
-    WELCOME_NOTIFICATION_SENT: 'onesignal.actions.welcomenotificationsent',
-    INTERNAL_SUBSCRIPTIONSET: 'onesignal.internal.subscriptionset',
-    SDK_INITIALIZED: 'initialized'
+    CUSTOM_PROMPT_CLICKED: {
+      legacyName: 'onesignal.prompt.custom.clicked',
+      name: null
+    },
+    NATIVE_PROMPT_PERMISSIONCHANGED: {
+      legacyName: 'onesignal.prompt.native.permissionchanged'
+      name: 'notificationPermissionChange'
+    },
+    SUBSCRIPTION_CHANGED: {
+      legacyName: 'onesignal.subscription.changed',
+      name: 'subscriptionChange'
+    },
+    WELCOME_NOTIFICATION_SENT: {
+      legacyName: 'onesignal.actions.welcomenotificationsent',
+      name: 'sendWelcomeNotification'
+    },
+    INTERNAL_SUBSCRIPTIONSET: {
+      legacyName: 'onesignal.internal.subscriptionset',
+      name: null
+    },
+    SDK_INITIALIZED: {
+      legacyName: 'onesignal.sdk.initialized',
+      name: 'initialize'
+    },
+    DB_REBUILT: {
+      legacyName: 'onesignal.db.rebuilt'
+      name: null
+    },
+    DB_RETRIEVED: {
+      legacyName: 'onesignal.db.retrieved',
+      name: null
+    },
+    DB_SET: {
+      legacyName: 'onesignal.db.set',
+      name: null
+    },
+    DB_REMOVED: {
+      legacyName: 'onesignal.db.removed',
+      name: null
+    }
+  },
+
+  // New and improved event name constants using OneSignal.on('...')
+  EMITTER_EVENTS: {
+    'onesignal.prompt.native.permissionchanged': 'notificationPermissionChange',
+    'onesignal.subscription.changed': 'subscriptionChange',
+    'onesignal.actions.welcomenotificationsent': 'welcomeNotificationSend',
+    'onesignal.sdk.initialized': 'initialize'
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
@@ -548,14 +592,14 @@ var OneSignal = {
       return;
     }
 
-    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
+    window.addEventListener(OneSignal.EVENTS.DB_REBUILT, OneSignal._onDatabaseRebuilt);
     window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
     window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
     window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
-    window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
+    window.addEventListener(OneSignal.EVENTS.DB_RETRIEVED, OneSignal._onDbValueRetrieved);
+    window.addEventListener(OneSignal.EVENTS.DB_SET, OneSignal._onDbValueSet);
     window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
-    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
+    OneSignal.on('initialize', OneSignal._onSdkInitialized);
     window.addEventListener('focus', (event) => {
       // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
       OneSignal._checkTrigger_nativePermissionChanged();
@@ -1255,11 +1299,11 @@ var OneSignal = {
   },
 
   _triggerEvent_dbValueRetrieved: function (value) {
-    Event.trigger(Database.EVENTS.RETRIEVED, value);
+    Event.trigger(OneSignal.EVENTS.DB_RETRIEVED, value);
   },
 
   _triggerEvent_dbValueSet: function (value) {
-    Event.trigger(Database.EVENTS.SET, value);
+    Event.trigger(OneSignal.EVENTS.DB_SET, value);
   },
 
   _triggerEvent_internalSubscriptionSet: function (value) {

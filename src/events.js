@@ -57,9 +57,12 @@ export default class Event {
       var event = new CustomEvent(eventName, {
         bubbles: true, cancelable: true, detail: data
       });
+      // Fire the event that listeners can listen to via 'window.addEventListener()'
       window.dispatchEvent(event);
-      let simplifiedEventName = eventName.replace('onesignal.', '');
-      OneSignal.emit(simplifiedEventName, data);
+      if (OneSignal.EMITTER_EVENTS[eventName]) {
+        // Fire the event that listeners can listen to via
+        OneSignal.emit(OneSignal.EMITTER_EVENTS[eventName], data);
+      }
 
       // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
       if (!Environment.isHost()) {
