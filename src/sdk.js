@@ -60,7 +60,7 @@ var OneSignal = {
       name: null
     },
     NATIVE_PROMPT_PERMISSIONCHANGED: {
-      legacyName: 'onesignal.prompt.native.permissionchanged'
+      legacyName: 'onesignal.prompt.native.permissionchanged',
       name: 'notificationPermissionChange'
     },
     SUBSCRIPTION_CHANGED: {
@@ -80,7 +80,7 @@ var OneSignal = {
       name: 'initialize'
     },
     DB_REBUILT: {
-      legacyName: 'onesignal.db.rebuilt'
+      legacyName: 'onesignal.db.rebuilt',
       name: null
     },
     DB_RETRIEVED: {
@@ -95,14 +95,6 @@ var OneSignal = {
       legacyName: 'onesignal.db.removed',
       name: null
     }
-  },
-
-  // New and improved event name constants using OneSignal.on('...')
-  EMITTER_EVENTS: {
-    'onesignal.prompt.native.permissionchanged': 'notificationPermissionChange',
-    'onesignal.subscription.changed': 'subscriptionChange',
-    'onesignal.actions.welcomenotificationsent': 'welcomeNotificationSend',
-    'onesignal.sdk.initialized': 'initialize'
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {

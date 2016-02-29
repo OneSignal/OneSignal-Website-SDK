@@ -21,13 +21,34 @@ export default class Bell {
 
   static get EVENTS() {
     return {
-      STATE_CHANGED: 'onesignal.nb.state.changed',
-      LAUNCHER_CLICK: 'onesignal.nb.launcher.click',
-      BELL_CLICK: 'onesignal.nb.launcher.button.click',
-      SUBSCRIBE_CLICK: 'onesignal.nb.launcher.dialog.button.subscribe.click',
-      UNSUBSCRIBE_CLICK: 'onesignal.nb.launcher.dialog.button.unsubscribe.click',
-      HOVERING: 'onesignal.nb.hovering',
-      HOVERED: 'onesignal.nb.hovered',
+      STATE_CHANGED: {
+        legacyName: 'onesignal.nb.state.changed',
+        name: null
+      },
+      LAUNCHER_CLICK: {
+        legacyName: 'onesignal.nb.launcher.click',
+        name: null
+      },
+      BELL_CLICK: {
+        legacyName: 'onesignal.nb.launcher.button.click',
+        name: null
+      },
+      SUBSCRIBE_CLICK: {
+        legacyName: 'onesignal.nb.launcher.dialog.button.subscribe.click',
+        name: null
+      },
+      UNSUBSCRIBE_CLICK: {
+        legacyName: 'onesignal.nb.launcher.dialog.button.unsubscribe.click',
+        name: null
+      },
+      HOVERING: {
+        legacyName: 'onesignal.nb.hovering',
+        name: null
+      },
+      HOVERED: {
+        legacyName: 'onesignal.nb.hovered',
+        name: null
+      },
     };
   }
 
