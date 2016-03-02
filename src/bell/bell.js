@@ -21,34 +21,13 @@ export default class Bell {
 
   static get EVENTS() {
     return {
-      STATE_CHANGED: {
-        legacyName: 'onesignal.nb.state.changed',
-        name: null
-      },
-      LAUNCHER_CLICK: {
-        legacyName: 'onesignal.nb.launcher.click',
-        name: null
-      },
-      BELL_CLICK: {
-        legacyName: 'onesignal.nb.launcher.button.click',
-        name: null
-      },
-      SUBSCRIBE_CLICK: {
-        legacyName: 'onesignal.nb.launcher.dialog.button.subscribe.click',
-        name: null
-      },
-      UNSUBSCRIBE_CLICK: {
-        legacyName: 'onesignal.nb.launcher.dialog.button.unsubscribe.click',
-        name: null
-      },
-      HOVERING: {
-        legacyName: 'onesignal.nb.hovering',
-        name: null
-      },
-      HOVERED: {
-        legacyName: 'onesignal.nb.hovered',
-        name: null
-      },
+      STATE_CHANGED: 'notifyButtonStateChange',
+      LAUNCHER_CLICK: 'notifyButtonLauncherClick',
+      BELL_CLICK: 'notifyButtonButtonClick',
+      SUBSCRIBE_CLICK: 'notifyButtonSubscribeClick',
+      UNSUBSCRIBE_CLICK: 'notifyButtonUnsubscribeClick',
+      HOVERING: 'notifyButtonHovering',
+      HOVERED: 'notifyButtonHover'
     };
   }
 
@@ -293,16 +272,16 @@ export default class Bell {
       }
     });
 
-    window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, (e) => {
+    window.addEventListener(EVENTS.SUBSCRIPTION_CHANGED, (e) => {
       let isSubscribed = e.detail;
       this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
     });
 
-    window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {
+    window.addEventListener(EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {
       this.updateState();
     });
 
-    window.addEventListener(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
+    window.addEventListener(EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
     });
 
     this.updateState();

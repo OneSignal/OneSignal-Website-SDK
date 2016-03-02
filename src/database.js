@@ -6,6 +6,16 @@ import { getConsoleStyle } from './utils.js';
 
 
 export default class Database {
+
+  static get EVENTS() {
+    return {
+      REBUILT: 'dbRebuilt',
+      RETRIEVED: 'dbRetrieved',
+      SET: 'dbSet',
+      REMOVED: 'dbRemoved',
+    }
+  }
+
   /**
    * Returns an existing instance or creates a new instances of the database.
    * @returns {Promise} Returns a promise that is fulfilled when the database becomes accessible or rejects when an error occurs.
@@ -44,7 +54,7 @@ export default class Database {
           db.createObjectStore("Options", {
             keyPath: "key"
           });
-          Event.trigger(OneSignal.EVENTS.DB_REBUILT);
+          Event.trigger(Database.EVENTS.REBUILT);
         };
         request.onversionchange = (event) => {
           log.warn('The database is about to be deleted.');
@@ -66,7 +76,7 @@ export default class Database {
         return new Promise(function (resolve, reject) {
           var request = database.transaction(table).objectStore(table).get(key);
           request.onsuccess = () => {
-            Event.trigger(OneSignal.EVENTS.DB_RETRIEVED, {table: table, key: key, result: request.result});
+            Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: request.result});
             resolve(request.result);
           };
           request.onerror = () => {
@@ -83,7 +93,7 @@ export default class Database {
           cursor.onsuccess = (event) => {
             var cursorResult = event.target.result;
             if (cursorResult) {
-              Event.trigger(OneSignal.EVENTS.DB_RETRIEVED, cursorResult.value);
+              Event.trigger(Database.EVENTS.RETRIEVED, cursorResult.value);
               jsonResult[cursorResult.key] = cursorResult.value.value;
               cursorResult.continue();
             } else {
@@ -109,7 +119,7 @@ export default class Database {
         try {
           let request = database.transaction([table], 'readwrite').objectStore(table).put(key);
           request.onsuccess = (event) => {
-            Event.trigger(OneSignal.EVENTS.DB_SET, key);
+            Event.trigger(Database.EVENTS.SET, key);
             resolve(key);
           };
           request.onerror = (e) => {
@@ -141,7 +151,7 @@ export default class Database {
         try {
           let request = database.transaction([table], 'readwrite').objectStore(table)[method](key);
           request.onsuccess = (event) => {
-            Event.trigger(OneSignal.EVENTS.DB_REMOVED, [table, key]);
+            Event.trigger(Database.EVENTS.REMOVED, [table, key]);
             resolve(key);
           };
           request.onerror = (e) => {

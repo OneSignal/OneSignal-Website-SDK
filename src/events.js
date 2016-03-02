@@ -28,69 +28,63 @@ const RETRIGGER_REMOTE_EVENTS = [
   'onesignal.internal.subscriptionset'
 ];
 
+const LEGACY_EVENT_MAP = {
+  'subscriptionChanged': 'onesignal.subscription.changed',
+  'customPromptClicked': 'onesignal.prompt.custom.clicked',
+}
+
 export default class Event {
-  static trigger(legacyEventName, data, remoteTriggerEnv=null) {
-    let oldEventName = legacyEventName;
-    legacyEventName = legacyEventName.legacyName;
-    let eventObject = null;
-    let eventObjectsKeys = Object.keys(OneSignal.EVENTS);
-    for (let eventObjectsKey of eventObjectsKeys) {
-      eventObject = OneSignal.EVENTS[eventObjectsKey];
-      if (eventObject.legacyName == legacyEventName) {
-        break;
-      }
-    }
-    let newEventName = eventObject.name;
-    if (!legacyEventName) {
-      debugger;
-      log.warn('Missing event name.');
-    }
-    if (!eventObject) {
-      log.warn('Event not found.');
-    }
-    if (!contains(SILENT_EVENTS, legacyEventName)) {
-      if (!Environment.isBrowser()) {
-        log.debug(`(${Environment.getEnv().capitalize()}) » %c${legacyEventName}:`, getConsoleStyle('event'), data, '(not triggered in a ServiceWorker environment)');
-        return;
+
+  /**
+   * Triggers the specified event with optional custom data.
+   * @param eventName The string event name to be emitted.
+   * @param data Any JavaScript variable to be passed with the event.
+   * @param remoteTriggerEnv If this method is being called in a different environment (e.g. was triggered in iFrame but now retriggered on main host), this is the string of the original environment for logging purposes.
+   */
+  static trigger(eventName, data, remoteTriggerEnv=null) {
+    if (!contains(SILENT_EVENTS, eventName)) {
+      let displayData = data;
+      if (remoteTriggerEnv) {
+        var env = `${Environment.getEnv().capitalize()} ⬸ ${remoteTriggerEnv.capitalize()}`;
       } else {
-        let displayData = data;
-        if (remoteTriggerEnv) {
-          var env = `${Environment.getEnv().capitalize()} ⬸ ${remoteTriggerEnv.capitalize()}`;
-        } else {
-          var env = Environment.getEnv().capitalize();
-        }
+        var env = Environment.getEnv().capitalize();
+      }
 
-        if (displayData || displayData === false) {
-          log.debug(`(${env}) » %c${legacyEventName}:`, getConsoleStyle('event'), displayData);
-        } else {
-          log.debug(`(${env}) » %c${legacyEventName}`, getConsoleStyle('event'));
-        }
-
+      if (displayData || displayData === false) {
+        log.debug(`(${env}) » %c${legacyEventName}:`, getConsoleStyle('event'), displayData);
+      } else {
+        log.debug(`(${env}) » %c${legacyEventName}`, getConsoleStyle('event'));
       }
     }
-    if (Environment.isBrowser()) {
-      var event = new CustomEvent(legacyEventName, {
-        bubbles: true, cancelable: true, detail: data
-      });
-      // Fire the event that listeners can listen to via 'window.addEventListener()'
-      window.dispatchEvent(event);
-      if (newEventName) {
-        // Fire the event that listeners can listen to via
-        OneSignal.emit(newEventName, data);
-      }
 
-      // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
-      if (!Environment.isHost()) {
-        var creator = opener || parent;
-        if (!creator) {
-          log.error(`Could not send event '${legacyEventName}' back to host page because no creator (opener or parent) found!`);
-        } else {
-          // But only if the event matches certain events
-          if (contains(RETRIGGER_REMOTE_EVENTS, legacyEventName)) {
-            OneSignal._safePostMessage(creator, {remoteEvent: legacyEventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
-          }
+    // Actually fire the event that can be listened to via OneSignal.on()
+    OneSignal.emit(newEventName, data);
+
+    // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
+    if (!Environment.isHost()) {
+      var creator = opener || parent;
+      if (!creator) {
+        log.error(`Could not send event '${legacyEventName}' back to host page because no creator (opener or parent) found!`);
+      } else {
+        // But only if the event matches certain events
+        if (contains(RETRIGGER_REMOTE_EVENTS, legacyEventName)) {
+          OneSignal._safePostMessage(creator, {remoteEvent: legacyEventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
         }
       }
     }
+  }
+
+  /**
+   * Fires the event to be listened to via window.addEventListener().
+   * @param eventName The string event name.
+   * @param data Any JavaScript variable to be passed with the event.
+   * @private
+   */
+  static _triggerLegacy(eventName, data) {
+    var event = new CustomEvent(eventName, {
+      bubbles: true, cancelable: true, detail: data
+    });
+    // Fire the event that listeners can listen to via 'window.addEventListener()'
+    window.dispatchEvent(event);
   }
 }

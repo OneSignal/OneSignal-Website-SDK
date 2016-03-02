@@ -51,50 +51,13 @@ var OneSignal = {
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
 
-  /* Event Definitions */
-
-  // Legacy event name constants using window.addEventListener('...')
   EVENTS: {
-    CUSTOM_PROMPT_CLICKED: {
-      legacyName: 'onesignal.prompt.custom.clicked',
-      name: null
-    },
-    NATIVE_PROMPT_PERMISSIONCHANGED: {
-      legacyName: 'onesignal.prompt.native.permissionchanged',
-      name: 'notificationPermissionChange'
-    },
-    SUBSCRIPTION_CHANGED: {
-      legacyName: 'onesignal.subscription.changed',
-      name: 'subscriptionChange'
-    },
-    WELCOME_NOTIFICATION_SENT: {
-      legacyName: 'onesignal.actions.welcomenotificationsent',
-      name: 'sendWelcomeNotification'
-    },
-    INTERNAL_SUBSCRIPTIONSET: {
-      legacyName: 'onesignal.internal.subscriptionset',
-      name: null
-    },
-    SDK_INITIALIZED: {
-      legacyName: 'onesignal.sdk.initialized',
-      name: 'initialize'
-    },
-    DB_REBUILT: {
-      legacyName: 'onesignal.db.rebuilt',
-      name: null
-    },
-    DB_RETRIEVED: {
-      legacyName: 'onesignal.db.retrieved',
-      name: null
-    },
-    DB_SET: {
-      legacyName: 'onesignal.db.set',
-      name: null
-    },
-    DB_REMOVED: {
-      legacyName: 'onesignal.db.removed',
-      name: null
-    }
+    CUSTOM_PROMPT_CLICKED: 'customPromptClicked',
+    NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
+    SUBSCRIPTION_CHANGED: 'subscriptionChange',
+    WELCOME_NOTIFICATION_SENT: 'sendWelcomeNotification',
+    INTERNAL_SUBSCRIPTIONSET: 'subscriptionset',
+    SDK_INITIALIZED: 'initialize'
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
@@ -584,12 +547,12 @@ var OneSignal = {
       return;
     }
 
-    window.addEventListener(OneSignal.EVENTS.DB_REBUILT, OneSignal._onDatabaseRebuilt);
+    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
     window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
     window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
     window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    window.addEventListener(OneSignal.EVENTS.DB_RETRIEVED, OneSignal._onDbValueRetrieved);
-    window.addEventListener(OneSignal.EVENTS.DB_SET, OneSignal._onDbValueSet);
+    window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
+    window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
     window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
     OneSignal.on('initialize', OneSignal._onSdkInitialized);
     window.addEventListener('focus', (event) => {
@@ -711,7 +674,7 @@ var OneSignal = {
         }
       })
       .catch(function (e) {
-        log.error(e);
+        logError(e);
       });
   },
 
@@ -1291,11 +1254,11 @@ var OneSignal = {
   },
 
   _triggerEvent_dbValueRetrieved: function (value) {
-    Event.trigger(OneSignal.EVENTS.DB_RETRIEVED, value);
+    Event.trigger(OneSignal.EVENTS.RETRIEVED, value);
   },
 
   _triggerEvent_dbValueSet: function (value) {
-    Event.trigger(OneSignal.EVENTS.DB_SET, value);
+    Event.trigger(OneSignal.EVENTS.SET, value);
   },
 
   _triggerEvent_internalSubscriptionSet: function (value) {
@@ -1570,6 +1533,7 @@ var OneSignal = {
       if (!name || data === undefined) {
         log.warn(`Received an event back from postMessage, but it was undefined!`);
       } else {
+        console.warn('Retriggering remote event', name, data, event.data.remoteEvent);
         Event.trigger(name, data, remoteTriggerEnv);
       }
     }

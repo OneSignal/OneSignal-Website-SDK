@@ -351,12 +351,15 @@ class ServiceWorker {
             .then(() => {
               let launchURLObject = new URL(launchURL);
               if (launchURL !== 'javascript:void(0);' &&
-                launchURL !== 'do_not_open' &&
-                !contains(launchURLObject.search, '_osp=do_not_open')) {
-                clients.openWindow(launchURL).catch(function (error) {
-                  // Should only fall into here if going to an external URL on Chrome older than 43.
-                  clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
+                  launchURL !== 'do_not_open' &&
+                  !contains(launchURLObject.search, '_osp=do_not_open')) {
+                      clients.openWindow(launchURL).catch(function (error) {
+                      // Should only fall into here if going to an external URL on Chrome older than 43.
+                      clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
                 });
+              } else {
+                // 3/1/16: If we are not opening a new window, then still post the notification.clicked event to the all service worker clients
+                //swivel.broadcast('notification.clicked', eventData);
               }
             });
         })
