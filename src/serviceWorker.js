@@ -2,11 +2,11 @@ import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
-import "./cache-polyfill.js";
 import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
+import * as Browser from 'bowser';
 
 class ServiceWorker {
 
@@ -40,25 +40,18 @@ class ServiceWorker {
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
 
-    // If the user is proxying through our subdomain (e.g. website.onesignal.com/sdks/)
-    if (ServiceWorker.onOurSubdomain) {
-      // Cache resources?
+    // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
+    // Fix: If the browser is Firefox and is v44, use the following workaround:
+    if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
+      self.REFETCH_REQUESTS = true;
+    }
+
+    if (self.REFETCH_REQUESTS) {
       self.addEventListener('fetch', ServiceWorker.onFetch);
     }
 
     // Install messaging event handlers for page <-> service worker communication
     swivel.on('data', ServiceWorker.onMessageReceived);
-  }
-
-  static get CACHE_URLS() {
-    return [
-      '/sdks/initOneSignalHttpIframe',
-      '/sdks/initOneSignalHttpIframe?session=*',
-      '/sdks/manifest_json',
-      '/dev_sdks/initOneSignalHttpIframe',
-      '/dev_sdks/initOneSignalHttpIframe?session=*',
-      '/dev_sdks/manifest_json'
-      ];
   }
 
   /**
@@ -394,12 +387,6 @@ class ServiceWorker {
     if (ServiceWorker.onOurSubdomain) {
       event.waitUntil(
         Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
-          .then(() => {
-            return caches.open("OneSignal_" + __VERSION__)
-          })
-          .then(cache => {
-            return cache.addAll(ServiceWorker.CACHE_URLS);
-          })
           .then(() => self.skipWaiting())
           .catch(e => log.error(e))
       );
@@ -413,30 +400,26 @@ class ServiceWorker {
 
   /*
       1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
+      3/2/16: Remove previous caches
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
     log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    event.waitUntil(self.clients.claim());
+
+    // Remove all OneSignal caches
+    let deleteCachePromise = caches.keys()
+      .then(keys => Promise.all(keys.map(key => {
+        if (key.indexOf('OneSignal_') == 0) {
+          log.info('Deleting old OneSignal cache:', key);
+          return caches.delete(key);
+        }
+      })));
+    let claimPromise = self.clients.claim();
+    event.waitUntil(deleteCachePromise.then(claimPromise));
   }
 
   static onFetch(event) {
-    let url = event.request.url;
-    for (let cacheUrl of ServiceWorker.CACHE_URLS) {
-      if (contains(url, cacheUrl)) {
-        event.respondWith(
-          caches.match(event.request)
-            .then((response) => {
-              // Cache hit -- return response
-              if (response) {
-                return response;
-              }
-              return fetch(event.request);
-            })
-            .catch((e) => log.error(e))
-        );
-      }
-    }
+    event.respondWith(fetch(event.request));
   }
 
   static get onOurSubdomain() {
