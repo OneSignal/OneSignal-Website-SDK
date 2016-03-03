@@ -42,7 +42,7 @@ class ServiceWorker {
 
     // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
     // Fix: If the browser is Firefox and is v44, use the following workaround:
-    if (Browser.firefox && Browser.version == 44) {
+    if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
       self.REFETCH_REQUESTS = true;
     }
 
@@ -419,9 +419,7 @@ class ServiceWorker {
   }
 
   static onFetch(event) {
-    if (self.REFETCH_REQUESTS) {
-      return event.respondWith(fetch(event.request));
-    }
+    event.respondWith(fetch(event.request));
   }
 
   static get onOurSubdomain() {
