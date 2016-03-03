@@ -7,6 +7,7 @@ import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
+import * as Browser from 'bowser';
 
 class ServiceWorker {
 
@@ -40,9 +41,19 @@ class ServiceWorker {
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
 
+    // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
+    // Fix: If the browser is Firefox and is v44, use the following workaround:
+    if (Browser.firefox && Browser.version == 44) {
+      self.REFETCH_REQUESTS = true;
+    }
+
     // If the user is proxying through our subdomain (e.g. website.onesignal.com/sdks/)
     if (ServiceWorker.onOurSubdomain) {
       // Cache resources?
+      self.CACHE_RESOURCES = true;
+    }
+
+    if (self.CACHE_RESOURCES || self.REFETCH_REQUESTS) {
       self.addEventListener('fetch', ServiceWorker.onFetch);
     }
 
@@ -413,29 +424,32 @@ class ServiceWorker {
 
   /*
       1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
+      3/2/16: Remove previous caches
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
     log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    event.waitUntil(self.clients.claim());
+
+    // Remove previous OneSignal caches
+    let deleteCachePromise = caches.keys()
+      .then(keys => Promise.all(keys.map(key => {
+        if (key.indexOf('OneSignal_') == 0 && key !== 'OneSignal_' + __VERSION__) {
+          log.info('Deleting old OneSignal cache:', key);
+          return caches.delete(key);
+        }
+      })));
+    let claimPromise = self.clients.claim();
+    event.waitUntil(deleteCachePromise.then(claimPromise));
   }
 
   static onFetch(event) {
-    let url = event.request.url;
-    for (let cacheUrl of ServiceWorker.CACHE_URLS) {
-      if (contains(url, cacheUrl)) {
-        event.respondWith(
-          caches.match(event.request)
-            .then((response) => {
-              // Cache hit -- return response
-              if (response) {
-                return response;
-              }
-              return fetch(event.request);
-            })
-            .catch((e) => log.error(e))
-        );
-      }
+    if (self.CACHE_RESOURCES) {
+      return event.respondWith(caches.match(event.request)
+        .then(response => response || fetch(event.request)));
+    }
+
+    if (self.REFETCH_REQUESTS) {
+      return event.respondWith(fetch(event.request));
     }
   }
 
