@@ -2,7 +2,6 @@ import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
-import "./cache-polyfill.js";
 import Database from './database.js';
 import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
 import objectAssign from 'object-assign';
@@ -47,29 +46,12 @@ class ServiceWorker {
       self.REFETCH_REQUESTS = true;
     }
 
-    // If the user is proxying through our subdomain (e.g. website.onesignal.com/sdks/)
-    if (ServiceWorker.onOurSubdomain) {
-      // Cache resources?
-      self.CACHE_RESOURCES = true;
-    }
-
-    if (self.CACHE_RESOURCES || self.REFETCH_REQUESTS) {
+    if (self.REFETCH_REQUESTS) {
       self.addEventListener('fetch', ServiceWorker.onFetch);
     }
 
     // Install messaging event handlers for page <-> service worker communication
     swivel.on('data', ServiceWorker.onMessageReceived);
-  }
-
-  static get CACHE_URLS() {
-    return [
-      '/sdks/initOneSignalHttpIframe',
-      '/sdks/initOneSignalHttpIframe?session=*',
-      '/sdks/manifest_json',
-      '/dev_sdks/initOneSignalHttpIframe',
-      '/dev_sdks/initOneSignalHttpIframe?session=*',
-      '/dev_sdks/manifest_json'
-      ];
   }
 
   /**
@@ -405,12 +387,6 @@ class ServiceWorker {
     if (ServiceWorker.onOurSubdomain) {
       event.waitUntil(
         Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
-          .then(() => {
-            return caches.open("OneSignal_" + __VERSION__)
-          })
-          .then(cache => {
-            return cache.addAll(ServiceWorker.CACHE_URLS);
-          })
           .then(() => self.skipWaiting())
           .catch(e => log.error(e))
       );
@@ -430,10 +406,10 @@ class ServiceWorker {
     // The old service worker is gone now
     log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    // Remove previous OneSignal caches
+    // Remove all OneSignal caches
     let deleteCachePromise = caches.keys()
       .then(keys => Promise.all(keys.map(key => {
-        if (key.indexOf('OneSignal_') == 0 && key !== 'OneSignal_' + __VERSION__) {
+        if (key.indexOf('OneSignal_') == 0) {
           log.info('Deleting old OneSignal cache:', key);
           return caches.delete(key);
         }
@@ -443,11 +419,6 @@ class ServiceWorker {
   }
 
   static onFetch(event) {
-    if (self.CACHE_RESOURCES) {
-      return event.respondWith(caches.match(event.request)
-        .then(response => response || fetch(event.request)));
-    }
-
     if (self.REFETCH_REQUESTS) {
       return event.respondWith(fetch(event.request));
     }
