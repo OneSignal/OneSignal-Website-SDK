@@ -1,10 +1,10 @@
 {
   "name": "onesignal-web-sdk",
-  "version": "109149",
+  "version": "1.0.0",
+  "sdkVersion": "109151",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.js",
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "autoprefixer-loader": "^3.1.0",
     "babel": "^6.1.18",
     "babel-core": "^6.2.1",
@@ -26,7 +26,7 @@
     "gulp-shell": "^0.5.1",
     "gulp-util": "^3.0.7",
     "he": "^0.5.0",
-    "heir": "^3.0.0",
+    "heir": "git://github.com/jasonpang/heir.git#onesignal",
     "http-server": "^0.8.5",
     "image-webpack-loader": "^1.6.2",
     "imports-loader": "^0.6.5",
@@ -37,14 +37,12 @@
     "npm-css": "^0.2.3",
     "object-assign": "^4.0.1",
     "raw-loader": "^0.5.1",
-    "react": "^0.13.1",
     "run-sequence": "^1.1.5",
     "sass-loader": "^3.1.2",
     "stacktrace-js": "^1.0.1",
     "style-loader": "^0.13.0",
-    "swivel": "^4.0.0",
+    "swivel": "git://github.com/jasonpang/swivel.git#onesignal",
     "url-loader": "^0.5.7",
-    "webmidi": "^1.0.0-beta.4",
     "webpack": "^1.12.9",
     "webpack-dev-server": "^1.12.1",
     "whatwg-fetch": "^0.10.1",
@@ -75,7 +73,7 @@
     "wns"
   ],
   "author": "OneSignal",
-  "license": "Modified MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "bugs": {
     "url": "https://github.com/one-signal/OneSignal-Website-SDK/issues"
   },
