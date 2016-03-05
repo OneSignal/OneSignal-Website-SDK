@@ -19,7 +19,7 @@ var OneSignal = {
   _API_URL: API_URL,
   _app_id: null,
   _futureSendTags: null,
-  _futureSendTagsPromiseResolve: null,
+  _futureSendTagsPromiseResolves: [],
   _notificationOpenedCallbacks: [],
   _idsAvailable_callback: [],
   _defaultLaunchURL: null,
@@ -200,6 +200,10 @@ var OneSignal = {
   _sendUnsentTags: function () {
     if (OneSignal._futureSendTags) {
       OneSignal.sendTags(OneSignal._futureSendTags);
+      while (OneSignal._futureSendTagsPromiseResolves.length > 0) {
+        var promiseResolveFn = OneSignal._futureSendTagsPromiseResolves.shift()
+        promiseResolveFn();
+      }
       OneSignal._futureSendTags = null;
     }
   },
@@ -1355,6 +1359,9 @@ var OneSignal = {
     }
 
     return new Promise((resolve, reject) => {
+
+      var futureSendTagResolveFn = null;
+
       return Database.get('Ids', 'userId')
         .then(userIdResult => {
           if (userIdResult) {
@@ -1368,14 +1375,22 @@ var OneSignal = {
               OneSignal._futureSendTags = {};
             }
             objectAssign(OneSignal._futureSendTags, tags);
-            OneSignal._futureSendTagsPromiseResolve = resolve;
+            futureSendTagResolveFn = (currentTags) => {
+              if (callback) {
+                callback(currentTags);
+              }
+              resolve(currentTags);
+            };
+            OneSignal._futureSendTagsPromiseResolves.push(futureSendTagResolveFn.bind(null, tags));
           }
         })
         .then(() => {
-          if (callback) {
-            callback(tags);
+          if (futureSendTagResolveFn == null) {
+            if (callback) {
+              callback(tags);
+            }
+            resolve(tags);
           }
-          resolve(tags);
         })
         .catch(e => {
           log.error('sendTags:', e);
