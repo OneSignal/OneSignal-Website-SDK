@@ -339,7 +339,7 @@ var OneSignal = {
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
 
-    if (navigator.serviceWorker) {
+    if (navigator.serviceWorker && window.location.protocol === 'https://') {
       navigator.serviceWorker.getRegistration()
         .then(registration => {
           if (registration && registration.active) {
@@ -805,8 +805,9 @@ var OneSignal = {
       return;
 
     OneSignal._getPlayerId(null, function (player_id) {
-      if (!isIframe || player_id) {
-        navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
+      // This call registers the service worker for the HTTP popup
+      if (Environment.isPopup()) {
+        OneSignal._registerForW3CPush({});
       }
     });
   },
