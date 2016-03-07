@@ -291,23 +291,36 @@ class ServiceWorker {
     var notificationData = event.notification.data;
     event.notification.close();
 
+    let notificationClickHandlerMatch = 'exact';
+
     event.waitUntil(
         ServiceWorker.logPush(notificationData.id, 'clicked')
         .then(() => Database.get('Options', 'defaultUrl'))
         .then(defaultUrlResult => {
-
           if (defaultUrlResult)
             ServiceWorker.defaultLaunchUrl = defaultUrlResult.value;
+        })
+        .then(() => Database.get('Options', 'notificationClickHandlerMatch'))
+        .then(matchPreferenceResult => {
+          if (matchPreferenceResult)
+            notificationClickHandlerMatch = matchPreferenceResult.value;
         })
         .then(() => {
           return clients.matchAll({type: 'window'});
         })
         .then(clientList => {
-          var launchURL = registration.scope;
+          var launchUrl = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)
-            launchURL = ServiceWorker.defaultLaunchUrl;
+            launchUrl = ServiceWorker.defaultLaunchUrl;
           if (notificationData.launchURL)
-            launchURL = notificationData.launchURL;
+            launchUrl = notificationData.launchURL;
+
+          let launchUrlObj = new URL(launchUrl);
+          let notificationOpensLink = (
+            launchUrl !== 'javascript:void(0);' &&
+            launchUrl !== 'do_not_open' &&
+            !contains(launchUrlObj.search, '_osp=do_not_open')
+          );
 
           let eventData = {
             id: notificationData.id,
@@ -321,15 +334,26 @@ class ServiceWorker {
 
           for (let i = 0; i < clientList.length; i++) {
             var client = clientList[i];
-            if ('focus' in client && client.url === launchURL) {
-              client.focus();
-
-              /*
-               Note: If an existing browser tab, with *exactly* the same URL as launchURL, that tab will be focused and posted a message.
-               This event rarely occurs. More than likely, the below will happen.
-               */
-              swivel.emit(client.id, 'notification.clicked', eventData);
-              return;
+            if ('focus' in client) {
+              if (notificationClickHandlerMatch === 'exact' && client.url === launchUrl) {
+                client.focus();
+                swivel.emit(client.id, 'notification.clicked', eventData);
+                return;
+              } else if (notificationClickHandlerMatch === 'origin') {
+                let clientOrigin = new URL(client.url).origin;
+                let launchUrlOrigin = null;
+                try {
+                  // Supplied launchUrl can be null
+                  launchUrlOrigin = new URL(launchUrl).origin;
+                } catch (e) {}
+                log.debug('Client Origin:', clientOrigin);
+                log.debug('Launch URL Origin:', launchUrlOrigin);
+                if (clientOrigin === launchUrlOrigin) {
+                  client.focus();
+                  swivel.emit(client.id, 'notification.clicked', eventData);
+                  return;
+                }
+              }
             }
           }
 
@@ -340,15 +364,12 @@ class ServiceWorker {
                - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
                - The addListenerForNotificationOpened() will be fired
            */
-          return Database.put("NotificationOpened", {url: launchURL, data: eventData})
+          return Database.put("NotificationOpened", {url: launchUrl, data: eventData, timestamp: Date.now()})
             .then(() => {
-              let launchURLObject = new URL(launchURL);
-              if (launchURL !== 'javascript:void(0);' &&
-                launchURL !== 'do_not_open' &&
-                !contains(launchURLObject.search, '_osp=do_not_open')) {
-                clients.openWindow(launchURL).catch(function (error) {
+              if (notificationOpensLink) {
+                clients.openWindow(launchUrl).catch(function (error) {
                   // Should only fall into here if going to an external URL on Chrome older than 43.
-                  clients.openWindow(registration.scope + "redirector.html?url=" + launchURL);
+                  clients.openWindow(registration.scope + "redirector.html?url=" + launchUrl);
                 });
               }
             });
