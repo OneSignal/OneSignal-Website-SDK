@@ -48,7 +48,7 @@ class ServiceWorker {
     if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
       Database.get('Options', 'serviceWorkerRefetchRequests')
         .then(refetchRequestsResult => {
-          if (refetchRequestsResult.value == true) {
+          if (refetchRequestsResult && refetchRequestsResult.value == true) {
             log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
             self.REFETCH_REQUESTS = true;
             self.addEventListener('fetch', ServiceWorker.onFetch);
