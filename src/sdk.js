@@ -339,7 +339,7 @@ var OneSignal = {
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
 
-    if (navigator.serviceWorker && window.location.protocol === 'https://') {
+    if (navigator.serviceWorker && window.location.protocol === 'https:') {
       navigator.serviceWorker.getRegistration()
         .then(registration => {
           if (registration && registration.active) {
