@@ -1013,7 +1013,7 @@ var OneSignal = {
     log.debug(`Called %c_registerForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
     return Database.get('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
-        if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted") {
+        if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted" || navigator.serviceWorker.controller == null) {
           navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
             var sw_path = "";
 
@@ -1707,7 +1707,7 @@ var OneSignal = {
           if (subscriptionResult && !subscriptionResult.value)
             return callback(false);
 
-          callback(Notification.permission == "granted");
+          callback(Notification.permission == "granted" && navigator.serviceWorker.controller !== null);
         }
         else
           callback(false);
