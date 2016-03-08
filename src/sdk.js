@@ -475,6 +475,13 @@ var OneSignal = {
     }
   },
 
+  /**
+   * Returns true if the current browser is a supported browser for push notifications, service workers, and promises.
+   * The following browsers are known to be supported:
+   *  - Chrome:  On Windows, Android, Mac OS X, and Linux. Not supported on iOS. Version 42+.
+   *  - Firefox: On desktop releases version 44 or higher. Not supported on iOS or mobile Firefox v44.
+   *  - Safari:  Version 7.1+ on desktop Mac OS X only. Not supported on iOS.
+   */
   isPushNotificationsSupported: function() {
     return isPushNotificationsSupported();
   },
@@ -663,6 +670,11 @@ var OneSignal = {
               Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             }
             return;
+          }
+
+          /* Only update the service worker for autoRegister false users; autoRegister true users will have the service worker updated when auto registering each time*/
+          if (OneSignal._initOptions.autoRegister === false) {
+            OneSignal._updateServiceWorker();
           }
 
           if (OneSignal._initOptions.autoRegister === false && !OneSignal._initOptions.subdomainName) {
@@ -1014,6 +1026,110 @@ var OneSignal = {
 
       Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
     }
+  },
+
+  /*
+    Updates an existing OneSignal-only service worker if an older version exists. Does not install a new service worker if none is available or overwrite other service workers.
+    This also differs from the original update code we have below in that we do not subscribe for push after.
+    Because we're overwriting a service worker, the push token seems to "carry over" (this is good), whereas if we unregistered and registered a new service worker, the push token would be lost (this is bad).
+    By not subscribing for push after we register the SW, we don't have to care if notification permissions are granted or not, since users will not be prompted; this update process will be transparent.
+    This way we can update the service worker even for autoRegister: false users.
+   */
+  _updateServiceWorker: function() {
+
+    let updateCheckAlreadyRan = sessionStorage.getItem('onesignal-update-serviceworker-completed');
+    if (!navigator.serviceWorker || !Environment.isHost() || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
+      log.warn('Skipping _updateServiceWorker().');
+      return;
+    }
+
+    try {
+      sessionStorage.setItem('onesignal-update-serviceworker-completed', "true");
+    } catch (e) { log.error(e); }
+
+    return navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
+      var sw_path = "";
+
+      if (OneSignal._initOptions.path)
+        sw_path = OneSignal._initOptions.path;
+
+      if (serviceWorkerRegistration && serviceWorkerRegistration.active) {
+        // An existing service worker
+        log.debug('_updateServiceWorker():', 'Existing service worker');
+        let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
+        if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+          // OneSignalSDKWorker.js was installed
+          log.debug('_updateServiceWorker():', 'OneSignalSDKWorker is active');
+          return Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
+            .then(function (versionResult) {
+              // Get version of installed worker saved to IndexedDB
+              if (versionResult) {
+                // If a version exists
+                log.debug('_updateServiceWorker():', 'Database version exists:', versionResult);
+                if (versionResult.id != OneSignal._VERSION) {
+                  // If there is a different version
+                  log.debug('_updateServiceWorker():', 'New version exists:', OneSignal._VERSION);
+                  log.info(`Installing new service worker (${versionResult.id} -> ${OneSignal._VERSION})`);
+                  return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                }
+                else {
+                  // No changed service worker version
+                  log.debug('_updateServiceWorker():', 'No changed service worker version');
+                  return null;
+                }
+              }
+              else {
+                // No version was saved; somehow this got overwritten
+                // Reinstall the alternate service worker
+                log.debug('_updateServiceWorker():', 'No version was saved; somehow this got overwritten; Reinstall the alternate service worker');
+                return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+              }
+
+            })
+            .catch(function (e) {
+              log.error(e);
+            });
+        }
+        else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+          // OneSignalSDKUpdaterWorker.js was installed
+          log.debug('_updateServiceWorker():', 'OneSignalSDKUpdaterWorker is active');
+          return Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
+            .then(function (versionResult) {
+              // Get version of installed worker saved to IndexedDB
+              if (versionResult) {
+                // If a version exists
+                log.debug('_updateServiceWorker():', 'Database version exists:', versionResult);
+                if (versionResult.id != OneSignal._VERSION) {
+                  // If there is a different version
+                  log.debug('_updateServiceWorker():', 'New version exists:', OneSignal._VERSION);
+                  log.info(`Installing new service worker (${versionResult.id} -> ${OneSignal._VERSION})`);
+                  return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                }
+                else {
+                  // No changed service worker version
+                  log.debug('_updateServiceWorker():', 'No changed service worker version');
+                  return null;
+                }
+              }
+              else {
+                // No version was saved; somehow this got overwritten
+                // Reinstall the alternate service worker
+                log.debug('_updateServiceWorker():', 'No version was saved; somehow this got overwritten; Reinstall the alternate service worker');
+                return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+              }
+            })
+            .catch(function (e) {
+              log.error(e);
+            });
+        } else {
+          // Some other service worker not belonging to us was installed
+          // Don't install ours over it
+        }
+      }
+    })
+    .catch(function (e) {
+      log.error(e);
+    });
   },
 
   _registerForW3CPush: function (options) {

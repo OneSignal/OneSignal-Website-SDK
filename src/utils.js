@@ -1,5 +1,6 @@
 import log from 'loglevel';
 import StackTrace from 'stacktrace-js';
+import * as Browser from 'bowser';
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -60,6 +61,10 @@ export function logError(e) {
 
 export function isPushNotificationsSupported () {
   var chromeVersion = navigator.appVersion.match(/Chrome\/(.*?) /);
+
+  if (Browser.firefox && Browser.version == '44.0' && (Browser.mobile || Browser.tablet)) {
+    return false;
+  }
 
   if (isSupportedFireFox())
     return true;
