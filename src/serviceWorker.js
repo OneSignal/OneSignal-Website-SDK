@@ -40,18 +40,29 @@ class ServiceWorker {
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
 
+    // Install messaging event handlers for page <-> service worker communication
+    swivel.on('data', ServiceWorker.onMessageReceived);
+
     // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
     // Fix: If the browser is Firefox and is v44, use the following workaround:
     if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
-      self.REFETCH_REQUESTS = true;
+      Database.get('Options', 'serviceWorkerRefetchRequests')
+        .then(refetchRequestsResult => {
+          if (refetchRequestsResult.value == true) {
+            log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
+            self.REFETCH_REQUESTS = true;
+            self.addEventListener('fetch', ServiceWorker.onFetch);
+          } else {
+            self.SKIP_REFETCH_REQUESTS = true;
+            log.info('Detected Firefox v44 but not refetching requests because option is set to false.');
+          }
+        })
+        .catch(e => {
+          log.error(e);
+          self.REFETCH_REQUESTS = true;
+          self.addEventListener('fetch', ServiceWorker.onFetch);
+        });
     }
-
-    if (self.REFETCH_REQUESTS) {
-      self.addEventListener('fetch', ServiceWorker.onFetch);
-    }
-
-    // Install messaging event handlers for page <-> service worker communication
-    swivel.on('data', ServiceWorker.onMessageReceived);
   }
 
   /**

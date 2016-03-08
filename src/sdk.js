@@ -606,6 +606,12 @@ var OneSignal = {
     }
     Promise.all(webhookPromises);
 
+    if (OneSignal._initOptions.serviceWorkerRefetchRequests === false) {
+      Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false})
+    } else {
+      Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true})
+    }
+
     // If Safari - add 'fetch' pollyfill if it isn't already added.
     if (isSupportedSafari() && typeof window.fetch == "undefined") {
       var s = document.createElement('script');
