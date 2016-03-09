@@ -834,7 +834,7 @@ var OneSignal = {
     OneSignal._getPlayerId(null, function (player_id) {
       // This call registers the service worker for the HTTP popup
       if (Environment.isPopup()) {
-        OneSignal._registerForW3CPush({});
+        navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
       }
     });
   },
