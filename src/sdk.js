@@ -356,7 +356,7 @@ var OneSignal = {
               log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
             });
             OneSignal._channel.on('notification.clicked', function handler(context, data) {
-              OneSignal._fireNotificationOpenedCallbacks(data);
+              OneSignal._fireTransmittedNotificationClickedCallbacks(data);
             });
             log.info('Service worker messaging channel established!');
           }
@@ -612,6 +612,12 @@ var OneSignal = {
       webhookPromises.push(Database.put('Options', {key: `webhooks.cors`, value: false}));
     }
     Promise.all(webhookPromises);
+
+    if (OneSignal._initOptions.notificationClickHandlerMatch) {
+      Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal._initOptions.notificationClickHandlerMatch})
+    } else {
+      Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'})
+    }
 
     if (OneSignal._initOptions.serviceWorkerRefetchRequests === false) {
       Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false})
@@ -1268,7 +1274,7 @@ var OneSignal = {
         log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
       });
       OneSignal._channel.on('notification.clicked', function handler(context, data) {
-        OneSignal._fireNotificationOpenedCallbacks(data);
+        OneSignal._fireTransmittedNotificationClickedCallbacks(data);
       });
       log.info('Service worker channel now established!');
 
@@ -1702,14 +1708,7 @@ var OneSignal = {
       OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt, event.data.httpNativePromptPermissionChanged);
     }
     else if (OneSignal.openedNotification) { // HTTP and HTTPS
-      OneSignal._fireNotificationOpenedCallbacks(event,data);
-    }
-  },
-
-  _fireNotificationOpenedCallbacks: function(data) {
-    while (OneSignal._notificationOpenedCallbacks.length > 0) {
-      let callback = OneSignal._notificationOpenedCallbacks.pop();
-      callback(data);
+      OneSignal._fireTransmittedNotificationClickedCallbacks(event,data);
     }
   },
 
@@ -1720,16 +1719,43 @@ var OneSignal = {
     }
 
     OneSignal._notificationOpenedCallbacks.push(callback);
-    if (Environment.isBrowser()) {
-      Database.get("NotificationOpened", document.URL)
-        .then(notificationOpenedResult => {
-          if (notificationOpenedResult) {
-            Database.remove("NotificationOpened", document.URL);
-            OneSignal._fireNotificationOpenedCallbacks(notificationOpenedResult.data);
-          }
-        })
-        .catch(e => log.error(e));
+    OneSignal._fireSavedNotificationClickedCallbacks();
+  },
+
+  _fireTransmittedNotificationClickedCallbacks: function(data) {
+    for (let notificationOpenedCallback of OneSignal._notificationOpenedCallbacks) {
+      notificationOpenedCallback(data);
     }
+  },
+
+  _fireSavedNotificationClickedCallbacks: function() {
+    Database.get("NotificationOpened", document.URL)
+      .then(notificationOpenedResult => {
+        if (notificationOpenedResult) {
+          Database.remove("NotificationOpened", document.URL);
+          let notificationData = notificationOpenedResult.data;
+          let timestamp = notificationOpenedResult.timestamp;
+          let discardNotification = false;
+          // 3/4: Timestamp is a new feature and previous notification opened results don't have it
+          if (timestamp) {
+            let now = Date.now();
+            let diffMilliseconds = Date.now() - timestamp;
+            let diffMinutes = diffMilliseconds / 1000 / 60;
+            /*
+             When the notification is clicked, its data is saved to IndexedDB, a new tab is opened, which then retrieves the just-saved data and runs this code.
+              If more than 5 minutes has passed, the page is probably being opened a long time later; do not fire the notification click event.
+              */
+            discardNotification = diffMinutes > 5;
+          }
+          if (discardNotification)
+            return;
+
+          for (let notificationOpenedCallback of OneSignal._notificationOpenedCallbacks) {
+            notificationOpenedCallback(notificationData);
+          }
+        }
+      })
+      .catch(e => log.error(e));
   },
 
   // Subdomain - Fired from message received from iframe.
