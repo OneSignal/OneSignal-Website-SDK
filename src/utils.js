@@ -1,6 +1,7 @@
 import log from 'loglevel';
 import StackTrace from 'stacktrace-js';
 import * as Browser from 'bowser';
+import Environment from './environment.js';
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -57,6 +58,20 @@ export function logError(e) {
       log.error(e);
     }
   }).catch(x => log.error(e));
+}
+
+
+if (Environment.isBrowser()) {
+  var decodeTextArea = document.createElement("textarea");
+}
+export function decodeHtmlEntities(text) {
+  if (decodeTextArea) {
+    decodeTextArea.innerHTML = text;
+    return decodeTextArea.value;
+  } else {
+    // Not running in a browser environment, text cannot be decoded
+    return text;
+  }
 }
 
 export function isPushNotificationsSupported () {

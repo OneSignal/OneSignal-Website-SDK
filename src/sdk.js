@@ -8,10 +8,9 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain, decodeHtmlEntities } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
-import * as HtmlEntities from 'he';
 
 
 var OneSignal = {
@@ -293,8 +292,8 @@ var OneSignal = {
           let unopenableWelcomeNotificationUrl = new URL(location.href);
           unopenableWelcomeNotificationUrl = unopenableWelcomeNotificationUrl.origin + '?_osp=do_not_open';
           let url = (welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0) ? welcome_notification_opts['url'] : unopenableWelcomeNotificationUrl;
-          title = HtmlEntities.decode(title);
-          message = HtmlEntities.decode(message);
+          title = decodeHtmlEntities(title);
+          message = decodeHtmlEntities(message);
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
             sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, null, { __isOneSignalWelcomeNotification: true });
