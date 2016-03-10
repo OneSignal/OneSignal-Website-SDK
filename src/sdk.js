@@ -335,7 +335,6 @@ var OneSignal = {
       log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
     OneSignal._channel.on('notification.clicked', function handler(context, data) {
-      debugger;
       if (Environment.isHost()) {
         OneSignal._fireTransmittedNotificationClickedCallbacks(data);
       } else if (Environment.isIframe()) {
