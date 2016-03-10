@@ -325,6 +325,27 @@ var OneSignal = {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
+  _establishServiceWorkerChannel: function(serviceWorkerRegistration) {
+    if (OneSignal._channel) {
+      OneSignal._channel.off('data');
+      OneSignal._channel.off('notification.clicked');
+    }
+    OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
+    OneSignal._channel.on('data', function handler(context, data) {
+      log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+    });
+    OneSignal._channel.on('notification.clicked', function handler(context, data) {
+      debugger;
+      if (Environment.isHost()) {
+        OneSignal._fireTransmittedNotificationClickedCallbacks(data);
+      } else if (Environment.isIframe()) {
+        var creator = opener || parent;
+        OneSignal._safePostMessage(creator, {openedNotification: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+      }
+    });
+    log.info('Service worker messaging channel established!');
+  },
+
   /**
    * This event occurs after init.
    * For HTTPS sites, this event is called after init.
@@ -346,18 +367,7 @@ var OneSignal = {
       navigator.serviceWorker.getRegistration()
         .then(registration => {
           if (registration && registration.active) {
-            if (OneSignal._channel) {
-              OneSignal._channel.off('data');
-              OneSignal._channel.off('notification.clicked');
-            }
-            OneSignal._channel = swivel.at(registration.active);
-            OneSignal._channel.on('data', function handler(context, data) {
-              log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
-            });
-            OneSignal._channel.on('notification.clicked', function handler(context, data) {
-              OneSignal._fireTransmittedNotificationClickedCallbacks(data);
-            });
-            log.info('Service worker messaging channel established!');
+            OneSignal._establishServiceWorkerChannel(registration);
           }
         })
         .catch(e => {
@@ -837,6 +847,16 @@ var OneSignal = {
         navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
       }
     });
+
+    // TODO: Fix state replication bug for HTTP
+    //navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+    //  log.info('Service worker now active:', serviceWorkerRegistration);
+    //  OneSignal._establishServiceWorkerChannel(serviceWorkerRegistration);
+    //  OneSignal._subscribeForPush(serviceWorkerRegistration);
+    //})
+    //  .catch(function (e) {
+    //    log.error(e);
+    //  });
   },
 
   _getSubdomainState: function (callback) {
@@ -1263,26 +1283,12 @@ var OneSignal = {
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
       log.info('Service worker now active:', serviceWorkerRegistration);
-
-      if (OneSignal._channel) {
-        OneSignal._channel.off('data');
-        OneSignal._channel.off('notification.clicked');
-      }
-      OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
-      OneSignal._channel.on('data', function handler(context, data) {
-        log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
-      });
-      OneSignal._channel.on('notification.clicked', function handler(context, data) {
-        OneSignal._fireTransmittedNotificationClickedCallbacks(data);
-      });
-      log.info('Service worker channel now established!');
-
+      OneSignal._establishServiceWorkerChannel(serviceWorkerRegistration);
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
-      .catch(function (e) {
-        log.error(e);
-      });
-    ;
+    .catch(function (e) {
+      log.error(e);
+    });
   },
 
   ///**
