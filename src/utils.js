@@ -400,5 +400,5 @@ export function normalizeSubdomain(subdomain) {
   for (let removeSubstring of removeSubstrings) {
     subdomain = subdomain.replace(removeSubstring, '');
   }
-  return subdomain;
+  return subdomain.toLowerCase();
 }
