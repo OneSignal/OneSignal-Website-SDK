@@ -1,12 +1,10 @@
 import log from 'loglevel';
 import StackTrace from 'stacktrace-js';
+import * as Browser from 'bowser';
+import Environment from './environment.js';
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
-}
-
-export function isDev() {
-  return __DEV__;
 }
 
 export function isPushNotificationsSupportedAndWarn() {
@@ -29,8 +27,26 @@ export function logError(e) {
   }).catch(x => log.error(e));
 }
 
+console.warn('Environment:', Environment);
+if (Environment.isBrowser()) {
+  var decodeTextArea = document.createElement("textarea");
+}
+export function decodeHtmlEntities(text) {
+  if (decodeTextArea) {
+    decodeTextArea.innerHTML = text;
+    return decodeTextArea.value;
+  } else {
+    // Not running in a browser environment, text cannot be decoded
+    return text;
+  }
+}
+
 export function isPushNotificationsSupported () {
   var chromeVersion = navigator.appVersion.match(/Chrome\/(.*?) /);
+
+  if (Browser.firefox && Browser.version == '44.0' && (Browser.mobile || Browser.tablet)) {
+    return false;
+  }
 
   if (isSupportedFireFox())
     return true;
@@ -351,5 +367,5 @@ export function normalizeSubdomain(subdomain) {
   for (let removeSubstring of removeSubstrings) {
     subdomain = subdomain.replace(removeSubstring, '');
   }
-  return subdomain;
+  return subdomain.toLowerCase();
 }

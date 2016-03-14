@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain, decodeHtmlEntities } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -20,7 +20,7 @@ var OneSignal = {
   _API_URL: API_URL,
   _app_id: null,
   _futureSendTags: null,
-  _futureSendTagsPromiseResolve: null,
+  _futureSendTagsPromiseResolves: [],
   _notificationOpenedCallbacks: [],
   _idsAvailable_callback: [],
   _defaultLaunchURL: null,
@@ -200,6 +200,10 @@ var OneSignal = {
   _sendUnsentTags: function () {
     if (OneSignal._futureSendTags) {
       OneSignal.sendTags(OneSignal._futureSendTags);
+      while (OneSignal._futureSendTagsPromiseResolves.length > 0) {
+        var promiseResolveFn = OneSignal._futureSendTagsPromiseResolves.shift()
+        promiseResolveFn();
+      }
       OneSignal._futureSendTags = null;
     }
   },
@@ -289,6 +293,8 @@ var OneSignal = {
           let unopenableWelcomeNotificationUrl = new URL(location.href);
           unopenableWelcomeNotificationUrl = unopenableWelcomeNotificationUrl.origin + '?_osp=do_not_open';
           let url = (welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0) ? welcome_notification_opts['url'] : unopenableWelcomeNotificationUrl;
+          title = decodeHtmlEntities(title);
+          message = decodeHtmlEntities(message);
           if (!welcome_notification_disabled) {
             log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
             sendNotification(OneSignal._app_id, [result.id], {'en': title}, {'en': message}, url, null, { __isOneSignalWelcomeNotification: true });
@@ -320,6 +326,26 @@ var OneSignal = {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
 
+  _establishServiceWorkerChannel: function(serviceWorkerRegistration) {
+    if (OneSignal._channel) {
+      OneSignal._channel.off('data');
+      OneSignal._channel.off('notification.clicked');
+    }
+    OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
+    OneSignal._channel.on('data', function handler(context, data) {
+      log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+    });
+    OneSignal._channel.on('notification.clicked', function handler(context, data) {
+      if (Environment.isHost()) {
+        OneSignal._fireTransmittedNotificationClickedCallbacks(data);
+      } else if (Environment.isIframe()) {
+        var creator = opener || parent;
+        OneSignal._safePostMessage(creator, {openedNotification: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+      }
+    });
+    log.info('Service worker messaging channel established!');
+  },
+
   /**
    * This event occurs after init.
    * For HTTPS sites, this event is called after init.
@@ -337,22 +363,11 @@ var OneSignal = {
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
 
-    if (navigator.serviceWorker) {
+    if (navigator.serviceWorker && window.location.protocol === 'https:') {
       navigator.serviceWorker.getRegistration()
         .then(registration => {
           if (registration && registration.active) {
-            if (OneSignal._channel) {
-              OneSignal._channel.off('data');
-              OneSignal._channel.off('notification.clicked');
-            }
-            OneSignal._channel = swivel.at(registration.active);
-            OneSignal._channel.on('data', function handler(context, data) {
-              log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
-            });
-            OneSignal._channel.on('notification.clicked', function handler(context, data) {
-              OneSignal._fireNotificationOpenedCallbacks(data);
-            });
-            log.info('Service worker messaging channel established!');
+            OneSignal._establishServiceWorkerChannel(registration);
           }
         })
         .catch(e => {
@@ -469,6 +484,13 @@ var OneSignal = {
     }
   },
 
+  /**
+   * Returns true if the current browser is a supported browser for push notifications, service workers, and promises.
+   * The following browsers are known to be supported:
+   *  - Chrome:  On Windows, Android, Mac OS X, and Linux. Not supported on iOS. Version 42+.
+   *  - Firefox: On desktop releases version 44 or higher. Not supported on iOS or mobile Firefox v44.
+   *  - Safari:  Version 7.1+ on desktop Mac OS X only. Not supported on iOS.
+   */
   isPushNotificationsSupported: function() {
     return isPushNotificationsSupported();
   },
@@ -600,6 +622,18 @@ var OneSignal = {
     }
     Promise.all(webhookPromises);
 
+    if (OneSignal._initOptions.notificationClickHandlerMatch) {
+      Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal._initOptions.notificationClickHandlerMatch})
+    } else {
+      Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'})
+    }
+
+    if (OneSignal._initOptions.serviceWorkerRefetchRequests === false) {
+      Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false})
+    } else {
+      Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true})
+    }
+
     // If Safari - add 'fetch' pollyfill if it isn't already added.
     if (isSupportedSafari() && typeof window.fetch == "undefined") {
       var s = document.createElement('script');
@@ -651,6 +685,11 @@ var OneSignal = {
               Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             }
             return;
+          }
+
+          /* Only update the service worker for autoRegister false users; autoRegister true users will have the service worker updated when auto registering each time*/
+          if (OneSignal._initOptions.autoRegister === false) {
+            OneSignal._updateServiceWorker();
           }
 
           if (OneSignal._initOptions.autoRegister === false && !OneSignal._initOptions.subdomainName) {
@@ -803,10 +842,21 @@ var OneSignal = {
       return;
 
     OneSignal._getPlayerId(null, function (player_id) {
-      if (!isIframe || player_id) {
+      // This call registers the service worker for the HTTP popup
+      if (Environment.isPopup()) {
         navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
       }
     });
+
+    // TODO: Fix state replication bug for HTTP
+    //navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+    //  log.info('Service worker now active:', serviceWorkerRegistration);
+    //  OneSignal._establishServiceWorkerChannel(serviceWorkerRegistration);
+    //  OneSignal._subscribeForPush(serviceWorkerRegistration);
+    //})
+    //  .catch(function (e) {
+    //    log.error(e);
+    //  });
   },
 
   _getSubdomainState: function (callback) {
@@ -1003,11 +1053,115 @@ var OneSignal = {
     }
   },
 
+  /*
+    Updates an existing OneSignal-only service worker if an older version exists. Does not install a new service worker if none is available or overwrite other service workers.
+    This also differs from the original update code we have below in that we do not subscribe for push after.
+    Because we're overwriting a service worker, the push token seems to "carry over" (this is good), whereas if we unregistered and registered a new service worker, the push token would be lost (this is bad).
+    By not subscribing for push after we register the SW, we don't have to care if notification permissions are granted or not, since users will not be prompted; this update process will be transparent.
+    This way we can update the service worker even for autoRegister: false users.
+   */
+  _updateServiceWorker: function() {
+
+    let updateCheckAlreadyRan = sessionStorage.getItem('onesignal-update-serviceworker-completed');
+    if (!navigator.serviceWorker || !Environment.isHost() || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
+      log.warn('Skipping _updateServiceWorker().');
+      return;
+    }
+
+    try {
+      sessionStorage.setItem('onesignal-update-serviceworker-completed', "true");
+    } catch (e) { log.error(e); }
+
+    return navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
+      var sw_path = "";
+
+      if (OneSignal._initOptions.path)
+        sw_path = OneSignal._initOptions.path;
+
+      if (serviceWorkerRegistration && serviceWorkerRegistration.active) {
+        // An existing service worker
+        log.debug('_updateServiceWorker():', 'Existing service worker');
+        let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
+        if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+          // OneSignalSDKWorker.js was installed
+          log.debug('_updateServiceWorker():', 'OneSignalSDKWorker is active');
+          return Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
+            .then(function (versionResult) {
+              // Get version of installed worker saved to IndexedDB
+              if (versionResult) {
+                // If a version exists
+                log.debug('_updateServiceWorker():', 'Database version exists:', versionResult);
+                if (versionResult.id != OneSignal._VERSION) {
+                  // If there is a different version
+                  log.debug('_updateServiceWorker():', 'New version exists:', OneSignal._VERSION);
+                  log.info(`Installing new service worker (${versionResult.id} -> ${OneSignal._VERSION})`);
+                  return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                }
+                else {
+                  // No changed service worker version
+                  log.debug('_updateServiceWorker():', 'No changed service worker version');
+                  return null;
+                }
+              }
+              else {
+                // No version was saved; somehow this got overwritten
+                // Reinstall the alternate service worker
+                log.debug('_updateServiceWorker():', 'No version was saved; somehow this got overwritten; Reinstall the alternate service worker');
+                return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+              }
+
+            })
+            .catch(function (e) {
+              log.error(e);
+            });
+        }
+        else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+          // OneSignalSDKUpdaterWorker.js was installed
+          log.debug('_updateServiceWorker():', 'OneSignalSDKUpdaterWorker is active');
+          return Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
+            .then(function (versionResult) {
+              // Get version of installed worker saved to IndexedDB
+              if (versionResult) {
+                // If a version exists
+                log.debug('_updateServiceWorker():', 'Database version exists:', versionResult);
+                if (versionResult.id != OneSignal._VERSION) {
+                  // If there is a different version
+                  log.debug('_updateServiceWorker():', 'New version exists:', OneSignal._VERSION);
+                  log.info(`Installing new service worker (${versionResult.id} -> ${OneSignal._VERSION})`);
+                  return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                }
+                else {
+                  // No changed service worker version
+                  log.debug('_updateServiceWorker():', 'No changed service worker version');
+                  return null;
+                }
+              }
+              else {
+                // No version was saved; somehow this got overwritten
+                // Reinstall the alternate service worker
+                log.debug('_updateServiceWorker():', 'No version was saved; somehow this got overwritten; Reinstall the alternate service worker');
+                return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+              }
+            })
+            .catch(function (e) {
+              log.error(e);
+            });
+        } else {
+          // Some other service worker not belonging to us was installed
+          // Don't install ours over it
+        }
+      }
+    })
+    .catch(function (e) {
+      log.error(e);
+    });
+  },
+
   _registerForW3CPush: function (options) {
     log.debug(`Called %c_registerForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
     return Database.get('Ids', 'registrationId')
       .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
-        if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted") {
+        if (!registrationIdResult || !options.fromRegisterFor || Notification.permission != "granted" || navigator.serviceWorker.controller == null) {
           navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
             var sw_path = "";
 
@@ -1129,26 +1283,12 @@ var OneSignal = {
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
       log.info('Service worker now active:', serviceWorkerRegistration);
-
-      if (OneSignal._channel) {
-        OneSignal._channel.off('data');
-        OneSignal._channel.off('notification.clicked');
-      }
-      OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
-      OneSignal._channel.on('data', function handler(context, data) {
-        log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
-      });
-      OneSignal._channel.on('notification.clicked', function handler(context, data) {
-        OneSignal._fireNotificationOpenedCallbacks(data);
-      });
-      log.info('Service worker channel now established!');
-
+      OneSignal._establishServiceWorkerChannel(serviceWorkerRegistration);
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
-      .catch(function (e) {
-        log.error(e);
-      });
-    ;
+    .catch(function (e) {
+      log.error(e);
+    });
   },
 
   /**
@@ -1367,6 +1507,9 @@ var OneSignal = {
     }
 
     return new Promise((resolve, reject) => {
+
+      var futureSendTagResolveFn = null;
+
       return Database.get('Ids', 'userId')
         .then(userIdResult => {
           if (userIdResult) {
@@ -1380,14 +1523,22 @@ var OneSignal = {
               OneSignal._futureSendTags = {};
             }
             objectAssign(OneSignal._futureSendTags, tags);
-            OneSignal._futureSendTagsPromiseResolve = resolve;
+            futureSendTagResolveFn = (currentTags) => {
+              if (callback) {
+                callback(currentTags);
+              }
+              resolve(currentTags);
+            };
+            OneSignal._futureSendTagsPromiseResolves.push(futureSendTagResolveFn.bind(null, tags));
           }
         })
         .then(() => {
-          if (callback) {
-            callback(tags);
+          if (futureSendTagResolveFn == null) {
+            if (callback) {
+              callback(tags);
+            }
+            resolve(tags);
           }
-          resolve(tags);
         })
         .catch(e => {
           log.error('sendTags:', e);
@@ -1577,14 +1728,7 @@ var OneSignal = {
       OneSignal._triggerEvent_nativePromptPermissionChanged(permissionBeforePrompt, event.data.httpNativePromptPermissionChanged);
     }
     else if (OneSignal.openedNotification) { // HTTP and HTTPS
-      OneSignal._fireNotificationOpenedCallbacks(event,data);
-    }
-  },
-
-  _fireNotificationOpenedCallbacks: function(data) {
-    while (OneSignal._notificationOpenedCallbacks.length > 0) {
-      let callback = OneSignal._notificationOpenedCallbacks.pop();
-      callback(data);
+      OneSignal._fireTransmittedNotificationClickedCallbacks(event,data);
     }
   },
 
@@ -1595,16 +1739,43 @@ var OneSignal = {
     }
 
     OneSignal._notificationOpenedCallbacks.push(callback);
-    if (Environment.isBrowser()) {
-      Database.get("NotificationOpened", document.URL)
-        .then(notificationOpenedResult => {
-          if (notificationOpenedResult) {
-            Database.remove("NotificationOpened", document.URL);
-            OneSignal._fireNotificationOpenedCallbacks(notificationOpenedResult.data);
-          }
-        })
-        .catch(e => log.error(e));
+    OneSignal._fireSavedNotificationClickedCallbacks();
+  },
+
+  _fireTransmittedNotificationClickedCallbacks: function(data) {
+    for (let notificationOpenedCallback of OneSignal._notificationOpenedCallbacks) {
+      notificationOpenedCallback(data);
     }
+  },
+
+  _fireSavedNotificationClickedCallbacks: function() {
+    Database.get("NotificationOpened", document.URL)
+      .then(notificationOpenedResult => {
+        if (notificationOpenedResult) {
+          Database.remove("NotificationOpened", document.URL);
+          let notificationData = notificationOpenedResult.data;
+          let timestamp = notificationOpenedResult.timestamp;
+          let discardNotification = false;
+          // 3/4: Timestamp is a new feature and previous notification opened results don't have it
+          if (timestamp) {
+            let now = Date.now();
+            let diffMilliseconds = Date.now() - timestamp;
+            let diffMinutes = diffMilliseconds / 1000 / 60;
+            /*
+             When the notification is clicked, its data is saved to IndexedDB, a new tab is opened, which then retrieves the just-saved data and runs this code.
+              If more than 5 minutes has passed, the page is probably being opened a long time later; do not fire the notification click event.
+              */
+            discardNotification = diffMinutes > 5;
+          }
+          if (discardNotification)
+            return;
+
+          for (let notificationOpenedCallback of OneSignal._notificationOpenedCallbacks) {
+            notificationOpenedCallback(notificationData);
+          }
+        }
+      })
+      .catch(e => log.error(e));
   },
 
   // Subdomain - Fired from message received from iframe.
@@ -1705,7 +1876,7 @@ var OneSignal = {
           if (subscriptionResult && !subscriptionResult.value)
             return callback(false);
 
-          callback(Notification.permission == "granted");
+          callback(Notification.permission == "granted" && navigator.serviceWorker.controller !== null);
         }
         else
           callback(false);
