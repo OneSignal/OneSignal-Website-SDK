@@ -5,20 +5,20 @@ import './string.js';
 
 
 const SILENT_EVENTS = [
-  'onesignal.nb.hovering',
-  'onesignal.nb.hovered',
-  'onesignal.nb.launcher.button.click',
-  'onesignal.nb.launcher.click',
-  'onesignal.nb.animatedelement.hiding',
-  'onesignal.nb.animatedelement.hidden',
-  'onesignal.nb.animatedelement.showing',
-  'onesignal.nb.animatedelement.shown',
-  'onesignal.nb.activeanimatedelement.activating',
-  'onesignal.nb.activeanimatedelement.active',
-  'onesignal.nb.activeanimatedelement.inactivating',
-  'onesignal.nb.activeanimatedelement.inactive',
-  'onesignal.db.retrieved',
-  'onesignal.db.set'
+  'notifyButtonHovering',
+  'notifyButtonHover',
+  'notifyButtonButtonClick',
+  'notifyButtonLauncherClick',
+  'animatedElementHiding',
+  'aniamtedElementHidden',
+  'animatedElementShowing',
+  'animatedElementShown',
+  'activeAnimatedElementActivating',
+  'activeAnimatedElementActive',
+  'activeAnimatedElementInactivating',
+  'activeAnimatedElementInactive',
+  'dbRetrieved',
+  'dbSet'
   ];
 
 const RETRIGGER_REMOTE_EVENTS = [
@@ -29,8 +29,9 @@ const RETRIGGER_REMOTE_EVENTS = [
 ];
 
 const LEGACY_EVENT_MAP = {
-  'subscriptionChanged': 'onesignal.subscription.changed',
-  'customPromptClicked': 'onesignal.prompt.custom.clicked',
+  'notificationPermissionChange': 'onesignal.prompt.native.permissionchanged',
+  'subscriptionChange': 'onesignal.subscription.changed',
+  'customPromptClick': 'onesignal.prompt.custom.clicked',
 }
 
 export default class Event {
@@ -51,24 +52,33 @@ export default class Event {
       }
 
       if (displayData || displayData === false) {
-        log.debug(`(${env}) » %c${legacyEventName}:`, getConsoleStyle('event'), displayData);
+        log.debug(`(${env}) » %c${eventName}:`, getConsoleStyle('event'), displayData);
       } else {
-        log.debug(`(${env}) » %c${legacyEventName}`, getConsoleStyle('event'));
+        log.debug(`(${env}) » %c${eventName}`, getConsoleStyle('event'));
       }
     }
 
     // Actually fire the event that can be listened to via OneSignal.on()
-    OneSignal.emit(newEventName, data);
+    if (Environment.isBrowser()) {
+      if (eventName === OneSignal.EVENTS.SDK_INITIALIZED && OneSignal.initialized) {
+        return;
+      }
+      OneSignal.emit(eventName, data);
+    }
+    if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
+      let legacyEventName = LEGACY_EVENT_MAP[eventName];
+      Event._triggerLegacy(legacyEventName, data);
+    }
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
-    if (!Environment.isHost()) {
+    if (!Environment.isHost() && Environment.isBrowser()) {
       var creator = opener || parent;
       if (!creator) {
-        log.error(`Could not send event '${legacyEventName}' back to host page because no creator (opener or parent) found!`);
+        log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
       } else {
         // But only if the event matches certain events
-        if (contains(RETRIGGER_REMOTE_EVENTS, legacyEventName)) {
-          OneSignal._safePostMessage(creator, {remoteEvent: legacyEventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+        if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
+          OneSignal._safePostMessage(creator, {remoteEvent: eventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
         }
       }
     }

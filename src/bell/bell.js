@@ -163,7 +163,7 @@ export default class Bell {
     this.state = Bell.STATES.UNINITIALIZED;
 
     // Install event hooks
-    window.addEventListener(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignal.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       OneSignal.setSubscription(true)
         .then(() => {
@@ -179,7 +179,7 @@ export default class Bell {
         });
     });
 
-    window.addEventListener(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignal.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
       OneSignal.setSubscription(false)
         .then(() => {
@@ -195,7 +195,7 @@ export default class Bell {
         });
     });
 
-    window.addEventListener(Bell.EVENTS.HOVERING, () => {
+    OneSignal.on(Bell.EVENTS.HOVERING, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -233,7 +233,7 @@ export default class Bell {
         })
     });
 
-    window.addEventListener(Bell.EVENTS.HOVERED, () => {
+    OneSignal.on(Bell.EVENTS.HOVERED, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -272,16 +272,13 @@ export default class Bell {
       }
     });
 
-    window.addEventListener(EVENTS.SUBSCRIPTION_CHANGED, (e) => {
-      let isSubscribed = e.detail;
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, e => {
+      let isSubscribed = e;
       this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
     });
 
-    window.addEventListener(EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {
+    OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {
       this.updateState();
-    });
-
-    window.addEventListener(EVENTS.WELCOME_NOTIFICATION_SENT, (e) => {
     });
 
     this.updateState();

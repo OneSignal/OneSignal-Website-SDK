@@ -27,11 +27,13 @@ export function logError(e) {
   }).catch(x => log.error(e));
 }
 
-console.warn('Environment:', Environment);
-if (Environment.isBrowser()) {
-  var decodeTextArea = document.createElement("textarea");
-}
+var decodeTextArea = null;
 export function decodeHtmlEntities(text) {
+  if (Environment.isBrowser()) {
+    if (!decodeTextArea) {
+      decodeTextArea = document.createElement("textarea");
+    }
+  }
   if (decodeTextArea) {
     decodeTextArea.innerHTML = text;
     return decodeTextArea.value;

@@ -52,11 +52,11 @@ var OneSignal = {
   SERVICE_WORKER_PARAM: {},
 
   EVENTS: {
-    CUSTOM_PROMPT_CLICKED: 'customPromptClicked',
+    CUSTOM_PROMPT_CLICKED: 'customPromptClick',
     NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
     SUBSCRIPTION_CHANGED: 'subscriptionChange',
     WELCOME_NOTIFICATION_SENT: 'sendWelcomeNotification',
-    INTERNAL_SUBSCRIPTIONSET: 'subscriptionset',
+    INTERNAL_SUBSCRIPTIONSET: 'subscriptionSet',
     SDK_INITIALIZED: 'initialize'
   },
 
@@ -235,9 +235,6 @@ var OneSignal = {
     Database.put("Options", {key: "defaultTitle", value: title});
   },
 
-  onCustomPromptClicked: function (event) {
-  },
-
   onNativePromptChanged: function (event) {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
@@ -283,7 +280,7 @@ var OneSignal = {
   },
 
   _onSubscriptionChanged: function (event) {
-    if (OneSignal._isUninitiatedVisitor && event.detail === true) {
+    if (OneSignal._isUninitiatedVisitor && event === true) {
       Database.get('Ids', 'userId')
         .then(function (result) {
           let welcome_notification_opts = OneSignal._initOptions['welcomeNotification'];
@@ -306,14 +303,13 @@ var OneSignal = {
           log.error(e);
         });
     }
-    LimitStore.put('subscription.value', event.detail);
+    LimitStore.put('subscription.value', event);
   },
 
   _onDbValueRetrieved: function (event) {
   },
 
-  _onDbValueSet: function (event) {
-    var info = event.detail;
+  _onDbValueSet: function (info) {
     if (info.type === 'userId') {
       LimitStore.put('db.ids.userId', info.id);
       OneSignal._checkTrigger_eventSubscriptionChanged();
@@ -321,7 +317,7 @@ var OneSignal = {
   },
 
   _onInternalSubscriptionSet: function (event) {
-    var newSubscriptionValue = event.detail;
+    var newSubscriptionValue = event;
     LimitStore.put('setsubscription.value', newSubscriptionValue);
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
@@ -569,14 +565,13 @@ var OneSignal = {
       return;
     }
 
-    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
-    window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
-    window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
-    window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
-    window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
-    window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
-    OneSignal.on('initialize', OneSignal._onSdkInitialized);
+    OneSignal.on(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
+    OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
+    OneSignal.on(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
+    OneSignal.on(Database.EVENTS.SET, OneSignal._onDbValueSet);
+    OneSignal.on(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
     window.addEventListener('focus', (event) => {
       // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
       OneSignal._checkTrigger_nativePermissionChanged();
@@ -1684,7 +1679,7 @@ var OneSignal = {
       if (!name || data === undefined) {
         log.warn(`Received an event back from postMessage, but it was undefined!`);
       } else {
-        console.warn('Retriggering remote event', name, data, event.data.remoteEvent);
+        log.warn('Retriggering remote event', name, data, event.data.remoteEvent);
         Event.trigger(name, data, remoteTriggerEnv);
       }
     }
@@ -1876,7 +1871,7 @@ var OneSignal = {
           if (subscriptionResult && !subscriptionResult.value)
             return callback(false);
 
-          callback(Notification.permission == "granted" && navigator.serviceWorker.controller !== null);
+          callback(Notification.permission == "granted" && navigator.serviceWorker && navigator.serviceWorker.controller !== null);
         }
         else
           callback(false);

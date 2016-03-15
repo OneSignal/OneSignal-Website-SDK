@@ -1,4 +1,4 @@
-import Environment from './environment.js'
+import Environment from './environment.js';
 
 export const DEV_HOST = 'https://oregon:3001';
 export const DEV_FRAME_HOST = 'https://nevada:3001';
