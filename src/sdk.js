@@ -1872,10 +1872,15 @@ var OneSignal = {
           if (subscriptionResult && !subscriptionResult.value)
             return callback(false);
 
-          callback(Notification.permission == "granted" && navigator.serviceWorker && navigator.serviceWorker.controller !== null);
+          if ('serviceWorker' in navigator) {
+            callback(Notification.permission == "granted" && navigator.serviceWorker.controller !== null);
+          } else {
+            callback(Notification.permission == "granted");
+          }
         }
-        else
+        else {
           callback(false);
+        }
       })
       .catch(function (e) {
         log.error(e);
