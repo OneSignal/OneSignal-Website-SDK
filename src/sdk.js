@@ -1784,6 +1784,7 @@ var OneSignal = {
   },
 
   getIdsAvailable: function (callback) {
+    console.warn("OneSignal: getIdsAvailable() is deprecated. Please use getUserId() or getRegistrationId() instead.");
     if (callback === undefined)
       return;
 
@@ -1982,6 +1983,11 @@ var OneSignal = {
     );
   },
 
+  /**
+   * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
+   * @param callback A function accepting one parameter for the OneSignal user ID.
+   * @returns {Promise.<T>}
+   */
   getUserId: function(callback) {
     if (!isPushNotificationsSupported()) {
       log.warn("Your browser does not support push notifications.");
@@ -1995,6 +2001,33 @@ var OneSignal = {
           callback(userId)
         }
         return userId;
+      } else {
+        if (callback) {
+          callback(null);
+        }
+        return null;
+      }
+    });
+  },
+
+  /**
+   * Returns a promise that resolves to the stored OneSignal registration ID if one is set; otherwise null.
+   * @param callback A function accepting one parameter for the OneSignal registration ID.
+   * @returns {Promise.<T>}
+   */
+  getRegistrationId: function(callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    return Database.get('Ids', 'registrationId').then(registrationIdResult => {
+      if (registrationIdResult) {
+        let registrationId = registrationIdResult.id;
+        if (callback) {
+          callback(registrationId)
+        }
+        return registrationId;
       } else {
         if (callback) {
           callback(null);
