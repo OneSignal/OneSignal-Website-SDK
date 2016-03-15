@@ -1,4 +1,6 @@
 import log from 'loglevel';
+import EventEmitter from 'wolfy87-eventemitter';
+import heir from 'heir';
 import Event from './events.js';
 import { getConsoleStyle } from './utils.js';
 
@@ -7,11 +9,11 @@ export default class Database {
 
   static get EVENTS() {
     return {
-      REBUILT: 'onesignal.db.rebuilt',
-      RETRIEVED: 'onesignal.db.retrieved',
-      SET: 'onesignal.db.set',
-      REMOVED: 'onesignal.db.removed'
-    };
+      REBUILT: 'dbRebuilt',
+      RETRIEVED: 'dbRetrieved',
+      SET: 'dbSet',
+      REMOVED: 'dbRemoved',
+    }
   }
 
   /**
@@ -269,3 +271,5 @@ export default class Database {
     ]);
   }
 }
+
+heir.merge(Database, new EventEmitter());

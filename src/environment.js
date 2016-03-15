@@ -54,4 +54,8 @@ export default class Environment {
   static isBrowser() {
     return typeof window !== 'undefined';
   }
+
+  static isDev() {
+    return __DEV__;
+  }
 }

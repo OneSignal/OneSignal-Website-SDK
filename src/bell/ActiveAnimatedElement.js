@@ -121,7 +121,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       return Promise.resolve(this);
     else return new Promise((resolve) => {
       once(window, ActiveAnimatedElement.EVENTS.ACTIVE, (event, destroyListenerFn) => {
-        if (event.detail === this) {
+        if (event === this) {
           destroyListenerFn();
           return resolve(this);
         }
@@ -138,7 +138,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       return Promise.resolve(this);
     else return new Promise((resolve) => {
       once(window, ActiveAnimatedElement.EVENTS.INACTIVE, (event, destroyListenerFn) => {
-        if (event.detail === this) {
+        if (event === this) {
           destroyListenerFn();
           return resolve(this);
         }
@@ -148,10 +148,10 @@ export default class ActiveAnimatedElement extends AnimatedElement {
 
   static get EVENTS() {
     return objectAssign({}, AnimatedElement.EVENTS, {
-      ACTIVATING: 'onesignal.nb.activeanimatedelement.activating',
-      ACTIVE: 'onesignal.nb.activeanimatedelement.active',
-      INACTIVATING: 'onesignal.nb.activeanimatedelement.inactivating',
-      INACTIVE: 'onesignal.nb.activeanimatedelement.inactive',
+      ACTIVATING: 'activeAnimatedElementActivating',
+      ACTIVE: 'activeAnimatedElementActive',
+      INACTIVATING: 'activeAnimatedElementInactivating',
+      INACTIVE: 'activeAnimatedElementInactive',
     });
   }
 

@@ -5,20 +5,20 @@ import './string.js';
 
 
 const SILENT_EVENTS = [
-  'onesignal.nb.hovering',
-  'onesignal.nb.hovered',
-  'onesignal.nb.launcher.button.click',
-  'onesignal.nb.launcher.click',
-  'onesignal.nb.animatedelement.hiding',
-  'onesignal.nb.animatedelement.hidden',
-  'onesignal.nb.animatedelement.showing',
-  'onesignal.nb.animatedelement.shown',
-  'onesignal.nb.activeanimatedelement.activating',
-  'onesignal.nb.activeanimatedelement.active',
-  'onesignal.nb.activeanimatedelement.inactivating',
-  'onesignal.nb.activeanimatedelement.inactive',
-  'onesignal.db.retrieved',
-  'onesignal.db.set'
+  'notifyButtonHovering',
+  'notifyButtonHover',
+  'notifyButtonButtonClick',
+  'notifyButtonLauncherClick',
+  'animatedElementHiding',
+  'aniamtedElementHidden',
+  'animatedElementShowing',
+  'animatedElementShown',
+  'activeAnimatedElementActivating',
+  'activeAnimatedElementActive',
+  'activeAnimatedElementInactivating',
+  'activeAnimatedElementInactive',
+  'dbRetrieved',
+  'dbSet'
   ];
 
 const RETRIGGER_REMOTE_EVENTS = [
@@ -28,49 +28,73 @@ const RETRIGGER_REMOTE_EVENTS = [
   'onesignal.internal.subscriptionset'
 ];
 
+const LEGACY_EVENT_MAP = {
+  'notificationPermissionChange': 'onesignal.prompt.native.permissionchanged',
+  'subscriptionChange': 'onesignal.subscription.changed',
+  'customPromptClick': 'onesignal.prompt.custom.clicked',
+}
+
 export default class Event {
+
+  /**
+   * Triggers the specified event with optional custom data.
+   * @param eventName The string event name to be emitted.
+   * @param data Any JavaScript variable to be passed with the event.
+   * @param remoteTriggerEnv If this method is being called in a different environment (e.g. was triggered in iFrame but now retriggered on main host), this is the string of the original environment for logging purposes.
+   */
   static trigger(eventName, data, remoteTriggerEnv=null) {
-    if (!eventName) {
-      log.warn('Missing event name.');
-    }
     if (!contains(SILENT_EVENTS, eventName)) {
-      if (!Environment.isBrowser()) {
-        log.debug(`(${Environment.getEnv().capitalize()}) » %c${eventName}:`, getConsoleStyle('event'), data, '(not triggered in a ServiceWorker environment)');
-        return;
+      let displayData = data;
+      if (remoteTriggerEnv) {
+        var env = `${Environment.getEnv().capitalize()} ⬸ ${remoteTriggerEnv.capitalize()}`;
       } else {
-        let displayData = data;
-        if (remoteTriggerEnv) {
-          var env = `${Environment.getEnv().capitalize()} ⬸ ${remoteTriggerEnv.capitalize()}`;
-        } else {
-          var env = Environment.getEnv().capitalize();
-        }
+        var env = Environment.getEnv().capitalize();
+      }
 
-        if (displayData || displayData === false) {
-          log.debug(`(${env}) » %c${eventName}:`, getConsoleStyle('event'), displayData);
-        } else {
-          log.debug(`(${env}) » %c${eventName}`, getConsoleStyle('event'));
-        }
-
+      if (displayData || displayData === false) {
+        log.debug(`(${env}) » %c${eventName}:`, getConsoleStyle('event'), displayData);
+      } else {
+        log.debug(`(${env}) » %c${eventName}`, getConsoleStyle('event'));
       }
     }
+
+    // Actually fire the event that can be listened to via OneSignal.on()
     if (Environment.isBrowser()) {
-      var event = new CustomEvent(eventName, {
-        bubbles: true, cancelable: true, detail: data
-      });
-      window.dispatchEvent(event);
+      if (eventName === OneSignal.EVENTS.SDK_INITIALIZED && OneSignal.initialized) {
+        return;
+      }
+      OneSignal.emit(eventName, data);
+    }
+    if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
+      let legacyEventName = LEGACY_EVENT_MAP[eventName];
+      Event._triggerLegacy(legacyEventName, data);
+    }
 
-      // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
-      if (!Environment.isHost()) {
-        var creator = opener || parent;
-        if (!creator) {
-          log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
-        } else {
-          // But only if the event matches certain events
-          if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-            OneSignal._safePostMessage(creator, {remoteEvent: eventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
-          }
+    // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
+    if (!Environment.isHost() && Environment.isBrowser()) {
+      var creator = opener || parent;
+      if (!creator) {
+        log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
+      } else {
+        // But only if the event matches certain events
+        if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
+          OneSignal._safePostMessage(creator, {remoteEvent: eventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
         }
       }
     }
+  }
+
+  /**
+   * Fires the event to be listened to via window.addEventListener().
+   * @param eventName The string event name.
+   * @param data Any JavaScript variable to be passed with the event.
+   * @private
+   */
+  static _triggerLegacy(eventName, data) {
+    var event = new CustomEvent(eventName, {
+      bubbles: true, cancelable: true, detail: data
+    });
+    // Fire the event that listeners can listen to via 'window.addEventListener()'
+    window.dispatchEvent(event);
   }
 }

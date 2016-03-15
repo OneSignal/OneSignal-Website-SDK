@@ -104,7 +104,7 @@ export default class Button extends ActiveAnimatedElement {
 
         once(window, OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (event, destroyListenerFn) => {
           destroyListenerFn();
-          let permission = event.detail.to;
+          let permission = event.to;
           if (permission === 'granted') {
             this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribed'], Message.TIMEOUT)
               .then(() => {

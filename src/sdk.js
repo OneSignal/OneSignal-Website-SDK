@@ -1,6 +1,6 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
-import Environment from './environment.js'
-import './string.js'
+import Environment from './environment.js';
+import './string.js';
 import { apiCall, sendNotification } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
@@ -10,6 +10,8 @@ import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain, decodeHtmlEntities } from './utils.js';
 import objectAssign from 'object-assign';
+import EventEmitter from 'wolfy87-eventemitter';
+import heir from 'heir';
 import swivel from 'swivel';
 
 
@@ -49,14 +51,13 @@ var OneSignal = {
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
 
-  /* Event Definitions */
   EVENTS: {
-    CUSTOM_PROMPT_CLICKED: 'onesignal.prompt.custom.clicked',
-    NATIVE_PROMPT_PERMISSIONCHANGED: 'onesignal.prompt.native.permissionchanged',
-    SUBSCRIPTION_CHANGED: 'onesignal.subscription.changed',
-    WELCOME_NOTIFICATION_SENT: 'onesignal.actions.welcomenotificationsent',
-    INTERNAL_SUBSCRIPTIONSET: 'onesignal.internal.subscriptionset',
-    SDK_INITIALIZED: 'onesignal.sdk.initialized'
+    CUSTOM_PROMPT_CLICKED: 'customPromptClick',
+    NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
+    SUBSCRIPTION_CHANGED: 'subscriptionChange',
+    WELCOME_NOTIFICATION_SENT: 'sendWelcomeNotification',
+    INTERNAL_SUBSCRIPTIONSET: 'subscriptionSet',
+    SDK_INITIALIZED: 'initialize'
   },
 
   _sendToOneSignalApi: function (url, action, inData, callback, failedCallback) {
@@ -234,9 +235,6 @@ var OneSignal = {
     Database.put("Options", {key: "defaultTitle", value: title});
   },
 
-  onCustomPromptClicked: function (event) {
-  },
-
   onNativePromptChanged: function (event) {
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
@@ -282,7 +280,7 @@ var OneSignal = {
   },
 
   _onSubscriptionChanged: function (event) {
-    if (OneSignal._isUninitiatedVisitor && event.detail === true) {
+    if (OneSignal._isUninitiatedVisitor && event === true) {
       Database.get('Ids', 'userId')
         .then(function (result) {
           let welcome_notification_opts = OneSignal._initOptions['welcomeNotification'];
@@ -305,14 +303,13 @@ var OneSignal = {
           log.error(e);
         });
     }
-    LimitStore.put('subscription.value', event.detail);
+    LimitStore.put('subscription.value', event);
   },
 
   _onDbValueRetrieved: function (event) {
   },
 
-  _onDbValueSet: function (event) {
-    var info = event.detail;
+  _onDbValueSet: function (info) {
     if (info.type === 'userId') {
       LimitStore.put('db.ids.userId', info.id);
       OneSignal._checkTrigger_eventSubscriptionChanged();
@@ -320,7 +317,7 @@ var OneSignal = {
   },
 
   _onInternalSubscriptionSet: function (event) {
-    var newSubscriptionValue = event.detail;
+    var newSubscriptionValue = event;
     LimitStore.put('setsubscription.value', newSubscriptionValue);
     OneSignal._checkTrigger_eventSubscriptionChanged();
   },
@@ -568,14 +565,13 @@ var OneSignal = {
       return;
     }
 
-    window.addEventListener(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
-    window.addEventListener(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, OneSignal.onCustomPromptClicked);
-    window.addEventListener(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
-    window.addEventListener(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    window.addEventListener(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
-    window.addEventListener(Database.EVENTS.SET, OneSignal._onDbValueSet);
-    window.addEventListener(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
-    window.addEventListener(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
+    OneSignal.on(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
+    OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNativePromptChanged);
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
+    OneSignal.on(Database.EVENTS.RETRIEVED, OneSignal._onDbValueRetrieved);
+    OneSignal.on(Database.EVENTS.SET, OneSignal._onDbValueSet);
+    OneSignal.on(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
     window.addEventListener('focus', (event) => {
       // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
       OneSignal._checkTrigger_nativePermissionChanged();
@@ -712,7 +708,7 @@ var OneSignal = {
         }
       })
       .catch(function (e) {
-        log.error(e);
+        logError(e);
       });
   },
 
@@ -1290,14 +1286,28 @@ var OneSignal = {
     });
   },
 
-  ///**
-  // * Returns a promise that resolves to the browser's current notification permission as 'default', 'granted', or 'denied'.
-  // * @param callback A callback function that will be called when the browser's current notification permission has been obtained. On failure, the first argument will be an Error object indicating the failure. On success, the first argument will be null.
-  // */
-  //getNotificationPermission: function (onComplete) {
-  //  let safariWebId = OneSignal._initOptions.safari_web_id;
-  //  let result = OneSignal._getNotificationPermission(safariWebId);
-  //},
+  /**
+   * Returns a promise that resolves to the browser's current notification permission as 'default', 'granted', or 'denied'.
+   * @param callback A callback function that will be called when the browser's current notification permission has been obtained, with one of 'default', 'granted', or 'denied'.
+   */
+  getNotificationPermission: function (onComplete) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    let safariWebId = null;
+    if (OneSignal._initOptions) {
+      safariWebId = OneSignal._initOptions.safari_web_id;
+    }
+    let result = OneSignal._getNotificationPermission(safariWebId);
+    return result.then((permission) => {
+      if (onComplete) {
+        onComplete(permission);
+      }
+      return permission;
+    });
+  },
 
   /*
    Returns the current browser-agnostic notification permission as "default", "granted", "denied".
@@ -1379,11 +1389,11 @@ var OneSignal = {
   },
 
   _triggerEvent_dbValueRetrieved: function (value) {
-    Event.trigger(Database.EVENTS.RETRIEVED, value);
+    Event.trigger(OneSignal.EVENTS.RETRIEVED, value);
   },
 
   _triggerEvent_dbValueSet: function (value) {
-    Event.trigger(Database.EVENTS.SET, value);
+    Event.trigger(OneSignal.EVENTS.SET, value);
   },
 
   _triggerEvent_internalSubscriptionSet: function (value) {
@@ -1669,6 +1679,7 @@ var OneSignal = {
       if (!name || data === undefined) {
         log.warn(`Received an event back from postMessage, but it was undefined!`);
       } else {
+        log.warn('Retriggering remote event', name, data, event.data.remoteEvent);
         Event.trigger(name, data, remoteTriggerEnv);
       }
     }
@@ -1773,6 +1784,7 @@ var OneSignal = {
   },
 
   getIdsAvailable: function (callback) {
+    console.warn("OneSignal: getIdsAvailable() is deprecated. Please use getUserId() or getRegistrationId() instead.");
     if (callback === undefined)
       return;
 
@@ -1841,7 +1853,7 @@ var OneSignal = {
     }
 
     // If Subdomain
-    if (OneSignal._initOptions.subdomainName && !isBrowserSafari()) {
+    if (OneSignal._initOptions && OneSignal._initOptions.subdomainName && !isBrowserSafari()) {
       OneSignal._isNotificationEnabledCallback.push(callback);
       if (OneSignal._iframePort) {
         OneSignal._iframePort.postMessage({getNotificationPermission: true, from: Environment.getEnv()});
@@ -1860,10 +1872,15 @@ var OneSignal = {
           if (subscriptionResult && !subscriptionResult.value)
             return callback(false);
 
-          callback(Notification.permission == "granted" && navigator.serviceWorker.controller !== null);
+          if ('serviceWorker' in navigator) {
+            callback(Notification.permission == "granted" && navigator.serviceWorker.controller !== null);
+          } else {
+            callback(Notification.permission == "granted");
+          }
         }
-        else
+        else {
           callback(false);
+        }
       })
       .catch(function (e) {
         log.error(e);
@@ -1935,7 +1952,98 @@ var OneSignal = {
   },
 
   /**
-   * Returns a promise that resolves to false if setSubscription(false) has been explicitly called at any point in time. Otherwise returns true.
+   * Returns a promise that resolves to false if setSubscription(false) is "in effect". Otherwise returns true.
+   * This means a return value of true does not mean the user is subscribed, only that the user did not call setSubcription(false).
+   * @private
+   * @returns {Promise}
+   */
+  isOptedOut: function(callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    return OneSignal._getSubscription().then(manualSubscriptionStatus => {
+      if (callback) {
+        callback(!manualSubscriptionStatus);
+      }
+      return !manualSubscriptionStatus;
+    });
+  },
+
+  /**
+   * Returns a promise that resolves once the manual subscription override has been set.
+   * @private
+   * @returns {Promise}
+   */
+  optOut: function(doOptOut, callback) {
+    if (doOptOut !== false || doOptOut !== true) {
+      throw new Error(`Invalid parameter '${doOptOut}' passed to OneSignal.optOut(). You must specify true or false.`);
+    }
+    return OneSignal.setSubscription(doOptOut).then(() => {
+        if (callback) {
+          callback();
+        }
+      }
+    );
+  },
+
+  /**
+   * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
+   * @param callback A function accepting one parameter for the OneSignal user ID.
+   * @returns {Promise.<T>}
+   */
+  getUserId: function(callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    return Database.get('Ids', 'userId').then(userIdResult => {
+      if (userIdResult) {
+        let userId = userIdResult.id;
+        if (callback) {
+          callback(userId)
+        }
+        return userId;
+      } else {
+        if (callback) {
+          callback(null);
+        }
+        return null;
+      }
+    });
+  },
+
+  /**
+   * Returns a promise that resolves to the stored OneSignal registration ID if one is set; otherwise null.
+   * @param callback A function accepting one parameter for the OneSignal registration ID.
+   * @returns {Promise.<T>}
+   */
+  getRegistrationId: function(callback) {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    return Database.get('Ids', 'registrationId').then(registrationIdResult => {
+      if (registrationIdResult) {
+        let registrationId = registrationIdResult.id;
+        if (callback) {
+          callback(registrationId)
+        }
+        return registrationId;
+      } else {
+        if (callback) {
+          callback(null);
+        }
+        return null;
+      }
+    });
+  },
+
+  /**
+   * Returns a promise that resolves to false if setSubscription(false) is "in effect". Otherwise returns true.
    * This means a return value of true does not mean the user is subscribed, only that the user did not call setSubcription(false).
    * @private
    * @returns {Promise}
@@ -2023,6 +2131,8 @@ Object.defineProperty(OneSignal, 'LOGGING', {
   enumerable: true,
   configurable: true
 });
+
+heir.merge(OneSignal, new EventEmitter());
 
 // If imported on your page.
 if (Environment.isBrowser()) {

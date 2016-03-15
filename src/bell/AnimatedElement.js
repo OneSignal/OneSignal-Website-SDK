@@ -106,7 +106,7 @@ export default class AnimatedElement {
     else return new Promise((resolve) => {
       once(window, AnimatedElement.EVENTS.SHOWN, (event, destroyListenerFn) => {
         var self = this;
-        if (event.detail === this) {
+        if (event === this) {
           destroyListenerFn();
           return resolve(this);
         }
@@ -123,7 +123,7 @@ export default class AnimatedElement {
       return Promise.resolve(this);
     else return new Promise((resolve) => {
       once(window, AnimatedElement.EVENTS.HIDDEN, (event, destroyListenerFn) => {
-        if (event.detail === this) {
+        if (event === this) {
           destroyListenerFn();
           return resolve(this);
         }
@@ -133,10 +133,10 @@ export default class AnimatedElement {
 
   static get EVENTS() {
     return {
-      SHOWING: 'onesignal.nb.animatedelement.showing',
-      SHOWN: 'onesignal.nb.animatedelement.shown',
-      HIDING: 'onesignal.nb.animatedelement.hiding',
-      HIDDEN: 'onesignal.nb.animatedelement.hidden',
+      SHOWING: 'animatedElementShowing',
+      SHOWN: 'animatedElementShown',
+      HIDING: 'animatedElementHiding',
+      HIDDEN: 'aniamtedElementHidden',
     };
   }
 

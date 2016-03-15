@@ -305,7 +305,7 @@ class ServiceWorker {
     let notificationClickHandlerMatch = 'exact';
 
     event.waitUntil(
-        ServiceWorker.logPush(notificationData.id, 'clicked')
+      ServiceWorker.logPush(notificationData.id, 'clicked')
         .then(() => Database.get('Options', 'defaultUrl'))
         .then(defaultUrlResult => {
           if (defaultUrlResult)
@@ -371,9 +371,9 @@ class ServiceWorker {
           /*
            addListenerForNotificationOpened() stuff:
            - A value is stored in IndexedDB, marking this notification's click
-               - If the launchURL isn't one of a couple special "don't open anything" values, a new window is then opened to the launchURL
-               - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
-               - The addListenerForNotificationOpened() will be fired
+           - If the launchURL isn't one of a couple special "don't open anything" values, a new window is then opened to the launchURL
+           - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
+           - The addListenerForNotificationOpened() will be fired
            */
           return Database.put("NotificationOpened", {url: launchUrl, data: eventData, timestamp: Date.now()})
             .then(() => {
@@ -431,8 +431,8 @@ class ServiceWorker {
   }
 
   /*
-      1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
-      3/2/16: Remove previous caches
+   1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
+   3/2/16: Remove previous caches
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
