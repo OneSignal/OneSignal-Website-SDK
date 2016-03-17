@@ -13,6 +13,7 @@ import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
 import swivel from 'swivel';
+import Postmam from './postmam.js';
 
 
 var OneSignal = {
@@ -47,6 +48,7 @@ var OneSignal = {
   browser: Browser,
   log: log,
   swivel: swivel,
+  postmam: Postmam,
   SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
   SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
   SERVICE_WORKER_PARAM: {},
@@ -740,6 +742,14 @@ var OneSignal = {
 
     OneSignal._initOptions = options;
 
+    let sendToOrigin = `https://${OneSignal._initOptions.subdomainName}.onesignal.com`;
+    if (Environment.isDev()) {
+      sendToOrigin = DEV_HOST;
+    }
+    let receiveFromOrigin = sendToOrigin;
+    let handshakeNonce = guid();
+    OneSignal.iframePostmam = new Postmam(node.contentWindow, sendToOrigin, receiveFromOrigin, handshakeNonce)
+
     OneSignal._installNativePromptPermissionChangedHook();
     if (options.continuePressed) {
       OneSignal.setSubscription(true);
@@ -1248,6 +1258,15 @@ var OneSignal = {
     else
       node.src += "?hostPageProtocol=" + hostPageProtocol
     document.body.appendChild(node);
+    node.onload = () => {
+      let sendToOrigin = `https://${OneSignal._initOptions.subdomainName}.onesignal.com`;
+      if (Environment.isDev()) {
+        sendToOrigin = DEV_FRAME_HOST;
+      }
+      let receiveFromOrigin = sendToOrigin;
+      let handshakeNonce = guid();
+      OneSignal.iframePostmam = new Postmam(node.contentWindow, sendToOrigin, receiveFromOrigin, handshakeNonce)
+    }
 
     OneSignal._sessionIframeAdded = true;
   },
