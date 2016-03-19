@@ -1235,8 +1235,7 @@ var OneSignal = {
           Database.get('Options', 'defaultTitle')
         ])
           .then(results => {
-            let defaultUrlResult = results[0];
-            let defaultTitleResult = results[1];
+            let [defaultUrlResult, defaultTitleResult] = results;
 
             if (!defaultUrlResult) {
               var defaultUrl = location.href;
@@ -1711,19 +1710,13 @@ var OneSignal = {
         OneSignal.getUserId(),
         OneSignal.getRegistrationId()
       ]).then(results => {
-        let userIdResult = results[0];
-        let registrationIdResult = results[1];
+        let [userId, registrationId] = results;
 
-        if (!registrationIdResult) {
-          var registrationId = null;
-        } else {
-          var registrationId = registrationIdResult.id;
-        }
-
-        if (!userIdResult) {
-          var userId = null;
-        } else {
-          var userId = userIdResult.id;
+        if (callback) {
+          callback({
+            userId: userId,
+            registrationId: registrationId
+          })
         }
       });
     }
@@ -1874,8 +1867,7 @@ var OneSignal = {
         OneSignal._getSubscription(),
         OneSignal.getUserId()
       ]).then(results => {
-        let subscription = results[0];
-        let userId = results[1];
+        let [subscription, userId] = results;
 
         if (!userId) {
           log.warn(`Cannot set the user's subscription state to '${newSubscription}' because no user ID was stored.`);
