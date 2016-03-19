@@ -64,54 +64,22 @@ export default class Postmam {
     this.isListening = true;
     log.info('(Postmam) Listening for Postmam connections.', this);
     // One of the messages will contain our MessageChannel port
-    window.addEventListener('message', this.onWindowMessageReceived.bind(this));
+    window.addEventListener('message', this.onWindowMessagePostmanConnectReceived.bind(this));
   }
 
-  onWindowMessageReceived(e) {
-    log.info(`(Postmam) (${Environment.getEnv()}) Window postmessage received:`, e);
+  startPostMessageReceive() {
+    window.addEventListener('message', this.onWindowPostMessageReceived.bind(this));
+  }
+
+  stopPostMessageReceive() {
+    window.removeEventListener('message', this.onWindowPostMessageReceived);
+  }
+
+  onWindowPostMessageReceived(e) {
+    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
-      return;
-    }
-    var { handshake, nonce } = e.data;
-    if (handshake !== Postmam.HANDSHAKE_MESSAGE || nonce !== this.handshakeNonce) {
-      log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
-      // This was not our expected handshake message
-      return;
-    }
-    // This was our expected handshake message
-    // Remove our message handler so we don't get spammed with cross-domain messages
-    window.removeEventListener('message', this.onWindowMessageReceived.bind(this));
-    // Get the message port
-    this.messagePort = e.ports[0];
-    this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
-    this.messagePort.start();
-    this.isConnected = true;
-    log.info(`(Postmam) (${Environment.getEnv()}) Connected.`);
-    this.message(Postmam.CONNECTED_MESSAGE);
-    this.emit('connect');
-  }
-
-  /**
-   * Establishes a message channel with a listening Postmam on another browsing context.
-   * @remarks Only call this if listen() is called on another page.
-   */
-  connect() {
-    log.info(`(Postmam) Establishing a connection to ${this.sendToOrigin}.`);
-    this.messagePort = this.channel.port1;
-    this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
-    this.messagePort.start();
-    this.windowReference.postMessage({
-      handshake: Postmam.HANDSHAKE_MESSAGE,
-      nonce: this.handshakeNonce
-    }, this.sendToOrigin, [this.channel.port2]);
-  }
-
-  onMessageReceived(e) {
-    log.info(`(Postmam) (${Environment.getEnv()}) Postmam message received:`, e.data);
-    if (!e.data) {
-      log.warn(`(${Environment.getEnv()}) Received an empty Postmam message:`, e);
       return;
     }
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
@@ -141,6 +109,79 @@ export default class Postmam {
     }
   }
 
+  onWindowMessagePostmanConnectReceived(e) {
+    log.info(`(Postmam) (${Environment.getEnv()}) Window postmessage for Postman connect received:`, e);
+    // Discard messages from unexpected origins; messages come frequently from other origins
+    if (!this.isSafeOrigin(e.origin)) {
+      log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
+      return;
+    }
+    var { handshake, nonce } = e.data;
+    if (handshake !== Postmam.HANDSHAKE_MESSAGE || nonce !== this.handshakeNonce) {
+      log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
+      // This was not our expected handshake message
+      return;
+    }
+    // This was our expected handshake message
+    // Remove our message handler so we don't get spammed with cross-domain messages
+    window.removeEventListener('message', this.onWindowMessagePostmanConnectReceived);
+    // Get the message port
+    this.messagePort = e.ports[0];
+    this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
+    this.messagePort.start();
+    this.isConnected = true;
+    log.info(`(Postmam) (${Environment.getEnv()}) Connected.`);
+    this.message(Postmam.CONNECTED_MESSAGE);
+    this.emit('connect');
+  }
+
+  /**
+   * Establishes a message channel with a listening Postmam on another browsing context.
+   * @remarks Only call this if listen() is called on another page.
+   */
+  connect() {
+    log.info(`(Postmam) Establishing a connection to ${this.sendToOrigin}.`);
+    this.messagePort = this.channel.port1;
+    this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
+    this.messagePort.start();
+    this.windowReference.postMessage({
+      handshake: Postmam.HANDSHAKE_MESSAGE,
+      nonce: this.handshakeNonce
+    }, this.sendToOrigin, [this.channel.port2]);
+  }
+
+  onMessageReceived(e) {
+    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e.data);
+    if (!e.data) {
+      log.warn(`(${Environment.getEnv()}) Received an empty Postmam message:`, e);
+      return;
+    }
+    let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
+    if (messageCommand === Postmam.CONNECTED_MESSAGE) {
+      this.emit('connect');
+      this.isConnected = true;
+      return;
+    }
+    let messageBundle = {
+      id: messageId,
+      command: messageCommand,
+      data: messageData,
+      source: messageSource
+    };
+    let messageBundleWithReply = objectAssign({
+      reply: this.reply.bind(this, messageBundle)
+    }, messageBundle);
+    if (this.replies.hasOwnProperty(messageId)) {
+      let replyFn = this.replies[messageId].bind(this.window);
+      let replyFnReturnValue = replyFn(messageBundleWithReply);
+      if (replyFnReturnValue === false) {
+        delete this.replies[messageId];
+      }
+    } else {
+      this.emit(messageCommand, messageBundleWithReply);
+    }
+  }
+
   reply(originalMessageBundle, data, onReply) {
     const messageBundle = {
       id: originalMessageBundle.id,
@@ -152,13 +193,42 @@ export default class Postmam {
     if (typeof onReply === 'function') {
       this.replies[messageId] = onReply;
     }
-    console.info('Replying with:', messageBundle);
     this.messagePort.postMessage(messageBundle);
   }
 
+  /**
+   * Sends via window.postMessage.
+   */
+  postMessage(command, data, onReply) {
+    if (!command || command == '') {
+      throw new Error("(Postmam) Postmam command must not be empty.");
+    }
+    if (typeof data === 'function') {
+      log.error('You passed a function to data, did you mean to pass null?')
+      return;
+    }
+    const messageBundle = {
+      id: guid(),
+      command: command,
+      data: data,
+      source: Environment.getEnv()
+    };
+    if (typeof onReply === 'function') {
+      this.replies[messageBundle.id] = onReply;
+    }
+    this.windowReference.postMessage(messageBundle, '*');
+  }
+
+  /**
+   * Sends via MessageChannel.port.postMessage
+   */
   message(command, data, onReply) {
     if (!command || command == '') {
       throw new Error("(Postmam) Postmam command must not be empty.");
+    }
+    if (typeof data === 'function') {
+      log.error('You passed a function to data, did you mean to pass null?')
+      return;
     }
     const messageBundle = {
       id: guid(),
@@ -173,9 +243,16 @@ export default class Postmam {
   }
 
   isSafeOrigin(messageOrigin) {
+    // TODO: Remove this line and fix
+    if (!OneSignal._initOptions) {
+      var subdomain = "test";
+    } else {
+      var subdomain = OneSignal._initOptions.subdomainName;
+    }
+
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank
             messageOrigin === 'https://onesignal.com' ||
-            messageOrigin === `https://${OneSignal._initOptions.subdomainName || ''}.onesignal.com` ||
+            messageOrigin === `https://${subdomain || ''}.onesignal.com` ||
             (__DEV__ && messageOrigin === DEV_FRAME_HOST) ||
             this.receiveFromOrigin === '*');
   }

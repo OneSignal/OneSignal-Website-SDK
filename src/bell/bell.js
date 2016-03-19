@@ -174,8 +174,11 @@ export default class Bell {
           return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], Message.TIMEOUT);
         })
         .then(() => {
-            this.launcher.clearIfWasInactive();
-            return this.launcher.inactivate();
+          this.launcher.clearIfWasInactive();
+          return this.launcher.inactivate();
+        })
+        .then(() => {
+          return this.updateState();
         });
     });
 
@@ -192,6 +195,9 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.unsubscribed'], Message.TIMEOUT);
+        })
+        .then(() => {
+          return this.updateState();
         });
     });
 
@@ -513,13 +519,12 @@ export default class Bell {
    * Updates the current state to the correct new current state. Returns a promise.
    */
   updateState() {
-    OneSignal.isPushNotificationsEnabled((isEnabled) => {
+    return OneSignal.isPushNotificationsEnabled().then(isEnabled => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
       if (LimitStore.getLast('notification.permission') === 'denied') {
         this.setState(Bell.STATES.BLOCKED);
       }
     });
-
   }
 
   /**
