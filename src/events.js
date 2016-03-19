@@ -78,7 +78,7 @@ export default class Event {
       } else {
         // But only if the event matches certain events
         if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-          OneSignal._safePostMessage(creator, {remoteEvent: eventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
         }
       }
     }
