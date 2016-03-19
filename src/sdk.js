@@ -52,7 +52,11 @@ var OneSignal = {
   SERVICE_WORKER_PARAM: {},
 
   POSTMAM_COMMANDS: {
-    NOTIFICATION_PERMISSION: 'postmam.notificationPermission',
+    REMOTE_NOTIFICATION_PERMISSION: 'postmam.remoteNotificationPermission',
+    REMOTE_DATABASE_GET: 'postmam.remoteDatabaseGet',
+    REMOTE_DATABASE_PUT: 'postmam.remoteDatabasePut',
+    REMOTE_DATABASE_REMOVE: 'postmam.remoteDatabaseRemove',
+    REMOTE_OPERATION_COMPLETE: 'postman.operationComplete'
   },
 
   EVENTS: {
@@ -757,9 +761,32 @@ var OneSignal = {
     OneSignal.iframePostmam.on('connect', e => {
       log.warn(`(${Environment.getEnv()}) Fired Postmam connect event!`);
     });
-    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_PERMISSION, message => {
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, message => {
       OneSignal.getNotificationPermission()
         .then(permission => message.reply(permission));
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, message => {
+      // retrievals is an array of key-value pairs e.g. [{'Ids': 'userId'}, {'Ids', 'registrationId'}]
+      let retrievals = message.data;
+      let retrievalOpPromises = [];
+      for (let retrieval of retrievals) {
+        let { table, key } = retrieval;
+        retrievalOpPromises.push(Database.get(table, key));
+      }
+      Promise.all(retrievalOpPromises)
+        .then(results => message.reply(results));
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, message => {
+      // insertions is an array of key-value pairs e.g. [{'Options': {key: persistNotification, value: '...'}}, {'Ids', {type: 'userId', id: '...'}]
+      // It's formatted that way because our IndexedDB database is formatted that way
+      let insertions = message.data;
+      let insertionOpPromises = [];
+      for (let insertion of insertions) {
+        let { table, key } = insertion;
+        insertionOpPromises.push(Database.put(table, key));
+      }
+      Promise.all(insertionOpPromises)
+        .then(results => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE));
     });
 
     OneSignal._installNativePromptPermissionChangedHook();
@@ -1378,7 +1405,7 @@ var OneSignal = {
       return new Promise((resolve, reject) => {
         if (OneSignal._isUsingSubscriptionWorkaround()) {
           // User is using our subscription workaround
-          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
+          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
             let remoteNotificationPermission = reply.data;
             resolve(remoteNotificationPermission);
           });
@@ -1888,7 +1915,7 @@ var OneSignal = {
     // TODO: Have this method delayed until OneSignal is initialized
     // If Subdomain
     if (OneSignal._isUsingSubscriptionWorkaround()) {
-      OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
+      OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
         let remoteNotificationPermission = reply.data;
         resolve(remoteNotificationPermission);
       });
@@ -1930,6 +1957,10 @@ var OneSignal = {
     });
   },
 
+  _getAppId: function() {
+    return OneSignal._app_id;
+  }
+
   setSubscription: function (newSubscription) {
     if (!isPushNotificationsSupported()) {
       log.warn("Your browser does not support push notifications.");
@@ -1937,50 +1968,66 @@ var OneSignal = {
     }
 
     return new Promise((resolve, reject) => {
-      if (OneSignal._iframePort) {
-        let uid = guid();
-        LimitStore.put(`setSubscriptionPromiseResolve.${uid}`, resolve);
-        OneSignal._iframePort.postMessage({setSubdomainState: {setSubscription: newSubscription}, promiseId: uid, from: Environment.getEnv()});
-        // This promise will eventually be resolved when the iFrame replies with setSubscriptionComplete
-      }
-      else {
-        OneSignal._getSubscription()
-          .then((currentSubscription) => {
-            if (currentSubscription != newSubscription) {
-              return Database.put("Options", {key: "subscription", value: newSubscription});
-            } else {
-              log.debug(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no change, so skipping call.');
-              resolve();
-            }
-          })
+      // Get the current subscription and user ID; will correctly retrieve values from remote iFrame IndexedDB if necessary
+      Promise.all([
+        OneSignal._getSubscription,
+        OneSignal.getUserId
+      ]).then(results => {
+        let subscriptionResult = results[0];
+        let userIdResult = results[1];
+
+        if (!subscriptionResult) {
+          var currentSubscription = true;
+        } else {
+          var currentSubscription = subscriptionResult.value;
+        }
+        if (!userIdResult) {
+          log.warn(`Cannot set the user's subscription state to '${newSubscription}' because no user ID was stored.`);
+          resolve(false);
+          return;
+        } else {
+          var currentUserId = userIdResult.id;
+        }
+
+        if (currentSubscription === newSubscription) {
+          // The user wants to set the new subscription to the same value; don't change it
+          resolve(false);
+          return;
+        }
+
+        // All checks pass, actually set the subscription
+        let dbOpPromise = null;
+        if (OneSignal._isUsingSubscriptionWorkaround()) {
+          dbOpPromise = new Promise((resolve, reject) => {
+            OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{'Options': {key: "subscription", value: newSubscription}}], reply => {
+              if (reply.data === 'complete') {
+                resolve();
+              } else {
+                reject('Tried to set remote db subscription value, but did not get complete response.');
+              }
+            });
+          });
+        } else {
+          dbOpPromise = Database.put('Options', {key: "subscription", value: newSubscription});
+        }
+
+        // Forward the result to OneSignal
+        dbOpPromise
           .then(() => {
-            return Database.get('Ids', 'userId');
-          })
-          .then((userIdResult) => {
-            if (userIdResult) {
-              return apiCall("players/" + userIdResult.id, "PUT", {
-                app_id: OneSignal._app_id,
-                notification_types: newSubscription ? 1 : -2
-              });
-            }
-            else {
-              log.warn(`Called %csetSubscription(${newSubscription})`, getConsoleStyle('code'), 'but there was no user ID, so the result was not forwarded to OneSignal.');
-              return Promise.reject('No user ID.');
-            }
+            return apiCall("players/" + currentUserId, "PUT", {
+              app_id: OneSignal._getAppId(),
+              notification_types: newSubscription ? 1 : -2
+            });
           })
           .then(() => {
             OneSignal._triggerEvent_internalSubscriptionSet(newSubscription);
-            resolve();
+            resolve(true);
           })
           .catch(e => {
-            if (e.constructor.name === 'Error') {
-              log.error(e);
-              reject(e);
-            } else {
-              resolve(e);
-            }
-          });
-      }
+            log.error(e);
+            reject(false);
+          })
+      });
     });
   },
 
@@ -2032,18 +2079,40 @@ var OneSignal = {
       return;
     }
 
-    return Database.get('Ids', 'userId').then(userIdResult => {
-      if (userIdResult) {
-        let userId = userIdResult.id;
-        if (callback) {
-          callback(userId)
-        }
-        return userId;
+    return new Promise((resolve, reject) => {
+      if (OneSignal._isUsingSubscriptionWorkaround()) {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{'Ids': 'userId'}], reply => {
+          let result = reply.data[0];
+          if (result) {
+            let userId = result.id;
+            if (callback) {
+              callback(userId)
+            }
+            resolve(userId);
+          } else {
+            if (callback) {
+              callback(null)
+            }
+            resolve(null);
+          }
+        });
       } else {
-        if (callback) {
-          callback(null);
-        }
-        return null;
+        Database.get('Ids', 'userId')
+          .then(userIdResult => {
+            if (userIdResult) {
+              let userId = userIdResult.id;
+              if (callback) {
+                callback(userId)
+              }
+              resolve(userId);
+            } else {
+              if (callback) {
+                callback(null);
+              }
+              resolve(null);
+            }
+          })
+          .catch(e => log.error(e));
       }
     });
   },
@@ -2059,18 +2128,40 @@ var OneSignal = {
       return;
     }
 
-    return Database.get('Ids', 'registrationId').then(registrationIdResult => {
-      if (registrationIdResult) {
-        let registrationId = registrationIdResult.id;
-        if (callback) {
-          callback(registrationId)
-        }
-        return registrationId;
+    return new Promise((resolve, reject) => {
+      if (OneSignal._isUsingSubscriptionWorkaround()) {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{'Ids': 'registrationId'}], reply => {
+          let result = reply.data[0];
+          if (result) {
+            let userId = result.id;
+            if (callback) {
+              callback(userId)
+            }
+            resolve(userId);
+          } else {
+            if (callback) {
+              callback(null)
+            }
+            resolve(null);
+          }
+        });
       } else {
-        if (callback) {
-          callback(null);
-        }
-        return null;
+        Database.get('Ids', 'registrationId')
+          .then(userIdResult => {
+            if (userIdResult) {
+              let userId = userIdResult.id;
+              if (callback) {
+                callback(userId)
+              }
+              resolve(userId);
+            } else {
+              if (callback) {
+                callback(null);
+              }
+              resolve(null);
+            }
+          })
+          .catch(e => log.error(e));
       }
     });
   },
@@ -2082,27 +2173,36 @@ var OneSignal = {
    * @returns {Promise}
    */
   _getSubscription: function () {
+    if (!isPushNotificationsSupported()) {
+      log.warn("Your browser does not support push notifications.");
+      return;
+    }
+
+    log.debug('Called %c_getSubscription()', getConsoleStyle('code'), `(from ${Environment.getEnv()})`);
+
     return new Promise((resolve, reject) => {
-      log.debug('Called %c_getSubscription()', getConsoleStyle('code'), `(from ${Environment.getEnv()})`);
-      var promise;
-      if (OneSignal._iframePort) {
-        let uid = guid();
-        promise = new Promise((resolve, reject) => {
-          LimitStore.put(`getSubscriptionPromiseResolve.${uid}`, resolve);
-          OneSignal._iframePort.postMessage({remoteGetDbValue: true, table: 'Options', key: 'subscription', promiseId: uid, from: Environment.getEnv()});
-          // This promise will eventually be resolved when the iFrame replies with remoteGetDbValue
+      if (OneSignal._isUsingSubscriptionWorkaround()) {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{'Options': 'subscription'}], reply => {
+          let subscriptionResult = reply.data[0];
+          if (subscriptionResult) {
+            resolve(subscriptionResult.value);
+          } else {
+            // No subscription value in remote database; return true as the default
+            resolve(true);
+          }
         });
       } else {
-        promise = Database.get('Options', 'subscription');
+        Database.get('Options', 'subscription')
+          .then(subscriptionResult => {
+            if (subscriptionResult) {
+              resolve(subscriptionResult.value);
+            } else {
+              // No subscription value in local database; return true as the default
+              resolve(true);
+            }
+          })
+          .catch(e => log.error(e));
       }
-      promise.then(subscriptionResult => {
-          resolve(!(subscriptionResult && subscriptionResult.value == false))
-        })
-        .catch(e => {
-          log.error(e);
-          reject(e);
-        });
-
     });
   },
 
