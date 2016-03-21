@@ -75,13 +75,18 @@ export default class Postmam {
     window.removeEventListener('message', this.onWindowPostMessageReceived);
   }
 
+  destroy() {
+    this.stopPostMessageReceive();
+    this.removeEvent();
+  }
+
   onWindowPostMessageReceived(e) {
-    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
+    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emit('connect');

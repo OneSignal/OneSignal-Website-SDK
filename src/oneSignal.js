@@ -353,16 +353,16 @@ export default class OneSignal {
     if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
+
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
-
-    //if (!options)
-    //  options = {};
-    //options.fromRegisterFor = true;
-    //OneSignal._sessionInit(options);
-
     if (OneSignal.isUsingSubscriptionWorkaround()) {
       OneSignal.loadPopup();
+    } else {
+      if (!options)
+        options = {};
+      options.fromRegisterFor = true;
+      OneSignal._sessionInit(options);
     }
   }
 
@@ -606,14 +606,6 @@ export default class OneSignal {
           OneSignalHelpers.triggerCustomPromptClicked('denied');
           return false;
         });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
-          OneSignalHelpers.triggerCustomPromptClicked('granted');
-          return false;
-        });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
-          OneSignalHelpers.triggerCustomPromptClicked('denied');
-          return false;
-        });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
           let newRemoteNotificationPermission = message.data;
           OneSignal.triggerNotificationPermissionChanged();
@@ -648,10 +640,21 @@ export default class OneSignal {
     OneSignal.popupPostmam.startPostMessageReceive();
 
     return new Promise((resolve, reject) => {
-      OneSignal.popupPostmam.on(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE, message => {
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
+        OneSignalHelpers.triggerCustomPromptClicked('granted');
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
+        OneSignalHelpers.triggerCustomPromptClicked('denied');
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE, message => {
         log.info('ids available from popup');
+        OneSignal.popupPostmam.stopPostMessageReceive();
         OneSignalHelpers.checkAndTriggerSubscriptionChanged();
         resolve();
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
+        log.info('Detected popup is closing.');
+        OneSignal.popupPostmam.destroy();
       });
     });
   }
@@ -1710,6 +1713,7 @@ objectAssign(OneSignal, {
     MODAL_PROMPT_REJECTED: 'postmam.modalPrompt.canceled',
     POPUP_ACCEPTED: 'postmam.popup.accepted',
     POPUP_REJECTED: 'postmam.popup.canceled',
+    POPUP_CLOSING: 'postman.popup.closing',
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
