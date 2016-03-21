@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';

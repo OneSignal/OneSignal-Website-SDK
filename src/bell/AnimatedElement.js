@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js'
 
@@ -33,6 +33,7 @@ export default class AnimatedElement {
       return Promise.resolve(this);
     }
     else return new Promise((resolve) => {
+      var self = this;
       this.state = 'showing';
       Event.trigger(AnimatedElement.EVENTS.SHOWING, this);
       if (this.hideClass)

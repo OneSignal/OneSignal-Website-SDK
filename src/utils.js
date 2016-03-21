@@ -91,18 +91,6 @@ export function isSupportedFireFox() {
   return false;
 }
 
-export function isBrowserFirefox() {
-  var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
-  return fireFoxVersion != null ;
-}
-
-export function getFirefoxVersion() {
-  var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
-  if (fireFoxVersion)
-    return parseInt(fireFoxVersion[2].substring(0, 2));
-  else return -1;
-}
-
 export function isSupportedSafari() {
   var safariVersion = navigator.appVersion.match("Version/([0-9]?).* Safari");
   if (safariVersion == null)

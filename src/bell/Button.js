@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, removeDomElement, once, when } from '../utils.js';
+import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, removeDomElement, once, when } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
@@ -98,7 +98,7 @@ export default class Button extends ActiveAnimatedElement {
         // The user is actually subscribed, register him for notifications
         OneSignal.registerForPushNotifications();
         //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
-        //if (OneSignal._getNotificationPermission(OneSignal._initOptions.safari_web_id) === 'default') {
+        //if (OneSignal.getNotificationPermission() === 'default') {
         //  this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribing'], Message.TIMEOUT)
         //}
 

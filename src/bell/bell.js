@@ -229,9 +229,11 @@ export default class Bell {
         } else {
           this.message.content = this.message.getTipForState();
           this.message.contentType = Message.TYPES.TIP;
+          console.log('Setting message:', this.message.content);
           resolve();
         }
       }).then(() => {
+          console.log('Showing message:', this.message.content);
           return this.message.show();
         })
         .then(() => {

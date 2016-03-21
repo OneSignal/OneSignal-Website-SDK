@@ -25,7 +25,13 @@ const RETRIGGER_REMOTE_EVENTS = [
   'onesignal.prompt.custom.clicked',
   'onesignal.prompt.native.permissionchanged',
   'onesignal.subscription.changed',
-  'onesignal.internal.subscriptionset'
+  'onesignal.internal.subscriptionset',
+  'dbRebuilt',
+  'initialize',
+  'subscriptionSet',
+  'sendWelcomeNotification',
+  'subscriptionChange',
+  'notificationPermissionChange'
 ];
 
 const LEGACY_EVENT_MAP = {
