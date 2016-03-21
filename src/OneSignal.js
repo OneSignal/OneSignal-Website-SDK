@@ -95,9 +95,13 @@ export default class OneSignal {
   static _storeInitialValues() {
     return Promise.all([
       OneSignal.isPushNotificationsEnabled(),
-      OneSignal.getNotificationPermission()
+      OneSignal.getNotificationPermission(),
+      OneSignal.getUserId(),
     ])
-      .then(([isPushEnabled, notificationPermission]) => {
+      .then(([isPushEnabled, notificationPermission, userId]) => {
+        if (!userId) {
+          OneSignal._isUninitiatedVisitor = true;
+        }
         return Promise.all([
           Database.put('Options', {key: 'isPushEnabled', value: isPushEnabled}),
           Database.put('Options', {key: 'notificationPermission', value: notificationPermission})
@@ -1206,59 +1210,62 @@ export default class OneSignal {
       return;
     }
 
-    function __sendTags() {
-      // Our backend considers false as removing a tag, so this allows false to be stored as a value
-      if (tags) {
-        Object.keys(tags).forEach(key => {
-          if (tags[key] === false) {
-            tags[key] = "false";
-          }
+    return new Promise((resolve, reject) => {
+      function __sendTags() {
+        // Our backend considers false as removing a tag, so this allows false to be stored as a value
+        if (tags) {
+          Object.keys(tags).forEach(key => {
+            if (tags[key] === false) {
+              tags[key] = "false";
+            }
+          });
+        }
+
+        let willResolveInFuture = false;
+
+        return new Promise((innerResolve, innerReject) => {
+          Promise.all([
+            OneSignal.getAppId(),
+            OneSignal.getUserId()
+          ])
+            .then(([appId, userId]) => {
+              if (userId) {
+                return apiCall(`players/${userId}`, 'PUT', {
+                  app_id: appId,
+                  tags: tags
+                })
+              }
+              else {
+                willResolveInFuture = true;
+                OneSignal.on(Database.EVENTS.SET, e => {
+                  if (e && e.type === 'userId') {
+                    OneSignal.sendTags(tags, callback).then(innerResolve);
+                    return true;
+                  }
+                });
+              }
+            })
+            .then(() => {
+              if (!willResolveInFuture) {
+                if (callback) {
+                  callback(tags);
+                }
+                innerResolve(tags);
+              }
+            })
+            .catch(e => {
+              log.error('sendTags:', e);
+              innerReject(e);
+            });
         });
       }
 
-      let willResolveInFuture = false;
-
-      return new Promise((resolve, reject) => {
-        Promise.all([
-          OneSignal.getAppId(),
-          OneSignal.getUserId()
-        ])
-          .then(([appId, userId]) => {
-            if (userId) {
-              return apiCall(`players/${userId}`, 'PUT', {
-                app_id: appId,
-                tags: tags
-              })
-            }
-            else {
-              willResolveInFuture = true;
-              OneSignal.on(Database.EVENTS.SET, e => {
-                OneSignal.sendTags(tags, callback);
-                // Remove this event listener
-                return true;
-              });
-            }
-          })
-          .then(() => {
-            if (willResolveInFuture) {
-              if (callback) {
-                callback(tags);
-              }
-              resolve(tags);
-            }
-          })
-          .catch(e => {
-            log.error('sendTags:', e);
-            reject(e);
-          });
-      });
-    }
-
-    if (!OneSignal.initialized) {
-      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __sendTags());
-    } else {
-      __sendTags();
-    }
+      if (!OneSignal.initialized) {
+        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __sendTags().then(resolve).catch(reject));
+      } else {
+        __sendTags().then(resolve).catch(reject);
+      }
+    });
   }
 
   static deleteTag(tag) {

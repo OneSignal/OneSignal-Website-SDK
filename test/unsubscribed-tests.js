@@ -34,7 +34,7 @@ describe('sdk.js', function(done) {
           ];
         let expectedNormalizedSubdomain = 'subdomain';
         for (let validSubdomain of validSubdomains) {
-          let actualNormalizedSubdomain = OneSignal._init_getNormalizedSubdomain(validSubdomain);
+          let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);
           expect(actualNormalizedSubdomain).to.equal(expectedNormalizedSubdomain);
         }
       });
