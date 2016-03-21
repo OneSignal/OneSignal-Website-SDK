@@ -244,10 +244,10 @@ export default class Postmam {
 
   isSafeOrigin(messageOrigin) {
     // TODO: Remove this line and fix
-    if (!OneSignal._initOptions) {
+    if (!OneSignal.config) {
       var subdomain = "test";
     } else {
-      var subdomain = OneSignal._initOptions.subdomainName;
+      var subdomain = OneSignal.config.subdomainName;
     }
 
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank

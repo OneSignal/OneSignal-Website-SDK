@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, clearDomElementChildren, once, logError } from '../utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, clearDomElementChildren, once, logError } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
@@ -37,25 +37,30 @@ export default class Dialog extends AnimatedElement {
   }
 
   getNotificationIcons() {
-    if (!OneSignal._app_id) {
-      return Promise.resolve(null);
-    }
-    let url = `${OneSignal._API_URL}apps/${OneSignal._app_id}/icon`;
-    return new Promise((resolve, reject) => {
-      fetch(url)
-        .then(function(response) {
-          return response.json()
-        }).then(function(data) {
-          if (data.errors) {
-            log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
-            reject(null);
-          }
-          resolve(data);
-        }).catch(function(ex) {
-          log.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
+    return OneSignal.getAppId()
+      .then(appId => {
+        if (!appId) {
+          return Promise.reject(null);
+        } else {
+          let url = `${OneSignal._API_URL}apps/${appId}/icon`;
+          return url;
+        }
+      }, () => {
+        log.debug('No app ID, not getting notification icon for notify button.');
+        return;
+      })
+      .then(url => fetch(url))
+      .then(response => response.json())
+      .then(data => {
+        if (data.errors) {
+          log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
           reject(null);
-        })
-    });
+        }
+        return data;
+      })
+      .catch(function (ex) {
+        log.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
+      })
   }
 
   getPlatformNotificationIcon() {

@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, isBrowserSafari, isSupportedFireFox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -62,6 +62,10 @@ export default class OneSignalHelpers {
 
   static beginTemporaryBrowserSession() {
     sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+  }
+
+  static isContinuingBrowserSession() {
+    return sessionStorage.getItem("ONE_SIGNAL_SESSION");
   }
 
   /**
@@ -169,12 +173,15 @@ export default class OneSignalHelpers {
     if (!url) {
       url = new URL(location.href).origin + '?_osp=do_not_open';
     }
-    OneSignal.getUserId()
-      .then(userId => {
-        if (userId) {
-          sendNotification(OneSignal._app_id, [userId], {'en': title}, {'en': message}, url, icon, data)
+    Promise.all([
+      OneSignal.getAppId(),
+      OneSignal.getUserId()
+    ])
+      .then(([appId, userId]) => {
+        if (userId && appId) {
+          sendNotification(appId, [userId], {'en': title}, {'en': message}, url, icon, data)
         } else {
-          log.warn('Could not send self a test notification because there is no valid user ID.');
+          log.warn('Could not send self a test notification because there is no valid user ID or app ID.');
         }
       });
   }
@@ -208,7 +215,7 @@ export default class OneSignalHelpers {
   }
 
   static getPromptOptionsQueryString() {
-    var message_localization_opts = OneSignal._initOptions['promptOptions'];
+    var message_localization_opts = OneSignal.config['promptOptions'];
     var message_localization_opts_str = '';
     if (message_localization_opts) {
       var message_localization_params = ['actionMessage',
@@ -237,5 +244,37 @@ export default class OneSignalHelpers {
     Event.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
       result: clickResult
     });
+  }
+
+  static saveAppId() {
+
+  }
+
+  static autoCorrectSubdomain(inputSubdomain) {
+    let normalizedSubdomain = OneSignalHelpers.getNormalizedSubdomain(inputSubdomain);
+    if (normalizedSubdomain !== inputSubdomain) {
+      log.warn(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
+    }
+    return normalizedSubdomain;
+  }
+
+  static createHiddenDomIFrame(url) {
+    let node = document.createElement("iframe");
+    node.style.display = "none";
+    node.src = url;
+    document.body.appendChild(node);
+    return node;
+  }
+
+  static openSubdomainPopup(url) {
+    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;
+    var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;
+    var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+    var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+    var childWidth = OneSignal._windowWidth;
+    var childHeight = OneSignal._windowHeight;
+    var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
+    var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
+    return window.open(url, "_blank", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
   }
 }

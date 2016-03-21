@@ -229,11 +229,9 @@ export default class Bell {
         } else {
           this.message.content = this.message.getTipForState();
           this.message.contentType = Message.TYPES.TIP;
-          console.log('Setting message:', this.message.content);
           resolve();
         }
       }).then(() => {
-          console.log('Showing message:', this.message.content);
           return this.message.show();
         })
         .then(() => {
@@ -280,9 +278,17 @@ export default class Bell {
       }
     });
 
-    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, e => {
-      let isSubscribed = e;
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
       this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+    });
+
+    OneSignal.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+      if (state.to === Bell.STATES.SUBSCRIBED) {
+        this.launcher.inactivate();
+      } else if (state.to === Bell.STATES.UNSUBSCRIBED ||
+                              Bell.STATES.BLOCKED) {
+        this.launcher.activate();
+      }
     });
 
     OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {

@@ -44,60 +44,31 @@ export function decodeHtmlEntities(text) {
 }
 
 export function isPushNotificationsSupported () {
-  var chromeVersion = navigator.appVersion.match(/Chrome\/(.*?) /);
+  if (Browser.ios || Browser.ipod || Browser.iphone || Browser.ipad)
+    return false;
 
-  if (Browser.firefox && Browser.version == '44.0' && (Browser.mobile || Browser.tablet)) {
+  if (Browser.msedge || Browser.msie)
+    return false;
+
+  /* Firefox on Android push notifications not supported until at least 47/48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
+  if (Browser.firefox && Number(Browser.version) < 47 && (Browser.mobile || Browser.tablet)) {
     return false;
   }
 
-  if (isSupportedFireFox())
+  if (Browser.firefox && Number(Browser.version) >= 44)
     return true;
 
-  if (isSupportedSafari())
+  if (Browser.safari && Number(Browser.version) >= 7.1)
     return true;
-
-  // Chrome is not found in appVersion.
-  if (!chromeVersion)
-    return false;
-
-  // Microsoft Edge
-  if (navigator.appVersion.match(/Edge/))
-    return false;
 
   // Android Chrome WebView
   if (navigator.appVersion.match(/ wv/))
     return false;
 
-  // Opera
-  if (navigator.appVersion.match(/OPR\//))
-    return false;
+  if (Browser.chrome && Number(Browser.version) >= 42)
+    return true;
 
-  // The user is on iOS
-  if (/iPad|iPhone|iPod/.test(navigator.platform))
-    return false;
-
-  return parseInt(chromeVersion[1].substring(0, 2)) > 41;
-}
-
-export function isBrowserSafari() {
-  var safariVersion = navigator.appVersion.match("Version/([0-9]?).* Safari");
-  return safariVersion != null ;
-}
-
-export function isSupportedFireFox() {
-  var fireFoxVersion = navigator.userAgent.match(/(Firefox\/)([0-9]{2,}\.[0-9]{1,})/);
-  if (fireFoxVersion)
-    return parseInt(fireFoxVersion[2].substring(0, 2)) > 43;
   return false;
-}
-
-export function isSupportedSafari() {
-  var safariVersion = navigator.appVersion.match("Version/([0-9]?).* Safari");
-  if (safariVersion == null)
-    return false;
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent))
-    return false;
-  return (parseInt(safariVersion[1]) > 7);
 }
 
 export function removeDomElement(selector) {
@@ -298,6 +269,16 @@ export function delay(durationMs) {
 
 export function nothing() {
   return Promise.resolve();
+}
+
+export function executeAndTimeoutPromiseAfter(promise, milliseconds, displayError) {
+  let timeoutPromise = new Promise(resolve => setTimeout(() => resolve('promise-timed-out'), milliseconds));
+  return Promise.race([promise, timeoutPromise]).then(value => {
+    if (value === 'promise-timed-out') {
+      log.error(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
+      return Promise.reject(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
+    }
+  });
 }
 
 export function when(condition, promiseIfTrue, promiseIfFalse) {

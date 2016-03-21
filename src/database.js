@@ -18,34 +18,40 @@ export default class Database {
     }
   }
 
-  static _getReturnHelper(table, result, resolve) {
+  static _getReturnHelper(table, key, result) {
     switch (table) {
       case 'Options':
-        if (result) {
-          resolve(result.value);
+        if (result && key) {
+          return result.value;
+        } else if (result && !key) {
+          return result;
         } else {
-          resolve(null);
+          return null;
         }
         break;
       case 'Ids':
-        if (result) {
-          resolve(result.id);
+        if (result && key) {
+          return result.id;
+        } else if (result && !key) {
+          return result;
         } else {
-          resolve(null);
+          return null;
         }
         break;
       case 'NotificationOpened':
-        if (result) {
-          resolve({data: result.data, timestamp: result.timestamp});
+        if (result && key) {
+          return {data: result.data, timestamp: result.timestamp};
+        } else if (result && !key) {
+          return result;
         } else {
-          resolve(null);
+          return null;
         }
         break;
       default:
         if (result) {
-          resolve(result);
+          return result;
         } else {
-          resolve(null);
+          return null;
         }
         break;
     }
@@ -59,21 +65,18 @@ export default class Database {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   static get(table, key) {
-    // TODO: Fire event properly when Database.get(table) is called without a key to get all values of the table
-    // TODO: Event.trigger(IndexedDb.EVENTS.RETRIEVED, cursorResult.value);
     return new Promise((resolve, reject) => {
       let databaseValue = null;
       if (!Environment.isServiceWorker() && OneSignal.isUsingSubscriptionWorkaround()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{table: table, key: key}], reply => {
           let result = reply.data[0];
-          let cleanResult = Database._getReturnHelper(table, result, resolve);
-          Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: cleanResult});
-          resolve(cleanResult);
+          Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: result});
+          resolve(result);
         });
       } else {
         return IndexedDb.get(table, key)
           .then(result => {
-            let cleanResult = Database._getReturnHelper(table, result, resolve);
+            let cleanResult = Database._getReturnHelper(table, key, result);
             Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: cleanResult});
             resolve(cleanResult);
           })

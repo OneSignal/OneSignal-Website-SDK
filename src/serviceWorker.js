@@ -3,7 +3,7 @@ import Environment from './environment.js'
 import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
 import Database from './database.js';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
