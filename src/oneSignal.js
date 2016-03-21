@@ -409,12 +409,12 @@ export default class OneSignal {
     let receiveFromOrigin = options.origin;
     let handshakeNonce = getUrlQueryParam('session');
 
-    OneSignal._thisIsThePopup = options.thisIsThePopup;
+    OneSignal._thisIsThePopup = options.isPopup;
     if (Environment.isPopup() || OneSignal._thisIsThePopup) {
       OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin, handshakeNonce);
     }
 
-    OneSignal._thisIsTheModal = options.thisIsTheModal;
+    OneSignal._thisIsTheModal = options.isModal;
     if (OneSignal._thisIsTheModal) {
       OneSignal.modalPostmam = new Postmam(this.parent, sendToOrigin, receiveFromOrigin, handshakeNonce);
     }
@@ -639,7 +639,7 @@ export default class OneSignal {
     }
     let receiveFromOrigin = sendToOrigin;
     let handshakeNonce = OneSignal._sessionNonce;
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(`${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&thisIsThePopup=true`);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(`${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup`);
 
     if (subdomainPopup)
       subdomainPopup.focus();
@@ -705,7 +705,7 @@ export default class OneSignal {
           ])
             .then(([appId, isPushEnabled, notificationPermission]) => {
               log.debug('Opening HTTPS modal prompt.');
-              let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&thisIsTheModal=true`;
+              let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
               let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
 
               let sendToOrigin = `https://onesignal.com`;
