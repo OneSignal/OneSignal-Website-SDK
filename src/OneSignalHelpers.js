@@ -266,6 +266,28 @@ export default class OneSignalHelpers {
     return node;
   }
 
+  static createSubscriptionDomModal(url) {
+    let iframeContainer = document.createElement('div');
+    iframeContainer.setAttribute('id', 'OneSignal-iframe-modal');
+    iframeContainer.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3000000000; display: block"></div>';
+    document.body.appendChild(iframeContainer);
+
+    let iframeContainerStyle = document.createElement('style');
+    iframeContainerStyle.innerHTML = `@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} } @media (min-width: 561px) { .OneSignal-permission-iframe { top: 50%; left: 50%; margin-left: -275px; margin-top: -248px;} }`;
+    document.getElementsByTagName('head')[0].appendChild(iframeContainerStyle);
+
+    let iframe = document.createElement("iframe");
+    iframe.className = "OneSignal-permission-iframe"
+    iframe.style.cssText = "background: rgba(255, 255, 255, 1); position: fixed;";
+    iframe.setAttribute('frameborder', '0');
+    iframe.width = OneSignal._windowWidth.toString();
+    iframe.height = OneSignal._windowHeight.toString();
+    iframe.src = url;
+
+    document.getElementById("notif-permission").appendChild(iframe);
+    return iframe;
+  }
+
   static openSubdomainPopup(url) {
     var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;
     var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;

@@ -213,6 +213,20 @@ export default class OneSignal {
 
     OneSignalHelpers.fixWordpressManifestIfMisplaced();
 
+    if (OneSignal.isUsingSubscriptionWorkaround()) {
+      if (OneSignal.config.subdomainName) {
+        OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
+      }
+      if (__DEV__)
+        OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';
+      else
+        OneSignal.iframePopupModalUrl = 'https://' + OneSignal.config.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+    } else {
+      if (__DEV__)
+        OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttps';
+      else
+        OneSignal.iframePopupModalUrl = 'https://onesignal.com/sdks/initOneSignalHttps';
+    }
 
     let subdomainPromise = Promise.resolve();
     if (OneSignal.isUsingSubscriptionWorkaround()) {
@@ -400,6 +414,11 @@ export default class OneSignal {
       OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin, handshakeNonce);
     }
 
+    OneSignal._thisIsTheModal = options.thisIsTheModal;
+    if (OneSignal._thisIsTheModal) {
+      OneSignal.modalPostmam = new Postmam(this.parent, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    }
+
     OneSignal.iframePostmam = new Postmam(this.window, sendToOrigin, receiveFromOrigin, handshakeNonce);
     OneSignal.iframePostmam.listen();
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, e => {
@@ -526,17 +545,6 @@ export default class OneSignal {
    */
   static loadSubdomainIFrame() {
     let subdomainLoadPromise = new Promise((resolve, reject) => {
-        // TODO: Investigate what the difference is between this iFrame for HTTP/HTTPS websites
-        // OneSignal.iframePopupModalUrl = 'https://onesignal.com/sdks/initOneSignalHttps';
-        OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
-
-      if (__DEV__)
-          OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';
-        else
-          OneSignal.iframePopupModalUrl = 'https://' + OneSignal.config.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
-
-      // --------
-
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
       // TODO: Previously, '?session=true' added to the iFrame's URL meant this was not a new tab (same page refresh) and that the HTTP iFrame should not re-register the service worker. Now that is gone, find an alternative way to do that.
@@ -631,7 +639,7 @@ export default class OneSignal {
     }
     let receiveFromOrigin = sendToOrigin;
     let handshakeNonce = OneSignal._sessionNonce;
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(`${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}`);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(`${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&thisIsThePopup=true`);
 
     if (subdomainPopup)
       subdomainPopup.focus();
@@ -666,84 +674,73 @@ export default class OneSignal {
       .then(() => {
         var hostPageProtocol = `${location.protocol}//`;
 
-        // If HTTP or using subdomain mode
-        if (OneSignal.isUsingSubscriptionWorkaround()) {
-          if (options.fromRegisterFor) {
-            OneSignal.loadPopup();
-          }
-        }
-        else {
-          if (Browser.safari) {
-            if (OneSignal.config.safari_web_id) {
-              OneSignal.getAppId()
-                .then(appId => {
-                  window.safari.pushNotification.requestPermission(
-                    `${OneSignal._API_URL}safari`,
-                    OneSignal.config.safari_web_id,
-                    {app_id: appId},
-                      pushResponse => {
-                      log.info('Safari Registration Result:', pushResponse);
-                      if (pushResponse.deviceToken) {
-                        OneSignalHelpers.registerWithOneSignal(appId, pushResponse.deviceToken.toLowerCase(), OneSignalHelpers.getDeviceTypeForBrowser());
-                      }
-                      else {
-                        OneSignalHelpers.beginTemporaryBrowserSession();
-                      }
-                      OneSignal.triggerNotificationPermissionChanged();
+        if (Browser.safari) {
+          if (OneSignal.config.safari_web_id) {
+            OneSignal.getAppId()
+              .then(appId => {
+                window.safari.pushNotification.requestPermission(
+                  `${OneSignal._API_URL}safari`,
+                  OneSignal.config.safari_web_id,
+                  {app_id: appId},
+                    pushResponse => {
+                    log.info('Safari Registration Result:', pushResponse);
+                    if (pushResponse.deviceToken) {
+                      OneSignalHelpers.registerWithOneSignal(appId, pushResponse.deviceToken.toLowerCase(), OneSignalHelpers.getDeviceTypeForBrowser());
                     }
-                  );
-                })
-                .catch(e => log.error(e));
-            }
+                    else {
+                      OneSignalHelpers.beginTemporaryBrowserSession();
+                    }
+                    OneSignal.triggerNotificationPermissionChanged();
+                  }
+                );
+              })
+              .catch(e => log.error(e));
           }
-          else if (options.modalPrompt && options.fromRegisterFor) { // If HTTPS - Show modal
-            if (!isPushNotificationsSupported()) {
-              log.warn('An attempt was made to open the HTTPS modal permission prompt, but push notifications are not supported on this browser. Opening canceled.');
-              return;
-            }
-            Promise.all([
-              OneSignal.getAppId(),
-              OneSignal.isPushNotificationsEnabled()
-            ])
-              .then(([appId, isPushEnabled]) => {
-                var element = document.createElement('div');
-                element.setAttribute('id', 'OneSignal-iframe-modal');
-                element.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3000000000; display: block"></div>';
-                document.body.appendChild(element);
-
-                var iframeStyle = document.createElement('style');
-                iframeStyle.innerHTML = "@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} }"
-                  + "@media (min-width: 561px) { .OneSignal-permission-iframe { top: 50%; left: 50%; margin-left: -275px; margin-top: -248px;} }";
-                document.getElementsByTagName('head')[0].appendChild(iframeStyle);
-
-                var message_localization_opts_str = OneSignalHelpers.getPromptOptionsQueryString();
-
-                var iframeNode = document.createElement("iframe");
-                iframeNode.className = "OneSignal-permission-iframe"
-                iframeNode.style.cssText = "background: rgba(255, 255, 255, 1); position: fixed;";
-                iframeNode.src = OneSignal.iframePopupModalUrl
-                  + '?'
-                  + message_localization_opts_str
-                  + '&id=' + appId
-                  + '&httpsPrompt=true'
-                  + '&pushEnabled=' + pushEnabled
-                  + '&permissionBlocked=' + (typeof Notification === "undefined" || Notification.permission == "denied")
-                  + '&hostPageProtocol=' + hostPageProtocol;
-                iframeNode.setAttribute('frameborder', '0');
-                iframeNode.width = OneSignal._windowWidth.toString();
-                iframeNode.height = OneSignal._windowHeight.toString();
-
-                log.debug('Opening HTTPS modal prompt.');
-                document.getElementById("notif-permission").appendChild(iframeNode);
-              });
-          }
-          else if ('serviceWorker' in navigator) // If HTTPS - Show native prompt
-            OneSignal._registerForW3CPush(options);
-          else
-            log.debug('Service workers are not supported in this browser.');
-
-          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
         }
+        else if (options.modalPrompt && options.fromRegisterFor) { // If HTTPS - Show modal
+          Promise.all([
+            OneSignal.getAppId(),
+            OneSignal.isPushNotificationsEnabled(),
+            OneSignal.getNotificationPermission()
+          ])
+            .then(([appId, isPushEnabled, notificationPermission]) => {
+              log.debug('Opening HTTPS modal prompt.');
+              let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&thisIsTheModal=true`;
+              let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
+
+              let sendToOrigin = `https://onesignal.com`;
+              if (Environment.isDev()) {
+                sendToOrigin = DEV_FRAME_HOST;
+              }
+              let receiveFromOrigin = sendToOrigin;
+              OneSignal.modalPostmam = new Postmam(iframeModal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
+              OneSignal.modalPostmam.startPostMessageReceive();
+
+              return new Promise((resolve, reject) => {
+                OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
+                  let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
+                  iframeModalDom.parentNode.removeChild(iframeModalDom);
+                  OneSignal.modalPostmam.destroy();
+                  OneSignalHelpers.triggerCustomPromptClicked('granted');
+                  OneSignal.registerForPushNotifications();
+                });
+                OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
+                  let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
+                  iframeModalDom.parentNode.removeChild(iframeModalDom);
+                  OneSignal.modalPostmam.destroy();
+                  OneSignalHelpers.triggerCustomPromptClicked('denied');
+                });
+                OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
+                  log.info('Detected modal is closing.');
+                  OneSignal.modalPostmam.destroy();
+                });
+              });
+            });
+        }
+        else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
+          OneSignal._registerForW3CPush(options);
+
+        Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       });
   }
 
@@ -1015,9 +1012,10 @@ export default class OneSignal {
     if (Browser.safari) {
       return false;
     }
-    return Environment.isHost() &&
+    let result = Environment.isHost() &&
       (OneSignal.config.subdomainName ||
       location.protocol === 'http:');
+    return !!result;
   }
 
   /*

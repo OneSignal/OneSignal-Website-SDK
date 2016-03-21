@@ -86,7 +86,7 @@ export default class Postmam {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
-    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e);
+    //console.log(`(Postmam) (${Environment.getEnv()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emit('connect');
@@ -115,12 +115,13 @@ export default class Postmam {
   }
 
   onWindowMessagePostmanConnectReceived(e) {
-    log.info(`(Postmam) (${Environment.getEnv()}) Window postmessage for Postman connect received:`, e);
+    //log.info(`(Postmam) (${Environment.getEnv()}) Window postmessage for Postman connect received:`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
+    console.log(`onWindowMessagePostmanConnectReceived: ${e}`);
     var { handshake, nonce } = e.data;
     if (handshake !== Postmam.HANDSHAKE_MESSAGE || nonce !== this.handshakeNonce) {
       log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
