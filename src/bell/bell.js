@@ -393,6 +393,7 @@ export default class Bell {
           throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
         }
 
+        this.patchSafariSvgFilterBug();
         this.applyOffsetIfSpecified();
         this.setCustomColorsIfSpecified();
 
@@ -417,6 +418,17 @@ export default class Bell {
           .catch((e) => log.error(e));
       }).catch(e => logError(e));
     });
+  }
+
+  patchSafariSvgFilterBug() {
+    if (!(Browser.safari && Number(Browser.version) >= 9.1)) {
+      let bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
+      let badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
+      let dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
+      this.graphic.setAttribute('style', `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`);
+      this.badge.element.setAttribute('style', `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`);
+      this.dialog.element.setAttribute('style', `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`);
+    }
   }
 
   applyOffsetIfSpecified() {
