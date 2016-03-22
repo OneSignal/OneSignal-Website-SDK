@@ -224,20 +224,20 @@ export default class OneSignal {
         } else {
           log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
         }
-        if (__DEV__)
-          OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';
+        OneSignal.iframePopupModalUrlSuffix = Environment.isBeta() ? 'Beta' : '';
+        if (Environment.isDev())
+          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/dev_sdks/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
         else
-          OneSignal.iframePopupModalUrl = 'https://' + OneSignal.config.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+          OneSignal.iframePopupModalUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/sdks/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
       } else {
-        if (__DEV__)
-          OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttps';
+        if (Environment.isDev())
+          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/dev_sdks/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
         else
-          OneSignal.iframePopupModalUrl = 'https://onesignal.com/sdks/initOneSignalHttps';
+          OneSignal.iframePopupModalUrl = `https://onesignal.com/sdks/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
       }
 
       let subdomainPromise = Promise.resolve();
       if (OneSignal.isUsingSubscriptionWorkaround()) {
-        log.debug('Loading subdomain iFrame...');
         subdomainPromise = OneSignal.loadSubdomainIFrame(`${location.protocol}//`)
           .then(() => log.info('Subdomain iFrame loaded'))
       }
@@ -568,6 +568,7 @@ export default class OneSignal {
       if (OneSignalHelpers.isContinuingBrowserSession()) {
         iframeUrl += `&continuingSession=true`;
       }
+      log.debug('Loading subdomain iFrame:', iframeUrl);
       let iframe = OneSignalHelpers.createHiddenDomIFrame(iframeUrl);
       iframe.onload = () => {
         let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
@@ -647,15 +648,15 @@ export default class OneSignal {
 
   static loadPopup() {
     // Important: Don't use any promises until the window is opened, otherwise the popup will be blocked
-    log.debug('Opening popup window.');
-
     let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
     if (Environment.isDev()) {
       sendToOrigin = DEV_FRAME_HOST;
     }
     let receiveFromOrigin = sendToOrigin;
     let handshakeNonce = OneSignal._sessionNonce;
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(`${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup`);
+    let popupUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup`;
+    log.info('Opening popup window:', popupUrl);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(popupUrl);
 
     if (subdomainPopup)
       subdomainPopup.focus();

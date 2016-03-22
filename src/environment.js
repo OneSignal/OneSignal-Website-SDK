@@ -72,6 +72,14 @@ export default class Environment {
     return __DEV__;
   }
 
+  static isBeta() {
+    return __BETA__;
+  }
+
+  static isTest() {
+    return __TEST__;
+  }
+
   static getLanguage() {
     return navigator.language ?
           (navigator.language.length > 3 ? navigator.language.substring(0, 2) : navigator.language) :
