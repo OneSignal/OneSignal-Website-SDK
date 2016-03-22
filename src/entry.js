@@ -8,10 +8,10 @@ if (Environment.isBrowser()) {
   if (typeof OneSignal !== "undefined")
     var predefinedOneSignalPushes = OneSignal;
 
-  require("expose?OneSignal!./sdk.js");
+  require("expose?OneSignal!./OneSignal.js");
 
   if (predefinedOneSignalPushes)
-    OneSignal._process_pushes(predefinedOneSignalPushes);
+    OneSignal._processPushes(predefinedOneSignalPushes);
 }
 else if (Environment.isServiceWorker()) {
   // We're running as the service worker

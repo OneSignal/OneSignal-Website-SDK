@@ -60,24 +60,24 @@ module.exports = {
     }),
     new webpack.optimize.DedupePlugin(),
     new webpack.optimize.AggressiveMergingPlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        sequences: false,
-        dead_code: false,
-        conditionals: false,
-        booleans: false,
-        unused: false,
-        if_return: false,
-        join_vars: false,
-        drop_console: false,
-        drop_debugger: false
-      },
-      mangle: false,
-      output: {
-        comments: false
-      }
-    }),
+    //new webpack.optimize.UglifyJsPlugin({
+    //  sourceMap: true,
+    //  compress: {
+    //    sequences: false,
+    //    dead_code: false,
+    //    conditionals: false,
+    //    booleans: false,
+    //    unused: false,
+    //    if_return: false,
+    //    join_vars: false,
+    //    drop_console: false,
+    //    drop_debugger: false
+    //  },
+    //  mangle: false,
+    //  output: {
+    //    comments: false
+    //  }
+    //}),
     function() {
       this.plugin('watch-run', function(watching, callback) {
         console.log();
