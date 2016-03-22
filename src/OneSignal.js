@@ -225,15 +225,20 @@ export default class OneSignal {
           log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
         }
         OneSignal.iframePopupModalUrlSuffix = Environment.isBeta() ? 'Beta' : '';
+        OneSignal.iframePopupModalUrlRoute = 'sdks';
         if (Environment.isDev())
-          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/dev_sdks/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
+          OneSignal.iframePopupModalUrlRoute = 'dev_sdks';
+        if (Environment.isBeta())
+          OneSignal.iframePopupModalUrlRoute = 'beta_sdks';
+        if (Environment.isDev())
+          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
         else
-          OneSignal.iframePopupModalUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/sdks/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
+          OneSignal.iframePopupModalUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
       } else {
         if (Environment.isDev())
-          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/dev_sdks/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
+          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
         else
-          OneSignal.iframePopupModalUrl = `https://onesignal.com/sdks/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
+          OneSignal.iframePopupModalUrl = `https://onesignal.com/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
       }
 
       let subdomainPromise = Promise.resolve();
@@ -1712,8 +1717,8 @@ objectAssign(OneSignal, {
   objectAssign: objectAssign,
   checkAndTriggerSubscriptionChanged: OneSignalHelpers.checkAndTriggerSubscriptionChanged,
   sendSelfNotification: OneSignalHelpers.sendSelfNotification,
-  SERVICE_WORKER_UPDATER_PATH: "OneSignalSDKUpdaterWorker.js",
-  SERVICE_WORKER_PATH: "OneSignalSDKWorker.js",
+  SERVICE_WORKER_UPDATER_PATH: (Environment.isBeta() ? 'OneSignalSDKBetaUpdaterWorker.js' : 'OneSignalSDKUpdaterWorker.js'),
+  SERVICE_WORKER_PATH: (Environment.isBeta() ? 'OneSignalSDKBetaWorker.js' : 'OneSignalSDKWorker.js'),
   SERVICE_WORKER_PARAM: {},
 
   POSTMAM_COMMANDS: {

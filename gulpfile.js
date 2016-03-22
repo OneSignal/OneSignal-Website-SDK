@@ -19,10 +19,23 @@ gulp.task("default", function() {
   }
 });
 
+function transferFileRemote(localFilePath, remoteFilePath) {
+  return `
+    #!/bin/bash
+    for i in \`seq 1 3\`;
+    do
+       scp ${localFilePath} deploy@frontend-v2-00$i:${remoteFilePath}
+    done
+  `;
+}
+
 gulp.task("transfer-beta-sdk", shell.task([
-  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@frontend-v2-001:/var/www/OneSignal/current/public/sdks/',
-  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@frontend-v2-002:/var/www/OneSignal/current/public/sdks/',
-  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@frontend-v2-003:/var/www/OneSignal/current/public/sdks/',
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBeta.js'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBeta.js.map'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBetaWorker.js'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBetaWorker.js.map'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBetaUpdaterWorker.js'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBetaUpdaterWorker.js.map'),
 ]));
 
 gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
