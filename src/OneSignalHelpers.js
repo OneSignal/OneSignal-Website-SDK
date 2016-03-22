@@ -207,11 +207,9 @@ export default class OneSignalHelpers {
   }
 
   static getNormalizedSubdomain(subdomain) {
-    if (!subdomain) {
-      log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
-      throw new Error('OneSignal: Missing required init parameter subdomainName. You must supply a subdomain name to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)')
+    if (subdomain) {
+      return normalizeSubdomain(subdomain);
     }
-    return normalizeSubdomain(subdomain);
   }
 
   static getPromptOptionsQueryString() {

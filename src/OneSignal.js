@@ -221,6 +221,8 @@ export default class OneSignal {
       if (OneSignal.isUsingSubscriptionWorkaround()) {
         if (OneSignal.config.subdomainName) {
           OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
+        } else {
+          log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
         }
         if (__DEV__)
           OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';

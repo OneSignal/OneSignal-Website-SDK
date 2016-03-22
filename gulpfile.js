@@ -20,7 +20,9 @@ gulp.task("default", function() {
 });
 
 gulp.task("transfer-beta-sdk", shell.task([
-  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@104.130.21.142:/var/www/OneSignal/current/public/sdks/'
+  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@frontend-v2-001:/var/www/OneSignal/current/public/sdks/',
+  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@frontend-v2-002:/var/www/OneSignal/current/public/sdks/',
+  'scp ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js ~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map deploy@frontend-v2-003:/var/www/OneSignal/current/public/sdks/',
 ]));
 
 gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
