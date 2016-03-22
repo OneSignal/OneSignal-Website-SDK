@@ -165,6 +165,7 @@ export default class Bell {
     // Install event hooks
     OneSignal.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
+      this._ignoreSubscriptionState = true;
       OneSignal.setSubscription(true)
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
@@ -174,6 +175,7 @@ export default class Bell {
           return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], Message.TIMEOUT);
         })
         .then(() => {
+          this._ignoreSubscriptionState = false;
           this.launcher.clearIfWasInactive();
           return this.launcher.inactivate();
         })
@@ -279,7 +281,9 @@ export default class Bell {
     });
 
     OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
-      this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+      if (!this._ignoreSubscriptionState) {
+        this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+      }
     });
 
     OneSignal.on(Bell.EVENTS.STATE_CHANGED, (state) => {
