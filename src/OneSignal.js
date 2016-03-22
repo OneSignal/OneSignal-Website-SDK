@@ -218,18 +218,19 @@ export default class OneSignal {
     function __init() {
       OneSignalHelpers.fixWordpressManifestIfMisplaced();
 
+      OneSignal.iframePopupModalUrlRoute = 'sdks';
+      if (Environment.isDev())
+        OneSignal.iframePopupModalUrlRoute = 'dev_sdks';
+      if (Environment.isBeta())
+        OneSignal.iframePopupModalUrlRoute = 'beta_sdks';
+      OneSignal.iframePopupModalUrlSuffix = Environment.isBeta() ? 'Beta' : '';
+
       if (OneSignal.isUsingSubscriptionWorkaround()) {
         if (OneSignal.config.subdomainName) {
           OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
         } else {
           log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
         }
-        OneSignal.iframePopupModalUrlSuffix = Environment.isBeta() ? 'Beta' : '';
-        OneSignal.iframePopupModalUrlRoute = 'sdks';
-        if (Environment.isDev())
-          OneSignal.iframePopupModalUrlRoute = 'dev_sdks';
-        if (Environment.isBeta())
-          OneSignal.iframePopupModalUrlRoute = 'beta_sdks';
         if (Environment.isDev())
           OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
         else
@@ -726,8 +727,8 @@ export default class OneSignal {
             OneSignal.getNotificationPermission()
           ])
             .then(([appId, isPushEnabled, notificationPermission]) => {
-              log.debug('Opening HTTPS modal prompt.');
               let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
+              log.info('Opening HTTPS modal prompt:', iframeModalUrl);
               let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
 
               let sendToOrigin = `https://onesignal.com`;
