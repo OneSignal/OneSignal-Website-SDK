@@ -215,57 +215,67 @@ export default class OneSignal {
       return;
     }
 
-    OneSignalHelpers.fixWordpressManifestIfMisplaced();
+    function __init() {
+      OneSignalHelpers.fixWordpressManifestIfMisplaced();
 
-    if (OneSignal.isUsingSubscriptionWorkaround()) {
-      if (OneSignal.config.subdomainName) {
-        OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
-      }
-      if (__DEV__)
-        OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';
-      else
-        OneSignal.iframePopupModalUrl = 'https://' + OneSignal.config.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
-    } else {
-      if (__DEV__)
-        OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttps';
-      else
-        OneSignal.iframePopupModalUrl = 'https://onesignal.com/sdks/initOneSignalHttps';
-    }
-
-    let subdomainPromise = Promise.resolve();
-    if (OneSignal.isUsingSubscriptionWorkaround()) {
-      log.info('Loading subdomain iFrame...');
-      subdomainPromise = OneSignal.loadSubdomainIFrame(`${location.protocol}//`)
-        .then(() => log.info('Subdomain iFrame loaded'))
-    }
-
-    OneSignal.on(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
-    OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNotificationPermissionChange);
-    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
-    OneSignal.on(Database.EVENTS.SET, OneSignal._onDbValueSet);
-    OneSignal.on(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
-    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
-    subdomainPromise.then(() => {
-      window.addEventListener('focus', (event) => {
-        // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
-        OneSignalHelpers.checkAndTriggerNotificationPermissionChanged();
-      });
-
-      // If Safari - add 'fetch' pollyfill if it isn't already added.
-      if (Browser.safari && typeof window.fetch == "undefined") {
-        var s = document.createElement('script');
-        s.setAttribute('src', "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");
-        document.head.appendChild(s);
+      if (OneSignal.isUsingSubscriptionWorkaround()) {
+        if (OneSignal.config.subdomainName) {
+          OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
+        }
+        if (__DEV__)
+          OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttp';
+        else
+          OneSignal.iframePopupModalUrl = 'https://' + OneSignal.config.subdomainName + '.onesignal.com/sdks/initOneSignalHttp';
+      } else {
+        if (__DEV__)
+          OneSignal.iframePopupModalUrl = DEV_FRAME_HOST + '/dev_sdks/initOneSignalHttps';
+        else
+          OneSignal.iframePopupModalUrl = 'https://onesignal.com/sdks/initOneSignalHttps';
       }
 
-      OneSignal._saveInitOptions()
-        .then(() => {
-          if (document.readyState === "complete")
-            OneSignal._internalInit();
-          else
-            window.addEventListener('load', OneSignal._internalInit);
+      let subdomainPromise = Promise.resolve();
+      if (OneSignal.isUsingSubscriptionWorkaround()) {
+        log.debug('Loading subdomain iFrame...');
+        subdomainPromise = OneSignal.loadSubdomainIFrame(`${location.protocol}//`)
+          .then(() => log.info('Subdomain iFrame loaded'))
+      }
+
+      OneSignal.on(Database.EVENTS.REBUILT, OneSignal._onDatabaseRebuilt);
+      OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, OneSignal.onNotificationPermissionChange);
+      OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, OneSignal._onSubscriptionChanged);
+      OneSignal.on(Database.EVENTS.SET, OneSignal._onDbValueSet);
+      OneSignal.on(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, OneSignal._onInternalSubscriptionSet);
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, OneSignal._onSdkInitialized);
+      subdomainPromise.then(() => {
+        window.addEventListener('focus', (event) => {
+          // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
+          OneSignalHelpers.checkAndTriggerNotificationPermissionChanged();
         });
-    });
+
+        // If Safari - add 'fetch' pollyfill if it isn't already added.
+        if (Browser.safari && typeof window.fetch == "undefined") {
+          var s = document.createElement('script');
+          s.setAttribute('src', "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");
+          document.head.appendChild(s);
+        }
+
+        OneSignal._saveInitOptions()
+          .then(() => {
+            if (document.readyState === "complete")
+              OneSignal._internalInit();
+            else
+              window.addEventListener('load', OneSignal._internalInit);
+          });
+      });
+    }
+
+    if (document.readyState === "complete") {
+      __init();
+    }
+    else {
+      log.debug('Waiting for document to finish loading before continuing init()...');
+      window.addEventListener('load', __init);
+    }
   }
 
   static _saveInitOptions() {
@@ -426,7 +436,7 @@ export default class OneSignal {
     OneSignal.iframePostmam = new Postmam(this.window, sendToOrigin, receiveFromOrigin, handshakeNonce);
     OneSignal.iframePostmam.listen();
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, e => {
-      log.warn(`(${Environment.getEnv()}) Fired Postmam connect event!`);
+      log.debug(`(${Environment.getEnv()}) Fired Postmam connect event!`);
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, message => {
       OneSignal.getNotificationPermission()
@@ -506,7 +516,7 @@ export default class OneSignal {
         .then(notificationOpenedResult => {
           if (notificationOpenedResult) {
             Database.remove("NotificationOpened", OneSignal.config.pageUrl);
-            OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, notificationOpenedResult.data);
+            OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, notificationOpenedResult);
           }
         }));
 
@@ -567,7 +577,7 @@ export default class OneSignal {
         OneSignal.iframePostmam = new Postmam(iframe.contentWindow, sendToOrigin, receiveFromOrigin, handshakeNonce);
         OneSignal.iframePostmam.connect();
         OneSignal.iframePostmam.on('connect', e => {
-          log.warn(`(${Environment.getEnv()}) Fired Postmam connect event!`);
+          log.debug(`(${Environment.getEnv()}) Fired Postmam connect event!`);
           Promise.all([
             Database.get('Options', 'defaultUrl'),
             Database.get('Options', 'defaultTitle')
@@ -624,7 +634,7 @@ export default class OneSignal {
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
-          OneSignal._fireTransmittedNotificationClickedCallbacks(event, data);
+          OneSignal._fireTransmittedNotificationClickedCallbacks(message.data);
           return false;
         });
       };
@@ -759,7 +769,7 @@ export default class OneSignal {
 
     let updateCheckAlreadyRan = sessionStorage.getItem('onesignal-update-serviceworker-completed');
     if (!navigator.serviceWorker || !Environment.isHost() || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
-      log.warn('Skipping _updateServiceWorker().');
+      log.debug('Skipping _updateServiceWorker().');
       return;
     }
 
@@ -1309,17 +1319,14 @@ export default class OneSignal {
   static addListenerForNotificationOpened(callback) {
     if (!isPushNotificationsSupportedAndWarn()) {
       return;
-    }
 
-    function __addListenerForNotificationOpened() {
-      OneSignal._notificationOpenedCallbacks.push(callback);
-      OneSignal._fireSavedNotificationClickedCallbacks();
     }
+    OneSignal._notificationOpenedCallbacks.push(callback);
 
     if (!OneSignal.initialized) {
-      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __addListenerForNotificationOpened());
+      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => OneSignal._fireSavedNotificationClickedCallbacks());
     } else {
-      __addListenerForNotificationOpened();
+      OneSignal._fireSavedNotificationClickedCallbacks();
     }
   }
 

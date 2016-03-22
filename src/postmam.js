@@ -121,7 +121,6 @@ export default class Postmam {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
-    console.log(`onWindowMessagePostmanConnectReceived: ${e}`);
     var { handshake, nonce } = e.data;
     if (handshake !== Postmam.HANDSHAKE_MESSAGE || nonce !== this.handshakeNonce) {
       log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
