@@ -281,6 +281,11 @@ export default class Bell {
     });
 
     OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
+      if (isSubscribed == true) {
+        if (this.badge.shown && this.options.prenotify) {
+          this.badge.hide();
+        }
+      }
       if (!this._ignoreSubscriptionState) {
         this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
       }
