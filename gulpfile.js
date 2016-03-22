@@ -31,11 +31,11 @@ function transferFileRemote(localFilePath, remoteFilePath) {
 
 gulp.task("transfer-beta-sdk", shell.task([
   transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBeta.js'),
-  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBeta.js.map'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBeta.js.map'),
   transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBetaWorker.js'),
-  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBetaWorker.js.map'),
-  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBetaUpdaterWorker.js'),
-  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalBetaUpdaterWorker.js.map'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBetaWorker.js.map'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBetaUpdaterWorker.js'),
+  transferFileRemote('~/code/OneSignal-Website-SDK/dist/OneSignalSDKBeta.js.map', '/var/www/OneSignal/current/public/beta_sdks/OneSignalSDKBetaUpdaterWorker.js.map'),
 ]));
 
 gulp.task("reload-changes", ['copy-assets', 'copy-js'], function() {
