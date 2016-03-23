@@ -248,7 +248,6 @@ export default class Postmam {
   }
 
   isSafeOrigin(messageOrigin) {
-    // TODO: Remove this line and fix
     if (!OneSignal.config) {
       var subdomain = "test";
     } else {
@@ -259,6 +258,7 @@ export default class Postmam {
             messageOrigin === 'https://onesignal.com' ||
             messageOrigin === `https://${subdomain || ''}.onesignal.com` ||
             (__DEV__ && messageOrigin === DEV_FRAME_HOST) ||
-            this.receiveFromOrigin === '*');
+            this.receiveFromOrigin === '*' ||
+            messageOrigin === this.receiveFromOrigin);
   }
 }

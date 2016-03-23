@@ -1684,6 +1684,7 @@ export default class OneSignal {
 }
 
 objectAssign(OneSignal, {
+  VERSION: __VERSION__,
   _VERSION: __VERSION__,
   _API_URL: API_URL,
   _notificationOpenedCallbacks: [],
