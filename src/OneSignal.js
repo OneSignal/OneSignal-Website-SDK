@@ -221,7 +221,6 @@ export default class OneSignal {
       return 'return';
     }
     OneSignal._initCalled = true;
-    OneSignal._sessionNonce = guid();
 
     OneSignal.config = objectAssign({
       path: '/'
@@ -230,6 +229,7 @@ export default class OneSignal {
     if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
+    OneSignal._sessionNonce = guid();
 
     if (Browser.safari && !OneSignal.config.safari_web_id) {
       log.warn("OneSignal: Required parameter %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), skipping SDK initialization.');
