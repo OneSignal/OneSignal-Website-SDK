@@ -28,7 +28,17 @@ export default class OneSignal {
       return;
     }
 
-    return Database.put("Options", {key: "defaultUrl", value: url});
+    function __setDefaultNotificationUrl() {
+      return Database.put("Options", {key: "defaultUrl", value: url});
+    }
+
+    if (!OneSignal.initialized) {
+      return new Promise((resolve, reject) => {
+        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __setDefaultNotificationUrl().then(resolve).catch(reject));
+      });
+    } else {
+      return __setDefaultNotificationUrl();
+    }
   }
 
   /**
@@ -41,7 +51,17 @@ export default class OneSignal {
       return;
     }
 
-    return Database.put("Options", {key: "defaultTitle", value: title});
+    function __setDefaultTitle() {
+      return Database.put("Options", {key: "defaultTitle", value: title});
+    }
+
+    if (!OneSignal.initialized) {
+      return new Promise((resolve, reject) => {
+        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __setDefaultTitle().then(resolve).catch(reject));
+      });
+    } else {
+      return __setDefaultTitle();
+    }
   }
 
   static onNotificationPermissionChange(event) {
@@ -392,13 +412,21 @@ export default class OneSignal {
 
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
-    if (OneSignal.isUsingSubscriptionWorkaround()) {
-      OneSignal.loadPopup();
+    function __registerForPushNotifications() {
+      if (OneSignal.isUsingSubscriptionWorkaround()) {
+        OneSignal.loadPopup();
+      } else {
+        if (!options)
+          options = {};
+        options.fromRegisterFor = true;
+        OneSignal._sessionInit(options);
+      }
+    }
+
+    if (!OneSignal.initialized) {
+      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
     } else {
-      if (!options)
-        options = {};
-      options.fromRegisterFor = true;
-      OneSignal._sessionInit(options);
+      return __registerForPushNotifications();
     }
   }
 
@@ -1280,7 +1308,9 @@ export default class OneSignal {
       }
 
       if (!OneSignal.initialized) {
-        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __sendTags().then(resolve).catch(reject));
+        return new Promise((resolve, reject) => {
+          OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __sendTags().then(resolve).catch(reject));
+        });
       } else {
         __sendTags().then(resolve).catch(reject);
       }
@@ -1614,14 +1644,24 @@ export default class OneSignal {
       return;
     }
 
-    return Database.get('Ids', 'userId')
-      .then(result => {
-        if (callback) {
-          callback(result)
-        }
-        return result;
-      })
-      .catch(e => log.error(e));
+    function __getUserId() {
+      return Database.get('Ids', 'userId')
+        .then(result => {
+          if (callback) {
+            callback(result)
+          }
+          return result;
+        })
+        .catch(e => log.error(e));
+    }
+
+    if (!OneSignal.initialized) {
+      return new Promise((resolve, reject) => {
+        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __getUserId().then(resolve).catch(reject));
+      });
+    } else {
+      return __getUserId();
+    }
   }
 
   /**
@@ -1634,14 +1674,24 @@ export default class OneSignal {
       return;
     }
 
-    return Database.get('Ids', 'registrationId')
-      .then(result => {
-        if (callback) {
-          callback(result)
-        }
-        return result;
-      })
-      .catch(e => log.error(e));
+    function __getRegistrationId() {
+      return Database.get('Ids', 'registrationId')
+        .then(result => {
+          if (callback) {
+            callback(result)
+          }
+          return result;
+        })
+        .catch(e => log.error(e));
+    }
+
+    if (!OneSignal.initialized) {
+      return new Promise((resolve, reject) => {
+        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __getRegistrationId().then(resolve).catch(reject));
+      });
+    } else {
+      return __getRegistrationId();
+    }
   }
 
   /**
@@ -1655,17 +1705,27 @@ export default class OneSignal {
       return;
     }
 
-    return Database.get('Options', 'subscription')
-      .then(result => {
-        if (result == null) {
-          result = true;
-        }
-        if (callback) {
-          callback(result)
-        }
-        return result;
-      })
-      .catch(e => log.error(e));
+    function __getSubscription() {
+      return Database.get('Options', 'subscription')
+        .then(result => {
+          if (result == null) {
+            result = true;
+          }
+          if (callback) {
+            callback(result)
+          }
+          return result;
+        })
+        .catch(e => log.error(e));
+    }
+
+    if (!OneSignal.initialized) {
+      return new Promise((resolve, reject) => {
+        OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __getSubscription().then(resolve).catch(reject));
+      });
+    } else {
+      return __getSubscription();
+    }
   }
 
   static _processPushes(array) {
