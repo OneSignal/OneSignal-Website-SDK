@@ -254,11 +254,19 @@ export default class Postmam {
       var subdomain = OneSignal.config.subdomainName;
     }
 
+    // If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol
+    // Then relax the postMessage restriction to also allow the http:// protocol for the same domain
+    let httpReceiveFromOrigin = this.receiveFromOrigin;
+    if (this.receiveFromOrigin.indexOf('https://') == 0) {
+      httpReceiveFromOrigin = this.receiveFromOrigin.replace("https://", "http://");
+    }
+
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank
             messageOrigin === 'https://onesignal.com' ||
             messageOrigin === `https://${subdomain || ''}.onesignal.com` ||
             (__DEV__ && messageOrigin === DEV_FRAME_HOST) ||
             this.receiveFromOrigin === '*' ||
-            messageOrigin === this.receiveFromOrigin);
+            messageOrigin === this.receiveFromOrigin ||
+            messageOrigin === httpReceiveFromOrigin);
   }
 }
