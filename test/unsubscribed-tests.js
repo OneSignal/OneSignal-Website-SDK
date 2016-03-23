@@ -32,7 +32,7 @@ describe('sdk.js', function(done) {
           'http://subdomain.onesignal.com',
           'http://subdomain.onesignal.com/',
           'subdomain.onesignal.com',
-          ];
+        ];
         let expectedNormalizedSubdomain = 'subdomain';
         for (let validSubdomain of validSubdomains) {
           let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);

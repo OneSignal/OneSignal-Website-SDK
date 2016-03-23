@@ -221,6 +221,7 @@ export default class OneSignal {
       return 'return';
     }
     OneSignal._initCalled = true;
+    OneSignal._sessionNonce = guid();
 
     OneSignal.config = objectAssign({
       path: '/'
@@ -1771,7 +1772,7 @@ objectAssign(OneSignal, {
   browser: Browser,
   log: log,
   swivel: swivel,
-  _sessionNonce: guid(),
+  _sessionNonce: null,
   iframePostmam: null,
   popupPostmam: null,
   helpers: OneSignalHelpers,
