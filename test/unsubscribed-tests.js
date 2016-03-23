@@ -51,8 +51,6 @@ describe('sdk.js', function(done) {
         expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
         expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
         expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
-        expect(postmam.isSafeOrigin('*')).to.be.true;
-        expect(postmam.isSafeOrigin('http://*.google.com')).to.be.false;
       });
 
       it('isSafeOrigin for HTTPS sites', () => {
@@ -64,8 +62,30 @@ describe('sdk.js', function(done) {
         expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
         expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
         expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
-        expect(postmam.isSafeOrigin('*')).to.be.true;
-        expect(postmam.isSafeOrigin('http://*.google.com')).to.be.false;
+      });
+
+      it('isSafeOrigin for * sites', () => {
+        let origin = '*';
+        let postmam = new Postmam(window, origin, origin, 'nonce');
+        expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.true;
+        expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('abc')).to.be.true;
+      });
+
+      it('isSafeOrigin for invalid sites', () => {
+        let origin = '*.google.com';
+        let postmam = new Postmam(window, origin, origin, 'nonce');
+        expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('https://site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('https://www.site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+        expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('abc')).to.be.false;
       });
     });
   })
