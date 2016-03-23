@@ -3,6 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
 import { guid, delay, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, logError } from '../src/utils.js';
+import Postmam from '../src/postmam.js';
 import {APP_ID, PLAYER_ID} from './vars.js';
 
 chai.use(chaiAsPromised);
@@ -37,6 +38,30 @@ describe('sdk.js', function(done) {
           let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);
           expect(actualNormalizedSubdomain).to.equal(expectedNormalizedSubdomain);
         }
+      });
+    });
+
+    describe('Postmam origin checking', () => {
+      it('isSafeOrigin for HTTP sites', () => {
+        let origin = 'http://site.com';
+        let postmam = new Postmam(window, origin, origin, 'nonce');
+        expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+        expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+      });
+
+      it('isSafeOrigin for HTTPS sites', () => {
+        let origin = 'https://site.com';
+        let postmam = new Postmam(window, origin, origin, 'nonce');
+        expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+        expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
       });
     });
   })

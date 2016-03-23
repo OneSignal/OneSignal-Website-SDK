@@ -1,4 +1,4 @@
-import { guid } from './utils.js';
+import { guid, contains } from './utils.js';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
 import Environment from './environment.js';
@@ -256,9 +256,17 @@ export default class Postmam {
 
     // If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol
     // Then relax the postMessage restriction to also allow the http:// protocol for the same domain
-    let httpReceiveFromOrigin = this.receiveFromOrigin;
-    if (this.receiveFromOrigin.indexOf('https://') == 0) {
-      httpReceiveFromOrigin = this.receiveFromOrigin.replace("https://", "http://");
+    let otherAllowedOrigins = [];
+    let url = new URL(this.receiveFromOrigin);
+    if (url.protocol === 'https:') {
+      otherAllowedOrigins.push(`https://${url.host}`);
+      otherAllowedOrigins.push(`https://www.${url.host}`);
+    }
+    else if (url.protocol === 'http:') {
+      otherAllowedOrigins.push(`http://${url.host}`);
+      otherAllowedOrigins.push(`http://www.${url.host}`);
+      otherAllowedOrigins.push(`https://${url.host}`);
+      otherAllowedOrigins.push(`https://www.${url.host}`);
     }
 
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank
@@ -267,6 +275,6 @@ export default class Postmam {
             (__DEV__ && messageOrigin === DEV_FRAME_HOST) ||
             this.receiveFromOrigin === '*' ||
             messageOrigin === this.receiveFromOrigin ||
-            messageOrigin === httpReceiveFromOrigin);
+            contains(otherAllowedOrigins, messageOrigin));
   }
 }
