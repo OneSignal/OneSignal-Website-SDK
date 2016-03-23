@@ -157,8 +157,9 @@ $sizes: (
                 width: 100%;
                 height: 100%;
 
-                -webkit-filter: $bell-shadow;
-                filter: $bell-shadow;
+                // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
+                //-webkit-filter: $bell-shadow;
+                //filter: $bell-shadow;
             }
 
             &.onesignal-bell-launcher-button-hover {
@@ -173,8 +174,9 @@ $sizes: (
             text-align: center;
             top: 0;
             cursor: pointer;
-            -webkit-filter: $badge-shadow;
-            filter: $badge-shadow;
+            // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
+            //-webkit-filter: $badge-shadow;
+            //filter: $badge-shadow;
             transition: transform $transition-duration ease-in-out,
             border $transition-duration ease-in-out,
             opacity $transition-duration * 1.2 ease-in-out,
@@ -246,8 +248,9 @@ $sizes: (
             background-color: $dialog-background;
             border-radius: 5px;
             border: 1px solid $dialog-border-color;
-            -webkit-filter: $dialog-shadow;
-            filter: $dialog-shadow;
+            // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
+            //-webkit-filter: $dialog-shadow;
+            //filter: $dialog-shadow;
             opacity: 0;
             width: 200px;
 

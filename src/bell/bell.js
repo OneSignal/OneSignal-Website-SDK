@@ -165,6 +165,7 @@ export default class Bell {
     // Install event hooks
     OneSignal.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
+      this._ignoreSubscriptionState = true;
       OneSignal.setSubscription(true)
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
@@ -174,8 +175,12 @@ export default class Bell {
           return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.resubscribed'], Message.TIMEOUT);
         })
         .then(() => {
-            this.launcher.clearIfWasInactive();
-            return this.launcher.inactivate();
+          this._ignoreSubscriptionState = false;
+          this.launcher.clearIfWasInactive();
+          return this.launcher.inactivate();
+        })
+        .then(() => {
+          return this.updateState();
         });
     });
 
@@ -192,6 +197,9 @@ export default class Bell {
         })
         .then(() => {
           return this.message.display(Message.TYPES.MESSAGE, this.text['message.action.unsubscribed'], Message.TIMEOUT);
+        })
+        .then(() => {
+          return this.updateState();
         });
     });
 
@@ -272,9 +280,24 @@ export default class Bell {
       }
     });
 
-    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, e => {
-      let isSubscribed = e;
-      this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
+      if (isSubscribed == true) {
+        if (this.badge.shown && this.options.prenotify) {
+          this.badge.hide();
+        }
+      }
+      if (!this._ignoreSubscriptionState) {
+        this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+      }
+    });
+
+    OneSignal.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+      if (state.to === Bell.STATES.SUBSCRIBED) {
+        this.launcher.inactivate();
+      } else if (state.to === Bell.STATES.UNSUBSCRIBED ||
+                              Bell.STATES.BLOCKED) {
+        this.launcher.activate();
+      }
     });
 
     OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (from, to) => {
@@ -379,6 +402,7 @@ export default class Bell {
           throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
         }
 
+        this.patchSafariSvgFilterBug();
         this.applyOffsetIfSpecified();
         this.setCustomColorsIfSpecified();
 
@@ -403,6 +427,17 @@ export default class Bell {
           .catch((e) => log.error(e));
       }).catch(e => logError(e));
     });
+  }
+
+  patchSafariSvgFilterBug() {
+    if (!(Browser.safari && Number(Browser.version) >= 9.1)) {
+      let bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
+      let badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
+      let dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
+      this.graphic.setAttribute('style', `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`);
+      this.badge.element.setAttribute('style', `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`);
+      this.dialog.element.setAttribute('style', `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`);
+    }
   }
 
   applyOffsetIfSpecified() {
@@ -513,13 +548,12 @@ export default class Bell {
    * Updates the current state to the correct new current state. Returns a promise.
    */
   updateState() {
-    OneSignal.isPushNotificationsEnabled((isEnabled) => {
+    return OneSignal.isPushNotificationsEnabled().then(isEnabled => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
       if (LimitStore.getLast('notification.permission') === 'denied') {
         this.setState(Bell.STATES.BLOCKED);
       }
     });
-
   }
 
   /**

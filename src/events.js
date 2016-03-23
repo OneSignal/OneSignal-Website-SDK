@@ -25,7 +25,13 @@ const RETRIGGER_REMOTE_EVENTS = [
   'onesignal.prompt.custom.clicked',
   'onesignal.prompt.native.permissionchanged',
   'onesignal.subscription.changed',
-  'onesignal.internal.subscriptionset'
+  'onesignal.internal.subscriptionset',
+  'dbRebuilt',
+  'initialize',
+  'subscriptionSet',
+  'sendWelcomeNotification',
+  'subscriptionChange',
+  'notificationPermissionChange'
 ];
 
 const LEGACY_EVENT_MAP = {
@@ -78,7 +84,7 @@ export default class Event {
       } else {
         // But only if the event matches certain events
         if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-          OneSignal._safePostMessage(creator, {remoteEvent: eventName, remoteEventData: data, from: Environment.getEnv()}, OneSignal._initOptions.origin, null);
+          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
         }
       }
     }

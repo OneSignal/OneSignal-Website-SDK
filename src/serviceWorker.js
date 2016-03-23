@@ -3,7 +3,7 @@ import Environment from './environment.js'
 import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
 import Database from './database.js';
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, contains, trimUndefined } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
@@ -47,8 +47,8 @@ class ServiceWorker {
     // Fix: If the browser is Firefox and is v44, use the following workaround:
     if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
       Database.get('Options', 'serviceWorkerRefetchRequests')
-        .then(refetchRequestsResult => {
-          if (refetchRequestsResult && refetchRequestsResult.value == true) {
+        .then(refetchRequests => {
+          if (refetchRequests == true) {
             log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
             self.REFETCH_REQUESTS = true;
             self.addEventListener('fetch', ServiceWorker.onFetch);
@@ -84,10 +84,7 @@ class ServiceWorker {
       ServiceWorker._breakOnPushReceived = false;
     } else if (data === 'push.status') {
       Database.get('Ids', 'backupNotification')
-        .then(backupNotificationResult => {
-          if (backupNotificationResult && backupNotificationResult.id) {
-            var backupNotification = backupNotificationResult.id;
-          }
+        .then(backupNotification => {
           swivel.broadcast('data', {
             backupNotification: backupNotification,
             isPushIntentionallyBroken: ServiceWorker._breakOnPushReceived
@@ -113,18 +110,12 @@ class ServiceWorker {
         Database.get('Options', 'persistNotification'),
         Database.get('Ids', 'appId'),
       ])
-        .then(results => {
-          extra.title = results[0];
-          extra.defaultIconResult = results[1];
-          if (extra.defaultIconResult)
-            extra.defaultIconResult = extra.defaultIconResult.value;
-          extra.persistNotification = results[2];
-          if (extra.persistNotification)
-            extra.persistNotification = extra.persistNotification.value;
-          extra.appId = results[3];
-          if (extra.appId)
-            extra.appId = extra.appId.id;
-          else
+        .then(([title, defaultIcon, persistNotification, appId]) => {
+          extra.title = title;
+          extra.defaultIconResult = defaultIcon;
+          extra.persistNotification = persistNotification;
+          extra.appId = appId;
+          if (!appId)
             log.error('There was no app ID stored when trying to display the notification. An app ID is required.');
         })
         .then(() => ServiceWorker._getLastNotifications())
@@ -197,9 +188,8 @@ class ServiceWorker {
           log.warn("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
 
           Database.get('Ids', 'backupNotification')
-            .then(backupNotificationResult => {
-              if (backupNotificationResult && backupNotificationResult.id) {
-                let backupNotification = backupNotificationResult.id;
+            .then(backupNotification => {
+              if (backupNotification) {
                 self.registration.showNotification(backupNotification.title, {
                   requireInteraction: false, // Don't persist our backup notification
                   body: backupNotification.message,
@@ -226,13 +216,12 @@ class ServiceWorker {
     var currentPushLog = {};
 
     return Database.get("Options", "pushLog")
-      .then(pushLogResult => {
-        if (pushLogResult) {
-          currentPushLog = pushLogResult.value;
+      .then(currentPushLogResult => {
+        if (currentPushLogResult) {
           // Note: Because we're storing consistent data, each "entry" takes up 156 characters stringified
           // Let's only store the last 5000 pushes
           let estimateBytesPerUnicodeChar = 2.5*1024*1024/4;
-          if (JSON.stringify(currentPushLog).length > 156 * 500) {
+          if (JSON.stringify(currentPushLog).length > 156 * 135) {
             log.warn('Clearing push log because it grew too large.');
             currentPushLog = {};
           }
@@ -253,19 +242,17 @@ class ServiceWorker {
     var isServerCorsEnabled = false;
     var userId = null;
     return Database.get('Ids', 'userId')
-      .then(userIdResult => {
-        if (userIdResult) {
-          userId = userIdResult.id;
-        }
+      .then(theUserId => {
+        userId = theUserId;
       })
       .then(() => Database.get('Options', 'webhooks.cors'))
-      .then(corsResult => {
-        isServerCorsEnabled = corsResult && corsResult.value;
+      .then(cors => {
+        isServerCorsEnabled = cors;
       })
       .then(() => Database.get('Options', `webhooks.${event}`))
       .then(webhookUrlQuery => {
-        if (webhookUrlQuery && webhookUrlQuery.value) {
-          let url = webhookUrlQuery.value;
+        if (webhookUrlQuery) {
+          let url = webhookUrlQuery;
           // JSON.stringify() does not include undefined values
           // Our response will not contain those fields here which have undefined values
           let postData = {
@@ -307,14 +294,14 @@ class ServiceWorker {
     event.waitUntil(
       ServiceWorker.logPush(notificationData.id, 'clicked')
         .then(() => Database.get('Options', 'defaultUrl'))
-        .then(defaultUrlResult => {
-          if (defaultUrlResult)
-            ServiceWorker.defaultLaunchUrl = defaultUrlResult.value;
+        .then(defaultUr=> {
+          if (defaultUr)
+            ServiceWorker.defaultLaunchUrl = defaultUr;
         })
         .then(() => Database.get('Options', 'notificationClickHandlerMatch'))
-        .then(matchPreferenceResult => {
-          if (matchPreferenceResult)
-            notificationClickHandlerMatch = matchPreferenceResult.value;
+        .then(matchPreference => {
+          if (matchPreference)
+            notificationClickHandlerMatch = matchPreference;
         })
         .then(() => {
           return clients.matchAll({type: 'window'});
@@ -388,13 +375,11 @@ class ServiceWorker {
         .then(() => {
           return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])
         })
-        .then(results => {
-
-          var [ appIdResult, userIdResult ] = results;
-          if (appIdResult && userIdResult) {
+        .then(([appId, userId]) => {
+          if (appId && userId) {
             return apiCall("notifications/" + notificationData.id, "PUT", {
-              app_id: appIdResult.id,
-              player_id: userIdResult.id,
+              app_id: appId,
+              player_id: userId,
               opened: true
             });
           }
@@ -464,14 +449,12 @@ class ServiceWorker {
   static _getTitle() {
     return new Promise((resolve, reject) => {
       Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
-        .then((results) => {
-          var [ defaultTitleResult, pageTitleResult ] = results;
-
-          if (defaultTitleResult) {
-            resolve(defaultTitleResult.value);
+        .then(([defaultTitle, pageTitle]) => {
+          if (defaultTitle) {
+            resolve(defaultTitle);
           }
-          else if (pageTitleResult && pageTitleResult.value != null) {
-            resolve(pageTitleResult.value);
+          else if (pageTitle != null) {
+            resolve(pageTitle);
           }
           else {
             resolve('');
@@ -502,9 +485,9 @@ class ServiceWorker {
        __proto__: Object
        */
       Database.get('Ids', 'userId')
-        .then(userIdResult => {
-          if (userIdResult) {
-            return apiCall("players/" + userIdResult.id + "/chromeweb_notification", "GET");
+        .then(userId => {
+          if (userId) {
+            return apiCall("players/" + userId + "/chromeweb_notification", "GET");
           }
           else {
             log.error('Tried to get last notifications, but there was no userId found in the database.');

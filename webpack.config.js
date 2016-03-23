@@ -27,6 +27,18 @@ var includePaths = [path.resolve(__dirname, "./src")];
 if (IS_TEST)
   includePaths.push(path.resolve(__dirname, "./test"));
 
+var definePluginConstants = {
+  __DEV__: !IS_PROD,
+  __BETA__: IS_BETA,
+  __TEST__: IS_TEST,
+  __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
+}
+if (IS_PROD) {
+  definePluginConstants['process.env'] = {
+    'NODE_ENV': JSON.stringify('production'),
+  };
+}
+
 module.exports = {
   entry: entries,
   output: {
@@ -78,6 +90,7 @@ module.exports = {
         comments: false
       }
     }),
+    new webpack.DefinePlugin(definePluginConstants),
     function() {
       this.plugin('watch-run', function(watching, callback) {
         console.log();
@@ -86,20 +99,5 @@ module.exports = {
         callback();
       })
     }
-  ].concat(IS_PROD ?
-      [
-        new webpack.DefinePlugin({
-          'process.env': {
-            'NODE_ENV': JSON.stringify('production'),
-          },
-          __DEV__: false,
-          __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
-        }),
-      ] :
-      [
-        new webpack.DefinePlugin({
-          __DEV__: true,
-          __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
-        })
-      ])
+  ]
 };

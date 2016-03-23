@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, isBrowserSafari, isSupportedFireFox, isBrowserFirefox, getFirefoxVersion, isSupportedSafari, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js'
 
@@ -33,6 +33,7 @@ export default class AnimatedElement {
       return Promise.resolve(this);
     }
     else return new Promise((resolve) => {
+      var self = this;
       this.state = 'showing';
       Event.trigger(AnimatedElement.EVENTS.SHOWING, this);
       if (this.hideClass)
@@ -156,10 +157,12 @@ export default class AnimatedElement {
    * @param value {string} The HTML to set to the element.
    */
   set content(value) {
-    if (this.nestedContentSelector)
-      this.element.querySelector(this.nestedContentSelector).innerHTML = value;
-    else
-      this.element.innerHTML = value;
+    if (this.nestedContentSelector) {
+      this.element.querySelector(this.nestedContentSelector).innerText = value;
+    }
+    else {
+      this.element.innerText = value;
+    }
   }
 
 
