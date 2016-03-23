@@ -257,16 +257,20 @@ export default class Postmam {
     // If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol
     // Then relax the postMessage restriction to also allow the http:// protocol for the same domain
     let otherAllowedOrigins = [];
-    let url = new URL(this.receiveFromOrigin);
-    if (url.protocol === 'https:') {
-      otherAllowedOrigins.push(`https://${url.host}`);
-      otherAllowedOrigins.push(`https://www.${url.host}`);
-    }
-    else if (url.protocol === 'http:') {
-      otherAllowedOrigins.push(`http://${url.host}`);
-      otherAllowedOrigins.push(`http://www.${url.host}`);
-      otherAllowedOrigins.push(`https://${url.host}`);
-      otherAllowedOrigins.push(`https://www.${url.host}`);
+    try {
+      let url = new URL(this.receiveFromOrigin);
+      if (url.protocol === 'https:') {
+        otherAllowedOrigins.push(`https://${url.host}`);
+        otherAllowedOrigins.push(`https://www.${url.host}`);
+      }
+      else if (url.protocol === 'http:') {
+        otherAllowedOrigins.push(`http://${url.host}`);
+        otherAllowedOrigins.push(`http://www.${url.host}`);
+        otherAllowedOrigins.push(`https://${url.host}`);
+        otherAllowedOrigins.push(`https://www.${url.host}`);
+      }
+    } catch (ex) {
+      // Invalid URL: Users can enter '*' or 'https://*.google.com' which is invalid.
     }
 
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank

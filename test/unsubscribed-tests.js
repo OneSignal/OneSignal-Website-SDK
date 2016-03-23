@@ -51,6 +51,8 @@ describe('sdk.js', function(done) {
         expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
         expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
         expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('*')).to.be.true;
+        expect(postmam.isSafeOrigin('http://*.google.com')).to.be.false;
       });
 
       it('isSafeOrigin for HTTPS sites', () => {
@@ -62,6 +64,8 @@ describe('sdk.js', function(done) {
         expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
         expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
         expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+        expect(postmam.isSafeOrigin('*')).to.be.true;
+        expect(postmam.isSafeOrigin('http://*.google.com')).to.be.false;
       });
     });
   })
