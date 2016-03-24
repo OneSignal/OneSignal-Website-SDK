@@ -708,7 +708,7 @@ export default class OneSignal {
       };
       OneSignal._sessionIframeAdded = true;
     });
-    return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000, `OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal platform settings.`);
+    return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000, `OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`);
   }
 
   static loadPopup() {
