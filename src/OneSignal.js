@@ -1204,7 +1204,8 @@ export default class OneSignal {
           });
       })
       .catch(function (e) {
-        if (e.message === 'Registration failed - no sender id provided') {
+        debugger;
+        if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
           let manifestDom = document.querySelector('link[rel=manifest]');
           if (manifestDom) {
             let manifestParentTagname = document.querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
