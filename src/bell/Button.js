@@ -101,20 +101,17 @@ export default class Button extends ActiveAnimatedElement {
         //if (OneSignal.getNotificationPermission() === 'default') {
         //  this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribing'], Message.TIMEOUT)
         //}
-
-        once(window, OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (event, destroyListenerFn) => {
-          destroyListenerFn();
-          let permission = event.to;
-          if (permission === 'granted') {
-            this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribed'], Message.TIMEOUT)
-              .then(() => {
-                this.bell.launcher.inactivate();
-              })
-              .catch((e) => {
-                log.error(e);
-              });
-          }
-        }, true);
+        this.bell._ignoreSubscriptionState = true;
+        OneSignal.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
+          this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribed'], Message.TIMEOUT)
+            .then(() => {
+              this.bell._ignoreSubscriptionState = false;
+              this.bell.launcher.inactivate();
+            })
+            .catch((e) => {
+              log.error(e);
+            });
+        });
       }
     }
     else if (this.bell.subscribed) {

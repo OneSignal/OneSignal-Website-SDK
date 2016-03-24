@@ -117,11 +117,13 @@ export default class OneSignal {
       OneSignal.isPushNotificationsEnabled(),
       OneSignal.getNotificationPermission(),
       OneSignal.getUserId(),
+      OneSignal.getSubscription()
     ])
-      .then(([isPushEnabled, notificationPermission, userId]) => {
+      .then(([isPushEnabled, notificationPermission, userId, optIn]) => {
         if (!userId) {
           OneSignal._isUninitiatedVisitor = true;
         }
+        LimitStore.put('setsubscription.value', optIn);
         return Promise.all([
           Database.put('Options', {key: 'isPushEnabled', value: isPushEnabled}),
           Database.put('Options', {key: 'notificationPermission', value: notificationPermission})
@@ -302,7 +304,7 @@ export default class OneSignal {
       __init();
     }
     else {
-      log.debug('Waiting for document to finish loading before continuing init()...');
+      log.debug('Waiting for document load before continuing initialization...');
       window.addEventListener('load', __init);
     }
   }
@@ -345,15 +347,20 @@ export default class OneSignal {
 
   static _internalInit() {
     log.debug('Called %c_internalInit()', getConsoleStyle('code'));
-    OneSignal.getAppId()
+    Database.get('Ids', 'appId')
       .then(appId => {
-        // If AppId changed delete playerId and continue.
-        if (appId !== null && appId != OneSignal.config.appId) {
-          log.warn(`%cWARNING: Because your app ID changed from ${appId} ⤑ ${OneSignal.config.appId}, all IndexedDB and SessionStorage data will be wiped.`, getConsoleStyle('alert'));
-          //sessionStorage.clear();
-          //Database.rebuild().then(() => {
-          //  OneSignal.init(OneSignal.config);
-          //}).catch(e => log.error(e));
+        if (!OneSignal.isUsingSubscriptionWorkaround() && appId && appId != OneSignal.config.appId) {
+          console.warn(`OneSignal: App ID changed from ${appId} ⤑ ${OneSignal.config.appId}. Wiping IndexedDB and SessionStorage data.`);
+          sessionStorage.clear();
+          return Database.rebuild()
+            .then(() => {
+              return Database.put('Ids', {type: ' appId', id: OneSignal.config.appId})
+            })
+            .then(() => {
+              OneSignal._initCalled = false;
+              OneSignal.init(OneSignal.config);
+              return Promise.reject(`OneSignal: App ID changed from ${appId} ⤑ ${OneSignal.config.appId}. Wiping IndexedDB and SessionStorage data.`)
+            });
         } else {
           // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
           if (sessionStorage.getItem("ONE_SIGNAL_SESSION")
@@ -382,7 +389,7 @@ export default class OneSignal {
           }
 
           if (OneSignal.config.autoRegister === false && !OneSignal.config.subdomainName) {
-            log.debug('No autoregister and no subdomain -> skip _internalInit().')
+            log.debug('Skipping internal init. Not auto-registering and no subdomain.');
             Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             return;
           }
@@ -435,7 +442,7 @@ export default class OneSignal {
   static _initHttp(options) {
     log.debug(`Called %c_initHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
-    if (Environment.isBrowser() && window.localStorage["onesignal.debugger._initHttp"]) {
+    if (Environment.isBrowser() && window.localStorage["onesignal.debugger.inithttp"]) {
       debugger;
     }
 
@@ -453,6 +460,7 @@ export default class OneSignal {
     // Forgetting this makes all our APIs stall forever because the promises expect this to be true
     OneSignal.config = {};
     OneSignal.initialized = true;
+
     let sendToOrigin = options.origin;
     if (Environment.isDev()) {
       sendToOrigin = options.origin;
@@ -582,7 +590,29 @@ export default class OneSignal {
   }
 
   static _initSaveState() {
-    return OneSignal.getAppId()
+    return Database.get('Ids', 'appId')
+      .then(dbAppId => {
+        if (Environment.isIframe() && dbAppId && dbAppId != OneSignal.config.appId) {
+          console.warn(`OneSignal: App ID changed from ${dbAppId} ⤑ ${OneSignal.config.appId}. Wiping IndexedDB and SessionStorage data.`);
+          sessionStorage.clear();
+          return Database.rebuild()
+            .then(() => {
+              return Database.put('Ids', {type: ' appId', id: OneSignal.config.appId})
+            })
+            .then(() => {
+              OneSignal._initCalled = false;
+              if (!OneSignal._initCalledTimes) {
+                OneSignal._initCalledTimes = 0;
+              }
+              OneSignal._initCalledTimes++;
+              if (OneSignal._initCalledTimes < 5) {
+                OneSignal.init(OneSignal.config);
+              }
+              return Promise.reject(`OneSignal: App ID changed from ${dbAppId} ⤑ ${OneSignal.config.appId}. Wiping IndexedDB and SessionStorage data.`)
+            });
+        }
+      })
+      .then(() => OneSignal.getAppId())
       .then(appId => {
         return Promise.all([
           Database.put("Ids", {type: "appId", id: appId}),
@@ -807,7 +837,7 @@ export default class OneSignal {
 
     let updateCheckAlreadyRan = sessionStorage.getItem('onesignal-update-serviceworker-completed');
     if (!navigator.serviceWorker || !Environment.isHost() || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
-      log.debug('Skipping _updateServiceWorker().');
+      log.debug('Skipping service worker update for existing session.');
       return;
     }
 
@@ -825,33 +855,32 @@ export default class OneSignal {
 
       if (serviceWorkerRegistration && serviceWorkerRegistration.active) {
         // An existing service worker
-        log.debug('_updateServiceWorker():', 'Existing service worker');
         let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
         if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
           // OneSignalSDKWorker.js was installed
-          log.debug('_updateServiceWorker():', 'OneSignalSDKWorker is active');
+          log.debug('(Service Worker Update)', 'The main service worker is active.');
           return Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
             .then(function (version) {
               // Get version of installed worker saved to IndexedDB
               if (version) {
                 // If a version exists
-                log.debug('_updateServiceWorker():', 'Database version exists:', version);
+                log.debug('(Service Worker Update)', `Stored service worker version v${version}.`);
                 if (version != OneSignal._VERSION) {
                   // If there is a different version
-                  log.debug('_updateServiceWorker():', 'New version exists:', OneSignal._VERSION);
-                  log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
+                  log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
+                  log.warn(`Upgrading service worker (v${version} -> v${OneSignal._VERSION})`);
                   return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                 }
                 else {
                   // No changed service worker version
-                  log.debug('_updateServiceWorker():', 'No changed service worker version');
+                  log.debug('(Service Worker Update)', 'You already have the latest service worker version.');
                   return null;
                 }
               }
               else {
                 // No version was saved; somehow this got overwritten
                 // Reinstall the alternate service worker
-                log.debug('_updateServiceWorker():', 'No version was saved; somehow this got overwritten; Reinstall the alternate service worker');
+                log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
                 return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
               }
 
@@ -862,29 +891,29 @@ export default class OneSignal {
         }
         else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
           // OneSignalSDKUpdaterWorker.js was installed
-          log.debug('_updateServiceWorker():', 'OneSignalSDKUpdaterWorker is active');
+          log.debug('(Service Worker Update)', 'The alternate service worker is active.');
           return Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
             .then(function (version) {
               // Get version of installed worker saved to IndexedDB
               if (version) {
                 // If a version exists
-                log.debug('_updateServiceWorker():', 'Database version exists:', version);
+                log.debug('(Service Worker Update)', `Stored service worker version v${version}.`);
                 if (version != OneSignal._VERSION) {
                   // If there is a different version
-                  log.debug('_updateServiceWorker():', 'New version exists:', OneSignal._VERSION);
-                  log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
+                  log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
+                  log.info(`Upgrading new service worker (v${version} -> v${OneSignal._VERSION})`);
                   return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                 }
                 else {
                   // No changed service worker version
-                  log.debug('_updateServiceWorker():', 'No changed service worker version');
+                  log.debug('(Service Worker Update)', 'You already have the latest service worker version.');
                   return null;
                 }
               }
               else {
                 // No version was saved; somehow this got overwritten
                 // Reinstall the alternate service worker
-                log.debug('_updateServiceWorker():', 'No version was saved; somehow this got overwritten; Reinstall the alternate service worker');
+                log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
                 return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
               }
             })

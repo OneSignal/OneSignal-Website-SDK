@@ -151,7 +151,7 @@ export default class Database {
   }
 
   static printIds() {
-    Promise.all([
+    return Promise.all([
       Database.get('Ids', 'appId'),
       Database.get('Ids', 'registrationId'),
       Database.get('Ids', 'userId')
