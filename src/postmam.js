@@ -259,15 +259,16 @@ export default class Postmam {
     let otherAllowedOrigins = [];
     try {
       let url = new URL(this.receiveFromOrigin);
+      let host = url.host.replace('www.', '');
       if (url.protocol === 'https:') {
-        otherAllowedOrigins.push(`https://${url.host}`);
-        otherAllowedOrigins.push(`https://www.${url.host}`);
+        otherAllowedOrigins.push(`https://${host}`);
+        otherAllowedOrigins.push(`https://www.${host}`);
       }
       else if (url.protocol === 'http:') {
-        otherAllowedOrigins.push(`http://${url.host}`);
-        otherAllowedOrigins.push(`http://www.${url.host}`);
-        otherAllowedOrigins.push(`https://${url.host}`);
-        otherAllowedOrigins.push(`https://www.${url.host}`);
+        otherAllowedOrigins.push(`http://${host}`);
+        otherAllowedOrigins.push(`http://www.${host}`);
+        otherAllowedOrigins.push(`https://${host}`);
+        otherAllowedOrigins.push(`https://www.${host}`);
       }
     } catch (ex) {
       // Invalid URL: Users can enter '*' or 'https://*.google.com' which is invalid.

@@ -52,6 +52,16 @@ describe('sdk.js', function(done) {
         expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
         expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
       });
+      it('isSafeOrigin for HTTP www. sites', () => {
+        let origin = 'http://www.site.com';
+        let postmam = new Postmam(window, origin, origin, 'nonce');
+        expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+        expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+        expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+      });
 
       it('isSafeOrigin for HTTPS sites', () => {
         let origin = 'https://site.com';
