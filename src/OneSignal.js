@@ -529,20 +529,6 @@ export default class OneSignal {
         .then(results => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE));
       return false;
     });
-    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_SERVICE_WORKER, message => {
-      if ('serviceWorker' in navigator) {
-        let worker = navigator.serviceWorker.controller;
-        if (worker === null) {
-          message.reply(null);
-        } else {
-          // We have to select these two components to return since the controller object cannot be cloned or stringified/parsed
-          message.reply({scriptURL: worker.scriptURL, state: worker.state});
-        }
-      } else {
-        message.reply(false);
-      }
-      return false;
-    });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, message => {
       log.warn(`(${Environment.getEnv()}) The iFrame has just received initOptions from the host page!`);
       OneSignal.config = objectAssign(message.data.hostInitOptions, options, {
@@ -1204,7 +1190,6 @@ export default class OneSignal {
           });
       })
       .catch(function (e) {
-        debugger;
         if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
           let manifestDom = document.querySelector('link[rel=manifest]');
           if (manifestDom) {
@@ -1484,24 +1469,26 @@ export default class OneSignal {
     }
 
     return new Promise((resolve, reject) => {
-      if (OneSignal.isUsingSubscriptionWorkaround()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_SERVICE_WORKER, null, reply => {
-          let worker = reply.data;
-          let isActive = (worker !== null &&
-          worker.state === 'activated');
-          if (callback) {
-            callback(isActive)
+      if (!OneSignal.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
+        let isServiceWorkerActive = false;
+        navigator.serviceWorker.getRegistrations().then(serviceWorkerRegistrations => {
+          for (let serviceWorkerRegistration of serviceWorkerRegistrations) {
+            if (serviceWorkerRegistration.active &&
+              serviceWorkerRegistration.active.state === 'activated' &&
+              (contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKWorker') || contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKUpdaterWorker'))) {
+              isServiceWorkerActive = true;
+            }
           }
-          resolve(isActive);
+          if (callback) {
+            callback(isServiceWorkerActive)
+          }
+          resolve(isServiceWorkerActive);
         });
       } else {
-        let worker = navigator.serviceWorker.controller;
-        let isActive = (worker !== null &&
-        worker.state === 'activated');
         if (callback) {
-          callback(isActive)
+          callback(false)
         }
-        resolve(isActive);
+        resolve(false);
       }
     });
   }
@@ -1527,7 +1514,7 @@ export default class OneSignal {
           .then(([userId, registrationId, notificationPermission, optIn, serviceWorkerActive]) => {
             let isPushEnabled = false;
 
-            if ('serviceWorker' in navigator) {
+            if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
               isPushEnabled = userId &&
                 registrationId &&
                 notificationPermission === 'granted' &&
@@ -1830,8 +1817,7 @@ objectAssign(OneSignal, {
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
-    POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
-    REMOTE_SERVICE_WORKER: 'postman.remoteServiceWorker'
+    POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable'
   },
 
   EVENTS: {
