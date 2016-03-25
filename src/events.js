@@ -66,8 +66,11 @@ export default class Event {
 
     // Actually fire the event that can be listened to via OneSignal.on()
     if (Environment.isBrowser()) {
-      if (eventName === OneSignal.EVENTS.SDK_INITIALIZED && OneSignal.initialized) {
-        return;
+      if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
+        if (OneSignal.initialized)
+          return;
+        else
+          OneSignal.initialized = true;
       }
       OneSignal.emit(eventName, data);
     }

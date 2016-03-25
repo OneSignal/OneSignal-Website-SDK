@@ -287,7 +287,11 @@ export default class Bell {
         }
       }
       if (!this._ignoreSubscriptionState) {
-        this.setState(isSubscribed ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
+        OneSignal.getNotificationPermission(permission => {
+          this.setState(isSubscribed ?
+            Bell.STATES.SUBSCRIBED :
+            ((permission === 'denied') ? Bell.STATES.BLOCKED : Bell.STATES.UNSUBSCRIBED));
+        });
       }
     });
 

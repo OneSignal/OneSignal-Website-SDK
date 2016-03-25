@@ -138,12 +138,6 @@ export default class OneSignal {
    * @private
    */
   static _onSdkInitialized() {
-    if (OneSignal.initialized) {
-      log.warn('SDK initialized event occured more than once, so skipping running init trigger code.');
-      return;
-    }
-    OneSignal.initialized = true;
-
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
@@ -383,13 +377,18 @@ export default class OneSignal {
             return;
           }
 
-          /* Only update the service worker for autoRegister false users; autoRegister true users will have the service worker updated when auto registering each time*/
-          if (OneSignal.config.autoRegister === false) {
-            OneSignal._updateServiceWorker();
-          }
-
           if (OneSignal.config.autoRegister === false && !OneSignal.config.subdomainName) {
             log.debug('Skipping internal init. Not auto-registering and no subdomain.');
+            /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
+            OneSignal.isPushNotificationsEnabled().then(isPushEnabled => {
+              if (isPushEnabled && !OneSignal.isUsingSubscriptionWorkaround()) {
+                log.info('Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.');
+                // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
+                OneSignal._registerForW3CPush({});
+              } else {
+                OneSignal._updateServiceWorker();
+              }
+            });
             Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
             return;
           }
