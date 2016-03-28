@@ -120,9 +120,14 @@ export default class Button extends ActiveAnimatedElement {
       });
     }
     else if (this.bell.blocked) {
-      this.bell.launcher.activateIfInactive().then(() => {
-        this.bell.showDialogProcedure();
-      });
+      if (OneSignal.isUsingSubscriptionWorkaround()) {
+        // Show the HTTP popup so users can re-allow notifications
+        OneSignal.registerForPushNotifications();
+      } else {
+        this.bell.launcher.activateIfInactive().then(() => {
+          this.bell.showDialogProcedure();
+        });
+      }
     }
     return this.bell.message.hide().catch((e) => log.error(e));
   }

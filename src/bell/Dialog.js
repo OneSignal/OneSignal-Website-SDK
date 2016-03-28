@@ -5,7 +5,6 @@ import AnimatedElement from './AnimatedElement.js';
 import * as Browser from 'bowser';
 import Bell from './bell.js';
 import { HOST_URL } from '../vars.js';
-import LimitStore from '../limitStore.js';
 
 
 export default class Dialog extends AnimatedElement {

@@ -152,12 +152,13 @@ export default class OneSignalHelpers {
   }
 
   static checkAndTriggerNotificationPermissionChanged() {
-    OneSignal.getNotificationPermission()
-      .then(permission => {
-        let currentPermission = permission;
-        let lastPermission = LimitStore.getLast('notification.permission');
-        if (lastPermission !== currentPermission) {
-          OneSignal.triggerNotificationPermissionChanged(lastPermission, currentPermission);
+    Promise.all([
+      Database.get('Options', 'notificationPermission'),
+      OneSignal.getNotificationPermission()
+    ])
+      .then(([previousPermission, currentPermission]) => {
+        if (previousPermission !== currentPermission) {
+          OneSignal.triggerNotificationPermissionChanged(previousPermission, currentPermission);
         }
       })
       .catch(e => log.error(e));
@@ -238,7 +239,6 @@ export default class OneSignalHelpers {
   }
 
   static triggerCustomPromptClicked(clickResult) {
-    var recentPermissions = LimitStore.put('prompt.custom.permission', clickResult);
     Event.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
       result: clickResult
     });

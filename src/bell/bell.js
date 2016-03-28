@@ -1,6 +1,5 @@
 import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, logError } from '../utils.js';
 import Environment from '../environment.js';
-import LimitStore from '../limitStore.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import * as Browser from 'bowser';
@@ -161,6 +160,7 @@ export default class Bell {
       this.text['dialog.blocked.message'] = 'Follow these instructions to allow notifications:';
     this.substituteText();
     this.state = Bell.STATES.UNINITIALIZED;
+    this._ignoreSubscriptionState = false;
 
     // Install event hooks
     OneSignal.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
@@ -286,13 +286,11 @@ export default class Bell {
           this.badge.hide();
         }
       }
-      if (!this._ignoreSubscriptionState) {
-        OneSignal.getNotificationPermission(permission => {
-          this.setState(isSubscribed ?
-            Bell.STATES.SUBSCRIBED :
-            ((permission === 'denied') ? Bell.STATES.BLOCKED : Bell.STATES.UNSUBSCRIBED));
-        });
-      }
+      OneSignal.getNotificationPermission(permission => {
+        this.setState((isSubscribed ?
+          Bell.STATES.SUBSCRIBED :
+          ((permission === 'denied') ? Bell.STATES.BLOCKED : Bell.STATES.UNSUBSCRIBED)), this._ignoreSubscriptionState);
+      });
     });
 
     OneSignal.on(Bell.EVENTS.STATE_CHANGED, (state) => {
@@ -552,9 +550,13 @@ export default class Bell {
    * Updates the current state to the correct new current state. Returns a promise.
    */
   updateState() {
-    return OneSignal.isPushNotificationsEnabled().then(isEnabled => {
+    Promise.all([
+      OneSignal.isPushNotificationsEnabled(),
+      OneSignal.getNotificationPermission()
+    ])
+    .then(([isEnabled, permission]) => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
-      if (LimitStore.getLast('notification.permission') === 'denied') {
+      if (permission === 'denied') {
         this.setState(Bell.STATES.BLOCKED);
       }
     });
@@ -564,10 +566,10 @@ export default class Bell {
    * Updates the current state to the specified new state.
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
-  setState(newState) {
+  setState(newState, silent = false) {
     let lastState = this.state;
     this.state = newState;
-    if (lastState !== newState) {
+    if (lastState !== newState && !silent) {
       Event.trigger(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
       // Update anything that should be changed here in the new state
     }

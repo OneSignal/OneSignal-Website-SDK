@@ -97,7 +97,6 @@ export default class OneSignal {
           });
       }
     }
-    LimitStore.put('subscription.value', newSubscriptionState);
   }
 
   static _onDbValueSet(info) {
