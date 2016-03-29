@@ -714,6 +714,13 @@ export default class OneSignal {
     OneSignal.popupPostmam.startPostMessageReceive();
 
     return new Promise((resolve, reject) => {
+      OneSignal.popupPostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, message => {
+        // e.g. { eventName: 'subscriptionChange', eventData: true}
+        let { eventName, eventData } = message.data;
+        Event.trigger(eventName, eventData, message.source);
+        return false;
+      });
+
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
         OneSignalHelpers.triggerCustomPromptClicked('granted');
       });
