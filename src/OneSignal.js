@@ -623,6 +623,9 @@ export default class OneSignal {
       if (OneSignalHelpers.isContinuingBrowserSession()) {
         iframeUrl += `&continuingSession=true`;
       }
+      // 3/30/16: Pass the URL to the iFrame so the service worker knows what the host URL is, and can properly determine notification click logic
+      // Must be the last component of the URL
+      iframeUrl += `&hostUrl=${encodeURIComponent(location.href)}`;
       log.debug('Loading subdomain iFrame:', iframeUrl);
       let iframe = OneSignalHelpers.createHiddenDomIFrame(iframeUrl);
       iframe.onload = () => {
@@ -651,6 +654,27 @@ export default class OneSignal {
                 var defaultTitle = document.title;
               } else {
                 var defaultTitle = defaultTitleResult;
+              }
+
+              if (navigator.serviceWorker) {
+                executeAndTimeoutPromiseAfter(navigator.serviceWorker.ready
+                  .then(registration => {
+                    debugger;
+                    if (registration && registration.active) {
+                      OneSignalHelpers.establishServiceWorkerChannel(registration);
+                    }
+                  })
+                  .catch(e => {
+                    if (e.code === 18) { // Only secure origins are allowed
+                      if (location.protocol === 'http:' || Environment.isIframe()) {
+                        // This site is an HTTP site with an <iframe>
+                        // We can no longer register service workers since Chrome 42
+                        log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
+                      }
+                    } else {
+                      log.error(`Error getting Service Worker registration on ${location.href}:`, e);
+                    }
+                  }), 5000, 'cannot navigator.service.ready inside of an insecure iframe parent');
               }
 
               OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {

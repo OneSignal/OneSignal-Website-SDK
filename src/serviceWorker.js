@@ -1,4 +1,4 @@
-import { DEV_HOST, PROD_HOST, API_URL } from './vars.js';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import { sendNotification, apiCall } from './api.js';
 import log from 'loglevel';
@@ -294,9 +294,9 @@ class ServiceWorker {
     event.waitUntil(
       ServiceWorker.logPush(notificationData.id, 'clicked')
         .then(() => Database.get('Options', 'defaultUrl'))
-        .then(defaultUr=> {
-          if (defaultUr)
-            ServiceWorker.defaultLaunchUrl = defaultUr;
+        .then(defaultUrl=> {
+          if (defaultUrl)
+            ServiceWorker.defaultLaunchUrl = defaultUrl;
         })
         .then(() => Database.get('Options', 'notificationClickHandlerMatch'))
         .then(matchPreference => {
@@ -333,23 +333,56 @@ class ServiceWorker {
           for (let i = 0; i < clientList.length; i++) {
             var client = clientList[i];
             if ('focus' in client) {
-              if (notificationClickHandlerMatch === 'exact' && client.url === launchUrl) {
-                client.focus();
-                swivel.emit(client.id, 'notification.clicked', eventData);
-                return;
-              } else if (notificationClickHandlerMatch === 'origin') {
-                let clientOrigin = new URL(client.url).origin;
-                let launchUrlOrigin = null;
-                try {
-                  // Supplied launchUrl can be null
-                  launchUrlOrigin = new URL(launchUrl).origin;
-                } catch (e) {}
-                log.debug('Client Origin:', clientOrigin);
-                log.debug('Launch URL Origin:', launchUrlOrigin);
-                if (clientOrigin === launchUrlOrigin) {
+              if (client.frameType && client.frameType === 'nested') {
+                if (Environment.isDev()) {
+                  if (!contains(client.url, DEV_FRAME_HOST))
+                    continue;
+                } else {
+                  if (!contains(client.url, '.onesignal.com'))
+                    continue;
+                }
+                // The site is an HTTP site and our Client is the iFrame
+                let hostUrl = client.url;
+                hostUrl = hostUrl.substr(hostUrl.indexOf('&hostUrl=') + '&hostUrl'.length + 1);
+                hostUrl = decodeURIComponent(hostUrl);
+                if (notificationClickHandlerMatch === 'exact' && hostUrl === launchUrl) {
                   client.focus();
                   swivel.emit(client.id, 'notification.clicked', eventData);
                   return;
+                } else if (notificationClickHandlerMatch === 'origin') {
+                  let clientOrigin = new URL(hostUrl).origin;
+                  let launchUrlOrigin = null;
+                  try {
+                    // Supplied launchUrl can be null
+                    launchUrlOrigin = new URL(launchUrl).origin;
+                  } catch (e) {}
+                  log.debug('Client Origin:', clientOrigin);
+                  log.debug('Launch URL Origin:', launchUrlOrigin);
+                  if (clientOrigin === launchUrlOrigin) {
+                    client.focus();
+                    swivel.emit(client.id, 'notification.clicked', eventData);
+                    return;
+                  }
+                }
+              } else {
+                if (notificationClickHandlerMatch === 'exact' && client.url === launchUrl) {
+                  client.focus();
+                  swivel.emit(client.id, 'notification.clicked', eventData);
+                  return;
+                } else if (notificationClickHandlerMatch === 'origin') {
+                  let clientOrigin = new URL(client.url).origin;
+                  let launchUrlOrigin = null;
+                  try {
+                    // Supplied launchUrl can be null
+                    launchUrlOrigin = new URL(launchUrl).origin;
+                  } catch (e) {}
+                  log.debug('Client Origin:', clientOrigin);
+                  log.debug('Launch URL Origin:', launchUrlOrigin);
+                  if (clientOrigin === launchUrlOrigin) {
+                    client.focus();
+                    swivel.emit(client.id, 'notification.clicked', eventData);
+                    return;
+                  }
                 }
               }
             }
