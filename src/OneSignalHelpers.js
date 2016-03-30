@@ -200,7 +200,6 @@ export default class OneSignalHelpers {
       if (Environment.isHost()) {
         OneSignal._fireTransmittedNotificationClickedCallbacks(data);
       } else if (Environment.isIframe()) {
-        var creator = opener || parent;
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, data);
       }
     });

@@ -563,6 +563,27 @@ export default class OneSignal {
         .then(() => {
           if (contains(location.search, "continuingSession=true"))
             return;
+
+          /* 3/20/16: In the future, if navigator.serviceWorker.ready is unusable inside of an insecure iFrame host, adding a message event listener will still work. */
+          //if (navigator.serviceWorker) {
+            //log.warn('We have added an event listener for service worker messages.', Environment.getEnv());
+            //navigator.serviceWorker.addEventListener('message', function(event) {
+            //  log.warn('Wow! We got a message!', event);
+            //});
+          //}
+
+          if (navigator.serviceWorker && window.location.protocol === 'https:') {
+            navigator.serviceWorker.ready
+              .then(registration => {
+                if (registration && registration.active) {
+                  OneSignalHelpers.establishServiceWorkerChannel(registration);
+                }
+              })
+              .catch(e => {
+                log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
+              });
+          }
+
           message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
         });
     });
@@ -623,6 +644,9 @@ export default class OneSignal {
       if (OneSignalHelpers.isContinuingBrowserSession()) {
         iframeUrl += `&continuingSession=true`;
       }
+      // 3/30/16: Pass the URL to the iFrame so the service worker knows what the host URL is, and can properly determine notification click logic
+      // Must be the last component of the URL
+      iframeUrl += `&hostUrl=${encodeURIComponent(location.href)}`;
       log.debug('Loading subdomain iFrame:', iframeUrl);
       let iframe = OneSignalHelpers.createHiddenDomIFrame(iframeUrl);
       iframe.onload = () => {
