@@ -24,7 +24,7 @@ export default class Environment {
     }
     else {
       // If the window is the root top-most level
-      if (window.self === window.top) {
+      if (window === window.top) {
         if (contains(location.href, "initOneSignal"))
           return Environment.POPUP;
         else
