@@ -540,6 +540,12 @@ export default class OneSignal {
       if (options.continuePressed) {
         opPromises.push(OneSignal.setSubscription(true));
       }
+      // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
+      opPromises.push(Database.get('Options', 'defaultUrl').then(defaultUrl => {
+        if (!defaultUrl) {
+          return Database.put('Options', {key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin});
+        }
+      }));
 
       opPromises.push(Database.get("NotificationOpened", OneSignal.config.pageUrl)
         .then(notificationOpenedResult => {
