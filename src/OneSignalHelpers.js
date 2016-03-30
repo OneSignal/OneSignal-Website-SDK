@@ -188,7 +188,6 @@ export default class OneSignalHelpers {
   }
 
   static establishServiceWorkerChannel(serviceWorkerRegistration) {
-    debugger;
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
       OneSignal._channel.off('notification.clicked');
@@ -198,7 +197,6 @@ export default class OneSignalHelpers {
       log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
     OneSignal._channel.on('notification.clicked', function handler(context, data) {
-      debugger;
       if (Environment.isHost()) {
         OneSignal._fireTransmittedNotificationClickedCallbacks(data);
       } else if (Environment.isIframe()) {

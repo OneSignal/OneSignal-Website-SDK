@@ -563,6 +563,27 @@ export default class OneSignal {
         .then(() => {
           if (contains(location.search, "continuingSession=true"))
             return;
+
+          /* 3/20/16: In the future, if navigator.serviceWorker.ready is unusable inside of an insecure iFrame host, adding a message event listener will still work. */
+          //if (navigator.serviceWorker) {
+            //log.warn('We have added an event listener for service worker messages.', Environment.getEnv());
+            //navigator.serviceWorker.addEventListener('message', function(event) {
+            //  log.warn('Wow! We got a message!', event);
+            //});
+          //}
+
+          if (navigator.serviceWorker && window.location.protocol === 'https:') {
+            navigator.serviceWorker.ready
+              .then(registration => {
+                if (registration && registration.active) {
+                  OneSignalHelpers.establishServiceWorkerChannel(registration);
+                }
+              })
+              .catch(e => {
+                log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
+              });
+          }
+
           message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
         });
     });
@@ -654,27 +675,6 @@ export default class OneSignal {
                 var defaultTitle = document.title;
               } else {
                 var defaultTitle = defaultTitleResult;
-              }
-
-              if (navigator.serviceWorker) {
-                executeAndTimeoutPromiseAfter(navigator.serviceWorker.ready
-                  .then(registration => {
-                    debugger;
-                    if (registration && registration.active) {
-                      OneSignalHelpers.establishServiceWorkerChannel(registration);
-                    }
-                  })
-                  .catch(e => {
-                    if (e.code === 18) { // Only secure origins are allowed
-                      if (location.protocol === 'http:' || Environment.isIframe()) {
-                        // This site is an HTTP site with an <iframe>
-                        // We can no longer register service workers since Chrome 42
-                        log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
-                      }
-                    } else {
-                      log.error(`Error getting Service Worker registration on ${location.href}:`, e);
-                    }
-                  }), 5000, 'cannot navigator.service.ready inside of an insecure iframe parent');
               }
 
               OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
