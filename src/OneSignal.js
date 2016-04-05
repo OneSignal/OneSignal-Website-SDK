@@ -1278,14 +1278,15 @@ export default class OneSignal {
         if (userId) {
           return apiCall(`players/${userId}`, 'GET', null);
         } else {
-          throw new Error('Could not get tags because you are not registered with OneSignal (no user ID).');
+          return null;
         }
       })
       .then(response => {
+        let tags = (response ? response.tags : null);
         if (callback) {
-          callback(response.tags);
+          callback(tags);
         }
-        return response.tags;
+        return tags;
       })
       .catch(e => {
         logError(e);
