@@ -69,11 +69,17 @@ export default class OneSignalHelpers {
   }
 
   /**
-   * Called from both the host page and HTTP popup.
-   * If a user already exists and is subscribed, updates the session count by calling /players/:id/on_session; otherwise, a new player is registered via the /players endpoint.
-   * Saves the user ID and registration ID to the database after the response from OneSignal.
+   * Creates a new or updates an existing OneSignal user (player) on the server.
+   *
+   * @param appId The app ID passed to init.
+   *        subscriptionInfo A hash containing 'endpointOrToken', 'auth', and 'p256dh'.
+   *
+   * @remarks Called from both the host page and HTTP popup.
+   *          If a user already exists and is subscribed, updates the session count by calling /players/:id/on_session; otherwise, a new player is registered via the /players endpoint.
+   *          Saves the user ID and registration ID to the local web database after the response from OneSignal.
    */
-  static registerWithOneSignal(appId, registrationId, deviceType) {
+  static registerWithOneSignal(appId, subscriptionInfo) {
+    let deviceType = OneSignalHelpers.getDeviceTypeForBrowser();
     return Promise.all([
       OneSignal.getUserId(),
       OneSignal.getSubscription()
@@ -94,9 +100,21 @@ export default class OneSignalHelpers {
           notification_types: OneSignalHelpers.getNotificationTypeFromOptIn(subscription)
         };
 
-        if (registrationId) {
-          requestData.identifier = registrationId;
+        if (subscriptionInfo) {
+          requestData.identifier = subscriptionInfo.endpointOrToken;
+          // Although we're passing the full endpoint to OneSignal, we still need to store only the registration ID for our SDK API getRegistrationId()
+          // Parse out the registration ID from the full endpoint URL and save it to our database
+          let registrationId = subscriptionInfo.endpointOrToken.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
           Database.put("Ids", {type: "registrationId", id: registrationId});
+          // New web push standard in Firefox 46+ and Chrome 50+ includes 'auth' and 'p256dh' in PushSubscription
+          if (subscriptionInfo.auth) {
+            requestData.web_auth = subscriptionInfo.auth;
+          }
+          if (subscriptionInfo.p256dh) {
+            requestData.web_p256 = subscriptionInfo.p256dh;
+          }
+        } else {
+          throw new Error('registerWithOneSignal: subscriptionInfo expected to contain token, auth, and p256dh cannot be null.');
         }
 
         return apiCall(requestUrl, 'POST', requestData);

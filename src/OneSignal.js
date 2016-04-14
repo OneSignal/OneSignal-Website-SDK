@@ -788,7 +788,11 @@ export default class OneSignal {
                     pushResponse => {
                     log.info('Safari Registration Result:', pushResponse);
                     if (pushResponse.deviceToken) {
-                      OneSignalHelpers.registerWithOneSignal(appId, pushResponse.deviceToken.toLowerCase(), OneSignalHelpers.getDeviceTypeForBrowser());
+                      let subscriptionInfo = {
+                        // Safari's subscription returns a device token (e.g. 03D5D4A2EBCE1EE2AED68E12B72B1B995C2BFB811AB7DBF973C84FED66C6D1D5)
+                        endpointOrToken: pushResponse.deviceToken.toLowerCase()
+                      };
+                      OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
                     }
                     else {
                       OneSignalHelpers.beginTemporaryBrowserSession();
@@ -1208,17 +1212,40 @@ export default class OneSignal {
           .then(appId => {
             log.debug("Called OneSignal._subscribeForPush() -> serviceWorkerRegistration.pushManager.subscribe().");
 
-            var registrationId = null;
+            var subscriptionInfo = {};
             if (subscription) {
-              if (typeof subscription.subscriptionId != "undefined") // Chrome 43 & 42
-                registrationId = subscription.subscriptionId;
-              else  // Chrome 44+ and FireFox
-                registrationId = subscription.endpoint.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
+              if (typeof subscription.subscriptionId != "undefined") {
+                // Chrome 43 & 42
+                subscriptionInfo.endpointOrToken = subscription.subscriptionId;
+              }
+              else {
+                // Chrome 44+ and FireFox
+                // 4/13/16: We now store the full endpoint instead of just the registration token
+                subscriptionInfo.endpointOrToken = subscription.endpoint;
+              }
+
+              // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
+              if (subscription.getKey) {
+                // p256dh and auth are both ArrayBuffer
+                let p256dh = subscription.getKey('p256dh');
+                let auth = subscription.getKey('auth');
+
+                if (p256dh) {
+                  // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                  let p256dh_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+                  subscriptionInfo.p256dh = p256dh_base64encoded;
+                }
+                if (auth) {
+                  // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                  let auth_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(auth)));
+                  subscriptionInfo.auth = auth_base64encoded;
+                }
+              }
             }
             else
               log.warn('Could not subscribe your browser for push notifications.');
 
-            OneSignalHelpers.registerWithOneSignal(appId, registrationId, OneSignalHelpers.getDeviceTypeForBrowser());
+            OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
           })
           .catch(function (e) {
             log.error(e);
