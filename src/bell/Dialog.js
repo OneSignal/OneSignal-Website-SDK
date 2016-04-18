@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, clearDomElementChildren, once, logError } from '../utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, clearDomElementChildren, once } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
@@ -77,7 +77,7 @@ export default class Dialog extends AnimatedElement {
   show() {
     return this.updateBellLauncherDialogBody()
       .then(() => super.show())
-      .catch(e => logError(e));
+      .catch(e => log.error(e));
   }
 
   get subscribeButtonSelectorId() {

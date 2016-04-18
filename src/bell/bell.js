@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, logError } from '../utils.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains } from '../utils.js';
 import Environment from '../environment.js';
 import log from 'loglevel';
 import Event from '../events.js';
@@ -427,7 +427,7 @@ export default class Bell {
           })
           .then(() => this.initialized = true)
           .catch((e) => log.error(e));
-      }).catch(e => logError(e));
+      }).catch(e => log.error(e));
     });
   }
 

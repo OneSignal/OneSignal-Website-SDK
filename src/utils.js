@@ -1,5 +1,4 @@
 import log from 'loglevel';
-import StackTrace from 'stacktrace-js';
 import * as Browser from 'bowser';
 import Environment from './environment.js';
 
@@ -13,18 +12,6 @@ export function isPushNotificationsSupportedAndWarn() {
     log.warn("Your browser does not support push notifications.");
   }
   return isSupported;
-}
-
-export function logError(e) {
-  StackTrace.fromError(e).then(s => {
-    if (s && s.length > 0) {
-      let stackInfo = s[0];
-      let filename = stackInfo.fileName.replace('webpack:///', 'webpack:///./');
-      log.error(e, `@ ${filename}:${stackInfo.lineNumber}:${stackInfo.columnNumber}`);
-    } else {
-      log.error(e);
-    }
-  }).catch(x => log.error(e));
 }
 
 var decodeTextArea = null;

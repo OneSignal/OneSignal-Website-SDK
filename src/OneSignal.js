@@ -8,7 +8,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, logError, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -407,7 +407,7 @@ export default class OneSignal {
         }
       })
       .catch(function (e) {
-        logError(e);
+        log.error(e);
       });
   }
 
@@ -1316,7 +1316,7 @@ export default class OneSignal {
         return tags;
       })
       .catch(e => {
-        logError(e);
+        log.error(e);
         return Promise.reject(e)
       });
   }
@@ -1597,7 +1597,7 @@ export default class OneSignal {
             resolve(isPushEnabled);
           })
           .catch(e => {
-            logError(e);
+            log.error(e);
             reject(e);
           });
       }
@@ -1842,7 +1842,6 @@ objectAssign(OneSignal, {
   _isUninitiatedVisitor: false,
   _isNewVisitor: false,
   _channel: null,
-  logError: logError,
   initialized: false,
   notifyButton: null,
   store: LimitStore,
