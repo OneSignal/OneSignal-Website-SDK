@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains } from '../utils.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, decodeHtmlEntities } from '../utils.js';
 import Environment from '../environment.js';
 import log from 'loglevel';
 import Event from '../events.js';
@@ -229,7 +229,7 @@ export default class Bell {
             resolve();
           });
         } else {
-          this.message.content = this.message.getTipForState();
+          this.message.content = decodeHtmlEntities(this.message.getTipForState());
           this.message.contentType = Message.TYPES.TIP;
           resolve();
         }

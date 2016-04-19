@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, once, delay, when, nothing } from '../utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, once, delay, when, nothing, decodeHtmlEntities } from '../utils.js';
 import log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
@@ -32,7 +32,7 @@ export default class Message extends AnimatedElement {
     return new Promise((resolve, reject) => {
       (this.shown ? this.hide() : nothing())
         .then(() => {
-          this.content = content;
+          this.content = decodeHtmlEntities(content);
           this.contentType = type;
         })
         .then(() => {
@@ -62,7 +62,7 @@ export default class Message extends AnimatedElement {
   }
 
   enqueue(message, notify = false) {
-    this.queued.push(message);
+    this.queued.push(decodeHtmlEntities(message));
     return new Promise((resolve) => {
       if (this.bell.badge.shown) {
         this.bell.badge.hide()
