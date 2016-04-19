@@ -605,8 +605,8 @@ $sizes: (
         top: 0;
         bottom: 0;
         right: 0;
-        -webkit-animation: pulse 0.35s ease-in-out;
-        animation: pulse 0.35s ease-in-out;
+        -webkit-animation: notifyButtonPulse 0.35s ease-in-out;
+        animation: notifyButtonPulse 0.35s ease-in-out;
         -webkit-animation-iteration-count: 1;
         animation-iteration-count: 1;
         opacity: 0;
@@ -621,7 +621,26 @@ $sizes: (
     }
 }
 
-@-webkit-keyframes pulse {
+@-webkit-keyframes notifyButtonPulse {
+    0% {
+        -webkit-transform: scale(0.1);
+        transform: scale(0.1);
+        opacity: 0.0;
+        border-width: 10px;
+    }
+    50% {
+        opacity: 1.0;
+        border-width: 5px;
+    }
+    100% {
+        -webkit-transform: scale(1.2);
+        transform: scale(1.2);
+        opacity: 0.0;
+        border-width: 1px;
+    }
+}
+
+@keyframes notifyButtonPulse {
     0% {
         -webkit-transform: scale(0.1);
         transform: scale(0.1);
