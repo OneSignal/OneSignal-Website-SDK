@@ -1227,8 +1227,18 @@ export default class OneSignal {
               // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
               if (subscription.getKey) {
                 // p256dh and auth are both ArrayBuffer
-                let p256dh = subscription.getKey('p256dh');
-                let auth = subscription.getKey('auth');
+                let p256dh = null;
+                try {
+                  p256dh = subscription.getKey('p256dh');
+                } catch (e) {
+                  // User is most likely running < Chrome < 50
+                }
+                let auth = null;
+                try {
+                  auth = subscription.getKey('auth');
+                } catch (e) {
+                  // User is most likely running < Firefox 45
+                }
 
                 if (p256dh) {
                   // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
