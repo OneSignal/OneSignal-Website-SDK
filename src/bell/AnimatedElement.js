@@ -158,10 +158,10 @@ export default class AnimatedElement {
    */
   set content(value) {
     if (this.nestedContentSelector) {
-      this.element.querySelector(this.nestedContentSelector).innerText = value;
+      this.element.querySelector(this.nestedContentSelector).innerHTML = value;
     }
     else {
-      this.element.innerText = value;
+      this.element.innerHTML = value;
     }
   }
 
