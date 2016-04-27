@@ -4,6 +4,7 @@ import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
 import { guid, delay, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, logError } from '../src/utils.js';
 import Postmam from '../src/postmam.js';
+import Environment from '../src/environment.js';
 import {APP_ID, PLAYER_ID} from './vars.js';
 
 chai.use(chaiAsPromised);
@@ -96,6 +97,19 @@ describe('sdk.js', function(done) {
         expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
         expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
         expect(postmam.isSafeOrigin('abc')).to.be.false;
+      });
+    });
+
+    describe('Navigator language checking', () => {
+      it('is navigator language detected correctly', () => {
+        expect(Environment.getLanguage('en-US')).to.equal('en');
+        expect(Environment.getLanguage('english-US')).to.equal('en');
+        expect(Environment.getLanguage('zh')).to.equal('zh-Hant');
+        expect(Environment.getLanguage('zh-CN')).to.equal('zh-Hans');
+        expect(Environment.getLanguage('zh-Hans')).to.equal('zh-Hans');
+        expect(Environment.getLanguage('zh-TW')).to.equal('zh-Hant');
+        expect(Environment.getLanguage('zh-Hant')).to.equal('zh-Hant');
+        expect(Environment.getLanguage('de-Arabic')).to.equal('de');
       });
     });
   })

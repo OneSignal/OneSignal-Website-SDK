@@ -80,9 +80,40 @@ export default class Environment {
     return __TEST__;
   }
 
-  static getLanguage() {
-    return navigator.language ?
-          (navigator.language.length > 3 ? navigator.language.substring(0, 2) : navigator.language) :
-          'en';
+  static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
+    return ['tw', 'hant']
+  }
+
+  static get SIMPLIFIED_CHINESE_LANGUAGE_TAG() {
+    return ['cn', 'hans']
+  }
+
+  /* Specifications: https://tools.ietf.org/html/bcp47 */
+  static getLanguage(testLanguage) {
+    let languageTag = testLanguage || navigator.language;
+    if (languageTag) {
+      languageTag = languageTag.toLowerCase();
+      let languageSubtags = languageTag.split('-');
+      if (languageSubtags[0] == 'zh') {
+        // The language is zh-?
+        // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional); OneSignal only supports these two Chinese variants
+        for (let traditionalSubtag of Environment.TRADITIONAL_CHINESE_LANGUAGE_TAG) {
+          if (contains(languageSubtags, traditionalSubtag)) {
+            return 'zh-Hant';
+          }
+        }
+        for (let simpleSubtag of Environment.SIMPLIFIED_CHINESE_LANGUAGE_TAG) {
+          if (contains(languageSubtags, simpleSubtag)) {
+            return 'zh-Hans';
+          }
+        }
+        return 'zh-Hant'; // Return Chinese traditional by default
+      } else {
+        // Return the language subtag (it can be three characters, so truncate it down to 2 just to be sure)
+        return languageSubtags[0].substring(0, 2);
+      }
+    } else {
+      return 'en';
+    }
   }
 }
