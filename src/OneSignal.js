@@ -722,7 +722,8 @@ export default class OneSignal {
       };
       OneSignal._sessionIframeAdded = true;
     });
-    return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000, `OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`);
+    return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000)
+             .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
   }
 
   static loadPopup() {
@@ -1048,13 +1049,13 @@ export default class OneSignal {
     if (existingServiceWorkerRegistration)
       log.debug('An older ServiceWorker exists:', existingServiceWorkerRegistration);
     if (!('PushManager' in window)) {
-      log.error("Push messaging is not supported. No PushManager.");
+      log.warn("Push messaging is not supported. No PushManager.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
       return;
     }
 
     if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-      log.error("Notifications are not supported. showNotification not available in ServiceWorkerRegistration.");
+      log.warn("Notifications are not supported. showNotification not available in ServiceWorkerRegistration.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
       return;
     }
@@ -1146,7 +1147,7 @@ export default class OneSignal {
             }
             else {
               // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
-              log.error(`OneSignal: Invalid init option safari_web_id %c${safariWebId}`, getConsoleStyle('code'), '. Please pass in a valid safari_web_id to OneSignal init.');
+              console.warn(`OneSignal: Invalid init option safari_web_id %c${safariWebId}`, getConsoleStyle('code'), '. Please pass in a valid safari_web_id to OneSignal init.');
             }
           }
           else {
@@ -1235,7 +1236,7 @@ export default class OneSignal {
                 }
                 let auth = null;
                 try {
-                  auth = subscription.getKey('auth');
+                  auth = subscription.getKey('auth');6
                 } catch (e) {
                   // User is most likely running < Firefox 45
                 }
@@ -1269,18 +1270,18 @@ export default class OneSignal {
             let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
             let manifestLocation = document.querySelector('link[rel=manifest]').href;
             if (manifestParentTagname !== 'head') {
-              log.error(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
+              console.warn(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
             } else {
               let manifestLocationOrigin = new URL(manifestLocation).origin;
               let currentOrigin = location.origin;
               if (currentOrigin !== manifestLocationOrigin) {
-                log.error(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is different from the current page's origin of ${currentOrigin}. Please serve your manifest from the same origin as your page's. If you are using a content delivery network (CDN), please add an exception so that the manifest is not served by your CDN. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)`);
+                console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is different from the current page's origin of ${currentOrigin}. Please serve your manifest from the same origin as your page's. If you are using a content delivery network (CDN), please add an exception so that the manifest is not served by your CDN. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)`);
               } else {
-                log.error(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+                console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
               }
             }
           } else if (location.protocol === 'https:') {
-            log.error(`OneSignal: You must reference a %cmanifest.json`, getConsoleStyle('code'), "in <head>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+            console.warn(`OneSignal: You must reference a %cmanifest.json`, getConsoleStyle('code'), "in <head>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
           }
         } else {
           log.error('Error while subscribing for push:', e);
@@ -1499,7 +1500,7 @@ export default class OneSignal {
       return;
     }
 
-    console.warn("OneSignal: getIdsAvailable() is deprecated. Please use getUserId() or getRegistrationId() instead.");
+    console.info("OneSignal: getIdsAvailable() is deprecated. Please use getUserId() or getRegistrationId() instead.");
 
     if (callback === undefined)
       return;
