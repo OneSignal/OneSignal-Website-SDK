@@ -79,6 +79,7 @@ $sizes: (
 
         @each $position in $positions {
 
+            $leftOrRight: 'right';
             @if $position == 'bottom-left' {
                 $leftOrRight: 'left';
             } @else if $position == 'bottom-right' {
@@ -340,6 +341,7 @@ $sizes: (
         }
 
         @each $size-name, $size-amount in $sizes {
+            $badge-font-size: $badge-font-size-base;
             @if $size-name == 'sm' {
                 $badge-font-size: $badge-font-size-base - 4;
                 $message-font-size: $message-font-size-base;
