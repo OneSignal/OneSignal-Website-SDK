@@ -1236,7 +1236,7 @@ export default class OneSignal {
                 }
                 let auth = null;
                 try {
-                  auth = subscription.getKey('auth');6
+                  auth = subscription.getKey('auth');
                 } catch (e) {
                   // User is most likely running < Firefox 45
                 }
