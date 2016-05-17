@@ -169,8 +169,21 @@ export default class OneSignal {
         objectAssign(OneSignal.config.bell, OneSignal.config.notifyButton);
         objectAssign(OneSignal.config.notifyButton, OneSignal.config.bell);
       }
-      OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
-      OneSignal.notifyButton.create();
+      if (OneSignal.config.notifyButton.displayPredicate &&
+          typeof OneSignal.config.notifyButton.displayPredicate === "function") {
+        Promise.resolve(OneSignal.config.notifyButton.displayPredicate())
+            .then(predicateValue => {
+              if (predicateValue !== false) {
+                OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
+                OneSignal.notifyButton.create();
+              } else {
+                log.debug('Notify button display predicate returned false so not showing the notify button.');
+              }
+            });
+      } else {
+        OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
+        OneSignal.notifyButton.create();
+      }
     }
   }
 
