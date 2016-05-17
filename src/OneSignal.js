@@ -767,6 +767,12 @@ export default class OneSignal {
 
   static _sessionInit(options) {
     log.debug(`Called %c_sessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
+    if (OneSignal._sessionInitAlreadyRunning) {
+      log.debug('Returning from _sessionInit because it has already been called.');
+      return;
+    } else {
+      OneSignal._sessionInitAlreadyRunning = true;
+    }
 
     OneSignal._initSaveState()
       .then(() => {
@@ -1201,6 +1207,8 @@ export default class OneSignal {
         return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
       })
       .then(function (subscription) {
+        // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
+        OneSignal._sessionInitAlreadyRunning = false;
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
         OneSignal.getAppId()
@@ -1257,6 +1265,7 @@ export default class OneSignal {
           });
       })
       .catch(function (e) {
+        OneSignal._sessionInitAlreadyRunning = false;
         if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
           let manifestDom = document.querySelector('link[rel=manifest]');
           if (manifestDom) {
@@ -1838,6 +1847,7 @@ objectAssign(OneSignal, {
   _defaultLaunchURL: null,
   config: null,
   _thisIsThePopup: false,
+  _sessionInitAlreadyRunning: false,
   _isNotificationEnabledCallback: [],
   _subscriptionSet: true,
   iframePopupModalUrl: null,
