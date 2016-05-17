@@ -70,8 +70,7 @@ export default class OneSignal {
 
   static _onSubscriptionChanged(newSubscriptionState) {
     if (newSubscriptionState === true) {
-      if (OneSignal._isUninitiatedVisitor) {
-        Promise.all([
+      Promise.all([
             OneSignal.getUserId(),
             OneSignal.getAppId()
           ])
@@ -86,16 +85,14 @@ export default class OneSignal {
             title = decodeHtmlEntities(title);
             message = decodeHtmlEntities(message);
             if (!welcome_notification_disabled) {
-              log.debug('Because this user is a new site visitor, a welcome notification will be sent.');
+              log.debug('Sending welcome notification.');
               sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null, {__isOneSignalWelcomeNotification: true});
               Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
-              OneSignal._isUninitiatedVisitor = false;
             }
           })
           .catch(function (e) {
             log.error(e);
           });
-      }
     }
   }
 
@@ -119,9 +116,6 @@ export default class OneSignal {
       OneSignal.getSubscription()
     ])
       .then(([isPushEnabled, notificationPermission, userId, optIn]) => {
-        if (!userId) {
-          OneSignal._isUninitiatedVisitor = true;
-        }
         LimitStore.put('setsubscription.value', optIn);
         return Promise.all([
           Database.put('Options', {key: 'isPushEnabled', value: isPushEnabled}),
@@ -1850,7 +1844,6 @@ objectAssign(OneSignal, {
   _sessionIframeAdded: false,
   _windowWidth: 550,
   _windowHeight: 480,
-  _isUninitiatedVisitor: false,
   _isNewVisitor: false,
   _channel: null,
   initialized: false,
