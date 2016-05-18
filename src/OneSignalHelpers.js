@@ -50,7 +50,7 @@ export default class OneSignalHelpers {
   }
 
   static getDeviceTypeForBrowser() {
-    if (Browser.chrome) {
+    if (Browser.chrome || Browser.yandexbrowser) {
       return OneSignal.DEVICE_TYPES.CHROME;
     } else if (Browser.firefox) {
       return OneSignal.DEVICE_TYPES.FIREFOX;
