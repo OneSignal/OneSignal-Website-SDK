@@ -685,7 +685,7 @@ export default class OneSignal {
               }
 
               OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
-                hostInitOptions: OneSignal.config,
+                hostInitOptions: JSON.parse(JSON.stringify(OneSignal.config)), // Removes functions and unmessageable objects
                 pageUrl: defaultUrl,
                 pageTitle: defaultTitle,
               }, reply => {
