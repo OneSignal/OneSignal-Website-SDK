@@ -169,6 +169,11 @@ class ServiceWorker {
                 // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
                 // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
                 requireInteraction: extra.persistNotification,
+                // https://developers.google.com/web/updates/2016/03/notifications
+                // As of Chrome 50+, by default notifications replacing identically-tagged notifications no longer
+                // vibrate/signal the user that a new notification has come in. This flag allows subsequent notifications
+                // to re-alert the user.
+                renotify: true,
                 body: data.message,
                 icon: data.icon,
                 tag: 'notification-tag-' + extra.appId,
