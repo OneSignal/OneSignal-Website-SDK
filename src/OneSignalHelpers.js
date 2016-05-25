@@ -7,7 +7,7 @@ import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -49,16 +49,6 @@ export default class OneSignalHelpers {
     }
   }
 
-  static getDeviceTypeForBrowser() {
-    if (Browser.chrome || Browser.yandexbrowser) {
-      return OneSignal.DEVICE_TYPES.CHROME;
-    } else if (Browser.firefox) {
-      return OneSignal.DEVICE_TYPES.FIREFOX;
-    } else if (Browser.safari) {
-      return OneSignal.DEVICE_TYPES.SAFARI;
-    }
-  }
-
   static beginTemporaryBrowserSession() {
     sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
   }
@@ -78,7 +68,7 @@ export default class OneSignalHelpers {
    *          Saves the user ID and registration ID to the local web database after the response from OneSignal.
    */
   static registerWithOneSignal(appId, subscriptionInfo) {
-    let deviceType = OneSignalHelpers.getDeviceTypeForBrowser();
+    let deviceType = getDeviceTypeForBrowser();
     return Promise.all([
       OneSignal.getUserId(),
       OneSignal.getSubscription()

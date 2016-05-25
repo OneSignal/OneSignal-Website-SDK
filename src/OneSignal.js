@@ -1,7 +1,7 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
-import { apiCall, sendNotification } from './api.js';
+import { apiCall, sendNotification, getUserIdFromSubscriptionIdentifier } from './api.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
@@ -290,7 +290,8 @@ export default class OneSignal {
           document.head.appendChild(s);
         }
 
-        OneSignal._saveInitOptions()
+        OneSignal._initSaveState()
+          .then(() => OneSignal._saveInitOptions())
           .then(() => {
             if (document.readyState === "complete")
               OneSignal._internalInit();
@@ -354,7 +355,7 @@ export default class OneSignal {
           sessionStorage.clear();
           return Database.rebuild()
             .then(() => {
-              return Database.put('Ids', {type: ' appId', id: OneSignal.config.appId})
+              return Database.put('Ids', {type: 'appId', id: OneSignal.config.appId})
             })
             .then(() => {
               OneSignal._initCalled = false;
@@ -615,7 +616,7 @@ export default class OneSignal {
           sessionStorage.clear();
           return Database.rebuild()
             .then(() => {
-              return Database.put('Ids', {type: ' appId', id: OneSignal.config.appId})
+              return Database.put('Ids', {type: 'appId', id: OneSignal.config.appId})
             })
             .then(() => {
               OneSignal._initCalled = false;
@@ -787,82 +788,79 @@ export default class OneSignal {
       OneSignal._sessionInitAlreadyRunning = true;
     }
 
-    OneSignal._initSaveState()
-      .then(() => {
-        var hostPageProtocol = `${location.protocol}//`;
+    var hostPageProtocol = `${location.protocol}//`;
 
-        if (Browser.safari) {
-          if (OneSignal.config.safari_web_id) {
-            OneSignal.getAppId()
-              .then(appId => {
-                window.safari.pushNotification.requestPermission(
-                  `${OneSignal._API_URL}safari`,
-                  OneSignal.config.safari_web_id,
-                  {app_id: appId},
-                    pushResponse => {
-                    log.info('Safari Registration Result:', pushResponse);
-                    if (pushResponse.deviceToken) {
-                      let subscriptionInfo = {
-                        // Safari's subscription returns a device token (e.g. 03D5D4A2EBCE1EE2AED68E12B72B1B995C2BFB811AB7DBF973C84FED66C6D1D5)
-                        endpointOrToken: pushResponse.deviceToken.toLowerCase()
-                      };
-                      OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
-                    }
-                    else {
-                      OneSignalHelpers.beginTemporaryBrowserSession();
-                    }
-                    OneSignal.triggerNotificationPermissionChanged();
-                  }
-                );
-              })
-              .catch(e => log.error(e));
-          }
-        }
-        else if (options.modalPrompt && options.fromRegisterFor) { // If HTTPS - Show modal
-          Promise.all([
-            OneSignal.getAppId(),
-            OneSignal.isPushNotificationsEnabled(),
-            OneSignal.getNotificationPermission()
-          ])
-            .then(([appId, isPushEnabled, notificationPermission]) => {
-              let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
-              log.info('Opening HTTPS modal prompt:', iframeModalUrl);
-              let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
-
-              let sendToOrigin = `https://onesignal.com`;
-              if (Environment.isDev()) {
-                sendToOrigin = DEV_FRAME_HOST;
+    if (Browser.safari) {
+      if (OneSignal.config.safari_web_id) {
+        OneSignal.getAppId()
+          .then(appId => {
+            window.safari.pushNotification.requestPermission(
+              `${OneSignal._API_URL}safari`,
+              OneSignal.config.safari_web_id,
+              {app_id: appId},
+                pushResponse => {
+                log.info('Safari Registration Result:', pushResponse);
+                if (pushResponse.deviceToken) {
+                  let subscriptionInfo = {
+                    // Safari's subscription returns a device token (e.g. 03D5D4A2EBCE1EE2AED68E12B72B1B995C2BFB811AB7DBF973C84FED66C6D1D5)
+                    endpointOrToken: pushResponse.deviceToken.toLowerCase()
+                  };
+                  OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
+                }
+                else {
+                  OneSignalHelpers.beginTemporaryBrowserSession();
+                }
+                OneSignal.triggerNotificationPermissionChanged();
               }
-              let receiveFromOrigin = sendToOrigin;
-              OneSignal.modalPostmam = new Postmam(iframeModal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
-              OneSignal.modalPostmam.startPostMessageReceive();
+            );
+          })
+          .catch(e => log.error(e));
+      }
+    }
+    else if (options.modalPrompt && options.fromRegisterFor) { // If HTTPS - Show modal
+      Promise.all([
+        OneSignal.getAppId(),
+        OneSignal.isPushNotificationsEnabled(),
+        OneSignal.getNotificationPermission()
+      ])
+        .then(([appId, isPushEnabled, notificationPermission]) => {
+          let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
+          log.info('Opening HTTPS modal prompt:', iframeModalUrl);
+          let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
 
-              return new Promise((resolve, reject) => {
-                OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
-                  let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
-                  iframeModalDom.parentNode.removeChild(iframeModalDom);
-                  OneSignal.modalPostmam.destroy();
-                  OneSignalHelpers.triggerCustomPromptClicked('granted');
-                  OneSignal.registerForPushNotifications();
-                });
-                OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
-                  let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
-                  iframeModalDom.parentNode.removeChild(iframeModalDom);
-                  OneSignal.modalPostmam.destroy();
-                  OneSignalHelpers.triggerCustomPromptClicked('denied');
-                });
-                OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
-                  log.info('Detected modal is closing.');
-                  OneSignal.modalPostmam.destroy();
-                });
-              });
+          let sendToOrigin = `https://onesignal.com`;
+          if (Environment.isDev()) {
+            sendToOrigin = DEV_FRAME_HOST;
+          }
+          let receiveFromOrigin = sendToOrigin;
+          OneSignal.modalPostmam = new Postmam(iframeModal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
+          OneSignal.modalPostmam.startPostMessageReceive();
+
+          return new Promise((resolve, reject) => {
+            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
+              let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
+              iframeModalDom.parentNode.removeChild(iframeModalDom);
+              OneSignal.modalPostmam.destroy();
+              OneSignalHelpers.triggerCustomPromptClicked('granted');
+              OneSignal.registerForPushNotifications();
             });
-        }
-        else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
-          OneSignal._registerForW3CPush(options);
+            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
+              let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
+              iframeModalDom.parentNode.removeChild(iframeModalDom);
+              OneSignal.modalPostmam.destroy();
+              OneSignalHelpers.triggerCustomPromptClicked('denied');
+            });
+            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
+              log.info('Detected modal is closing.');
+              OneSignal.modalPostmam.destroy();
+            });
+          });
+        });
+    }
+    else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
+      OneSignal._registerForW3CPush(options);
 
-        Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      });
+    Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
 
   /*
@@ -1883,6 +1881,7 @@ objectAssign(OneSignal, {
   popupPostmam: null,
   helpers: OneSignalHelpers,
   apiCall: apiCall,
+  getUserIdFromSubscriptionIdentifier: getUserIdFromSubscriptionIdentifier,
   objectAssign: objectAssign,
   checkAndTriggerSubscriptionChanged: OneSignalHelpers.checkAndTriggerSubscriptionChanged,
   sendSelfNotification: OneSignalHelpers.sendSelfNotification,
@@ -1922,12 +1921,6 @@ objectAssign(OneSignal, {
     SUBSCRIBED: 1,
     UNSUBSCRIBED: -2
   },
-
-  DEVICE_TYPES: {
-    CHROME: 5,
-    SAFARI: 7,
-    FIREFOX: 8,
-  }
 });
 
 Object.defineProperty(OneSignal, 'LOGGING', {
