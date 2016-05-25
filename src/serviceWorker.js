@@ -1,9 +1,9 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
-import { sendNotification, apiCall } from './api.js';
+import { sendNotification, apiCall, getUserIdFromSubscriptionIdentifier } from './api.js';
 import log from 'loglevel';
 import Database from './database.js';
-import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
@@ -32,6 +32,10 @@ class ServiceWorker {
 
   static get apiUrl() {
     return API_URL;
+  }
+
+  static get browser() {
+    return Browser;
   }
 
   static run() {
@@ -190,29 +194,32 @@ class ServiceWorker {
         .then(resolve)
         .catch(e => {
           log.error('Failed to display a notification:', e);
-          log.warn("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+          if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
+            log.warn('Because we have just unsubscribed from notifications, we will not show anything.');
+          } else {
+            log.warn("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
 
-          Database.get('Ids', 'backupNotification')
-            .then(backupNotification => {
-              if (backupNotification) {
-                self.registration.showNotification(backupNotification.title, {
-                  requireInteraction: false, // Don't persist our backup notification
-                  body: backupNotification.message,
-                  icon: backupNotification.icon,
-                  tag: 'notification-tag-' + extra.appId,
-                  data: backupNotification
+            Database.get('Ids', 'backupNotification')
+                .then(backupNotification => {
+                  if (backupNotification) {
+                    self.registration.showNotification(backupNotification.title, {
+                      requireInteraction: false, // Don't persist our backup notification
+                      body: backupNotification.message,
+                      icon: backupNotification.icon,
+                      tag: 'notification-tag-' + extra.appId,
+                      data: backupNotification
+                    });
+                  } else {
+                    self.registration.showNotification(extra.title, {
+                      requireInteraction: false, // Don't persist our backup notification
+                      body: 'You have new updates.',
+                      icon: extra.defaultIconResult,
+                      tag: 'notification-tag-' + extra.appId,
+                      data: {backupNotification: true}
+                    });
+                  }
                 });
-              } else {
-                self.registration.showNotification(extra.title, {
-                  requireInteraction: false, // Don't persist our backup notification
-                  body: 'You have new updates.',
-                  icon: extra.defaultIconResult,
-                  tag: 'notification-tag-' + extra.appId,
-                  data: {backupNotification: true}
-                });
-              }
-            });
-
+          }
         });
     }));
   }
@@ -530,8 +537,46 @@ class ServiceWorker {
             return apiCall("players/" + userId + "/chromeweb_notification", "GET");
           }
           else {
-            log.error('Tried to get last notifications, but there was no userId found in the database.');
-            reject(new Error('Tried to get last notifications, but there was no userId found in the database.'));
+            log.error('Tried to get notification contents, but IndexedDB is missing user ID info.');
+            return Promise.all([
+                    Database.get('Ids', 'appId'),
+                    self.registration.pushManager.getSubscription().then(subscription => subscription.endpoint)
+                  ])
+                .then(([appId, identifier]) => {
+                  let deviceType = getDeviceTypeForBrowser();
+                  // Get the user ID from OneSignal
+                  return getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier).then(recoveredUserId => {
+                    if (recoveredUserId) {
+                      log.debug('Recovered OneSignal user ID:', recoveredUserId);
+                      // We now have our OneSignal user ID again
+                      return Promise.all([
+                        Database.put('Ids', {type: 'userId', id: recoveredUserId}),
+                        Database.put('Ids', {
+                          type: 'registrationId',
+                          id: identifier.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "")
+                        }),
+                      ]).then(() => {
+                        // Try getting the notification again
+                        log.debug('Attempting to retrieve the notification again now with a recovered user ID.');
+                        return apiCall("players/" + recoveredUserId + "/chromeweb_notification", "GET");
+                      });
+                    } else {
+                      return Promise.reject('Recovered user ID was null. Unsubscribing from push notifications.');
+                    }
+                  });
+                })
+                .catch(error => {
+                  log.error('Unsuccessfully attempted to recover OneSignal user ID:', error);
+                  // Actually unsubscribe from push so this user doesn't get bothered again
+                  return self.registration.pushManager.getSubscription()
+                      .then(subscription => {
+                        return subscription.unsubscribe()
+                      })
+                      .then (unsubscriptionResult => {
+                        log.warn('Unsubscribed from push notifications result:', unsubscriptionResult);
+                        self.UNSUBSCRIBED_FROM_NOTIFICATIONS = true;
+                      });
+                });
           }
         })
         .then(response => {

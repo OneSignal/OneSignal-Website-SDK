@@ -145,6 +145,22 @@ export function on(targetSelectorOrElement, event, task) {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
+var DEVICE_TYPES = {
+  CHROME: 5,
+      SAFARI: 7,
+      FIREFOX: 8,
+};
+
+export function getDeviceTypeForBrowser() {
+  if (Browser.chrome || Browser.yandexbrowser) {
+    return DEVICE_TYPES.CHROME;
+  } else if (Browser.firefox) {
+    return DEVICE_TYPES.FIREFOX;
+  } else if (Browser.safari) {
+    return DEVICE_TYPES.SAFARI;
+  }
+}
+
 export function once(targetSelectorOrElement, event, task, manualDestroy=false) {
   if (!event) {
     log.error('Cannot call on() with no event: ', event);

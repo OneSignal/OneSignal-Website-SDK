@@ -28,6 +28,28 @@ export function apiCall(action, method, data) {
     });
 }
 
+/**
+ * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
+ * Used if the user clears his or her IndexedDB database and we need the user ID again.
+ */
+export function getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier) {
+  // Calling POST /players with an existing identifier returns us that player ID
+  return apiCall('players', 'POST', {
+    app_id: appId,
+    device_type: deviceType,
+    identifier: identifier
+  }).then(response => {
+    if (response && response.id) {
+      return response.id;
+    } else {
+      return null;
+    }
+  }).catch(e => {
+    log.error('Error getting user ID from subscription identifier:', e);
+    return null;
+  });
+}
+
 export function sendNotification(appId, playerIds, titles, contents, url, icon, data) {
   var params = {
     app_id: appId,
