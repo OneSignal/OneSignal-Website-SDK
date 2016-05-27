@@ -209,7 +209,7 @@ export default class Postmam {
       throw new Error("(Postmam) Postmam command must not be empty.");
     }
     if (typeof data === 'function') {
-      log.error('You passed a function to data, did you mean to pass null?')
+      log.debug('You passed a function to data, did you mean to pass null?')
       return;
     }
     const messageBundle = {
@@ -232,7 +232,7 @@ export default class Postmam {
       throw new Error("(Postmam) Postmam command must not be empty.");
     }
     if (typeof data === 'function') {
-      log.error('You passed a function to data, did you mean to pass null?')
+      log.debug('You passed a function to data, did you mean to pass null?')
       return;
     }
     const messageBundle = {

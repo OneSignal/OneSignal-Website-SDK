@@ -45,7 +45,7 @@ export function getUserIdFromSubscriptionIdentifier(appId, deviceType, identifie
       return null;
     }
   }).catch(e => {
-    log.error('Error getting user ID from subscription identifier:', e);
+    log.debug('Error getting user ID from subscription identifier:', e);
     return null;
   });
 }

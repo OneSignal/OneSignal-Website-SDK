@@ -459,7 +459,7 @@ export default class OneSignal {
     var creator = opener || parent;
 
     if (creator == window) {
-      log.error('This page was not opened from a parent window. This page is intended to be loaded as an iFrame in an HTTP site.');
+      log.debug('This page was not opened from a parent window. This page is intended to be loaded as an iFrame in an HTTP site.');
       return;
     }
 

@@ -120,7 +120,7 @@ class ServiceWorker {
           extra.persistNotification = persistNotification;
           extra.appId = appId;
           if (!appId)
-            log.error('There was no app ID stored when trying to display the notification. An app ID is required.');
+            log.debug('There was no app ID stored when trying to display the notification. An app ID is required.');
         })
         .then(() => ServiceWorker._getLastNotifications())
         .then(notifications => {
@@ -193,11 +193,11 @@ class ServiceWorker {
         })
         .then(resolve)
         .catch(e => {
-          log.error('Failed to display a notification:', e);
+          log.debug('Failed to display a notification:', e);
           if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
-            log.warn('Because we have just unsubscribed from notifications, we will not show anything.');
+            log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
           } else {
-            log.warn("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+            log.debug("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
 
             Database.get('Ids', 'backupNotification')
                 .then(backupNotification => {
@@ -537,7 +537,7 @@ class ServiceWorker {
             return apiCall("players/" + userId + "/chromeweb_notification", "GET");
           }
           else {
-            log.error('Tried to get notification contents, but IndexedDB is missing user ID info.');
+            log.debug('Tried to get notification contents, but IndexedDB is missing user ID info.');
             return Promise.all([
                     Database.get('Ids', 'appId'),
                     self.registration.pushManager.getSubscription().then(subscription => subscription.endpoint)
@@ -566,14 +566,14 @@ class ServiceWorker {
                   });
                 })
                 .catch(error => {
-                  log.error('Unsuccessfully attempted to recover OneSignal user ID:', error);
+                  log.debug('Unsuccessfully attempted to recover OneSignal user ID:', error);
                   // Actually unsubscribe from push so this user doesn't get bothered again
                   return self.registration.pushManager.getSubscription()
                       .then(subscription => {
                         return subscription.unsubscribe()
                       })
                       .then (unsubscriptionResult => {
-                        log.warn('Unsubscribed from push notifications result:', unsubscriptionResult);
+                        log.debug('Unsubscribed from push notifications result:', unsubscriptionResult);
                         self.UNSUBSCRIBED_FROM_NOTIFICATIONS = true;
                       });
                 });
