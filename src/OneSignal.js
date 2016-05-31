@@ -842,7 +842,7 @@ export default class OneSignal {
               iframeModalDom.parentNode.removeChild(iframeModalDom);
               OneSignal.modalPostmam.destroy();
               OneSignalHelpers.triggerCustomPromptClicked('granted');
-              OneSignal.registerForPushNotifications();
+              OneSignal._registerForW3CPush(options);
             });
             OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
               let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
