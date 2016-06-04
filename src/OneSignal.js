@@ -135,6 +135,7 @@ export default class OneSignal {
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in _sessionInit for HTTP sites, since the iframe is needed for communication
     OneSignal._storeInitialValues();
+    OneSignal._installNativePromptPermissionChangedHook();
 
     if (navigator.serviceWorker && window.location.protocol === 'https:') {
       navigator.serviceWorker.getRegistration()
