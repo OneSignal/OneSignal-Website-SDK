@@ -1044,7 +1044,6 @@ export default class OneSignal {
       .catch(function (e) {
         log.error(e);
       });
-    ;
   }
 
   static _registerServiceWorker(full_sw_and_path) {

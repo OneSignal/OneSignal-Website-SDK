@@ -12,6 +12,7 @@ import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
 import swivel from 'swivel';
+import OneSignal from './OneSignal';
 import Postmam from './postmam.js';
 
 
@@ -124,7 +125,7 @@ export default class OneSignalHelpers {
               log.debug("Sending player Id and registrationId back to host page");
               var creator = opener || parent;
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
-              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE)
+              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE);
               if (opener)
                 window.close();
             })
