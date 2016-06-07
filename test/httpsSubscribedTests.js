@@ -1,6 +1,7 @@
 import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import StackTrace from 'stacktrace-js';
+import OneSignal from '../src/OneSignal';
 import log from 'loglevel';
 import { guid, delay, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, logError } from '../src/utils.js';
 import {APP_ID, PLAYER_ID} from './vars.js';

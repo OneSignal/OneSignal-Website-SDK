@@ -1,10 +1,13 @@
-function importTestsThatRequireValidSubscription() {
-  require('./subscribed-tests.js');
+import Extension from './extension';
+
+export default class OneSignalTests {
+  static runHttpsSubscribedTests() {
+    require('./httpsSubscribedTests.js');
+  }
+
+  static runUnsubscribedTests() {
+    require('./unsubscribedTests.js');
+  }
 }
 
-function importTestsThatDontRequireValidSubscription() {
-  require('./unsubscribed-tests.js');
-}
-
-window.importTestsThatRequireValidSubscription = importTestsThatRequireValidSubscription;
-window.importTestsThatDontRequireValidSubscription = importTestsThatDontRequireValidSubscription;
+window.OneSignalTests = OneSignalTests;
