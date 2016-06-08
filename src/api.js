@@ -23,8 +23,12 @@ export function apiCall(action, method, data) {
     .then(json => {
       if (status >= 200 && status < 300)
         return json;
-      else
+      else {
+        if (json && json.errors && json.errors.length > 0) {
+          
+        }
         return Promise.reject(json);
+      }
     });
 }
 

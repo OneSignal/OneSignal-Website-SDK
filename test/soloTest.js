@@ -24,20 +24,29 @@ export default class SoloTest {
                     Promise.resolve(testFn())
                         .then(() => this.finishSoloInstance())
                         .catch(e => {
-                            Utils.captureError(e).then(e => {
-                                console.error('Test Error:', e);
-                                this.finishSoloInstance(e);
-                            });
+                            this.testErrorHelper(e);
                         });
                 } catch (e) {
-                    Utils.captureError(e).then(e => {
-                        console.error('Test Error:', e);
-                        this.finishSoloInstance(e);
-                    });
+                    this.testErrorHelper(e);
                 }
             }
         });
     }
+
+    /**
+     * Reports the test error in detail to the console.
+     * @param e The detailed test error enhanced by source maps.
+     */
+    testErrorHelper(e) {
+        Utils.captureError(e).then(detailedError => {
+            console.group('Mocha Test:', this.test.title);
+            console.error(e);
+            console.error(detailedError);
+            console.groupEnd();
+            this.finishSoloInstance(detailedError);
+        });
+    }
+
     /**
      * Returns true if only this test is being run in a separate browser tab.
      * @returns {*}
@@ -63,17 +72,16 @@ export default class SoloTest {
             listenDomain: location.origin
         });
         this.pm.listen(testName, function (reply, respond) {
+            // Reply to the test runner in this block
             respond(true, {finished: true});
             if (JSON.parse(reply) === "test_successful") {
                 resolve();
             } else {
-                window.error = JSON.parse(reply);
                 reject(new Error(reply));
             }
         });
         let url = new URL(location.href);
         let params = new URLSearchParams();
-        params.set('init', true);
         params.set('grep', encodeURIComponent(testName));
         //Extension.createBrowserTab(`${url.origin}${url.pathname}?${Utils.urlSearchParamToString(params)}`);
         window.open(`${url.origin}${url.pathname}?${Utils.urlSearchParamToString(params)}`);
@@ -101,7 +109,7 @@ export default class SoloTest {
             channel: this.test.title,
             data: error ? JSON.stringify(error, Object.getOwnPropertyNames(error), 4) : JSON.stringify("test_successful"),
             callback: (success, reply) => {
-                if (reply.finished && !this.options.leaveRunning) {
+                if (reply.finished && !this.options.leaveRunning && !error) {
                     window.close();
                 }
             }

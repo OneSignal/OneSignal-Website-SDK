@@ -103,8 +103,6 @@ export default class OneSignalHelpers {
           if (subscriptionInfo.p256dh) {
             requestData.web_p256 = subscriptionInfo.p256dh;
           }
-        } else {
-          throw new Error('registerWithOneSignal: subscriptionInfo expected to contain token, auth, and p256dh cannot be null.');
         }
 
         return apiCall(requestUrl, 'POST', requestData);
