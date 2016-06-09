@@ -14,7 +14,6 @@
     "babel-runtime": "^6.6.1",
     "bowser": "^1.0.0",
     "chai": "^3.5.0",
-    "chai-as-promised": "^5.2.0",
     "css-loader": "^0.23.1",
     "exports-loader": "^0.6.3",
     "expose-loader": "^0.7.1",
