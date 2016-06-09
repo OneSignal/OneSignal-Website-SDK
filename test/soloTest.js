@@ -14,6 +14,10 @@ export default class SoloTest {
 
     constructor(testInstance, options, testFn) {
         this.test = testInstance;
+        if (this.isTestNameIllegal(this.test.title)) {
+            return Promise.reject(new Error(`Your test name of '${this.test.title}' is illegal because Mocha cannot ` +
+                `properly grep ( ). Please rewrite your test name to exclude these special characters.`));
+        }
         this.options = options;
         return new Promise((resolve, reject) => {
             if (!this.isSoloInstance(this.test.title)) {
@@ -71,13 +75,14 @@ export default class SoloTest {
         this.pm = new PMPlus({
             listenDomain: location.origin
         });
-        this.pm.listen(testName, function (reply, respond) {
+        this.pm.listen(testName, (response, respond) => {
             // Reply to the test runner in this block
             respond(true, {finished: true});
-            if (JSON.parse(reply) === "test_successful") {
+            if (JSON.parse(response) === "test_successful") {
+                this.pm.destroy();
                 resolve();
             } else {
-                reject(new Error(reply));
+                reject(new Error(response));
             }
         });
         let url = new URL(location.href);
@@ -114,5 +119,13 @@ export default class SoloTest {
                 }
             }
         });
+    }
+
+    /**
+     * The test runner has some problems with parentheses and commas so we'll take them out.
+     */
+    isTestNameIllegal(testName) {
+        return testName.replace(/\(/g, '')
+            .replace(/\)/g, '') !== testName;
     }
 }
