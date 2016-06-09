@@ -742,6 +742,10 @@ export default class OneSignal {
           OneSignal._fireTransmittedNotificationClickedCallbacks(message.data);
           return false;
         });
+        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, message => {
+          Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, message.data);
+          return false;
+        });
       };
       OneSignal._sessionIframeAdded = true;
     });
@@ -1916,6 +1920,7 @@ objectAssign(OneSignal, {
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
+    NOTIFICATION_DISPLAYED: 'postmam.notificationDisplayed',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable'
@@ -1926,6 +1931,7 @@ objectAssign(OneSignal, {
     NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
     SUBSCRIPTION_CHANGED: 'subscriptionChange',
     WELCOME_NOTIFICATION_SENT: 'sendWelcomeNotification',
+    NOTIFICATION_DISPLAYED: 'notificationDisplay',
     INTERNAL_SUBSCRIPTIONSET: 'subscriptionSet',
     SDK_INITIALIZED: 'initialize'
   },

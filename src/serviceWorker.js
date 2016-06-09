@@ -183,7 +183,10 @@ class ServiceWorker {
                 tag: 'notification-tag-' + extra.appId,
                 data: data
               });
-              return showNotificationPromise.then(() => retrievedPushLogPromise).then(() => ServiceWorker.logPush(data.id, 'displayed'));
+              return showNotificationPromise
+                  .then(() => retrievedPushLogPromise)
+                  .then(() => ServiceWorker.logPush(data.id, 'displayed'))
+                  .then(() => swivel.broadcast('notification.displayed', data));
             }).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
           }
