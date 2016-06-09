@@ -14,11 +14,11 @@ Sources for web SDK. `entry.js` is the entry point that requires other files.
 
 `+-- test/`
 
-Sources for web SDK tests. `entry.js` is the entry point that requires other files. Currently unused.
+Sources for web SDK tests. `entry.js` is the entry point that requires other files.
 
 `+-- dist/`
 
-Contains the production (minified) and development versions of the transpiled web SDK as well as their separate source map `.map` files. Also contains the soloTest file, which is the ES6-transpiled-to-ES5 tests from all the `test/` source files.
+Contains the production (minified & mangled) and development versions of the transpiled web SDK as well as their separate source map `.map` files. Also contains the OneSignalSDKTests.js file, which is the ES6-transpiled-to-ES5 tests from all the `test/` source files.
 
 ## Contributing
 
@@ -27,4 +27,4 @@ Contains the production (minified) and development versions of the transpiled we
 3. `npm install -g gulp webpack`  (installs `gulp` and `webpack` globally for use)
 4. `gulp`
 
-The `src/` and `test/` directories are watched and automatically re-transpiled when changed. The compiled SDK go to `dist/`. The compiled test sources go to `dist/soloTest`.
+The `src/` and `test/` directories are watched and automatically re-transpiled when changed. The compiled SDK go to `dist/`. The compiled test sources go to `dist/OneSignalSDKTests.js`.
