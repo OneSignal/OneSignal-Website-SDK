@@ -359,7 +359,6 @@ class ServiceWorker {
                 hostUrl = decodeURIComponent(hostUrl);
                 if (notificationClickHandlerMatch === 'exact' && hostUrl === launchUrl) {
                   client.focus();
-                  //client.postMessage('notification.clicked');
                   swivel.emit(client.id, 'notification.clicked', eventData);
                   return;
                 } else if (notificationClickHandlerMatch === 'origin') {
@@ -373,7 +372,6 @@ class ServiceWorker {
                   log.debug('Launch URL Origin:', launchUrlOrigin);
                   if (clientOrigin === launchUrlOrigin) {
                     client.focus();
-                    //client.postMessage('notification.clicked');
                     swivel.emit(client.id, 'notification.clicked', eventData);
                     return;
                   }
