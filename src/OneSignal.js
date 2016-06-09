@@ -14,7 +14,7 @@ import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
 import swivel from 'swivel';
 import Postmam from './postmam.js';
-import OneSignalHelpers from './OneSignalHelpers.js';
+import OneSignalHelpers from './helpers.js';
 
 
 export default class OneSignal {

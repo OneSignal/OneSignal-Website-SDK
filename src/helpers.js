@@ -1,7 +1,7 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
-import { apiCall, sendNotification } from './api.js';
+import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
@@ -16,7 +16,7 @@ import OneSignal from './OneSignal';
 import Postmam from './postmam.js';
 
 
-export default class OneSignalHelpers {
+export default class Helpers {
 
   /**
    * If there are multiple manifests, and one of them is our OneSignal manifest, we move it to the top of <head> to ensure our manifest is used for push subscription (manifests after the first are ignored as part of the spec).
@@ -87,7 +87,7 @@ export default class OneSignalHelpers {
           device_model: navigator.platform + " " + Browser.name,
           device_os: Browser.version,
           sdk: OneSignal._VERSION,
-          notification_types: OneSignalHelpers.getNotificationTypeFromOptIn(subscription)
+          notification_types: Helpers.getNotificationTypeFromOptIn(subscription)
         };
 
         if (subscriptionInfo) {
@@ -105,12 +105,12 @@ export default class OneSignalHelpers {
           }
         }
 
-        return apiCall(requestUrl, 'POST', requestData);
+        return OneSignalApi.post(requestUrl, requestData);
       })
       .then(response => {
         let { id: userId } = response;
 
-        OneSignalHelpers.beginTemporaryBrowserSession();
+        Helpers.beginTemporaryBrowserSession();
 
         if (userId) {
           Database.put("Ids", {type: "userId", id: userId});
@@ -186,7 +186,7 @@ export default class OneSignalHelpers {
     ])
       .then(([appId, userId]) => {
         if (userId && appId) {
-          sendNotification(appId, [userId], {'en': title}, {'en': message}, url, icon, data)
+          OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, icon, data)
         } else {
           log.warn('Could not send self a test notification because there is no valid user ID or app ID.');
         }
@@ -196,11 +196,19 @@ export default class OneSignalHelpers {
   static establishServiceWorkerChannel(serviceWorkerRegistration) {
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
+      OneSignal._channel.off('notification.displayed');
       OneSignal._channel.off('notification.clicked');
     }
     OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
     OneSignal._channel.on('data', function handler(context, data) {
       log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+    });
+    OneSignal._channel.on('notification.displayed', function handler(context, data) {
+      if (Environment.isHost()) {
+        Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      } else if (Environment.isIframe()) {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, data);
+      }
     });
     OneSignal._channel.on('notification.clicked', function handler(context, data) {
       if (Environment.isHost()) {
@@ -254,7 +262,7 @@ export default class OneSignalHelpers {
   }
 
   static autoCorrectSubdomain(inputSubdomain) {
-    let normalizedSubdomain = OneSignalHelpers.getNormalizedSubdomain(inputSubdomain);
+    let normalizedSubdomain = Helpers.getNormalizedSubdomain(inputSubdomain);
     if (normalizedSubdomain !== inputSubdomain) {
       log.warn(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
     }
