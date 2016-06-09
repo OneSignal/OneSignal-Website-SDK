@@ -85,7 +85,7 @@ module.exports = {
         drop_console: false,
         drop_debugger: false
       },
-      mangle: true,
+      mangle: IS_PROD,
       output: {
         comments: false
       }

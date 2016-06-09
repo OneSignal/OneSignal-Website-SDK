@@ -1,7 +1,7 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
-import { apiCall, sendNotification, getUserIdFromSubscriptionIdentifier } from './api.js';
+import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
@@ -14,7 +14,7 @@ import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
 import swivel from 'swivel';
 import Postmam from './postmam.js';
-import OneSignalHelpers from './OneSignalHelpers.js';
+import OneSignalHelpers from './helpers.js';
 
 
 export default class OneSignal {
@@ -86,7 +86,7 @@ export default class OneSignal {
             message = decodeHtmlEntities(message);
             if (!welcome_notification_disabled) {
               log.debug('Sending welcome notification.');
-              sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null, {__isOneSignalWelcomeNotification: true});
+              OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null, {__isOneSignalWelcomeNotification: true});
               Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
             }
           })
@@ -345,6 +345,20 @@ export default class OneSignal {
       opPromises.push(Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true}));
     }
     return Promise.all(opPromises);
+  }
+
+  static closeNotifications() {
+    if (navigator.serviceWorker && !OneSignal.isUsingSubscriptionWorkaround()) {
+      navigator.serviceWorker.getRegistration()
+          .then(registration => {
+            if (registration === undefined || !registration.active) {
+              log.debug('There is no active service worker.');
+              return Promise.reject();
+            } else if (OneSignal._channel) {
+              OneSignal._channel.emit('data', 'notification.closeall');
+            }
+          });
+    }
   }
 
   static _internalInit() {
@@ -726,6 +740,10 @@ export default class OneSignal {
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
           OneSignal._fireTransmittedNotificationClickedCallbacks(message.data);
+          return false;
+        });
+        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, message => {
+          Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, message.data);
           return false;
         });
       };
@@ -1328,7 +1346,7 @@ export default class OneSignal {
     return OneSignal.getUserId()
       .then(userId => {
         if (userId) {
-          return apiCall(`players/${userId}`, 'GET', null);
+          return OneSignalApi.get(`players/${userId}`, null);
         } else {
           return null;
         }
@@ -1381,7 +1399,7 @@ export default class OneSignal {
           ])
             .then(([appId, userId]) => {
               if (userId) {
-                return apiCall(`players/${userId}`, 'PUT', {
+                return OneSignalApi.put(`players/${userId}`, {
                   app_id: appId,
                   tags: tags
                 })
@@ -1687,7 +1705,7 @@ export default class OneSignal {
         dbOpPromise
           .then(() => OneSignal.getAppId())
           .then(appId => {
-            return apiCall("players/" + userId, "PUT", {
+            return OneSignalApi.put('players/' + userId, {
               app_id: appId,
               notification_types: OneSignalHelpers.getNotificationTypeFromOptIn(newSubscription)
             });
@@ -1876,12 +1894,11 @@ objectAssign(OneSignal, {
   browser: Browser,
   log: log,
   swivel: swivel,
+  api: OneSignalApi,
   _sessionNonce: null,
   iframePostmam: null,
   popupPostmam: null,
   helpers: OneSignalHelpers,
-  apiCall: apiCall,
-  getUserIdFromSubscriptionIdentifier: getUserIdFromSubscriptionIdentifier,
   objectAssign: objectAssign,
   checkAndTriggerSubscriptionChanged: OneSignalHelpers.checkAndTriggerSubscriptionChanged,
   sendSelfNotification: OneSignalHelpers.sendSelfNotification,
@@ -1903,6 +1920,7 @@ objectAssign(OneSignal, {
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
+    NOTIFICATION_DISPLAYED: 'postmam.notificationDisplayed',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable'
@@ -1913,6 +1931,7 @@ objectAssign(OneSignal, {
     NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
     SUBSCRIPTION_CHANGED: 'subscriptionChange',
     WELCOME_NOTIFICATION_SENT: 'sendWelcomeNotification',
+    NOTIFICATION_DISPLAYED: 'notificationDisplay',
     INTERNAL_SUBSCRIPTIONSET: 'subscriptionSet',
     SDK_INITIALIZED: 'initialize'
   },

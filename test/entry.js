@@ -1,8 +1,8 @@
 import Extension from './extension';
 
 export default class OneSignalTests {
-  static runHttpsSubscribedTests() {
-    require('./httpsSubscribedTests.js');
+  static runHttpsTests() {
+    require('./httpsTests.js');
   }
 
   static runUnsubscribedTests() {
