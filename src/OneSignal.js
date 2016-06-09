@@ -347,6 +347,20 @@ export default class OneSignal {
     return Promise.all(opPromises);
   }
 
+  static closeNotifications() {
+    if (navigator.serviceWorker && !OneSignal.isUsingSubscriptionWorkaround()) {
+      navigator.serviceWorker.getRegistration()
+          .then(registration => {
+            if (registration === undefined || !registration.active) {
+              log.debug('There is no active service worker.');
+              return Promise.reject();
+            } else if (OneSignal._channel) {
+              OneSignal._channel.emit('data', 'notification.closeall');
+            }
+          });
+    }
+  }
+
   static _internalInit() {
     log.debug('Called %c_internalInit()', getConsoleStyle('code'));
     Database.get('Ids', 'appId')
