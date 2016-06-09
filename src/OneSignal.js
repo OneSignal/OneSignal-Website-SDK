@@ -1,7 +1,7 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
-import { apiCall, sendNotification, getUserIdFromSubscriptionIdentifier } from './api.js';
+import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
@@ -86,7 +86,7 @@ export default class OneSignal {
             message = decodeHtmlEntities(message);
             if (!welcome_notification_disabled) {
               log.debug('Sending welcome notification.');
-              sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null, {__isOneSignalWelcomeNotification: true});
+              OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null, {__isOneSignalWelcomeNotification: true});
               Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
             }
           })
@@ -1328,7 +1328,7 @@ export default class OneSignal {
     return OneSignal.getUserId()
       .then(userId => {
         if (userId) {
-          return apiCall(`players/${userId}`, 'GET', null);
+          return OneSignalApi.get(`players/${userId}`, null);
         } else {
           return null;
         }
@@ -1381,7 +1381,7 @@ export default class OneSignal {
           ])
             .then(([appId, userId]) => {
               if (userId) {
-                return apiCall(`players/${userId}`, 'PUT', {
+                return OneSignalApi.put(`players/${userId}`, {
                   app_id: appId,
                   tags: tags
                 })
@@ -1687,7 +1687,7 @@ export default class OneSignal {
         dbOpPromise
           .then(() => OneSignal.getAppId())
           .then(appId => {
-            return apiCall("players/" + userId, "PUT", {
+            return OneSignalApi.put('players/' + userId, {
               app_id: appId,
               notification_types: OneSignalHelpers.getNotificationTypeFromOptIn(newSubscription)
             });
@@ -1876,12 +1876,11 @@ objectAssign(OneSignal, {
   browser: Browser,
   log: log,
   swivel: swivel,
+  api: OneSignalApi,
   _sessionNonce: null,
   iframePostmam: null,
   popupPostmam: null,
   helpers: OneSignalHelpers,
-  apiCall: apiCall,
-  getUserIdFromSubscriptionIdentifier: getUserIdFromSubscriptionIdentifier,
   objectAssign: objectAssign,
   checkAndTriggerSubscriptionChanged: OneSignalHelpers.checkAndTriggerSubscriptionChanged,
   sendSelfNotification: OneSignalHelpers.sendSelfNotification,
