@@ -1,6 +1,7 @@
 import log from 'loglevel';
 import * as Browser from 'bowser';
 import Environment from './environment.js';
+import IndexedDb from './indexedDb';
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -284,6 +285,7 @@ export function executeAndTimeoutPromiseAfter(promise, milliseconds, displayErro
       log.warn(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
       return Promise.reject(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
     }
+    else return value;
   });
 }
 
@@ -364,4 +366,47 @@ export function getUrlQueryParam(name) {
   if (!results) return null;
   if (!results[2]) return '';
   return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+/**
+ * Wipe OneSignal-related IndexedDB data.
+ */
+export function wipeIndexedDb() {
+  console.warn('OneSignal: Wiping IndexedDB data.');
+  return Promise.all([
+    IndexedDb.remove('Ids'),
+    IndexedDb.remove('NotificationOpened'),
+    IndexedDb.remove('Options')
+  ]);
+}
+
+
+/**
+ * Unsubscribe from push notifications and remove any active service worker.
+ */
+export function wipeServiceWorkerAndUnsubscribe() {
+  console.warn('OneSignal: Unsubscribe from push and unregistering service worker.');
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
+    return Promise.resolve();
+
+  let unsubscribePromise = navigator.serviceWorker.ready
+      .then(registration => registration.pushManager)
+      .then(pushManager => pushManager.getSubscription())
+      .then(subscription => {
+        if (subscription) {
+          return subscription.unsubscribe();
+        }
+      });
+
+  let unregisterWorkerPromise = navigator.serviceWorker.ready
+      .then(registration => registration.unregister());
+
+  return Promise.all([
+    unsubscribePromise,
+    unregisterWorkerPromise
+  ]);
+}
+
+export function wait(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }

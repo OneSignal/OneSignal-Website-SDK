@@ -5,8 +5,10 @@ import {APP_ID, PLAYER_ID} from './vars.js';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';
 import Utils from './utils';
-import { executeAndTimeoutPromiseAfter, guid } from '../src/utils';
+import { executeAndTimeoutPromiseAfter, guid, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn } from '../src/utils';
 import IndexedDb from '../src/indexedDb';
+import Environment from '../src/environment.js';
+import Postmam from '../src/postmam.js';
 
 
 chai.config.includeStack = false;
@@ -18,31 +20,15 @@ describe('HTTPS Tests', function() {
     describe('Notifications', function() {
         it('should subscribe and receive a welcome notification successfully', function () {
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true
-                                }]);
-
-                                OneSignal.on('notificationDisplay', resolve);
-                            });
-                        });
+                return Utils.initialize({
+                        welcomeNotification: true,
+                        autoRegister: true
                     })
+                    .then(() => Utils.expectEvent('notificationDisplay'))
                     .then(notification => {
                         expect(notification).to.not.be.null;
                         expect(notification).to.have.property('message', 'Thanks for subscribing!');
-                        return new Promise(resolve => setTimeout(resolve, 250));
+                        return Utils.wait(150);
                     })
                     .then(() => OneSignal.closeNotifications());
             });
@@ -50,41 +36,19 @@ describe('HTTPS Tests', function() {
 
         it('should subscribe and receive a notification successfully', function () {
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
-
-                                OneSignal.on('subscriptionChange', resolve);
-                            });
-                        }).catch(e => console.error(e)), 3000, 'No subscription change after given time.');
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
                     })
                     .then(() => {
-                        return new Promise(resolve => {
-                            OneSignal.on('notificationDisplay', resolve);
-                            OneSignal.sendSelfNotification()
-                        });
+                        OneSignal.sendSelfNotification();
+                        return Utils.expectEvent('notificationDisplay')
                     })
                     .then(notification => {
                         expect(notification).to.not.be.null;
                         expect(notification).to.have.property('message', 'This is an example notification.');
                         expect(notification).to.have.property('title', 'OneSignal Test Message');
-                        return new Promise(resolve => setTimeout(resolve, 250));
+                        return Utils.wait(150);
                     })
                     .then(() => OneSignal.closeNotifications());
             });
@@ -132,31 +96,11 @@ describe('HTTPS Tests', function() {
             tagsToCheckDeepEqual = Object.keys(sentTags).filter(x => expectedTagsUnsent.concat(['string', 'false']).indexOf(x) < 0);
         });
 
-        it('should send, receive, and delete tags successfully', function () {
+        it.only('should send, receive, and delete tags successfully', function () {
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
-
-                                OneSignal.on('subscriptionChange', resolve);
-                            });
-                        }).catch(e => console.error(e)), 3000, 'No subscription change after given time.');
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
                     })
                     .then(() => OneSignal.sendTags(sentTags))
                     .then(() => OneSignal.getTags())
@@ -181,35 +125,15 @@ describe('HTTPS Tests', function() {
                         Object.keys(expectedTags).forEach(tag => {
                             expect(receivedTags.hasOwnProperty(tag)).to.be.false;
                         });
-                    })
+                    });
             });
         });
 
         it('should successfully send, receive, and delete tags via callbacks', function () {
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
-
-                                OneSignal.on('subscriptionChange', resolve);
-                            });
-                        }).catch(e => console.error(e)), 3000, 'No subscription change after given time.');
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
                     })
                     .then(() => {
                         function getTagsCallback(receivedTags) {
@@ -248,7 +172,7 @@ describe('HTTPS Tests', function() {
                         }
 
                         OneSignal.sendTags(sentTags, onSendTagsComplete);
-                    })
+                    });
             });
         });
 
@@ -256,29 +180,10 @@ describe('HTTPS Tests', function() {
             return new SoloTest(this.test, {}, () => {
                 let tagKey = 'string';
                 let tagValue = sentTags[tagKey];
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
 
-                                OneSignal.on('subscriptionChange', resolve);
-                            });
-                        }).catch(e => console.error(e)), 3000, 'No subscription change after given time.');
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
                     })
                     .then(() => OneSignal.sendTag(tagKey, tagValue))
                     .then(() => OneSignal.getTags())
@@ -291,35 +196,15 @@ describe('HTTPS Tests', function() {
                     .then(receivedTags => {
                         expect(receivedTags).to.not.be.undefined;
                         expect(receivedTags[tagKey]).to.be.undefined;
-                    })
+                    });
             });
         });
 
         it('should return Promise objects', function () {
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
-
-                                OneSignal.on('subscriptionChange', resolve);
-                            });
-                        }).catch(e => console.error(e)), 3000, 'No subscription change after given time.');
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
                     })
                     .then(() => {
                         let getTagsReturnValue = OneSignal.getTags();
@@ -327,37 +212,26 @@ describe('HTTPS Tests', function() {
                         let sendTagsReturnValue = OneSignal.sendTags();
                         let deleteTagReturnValue = OneSignal.deleteTag('');
                         let deleteTagsReturnValue = OneSignal.deleteTags(['']);
-                        [getTagsReturnValue, sendTagReturnValue, sendTagsReturnValue, deleteTagReturnValue, deleteTagsReturnValue].forEach(x => expect(x.constructor.name).to.equal('Promise'));
+                        [getTagsReturnValue,
+                         sendTagReturnValue,
+                         sendTagsReturnValue,
+                         deleteTagReturnValue,
+                         deleteTagsReturnValue].forEach(x => expect(x.constructor.name).to.equal('Promise'));
                     });
             });
         });
 
         it('should automatically be sent after subscribing if called before subscribing', function () {
-            let tagValue = guid();
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
+                let tagValue = guid();
+
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: false
+                    })
                     .then(() => {
-                        // Initialize OneSignal
-                        return new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: false,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
-                                OneSignal.on('initialize', resolve);
-                            });
-                        })
-                            .then(() => OneSignal.getTags());
+                        OneSignal.database.printIds();
+                        return OneSignal.getTags();
                     })
                     .then(tags => {
                         expect(tags).to.be.null;
@@ -374,7 +248,7 @@ describe('HTTPS Tests', function() {
                     .then(tags => {
                         expect(tags).to.not.be.null;
                         expect(tags).to.have.property('key', tagValue);
-                    })
+                    });
             });
         });
     });
@@ -382,43 +256,20 @@ describe('HTTPS Tests', function() {
     describe('Server-Sided State Changes', function () {
         it('should remove client-sided data if user is deleted from OneSignal dashboard', function () {
             return new SoloTest(this.test, {}, () => {
-                return Promise.all([
-                        // Wipe database and force allow notifications permission
-                        Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
-                        Utils.wipeIndexedDb(),
-                        Utils.wipeServiceWorkerAndUnsubscribe()
-                    ])
-                    .then(() => {
-                        // Initialize OneSignal and subscribe
-                        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-                            window.OneSignal = OneSignal || [];
-                            OneSignal.push(function () {
-                                OneSignal.LOGGING = true;
-                                OneSignal.push(["init", {
-                                    appId: APP_ID,
-                                    autoRegister: true,
-                                    welcomeNotification: {
-                                        disable: true
-                                    }
-                                }]);
+                let tagValue = guid();
 
-                                OneSignal.database.printIds();
-                                OneSignal.on('subscriptionChange', resolve);
-                            });
-                        }).catch(e => console.error(e)), 3000, 'No subscription change after given time.');
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
                     })
-                    .then(() => {
-                        // We're now subscribed
-                        return OneSignal.getUserId();
-                    })
+                    .then(() => OneSignal.getUserId())
                     .then(id => {
-                        console.log('User ID (initial subscription):', id);
                         expect(id).to.not.be.null;
                         // Set the user ID to something else; this has the same effect as deleting an ID on the dashboard
                         let newId = guid();
                         return Promise.all([id,
                             newId,
-                            IndexedDb.put("Ids", {type: "userId", id: newId})]);
+                            OneSignal.database.put("Ids", {type: "userId", id: newId})]);
                     })
                     .then(([originalId, newId]) => {
                         // Ids should be diff
@@ -442,4 +293,108 @@ describe('HTTPS Tests', function() {
             });
         });
     });
+
+    describe('Environment', () => {
+        it('isPushNotificationsSupported() should return true', () => {
+            expect(isPushNotificationsSupported()).to.be.true;
+        });
+
+        it('isPushNotificationsSupportedAndWarn() should return true', () => {
+            expect(isPushNotificationsSupportedAndWarn()).to.be.true;
+        });
+    })
+
+    describe('SDK Initialization', () => {
+        describe('Subdomain', () => {
+            it('valid subdomains should have the proper subdomain extracted', () => {
+                let validSubdomains = [
+                    'subdomain',
+                    '  subdomain  ',
+                    'https://subdomain.onesignal.com',
+                    'https://subdomain.onesignal.com/',
+                    'http://www.subdomain.onesignal.com',
+                    'https://www.subdomain.onesignal.com/',
+                    'http://subdomain.onesignal.com',
+                    'http://subdomain.onesignal.com/',
+                    'subdomain.onesignal.com',
+                ];
+                let expectedNormalizedSubdomain = 'subdomain';
+                for (let validSubdomain of validSubdomains) {
+                    let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);
+                    expect(actualNormalizedSubdomain).to.equal(expectedNormalizedSubdomain);
+                }
+            });
+        });
+
+        describe('Postmam origin checking', () => {
+            it('isSafeOrigin for HTTP sites', () => {
+                let origin = 'http://site.com';
+                let postmam = new Postmam(window, origin, origin, 'nonce');
+                expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+            });
+            it('isSafeOrigin for HTTP www. sites', () => {
+                let origin = 'http://www.site.com';
+                let postmam = new Postmam(window, origin, origin, 'nonce');
+                expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+            });
+
+            it('isSafeOrigin for HTTPS sites', () => {
+                let origin = 'https://site.com';
+                let postmam = new Postmam(window, origin, origin, 'nonce');
+                expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+            });
+
+            it('isSafeOrigin for * sites', () => {
+                let origin = '*';
+                let postmam = new Postmam(window, origin, origin, 'nonce');
+                expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.true;
+                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.true;
+                expect(postmam.isSafeOrigin('abc')).to.be.true;
+            });
+
+            it('isSafeOrigin for invalid sites', () => {
+                let origin = '*.google.com';
+                let postmam = new Postmam(window, origin, origin, 'nonce');
+                expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('https://site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+                expect(postmam.isSafeOrigin('abc')).to.be.false;
+            });
+        });
+
+        describe('Navigator language checking', () => {
+            it('is navigator language detected correctly', () => {
+                expect(Environment.getLanguage('en-US')).to.equal('en');
+                expect(Environment.getLanguage('english-US')).to.equal('en');
+                expect(Environment.getLanguage('zh')).to.equal('zh-Hant');
+                expect(Environment.getLanguage('zh-CN')).to.equal('zh-Hans');
+                expect(Environment.getLanguage('zh-Hans')).to.equal('zh-Hans');
+                expect(Environment.getLanguage('zh-TW')).to.equal('zh-Hant');
+                expect(Environment.getLanguage('zh-Hant')).to.equal('zh-Hant');
+                expect(Environment.getLanguage('de-Arabic')).to.equal('de');
+            });
+        });
+    })
 });

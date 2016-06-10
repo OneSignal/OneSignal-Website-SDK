@@ -1,6 +1,9 @@
-import StackTrace from 'stacktrace-js';
 import StackTraceGPS from 'stacktrace-gps';
+import {APP_ID, PLAYER_ID, SUBDOMAIN} from './vars.js';
+import chai, { expect } from 'chai';
+import StackTrace from 'stacktrace-js';
 import IndexedDb from '../src/indexedDb';
+import { executeAndTimeoutPromiseAfter } from '../src/utils';
 
 
 // URLSearchParams.toString() does a second weird URL encoding so here we have to redo the URL encoding
@@ -84,5 +87,89 @@ export default class Utils {
             unsubscribePromise,
             unregisterWorkerPromise
         ]);
+    }
+
+    /**
+     * Gets the sequence of calls to initialize / subscribe for the HTTP / HTTPS test site.
+     * @param options Use 'autoRegister' or 'welcomeNotification'.
+     */
+    static initialize(options) {
+        if (!options) {
+            options = {};
+        }
+        return Promise.all([
+                // Wipe database and force allow notifications permission for current site origin
+                Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
+                // Also allow popup permissions (only for HTTP, but doesn't hurt to enable for HTTPS)
+                Extension.setPopupPermission(`${location.origin}/*`, 'allow'),
+                // Only for HTTPS: Wipes the IndexedDB on the current site origin
+                Utils.wipeIndexedDb(),
+                Utils.wipeServiceWorkerAndUnsubscribe()
+            ])
+            .then(() => {
+                // Initialize OneSignal and subscribe
+                return new Promise(resolve => {
+                    window.OneSignal = OneSignal || [];
+                    OneSignal.push(function () {
+                        OneSignal.LOGGING = true;
+                        let initOptions = {
+                            appId: APP_ID,
+                            autoRegister: options.autoRegister,
+                            persistNotification: false,
+                            dangerouslyWipeData: true && location.protocol === 'http:' // Wipes IndexedDB data on popup / iframe initialize for HTTP
+                        };
+                        if (!options.welcomeNotification) {
+                            initOptions.welcomeNotification = {
+                                disable: true
+                            }
+                        }
+                        if (location.protocol === 'http:') {
+                            initOptions.subdomainName = SUBDOMAIN;
+                            if (options.autoRegister) {
+                                OneSignal.registerForPushNotifications();
+                            }
+                        }
+                        OneSignal.push(["init", initOptions]);
+
+                        if (options.autoRegister) {
+                            if (location.protocol === 'http:') {
+                                // Wait for the HTTP popup to appear and be interactable
+                                OneSignal.on('popupLoad', resolve);
+                            } else {
+                                // Wait for the HTTPS subscription to finish
+                                OneSignal.on('subscriptionChange', resolve);
+                            }
+                        } else {
+                            // Don't subscribe, just wait for SDK to initialize
+                            OneSignal.on('initialize', resolve);
+                        }
+                    });
+                });
+            })
+            .then(() => {
+                if (location.protocol === 'http:' && options.autoRegister) {
+                    return Extension.acceptHttpSubscriptionPopup();
+                }
+            })
+            .then(() => {
+                if (location.protocol === 'http:' && options.autoRegister) {
+                    return new Promise(resolve => {
+                        OneSignal.on('subscriptionChange', resolve);
+                    });
+                }
+            })
+    }
+
+    static expectEvent(eventName, timeout) {
+        if (!timeout) {
+            timeout = 5000;
+        }
+        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
+            OneSignal.once(eventName, resolve);
+        }).catch(e => console.error(e)), timeout, `Event '${eventName}' did not fire after ${timeout} ms.`);
+    }
+
+    static wait(milliseconds) {
+        return new Promise(resolve => setTimeout(resolve, milliseconds));
     }
 }
