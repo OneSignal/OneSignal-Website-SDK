@@ -5,9 +5,11 @@ export default class Extension {
 
     static get COMMANDS() {
         return {
+            SET_POPUP_PERMISSION: 'SET_POPUP_PERMISSION',
             SET_NOTIFICATION_PERMISSION: 'SET_NOTIFICATION_PERMISSION',
             CREATE_BROWSER_TAB: 'CREATE_BROWSER_TAB',
-            EXECUTE_SCRIPT: 'EXECUTE_SCRIPT'
+            EXECUTE_SCRIPT: 'EXECUTE_SCRIPT',
+            ACCEPT_HTTP_SUBSCRIPTION_POPUP: 'ACCEPT_HTTP_SUBSCRIPTION_POPUP'
         };
     }
 
@@ -19,6 +21,19 @@ export default class Extension {
     static setNotificationPermission(siteUrl, permission) {
         return Extension.message({
             command: Extension.COMMANDS.SET_NOTIFICATION_PERMISSION,
+            siteUrl: siteUrl,
+            permission: permission
+        });
+    }
+
+    /**
+     * Sets the site's popup permission setting.
+     * @param siteUrl The match pattern URL for a website.
+     * @param permission One of 'allow', 'block', or 'clear'.
+     */
+    static setPopupPermission(siteUrl, permission) {
+        return Extension.message({
+            command: Extension.COMMANDS.SET_POPUP_PERMISSION,
             siteUrl: siteUrl,
             permission: permission
         });
@@ -48,6 +63,14 @@ export default class Extension {
         });
     }
 
+    /**
+     * Attempts to click the 'Continue' button on the HTTP subscription popup.
+     */
+    static acceptHttpSubscriptionPopup() {
+        return Extension.message({
+            command: Extension.COMMANDS.ACCEPT_HTTP_SUBSCRIPTION_POPUP
+        });
+    }
 
     static message(data) {
         return new Promise((resolve, reject) => {

@@ -31,14 +31,15 @@ const RETRIGGER_REMOTE_EVENTS = [
   'subscriptionSet',
   'sendWelcomeNotification',
   'subscriptionChange',
-  'notificationPermissionChange'
+  'notificationPermissionChange',
+  'dbSet'
 ];
 
 const LEGACY_EVENT_MAP = {
   'notificationPermissionChange': 'onesignal.prompt.native.permissionchanged',
   'subscriptionChange': 'onesignal.subscription.changed',
   'customPromptClick': 'onesignal.prompt.custom.clicked',
-}
+};
 
 export default class Event {
 
