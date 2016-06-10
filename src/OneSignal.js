@@ -98,7 +98,13 @@ export default class OneSignal {
   }
 
   static _onDbValueSet(info) {
-    if (info.type === 'userId') {
+    /*
+     For HTTPS sites, this is how the subscription change event gets fired.
+     For HTTP sites, leaving this enabled fires the subscription change event twice. The first event is from Postmam
+     remotely re-triggering the db.set event to notify the host page that the popup set the user ID in the db. The second
+     event is from Postmam remotely re-triggering the subscription.changed event which is also fired from the popup.
+     */
+    if (info.type === 'userId' && !OneSignal.isUsingSubscriptionWorkaround()) {
       OneSignalHelpers.checkAndTriggerSubscriptionChanged();
     }
   }
@@ -497,137 +503,136 @@ export default class OneSignal {
       // Wipe IndexedDB and unsubscribe from push/unregister the service worker for testing.
       console.warn('Wiping away previous HTTP data.');
       preinitializePromise = wipeIndexedDb()
-                                .then(() => wipeServiceWorkerAndUnsubscribe())
-                                .then(() => IndexedDb.put('Ids', {type: 'appId', id: options.appId})
-                                .then(() => OneSignal.setDefaultTitle("OneSignal Test HTTP Site")));
+          .then(() => wipeServiceWorkerAndUnsubscribe())
+          .then(() => IndexedDb.put('Ids', {type: 'appId', id: options.appId}));
     }
 
-    preinitializePromise.then(() => {
-      OneSignal._thisIsThePopup = options.isPopup;
-      if (Environment.isPopup() || OneSignal._thisIsThePopup) {
-        OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    OneSignal._thisIsThePopup = options.isPopup;
+    if (Environment.isPopup() || OneSignal._thisIsThePopup) {
+      OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    }
+
+    OneSignal._thisIsTheModal = options.isModal;
+    if (OneSignal._thisIsTheModal) {
+      OneSignal.modalPostmam = new Postmam(this.parent, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    }
+
+    OneSignal.iframePostmam = new Postmam(this.window, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    OneSignal.iframePostmam.listen();
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, e => {
+      log.debug(`(${Environment.getEnv()}) Fired Postmam connect event!`);
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, message => {
+      OneSignal.getNotificationPermission()
+          .then(permission => message.reply(permission));
+      return false;
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, message => {
+      // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys: 'userId'}, {table: 'Ids', keys: 'registrationId'}]
+      let retrievals = message.data;
+      let retrievalOpPromises = [];
+      for (let retrieval of retrievals) {
+        let {table, key} = retrieval;
+        if (!table || !key) {
+          log.error('Missing table or key for remote database get.', 'table:', table, 'key:', key);
+        }
+        retrievalOpPromises.push(Database.get(table, key));
       }
-
-      OneSignal._thisIsTheModal = options.isModal;
-      if (OneSignal._thisIsTheModal) {
-        OneSignal.modalPostmam = new Postmam(this.parent, sendToOrigin, receiveFromOrigin, handshakeNonce);
+      Promise.all(retrievalOpPromises)
+          .then(results => message.reply(results));
+      return false;
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, message => {
+      // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
+      // It's formatted that way because our IndexedDB database is formatted that way
+      let insertions = message.data;
+      let insertionOpPromises = [];
+      for (let insertion of insertions) {
+        let {table, keypath} = insertion;
+        insertionOpPromises.push(Database.put(table, keypath));
       }
+      Promise.all(insertionOpPromises)
+          .then(results => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE));
+      return false;
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, message => {
+      // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
+      // It's formatted that way because our IndexedDB database is formatted that way
+      let removals = message.data;
+      let removalOpPromises = [];
+      for (let removal of removals) {
+        let {table, keypath} = removal;
+        removalOpPromises.push(Database.remove(table, keypath));
+      }
+      Promise.all(removalOpPromises)
+          .then(results => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE));
+      return false;
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, message => {
+      log.warn(`(${Environment.getEnv()}) The iFrame has just received initOptions from the host page!`);
 
-      OneSignal.iframePostmam = new Postmam(this.window, sendToOrigin, receiveFromOrigin, handshakeNonce);
-      OneSignal.iframePostmam.listen();
-      OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, e => {
-        log.debug(`(${Environment.getEnv()}) Fired Postmam connect event!`);
-      });
-      OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, message => {
-        OneSignal.getNotificationPermission()
-            .then(permission => message.reply(permission));
-        return false;
-      });
-      OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, message => {
-        // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys: 'userId'}, {table: 'Ids', keys: 'registrationId'}]
-        let retrievals = message.data;
-        let retrievalOpPromises = [];
-        for (let retrieval of retrievals) {
-          let {table, key} = retrieval;
-          if (!table || !key) {
-            log.error('Missing table or key for remote database get.', 'table:', table, 'key:', key);
-          }
-          retrievalOpPromises.push(Database.get(table, key));
-        }
-        Promise.all(retrievalOpPromises)
-            .then(results => message.reply(results));
-        return false;
-      });
-      OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, message => {
-        // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
-        // It's formatted that way because our IndexedDB database is formatted that way
-        let insertions = message.data;
-        let insertionOpPromises = [];
-        for (let insertion of insertions) {
-          let {table, keypath} = insertion;
-          insertionOpPromises.push(Database.put(table, keypath));
-        }
-        Promise.all(insertionOpPromises)
-            .then(results => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE));
-        return false;
-      });
-      OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, message => {
-        // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
-        // It's formatted that way because our IndexedDB database is formatted that way
-        let removals = message.data;
-        let removalOpPromises = [];
-        for (let removal of removals) {
-          let {table, keypath} = removal;
-          removalOpPromises.push(Database.remove(table, keypath));
-        }
-        Promise.all(removalOpPromises)
-            .then(results => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE));
-        return false;
-      });
-      OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, message => {
-        log.warn(`(${Environment.getEnv()}) The iFrame has just received initOptions from the host page!`);
-        OneSignal.config = objectAssign(message.data.hostInitOptions, options, {
-          pageUrl: message.data.pageUrl,
-          pageTitle: message.data.pageTitle
-        });
+      preinitializePromise.then(() => {
+            OneSignal.config = objectAssign(message.data.hostInitOptions, options, {
+              pageUrl: message.data.pageUrl,
+              pageTitle: message.data.pageTitle
+            });
 
-        OneSignal._installNativePromptPermissionChangedHook();
+            OneSignal._installNativePromptPermissionChangedHook();
 
-        let opPromises = [];
-        if (options.continuePressed) {
-          opPromises.push(OneSignal.setSubscription(true));
-        }
-        // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
-        opPromises.push(Database.get('Options', 'defaultUrl').then(defaultUrl => {
-          if (!defaultUrl) {
-            return Database.put('Options', {key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin});
-          }
-        }));
-
-        opPromises.push(Database.get("NotificationOpened", OneSignal.config.pageUrl)
-            .then(notificationOpenedResult => {
-              if (notificationOpenedResult) {
-                Database.remove("NotificationOpened", OneSignal.config.pageUrl);
-                OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, notificationOpenedResult);
+            let opPromises = [];
+            if (options.continuePressed) {
+              opPromises.push(OneSignal.setSubscription(true));
+            }
+            // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
+            opPromises.push(Database.get('Options', 'defaultUrl').then(defaultUrl => {
+              if (!defaultUrl) {
+                return Database.put('Options', {key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin});
               }
             }));
 
+            opPromises.push(Database.get("NotificationOpened", OneSignal.config.pageUrl)
+                .then(notificationOpenedResult => {
+                  if (notificationOpenedResult) {
+                    Database.remove("NotificationOpened", OneSignal.config.pageUrl);
+                    OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, notificationOpenedResult);
+                  }
+                }));
 
-        opPromises.push(OneSignal._initSaveState());
-        opPromises.push(OneSignal._storeInitialValues());
-        opPromises.push(OneSignal._saveInitOptions());
-        Promise.all(opPromises)
-            .then(() => {
-              if (contains(location.search, "continuingSession=true"))
-                return;
 
-              /* 3/20/16: In the future, if navigator.serviceWorker.ready is unusable inside of an insecure iFrame host, adding a message event listener will still work. */
-              //if (navigator.serviceWorker) {
-              //log.warn('We have added an event listener for service worker messages.', Environment.getEnv());
-              //navigator.serviceWorker.addEventListener('message', function(event) {
-              //  log.warn('Wow! We got a message!', event);
-              //});
-              //}
+            opPromises.push(OneSignal._initSaveState());
+            opPromises.push(OneSignal._storeInitialValues());
+            opPromises.push(OneSignal._saveInitOptions());
+            Promise.all(opPromises)
+                .then(() => {
+                  if (contains(location.search, "continuingSession=true"))
+                    return;
 
-              if (navigator.serviceWorker && window.location.protocol === 'https:') {
-                navigator.serviceWorker.ready
-                    .then(registration => {
-                      if (registration && registration.active) {
-                        OneSignalHelpers.establishServiceWorkerChannel(registration);
-                      }
-                    })
-                    .catch(e => {
-                      log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
-                    });
-              }
+                  /* 3/20/16: In the future, if navigator.serviceWorker.ready is unusable inside of an insecure iFrame host, adding a message event listener will still work. */
+                  //if (navigator.serviceWorker) {
+                  //log.warn('We have added an event listener for service worker messages.', Environment.getEnv());
+                  //navigator.serviceWorker.addEventListener('message', function(event) {
+                  //  log.warn('Wow! We got a message!', event);
+                  //});
+                  //}
 
-              message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
-            });
-      });
-    })
-    .then(() => {
-      Event.trigger('httpInitialize');
+                  if (navigator.serviceWorker && window.location.protocol === 'https:') {
+                    navigator.serviceWorker.ready
+                        .then(registration => {
+                          if (registration && registration.active) {
+                            OneSignalHelpers.establishServiceWorkerChannel(registration);
+                          }
+                        })
+                        .catch(e => {
+                          log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
+                        });
+                  }
+
+                  message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
+                });
+          })
+          .catch(e => console.error(e));
     });
+    Event.trigger('httpInitialize');
   }
 
   static _initPopup() {
@@ -681,7 +686,12 @@ export default class OneSignal {
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
       // TODO: Previously, '?session=true' added to the iFrame's URL meant this was not a new tab (same page refresh) and that the HTTP iFrame should not re-register the service worker. Now that is gone, find an alternative way to do that.
+
+      let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
       let iframeUrl = `${OneSignal.iframePopupModalUrl}Iframe?session=${OneSignal._sessionNonce}`;
+      if (dangerouslyWipeData) {
+        iframeUrl += '&dangerouslyWipeData=true';
+      }
       if (OneSignalHelpers.isContinuingBrowserSession()) {
         iframeUrl += `&continuingSession=true`;
       }
@@ -1261,6 +1271,7 @@ export default class OneSignal {
       notificationPermissionBeforeRequest = permission;
     })
       .then(() => {
+        log.debug("Calling service worker's pushManager.subscribe()");
         return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
       })
       .then(function (subscription) {
@@ -1270,7 +1281,7 @@ export default class OneSignal {
 
         OneSignal.getAppId()
           .then(appId => {
-            log.debug("Called OneSignal._subscribeForPush() -> serviceWorkerRegistration.pushManager.subscribe().");
+            log.debug("Finished subscribing for push via pushManager.subscribe().");
 
             var subscriptionInfo = {};
             if (subscription) {

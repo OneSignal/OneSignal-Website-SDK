@@ -386,6 +386,9 @@ export function wipeIndexedDb() {
  */
 export function wipeServiceWorkerAndUnsubscribe() {
   console.warn('OneSignal: Unsubscribe from push and unregistering service worker.');
+  if (Environment.isIframe()) {
+    return;
+  }
   if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
     return Promise.resolve();
 

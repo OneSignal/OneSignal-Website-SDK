@@ -9,6 +9,7 @@ import { executeAndTimeoutPromiseAfter, guid, isPushNotificationsSupported, isPu
 import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
 import Postmam from '../src/postmam.js';
+import Database from '../src/database';
 
 
 chai.config.includeStack = false;
@@ -17,7 +18,7 @@ chai.config.truncateThreshold = 0;
 
 describe('HTTPS Tests', function() {
 
-    describe('Notifications', function() {
+    describe('Notifications', function () {
         it('should subscribe and receive a welcome notification successfully', function () {
             return new SoloTest(this.test, {}, () => {
                 return Utils.initialize({
@@ -96,7 +97,7 @@ describe('HTTPS Tests', function() {
             tagsToCheckDeepEqual = Object.keys(sentTags).filter(x => expectedTagsUnsent.concat(['string', 'false']).indexOf(x) < 0);
         });
 
-        it.only('should send, receive, and delete tags successfully', function () {
+        it('should send, receive, and delete tags successfully', function () {
             return new SoloTest(this.test, {}, () => {
                 return Utils.initialize({
                         welcomeNotification: false,
@@ -213,10 +214,10 @@ describe('HTTPS Tests', function() {
                         let deleteTagReturnValue = OneSignal.deleteTag('');
                         let deleteTagsReturnValue = OneSignal.deleteTags(['']);
                         [getTagsReturnValue,
-                         sendTagReturnValue,
-                         sendTagsReturnValue,
-                         deleteTagReturnValue,
-                         deleteTagsReturnValue].forEach(x => expect(x.constructor.name).to.equal('Promise'));
+                            sendTagReturnValue,
+                            sendTagsReturnValue,
+                            deleteTagReturnValue,
+                            deleteTagsReturnValue].forEach(x => expect(x.constructor.name).to.equal('Promise'));
                     });
             });
         });
@@ -230,7 +231,6 @@ describe('HTTPS Tests', function() {
                         autoRegister: false
                     })
                     .then(() => {
-                        OneSignal.database.printIds();
                         return OneSignal.getTags();
                     })
                     .then(tags => {
@@ -239,7 +239,11 @@ describe('HTTPS Tests', function() {
                         return executeAndTimeoutPromiseAfter(new Promise(resolve => {
                                 OneSignal.sendTags({key: tagValue}).then(resolve);
                                 OneSignal.registerForPushNotifications();
-                            }).catch(e => console.error(e)), 5000,
+                                if (location.protocol === 'http:') {
+                                    Utils.expectEvent('popupLoad')
+                                        .then(() => Extension.acceptHttpSubscriptionPopup())
+                                }
+                            }).catch(e => console.error(e)), 7000,
                             'Expected tags to be sent after subscription but tags were not sent.');
                     })
                     .then(() => {
@@ -304,97 +308,111 @@ describe('HTTPS Tests', function() {
         });
     })
 
-    describe('SDK Initialization', () => {
-        describe('Subdomain', () => {
-            it('valid subdomains should have the proper subdomain extracted', () => {
-                let validSubdomains = [
-                    'subdomain',
-                    '  subdomain  ',
-                    'https://subdomain.onesignal.com',
-                    'https://subdomain.onesignal.com/',
-                    'http://www.subdomain.onesignal.com',
-                    'https://www.subdomain.onesignal.com/',
-                    'http://subdomain.onesignal.com',
-                    'http://subdomain.onesignal.com/',
-                    'subdomain.onesignal.com',
-                ];
-                let expectedNormalizedSubdomain = 'subdomain';
-                for (let validSubdomain of validSubdomains) {
-                    let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);
-                    expect(actualNormalizedSubdomain).to.equal(expectedNormalizedSubdomain);
-                }
-            });
+    describe('Subdomain', () => {
+        it('valid subdomains should have the proper subdomain extracted', () => {
+            let validSubdomains = [
+                'subdomain',
+                '  subdomain  ',
+                'https://subdomain.onesignal.com',
+                'https://subdomain.onesignal.com/',
+                'http://www.subdomain.onesignal.com',
+                'https://www.subdomain.onesignal.com/',
+                'http://subdomain.onesignal.com',
+                'http://subdomain.onesignal.com/',
+                'subdomain.onesignal.com',
+            ];
+            let expectedNormalizedSubdomain = 'subdomain';
+            for (let validSubdomain of validSubdomains) {
+                let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);
+                expect(actualNormalizedSubdomain).to.equal(expectedNormalizedSubdomain);
+            }
+        });
+    });
+
+    describe('Postmam origin checking', () => {
+        it('isSafeOrigin for HTTP sites', () => {
+            let origin = 'http://site.com';
+            let postmam = new Postmam(window, origin, origin, 'nonce');
+            expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+            expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+        });
+        it('isSafeOrigin for HTTP www. sites', () => {
+            let origin = 'http://www.site.com';
+            let postmam = new Postmam(window, origin, origin, 'nonce');
+            expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+            expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
         });
 
-        describe('Postmam origin checking', () => {
-            it('isSafeOrigin for HTTP sites', () => {
-                let origin = 'http://site.com';
-                let postmam = new Postmam(window, origin, origin, 'nonce');
-                expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
-                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
-            });
-            it('isSafeOrigin for HTTP www. sites', () => {
-                let origin = 'http://www.site.com';
-                let postmam = new Postmam(window, origin, origin, 'nonce');
-                expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
-                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
-            });
-
-            it('isSafeOrigin for HTTPS sites', () => {
-                let origin = 'https://site.com';
-                let postmam = new Postmam(window, origin, origin, 'nonce');
-                expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
-                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
-            });
-
-            it('isSafeOrigin for * sites', () => {
-                let origin = '*';
-                let postmam = new Postmam(window, origin, origin, 'nonce');
-                expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.true;
-                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.true;
-                expect(postmam.isSafeOrigin('abc')).to.be.true;
-            });
-
-            it('isSafeOrigin for invalid sites', () => {
-                let origin = '*.google.com';
-                let postmam = new Postmam(window, origin, origin, 'nonce');
-                expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('https://site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('https://www.site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
-                expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
-                expect(postmam.isSafeOrigin('abc')).to.be.false;
-            });
+        it('isSafeOrigin for HTTPS sites', () => {
+            let origin = 'https://site.com';
+            let postmam = new Postmam(window, origin, origin, 'nonce');
+            expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+            expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
         });
 
-        describe('Navigator language checking', () => {
-            it('is navigator language detected correctly', () => {
-                expect(Environment.getLanguage('en-US')).to.equal('en');
-                expect(Environment.getLanguage('english-US')).to.equal('en');
-                expect(Environment.getLanguage('zh')).to.equal('zh-Hant');
-                expect(Environment.getLanguage('zh-CN')).to.equal('zh-Hans');
-                expect(Environment.getLanguage('zh-Hans')).to.equal('zh-Hans');
-                expect(Environment.getLanguage('zh-TW')).to.equal('zh-Hant');
-                expect(Environment.getLanguage('zh-Hant')).to.equal('zh-Hant');
-                expect(Environment.getLanguage('de-Arabic')).to.equal('de');
+        it('isSafeOrigin for * sites', () => {
+            let origin = '*';
+            let postmam = new Postmam(window, origin, origin, 'nonce');
+            expect(postmam.isSafeOrigin('http://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('http://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.true;
+            expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.true;
+            expect(postmam.isSafeOrigin('abc')).to.be.true;
+        });
+
+        it('isSafeOrigin for invalid sites', () => {
+            let origin = '*.google.com';
+            let postmam = new Postmam(window, origin, origin, 'nonce');
+            expect(postmam.isSafeOrigin('http://site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('http://www.site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('https://site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('https://www.site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('https://www.site.com:123')).to.be.false;
+            expect(postmam.isSafeOrigin('https://ww.site.com')).to.be.false;
+            expect(postmam.isSafeOrigin('abc')).to.be.false;
+        });
+    });
+
+    describe('Navigator language checking', () => {
+        it('should detect navigator language correctly', () => {
+            expect(Environment.getLanguage('en-US')).to.equal('en');
+            expect(Environment.getLanguage('english-US')).to.equal('en');
+            expect(Environment.getLanguage('zh')).to.equal('zh-Hant');
+            expect(Environment.getLanguage('zh-CN')).to.equal('zh-Hans');
+            expect(Environment.getLanguage('zh-Hans')).to.equal('zh-Hans');
+            expect(Environment.getLanguage('zh-TW')).to.equal('zh-Hant');
+            expect(Environment.getLanguage('zh-Hant')).to.equal('zh-Hant');
+            expect(Environment.getLanguage('de-Arabic')).to.equal('de');
+        });
+    });
+
+    describe('SDK Events', () => {
+        it('subscriptionChange event should fire at most once when subscribing', function () {
+            return new SoloTest(this.test, {}, () => {
+                let subscriptionChangeEventCount = 0;
+                OneSignal.on('subscriptionChange', () => subscriptionChangeEventCount++);
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true
+                    })
+                    .then(() => Utils.wait(1000))
+                    .then(() => expect(subscriptionChangeEventCount).to.equal(1));
+
             });
         });
-    })
+    });
 });
