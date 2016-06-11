@@ -57,8 +57,8 @@ describe('HTTPS Tests', function() {
     });
 
     describe('HTTPS Modal Popup', function() {
-       it('should be able to subscribe via HTTPS modal prompt successfully', function() {
-           return new SoloTest(this.test, {}, () => {
+       it.only('should be able to subscribe via HTTPS modal prompt successfully', function() {
+           return new SoloTest(this.test, {leaveRunning: true}, () => {
                if (location.protocol === 'https:') {
                    return Utils.initialize({
                            welcomeNotification: false,
@@ -70,7 +70,10 @@ describe('HTTPS Tests', function() {
                                Utils.expectEvent('modalLoaded').then(resolve);
                            });
                        })
-                       .then(() => Extension.acceptHttpsSubscriptionModal())
+                       .then(() => {
+                           Extension.acceptHttpsSubscriptionModal();
+                           return Utils.expectEvent('subscriptionChange');
+                       });
                }
            });           
        });
