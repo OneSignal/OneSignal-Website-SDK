@@ -747,20 +747,6 @@ export default class OneSignal {
           Event.trigger(eventName, eventData, message.source);
           return false;
         });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, message => {
-          OneSignal.registerForPushNotifications();
-          OneSignal.setSubscription(true);
-          let elem = document.getElementById('OneSignal-iframe-modal');
-          elem.parentNode.removeChild(elem);
-          OneSignalHelpers.triggerCustomPromptClicked('granted');
-          return false;
-        });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, message => {
-          let elem = document.getElementById('OneSignal-iframe-modal');
-          elem.parentNode.removeChild(elem);
-          OneSignalHelpers.triggerCustomPromptClicked('denied');
-          return false;
-        });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
           let newRemoteNotificationPermission = message.data;
           OneSignal.triggerNotificationPermissionChanged();
@@ -894,14 +880,18 @@ export default class OneSignal {
             OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_LOADED, message => {
               Event.trigger('modalLoaded');
             });
-            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
+            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, message => {
+              console.log('User accepted the HTTPS modal prompt.');
+              OneSignal._sessionInitAlreadyRunning = false;
               let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
               iframeModalDom.parentNode.removeChild(iframeModalDom);
               OneSignal.modalPostmam.destroy();
               OneSignalHelpers.triggerCustomPromptClicked('granted');
               OneSignal._registerForW3CPush(options);
             });
-            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
+            OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, message => {
+              console.log('User rejected the HTTPS modal prompt.');
+              OneSignal._sessionInitAlreadyRunning = false;
               let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
               iframeModalDom.parentNode.removeChild(iframeModalDom);
               OneSignal.modalPostmam.destroy();

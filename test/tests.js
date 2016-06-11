@@ -56,6 +56,26 @@ describe('HTTPS Tests', function() {
         });
     });
 
+    describe('HTTPS Modal Popup', function() {
+       it('should be able to subscribe via HTTPS modal prompt successfully', function() {
+           return new SoloTest(this.test, {}, () => {
+               if (location.protocol === 'https:') {
+                   return Utils.initialize({
+                           welcomeNotification: false,
+                           autoRegister: false
+                       })
+                       .then(() => {
+                           return new Promise(resolve => {
+                               OneSignal.registerForPushNotifications({modalPrompt: true});
+                               Utils.expectEvent('modalLoaded').then(resolve);
+                           });
+                       })
+                       .then(() => Extension.acceptHttpsSubscriptionModal())
+               }
+           });           
+       });
+    });
+
     describe('Tags', function () {
         var sentTags, expectedTags, expectedTagsUnsent, tagsToCheckDeepEqual;
 

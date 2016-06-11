@@ -9,7 +9,8 @@ export default class Extension {
             SET_NOTIFICATION_PERMISSION: 'SET_NOTIFICATION_PERMISSION',
             CREATE_BROWSER_TAB: 'CREATE_BROWSER_TAB',
             EXECUTE_SCRIPT: 'EXECUTE_SCRIPT',
-            ACCEPT_HTTP_SUBSCRIPTION_POPUP: 'ACCEPT_HTTP_SUBSCRIPTION_POPUP'
+            ACCEPT_HTTP_SUBSCRIPTION_POPUP: 'ACCEPT_HTTP_SUBSCRIPTION_POPUP',
+            ACCEPT_HTTPS_SUBSCRIPTION_MODAL: 'ACCEPT_HTTPS_SUBSCRIPTION_MODAL'
         };
     }
 
@@ -69,6 +70,16 @@ export default class Extension {
     static acceptHttpSubscriptionPopup() {
         return Extension.message({
             command: Extension.COMMANDS.ACCEPT_HTTP_SUBSCRIPTION_POPUP
+        });
+    }
+
+    /**
+     * Attempts to click the 'Continue' button on the HTTPS subscription modal.
+     */
+    static acceptHttpsSubscriptionModal() {
+        return Extension.message({
+            command: Extension.COMMANDS.ACCEPT_HTTPS_SUBSCRIPTION_MODAL,
+            parentTabUrl: location.href
         });
     }
 
