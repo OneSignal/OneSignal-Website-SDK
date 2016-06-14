@@ -155,92 +155,11 @@ export default class Database {
       Database.get('Ids', 'appId'),
       Database.get('Ids', 'registrationId'),
       Database.get('Ids', 'userId')
-    ]).then(function(contents) {
-      console.info('appId:', contents[0]);
-      console.info('registrationId:', contents[1]);
-      console.info('userId:', contents[2]);
+    ]).then(function([appId, registrationId, userId]) {
+      console.info('appId:', appId);
+      console.info('registrationId:', registrationId);
+      console.info('userId:', userId);
     });
-  }
-
-  static printPushLog() {
-    Database.get('Options', 'pushLog')
-      .then(pushLogResult => {
-        if (pushLogResult) {
-          console.info('Push Log:', pushLogResult);
-        } else {
-          console.info('No push log found.');
-        }
-      })
-  }
-
-  static getPushLog() {
-    return new Promise(resolve => {
-      Database.get('Options', 'pushLog')
-        .then(pushLogResult => {
-          if (pushLogResult) {
-            if (typeof window !== 'undefined') {
-              window.pushlog = pushLogResult;
-            } else {
-              self.pushlog = pushLogResult;
-            }
-            console.info(`Push log stored in variable %cpushlog`, getConsoleStyle('code'), ".");
-            resolve(pushLogResult);
-          } else {
-            log.info('No push log found.');
-            resolve(null);
-          }
-        })
-    });
-  }
-
-  static clearPushLog() {
-    Database.put('Options', {key: 'pushLog', value: {}})
-      .then(() => console.info('Push log cleared.'));
-  }
-
-  static copyPushLog() {
-    Database.get('Options', 'pushLog')
-      .then(pushLogResult => {
-        if (pushLogResult) {
-          if (typeof window !== 'undefined') {
-            window.pushlog = pushLogResult;
-            console.info(`Push log set into variable. Please run this code now to copy the push log to your clipboard: %ccopy(window.pushlog)`, getConsoleStyle('code'), ". You should see 'undefined' but the contents will be copied to your clipboard.");
-          } else {
-            self.pushlog = pushLogResult;
-            console.info(`Push log set into variable. Please run this code now to copy the push log to your clipboard: %ccopy(self.pushlog)`, getConsoleStyle('code'));
-          }
-        } else {
-          console.warn('No push log found.');
-        }
-      })
-  }
-
-  static readPushLog(pushLog) {
-    if (!pushLog || pushLog == '') {
-      console.warn('Please pass in the entire stringified push log as a parameter. Example usage: %cOneSignal.database.readPushLog(`{ "ff5fb87e-40d9-4232-8df8-9300f3a0feaf": { "retrieved": "2016-02-24T05:43:25.705Z", "displayed": "2016-02-24T05:43:25.709Z" }}`)', getConsoleStyle('code'));
-      return;
-    }
-    var pushLog = JSON.parse(pushLog);
-    var pushLogKeys = Object.keys(pushLog);
-    var actions = ['retrieved', 'displayed', 'clicked'];
-    for (var key of pushLogKeys) {
-      for (var action of actions) {
-        if (pushLog[key][action]) {
-          // Convert string date to Date object
-          pushLog[key][action] = new Date(pushLog[key][action]);
-        }
-      }
-    }
-    return pushLog;
-  }
-
-  static _wipeBetaSettings() {
-    Promise.all([
-      Database.remove('Options', 'persistNotification'),
-      Database.remove('Options', 'webhooks.cors'),
-      Database.remove('Options', 'webhooks.notification.displayed'),
-      Database.remove('Options', 'webhooks.notification.clicked'),
-    ]);
   }
 }
 

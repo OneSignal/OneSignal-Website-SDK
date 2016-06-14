@@ -126,7 +126,6 @@ class ServiceWorker {
         .then(notifications => {
           if (!notifications || notifications.length == 0) {
             log.warn('Push signal received, but there were no messages after calling chromeweb_notification().')
-            ServiceWorker.logPush("chromeweb_notification_no_results", 'last_occurred');
           }
           // At this point, we have an array of notification objects (all the JSON is parsed)
           // We want to fire a notification for each object
@@ -141,8 +140,6 @@ class ServiceWorker {
               message: notification.alert,
               additionalData: notification.custom.a
             };
-
-            let retrievedPushLogPromise = ServiceWorker.logPush(data.id, 'retrieved');
 
             if (notification.title)
               data.title = notification.title;
@@ -184,8 +181,6 @@ class ServiceWorker {
                 data: data
               });
               return showNotificationPromise
-                  .then(() => retrievedPushLogPromise)
-                  .then(() => ServiceWorker.logPush(data.id, 'displayed'))
                   .then(() => swivel.broadcast('notification.displayed', data));
             }).bind(null, data));
             notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
@@ -225,32 +220,6 @@ class ServiceWorker {
           }
         });
     }));
-  }
-
-  static logPush(notificationId, action) {
-    var currentPushLog = {};
-
-    return Database.get("Options", "pushLog")
-      .then(currentPushLogResult => {
-        if (currentPushLogResult) {
-          // Note: Because we're storing consistent data, each "entry" takes up 156 characters stringified
-          // Let's only store the last 5000 pushes
-          let estimateBytesPerUnicodeChar = 2.5*1024*1024/4;
-          if (JSON.stringify(currentPushLog).length > 156 * 135) {
-            log.warn('Clearing push log because it grew too large.');
-            currentPushLog = {};
-          }
-        }
-
-        // Add to our pushlog
-        if (!currentPushLog.hasOwnProperty(notificationId)) {
-          currentPushLog[notificationId] = {};
-        }
-
-        // Might be currentPushLog[id]['displayed'] = Tue Feb 23 2016 20:26:01 GMT-0800 (PST)  (a Date object)
-        currentPushLog[notificationId][action] = new Date();
-      })
-      .then(() => Database.put("Options", {key: "pushLog", value: currentPushLog}));
   }
 
   static executeWebhooks(event, notification) {
@@ -307,8 +276,7 @@ class ServiceWorker {
     let notificationClickHandlerMatch = 'exact';
 
     event.waitUntil(
-      ServiceWorker.logPush(notificationData.id, 'clicked')
-        .then(() => Database.get('Options', 'defaultUrl'))
+      Database.get('Options', 'defaultUrl')
         .then(defaultUrl=> {
           if (defaultUrl)
             ServiceWorker.defaultLaunchUrl = defaultUrl;
