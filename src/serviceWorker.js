@@ -82,18 +82,6 @@ class ServiceWorker {
           notification.close();
         }
       });
-    } else if (data === 'push.mute') {
-      ServiceWorker._breakOnPushReceived = true;
-    } else if (data === 'push.restore') {
-      ServiceWorker._breakOnPushReceived = false;
-    } else if (data === 'push.status') {
-      Database.get('Ids', 'backupNotification')
-        .then(backupNotification => {
-          swivel.broadcast('data', {
-            backupNotification: backupNotification,
-            isPushIntentionallyBroken: ServiceWorker._breakOnPushReceived
-          });
-        });
     }
   }
 
@@ -557,13 +545,7 @@ class ServiceWorker {
           for (var i = 0; i < response.length; i++) {
             notifications.push(JSON.parse(response[i]));
           }
-
-          if (ServiceWorker._breakOnPushReceived) {
-            log.warn('Received notifications from server, but intentionally breaking %conPushReceived', getConsoleStyle('code'), 'without displaying a notification.', response);
-            throw new Error('push.mute intentionally not returning any notifications.');
-          } else {
-            resolve(notifications);
-          }
+          resolve(notifications);
         })
         .catch(e => {
           log.error(e);
