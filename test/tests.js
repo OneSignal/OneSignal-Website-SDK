@@ -57,8 +57,8 @@ describe('HTTPS Tests', function() {
     });
 
     describe('HTTPS Modal Popup', function() {
-       it.only('should be able to subscribe via HTTPS modal prompt successfully', function() {
-           return new SoloTest(this.test, {leaveRunning: true}, () => {
+       it('should be able to subscribe via HTTPS modal prompt successfully', function() {
+           return new SoloTest(this.test, {}, () => {
                if (location.protocol === 'https:') {
                    return Utils.initialize({
                            welcomeNotification: false,
@@ -281,43 +281,154 @@ describe('HTTPS Tests', function() {
     });
 
     describe('Server-Sided State Changes', function () {
-        it('should remove client-sided data if user is deleted from OneSignal dashboard', function () {
+        it('should register a new user ID if user is deleted from OneSignal dashboard and opens a new site session', function () {
             return new SoloTest(this.test, {}, () => {
                 let tagValue = guid();
 
-                return Utils.initialize({
-                        welcomeNotification: false,
-                        autoRegister: true
-                    })
-                    .then(() => OneSignal.getUserId())
-                    .then(id => {
-                        expect(id).to.not.be.null;
-                        // Set the user ID to something else; this has the same effect as deleting an ID on the dashboard
-                        let newId = guid();
-                        return Promise.all([id,
-                            newId,
-                            OneSignal.database.put("Ids", {type: "userId", id: newId})]);
-                    })
-                    .then(([originalId, newId]) => {
-                        // Ids should be diff
-                        expect(originalId).to.not.eq(newId);
-                        return Promise.all([newId, OneSignal.getUserId()]);
-                    })
-                    .then(([expectedNewId, actualNewId]) => {
-                        console.log('User ID (force modified to simulate delete):', actualNewId);
-                        expect(expectedNewId).to.eq(actualNewId);
-                        // Now call any one of the APIs that requires our user ID
-                        // We should get an error: User with this ID not found
-                        OneSignal.getTags()
-                            .catch(e => {
+                let params = new URL(location.href).searchParams;
+
+                if (params.get('step') == undefined) {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true
+                        })
+                        .then(() => OneSignal.getUserId())
+                        .then(id => {
+                            expect(id).to.not.be.null;
+                            return Promise.all([
+                                id,
+                                Extension.set('user-id', id),
+                                OneSignal.api.delete(`players/${id}`)]);
+                        })
+                        .then(([id]) => OneSignal.api.get(`players/${id}`)
+                            .catch(error => {
                                 expect(error).to.have.property('errors');
-                                expect(error.errors).to.include('Could not find app_id for given player id.');
+                                expect(error.errors).to.include('Could not find app_id for given player id.')
+                            })
+                        )
+                        .then(() => {
+                            return new Promise(() => {
+                                sessionStorage.clear();
+                                location.href = location.href + '&step=2'
                             });
-                    })
-                    .then(() => {
-                        // User data should be deleted if this happens
-                    });
+                        });
+                } else if (params.get('step') == '2') {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true,
+                            dontWipeData: true
+                        })
+                        .then(() => {
+                            if (location.protocol === 'https:') {
+                                return Utils.expectEvent('subscriptionChange')
+                            }
+                        })
+                        .then(id => Promise.all([
+                                Extension.get('user-id'),
+                                OneSignal.getUserId()
+                            ])
+                        )
+                        .then(([originalStoredId, currentId]) => {
+                            console.log('Original ID:', originalStoredId);
+                            console.log('New ID:', currentId);
+                            expect(originalStoredId).to.not.be.null;
+                            expect(currentId).to.not.be.null;
+                            expect(originalStoredId).to.not.equal(currentId);
+                        });
+                }
             });
+        });
+
+        let testHelper = function (test, kind) {
+            return new SoloTest(test, {}, function () {
+                let tagValue = guid();
+
+                let params = new URL(location.href).searchParams;
+
+                if (params.get('step') == undefined) {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true
+                        })
+                        .then(() => OneSignal.getUserId())
+                        .then(id => {
+                            expect(id).to.not.be.null;
+                            return Promise.all([
+                                Extension.set('user-id', id),
+                                OneSignal.api.delete(`players/${id}`)]);
+                        })
+                        .then(() => {
+                            // Now call any one of the APIs that requires our user ID
+                            // We should get an error: User with this ID not found
+                            if (kind === 'getTags') {
+                                return OneSignal.getTags()
+                                    .catch(error => {
+                                        expect(error).to.have.property('errors');
+                                        expect(error.errors).to.include('Could not find app_id for given player id.');
+                                    });
+                            } else if (kind === 'setSubscription') {
+                                return OneSignal.setSubscription(false)
+                                    .then(success => {
+                                        console.log("This isn't supposed to happen. setSubscription() succeeded when the user was remotely deleted:", success);
+                                    })
+                                    .catch(error => {
+                                        expect(error).to.have.property('errors');
+                                        expect(error.errors).to.include('No user with this id found');
+                                    });
+                            }
+                        })
+                        .then(() => {
+                            // User data should be deleted if this happens
+                            return Promise.all([
+                                    OneSignal.database.get('Ids'),
+                                    OneSignal.database.get('Options'),
+                                    OneSignal.database.get('NotificationOpened')
+                                ])
+                                .then(([ids, options, notificationOpened]) => {
+                                    expect(ids).to.deep.equal({});
+                                    expect(options).to.deep.equal({});
+                                    expect(notificationOpened).to.deep.equal({});
+                                });
+                        })
+                        .then(() => {
+                            return new Promise(() => {
+                                sessionStorage.clear();
+                                location.href = location.href + '&step=2'
+                            });
+                        });
+                } else if (params.get('step') == '2') {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true,
+                            dontWipeData: true
+                        })
+                        .then(() => {
+                            if (location.protocol === 'https:') {
+                                return Utils.expectEvent('subscriptionChange')
+                            }
+                        })
+                        .then(id => Promise.all([
+                                Extension.get('user-id'),
+                                OneSignal.getUserId()
+                            ])
+                        )
+                        .then(([originalStoredId, currentId]) => {
+                            console.log('Original ID:', originalStoredId);
+                            console.log('New ID:', currentId);
+                            expect(originalStoredId).to.not.be.null;
+                            expect(currentId).to.not.be.null;
+                            expect(originalStoredId).to.not.equal(currentId);
+                        });
+                }
+            });
+        };
+
+        it('should delete browser data and allow re-subscription with new ID if user deleted and getTags is called', function () {
+            return testHelper(this.test, 'getTags');
+        });
+
+        it('should delete browser data and allow re-subscription with new ID if user deleted and setSubscription is called', function () {
+            return testHelper(this.test, 'setSubscription');
         });
     });
 
@@ -329,7 +440,7 @@ describe('HTTPS Tests', function() {
         it('isPushNotificationsSupportedAndWarn() should return true', () => {
             expect(isPushNotificationsSupportedAndWarn()).to.be.true;
         });
-    })
+    });
 
     describe('Subdomain', () => {
         it('valid subdomains should have the proper subdomain extracted', () => {

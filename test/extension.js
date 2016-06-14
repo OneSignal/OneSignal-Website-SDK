@@ -10,7 +10,9 @@ export default class Extension {
             CREATE_BROWSER_TAB: 'CREATE_BROWSER_TAB',
             EXECUTE_SCRIPT: 'EXECUTE_SCRIPT',
             ACCEPT_HTTP_SUBSCRIPTION_POPUP: 'ACCEPT_HTTP_SUBSCRIPTION_POPUP',
-            ACCEPT_HTTPS_SUBSCRIPTION_MODAL: 'ACCEPT_HTTPS_SUBSCRIPTION_MODAL'
+            ACCEPT_HTTPS_SUBSCRIPTION_MODAL: 'ACCEPT_HTTPS_SUBSCRIPTION_MODAL',
+            GET: 'GET',
+            SET: 'SET'
         };
     }
 
@@ -83,6 +85,27 @@ export default class Extension {
         });
     }
 
+    /**
+     * Gets the value for the specified key stored in extension memory.
+     */
+    static get(key) {
+        return Extension.message({
+            command: Extension.COMMANDS.GET,
+            key: key
+        });
+    }
+
+    /**
+     * Sets the value for the specified key and stores it in extension memory.
+     */
+    static set(key, value) {
+        return Extension.message({
+            command: Extension.COMMANDS.SET,
+            key: key,
+            value: value
+        });
+    }
+
     static message(data) {
         return new Promise((resolve, reject) => {
             chrome.runtime.sendMessage(EXT_ID, data, {},
@@ -91,7 +114,11 @@ export default class Extension {
                         reject(chrome.runtime.lastError);
                     }
                     else if (response.success) {
-                        resolve(response);
+                        if (data.command === Extension.COMMANDS.GET) {
+                            resolve(response.result);
+                        } else {
+                            resolve(response);
+                        }
                     }
                     else {
                         reject(response);

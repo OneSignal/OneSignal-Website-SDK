@@ -103,8 +103,8 @@ export default class Utils {
                 // Also allow popup permissions (only for HTTP, but doesn't hurt to enable for HTTPS)
                 Extension.setPopupPermission(`${location.origin}/*`, 'allow'),
                 // Only for HTTPS: Wipes the IndexedDB on the current site origin
-                Utils.wipeIndexedDb(),
-                Utils.wipeServiceWorkerAndUnsubscribe()
+                options.dontWipeData ? null : Utils.wipeIndexedDb(),
+                options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe()
             ])
             .then(() => {
                 // Initialize OneSignal and subscribe
@@ -116,7 +116,7 @@ export default class Utils {
                             appId: APP_ID,
                             autoRegister: options.autoRegister,
                             persistNotification: false,
-                            dangerouslyWipeData: true && location.protocol === 'http:' // Wipes IndexedDB data on popup / iframe initialize for HTTP
+                            dangerouslyWipeData: true && location.protocol === 'http:' && !options.dontWipeData // Wipes IndexedDB data on popup / iframe initialize for HTTP
                         };
                         if (!options.welcomeNotification) {
                             initOptions.welcomeNotification = {
@@ -136,8 +136,14 @@ export default class Utils {
                                 // Wait for the HTTP popup to appear and be interactable
                                 OneSignal.on('popupLoad', resolve);
                             } else {
-                                // Wait for the HTTPS subscription to finish
-                                OneSignal.on('subscriptionChange', resolve);
+                                if (options.dontWipeData) {
+                                    // There will be no subscriptionChange event since data wasn't wiped, but user
+                                    // autoregistered anyways, so continue on
+                                    resolve();
+                                } else {
+                                    // Wait for the HTTPS subscription to finish
+                                    OneSignal.on('subscriptionChange', resolve);
+                                }
                             }
                         } else {
                             // Don't subscribe, just wait for SDK to initialize
@@ -162,7 +168,7 @@ export default class Utils {
 
     static expectEvent(eventName, timeout) {
         if (!timeout) {
-            timeout = 5000;
+            timeout = 10000;
         }
         return executeAndTimeoutPromiseAfter(new Promise(resolve => {
             OneSignal.once(eventName, resolve);

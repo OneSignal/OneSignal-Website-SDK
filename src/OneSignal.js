@@ -9,7 +9,7 @@ import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeIndexedDb, wipeServiceWorkerAndUnsubscribe } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, wipeServiceWorkerAndUnsubscribe } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -501,9 +501,9 @@ export default class OneSignal {
     if (shouldWipeData) {
       OneSignal.LOGGING = true;
       // Wipe IndexedDB and unsubscribe from push/unregister the service worker for testing.
-      console.warn('Wiping away previous HTTP data.');
-      preinitializePromise = wipeIndexedDb()
-          .then(() => wipeServiceWorkerAndUnsubscribe())
+      log.warn('Wiping away previous HTTP data (called from HTTP iFrame).');
+      preinitializePromise = wipeLocalIndexedDb()
+          .then(() => unsubscribeFromPush())
           .then(() => IndexedDb.put('Ids', {type: 'appId', id: options.appId}));
     }
 
@@ -631,6 +631,12 @@ export default class OneSignal {
                 });
           })
           .catch(e => console.error(e));
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, message => {
+      log.debug(Environment.getEnv() + " (Expected iFrame) has received the unsubscribe from push method.");
+      unsubscribeFromPush()
+          .then(() => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE))
+          .catch(e => log.warn('Failed to unsubscribe from push remotely.', e));
     });
     Event.trigger('httpInitialize');
   }
@@ -881,7 +887,7 @@ export default class OneSignal {
               Event.trigger('modalLoaded');
             });
             OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, message => {
-              console.log('User accepted the HTTPS modal prompt.');
+              log.debug('User accepted the HTTPS modal prompt.');
               OneSignal._sessionInitAlreadyRunning = false;
               let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
               iframeModalDom.parentNode.removeChild(iframeModalDom);
@@ -890,7 +896,7 @@ export default class OneSignal {
               OneSignal._registerForW3CPush(options);
             });
             OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, message => {
-              console.log('User rejected the HTTPS modal prompt.');
+              log.debug('User rejected the HTTPS modal prompt.');
               OneSignal._sessionInitAlreadyRunning = false;
               let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
               iframeModalDom.parentNode.removeChild(iframeModalDom);
@@ -1103,8 +1109,7 @@ export default class OneSignal {
   }
 
   static _enableNotifications(existingServiceWorkerRegistration) { // is ServiceWorkerRegistration type
-    if (existingServiceWorkerRegistration)
-      log.debug('An older ServiceWorker exists:', existingServiceWorkerRegistration);
+    log.debug(`Called %c_enableNotifications()`, getConsoleStyle('code'));
     if (!('PushManager' in window)) {
       log.warn("Push messaging is not supported. No PushManager.");
       sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
@@ -1122,8 +1127,9 @@ export default class OneSignal {
       return;
     }
 
+    log.debug(`Calling %cnavigator.serviceWorker.ready() ...`, getConsoleStyle('code'));
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-      log.info('Service worker now active:', serviceWorkerRegistration);
+      log.debug('Finished call to %cnavigator.serviceWorker.ready', getConsoleStyle('code'));
       OneSignalHelpers.establishServiceWorkerChannel(serviceWorkerRegistration);
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
@@ -1255,16 +1261,18 @@ export default class OneSignal {
   }
 
   static _subscribeForPush(serviceWorkerRegistration) {
+    log.debug(`Called %c_subscribeForPush()`, getConsoleStyle('code'));
     var notificationPermissionBeforeRequest = '';
 
     OneSignal.getNotificationPermission().then((permission) => {
       notificationPermissionBeforeRequest = permission;
     })
       .then(() => {
-        log.debug("Calling service worker's pushManager.subscribe()");
+        log.debug(`Called %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
         return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
       })
       .then(function (subscription) {
+        log.debug(`Finished call to %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
         // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
         OneSignal._sessionInitAlreadyRunning = false;
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
@@ -1744,8 +1752,8 @@ export default class OneSignal {
             resolve(true);
           })
           .catch(e => {
-            log.error(e);
-            reject(false);
+            log.warn(e);
+            reject(e);
           })
       });
     });
@@ -1955,7 +1963,8 @@ objectAssign(OneSignal, {
     NOTIFICATION_DISPLAYED: 'postmam.notificationDisplayed',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
-    POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable'
+    POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
+    UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush'
   },
 
   EVENTS: {

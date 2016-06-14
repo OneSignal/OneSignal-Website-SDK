@@ -2,6 +2,7 @@ import log from 'loglevel';
 import * as Browser from 'bowser';
 import Environment from './environment.js';
 import IndexedDb from './indexedDb';
+import Database from './database';
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -369,10 +370,10 @@ export function getUrlQueryParam(name) {
 }
 
 /**
- * Wipe OneSignal-related IndexedDB data.
+ * Wipe OneSignal-related IndexedDB data on the current origin. OneSignal does not have to be initialized to use this.
  */
-export function wipeIndexedDb() {
-  console.warn('OneSignal: Wiping IndexedDB data.');
+export function wipeLocalIndexedDb() {
+  log.warn('OneSignal: Wiping local IndexedDB data.');
   return Promise.all([
     IndexedDb.remove('Ids'),
     IndexedDb.remove('NotificationOpened'),
@@ -380,33 +381,76 @@ export function wipeIndexedDb() {
   ]);
 }
 
+/**
+ * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.
+ */
+export function wipeIndexedDb() {
+  log.warn('OneSignal: Wiping IndexedDB data.');
+  return Promise.all([
+    Database.remove('Ids'),
+    Database.remove('NotificationOpened'),
+    Database.remove('Options')
+  ]);
+}
+
+
+/**
+ * Unsubscribe from push notifications without removing the active service worker.
+ */
+export function unsubscribeFromPush() {
+  log.warn('OneSignal: Unsubscribe from push.');
+  if (OneSignal.isUsingSubscriptionWorkaround()) {
+    return new Promise((resolve, reject) => {
+      log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
+      OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
+        log.debug("Unsubscribe from push succesfully remotely executed.");
+        if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
+          resolve();
+        } else {
+          reject('Failed to remotely unsubscribe from push.');
+        }
+      });
+    });
+  } else {
+    if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
+      return Promise.resolve();
+
+    return navigator.serviceWorker.ready
+        .then(registration => registration.pushManager)
+        .then(pushManager => pushManager.getSubscription())
+        .then(subscription => {
+          if (subscription) {
+            return subscription.unsubscribe();
+          }
+        });
+  }
+}
+
+
+/**
+ * Unregisters the active service worker.
+ */
+export function wipeServiceWorker() {
+  log.warn('OneSignal: Unregistering service worker.');
+  if (Environment.isIframe()) {
+    return;
+  }
+  debugger;
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
+    return Promise.resolve();
+
+  return navigator.serviceWorker.ready
+      .then(registration => registration.unregister());
+}
+
 
 /**
  * Unsubscribe from push notifications and remove any active service worker.
  */
 export function wipeServiceWorkerAndUnsubscribe() {
-  console.warn('OneSignal: Unsubscribe from push and unregistering service worker.');
-  if (Environment.isIframe()) {
-    return;
-  }
-  if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
-    return Promise.resolve();
-
-  let unsubscribePromise = navigator.serviceWorker.ready
-      .then(registration => registration.pushManager)
-      .then(pushManager => pushManager.getSubscription())
-      .then(subscription => {
-        if (subscription) {
-          return subscription.unsubscribe();
-        }
-      });
-
-  let unregisterWorkerPromise = navigator.serviceWorker.ready
-      .then(registration => registration.unregister());
-
   return Promise.all([
-    unsubscribePromise,
-    unregisterWorkerPromise
+    unsubscribeFromPush(),
+    wipeServiceWorker()
   ]);
 }
 

@@ -1,6 +1,6 @@
 import { API_URL } from './vars.js'
 import log from 'loglevel';
-import { contains, trimUndefined } from './utils.js'
+import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush, wait } from './utils.js'
 
 
 export default class OneSignalApi {
@@ -43,9 +43,33 @@ export default class OneSignalApi {
           if (status >= 200 && status < 300)
             return json;
           else {
-            return Promise.reject(json);
+            let error = OneSignalApi.identifyError(json);
+            if (error === 'no-user-id-error') {
+              if (OneSignal.isUsingSubscriptionWorkaround()) {
+                return wipeIndexedDb()
+                    .then(() => Promise.reject(json));
+              } else {
+                return wipeIndexedDb()
+                    .then(() => unsubscribeFromPush())
+                    .then(() => Promise.reject(json));
+              }
+            } else {
+              return Promise.reject(json);
+            }
           }
         });
+  }
+
+  static identifyError(error) {
+    if (!error || !error.errors) {
+      return 'no-error';
+    }
+    let errors = error.errors;
+    if (contains(errors, 'No user with this id found') ||
+        contains(errors, 'Could not find app_id for given player id.')) {
+      return 'no-user-id-error';
+    }
+    return 'unknown-error';
   }
 
   /**
