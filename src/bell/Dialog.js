@@ -17,16 +17,6 @@ export default class Dialog extends AnimatedElement {
     this.unsubscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #unsubscribe-button';
     this.notificationIcons = null;
 
-    OneSignal.on(Bell.EVENTS.STATE_CHANGED, (state) => {
-      if (state.to === Bell.STATES.SUBSCRIBED) {
-        if (this.notificationIcons === null) {
-          this.getNotificationIcons().then((icons) => {
-            this.notificationIcons = icons;
-          });
-        }
-      }
-    });
-
     window.addEventListener('click', (event) => {
       if (event.target === document.querySelector(this.subscribeButtonId))
         Event.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);

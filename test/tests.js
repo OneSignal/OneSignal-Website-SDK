@@ -1,7 +1,7 @@
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
-import {APP_ID, PLAYER_ID} from './vars.js';
+import {APP_ID, PLAYER_ID, USER_AUTH_KEY} from './vars.js';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';
 import Utils from './utils';
@@ -531,6 +531,44 @@ describe('HTTPS Tests', function() {
             expect(Environment.getLanguage('zh-TW')).to.equal('zh-Hant');
             expect(Environment.getLanguage('zh-Hant')).to.equal('zh-Hant');
             expect(Environment.getLanguage('de-Arabic')).to.equal('de');
+        });
+    });
+
+    describe('Notify Button', () => {
+        it.only('should show site icon on notify button popup after initial subscribe', function () {
+            return new SoloTest(this.test, {leaveRunning: true}, () => {
+                return Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: false,
+                        notifyButton: true
+                    })
+                    .then(() => OneSignal.api.get(`apps/${OneSignal.config.appId}`, null, {
+                        'Authorization': `Basic ${USER_AUTH_KEY}`
+                    }))
+                    .then(app => {
+                        let iconUrl = app.chrome_web_default_notification_icon;
+                        if (!iconUrl) {
+                            return Promise.reject('This OneSignal test app does not have a default notification icon.');
+                        }
+                        this.test.iconUrl = iconUrl;
+                    })
+                    .then(() => {
+                        OneSignal.registerForPushNotifications();
+                        if (location.protocol === 'http:') {
+                            return Utils.expectEvent('popupLoad')
+                                .then(() => Extension.acceptHttpSubscriptionPopup())
+                        } else {
+                            return Utils.expectEvent('subscriptionChange');
+                        }
+                    })
+                    .then(() => Utils.wait(3000))
+                    .then(() => OneSignal.notifyButton.dialog.show())
+                    .then(() => {
+                        let dialogIconHtml = document.querySelector('.push-notification-icon').innerHTML;
+                        expect(dialogIconHtml).to.include(this.test.iconUrl);
+                        OneSignal.database.printIds();
+                    });
+            });
         });
     });
 

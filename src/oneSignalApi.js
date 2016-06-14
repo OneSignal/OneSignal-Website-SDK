@@ -5,29 +5,34 @@ import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush, wait } fro
 
 export default class OneSignalApi {
 
-  static get(action, data) {
-    return OneSignalApi.call('GET', action, data);
+  static get(action, data, headers) {
+    return OneSignalApi.call('GET', action, data, headers);
   }
 
-  static post(action, data) {
-    return OneSignalApi.call('POST', action, data);
+  static post(action, data, headers) {
+    return OneSignalApi.call('POST', action, data, headers);
   }
 
-  static put(action, data) {
-    return OneSignalApi.call('PUT', action, data);
+  static put(action, data, headers) {
+    return OneSignalApi.call('PUT', action, data, headers);
   }
 
-  static delete(action, data) {
-    return OneSignalApi.call('DELETE', action, data);
+  static delete(action, data, headers) {
+    return OneSignalApi.call('DELETE', action, data, headers);
   }
 
-  static call(method, action, data) {
-    let headers = new Headers();
-    headers.append('Content-Type', 'application/json;charset=UTF-8');
+  static call(method, action, data, headers) {
+    let callHeaders = new Headers();
+    callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
+    if (headers) {
+      for (let key of Object.keys(headers)) {
+        callHeaders.append(key, headers[key]);
+      }
+    }
 
     let contents = {
       method: method || 'NO_METHOD_SPECIFIED',
-      headers: headers,
+      headers: callHeaders,
       cache: 'no-cache'
     };
     if (data)

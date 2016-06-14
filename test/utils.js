@@ -123,6 +123,11 @@ export default class Utils {
                                 disable: true
                             }
                         }
+                        if (options.notifyButton) {
+                            initOptions.notifyButton = {
+                                enable: true
+                            };
+                        }
                         if (location.protocol === 'http:') {
                             initOptions.subdomainName = SUBDOMAIN;
                             if (options.autoRegister) {

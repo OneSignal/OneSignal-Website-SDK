@@ -285,7 +285,13 @@ export default class Bell {
         if (this.badge.shown && this.options.prenotify) {
           this.badge.hide();
         }
+        if (this.dialog.notificationIcons === null) {
+          this.dialog.getNotificationIcons().then((icons) => {
+            this.dialog.notificationIcons = icons;
+          });
+        }
       }
+
       OneSignal.getNotificationPermission(permission => {
         this.setState((isSubscribed ?
           Bell.STATES.SUBSCRIBED :
