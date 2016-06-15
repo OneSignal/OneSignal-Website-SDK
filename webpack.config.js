@@ -32,14 +32,14 @@ var definePluginConstants = {
   __BETA__: IS_BETA,
   __TEST__: IS_TEST,
   __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
-}
+};
 if (IS_PROD) {
   definePluginConstants['process.env'] = {
     'NODE_ENV': JSON.stringify('production'),
   };
 }
 
-module.exports = {
+module.exports = [{
   entry: entries,
   output: {
     path: path.join(__dirname, 'dist'),
@@ -47,20 +47,20 @@ module.exports = {
   },
   devtool: IS_PROD ? 'source-map' : 'source-map',
   module: {
-    loaders: [{
-      test: /\.js$/,
-      include: includePaths,
-      exclude: /(node_modules|bower_components)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015'],
-        cacheDirectory: true
-      }
-    },
-    {
-      test: /\.scss$/,
-      loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
-    }]
+      loaders: [{
+        test: /\.js$/,
+        include: includePaths,
+        exclude: /(node_modules|bower_components|test\/server)/,
+        loader: 'babel-loader',
+        query: {
+          presets: ['es2015'],
+          cacheDirectory: true
+        }
+      },
+      {
+        test: /\.scss$/,
+        loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
+      }]
   },
   sassLoader: {
     includePaths: [path.resolve(__dirname, "./src")]
@@ -83,7 +83,8 @@ module.exports = {
         if_return: false,
         join_vars: false,
         drop_console: false,
-        drop_debugger: false
+        drop_debugger: false,
+        warnings: false,
       },
       mangle: IS_PROD,
       output: {
@@ -100,4 +101,43 @@ module.exports = {
       })
     }
   ]
-};
+}, {
+  name: 'test-server',
+  target: 'node',
+  entry: {
+    OneSignalSDKTestServer: './test/server.js'
+  },
+  output: {
+    path: path.join(__dirname, 'dist'),
+    filename: '[name].js'
+  },
+  devtool: IS_PROD ? 'source-map' : 'source-map',
+  module: {
+    loaders: [{
+      test: /\.js$/,
+      include: [path.resolve(__dirname, "./test/server")],
+      exclude: /(node_modules|bower_components)/,
+      loader: 'babel-loader',
+      query: {
+        presets: ['es2015'],
+        cacheDirectory: true
+      }
+    },
+    {
+      test: /\.json$/,
+      loader: "json-loader"
+    }]
+  },
+  debug: !IS_PROD,
+  plugins: [
+    new webpack.DefinePlugin(definePluginConstants),
+    function () {
+      this.plugin('watch-run', function (watching, callback) {
+        console.log();
+        console.log('Recompiling assets starting ' + new Date()
+                .timeNow() + "...");
+        callback();
+      })
+    }
+  ]
+}];
