@@ -183,4 +183,40 @@ export default class Utils {
     static wait(milliseconds) {
         return new Promise(resolve => setTimeout(resolve, milliseconds));
     }
+
+    static deletePlayer(userId) {
+        return Utils.httpCall('DELETE', `https://${location.hostname}:8080/player/${userId}`);
+    }
+
+    static httpCall(method, endpoint, data, headers, options) {
+        let callHeaders = new Headers();
+        callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
+        if (headers) {
+            for (let key of Object.keys(headers)) {
+                callHeaders.append(key, headers[key]);
+            }
+        }
+
+        let contents = Object.assign({
+            method: method || 'NO_METHOD_SPECIFIED',
+            headers: callHeaders,
+            cache: 'no-cache'
+        }, options);
+        if (data)
+            contents.body = JSON.stringify(data);
+
+        var status;
+        return fetch(endpoint, contents)
+            .then(response => {
+                status = response.status;
+                return response.json();
+            })
+            .then(json => {
+                if (status >= 200 && status < 300)
+                    return json;
+                else {
+                    return Promise.reject(json);
+                }
+            });
+    }
 }

@@ -298,7 +298,7 @@ describe('HTTPS Tests', function() {
                             return Promise.all([
                                 id,
                                 Extension.set('user-id', id),
-                                OneSignal.api.delete(`players/${id}`)]);
+                                Utils.deletePlayer(id)]);
                         })
                         .then(([id]) => OneSignal.api.get(`players/${id}`)
                             .catch(error => {
@@ -355,7 +355,7 @@ describe('HTTPS Tests', function() {
                             expect(id).to.not.be.null;
                             return Promise.all([
                                 Extension.set('user-id', id),
-                                OneSignal.api.delete(`players/${id}`)]);
+                                Utils.deletePlayer(id)]);
                         })
                         .then(() => {
                             // Now call any one of the APIs that requires our user ID
@@ -535,8 +535,8 @@ describe('HTTPS Tests', function() {
     });
 
     describe('Notify Button', () => {
-        it.only('should show site icon on notify button popup after initial subscribe', function () {
-            return new SoloTest(this.test, {leaveRunning: true}, () => {
+        it('should show site icon on notify button popup after initial subscribe', function () {
+            return new SoloTest(this.test, {}, () => {
                 return Utils.initialize({
                         welcomeNotification: false,
                         autoRegister: false,
@@ -561,7 +561,7 @@ describe('HTTPS Tests', function() {
                             return Utils.expectEvent('subscriptionChange');
                         }
                     })
-                    .then(() => Utils.wait(3000))
+                    .then(() => Utils.wait(500))
                     .then(() => OneSignal.notifyButton.dialog.show())
                     .then(() => {
                         let dialogIconHtml = document.querySelector('.push-notification-icon').innerHTML;

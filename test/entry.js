@@ -1,4 +1,5 @@
 import Extension from './extension';
+import Utils from './utils';
 
 export default class OneSignalTests {
   static runTests() {
@@ -7,3 +8,4 @@ export default class OneSignalTests {
 }
 
 window.OneSignalTests = OneSignalTests;
+window.utils = Utils;
