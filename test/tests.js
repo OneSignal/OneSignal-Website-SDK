@@ -58,65 +58,88 @@ describe('HTTPS Tests', function() {
     });
 
     describe('Session Tracking', function() {
-        it.only("should increment user's session_count on new site session for autoRegister true", function () {
-            return new MultiStepSoloTest(this.test, {}, (step, gotoStep) => {
+        let testHelper = function (test, kind) {
+            return new MultiStepSoloTest(test, {leaveRunning: true}, async (step, gotoStep) => {
+                let initOptions = {
+                    welcomeNotification: false,
+                    autoRegister: kind.autoRegister,
+                    useRegisterEvent: kind.autoRegister
+                };
+                if (step !== 'first') {
+                    initOptions['dontWipeData'] = true;
+                }
                 if (step === 'first') {
-                    return Utils.initialize({
-                            welcomeNotification: false,
-                            autoRegister: true,
-                            useRegisterEvent: true
-                        })
-                        .then(() => OneSignal.getUserId())
-                        .then((id) => Promise.all([
-                            OneSignal.api.get(`players/${id}`),
-                            Extension.set('user-id', id)
-                        ]))
-                        .then(([player, _]) => {
-                            expect(player).to.not.be.null;
-                            expect(player).to.have.property('session_count', 1);
-                            return new Promise(() => {
-                                sessionStorage.clear();
-                                gotoStep('2');
-                            });
-                        });
+                    await Utils.initialize({
+                        welcomeNotification: false,
+                        autoRegister: true,
+                        useRegisterEvent: true
+                    });
+                    let id = await OneSignal.getUserId();
+                    let player = await OneSignal.api.get(`players/${id}`);
+                    await Extension.set('user-id', id);
+                    console.log('Step 1');
+                    console.log('Player:', player);
+                    expect(player).to.have.property('session_count', 1);
+                    await Extension.set('last-active', player.last_active);
+                    await Utils.wait(1000);
+                    sessionStorage.clear();
+                    gotoStep('2');
+
                 } else if (step === '2') {
-                    return Utils.initialize({
-                            welcomeNotification: false,
-                            autoRegister: true,
-                            dontWipeData: true,
-                            useRegisterEvent: true
-                        })
-                        .then(() => OneSignal.getUserId())
-                        .then((id) => {
-                            return Extension.get('user-id')
-                                .then(retrievedId => {
-                                    expect(retrievedId).to.be.equal(id);
-                                })
-                                .then(() => OneSignal.api.get(`players/${id}`));
-                        })
-                        .then(player => {
-                            expect(player).to.not.be.null;
-                            expect(player).to.have.property('session_count', 2);
-                            return new Promise(() => {
-                                sessionStorage.clear();
-                                gotoStep('3');
-                            });
-                        });
+                    await Utils.initialize(initOptions);
+                    if (!kind.autoRegister) {
+                        OneSignal.registerForPushNotifications();
+                        if (location.protocol === 'http:') {
+                            await Utils.expectEvent('popupLoad');
+                            await Extension.acceptHttpSubscriptionPopup();
+                            await Utils.expectEvent('register');
+                        } else {
+                            await Utils.expectEvent('register');
+                        }
+                    }
+                    let id = await OneSignal.getUserId();
+                    let retrievedId = await Extension.get('user-id');
+                    expect(retrievedId).to.be.equal(id);
+                    let player = await OneSignal.api.get(`players/${id}`);
+                    console.log('Step 2');
+                    console.log('Player:', player);
+                    expect(player).to.have.property('session_count', 2);
+                    let previousLastActive = await Extension.get('last-active')
+                    expect(player.last_active).to.be.above(previousLastActive);
+
+                    await Extension.set('last-active', player.last_active);
+                    await Utils.wait(1000);
+                    sessionStorage.clear();
+                    gotoStep('3');
                 } else if (step === '3') {
-                    return Utils.initialize({
-                            welcomeNotification: false,
-                            autoRegister: true,
-                            dontWipeData: true,
-                            useRegisterEvent: true
-                        })
-                        .then(() => OneSignal.getUserId())
-                        .then((id) => OneSignal.api.get(`players/${id}`))
-                        .then(player => {
-                            expect(player).to.not.be.null;
-                            expect(player).to.have.property('session_count', 3);
-                        });
+                    await Utils.initialize(initOptions);
+                    if (!kind.autoRegister) {
+                        OneSignal.registerForPushNotifications();
+                        if (location.protocol === 'http:') {
+                            await Utils.expectEvent('popupLoad');
+                            await Extension.acceptHttpSubscriptionPopup();
+                            await Utils.expectEvent('register');
+                        } else {
+                            await Utils.expectEvent('register');
+                        }
+                    }
+                    let id = await OneSignal.getUserId();
+                    let player = await OneSignal.api.get(`players/${id}`);
+                    console.log('Step 3');
+                    console.log('Player:', player);
+                    expect(player).to.have.property('session_count', 3);
+                    let previousLastActive = await Extension.get('last-active')
+                    expect(player.last_active).to.be.above(previousLastActive);
                 }
             });
+        };
+
+        it("should increment user's session_count on new site session for autoRegister true", function () {
+            return testHelper(this.test, {autoRegister: true});
+        });
+
+        it.only("should increment user's session_count on new site session for autoRegister false", function () {
+            return testHelper(this.test, {autoRegister: false});
         });
     });
 
