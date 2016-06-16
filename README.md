@@ -3,6 +3,7 @@
   <br/>
     <br/>
   <img src="https://www.filepicker.io/api/file/FKy7xatlQeGqUuE9C3p8"/>
+  <span style="color: grey !important">Showing web push notifications from Chrome, Safari, and Firefox</span>
 </p>
 
 # OneSignal Web Push SDK
