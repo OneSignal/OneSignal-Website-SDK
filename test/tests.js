@@ -88,14 +88,7 @@ describe('HTTPS Tests', function() {
                 } else if (step === '2') {
                     await Utils.initialize(initOptions);
                     if (!kind.autoRegister) {
-                        OneSignal.registerForPushNotifications();
-                        if (location.protocol === 'http:') {
-                            await Utils.expectEvent('popupLoad');
-                            await Extension.acceptHttpSubscriptionPopup();
-                            await Utils.expectEvent('register');
-                        } else {
-                            await Utils.expectEvent('register');
-                        }
+                        await Utils.expectEvent('register');
                     }
                     let id = await OneSignal.getUserId();
                     let retrievedId = await Extension.get('user-id');
@@ -114,14 +107,7 @@ describe('HTTPS Tests', function() {
                 } else if (step === '3') {
                     await Utils.initialize(initOptions);
                     if (!kind.autoRegister) {
-                        OneSignal.registerForPushNotifications();
-                        if (location.protocol === 'http:') {
-                            await Utils.expectEvent('popupLoad');
-                            await Extension.acceptHttpSubscriptionPopup();
-                            await Utils.expectEvent('register');
-                        } else {
-                            await Utils.expectEvent('register');
-                        }
+                        await Utils.expectEvent('register');
                     }
                     let id = await OneSignal.getUserId();
                     let player = await OneSignal.api.get(`players/${id}`);
@@ -138,7 +124,7 @@ describe('HTTPS Tests', function() {
             return testHelper(this.test, {autoRegister: true});
         });
 
-        it.only("should increment user's session_count on new site session for autoRegister false", function () {
+        it("should increment user's session_count on new site session for autoRegister false", function () {
             return testHelper(this.test, {autoRegister: false});
         });
     });
@@ -618,39 +604,32 @@ describe('HTTPS Tests', function() {
     });
 
     describe('Notify Button', () => {
-        it('should show site icon on notify button popup after initial subscribe', function () {
-            return new SoloTest(this.test, {}, () => {
-                return Utils.initialize({
-                        welcomeNotification: false,
-                        autoRegister: false,
-                        notifyButton: true
-                    })
-                    .then(() => OneSignal.api.get(`apps/${OneSignal.config.appId}`, null, {
-                        'Authorization': `Basic ${USER_AUTH_KEY}`
-                    }))
-                    .then(app => {
-                        let iconUrl = app.chrome_web_default_notification_icon;
-                        if (!iconUrl) {
-                            return Promise.reject('This OneSignal test app does not have a default notification icon.');
-                        }
-                        this.test.iconUrl = iconUrl;
-                    })
-                    .then(() => {
-                        OneSignal.registerForPushNotifications();
-                        if (location.protocol === 'http:') {
-                            return Utils.expectEvent('popupLoad')
-                                .then(() => Extension.acceptHttpSubscriptionPopup())
-                        } else {
-                            return Utils.expectEvent('subscriptionChange');
-                        }
-                    })
-                    .then(() => Utils.wait(500))
-                    .then(() => OneSignal.notifyButton.dialog.show())
-                    .then(() => {
-                        let dialogIconHtml = document.querySelector('.push-notification-icon').innerHTML;
-                        expect(dialogIconHtml).to.include(this.test.iconUrl);
-                        OneSignal.database.printIds();
-                    });
+        it('should show site icon on notify button popup after initial subscribe and after initial unsubscribe', function () {
+            return new SoloTest(this.test, {}, async () => {
+                await Utils.initialize({
+                    welcomeNotification: false,
+                    autoRegister: false,
+                    notifyButton: true
+                });
+                let app = await OneSignal.api.get(`apps/${OneSignal.config.appId}`, null, {
+                    'Authorization': `Basic ${USER_AUTH_KEY}`
+                });
+                let iconUrl = app.chrome_web_default_notification_icon;
+                if (!iconUrl) {
+                    return Promise.reject('This OneSignal test app does not have a default notification icon.');
+                }
+                this.test.iconUrl = iconUrl;
+                OneSignal.registerForPushNotifications();
+                if (location.protocol === 'http:') {
+                    await Utils.expectEvent('popupLoad')
+                    await Extension.acceptHttpSubscriptionPopup();
+                    await Utils.expectEvent('subscriptionChange');
+                }
+                // Check whether the icon exists in the popup HTML
+                await Utils.wait(500);
+                await OneSignal.notifyButton.dialog.show();
+                let dialogIconHtml = document.querySelector('.push-notification-icon').innerHTML;
+                expect(dialogIconHtml).to.include(this.test.iconUrl);
             });
         });
     });
