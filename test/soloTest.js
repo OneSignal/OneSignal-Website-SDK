@@ -89,7 +89,7 @@ export default class SoloTest {
         let params = new URLSearchParams();
         params.set('grep', encodeURIComponent(testName));
         //Extension.createBrowserTab(`${url.origin}${url.pathname}?${Utils.urlSearchParamToString(params)}`);
-        window.open(`${url.origin}${url.pathname}?${Utils.urlSearchParamToString(params)}`);
+        window.open(url.origin + url.pathname + Utils.urlSearchParamToString(params));
     }
 
     /**

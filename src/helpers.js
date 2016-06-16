@@ -129,7 +129,11 @@ export default class Helpers {
             })
             .catch(e => log.error(e));
         }
-      });
+      })
+        .then(() => {
+          // We've finished registering with OneSignal, our session_count and last_active has been updated
+          Event.trigger(OneSignal.EVENTS.REGISTERED);
+        });
   }
 
   static checkAndTriggerSubscriptionChanged() {

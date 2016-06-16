@@ -107,6 +107,7 @@ export default class Utils {
                 options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe()
             ])
             .then(() => {
+                console.log('Test Initialize: Stage 1');
                 // Initialize OneSignal and subscribe
                 return new Promise(resolve => {
                     window.OneSignal = OneSignal || [];
@@ -141,13 +142,18 @@ export default class Utils {
                                 // Wait for the HTTP popup to appear and be interactable
                                 OneSignal.on('popupLoad', resolve);
                             } else {
-                                if (options.dontWipeData) {
+                                if (options.dontWipeData && !options.useRegisterEvent) {
                                     // There will be no subscriptionChange event since data wasn't wiped, but user
                                     // autoregistered anyways, so continue on
                                     resolve();
                                 } else {
-                                    // Wait for the HTTPS subscription to finish
-                                    OneSignal.on('subscriptionChange', resolve);
+                                    if (options.useRegisterEvent && location.protocol === 'https:') {
+                                        console.log('Listening for register event...');
+                                        OneSignal.on('register', resolve);
+                                    } else {
+                                        // Wait for the HTTPS subscription to finish
+                                        OneSignal.on('subscriptionChange', resolve);
+                                    }
                                 }
                             }
                         } else {
@@ -158,17 +164,27 @@ export default class Utils {
                 });
             })
             .then(() => {
+                console.log('Test Initialize: Stage 2');
                 if (location.protocol === 'http:' && options.autoRegister) {
                     return Extension.acceptHttpSubscriptionPopup();
                 }
             })
             .then(() => {
-                if (location.protocol === 'http:' && options.autoRegister) {
+                console.log('Test Initialize: Stage 3');
+                if (location.protocol === 'http:' && options.autoRegister && !options.useRegisterEvent) {
                     return new Promise(resolve => {
                         OneSignal.on('subscriptionChange', resolve);
                     });
                 }
+                else if (options.useRegisterEvent && location.protocol === 'http:') {
+                    return new Promise(resolve => {
+                        OneSignal.on('register', resolve);
+                    });
+                }
             })
+            .then(() => {
+                console.log('Test Initialize: Stage 4');
+            });
     }
 
     static expectEvent(eventName, timeout) {

@@ -57,6 +57,69 @@ describe('HTTPS Tests', function() {
         });
     });
 
+    describe('Session Tracking', function() {
+        it.only("should increment user's session_count on new site session for autoRegister true", function () {
+            return new MultiStepSoloTest(this.test, {}, (step, gotoStep) => {
+                if (step === 'first') {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true,
+                            useRegisterEvent: true
+                        })
+                        .then(() => OneSignal.getUserId())
+                        .then((id) => Promise.all([
+                            OneSignal.api.get(`players/${id}`),
+                            Extension.set('user-id', id)
+                        ]))
+                        .then(([player, _]) => {
+                            expect(player).to.not.be.null;
+                            expect(player).to.have.property('session_count', 1);
+                            return new Promise(() => {
+                                sessionStorage.clear();
+                                gotoStep('2');
+                            });
+                        });
+                } else if (step === '2') {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true,
+                            dontWipeData: true,
+                            useRegisterEvent: true
+                        })
+                        .then(() => OneSignal.getUserId())
+                        .then((id) => {
+                            return Extension.get('user-id')
+                                .then(retrievedId => {
+                                    expect(retrievedId).to.be.equal(id);
+                                })
+                                .then(() => OneSignal.api.get(`players/${id}`));
+                        })
+                        .then(player => {
+                            expect(player).to.not.be.null;
+                            expect(player).to.have.property('session_count', 2);
+                            return new Promise(() => {
+                                sessionStorage.clear();
+                                gotoStep('3');
+                            });
+                        });
+                } else if (step === '3') {
+                    return Utils.initialize({
+                            welcomeNotification: false,
+                            autoRegister: true,
+                            dontWipeData: true,
+                            useRegisterEvent: true
+                        })
+                        .then(() => OneSignal.getUserId())
+                        .then((id) => OneSignal.api.get(`players/${id}`))
+                        .then(player => {
+                            expect(player).to.not.be.null;
+                            expect(player).to.have.property('session_count', 3);
+                        });
+                }
+            });
+        });
+    });
+
     describe('HTTPS Modal Popup', function() {
        it('should be able to subscribe via HTTPS modal prompt successfully', function() {
            return new SoloTest(this.test, {}, () => {

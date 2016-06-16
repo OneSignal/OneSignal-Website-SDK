@@ -1968,13 +1968,48 @@ objectAssign(OneSignal, {
   },
 
   EVENTS: {
+    /**
+     * Occurs when the user clicks the "Continue" or "No Thanks" button on the HTTP popup or HTTPS modal prompt.
+     * For HTTP sites (and HTTPS sites using the modal prompt), this event is fired before the native permission
+     * prompt is shown. This event is mostly used for HTTP sites.
+     */
     CUSTOM_PROMPT_CLICKED: 'customPromptClick',
+    /**
+     * Occurs when the user clicks "Allow" or "Block" on the native permission prompt on Chrome, Firefox, or Safari.
+     * This event is used for both HTTP and HTTPS sites and occurs after the user actually grants notification
+     * permissions for the site. Occurs before the user is actually subscribed to push notifications.
+     */
     NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
+    /**
+     * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
+     * and activated and the user is eligible to receive push notifications at any point after this.
+     */
     SUBSCRIPTION_CHANGED: 'subscriptionChange',
+    /**
+     * Occurs after a POST call to OneSignal's server to send the welcome notification has completed. The actual
+     * notification arrives shortly after.
+     */
     WELCOME_NOTIFICATION_SENT: 'sendWelcomeNotification',
+    /**
+     * Occurs when a notification is displayed.
+     */
     NOTIFICATION_DISPLAYED: 'notificationDisplay',
+    /**
+     * An internal legacy event that should be deprecated.
+     */
     INTERNAL_SUBSCRIPTIONSET: 'subscriptionSet',
-    SDK_INITIALIZED: 'initialize'
+    /**
+     * Occurs after the document ready event fires and, for HTTP sites, the iFrame to subdomain.onesignal.com has
+     * loaded.
+     * Before this event, IndexedDB access is not possible for HTTP sites.
+     */
+    SDK_INITIALIZED: 'initialize',
+    /**
+     * Occurs after the user subscribes to push notifications and a new user entry is created on OneSignal's server,
+     * and also occurs when the user begins a new site session and the last_session and last_active is updated on
+     * OneSignal's server.
+     */
+    REGISTERED: 'register',
   },
 
   NOTIFICATION_TYPES: {
