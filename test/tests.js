@@ -10,6 +10,7 @@ import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
 import Postmam from '../src/postmam.js';
 import Database from '../src/database';
+import MultiStepSoloTest from './multiStepSoloTest';
 
 
 chai.config.includeStack = false;
@@ -282,12 +283,10 @@ describe('HTTPS Tests', function() {
 
     describe('Server-Sided State Changes', function () {
         it('should register a new user ID if user is deleted from OneSignal dashboard and opens a new site session', function () {
-            return new SoloTest(this.test, {}, () => {
+            return new MultiStepSoloTest(this.test, {}, (step, gotoStep) => {
                 let tagValue = guid();
 
-                let params = new URL(location.href).searchParams;
-
-                if (params.get('step') == undefined) {
+                if (step === 'first') {
                     return Utils.initialize({
                             welcomeNotification: false,
                             autoRegister: true
@@ -309,10 +308,10 @@ describe('HTTPS Tests', function() {
                         .then(() => {
                             return new Promise(() => {
                                 sessionStorage.clear();
-                                location.href = location.href + '&step=2'
+                                gotoStep('next');
                             });
                         });
-                } else if (params.get('step') == '2') {
+                } else if (step === 'next') {
                     return Utils.initialize({
                             welcomeNotification: false,
                             autoRegister: true,
@@ -340,12 +339,10 @@ describe('HTTPS Tests', function() {
         });
 
         let testHelper = function (test, kind) {
-            return new SoloTest(test, {}, function () {
+            return new MultiStepSoloTest(test, {}, (step, gotoStep) => {
                 let tagValue = guid();
 
-                let params = new URL(location.href).searchParams;
-
-                if (params.get('step') == undefined) {
+                if (step === 'first') {
                     return Utils.initialize({
                             welcomeNotification: false,
                             autoRegister: true
@@ -393,10 +390,10 @@ describe('HTTPS Tests', function() {
                         .then(() => {
                             return new Promise(() => {
                                 sessionStorage.clear();
-                                location.href = location.href + '&step=2'
+                                gotoStep('next');
                             });
                         });
-                } else if (params.get('step') == '2') {
+                } else if (step === 'next') {
                     return Utils.initialize({
                             welcomeNotification: false,
                             autoRegister: true,
