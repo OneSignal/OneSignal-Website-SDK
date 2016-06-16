@@ -1,3 +1,10 @@
+<p align="center">
+  <img src="https://onesignal.com/assets/common/logo_onesignal_color.png"/>
+  <br/>
+    <br/>
+  <img src="https://www.filepicker.io/api/file/FKy7xatlQeGqUuE9C3p8"/>
+</p>
+
 # OneSignal Web Push SDK
 
 OneSignal is a free push notification service for web and mobile apps.
