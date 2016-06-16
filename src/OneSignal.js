@@ -1129,7 +1129,7 @@ export default class OneSignal {
 
     log.debug(`Calling %cnavigator.serviceWorker.ready() ...`, getConsoleStyle('code'));
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-      log.debug('Finished call to %cnavigator.serviceWorker.ready', getConsoleStyle('code'));
+      log.debug('Finished calling %cnavigator.serviceWorker.ready', getConsoleStyle('code'));
       OneSignalHelpers.establishServiceWorkerChannel(serviceWorkerRegistration);
       OneSignal._subscribeForPush(serviceWorkerRegistration);
     })
@@ -1268,11 +1268,11 @@ export default class OneSignal {
       notificationPermissionBeforeRequest = permission;
     })
       .then(() => {
-        log.debug(`Called %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+        log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
         return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
       })
       .then(function (subscription) {
-        log.debug(`Finished call to %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+        log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
         // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
         OneSignal._sessionInitAlreadyRunning = false;
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
