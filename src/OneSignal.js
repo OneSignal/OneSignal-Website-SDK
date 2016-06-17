@@ -300,21 +300,16 @@ export default class OneSignal {
 
         OneSignal._initSaveState()
           .then(() => OneSignal._saveInitOptions())
-          .then(() => {
-            if (document.readyState === "complete")
-              OneSignal._internalInit();
-            else
-              window.addEventListener('load', OneSignal._internalInit);
-          });
+          .then(() => OneSignal._internalInit());
       });
     }
 
-    if (document.readyState === "complete") {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
       __init();
     }
     else {
-      log.debug('Waiting for document load before continuing initialization...');
-      window.addEventListener('load', __init);
+      log.debug('OneSignal: Waiting for DOMContentLoaded event before continuing initialization...');
+      window.addEventListener('DOMContentLoaded', __init);
     }
   }
 
