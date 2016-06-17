@@ -58,8 +58,8 @@ describe('HTTPS Tests', function() {
     });
 
     describe('Session Tracking', function() {
-        let testHelper = function (test, kind) {
-            return new MultiStepSoloTest(test, {leaveRunning: true}, async (step, gotoStep) => {
+        let testHelper = function (test, kind, options) {
+            return new MultiStepSoloTest(test, options, async (step, gotoStep) => {
                 let initOptions = {
                     welcomeNotification: false,
                     autoRegister: kind.autoRegister,
@@ -113,18 +113,18 @@ describe('HTTPS Tests', function() {
                     console.log('Step 3');
                     console.log('Player:', player);
                     expect(player).to.have.property('session_count', 3);
-                    let previousLastActive = await Extension.get('last-active')
+                    let previousLastActive = await Extension.get('last-active');
                     expect(player.last_active).to.be.above(previousLastActive);
                 }
             });
         };
 
         it("should increment user's session_count on new site session for autoRegister true", async function () {
-            return testHelper(this.test, {autoRegister: true});
+            return testHelper(this.test, {autoRegister: true}, {});
         });
 
-        it.skip("should increment user's session_count on new site session for autoRegister false", async function () {
-            return testHelper(this.test, {autoRegister: false});
+        it("should increment user's session_count on new site session for autoRegister false", async function () {
+            return testHelper(this.test, {autoRegister: false}, {});
         });
     });
 

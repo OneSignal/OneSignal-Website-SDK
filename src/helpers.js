@@ -55,7 +55,7 @@ export default class Helpers {
   }
 
   static isContinuingBrowserSession() {
-    return sessionStorage.getItem("ONE_SIGNAL_SESSION");
+    return sessionStorage.getItem("ONE_SIGNAL_SESSION") == "true";
   }
 
   /**

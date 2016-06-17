@@ -173,12 +173,24 @@ export default class Utils {
                 console.log('Test Initialize: Stage 3');
                 if (location.protocol === 'http:' && options.autoRegister && !options.useRegisterEvent) {
                     return new Promise(resolve => {
-                        OneSignal.on('subscriptionChange', resolve);
+                        OneSignal.isPushNotificationsEnabled(isEnabled => {
+                            if (isEnabled) {
+                                resolve();
+                            } else {
+                                OneSignal.on('subscriptionChange', resolve);
+                            }
+                        });
                     });
                 }
                 else if (options.useRegisterEvent && location.protocol === 'http:') {
                     return new Promise(resolve => {
-                        OneSignal.on('register', resolve);
+                        OneSignal.isPushNotificationsEnabled(isEnabled => {
+                            if (isEnabled) {
+                                resolve();
+                            } else {
+                                OneSignal.on('register', resolve);
+                            }
+                        });
                     });
                 }
             })
@@ -196,7 +208,15 @@ export default class Utils {
         }).catch(e => console.error(e)), timeout, `Event '${eventName}' did not fire after ${timeout} ms.`);
     }
 
+    /**
+     * Use to stop a multi-step test from continuing.
+     * Use it like "return Utils.wait()" at the end of the step section.
+     */
     static wait(milliseconds) {
+        if (!milliseconds) {
+            // Max value allowed by setTimeout
+            milliseconds = 2147483647;
+        }
         return new Promise(resolve => setTimeout(resolve, milliseconds));
     }
 
