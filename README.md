@@ -12,7 +12,7 @@ OneSignal is a free push notification service for web and mobile apps.
 
 This SDK allows your site's visitors to receive push notifications from you. Send visitors custom notification content, target specific users, and send automatically based on triggers.
 
-View our [website](https://onesignal.com) and our [documentation](https://documentation.onesignal.com/docs/website-sdk-overview) to get started. This repository always matches our latest Web SDK `onesignal.com/OneSignalSDK.js`.
+View our [website](https://onesignal.com) and our [documentation](https://documentation.onesignal.com/docs/website-sdk-overview) to get started.
 
 ## Structure
 
