@@ -12,9 +12,12 @@ export default class MultiStepSoloTest {
         let params = new URL(location.href).searchParams;
         let step = params.get('step') ? params.get('step') : 'first';
         let gotoStep = stepName => {
-          console.log('Got called to go to step', stepName);
-          params.set('step', stepName);
-          location.href = location.origin + location.pathname + Utils.urlSearchParamToString(params);
+            return new Promise(() => {
+                // This promise should never resolve, otherwise the test will pass prematurely in one of the stages
+                console.warn('Proceeding to test step:', stepName);
+                params.set('step', stepName);
+                location.href = location.origin + location.pathname + Utils.urlSearchParamToString(params);
+            });
         };
         return new SoloTest(testInstance, options, testFn.bind(this, step, gotoStep));
     }
