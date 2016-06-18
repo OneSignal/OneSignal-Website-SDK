@@ -72,28 +72,41 @@ export default class OneSignal {
   static _onSubscriptionChanged(newSubscriptionState) {
     if (newSubscriptionState === true) {
       Promise.all([
-            OneSignal.getUserId(),
-            OneSignal.getAppId()
-          ])
-          .then(([userId, appId]) => {
-            let welcome_notification_opts = OneSignal.config['welcomeNotification'];
-            let welcome_notification_disabled = (welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true);
-            let title = (welcome_notification_opts !== undefined && welcome_notification_opts['title'] !== undefined && welcome_notification_opts['title'] !== null) ? welcome_notification_opts['title'] : '';
-            let message = (welcome_notification_opts !== undefined && welcome_notification_opts['message'] !== undefined && welcome_notification_opts['message'] !== null && welcome_notification_opts['message'].length > 0) ? welcome_notification_opts['message'] : 'Thanks for subscribing!';
-            let unopenableWelcomeNotificationUrl = new URL(location.href);
-            unopenableWelcomeNotificationUrl = unopenableWelcomeNotificationUrl.origin + '?_osp=do_not_open';
-            let url = (welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0) ? welcome_notification_opts['url'] : unopenableWelcomeNotificationUrl;
-            title = decodeHtmlEntities(title);
-            message = decodeHtmlEntities(message);
-            if (!welcome_notification_disabled) {
-              log.debug('Sending welcome notification.');
-              OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null, {__isOneSignalWelcomeNotification: true});
-              Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
-            }
-          })
-          .catch(function (e) {
-            log.error(e);
-          });
+                    OneSignal.getUserId(),
+                    OneSignal.getAppId()
+                  ])
+             .then(([userId, appId]) => {
+               let welcome_notification_opts = OneSignal.config['welcomeNotification'];
+               let welcome_notification_disabled = ((welcome_notification_opts !== undefined) &&
+                                                    (welcome_notification_opts['disable'] === true));
+               let title = ((welcome_notification_opts !== undefined) &&
+                            (welcome_notification_opts['title'] !== undefined) &&
+                            (welcome_notification_opts['title'] !== null)) ? welcome_notification_opts['title'] : '';
+               let message = ((welcome_notification_opts !== undefined) &&
+                              (welcome_notification_opts['message'] !== undefined) &&
+                              (welcome_notification_opts['message'] !== null) &&
+                              (welcome_notification_opts['message'].length > 0)) ?
+                             welcome_notification_opts['message'] :
+                             'Thanks for subscribing!';
+               let unopenableWelcomeNotificationUrl = new URL(location.href);
+               unopenableWelcomeNotificationUrl = unopenableWelcomeNotificationUrl.origin + '?_osp=do_not_open';
+               let url = (welcome_notification_opts &&
+                          welcome_notification_opts['url'] &&
+                          (welcome_notification_opts['url'].length > 0)) ?
+                         welcome_notification_opts['url'] :
+                         unopenableWelcomeNotificationUrl;
+               title = decodeHtmlEntities(title);
+               message = decodeHtmlEntities(message);
+               if (!welcome_notification_disabled) {
+                 log.debug('Sending welcome notification.');
+                 OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, null,
+                                               {__isOneSignalWelcomeNotification: true});
+                 Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
+               }
+             })
+             .catch(function (e) {
+               log.error(e);
+             });
     }
   }
 
