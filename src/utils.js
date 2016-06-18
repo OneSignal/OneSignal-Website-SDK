@@ -457,3 +457,13 @@ export function wipeServiceWorkerAndUnsubscribe() {
 export function wait(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
+
+/**
+ * Returns the part of the string after the first occurence of the specified search.
+ * @param string The entire string.
+ * @param search The text returned will be everything *after* search.
+ * e.g. substringAfter('A white fox', 'white') => ' fox'
+ */
+export function substringAfter(string, search) {
+  return string.substr(string.indexOf(search) + search.length);
+}

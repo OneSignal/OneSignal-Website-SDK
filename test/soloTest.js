@@ -114,7 +114,7 @@ export default class SoloTest {
             channel: this.test.title,
             data: error ? JSON.stringify(error, Object.getOwnPropertyNames(error), 4) : JSON.stringify("test_successful"),
             callback: (success, reply) => {
-                if (reply.finished && !this.options.leaveRunning && !error) {
+                if (reply.finished && (this.options.close !== false) && !error) {
                     window.close();
                 }
             }

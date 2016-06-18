@@ -29,7 +29,7 @@ describe('HTTPS Tests', function() {
                     .then(() => Utils.expectEvent('notificationDisplay'))
                     .then(notification => {
                         expect(notification).to.not.be.null;
-                        expect(notification).to.have.property('message', 'Thanks for subscribing!');
+                        expect(notification).to.have.property('content', 'Thanks for subscribing!');
                         return Utils.wait(150);
                     })
                     .then(() => OneSignal.closeNotifications());
@@ -48,8 +48,8 @@ describe('HTTPS Tests', function() {
                     })
                     .then(notification => {
                         expect(notification).to.not.be.null;
-                        expect(notification).to.have.property('message', 'This is an example notification.');
-                        expect(notification).to.have.property('title', 'OneSignal Test Message');
+                        expect(notification).to.have.property('content', 'This is an example notification.');
+                        expect(notification).to.have.property('heading', 'OneSignal Test Message');
                         return Utils.wait(150);
                     })
                     .then(() => OneSignal.closeNotifications());

@@ -3,17 +3,33 @@ import Environment from './environment.js'
 import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import Database from './database.js';
-import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
 
+
+/**
+ * The main service worker script fetching and displaying notifications to users in the background even when the client
+ * site is not running. The worker is registered via the navigator.serviceWorker.register() call after the user first
+ * allows notification permissions, and is a pre-requisite to subscribing for push notifications.
+ *
+ * For HTTPS sites, the service worker is registered site-wide at the top-level scope. For HTTP sites, the service
+ * worker is registered to the iFrame pointing to subdomain.onesignal.com.
+ */
 class ServiceWorker {
 
+  /**
+   * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
+   * previous version.
+   */
   static get VERSION() {
     return __VERSION__;
   }
 
+  /**
+   * Describes what context the JavaScript code is running in and whether we're running in local development mode.
+   */
   static get environment() {
     return Environment;
   }
@@ -22,10 +38,19 @@ class ServiceWorker {
     return log;
   }
 
+  /**
+   * Allows message passing between this service worker and its controlled clients, or webpages. Controlled
+   * clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
+   * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
+   * clients to communicate with the service worker to close all active notifications.
+   */
   static get swivel() {
     return swivel;
   }
 
+  /**
+   * An interface to the browser's IndexedDB.
+   */
   static get database() {
     return Database;
   }
@@ -34,10 +59,16 @@ class ServiceWorker {
     return API_URL;
   }
 
+  /**
+   * Describes the current browser name and version.
+   */
   static get browser() {
     return Browser;
   }
 
+  /**
+   * Service worker entry point.
+   */
   static run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
@@ -70,13 +101,15 @@ class ServiceWorker {
   }
 
   /**
-   * Occurs when a message is received from the host page.
+   * Occurs when a control message is received from the host page. Not related to the actual push message event.
    * @param context Used to reply to the host page.
    * @param data The message contents.
    */
   static onMessageReceived(context, data) {
     log.debug(`%c${Environment.getEnv().capitalize()} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
+
     if (data === 'notification.closeall') {
+      // Used for testing; the host page can close active notifications
       self.registration.getNotifications().then(notifications => {
         for (let notification of notifications) {
           notification.close();
@@ -87,129 +120,55 @@ class ServiceWorker {
 
   /**
    * Occurs when a push message is received.
-   * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle notifications.
-   * @param event
+   * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
+   * notifications.
    */
   static onPushReceived(event) {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    event.waitUntil(new Promise((resolve, reject) => {
-      var extra = {};
-      var promise = Promise.resolve();
-      Promise.all([
-        ServiceWorker._getTitle(),
-        Database.get('Options', 'defaultIcon'),
-        Database.get('Options', 'persistNotification'),
-        Database.get('Ids', 'appId'),
-      ])
-        .then(([title, defaultIcon, persistNotification, appId]) => {
-          extra.title = title;
-          extra.defaultIconResult = defaultIcon;
-          extra.persistNotification = persistNotification;
-          extra.appId = appId;
-          if (!appId)
-            log.debug('There was no app ID stored when trying to display the notification. An app ID is required.');
-        })
-        .then(() => ServiceWorker._getLastNotifications())
-        .then(notifications => {
-          if (!notifications || notifications.length == 0) {
-            log.warn('Push signal received, but there were no messages after calling chromeweb_notification().')
-          }
-          // At this point, we have an array of notification objects (all the JSON is parsed)
-          // We want to fire a notification for each object
-          // We need to use event.waitUntil() to extend the life of the service worker (workers can be killed if idling)
-          // We want to extend the service worker lifetime until all promises for showNotification resolve
-          let notificationEventPromiseFns = [];
+    event.waitUntil(
+        ServiceWorker.retrieveNotifications()
+            .then(notifications => {
+              // Display push notifications in the order we received them
+              let notificationEventPromiseFns = [];
 
-          for (let notification of notifications) {
-            // notification is the raw object returned by the OneSignal API
-            let data = {
-              id: notification.custom.i,
-              message: notification.alert,
-              additionalData: notification.custom.a
-            };
+              for (let rawNotification of notifications) {
+                let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
+                log.debug('structured notification:', notification);
 
-            if (notification.title)
-              data.title = notification.title;
-            else
-              data.title = extra.title;
+                // Never nest the following line in a callback from the point of entering from retrieveNotifications
+                notificationEventPromiseFns.push((notif => {
+                  return ServiceWorker.displayNotification(notif)
+                      .then(() => ServiceWorker.updateBackupNotification(notification))
+                      .then(() => swivel.broadcast('notification.displayed', notif));
+                }).bind(null, notification));
+                notificationEventPromiseFns.push((notif => ServiceWorker.executeWebhooks('notification.displayed', notif))
+                    .bind(null, notification));
+              }
 
-            if (notification.custom.u)
-              data.launchURL = notification.custom.u;
-
-            if (notification.icon)
-              data.icon = notification.icon;
-            else if (extra.defaultIconResult)
-              data.icon = extra.defaultIconResult;
-
-            let saveAsBackupNotification = true;
-            let isOneSignalWelcomeNotification = data.additionalData && data.additionalData.__isOneSignalWelcomeNotification;
-            if (isOneSignalWelcomeNotification) {
-              saveAsBackupNotification = false;
-            }
-            if (saveAsBackupNotification) {
-              let backupData = objectAssign({}, data, {displayedTime: Date.now()})
-              Database.put('Ids', {type: 'backupNotification', id: data });
-            }
-
-            // Never nest the following line in a callback from the point of entering from _getLastNotifications
-            notificationEventPromiseFns.push((data => {
-              let showNotificationPromise = self.registration.showNotification(data.title, {
-                // https://developers.google.com/web/updates/2015/10/notification-requireInteraction?hl=en
-                // On Chrome 47+ Desktop only, notifications will be dismissed after 20 seconds unless requireInteraction is set to true
-                requireInteraction: extra.persistNotification,
-                // https://developers.google.com/web/updates/2016/03/notifications
-                // As of Chrome 50+, by default notifications replacing identically-tagged notifications no longer
-                // vibrate/signal the user that a new notification has come in. This flag allows subsequent notifications
-                // to re-alert the user.
-                renotify: true,
-                body: data.message,
-                icon: data.icon,
-                tag: 'notification-tag-' + extra.appId,
-                data: data
-              });
-              return showNotificationPromise
-                  .then(() => swivel.broadcast('notification.displayed', data));
-            }).bind(null, data));
-            notificationEventPromiseFns.push((data => ServiceWorker.executeWebhooks('notification.displayed', data)).bind(null, data));
-          }
-          return notificationEventPromiseFns.reduce(function (p, fn) {
-            return p = p.then(fn);
-          }, promise);
-        })
-        .then(resolve)
-        .catch(e => {
-          log.debug('Failed to display a notification:', e);
-          if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
-            log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
-          } else {
-            log.debug("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
-
-            Database.get('Ids', 'backupNotification')
-                .then(backupNotification => {
-                  if (backupNotification) {
-                    self.registration.showNotification(backupNotification.title, {
-                      requireInteraction: false, // Don't persist our backup notification
-                      body: backupNotification.message,
-                      icon: backupNotification.icon,
-                      tag: 'notification-tag-' + extra.appId,
-                      data: backupNotification
-                    });
-                  } else {
-                    self.registration.showNotification(extra.title, {
-                      requireInteraction: false, // Don't persist our backup notification
-                      body: 'You have new updates.',
-                      icon: extra.defaultIconResult,
-                      tag: 'notification-tag-' + extra.appId,
-                      data: {backupNotification: true}
-                    });
-                  }
-                });
-          }
-        });
-    }));
+              return notificationEventPromiseFns.reduce((p, fn) => {
+                return p = p.then(fn);
+              }, Promise.resolve());
+            })
+            .catch(e => {
+              log.debug('Failed to display a notification:', e);
+              if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
+                log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
+              } else {
+                log.debug("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+                return ServiceWorker.displayBackupNotification();
+              }
+            })
+    );
   }
 
+  /**
+   * Makes a POST call to a specified URL to forward certain events.
+   * @param event The name of the webhook event. Affects the DB key pulled for settings and the final event the user
+   *              consumes.
+   * @param notification A JSON object containing notification details the user consumes.
+   * @returns {Promise}
+   */
   static executeWebhooks(event, notification) {
     var isServerCorsEnabled = false;
     var userId = null;
@@ -231,11 +190,11 @@ class ServiceWorker {
             event: event,
             id: notification.id,
             userId: userId,
-            heading: notification.title,
-            content: notification.message,
-            url: notification.launchURL,
+            heading: notification.heading,
+            content: notification.content,
+            url: notification.url,
             icon: notification.icon,
-            data: notification.additionalData
+            data: notification.data
           };
           let fetchOptions = {
             method: 'post',
@@ -255,6 +214,172 @@ class ServiceWorker {
       });
   }
 
+  /**
+   * Gets an array of active window clients along with whether each window client is the HTTP site's iFrame or an
+   * HTTPS site page.
+   * An active window client is a browser tab that is controlled by the service worker.
+   * Technically, this list should only ever contain clients that are iFrames, or clients that are HTTPS site pages,
+   * and not both. This doesn't really matter though.
+   * @returns {Promise}
+   */
+  static getActiveClients() {
+    return self.clients.matchAll({type: 'window'})
+        .then(windowClients => {
+          let activeClients = [];
+
+          for (let client of windowClients) {
+            // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
+            if (client.frameType && client.frameType === 'nested') {
+              // Subdomain iFrames point to 'https://subdomain.onesignal.com/initOneSignalHttpiFrame...'
+              if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
+                  !contains(client.url, '.onesignal.com')) {
+                  continue;
+              }
+              // Indicates this window client is an HTTP subdomain iFrame
+              client.isSubdomainIframe = true;
+            }
+            activeClients.push(client);
+          }
+
+          return activeClients;
+        });
+  }
+
+  /**
+   * Constructs a structured notification object from the raw notification fetched from OneSignal's server. This
+   * object is passed around from event to event, and is also returned to the host page for notification event details.
+   * Constructed in onPushReceived, and passed along to other event handlers.
+   * @param rawNotification The raw notification JSON returned from OneSignal's server.
+   */
+  static buildStructuredNotificationObject(rawNotification) {
+    let notification = {
+      id: rawNotification.custom.i,
+      heading: rawNotification.title,
+      content: rawNotification.alert,
+      data: rawNotification.custom.a,
+      url: rawNotification.custom.u,
+      icon: rawNotification.icon
+    };
+    return trimUndefined(notification);
+  }
+
+  /**
+   * Actually displays a visible notification to the user.
+   * Any event needing to display a notification calls this so that all the display options can be centralized here.
+   * @param notification A structured notification object.
+   */
+  static displayNotification(notification, overrides) {
+    return Promise.all([
+          // Use the default title if one isn't provided
+          ServiceWorker._getTitle(),
+          // Use the default icon if one isn't provided
+          Database.get('Options', 'defaultIcon'),
+          // Get option of whether we should leave notification displaying indefinitely
+          Database.get('Options', 'persistNotification'),
+          // Get app ID for tag value
+          Database.get('Ids', 'appId')
+        ])
+        .then(([defaultTitle, defaultIcon, persistNotification, appId]) => {
+          notification.heading = notification.heading ? notification.heading : defaultTitle;
+          notification.icon = notification.icon ? notification.icon : defaultIcon;
+          notification.tag = `${appId}`;
+          notification.persistNotification = persistNotification;
+
+          // Allow overriding some values
+          if (!overrides)
+            overrides = {};
+          notification = objectAssign(notification, overrides);
+
+          return self.registration.showNotification(
+              notification.heading,
+              {
+                body: notification.content,
+                icon: notification.icon,
+                data: notification.data,
+                /*
+                 On Chrome 48+, action buttons show below the message body of the notification. Clicking either
+                 button takes the user to a link. See:
+                 https://developers.google.com/web/updates/2016/01/notification-actions
+                 */
+                actions: notification.actions,
+                /*
+                 Tags are any string value that groups notifications together. Two or notifications sharing a tag
+                 replace each other.
+                 */
+                tag: notification.tag,
+                /*
+                 On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
+                 is set to true. See:
+                 https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
+                 */
+                requireInteraction: notification.persistNotification,
+                /*
+                 On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
+                 vibrate/signal the user that a new notification has come in. This flag allows subsequent
+                 notifications to re-alert the user. See:
+                 https://developers.google.com/web/updates/2016/03/notifications
+                 */
+                renotify: true
+              })
+        });
+  }
+
+  /**
+   * Stores the most recent notification into IndexedDB so that it can be shown as a backup if a notification fails
+   * to be displayed. This is to avoid Chrome's forced "This site has been updated in the background" message. See
+   * this post for more details: http://stackoverflow.com/a/35045513/555547.
+   * This is called every time is a push message is received so that the most recent message can be used as the
+   * backup notification.
+   * @param notification The most recent notification as a structured notification object.
+   */
+  static updateBackupNotification(notification) {
+    let isWelcomeNotification = notification.data && notification.data.__isOneSignalWelcomeNotification;
+    // Don't save the welcome notification, that just looks broken
+    if (isWelcomeNotification)
+      return;
+    // Add a timestamp to backup notifications (why?)
+    notification.displayedTime = Date.now();
+    return Database.put('Ids', {type: 'backupNotification', id: notification});
+  }
+
+  /**
+   * Displays a fail-safe notification during a push event in case notification contents could not be retrieved.
+   * This is to avoid Chrome's forced "This site has been updated in the background" message. See this post for
+   * more details: http://stackoverflow.com/a/35045513/555547.
+   */
+  static displayBackupNotification() {
+    return Database.get('Ids', 'backupNotification')
+        .then(backupNotification => {
+          let overrides = {
+            // Don't persist our backup notification; users should ideally not see them
+            persistNotification: false,
+            data: {__isOneSignalBackupNotification: true}
+          };
+          if (backupNotification) {
+            return ServiceWorker.displayNotification(backupNotification, overrides);
+          } else {
+            return ServiceWorker.displayNotification({
+              body: 'You have new updates.'
+            }, overrides);
+          }
+        });
+  }
+
+  /**
+   * Returns false if the given URL matches a few special URLs designed to skip opening a URL when clicking a
+   * notification. Otherwise returns true and the link will be opened.
+   * @param url
+     */
+  static shouldOpenNotificationUrl(url) {
+    return (url !== 'javascript:void(0);' &&
+            url !== 'do_not_open' &&
+            !contains(url, '_osp=do_not_open'));
+  }
+
+  /**
+   * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
+   * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
+   */
   static onNotificationClicked(event) {
     log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
@@ -274,88 +399,39 @@ class ServiceWorker {
           if (matchPreference)
             notificationClickHandlerMatch = matchPreference;
         })
-        .then(() => {
-          return clients.matchAll({type: 'window'});
-        })
-        .then(clientList => {
+        .then(() => ServiceWorker.getActiveClients)
+        .then(activeClients => {
           var launchUrl = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)
             launchUrl = ServiceWorker.defaultLaunchUrl;
           if (notificationData.launchURL)
             launchUrl = notificationData.launchURL;
 
-          let launchUrlObj = new URL(launchUrl);
-          let notificationOpensLink = (
-            launchUrl !== 'javascript:void(0);' &&
-            launchUrl !== 'do_not_open' &&
-            !contains(launchUrlObj.search, '_osp=do_not_open')
-          );
+          let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
 
-          let eventData = {
-            id: notificationData.id,
-            heading: notificationData.title,
-            content: notificationData.message,
-            url: notificationData.launchURL,
-            icon: notificationData.icon,
-            data: notificationData.additionalData
-          };
-          trimUndefined(eventData);
+          /*
+            Check if we can focus on an existing tab instead of opening a new url.
+            If an existing tab with exactly the same URL already exists, then this existing tab is focused instead of
+            an identical new tab being created. With a special setting, any existing tab matching the origin will
+            be focused instead of an identical new tab being created.
+           */
+          for (let client of activeClients) {
+            let clientUrl = client.isSubdomainIframe ?
+                decodeURIComponent(substringAfter(client.url, '&hostUrl=')) :
+                client.url;
+            let clientOrigin = new URL(clientUrl).origin;
+            let launchOrigin = null;
+            try {
+              // Check if the launchUrl is valid; it can be null
+              launchOrigin = new URL(launchUrl).origin;
+            } catch (e) {
+            }
 
-          for (let i = 0; i < clientList.length; i++) {
-            var client = clientList[i];
-            if ('focus' in client) {
-              if (client.frameType && client.frameType === 'nested') {
-                if (Environment.isDev()) {
-                  if (!contains(client.url, DEV_FRAME_HOST))
-                    continue;
-                } else {
-                  if (!contains(client.url, '.onesignal.com'))
-                    continue;
-                }
-                // The site is an HTTP site and our Client is the iFrame
-                let hostUrl = client.url;
-                hostUrl = hostUrl.substr(hostUrl.indexOf('&hostUrl=') + '&hostUrl'.length + 1);
-                hostUrl = decodeURIComponent(hostUrl);
-                if (notificationClickHandlerMatch === 'exact' && hostUrl === launchUrl) {
-                  client.focus();
-                  swivel.emit(client.id, 'notification.clicked', eventData);
-                  return;
-                } else if (notificationClickHandlerMatch === 'origin') {
-                  let clientOrigin = new URL(hostUrl).origin;
-                  let launchUrlOrigin = null;
-                  try {
-                    // Supplied launchUrl can be null
-                    launchUrlOrigin = new URL(launchUrl).origin;
-                  } catch (e) {}
-                  log.debug('Client Origin:', clientOrigin);
-                  log.debug('Launch URL Origin:', launchUrlOrigin);
-                  if (clientOrigin === launchUrlOrigin) {
-                    client.focus();
-                    swivel.emit(client.id, 'notification.clicked', eventData);
-                    return;
-                  }
-                }
-              } else {
-                if (notificationClickHandlerMatch === 'exact' && client.url === launchUrl) {
-                  client.focus();
-                  swivel.emit(client.id, 'notification.clicked', eventData);
-                  return;
-                } else if (notificationClickHandlerMatch === 'origin') {
-                  let clientOrigin = new URL(client.url).origin;
-                  let launchUrlOrigin = null;
-                  try {
-                    // Supplied launchUrl can be null
-                    launchUrlOrigin = new URL(launchUrl).origin;
-                  } catch (e) {}
-                  log.debug('Client Origin:', clientOrigin);
-                  log.debug('Launch URL Origin:', launchUrlOrigin);
-                  if (clientOrigin === launchUrlOrigin) {
-                    client.focus();
-                    swivel.emit(client.id, 'notification.clicked', eventData);
-                    return;
-                  }
-                }
-              }
+            if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
+                (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
+              client.focus();
+              swivel.emit(client.id, 'notification.clicked', notificationData);
+              return;
             }
           }
 
@@ -366,7 +442,7 @@ class ServiceWorker {
            - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
            - The addListenerForNotificationOpened() will be fired
            */
-          return Database.put("NotificationOpened", {url: launchUrl, data: eventData, timestamp: Date.now()})
+          return Database.put("NotificationOpened", {url: launchUrl, data: notificationData, timestamp: Date.now()})
             .then(() => {
               if (notificationOpensLink) {
                 clients.openWindow(launchUrl).catch(function (error) {
@@ -401,42 +477,26 @@ class ServiceWorker {
     log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
 
     if (contains(self.location.pathname, "OneSignalSDKWorker.js"))
-      var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION'
+      var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION';
     else
       var serviceWorkerVersionType = 'WORKER2_ONE_SIGNAL_SW_VERSION';
 
-    if (ServiceWorker.onOurSubdomain) {
-      event.waitUntil(
+
+    event.waitUntil(
         Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
-          .then(() => self.skipWaiting())
-          .catch(e => log.error(e))
-      );
-    } else {
-      event.waitUntil(
-        Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
-          .then(() => self.skipWaiting())
-      );
-    }
+            .then(() => self.skipWaiting())
+            .catch(e => log.error(e))
+    );
   }
 
   /*
    1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
-   3/2/16: Remove previous caches
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
     log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    // Remove all OneSignal caches
-    let deleteCachePromise = caches.keys()
-      .then(keys => Promise.all(keys.map(key => {
-        if (key.indexOf('OneSignal_') == 0) {
-          log.info('Deleting old OneSignal cache:', key);
-          return caches.delete(key);
-        }
-      })));
-    let claimPromise = self.clients.claim();
-    event.waitUntil(deleteCachePromise.then(claimPromise));
+    event.waitUntil(self.clients.claim());
   }
 
   static onFetch(event) {
@@ -472,9 +532,12 @@ class ServiceWorker {
   }
 
   /**
-   * Returns a promise that is fulfilled with the JSON result of chrome notifications.
+   * Retrieves unread notifications from OneSignal's servers. For Chrome and Firefox's legacy web push protocol,
+   * a push signal is sent to the service worker without any message contents, and the service worker must retrieve
+   * the contents from OneSignal's servers. In Chrome and Firefox's new web push protocols involving payloads, the
+   * notification contents will arrive with the push signal. The legacy format must be supported for a while.
    */
-  static _getLastNotifications() {
+  static retrieveNotifications() {
     return new Promise((resolve, reject) => {
       var notifications = [];
       // Each entry is like:
@@ -544,6 +607,10 @@ class ServiceWorker {
           // ^ Notice this is an array literal with JSON data inside
           for (var i = 0; i < response.length; i++) {
             notifications.push(JSON.parse(response[i]));
+          }
+          if (notifications.length == 0) {
+            log.warn('OneSignal Worker: Received a GCM push signal, but there were no messages to retrieve. Are you' +
+                ' using the wrong API URL?', API_URL);
           }
           resolve(notifications);
         })
