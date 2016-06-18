@@ -1,7 +1,7 @@
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
-import {APP_ID, PLAYER_ID, USER_AUTH_KEY} from './vars.js';
+import {PLAYER_ID, USER_AUTH_KEY} from './vars.js';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';
 import Utils from './utils';
@@ -11,48 +11,57 @@ import Environment from '../src/environment.js';
 import Postmam from '../src/postmam.js';
 import Database from '../src/database';
 import MultiStepSoloTest from './multiStepSoloTest';
+import isUuid from 'validator/lib/isUuid';
 
 
 chai.config.includeStack = false;
 chai.config.showDiff = true;
 chai.config.truncateThreshold = 0;
+var globals = {};
 
-describe('HTTPS Tests', function() {
+describe('Web SDK Tests', function() {
+
+    before(async function() {
+        let apps = await OneSignal.api.get(`apps`, null, {
+            'Authorization': `Basic ${USER_AUTH_KEY}`
+        });
+        let appName = (location.protocol === 'https:' ? 'California' : 'Washington');
+        for (let app of apps) {
+            if (app.name === appName) {
+                globals.app = app;
+            }
+        }
+    });
 
     describe('Notifications', function () {
         it('should subscribe and receive a welcome notification successfully', function () {
-            return new SoloTest(this.test, {}, () => {
-                return Utils.initialize({
-                        welcomeNotification: true,
-                        autoRegister: true
-                    })
-                    .then(() => Utils.expectEvent('notificationDisplay'))
-                    .then(notification => {
-                        expect(notification).to.not.be.null;
-                        expect(notification).to.have.property('content', 'Thanks for subscribing!');
-                        return Utils.wait(150);
-                    })
-                    .then(() => OneSignal.closeNotifications());
+            return new SoloTest(this.test, {}, async() => {
+                await Utils.initialize({
+                                           welcomeNotification: false,
+                                           autoRegister: true
+                                       });
+                OneSignal.sendSelfNotification();
+                let notification = await Utils.expectEvent('notificationDisplay');
+                expect(notification).to.not.be.null;
+                expect(notification).to.have.property('content', 'Thanks for subscribing!');
+                await Utils.wait(150);
+                await OneSignal.closeNotifications();
             });
         });
 
         it('should subscribe and receive a notification successfully', function () {
-            return new SoloTest(this.test, {}, () => {
-                return Utils.initialize({
-                        welcomeNotification: false,
-                        autoRegister: true
-                    })
-                    .then(() => {
-                        OneSignal.sendSelfNotification();
-                        return Utils.expectEvent('notificationDisplay')
-                    })
-                    .then(notification => {
-                        expect(notification).to.not.be.null;
-                        expect(notification).to.have.property('content', 'This is an example notification.');
-                        expect(notification).to.have.property('heading', 'OneSignal Test Message');
-                        return Utils.wait(150);
-                    })
-                    .then(() => OneSignal.closeNotifications());
+            return new SoloTest(this.test, {}, async () => {
+                await Utils.initialize({
+                                           welcomeNotification: false,
+                                           autoRegister: true
+                                       });
+                OneSignal.sendSelfNotification();
+                let notification = await Utils.expectEvent('notificationDisplay');
+                expect(notification).to.not.be.null;
+                expect(notification).to.have.property('content', 'This is an example notification.');
+                expect(notification).to.have.property('heading', 'OneSignal Test Message');
+                await Utils.wait(150);
+                await OneSignal.closeNotifications();
             });
         });
     });
@@ -603,7 +612,7 @@ describe('HTTPS Tests', function() {
     });
 
     describe('Notify Button', () => {
-        it('should show site icon on notify button popup after initial subscribe and after initial unsubscribe', function () {
+        it('should show site icon on notify button popup after initial subscribe', function () {
             return new SoloTest(this.test, {}, async () => {
                 await Utils.initialize({
                     welcomeNotification: false,
@@ -635,16 +644,41 @@ describe('HTTPS Tests', function() {
 
     describe('SDK Events', () => {
         it('subscriptionChange event should fire at most once when subscribing', function () {
-            return new SoloTest(this.test, {}, () => {
+            return new SoloTest(this.test, {}, async () => {
                 let subscriptionChangeEventCount = 0;
                 OneSignal.on('subscriptionChange', () => subscriptionChangeEventCount++);
-                return Utils.initialize({
+                await Utils.initialize({
                         welcomeNotification: false,
                         autoRegister: true
-                    })
-                    .then(() => Utils.wait(1000))
-                    .then(() => expect(subscriptionChangeEventCount).to.equal(1));
+                    });
+                await Utils.wait(1000);
+                expect(subscriptionChangeEventCount).to.equal(1);
+            });
+        });
 
+        it.only('notification displayed event data should conform to documentation specs', function() {
+            return new SoloTest(this.test, {}, async() => {
+                await Utils.initialize({
+                                           welcomeNotification: false,
+                                           autoRegister: true
+                                       });
+                OneSignal.sendSelfNotification();
+                let notification = await Utils.expectEvent('notificationDisplay');
+                let iconUrl = globals.app.chrome_web_default_notification_icon;
+                let lastNotification = await OneSignal.api.get(`notifications?app_id=${OneSignal.config.appId}&limit=1`, null, {
+                    'Authorization': `Basic ${globals.app.basic_auth_key}`
+                });
+                expect(lastNotification).to.not.be.null;
+                expect(lastNotification).to.have.property('notifications');
+                let notificationId = lastNotification.notifications[0].id;
+                expect(notification).to.not.be.null;
+                expect(notification).to.have.property('id', notificationId);
+                expect(notification).to.have.property('heading', 'OneSignal Test Message');
+                expect(notification).to.have.property('content', 'This is an example notification.');
+                expect(notification).to.have.property('icon', iconUrl);
+                expect(notification).to.have.property('url', `${location.origin}?_osp=do_not_open`);
+                await Utils.wait(150);
+                await OneSignal.closeNotifications();
             });
         });
     });
