@@ -208,11 +208,7 @@ export default class Helpers {
       log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
     OneSignal._channel.on('notification.displayed', function handler(context, data) {
-      if (Environment.isHost()) {
-        Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
-      } else if (Environment.isIframe()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, data);
-      }
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
     OneSignal._channel.on('notification.clicked', function handler(context, data) {
       if (Environment.isHost()) {
@@ -220,6 +216,9 @@ export default class Helpers {
       } else if (Environment.isIframe()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, data);
       }
+    });
+    OneSignal._channel.on('notification.dismissed', function handler(context, data) {
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
     log.info('Service worker messaging channel established!');
   }

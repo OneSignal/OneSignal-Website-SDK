@@ -71,6 +71,7 @@ class ServiceWorker {
    */
   static run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
+    self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
@@ -134,7 +135,6 @@ class ServiceWorker {
 
               for (let rawNotification of notifications) {
                 let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
-                log.debug('structured notification:', notification);
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((notif => {
@@ -377,13 +377,24 @@ class ServiceWorker {
   }
 
   /**
+   * Occurs when a notification is dismissed by the user (clicking the 'X') or all notifications are cleared.
+   * Supported on: Chrome 50+ only
+   */
+  static onNotificationClosed(notification) {
+    log.debug(`Called %onNotificationClosed(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+
+    swivel.broadcast('notification.dismissed', notification);
+    ServiceWorker.executeWebhooks('notification.dismissed', notification)
+  }
+
+  /**
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
   static onNotificationClicked(event) {
     log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    var notificationData = event.notification.data;
+    var notification = event.notification.data;
     event.notification.close();
 
     let notificationClickHandlerMatch = 'exact';
@@ -404,8 +415,8 @@ class ServiceWorker {
           var launchUrl = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)
             launchUrl = ServiceWorker.defaultLaunchUrl;
-          if (notificationData.launchURL)
-            launchUrl = notificationData.launchURL;
+          if (notification.launchURL)
+            launchUrl = notification.launchURL;
 
           let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
 
@@ -430,7 +441,7 @@ class ServiceWorker {
             if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
                 (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
               client.focus();
-              swivel.emit(client.id, 'notification.clicked', notificationData);
+              swivel.emit(client.id, 'notification.clicked', notification);
               return;
             }
           }
@@ -442,7 +453,7 @@ class ServiceWorker {
            - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
            - The addListenerForNotificationOpened() will be fired
            */
-          return Database.put("NotificationOpened", {url: launchUrl, data: notificationData, timestamp: Date.now()})
+          return Database.put("NotificationOpened", {url: launchUrl, data: notification, timestamp: Date.now()})
             .then(() => {
               if (notificationOpensLink) {
                 clients.openWindow(launchUrl).catch(function (error) {
@@ -457,7 +468,7 @@ class ServiceWorker {
         })
         .then(([appId, userId]) => {
           if (appId && userId) {
-            return OneSignalApi.put('notifications/' + notificationData.id, {
+            return OneSignalApi.put('notifications/' + notification.id, {
               app_id: appId,
               player_id: userId,
               opened: true
@@ -465,7 +476,7 @@ class ServiceWorker {
           }
         })
         .then(() => {
-          return ServiceWorker.executeWebhooks('notification.clicked', notificationData);
+          return ServiceWorker.executeWebhooks('notification.clicked', notification);
         })
         .catch(e => log.error(e))
     );

@@ -803,10 +803,6 @@ export default class OneSignal {
           OneSignal._fireTransmittedNotificationClickedCallbacks(message.data);
           return false;
         });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, message => {
-          Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, message.data);
-          return false;
-        });
       };
       OneSignal._sessionIframeAdded = true;
     });
@@ -2002,7 +1998,6 @@ objectAssign(OneSignal, {
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
-    NOTIFICATION_DISPLAYED: 'postmam.notificationDisplayed',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
@@ -2036,6 +2031,12 @@ objectAssign(OneSignal, {
      * Occurs when a notification is displayed.
      */
     NOTIFICATION_DISPLAYED: 'notificationDisplay',
+    /**
+     * Occurs when a notification is dismissed by the user either clicking 'X' or clearing all notifications
+     * (available in Android). This event is NOT called if the user clicks the notification's body or any of the
+     * action buttons.
+     */
+    NOTIFICATION_DISMISSED: 'notificationDismiss',
     /**
      * An internal legacy event that should be deprecated.
      */
