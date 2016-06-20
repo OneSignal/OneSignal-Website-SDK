@@ -56,6 +56,7 @@
     "style-loader": "^0.13.0",
     "swivel": "git://github.com/jasonpang/swivel.git#onesignal",
     "url-loader": "^0.5.7",
+    "validator": "^5.4.0",
     "webpack": "^1.12.14",
     "webpack-dev-server": "^1.14.1",
     "whatwg-fetch": "^0.11.0",

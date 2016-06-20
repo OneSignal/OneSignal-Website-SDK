@@ -37,10 +37,9 @@ describe('Web SDK Tests', function() {
         it('should subscribe and receive a welcome notification successfully', function () {
             return new SoloTest(this.test, {}, async() => {
                 await Utils.initialize({
-                                           welcomeNotification: false,
+                                           welcomeNotification: true,
                                            autoRegister: true
                                        });
-                OneSignal.sendSelfNotification();
                 let notification = await Utils.expectEvent('notificationDisplay');
                 expect(notification).to.not.be.null;
                 expect(notification).to.have.property('content', 'Thanks for subscribing!');
@@ -656,7 +655,7 @@ describe('Web SDK Tests', function() {
             });
         });
 
-        it.only('notification displayed event data should conform to documentation specs', function() {
+        it('notification displayed event data should conform to documentation specs', function() {
             return new SoloTest(this.test, {}, async() => {
                 await Utils.initialize({
                                            welcomeNotification: false,
