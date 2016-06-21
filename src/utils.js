@@ -393,7 +393,6 @@ export function wipeIndexedDb() {
   ]);
 }
 
-
 /**
  * Unsubscribe from push notifications without removing the active service worker.
  */

@@ -31,7 +31,7 @@ export default class IndexedDb {
           }
         };
         request.onerror = (event) => {
-          log.error('Unable to open IndexedDB.', event);
+          log.error('OneSignal: Unable to open IndexedDB.', event.target.error.name + ': ' + event.target.error.message);
           reject(event);
         };
         request.onupgradeneeded = (event) => {
