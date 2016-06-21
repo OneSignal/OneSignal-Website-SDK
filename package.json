@@ -37,6 +37,7 @@
     "livereload": "^0.4.1",
     "loglevel": "^1.4.0",
     "mocha": "^2.4.5",
+    "morgan": "^1.7.0",
     "node-sass": "^3.4.2",
     "node-uuid": "^1.4.7",
     "npm-css": "^0.2.3",

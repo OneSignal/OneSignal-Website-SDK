@@ -26,6 +26,7 @@ describe('Web SDK Tests', function() {
             'Authorization': `Basic ${USER_AUTH_KEY}`
         });
         let appName = (location.protocol === 'https:' ? 'California' : 'Washington');
+        console.log('App Name:', appName);
         for (let app of apps) {
             if (app.name === appName) {
                 globals.app = app;
@@ -676,6 +677,40 @@ describe('Web SDK Tests', function() {
                 expect(notification).to.have.property('content', 'This is an example notification.');
                 expect(notification).to.have.property('icon', iconUrl);
                 expect(notification).to.have.property('url', `${location.origin}?_osp=do_not_open`);
+                await Utils.wait(150);
+                await OneSignal.closeNotifications();
+            });
+        });
+    });
+
+    describe('Webhooks', () => {
+        it.only('notification displayed webhook should have correct payload', function() {
+            return new SoloTest(this.test, {}, async() => {
+                await Utils.initialize({
+                                           welcomeNotification: false,
+                                           autoRegister: true,
+                                           webhooks: true
+                                       });
+                OneSignal.sendSelfNotification();
+                let userId = await OneSignal.getUserId();
+                let notification = await Utils.expectEvent('notificationDisplay');
+
+                let iconUrl = globals.app.chrome_web_default_notification_icon;
+                console.log(`URL: notifications?app_id=${OneSignal.config.appId}&limit=1`);
+                let lastNotification = await OneSignal.api.get(`notifications?app_id=${OneSignal.config.appId}&limit=1`, null, {
+                    'Authorization': `Basic ${globals.app.basic_auth_key}`
+                });
+                expect(lastNotification).to.not.be.null;
+                expect(lastNotification).to.have.property('notifications');
+                let notificationId = lastNotification.notifications[0].id;
+
+                let payload = await Utils.httpCall('GET', 'https://localhost:8080/webhook/notification.displayed');
+                expect(payload).to.have.property('event', 'notification.displayed');
+                expect(payload).to.have.property('id', notificationId);
+                expect(payload).to.have.property('userId', userId);
+                expect(payload).to.have.property('heading', 'OneSignal Test Message');
+                expect(payload).to.have.property('content', 'This is an example notification.');
+                expect(payload).to.have.property('url', `${location.origin}?_osp=do_not_open`);
                 await Utils.wait(150);
                 await OneSignal.closeNotifications();
             });

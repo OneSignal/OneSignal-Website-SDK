@@ -3,6 +3,7 @@ import https from 'https';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import database from './server/database';
+import morgan from 'morgan';
 import fs from 'fs';
 import Sequelize from 'sequelize';
 
@@ -15,12 +16,14 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
+// Enable development logging
+app.use(morgan('dev'));
 
 var port = 8080;
 var router = express.Router();
+var webhookCalls = {};
 
 router.delete('/player/:id', function(req, res) {
-    console.log(req.params);
     database.query(
         'DELETE FROM players WHERE id = :id ',
         {
@@ -46,6 +49,25 @@ router.delete('/player/:id', function(req, res) {
                 message: e
             })
         });
+});
+
+router.post('/webhook', function(req, res) {
+    webhookCalls[req.body.event] = {
+        "event": req.body.event,
+        "id": req.body.id,
+        "userId": req.body.userId,
+        "heading": req.body.heading,
+        "content": req.body.content,
+        "url": req.body.url,
+        "icon": req.body.icon,
+        "data": req.body.data,
+        "timestamp": Date.now()
+    };
+    res.status(200).send({success: true});
+});
+
+router.get('/webhook/:event', function(req, res) {
+    res.status(200).send(webhookCalls[req.params.event]);
 });
 
 app.use('/', router);
