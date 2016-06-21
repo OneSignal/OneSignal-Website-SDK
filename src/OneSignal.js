@@ -368,7 +368,7 @@ export default class OneSignal {
     }
 
     let webhookOptions = OneSignal.config.webhooks;
-    ['notification.displayed', 'notification.clicked'].forEach(event => {
+    ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(event => {
       if (webhookOptions && webhookOptions[event]) {
         opPromises.push(Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]}));
       } else {

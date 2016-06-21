@@ -282,8 +282,9 @@ class ServiceWorker {
         .then(([defaultTitle, defaultIcon, persistNotification, appId]) => {
           notification.heading = notification.heading ? notification.heading : defaultTitle;
           notification.icon = notification.icon ? notification.icon : defaultIcon;
-          notification.tag = `${appId}`;
-          notification.persistNotification = persistNotification;
+          var extra = {};
+          extra.tag = `${appId}`;
+          extra.persistNotification = persistNotification;
 
           // Allow overriding some values
           if (!overrides)
@@ -295,7 +296,13 @@ class ServiceWorker {
               {
                 body: notification.content,
                 icon: notification.icon,
-                data: notification.data,
+                /*
+                 On Chrome 44+, use this property to store extra information which you can read back when the
+                 notification gets invoked from a notification click or dismissed event. We serialize the
+                 notification in the 'data' field and read it back in other events. See:
+                 https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
+                 */
+                data: notification,
                 /*
                  On Chrome 48+, action buttons show below the message body of the notification. Clicking either
                  button takes the user to a link. See:
@@ -306,13 +313,13 @@ class ServiceWorker {
                  Tags are any string value that groups notifications together. Two or notifications sharing a tag
                  replace each other.
                  */
-                tag: notification.tag,
+                tag: extra.tag,
                 /*
                  On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
                  is set to true. See:
                  https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
                  */
-                requireInteraction: notification.persistNotification,
+                requireInteraction: extra.persistNotification,
                 /*
                  On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
                  vibrate/signal the user that a new notification has come in. This flag allows subsequent
@@ -337,8 +344,6 @@ class ServiceWorker {
     // Don't save the welcome notification, that just looks broken
     if (isWelcomeNotification)
       return;
-    // Add a timestamp to backup notifications (why?)
-    notification.displayedTime = Date.now();
     return Database.put('Ids', {type: 'backupNotification', id: notification});
   }
 
@@ -380,11 +385,14 @@ class ServiceWorker {
    * Occurs when a notification is dismissed by the user (clicking the 'X') or all notifications are cleared.
    * Supported on: Chrome 50+ only
    */
-  static onNotificationClosed(notification) {
-    log.debug(`Called %onNotificationClosed(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+  static onNotificationClosed(event) {
+    log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    let notification = event.notification.data;
 
     swivel.broadcast('notification.dismissed', notification);
-    ServiceWorker.executeWebhooks('notification.dismissed', notification)
+    event.waitUntil(
+        ServiceWorker.executeWebhooks('notification.dismissed', notification)
+    );
   }
 
   /**
@@ -410,7 +418,7 @@ class ServiceWorker {
           if (matchPreference)
             notificationClickHandlerMatch = matchPreference;
         })
-        .then(() => ServiceWorker.getActiveClients)
+        .then(() => ServiceWorker.getActiveClients())
         .then(activeClients => {
           var launchUrl = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)

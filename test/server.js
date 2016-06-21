@@ -52,17 +52,7 @@ router.delete('/player/:id', function(req, res) {
 });
 
 router.post('/webhook', function(req, res) {
-    webhookCalls[req.body.event] = {
-        "event": req.body.event,
-        "id": req.body.id,
-        "userId": req.body.userId,
-        "heading": req.body.heading,
-        "content": req.body.content,
-        "url": req.body.url,
-        "icon": req.body.icon,
-        "data": req.body.data,
-        "timestamp": Date.now()
-    };
+    webhookCalls[req.body.event] = req.body;
     res.status(200).send({success: true});
 });
 
