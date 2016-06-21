@@ -539,7 +539,7 @@ export default class OneSignal {
     let shouldWipeData = getUrlQueryParam('dangerouslyWipeData');
 
     let preinitializePromise = Promise.resolve();
-    if (shouldWipeData) {
+    if (shouldWipeData && Environment.isIframe()) {
       OneSignal.LOGGING = true;
       // Wipe IndexedDB and unsubscribe from push/unregister the service worker for testing.
       log.warn('Wiping away previous HTTP data (called from HTTP iFrame).');
