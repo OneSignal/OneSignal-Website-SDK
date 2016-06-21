@@ -368,7 +368,7 @@ export default class OneSignal {
     }
 
     let webhookOptions = OneSignal.config.webhooks;
-    ['notification.displayed', 'notification.clicked'].forEach(event => {
+    ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(event => {
       if (webhookOptions && webhookOptions[event]) {
         opPromises.push(Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]}));
       } else {
@@ -539,7 +539,7 @@ export default class OneSignal {
     let shouldWipeData = getUrlQueryParam('dangerouslyWipeData');
 
     let preinitializePromise = Promise.resolve();
-    if (shouldWipeData) {
+    if (shouldWipeData && Environment.isIframe()) {
       OneSignal.LOGGING = true;
       // Wipe IndexedDB and unsubscribe from push/unregister the service worker for testing.
       log.warn('Wiping away previous HTTP data (called from HTTP iFrame).');
@@ -801,10 +801,6 @@ export default class OneSignal {
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
           OneSignal._fireTransmittedNotificationClickedCallbacks(message.data);
-          return false;
-        });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, message => {
-          Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, message.data);
           return false;
         });
       };
@@ -2002,7 +1998,6 @@ objectAssign(OneSignal, {
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
-    NOTIFICATION_DISPLAYED: 'postmam.notificationDisplayed',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
@@ -2036,6 +2031,12 @@ objectAssign(OneSignal, {
      * Occurs when a notification is displayed.
      */
     NOTIFICATION_DISPLAYED: 'notificationDisplay',
+    /**
+     * Occurs when a notification is dismissed by the user either clicking 'X' or clearing all notifications
+     * (available in Android). This event is NOT called if the user clicks the notification's body or any of the
+     * action buttons.
+     */
+    NOTIFICATION_DISMISSED: 'notificationDismiss',
     /**
      * An internal legacy event that should be deprecated.
      */

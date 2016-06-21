@@ -135,6 +135,14 @@ export default class Utils {
                                 OneSignal.registerForPushNotifications();
                             }
                         }
+                        if (options.webhooks) {
+                            initOptions['webhooks'] = {
+                                cors: true,
+                                'notification.displayed': 'https://localhost:8080/webhook',
+                                'notification.clicked': 'https://localhost:8080/webhook',
+                                'notification.dismissed': 'https://localhost:8080/webhook'
+                            };
+                        }
                         OneSignal.push(["init", initOptions]);
 
                         if (options.autoRegister) {

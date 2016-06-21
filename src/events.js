@@ -33,7 +33,9 @@ const RETRIGGER_REMOTE_EVENTS = [
   'subscriptionChange',
   'notificationPermissionChange',
   'dbSet',
-  'register'
+  'register',
+  'notificationDisplay',
+  'notificationDismiss'
 ];
 
 const LEGACY_EVENT_MAP = {
