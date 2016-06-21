@@ -423,8 +423,8 @@ class ServiceWorker {
           var launchUrl = registration.scope;
           if (ServiceWorker.defaultLaunchUrl)
             launchUrl = ServiceWorker.defaultLaunchUrl;
-          if (notification.launchURL)
-            launchUrl = notification.launchURL;
+          if (notification.url)
+            launchUrl = notification.url;
 
           let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
 
@@ -464,10 +464,7 @@ class ServiceWorker {
           return Database.put("NotificationOpened", {url: launchUrl, data: notification, timestamp: Date.now()})
             .then(() => {
               if (notificationOpensLink) {
-                clients.openWindow(launchUrl).catch(function (error) {
-                  // Should only fall into here if going to an external URL on Chrome older than 43.
-                  clients.openWindow(registration.scope + "redirector.html?url=" + launchUrl);
-                });
+                ServiceWorker.openUrl(launchUrl);
               }
             });
         })
@@ -488,6 +485,19 @@ class ServiceWorker {
         })
         .catch(e => log.error(e))
     );
+  }
+
+  /**
+   * Attempts to open the given url in a new browser tab. Called when a notification is clicked.
+   * @param url May not be well-formed.
+   */
+  static openUrl(url) {
+    log.debug('Opening notification URL:', url);
+    clients.openWindow(url).catch(e => {
+      log.warn(`Failed to open the URL '${url}':`, e);
+      // Should only fall into here if going to an external URL on Chrome older than 43.
+      clients.openWindow(`${registration.scope}redirector.html?url=${url}`);
+    });
   }
 
   static onServiceWorkerInstalled(event) {

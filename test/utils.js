@@ -232,6 +232,17 @@ export default class Utils {
         return Utils.httpCall('DELETE', `https://${location.hostname}:8080/player/${userId}`);
     }
 
+    /**
+     * Flashes a large blue text message on the top of the test runner webpage.
+     * @param message
+     */
+    static flashMessage(message) {
+        if (!message) {
+            message = '';
+        }
+        document.querySelector('#message').htmlContent = message;
+    }
+
     static httpCall(method, endpoint, data, headers, options) {
         let callHeaders = new Headers();
         callHeaders.append('Content-Type', 'application/json;charset=UTF-8');

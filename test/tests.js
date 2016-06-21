@@ -684,7 +684,7 @@ describe('Web SDK Tests', function() {
     });
 
     describe('Webhooks', () => {
-        it.only('notification displayed webhook payload should strictly conform to documentation specs', function() {
+        it('notification displayed webhook payload should strictly conform to documentation specs', function() {
             return new SoloTest(this.test, {}, async() => {
                 await Utils.initialize({
                                            welcomeNotification: false,
