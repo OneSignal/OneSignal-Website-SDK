@@ -233,7 +233,9 @@ export default class Helpers {
     var message_localization_opts = OneSignal.config['promptOptions'];
     var message_localization_opts_str = '';
     if (message_localization_opts) {
-      var message_localization_params = ['actionMessage',
+      var message_localization_params = [
+        'siteName',
+        'actionMessage',
         'exampleNotificationTitleDesktop',
         'exampleNotificationMessageDesktop',
         'exampleNotificationTitleMobile',
