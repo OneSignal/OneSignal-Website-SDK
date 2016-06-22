@@ -297,7 +297,7 @@ export default class OneSignal {
 
       OneSignal.iframePopupModalUrlRoute = 'sdks';
       if (Environment.isDev())
-        OneSignal.iframePopupModalUrlRoute = 'dev_sdks';
+        OneSignal.iframePopupModalUrlRoute = 'sdks';
       if (Environment.isBeta())
         OneSignal.iframePopupModalUrlRoute = 'beta_sdks';
       OneSignal.iframePopupModalUrlSuffix = Environment.isBeta() ? 'Beta' : '';
@@ -736,6 +736,9 @@ export default class OneSignal {
 
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
       let iframeUrl = `${OneSignal.iframePopupModalUrl}Iframe?session=${OneSignal._sessionNonce}`;
+      if (Environment.isDev()) {
+        iframeUrl += '&isDev=true';
+      }
       if (dangerouslyWipeData) {
         iframeUrl += '&dangerouslyWipeData=true';
       }
@@ -820,6 +823,9 @@ export default class OneSignal {
     let handshakeNonce = OneSignal._sessionNonce;
     let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
     let popupUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup`;
+    if (Environment.isDev()) {
+      popupUrl += '&isDev=true';
+    }
     if (dangerouslyWipeData) {
       popupUrl += '&dangerouslyWipeData=true';
     }
@@ -909,6 +915,9 @@ export default class OneSignal {
           ])
           .then(([appId, isPushEnabled, notificationPermission]) => {
             let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
+            if (Environment.isDev()) {
+              iframeModalUrl += '&isDev=true';
+            }
             log.info('Opening HTTPS modal prompt:', iframeModalUrl);
             let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
 

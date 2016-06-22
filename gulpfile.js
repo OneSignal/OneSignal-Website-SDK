@@ -9,7 +9,7 @@ var oneSignalSourceDir = "/Users/jpang/code/OneSignal";
 var IS_PRODUCTION_BUILD = process.argv.indexOf('--production') >= 0 || false;
 var IS_TEST_BUILD = process.argv.indexOf('--test') >= 0 || false;
 var IS_BETA_BUILD = process.argv.indexOf('--beta') >= 0 || false;
-var targetFolder = IS_PRODUCTION_BUILD ? 'sdks' : 'dev_sdks';
+var targetFolder = IS_PRODUCTION_BUILD ? 'sdks' : 'sdks';
 var fileSuffix = IS_PRODUCTION_BUILD ? '.prod.js' : '.dev.js';
 
 
