@@ -410,9 +410,9 @@ export default class Bell {
           throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
         }
 
-        this.patchSafariSvgFilterBug();
         this.applyOffsetIfSpecified();
         this.setCustomColorsIfSpecified();
+        this.patchSafariSvgFilterBug();
 
         log.info('Showing the notify button.');
 
@@ -445,6 +445,9 @@ export default class Bell {
       this.graphic.setAttribute('style', `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`);
       this.badge.element.setAttribute('style', `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`);
       this.dialog.element.setAttribute('style', `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`);
+    }
+    if (Browser.safari) {
+      this.badge.element.setAttribute('style', `display: none;`);
     }
   }
 

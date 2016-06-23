@@ -176,8 +176,8 @@ $sizes: (
             top: 0;
             cursor: pointer;
             // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
-            //-webkit-filter: $badge-shadow;
-            //filter: $badge-shadow;
+            -webkit-filter: $badge-shadow;
+            filter: $badge-shadow;
             transition: transform $transition-duration ease-in-out,
             border $transition-duration ease-in-out,
             opacity $transition-duration * 1.2 ease-in-out,
