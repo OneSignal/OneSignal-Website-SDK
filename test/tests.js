@@ -91,11 +91,13 @@ describe('Web SDK Tests', function() {
                     expect(player).to.have.property('session_count', 1);
                     await Extension.set('last-active', player.last_active);
                     await Utils.wait(1000);
-                    sessionStorage.clear();
+                    if (!options.testFirstPageReload) {
+                        sessionStorage.clear();
+                    }
                     return gotoStep('2');
                 } else if (step === '2') {
                     await Utils.initialize(initOptions);
-                    if (!kind.autoRegister) {
+                    if (!kind.autoRegister && !options.testFirstPageReload) {
                         await Utils.expectEvent('register');
                     }
                     let id = await OneSignal.getUserId();
@@ -104,14 +106,18 @@ describe('Web SDK Tests', function() {
                     let player = await OneSignal.api.get(`players/${id}`);
                     console.log('Step 2');
                     console.log('Player:', player);
-                    expect(player).to.have.property('session_count', 2);
-                    let previousLastActive = await Extension.get('last-active')
-                    expect(player.last_active).to.be.above(previousLastActive);
+                    if (options.testFirstPageReload) {
+                        expect(player).to.have.property('session_count', 1);
+                    } else {
+                        expect(player).to.have.property('session_count', 2);
+                        let previousLastActive = await Extension.get('last-active');
+                        expect(player.last_active).to.be.above(previousLastActive);
 
-                    await Extension.set('last-active', player.last_active);
-                    await Utils.wait(1000);
-                    sessionStorage.clear();
-                    return gotoStep('3');
+                        await Extension.set('last-active', player.last_active);
+                        await Utils.wait(1000);
+                        sessionStorage.clear();
+                        return gotoStep('3');
+                    }
                 } else if (step === '3') {
                     await Utils.initialize(initOptions);
                     if (!kind.autoRegister) {
@@ -134,6 +140,10 @@ describe('Web SDK Tests', function() {
 
         it("should increment user's session_count on new site session for autoRegister false", async function () {
             return testHelper(this.test, {autoRegister: false}, {});
+        });
+
+        it("should not increment user's session_count after first page reload", async function () {
+            return testHelper(this.test, {autoRegister: false}, {testFirstPageReload: true});
         });
     });
 

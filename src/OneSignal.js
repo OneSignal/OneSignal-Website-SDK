@@ -866,6 +866,10 @@ export default class OneSignal {
         Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
         OneSignal.popupPostmam.destroy();
       });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION, message => {
+        log.debug(Environment.getEnv() + " Marking current session as a continuing browsing session.");
+        OneSignalHelpers.beginTemporaryBrowserSession();
+      });
     });
   }
 
@@ -1159,13 +1163,13 @@ export default class OneSignal {
     log.debug(`Called %c_enableNotifications()`, getConsoleStyle('code'));
     if (!('PushManager' in window)) {
       log.warn("Push messaging is not supported. No PushManager.");
-      sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+      OneSignalHelpers.beginTemporaryBrowserSession();
       return;
     }
 
     if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
       log.warn("Notifications are not supported. showNotification not available in ServiceWorkerRegistration.");
-      sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+      OneSignalHelpers.beginTemporaryBrowserSession();
       return;
     }
 
@@ -2010,7 +2014,8 @@ objectAssign(OneSignal, {
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
-    UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush'
+    UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
+    BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession'
   },
 
   EVENTS: {

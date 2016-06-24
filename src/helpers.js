@@ -50,11 +50,37 @@ export default class Helpers {
     }
   }
 
+  /**
+   * Assigns a variable into sessionStorage to represent the beginning of a OneSignal session. A session is
+   * initiated by opening a new tab or window to a OneSignal active page. While the same session lasts, refreshes to
+   * the same page won't re-subscribe the user to OneSignal or update the last_active or session_count property.
+   *
+   * This method ensures that the sessionStorage is appropriately set for HTTP sites by communicating with the host
+   * page.
+   *
+   * The only time we do start a browsing session on HTTP is after we register, so we get the popupPostman and post
+   * a message back to the host to also start a browsing session.
+   */
   static beginTemporaryBrowserSession() {
     sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+    if (Environment.isPopup()) {
+      // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
+      // main page
+      if (!OneSignal.popupPostmam) {
+        return;
+      }
+      OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
+    }
   }
 
+  /**
+   * Returns true if this current window session is continuing and not a newly opened tab or window.
+   */
   static isContinuingBrowserSession() {
+    /*
+       We don't need to communicate with any iFrames for HTTP sites because the same sessionStorage is set on all
+       frames of the window.
+     */
     return sessionStorage.getItem("ONE_SIGNAL_SESSION") == "true";
   }
 
