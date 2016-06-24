@@ -134,12 +134,13 @@ class ServiceWorker {
               let notificationEventPromiseFns = [];
 
               for (let rawNotification of notifications) {
+                log.debug('Raw Notification from OneSignal:', rawNotification);
                 let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
-                      .then(() => ServiceWorker.updateBackupNotification(notification))
+                      .then(() => ServiceWorker.updateBackupNotification(notif))
                       .then(() => swivel.broadcast('notification.displayed', notif));
                 }).bind(null, notification));
                 notificationEventPromiseFns.push((notif => ServiceWorker.executeWebhooks('notification.displayed', notif))
@@ -190,6 +191,8 @@ class ServiceWorker {
             event: event,
             id: notification.id,
             userId: userId,
+            action: notification.action,
+            buttons: notification.buttons,
             heading: notification.heading,
             content: notification.content,
             url: notification.url,
@@ -260,6 +263,19 @@ class ServiceWorker {
       url: rawNotification.custom.u,
       icon: rawNotification.icon
     };
+
+    // Add action buttons
+    if (rawNotification.o) {
+      notification.buttons = [];
+      for (let rawButton of rawNotification.o) {
+        notification.buttons.push({
+                                    action: rawButton.i,
+                                    title: rawButton.n,
+                                    icon: rawButton.p,
+                                    url: rawButton.u
+                                  });
+      }
+    }
     return trimUndefined(notification);
   }
 
@@ -269,6 +285,7 @@ class ServiceWorker {
    * @param notification A structured notification object.
    */
   static displayNotification(notification, overrides) {
+    log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, getConsoleStyle('code'), notification);
     return Promise.all([
           // Use the default title if one isn't provided
           ServiceWorker._getTitle(),
@@ -308,7 +325,7 @@ class ServiceWorker {
                  button takes the user to a link. See:
                  https://developers.google.com/web/updates/2016/01/notification-actions
                  */
-                actions: notification.actions,
+                actions: notification.buttons,
                 /*
                  Tags are any string value that groups notifications together. Two or notifications sharing a tag
                  replace each other.
@@ -396,6 +413,36 @@ class ServiceWorker {
   }
 
   /**
+   * After clicking a notification, determines the URL to open based on whether an action button was clicked or the
+   * notification body was clicked.
+   */
+  static getNotificationUrlToOpen(notification) {
+    // Defaults to the URL the service worker was registered
+    // TODO: This should be fixed for HTTP sites
+    var launchUrl = self.registration.scope;
+
+    // Use the user-provided default if one exists
+    if (ServiceWorker.defaultLaunchUrl)
+      launchUrl = ServiceWorker.defaultLaunchUrl;
+
+    // If the user clicked an action button, use the URL provided by the action button
+    // Unless the action button URL is null
+    if (notification.action) {
+      // Find the URL tied to the action button that was clicked
+      for (let button of notification.buttons) {
+        if (button.action === notification.action && button.url && button.url !== '') {
+          launchUrl = button.url;
+        }
+      }
+    } else if (notification.url && notification.url !== '') {
+      // The user did not clicked the notification body instead of an action button
+      launchUrl = notification.url;
+    }
+
+    return launchUrl;
+  }
+
+  /**
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
@@ -403,6 +450,10 @@ class ServiceWorker {
     log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
     var notification = event.notification.data;
+
+    // Chrome 48+: Get the action button that was clicked
+    notification.action = event.action;
+
     event.notification.close();
 
     let notificationClickHandlerMatch = 'exact';
@@ -420,12 +471,7 @@ class ServiceWorker {
         })
         .then(() => ServiceWorker.getActiveClients())
         .then(activeClients => {
-          var launchUrl = registration.scope;
-          if (ServiceWorker.defaultLaunchUrl)
-            launchUrl = ServiceWorker.defaultLaunchUrl;
-          if (notification.url)
-            launchUrl = notification.url;
-
+          let launchUrl = ServiceWorker.getNotificationUrlToOpen(notification);
           let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
 
           /*

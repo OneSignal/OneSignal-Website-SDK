@@ -174,7 +174,7 @@ export default class Helpers {
       .catch(e => log.error(e));
   }
 
-  static sendSelfNotification(title, message, url, icon, data) {
+  static sendSelfNotification(title, message, url, icon, data, buttons) {
     if (!title) {
       title = 'OneSignal Test Message';
     }
@@ -190,7 +190,7 @@ export default class Helpers {
     ])
       .then(([appId, userId]) => {
         if (userId && appId) {
-          OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, icon, data)
+          OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, icon, data, buttons)
         } else {
           log.warn('Could not send self a test notification because there is no valid user ID or app ID.');
         }

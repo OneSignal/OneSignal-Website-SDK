@@ -99,13 +99,14 @@ export default class OneSignalApi {
     });
   }
 
-  static sendNotification(appId, playerIds, titles, contents, url, icon, data) {
+  static sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons) {
     var params = {
       app_id: appId,
       contents: contents,
       include_player_ids: playerIds,
       isAnyWeb: true,
-      data: data
+      data: data,
+      web_buttons: buttons
     };
     if (titles) {
       params.headings = titles;
