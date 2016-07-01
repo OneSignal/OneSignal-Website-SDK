@@ -74,6 +74,21 @@ export default class Helpers {
   }
 
   /**
+   * Stores a flag in sessionStorage that we've already shown the HTTP prompt to this user and that we should not
+   * show it again until they open a new window or tab to the site.
+   */
+  static markHttpPromptShown() {
+    sessionStorage.setItem("ONESIGNAL_HTTP_PROMPT_SHOWN", true);
+  }
+
+  /**
+   * Returns true if the HTTP prompt was already shown inside the same session.
+   */
+  static isHttpPromptAlreadyShown() {
+    return sessionStorage.getItem("ONESIGNAL_HTTP_PROMPT_SHOWN") == "true";
+  }
+
+  /**
    * Returns true if this current window session is continuing and not a newly opened tab or window.
    */
   static isContinuingBrowserSession() {

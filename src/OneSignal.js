@@ -496,6 +496,7 @@ export default class OneSignal {
   }
 
   static showHttpPrompt() {
+    OneSignalHelpers.markHttpPromptShown();
     OneSignal.prompt = new Prompt(OneSignal.config.httpPrompt);
     OneSignal.prompt.create();
     OneSignal.on(Prompt.EVENTS.ALLOW_CLICK, () => {
@@ -976,7 +977,7 @@ export default class OneSignal {
     }
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
-    else if (OneSignal.isUsingSubscriptionWorkaround() && !OneSignalHelpers.isContinuingBrowserSession()) {
+    else if (OneSignal.isUsingSubscriptionWorkaround() && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
       OneSignal.showHttpPrompt();
     }
 
