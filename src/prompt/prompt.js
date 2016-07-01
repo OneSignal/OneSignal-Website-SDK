@@ -15,6 +15,8 @@ export default class Prompt {
         return {
             ALLOW_CLICK: 'promptAllowClick',
             CANCEL_CLICK: 'promptCancelClick',
+            BLOCKED_CANCEL_CLICK: 'promptBlockedCancelClick',
+            BLOCKED_RETRY_CLICK: 'promptBlockedRetryClick',
             SHOWN: 'promptShown',
             CLOSED: 'promptClosed',
         };
@@ -46,21 +48,59 @@ export default class Prompt {
                     removeDomElement('#onesignal-prompt-container');
                 }
 
+                let imageUrl = null;
+                if (Browser.chrome) {
+                    if (!Browser.mobile && !Browser.tablet) {
+                        imageUrl = HOST_URL + '/bell/chrome-unblock.jpg';
+                    }
+                }
+                else if (Browser.firefox)
+                    imageUrl = HOST_URL + '/bell/firefox-unblock.jpg';
+                else if (Browser.safari)
+                    imageUrl = HOST_URL + '/bell/safari-unblock.jpg';
+                let blockedImageHtml = '';
+                if (imageUrl) {
+                    blockedImageHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a>`;
+                }
+
                 let dialogHtml = `
-                    <div class="prompt-body">
-                        <div class="prompt-body-icon" style="background-image: url('${this.getPlatformNotificationIcon()}');">
+                    <div id="normal-prompt">
+                        <div class="prompt-body">
+                            <div class="prompt-body-icon" style="background-image: url('${this.getPlatformNotificationIcon()}');">
+                            </div>
+                            <div class="prompt-body-message">
+                                ${this.text['message.body']}                
+                            </div>
+                            <div class="clearfix"></div>
                         </div>
-                        <div class="prompt-body-message">
-                            ${this.text['message.body']}                
+                        <div class="prompt-footer">
+                            <button id="onesignal-prompt-allow-button" class="align-right primary prompt-button">
+                            ${this.text['button.allow']}</button>
+                            <button id="onesignal-prompt-cancel-button" class="align-right secondary prompt-button">
+                            ${this.text['button.cancel']}</button>
+                            <div class="clearfix"></div>
                         </div>
-                        <div class="clearfix"></div>
                     </div>
-                    <div class="prompt-footer">
-                        <button id="onesignal-prompt-allow-button" class="align-right primary prompt-button">
-                        ${this.text['button.allow']}</button>
-                        <button id="onesignal-prompt-cancel-button" class="align-right secondary prompt-button">
-                        ${this.text['button.cancel']}</button>
-                        <div class="clearfix"></div>
+                    <div id="blocked-prompt">
+                        <div class="prompt-body">
+                            <div class="prompt-body-message">
+                                <div class="message">
+                                    ${Browser.name} is currently blocking notifications on ${OneSignal.config.subdomainName}.<br/>      
+                                    Please follow these instructions to change it:
+                                </div>
+                                <div class="unblock-image">
+                                    ${blockedImageHtml}
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="prompt-footer">
+                            <button id="onesignal-prompt-blocked-retry-button" 
+                            class="align-right primary prompt-button">Retry</button>
+                            <button id="onesignal-prompt-blocked-cancel-button" 
+                            class="align-right secondary prompt-button">Cancel</button>
+                            <div class="clearfix"></div>
+                        </div>
                     </div>
                 `;
 
@@ -76,9 +116,15 @@ export default class Prompt {
                 // Add click event handlers
                 this.allowButton.addEventListener('click', this.onPromptAllowed.bind(this));
                 this.cancelButton.addEventListener('click', this.onPromptCanceled.bind(this));
+                this.blockedCancelButton.addEventListener('click', this.onPromptBlockedCancel.bind(this));
+                this.blockedRetryButton.addEventListener('click', this.onPromptBlockedRetry.bind(this));
                 Event.trigger(Prompt.EVENTS.SHOWN);
             });
         }
+    }
+
+    showBlockedDialog() {
+        addCssClass(this.dialog, 'blocked-dialog');
     }
 
     onPromptAllowed(e) {
@@ -88,6 +134,25 @@ export default class Prompt {
     onPromptCanceled(e) {
         Event.trigger(Prompt.EVENTS.CANCEL_CLICK);
         this.close();
+    }
+
+    onPromptBlockedCancel(e) {
+        Event.trigger(Prompt.EVENTS.BLOCKED_CANCEL_CLICK);
+        this.close();
+    }
+
+    onPromptBlockedRetry(e) {
+        OneSignal.getNotificationPermission()
+                 .then(permission => {
+                    if (permission === 'denied') {
+
+                    } else if (permission === 'default') {
+
+                    } else if (permission === 'granted') {
+                        this.close();
+                        Event.trigger(Prompt.EVENTS.ALLOW_CLICK);
+                    }
+                 });
     }
 
     close() {
@@ -128,5 +193,13 @@ export default class Prompt {
 
     get cancelButton() {
         return document.querySelector('#onesignal-prompt-cancel-button');
+    }
+
+    get blockedCancelButton() {
+        return document.querySelector('#onesignal-prompt-blocked-cancel-button');
+    }
+
+    get blockedRetryButton() {
+        return document.querySelector('#onesignal-prompt-blocked-retry-button');
     }
 }

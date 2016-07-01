@@ -36,7 +36,39 @@ $border-radius: 2px;
       animation-timing-function: ease-out;
       animation-duration: $prompt-transition-duration;
       animation-fill-mode: forwards;
+
+      &.blocked-dialog {
+        #blocked-prompt {
+          display: block;
+        }
+        #normal-prompt {
+          display: none;
+        }
+        .prompt-body-message {
+          padding: 0 0.2em 0 0.2em;
+          text-align: center;
+          width: 100%;
+          img {
+            width: 100%;
+          }
+
+          .unblock-image {
+            margin: 2em 0 0.5em 0;
+          }
+        }
+        padding: 1.714em;
+        width: 612px;
+        margin-bottom: 18px;
+
+        .prompt-button.secondary {
+          padding: 0.714em 2em;
+        }
+      }
     }
+  }
+
+  #blocked-prompt {
+    display: none;
   }
 
   &.slide-up {

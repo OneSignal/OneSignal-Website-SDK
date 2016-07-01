@@ -977,8 +977,9 @@ export default class OneSignal {
     }
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
-    else if (OneSignal.isUsingSubscriptionWorkaround() && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
+    else if (OneSignal.isUsingSubscriptionWorkaround()) { // TODO && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
       OneSignal.showHttpPrompt();
+      setTimeout(() => OneSignal.prompt.showBlockedDialog(), 500);
     }
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
@@ -1337,6 +1338,7 @@ export default class OneSignal {
     })
       .then(() => {
         log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+        Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
         return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
       })
       .then(function (subscription) {
@@ -2088,7 +2090,13 @@ objectAssign(OneSignal, {
     /**
      * Occurs as the HTTP popup is closing.
      */
-    POPUP_CLOSING: 'popupClose'
+    POPUP_CLOSING: 'popupClose',
+    /**
+     * Occurs when the native permission prompt is displayed.
+     * This is currently used to know when to display the HTTP popup incognito notice so that it hides the notice
+     * for non-incognito users.
+     */
+    PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplayed',
   },
 
   NOTIFICATION_TYPES: {
