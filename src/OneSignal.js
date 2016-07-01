@@ -16,10 +16,52 @@ import heir from 'heir';
 import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
-import Prompt from './prompt/prompt';
+import Popover from './popover/popover';
+
+
+import StackTraceGPS from 'stacktrace-gps';
+import StackTrace from 'stacktrace-js';
+
 
 
 export default class OneSignal {
+
+  /**
+   * Given a JavaScript error object, returns a more precise error using source maps.
+   */
+  static captureError(e) {
+    if (typeof(e) === 'string') {
+      // This is not an actual Error object, so just return t he error
+      return Promise.resolve(e);
+    }
+    return StackTrace.fromError(e)
+                     .then(stackFrame => {
+                       stackFrame = stackFrame[0];
+                       let gps = new StackTraceGPS();
+                       if (stackFrame.fileName) {
+                         stackFrame.fileName = stackFrame.fileName.replace('https://127.0.0.1:3001/', location.origin + '/');
+                       }
+                       if (stackFrame.source) {
+                         stackFrame.source = stackFrame.source.replace('https://127.0.0.1:3001/', location.origin + '/');
+                       }
+                       return gps.pinpoint(stackFrame);
+                     })
+                     .then(detailedError => {
+                       if (detailedError.fileName) {
+                         detailedError.fileName = detailedError.fileName.replace('webpack:///', 'webpack:///./');
+                       }
+                       return `${e.name}: ${e.message} @ ${detailedError.fileName}:${detailedError.lineNumber}:${detailedError.columnNumber}`;
+                     })
+                     .catch(x => {
+                       if (!Utils.recursiveDepth) {
+                         Utils.recursiveDepth = 0;
+                       }
+                       if (Utils.recursiveDepth < 3) {
+                         Utils.recursiveDepth++;
+                         return OneSignal.captureError(x);
+                       }
+                     });
+  }
 
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
@@ -491,16 +533,16 @@ export default class OneSignal {
         }
       })
       .catch(function (e) {
-        log.error(e);
+        OneSignal.captureError(e).then(e  => console.error(e));
       });
   }
 
-  static showHttpPrompt() {
-    OneSignalHelpers.markHttpPromptShown();
-    OneSignal.prompt = new Prompt(OneSignal.config.httpPrompt);
-    OneSignal.prompt.create();
-    OneSignal.on(Prompt.EVENTS.ALLOW_CLICK, () => {
-      OneSignal.prompt.close();
+  static showHttpPopover() {
+    OneSignalHelpers.markHttpPopoverShown();
+    OneSignal.popover = new Popover(OneSignal.config.popover);
+    OneSignal.popover.create();
+    OneSignal.on(Popover.EVENTS.ALLOW_CLICK, () => {
+      OneSignal.popover.close();
       OneSignal.registerForPushNotifications({autoAccept: true});
     });
   }
@@ -978,8 +1020,8 @@ export default class OneSignal {
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
     else if (OneSignal.isUsingSubscriptionWorkaround()) { // TODO && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
-      OneSignal.showHttpPrompt();
-      setTimeout(() => OneSignal.prompt.showBlockedDialog(), 500);
+      OneSignal.showHttpPopover();
+      setTimeout(() => OneSignal.popover.showBlockedDialog(), 500);
     }
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
@@ -1999,7 +2041,7 @@ objectAssign(OneSignal, {
   database: Database,
   event: Event,
   browser: Browser,
-  prompt: null,
+  popover: null,
   log: log,
   swivel: swivel,
   api: OneSignalApi,

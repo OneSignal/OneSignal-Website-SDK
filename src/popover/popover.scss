@@ -1,4 +1,4 @@
-$prompt-transition-duration: 400ms;
+$popover-transition-duration: 400ms;
 $border-radius: 2px;
 
 @font-face {
@@ -7,7 +7,7 @@ $border-radius: 2px;
   font-weight: 400;
   src: local('Roboto'), local('Roboto-Regular'), url(https://fonts.gstatic.com/l/font?kit=Tc9Dk7UP-O5wKOy5yWA_gPzT3HLlM0olb3Jp1hLG85RGzn8iC_SrKQsTfHpL0EAc6KvBi6nAuhqz2DjzQt0A0w&skey=a0a0114a1dcab3ac&v=v15) format('woff2');
 }
-#onesignal-prompt-container {
+#onesignal-popover-container {
   font-size: 14px;
   position: fixed;
   z-index: 2258594000;
@@ -17,34 +17,34 @@ $border-radius: 2px;
   &.slide-down {
     top: 0;
 
-    &.close-prompt {
-      #onesignal-prompt-dialog {
+    &.close-popover {
+      #onesignal-popover-dialog {
         -webkit-animation-name: slideDownExit;
       }
     }
 
-    #onesignal-prompt-dialog {
+    #onesignal-popover-dialog {
       width: 500px;
 
       -webkit-animation-name: slideDownEnter;
       -webkit-animation-iteration-count: 1;
       -webkit-animation-timing-function: ease-out;
-      -webkit-animation-duration: $prompt-transition-duration;
+      -webkit-animation-duration: $popover-transition-duration;
       -webkit-animation-fill-mode: forwards;
       animation-name: slideDownEnter;
       animation-iteration-count: 1;
       animation-timing-function: ease-out;
-      animation-duration: $prompt-transition-duration;
+      animation-duration: $popover-transition-duration;
       animation-fill-mode: forwards;
 
       &.blocked-dialog {
-        #blocked-prompt {
+        #blocked-popover {
           display: block;
         }
-        #normal-prompt {
+        #normal-popover {
           display: none;
         }
-        .prompt-body-message {
+        .popover-body-message {
           padding: 0 0.2em 0 0.2em;
           text-align: center;
           width: 100%;
@@ -60,43 +60,43 @@ $border-radius: 2px;
         width: 612px;
         margin-bottom: 18px;
 
-        .prompt-button.secondary {
+        .popover-button.secondary {
           padding: 0.714em 2em;
         }
       }
     }
   }
 
-  #blocked-prompt {
+  #blocked-popover {
     display: none;
   }
 
   &.slide-up {
     bottom: 0;
 
-    &.close-prompt {
-      #onesignal-prompt-dialog {
+    &.close-popover {
+      #onesignal-popover-dialog {
         -webkit-animation-name: slideUpExit;
       }
     }
 
-    #onesignal-prompt-dialog {
+    #onesignal-popover-dialog {
       width: 100%;
 
       -webkit-animation-name: slideUpEnter;
       -webkit-animation-iteration-count: 1;
       -webkit-animation-timing-function: ease-out;
-      -webkit-animation-duration: $prompt-transition-duration;
+      -webkit-animation-duration: $popover-transition-duration;
       -webkit-animation-fill-mode: backwards;
       animation-name: slideUpEnter;
       animation-iteration-count: 1;
       animation-timing-function: ease-out;
-      animation-duration: $prompt-transition-duration;
+      animation-duration: $popover-transition-duration;
       animation-fill-mode: backwards;
     }
   }
 
-  #onesignal-prompt-dialog {
+  #onesignal-popover-dialog {
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
@@ -107,12 +107,12 @@ $border-radius: 2px;
     border-bottom-right-radius: $border-radius;
     font-family: 'Roboto', 'Noto', sans-serif;
 
-    .prompt-body {
+    .popover-body {
       box-sizing: border-box;
       margin: 0;
     }
 
-    .prompt-body-icon {
+    .popover-body-icon {
       box-sizing: border-box;
       float: left;
       width: 80px;
@@ -122,7 +122,7 @@ $border-radius: 2px;
       background-repeat: no-repeat;
     }
 
-    .prompt-body-message {
+    .popover-body-message {
       box-sizing: border-box;
       padding: 0 0.2em 0 1.286em;
       float: left;
@@ -159,7 +159,7 @@ $border-radius: 2px;
       margin: 0;
     }
 
-    .prompt-button {
+    .popover-button {
       padding: 0.714em 2em;
       font-size: 1em;
       text-transform: uppercase;
@@ -195,11 +195,11 @@ $border-radius: 2px;
       }
     }
 
-    .primary.prompt-button+.secondary.prompt-button {
+    .primary.popover-button+.secondary.popover-button {
       margin-right: 0.714em;
     }
 
-    .prompt-footer {
+    .popover-footer {
       position: relative;
       margin: 0.25em 0.25em 0 0;
     }

@@ -74,15 +74,15 @@ export default class Helpers {
   }
 
   /**
-   * Stores a flag in sessionStorage that we've already shown the HTTP prompt to this user and that we should not
+   * Stores a flag in sessionStorage that we've already shown the HTTP popover to this user and that we should not
    * show it again until they open a new window or tab to the site.
    */
-  static markHttpPromptShown() {
+  static markHttpPopoverShown() {
     sessionStorage.setItem("ONESIGNAL_HTTP_PROMPT_SHOWN", true);
   }
 
   /**
-   * Returns true if the HTTP prompt was already shown inside the same session.
+   * Returns true if the HTTP popover was already shown inside the same session.
    */
   static isHttpPromptAlreadyShown() {
     return sessionStorage.getItem("ONESIGNAL_HTTP_PROMPT_SHOWN") == "true";
@@ -158,7 +158,7 @@ export default class Helpers {
         }
 
         if (OneSignal._thisIsThePopup) {
-          // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP prompt!!
+          // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
           OneSignal.getNotificationPermission()
             .then((permission) => {
               log.debug("Sending player Id and registrationId back to host page");
