@@ -6,6 +6,7 @@ import * as Browser from 'bowser';
 import { HOST_URL } from '../vars.js';
 import AnimatedElement from './AnimatedElement.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
+import Helpers from '../helpers';
 import Launcher from './Launcher.js';
 import Badge from './Badge.js';
 import Button from './Button.js';
@@ -286,7 +287,7 @@ export default class Bell {
           this.badge.hide();
         }
         if (this.dialog.notificationIcons === null) {
-          this.dialog.getNotificationIcons().then((icons) => {
+          Helpers.getNotificationIcons().then((icons) => {
             this.dialog.notificationIcons = icons;
           });
         }
@@ -354,7 +355,7 @@ export default class Bell {
 
     // Remove any existing bell
     if (this.container) {
-      removeDomElement('onesignal-bell-container');
+      removeDomElement('#onesignal-bell-container');
     }
 
     window.addDomElement = addDomElement;

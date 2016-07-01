@@ -16,6 +16,7 @@ import heir from 'heir';
 import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
+import Prompt from './prompt/prompt';
 
 
 export default class OneSignal {
@@ -494,6 +495,15 @@ export default class OneSignal {
       });
   }
 
+  static showHttpPrompt() {
+    OneSignal.prompt = new Prompt(OneSignal.config.httpPrompt);
+    OneSignal.prompt.create();
+    OneSignal.on(Prompt.EVENTS.ALLOW_CLICK, () => {
+      OneSignal.prompt.close();
+      OneSignal.registerForPushNotifications({autoAccept: true});
+    });
+  }
+
   static registerForPushNotifications(options) {
     if (!isPushNotificationsSupportedAndWarn()) {
       return;
@@ -503,7 +513,7 @@ export default class OneSignal {
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
       if (OneSignal.isUsingSubscriptionWorkaround()) {
-        OneSignal.loadPopup();
+        OneSignal.loadPopup(options);
       } else {
         if (!options)
           options = {};
@@ -819,7 +829,7 @@ export default class OneSignal {
              .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
   }
 
-  static loadPopup() {
+  static loadPopup(options) {
     // Important: Don't use any promises until the window is opened, otherwise the popup will be blocked
     let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
     if (Environment.isDev()) {
@@ -831,6 +841,9 @@ export default class OneSignal {
     let popupUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup`;
     if (dangerouslyWipeData) {
       popupUrl += '&dangerouslyWipeData=true';
+    }
+    if (options && options.autoAccept) {
+      popupUrl += '&autoAccept=true'
     }
     log.info('Opening popup window:', popupUrl);
     var subdomainPopup = OneSignalHelpers.openSubdomainPopup(popupUrl);
@@ -963,6 +976,9 @@ export default class OneSignal {
     }
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
+    else if (OneSignal.isUsingSubscriptionWorkaround() && !OneSignalHelpers.isContinuingBrowserSession()) {
+      OneSignal.showHttpPrompt();
+    }
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
@@ -1980,6 +1996,7 @@ objectAssign(OneSignal, {
   database: Database,
   event: Event,
   browser: Browser,
+  prompt: null,
   log: log,
   swivel: swivel,
   api: OneSignalApi,

@@ -1,0 +1,258 @@
+$prompt-transition-duration: 400ms;
+$border-radius: 2px;
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Roboto'), local('Roboto-Regular'), url(https://fonts.gstatic.com/l/font?kit=Tc9Dk7UP-O5wKOy5yWA_gPzT3HLlM0olb3Jp1hLG85RGzn8iC_SrKQsTfHpL0EAc6KvBi6nAuhqz2DjzQt0A0w&skey=a0a0114a1dcab3ac&v=v15) format('woff2');
+}
+#onesignal-prompt-container {
+  font-size: 14px;
+  position: fixed;
+  z-index: 2258594000;
+  left: 0;
+  right: 0;
+
+  &.slide-down {
+    top: 0;
+
+    &.close-prompt {
+      #onesignal-prompt-dialog {
+        -webkit-animation-name: slideDownExit;
+      }
+    }
+
+    #onesignal-prompt-dialog {
+      width: 500px;
+
+      -webkit-animation-name: slideDownEnter;
+      -webkit-animation-iteration-count: 1;
+      -webkit-animation-timing-function: ease-out;
+      -webkit-animation-duration: $prompt-transition-duration;
+      -webkit-animation-fill-mode: forwards;
+      animation-name: slideDownEnter;
+      animation-iteration-count: 1;
+      animation-timing-function: ease-out;
+      animation-duration: $prompt-transition-duration;
+      animation-fill-mode: forwards;
+    }
+  }
+
+  &.slide-up {
+    bottom: 0;
+
+    &.close-prompt {
+      #onesignal-prompt-dialog {
+        -webkit-animation-name: slideUpExit;
+      }
+    }
+
+    #onesignal-prompt-dialog {
+      width: 100%;
+
+      -webkit-animation-name: slideUpEnter;
+      -webkit-animation-iteration-count: 1;
+      -webkit-animation-timing-function: ease-out;
+      -webkit-animation-duration: $prompt-transition-duration;
+      -webkit-animation-fill-mode: backwards;
+      animation-name: slideUpEnter;
+      animation-iteration-count: 1;
+      animation-timing-function: ease-out;
+      animation-duration: $prompt-transition-duration;
+      animation-fill-mode: backwards;
+    }
+  }
+
+  #onesignal-prompt-dialog {
+    box-sizing: border-box;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22);
+    background: white;
+    padding: 1.286em;
+    border-bottom-left-radius: $border-radius;
+    border-bottom-right-radius: $border-radius;
+    font-family: 'Roboto', 'Noto', sans-serif;
+
+    .prompt-body {
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    .prompt-body-icon {
+      box-sizing: border-box;
+      float: left;
+      width: 80px;
+      height: 80px;
+      background-size: contain;
+      background-position: 0% 0%;
+      background-repeat: no-repeat;
+    }
+
+    .prompt-body-message {
+      box-sizing: border-box;
+      padding: 0 0.2em 0 1.286em;
+      float: left;
+      width: calc(100% - 80px);
+      font-size: 1.143em;
+      line-height: 1.45em;
+      -o-user-select: none;
+      user-select: none;
+      cursor: default;
+      color: #666;
+    }
+
+    button {
+      box-sizing: border-box;
+      display: inline-block;
+      padding: .375rem 1rem;
+      font-size: 0.9625em;
+      font-weight: 400;
+      line-height: 1.5;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border: 1px solid transparent;
+      border-radius: .25rem;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      -webkit-transition: background-color 75ms ease;
+      transition: background-color 75ms ease;
+      margin: 0;
+    }
+
+    .prompt-button {
+      padding: 0.714em 2em;
+      font-size: 1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      font-weight: 400;
+
+      &.primary {
+        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
+        background: #4285F4;
+        color: white;
+
+        &:hover {
+          background: darken(#4285F4, 7.5%);
+        }
+
+        &:active {
+          background: darken(#4285F4, 15%);
+        }
+      }
+
+      &.secondary {
+        box-shadow: none;
+        background: white;
+        color: #4285F4;
+
+        &:hover {
+          color: darken(#4285F4, 12.5%);
+        }
+
+        &:active {
+          color: darken(#4285F4, 30.5%);
+        }
+      }
+    }
+
+    .primary.prompt-button+.secondary.prompt-button {
+      margin-right: 0.714em;
+    }
+
+    .prompt-footer {
+      position: relative;
+      margin: 0.25em 0.25em 0 0;
+    }
+
+    .align-right {
+      float: right;
+    }
+
+    .clearfix {
+      display: block;
+    }
+    .clearfix:after {
+      content: '';
+      display: block;
+      height: 0;
+      clear: both;
+      visibility: hidden;
+    }
+  }
+}
+
+@-webkit-keyframes slideDownEnter {
+  0% {
+    -webkit-transform: translateY(-150%);
+  }
+  100% {
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes slideDownEnter {
+  0% {
+    transform: translateY(-150%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes slideDownExit {
+  0% {
+    -webkit-transform: translateY(0%);
+  }
+  100% {
+    -webkit-transform: translateY(-150%);
+  }
+}
+@keyframes slideDownExit {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-150%);
+  }
+}
+
+@-webkit-keyframes slideUpEnter {
+  0% {
+    -webkit-transform: translateY(150%);
+  }
+  100% {
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes slideUpEnter {
+  0% {
+    transform: translateY(150%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes slideUpExit {
+  0% {
+    -webkit-transform: translateY(0%);
+  }
+  100% {
+    -webkit-transform: translateY(150%);
+  }
+}
+@keyframes slideUpExit {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(150%);
+  }
+}
