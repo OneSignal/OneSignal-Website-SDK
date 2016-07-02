@@ -1021,7 +1021,6 @@ export default class OneSignal {
       OneSignal._registerForW3CPush(options);
     else if (OneSignal.isUsingSubscriptionWorkaround()) { // TODO && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
       OneSignal.showHttpPopover();
-      setTimeout(() => OneSignal.popover.showBlockedDialog(), 500);
     }
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);

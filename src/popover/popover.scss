@@ -120,6 +120,11 @@ $border-radius: 2px;
       background-size: contain;
       background-position: 0% 0%;
       background-repeat: no-repeat;
+
+      &.default-icon {
+        background-size: initial;
+        background-position: 50% 0%;
+      }
     }
 
     .popover-body-message {

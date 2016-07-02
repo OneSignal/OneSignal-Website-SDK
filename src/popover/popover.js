@@ -66,11 +66,13 @@ export default class Popover {
                     if (imageUrl) {
                         blockedImageHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a>`;
                     }
+                    let icon = this.getPlatformNotificationIcon();
+                    let defaultIcon = `data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%2239.5%22%20height%3D%2240.5%22%20viewBox%3D%220%200%2079%2081%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ctitle%3EOneSignal-Bell%3C%2Ftitle%3E%3Cg%20fill%3D%22%23BBB%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M39.96%2067.12H4.12s-3.2-.32-3.2-3.36%202.72-3.2%202.72-3.2%2010.72-5.12%2010.72-8.8c0-3.68-1.76-6.24-1.76-21.28%200-15.04%209.6-26.56%2021.12-26.56%200%200%201.6-3.84%206.24-3.84%204.48%200%206.08%203.84%206.08%203.84%2011.52%200%2021.12%2011.52%2021.12%2026.56s-1.6%2017.6-1.6%2021.28c0%203.68%2010.72%208.8%2010.72%208.8s2.72.16%202.72%203.2c0%202.88-3.36%203.36-3.36%203.36H39.96zM27%2070.8h24s-1.655%2010.08-11.917%2010.08S27%2070.8%2027%2070.8z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E`;
 
                     let dialogHtml = `
                     <div id="normal-popover">
                         <div class="popover-body">
-                            <div class="popover-body-icon" style="background-image: url('${this.getPlatformNotificationIcon()}');">
+                            <div class="popover-body-icon ${icon === 'default-icon' ? 'default-icon' : ''}" style="background-image: url('${icon === 'default-icon' ? defaultIcon : icon}');">
                             </div>
                             <div class="popover-body-message">
                                 ${this.text['message.body']}                
@@ -175,7 +177,7 @@ export default class Popover {
     }
 
     getPlatformNotificationIcon() {
-        if (this.notificationIcons) {
+        if (this.notifsdfsdfsdficationIcons) {
             if (Browser.chrome || Browser.firefox) {
                 return this.notificationIcons.chrome || this.notificationIcons.safari;
             }
@@ -183,7 +185,7 @@ export default class Popover {
                 return this.notificationIcons.safari || this.notificationIcons.chrome;
             }
         }
-        else return `data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2254%22%20height%3D%2255%22%3E%0D%0A%20%20%3Cg%20fill%3D%22%23BBB%22%20fill-rule%3D%22evenodd%22%3E%0D%0A%20%20%20%20%3Cpath%20d%3D%22M35.195%205H8.997C4.027%205%200%209.028%200%2013.997v32.006C0%2050.973%204.028%2055%208.997%2055h32.006C45.973%2055%2050%2050.972%2050%2046.003V18.476c-1.242.475-2.59.735-4%20.735v25.797C46%2048.317%2043.31%2051%2040.005%2051H9.995C6.685%2051%204%2048.31%204%2045.005v-30.01C4%2011.685%206.69%209%209.995%209h24.838c-.03-.33-.044-.663-.044-1%200-1.04.14-2.045.403-3z%22%2F%3E%0D%0A%20%20%20%20%3Cellipse%20cx%3D%2245.623%22%20cy%3D%228.623%22%20rx%3D%228.097%22%20ry%3D%228.097%22%2F%3E%0D%0A%20%20%20%20%3Cpath%20d%3D%22M10%2018h26v5H10zm0%2010h30v5H10zm0%2010h30v5H10z%22%2F%3E%0D%0A%20%20%3C%2Fg%3E%0D%0A%3C%2Fsvg%3E`;
+        else return 'default-icon';
     }
 
     get container() {

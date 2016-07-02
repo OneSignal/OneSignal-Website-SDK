@@ -14,7 +14,7 @@ import Dialog from './Dialog.js';
 import Message from './Message.js';
 
 import "./bell.scss";
-var logoSvg = require('raw!./bell.svg');
+var logoSvg = require('raw!./../assets/bell.svg');
 
 
 export default class Bell {
