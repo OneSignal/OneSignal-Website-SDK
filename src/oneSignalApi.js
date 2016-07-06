@@ -23,6 +23,7 @@ export default class OneSignalApi {
 
   static call(method, action, data, headers) {
     let callHeaders = new Headers();
+    callHeaders.append('SDK-Version', `onesignal/web/${__VERSION__}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
     if (headers) {
       for (let key of Object.keys(headers)) {
