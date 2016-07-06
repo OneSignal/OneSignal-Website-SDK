@@ -293,6 +293,12 @@ export default class OneSignal {
     }
 
     function __init() {
+      if (OneSignal.__initAlreadyCalled) {
+        log.debug('OneSignal: Skipping extra init() event.');
+        return;
+      } else {
+        OneSignal.__initAlreadyCalled = true;
+      }
       OneSignalHelpers.fixWordpressManifestIfMisplaced();
 
       OneSignal.iframePopupModalUrlRoute = 'sdks';
@@ -350,8 +356,18 @@ export default class OneSignal {
       __init();
     }
     else {
-      log.debug('OneSignal: Waiting for DOMContentLoaded event before continuing initialization...');
-      window.addEventListener('DOMContentLoaded', __init);
+      log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
+                ' initialization...');
+      window.addEventListener('DOMContentLoaded', () => {
+        log.debug('OneSignal: DOMContentLoaded event fired. Document readyState is:', document.readyState);
+        __init();
+      });
+      document.onreadystatechange = () => {
+        log.debug('OneSignal: readyStateChange event fired. Document readyState is:', document.readyState);
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          __init();
+        }
+      };
     }
   }
 
