@@ -105,7 +105,9 @@ export default class AnimatedElement {
     if (this.state === 'shown')
       return Promise.resolve(this);
     else return new Promise((resolve) => {
+      console.log('Calling the once thing', event);
       once(window, AnimatedElement.EVENTS.SHOWN, (event, destroyListenerFn) => {
+        console.log('ANT EVENY', event);
         var self = this;
         if (event === this) {
           destroyListenerFn();

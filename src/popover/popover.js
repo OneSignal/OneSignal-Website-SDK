@@ -168,8 +168,9 @@ export default class Popover {
         addCssClass(this.container, 'close-popover');
         once(this.dialog, 'animationend', (event, destroyListenerFn) => {
             if (event.target === this.dialog &&
-                event.animationName === 'slideDownExit') {
+                (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
                 // Uninstall the event listener for animationend
+                removeDomElement('#onesignal-popover-container');
                 destroyListenerFn();
                 Event.trigger(Popover.EVENTS.CLOSED);
             }
@@ -177,7 +178,7 @@ export default class Popover {
     }
 
     getPlatformNotificationIcon() {
-        if (this.notifsdfsdfsdficationIcons) {
+        if (this.notificationIcons) {
             if (Browser.chrome || Browser.firefox) {
                 return this.notificationIcons.chrome || this.notificationIcons.safari;
             }

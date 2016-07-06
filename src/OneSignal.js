@@ -312,7 +312,7 @@ export default class OneSignal {
   static init(options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
-    if (Environment.isBrowser() && window.localStorage["onesignal.debugger.init"])
+    if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.init"])
       debugger;
 
     if (OneSignal._initCalled) {
@@ -541,6 +541,16 @@ export default class OneSignal {
     OneSignalHelpers.markHttpPopoverShown();
     OneSignal.popover = new Popover(OneSignal.config.popover);
     OneSignal.popover.create();
+    OneSignal.notifyButton.button.waitUntilShown()
+        .then(() => {
+          console.log('wait until shown finished!')
+          OneSignal.notifyButton.launcher.hide();
+        });
+    OneSignal.on(Popover.EVENTS.CLOSED, () => {
+      if (OneSignal.notifyButton) {
+        OneSignal.notifyButton.launcher.show();
+      }
+    });
     OneSignal.on(Popover.EVENTS.ALLOW_CLICK, () => {
       OneSignal.popover.close();
       OneSignal.registerForPushNotifications({autoAccept: true});
@@ -576,7 +586,7 @@ export default class OneSignal {
   static _initHttp(options) {
     log.debug(`Called %c_initHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
-    if (Environment.isBrowser() && window.localStorage["onesignal.debugger.inithttp"]) {
+    if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.inithttp"]) {
       debugger;
     }
 
@@ -1020,7 +1030,20 @@ export default class OneSignal {
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
     else if (OneSignal.isUsingSubscriptionWorkaround()) { // TODO && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
-      OneSignal.showHttpPopover();
+      /*
+        Only show the HTTP popover if:
+        - Notifications aren't already enabled
+        - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
+       */
+      Promise.all([
+                    OneSignal.isPushNotificationsEnabled(),
+                    OneSignal.getSubscription()
+                  ])
+          .then(([isEnabled, notOptedOut]) => {
+            if (!isEnabled && notOptedOut) {
+              OneSignal.showHttpPopover();
+            }
+          });
     }
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);

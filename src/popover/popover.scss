@@ -20,6 +20,15 @@ $border-radius: 2px;
     &.close-popover {
       #onesignal-popover-dialog {
         -webkit-animation-name: slideDownExit;
+        -webkit-animation-iteration-count: 1;
+        -webkit-animation-timing-function: ease-out;
+        -webkit-animation-duration: $popover-transition-duration;
+        -webkit-animation-fill-mode: forwards;
+        animation-name: slideDownExit;
+        animation-iteration-count: 1;
+        animation-timing-function: ease-out;
+        animation-duration: $popover-transition-duration;
+        animation-fill-mode: forwards;
       }
     }
 
@@ -77,6 +86,15 @@ $border-radius: 2px;
     &.close-popover {
       #onesignal-popover-dialog {
         -webkit-animation-name: slideUpExit;
+        -webkit-animation-iteration-count: 1;
+        -webkit-animation-timing-function: ease-out;
+        -webkit-animation-duration: $popover-transition-duration;
+        -webkit-animation-fill-mode: forwards;
+        animation-name: slideUpExit;
+        animation-iteration-count: 1;
+        animation-timing-function: ease-out;
+        animation-duration: $popover-transition-duration;
+        animation-fill-mode: forwards;
       }
     }
 
