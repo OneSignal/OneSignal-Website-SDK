@@ -120,9 +120,8 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.active)
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      once(window, ActiveAnimatedElement.EVENTS.ACTIVE, (event, destroyListenerFn) => {
+      OneSignal.once(ActiveAnimatedElement.EVENTS.ACTIVE, (event) => {
         if (event === this) {
-          destroyListenerFn();
           return resolve(this);
         }
       }, true);
@@ -137,9 +136,8 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.inactive)
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      once(window, ActiveAnimatedElement.EVENTS.INACTIVE, (event, destroyListenerFn) => {
+      OneSignal.oncew(ActiveAnimatedElement.EVENTS.INACTIVE, (event) => {
         if (event === this) {
-          destroyListenerFn();
           return resolve(this);
         }
       }, true);

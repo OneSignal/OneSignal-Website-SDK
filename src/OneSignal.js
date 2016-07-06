@@ -541,9 +541,8 @@ export default class OneSignal {
     OneSignalHelpers.markHttpPopoverShown();
     OneSignal.popover = new Popover(OneSignal.config.popover);
     OneSignal.popover.create();
-    OneSignal.notifyButton.button.waitUntilShown()
+    OneSignal.notifyButton.launcher.waitUntilShown()
         .then(() => {
-          console.log('wait until shown finished!')
           OneSignal.notifyButton.launcher.hide();
         });
     OneSignal.on(Popover.EVENTS.CLOSED, () => {
@@ -1029,7 +1028,8 @@ export default class OneSignal {
     }
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
-    else if (OneSignal.isUsingSubscriptionWorkaround()) { // TODO && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
+    else if ((OneSignal.config.autoRegister !== false) && OneSignal.isUsingSubscriptionWorkaround()) { // TODO &&
+      // !OneSignalHelpers.isHttpPromptAlreadyShown()) {
       /*
         Only show the HTTP popover if:
         - Notifications aren't already enabled

@@ -105,12 +105,9 @@ export default class AnimatedElement {
     if (this.state === 'shown')
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      console.log('Calling the once thing', event);
-      once(window, AnimatedElement.EVENTS.SHOWN, (event, destroyListenerFn) => {
-        console.log('ANT EVENY', event);
+      OneSignal.once(AnimatedElement.EVENTS.SHOWN, (event) => {
         var self = this;
         if (event === this) {
-          destroyListenerFn();
           return resolve(this);
         }
       }, true);
@@ -125,9 +122,8 @@ export default class AnimatedElement {
     if (this.state === 'hidden')
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      once(window, AnimatedElement.EVENTS.HIDDEN, (event, destroyListenerFn) => {
+      OneSignal.once(AnimatedElement.EVENTS.HIDDEN, (event) => {
         if (event === this) {
-          destroyListenerFn();
           return resolve(this);
         }
       }, true);
