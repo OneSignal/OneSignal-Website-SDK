@@ -1058,13 +1058,13 @@ export default class OneSignal {
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
     else { // TODO &&
-      if (OneSignal.config.autoRegister == false) {
-        log.debug('OneSignal: Not automatically showing popover because autoRegister is false.');
+      if (OneSignal.config.autoRegister !== true) {
+        log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
       }
       if (OneSignalHelpers.isHttpPromptAlreadyShown()) {
         log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
       }
-      if ((OneSignal.config.autoRegister !== false) && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
+      if ((OneSignal.config.autoRegister === true) && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
         OneSignal.showHttpPopover();
       }
     }
