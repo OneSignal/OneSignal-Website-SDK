@@ -379,12 +379,11 @@ export default class Bell {
     // Add visual elements
     addDomElement(this.button.selector, 'beforeEnd', logoSvg);
 
-    new Promise(resolve => {
-      OneSignal.isPushNotificationsEnabled((isPushEnabled) => {
-        resolve(isPushEnabled)
-      });
-    })
-    .then(isPushEnabled => {
+    Promise.all([
+                  OneSignal.isPushNotificationsEnabled(),
+                  OneSignal.getSubscription()
+                ])
+    .then(([isPushEnabled, notOptedOut]) => {
       // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
       let resizeTo = (isPushEnabled ? 'small' : this.options.size);
       // Add default classes
@@ -420,7 +419,17 @@ export default class Bell {
         (isPushEnabled ? this.launcher.inactivate() : nothing())
           .then(() => delay(this.options.showLauncherAfter))
           .then(() => {
-            return this.launcher.show();
+            if (OneSignal.isUsingSubscriptionWorkaround() &&
+                notOptedOut &&
+                !isPushEnabled &&
+                (OneSignal.config.autoRegister !== false) &&
+                (!OneSignal.config.popover || OneSignal.config.popover.enable == false) &&
+                !Helpers.isHttpPromptAlreadyShown()) {
+              log.debug('Not showing notify button because popover will be shown.');
+              return nothing();
+            } else {
+              return this.launcher.show();
+            }
           })
           .then(() => {
             return delay(this.options.showBadgeAfter);

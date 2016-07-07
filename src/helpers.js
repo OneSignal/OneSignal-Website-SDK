@@ -298,30 +298,40 @@ export default class Helpers {
   }
 
   static getPromptOptionsQueryString() {
-    var message_localization_opts = OneSignal.config['promptOptions'];
-    var message_localization_opts_str = '';
-    if (message_localization_opts) {
-      var message_localization_params = [
+    let promptOptions = OneSignal.config['promptOptions'];
+    let promptOptionsStr = '';
+    if (promptOptions) {
+      var legacyParams = {
+        'exampleNotificationTitleDesktop': 'exampleNotificationTitle',
+        'exampleNotificationMessageDesktop': 'exampleNotificationMessage',
+        'exampleNotificationTitleMobile': 'exampleNotificationTitle',
+        'exampleNotificationMessageMobile': 'exampleNotificationMessage',
+      };
+      for (let legacyParamKey of Object.keys(legacyParams)) {
+        let legacyParamValue = legacyParams[legacyParamKey];
+        if (promptOptions[legacyParamKey]) {
+          promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
+        }
+      }
+      var allowedPromptOptions = [
         'siteName',
         'actionMessage',
-        'exampleNotificationTitleDesktop',
-        'exampleNotificationMessageDesktop',
-        'exampleNotificationTitleMobile',
-        'exampleNotificationMessageMobile',
+        'exampleNotificationTitle',
+        'exampleNotificationMessage',
         'exampleNotificationCaption',
         'acceptButtonText',
-        'cancelButtonText',
-        'showCredit'];
-      for (var i = 0; i < message_localization_params.length; i++) {
-        var key = message_localization_params[i];
-        var value = message_localization_opts[key];
+        'cancelButtonText'
+      ];
+      for (var i = 0; i < allowedPromptOptions.length; i++) {
+        var key = allowedPromptOptions[i];
+        var value = promptOptions[key];
         var encoded_value = encodeURIComponent(value);
         if (value || value === false || value === '') {
-          message_localization_opts_str += '&' + key + '=' + encoded_value;
+          promptOptionsStr += '&' + key + '=' + encoded_value;
         }
       }
     }
-    return message_localization_opts_str;
+    return promptOptionsStr;
   }
 
   static triggerCustomPromptClicked(clickResult) {
