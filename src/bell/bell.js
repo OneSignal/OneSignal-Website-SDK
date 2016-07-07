@@ -422,8 +422,7 @@ export default class Bell {
             if (OneSignal.isUsingSubscriptionWorkaround() &&
                 notOptedOut &&
                 !isPushEnabled &&
-                (OneSignal.config.autoRegister !== false) &&
-                (!OneSignal.config.popover || OneSignal.config.popover.enable == false) &&
+                (OneSignal.config.autoRegister === true) &&
                 !Helpers.isHttpPromptAlreadyShown()) {
               log.debug('Not showing notify button because popover will be shown.');
               return nothing();

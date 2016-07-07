@@ -4,6 +4,7 @@ import log from 'loglevel';
 import Event from '../events.js';
 import Helpers from '../helpers';
 import * as Browser from 'bowser';
+import objectAssign from 'object-assign';
 import { HOST_URL } from '../vars.js';
 
 import "./popover.scss";
@@ -21,20 +22,20 @@ export default class Popover {
     }
 
     constructor(options) {
-        this.options = options;
-        if (!this.options) {
+        if (!options) {
             this.options = {};
+        } else {
+            this.options = objectAssign({}, options);
         }
-        this.text = this.options.text;
-        if (!this.text) {
-            this.text = {};
-        }
-        if (!this.text['message.body'])
-            this.text['message.body'] = "We'd like to send you push notifications. You can unsubscribe at any time.";
-        if (!this.text['button.allow'])
-            this.text['button.allow'] = "Allow";
-        if (!this.text['button.cancel'])
-            this.text['button.cancel'] = "No Thanks";
+        if (!this.options['actionMessage'] || typeof this.options['actionMessage'] !== "string")
+            this.options['actionMessage'] = "We'd like to show you notifications for the latest news and updates.";
+        if (!this.options['acceptButtonText'] || typeof this.options['acceptButtonText'] !== "string")
+            this.options['acceptButtonText'] = "Allow";
+        if (!this.options['cancelButtonText'] || typeof this.options['cancelButtonText'] !== "string")
+            this.options['cancelButtonText'] = "No Thanks";
+        this.options['actionMessage'] = this.options['actionMessage'].substring(0, 90);
+        this.options['acceptButtonText'] = this.options['acceptButtonText'].substring(0, 15);
+        this.options['cancelButtonText'] = this.options['cancelButtonText'].substring(0, 15);
 
         this.notificationIcons = null;
     }
@@ -59,15 +60,15 @@ export default class Popover {
                             <div class="popover-body-icon ${icon === 'default-icon' ? 'default-icon' : ''}" style="background-image: url('${icon === 'default-icon' ? defaultIcon : icon}');">
                             </div>
                             <div class="popover-body-message">
-                                ${this.text['message.body']}                
+                                ${this.options['actionMessage']}                
                             </div>
                             <div class="clearfix"></div>
                         </div>
                         <div class="popover-footer">
                             <button id="onesignal-popover-allow-button" class="align-right primary popover-button">
-                            ${this.text['button.allow']}</button>
+                            ${this.options['acceptButtonText']}</button>
                             <button id="onesignal-popover-cancel-button" class="align-right secondary popover-button">
-                            ${this.text['button.cancel']}</button>
+                            ${this.options['cancelButtonText']}</button>
                             <div class="clearfix"></div>
                         </div>
                     </div>                   
