@@ -549,9 +549,14 @@ export default class OneSignal {
     return Promise.all([
                          OneSignal.getNotificationPermission(),
                          OneSignal.isPushNotificationsEnabled(),
-                         OneSignal.getSubscription()
+                         OneSignal.getSubscription(),
+                         Database.get('Options', 'popoverDoNotPrompt')
                        ])
-                  .then(([permission, isEnabled, notOptedOut]) => {
+                  .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
+                    if (doNotPrompt === true) {
+                      log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
+                      return;
+                    }
                     if (permission === 'denied') {
                       log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
                       return;
@@ -585,6 +590,10 @@ export default class OneSignal {
                     OneSignal.on(Popover.EVENTS.ALLOW_CLICK, () => {
                       OneSignal.popover.close();
                       OneSignal.registerForPushNotifications({autoAccept: true});
+                    });
+                    OneSignal.on(Popover.EVENTS.CANCEL_CLICK, () => {
+                      log.debug("Setting flag to not show the popover to the user again.");
+                      Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
                     });
                   });
   }
