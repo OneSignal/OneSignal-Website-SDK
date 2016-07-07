@@ -344,25 +344,30 @@ export default class OneSignal {
       }
       OneSignalHelpers.fixWordpressManifestIfMisplaced();
 
-      OneSignal.iframePopupModalUrlRoute = 'sdks';
-      OneSignal.iframePopupModalUrlSuffix = '';
-
       if (OneSignal.isUsingSubscriptionWorkaround()) {
         if (OneSignal.config.subdomainName) {
           OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
         } else {
-          log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
+          log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'),
+                    '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
         }
-        if (Environment.isDev())
-          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
-        else
-          OneSignal.iframePopupModalUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
+
+        if (Environment.isDev()) {
+          OneSignal.iframeUrl = `${DEV_FRAME_HOST}/webPushIframe`;
+          OneSignal.popupUrl = `${DEV_FRAME_HOST}/subscribe`;
+        }
+        else {
+          OneSignal.iframeUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/webPushIframe`;
+          OneSignal.popupUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/subscribe`;
+        }
       } else {
-        if (Environment.isDev())
-          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
-        else
-          OneSignal.iframePopupModalUrl = `https://onesignal.com/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
+        if (Environment.isDev()) {
+          OneSignal.modalUrl = `${DEV_FRAME_HOST}/webPushModal`;
+        } else {
+          OneSignal.modalUrl = `https://onesignal.com/webPushModal`;
+        }
       }
+
 
       let subdomainPromise = Promise.resolve();
       if (OneSignal.isUsingSubscriptionWorkaround()) {
@@ -647,7 +652,8 @@ export default class OneSignal {
     var creator = opener || parent;
 
     if (creator == window) {
-      log.debug('This page was not opened from a parent window. This page is intended to be loaded as an iFrame in an HTTP site.');
+      document.write(`<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and 
+must be opened as a result of a subscription call.</span>`);
       return;
     }
 
@@ -657,8 +663,8 @@ export default class OneSignal {
 
     let sendToOrigin = options.origin;
     let receiveFromOrigin = options.origin;
-    let handshakeNonce = getUrlQueryParam('session');
-    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData');
+    let handshakeNonce = getUrlQueryParam('session') || window.__POSTDATA['session'];
+    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData']);
 
     let preinitializePromise = Promise.resolve();
     if (shouldWipeData && Environment.isIframe()) {
@@ -854,10 +860,8 @@ export default class OneSignal {
     let subdomainLoadPromise = new Promise((resolve, reject) => {
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
-      // TODO: Previously, '?session=true' added to the iFrame's URL meant this was not a new tab (same page refresh) and that the HTTP iFrame should not re-register the service worker. Now that is gone, find an alternative way to do that.
-
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-      let iframeUrl = `${OneSignal.iframePopupModalUrl}Iframe?session=${OneSignal._sessionNonce}`;
+      let iframeUrl = `${OneSignal.iframeUrl}?session=${OneSignal._sessionNonce}`;
       if (dangerouslyWipeData) {
         iframeUrl += '&dangerouslyWipeData=true';
       }
@@ -929,7 +933,7 @@ export default class OneSignal {
       OneSignal._sessionIframeAdded = true;
     });
     return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000)
-             .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
+             .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframeUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
   }
 
   static loadPopup(options) {
@@ -941,7 +945,7 @@ export default class OneSignal {
     let receiveFromOrigin = sendToOrigin;
     let handshakeNonce = OneSignal._sessionNonce;
     let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-    let popupUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup&parentHostname=${encodeURIComponent(location.hostname)}`;
+    let popupUrl = `${OneSignal.popupUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup&parentHostname=${encodeURIComponent(location.hostname)}`;
     if (dangerouslyWipeData) {
       popupUrl += '&dangerouslyWipeData=true';
     }
@@ -949,7 +953,13 @@ export default class OneSignal {
       popupUrl += '&autoAccept=true'
     }
     log.info('Opening popup window:', popupUrl);
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(popupUrl);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(
+        `${DEV_FRAME_HOST}/subscribe`,
+        objectAssign({}, OneSignalHelpers.getPromptOptionsPostHash(), {
+          session: handshakeNonce,
+          promptType: 'popup',
+          parentHostname: encodeURIComponent(location.hostname)
+        }));
 
     if (subdomainPopup)
       subdomainPopup.focus();
@@ -1037,16 +1047,16 @@ export default class OneSignal {
             OneSignal.getNotificationPermission()
           ])
           .then(([appId, isPushEnabled, notificationPermission]) => {
-            let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
-            log.info('Opening HTTPS modal prompt:', iframeModalUrl);
-            let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
+            let modalUrl = `${OneSignal.modalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
+            log.info('Opening HTTPS modal prompt:', modalUrl);
+            let modal = OneSignalHelpers.createSubscriptionDomModal(modalUrl);
 
             let sendToOrigin = `https://onesignal.com`;
             if (Environment.isDev()) {
               sendToOrigin = DEV_FRAME_HOST;
             }
             let receiveFromOrigin = sendToOrigin;
-            OneSignal.modalPostmam = new Postmam(iframeModal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
+            OneSignal.modalPostmam = new Postmam(modal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
             OneSignal.modalPostmam.startPostMessageReceive();
 
             return new Promise((resolve, reject) => {
@@ -2096,7 +2106,9 @@ objectAssign(OneSignal, {
   _sessionInitAlreadyRunning: false,
   _isNotificationEnabledCallback: [],
   _subscriptionSet: true,
-  iframePopupModalUrl: null,
+  iframeUrl: null,
+  popupUrl: null,
+  modalUrl: null,
   _sessionIframeAdded: false,
   _windowWidth: 650,
   _windowHeight: 568,

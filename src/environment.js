@@ -25,13 +25,16 @@ export default class Environment {
     else {
       // If the window is the root top-most level
       if (window === window.top) {
-        if (contains(location.href, "initOneSignal"))
+        if (contains(location.href, "initOneSignal") ||
+            (location.pathname === '/subscribe' && location.search === ''))
           return Environment.POPUP;
         else
           return Environment.HOST;
       }
-      else
+      else if (location.pathname === '/webPushIframe' ||
+               location.pathname === '/webPushModal') {
         return Environment.IFRAME;
+      }
     }
   }
 

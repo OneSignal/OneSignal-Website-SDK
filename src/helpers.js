@@ -334,14 +334,47 @@ export default class Helpers {
     return promptOptionsStr;
   }
 
+  static getPromptOptionsPostHash() {
+    let promptOptions = OneSignal.config['promptOptions'];
+    if (promptOptions) {
+      var legacyParams = {
+        'exampleNotificationTitleDesktop': 'exampleNotificationTitle',
+        'exampleNotificationMessageDesktop': 'exampleNotificationMessage',
+        'exampleNotificationTitleMobile': 'exampleNotificationTitle',
+        'exampleNotificationMessageMobile': 'exampleNotificationMessage',
+      };
+      for (let legacyParamKey of Object.keys(legacyParams)) {
+        let legacyParamValue = legacyParams[legacyParamKey];
+        if (promptOptions[legacyParamKey]) {
+          promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
+        }
+      }
+      var allowedPromptOptions = [
+        'siteName',
+        'actionMessage',
+        'exampleNotificationTitle',
+        'exampleNotificationMessage',
+        'exampleNotificationCaption',
+        'acceptButtonText',
+        'cancelButtonText'
+      ];
+      var hash = {};
+      for (var i = 0; i < allowedPromptOptions.length; i++) {
+        var key = allowedPromptOptions[i];
+        var value = promptOptions[key];
+        var encoded_value = encodeURIComponent(value);
+        if (value || value === false || value === '') {
+          hash[key] = encoded_value;
+        }
+      }
+    }
+    return hash;
+  }
+
   static triggerCustomPromptClicked(clickResult) {
     Event.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
       result: clickResult
     });
-  }
-
-  static saveAppId() {
-
   }
 
   static autoCorrectSubdomain(inputSubdomain) {
@@ -382,7 +415,15 @@ export default class Helpers {
     return iframe;
   }
 
-  static openSubdomainPopup(url) {
+  // Arguments :
+  //  verb : 'GET'|'POST'
+  //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
+  static openWindowViaPost(url, data) {
+    var form = document.createElement("form");
+    form.action = url;
+    form.method = 'POST';
+    form.target = "onesignal-http-popup";
+
     var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;
     var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;
     var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
@@ -391,6 +432,22 @@ export default class Helpers {
     var childHeight = OneSignal._windowHeight;
     var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
     var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
-    return window.open(url, "_blank", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
+    window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
+
+    if (data) {
+      for (var key in data) {
+        var input = document.createElement("textarea");
+        input.name = key;
+        input.value = typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key];
+        form.appendChild(input);
+      }
+    }
+    form.style.display = 'none';
+    document.body.appendChild(form);
+    form.submit();
+  };
+
+  static openSubdomainPopup(url, data) {
+    Helpers.openWindowViaPost(url, data);
   }
 }
