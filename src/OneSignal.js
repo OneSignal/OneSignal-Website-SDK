@@ -547,41 +547,45 @@ export default class OneSignal {
      - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
      */
     return Promise.all([
+                         OneSignal.getNotificationPermission(),
                          OneSignal.isPushNotificationsEnabled(),
                          OneSignal.getSubscription()
                        ])
-                  .then(([isEnabled, notOptedOut]) => {
+                  .then(([permission, isEnabled, notOptedOut]) => {
+                    if (permission === 'denied') {
+                      log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
+                      return;
+                    }
                     if (isEnabled) {
                       log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
+                      return;
                     }
                     if (!notOptedOut) {
                       log.debug('OneSignal: Not showing popover because the user was manually opted out.');
+                      return;
                     }
                     if (!OneSignal.isUsingSubscriptionWorkaround()) {
                       log.debug('OneSignal: Not showing popover because this is not an HTTP site.');
+                      return;
                     }
-                    if (!isEnabled &&
-                        notOptedOut &&
-                        OneSignal.isUsingSubscriptionWorkaround()) {
-                      OneSignalHelpers.markHttpPopoverShown();
-                      OneSignal.popover = new Popover(OneSignal.config.popover);
-                      OneSignal.popover.create();
-                      if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
-                        OneSignal.notifyButton.launcher.waitUntilShown()
-                                 .then(() => {
-                                   OneSignal.notifyButton.launcher.hide();
-                                 });
+                    OneSignalHelpers.markHttpPopoverShown();
+                    OneSignal.popover = new Popover(OneSignal.config.popover);
+                    OneSignal.popover.create();
+                    if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
+                      OneSignal.notifyButton.launcher.waitUntilShown()
+                               .then(() => {
+                                 OneSignal.notifyButton.launcher.hide();
+                               });
+                    }
+                    OneSignal.on(Popover.EVENTS.CLOSED, () => {
+                      if (OneSignal.notifyButton) {
+                        OneSignal.notifyButton.launcher.show();
                       }
-                      OneSignal.on(Popover.EVENTS.CLOSED, () => {
-                        if (OneSignal.notifyButton) {
-                          OneSignal.notifyButton.launcher.show();
-                        }
-                      });
-                      OneSignal.on(Popover.EVENTS.ALLOW_CLICK, () => {
-                        OneSignal.popover.close();
-                        OneSignal.registerForPushNotifications({autoAccept: true});
-                      });
-                    }
+                    });
+                    OneSignal.on(Popover.EVENTS.ALLOW_CLICK, () => {
+                      OneSignal.popover.close();
+                      OneSignal.registerForPushNotifications({autoAccept: true});
+                    });
                   });
   }
 
