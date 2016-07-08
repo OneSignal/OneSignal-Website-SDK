@@ -136,7 +136,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.inactive)
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      OneSignal.oncew(ActiveAnimatedElement.EVENTS.INACTIVE, (event) => {
+      OneSignal.once(ActiveAnimatedElement.EVENTS.INACTIVE, (event) => {
         if (event === this) {
           return resolve(this);
         }

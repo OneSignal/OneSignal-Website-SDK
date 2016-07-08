@@ -1,12 +1,8 @@
 $popover-transition-duration: 400ms;
 $border-radius: 2px;
 
-@font-face {
-  font-family: 'Roboto';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Roboto'), local('Roboto-Regular'), url(https://fonts.gstatic.com/l/font?kit=Tc9Dk7UP-O5wKOy5yWA_gPzT3HLlM0olb3Jp1hLG85RGzn8iC_SrKQsTfHpL0EAc6KvBi6nAuhqz2DjzQt0A0w&skey=a0a0114a1dcab3ac&v=v15) format('woff2');
-}
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
 #onesignal-popover-container {
   font-size: 14px;
   position: fixed;

@@ -1045,7 +1045,7 @@ must be opened as a result of a subscription call.</span>`);
     }
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
-    else { // TODO &&
+    else {
       if (OneSignal.config.autoRegister !== true) {
         log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
       }
