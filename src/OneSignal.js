@@ -903,21 +903,19 @@ must be opened as a result of a subscription call.</span>`);
     let receiveFromOrigin = sendToOrigin;
     let handshakeNonce = OneSignal._sessionNonce;
     let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-    let popupUrl = `${OneSignal.popupUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup&parentHostname=${encodeURIComponent(location.hostname)}`;
-    if (dangerouslyWipeData) {
-      popupUrl += '&dangerouslyWipeData=true';
-    }
+    let postData = objectAssign({}, OneSignalHelpers.getPromptOptionsPostHash(), {
+      session: handshakeNonce,
+      promptType: 'popup',
+      parentHostname: encodeURIComponent(location.hostname)
+    });
     if (options && options.autoAccept) {
-      popupUrl += '&autoAccept=true'
+      postData['autoAccept'] = true;
     }
-    log.info('Opening popup window:', popupUrl);
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(
-        `${DEV_FRAME_HOST}/subscribe`,
-        objectAssign({}, OneSignalHelpers.getPromptOptionsPostHash(), {
-          session: handshakeNonce,
-          promptType: 'popup',
-          parentHostname: encodeURIComponent(location.hostname)
-        }));
+    if (dangerouslyWipeData) {
+      postData['dangerouslyWipeData'] = true;
+    }
+    log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData);
 
     if (subdomainPopup)
       subdomainPopup.focus();

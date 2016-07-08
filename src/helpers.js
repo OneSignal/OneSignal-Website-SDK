@@ -301,34 +301,10 @@ export default class Helpers {
     let promptOptions = OneSignal.config['promptOptions'];
     let promptOptionsStr = '';
     if (promptOptions) {
-      var legacyParams = {
-        'exampleNotificationTitleDesktop': 'exampleNotificationTitle',
-        'exampleNotificationMessageDesktop': 'exampleNotificationMessage',
-        'exampleNotificationTitleMobile': 'exampleNotificationTitle',
-        'exampleNotificationMessageMobile': 'exampleNotificationMessage',
-      };
-      for (let legacyParamKey of Object.keys(legacyParams)) {
-        let legacyParamValue = legacyParams[legacyParamKey];
-        if (promptOptions[legacyParamKey]) {
-          promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
-        }
-      }
-      var allowedPromptOptions = [
-        'siteName',
-        'actionMessage',
-        'exampleNotificationTitle',
-        'exampleNotificationMessage',
-        'exampleNotificationCaption',
-        'acceptButtonText',
-        'cancelButtonText'
-      ];
-      for (var i = 0; i < allowedPromptOptions.length; i++) {
-        var key = allowedPromptOptions[i];
-        var value = promptOptions[key];
-        var encoded_value = encodeURIComponent(value);
-        if (value || value === false || value === '') {
-          promptOptionsStr += '&' + key + '=' + encoded_value;
-        }
+      let hash = Helpers.getPromptOptionsPostHash();
+      for (let key of Object.keys(hash)) {
+        var value = hash[key];
+        promptOptionsStr += '&' + key + '=' + value;
       }
     }
     return promptOptionsStr;
