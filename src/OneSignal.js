@@ -19,50 +19,8 @@ import OneSignalHelpers from './helpers.js';
 import Popover from './popover/popover';
 
 
-import StackTraceGPS from 'stacktrace-gps';
-import StackTrace from 'stacktrace-js';
-
-
 
 export default class OneSignal {
-
-  /**
-   * Given a JavaScript error object, returns a more precise error using source maps.
-   */
-  static captureError(e) {
-    if (typeof(e) === 'string') {
-      // This is not an actual Error object, so just return t he error
-      return Promise.resolve(e);
-    }
-    return StackTrace.fromError(e)
-                     .then(stackFrame => {
-                       stackFrame = stackFrame[0];
-                       let gps = new StackTraceGPS();
-                       if (stackFrame.fileName) {
-                         stackFrame.fileName = stackFrame.fileName.replace('https://127.0.0.1:3001/', location.origin + '/');
-                       }
-                       if (stackFrame.source) {
-                         stackFrame.source = stackFrame.source.replace('https://127.0.0.1:3001/', location.origin + '/');
-                       }
-                       return gps.pinpoint(stackFrame);
-                     })
-                     .then(detailedError => {
-                       if (detailedError.fileName) {
-                         detailedError.fileName = detailedError.fileName.replace('webpack:///', 'webpack:///./');
-                       }
-                       return `${e.name}: ${e.message} @ ${detailedError.fileName}:${detailedError.lineNumber}:${detailedError.columnNumber}`;
-                     })
-                     .catch(x => {
-                       if (!Utils.recursiveDepth) {
-                         Utils.recursiveDepth = 0;
-                       }
-                       if (Utils.recursiveDepth < 3) {
-                         Utils.recursiveDepth++;
-                         return OneSignal.captureError(x);
-                       }
-                     });
-  }
-
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @publiclySupportedApi
@@ -538,7 +496,7 @@ export default class OneSignal {
         }
       })
       .catch(function (e) {
-        OneSignal.captureError(e).then(e  => console.error(e));
+        log.error(e);
       });
   }
 
