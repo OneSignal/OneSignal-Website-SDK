@@ -16,10 +16,11 @@ import heir from 'heir';
 import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
+import Popover from './popover/popover';
+
 
 
 export default class OneSignal {
-
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @publiclySupportedApi
@@ -269,7 +270,7 @@ export default class OneSignal {
   static init(options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
-    if (Environment.isBrowser() && window.localStorage["onesignal.debugger.init"])
+    if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.init"])
       debugger;
 
     if (OneSignal._initCalled) {
@@ -301,25 +302,30 @@ export default class OneSignal {
       }
       OneSignalHelpers.fixWordpressManifestIfMisplaced();
 
-      OneSignal.iframePopupModalUrlRoute = 'sdks';
-      OneSignal.iframePopupModalUrlSuffix = '';
-
       if (OneSignal.isUsingSubscriptionWorkaround()) {
         if (OneSignal.config.subdomainName) {
           OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
         } else {
-          log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'), '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
+          log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'),
+                    '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
         }
-        if (Environment.isDev())
-          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
-        else
-          OneSignal.iframePopupModalUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttp${OneSignal.iframePopupModalUrlSuffix}`;
+
+        if (Environment.isDev()) {
+          OneSignal.iframeUrl = `${DEV_FRAME_HOST}/webPushIframe`;
+          OneSignal.popupUrl = `${DEV_FRAME_HOST}/subscribe`;
+        }
+        else {
+          OneSignal.iframeUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/webPushIframe`;
+          OneSignal.popupUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/subscribe`;
+        }
       } else {
-        if (Environment.isDev())
-          OneSignal.iframePopupModalUrl = `${DEV_FRAME_HOST}/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
-        else
-          OneSignal.iframePopupModalUrl = `https://onesignal.com/${OneSignal.iframePopupModalUrlRoute}/initOneSignalHttps${OneSignal.iframePopupModalUrlSuffix}`;
+        if (Environment.isDev()) {
+          OneSignal.modalUrl = `${DEV_FRAME_HOST}/webPushModal`;
+        } else {
+          OneSignal.modalUrl = `https://onesignal.com/webPushModal`;
+        }
       }
+
 
       let subdomainPromise = Promise.resolve();
       if (OneSignal.isUsingSubscriptionWorkaround()) {
@@ -494,6 +500,76 @@ export default class OneSignal {
       });
   }
 
+  /**
+   * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
+   */
+  static showHttpPrompt() {
+    /*
+     Only show the HTTP popover if:
+     - Notifications aren't already enabled
+     - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
+     */
+    if (OneSignal.__isPopoverShowing) {
+      log.debug('OneSignal: Not showing popover because it is currently being shown.');
+      return 'popover-already-shown';
+    }
+    return Promise.all([
+                         OneSignal.getNotificationPermission(),
+                         OneSignal.isPushNotificationsEnabled(),
+                         OneSignal.getSubscription(),
+                         Database.get('Options', 'popoverDoNotPrompt')
+                       ])
+                  .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
+                    if (doNotPrompt === true) {
+                      log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
+                      return 'popover-previously-dismissed';
+                    }
+                    if (permission === 'denied') {
+                      log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
+                      return 'notification-permission-blocked';
+                    }
+                    if (isEnabled) {
+                      log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
+                      return 'user-already-subscribed';
+                    }
+                    if (!notOptedOut) {
+                      log.debug('OneSignal: Not showing popover because the user was manually opted out.');
+                      return 'user-intentionally-unsubscribed';
+                    }
+                    if (!OneSignal.isUsingSubscriptionWorkaround()) {
+                      log.debug('OneSignal: Not showing popover because this is not an HTTP site.');
+                      return 'invalid-environment';
+                    }
+                    OneSignalHelpers.markHttpPopoverShown();
+                    OneSignal.popover = new Popover(OneSignal.config.promptOptions);
+                    OneSignal.popover.create();
+                    log.debug('Showing the HTTP popover.');
+                    if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
+                      OneSignal.notifyButton.launcher.waitUntilShown()
+                               .then(() => {
+                                 OneSignal.notifyButton.launcher.hide();
+                               });
+                    }
+                    OneSignal.once(Popover.EVENTS.SHOWN, () => {
+                      OneSignal.__isPopoverShowing = true;
+                    });
+                    OneSignal.once(Popover.EVENTS.CLOSED, () => {
+                      OneSignal.__isPopoverShowing = false;
+                      if (OneSignal.notifyButton) {
+                        OneSignal.notifyButton.launcher.show();
+                      }
+                    });
+                    OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
+                      OneSignal.popover.close();
+                      OneSignal.registerForPushNotifications({autoAccept: true});
+                    });
+                    OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
+                      log.debug("Setting flag to not show the popover to the user again.");
+                      Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
+                    });
+                  });
+  }
+
   static registerForPushNotifications(options) {
     if (!isPushNotificationsSupportedAndWarn()) {
       return;
@@ -503,7 +579,7 @@ export default class OneSignal {
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
       if (OneSignal.isUsingSubscriptionWorkaround()) {
-        OneSignal.loadPopup();
+        OneSignal.loadPopup(options);
       } else {
         if (!options)
           options = {};
@@ -523,7 +599,7 @@ export default class OneSignal {
   static _initHttp(options) {
     log.debug(`Called %c_initHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
-    if (Environment.isBrowser() && window.localStorage["onesignal.debugger.inithttp"]) {
+    if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.inithttp"]) {
       debugger;
     }
 
@@ -534,7 +610,8 @@ export default class OneSignal {
     var creator = opener || parent;
 
     if (creator == window) {
-      log.debug('This page was not opened from a parent window. This page is intended to be loaded as an iFrame in an HTTP site.');
+      document.write(`<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and 
+must be opened as a result of a subscription call.</span>`);
       return;
     }
 
@@ -544,8 +621,8 @@ export default class OneSignal {
 
     let sendToOrigin = options.origin;
     let receiveFromOrigin = options.origin;
-    let handshakeNonce = getUrlQueryParam('session');
-    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData');
+    let handshakeNonce = getUrlQueryParam('session') || window.__POSTDATA['session'];
+    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData']);
 
     let preinitializePromise = Promise.resolve();
     if (shouldWipeData && Environment.isIframe()) {
@@ -741,10 +818,8 @@ export default class OneSignal {
     let subdomainLoadPromise = new Promise((resolve, reject) => {
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
-      // TODO: Previously, '?session=true' added to the iFrame's URL meant this was not a new tab (same page refresh) and that the HTTP iFrame should not re-register the service worker. Now that is gone, find an alternative way to do that.
-
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-      let iframeUrl = `${OneSignal.iframePopupModalUrl}Iframe?session=${OneSignal._sessionNonce}`;
+      let iframeUrl = `${OneSignal.iframeUrl}?session=${OneSignal._sessionNonce}`;
       if (dangerouslyWipeData) {
         iframeUrl += '&dangerouslyWipeData=true';
       }
@@ -816,10 +891,10 @@ export default class OneSignal {
       OneSignal._sessionIframeAdded = true;
     });
     return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000)
-             .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframePopupModalUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
+             .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframeUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
   }
 
-  static loadPopup() {
+  static loadPopup(options) {
     // Important: Don't use any promises until the window is opened, otherwise the popup will be blocked
     let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
     if (Environment.isDev()) {
@@ -828,12 +903,19 @@ export default class OneSignal {
     let receiveFromOrigin = sendToOrigin;
     let handshakeNonce = OneSignal._sessionNonce;
     let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-    let popupUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&session=${handshakeNonce}&promptType=popup`;
-    if (dangerouslyWipeData) {
-      popupUrl += '&dangerouslyWipeData=true';
+    let postData = objectAssign({}, OneSignalHelpers.getPromptOptionsPostHash(), {
+      session: handshakeNonce,
+      promptType: 'popup',
+      parentHostname: encodeURIComponent(location.hostname)
+    });
+    if (options && options.autoAccept) {
+      postData['autoAccept'] = true;
     }
-    log.info('Opening popup window:', popupUrl);
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(popupUrl);
+    if (dangerouslyWipeData) {
+      postData['dangerouslyWipeData'] = true;
+    }
+    log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData);
 
     if (subdomainPopup)
       subdomainPopup.focus();
@@ -921,16 +1003,16 @@ export default class OneSignal {
             OneSignal.getNotificationPermission()
           ])
           .then(([appId, isPushEnabled, notificationPermission]) => {
-            let iframeModalUrl = `${OneSignal.iframePopupModalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
-            log.info('Opening HTTPS modal prompt:', iframeModalUrl);
-            let iframeModal = OneSignalHelpers.createSubscriptionDomModal(iframeModalUrl);
+            let modalUrl = `${OneSignal.modalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
+            log.info('Opening HTTPS modal prompt:', modalUrl);
+            let modal = OneSignalHelpers.createSubscriptionDomModal(modalUrl);
 
             let sendToOrigin = `https://onesignal.com`;
             if (Environment.isDev()) {
               sendToOrigin = DEV_FRAME_HOST;
             }
             let receiveFromOrigin = sendToOrigin;
-            OneSignal.modalPostmam = new Postmam(iframeModal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
+            OneSignal.modalPostmam = new Postmam(modal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
             OneSignal.modalPostmam.startPostMessageReceive();
 
             return new Promise((resolve, reject) => {
@@ -963,6 +1045,17 @@ export default class OneSignal {
     }
     else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
       OneSignal._registerForW3CPush(options);
+    else {
+      if (OneSignal.config.autoRegister !== true) {
+        log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
+      }
+      if (OneSignalHelpers.isHttpPromptAlreadyShown()) {
+        log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
+      }
+      if ((OneSignal.config.autoRegister === true) && !OneSignalHelpers.isHttpPromptAlreadyShown()) {
+        OneSignal.showHttpPrompt();
+      }
+    }
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
@@ -1320,6 +1413,7 @@ export default class OneSignal {
     })
       .then(() => {
         log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+        Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
         return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
       })
       .then(function (subscription) {
@@ -1964,13 +2058,16 @@ objectAssign(OneSignal, {
   _defaultLaunchURL: null,
   config: null,
   _thisIsThePopup: false,
+  __isPopoverShowing: false,
   _sessionInitAlreadyRunning: false,
   _isNotificationEnabledCallback: [],
   _subscriptionSet: true,
-  iframePopupModalUrl: null,
+  iframeUrl: null,
+  popupUrl: null,
+  modalUrl: null,
   _sessionIframeAdded: false,
-  _windowWidth: 550,
-  _windowHeight: 480,
+  _windowWidth: 650,
+  _windowHeight: 568,
   _isNewVisitor: false,
   _channel: null,
   initialized: false,
@@ -1980,6 +2077,7 @@ objectAssign(OneSignal, {
   database: Database,
   event: Event,
   browser: Browser,
+  popover: null,
   log: log,
   swivel: swivel,
   api: OneSignalApi,
@@ -2070,7 +2168,13 @@ objectAssign(OneSignal, {
     /**
      * Occurs as the HTTP popup is closing.
      */
-    POPUP_CLOSING: 'popupClose'
+    POPUP_CLOSING: 'popupClose',
+    /**
+     * Occurs when the native permission prompt is displayed.
+     * This is currently used to know when to display the HTTP popup incognito notice so that it hides the notice
+     * for non-incognito users.
+     */
+    PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplayed',
   },
 
   NOTIFICATION_TYPES: {

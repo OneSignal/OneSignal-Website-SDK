@@ -86,7 +86,7 @@ export default class Postmam {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
-    //console.log(`(Postmam) (${Environment.getEnv()}):`, e);
+    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emit('connect');

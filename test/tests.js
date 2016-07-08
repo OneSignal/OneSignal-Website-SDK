@@ -148,7 +148,7 @@ describe('Web SDK Tests', function() {
     });
 
     describe('HTTPS Modal Popup', function() {
-       it('should be able to subscribe via HTTPS modal prompt successfully', function() {
+       it('should be able to subscribe via HTTPS modal popup successfully', function() {
            return new SoloTest(this.test, {}, () => {
                if (location.protocol === 'https:') {
                    return Utils.initialize({

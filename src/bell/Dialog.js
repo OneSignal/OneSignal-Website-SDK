@@ -4,6 +4,7 @@ import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
 import * as Browser from 'bowser';
 import Bell from './bell.js';
+import Helpers from '../helpers';
 import { HOST_URL } from '../vars.js';
 
 
@@ -23,33 +24,6 @@ export default class Dialog extends AnimatedElement {
       else if (event.target === document.querySelector(this.unsubscribeButtonId))
         Event.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK);
     });
-  }
-
-  getNotificationIcons() {
-    return OneSignal.getAppId()
-      .then(appId => {
-        if (!appId) {
-          return Promise.reject(null);
-        } else {
-          let url = `${OneSignal._API_URL}apps/${appId}/icon`;
-          return url;
-        }
-      }, () => {
-        log.debug('No app ID, not getting notification icon for notify button.');
-        return;
-      })
-      .then(url => fetch(url))
-      .then(response => response.json())
-      .then(data => {
-        if (data.errors) {
-          log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
-          reject(null);
-        }
-        return data;
-      })
-      .catch(function (ex) {
-        log.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
-      })
   }
 
   getPlatformNotificationIcon() {

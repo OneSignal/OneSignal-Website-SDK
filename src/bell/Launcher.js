@@ -101,7 +101,6 @@ export default class Launcher extends ActiveAnimatedElement {
     if (this.bell.badge.content.length > 0) {
       return this.bell.badge.hide()
         .then(() => Promise.all([super.activate(), this.resize(this.bell.options.size)]))
-        .then(() => this.bell.badge.show())
         .catch((e) => log.error(e))
     }
     else {

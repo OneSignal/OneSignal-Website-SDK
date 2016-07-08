@@ -1,0 +1,309 @@
+$popover-transition-duration: 400ms;
+$border-radius: 2px;
+
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
+#onesignal-popover-container {
+  font-size: 14px;
+  position: fixed;
+  z-index: 2258594000;
+  left: 0;
+  right: 0;
+
+  &.slide-down {
+    top: 0;
+
+    &.close-popover {
+      #onesignal-popover-dialog {
+        -webkit-animation-name: slideDownExit;
+        -webkit-animation-iteration-count: 1;
+        -webkit-animation-timing-function: ease-out;
+        -webkit-animation-duration: $popover-transition-duration;
+        -webkit-animation-fill-mode: forwards;
+        animation-name: slideDownExit;
+        animation-iteration-count: 1;
+        animation-timing-function: ease-out;
+        animation-duration: $popover-transition-duration;
+        animation-fill-mode: forwards;
+      }
+    }
+
+    #onesignal-popover-dialog {
+      width: 500px;
+
+      -webkit-animation-name: slideDownEnter;
+      -webkit-animation-iteration-count: 1;
+      -webkit-animation-timing-function: ease-out;
+      -webkit-animation-duration: $popover-transition-duration;
+      -webkit-animation-fill-mode: forwards;
+      animation-name: slideDownEnter;
+      animation-iteration-count: 1;
+      animation-timing-function: ease-out;
+      animation-duration: $popover-transition-duration;
+      animation-fill-mode: forwards;
+
+      &.blocked-dialog {
+        #blocked-popover {
+          display: block;
+        }
+        #normal-popover {
+          display: none;
+        }
+        .popover-body-message {
+          padding: 0 0.2em 0 0.2em;
+          text-align: center;
+          width: 100%;
+          img {
+            width: 100%;
+          }
+
+          .unblock-image {
+            margin: 2em 0 0.5em 0;
+          }
+        }
+        padding: 1.714em;
+        width: 612px;
+        margin-bottom: 18px;
+
+        .popover-button.secondary {
+          padding: 0.714em 2em;
+        }
+      }
+    }
+  }
+
+  #blocked-popover {
+    display: none;
+  }
+
+  &.slide-up {
+    bottom: 0;
+
+    &.close-popover {
+      #onesignal-popover-dialog {
+        -webkit-animation-name: slideUpExit;
+        -webkit-animation-iteration-count: 1;
+        -webkit-animation-timing-function: ease-out;
+        -webkit-animation-duration: $popover-transition-duration;
+        -webkit-animation-fill-mode: forwards;
+        animation-name: slideUpExit;
+        animation-iteration-count: 1;
+        animation-timing-function: ease-out;
+        animation-duration: $popover-transition-duration;
+        animation-fill-mode: forwards;
+      }
+    }
+
+    #onesignal-popover-dialog {
+      width: 100%;
+
+      -webkit-animation-name: slideUpEnter;
+      -webkit-animation-iteration-count: 1;
+      -webkit-animation-timing-function: ease-out;
+      -webkit-animation-duration: $popover-transition-duration;
+      -webkit-animation-fill-mode: backwards;
+      animation-name: slideUpEnter;
+      animation-iteration-count: 1;
+      animation-timing-function: ease-out;
+      animation-duration: $popover-transition-duration;
+      animation-fill-mode: backwards;
+    }
+  }
+
+  #onesignal-popover-dialog {
+    box-sizing: border-box;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22);
+    background: white;
+    padding: 1.286em;
+    border-bottom-left-radius: $border-radius;
+    border-bottom-right-radius: $border-radius;
+    font-family: 'Roboto', 'Noto', sans-serif;
+
+    .popover-body {
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    .popover-body-icon {
+      box-sizing: border-box;
+      float: left;
+      width: 80px;
+      height: 80px;
+      background-size: contain;
+      background-position: 0% 0%;
+      background-repeat: no-repeat;
+
+      &.default-icon {
+        background-size: initial;
+        background-position: 50% 0%;
+      }
+    }
+
+    .popover-body-message {
+      box-sizing: border-box;
+      padding: 0 0.2em 0 1.286em;
+      float: left;
+      width: calc(100% - 80px);
+      font-size: 1.143em;
+      line-height: 1.45em;
+      -o-user-select: none;
+      user-select: none;
+      cursor: default;
+      color: #666;
+    }
+
+    button {
+      box-sizing: border-box;
+      display: inline-block;
+      padding: .375rem 1rem;
+      font-size: 0.9625em;
+      font-weight: 400;
+      line-height: 1.5;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border: 1px solid transparent;
+      border-radius: .25rem;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      -webkit-transition: background-color 75ms ease;
+      transition: background-color 75ms ease;
+      margin: 0;
+    }
+
+    .popover-button {
+      padding: 0.714em 2em;
+      font-size: 1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      font-weight: 400;
+
+      &.primary {
+        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
+        background: #4285F4;
+        color: white;
+
+        &:hover {
+          background: darken(#4285F4, 7.5%);
+        }
+
+        &:active {
+          background: darken(#4285F4, 15%);
+        }
+      }
+
+      &.secondary {
+        box-shadow: none;
+        background: white;
+        color: #4285F4;
+
+        &:hover {
+          color: darken(#4285F4, 12.5%);
+        }
+
+        &:active {
+          color: darken(#4285F4, 30.5%);
+        }
+      }
+    }
+
+    .primary.popover-button+.secondary.popover-button {
+      margin-right: 0.714em;
+    }
+
+    .popover-footer {
+      position: relative;
+      margin: 0.25em 0.25em 0 0;
+    }
+
+    .align-right {
+      float: right;
+    }
+
+    .clearfix {
+      display: block;
+    }
+    .clearfix:after {
+      content: '';
+      display: block;
+      height: 0;
+      clear: both;
+      visibility: hidden;
+    }
+  }
+}
+
+@-webkit-keyframes slideDownEnter {
+  0% {
+    -webkit-transform: translateY(-150%);
+  }
+  100% {
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes slideDownEnter {
+  0% {
+    transform: translateY(-150%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes slideDownExit {
+  0% {
+    -webkit-transform: translateY(0%);
+  }
+  100% {
+    -webkit-transform: translateY(-150%);
+  }
+}
+@keyframes slideDownExit {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-150%);
+  }
+}
+
+@-webkit-keyframes slideUpEnter {
+  0% {
+    -webkit-transform: translateY(150%);
+  }
+  100% {
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes slideUpEnter {
+  0% {
+    transform: translateY(150%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes slideUpExit {
+  0% {
+    -webkit-transform: translateY(0%);
+  }
+  100% {
+    -webkit-transform: translateY(150%);
+  }
+}
+@keyframes slideUpExit {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(150%);
+  }
+}

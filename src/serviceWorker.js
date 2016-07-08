@@ -233,7 +233,7 @@ class ServiceWorker {
           for (let client of windowClients) {
             // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
             if (client.frameType && client.frameType === 'nested') {
-              // Subdomain iFrames point to 'https://subdomain.onesignal.com/initOneSignalHttpiFrame...'
+              // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
               if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
                   !contains(client.url, '.onesignal.com')) {
                   continue;
