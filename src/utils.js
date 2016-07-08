@@ -39,8 +39,8 @@ export function isPushNotificationsSupported () {
   if (Browser.msedge || Browser.msie)
     return false;
 
-  /* Firefox on Android push notifications not supported until at least 47/48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
-  if (Browser.firefox && Number(Browser.version) < 47 && (Browser.mobile || Browser.tablet)) {
+  /* Firefox on Android push notifications not supported until at least 48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
+  if (Browser.firefox && Number(Browser.version) < 48 && (Browser.mobile || Browser.tablet)) {
     return false;
   }
 
