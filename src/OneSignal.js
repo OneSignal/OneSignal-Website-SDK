@@ -7,6 +7,7 @@ import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Bell from "./bell/bell.js";
+import Cookie from 'js-cookie';
 import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb } from './utils.js';
@@ -214,7 +215,7 @@ export default class OneSignal {
            For sites that omit autoRegister, autoRegister is assumed to be true. For Safari, the session count
            and last active is updated from this registration call.
            */
-          OneSignal._sessionInit({});
+          OneSignal._sessionInit({__sdkCall: true});
         }
       });
     }
@@ -485,14 +486,14 @@ export default class OneSignal {
             once(document, 'visibilitychange', (e, destroyEventListener) => {
               if (document.visibilityState === 'visible') {
                 destroyEventListener();
-                OneSignal._sessionInit({});
+                OneSignal._sessionInit({__sdkCall: true});
               }
             }, true);
             return;
           }
 
           log.debug('Calling _sessionInit() normally from _internalInit().');
-          OneSignal._sessionInit({});
+          OneSignal._sessionInit({__sdkCall: true});
         }
       })
       .catch(function (e) {
@@ -1045,8 +1046,17 @@ must be opened as a result of a subscription call.</span>`);
             });
           });
     }
-    else if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround()) // If HTTPS - Show native prompt
-      OneSignal._registerForW3CPush(options);
+    else if ('serviceWorker' in navigator &&
+             !OneSignal.isUsingSubscriptionWorkaround()) { // If HTTPS - Show native prompt
+      if (options.__sdkCall && !OneSignalHelpers.wasHttpsNativePromptDismissed()) {
+        OneSignal._registerForW3CPush(options);
+      } else if (options.__sdkCall && OneSignalHelpers.wasHttpsNativePromptDismissed()) {
+        log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
+        OneSignal._sessionInitAlreadyRunning = false;
+      } else {
+        OneSignal._registerForW3CPush(options);
+      }
+    }
     else {
       if (OneSignal.config.autoRegister !== true) {
         log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
@@ -1510,6 +1520,7 @@ must be opened as a result of a subscription call.</span>`);
           if (permission === 'default') {
             // The user clicked 'X'
             OneSignal.triggerNotificationPermissionChanged(true);
+            OneSignalHelpers.markHttpsNativePromptDismissed();
           }
 
           if (!OneSignal._usingNativePermissionHook)
@@ -2072,6 +2083,7 @@ objectAssign(OneSignal, {
   _windowHeight: 568,
   _isNewVisitor: false,
   _channel: null,
+  cookie: Cookie,
   initialized: false,
   notifyButton: null,
   store: LimitStore,

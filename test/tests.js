@@ -170,6 +170,53 @@ describe('Web SDK Tests', function() {
        });
     });
 
+    /**
+     * This test simulates the X close button on the prompt.
+     */
+    describe('HTTPS Native Permission Popup', function() {
+        it('should only show once per browser session', function() {
+            if (location.protocol === 'https:') {
+                return new MultiStepSoloTest(this.test, {}, async(step, gotoStep) => {
+                    if (step === 'first') {
+                        OneSignal.helpers.unmarkHttpsNativePromptDismissed();
+                        await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
+                        OneSignal.init({
+                                           autoRegister: true
+                                       });
+                        try {
+                            await Utils.expectEvent('permissionPromptDisplay', 5000);
+                            // Simulate the X close popup
+                            OneSignal.helpers.markHttpsNativePromptDismissed();
+                            return gotoStep('2');
+                        } catch (e) {
+                            console.error(e);
+                            throw e;
+                        }
+                    } else if (step === '2') {
+                        await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
+                        OneSignal.init({
+                                           autoRegister: true
+                                       });
+
+                        try {
+                            // We actually do NOT want this event (if we get it the test fails)
+                            await Utils.expectEvent('permissionPromptDisplay', 2000);
+                            throw "test-failed-prompt-displayed";
+                        } catch (e) {
+                            if (e === "test-failed-prompt-displayed") {
+                                throw new Error("The test failed because the permission prompt was displayed" +
+                                                " twice in the same session.");
+                            } else {
+                                console.error(e);
+                            }
+                            await Extension.setNotificationPermission(`${location.origin}/*`, 'allow');
+                        }
+                    }
+                });
+            }
+        });
+    });
+
     describe('Tags', function () {
         var sentTags, expectedTags, expectedTagsUnsent, tagsToCheckDeepEqual;
 
@@ -372,7 +419,8 @@ describe('Web SDK Tests', function() {
     });
 
     describe('Server-Sided State Changes', function () {
-        it('should register a new user ID if user is deleted from OneSignal dashboard and opens a new site session', function () {
+        it('should register a new user ID if user is deleted from OneSignal dashboard and opens a new site' +
+              ' session', function () {
             return new MultiStepSoloTest(this.test, {}, (step, gotoStep) => {
                 let tagValue = guid();
 

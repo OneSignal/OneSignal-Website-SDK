@@ -14,6 +14,7 @@ import heir from 'heir';
 import swivel from 'swivel';
 import OneSignal from './OneSignal';
 import Postmam from './postmam.js';
+import Cookie from 'js-cookie';
 
 
 export default class Helpers {
@@ -62,6 +63,7 @@ export default class Helpers {
    * a message back to the host to also start a browsing session.
    */
   static beginTemporaryBrowserSession() {
+    log.debug('OneSignal: Marking browser session as continuing.');
     sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
     if (Environment.isPopup()) {
       // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
@@ -71,6 +73,33 @@ export default class Helpers {
       }
       OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
     }
+  }
+
+  /**
+   * Creates a session cookie to note that the user does not want to be disturbed for the rest of the browser session.
+   */
+  static markHttpsNativePromptDismissed() {
+    log.debug('OneSignal: User dismissed the native notification prompt; storing flag.')
+    return Cookie.set('onesignal-notification-prompt', 'dismissed');
+  }
+
+  /**
+   * Just for debugging purposes, removes the coookie from hiding the native prompt.
+   * @returns {*}
+     */
+  static unmarkHttpsNativePromptDismissed() {
+    if (Cookie.remove('onesignal-notification-prompt')) {
+      log.debug('OneSignal: Removed the native notification prompt dismissed cookie.')
+    } else {
+      log.debug('OneSignal: Cookie not marked.');
+    }
+  }
+
+  /**
+   * Returns true if a session cookie exists for noting the user dismissed the native prompt.
+   */
+  static wasHttpsNativePromptDismissed() {
+    return Cookie.get('onesignal-notification-prompt') === 'dismissed';
   }
 
   /**

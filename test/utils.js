@@ -94,17 +94,22 @@ export default class Utils {
      * @param options Use 'autoRegister' or 'welcomeNotification'.
      */
     static initialize(options) {
+        let setNotificationPermission = 'allow';
         if (!options) {
             options = {};
         }
+        if (options.notificationPermission) {
+            setNotificationPermission = options.notificationPermission;
+        }
         return Promise.all([
                 // Wipe database and force allow notifications permission for current site origin
-                Extension.setNotificationPermission(`${location.origin}/*`, 'allow'),
+                Extension.setNotificationPermission(`${location.origin}/*`, setNotificationPermission),
                 // Also allow popup permissions (only for HTTP, but doesn't hurt to enable for HTTPS)
                 Extension.setPopupPermission(`${location.origin}/*`, 'allow'),
                 // Only for HTTPS: Wipes the IndexedDB on the current site origin
                 options.dontWipeData ? null : Utils.wipeIndexedDb(),
-                options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe()
+                options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe(),
+                options.dontWipeData ? null : OneSignal.helpers.unmarkHttpsNativePromptDismissed()
             ])
             .then(() => {
                 console.log('Test Initialize: Stage 1');
