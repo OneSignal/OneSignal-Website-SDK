@@ -119,10 +119,22 @@ export default class Popover {
     getPlatformNotificationIcon() {
         if (this.notificationIcons) {
             if (Browser.chrome || Browser.firefox) {
-                return this.notificationIcons.chrome || this.notificationIcons.safari;
+                if (this.notificationIcons.chrome) {
+                    return this.notificationIcons.chrome;
+                } else if (this.notificationIcons.firefox) {
+                    return this.notificationIcons.firefox;
+                } else {
+                    return 'default-icon';
+                }
             }
             else if (Browser.safari) {
-                return this.notificationIcons.safari || this.notificationIcons.chrome;
+                if (this.notificationIcons.safari) {
+                    return this.notificationIcons.safari;
+                } else if (this.notificationIcons.chrome) {
+                    return this.notificationIcons.chrome;
+                } else {
+                    return 'default-icon';
+                }
             }
         }
         else return 'default-icon';

@@ -1,7 +1,7 @@
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
-import {PLAYER_ID, USER_AUTH_KEY} from './vars.js';
+import {APP_ID, PLAYER_ID, USER_AUTH_KEY} from './vars.js';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';
 import Utils from './utils';
@@ -181,6 +181,7 @@ describe('Web SDK Tests', function() {
                         OneSignal.helpers.unmarkHttpsNativePromptDismissed();
                         await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
                         OneSignal.init({
+                                           appId: APP_ID,
                                            autoRegister: true
                                        });
                         try {
@@ -195,6 +196,7 @@ describe('Web SDK Tests', function() {
                     } else if (step === '2') {
                         await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
                         OneSignal.init({
+                                           appId: APP_ID,
                                            autoRegister: true
                                        });
 
