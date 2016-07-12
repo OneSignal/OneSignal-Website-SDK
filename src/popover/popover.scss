@@ -1,8 +1,6 @@
 $popover-transition-duration: 400ms;
 $border-radius: 2px;
 
-@import url(https://fonts.googleapis.com/css?family=Roboto);
-
 #onesignal-popover-container {
   font-size: 14px;
   position: fixed;
@@ -119,7 +117,7 @@ $border-radius: 2px;
     padding: 1.286em;
     border-bottom-left-radius: $border-radius;
     border-bottom-right-radius: $border-radius;
-    font-family: 'Roboto', 'Noto', sans-serif;
+    font-family: 'Roboto', 'Noto', Helvetica Neue, Helvetica, Arial, sans-serif;
 
     .popover-body {
       box-sizing: border-box;
