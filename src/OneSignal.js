@@ -807,7 +807,9 @@ must be opened as a result of a subscription call.</span>`);
         return Promise.all([
           Database.put("Ids", {type: "appId", id: appId}),
           Database.put("Options", {key: "pageTitle", value: document.title})
-        ]);
+        ]).then(() => {
+          log.info(`OneSignal: Set pageTitle to be '${document.title}'.`);
+        });
       });
   }
 
@@ -2174,7 +2176,7 @@ objectAssign(OneSignal, {
      * This is currently used to know when to display the HTTP popup incognito notice so that it hides the notice
      * for non-incognito users.
      */
-    PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplayed',
+    PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
   },
 
   NOTIFICATION_TYPES: {
