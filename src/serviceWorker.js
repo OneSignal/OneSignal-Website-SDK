@@ -589,7 +589,7 @@ class ServiceWorker {
     return new Promise((resolve, reject) => {
       Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
         .then(([defaultTitle, pageTitle]) => {
-          if (defaultTitle) {
+          if (defaultTitle !== null) {
             resolve(defaultTitle);
           }
           else if (pageTitle != null) {
