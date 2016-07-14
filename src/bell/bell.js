@@ -6,6 +6,7 @@ import * as Browser from 'bowser';
 import { HOST_URL } from '../vars.js';
 import AnimatedElement from './AnimatedElement.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
+import Database from '../database';
 import Helpers from '../helpers';
 import Launcher from './Launcher.js';
 import Badge from './Badge.js';
@@ -381,9 +382,10 @@ export default class Bell {
 
     Promise.all([
                   OneSignal.isPushNotificationsEnabled(),
-                  OneSignal.getSubscription()
+                  OneSignal.getSubscription(),
+                  Database.get('Options', 'popoverDoNotPrompt')
                 ])
-    .then(([isPushEnabled, notOptedOut]) => {
+    .then(([isPushEnabled, notOptedOut, doNotPrompt]) => {
       // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
       let resizeTo = (isPushEnabled ? 'small' : this.options.size);
       // Add default classes
@@ -421,6 +423,7 @@ export default class Bell {
           .then(() => {
             if (OneSignal.isUsingSubscriptionWorkaround() &&
                 notOptedOut &&
+                doNotPrompt !== true &&
                 !isPushEnabled &&
                 (OneSignal.config.autoRegister === true) &&
                 !Helpers.isHttpPromptAlreadyShown()) {
