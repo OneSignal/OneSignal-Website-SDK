@@ -537,10 +537,6 @@ export default class OneSignal {
                       log.debug('OneSignal: Not showing popover because the user was manually opted out.');
                       return 'user-intentionally-unsubscribed';
                     }
-                    if (!OneSignal.isUsingSubscriptionWorkaround()) {
-                      log.debug('OneSignal: Not showing popover because this is not an HTTP site.');
-                      return 'invalid-environment';
-                    }
                     OneSignalHelpers.markHttpPopoverShown();
                     OneSignal.popover = new Popover(OneSignal.config.promptOptions);
                     OneSignal.popover.create();
