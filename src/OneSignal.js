@@ -1765,22 +1765,39 @@ must be opened as a result of a subscription call.</span>`);
       return false;
     }
 
+    function isServiceWorkerRegistrationActive(serviceWorkerRegistration) {
+      return serviceWorkerRegistration.active &&
+             serviceWorkerRegistration.active.state === 'activated' &&
+             (contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKWorker') ||
+              contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKUpdaterWorker'));
+    }
+
     return new Promise((resolve, reject) => {
       if (!OneSignal.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
         let isServiceWorkerActive = false;
-        navigator.serviceWorker.getRegistrations().then(serviceWorkerRegistrations => {
-          for (let serviceWorkerRegistration of serviceWorkerRegistrations) {
-            if (serviceWorkerRegistration.active &&
-              serviceWorkerRegistration.active.state === 'activated' &&
-              (contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKWorker') || contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKUpdaterWorker'))) {
+        if (navigator.serviceWorker.getRegistrations) {
+          navigator.serviceWorker.getRegistrations().then(serviceWorkerRegistrations => {
+            for (let serviceWorkerRegistration of serviceWorkerRegistrations) {
+              if (isServiceWorkerRegistrationActive(serviceWorkerRegistration)) {
+                isServiceWorkerActive = true;
+              }
+            }
+            if (callback) {
+              callback(isServiceWorkerActive)
+            }
+            resolve(isServiceWorkerActive);
+          });
+        } else {
+          navigator.serviceWorker.ready.then(serviceWorkerRegistration => {
+            if (isServiceWorkerRegistrationActive(serviceWorkerRegistration)) {
               isServiceWorkerActive = true;
             }
-          }
-          if (callback) {
-            callback(isServiceWorkerActive)
-          }
-          resolve(isServiceWorkerActive);
-        });
+            if (callback) {
+              callback(isServiceWorkerActive)
+            }
+            resolve(isServiceWorkerActive);
+          });
+        }
       } else {
         if (callback) {
           callback(false)
