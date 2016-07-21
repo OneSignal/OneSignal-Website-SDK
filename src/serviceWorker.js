@@ -280,6 +280,46 @@ class ServiceWorker {
   }
 
   /**
+   * Given an image URL, returns a proxied HTTPS image using the https://images.weserv.nl service.
+   * For a null image, returns null so that no icon is displayed.
+   * If the image origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
+   * @param imageUrl An HTTP or HTTPS image URL.
+   */
+  static ensureImageResourceHttps(imageUrl) {
+    if (imageUrl) {
+      try {
+        let parsedImageUrl = new URL(imageUrl);
+        if (parsedImageUrl.hostname === 'localhost' ||
+            contains(parsedImageUrl.hostname, '192.168')) {
+          return imageUrl;
+        }
+      } catch (e) { }
+      /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
+      let replacedImageUrl = imageUrl.replace(/https:\/\//, 'ssl:')
+                                     .replace(/http:\/\//, '');
+      return `https://images.weserv.nl/?url=${encodeURIComponent(replacedImageUrl)}`;
+    } else return null;
+  }
+
+  /**
+   * Given a structured notification object, HTTPS-ifies the notification icon and action button icons, if they exist.
+   */
+  static ensureNotificationResourcesHttps(notification) {
+    if (notification) {
+      if (notification.icon) {
+        notification.icon = ServiceWorker.ensureImageResourceHttps(notification.icon);
+      }
+      if (notification.buttons && notification.buttons.length > 0) {
+        for (let button of notification.buttons) {
+          if (button.icon) {
+            button.icon = ServiceWorker.ensureImageResourceHttps(button.icon);
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Actually displays a visible notification to the user.
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
@@ -307,6 +347,8 @@ class ServiceWorker {
           if (!overrides)
             overrides = {};
           notification = objectAssign(notification, overrides);
+
+          ServiceWorker.ensureNotificationResourcesHttps(notification);
 
           return self.registration.showNotification(
               notification.heading,
