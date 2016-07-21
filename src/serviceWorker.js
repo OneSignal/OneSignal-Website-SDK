@@ -141,10 +141,9 @@ class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => ServiceWorker.updateBackupNotification(notif))
-                      .then(() => swivel.broadcast('notification.displayed', notif));
+                      .then(() => swivel.broadcast('notification.displayed', notif))
+                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif))
                 }).bind(null, notification));
-                notificationEventPromiseFns.push((notif => ServiceWorker.executeWebhooks('notification.displayed', notif))
-                    .bind(null, notification));
               }
 
               return notificationEventPromiseFns.reduce((p, fn) => {
@@ -214,6 +213,9 @@ class ServiceWorker {
           log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${url}`, getConsoleStyle('code'), ':', postData);
           return fetch(url, fetchOptions);
         }
+      })
+      .catch(e => {
+        log.error('Error executing webhook:', e);
       });
   }
 
