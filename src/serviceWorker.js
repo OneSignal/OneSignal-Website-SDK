@@ -228,7 +228,7 @@ class ServiceWorker {
    * @returns {Promise}
    */
   static getActiveClients() {
-    return self.clients.matchAll({type: 'window'})
+    return self.clients.matchAll({type: 'window', includeUncontrolled: true})
         .then(windowClients => {
           let activeClients = [];
 
@@ -237,7 +237,7 @@ class ServiceWorker {
             if (client.frameType && client.frameType === 'nested') {
               // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
               if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
-                  !contains(client.url, '.onesignal.com')) {
+                   !Environment.isDev() && !contains(client.url, '.onesignal.com')) {
                   continue;
               }
               // Indicates this window client is an HTTP subdomain iFrame

@@ -734,7 +734,7 @@ describe('Web SDK Tests', function() {
                                                            id: notificationId,
                                                            heading: 'OneSignal Test Message',
                                                            content: 'This is an example notification.',
-                                                           icon: iconUrl,
+                                                           icon: Utils.ensureImageResourceHttps(iconUrl),
                                                            url: `${location.origin}?_osp=do_not_open`
                                                        });
                 await Utils.wait(150);
@@ -772,7 +772,7 @@ describe('Web SDK Tests', function() {
                                                   heading: 'OneSignal Test Message',
                                                   content: 'This is an example notification.',
                                                   url: `${location.origin}?_osp=do_not_open`,
-                                                  icon: iconUrl
+                                                  icon: Utils.ensureImageResourceHttps(iconUrl)
                                               });
                 await Utils.wait(150);
                 await OneSignal.closeNotifications();

@@ -295,12 +295,13 @@ export default class Helpers {
   }
 
   static establishServiceWorkerChannel(serviceWorkerRegistration) {
+    log.debug('OneSignal: Attempting to establish a service worker channel...');
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
       OneSignal._channel.off('notification.displayed');
       OneSignal._channel.off('notification.clicked');
     }
-    OneSignal._channel = swivel.at(serviceWorkerRegistration.active);
+    OneSignal._channel = swivel.at(serviceWorkerRegistration ? serviceWorkerRegistration.active : null);
     OneSignal._channel.on('data', function handler(context, data) {
       log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });

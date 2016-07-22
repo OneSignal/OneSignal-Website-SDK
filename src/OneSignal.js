@@ -737,15 +737,11 @@ must be opened as a result of a subscription call.</span>`);
                   //}
 
                   if (navigator.serviceWorker && window.location.protocol === 'https:') {
-                    navigator.serviceWorker.ready
-                        .then(registration => {
-                          if (registration && registration.active) {
-                            OneSignalHelpers.establishServiceWorkerChannel(registration);
-                          }
-                        })
-                        .catch(e => {
-                          log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
-                        });
+                    try {
+                      OneSignalHelpers.establishServiceWorkerChannel();
+                    } catch (e) {
+                      log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
+                    }
                   }
 
                   message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);

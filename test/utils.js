@@ -54,6 +54,28 @@ export default class Utils {
     }
 
     /**
+     * Given an image URL, returns a proxied HTTPS image using the https://images.weserv.nl service.
+     * For a null image, returns null so that no icon is displayed.
+     * If the image origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
+     * @param imageUrl An HTTP or HTTPS image URL.
+     */
+    static ensureImageResourceHttps(imageUrl) {
+        if (imageUrl) {
+            try {
+                let parsedImageUrl = new URL(imageUrl);
+                if (parsedImageUrl.hostname === 'localhost' ||
+                    contains(parsedImageUrl.hostname, '192.168')) {
+                    return imageUrl;
+                }
+            } catch (e) { }
+            /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
+            let replacedImageUrl = imageUrl.replace(/https:\/\//, 'ssl:')
+                                           .replace(/http:\/\//, '');
+            return `https://images.weserv.nl/?url=${encodeURIComponent(replacedImageUrl)}`;
+        } else return null;
+    }
+
+    /**
      * Wipe OneSignal-related IndexedDB data.
      */
     static wipeIndexedDb() {
@@ -214,7 +236,7 @@ export default class Utils {
 
     static expectEvent(eventName, timeout) {
         if (!timeout) {
-            timeout = 10000;
+            timeout = 25000;
         }
         return executeAndTimeoutPromiseAfter(new Promise(resolve => {
             OneSignal.once(eventName, resolve);
