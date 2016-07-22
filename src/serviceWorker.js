@@ -130,7 +130,13 @@ class ServiceWorker {
     event.waitUntil(
         ServiceWorker.retrieveNotifications()
             .then(notifications => {
-              // Display push notifications in the order we received them
+              if (!notifications || notifications.length == 0) {
+                log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
+                          " long as it isn't the welcome notification.");
+                return ServiceWorker.displayBackupNotification();
+              }
+
+              //Display push notifications in the order we received them
               let notificationEventPromiseFns = [];
 
               for (let rawNotification of notifications) {
@@ -148,18 +154,19 @@ class ServiceWorker {
 
               return notificationEventPromiseFns.reduce((p, fn) => {
                 return p = p.then(fn);
-              }, Promise.resolve());
+               }, Promise.resolve());
             })
             .catch(e => {
               log.debug('Failed to display a notification:', e);
               if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
                 log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
               } else {
-                log.debug("Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+                log.debug(
+                    "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
                 return ServiceWorker.displayBackupNotification();
               }
             })
-    );
+    )
   }
 
   /**
@@ -340,7 +347,7 @@ class ServiceWorker {
         ])
         .then(([defaultTitle, defaultIcon, persistNotification, appId]) => {
           notification.heading = notification.heading ? notification.heading : defaultTitle;
-          notification.icon = notification.icon ? notification.icon : defaultIcon;
+          notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
           var extra = {};
           extra.tag = `${appId}`;
           extra.persistNotification = persistNotification;
@@ -352,43 +359,42 @@ class ServiceWorker {
 
           ServiceWorker.ensureNotificationResourcesHttps(notification);
 
-          return self.registration.showNotification(
-              notification.heading,
-              {
-                body: notification.content,
-                icon: notification.icon,
-                /*
-                 On Chrome 44+, use this property to store extra information which you can read back when the
-                 notification gets invoked from a notification click or dismissed event. We serialize the
-                 notification in the 'data' field and read it back in other events. See:
-                 https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
-                 */
-                data: notification,
-                /*
-                 On Chrome 48+, action buttons show below the message body of the notification. Clicking either
-                 button takes the user to a link. See:
-                 https://developers.google.com/web/updates/2016/01/notification-actions
-                 */
-                actions: notification.buttons,
-                /*
-                 Tags are any string value that groups notifications together. Two or notifications sharing a tag
-                 replace each other.
-                 */
-                tag: extra.tag,
-                /*
-                 On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
-                 is set to true. See:
-                 https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
-                 */
-                requireInteraction: extra.persistNotification,
-                /*
-                 On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
-                 vibrate/signal the user that a new notification has come in. This flag allows subsequent
-                 notifications to re-alert the user. See:
-                 https://developers.google.com/web/updates/2016/03/notifications
-                 */
-                renotify: true
-              })
+          let notificationOptions = {
+            body: notification.content,
+            icon: notification.icon,
+            /*
+             On Chrome 44+, use this property to store extra information which you can read back when the
+             notification gets invoked from a notification click or dismissed event. We serialize the
+             notification in the 'data' field and read it back in other events. See:
+             https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
+             */
+            data: notification,
+            /*
+             On Chrome 48+, action buttons show below the message body of the notification. Clicking either
+             button takes the user to a link. See:
+             https://developers.google.com/web/updates/2016/01/notification-actions
+             */
+            actions: notification.buttons,
+            /*
+             Tags are any string value that groups notifications together. Two or notifications sharing a tag
+             replace each other.
+             */
+            tag: extra.tag,
+            /*
+             On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
+             is set to true. See:
+             https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
+             */
+            requireInteraction: extra.persistNotification,
+            /*
+             On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
+             vibrate/signal the user that a new notification has come in. This flag allows subsequent
+             notifications to re-alert the user. See:
+             https://developers.google.com/web/updates/2016/03/notifications
+             */
+            renotify: true
+          };
+          return self.registration.showNotification(notification.heading, notificationOptions)
         });
   }
 
@@ -425,7 +431,7 @@ class ServiceWorker {
             return ServiceWorker.displayNotification(backupNotification, overrides);
           } else {
             return ServiceWorker.displayNotification({
-              body: 'You have new updates.'
+              content: 'You have new updates.'
             }, overrides);
           }
         });
