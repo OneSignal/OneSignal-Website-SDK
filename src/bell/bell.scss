@@ -69,6 +69,7 @@ $sizes: (
 
     .onesignal-bell-launcher {
         @include unselectable();
+        -webkit-font-smoothing: initial;
         position: absolute;
         z-index: 2147483000;
         font-family: $font-sans-serif;
