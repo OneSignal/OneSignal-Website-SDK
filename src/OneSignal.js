@@ -1418,66 +1418,88 @@ must be opened as a result of a subscription call.</span>`);
       .then(() => {
         log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
         Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-        return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
+        /*
+            7/29/16: If the user dismisses the prompt, the prompt cannot be shown again via pushManager.subscribe()
+            See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
+            Our solution is to call Notification.requestPermission(), and then call
+             pushManager.subscribe(). Because notification and push permissions are shared, the subesequent call to
+             pushManager.subscribe() will go through successfully.
+         */
+        return OneSignalHelpers.requestNotificationPermissionPromise();
+      })
+      .then(permission => {
+        if (permission !== "granted") {
+          throw new Error("User did not grant push permission to allow notifications.");
+        } else {
+          return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true})
+        }
       })
       .then(function (subscription) {
-        log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+        /*
+         7/29/16: New bug, even if the user dismisses the prompt, they'll be given a subscription
+         See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
+         Our solution is simply to check the permission before actually subscribing the user.
+         */
+        log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`,
+                  getConsoleStyle('code'));
         // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
         OneSignal._sessionInitAlreadyRunning = false;
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
 
         OneSignal.getAppId()
-          .then(appId => {
-            log.debug("Finished subscribing for push via pushManager.subscribe().");
+                 .then(appId => {
+                   log.debug("Finished subscribing for push via pushManager.subscribe().");
 
-            var subscriptionInfo = {};
-            if (subscription) {
-              if (typeof subscription.subscriptionId != "undefined") {
-                // Chrome 43 & 42
-                subscriptionInfo.endpointOrToken = subscription.subscriptionId;
-              }
-              else {
-                // Chrome 44+ and FireFox
-                // 4/13/16: We now store the full endpoint instead of just the registration token
-                subscriptionInfo.endpointOrToken = subscription.endpoint;
-              }
+                   var subscriptionInfo = {};
+                   if (subscription) {
+                     if (typeof subscription.subscriptionId != "undefined") {
+                       // Chrome 43 & 42
+                       subscriptionInfo.endpointOrToken = subscription.subscriptionId;
+                     }
+                     else {
+                       // Chrome 44+ and FireFox
+                       // 4/13/16: We now store the full endpoint instead of just the registration token
+                       subscriptionInfo.endpointOrToken = subscription.endpoint;
+                     }
 
-              // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
-              if (subscription.getKey) {
-                // p256dh and auth are both ArrayBuffer
-                let p256dh = null;
-                try {
-                  p256dh = subscription.getKey('p256dh');
-                } catch (e) {
-                  // User is most likely running < Chrome < 50
-                }
-                let auth = null;
-                try {
-                  auth = subscription.getKey('auth');
-                } catch (e) {
-                  // User is most likely running < Firefox 45
-                }
+                     // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
+                     if (subscription.getKey) {
+                       // p256dh and auth are both ArrayBuffer
+                       let p256dh = null;
+                       try {
+                         p256dh = subscription.getKey('p256dh');
+                       } catch (e) {
+                         // User is most likely running < Chrome < 50
+                       }
+                       let auth = null;
+                       try {
+                         auth = subscription.getKey('auth');
+                       } catch (e) {
+                         // User is most likely running < Firefox 45
+                       }
 
-                if (p256dh) {
-                  // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-                  let p256dh_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh)));
-                  subscriptionInfo.p256dh = p256dh_base64encoded;
-                }
-                if (auth) {
-                  // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-                  let auth_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(auth)));
-                  subscriptionInfo.auth = auth_base64encoded;
-                }
-              }
-            }
-            else
-              log.warn('Could not subscribe your browser for push notifications.');
+                       if (p256dh) {
+                         // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                         let p256dh_base64encoded = btoa(
+                             String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+                         subscriptionInfo.p256dh = p256dh_base64encoded;
+                       }
+                       if (auth) {
+                         // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                         let auth_base64encoded = btoa(
+                             String.fromCharCode.apply(null, new Uint8Array(auth)));
+                         subscriptionInfo.auth = auth_base64encoded;
+                       }
+                     }
+                   }
+                   else
+                     log.warn('Could not subscribe your browser for push notifications.');
 
-            OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
-          })
-          .catch(function (e) {
-            log.error(e);
-          });
+                   OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
+                 })
+                 .catch(function (e) {
+                   log.error(e);
+                 });
       })
       .catch(function (e) {
         OneSignal._sessionInitAlreadyRunning = false;

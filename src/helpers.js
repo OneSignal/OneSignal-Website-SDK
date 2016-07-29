@@ -267,6 +267,14 @@ export default class Helpers {
       });
   }
 
+  /**
+   * Calls Notification.requestPermission(), but returns a Promise instead of accepting a callback like the a ctual
+   * Notification.requestPermission();
+   */
+  static requestNotificationPermissionPromise() {
+    return new Promise(resolve => Notification.requestPermission(resolve));
+  }
+
   static getNotificationIcons() {
     return OneSignal.getAppId()
                     .then(appId => {

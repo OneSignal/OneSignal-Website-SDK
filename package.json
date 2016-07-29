@@ -1,7 +1,7 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "109630",
+  "sdkVersion": "109635",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.js",
   "dependencies": {
@@ -93,5 +93,8 @@
   "bugs": {
     "url": "https://github.com/one-signal/OneSignal-Website-SDK/issues"
   },
-  "homepage": "https://github.com/one-signal/OneSignal-Website-SDK"
+  "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
+  "devDependencies": {
+    "webpack": "^1.13.1"
+  }
 }
