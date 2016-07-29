@@ -113,8 +113,8 @@ $border-radius: 2px;
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
-    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22);
-    background: white;
+    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22) !important;
+    background: white !important;
     padding: 1.286em;
     border-bottom-left-radius: $border-radius;
     border-bottom-right-radius: $border-radius;
@@ -150,7 +150,7 @@ $border-radius: 2px;
       -o-user-select: none;
       user-select: none;
       cursor: default;
-      color: #666;
+      color: #666 !important;
     }
 
     button {
@@ -186,8 +186,8 @@ $border-radius: 2px;
 
       &.primary {
         box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
-        background: #4285F4;
-        color: white;
+        background: #4285F4 !important;;
+        color: white !important;
 
         &:hover {
           background: darken(#4285F4, 7.5%);
@@ -200,8 +200,12 @@ $border-radius: 2px;
 
       &.secondary {
         box-shadow: none;
-        background: white;
-        color: #4285F4;
+        background: white !important;
+        /*
+          We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
+          Some sites set their own !important tag for text and we don't want that to be able to override ours.
+         */
+        color: #4285F4 !important;
 
         &:hover {
           color: darken(#4285F4, 12.5%);
