@@ -2134,8 +2134,8 @@ objectAssign(OneSignal, {
   objectAssign: objectAssign,
   checkAndTriggerSubscriptionChanged: OneSignalHelpers.checkAndTriggerSubscriptionChanged,
   sendSelfNotification: OneSignalHelpers.sendSelfNotification,
-  SERVICE_WORKER_UPDATER_PATH: (Environment.isBeta() ? 'OneSignalSDKBetaUpdaterWorker.js' : 'OneSignalSDKUpdaterWorker.js'),
-  SERVICE_WORKER_PATH: (Environment.isBeta() ? 'OneSignalSDKBetaWorker.js' : 'OneSignalSDKWorker.js'),
+  SERVICE_WORKER_UPDATER_PATH: 'OneSignalSDKUpdaterWorker.js',
+  SERVICE_WORKER_PATH: 'OneSignalSDKWorker.js',
   SERVICE_WORKER_PARAM: {},
 
   POSTMAM_COMMANDS: {
