@@ -814,7 +814,7 @@ must be opened as a result of a subscription call.</span>`);
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-      let iframeUrl = `${OneSignal.iframeUrl}?session=${OneSignal._sessionNonce}`;
+      let iframeUrl = `${OneSignal.iframeUrl}?session=${OneSignal._sessionNonce}&app_id=${OneSignal.config.appId}`;
       if (dangerouslyWipeData) {
         iframeUrl += '&dangerouslyWipeData=true';
       }
