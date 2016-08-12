@@ -399,10 +399,16 @@ export default class Helpers {
     return normalizedSubdomain;
   }
 
-  static createHiddenDomIFrame(url) {
+  static createHiddenDomIFrame(url, name) {
     let node = document.createElement("iframe");
     node.style.display = "none";
+    if (!url) {
+      url = 'about:blank';
+    }
     node.src = url;
+    if (name) {
+      node.name = name;
+    }
     document.body.appendChild(node);
     return node;
   }
@@ -459,7 +465,30 @@ export default class Helpers {
     form.style.display = 'none';
     document.body.appendChild(form);
     form.submit();
+    document.body.removeChild(form);
   };
+
+  static createIframeViaPost(url, data) {
+    var form = document.createElement("form");
+    form.action = url;
+    form.method = 'POST';
+    form.target = "onesignal-http-iframe";
+
+    if (data) {
+      for (var key in data) {
+        var input = document.createElement("textarea");
+        input.name = key;
+        input.value = typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key];
+        form.appendChild(input);
+      }
+    }
+    form.style.display = 'none';
+    document.body.appendChild(form);
+    let iframe = Helpers.createHiddenDomIFrame(null, form.target);
+    form.submit();
+    document.body.removeChild(form);
+    return iframe;
+  }
 
   static openSubdomainPopup(url, data) {
     Helpers.openWindowViaPost(url, data);

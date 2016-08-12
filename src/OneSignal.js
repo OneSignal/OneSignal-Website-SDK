@@ -619,7 +619,7 @@ must be opened as a result of a subscription call.</span>`);
     let sendToOrigin = options.origin;
     let receiveFromOrigin = options.origin;
     let handshakeNonce = getUrlQueryParam('session') || window.__POSTDATA['session'];
-    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData']);
+    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData'] === 'true');
 
     let preinitializePromise = Promise.resolve();
     if (shouldWipeData && Environment.isIframe()) {
@@ -775,7 +775,10 @@ must be opened as a result of a subscription call.</span>`);
   static _initSaveState() {
     return Database.get('Ids', 'appId')
       .then(dbAppId => {
-        if (Environment.isIframe() && dbAppId && dbAppId != OneSignal.config.appId) {
+        if (Environment.isIframe() &&
+            dbAppId &&
+            dbAppId != OneSignal.config.appId &&
+            OneSignal.config.dangerouslyChangeAppId) {
           console.warn(`OneSignal: App ID changed from ${dbAppId} ⤑ ${OneSignal.config.appId}. Wiping IndexedDB and SessionStorage data.`);
           sessionStorage.clear();
           return Database.rebuild()
@@ -814,18 +817,20 @@ must be opened as a result of a subscription call.</span>`);
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-      let iframeUrl = `${OneSignal.iframeUrl}?session=${OneSignal._sessionNonce}&app_id=${OneSignal.config.appId}`;
+      let iframePostData = {
+        session: OneSignal._sessionNonce
+      };
       if (dangerouslyWipeData) {
-        iframeUrl += '&dangerouslyWipeData=true';
+        iframePostData.dangerouslyWipeData = true;
       }
       if (OneSignalHelpers.isContinuingBrowserSession()) {
-        iframeUrl += `&continuingSession=true`;
+        iframePostData.continuingSession = true;
       }
       // 3/30/16: Pass the URL to the iFrame so the service worker knows what the host URL is, and can properly determine notification click logic
       // Must be the last component of the URL
-      iframeUrl += `&hostUrl=${encodeURIComponent(location.href)}`;
-      log.debug('Loading subdomain iFrame:', iframeUrl);
-      let iframe = OneSignalHelpers.createHiddenDomIFrame(iframeUrl);
+      iframePostData.hostUrl = encodeURIComponent(location.href);
+      log.debug('Loading subdomain iFrame:', OneSignal.iframeUrl);
+      let iframe = OneSignalHelpers.createIframeViaPost(OneSignal.iframeUrl, iframePostData);
       iframe.onload = () => {
         let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
         if (Environment.isDev()) {
