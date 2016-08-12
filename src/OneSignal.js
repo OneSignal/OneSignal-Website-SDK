@@ -619,7 +619,7 @@ must be opened as a result of a subscription call.</span>`);
     let sendToOrigin = options.origin;
     let receiveFromOrigin = options.origin;
     let handshakeNonce = getUrlQueryParam('session') || window.__POSTDATA['session'];
-    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData'] === 'true');
+    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData'] === true);
 
     let preinitializePromise = Promise.resolve();
     if (shouldWipeData && Environment.isIframe()) {
