@@ -291,7 +291,7 @@ class ServiceWorker {
   /**
    * Given an image URL, returns a proxied HTTPS image using the https://images.weserv.nl service.
    * For a null image, returns null so that no icon is displayed.
-   * If the image origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
+   * If the image protocol is HTTPS, or origin contains localhost or starts with 192.168.*.*, we do not proxy the image.
    * @param imageUrl An HTTP or HTTPS image URL.
    */
   static ensureImageResourceHttps(imageUrl) {
@@ -299,7 +299,8 @@ class ServiceWorker {
       try {
         let parsedImageUrl = new URL(imageUrl);
         if (parsedImageUrl.hostname === 'localhost' ||
-            contains(parsedImageUrl.hostname, '192.168')) {
+            contains(parsedImageUrl.hostname, '192.168') ||
+            parsedImageUrl.protocol === 'https:') {
           return imageUrl;
         }
       } catch (e) { }
