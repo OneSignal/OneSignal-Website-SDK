@@ -438,7 +438,6 @@ export function wipeServiceWorker() {
   if (Environment.isIframe()) {
     return;
   }
-  debugger;
   if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
     return Promise.resolve();
 

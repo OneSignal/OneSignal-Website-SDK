@@ -25,24 +25,19 @@ export default class Postmam {
    * @param windowReference The window to postMessage() the initial MessageChannel port to.
    * @param sendToOrigin The origin that will receive the initial postMessage with the transferred message channel port object.
    * @param receiveFromOrigin The origin to allow incoming messages from. If messages do not come from this origin they will be discarded. Only affects the initial handshake.
-   * @param handshakeNonce A value sent via URL query params when creating an iFrame or popup to ensure a handshake message is coming from the expected source.
    * @remarks The initiating (client) page must call this after the page has been loaded so that the other page has a chance to receive the initial handshake message. The receiving (server) page must set up a message listener to catch the initial handshake message.
    */
-  constructor(windowReference, sendToOrigin, receiveFromOrigin, handshakeNonce) {
+  constructor(windowReference, sendToOrigin, receiveFromOrigin) {
     if (!window || !window.postMessage) {
       throw new Error('Must pass in a valid window reference supporting postMessage().', windowReference);
     }
     if (!sendToOrigin || !receiveFromOrigin) {
       throw new Error('Invalid origin. Must be set.');
     }
-    if (!handshakeNonce) {
-      throw new Error('Missing handshake nonce.');
-    }
     heir.merge(this, new EventEmitter());
     this.windowReference = windowReference;
     this.sendToOrigin = sendToOrigin;
     this.receiveFromOrigin = receiveFromOrigin;
-    this.handshakeNonce = handshakeNonce;
     this.channel = new MessageChannel();
     this.messagePort = null;
     this.isListening = false;
@@ -86,7 +81,7 @@ export default class Postmam {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
-    //log.debug(`(Postmam) (${Environment.getEnv()}):`, e);
+    //log.debug(`(Postmam) (onWindowPostMessageReceived) (${Environment.getEnv()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emit('connect');
@@ -121,8 +116,8 @@ export default class Postmam {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
-    var { handshake, nonce } = e.data;
-    if (handshake !== Postmam.HANDSHAKE_MESSAGE || nonce !== this.handshakeNonce) {
+    var { handshake } = e.data;
+    if (handshake !== Postmam.HANDSHAKE_MESSAGE) {
       log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
       // This was not our expected handshake message
       return;
@@ -145,13 +140,12 @@ export default class Postmam {
    * @remarks Only call this if listen() is called on another page.
    */
   connect() {
-    log.info(`(Postmam) Establishing a connection to ${this.sendToOrigin}.`);
+    log.info(`(Postmam) (${Environment.getEnv()}) Establishing a connection to ${this.sendToOrigin}.`);
     this.messagePort = this.channel.port1;
     this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
     this.messagePort.start();
     this.windowReference.postMessage({
-      handshake: Postmam.HANDSHAKE_MESSAGE,
-      nonce: this.handshakeNonce
+      handshake: Postmam.HANDSHAKE_MESSAGE
     }, this.sendToOrigin, [this.channel.port2]);
   }
 

@@ -287,7 +287,6 @@ export default class OneSignal {
     if (!isPushNotificationsSupportedAndWarn()) {
       return;
     }
-    OneSignal._sessionNonce = guid();
 
     if (Browser.safari && !OneSignal.config.safari_web_id) {
       log.warn("OneSignal: Required parameter %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), skipping SDK initialization.');
@@ -618,7 +617,6 @@ must be opened as a result of a subscription call.</span>`);
 
     let sendToOrigin = options.origin;
     let receiveFromOrigin = options.origin;
-    let handshakeNonce = getUrlQueryParam('session') || window.__POSTDATA['session'];
     let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData'] === true);
 
     let preinitializePromise = Promise.resolve();
@@ -633,15 +631,15 @@ must be opened as a result of a subscription call.</span>`);
 
     OneSignal._thisIsThePopup = options.isPopup;
     if (Environment.isPopup() || OneSignal._thisIsThePopup) {
-      OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin, handshakeNonce);
+      OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin);
     }
 
     OneSignal._thisIsTheModal = options.isModal;
     if (OneSignal._thisIsTheModal) {
-      OneSignal.modalPostmam = new Postmam(this.parent, sendToOrigin, receiveFromOrigin, handshakeNonce);
+      OneSignal.modalPostmam = new Postmam(this.parent, sendToOrigin, receiveFromOrigin);
     }
 
-    OneSignal.iframePostmam = new Postmam(this.window, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    OneSignal.iframePostmam = new Postmam(this.window, sendToOrigin, receiveFromOrigin);
     OneSignal.iframePostmam.listen();
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, e => {
       log.debug(`(${Environment.getEnv()}) Fired Postmam connect event!`);
@@ -816,15 +814,10 @@ must be opened as a result of a subscription call.</span>`);
     let subdomainLoadPromise = new Promise((resolve, reject) => {
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
+      let iframePostData = {};
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-      let iframePostData = {
-        session: OneSignal._sessionNonce
-      };
       if (dangerouslyWipeData) {
         iframePostData.dangerouslyWipeData = true;
-      }
-      if (OneSignalHelpers.isContinuingBrowserSession()) {
-        iframePostData.continuingSession = true;
       }
       // 3/30/16: Pass the URL to the iFrame so the service worker knows what the host URL is, and can properly determine notification click logic
       // Must be the last component of the URL
@@ -832,13 +825,13 @@ must be opened as a result of a subscription call.</span>`);
       log.debug('Loading subdomain iFrame:', OneSignal.iframeUrl);
       let iframe = OneSignalHelpers.createIframeViaPost(OneSignal.iframeUrl, iframePostData);
       iframe.onload = () => {
+        log.info('iFrame onload event was called for:', iframe.src);
         let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
         if (Environment.isDev()) {
           sendToOrigin = DEV_FRAME_HOST;
         }
         let receiveFromOrigin = sendToOrigin;
-        let handshakeNonce = OneSignal._sessionNonce;
-        OneSignal.iframePostmam = new Postmam(iframe.contentWindow, sendToOrigin, receiveFromOrigin, handshakeNonce);
+        OneSignal.iframePostmam = new Postmam(iframe.contentWindow, sendToOrigin, receiveFromOrigin);
         OneSignal.iframePostmam.connect();
         OneSignal.iframePostmam.on('connect', e => {
           log.debug(`(${Environment.getEnv()}) Fired Postmam connect event!`);
@@ -901,10 +894,8 @@ must be opened as a result of a subscription call.</span>`);
       sendToOrigin = DEV_FRAME_HOST;
     }
     let receiveFromOrigin = sendToOrigin;
-    let handshakeNonce = OneSignal._sessionNonce;
     let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
     let postData = objectAssign({}, OneSignalHelpers.getPromptOptionsPostHash(), {
-      session: handshakeNonce,
       promptType: 'popup',
       parentHostname: encodeURIComponent(location.hostname)
     });
@@ -920,7 +911,7 @@ must be opened as a result of a subscription call.</span>`);
     if (subdomainPopup)
       subdomainPopup.focus();
 
-    OneSignal.popupPostmam = new Postmam(subdomainPopup, sendToOrigin, receiveFromOrigin, handshakeNonce);
+    OneSignal.popupPostmam = new Postmam(subdomainPopup, sendToOrigin, receiveFromOrigin);
     OneSignal.popupPostmam.startPostMessageReceive();
 
     return new Promise((resolve, reject) => {
@@ -1003,7 +994,7 @@ must be opened as a result of a subscription call.</span>`);
             OneSignal.getNotificationPermission()
           ])
           .then(([appId, isPushEnabled, notificationPermission]) => {
-            let modalUrl = `${OneSignal.modalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&session=${OneSignal._sessionNonce}&promptType=modal`;
+            let modalUrl = `${OneSignal.modalUrl}?${OneSignalHelpers.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&promptType=modal`;
             log.info('Opening HTTPS modal prompt:', modalUrl);
             let modal = OneSignalHelpers.createSubscriptionDomModal(modalUrl);
 
@@ -1012,7 +1003,7 @@ must be opened as a result of a subscription call.</span>`);
               sendToOrigin = DEV_FRAME_HOST;
             }
             let receiveFromOrigin = sendToOrigin;
-            OneSignal.modalPostmam = new Postmam(modal, sendToOrigin, receiveFromOrigin, OneSignal._sessionNonce);
+            OneSignal.modalPostmam = new Postmam(modal, sendToOrigin, receiveFromOrigin);
             OneSignal.modalPostmam.startPostMessageReceive();
 
             return new Promise((resolve, reject) => {
@@ -2132,7 +2123,6 @@ objectAssign(OneSignal, {
   swivel: swivel,
   api: OneSignalApi,
   indexedDb: IndexedDb,
-  _sessionNonce: null,
   iframePostmam: null,
   popupPostmam: null,
   helpers: OneSignalHelpers,
