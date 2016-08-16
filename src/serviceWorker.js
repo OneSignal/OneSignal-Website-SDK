@@ -109,6 +109,11 @@ class ServiceWorker {
   static onMessageReceived(context, data) {
     log.debug(`%c${Environment.getEnv().capitalize()} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
 
+    if (!data) {
+      log.debug('Returning from empty data message.');
+      return;
+    }
+
     if (data === 'notification.closeall') {
       // Used for testing; the host page can close active notifications
       self.registration.getNotifications().then(notifications => {
@@ -116,7 +121,46 @@ class ServiceWorker {
           notification.close();
         }
       });
+    } else if (data.query) {
+      ServiceWorker.processQuery(data.query, data.response);
     }
+  }
+
+  static processQuery(queryType, response) {
+    if (!self.queries) {
+      log.warn(`queryClient() was not called before processQuery(). self.queries is empty.`);
+    }
+    if (!self.queries[queryType]) {
+      log.warn(`Received query ${queryType} response ${response}. Expected self.queries to be preset to a hash.`);
+      return;
+    } else {
+      if (!self.queries[queryType].promise) {
+        log.warn(`Expected self.queries[${queryType}].promise value to be a Promise: ${self.queries[queryType]}`);
+        return;
+      }
+      self.queries[queryType].promiseResolve(response);
+    }
+  }
+
+  /**
+   * Messages the service worker client the specified queryString via postMessage(), and returns a Promise that
+   * resolves to the client's response.
+   * @param serviceWorkerClient A service worker client.
+   * @param queryType The message to send to the client.
+     */
+  static queryClient(serviceWorkerClient, queryType) {
+    if (!self.queries) {
+      self.queries = {};
+    }
+    if (!self.queries[queryType]) {
+      self.queries[queryType] = {};
+    }
+    self.queries[queryType].promise = new Promise((resolve, reject) => {
+      self.queries[queryType].promiseResolve = resolve;
+      self.queries[queryType].promiseReject = reject;
+      swivel.emit(serviceWorkerClient.id, queryType);
+    });
+    return self.queries[queryType].promise;
   }
 
   /**
@@ -526,44 +570,45 @@ class ServiceWorker {
           let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
 
           /*
-            Check if we can focus on an existing tab instead of opening a new url.
-            If an existing tab with exactly the same URL already exists, then this existing tab is focused instead of
-            an identical new tab being created. With a special setting, any existing tab matching the origin will
-            be focused instead of an identical new tab being created.
+           Check if we can focus on an existing tab instead of opening a new url.
+           If an existing tab with exactly the same URL already exists, then this existing tab is focused instead of
+           an identical new tab being created. With a special setting, any existing tab matching the origin will
+           be focused instead of an identical new tab being created.
            */
+          let clientUrlPromises = [];
+          let doNotOpenLink = false;
           for (let client of activeClients) {
-            let clientUrl = client.isSubdomainIframe ?
-                decodeURIComponent(substringAfter(client.url, '&hostUrl=')) :
-                client.url;
-            let clientOrigin = new URL(clientUrl).origin;
-            let launchOrigin = null;
-            try {
-              // Check if the launchUrl is valid; it can be null
-              launchOrigin = new URL(launchUrl).origin;
-            } catch (e) {
+            let getClientUrlPromise = null;
+            if (client.isSubdomainIframe) {
+              getClientUrlPromise = ServiceWorker.queryClient(client, 'url');
+            } else {
+              getClientUrlPromise = Promise.resolve(client.url);
             }
+            getClientUrlPromise.then(clientUrl => {
+              let clientOrigin = new URL(clientUrl).origin;
+              let launchOrigin = null;
+              try {
+                // Check if the launchUrl is valid; it can be null
+                launchOrigin = new URL(launchUrl).origin;
+              } catch (e) {
+              }
 
-            if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
-                (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-              client.focus();
-              swivel.emit(client.id, 'notification.clicked', notification);
-              return;
-            }
-          }
-
-          /*
-           addListenerForNotificationOpened() stuff:
-           - A value is stored in IndexedDB, marking this notification's click
-           - If the launchURL isn't one of a couple special "don't open anything" values, a new window is then opened to the launchURL
-           - If the new window opened loads our SDK, it will retrieve the value we just put in the database (in init() for HTTPS and initHttp() for HTTP)
-           - The addListenerForNotificationOpened() will be fired
-           */
-          return Database.put("NotificationOpened", {url: launchUrl, data: notification, timestamp: Date.now()})
-            .then(() => {
-              if (notificationOpensLink) {
-                ServiceWorker.openUrl(launchUrl);
+              if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
+                  (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
+                client.focus();
+                swivel.emit(client.id, 'notification.clicked', notification);
+                doNotOpenLink = true;
               }
             });
+            clientUrlPromises.push(getClientUrlPromise);
+          }
+          return Promise.all(clientUrlPromises)
+                         .then(() => Database.put("NotificationOpened", {url: launchUrl, data: notification, timestamp: Date.now()}))
+                         .then(() => {
+                           if (notificationOpensLink && !doNotOpenLink) {
+                             ServiceWorker.openUrl(launchUrl);
+                           }
+                         });
         })
         .then(() => {
           return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])

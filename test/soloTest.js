@@ -82,6 +82,7 @@ export default class SoloTest {
                 this.pm.destroy();
                 resolve();
             } else {
+                this.pm.destroy();
                 reject(new Error(response));
             }
         });

@@ -814,16 +814,12 @@ must be opened as a result of a subscription call.</span>`);
     let subdomainLoadPromise = new Promise((resolve, reject) => {
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
-      let iframePostData = {};
       let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
       if (dangerouslyWipeData) {
-        iframePostData.dangerouslyWipeData = true;
+        OneSignal.iframeUrl += '?&dangerouslyWipeData=true';
       }
-      // 3/30/16: Pass the URL to the iFrame so the service worker knows what the host URL is, and can properly determine notification click logic
-      // Must be the last component of the URL
-      iframePostData.hostUrl = encodeURIComponent(location.href);
       log.debug('Loading subdomain iFrame:', OneSignal.iframeUrl);
-      let iframe = OneSignalHelpers.createIframeViaPost(OneSignal.iframeUrl, iframePostData);
+      let iframe = OneSignalHelpers.createHiddenDomIFrame(OneSignal.iframeUrl);
       iframe.onload = () => {
         log.info('iFrame onload event was called for:', iframe.src);
         let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
@@ -878,6 +874,10 @@ must be opened as a result of a subscription call.</span>`);
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
           OneSignal._fireTransmittedNotificationClickedCallbacks(message.data);
+          return false;
+        });
+        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, message => {
+          message.reply(location.href);
           return false;
         });
       };
@@ -2153,7 +2153,8 @@ objectAssign(OneSignal, {
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
-    BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession'
+    BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
+    REQUEST_HOST_URL: 'postmam.requestHostUrl',
   },
 
   EVENTS: {

@@ -303,7 +303,7 @@ export default class Helpers {
   }
 
   static establishServiceWorkerChannel(serviceWorkerRegistration) {
-    log.debug('OneSignal: Attempting to establish a service worker channel...');
+    log.debug('OneSignal: Attempting to establish a service worker channel...', serviceWorkerRegistration);
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
       OneSignal._channel.off('notification.displayed');
@@ -321,6 +321,16 @@ export default class Helpers {
         OneSignal._fireTransmittedNotificationClickedCallbacks(data);
       } else if (Environment.isIframe()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, data);
+      }
+    });
+    OneSignal._channel.on('url', function handler(context, data) {
+      // This is only called from the service worker to the iframe
+      OneSignal._channel.setWorker(context.event.source);
+      if (Environment.isIframe()) {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, data);
+        OneSignal.iframePostmam.once(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, message => {
+          OneSignal._channel.emit('data', {query: 'url', response: message.data });
+        });
       }
     });
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
@@ -467,28 +477,6 @@ export default class Helpers {
     form.submit();
     document.body.removeChild(form);
   };
-
-  static createIframeViaPost(url, data) {
-    var form = document.createElement("form");
-    form.action = url;
-    form.method = 'POST';
-    form.target = "onesignal-http-iframe";
-
-    if (data) {
-      for (var key in data) {
-        var input = document.createElement("textarea");
-        input.name = key;
-        input.value = typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key];
-        form.appendChild(input);
-      }
-    }
-    form.style.display = 'none';
-    document.body.appendChild(form);
-    let iframe = Helpers.createHiddenDomIFrame(null, form.target);
-    form.submit();
-    document.body.removeChild(form);
-    return iframe;
-  }
 
   static openSubdomainPopup(url, data) {
     Helpers.openWindowViaPost(url, data);
