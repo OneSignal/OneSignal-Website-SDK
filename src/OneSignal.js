@@ -308,6 +308,7 @@ export default class OneSignal {
         } else {
           log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'),
                     '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
+          return;
         }
 
         if (Environment.isDev()) {
