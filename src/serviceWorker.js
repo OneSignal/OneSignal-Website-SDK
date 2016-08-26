@@ -347,11 +347,10 @@ class ServiceWorker {
             parsedImageUrl.protocol === 'https:') {
           return imageUrl;
         }
+        /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
+        let replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
+        return `https://i0.wp.com/${replacedImageUrl}`;
       } catch (e) { }
-      /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
-      let replacedImageUrl = imageUrl.replace(/https:\/\//, 'ssl:')
-                                     .replace(/http:\/\//, '');
-      return `https://images.weserv.nl/?url=${encodeURIComponent(replacedImageUrl)}`;
     } else return null;
   }
 

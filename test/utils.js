@@ -64,15 +64,14 @@ export default class Utils {
             try {
                 let parsedImageUrl = new URL(imageUrl);
                 if (parsedImageUrl.hostname === 'localhost' ||
-                    parsedImageUrl.hostname.indexOf('192.168') !== -1 ||
+                    contains(parsedImageUrl.hostname, '192.168') ||
                     parsedImageUrl.protocol === 'https:') {
                     return imageUrl;
                 }
-            } catch (e) { console.error('ensureImageResourceHttps:', e); }
-            /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
-            let replacedImageUrl = imageUrl.replace(/https:\/\//, 'ssl:')
-                                           .replace(/http:\/\//, '');
-            return `https://images.weserv.nl/?url=${encodeURIComponent(replacedImageUrl)}`;
+                /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
+                let replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
+                return `https://i0.wp.com/${replacedImageUrl}`;
+            } catch (e) { }
         } else return null;
     }
 
