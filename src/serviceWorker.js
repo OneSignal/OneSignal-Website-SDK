@@ -343,9 +343,17 @@ class ServiceWorker {
       try {
         let parsedImageUrl = new URL(imageUrl);
         if (parsedImageUrl.hostname === 'localhost' ||
-            contains(parsedImageUrl.hostname, '192.168') ||
+            parsedImageUrl.hostname.indexOf('192.168') !== -1 ||
+            parsedImageUrl.hostname === '127.0.0.1' ||
             parsedImageUrl.protocol === 'https:') {
           return imageUrl;
+        }
+        if (parsedImageUrl.hostname === 'i0.wp.com' ||
+            parsedImageUrl.hostname === 'i1.wp.com' ||
+            parsedImageUrl.hostname === 'i2.wp.com' ||
+            parsedImageUrl.hostname === 'i3.wp.com') {
+          /* Their site already uses Jetpack, just make sure Jetpack is HTTPS */
+          return `https://${parsedImageUrl.hostname}${parsedImageUrl.pathname}`
         }
         /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
         let replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;

@@ -779,4 +779,27 @@ describe('Web SDK Tests', function() {
             });
         });
     });
+
+    describe.only('Ensure HTTPS Image Resources', () => {
+        it('should not translate HTTPS URLs', function() {
+            expect(Utils.ensureImageResourceHttps('https://site.com/a.jpg')).to.equal('https://site.com/a.jpg');
+        });
+
+        it('should translate HTTP URLs', function() {
+            expect(Utils.ensureImageResourceHttps('http://site.com/a/b/c/d.jpg')).to.equal('https://i0.wp.com/site.com/a/b/c/d.jpg');
+        });
+
+        it('should translate HTTP URLs except localhost URLs', function() {
+            expect(Utils.ensureImageResourceHttps('http://localhost:3000/a/b/c/d.jpg')).to.equal('http://localhost:3000/a/b/c/d.jpg');
+            expect(Utils.ensureImageResourceHttps('http://192.168.1.201:3000/a/b/c/d.jpg')).to.equal('http://192.168.1.201:3000/a/b/c/d.jpg');
+            expect(Utils.ensureImageResourceHttps('http://127.0.0.1:3000/a/b/c/d.jpg')).to.equal('http://127.0.0.1:3000/a/b/c/d.jpg');
+        });
+
+        it('should translate HTTP URLs except those using Jetpack/Photon', function() {
+            for (var i = 0; i <= 3; i++) {
+                let url = `http://i${i}.wp.com/site.com/wp-content/uploads/2016/08/photo.png`;
+                expect(Utils.ensureImageResourceHttps(url)).to.equal(url.replace('http:', 'https:'));
+            }
+        });
+    });
 });
