@@ -15,7 +15,7 @@ This SDK allows your site's visitors to receive push notifications from you. Sen
 
 ## Getting Started
 
-View our [documentation](https://documentation.onesignal.com/docs/website-sdk-overview) to get started.
+View our [documentation](https://documentation.onesignal.com/docs/web-push-setup) to get started.
 
 Please reference the OneSignal SDK on your webpage via our CDN URL (listed in our setup documentation) instead of copying the source into another file. This is because our SDK updates frequently for new features and bug fixes.
 
