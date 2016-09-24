@@ -306,8 +306,10 @@ export default class OneSignal {
         if (OneSignal.config.subdomainName) {
           OneSignal.config.subdomainName = OneSignalHelpers.autoCorrectSubdomain(OneSignal.config.subdomainName);
         } else {
-          log.error('OneSignal: Missing required init parameter %csubdomainName', getConsoleStyle('code'),
-                    '. Because your site is accessed via HTTP, a subdomain name must be supplied to the SDK initialization options. (See: https://documentation.onesignal.com/docs/website-sdk-http-installation#2-include-and-initialize-onesignal)');
+          log.error('OneSignal: Your JavaScript initialization code is missing a required parameter %csubdomainName',
+                    getConsoleStyle('code'),
+                    '. HTTP sites require this parameter to initialize correctly. Please see steps 1.5 and 2.2 at ' +
+                    'https://documentation.onesignal.com/docs/web-push-sdk-setup-http)');
           return;
         }
 
@@ -1507,18 +1509,33 @@ must be opened as a result of a subscription call.</span>`);
             let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
             let manifestLocation = document.querySelector('link[rel=manifest]').href;
             if (manifestParentTagname !== 'head') {
-              console.warn(`OneSignal: Your manifest %c${manifestHtml}`, getConsoleStyle('code'), `must be referenced in the <head> tag to be detected properly. It is currently referenced in <${manifestParentTagname}>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#3-include-and-initialize-the-sdk)`);
+              console.warn(`OneSignal: Your manifest %c${manifestHtml}`,
+                           getConsoleStyle('code'),
+                           'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
+                           'in <${manifestParentTagname}>. Please see step 3.1 at ' +
+                           'https://documentation.onesignal.com/docs/web-push-sdk-setup-https.');
             } else {
               let manifestLocationOrigin = new URL(manifestLocation).origin;
               let currentOrigin = location.origin;
               if (currentOrigin !== manifestLocationOrigin) {
-                console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is different from the current page's origin of ${currentOrigin}. Please serve your manifest from the same origin as your page's. If you are using a content delivery network (CDN), please add an exception so that the manifest is not served by your CDN. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)`);
+                console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
+                             `different from the current page's origin of ${currentOrigin}. Please serve your ` +
+                             `manifest from the same origin as your page's. If you are using a content delivery ` +
+                             `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
+                             `WordPress users, please see ` +
+                             `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
               } else {
-                console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`, getConsoleStyle('code'), "field is missing or invalid. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+                console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
+                             getConsoleStyle('code'),
+                             "field is missing or invalid, and a valid value is required. Please see step 2 at " +
+                             "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
               }
             }
           } else if (location.protocol === 'https:') {
-            console.warn(`OneSignal: You must reference a %cmanifest.json`, getConsoleStyle('code'), "in <head>. (See: https://documentation.onesignal.com/docs/website-sdk-installation#2-upload-required-files)");
+            console.warn(`OneSignal: You must reference a %cmanifest.json`,
+                         getConsoleStyle('code'),
+                         "in the <head> of your page. Please see step 2 at " +
+                         "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
           }
         } else {
           log.error('Error while subscribing for push:', e);
