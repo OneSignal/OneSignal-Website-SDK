@@ -158,7 +158,7 @@ var DEVICE_TYPES = {
 };
 
 export function getDeviceTypeForBrowser() {
-  if (Browser.chrome || Browser.yandexbrowser) {
+  if (Browser.chrome || Browser.yandexbrowser || Browser.opera) {
     return DEVICE_TYPES.CHROME;
   } else if (Browser.firefox) {
     return DEVICE_TYPES.FIREFOX;
