@@ -1,5 +1,5 @@
 import StackTraceGPS from 'stacktrace-gps';
-import {APP_ID, PLAYER_ID, SUBDOMAIN} from './vars.js';
+import {SUBDOMAIN} from './vars.js';
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import IndexedDb from '../src/indexedDb';
@@ -123,7 +123,7 @@ export default class Utils {
      * Gets the sequence of calls to initialize / subscribe for the HTTP / HTTPS test site.
      * @param options Use 'autoRegister' or 'welcomeNotification'.
      */
-    static initialize(options) {
+    static initialize(globals, options) {
         let setNotificationPermission = 'allow';
         if (!options) {
             options = {};
@@ -149,7 +149,7 @@ export default class Utils {
                     OneSignal.push(function () {
                         OneSignal.LOGGING = true;
                         let initOptions = {
-                            appId: APP_ID,
+                            appId: globals.app.id,
                             autoRegister: options.autoRegister,
                             persistNotification: false,
                             dangerouslyWipeData: true && location.protocol === 'http:' && !options.dontWipeData // Wipes IndexedDB data on popup / iframe initialize for HTTP

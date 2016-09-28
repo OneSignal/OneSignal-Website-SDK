@@ -1,11 +1,16 @@
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
-import {APP_ID, PLAYER_ID, USER_AUTH_KEY} from './vars.js';
+import { USER_AUTH_KEY} from './vars.js';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';
 import Utils from './utils';
-import { executeAndTimeoutPromiseAfter, guid, isPushNotificationsSupported, isPushNotificationsSupportedAndWarn } from '../src/utils';
+import {
+    executeAndTimeoutPromiseAfter,
+    guid,
+    isPushNotificationsSupported,
+    isPushNotificationsSupportedAndWarn
+} from '../src/utils';
 import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
 import Postmam from '../src/postmam.js';
@@ -17,11 +22,12 @@ import isUuid from 'validator/lib/isUuid';
 chai.config.includeStack = false;
 chai.config.showDiff = true;
 chai.config.truncateThreshold = 0;
+chai.config.truncateThreshold = 0;
 var globals = {};
 
-describe('Web SDK Tests', function() {
+describe('Web SDK Tests', function () {
 
-    before(async function() {
+    before(async function () {
         let apps = await OneSignal.api.get(`apps`, null, {
             'Authorization': `Basic ${USER_AUTH_KEY}`
         });
@@ -37,7 +43,7 @@ describe('Web SDK Tests', function() {
     describe('Notifications', function () {
         it('should subscribe and receive a welcome notification successfully', function () {
             return new SoloTest(this.test, {}, async() => {
-                await Utils.initialize({
+                await Utils.initialize(globals, {                                            
                                            welcomeNotification: true,
                                            autoRegister: true
                                        });
@@ -51,7 +57,7 @@ describe('Web SDK Tests', function() {
 
         it('should subscribe and receive a notification successfully', function () {
             return new SoloTest(this.test, {}, async () => {
-                await Utils.initialize({
+                await Utils.initialize(globals, {
                                            welcomeNotification: false,
                                            autoRegister: true
                                        });
@@ -78,7 +84,7 @@ describe('Web SDK Tests', function() {
                     initOptions['dontWipeData'] = true;
                 }
                 if (step === 'first') {
-                    await Utils.initialize({
+                    await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true,
                         useRegisterEvent: true
@@ -151,7 +157,7 @@ describe('Web SDK Tests', function() {
        it('should be able to subscribe via HTTPS modal popup successfully', function() {
            return new SoloTest(this.test, {}, () => {
                if (location.protocol === 'https:') {
-                   return Utils.initialize({
+                   return Utils.initialize(globals, {
                            welcomeNotification: false,
                            autoRegister: false
                        })
@@ -181,7 +187,7 @@ describe('Web SDK Tests', function() {
                         OneSignal.helpers.unmarkHttpsNativePromptDismissed();
                         await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
                         OneSignal.init({
-                                           appId: APP_ID,
+                                           appId: globals.app.id,
                                            autoRegister: true
                                        });
                         try {
@@ -196,7 +202,7 @@ describe('Web SDK Tests', function() {
                     } else if (step === '2') {
                         await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
                         OneSignal.init({
-                                           appId: APP_ID,
+                                           appId: globals.app.id,
                                            autoRegister: true
                                        });
 
@@ -262,7 +268,7 @@ describe('Web SDK Tests', function() {
 
         it('should send, receive, and delete tags successfully', function () {
             return new SoloTest(this.test, {}, () => {
-                return Utils.initialize({
+                return Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
                     })
@@ -295,7 +301,7 @@ describe('Web SDK Tests', function() {
 
         it('should successfully send, receive, and delete tags via callbacks', function () {
             return new SoloTest(this.test, {}, () => {
-                return Utils.initialize({
+                return Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
                     })
@@ -345,7 +351,7 @@ describe('Web SDK Tests', function() {
                 let tagKey = 'string';
                 let tagValue = sentTags[tagKey];
 
-                return Utils.initialize({
+                return Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
                     })
@@ -366,7 +372,7 @@ describe('Web SDK Tests', function() {
 
         it('should return Promise objects', function () {
             return new SoloTest(this.test, {}, () => {
-                return Utils.initialize({
+                return Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
                     })
@@ -389,7 +395,7 @@ describe('Web SDK Tests', function() {
             return new SoloTest(this.test, {}, () => {
                 let tagValue = guid();
 
-                return Utils.initialize({
+                return Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: false
                     })
@@ -427,7 +433,7 @@ describe('Web SDK Tests', function() {
                 let tagValue = guid();
 
                 if (step === 'first') {
-                    return Utils.initialize({
+                    return Utils.initialize(globals, {
                             welcomeNotification: false,
                             autoRegister: true
                         })
@@ -452,7 +458,7 @@ describe('Web SDK Tests', function() {
                             });
                         });
                 } else if (step === 'next') {
-                    return Utils.initialize({
+                    return Utils.initialize(globals, {
                             welcomeNotification: false,
                             autoRegister: true,
                             dontWipeData: true
@@ -483,7 +489,7 @@ describe('Web SDK Tests', function() {
                 let tagValue = guid();
 
                 if (step === 'first') {
-                    return Utils.initialize({
+                    return Utils.initialize(globals, {
                             welcomeNotification: false,
                             autoRegister: true
                         })
@@ -534,7 +540,7 @@ describe('Web SDK Tests', function() {
                             });
                         });
                 } else if (step === 'next') {
-                    return Utils.initialize({
+                    return Utils.initialize(globals, {
                             welcomeNotification: false,
                             autoRegister: true,
                             dontWipeData: true
@@ -674,7 +680,7 @@ describe('Web SDK Tests', function() {
     describe('Notify Button', () => {
         it('should show site icon on notify button popup after initial subscribe', function () {
             return new SoloTest(this.test, {}, async () => {
-                await Utils.initialize({
+                await Utils.initialize(globals, {
                     welcomeNotification: false,
                     autoRegister: false,
                     notifyButton: true
@@ -707,7 +713,7 @@ describe('Web SDK Tests', function() {
             return new SoloTest(this.test, {}, async () => {
                 let subscriptionChangeEventCount = 0;
                 OneSignal.on('subscriptionChange', () => subscriptionChangeEventCount++);
-                await Utils.initialize({
+                await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
                     });
@@ -718,7 +724,7 @@ describe('Web SDK Tests', function() {
 
         it('notification displayed event data should strictly conform to documentation specs', function() {
             return new SoloTest(this.test, {}, async() => {
-                await Utils.initialize({
+                await Utils.initialize(globals, {
                                            welcomeNotification: false,
                                            autoRegister: true
                                        });
@@ -746,7 +752,7 @@ describe('Web SDK Tests', function() {
     describe('Webhooks', () => {
         it('notification displayed webhook payload should strictly conform to documentation specs', function() {
             return new SoloTest(this.test, {}, async() => {
-                await Utils.initialize({
+                await Utils.initialize(globals, {
                                            welcomeNotification: false,
                                            autoRegister: true,
                                            webhooks: true
