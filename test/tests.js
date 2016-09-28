@@ -24,20 +24,23 @@ chai.config.showDiff = true;
 chai.config.truncateThreshold = 0;
 chai.config.truncateThreshold = 0;
 var globals = {};
+window.globals = globals;
 
 describe('Web SDK Tests', function () {
 
     before(async function () {
+        console.log('OneSignal Tests: Starting web SDK tests.');
         let apps = await OneSignal.api.get(`apps`, null, {
             'Authorization': `Basic ${USER_AUTH_KEY}`
         });
         let appName = (location.protocol === 'https:' ? 'California' : 'Washington');
-        console.log('App Name:', appName);
+        console.log('Using app name:', appName);
         for (let app of apps) {
             if (app.name === appName) {
                 globals.app = app;
             }
         }
+        console.log('Finished before() function.');
     });
 
     describe('Notifications', function () {
@@ -102,7 +105,7 @@ describe('Web SDK Tests', function () {
                     }
                     return gotoStep('2');
                 } else if (step === '2') {
-                    await Utils.initialize(initOptions);
+                    await Utils.initialize(globals, initOptions);
                     if (!kind.autoRegister && !options.testFirstPageReload) {
                         await Utils.expectEvent('register');
                     }
@@ -125,7 +128,7 @@ describe('Web SDK Tests', function () {
                         return gotoStep('3');
                     }
                 } else if (step === '3') {
-                    await Utils.initialize(initOptions);
+                    await Utils.initialize(globals, initOptions);
                     if (!kind.autoRegister) {
                         await Utils.expectEvent('register');
                     }
@@ -690,7 +693,8 @@ describe('Web SDK Tests', function () {
                 });
                 let iconUrl = app.chrome_web_default_notification_icon;
                 if (!iconUrl) {
-                    return Promise.reject('This OneSignal test app does not have a default notification icon.');
+                    return Promise.reject('This OneSignal test app does not have a default notification icon. Please' +
+                                          ' set one in your app settings.');
                 }
                 this.test.iconUrl = iconUrl;
                 OneSignal.registerForPushNotifications();
@@ -786,7 +790,7 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe.only('Ensure HTTPS Image Resources', () => {
+    describe('Ensure HTTPS Image Resources', () => {
         it('should not translate HTTPS URLs', function() {
             expect(Utils.ensureImageResourceHttps('https://site.com/a.jpg')).to.equal('https://site.com/a.jpg');
         });

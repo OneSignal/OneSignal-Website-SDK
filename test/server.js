@@ -8,8 +8,8 @@ import fs from 'fs';
 import Sequelize from 'sequelize';
 
 var options = {
-    key: fs.readFileSync('test/server/key.pem'),
-    cert: fs.readFileSync('test/server/cert.pem')
+    key: fs.readFileSync('test/server/keys/key.pem'),
+    cert: fs.readFileSync('test/server/keys/cert.pem')
 };
 
 var app = express();
@@ -82,4 +82,6 @@ router.get('/webhook/:event', function(req, res) {
 app.use('/', router);
 
 https.createServer(options, app).listen(port);
-console.log(`Server listening on 0.0.0.0:${port}`);
+console.log('OnSignal Web SDK Test Server');
+console.log('────────────────────────────');
+console.log(`Server: Listening on 0.0.0.0:${port}...`);

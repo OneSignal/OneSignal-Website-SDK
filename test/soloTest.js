@@ -110,6 +110,15 @@ export default class SoloTest {
      * shown on the main test page as the Promise rejects.
      */
     finishSoloInstance(error) {
+        if (error) {
+            let mochaReportDom = document.querySelector('#mocha-report');
+            mochaReportDom.insertAdjacentHTML('afterend',
+            `
+                <div class='error'>
+                    ${error}
+                </div>
+            `);
+        }
         this.pm.send({
             w: window.opener,
             channel: this.test.title,
