@@ -3,7 +3,7 @@ import Environment from './environment.js'
 import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import Database from './database.js';
-import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
@@ -172,7 +172,7 @@ class ServiceWorker {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
     event.waitUntil(
-        ServiceWorker.retrieveNotifications()
+        ServiceWorker.parseOrFetchNotifications(event)
             .then(notifications => {
               if (!notifications || notifications.length == 0) {
                 log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
@@ -681,10 +681,6 @@ class ServiceWorker {
     event.respondWith(fetch(event.request));
   }
 
-  static get onOurSubdomain() {
-    return __DEV__ || location.href.match(/https:\/\/.*\.onesignal.com\/sdks\//) !== null;
-  }
-
   /**
    * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
    */
@@ -707,6 +703,52 @@ class ServiceWorker {
           reject(e);
         });
     });
+  }
+
+  /**
+   * Returns an array of raw notification objects, either fetched from the server (as from legacy GCM push), or read
+   * from the event.data.payload property (as from the new web push protocol).
+   * @param event
+   * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
+   * an array is returned for backwards compatibility with the rest of the service worker plumbing.
+     */
+  static parseOrFetchNotifications(event) {
+    if (event.data) {
+      const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
+      if (isValidPayload) {
+        return Promise.resolve([event.data.json()]);
+      } else {
+        return Promise.reject('Unexpected push message payload received.', event.data.text());
+        /*
+         We received a push message payload from another service provider or a malformed
+         payload. The last received notification will be displayed.
+         */
+      }
+    }
+    else return ServiceWorker.retrieveNotifications();
+  }
+
+  /**
+   * Returns true if the raw data payload is a OneSignal push message in the format of the new web push protocol.
+   * Otherwise returns false.
+   * @param rawData The raw PushMessageData from the push event's event.data, not already parsed to JSON.
+   */
+  static isValidPushPayload(rawData) {
+    try {
+      const payload = rawData.json();
+      if (payload &&
+          payload.custom &&
+          payload.custom.i &&
+          isValidUuid(payload.custom.i)) {
+        return true;
+      } else {
+        log.debug('isValidPushPayload: Valid JSON but missing notification UUID:', payload);
+        return false;
+      }
+    } catch (e) {
+      log.debug('isValidPushPayload: Parsing to JSON failed with:', e);
+      return false;
+    }
   }
 
   /**
