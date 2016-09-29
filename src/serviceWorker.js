@@ -716,6 +716,7 @@ class ServiceWorker {
     if (event.data) {
       const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
       if (isValidPayload) {
+        log.debug('Received a valid encrypted push payload.');
         return Promise.resolve([event.data.json()]);
       } else {
         return Promise.reject('Unexpected push message payload received.', event.data.text());
@@ -774,6 +775,7 @@ class ServiceWorker {
       Database.get('Ids', 'userId')
         .then(userId => {
           if (userId) {
+            log.debug(`Legacy push signal received, retrieving contents from players/${userId}/chromeweb_notification`);
             return OneSignalApi.get(`players/${userId}/chromeweb_notification`);
           }
           else {
