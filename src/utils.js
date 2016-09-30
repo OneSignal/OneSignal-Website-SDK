@@ -478,3 +478,19 @@ export function wait(milliseconds) {
 export function substringAfter(string, search) {
   return string.substr(string.indexOf(search) + search.length);
 }
+
+/**
+ * Returns the number of times the SDK has been loaded into the browser.
+ * Expects a browser environment, otherwise this call will fail.
+ */
+export function getSdkLoadCount() {
+  return window.__oneSignalSdkLoadCount || 0;
+}
+
+/**
+ * Increments the counter describing the number of times the SDK has been loaded into the browser.
+ * Expects a browser environment, otherwise this call will fail.
+ */
+export function incrementSdkLoadCount() {
+  window.__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
+}
