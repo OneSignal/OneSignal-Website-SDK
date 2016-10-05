@@ -4,8 +4,9 @@ var shell = require('gulp-shell');
 var rename = require("gulp-rename");
 var runSequence = require('run-sequence');
 var clip = require('gulp-clip-empty-files');
+var HOME_PATH = process.env.HOME;
 
-var oneSignalSourceDir = "/Users/jpang/code/OneSignal";
+var oneSignalSourceDir = HOME_PATH + "/code/OneSignal";
 var IS_PRODUCTION_BUILD = process.argv.indexOf('--production') >= 0 || false;
 var IS_TEST_BUILD = process.argv.indexOf('--test') >= 0 || false;
 var targetFolder = IS_PRODUCTION_BUILD ? 'sdks' : 'sdks';

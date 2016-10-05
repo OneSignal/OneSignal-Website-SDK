@@ -75,10 +75,6 @@ export default class Environment {
     return __DEV__;
   }
 
-  static isBeta() {
-    return __BETA__;
-  }
-
   static isTest() {
     return __TEST__;
   }

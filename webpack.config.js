@@ -2,9 +2,9 @@ var webpack = require("webpack");
 var path = require('path');
 var babelPolyfill = require('babel-polyfill');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
 var IS_PROD = process.argv.indexOf('--production') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
-var IS_BETA = process.argv.indexOf('--beta') >= 0;
 
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
@@ -16,7 +16,6 @@ Date.prototype.timeNow = function() {
 
 var definePluginConstants = {
   __DEV__: !IS_PROD,
-  __BETA__: IS_BETA,
   __TEST__: IS_TEST,
   __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
 };
@@ -34,11 +33,9 @@ var recompileFunction = function() {
   })
 };
 
-var entries = { };
-if (IS_BETA)
-  entries['OneSignalSDKBeta'] = './src/entry.js';
-else
-  entries['OneSignalSDK'] = './src/entry.js';
+var entries = {
+  OneSignalSDK: './src/entry.js'
+};
 
 const ONESIGNAL_WEB_SDK = {
   name: 'OneSignalSDK',
