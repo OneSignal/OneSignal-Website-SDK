@@ -674,8 +674,17 @@ class ServiceWorker {
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
     log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-
-    event.waitUntil(self.clients.claim());
+    var activationPromise = self.clients.claim()
+                                        .then(() => Database.get('Ids', 'userId'))
+                                        .then(userId => {
+                                          if (self.registration && userId) {
+                                            return ServiceWorker._subscribeForPush(self.registration);
+                                          }
+                                        })
+                                        .catch(e => {
+                                          console.error('onServiceWorkerActivated:', e);
+                                        });
+    event.waitUntil(activationPromise);
   }
 
   static onFetch(event) {
@@ -780,9 +789,10 @@ class ServiceWorker {
       Database.get('Ids', 'userId'),
     ])
         .then(([userId, subscription]) => {
-          let requestUrl = userId ?
-              `players/${userId}/on_session` :
-              `players`;
+          if (!userId) {
+            return Promise.reject('No user ID found; cannot update existing player info');
+          }
+          let requestUrl = `players/${userId}`;
 
           let requestData = {
             app_id: appId,
@@ -792,7 +802,6 @@ class ServiceWorker {
             device_model: navigator.platform + " " + Browser.name,
             device_os: Browser.version,
             sdk: ServiceWorker.VERSION,
-            notification_types: 1
           };
 
           if (subscriptionInfo) {
@@ -810,9 +819,10 @@ class ServiceWorker {
             }
           }
 
-          return OneSignalApi.post(requestUrl, requestData);
+          return OneSignalApi.put(requestUrl, requestData);
         })
         .then(response => {
+          console.log('Response from ServiceWorker.registerWithOneSignal:', response);
           let {id: userId} = response;
 
           if (userId) {
