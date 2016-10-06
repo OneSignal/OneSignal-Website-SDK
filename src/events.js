@@ -85,7 +85,8 @@ export default class Event {
     }
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
-    if (!Environment.isHost() && Environment.isBrowser()) {
+    if (Environment.isBrowser() &&
+        (Environment.isPopup() || Environment.isIframe())) {
       var creator = opener || parent;
       if (!creator) {
         log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);

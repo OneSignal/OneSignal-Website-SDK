@@ -35,6 +35,7 @@ export default class Environment {
                location.pathname === '/webPushModal') {
         return Environment.IFRAME;
       }
+      else return Environment.UNSUPPORTED;
     }
   }
 
@@ -54,6 +55,10 @@ export default class Environment {
    */
   static isPopup() {
     return Environment.getEnv() === Environment.POPUP;
+  }
+
+  static get UNSUPPORTED() {
+    return "unsupported";
   }
 
   /**
@@ -77,6 +82,10 @@ export default class Environment {
 
   static isTest() {
     return __TEST__;
+  }
+
+  static isUnsupported() {
+       return Environment.getEnv() === Environment.UNSUPPORTED;
   }
 
   static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

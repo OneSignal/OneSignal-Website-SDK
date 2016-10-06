@@ -574,6 +574,11 @@ export default class OneSignal {
       return;
     }
 
+    if (Environment.isUnsupported()) {
+      log.debug('OneSignal: registerForPushNotifications(): Exiting from unsupported environment.');
+      return;
+    }
+
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
