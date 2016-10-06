@@ -75,6 +75,7 @@ class ServiceWorker {
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
+    self.addEventListener('pushsubscriptionchange', ServiceWorker.onPushSubscriptionChange);
 
     // Install messaging event handlers for page <-> service worker communication
     swivel.on('data', ServiceWorker.onMessageReceived);
@@ -679,6 +680,145 @@ class ServiceWorker {
 
   static onFetch(event) {
     event.respondWith(fetch(event.request));
+  }
+
+  static onPushSubscriptionChange(event) {
+    // Subscription expired
+    log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    event.waitUntil(ServiceWorker._subscribeForPush(self.registration));
+  }
+
+  /**
+   * Simulates a service worker event.
+   * @param eventName An event name like 'pushsubscriptionchange'.
+   */
+  static simulateEvent(eventName) {
+    self.dispatchEvent(new ExtendableEvent(eventName));
+  }
+
+  static _subscribeForPush(serviceWorkerRegistration) {
+    log.debug(`Called %c_subscribeForPush()`, getConsoleStyle('code'));
+
+    var appId = null;
+    return Database.get('Ids', 'appId')
+        .then(retrievedAppId => {
+          appId = retrievedAppId;
+          log.debug(`Calling pushManager.subscribe to resubscribe expired subscription`);
+          return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
+        }).then(subscription => {
+          log.debug(`Finished calling pushManager.subscribe to resubscribe expired subscription:`, subscription);
+
+          var subscriptionInfo = {};
+          if (subscription) {
+            if (typeof subscription.subscriptionId != "undefined") {
+              // Chrome 43 & 42
+              subscriptionInfo.endpointOrToken = subscription.subscriptionId;
+            }
+            else {
+              // Chrome 44+ and FireFox
+              // 4/13/16: We now store the full endpoint instead of just the registration token
+              subscriptionInfo.endpointOrToken = subscription.endpoint;
+            }
+
+            // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
+            if (subscription.getKey) {
+              // p256dh and auth are both ArrayBuffer
+              let p256dh = null;
+              try {
+                p256dh = subscription.getKey('p256dh');
+              } catch (e) {
+                // User is most likely running < Chrome < 50
+              }
+              let auth = null;
+              try {
+                auth = subscription.getKey('auth');
+              } catch (e) {
+                // User is most likely running < Firefox 45
+              }
+
+              if (p256dh) {
+                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                let p256dh_base64encoded = btoa(
+                    String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+                subscriptionInfo.p256dh = p256dh_base64encoded;
+              }
+              if (auth) {
+                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                let auth_base64encoded = btoa(
+                    String.fromCharCode.apply(null, new Uint8Array(auth)));
+                subscriptionInfo.auth = auth_base64encoded;
+              }
+            }
+          }
+          else {
+            log.warn('Could not subscribe your browser for push notifications.');
+          }
+
+          return ServiceWorker.registerWithOneSignal(appId, subscriptionInfo);
+        })
+        .then(() => {
+          log.debug(`Finished updating new subscription`);
+        })
+        .catch(function (e) {
+          log.error('Error while subscribing for push:', e);
+        });
+  }
+
+  /**
+   * Creates a new or updates an existing OneSignal user (player) on the server.
+   *
+   * @param appId The app ID passed to init.
+   *        subscriptionInfo A hash containing 'endpointOrToken', 'auth', and 'p256dh'.
+   *
+   * @remarks Called from both the host page and HTTP popup.
+   *          If a user already exists and is subscribed, updates the session count by calling /players/:id/on_session; otherwise, a new player is registered via the /players endpoint.
+   *          Saves the user ID and registration ID to the local web database after the response from OneSignal.
+   */
+  static registerWithOneSignal(appId, subscriptionInfo) {
+    let deviceType = getDeviceTypeForBrowser();
+    return Promise.all([
+      Database.get('Ids', 'userId'),
+    ])
+        .then(([userId, subscription]) => {
+          let requestUrl = userId ?
+              `players/${userId}/on_session` :
+              `players`;
+
+          let requestData = {
+            app_id: appId,
+            device_type: deviceType,
+            language: Environment.getLanguage(),
+            timezone: new Date().getTimezoneOffset() * -60,
+            device_model: navigator.platform + " " + Browser.name,
+            device_os: Browser.version,
+            sdk: ServiceWorker.VERSION,
+            notification_types: 1
+          };
+
+          if (subscriptionInfo) {
+            requestData.identifier = subscriptionInfo.endpointOrToken;
+            // Although we're passing the full endpoint to OneSignal, we still need to store only the registration ID for our SDK API getRegistrationId()
+            // Parse out the registration ID from the full endpoint URL and save it to our database
+            let registrationId = subscriptionInfo.endpointOrToken.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
+            Database.put("Ids", {type: "registrationId", id: registrationId});
+            // New web push standard in Firefox 46+ and Chrome 50+ includes 'auth' and 'p256dh' in PushSubscription
+            if (subscriptionInfo.auth) {
+              requestData.web_auth = subscriptionInfo.auth;
+            }
+            if (subscriptionInfo.p256dh) {
+              requestData.web_p256 = subscriptionInfo.p256dh;
+            }
+          }
+
+          return OneSignalApi.post(requestUrl, requestData);
+        })
+        .then(response => {
+          let {id: userId} = response;
+
+          if (userId) {
+            Database.put("Ids", {type: "userId", id: userId});
+          }
+        });
   }
 
   /**
