@@ -1,7 +1,7 @@
 import { DEV_HOST, PROD_HOST, API_URL } from '../src/vars.js';
 import Environment from '../src/environment.js'
 
-export var USER_AUTH_KEY = 'NjZmZDM5YmQtNjRiMS00MTk5LTkwY2UtMGRiYTgzNzM2NGM0';
+export var USER_AUTH_KEY = 'OGVjMWM0MmMtMzgxMC00M2IzLThlNzYtNGRkMTg4MWRjMDk3';
 export var SUBDOMAIN = 'washington';
 
 /* Web SDK Test Chrome Extension Variables */
