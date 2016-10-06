@@ -1435,7 +1435,11 @@ must be opened as a result of a subscription call.</span>`);
         if (permission !== "granted") {
           throw new Error("User did not grant push permission to allow notifications.");
         } else {
-          return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true})
+          return executeAndTimeoutPromiseAfter(
+              serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
+              25000,
+              "A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing."
+          );
         }
       })
       .then(function (subscription) {
@@ -1446,6 +1450,7 @@ must be opened as a result of a subscription call.</span>`);
          */
         log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`,
                   getConsoleStyle('code'));
+        log.debug('Subscription details:', subscription);
         // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
         OneSignal._sessionInitAlreadyRunning = false;
         sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", Notification.permission);
