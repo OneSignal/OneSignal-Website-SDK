@@ -377,6 +377,7 @@ export default class Helpers {
         }
       }
       var allowedPromptOptions = [
+        'autoAcceptTitle',
         'siteName',
         'autoAcceptTitle',
         'actionMessage',
