@@ -79,8 +79,11 @@ export default class Helpers {
    * Creates a session cookie to note that the user does not want to be disturbed for the rest of the browser session.
    */
   static markHttpsNativePromptDismissed() {
-    log.debug('OneSignal: User dismissed the native notification prompt; storing flag.')
-    return Cookie.set('onesignal-notification-prompt', 'dismissed');
+    log.debug('OneSignal: User dismissed the native notification prompt; storing flag.');
+    return Cookie.set('onesignal-notification-prompt', 'dismissed', {
+      // In 8 hours, or 1/3 of the day
+      expires: 0.333
+    });
   }
 
   /**

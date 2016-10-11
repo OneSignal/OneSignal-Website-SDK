@@ -1578,6 +1578,11 @@ must be opened as a result of a subscription call.</span>`);
           log.error('Error while subscribing for push:', e);
         }
 
+        // In Chrome, closing a tab while the prompt is displayed is the same as dismissing the prompt by clicking X
+        // Our SDK receives the same event as if the user clicked X, when in fact the user just closed the tab. If
+        // we had some code that prevented showing the prompt for 8 hours, the user would accidentally not be able
+        // to subscribe.
+
         // New addition (12/22/2015), adding support for detecting the cancel 'X'
         // Chrome doesn't show when the user clicked 'X' for cancel
         // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
