@@ -419,8 +419,9 @@ export default class Bell {
         log.info('Showing the notify button.');
 
         (isPushEnabled ? this.launcher.inactivate() : nothing())
-          .then(() => {
-            if (isPushEnabled && this.dialog.notificationIcons === null) {
+          .then(() => OneSignal.getSubscription())
+          .then(isNotOptedOut => {
+            if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
               return Helpers.getNotificationIcons().then((icons) => {
                 this.dialog.notificationIcons = icons;
               });
