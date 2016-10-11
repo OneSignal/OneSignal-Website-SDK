@@ -767,12 +767,10 @@ must be opened as a result of a subscription call.</span>`);
   static _initPopup() {
     OneSignal.config = {};
     OneSignal.initialized = true;
-      log.debug(`Called %c_initPopup()`, getConsoleStyle('code'));
 
     // Do not register OneSignalSDKUpdaterWorker.js for HTTP popup sites; the file does not exist
     OneSignal.isPushNotificationsEnabled(isEnabled => {
       if (!isEnabled) {
-        log.debug('Push notifications not enabled; registering service worker (calling navigator.serviceWorker.register)...');
         navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM).then(OneSignal._enableNotifications, OneSignal._registerError);
       } else {
         window.close();
