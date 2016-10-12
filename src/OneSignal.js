@@ -498,7 +498,7 @@ export default class OneSignal {
     /**
      * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
      */
-    static showHttpPrompt() {
+    static showHttpPrompt(options) {
         if (!isPushNotificationsSupportedAndWarn()) {
             return;
         }
@@ -520,7 +520,7 @@ export default class OneSignal {
                 Database.get('Options', 'popoverDoNotPrompt')
             ])
                 .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
-                    if (doNotPrompt === true) {
+                    if (doNotPrompt === true && (!options || options.force == false)) {
                         log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
                         return 'popover-previously-dismissed';
                     }
