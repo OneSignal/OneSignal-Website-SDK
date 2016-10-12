@@ -375,6 +375,7 @@ export default class Helpers {
       }
       var allowedPromptOptions = [
         'siteName',
+        'autoAcceptTitle',
         'actionMessage',
         'exampleNotificationTitle',
         'exampleNotificationMessage',
