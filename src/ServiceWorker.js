@@ -588,12 +588,17 @@ class ServiceWorker {
           for (let client of activeClients) {
             let getClientUrlPromise = null;
             if (client.isSubdomainIframe) {
-              getClientUrlPromise = ServiceWorker.queryClient(client, 'url');
+              getClientUrlPromise = Database.get('Options', 'defaultUrl');
             } else {
               getClientUrlPromise = Promise.resolve(client.url);
             }
             getClientUrlPromise.then(clientUrl => {
-              let clientOrigin = new URL(clientUrl).origin;
+              let clientOrigin = '';
+              try {
+                clientOrigin = new URL(clientUrl).origin;
+              } catch (e) {
+                log.error(`Failed to get the HTTP site's actual origin:`, e);
+              }
               let launchOrigin = null;
               try {
                 // Check if the launchUrl is valid; it can be null

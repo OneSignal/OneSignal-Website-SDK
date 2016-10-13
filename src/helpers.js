@@ -326,16 +326,6 @@ export default class Helpers {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, data);
       }
     });
-    OneSignal._channel.on('url', function handler(context, data) {
-      // This is only called from the service worker to the iframe
-      OneSignal._channel.setWorker(context.event.source);
-      if (Environment.isIframe()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, data);
-        OneSignal.iframePostmam.once(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, message => {
-          OneSignal._channel.emit('data', {query: 'url', response: message.data });
-        });
-      }
-    });
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
