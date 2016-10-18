@@ -35,7 +35,7 @@ export default class Environment {
                location.pathname === '/webPushModal') {
         return Environment.IFRAME;
       }
-      else return Environment.UNSUPPORTED;
+      else return Environment.CUSTOM_SUBDOMAIN;
     }
   }
 
@@ -57,8 +57,8 @@ export default class Environment {
     return Environment.getEnv() === Environment.POPUP;
   }
 
-  static get UNSUPPORTED() {
-    return "unsupported";
+  static get CUSTOM_SUBDOMAIN() {
+    return "custom_subdomain";
   }
 
   /**
@@ -84,8 +84,8 @@ export default class Environment {
     return __TEST__;
   }
 
-  static isUnsupported() {
-       return Environment.getEnv() === Environment.UNSUPPORTED;
+  static isCustomSubdomain() {
+       return Environment.getEnv() === Environment.CUSTOM_SUBDOMAIN;
   }
 
   static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

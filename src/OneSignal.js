@@ -361,6 +361,11 @@ export default class OneSignal {
           document.head.appendChild(s);
         }
 
+        if (Environment.isCustomSubdomain()) {
+            Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+            return;
+        }
+
         OneSignal._initSaveState()
           .then(() => OneSignal._saveInitOptions())
           .then(() => OneSignal._internalInit());
@@ -1361,7 +1366,7 @@ must be opened as a result of a subscription call.</span>`);
     }
     let result = (Environment.isHost() &&
       (OneSignal.config.subdomainName ||
-      location.protocol === 'http:')) || (Environment.isUnsupported());
+      location.protocol === 'http:'));
     return !!result;
   }
 
