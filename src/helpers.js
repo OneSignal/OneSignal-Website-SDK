@@ -431,8 +431,7 @@ export default class Helpers {
     document.getElementsByTagName('head')[0].appendChild(iframeContainerStyle);
 
     let iframe = document.createElement("iframe");
-    iframe.className = "OneSignal-permission-iframe"
-    iframe.style.cssText = "position: fixed;";
+    iframe.className = "OneSignal-permission-iframe";
     iframe.setAttribute('frameborder', '0');
     iframe.width = OneSignal._windowWidth.toString();
     iframe.height = OneSignal._windowHeight.toString();
