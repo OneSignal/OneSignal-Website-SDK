@@ -76,6 +76,16 @@ export default class Helpers {
   }
 
   /**
+   * Returns true if the experimental HTTP permission request is being used to prompt the user.
+   */
+  static isUsingHttpPermissionRequest() {
+    return OneSignal &&
+           OneSignal.config &&
+           OneSignal.config.httpPermissionRequest &&
+           OneSignal.config.httpPermissionRequest.enable;
+  }
+
+  /**
    * Creates a session cookie to note that the user does not want to be disturbed for the rest of the browser session.
    */
   static markHttpsNativePromptDismissed() {

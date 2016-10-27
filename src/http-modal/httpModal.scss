@@ -1,0 +1,222 @@
+$modal-transition-duration: 400ms;
+$border-radius: 2px;
+
+#onesignal-modal-container {
+  font-size: 14px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2258594000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:rgba(51, 51, 51, 0.2);
+  -webkit-font-smoothing: initial;
+
+  #onesignal-modal-dialog {
+    width: 500px;
+  }
+
+  #onesignal-modal-dialog {
+    box-sizing: border-box;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22) !important;
+    background: white !important;
+    padding: 1.286em;
+    border-bottom-left-radius: $border-radius;
+    border-bottom-right-radius: $border-radius;
+    font-family: 'Roboto', 'Noto', Helvetica Neue, Helvetica, Arial, sans-serif;
+
+    .modal-body {
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    .modal-body-icon {
+      box-sizing: border-box;
+      float: left;
+      width: 80px;
+      height: 80px;
+      background-size: contain;
+      background-position: 0% 0%;
+      background-repeat: no-repeat;
+
+      &.default-icon {
+        background-size: initial;
+        background-position: 50% 0%;
+      }
+    }
+
+    .modal-body-message {
+      box-sizing: border-box;
+      padding: 0 0.2em 0 1.286em;
+      float: left;
+      width: calc(100% - 80px);
+      font-size: 1.143em;
+      line-height: 1.45em;
+      -o-user-select: none;
+      user-select: none;
+      cursor: default;
+      color: #666 !important;
+    }
+
+    button {
+      box-sizing: border-box;
+      display: inline-block;
+      padding: .375rem 1rem;
+      font-size: 0.9625em;
+      font-weight: 400;
+      line-height: 1.5;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border: 1px solid transparent;
+      border-radius: .25rem;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      -webkit-transition: background-color 75ms ease;
+      transition: background-color 75ms ease;
+      margin: 0;
+    }
+
+    .modal-button {
+      padding: 0.714em 2em;
+      font-size: 1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      font-weight: 400;
+
+      &.primary {
+        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
+        background: #4285F4 !important;;
+        color: white !important;
+
+        &:hover {
+          background: darken(#4285F4, 7.5%);
+        }
+
+        &:active {
+          background: darken(#4285F4, 15%);
+        }
+      }
+
+      &.secondary {
+        box-shadow: none;
+        background: white !important;
+        /*
+          We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
+          Some sites set their own !important tag for text and we don't want that to be able to override ours.
+         */
+        color: #4285F4 !important;
+
+        &:hover {
+          color: darken(#4285F4, 12.5%);
+        }
+
+        &:active {
+          color: darken(#4285F4, 30.5%);
+        }
+      }
+    }
+
+    .primary.modal-button+.secondary.modal-button {
+      margin-right: 0.714em;
+    }
+
+    .modal-footer {
+      position: relative;
+      margin: 0.25em 0.25em 0 0;
+    }
+
+    .align-right {
+      float: right;
+    }
+
+    .clearfix {
+      display: block;
+    }
+    .clearfix:after {
+      content: '';
+      display: block;
+      height: 0;
+      clear: both;
+      visibility: hidden;
+    }
+  }
+}
+
+@-webkit-keyframes slideDownEnter {
+  0% {
+    -webkit-transform: translateY(-150%);
+  }
+  100% {
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes slideDownEnter {
+  0% {
+    transform: translateY(-150%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes slideDownExit {
+  0% {
+    -webkit-transform: translateY(0%);
+  }
+  100% {
+    -webkit-transform: translateY(-150%);
+  }
+}
+@keyframes slideDownExit {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-150%);
+  }
+}
+
+@-webkit-keyframes slideUpEnter {
+  0% {
+    -webkit-transform: translateY(150%);
+  }
+  100% {
+    -webkit-transform: translateY(0);
+  }
+}
+@keyframes slideUpEnter {
+  0% {
+    transform: translateY(150%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes slideUpExit {
+  0% {
+    -webkit-transform: translateY(0%);
+  }
+  100% {
+    -webkit-transform: translateY(150%);
+  }
+}
+@keyframes slideUpExit {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(150%);
+  }
+}

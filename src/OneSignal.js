@@ -18,6 +18,7 @@ import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
 import Popover from './popover/popover';
+import HttpModal from "./http-modal/httpModal";
 
 
 
@@ -322,7 +323,7 @@ export default class OneSignal {
         } else {
           log.error('OneSignal: Your JavaScript initialization code is missing a required parameter %csubdomainName',
                     getConsoleStyle('code'),
-                    '. HTTP sites require this parameter to initialize correctly. Please see steps 1.5 and 2.2 at ' +
+                    '. HTTP sites require this parameter to initialize correctly. Please see steps 1.4 and 2 at ' +
                     'https://documentation.onesignal.com/docs/web-push-sdk-setup-http)');
           return;
         }
@@ -551,6 +552,10 @@ export default class OneSignal {
                         log.debug('OneSignal: Not showing popover because the user was manually opted out.');
                         return 'user-intentionally-unsubscribed';
                     }
+                    if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
+                        log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
+                        return 'using-http-permission-request';
+                    }
                     OneSignalHelpers.markHttpPopoverShown();
                     OneSignal.popover = new Popover(OneSignal.config.promptOptions);
                     OneSignal.popover.create();
@@ -765,6 +770,10 @@ must be opened as a result of a subscription call.</span>`);
                     }
                   }
 
+                  if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
+                      OneSignal.showHttpPermissionRequest();
+                  }
+
                   message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
                 });
           })
@@ -777,6 +786,21 @@ must be opened as a result of a subscription call.</span>`);
           .catch(e => log.warn('Failed to unsubscribe from push remotely.', e));
     });
     Event.trigger('httpInitialize');
+  }
+
+  static showHttpPermissionRequest() {
+      console.warn(`(${Environment.getEnv()}) Showing HTTP permission request.`);
+      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      Notification.requestPermission(permission => {
+          console.log('HTTP Permission Request Result:', permission);
+          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
+      });
+  }
+
+  static showHttpPermissionPostRequestModal() {
+      console.warn(`(${Environment.getEnv()}) Showing HTTP permission post-request modal.`);
+      OneSignal.httpModal = new HttpModal();
+      OneSignal.httpModal.create();
   }
 
   static _initPopup() {
@@ -920,6 +944,10 @@ must be opened as a result of a subscription call.</span>`);
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
           let newRemoteNotificationPermission = message.data;
           OneSignal.triggerNotificationPermissionChanged();
+          if (OneSignalHelpers.isUsingHttpPermissionRequest() &&
+              newRemoteNotificationPermission === 'granted') {
+              OneSignal.showHttpPermissionPostRequestModal();
+          }
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
