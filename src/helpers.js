@@ -78,10 +78,8 @@ export default class Helpers {
    * Returns true if the experimental HTTP permission request is being used to prompt the user.
    */
   static isUsingHttpPermissionRequest() {
-    return OneSignal &&
-           OneSignal.config &&
-           OneSignal.config.httpPermissionRequest &&
-           OneSignal.config.httpPermissionRequest.enable;
+    return OneSignal.config.httpPermissionRequest &&
+           OneSignal.config.httpPermissionRequest.enable == true;
   }
 
   /**

@@ -17,7 +17,8 @@ const SILENT_EVENTS = [
   'activeAnimatedElementInactivating',
   'activeAnimatedElementInactive',
   'dbRetrieved',
-  'dbSet'
+  'dbSet',
+  'testEvent'
   ];
 
 const RETRIGGER_REMOTE_EVENTS = [

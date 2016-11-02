@@ -784,16 +784,51 @@ must be opened as a result of a subscription call.</span>`);
           .then(() => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE))
           .catch(e => log.warn('Failed to unsubscribe from push remotely.', e));
     });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
+          log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
+          OneSignal.showHttpPermissionRequest()
+              .then(() => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE))
+              .catch(e => log.warn('Failed to show HTTP permission request:', e));
+    });
     Event.trigger('httpInitialize');
   }
 
   static showHttpPermissionRequest() {
-      console.warn(`(${Environment.getEnv()}) Showing HTTP permission request.`);
-      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-      Notification.requestPermission(permission => {
-          console.log('HTTP Permission Request Result:', permission);
-          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
-      });
+      // Safari's push notifications are one-click Allow and shouldn't support this workaround
+      if (!isPushNotificationsSupportedAndWarn() ||
+          Browser.safari) {
+          return;
+      }
+
+      function __showHttpPermissionRequest() {
+          if (OneSignal.isUsingSubscriptionWorkaround()) {
+              OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST);
+          } else {
+              if (!OneSignal.isUsingHttpPermissionRequest()) {
+                  console.log('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
+                  Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                  return;
+              }
+
+              console.warn(`(${Environment.getEnv()}) Showing HTTP permission request.`);
+              Notification.requestPermission(permission => {
+                  console.log('HTTP Permission Request Result:', permission);
+                  OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
+              });
+              if (Notification.permission === "default") {
+                  Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+              } else {
+                  Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                  console.log('HTTP permission request not displayed because notification permission is:', Notification.permission);
+              }
+          }
+      }
+
+      if (!OneSignal.initialized) {
+          OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __showHttpPermissionRequest());
+      } else {
+          return __showHttpPermissionRequest();
+      }
   }
 
   static showHttpPermissionPostRequestModal() {
@@ -2257,6 +2292,7 @@ objectAssign(OneSignal, {
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
+    SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
   },
 
   EVENTS: {
@@ -2314,10 +2350,13 @@ objectAssign(OneSignal, {
     POPUP_CLOSING: 'popupClose',
     /**
      * Occurs when the native permission prompt is displayed.
-     * This is currently used to know when to display the HTTP popup incognito notice so that it hides the notice
-     * for non-incognito users.
      */
     PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
+      /**
+       * For internal testing only. Used for all sorts of things.
+       */
+     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
+     TEST_WOULD_DISPLAY: 'testWouldDisplay',
   },
 
   NOTIFICATION_TYPES: {

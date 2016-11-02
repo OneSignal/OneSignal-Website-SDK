@@ -813,4 +813,60 @@ describe('Web SDK Tests', function () {
             }
         });
     });
+
+    describe.only('HTTP Permission Request', () => {
+        it('should activate by init option', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: {
+                            enable: true
+                        },
+                    });
+                    let notification = await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                }
+            });
+        });
+
+        it('should activate by init option', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                        welcomeNotification: false,
+                        autoRegister: true,
+                        webhooks: true
+                    });
+                    OneSignal.showHttpPermissionRequest();
+                    let notification = await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                }
+            });
+        });
+        it('should not activate if init option is missing', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                        httpPermissionRequest: {
+                            enable: false
+                        },
+                    });
+                    OneSignal.showHttpPermissionRequest();
+                    let notification = await Utils.expectEvent(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                }
+            });
+        });
+
+        it('should activate by init option', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                        welcomeNotification: false,
+                        autoRegister: true,
+                        webhooks: true
+                    });
+                    OneSignal.showHttpPermissionRequest();
+                    let notification = await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                }
+            });
+        });
+    });
 });
