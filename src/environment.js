@@ -26,7 +26,13 @@ export default class Environment {
       // If the window is the root top-most level
       if (window === window.top) {
         if (contains(location.href, "initOneSignal") ||
-            (location.pathname === '/subscribe' && location.search === ''))
+            (location.pathname === '/subscribe' &&
+             location.search === '') &&
+             (
+                 location.hostname.endsWith('.onesignal.com') ||
+                 (location.hostname.indexOf('.localhost') !== -1 && Environment.isDev())
+             )
+           )
           return Environment.POPUP;
         else
           return Environment.HOST;

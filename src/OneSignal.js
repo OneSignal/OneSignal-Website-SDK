@@ -1,6 +1,5 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars.js';
 import Environment from './environment.js';
-import './string.js';
 import OneSignalApi from './oneSignalApi.js';
 import IndexedDb from './indexedDb';
 import log from 'loglevel';
