@@ -330,6 +330,8 @@ export default class OneSignal {
       } else {
         if (Environment.isDev()) {
           OneSignal.modalUrl = `${DEV_FRAME_HOST}/webPushModal`;
+        } else if (Environment.isStaging()) {
+          OneSignal.modalUrl = `${STAGING_FRAME_HOST}/webPushModal`;
         } else {
           OneSignal.modalUrl = `https://onesignal.com/webPushModal`;
         }
@@ -863,6 +865,8 @@ must be opened as a result of a subscription call.</span>`);
         let sendToOrigin = `https://${OneSignal.config.subdomainName}.onesignal.com`;
         if (Environment.isDev()) {
           sendToOrigin = DEV_FRAME_HOST;
+        } else if (Environment.isStaging()) {
+          sendToOrigin = STAGING_FRAME_HOST;
         }
         let receiveFromOrigin = sendToOrigin;
         OneSignal.iframePostmam = new Postmam(iframe.contentWindow, sendToOrigin, receiveFromOrigin);

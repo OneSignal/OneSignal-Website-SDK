@@ -289,7 +289,8 @@ class ServiceWorker {
             if (client.frameType && client.frameType === 'nested') {
               // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
               if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
-                   !Environment.isDev() && !contains(client.url, '.onesignal.com')) {
+                   !Environment.isDev() && !contains(client.url, '.onesignal.com') ||
+                   Environment.isStaging() && !contains(client.url, STAGING_FRAME_HOST)) {
                   continue;
               }
               // Indicates this window client is an HTTP subdomain iFrame

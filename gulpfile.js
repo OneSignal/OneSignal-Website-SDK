@@ -8,6 +8,7 @@ var HOME_PATH = process.env.HOME;
 
 var oneSignalSourceDir = HOME_PATH + "/code/OneSignal";
 var IS_PRODUCTION_BUILD = process.argv.indexOf('--production') >= 0 || false;
+var IS_STAGING_BUILD = process.argv.indexOf('--staging') >= 0 || false;
 var IS_TEST_BUILD = process.argv.indexOf('--test') >= 0 || false;
 var targetFolder = IS_PRODUCTION_BUILD ? 'sdks' : 'sdks';
 
@@ -24,6 +25,51 @@ gulp.task("reload-changes", ['copy-js-sdk', 'copy-js-sdk-tests'], function() {
 gulp.task("transpile-javascript", shell.task([
   'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production' : '') + ' ' + (IS_TEST_BUILD ? '--test' : '')
 ]));
+
+function copyFile(prefix) {
+  // Copy to OneSignal's public/sdks/OneSignalSDK.js
+  gulp.src("./dist/OneSignalSDK.js")
+      .pipe(clip())
+      .pipe(rename("/" + prefix + "OneSignalSDK.js"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  console.log('Copying to ' + oneSignalSourceDir + "/public/" + targetFolder + "/" + prefix + "OneSignalSDK.js");
+
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+        .pipe(clip())
+        .pipe(rename("/" + prefix + "OneSignalSDK.js.map"))
+        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
+
+  // Copy to OneSignal's public/sdks/OneSignalSDKWorker.js
+  // Copy to OneSignal's public/OneSignalSDKWorker.js
+  gulp.src("./dist/OneSignalSDK.js")
+      .pipe(clip())
+      .pipe(rename("/" + prefix + "OneSignalSDKWorker.js"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+        .pipe(clip())
+        .pipe(rename("/" + prefix + "OneSignalSDKWorker.js.map"))
+        .pipe(gulp.dest(oneSignalSourceDir + "/public/"))
+        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  }
+
+  // Copy to OneSignal's public/OneSignalSDKUpdaterWorker.js
+  gulp.src("./dist/OneSignalSDK.js")
+      .pipe(clip())
+      .pipe(rename("/" + prefix + "OneSignalSDKUpdaterWorker.js"))
+      .pipe(gulp.dest(oneSignalSourceDir + "/public/"));
+
+  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
+    gulp.src("./dist/OneSignalSDK.js.map")
+        .pipe(clip())
+        .pipe(rename("/" + prefix + "OneSignalSDKUpdaterWorker.js.map"))
+        .pipe(gulp.dest(oneSignalSourceDir + "/public/"));
+  }
+}
 
 /*
  Creates:
@@ -42,44 +88,12 @@ gulp.task("transpile-javascript", shell.task([
  'https://onesignal.com/OneSignalSDKWorker.js' and 'OneSignalSDKUpdaterWorker.js' contain the full contents as well.
  */
 gulp.task("copy-js-sdk", function() {
-  // Copy to OneSignal's public/sdks/OneSignalSDK.js
-  gulp.src("./dist/OneSignalSDK.js")
-      .pipe(clip())
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
-
-  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
-    gulp.src("./dist/OneSignalSDK.js.map")
-        .pipe(clip())
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+  copyFile('Dev-');
+  if (IS_PRODUCTION_BUILD) {
+    copyFile(''); // No prefix for production
   }
-
-  // Copy to OneSignal's public/sdks/OneSignalSDKWorker.js
-  // Copy to OneSignal's public/OneSignalSDKWorker.js
-  gulp.src("./dist/OneSignalSDK.js")
-      .pipe(clip())
-      .pipe(rename("/OneSignalSDKWorker.js"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
-
-  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
-    gulp.src("./dist/OneSignalSDK.js.map")
-        .pipe(clip())
-        .pipe(rename("/OneSignalSDKWorker.js.map"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
-  }
-
-  // Copy to OneSignal's public/OneSignalSDKUpdaterWorker.js
-  gulp.src("./dist/OneSignalSDK.js")
-      .pipe(clip())
-      .pipe(rename("/OneSignalSDKUpdaterWorker.js"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/"));
-
-  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
-    gulp.src("./dist/OneSignalSDK.js.map")
-        .pipe(clip())
-        .pipe(rename("/OneSignalSDKUpdaterWorker.js.map"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/"));
+  if (IS_STAGING_BUILD) {
+    copyFile('Staging-');
   }
 });
 

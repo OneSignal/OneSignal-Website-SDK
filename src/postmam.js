@@ -271,7 +271,8 @@ export default class Postmam {
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank
             messageOrigin === 'https://onesignal.com' ||
             messageOrigin === `https://${subdomain || ''}.onesignal.com` ||
-            (__DEV__ && messageOrigin === DEV_FRAME_HOST) ||
+            (Environment.isDev() && messageOrigin === DEV_FRAME_HOST) ||
+            (Environment.isStaging() && messageOrigin === STAGING_FRAME_HOST) ||
             this.receiveFromOrigin === '*' ||
             messageOrigin === this.receiveFromOrigin ||
             contains(otherAllowedOrigins, messageOrigin));

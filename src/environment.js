@@ -76,6 +76,10 @@ export default class Environment {
     return typeof window !== 'undefined';
   }
 
+  static isStaging() {
+    return __STAGING__;
+  }
+
   static isDev() {
     return __DEV__;
   }
