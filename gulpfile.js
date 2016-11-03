@@ -23,7 +23,7 @@ gulp.task("reload-changes", ['copy-js-sdk', 'copy-js-sdk-tests'], function() {
 });
 
 gulp.task("transpile-javascript", shell.task([
-  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production' : '') + ' ' + (IS_TEST_BUILD ? '--test' : '')
+  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production' : '') + ' ' + (IS_TEST_BUILD ? '--test' : '') + ' ' + (IS_STAGING_BUILD ? '--staging' : '')
 ]));
 
 function copyFile(prefix) {
@@ -32,7 +32,6 @@ function copyFile(prefix) {
       .pipe(clip())
       .pipe(rename("/" + prefix + "OneSignalSDK.js"))
       .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
-  console.log('Copying to ' + oneSignalSourceDir + "/public/" + targetFolder + "/" + prefix + "OneSignalSDK.js");
 
   if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
     gulp.src("./dist/OneSignalSDK.js.map")
