@@ -1,4 +1,4 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from './vars.js';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
 import OneSignalApi from './oneSignalApi.js';
@@ -276,6 +276,14 @@ export default class OneSignal {
 
   static init(options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
+
+    if (Environment.isDev()) {
+        OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
+        OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalUpdaterSDKWorker.js';
+    } else if (Environment.isStaging()) {
+        OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
+        OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalUpdaterSDKWorker.js';
+    }
 
     if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.init"])
       debugger;
