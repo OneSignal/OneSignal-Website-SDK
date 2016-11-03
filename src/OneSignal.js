@@ -1,4 +1,4 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
 import OneSignalApi from './oneSignalApi.js';
