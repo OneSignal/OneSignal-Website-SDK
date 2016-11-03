@@ -4,6 +4,7 @@ var babelPolyfill = require('babel-polyfill');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 var IS_PROD = process.argv.indexOf('--production') >= 0;
+var IS_STAGING = process.argv.indexOf('--staging') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
 
 Date.prototype.timeNow = function() {
@@ -15,8 +16,9 @@ Date.prototype.timeNow = function() {
 };
 
 var definePluginConstants = {
-  __DEV__: !IS_PROD,
+  __DEV__: !IS_PROD && !IS_STAGING,
   __TEST__: IS_TEST,
+  __STAGING__: IS_STAGING,
   __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
 };
 

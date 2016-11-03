@@ -2,7 +2,7 @@ import { guid, contains } from './utils.js';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
 import Environment from './environment.js';
-import { DEV_FRAME_HOST } from './vars.js';
+import { DEV_FRAME_HOST, STAGING_FRAME_HOST } from './vars.js';
 import objectAssign from 'object-assign';
 import log from 'loglevel';
 
@@ -271,7 +271,8 @@ export default class Postmam {
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank
             messageOrigin === 'https://onesignal.com' ||
             messageOrigin === `https://${subdomain || ''}.onesignal.com` ||
-            (__DEV__ && messageOrigin === DEV_FRAME_HOST) ||
+            (Environment.isDev() && messageOrigin === DEV_FRAME_HOST) ||
+            (Environment.isStaging() && messageOrigin === STAGING_FRAME_HOST) ||
             this.receiveFromOrigin === '*' ||
             messageOrigin === this.receiveFromOrigin ||
             contains(otherAllowedOrigins, messageOrigin));
