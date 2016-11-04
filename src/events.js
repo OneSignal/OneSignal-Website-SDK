@@ -37,7 +37,8 @@ const RETRIGGER_REMOTE_EVENTS = [
   'notificationDisplay',
   'notificationDismiss',
   'permissionPromptDisplay',
-  ''
+  'testWouldDisplay',
+  'testInitOptionDisabled'
 ];
 
 const LEGACY_EVENT_MAP = {

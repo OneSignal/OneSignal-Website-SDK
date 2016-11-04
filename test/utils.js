@@ -164,6 +164,11 @@ export default class Utils {
                                 enable: true
                             };
                         }
+                        if (options.httpPermissionRequest) {
+                            initOptions.httpPermissionRequest = {
+                                enable: true
+                            };
+                        }
                         if (location.protocol === 'http:') {
                             initOptions.subdomainName = SUBDOMAIN;
                             if (options.autoRegister) {
@@ -238,16 +243,20 @@ export default class Utils {
                 }
             })
             .then(() => {
-                console.log('Test Initialize: Stage 4');
+                console.log('Test Initialize: Stage 4 (Final)');
             });
     }
 
-    static expectEvent(eventName, timeout) {
+    static expectEvent(eventName, timeout, predicate) {
         if (!timeout) {
             timeout = 25000;
         }
-        return executeAndTimeoutPromiseAfter(new Promise(resolve => {
-            OneSignal.once(eventName, resolve);
+        return executeAndTimeoutPromiseAfter(new Promise((resolve, reject) => {
+            OneSignal.once(eventName, (e) => {
+                if (predicate && predicate(e)) {
+                    resolve();
+                } else reject();
+            });
         }).catch(e => console.error(e)), timeout, `Event '${eventName}' did not fire after ${timeout} ms.`);
     }
 

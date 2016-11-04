@@ -794,6 +794,7 @@ must be opened as a result of a subscription call.</span>`);
   }
 
   static showHttpPermissionRequest() {
+      console.warn('Called showHttpPermissionRequest');
       // Safari's push notifications are one-click Allow and shouldn't support this workaround
       if (!isPushNotificationsSupportedAndWarn() ||
           Browser.safari) {
@@ -801,10 +802,11 @@ must be opened as a result of a subscription call.</span>`);
       }
 
       function __showHttpPermissionRequest() {
+          console.log('Called function.');
           if (OneSignal.isUsingSubscriptionWorkaround()) {
               OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST);
           } else {
-              if (!OneSignal.isUsingHttpPermissionRequest()) {
+              if (!OneSignalHelpers.isUsingHttpPermissionRequest()) {
                   console.log('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
                   Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
                   return;
