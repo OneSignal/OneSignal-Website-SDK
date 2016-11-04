@@ -87,7 +87,9 @@ function copyFile(prefix) {
  'https://onesignal.com/OneSignalSDKWorker.js' and 'OneSignalSDKUpdaterWorker.js' contain the full contents as well.
  */
 gulp.task("copy-js-sdk", function() {
-  copyFile('Dev-');
+  if (!IS_PRODUCTION_BUILD && !IS_STAGING_BUILD) {
+    copyFile('Dev-');
+  }
   if (IS_PRODUCTION_BUILD) {
     copyFile(''); // No prefix for production
   }
