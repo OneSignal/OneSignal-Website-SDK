@@ -98,15 +98,20 @@ gulp.task("copy-js-sdk", function() {
 
 gulp.task("copy-js-sdk-tests", function() {
   if (IS_TEST_BUILD) {
+    if (IS_STAGING_BUILD) {
+      var prefix = 'Staging-';
+    } else if (!IS_PRODUCTION_BUILD && !IS_STAGING_BUILD) {
+      var prefix = 'Dev-';
+    }
     gulp.src("./dist/OneSignalSDKTests.js")
         .pipe(clip())
-        .pipe(rename("/OneSignalSDKTests.js"))
+        .pipe(rename("/" + prefix + "OneSignalSDKTests.js"))
         .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
 
     if (fs.existsSync("./dist/OneSignalSDKTests.js.map")) {
       gulp.src("./dist/OneSignalSDKTests.js.map")
           .pipe(clip())
-          .pipe(rename("/OneSignalSDKTests.js.map"))
+          .pipe(rename("/" + prefix + "OneSignalSDKTests.js.map"))
           .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
     }
   }

@@ -279,10 +279,10 @@ export default class OneSignal {
 
     if (Environment.isDev()) {
         OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-        OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalUpdaterSDKWorker.js';
+        OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
     } else if (Environment.isStaging()) {
         OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-        OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalUpdaterSDKWorker.js';
+        OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
     }
 
     if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.init"])

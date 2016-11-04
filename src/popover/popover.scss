@@ -232,6 +232,7 @@ $border-radius: 2px;
 
     .clearfix {
       display: block;
+      backface-visibility: initial !important; // Causes buttons to be unclickable if set to hidden
     }
     .clearfix:after {
       content: '';

@@ -78,6 +78,7 @@ describe('Web SDK Tests', function () {
     describe('Session Tracking', function() {
         let testHelper = function (test, kind, options) {
             return new MultiStepSoloTest(test, options, async (step, gotoStep) => {
+                console.log('A');
                 let initOptions = {
                     welcomeNotification: false,
                     autoRegister: kind.autoRegister,
