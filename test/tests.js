@@ -815,13 +815,14 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe('HTTP Permission Request', () => {
+    describe.only('HTTP Permission Request', () => {
         it('can activate by init option httpPermissionRequest', function() {
             return new SoloTest(this.test, {}, async() => {
                 await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'allow');
                 if (location.protocol === 'http:') {
                     Utils.initialize(globals, {
-                        httpPermissionRequest: true
+                        httpPermissionRequest: true,
+                        autoRegister: true
                     });
                     await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
                 }
@@ -837,6 +838,18 @@ describe('Web SDK Tests', function () {
                     });
                     OneSignal.showHttpPermissionRequest();
                     await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                }
+            });
+        });
+
+        it('should not activate automatically if autoRegister is false', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: false
+                    });
+                    await Utils.expectEvent(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
                 }
             });
         });
@@ -857,7 +870,8 @@ describe('Web SDK Tests', function () {
                 if (location.protocol === 'http:') {
                     await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'ask');
                     Utils.initialize(globals, {
-                        httpPermissionRequest: true
+                        httpPermissionRequest: true,
+                        autoRegister: true
                     });
                     await Utils.expectEvent(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
                     await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'allow');
@@ -865,17 +879,15 @@ describe('Web SDK Tests', function () {
             });
         });
 
-        it.only('should trigger existing event notificationPermissionChange, with argument for prompt acceptance', function() {
+        it('popup should close after timeout milliseconds', function() {
             return new SoloTest(this.test, {}, async() => {
                 if (location.protocol === 'http:') {
-                    await Utils.initialize(globals, {
-                        httpPermissionRequest: true
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        httpPermissionRequestTimeout: 1,
+                        autoRegister: true
                     });
-                    OneSignal.showHttpPermissionRequest();
-                    await Utils.expectEvent(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (e) => {
-                        console.warn('I"M INSIDE HERE AND THE ARGUMENT FOR E IS:', e);
-                        return e.to === 'granted';
-                    });
+                    await Utils.expectEvent(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
                 }
             });
         });

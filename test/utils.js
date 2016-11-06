@@ -164,6 +164,14 @@ export default class Utils {
                                 enable: true
                             };
                         }
+                        if (options.httpPermissionRequestTimeout) {
+                            if (!initOptions.promptOptions) {
+                                initOptions.promptOptions = {};
+                            }
+                            initOptions.promptOptions = Object.assign({}, initOptions.promptOptions, {
+                                timeout: options.httpPermissionRequestTimeout
+                            });
+                        }
                         if (options.httpPermissionRequest) {
                             initOptions.httpPermissionRequest = {
                                 enable: true
@@ -172,7 +180,11 @@ export default class Utils {
                         if (location.protocol === 'http:') {
                             initOptions.subdomainName = SUBDOMAIN;
                             if (options.autoRegister) {
-                                OneSignal.registerForPushNotifications();
+                                if (options.httpPermissionRequest) {
+                                    OneSignal.registerForPushNotifications({httpPermissionRequest: true});
+                                } else {
+                                    OneSignal.registerForPushNotifications();
+                                }
                             }
                         }
                         if (options.webhooks) {
@@ -183,6 +195,7 @@ export default class Utils {
                                 'notification.dismissed': 'https://localhost:8080/webhook'
                             };
                         }
+                        console.log('TEST OPTIONS INIT"', initOptions);
                         OneSignal.push(["init", initOptions]);
 
                         if (options.autoRegister) {
@@ -213,7 +226,9 @@ export default class Utils {
             })
             .then(() => {
                 console.log('Test Initialize: Stage 2');
-                if (location.protocol === 'http:' && options.autoRegister) {
+                if (location.protocol === 'http:' &&
+                    options.autoRegister &&
+                    !options.httpPermissionRequest) {
                     return Extension.acceptHttpSubscriptionPopup();
                 }
             })
@@ -254,6 +269,8 @@ export default class Utils {
         return executeAndTimeoutPromiseAfter(new Promise((resolve, reject) => {
             OneSignal.once(eventName, (e) => {
                 if (predicate && predicate(e)) {
+                    resolve();
+                } else if (predicate === null || predicate === undefined) {
                     resolve();
                 } else reject();
             });

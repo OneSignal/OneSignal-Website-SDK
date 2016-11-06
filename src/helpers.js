@@ -204,6 +204,7 @@ export default class Helpers {
               var creator = opener || parent;
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE);
+              /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
               if (opener)
                 window.close();
             })
@@ -377,12 +378,15 @@ export default class Helpers {
         'autoAcceptTitle',
         'siteName',
         'autoAcceptTitle',
+        'subscribeText',
+        'showGraphic',
         'actionMessage',
         'exampleNotificationTitle',
         'exampleNotificationMessage',
         'exampleNotificationCaption',
         'acceptButtonText',
-        'cancelButtonText'
+        'cancelButtonText',
+        'timeout',
       ];
       var hash = {};
       for (var i = 0; i < allowedPromptOptions.length; i++) {

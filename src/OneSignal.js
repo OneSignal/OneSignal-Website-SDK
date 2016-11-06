@@ -17,7 +17,6 @@ import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
 import Popover from './popover/popover';
-import HttpModal from "./http-modal/httpModal";
 
 
 
@@ -770,7 +769,11 @@ must be opened as a result of a subscription call.</span>`);
                   }
 
                   if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
-                      OneSignal.showHttpPermissionRequest();
+                      if (OneSignal.config.autoRegister) {
+                          OneSignal.showHttpPermissionRequest();
+                      } else {
+                          Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                      }
                   }
 
                   message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
@@ -802,26 +805,25 @@ must be opened as a result of a subscription call.</span>`);
       }
 
       function __showHttpPermissionRequest() {
-          console.log('Called function.');
           if (OneSignal.isUsingSubscriptionWorkaround()) {
               OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST);
           } else {
               if (!OneSignalHelpers.isUsingHttpPermissionRequest()) {
-                  console.log('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
+                  log.debug('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
                   Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
                   return;
               }
 
               console.warn(`(${Environment.getEnv()}) Showing HTTP permission request.`);
               Notification.requestPermission(permission => {
-                  console.log('HTTP Permission Request Result:', permission);
+                  log.debug('HTTP Permission Request Result:', permission);
                   OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
               });
               if (Notification.permission === "default") {
                   Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
               } else {
                   Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
-                  console.log('HTTP permission request not displayed because notification permission is:', Notification.permission);
+                  log.debug('HTTP permission request not displayed because notification permission is:', Notification.permission);
               }
           }
       }
@@ -831,12 +833,6 @@ must be opened as a result of a subscription call.</span>`);
       } else {
           return __showHttpPermissionRequest();
       }
-  }
-
-  static showHttpPermissionPostRequestModal() {
-      console.warn(`(${Environment.getEnv()}) Showing HTTP permission post-request modal.`);
-      OneSignal.httpModal = new HttpModal();
-      OneSignal.httpModal.create();
   }
 
   static _initPopup() {
@@ -978,12 +974,7 @@ must be opened as a result of a subscription call.</span>`);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
-          let newRemoteNotificationPermission = message.data;
-          OneSignal.triggerNotificationPermissionChanged();
-          if (OneSignalHelpers.isUsingHttpPermissionRequest() &&
-              newRemoteNotificationPermission === 'granted') {
-              OneSignal.showHttpPermissionPostRequestModal();
-          }
+          OneSignal.triggerNotificationPermissionChanged(true);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
@@ -1015,6 +1006,10 @@ must be opened as a result of a subscription call.</span>`);
     });
     if (options && options.autoAccept) {
       postData['autoAccept'] = true;
+    }
+    console.info('loadPopup(options):', options);
+    if (options && options.httpPermissionRequest) {
+      postData['httpPermissionRequest'] = true;
     }
     if (dangerouslyWipeData) {
       postData['dangerouslyWipeData'] = true;
@@ -1059,6 +1054,10 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION, message => {
         log.debug(Environment.getEnv() + " Marking current session as a continuing browsing session.");
         OneSignalHelpers.beginTemporaryBrowserSession();
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, message => {
+        log.debug(Environment.getEnv() + " Popup window timed out and was closed.");
+        Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
       });
     });
   }
@@ -2295,6 +2294,7 @@ objectAssign(OneSignal, {
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
+    WINDOW_TIMEOUT: 'postmam.windowTimeout',
   },
 
   EVENTS: {
@@ -2357,8 +2357,9 @@ objectAssign(OneSignal, {
       /**
        * For internal testing only. Used for all sorts of things.
        */
-     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
-     TEST_WOULD_DISPLAY: 'testWouldDisplay',
+    TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
+    TEST_WOULD_DISPLAY: 'testWouldDisplay',
+    POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
   },
 
   NOTIFICATION_TYPES: {
