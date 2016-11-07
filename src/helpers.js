@@ -471,17 +471,19 @@ export default class Helpers {
     var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
     var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
 
-    if (overrides.childWidth) {
-      childWidth = overrides.childWidth;
-    }
-    if (overrides.childHeight) {
-      childHeight = overrides.childHeight;
-    }
-    if (overrides.left) {
-      left = overrides.left;
-    }
-    if (overrides.top) {
-      top = overrides.top;
+    if (overrides) {
+      if (overrides.childWidth) {
+        childWidth = overrides.childWidth;
+      }
+      if (overrides.childHeight) {
+        childHeight = overrides.childHeight;
+      }
+      if (overrides.left) {
+        left = overrides.left;
+      }
+      if (overrides.top) {
+        top = overrides.top;
+      }
     }
     window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
 

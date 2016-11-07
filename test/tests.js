@@ -815,7 +815,7 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe.only('HTTP Permission Request', () => {
+    describe('HTTP Permission Request', () => {
         it('can activate by init option httpPermissionRequest', function() {
             return new SoloTest(this.test, {}, async() => {
                 await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'allow');
