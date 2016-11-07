@@ -797,7 +797,7 @@ must be opened as a result of a subscription call.</span>`);
   }
 
   static showHttpPermissionRequest() {
-      console.warn('Called showHttpPermissionRequest');
+      log.debug('Called showHttpPermissionRequest().');
       // Safari's push notifications are one-click Allow and shouldn't support this workaround
       if (!isPushNotificationsSupportedAndWarn() ||
           Browser.safari) {
@@ -814,7 +814,7 @@ must be opened as a result of a subscription call.</span>`);
                   return;
               }
 
-              console.warn(`(${Environment.getEnv()}) Showing HTTP permission request.`);
+              log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
               Notification.requestPermission(permission => {
                   log.debug('HTTP Permission Request Result:', permission);
                   OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
