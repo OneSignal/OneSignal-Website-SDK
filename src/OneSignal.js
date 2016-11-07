@@ -1010,12 +1010,18 @@ must be opened as a result of a subscription call.</span>`);
     console.info('loadPopup(options):', options);
     if (options && options.httpPermissionRequest) {
       postData['httpPermissionRequest'] = true;
+      var overrides = {
+        childWidth: 250,
+        childHeight: 150,
+        left: -99999999,
+        top: 9999999,
+      };
     }
     if (dangerouslyWipeData) {
       postData['dangerouslyWipeData'] = true;
     }
     log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData, overrides);
 
     if (subdomainPopup)
       subdomainPopup.focus();

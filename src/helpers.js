@@ -205,8 +205,9 @@ export default class Helpers {
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE);
               /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
-              if (opener)
+              if (opener) {
                 window.close();
+              }
             })
             .catch(e => log.error(e));
         }
@@ -455,7 +456,7 @@ export default class Helpers {
   // Arguments :
   //  verb : 'GET'|'POST'
   //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
-  static openWindowViaPost(url, data) {
+  static openWindowViaPost(url, data, overrides) {
     var form = document.createElement("form");
     form.action = url;
     form.method = 'POST';
@@ -469,6 +470,19 @@ export default class Helpers {
     var childHeight = OneSignal._windowHeight;
     var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
     var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
+
+    if (overrides.childWidth) {
+      childWidth = overrides.childWidth;
+    }
+    if (overrides.childHeight) {
+      childHeight = overrides.childHeight;
+    }
+    if (overrides.left) {
+      left = overrides.left;
+    }
+    if (overrides.top) {
+      top = overrides.top;
+    }
     window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
 
     if (data) {
@@ -485,7 +499,7 @@ export default class Helpers {
     document.body.removeChild(form);
   };
 
-  static openSubdomainPopup(url, data) {
-    Helpers.openWindowViaPost(url, data);
+  static openSubdomainPopup(url, data, overrides) {
+    Helpers.openWindowViaPost(url, data, overrides);
   }
 }
