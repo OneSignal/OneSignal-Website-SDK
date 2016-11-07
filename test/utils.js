@@ -195,7 +195,6 @@ export default class Utils {
                                 'notification.dismissed': 'https://localhost:8080/webhook'
                             };
                         }
-                        console.log('TEST OPTIONS INIT"', initOptions);
                         OneSignal.push(["init", initOptions]);
 
                         if (options.autoRegister) {
