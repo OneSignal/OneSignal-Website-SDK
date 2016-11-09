@@ -879,6 +879,22 @@ describe('Web SDK Tests', function () {
             });
         });
 
+        it('rejects if permission already allowed or denied', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: false
+                    });
+                    try {
+                        await OneSignal.showHttpPermissionRequest();
+                        expect(false).to.equal(true);
+                    } catch (result) {
+                    }
+                }
+            });
+        });
+
         it('popup should close after timeout milliseconds', function() {
             return new SoloTest(this.test, {}, async() => {
                 if (location.protocol === 'http:') {

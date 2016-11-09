@@ -790,49 +790,64 @@ must be opened as a result of a subscription call.</span>`);
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
           log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
           OneSignal.showHttpPermissionRequest()
-              .then(() => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE))
-              .catch(e => log.warn('Failed to show HTTP permission request:', e));
+              .then(result => {
+                  message.reply({status: 'resolve', result: result});
+              })
+              .catch(e => message.reply({status: 'reject', result: e}));
     });
     Event.trigger('httpInitialize');
   }
 
   static showHttpPermissionRequest() {
       log.debug('Called showHttpPermissionRequest().');
-      // Safari's push notifications are one-click Allow and shouldn't support this workaround
-      if (!isPushNotificationsSupportedAndWarn() ||
-          Browser.safari) {
-          return;
-      }
 
-      function __showHttpPermissionRequest() {
-          if (OneSignal.isUsingSubscriptionWorkaround()) {
-              OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST);
-          } else {
-              if (!OneSignalHelpers.isUsingHttpPermissionRequest()) {
-                  log.debug('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
-                  Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
-                  return;
-              }
+      return new Promise((resolve, reject) => {
+          // Safari's push notifications are one-click Allow and shouldn't support this workaround
+          if (!isPushNotificationsSupportedAndWarn() ||
+              Browser.safari) {
+              return;
+          }
 
-              log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
-              Notification.requestPermission(permission => {
-                  log.debug('HTTP Permission Request Result:', permission);
-                  OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
-              });
-              if (Notification.permission === "default") {
-                  Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+          function __showHttpPermissionRequest() {
+              if (OneSignal.isUsingSubscriptionWorkaround()) {
+                  OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, null, reply => {
+                      let {status, result} = reply.data;
+                      if (status === 'resolve') {
+                          resolve(result);
+                      } else {
+                          reject(result);
+                      }
+                  });
               } else {
-                  Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
-                  log.debug('HTTP permission request not displayed because notification permission is:', Notification.permission);
+                  if (!OneSignalHelpers.isUsingHttpPermissionRequest()) {
+                      log.debug('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
+                      Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                      return;
+                  }
+
+                  log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
+                  Notification.requestPermission(permission => {
+                      resolve(permission);
+                      log.debug('HTTP Permission Request Result:', permission);
+                      OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
+                  });
+                  if (Notification.permission === "default") {
+                      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+                  } else {
+                      Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                      const rejectReason = 'OneSignal: HTTP permission request not displayed because notification permission is already ' + Notification.permission + '.';
+                      log.debug(rejectReason);
+                      reject(rejectReason);
+                  }
               }
           }
-      }
 
-      if (!OneSignal.initialized) {
-          OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __showHttpPermissionRequest());
-      } else {
-          return __showHttpPermissionRequest();
-      }
+          if (!OneSignal.initialized) {
+              OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __showHttpPermissionRequest());
+          } else {
+              return __showHttpPermissionRequest();
+          }
+      });
   }
 
   static _initPopup() {
