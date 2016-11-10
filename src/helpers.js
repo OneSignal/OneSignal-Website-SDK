@@ -14,6 +14,8 @@ import swivel from 'swivel';
 import OneSignal from './OneSignal';
 import Postmam from './postmam.js';
 import Cookie from 'js-cookie';
+import HttpModal from "./http-modal/httpModal";
+import Bell from "./bell/bell.js";
 
 
 export default class Helpers {
@@ -80,6 +82,14 @@ export default class Helpers {
   static isUsingHttpPermissionRequest() {
     return OneSignal.config.httpPermissionRequest &&
            OneSignal.config.httpPermissionRequest.enable == true;
+  }
+
+  /**
+   * Returns true if the site using the HTTP permission request is supplying its own modal prompt to the user.
+   */
+  static isUsingCustomHttpPermissionRequestPostModal() {
+    return OneSignal.config.httpPermissionRequest &&
+        OneSignal.config.httpPermissionRequest.useCustomModal == true;
   }
 
   /**
@@ -202,7 +212,10 @@ export default class Helpers {
             .then((permission) => {
               log.debug("Sending player Id and registrationId back to host page");
               var creator = opener || parent;
-              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
+              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+                permission: permission,
+                forceUpdatePermission: true
+              });
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE);
               /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
               if (opener) {
@@ -251,6 +264,7 @@ export default class Helpers {
       .then(([previousPermission, currentPermission]) => {
         if (previousPermission !== currentPermission) {
           OneSignal.triggerNotificationPermissionChanged(previousPermission, currentPermission);
+          return Database.put('Options', {key: 'notificationPermission', value: currentPermission});
         }
       })
       .catch(e => log.error(e));
@@ -285,6 +299,50 @@ export default class Helpers {
    */
   static requestNotificationPermissionPromise() {
     return new Promise(resolve => Notification.requestPermission(resolve));
+  }
+
+  static showNotifyButton() {
+    if (Environment.isBrowser() && !OneSignal.notifyButton) {
+      OneSignal.config.notifyButton = OneSignal.config.notifyButton || {};
+      if (OneSignal.config.bell) {
+        // If both bell and notifyButton, notifyButton's options take precedence
+        objectAssign(OneSignal.config.bell, OneSignal.config.notifyButton);
+        objectAssign(OneSignal.config.notifyButton, OneSignal.config.bell);
+      }
+      if (OneSignal.config.notifyButton.displayPredicate &&
+          typeof OneSignal.config.notifyButton.displayPredicate === "function") {
+        Promise.resolve(OneSignal.config.notifyButton.displayPredicate())
+            .then(predicateValue => {
+              if (predicateValue !== false) {
+                OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
+                OneSignal.notifyButton.create();
+              } else {
+                log.debug('Notify button display predicate returned false so not showing the notify button.');
+              }
+            });
+      } else {
+        OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
+        OneSignal.notifyButton.create();
+      }
+    }
+  }
+
+  static checkAndDoHttpPermissionRequest() {
+    log.debug('Called checkAndDoHttpPermissionRequest().');
+    if (this.isUsingHttpPermissionRequest()) {
+      if (OneSignal.config.autoRegister) {
+        OneSignal.showHttpPermissionRequest()
+            .then(result => {
+              if (result === 'granted' &&
+                  !this.isUsingCustomHttpPermissionRequestPostModal()) {
+                log.debug('Showing built-in post HTTP permission request in-page modal because permission is granted and not using custom modal.');
+                this.showHttpPermissionRequestPostModal(OneSignal.config.httpPermissionRequest);
+              }
+            });
+      } else {
+        Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+      }
+    }
   }
 
   static getNotificationIcons() {
@@ -358,6 +416,15 @@ export default class Helpers {
       }
     }
     return promptOptionsStr;
+  }
+
+  /**
+   * Shows the modal on the page users must click on after the local notification prompt to trigger the standard
+   * HTTP popup window.
+   */
+  static showHttpPermissionRequestPostModal(options) {
+    OneSignal.httpPermissionRequestPostModal = new HttpModal(options);
+    OneSignal.httpPermissionRequestPostModal.create();
   }
 
   static getPromptOptionsPostHash() {

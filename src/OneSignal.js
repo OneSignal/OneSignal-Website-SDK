@@ -17,6 +17,7 @@ import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
 import Popover from './popover/popover';
+import HttpModal from "./http-modal/httpModal";
 
 
 
@@ -182,29 +183,7 @@ export default class OneSignal {
           });
     }
 
-    if (Environment.isBrowser() && !OneSignal.notifyButton) {
-      OneSignal.config.notifyButton = OneSignal.config.notifyButton || {};
-      if (OneSignal.config.bell) {
-        // If both bell and notifyButton, notifyButton's options take precedence
-        objectAssign(OneSignal.config.bell, OneSignal.config.notifyButton);
-        objectAssign(OneSignal.config.notifyButton, OneSignal.config.bell);
-      }
-      if (OneSignal.config.notifyButton.displayPredicate &&
-          typeof OneSignal.config.notifyButton.displayPredicate === "function") {
-        Promise.resolve(OneSignal.config.notifyButton.displayPredicate())
-            .then(predicateValue => {
-              if (predicateValue !== false) {
-                OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
-                OneSignal.notifyButton.create();
-              } else {
-                log.debug('Notify button display predicate returned false so not showing the notify button.');
-              }
-            });
-      } else {
-        OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
-        OneSignal.notifyButton.create();
-      }
-    }
+    OneSignal.helpers.showNotifyButton();
 
     if (Browser.safari && OneSignal.config.autoRegister === false) {
       OneSignal.isPushNotificationsEnabled(enabled => {
@@ -240,6 +219,7 @@ export default class OneSignal {
     }
 
     OneSignal.checkAndWipeUserSubscription();
+    OneSignalHelpers.checkAndDoHttpPermissionRequest();
   }
 
   static _onDatabaseRebuilt() {
@@ -768,14 +748,6 @@ must be opened as a result of a subscription call.</span>`);
                     }
                   }
 
-                  if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
-                      if (OneSignal.config.autoRegister) {
-                          OneSignal.showHttpPermissionRequest();
-                      } else {
-                          Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
-                      }
-                  }
-
                   message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
                 });
           })
@@ -826,12 +798,17 @@ must be opened as a result of a subscription call.</span>`);
                   }
 
                   log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
-                  Notification.requestPermission(permission => {
-                      resolve(permission);
-                      log.debug('HTTP Permission Request Result:', permission);
-                      OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
-                  });
                   if (Notification.permission === "default") {
+                      Notification.requestPermission(permission => {
+                          resolve(permission);
+                          log.debug('HTTP Permission Request Result:', permission);
+                          if (permission === 'default') {
+                              OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+                                  permission: permission,
+                                  forceUpdatePermission: true
+                              });
+                          }
+                      });
                       Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
                   } else {
                       Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
@@ -989,7 +966,8 @@ must be opened as a result of a subscription call.</span>`);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
-          OneSignal.triggerNotificationPermissionChanged(true);
+          let { forceUpdatePermission } = message.data;
+          OneSignal.triggerNotificationPermissionChanged(forceUpdatePermission);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {

@@ -122,7 +122,8 @@ class ServiceWorker {
           notification.close();
         }
       });
-    } else if (data.query) {
+    }
+    else if (data.query) {
       ServiceWorker.processQuery(data.query, data.response);
     }
   }
