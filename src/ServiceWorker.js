@@ -3,7 +3,7 @@ import Environment from './environment.js'
 import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import Database from './database.js';
-import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from './utils.js';
 import objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
@@ -108,7 +108,7 @@ class ServiceWorker {
    * @param data The message contents.
    */
   static onMessageReceived(context, data) {
-    log.debug(`%c${Environment.getEnv().capitalize()} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
+    log.debug(`%c${capitalize(Environment.getEnv())} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
 
     if (!data) {
       log.debug('Returning from empty data message.');
@@ -122,7 +122,8 @@ class ServiceWorker {
           notification.close();
         }
       });
-    } else if (data.query) {
+    }
+    else if (data.query) {
       ServiceWorker.processQuery(data.query, data.response);
     }
   }

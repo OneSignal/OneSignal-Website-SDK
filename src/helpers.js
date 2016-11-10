@@ -1,13 +1,12 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js';
-import './string.js';
 import OneSignalApi from './oneSignalApi.js';
 import log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser } from './utils.js';
+import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser, capitalize } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -15,6 +14,8 @@ import swivel from 'swivel';
 import OneSignal from './OneSignal';
 import Postmam from './postmam.js';
 import Cookie from 'js-cookie';
+import HttpModal from "./http-modal/httpModal";
+import Bell from "./bell/bell.js";
 
 
 export default class Helpers {
@@ -73,6 +74,22 @@ export default class Helpers {
       }
       OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
     }
+  }
+
+  /**
+   * Returns true if the experimental HTTP permission request is being used to prompt the user.
+   */
+  static isUsingHttpPermissionRequest() {
+    return OneSignal.config.httpPermissionRequest &&
+           OneSignal.config.httpPermissionRequest.enable == true;
+  }
+
+  /**
+   * Returns true if the site using the HTTP permission request is supplying its own modal prompt to the user.
+   */
+  static isUsingCustomHttpPermissionRequestPostModal() {
+    return OneSignal.config.httpPermissionRequest &&
+        OneSignal.config.httpPermissionRequest.useCustomModal == true;
   }
 
   /**
@@ -195,10 +212,15 @@ export default class Helpers {
             .then((permission) => {
               log.debug("Sending player Id and registrationId back to host page");
               var creator = opener || parent;
-              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, permission);
+              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+                permission: permission,
+                forceUpdatePermission: true
+              });
               OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE);
-              if (opener)
+              /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
+              if (opener) {
                 window.close();
+              }
             })
             .catch(e => log.error(e));
         }
@@ -242,6 +264,7 @@ export default class Helpers {
       .then(([previousPermission, currentPermission]) => {
         if (previousPermission !== currentPermission) {
           OneSignal.triggerNotificationPermissionChanged(previousPermission, currentPermission);
+          return Database.put('Options', {key: 'notificationPermission', value: currentPermission});
         }
       })
       .catch(e => log.error(e));
@@ -276,6 +299,50 @@ export default class Helpers {
    */
   static requestNotificationPermissionPromise() {
     return new Promise(resolve => Notification.requestPermission(resolve));
+  }
+
+  static showNotifyButton() {
+    if (Environment.isBrowser() && !OneSignal.notifyButton) {
+      OneSignal.config.notifyButton = OneSignal.config.notifyButton || {};
+      if (OneSignal.config.bell) {
+        // If both bell and notifyButton, notifyButton's options take precedence
+        objectAssign(OneSignal.config.bell, OneSignal.config.notifyButton);
+        objectAssign(OneSignal.config.notifyButton, OneSignal.config.bell);
+      }
+      if (OneSignal.config.notifyButton.displayPredicate &&
+          typeof OneSignal.config.notifyButton.displayPredicate === "function") {
+        Promise.resolve(OneSignal.config.notifyButton.displayPredicate())
+            .then(predicateValue => {
+              if (predicateValue !== false) {
+                OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
+                OneSignal.notifyButton.create();
+              } else {
+                log.debug('Notify button display predicate returned false so not showing the notify button.');
+              }
+            });
+      } else {
+        OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
+        OneSignal.notifyButton.create();
+      }
+    }
+  }
+
+  static checkAndDoHttpPermissionRequest() {
+    log.debug('Called checkAndDoHttpPermissionRequest().');
+    if (this.isUsingHttpPermissionRequest()) {
+      if (OneSignal.config.autoRegister) {
+        OneSignal.showHttpPermissionRequest()
+            .then(result => {
+              if (result === 'granted' &&
+                  !this.isUsingCustomHttpPermissionRequestPostModal()) {
+                log.debug('Showing built-in post HTTP permission request in-page modal because permission is granted and not using custom modal.');
+                this.showHttpPermissionRequestPostModal(OneSignal.config.httpPermissionRequest);
+              }
+            });
+      } else {
+        Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+      }
+    }
   }
 
   static getNotificationIcons() {
@@ -314,7 +381,7 @@ export default class Helpers {
     }
     OneSignal._channel = swivel.at(serviceWorkerRegistration ? serviceWorkerRegistration.active : null);
     OneSignal._channel.on('data', function handler(context, data) {
-      log.debug(`%c${Environment.getEnv().capitalize()} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+      log.debug(`%c${capitalize(Environment.getEnv())} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
     OneSignal._channel.on('notification.displayed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
@@ -351,6 +418,15 @@ export default class Helpers {
     return promptOptionsStr;
   }
 
+  /**
+   * Shows the modal on the page users must click on after the local notification prompt to trigger the standard
+   * HTTP popup window.
+   */
+  static showHttpPermissionRequestPostModal(options) {
+    OneSignal.httpPermissionRequestPostModal = new HttpModal(options);
+    OneSignal.httpPermissionRequestPostModal.create();
+  }
+
   static getPromptOptionsPostHash() {
     let promptOptions = OneSignal.config['promptOptions'];
     if (promptOptions) {
@@ -370,12 +446,15 @@ export default class Helpers {
         'autoAcceptTitle',
         'siteName',
         'autoAcceptTitle',
+        'subscribeText',
+        'showGraphic',
         'actionMessage',
         'exampleNotificationTitle',
         'exampleNotificationMessage',
         'exampleNotificationCaption',
         'acceptButtonText',
-        'cancelButtonText'
+        'cancelButtonText',
+        'timeout',
       ];
       var hash = {};
       for (var i = 0; i < allowedPromptOptions.length; i++) {
@@ -444,7 +523,7 @@ export default class Helpers {
   // Arguments :
   //  verb : 'GET'|'POST'
   //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
-  static openWindowViaPost(url, data) {
+  static openWindowViaPost(url, data, overrides) {
     var form = document.createElement("form");
     form.action = url;
     form.method = 'POST';
@@ -458,6 +537,21 @@ export default class Helpers {
     var childHeight = OneSignal._windowHeight;
     var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
     var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
+
+    if (overrides) {
+      if (overrides.childWidth) {
+        childWidth = overrides.childWidth;
+      }
+      if (overrides.childHeight) {
+        childHeight = overrides.childHeight;
+      }
+      if (overrides.left) {
+        left = overrides.left;
+      }
+      if (overrides.top) {
+        top = overrides.top;
+      }
+    }
     window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
 
     if (data) {
@@ -474,7 +568,7 @@ export default class Helpers {
     document.body.removeChild(form);
   };
 
-  static openSubdomainPopup(url, data) {
-    Helpers.openWindowViaPost(url, data);
+  static openSubdomainPopup(url, data, overrides) {
+    Helpers.openWindowViaPost(url, data, overrides);
   }
 }

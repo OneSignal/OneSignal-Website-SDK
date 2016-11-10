@@ -1,6 +1,5 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars.js';
 import Environment from './environment.js';
-import './string.js';
 import OneSignalApi from './oneSignalApi.js';
 import IndexedDb from './indexedDb';
 import log from 'loglevel';
@@ -18,6 +17,7 @@ import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
 import Popover from './popover/popover';
+import HttpModal from "./http-modal/httpModal";
 
 
 
@@ -183,29 +183,7 @@ export default class OneSignal {
           });
     }
 
-    if (Environment.isBrowser() && !OneSignal.notifyButton) {
-      OneSignal.config.notifyButton = OneSignal.config.notifyButton || {};
-      if (OneSignal.config.bell) {
-        // If both bell and notifyButton, notifyButton's options take precedence
-        objectAssign(OneSignal.config.bell, OneSignal.config.notifyButton);
-        objectAssign(OneSignal.config.notifyButton, OneSignal.config.bell);
-      }
-      if (OneSignal.config.notifyButton.displayPredicate &&
-          typeof OneSignal.config.notifyButton.displayPredicate === "function") {
-        Promise.resolve(OneSignal.config.notifyButton.displayPredicate())
-            .then(predicateValue => {
-              if (predicateValue !== false) {
-                OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
-                OneSignal.notifyButton.create();
-              } else {
-                log.debug('Notify button display predicate returned false so not showing the notify button.');
-              }
-            });
-      } else {
-        OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
-        OneSignal.notifyButton.create();
-      }
-    }
+    OneSignal.helpers.showNotifyButton();
 
     if (Browser.safari && OneSignal.config.autoRegister === false) {
       OneSignal.isPushNotificationsEnabled(enabled => {
@@ -241,6 +219,7 @@ export default class OneSignal {
     }
 
     OneSignal.checkAndWipeUserSubscription();
+    OneSignalHelpers.checkAndDoHttpPermissionRequest();
   }
 
   static _onDatabaseRebuilt() {
@@ -322,7 +301,7 @@ export default class OneSignal {
         } else {
           log.error('OneSignal: Your JavaScript initialization code is missing a required parameter %csubdomainName',
                     getConsoleStyle('code'),
-                    '. HTTP sites require this parameter to initialize correctly. Please see steps 1.5 and 2.2 at ' +
+                    '. HTTP sites require this parameter to initialize correctly. Please see steps 1.4 and 2 at ' +
                     'https://documentation.onesignal.com/docs/web-push-sdk-setup-http)');
           return;
         }
@@ -551,6 +530,10 @@ export default class OneSignal {
                         log.debug('OneSignal: Not showing popover because the user was manually opted out.');
                         return 'user-intentionally-unsubscribed';
                     }
+                    if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
+                        log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
+                        return 'using-http-permission-request';
+                    }
                     OneSignalHelpers.markHttpPopoverShown();
                     OneSignal.popover = new Popover(OneSignal.config.promptOptions);
                     OneSignal.popover.create();
@@ -776,7 +759,72 @@ must be opened as a result of a subscription call.</span>`);
           .then(() => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE))
           .catch(e => log.warn('Failed to unsubscribe from push remotely.', e));
     });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
+          log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
+          OneSignal.showHttpPermissionRequest()
+              .then(result => {
+                  message.reply({status: 'resolve', result: result});
+              })
+              .catch(e => message.reply({status: 'reject', result: e}));
+    });
     Event.trigger('httpInitialize');
+  }
+
+  static showHttpPermissionRequest() {
+      log.debug('Called showHttpPermissionRequest().');
+
+      return new Promise((resolve, reject) => {
+          // Safari's push notifications are one-click Allow and shouldn't support this workaround
+          if (!isPushNotificationsSupportedAndWarn() ||
+              Browser.safari) {
+              return;
+          }
+
+          function __showHttpPermissionRequest() {
+              if (OneSignal.isUsingSubscriptionWorkaround()) {
+                  OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, null, reply => {
+                      let {status, result} = reply.data;
+                      if (status === 'resolve') {
+                          resolve(result);
+                      } else {
+                          reject(result);
+                      }
+                  });
+              } else {
+                  if (!OneSignalHelpers.isUsingHttpPermissionRequest()) {
+                      log.debug('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
+                      Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                      return;
+                  }
+
+                  log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
+                  if (Notification.permission === "default") {
+                      Notification.requestPermission(permission => {
+                          resolve(permission);
+                          log.debug('HTTP Permission Request Result:', permission);
+                          if (permission === 'default') {
+                              OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+                                  permission: permission,
+                                  forceUpdatePermission: true
+                              });
+                          }
+                      });
+                      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+                  } else {
+                      Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                      const rejectReason = 'OneSignal: HTTP permission request not displayed because notification permission is already ' + Notification.permission + '.';
+                      log.debug(rejectReason);
+                      reject(rejectReason);
+                  }
+              }
+          }
+
+          if (!OneSignal.initialized) {
+              OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __showHttpPermissionRequest());
+          } else {
+              return __showHttpPermissionRequest();
+          }
+      });
   }
 
   static _initPopup() {
@@ -918,8 +966,8 @@ must be opened as a result of a subscription call.</span>`);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
-          let newRemoteNotificationPermission = message.data;
-          OneSignal.triggerNotificationPermissionChanged();
+          let { forceUpdatePermission } = message.data;
+          OneSignal.triggerNotificationPermissionChanged(forceUpdatePermission);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
@@ -952,11 +1000,21 @@ must be opened as a result of a subscription call.</span>`);
     if (options && options.autoAccept) {
       postData['autoAccept'] = true;
     }
+    console.info('loadPopup(options):', options);
+    if (options && options.httpPermissionRequest) {
+      postData['httpPermissionRequest'] = true;
+      var overrides = {
+        childWidth: 250,
+        childHeight: 150,
+        left: -99999999,
+        top: 9999999,
+      };
+    }
     if (dangerouslyWipeData) {
       postData['dangerouslyWipeData'] = true;
     }
     log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
-    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData);
+    var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData, overrides);
 
     if (subdomainPopup)
       subdomainPopup.focus();
@@ -995,6 +1053,10 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION, message => {
         log.debug(Environment.getEnv() + " Marking current session as a continuing browsing session.");
         OneSignalHelpers.beginTemporaryBrowserSession();
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, message => {
+        log.debug(Environment.getEnv() + " Popup window timed out and was closed.");
+        Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
       });
     });
   }
@@ -2230,6 +2292,8 @@ objectAssign(OneSignal, {
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
+    SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
+    WINDOW_TIMEOUT: 'postmam.windowTimeout',
   },
 
   EVENTS: {
@@ -2287,10 +2351,14 @@ objectAssign(OneSignal, {
     POPUP_CLOSING: 'popupClose',
     /**
      * Occurs when the native permission prompt is displayed.
-     * This is currently used to know when to display the HTTP popup incognito notice so that it hides the notice
-     * for non-incognito users.
      */
     PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
+      /**
+       * For internal testing only. Used for all sorts of things.
+       */
+    TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
+    TEST_WOULD_DISPLAY: 'testWouldDisplay',
+    POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
   },
 
   NOTIFICATION_TYPES: {

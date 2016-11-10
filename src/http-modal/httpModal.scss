@@ -1,0 +1,186 @@
+$modal-transition-duration: 400ms;
+$border-radius: 2px;
+
+#onesignal-modal-container {
+  font-size: 14px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2258594000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:rgba(51, 51, 51, 0.2);
+  -webkit-font-smoothing: initial;
+  padding: 2em;
+
+  #onesignal-modal-dialog {
+    width: 600px;
+    max-width: 100%;
+  }
+
+  #onesignal-modal-dialog {
+    box-sizing: border-box;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22) !important;
+    background: white !important;
+    padding: 0;
+    border-bottom-left-radius: $border-radius;
+    border-bottom-right-radius: $border-radius;
+    font-family: -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+
+    .modal-body {
+      box-sizing: border-box;
+      margin: 0;
+      padding-bottom: 1.714em;
+    }
+
+    .modal-body-icon {
+      box-sizing: border-box;
+      float: left;
+      width: 80px;
+      height: 80px;
+      background-size: contain;
+      background-position: 0% 0%;
+      background-repeat: no-repeat;
+
+      &.default-icon {
+        background-size: initial;
+        background-position: 50% 0%;
+      }
+    }
+
+    .modal-body-message {
+      box-sizing: border-box;
+      text-align: center;
+      width: 100%;
+      display: block;
+      font-size: 1.143em;
+      padding: 0 1.5em;
+      line-height: 1.45em;
+      -o-user-select: none;
+      user-select: none;
+      cursor: default;
+      font-weight: 300;
+      color: #666 !important;
+    }
+
+    .modal-body-title {
+      background: #24A3F3;
+      cursor: default;
+      user-select: none;
+      padding: 1em;
+      text-align: center;
+      font-size: 1.4em;
+      font-weight: 300;
+      color: white !important;
+      margin-bottom: 1.25em;
+    }
+
+    .modal-exit {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      color: white;
+      font-size: 1.5em;
+    }
+
+    button {
+      box-sizing: border-box;
+      display: inline-block;
+      padding: .375rem 1rem;
+      font-size: 0.9625em;
+      font-weight: 400;
+      line-height: 1.5;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border: 1px solid transparent;
+      border-radius: .25rem;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      -webkit-transition: background-color 75ms ease;
+      transition: background-color 75ms ease;
+      margin: 0;
+    }
+
+    .modal-button {
+      padding: 0.714em 2em;
+      font-size: 1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      font-weight: 400;
+
+      &.primary {
+        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
+        background: #24A3F3 !important;;
+        color: white !important;
+
+        &:hover {
+          background: darken(#4285F4, 7.5%);
+        }
+
+        &:active {
+          background: darken(#4285F4, 15%);
+        }
+      }
+
+      &.secondary {
+        box-shadow: none;
+        background: white !important;
+        /*
+          We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
+          Some sites set their own !important tag for text and we don't want that to be able to override ours.
+         */
+        color: #4285F4 !important;
+
+        &:hover {
+          color: darken(#4285F4, 12.5%);
+        }
+
+        &:active {
+          color: darken(#4285F4, 30.5%);
+        }
+      }
+    }
+
+    .primary.modal-button+.secondary.modal-button {
+      margin-right: 0.714em;
+    }
+
+    .modal-footer {
+      position: relative;
+      margin: 0.571em;
+      margin-bottom: 1.15em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .align-right {
+      float: right;
+    }
+
+    .clearfix {
+      display: block;
+    }
+    .clearfix:after {
+      content: '';
+      display: block;
+      height: 0;
+      clear: both;
+      visibility: hidden;
+    }
+  }
+}

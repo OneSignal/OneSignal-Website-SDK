@@ -407,6 +407,14 @@ export function wipeIndexedDb() {
 }
 
 /**
+ * Capitalizes the first letter of the string.
+ * @returns {string} The string with the first letter capitalized.
+ */
+export function capitalize(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
  * Unsubscribe from push notifications without removing the active service worker.
  */
 export function unsubscribeFromPush() {

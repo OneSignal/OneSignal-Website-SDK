@@ -1,7 +1,6 @@
 import log from 'loglevel';
 import Environment from './environment.js';
-import { getConsoleStyle, contains } from './utils.js';
-import './string.js';
+import { getConsoleStyle, contains, capitalize } from './utils.js';
 
 
 const SILENT_EVENTS = [
@@ -18,7 +17,8 @@ const SILENT_EVENTS = [
   'activeAnimatedElementInactivating',
   'activeAnimatedElementInactive',
   'dbRetrieved',
-  'dbSet'
+  'dbSet',
+  'testEvent'
   ];
 
 const RETRIGGER_REMOTE_EVENTS = [
@@ -36,7 +36,10 @@ const RETRIGGER_REMOTE_EVENTS = [
   'register',
   'notificationDisplay',
   'notificationDismiss',
-  'permissionPromptDisplay'
+  'permissionPromptDisplay',
+  'testWouldDisplay',
+  'testInitOptionDisabled',
+  'popupWindowTimeout'
 ];
 
 const LEGACY_EVENT_MAP = {
@@ -57,9 +60,9 @@ export default class Event {
     if (!contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
       if (remoteTriggerEnv) {
-        var env = `${Environment.getEnv().capitalize()} ⬸ ${remoteTriggerEnv.capitalize()}`;
+        var env = `${capitalize(Environment.getEnv())} ⬸ ${capitalize(remoteTriggerEnv)}`;
       } else {
-        var env = Environment.getEnv().capitalize();
+        var env = capitalize(Environment.getEnv());
       }
 
       if (displayData || displayData === false) {

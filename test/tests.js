@@ -14,6 +14,7 @@ import {
 import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
 import Postmam from '../src/postmam.js';
+import { DEV_FRAME_HOST } from '../src/vars.js';
 import Database from '../src/database';
 import MultiStepSoloTest from './multiStepSoloTest';
 import isUuid from 'validator/lib/isUuid';
@@ -811,6 +812,100 @@ describe('Web SDK Tests', function () {
                 let url = `http://i${i}.wp.com/site.com/wp-content/uploads/2016/08/photo.png`;
                 expect(Utils.ensureImageResourceHttps(url)).to.equal(url.replace('http:', 'https:'));
             }
+        });
+    });
+
+    describe('HTTP Permission Request', () => {
+        it('can activate by init option httpPermissionRequest', function() {
+            return new SoloTest(this.test, {}, async() => {
+                await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'allow');
+                if (location.protocol === 'http:') {
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: true
+                    });
+                    await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                }
+            });
+        });
+
+        it('can activate manually by method showHttpPermissionRequest', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: false
+                    });
+                    OneSignal.showHttpPermissionRequest();
+                    await Utils.expectEvent(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
+                }
+            });
+        });
+
+        it('should not activate automatically if autoRegister is false', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: false
+                    });
+                    await Utils.expectEvent(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                }
+            });
+        });
+
+        it('should not activate if init option is missing but showHttpPermissionRequest is called', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                    });
+                    OneSignal.showHttpPermissionRequest();
+                    await Utils.expectEvent(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
+                }
+            });
+        });
+
+        it('should trigger existing event permissionPromptDisplay when the prompt is displayed', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'ask');
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: true
+                    });
+                    await Utils.expectEvent(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+                    await Extension.setNotificationPermission(`${DEV_FRAME_HOST}/*`, 'allow');
+                }
+            });
+        });
+
+        it('rejects if permission already allowed or denied', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    await Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        autoRegister: false
+                    });
+                    try {
+                        await OneSignal.showHttpPermissionRequest();
+                        expect(false).to.equal(true);
+                    } catch (result) {
+                    }
+                }
+            });
+        });
+
+        it('popup should close after timeout milliseconds', function() {
+            return new SoloTest(this.test, {}, async() => {
+                if (location.protocol === 'http:') {
+                    Utils.initialize(globals, {
+                        httpPermissionRequest: true,
+                        httpPermissionRequestTimeout: 1,
+                        autoRegister: true
+                    });
+                    await Utils.expectEvent(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
+                }
+            });
         });
     });
 });
