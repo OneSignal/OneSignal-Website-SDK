@@ -147,6 +147,7 @@ export default class Utils {
                 return new Promise(resolve => {
                     window.OneSignal = OneSignal || [];
                     OneSignal.push(function () {
+                        OneSignal.log.setLevel('trace');
                         OneSignal.LOGGING = true;
                         let initOptions = {
                             appId: globals.app.id,

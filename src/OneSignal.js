@@ -253,16 +253,20 @@ export default class OneSignal {
     }
   }
 
+  static _applyServiceWorkerEnvPrefixes() {
+    if (Environment.isDev()) {
+      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+    } else if (Environment.isStaging()) {
+      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+    }
+  }
+
   static init(options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
-    if (Environment.isDev()) {
-        OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-        OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    } else if (Environment.isStaging()) {
-        OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-        OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    }
+    OneSignal._applyServiceWorkerEnvPrefixes();
 
     if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.init"])
       debugger;
@@ -368,11 +372,9 @@ export default class OneSignal {
       log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
                 ' initialization...');
       window.addEventListener('DOMContentLoaded', () => {
-        log.debug('OneSignal: DOMContentLoaded event fired. Document readyState is:', document.readyState);
         __init();
       });
       document.onreadystatechange = () => {
-        log.debug('OneSignal: readyStateChange event fired. Document readyState is:', document.readyState);
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
           __init();
         }
@@ -609,6 +611,8 @@ export default class OneSignal {
       return;
     }
 
+    OneSignal._applyServiceWorkerEnvPrefixes();
+
     var creator = opener || parent;
 
     if (creator == window) {
@@ -830,6 +834,8 @@ must be opened as a result of a subscription call.</span>`);
   static _initPopup() {
     OneSignal.config = {};
     OneSignal.initialized = true;
+
+    OneSignal._applyServiceWorkerEnvPrefixes();
 
     // Do not register OneSignalSDKUpdaterWorker.js for HTTP popup sites; the file does not exist
     OneSignal.isPushNotificationsEnabled(isEnabled => {

@@ -719,13 +719,21 @@ class ServiceWorker {
     return Database.get('Ids', 'appId')
         .then(retrievedAppId => {
           appId = retrievedAppId;
+          return serviceWorkerRegistration.pushManager.getSubscription()
+        }).then(oldSubscription => {
           log.debug(`Calling pushManager.subscribe to resubscribe expired subscription`);
-          return serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true});
+          // Only re-subscribe if there was an existing subscription and we are on Chrome 54+ wth PushSubscriptionOptions
+          // Otherwise there's really no way to resubscribe since we don't have the manifest.json sender ID
+          if (oldSubscription && oldSubscription.options) {
+            return serviceWorkerRegistration.pushManager.subscribe(oldSubscription.options);
+          } else {
+            return Promise.resolve();
+          }
         }).then(subscription => {
-          log.debug(`Finished calling pushManager.subscribe to resubscribe expired subscription:`, subscription);
-
-          var subscriptionInfo = {};
+          var subscriptionInfo = null;
           if (subscription) {
+            subscriptionInfo = {};
+            log.debug(`Finished calling pushManager.subscribe to resubscribe expired subscription:`, subscription);
             if (typeof subscription.subscriptionId != "undefined") {
               // Chrome 43 & 42
               subscriptionInfo.endpointOrToken = subscription.subscriptionId;
@@ -755,13 +763,13 @@ class ServiceWorker {
               if (p256dh) {
                 // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
                 let p256dh_base64encoded = btoa(
-                    String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+                  String.fromCharCode.apply(null, new Uint8Array(p256dh)));
                 subscriptionInfo.p256dh = p256dh_base64encoded;
               }
               if (auth) {
                 // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
                 let auth_base64encoded = btoa(
-                    String.fromCharCode.apply(null, new Uint8Array(auth)));
+                  String.fromCharCode.apply(null, new Uint8Array(auth)));
                 subscriptionInfo.auth = auth_base64encoded;
               }
             }

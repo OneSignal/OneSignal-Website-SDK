@@ -16,6 +16,7 @@ import Postmam from './postmam.js';
 import Cookie from 'js-cookie';
 import HttpModal from "./http-modal/httpModal";
 import Bell from "./bell/bell.js";
+import Hashes from 'jshashes';
 
 
 export default class Helpers {
@@ -81,15 +82,31 @@ export default class Helpers {
    */
   static isUsingHttpPermissionRequest() {
     return OneSignal.config.httpPermissionRequest &&
-           OneSignal.config.httpPermissionRequest.enable == true;
+           OneSignal.config.httpPermissionRequest.enable == true &&
+           OneSignal.isUsingSubscriptionWorkaround();
   }
 
   /**
    * Returns true if the site using the HTTP permission request is supplying its own modal prompt to the user.
    */
   static isUsingCustomHttpPermissionRequestPostModal() {
-    return OneSignal.config.httpPermissionRequest &&
-        OneSignal.config.httpPermissionRequest.useCustomModal == true;
+    return (OneSignal.config.httpPermissionRequest &&
+        OneSignal.config.httpPermissionRequest.useCustomModal == true) ||
+        this.isSpecialAppId();
+  }
+
+  static isSpecialAppId() {
+    const appId = OneSignal.config.appId;
+    if (appId) {
+      const hashedAppId = new Hashes.SHA1().hex(appId);
+      return ['73c17966301b2472374f75dbba72f169140d8382',
+              'b7968a61bca8dfced244747dc551969b3b8885e8',
+              'd985e24045894b8b65ea1ca190ba8d378e6bff6f',
+              'bde0962475ebe01e7d61cd1ca8f8f00957951e25',
+              '53a7024a5dc9385dc6629d37d899a1a9bb5edd8c',
+              '5b3da02c0caf5dc03e8efc173e2999c182a8c684',
+              'a4f2cce77d9dec99b64e7e2a0d7b818cb5d3291a'].indexOf(hashedAppId) !== -1;
+    } else return false;
   }
 
   /**
@@ -324,6 +341,16 @@ export default class Helpers {
         OneSignal.notifyButton = new Bell(OneSignal.config.notifyButton);
         OneSignal.notifyButton.create();
       }
+    }
+  }
+
+  static getPrefixedServiceWorkerNameForEnv() {
+    if (Environment.isDev()) {
+      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+    } else if (Environment.isStaging()) {
+      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
     }
   }
 
