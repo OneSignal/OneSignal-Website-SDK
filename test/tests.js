@@ -9,7 +9,7 @@ import {
     executeAndTimeoutPromiseAfter,
     guid,
     isPushNotificationsSupported,
-    isPushNotificationsSupportedAndWarn
+    isValidEmail
 } from '../src/utils';
 import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
@@ -584,10 +584,6 @@ describe('Web SDK Tests', function () {
         it('isPushNotificationsSupported() should return true', () => {
             expect(isPushNotificationsSupported()).to.be.true;
         });
-
-        it('isPushNotificationsSupportedAndWarn() should return true', () => {
-            expect(isPushNotificationsSupportedAndWarn()).to.be.true;
-        });
     });
 
     describe('Subdomain', () => {
@@ -906,6 +902,50 @@ describe('Web SDK Tests', function () {
                     await Utils.expectEvent(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
                 }
             });
+        });
+    });
+
+    describe.only('isValidEmail() Email Validation', () => {
+        it('should allow valid email addresses', function () {
+            var validEmails = [
+                'jason@onesignal.com',
+                'jason+1@onesignal.com',
+                'jason.1@onesignal.com',
+                'jason-1@onesignal.com',
+                'jason@onesignal.com.br',
+                'jason@onesignal.com.br.eu.tz',
+                'jason@gmail.org',
+                'jason.test.1.-4+2@onesignal.com',
+                'monorail+v2.3275348242@chromium.org',
+                'chromium@monorail-prod.appspotmail.com',
+                'chrome-dev-summit-noreply@google.com',
+                'notifications+admin_only_129918_8de78bb5398c1c185fded6cca7abebafae790396@mail.intercom.io',
+                'notifications+admin_only_129918_1ca9a353350f0f69053fb0aae767614baccee697@mail.intercom.io',
+                'george.deglin@onesignal.mail.intercom.io',
+                'a@b.c',
+                'name@domain.super-long-top-level-domain-name-extension',
+                'jason 1@onesignal.com', // Yep this is valid apparently
+            ];
+            for (let email of validEmails) {
+                expect(isValidEmail(email), `For email '${email}'`).to.be.true
+            }
+        });
+        it('should not allow invalid email addresses', function () {
+            var invalidEmails = [
+                null,
+                undefined,
+                '',
+                '    ',
+                'jason@myhostname',
+                'jason',
+                'a',
+                '@',
+                'jason@@gmail.com',
+                'jason@gmail..com',
+            ];
+            for (let email of invalidEmails) {
+                expect(isValidEmail(email), `For email '${email}'`).to.be.false
+            }
         });
     });
 });

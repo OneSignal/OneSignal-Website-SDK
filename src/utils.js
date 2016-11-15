@@ -8,14 +8,6 @@ export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
 }
 
-export function isPushNotificationsSupportedAndWarn() {
-  let isSupported = isPushNotificationsSupported();
-  if (!isSupported) {
-    log.warn("Your browser does not support push notifications.");
-  }
-  return isSupported;
-}
-
 var decodeTextArea = null;
 export function decodeHtmlEntities(text) {
   if (Environment.isBrowser()) {
@@ -73,6 +65,29 @@ export function removeDomElement(selector) {
     for (let i = 0; i < els.length; i++)
       els[i].parentNode.removeChild(els[i]);
   }
+}
+
+/**
+ * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
+ * not supported, and wraps these tasks in a Promise.
+ */
+export function awaitOneSignalInitAndSupported() {
+  return new Promise((resolve, reject) => {
+    if (!isPushNotificationsSupported()) {
+      reject('Push notifications are not supported.');
+    }
+
+    if (!OneSignal.initialized) {
+      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => resolve);
+    } else {
+      resolve();
+    }
+  });
+}
+
+export function isValidEmail(email) {
+  return !!email &&
+         !!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/)
 }
 
 export function addDomElement(targetSelectorOrElement, addOrder, elementHtml) {
