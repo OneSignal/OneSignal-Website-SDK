@@ -1,11 +1,11 @@
 var webpack = require("webpack");
 var path = require('path');
-var babelPolyfill = require('babel-polyfill');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
-var IS_PROD = process.argv.indexOf('--production') >= 0;
+
+var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--production') >= 0;
 var IS_STAGING = process.argv.indexOf('--staging') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
+var IS_DEV = !IS_PROD && !IS_STAGING;
 
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
@@ -15,39 +15,63 @@ Date.prototype.timeNow = function() {
   return ((hours < 10) ? "0" : "") + hours + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + " " + ampm;
 };
 
-var definePluginConstants = {
-  __DEV__: !IS_PROD && !IS_STAGING,
-  __TEST__: IS_TEST,
-  __STAGING__: IS_STAGING,
-  __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
-};
-
-if (IS_PROD) {
-  definePluginConstants['process.env.NODE_ENV'] = JSON.stringify('production');
+/**
+ * Returns Dev- for dev builds, Staging- for staging builds.
+ */
+function getBuildPrefix() {
+  if (IS_STAGING) {
+    return 'Staging-';
+  } else if (IS_DEV) {
+    return 'Dev-';
+  } else {
+    return '';
+  }
 }
 
-var recompileFunction = function() {
+/**
+ * Build constants that get inserted into src/environment.js.
+ */
+function getBuildDefines() {
+  var buildDefines = {
+    __DEV__: IS_DEV,
+    __TEST__: IS_TEST,
+    __STAGING__: IS_STAGING,
+    __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
+  };
+  if (IS_PROD) {
+    buildDefines['process.env.NODE_ENV'] = JSON.stringify('production');
+  }
+  return buildDefines;
+}
+
+/**
+ * This plugin outputs:
+ *    05:45:02 PM: File changes detected.
+ * which helps identify the time files changed.
+ */
+var changesDetectedMessagePlugin = function() {
   this.plugin('watch-run', function(watching, callback) {
     console.log();
-    console.log('Recompiling assets starting ' + new Date()
-            .timeNow() + "...");
+    console.log(new Date().timeNow() + ": File changes detected.");
+    console.log();
     callback();
   })
 };
 
-var entries = {
-  OneSignalSDK: './src/entry.js'
-};
+function getWebSdkModuleEntry() {
+  var path = './src/entry.js';
+  var moduleEntry = {};
+  moduleEntry[getBuildPrefix() + 'OneSignalSDK'] = path;
+  return moduleEntry;
+}
 
 const ONESIGNAL_WEB_SDK = {
-  name: 'OneSignalSDK',
   target: 'web',
-  entry: entries,
+  entry: getWebSdkModuleEntry(),
   output: {
     path: path.join(__dirname, 'dist'),
     filename: '[name].js'
   },
-  devtool: 'source-map',
   module: {
     loaders: [{
       test: /\.js$/,
@@ -64,6 +88,7 @@ const ONESIGNAL_WEB_SDK = {
         loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
       }]
   },
+  devtool: 'source-map',
   sassLoader: {
     includePaths: [path.resolve(__dirname, "./src")]
   },
@@ -93,18 +118,21 @@ const ONESIGNAL_WEB_SDK = {
         comments: false
       }
     }),
-    new webpack.DefinePlugin(definePluginConstants),
-    recompileFunction
+    new webpack.DefinePlugin(getBuildDefines()),
+    changesDetectedMessagePlugin
   ]
 };
 
+function getWebSdkTestModuleName() {
+  return getBuildPrefix() + 'OneSignalSDKTests';
+}
+
 const ONESIGNAL_WEB_SDK_TESTS = {
-  name: 'OneSignalSDKTests',
   target: 'web',
   entry: ['babel-polyfill', './test/entry.js'],
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'OneSignalSDKTests.js'
+    filename: getWebSdkTestModuleName() + '.js'
   },
   devtool: 'source-map',
   module: {
@@ -137,18 +165,21 @@ const ONESIGNAL_WEB_SDK_TESTS = {
     }),
     new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.optimize.DedupePlugin(),
-    new webpack.DefinePlugin(definePluginConstants),
-    recompileFunction
+    new webpack.DefinePlugin(getBuildDefines()),
+    changesDetectedMessagePlugin
   ]
 };
 
+function getWebSdkTestServerModuleName() {
+  return getBuildPrefix() + 'OneSignalSDKTestServer';
+}
+
 const ONESIGNAL_WEB_SDK_TEST_SERVER = {
-  name: 'OneSignalSDKTestServer',
   target: 'node',
   entry: ['babel-polyfill', './test/server.js'],
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'OneSignalSDKTestServer.js'
+    filename: getWebSdkTestServerModuleName() + '.js'
   },
   devtool: 'source-map',
   module: {
@@ -171,8 +202,8 @@ const ONESIGNAL_WEB_SDK_TEST_SERVER = {
   debug: !IS_PROD,
   plugins: [
     new webpack.optimize.DedupePlugin(),
-    new webpack.DefinePlugin(definePluginConstants),
-    recompileFunction
+    new webpack.DefinePlugin(getBuildDefines()),
+    changesDetectedMessagePlugin
   ]
 };
 

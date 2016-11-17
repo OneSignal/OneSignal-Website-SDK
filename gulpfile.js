@@ -6,11 +6,27 @@ var runSequence = require('run-sequence');
 var clip = require('gulp-clip-empty-files');
 var HOME_PATH = process.env.HOME;
 
-var oneSignalSourceDir = HOME_PATH + "/code/OneSignal";
-var IS_PRODUCTION_BUILD = process.argv.indexOf('--production') >= 0 || false;
-var IS_STAGING_BUILD = process.argv.indexOf('--staging') >= 0 || false;
-var IS_TEST_BUILD = process.argv.indexOf('--test') >= 0 || false;
-var targetFolder = IS_PRODUCTION_BUILD ? 'sdks' : 'sdks';
+var oneSignalProjectRoot = HOME_PATH + "/code/OneSignal";
+var oneSignalSdksDirName = 'sdks';
+var publicAssetsTargetPath = oneSignalProjectRoot + "/public/";
+var sdksTargetPath = publicAssetsTargetPath + oneSignalSdksDirName;
+var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--production') >= 0 || false;
+var IS_STAGING = process.argv.indexOf('--staging') >= 0 || false;
+var IS_TEST = process.argv.indexOf('--test') >= 0 || false;
+var IS_DEV = !IS_PROD && !IS_STAGING;
+
+/**
+ * Returns Dev- for dev builds, Staging- for staging builds.
+ */
+function getBuildPrefix() {
+  if (IS_STAGING) {
+    return 'Staging-';
+  } else if (IS_DEV) {
+    return 'Dev-';
+  } else {
+    return '';
+  }
+}
 
 
 gulp.task("default", function() {
@@ -18,55 +34,64 @@ gulp.task("default", function() {
 });
 
 gulp.task("reload-changes", ['copy-js-sdk', 'copy-js-sdk-tests'], function() {
-  gulp.watch('dist/OneSignalSDK.js', ['copy-js-sdk']);
-  gulp.watch('dist/OneSignalSDKTests.js', ['copy-js-sdk-tests']);
+  gulp.watch('dist/' + getBuildPrefix() + 'OneSignalSDK.js', ['copy-js-sdk']);
+  gulp.watch('dist/' + getBuildPrefix() + 'OneSignalSDKTests.js', ['copy-js-sdk-tests']);
 });
 
 gulp.task("transpile-javascript", shell.task([
-  'webpack --progress --sort-assets-by --watch --colors ' + (IS_PRODUCTION_BUILD ? '--production' : '') + ' ' + (IS_TEST_BUILD ? '--test' : '') + ' ' + (IS_STAGING_BUILD ? '--staging' : '')
+  'webpack --progress --sort-assets-by --watch --colors ' +
+  (IS_PROD ? '--production' : '') + ' ' +
+  (IS_TEST ? '--test' : '') + ' ' +
+  (IS_STAGING ? '--staging' : '')
 ]));
 
 function copyFile(prefix) {
-  // Copy to OneSignal's public/sdks/OneSignalSDK.js
-  gulp.src("./dist/OneSignalSDK.js")
+  // Copy: dist/OneSignalSDK.js  ==>  OneSignal/public/sdks/OneSignalSDK.js
+  gulp.src("./dist/" + prefix + "OneSignalSDK.js")
       .pipe(clip())
-      .pipe(rename("/" + prefix + "OneSignalSDK.js"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+      .pipe(gulp.dest(sdksTargetPath));
 
-  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
-    gulp.src("./dist/OneSignalSDK.js.map")
+  // Copy: dist/OneSignalSDK.js.map  ==>  OneSignal/public/sdks/OneSignalSDK.js.map
+  if (fs.existsSync("./dist/" + prefix + "OneSignalSDK.js.map")) {
+    gulp.src("./dist/" + prefix + "OneSignalSDK.js.map")
         .pipe(clip())
-        .pipe(rename("/" + prefix + "OneSignalSDK.js.map"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+        .pipe(gulp.dest(sdksTargetPath));
   }
 
-  // Copy to OneSignal's public/sdks/OneSignalSDKWorker.js
-  // Copy to OneSignal's public/OneSignalSDKWorker.js
-  gulp.src("./dist/OneSignalSDK.js")
+  // Rename: dist/OneSignalSDK.js  ==>  dist/OneSignalSDKWorker.js
+  //   ->  Copy: dist/OneSignalSDKWorker.js  ==>  OneSignal/public/OneSignalSDKWorker.js
+  //   ->  Copy: dist/OneSignalSDKWorker.js  ==>  OneSignal/public/sdks/OneSignalSDKWorker.js
+  gulp.src("./dist/" + prefix +  "OneSignalSDK.js")
       .pipe(clip())
       .pipe(rename("/" + prefix + "OneSignalSDKWorker.js"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+      .pipe(gulp.dest(publicAssetsTargetPath))
+      .pipe(gulp.dest(sdksTargetPath));
 
-  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
-    gulp.src("./dist/OneSignalSDK.js.map")
+  // Rename: dist/OneSignalSDK.js.map  ==>  dist/OneSignalSDKWorker.js.map
+  //   ->  Copy: dist/OneSignalSDKWorker.js.map  ==>  OneSignal/public/OneSignalSDKWorker.js.map
+  //   ->  Copy: dist/OneSignalSDKWorker.js.map  ==>  OneSignal/public/sdks/OneSignalSDKWorker.js.map
+  if (fs.existsSync("./dist/" + prefix + "OneSignalSDK.js.map")) {
+    gulp.src("./dist/" + prefix + "OneSignalSDK.js.map")
         .pipe(clip())
         .pipe(rename("/" + prefix + "OneSignalSDKWorker.js.map"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+        .pipe(gulp.dest(publicAssetsTargetPath))
+        .pipe(gulp.dest(sdksTargetPath));
   }
 
-  // Copy to OneSignal's public/OneSignalSDKUpdaterWorker.js
-  gulp.src("./dist/OneSignalSDK.js")
+  // Rename: dist/OneSignalSDK.js  ==>  dist/OneSignalSDKUpdaterWorker.js
+  //   ->  Copy: dist/OneSignalSDKUpdaterWorker.js  ==>  OneSignal/public/OneSignalSDKUpdaterWorker.js
+  gulp.src("./dist/" + prefix + "OneSignalSDK.js")
       .pipe(clip())
       .pipe(rename("/" + prefix + "OneSignalSDKUpdaterWorker.js"))
-      .pipe(gulp.dest(oneSignalSourceDir + "/public/"));
+      .pipe(gulp.dest(publicAssetsTargetPath));
 
-  if (fs.existsSync("./dist/OneSignalSDK.js.map")) {
-    gulp.src("./dist/OneSignalSDK.js.map")
+  // Rename: dist/OneSignalSDK.js.map  ==>  dist/OneSignalSDKUpdaterWorker.js.map
+  //   ->  Copy: dist/OneSignalSDKUpdaterWorker.js.map  ==>  OneSignal/public/OneSignalSDKUpdaterWorker.js.map
+  if (fs.existsSync("./dist/" + prefix + "OneSignalSDK.js.map")) {
+    gulp.src("./dist/" + prefix + "OneSignalSDK.js.map")
         .pipe(clip())
         .pipe(rename("/" + prefix + "OneSignalSDKUpdaterWorker.js.map"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/"));
+        .pipe(gulp.dest(publicAssetsTargetPath));
   }
 }
 
@@ -87,34 +112,19 @@ function copyFile(prefix) {
  'https://onesignal.com/OneSignalSDKWorker.js' and 'OneSignalSDKUpdaterWorker.js' contain the full contents as well.
  */
 gulp.task("copy-js-sdk", function() {
-  if (!IS_PRODUCTION_BUILD && !IS_STAGING_BUILD) {
-    copyFile('Dev-');
-  }
-  if (IS_PRODUCTION_BUILD) {
-    copyFile(''); // No prefix for production
-  }
-  if (IS_STAGING_BUILD) {
-    copyFile('Staging-');
-  }
+  copyFile(getBuildPrefix());
 });
 
 gulp.task("copy-js-sdk-tests", function() {
-  if (IS_TEST_BUILD) {
-    if (IS_STAGING_BUILD) {
-      var prefix = 'Staging-';
-    } else if (!IS_PRODUCTION_BUILD && !IS_STAGING_BUILD) {
-      var prefix = 'Dev-';
-    }
-    gulp.src("./dist/OneSignalSDKTests.js")
+  if (IS_TEST) {
+    gulp.src("./dist/" + getBuildPrefix() + "OneSignalSDKTests.js")
         .pipe(clip())
-        .pipe(rename("/" + prefix + "OneSignalSDKTests.js"))
-        .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+        .pipe(gulp.dest(sdksTargetPath));
 
-    if (fs.existsSync("./dist/OneSignalSDKTests.js.map")) {
-      gulp.src("./dist/OneSignalSDKTests.js.map")
+    if (fs.existsSync("./dist/" + getBuildPrefix() + "OneSignalSDKTests.js.map")) {
+      gulp.src("./dist/" + getBuildPrefix() + "OneSignalSDKTests.js.map")
           .pipe(clip())
-          .pipe(rename("/" + prefix + "OneSignalSDKTests.js.map"))
-          .pipe(gulp.dest(oneSignalSourceDir + "/public/" + targetFolder));
+          .pipe(gulp.dest(sdksTargetPath));
     }
   }
 });
