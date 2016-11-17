@@ -280,8 +280,8 @@ export default class Helpers {
     ])
       .then(([previousPermission, currentPermission]) => {
         if (previousPermission !== currentPermission) {
-          OneSignal.triggerNotificationPermissionChanged(previousPermission, currentPermission);
-          return Database.put('Options', {key: 'notificationPermission', value: currentPermission});
+          OneSignal.triggerNotificationPermissionChanged()
+            .then(() => Database.put('Options', {key: 'notificationPermission', value: currentPermission}));
         }
       })
       .catch(e => log.error(e));
