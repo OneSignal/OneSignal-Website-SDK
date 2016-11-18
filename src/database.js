@@ -79,8 +79,7 @@ export default class Database {
             let cleanResult = Database._getReturnHelper(table, key, result);
             Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: cleanResult});
             resolve(cleanResult);
-          })
-          .catch(e => reject(e));
+          });
       }
     });
   }
@@ -106,8 +105,7 @@ export default class Database {
           .then(() => {
             Event.trigger(Database.EVENTS.SET, keypath);
             resolve();
-          })
-          .catch(e => reject(e));
+          });
       }
     });
   }
@@ -132,8 +130,7 @@ export default class Database {
           .then(() => {
             Event.trigger(Database.EVENTS.REMOVED, [table, keypath]);
             resolve();
-          })
-          .catch(e => reject(e));
+          });
       }
     });
   }

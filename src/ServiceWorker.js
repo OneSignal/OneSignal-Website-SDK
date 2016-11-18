@@ -862,10 +862,6 @@ class ServiceWorker {
           else {
             resolve('');
           }
-        })
-        .catch(function (e) {
-          log.error(e);
-          reject(e);
         });
     });
   }
@@ -1000,10 +996,6 @@ class ServiceWorker {
                 ' using the wrong API URL?', API_URL);
           }
           resolve(notifications);
-        })
-        .catch(e => {
-          log.error(e);
-          reject(e);
         });
     });
   }

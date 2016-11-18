@@ -1924,11 +1924,7 @@ must be opened as a result of a subscription call.</span>`);
             if (callback) {
               callback(isPushEnabled);
             }
-            resolve(isPushEnabled);
-          })
-          .catch(e => {
-            log.error(e);
-            reject(e);
+            return isPushEnabled;
           });
       });
   }
@@ -1994,11 +1990,7 @@ must be opened as a result of a subscription call.</span>`);
           .then(() => {
             OneSignal.triggerInternalSubscriptionSet(newSubscription);
             resolve(true);
-          })
-          .catch(e => {
-            log.warn(e);
-            reject(e);
-          })
+          });
       });
     });
   }
