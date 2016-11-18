@@ -100,6 +100,7 @@
   "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
   "devDependencies": {
     "gulp": "https://registry.npmjs.org/gulp/-/gulp-3.9.1.tgz",
-    "webpack": "https://registry.npmjs.org/webpack/-/webpack-1.13.2.tgz"
+    "webpack": "https://registry.npmjs.org/webpack/-/webpack-1.13.2.tgz",
+    "webpack-bundle-analyzer": "^1.5.3"
   }
 }
