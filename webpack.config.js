@@ -1,11 +1,13 @@
 var webpack = require("webpack");
 var path = require('path');
+var Visualizer = require('webpack-visualizer-plugin');
 
 
 var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--production') >= 0;
 var IS_STAGING = process.argv.indexOf('--staging') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
 var IS_DEV = !IS_PROD && !IS_STAGING;
+var SIZE_STATS = process.argv.indexOf('--stats') >= 0 || false;
 
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
@@ -65,6 +67,49 @@ function getWebSdkModuleEntry() {
   return moduleEntry;
 }
 
+var webSdkPlugins = [
+  new webpack.ProvidePlugin({
+    'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+  }),
+  new webpack.optimize.DedupePlugin(),
+  new webpack.optimize.OccurrenceOrderPlugin(),
+  new webpack.optimize.UglifyJsPlugin({
+    sourceMap: true,
+    compress: {
+      sequences: true,
+      properties: true,
+      dead_code: true,
+      conditionals: true,
+      comparisons: true,
+      evaluate: true,
+      booleans: true,
+      loops: true,
+      unused: true,
+      hoist_funs: true,
+      if_return: true,
+      join_vars: true,
+      cascade: true,
+      collapse_vars: true,
+      drop_console: false,
+      drop_debugger: false,
+      warnings: false,
+      negate_iife: true,
+    },
+    mangle: IS_PROD,
+    output: {
+      comments: false
+    }
+  }),
+  new webpack.DefinePlugin(getBuildDefines()),
+  changesDetectedMessagePlugin
+];
+
+if (SIZE_STATS) {
+  webSdkPlugins.push(new Visualizer({
+    filename: './statistics.html'
+  }));
+}
+
 const ONESIGNAL_WEB_SDK = {
   target: 'web',
   entry: getWebSdkModuleEntry(),
@@ -93,34 +138,7 @@ const ONESIGNAL_WEB_SDK = {
     includePaths: [path.resolve(__dirname, "./src")]
   },
   debug: !IS_PROD,
-  plugins: [
-    new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-    }),
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.OccurrenceOrderPlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        sequences: false,
-        dead_code: false,
-        conditionals: false,
-        booleans: false,
-        unused: false,
-        if_return: false,
-        join_vars: false,
-        drop_console: false,
-        drop_debugger: false,
-        warnings: false,
-      },
-      mangle: IS_PROD,
-      output: {
-        comments: false
-      }
-    }),
-    new webpack.DefinePlugin(getBuildDefines()),
-    changesDetectedMessagePlugin
-  ]
+  plugins: webSdkPlugins
 };
 
 function getWebSdkTestModuleName() {
