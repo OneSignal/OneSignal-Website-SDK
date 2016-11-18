@@ -120,9 +120,6 @@ export default class OneSignalApi {
       params.firefox_icon = icon;
     }
     trimUndefined(params);
-    return OneSignalApi.post('notifications', params)
-        .catch(e => {
-          log.error('Failed to send notification:', e);
-        });
+    return OneSignalApi.post('notifications', params);
   }
 }

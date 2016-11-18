@@ -47,8 +47,7 @@ export default class Message extends AnimatedElement {
           this.content = this.getTipForState();
           this.contentType = 'tip';
         })
-        .then(resolve)
-        .catch((e) => log.error(e));
+        .then(resolve);
     });
   }
 

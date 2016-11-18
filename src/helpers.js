@@ -238,8 +238,7 @@ export default class Helpers {
               if (opener) {
                 window.close();
               }
-            })
-            .catch(e => log.error(e));
+            });
         }
       })
         .then(() => {
@@ -283,8 +282,7 @@ export default class Helpers {
           OneSignal.triggerNotificationPermissionChanged()
             .then(() => Database.put('Options', {key: 'notificationPermission', value: currentPermission}));
         }
-      })
-      .catch(e => log.error(e));
+      });
   }
 
   static sendSelfNotification(title, message, url, icon, data, buttons) {
@@ -355,7 +353,7 @@ export default class Helpers {
   }
 
   static checkAndDoHttpPermissionRequest() {
-    log.debug('Called checkAndDoHttpPermissionRequest().');
+    log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
     if (this.isUsingHttpPermissionRequest()) {
       if (OneSignal.config.autoRegister) {
         OneSignal.showHttpPermissionRequest()
@@ -393,14 +391,10 @@ export default class Helpers {
                         reject(null);
                       }
                       return data;
-                    })
-                    .catch(function (ex) {
-                      log.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
-                    })
+                    });
   }
 
   static establishServiceWorkerChannel(serviceWorkerRegistration) {
-    log.debug('OneSignal: Attempting to establish a service worker channel...', serviceWorkerRegistration);
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
       OneSignal._channel.off('notification.displayed');
@@ -423,7 +417,6 @@ export default class Helpers {
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
-    log.info('Service worker messaging channel established!');
   }
 
   static getNormalizedSubdomain(subdomain) {

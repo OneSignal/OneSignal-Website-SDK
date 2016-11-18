@@ -95,9 +95,6 @@ export default class OneSignal {
                                                {__isOneSignalWelcomeNotification: true});
                  Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {title: title, message: message, url: url});
                }
-             })
-             .catch(function (e) {
-               log.error(e);
              });
     }
   }
@@ -232,10 +229,7 @@ export default class OneSignal {
         permissionStatus.onchange = function () {
           OneSignal.triggerNotificationPermissionChanged();
         };
-      })
-        .catch(function (e) {
-          log.error(e);
-        });
+      });
     }
   }
 
@@ -279,7 +273,8 @@ export default class OneSignal {
 
     function __init() {
       if (OneSignal.__initAlreadyCalled) {
-        log.debug('OneSignal: Skipping extra init() event.');
+        // Call from window.addEventListener('DOMContentLoaded', () => {
+        // Call from if (document.readyState === 'complete' || document.readyState === 'interactive')
         return;
       } else {
         OneSignal.__initAlreadyCalled = true;
@@ -470,11 +465,7 @@ export default class OneSignal {
           return;
         }
 
-        log.debug('Calling _sessionInit() normally from _internalInit().');
         OneSignal._sessionInit({__sdkCall: true});
-      })
-      .catch(function (e) {
-        log.error(e);
       });
   }
 
@@ -722,8 +713,7 @@ must be opened as a result of a subscription call.</span>`);
 
                   message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
                 });
-          })
-          .catch(e => console.error(e));
+          });
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, message => {
       log.debug(Environment.getEnv() + " (Expected iFrame) has received the unsubscribe from push method.");
@@ -1061,8 +1051,7 @@ must be opened as a result of a subscription call.</span>`);
                     OneSignal.triggerNotificationPermissionChanged();
                   }
               );
-            })
-            .catch(e => log.error(e));
+            });
       }
     }
     else if (options.modalPrompt && options.fromRegisterFor) { // If HTTPS - Show modal
@@ -1198,9 +1187,6 @@ must be opened as a result of a subscription call.</span>`);
                 return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
               }
 
-            })
-            .catch(function (e) {
-              log.error(e);
             });
         }
         else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
@@ -1230,19 +1216,13 @@ must be opened as a result of a subscription call.</span>`);
                 log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
                 return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
               }
-            })
-            .catch(function (e) {
-              log.error(e);
             });
         } else {
           // Some other service worker not belonging to us was installed
           // Don't install ours over it
         }
       }
-    })
-      .catch(function (e) {
-        log.error(e);
-      });
+    });
   }
 
   static _registerForW3CPush(options) {
@@ -1275,10 +1255,6 @@ must be opened as a result of a subscription call.</span>`);
                       }
                       else
                         OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
-
-                    })
-                    .catch(function (e) {
-                      log.error(e);
                     });
                 }
                 else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
@@ -1295,9 +1271,6 @@ must be opened as a result of a subscription call.</span>`);
                       }
                       else
                         OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
-                    })
-                    .catch(function (e) {
-                      log.error(e);
                     });
                 } else {
                   // Some other service worker not belonging to us was installed
@@ -1312,14 +1285,8 @@ must be opened as a result of a subscription call.</span>`);
               else if (serviceWorkerRegistration.installing == null)
                 OneSignal._registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
             }
-          })
-            .catch(function (e) {
-              log.error(e);
-            });
+          });
         }
-      })
-      .catch(function (e) {
-        log.error(e);
       });
   }
 
@@ -1356,10 +1323,7 @@ must be opened as a result of a subscription call.</span>`);
       log.debug('Finished calling %cnavigator.serviceWorker.ready', getConsoleStyle('code'));
       OneSignalHelpers.establishServiceWorkerChannel(serviceWorkerRegistration);
       OneSignal._subscribeForPush(serviceWorkerRegistration);
-    })
-      .catch(function (e) {
-        log.error(e);
-      });
+    });
   }
 
   /**
@@ -1571,9 +1535,6 @@ must be opened as a result of a subscription call.</span>`);
                      log.warn('Could not subscribe your browser for push notifications.');
 
                    OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
-                 })
-                 .catch(function (e) {
-                   log.error(e);
                  });
       })
       .catch(function (e) {
@@ -1637,8 +1598,7 @@ must be opened as a result of a subscription call.</span>`);
 
           if (opener && OneSignal._thisIsThePopup)
             window.close();
-        })
-          .catch(e => log.error(e));
+        });
       });
   }
 
@@ -1796,8 +1756,7 @@ must be opened as a result of a subscription call.</span>`);
             notificationOpenedCallback(notificationData);
           }
         }
-      })
-      .catch(e => log.error(e));
+      });
   }
 
   static getIdsAvailable(callback) {
@@ -1896,38 +1855,37 @@ must be opened as a result of a subscription call.</span>`);
    */
   static isPushNotificationsEnabled(callback) {
     return awaitOneSignalInitAndSupported()
-      .then(() => {
-        Promise.all([
-          OneSignal.getUserId(),
-          OneSignal.getRegistrationId(),
-          OneSignal.getNotificationPermission(),
-          OneSignal.getSubscription(),
-          OneSignal.isServiceWorkerActive()
-        ])
-          .then(([userId, registrationId, notificationPermission, optIn, serviceWorkerActive]) => {
-            let isPushEnabled = false;
+      .then(() => Promise.all([
+        OneSignal.getUserId(),
+        OneSignal.getRegistrationId(),
+        OneSignal.getNotificationPermission(),
+        OneSignal.getSubscription(),
+        OneSignal.isServiceWorkerActive()
+      ]))
+      .then(([userId, registrationId, notificationPermission, optIn, serviceWorkerActive]) => {
+        let isPushEnabled = false;
 
-            if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
-              isPushEnabled = userId &&
-                registrationId &&
-                notificationPermission === 'granted' &&
-                optIn &&
-                serviceWorkerActive;
-            } else {
-              isPushEnabled = userId &&
-                registrationId &&
-                notificationPermission === 'granted' &&
-                optIn;
-            }
-            isPushEnabled = (isPushEnabled == true);
+        if ('serviceWorker' in navigator && !OneSignal.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
+          isPushEnabled = userId &&
+            registrationId &&
+            notificationPermission === 'granted' &&
+            optIn &&
+            serviceWorkerActive;
+        } else {
+          isPushEnabled = userId &&
+            registrationId &&
+            notificationPermission === 'granted' &&
+            optIn;
+        }
+        isPushEnabled = (isPushEnabled == true);
 
-            if (callback) {
-              callback(isPushEnabled);
-            }
-            return isPushEnabled;
-          });
+        if (callback) {
+          callback(isPushEnabled);
+        }
+        return isPushEnabled;
       });
   }
+
 
   static getAppId() {
     if (OneSignal.config.appId) {

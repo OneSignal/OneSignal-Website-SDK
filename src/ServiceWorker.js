@@ -266,9 +266,6 @@ class ServiceWorker {
           log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${url}`, getConsoleStyle('code'), ':', postData);
           return fetch(url, fetchOptions);
         }
-      })
-      .catch(e => {
-        log.error('Error executing webhook:', e);
       });
   }
 
@@ -640,7 +637,6 @@ class ServiceWorker {
         .then(() => {
           return ServiceWorker.executeWebhooks('notification.clicked', notification);
         })
-        .catch(e => log.error(e))
     );
   }
 
@@ -671,7 +667,6 @@ class ServiceWorker {
     event.waitUntil(
         Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
             .then(() => self.skipWaiting())
-            .catch(e => log.error(e))
     );
   }
 
@@ -687,9 +682,6 @@ class ServiceWorker {
                                           if (self.registration && userId) {
                                             return ServiceWorker._subscribeForPush(self.registration);
                                           }
-                                        })
-                                        .catch(e => {
-                                          console.error('onServiceWorkerActivated:', e);
                                         });
     event.waitUntil(activationPromise);
   }
@@ -721,7 +713,7 @@ class ServiceWorker {
           appId = retrievedAppId;
           return serviceWorkerRegistration.pushManager.getSubscription()
         }).then(oldSubscription => {
-          log.debug(`Calling pushManager.subscribe to resubscribe expired subscription`);
+          log.debug(`Resubscribing old subscription`, oldSubscription, `within the service worker ...`);
           // Only re-subscribe if there was an existing subscription and we are on Chrome 54+ wth PushSubscriptionOptions
           // Otherwise there's really no way to resubscribe since we don't have the manifest.json sender ID
           if (oldSubscription && oldSubscription.options) {
@@ -733,7 +725,7 @@ class ServiceWorker {
           var subscriptionInfo = null;
           if (subscription) {
             subscriptionInfo = {};
-            log.debug(`Finished calling pushManager.subscribe to resubscribe expired subscription:`, subscription);
+            log.debug(`Finished resubscribing for push:`, subscription);
             if (typeof subscription.subscriptionId != "undefined") {
               // Chrome 43 & 42
               subscriptionInfo.endpointOrToken = subscription.subscriptionId;
@@ -779,12 +771,6 @@ class ServiceWorker {
           }
 
           return ServiceWorker.registerWithOneSignal(appId, subscriptionInfo);
-        })
-        .then(() => {
-          log.debug(`Finished updating new subscription`);
-        })
-        .catch(function (e) {
-          log.error('Error while subscribing for push:', e);
         });
   }
 
@@ -837,7 +823,9 @@ class ServiceWorker {
           return OneSignalApi.put(requestUrl, requestData);
         })
         .then(response => {
-          console.log('Response from ServiceWorker.registerWithOneSignal:', response);
+          if (!response.success) {
+            log.error('Resubscription registration with OneSignal failed:', response);
+          }
           let {id: userId} = response;
 
           if (userId) {

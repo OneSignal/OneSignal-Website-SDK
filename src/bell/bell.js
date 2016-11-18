@@ -320,29 +320,20 @@ export default class Bell {
   showDialogProcedure() {
     if (!this.dialog.shown) {
       this.dialog.show()
-        .then((e) => {
-          //var id = Math.random().toString(36).substring(7, 11);
-          //console.warn(`Generating %cshowDialogProcedure(${id}):`, getConsoleStyle('code'), '.');
+        .then(() => {
           once(document, 'click', (e, destroyEventListener) => {
             let wasDialogClicked = this.dialog.element.contains(e.target);
             if (wasDialogClicked) {
             } else {
-              //console.warn(`%cshowDialogProcedure(${id}):`, getConsoleStyle('code'), 'A destroying click was detected.');
               destroyEventListener();
               if (this.dialog.shown) {
                 this.dialog.hide()
                   .then((e) => {
                     this.launcher.inactivateIfWasInactive();
-                  })
-                  .catch((e) => {
-                    log.error(e);
                   });
               }
             }
           }, true);
-        })
-        .catch((e) => {
-          log.error(e);
         });
     }
   }
@@ -451,9 +442,8 @@ export default class Bell {
             }
             else return nothing();
           })
-          .then(() => this.initialized = true)
-          .catch((e) => log.error(e));
-      }).catch(e => log.error(e));
+          .then(() => this.initialized = true);
+      });
     });
   }
 

@@ -40,8 +40,7 @@ export default class Dialog extends AnimatedElement {
 
   show() {
     return this.updateBellLauncherDialogBody()
-      .then(() => super.show())
-      .catch(e => log.error(e));
+      .then(() => super.show());
   }
 
   get subscribeButtonSelectorId() {
