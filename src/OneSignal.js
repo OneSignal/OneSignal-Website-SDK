@@ -2228,6 +2228,8 @@ else
   log.setDefaultLevel(log.levels.ERROR);
 
 log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
+log.debug(`Current Page URL: ${location.href}`);
+log.debug(`Browser Environment: ${Browser.name} ${Browser.version}`);
 
 module.exports = OneSignal;
 
