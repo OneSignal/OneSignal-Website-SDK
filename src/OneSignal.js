@@ -1095,7 +1095,9 @@ must be opened as a result of a subscription call.</span>`);
                 iframeModalDom.parentNode.removeChild(iframeModalDom);
                 OneSignal.modalPostmam.destroy();
                 OneSignalHelpers.triggerCustomPromptClicked('granted');
-                OneSignal._registerForW3CPush(options);
+                log.debug('Calling setSubscription(true)');
+                OneSignal.setSubscription(true)
+                  .then(() => OneSignal._registerForW3CPush(options));
               });
               OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, message => {
                 log.debug('User rejected the HTTPS modal prompt.');
