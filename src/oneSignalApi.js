@@ -1,6 +1,6 @@
 import { API_URL } from './vars.js'
 import log from 'loglevel';
-import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush, wait } from './utils.js'
+import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils.js'
 
 
 export default class OneSignalApi {
@@ -98,6 +98,10 @@ export default class OneSignalApi {
       log.debug('Error getting user ID from subscription identifier:', e);
       return null;
     });
+  }
+
+  static editDevice(id, options) {
+    return OneSignalApi.put(`players/${id}`, options);
   }
 
   static sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons) {

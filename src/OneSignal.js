@@ -9,7 +9,7 @@ import Bell from "./bell/bell.js";
 import Cookie from 'js-cookie';
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb } from './utils.js';
+import { isPushNotificationsSupported, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, md5, sha1, prepareEmailForHashing } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -46,9 +46,22 @@ export default class OneSignal {
       .then(() => {
         return new Promise((resolve, reject) => {
           if (!isValidEmail(email)) {
-            reject('Invalid email address.');
+            reject('Use a valid email address.');
+            return;
           }
-
+          OneSignal.getUserId()
+                   .then(userId => {
+                     if (!userId) {
+                       reject('Retry after subscribing.')
+                     } else {
+                       const sanitizedEmail = prepareEmailForHashing(email);
+                       return OneSignalApi.editDevice(userId, {
+                         em_m: md5(sanitizedEmail),
+                         em_s: sha1(sanitizedEmail)
+                       })
+                     }
+                   })
+                   .then(() => resolve);
         });
       });
   }

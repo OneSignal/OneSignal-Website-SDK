@@ -153,9 +153,17 @@ export default class Database {
       Database.get('Ids', 'registrationId'),
       Database.get('Ids', 'userId')
     ]).then(function([appId, registrationId, userId]) {
-      console.info('appId:', appId);
-      console.info('registrationId:', registrationId);
-      console.info('userId:', userId);
+      if (console.table) {
+       console.table({'OneSignal Database IDs': {
+         'App ID': appId,
+         'Registration ID': registrationId,
+         'User ID': userId
+       }});
+      } else {
+        console.info('App ID:', appId);
+        console.info('Registration ID:', registrationId);
+        console.info('User ID:', userId);
+      }
     });
   }
 }
