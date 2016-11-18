@@ -44,25 +44,21 @@ export default class OneSignal {
   static syncHashedEmail(email) {
     return awaitOneSignalInitAndSupported()
       .then(() => {
-        return new Promise((resolve, reject) => {
-          if (!isValidEmail(email)) {
-            reject('Use a valid email address.');
-            return;
-          }
-          OneSignal.getUserId()
-                   .then(userId => {
-                     if (!userId) {
-                       reject('Retry after subscribing.')
-                     } else {
-                       const sanitizedEmail = prepareEmailForHashing(email);
-                       return OneSignalApi.editDevice(userId, {
-                         em_m: md5(sanitizedEmail),
-                         em_s: sha1(sanitizedEmail)
-                       })
-                     }
-                   })
-                   .then(() => resolve);
-        });
+        if (!isValidEmail(email)) {
+          throw new Error('Use a valid email address.');
+        }
+        else return OneSignal.getUserId();
+      })
+      .then(userId => {
+        if (!userId) {
+          throw new Error('Retry after subscribing.');
+        } else {
+          const sanitizedEmail = prepareEmailForHashing(email);
+          return OneSignalApi.editDevice(userId, {
+            em_m: md5(sanitizedEmail),
+            em_s: sha1(sanitizedEmail)
+          })
+        }
       });
   }
 
