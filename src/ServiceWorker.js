@@ -1,11 +1,11 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from './vars.js';
 import Environment from './environment.js'
 import OneSignalApi from './oneSignalApi.js';
-import log from 'loglevel';
+import * as log from 'loglevel';
 import Database from './database.js';
 import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from './utils.js';
-import objectAssign from 'object-assign';
-import swivel from 'swivel';
+import * as objectAssign from 'object-assign';
+import * as swivel from 'swivel';
 import * as Browser from 'bowser';
 
 

@@ -1,5 +1,5 @@
 import { API_URL } from './vars.js'
-import log from 'loglevel';
+import * as log from 'loglevel';
 import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils.js'
 
 

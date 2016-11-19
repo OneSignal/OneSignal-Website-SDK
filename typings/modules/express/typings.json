@@ -1,0 +1,26 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/types/npm-express/40186271a77cdfad17681014be3ea8b05fc8dcf7/typings.json",
+    "raw": "registry:npm/express#4.14.0+20160925001530",
+    "main": "index.d.ts",
+    "version": "4.14.0",
+    "dependencies": {
+      "path-to-regexp": {
+        "src": "https://raw.githubusercontent.com/pillarjs/path-to-regexp/ec285ed3500aed455df59e3b8b07f473412918a4/index.d.ts",
+        "raw": "github:pillarjs/path-to-regexp/index.d.ts#ec285ed3500aed455df59e3b8b07f473412918a4",
+        "typings": "https://raw.githubusercontent.com/pillarjs/path-to-regexp/ec285ed3500aed455df59e3b8b07f473412918a4/index.d.ts"
+      },
+      "serve-static": {
+        "src": "https://raw.githubusercontent.com/felixfbecker/typed-serve-static/fe2b0ca8e5f2bd696242c57fef96e85715b4c516/typings.json",
+        "raw": "registry:npm/serve-static#1.11.1+20160810053450",
+        "main": "index.d.ts",
+        "version": "1.11.1",
+        "name": "serve-static",
+        "type": "typings"
+      }
+    },
+    "name": "express",
+    "type": "typings"
+  }
+}

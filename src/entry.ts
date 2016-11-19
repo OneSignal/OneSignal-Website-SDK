@@ -1,6 +1,6 @@
 import Environment from './environment.js';
 import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
-import log from 'loglevel';
+import * as log from 'loglevel';
 
 
 if (Environment.isBrowser()) {

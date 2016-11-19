@@ -1,0 +1,11 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/types/npm-body-parser/f77bb083cf0d5508b502be890d5d3f2f2902cc23/typings.json",
+    "raw": "registry:npm/body-parser#1.15.2+20160815132839",
+    "main": "index.d.ts",
+    "version": "1.15.2",
+    "name": "body-parser",
+    "type": "typings"
+  }
+}

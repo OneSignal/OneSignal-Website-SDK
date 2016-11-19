@@ -99,7 +99,12 @@
   },
   "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
   "devDependencies": {
+    "@types/node": "^6.0.48",
+    "awesome-typescript-loader": "^2.2.4",
+    "babel-core": "https://registry.npmjs.org/babel-core/-/babel-core-6.17.0.tgz",
     "gulp": "https://registry.npmjs.org/gulp/-/gulp-3.9.1.tgz",
+    "nconf": "^0.8.4",
+    "typescript": "next",
     "webpack": "https://registry.npmjs.org/webpack/-/webpack-1.13.2.tgz",
     "webpack-bundle-analyzer": "^1.5.3"
   }

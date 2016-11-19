@@ -61,7 +61,7 @@ var changesDetectedMessagePlugin = function() {
 };
 
 function getWebSdkModuleEntry() {
-  var path = './src/entry.js';
+  var path = './src/entry.ts';
   var moduleEntry = {};
   moduleEntry[getBuildPrefix() + 'OneSignalSDK'] = path;
   return moduleEntry;
@@ -139,19 +139,18 @@ const ONESIGNAL_WEB_SDK = {
   },
   module: {
     loaders: [{
-      test: /\.js$/,
+      test: /\.(t|j)s$/,
       include: [path.resolve(__dirname, "./src")],
-      exclude: /(node_modules|bower_components|test\/server)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015'],
-        cacheDirectory: true
-      }
+      exclude: /(node_modules|bower_components|test)/,
+      loader: 'awesome-typescript-loader'
     },
       {
         test: /\.scss$/,
         loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
       }]
+  },
+  resolve: {
+    extensions: ["", ".ts", ".js"]
   },
   devtool: 'source-map',
   sassLoader: {

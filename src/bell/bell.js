@@ -1,6 +1,6 @@
 import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, decodeHtmlEntities } from '../utils.js';
 import Environment from '../environment.js';
-import log from 'loglevel';
+import * as log from 'loglevel';
 import Event from '../events.js';
 import * as Browser from 'bowser';
 import { HOST_URL } from '../vars.js';

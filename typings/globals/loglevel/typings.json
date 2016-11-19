@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/10d69f9da63bdf18b802bd34fc528294ec340f86/loglevel/loglevel.d.ts",
+    "raw": "registry:dt/loglevel#1.4.0+20160412141402",
+    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/10d69f9da63bdf18b802bd34fc528294ec340f86/loglevel/loglevel.d.ts"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "build": {
+
+  },
+  "test": {
+    "server": {
+      "rails_host_http": "localhost:3000",
+      "rails_host_https": "localhost:3001",
+      "database_host": "localhost:5432",
+      "database_user": "postgres",
+      "database_pass": "",
+      "master_database": "gamethrive_00",
+      "shard_1_database": "gamethrive_80"
+    },
+    "tests": {
+      "rails_host_http": "ubuntu:3000",
+      "rails_host_https": "ubuntu:3001",
+      "user_auth_key": "NjZmZDM5YmQtNjRiMS00MTk5LTkwY2UtMGRiYTgzNzM2NGM0"
+    },
+    "chrome_extension": {
+      "extension_id": "engiogdknecmkikekehomfbhnneekmng"
+    }
+  }
+}
