@@ -79,10 +79,10 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe('Session Tracking', function() {
+    describe.skip('Session Tracking', function() {
         let testHelper = function (test, kind, options) {
             return new MultiStepSoloTest(test, options, async (step, gotoStep) => {
-                console.log('A');
+                console.log('Running Session Tracking multi step solo test.');
                 let initOptions = {
                     welcomeNotification: false,
                     autoRegister: kind.autoRegister,
@@ -92,11 +92,13 @@ describe('Web SDK Tests', function () {
                     initOptions['dontWipeData'] = true;
                 }
                 if (step === 'first') {
+                    console.log('Calling await Utils.initialize...');
                     await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true,
                         useRegisterEvent: true
                     });
+                    console.log('Finished calling await Utils.initialize...');
                     let id = await OneSignal.getUserId();
                     let player = await OneSignal.api.get(`players/${id}`);
                     await Extension.set('user-id', id);
@@ -110,7 +112,7 @@ describe('Web SDK Tests', function () {
                     }
                     return gotoStep('2');
                 } else if (step === '2') {
-                    await Utils.initialize(globals, initOptions);
+                    await Utils.initialize(globals, initOpaitions);
                     if (!kind.autoRegister && !options.testFirstPageReload) {
                         await Utils.expectEvent('register');
                     }
@@ -355,26 +357,27 @@ describe('Web SDK Tests', function () {
         });
 
         it('should successfully send, receive, and delete tags via the singular sendTag and getTag method', function () {
-            return new SoloTest(this.test, {}, () => {
+            return new SoloTest(this.test, {delay: 5000}, async () => {
                 let tagKey = 'string';
                 let tagValue = sentTags[tagKey];
 
-                return Utils.initialize(globals, {
+                console.log('Calling await Utils.initialize.');
+                debugger;
+                await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
-                    })
-                    .then(() => OneSignal.sendTag(tagKey, tagValue))
-                    .then(() => OneSignal.getTags())
-                    .then(receivedTags => {
-                        expect(receivedTags).to.not.be.undefined;
-                        expect(receivedTags[tagKey]).to.equal(tagValue);
-                    })
-                    .then(() => OneSignal.deleteTag(tagKey))
-                    .then(() => OneSignal.getTags())
-                    .then(receivedTags => {
-                        expect(receivedTags).to.not.be.undefined;
-                        expect(receivedTags[tagKey]).to.be.undefined;
                     });
+                console.log('Calling sendTag');
+                await OneSignal.sendTag(tagKey, tagValue);
+                console.log('Calling getTags');
+                let receivedTags = await OneSignal.getTags();
+                expect(receivedTags).to.not.be.undefined;
+                expect(receivedTags[tagKey]).to.equal(tagValue);
+                console.log('Calling deleteTag');
+                OneSignal.deleteTag(tagKey);
+                receivedTags = OneSignal.getTags();
+                expect(receivedTags).to.not.be.undefined;
+                expect(receivedTags[tagKey]).to.be.undefined;
             });
         });
 
