@@ -1,4 +1,4 @@
-import { guid, contains } from './utils.js';
+import { guid, contains } from './utils';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import Environment from './environment.js';

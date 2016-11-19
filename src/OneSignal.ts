@@ -7,15 +7,15 @@ import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Bell from "./bell/bell.js";
 import * as Cookie from 'js-cookie';
-import Database from './database.js';
+import Database from './Database';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, md5, sha1, prepareEmailForHashing } from './utils.js';
+import { isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, md5, sha1, prepareEmailForHashing } from './utils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import * as swivel from 'swivel';
 import Postmam from './postmam.js';
-import OneSignalHelpers from './helpers.js';
+import OneSignalHelpers from './helpers';
 import Popover from './popover/popover';
 import HttpModal from "./http-modal/httpModal";
 
@@ -26,9 +26,10 @@ export default class OneSignal {
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @publiclySupportedApi
    */
-  static setDefaultNotificationUrl(url) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => Database.put("Options", {key: "defaultUrl", value: url}));
+  static async setDefaultNotificationUrl(url) {
+    logMethodCall('setDefaultNotificationUrl', url);
+    await awaitOneSignalInitAndSupported();
+    return await Database.setDefaultUrl(url);
   }
 
   /**

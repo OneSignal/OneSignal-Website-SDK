@@ -2,8 +2,8 @@ import * as log from 'loglevel';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import Event from './events.js';
-import { getConsoleStyle } from './utils.js';
-import Database from './database.js';
+import { getConsoleStyle } from './utils';
+import Database from './Database';
 
 
 export default class IndexedDb {

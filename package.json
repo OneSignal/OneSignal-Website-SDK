@@ -22,6 +22,7 @@
     "css-loader": "https://registry.npmjs.org/css-loader/-/css-loader-0.25.0.tgz",
     "decamelize": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
     "defined": "https://registry.npmjs.org/defined/-/defined-1.0.0.tgz",
+    "es6-error": "^4.0.0",
     "exports-loader": "https://registry.npmjs.org/exports-loader/-/exports-loader-0.6.3.tgz",
     "expose-loader": "https://registry.npmjs.org/expose-loader/-/expose-loader-0.7.1.tgz",
     "express": "https://registry.npmjs.org/express/-/express-4.14.0.tgz",

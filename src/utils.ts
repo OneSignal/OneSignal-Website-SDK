@@ -2,7 +2,8 @@ import * as log from 'loglevel';
 import * as Browser from 'bowser';
 import Environment from './environment.js';
 import IndexedDb from './indexedDb';
-import Database from './database';
+import Database from './Database';
+import PushNotSupportedError from "./errors/PushNotSupportedError";
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -74,7 +75,7 @@ export function removeDomElement(selector) {
 export function awaitOneSignalInitAndSupported() {
   return new Promise((resolve, reject) => {
     if (!isPushNotificationsSupported()) {
-      reject('Push notifications are not supported.');
+      throw new PushNotSupportedError();
     }
 
     if (!OneSignal.initialized) {
@@ -83,6 +84,10 @@ export function awaitOneSignalInitAndSupported() {
       resolve();
     }
   });
+}
+
+export function logMethodCall(methodName: string, ...args) {
+  return log.trace(`Called %c${methodName}(${args.map(JSON.stringify).join(', ')})`, getConsoleStyle('code'), '.');
 }
 
 export function isValidEmail(email) {
@@ -249,14 +254,11 @@ export function off(targetSelectorOrElement, event, task) {
 export function getConsoleStyle(style) {
   if (style == 'code') {
     return `
-    padding: 0 5px 2px;
+    padding: 0 1px 1px 5px;
     border: 1px solid #ddd;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
     border-radius: 3px;
-    background-clip: padding-box;
     font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;
-    color: #666;
+    color: #444;
     `
   } else if (style == 'bold') {
     return `

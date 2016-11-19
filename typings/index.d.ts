@@ -1,3 +1,4 @@
+/// <reference path="globals/es6-error/index.d.ts" />
 /// <reference path="globals/loglevel/index.d.ts" />
 /// <reference path="globals/mocha/index.d.ts" />
 /// <reference path="globals/nconf/index.d.ts" />

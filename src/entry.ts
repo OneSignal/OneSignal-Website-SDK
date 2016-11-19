@@ -16,7 +16,7 @@ if (Environment.isBrowser()) {
     if (typeof OneSignal !== "undefined")
       var predefinedOneSignalPushes = OneSignal;
 
-    require("expose?OneSignal!./OneSignal.js");
+    require("expose?OneSignal!./OneSignal.ts");
 
     if (predefinedOneSignalPushes)
       OneSignal._processPushes(predefinedOneSignalPushes);

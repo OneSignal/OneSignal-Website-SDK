@@ -1,6 +1,6 @@
 import * as log from 'loglevel';
 import Environment from './environment.js';
-import { getConsoleStyle, contains, capitalize } from './utils.js';
+import { getConsoleStyle, contains, capitalize } from './utils';
 
 
 const SILENT_EVENTS = [

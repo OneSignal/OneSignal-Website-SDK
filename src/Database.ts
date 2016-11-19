@@ -2,7 +2,7 @@ import * as log from 'loglevel';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import Event from './events.js';
-import { getConsoleStyle } from './utils.js';
+import { getConsoleStyle } from './utils';
 import IndexedDb from './indexedDb.js';
 import Environment from './environment.js';
 
@@ -133,6 +133,10 @@ export default class Database {
           });
       }
     });
+  }
+
+  static setDefaultUrl(url: URL) {
+    return Database.put("Options", {key: "defaultUrl", value: url});
   }
 
   /**

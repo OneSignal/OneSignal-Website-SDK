@@ -1,6 +1,6 @@
 import { API_URL } from './vars.js'
 import * as log from 'loglevel';
-import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils.js'
+import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils'
 
 
 export default class OneSignalApi {

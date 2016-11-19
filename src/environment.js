@@ -1,4 +1,4 @@
-import { contains } from './utils.js';
+import { contains } from './utils';
 
 export default class Environment {
   static get SERVICE_WORKER() {
