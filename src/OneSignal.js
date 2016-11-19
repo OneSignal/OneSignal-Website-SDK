@@ -1714,26 +1714,26 @@ must be opened as a result of a subscription call.</span>`);
   }
 
   static deleteTags(tags, callback) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        if (tags instanceof Array && tags.length > 0) {
-          var jsonPair = {};
-          var length = tags.length;
-          for (var i = 0; i < length; i++)
-            jsonPair[tags[i]] = "";
+      return awaitOneSignalInitAndSupported()
+          .then(() => {
+              if (tags instanceof Array && tags.length > 0) {
+                  var jsonPair = {};
+                  var length = tags.length;
+                  for (var i = 0; i < length; i++)
+                      jsonPair[tags[i]] = "";
 
-          return OneSignal.sendTags(jsonPair)
-            .then(emptySentTagsObj => {
+                  return OneSignal.sendTags(jsonPair);
+              } else {
+                  throw new Error(`OneSignal: Invalid tags '${tags}' to delete. You must pass in array of strings with at least one tag string to be deleted.`);
+              }
+          })
+          .then(emptySentTagsObj => {
               let emptySentTags = Object.keys(emptySentTagsObj);
               if (callback) {
-                callback(emptySentTags);
+                  callback(emptySentTags);
               }
-              resolve(emptySentTags);
-            })
-        } else {
-          reject(new Error(`OneSignal: Invalid tags '${tags}' to delete. You must pass in array of strings with at least one tag string to be deleted.`));
-        }
-      });
+              return emptySentTags;
+          });
   }
 
   static addListenerForNotificationOpened(callback) {
