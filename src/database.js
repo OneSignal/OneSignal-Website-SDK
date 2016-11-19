@@ -79,8 +79,7 @@ export default class Database {
             let cleanResult = Database._getReturnHelper(table, key, result);
             Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: cleanResult});
             resolve(cleanResult);
-          })
-          .catch(e => reject(e));
+          });
       }
     });
   }
@@ -106,8 +105,7 @@ export default class Database {
           .then(() => {
             Event.trigger(Database.EVENTS.SET, keypath);
             resolve();
-          })
-          .catch(e => reject(e));
+          });
       }
     });
   }
@@ -132,8 +130,7 @@ export default class Database {
           .then(() => {
             Event.trigger(Database.EVENTS.REMOVED, [table, keypath]);
             resolve();
-          })
-          .catch(e => reject(e));
+          });
       }
     });
   }
@@ -156,9 +153,17 @@ export default class Database {
       Database.get('Ids', 'registrationId'),
       Database.get('Ids', 'userId')
     ]).then(function([appId, registrationId, userId]) {
-      console.info('appId:', appId);
-      console.info('registrationId:', registrationId);
-      console.info('userId:', userId);
+      if (console.table) {
+       console.table({'OneSignal Database IDs': {
+         'App ID': appId,
+         'Registration ID': registrationId,
+         'User ID': userId
+       }});
+      } else {
+        console.info('App ID:', appId);
+        console.info('Registration ID:', registrationId);
+        console.info('User ID:', userId);
+      }
     });
   }
 }

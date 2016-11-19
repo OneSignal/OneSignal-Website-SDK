@@ -14,6 +14,7 @@ var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--pro
 var IS_STAGING = process.argv.indexOf('--staging') >= 0 || false;
 var IS_TEST = process.argv.indexOf('--test') >= 0 || false;
 var IS_DEV = !IS_PROD && !IS_STAGING;
+var SIZE_STATS = process.argv.indexOf('--stats') >= 0 || false;
 
 /**
  * Returns Dev- for dev builds, Staging- for staging builds.
@@ -42,7 +43,8 @@ gulp.task("transpile-javascript", shell.task([
   'webpack --progress --sort-assets-by --watch --colors ' +
   (IS_PROD ? '--production' : '') + ' ' +
   (IS_TEST ? '--test' : '') + ' ' +
-  (IS_STAGING ? '--staging' : '')
+  (IS_STAGING ? '--staging' : '') + ' ' +
+  (SIZE_STATS ? '--stats' : '')
 ]));
 
 function copyFile(prefix) {

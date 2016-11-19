@@ -1,11 +1,13 @@
 var webpack = require("webpack");
 var path = require('path');
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 
 var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--production') >= 0;
 var IS_STAGING = process.argv.indexOf('--staging') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
 var IS_DEV = !IS_PROD && !IS_STAGING;
+var SIZE_STATS = process.argv.indexOf('--stats') >= 0 || false;
 
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
@@ -65,6 +67,69 @@ function getWebSdkModuleEntry() {
   return moduleEntry;
 }
 
+var webSdkPlugins = [
+  new webpack.ProvidePlugin({
+    'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+  }),
+  new webpack.optimize.DedupePlugin(),
+  new webpack.optimize.OccurrenceOrderPlugin(),
+  new webpack.optimize.UglifyJsPlugin({
+    sourceMap: true,
+    compress: {
+      sequences: true,
+      properties: true,
+      dead_code: true,
+      conditionals: true,
+      comparisons: true,
+      evaluate: true,
+      booleans: true,
+      loops: true,
+      unused: true,
+      hoist_funs: true,
+      if_return: true,
+      join_vars: true,
+      cascade: true,
+      collapse_vars: true,
+      drop_console: false,
+      drop_debugger: false,
+      warnings: false,
+      negate_iife: true,
+    },
+    mangle: IS_PROD,
+    output: {
+      comments: false
+    }
+  }),
+  new webpack.DefinePlugin(getBuildDefines()),
+  changesDetectedMessagePlugin
+];
+
+if (SIZE_STATS) {
+  webSdkPlugins.push(new BundleAnalyzerPlugin({
+    // Can be `server`, `static` or `disabled`.
+    // In `server` mode analyzer will start HTTP server to show bundle report.
+    // In `static` mode single HTML file with bundle report will be generated.
+    // In `disabled` mode you can use this plugin to just generate Webpack Stats JSON file by setting `generateStatsFile` to `true`.
+    analyzerMode: 'static',
+    // Port that will be used in `server` mode to start HTTP server.
+    analyzerPort: 8888,
+    // Path to bundle report file that will be generated in `static` mode.
+    // Relative to bundles output directory.
+    reportFilename: 'report.html',
+    // Automatically open report in default browser
+    openAnalyzer: true,
+    // If `true`, Webpack Stats JSON file will be generated in bundles output directory
+    generateStatsFile: true,
+    // Name of Webpack Stats JSON file that will be generated if `generateStatsFile` is `true`.
+    // Relative to bundles output directory.
+    statsFilename: 'stats.json',
+    // Options for `stats.toJson()` method.
+    // For example you can exclude sources of your modules from stats file with `source: false` option.
+    // See more options here: https://github.com/webpack/webpack/blob/webpack-1/lib/Stats.js#L21
+    statsOptions: null
+  }));
+}
+
 const ONESIGNAL_WEB_SDK = {
   target: 'web',
   entry: getWebSdkModuleEntry(),
@@ -93,34 +158,7 @@ const ONESIGNAL_WEB_SDK = {
     includePaths: [path.resolve(__dirname, "./src")]
   },
   debug: !IS_PROD,
-  plugins: [
-    new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-    }),
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.OccurrenceOrderPlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        sequences: false,
-        dead_code: false,
-        conditionals: false,
-        booleans: false,
-        unused: false,
-        if_return: false,
-        join_vars: false,
-        drop_console: false,
-        drop_debugger: false,
-        warnings: false,
-      },
-      mangle: IS_PROD,
-      output: {
-        comments: false
-      }
-    }),
-    new webpack.DefinePlugin(getBuildDefines()),
-    changesDetectedMessagePlugin
-  ]
+  plugins: webSdkPlugins
 };
 
 function getWebSdkTestModuleName() {

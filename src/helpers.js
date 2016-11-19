@@ -6,7 +6,7 @@ import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser, capitalize } from './utils.js';
+import { isPushNotificationsSupported, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser, capitalize } from './utils.js';
 import objectAssign from 'object-assign';
 import EventEmitter from 'wolfy87-eventemitter';
 import heir from 'heir';
@@ -16,7 +16,6 @@ import Postmam from './postmam.js';
 import Cookie from 'js-cookie';
 import HttpModal from "./http-modal/httpModal";
 import Bell from "./bell/bell.js";
-import Hashes from 'jshashes';
 
 
 export default class Helpers {
@@ -91,22 +90,7 @@ export default class Helpers {
    */
   static isUsingCustomHttpPermissionRequestPostModal() {
     return (OneSignal.config.httpPermissionRequest &&
-        OneSignal.config.httpPermissionRequest.useCustomModal == true) ||
-        this.isSpecialAppId();
-  }
-
-  static isSpecialAppId() {
-    const appId = OneSignal.config.appId;
-    if (appId) {
-      const hashedAppId = new Hashes.SHA1().hex(appId);
-      return ['73c17966301b2472374f75dbba72f169140d8382',
-              'b7968a61bca8dfced244747dc551969b3b8885e8',
-              'd985e24045894b8b65ea1ca190ba8d378e6bff6f',
-              'bde0962475ebe01e7d61cd1ca8f8f00957951e25',
-              '53a7024a5dc9385dc6629d37d899a1a9bb5edd8c',
-              '5b3da02c0caf5dc03e8efc173e2999c182a8c684',
-              'a4f2cce77d9dec99b64e7e2a0d7b818cb5d3291a'].indexOf(hashedAppId) !== -1;
-    } else return false;
+        OneSignal.config.httpPermissionRequest.useCustomModal == true);
   }
 
   /**
@@ -238,8 +222,7 @@ export default class Helpers {
               if (opener) {
                 window.close();
               }
-            })
-            .catch(e => log.error(e));
+            });
         }
       })
         .then(() => {
@@ -280,11 +263,10 @@ export default class Helpers {
     ])
       .then(([previousPermission, currentPermission]) => {
         if (previousPermission !== currentPermission) {
-          OneSignal.triggerNotificationPermissionChanged(previousPermission, currentPermission);
-          return Database.put('Options', {key: 'notificationPermission', value: currentPermission});
+          OneSignal.triggerNotificationPermissionChanged()
+            .then(() => Database.put('Options', {key: 'notificationPermission', value: currentPermission}));
         }
-      })
-      .catch(e => log.error(e));
+      });
   }
 
   static sendSelfNotification(title, message, url, icon, data, buttons) {
@@ -355,7 +337,7 @@ export default class Helpers {
   }
 
   static checkAndDoHttpPermissionRequest() {
-    log.debug('Called checkAndDoHttpPermissionRequest().');
+    log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
     if (this.isUsingHttpPermissionRequest()) {
       if (OneSignal.config.autoRegister) {
         OneSignal.showHttpPermissionRequest()
@@ -393,14 +375,10 @@ export default class Helpers {
                         reject(null);
                       }
                       return data;
-                    })
-                    .catch(function (ex) {
-                      log.error('Call %cgetNotificationIcons()', getConsoleStyle('code'), 'failed with:', ex);
-                    })
+                    });
   }
 
   static establishServiceWorkerChannel(serviceWorkerRegistration) {
-    log.debug('OneSignal: Attempting to establish a service worker channel...', serviceWorkerRegistration);
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
       OneSignal._channel.off('notification.displayed');
@@ -423,7 +401,6 @@ export default class Helpers {
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
-    log.info('Service worker messaging channel established!');
   }
 
   static getNormalizedSubdomain(subdomain) {

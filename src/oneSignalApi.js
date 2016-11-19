@@ -1,6 +1,6 @@
 import { API_URL } from './vars.js'
 import log from 'loglevel';
-import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush, wait } from './utils.js'
+import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils.js'
 
 
 export default class OneSignalApi {
@@ -100,6 +100,14 @@ export default class OneSignalApi {
     });
   }
 
+  static getPlayer(appId, playerId) {
+    return OneSignalApi.get(`players/${playerId}?app_id=${appId}`);
+  }
+
+  static updatePlayer(id, options) {
+    return OneSignalApi.put(`players/${id}`, options);
+  }
+
   static sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons) {
     var params = {
       app_id: appId,
@@ -120,9 +128,6 @@ export default class OneSignalApi {
       params.firefox_icon = icon;
     }
     trimUndefined(params);
-    return OneSignalApi.post('notifications', params)
-        .catch(e => {
-          log.error('Failed to send notification:', e);
-        });
+    return OneSignalApi.post('notifications', params);
   }
 }

@@ -1,6 +1,9 @@
 import Extension from './extension';
 import Utils from './utils';
 import PMPlus from './PMPlus';
+import {
+  delay
+} from '../src/utils';
 
 /**
  * A "solo test" is a browser test that needs to be run in another separate browser tab due to test requirements like
@@ -19,7 +22,11 @@ export default class SoloTest {
                 `properly grep ( ). Please rewrite your test name to exclude these special characters.`));
         }
         this.options = options;
-        return new Promise((resolve, reject) => {
+        let beginningPromise = Promise.resolve();
+        if (options.delay) {
+            beginningPromise = delay(options.delay);
+        }
+        return beginningPromise.then(() => new Promise((resolve, reject) => {
             if (!this.isSoloInstance(this.test.title)) {
                 this.createSoloInstance(this.test.title, resolve, reject);
             } else {
@@ -29,12 +36,14 @@ export default class SoloTest {
                         .then(() => this.finishSoloInstance())
                         .catch(e => {
                             this.testErrorHelper(e);
+                            throw e;
                         });
                 } catch (e) {
                     this.testErrorHelper(e);
+                    throw e;
                 }
             }
-        });
+        }));
     }
 
     /**
@@ -42,13 +51,10 @@ export default class SoloTest {
      * @param e The detailed test error enhanced by source maps.
      */
     testErrorHelper(e) {
-        Utils.captureError(e).then(detailedError => {
-            console.group('Mocha Test:', this.test.title);
-            console.error(e);
-            console.error(detailedError);
-            console.groupEnd();
-            this.finishSoloInstance(detailedError);
-        });
+        console.group('Mocha Test:', this.test.title);
+        console.error(e);
+        console.groupEnd();
+        this.finishSoloInstance(e);
     }
 
     /**

@@ -9,7 +9,10 @@ import {
     executeAndTimeoutPromiseAfter,
     guid,
     isPushNotificationsSupported,
-    isPushNotificationsSupportedAndWarn
+    isValidEmail,
+    prepareEmailForHashing,
+    md5,
+    sha1
 } from '../src/utils';
 import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
@@ -76,10 +79,10 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe('Session Tracking', function() {
+    describe.skip('Session Tracking', function() {
         let testHelper = function (test, kind, options) {
             return new MultiStepSoloTest(test, options, async (step, gotoStep) => {
-                console.log('A');
+                console.log('Running Session Tracking multi step solo test.');
                 let initOptions = {
                     welcomeNotification: false,
                     autoRegister: kind.autoRegister,
@@ -89,11 +92,13 @@ describe('Web SDK Tests', function () {
                     initOptions['dontWipeData'] = true;
                 }
                 if (step === 'first') {
+                    console.log('Calling await Utils.initialize...');
                     await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true,
                         useRegisterEvent: true
                     });
+                    console.log('Finished calling await Utils.initialize...');
                     let id = await OneSignal.getUserId();
                     let player = await OneSignal.api.get(`players/${id}`);
                     await Extension.set('user-id', id);
@@ -107,7 +112,7 @@ describe('Web SDK Tests', function () {
                     }
                     return gotoStep('2');
                 } else if (step === '2') {
-                    await Utils.initialize(globals, initOptions);
+                    await Utils.initialize(globals, initOpaitions);
                     if (!kind.autoRegister && !options.testFirstPageReload) {
                         await Utils.expectEvent('register');
                     }
@@ -352,26 +357,27 @@ describe('Web SDK Tests', function () {
         });
 
         it('should successfully send, receive, and delete tags via the singular sendTag and getTag method', function () {
-            return new SoloTest(this.test, {}, () => {
+            return new SoloTest(this.test, {delay: 5000}, async () => {
                 let tagKey = 'string';
                 let tagValue = sentTags[tagKey];
 
-                return Utils.initialize(globals, {
+                console.log('Calling await Utils.initialize.');
+                debugger;
+                await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
-                    })
-                    .then(() => OneSignal.sendTag(tagKey, tagValue))
-                    .then(() => OneSignal.getTags())
-                    .then(receivedTags => {
-                        expect(receivedTags).to.not.be.undefined;
-                        expect(receivedTags[tagKey]).to.equal(tagValue);
-                    })
-                    .then(() => OneSignal.deleteTag(tagKey))
-                    .then(() => OneSignal.getTags())
-                    .then(receivedTags => {
-                        expect(receivedTags).to.not.be.undefined;
-                        expect(receivedTags[tagKey]).to.be.undefined;
                     });
+                console.log('Calling sendTag');
+                await OneSignal.sendTag(tagKey, tagValue);
+                console.log('Calling getTags');
+                let receivedTags = await OneSignal.getTags();
+                expect(receivedTags).to.not.be.undefined;
+                expect(receivedTags[tagKey]).to.equal(tagValue);
+                console.log('Calling deleteTag');
+                OneSignal.deleteTag(tagKey);
+                receivedTags = OneSignal.getTags();
+                expect(receivedTags).to.not.be.undefined;
+                expect(receivedTags[tagKey]).to.be.undefined;
             });
         });
 
@@ -583,10 +589,6 @@ describe('Web SDK Tests', function () {
     describe('Environment', () => {
         it('isPushNotificationsSupported() should return true', () => {
             expect(isPushNotificationsSupported()).to.be.true;
-        });
-
-        it('isPushNotificationsSupportedAndWarn() should return true', () => {
-            expect(isPushNotificationsSupportedAndWarn()).to.be.true;
         });
     });
 
@@ -906,6 +908,74 @@ describe('Web SDK Tests', function () {
                     await Utils.expectEvent(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
                 }
             });
+        });
+    });
+
+    describe('isValidEmail() Email Validation', () => {
+        it('should allow valid email addresses', function () {
+            var validEmails = [
+                'jason@onesignal.com',
+                'jason+1@onesignal.com',
+                'jason.1@onesignal.com',
+                'jason-1@onesignal.com',
+                'jason@onesignal.com.br',
+                'jason@onesignal.com.br.eu.tz',
+                'jason@gmail.org',
+                'jason.test.1.-4+2@onesignal.com',
+                'monorail+v2.3275348242@chromium.org',
+                'chromium@monorail-prod.appspotmail.com',
+                'chrome-dev-summit-noreply@google.com',
+                'notifications+admin_only_129918_8de78bb5398c1c185fded6cca7abebafae790396@mail.intercom.io',
+                'notifications+admin_only_129918_1ca9a353350f0f69053fb0aae767614baccee697@mail.intercom.io',
+                'george.deglin@onesignal.mail.intercom.io',
+                'a@b.c',
+                'name@domain.super-long-top-level-domain-name-extension',
+                'jason 1@onesignal.com', // Yep this is valid apparently
+            ];
+            for (let email of validEmails) {
+                expect(isValidEmail(email), `For email '${email}'`).to.be.true
+            }
+        });
+        it('should not allow invalid email addresses', function () {
+            var invalidEmails = [
+                null,
+                undefined,
+                '',
+                '    ',
+                'jason@myhostname',
+                'jason',
+                'a',
+                '@',
+                'jason@@gmail.com',
+                'jason@gmail..com',
+            ];
+            for (let email of invalidEmails) {
+                expect(isValidEmail(email), `For email '${email}'`).to.be.false
+            }
+        });
+    });
+
+    describe('syncHashedEmail', () => {
+        it('should update player hashed email', function () {
+            let email = 'test@test2.com';
+            let preppedEmail = prepareEmailForHashing(email);
+            expect(isValidEmail(preppedEmail)).to.be.true;
+            expect(md5(preppedEmail)).to.eql('3e1163777d25d2b935057c3ae393efee');
+            expect(sha1(preppedEmail)).to.eql('69e9ca5af84bc88bc185136cd6f782ee889be5c8');
+        });
+        it('should update player hashed email ignoring case', function () {
+            let email = 'Test@tEst.CoM';
+            let preppedEmail = prepareEmailForHashing(email);
+            expect(isValidEmail(preppedEmail)).to.be.true;
+            expect(md5(preppedEmail)).to.eql('b642b4217b34b1e8d3bd915fc65c4452');
+            expect(sha1(preppedEmail)).to.eql('a6ad00ac113a19d953efb91820d8788e2263b28a');
+        });
+        it('should update player hashed email ignoring whitespace', function () {
+            let email = ' test@test2.com ';
+            let preppedEmail = prepareEmailForHashing(email);
+            expect(isValidEmail(preppedEmail)).to.be.true;
+            expect(md5(preppedEmail)).to.eql('3e1163777d25d2b935057c3ae393efee');
+            expect(sha1(preppedEmail)).to.eql('69e9ca5af84bc88bc185136cd6f782ee889be5c8');
         });
     });
 });

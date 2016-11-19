@@ -107,9 +107,6 @@ export default class Button extends ActiveAnimatedElement {
             .then(() => {
               this.bell._ignoreSubscriptionState = false;
               this.bell.launcher.inactivate();
-            })
-            .catch((e) => {
-              log.error(e);
             });
         });
       }
@@ -129,7 +126,7 @@ export default class Button extends ActiveAnimatedElement {
         });
       }
     }
-    return this.bell.message.hide().catch((e) => log.error(e));
+    return this.bell.message.hide();
   }
 
   pulse() {

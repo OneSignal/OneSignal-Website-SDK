@@ -26,7 +26,6 @@ export default class IndexedDb {
           } else {
             let database = event.target.result;
             IndexedDb._instance = database;
-            log.debug('Opening IndexedDB instance.');
             resolve(database);
           }
         };

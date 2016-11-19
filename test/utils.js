@@ -138,7 +138,7 @@ export default class Utils {
                 Extension.setPopupPermission(`${location.origin}/*`, 'allow'),
                 // Only for HTTPS: Wipes the IndexedDB on the current site origin
                 options.dontWipeData ? null : Utils.wipeIndexedDb(),
-                options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe(),
+                options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe().catch(e => console.error('Error wiping service worker and unsubscribing from push (caught):', e)),
                 options.dontWipeData ? null : OneSignal.helpers.unmarkHttpsNativePromptDismissed()
             ])
             .then(() => {
@@ -269,9 +269,9 @@ export default class Utils {
         return executeAndTimeoutPromiseAfter(new Promise((resolve, reject) => {
             OneSignal.once(eventName, (e) => {
                 if (predicate && predicate(e)) {
-                    resolve();
+                    resolve(e);
                 } else if (predicate === null || predicate === undefined) {
-                    resolve();
+                    resolve(e);
                 } else reject();
             });
         }).catch(e => console.error(e)), timeout, `Event '${eventName}' did not fire after ${timeout} ms.`);
