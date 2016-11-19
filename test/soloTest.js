@@ -29,9 +29,11 @@ export default class SoloTest {
                         .then(() => this.finishSoloInstance())
                         .catch(e => {
                             this.testErrorHelper(e);
+                            throw e;
                         });
                 } catch (e) {
                     this.testErrorHelper(e);
+                    throw e;
                 }
             }
         });
@@ -42,13 +44,10 @@ export default class SoloTest {
      * @param e The detailed test error enhanced by source maps.
      */
     testErrorHelper(e) {
-        Utils.captureError(e).then(detailedError => {
-            console.group('Mocha Test:', this.test.title);
-            console.error(e);
-            console.error(detailedError);
-            console.groupEnd();
-            this.finishSoloInstance(detailedError);
-        });
+        console.group('Mocha Test:', this.test.title);
+        console.error(e);
+        console.groupEnd();
+        this.finishSoloInstance(e);
     }
 
     /**

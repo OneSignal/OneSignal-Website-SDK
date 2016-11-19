@@ -100,7 +100,11 @@ export default class OneSignalApi {
     });
   }
 
-  static editDevice(id, options) {
+  static getPlayer(appId, playerId) {
+    return OneSignalApi.get(`players/${playerId}?app_id=${appId}`);
+  }
+
+  static updatePlayer(id, options) {
     return OneSignalApi.put(`players/${id}`, options);
   }
 

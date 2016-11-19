@@ -9,7 +9,10 @@ import {
     executeAndTimeoutPromiseAfter,
     guid,
     isPushNotificationsSupported,
-    isValidEmail
+    isValidEmail,
+    prepareEmailForHashing,
+    md5,
+    sha1
 } from '../src/utils';
 import IndexedDb from '../src/indexedDb';
 import Environment from '../src/environment.js';
@@ -905,7 +908,7 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe.only('isValidEmail() Email Validation', () => {
+    describe('isValidEmail() Email Validation', () => {
         it('should allow valid email addresses', function () {
             var validEmails = [
                 'jason@onesignal.com',
@@ -946,6 +949,30 @@ describe('Web SDK Tests', function () {
             for (let email of invalidEmails) {
                 expect(isValidEmail(email), `For email '${email}'`).to.be.false
             }
+        });
+    });
+
+    describe('syncHashedEmail', () => {
+        it('should update player hashed email', function () {
+            let email = 'test@test2.com';
+            let preppedEmail = prepareEmailForHashing(email);
+            expect(isValidEmail(preppedEmail)).to.be.true;
+            expect(md5(preppedEmail)).to.eql('3e1163777d25d2b935057c3ae393efee');
+            expect(sha1(preppedEmail)).to.eql('69e9ca5af84bc88bc185136cd6f782ee889be5c8');
+        });
+        it('should update player hashed email ignoring case', function () {
+            let email = 'Test@tEst.CoM';
+            let preppedEmail = prepareEmailForHashing(email);
+            expect(isValidEmail(preppedEmail)).to.be.true;
+            expect(md5(preppedEmail)).to.eql('b642b4217b34b1e8d3bd915fc65c4452');
+            expect(sha1(preppedEmail)).to.eql('a6ad00ac113a19d953efb91820d8788e2263b28a');
+        });
+        it('should update player hashed email ignoring whitespace', function () {
+            let email = ' test@test2.com ';
+            let preppedEmail = prepareEmailForHashing(email);
+            expect(isValidEmail(preppedEmail)).to.be.true;
+            expect(md5(preppedEmail)).to.eql('3e1163777d25d2b935057c3ae393efee');
+            expect(sha1(preppedEmail)).to.eql('69e9ca5af84bc88bc185136cd6f782ee889be5c8');
         });
     });
 });

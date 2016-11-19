@@ -42,9 +42,14 @@ export default class OneSignal {
   }
 
   static syncHashedEmail(email) {
+    let sanitizedEmail = null;
     return awaitOneSignalInitAndSupported()
       .then(() => {
-        if (!isValidEmail(email)) {
+        if (!email) {
+          throw new Error('Use a valid email address.');
+        }
+        sanitizedEmail = prepareEmailForHashing(email);
+        if (!isValidEmail(sanitizedEmail)) {
           throw new Error('Use a valid email address.');
         }
         else return OneSignal.getUserId();
@@ -53,11 +58,17 @@ export default class OneSignal {
         if (!userId) {
           throw new Error('Retry after subscribing.');
         } else {
-          const sanitizedEmail = prepareEmailForHashing(email);
-          return OneSignalApi.editDevice(userId, {
+          return OneSignalApi.updatePlayer(userId, {
             em_m: md5(sanitizedEmail),
             em_s: sha1(sanitizedEmail)
           })
+        }
+      })
+      .then(result => {
+        if (result && result.success) {
+          return true;
+        } else {
+          return result;
         }
       });
   }
