@@ -9,7 +9,11 @@ import Bell from "./bell/bell.js";
 import * as Cookie from 'js-cookie';
 import Database from './Database';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, md5, sha1, prepareEmailForHashing } from './utils';
+import {
+  isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
+  once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
+  wipeLocalIndexedDb, md5, sha1, prepareEmailForHashing, executeCallback
+} from './utils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
@@ -18,6 +22,7 @@ import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers';
 import Popover from './popover/popover';
 import HttpModal from "./http-modal/httpModal";
+import {Uuid} from "./models/Uuid";
 
 
 
@@ -26,7 +31,7 @@ export default class OneSignal {
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @publiclySupportedApi
    */
-  static async setDefaultNotificationUrl(url) {
+  static async setDefaultNotificationUrl(url: URL) {
     logMethodCall('setDefaultNotificationUrl', url);
     await awaitOneSignalInitAndSupported();
     return await Database.setDefaultUrl(url);
@@ -2014,18 +2019,15 @@ must be opened as a result of a subscription call.</span>`);
   /**
    * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
    * @param callback A function accepting one parameter for the OneSignal user ID.
-   * @returns {Promise.<T>}
+   * @returns
    */
-  static getUserId(callback) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => Database.get('Ids', 'userId'))
-      .then(result => {
-        if (callback) {
-          callback(result)
-        }
-        return result;
-      });
-  }
+  static async getUserId(callback?: Action<Uuid>): Promise<Uuid> {
+    logMethodCall('getUserId', callback);
+    await awaitOneSignalInitAndSupported()
+    const userId: Uuid = await Database.get<Uuid>('Ids', 'userId');
+    executeCallback<Uuid>(callback, userId);
+    return userId;
+}
 
   /**
    * Returns a promise that resolves to the stored OneSignal registration ID if one is set; otherwise null.

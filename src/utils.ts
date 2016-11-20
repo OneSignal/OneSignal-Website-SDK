@@ -86,8 +86,28 @@ export function awaitOneSignalInitAndSupported() {
   });
 }
 
+/**
+ * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
+ * Helps when logging method calls.
+ */
+export function stringify(obj) {
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'function') {
+      return "[Function]";
+    } else {
+      return value;
+    }
+  });
+}
+
+export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
+  if (callback) {
+    return callback.apply(null, args);
+  }
+}
+
 export function logMethodCall(methodName: string, ...args) {
-  return log.trace(`Called %c${methodName}(${args.map(JSON.stringify).join(', ')})`, getConsoleStyle('code'), '.');
+  return log.trace(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
 }
 
 export function isValidEmail(email) {
