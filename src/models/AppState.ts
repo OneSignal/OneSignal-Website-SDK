@@ -1,9 +1,6 @@
-import { Notification } from "./Notification";
-
-
 class AppState {
-    serviceWorkerVersion: number;
-    backupNotification: Notification;
+    defaultNotificationUrl: URL;
+    defaultNotificationTitle: string;
 }
 
 export { AppState };

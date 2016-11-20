@@ -1,10 +1,18 @@
 import {Uuid} from "./Uuid";
-import {Url} from "url";
 
 
 class Subscription {
+    /**
+     * The OneSignal player ID.
+     */
     deviceId: Uuid;
-    endpoint: Url;
+    /**
+     * The GCM/FCM registration token, along with the full URL.
+     */
+    endpoint: URL;
+    /**
+     * The GCM/FCM registration token, just the token part.
+     */
     token: string;
 }
 

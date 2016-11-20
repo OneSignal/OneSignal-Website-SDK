@@ -1,12 +1,12 @@
 import { Uuid } from "./Uuid";
+import { ServiceWorkerConfig } from "./ServiceWorkerConfig";
 
 
 class AppConfig {
     appId: Uuid;
     subdomain: string;
     autoRegister: boolean;
-    serviceWorkerScope: string;
-    promptOptions: Map<string, any>
+    serviceWorkerConfig: ServiceWorkerConfig;
 }
 
 export { AppConfig };
