@@ -1,9 +1,8 @@
 import {Url} from "url";
-import Serializable from "../Serializable";
 import { Uuid } from "./Uuid";
 
 
-interface Notification extends Serializable {
+interface Notification {
     id: Uuid,
     heading: string,
     content: string,

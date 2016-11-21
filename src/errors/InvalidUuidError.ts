@@ -2,7 +2,7 @@ import OneSignalError from "./OneSignalError";
 
 
 export default class PushNotSupportedError extends OneSignalError {
-  constructor() {
-    super('Push notifications are not supported.');
+  constructor(uuid) {
+    super(`'${uuid}' is not a valid UUID`);
   }
 }

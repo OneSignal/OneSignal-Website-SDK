@@ -7,5 +7,5 @@ export default class OneSignalTests {
   }
 }
 
-window.OneSignalTests = OneSignalTests;
-window.utils = Utils;
+(<any>window).OneSignalTests = OneSignalTests;
+(<any>window).utils = Utils;

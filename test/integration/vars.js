@@ -1,5 +1,5 @@
-import { DEV_HOST, PROD_HOST, API_URL } from '../src/vars.js';
-import Environment from '../src/environment.js'
+import { DEV_HOST, PROD_HOST, API_URL } from '../../src/vars.js';
+import Environment from '../../src/environment.js'
 
 export var USER_AUTH_KEY = 'OTFkMThlMTItZjYzZC00MmJjLTg5NzktYTVhZjhlNmQwM2U3';
 export var SUBDOMAIN = 'washington';

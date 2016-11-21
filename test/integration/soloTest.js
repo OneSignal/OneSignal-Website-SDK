@@ -3,7 +3,7 @@ import Utils from './utils';
 import PMPlus from './PMPlus';
 import {
   delay
-} from '../src/utils';
+} from '../../src/utils';
 
 /**
  * A "solo test" is a browser test that needs to be run in another separate browser tab due to test requirements like

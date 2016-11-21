@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, once, contains } from '../utils';
+import { addCssClass, removeCssClass, contains, once } from '../utils';
 import * as log from 'loglevel';
 import Event from '../events.js'
 

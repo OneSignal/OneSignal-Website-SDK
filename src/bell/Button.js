@@ -1,5 +1,4 @@
-import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, removeDomElement, once, when } from '../utils';
-import * as log from 'loglevel';
+import { removeDomElement } from '../utils';
 import Event from '../events.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
 import Bell from './bell.js';
@@ -18,37 +17,30 @@ export default class Button extends ActiveAnimatedElement {
     };
 
     this.element.addEventListener('touchstart', (e) => {
-      //log.debug('touchstart');
       this.onHovering(e);
       this.onTap(e);
     });
 
     this.element.addEventListener('mouseenter', (e) => {
-      //log.debug('mouseenter');
       this.onHovering(e);
     });
 
     this.element.addEventListener('mouseleave', (e) => {
-      //log.debug('mouseleave');
       this.onHovered(e);
     });
     this.element.addEventListener('touchmove', (e) => {
-      //log.debug('touchmove');
       this.onHovered(e);
     });
 
     this.element.addEventListener('mousedown', (e) => {
-      //log.debug('mousedown');
       this.onTap(e);
     });
 
     this.element.addEventListener('mouseup', (e) => {
-      //log.debug('mouseup');
       this.onEndTap(e);
     });
 
     this.element.addEventListener('click', (e) => {
-      //log.debug('click');
       this.onHovered(e);
       this.onClick(e);
     });

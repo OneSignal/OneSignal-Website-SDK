@@ -1,9 +1,9 @@
-import express from 'express';
-import https from 'https';
-import cors from 'cors';
-import bodyParser from 'body-parser';
+import * as express from 'express';
+import * as https from 'https';
+import * as cors from 'cors';
+import * as bodyParser from 'body-parser';
 import { database, databaseShard} from './server/database';
-import morgan from 'morgan';
+import * as morgan from 'morgan';
 import fs from 'fs';
 import Sequelize from 'sequelize';
 

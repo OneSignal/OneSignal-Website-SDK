@@ -1,6 +1,5 @@
-import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, once, delay, when, nothing, decodeHtmlEntities } from '../utils';
+import { getConsoleStyle, delay, nothing, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
-import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
 import Bell from './bell.js';
 

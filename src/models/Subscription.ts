@@ -1,7 +1,7 @@
 import {Uuid} from "./Uuid";
 
 
-class Subscription {
+export class Subscription {
     /**
      * The OneSignal player ID.
      */
@@ -15,5 +15,3 @@ class Subscription {
      */
     token: string;
 }
-
-export { Subscription };

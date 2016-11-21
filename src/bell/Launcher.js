@@ -1,7 +1,5 @@
-import { isPushNotificationsSupported, getConsoleStyle, hasCssClass, addCssClass, removeCssClass, once, nothing, contains } from '../utils';
+import { hasCssClass, addCssClass, removeCssClass, nothing, contains } from '../utils';
 import * as log from 'loglevel';
-import Event from '../events.js';
-import AnimatedElement from './AnimatedElement.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
 
 

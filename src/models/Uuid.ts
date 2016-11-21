@@ -1,9 +1,7 @@
-///<reference path="../../typings/globals/validator/index.d.ts"/>
-
-import Serializable from "../Serializable";
 import * as isUuid from 'validator/lib/isUUID';
+import InvalidUuidError from '../errors/InvalidUuidError';
 
-class Uuid implements Serializable {
+class Uuid {
     uuid: string;
 
     constructor(uuid: string) {
@@ -13,20 +11,6 @@ class Uuid implements Serializable {
             throw new InvalidUuidError(uuid);
         }
     }
-
-    serialize() {
-        return this.uuid;
-    }
 }
 
-class InvalidUuidError {
-    constructor(uuid: string) {
-        const error = (<any>this);
-        error.message = `'${uuid}' is not a valid UUID`;
-        error.name = 'InvalidUuidError';
-        error.stack = new Error().stack;
-    }
-}
-InvalidUuidError.prototype = Object.create(Error.prototype);
-
-export { Uuid, InvalidUuidError };
+export { Uuid };

@@ -1,7 +1,7 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars.js';
 import Environment from './environment.js';
 import OneSignalApi from './oneSignalApi.js';
-import IndexedDb from './indexedDb';
+import IndexedDb from './IndexedDb';
 import * as log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
@@ -11,9 +11,13 @@ import Database from './Database';
 import * as Browser from 'bowser';
 import {
   isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
-  once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
-  wipeLocalIndexedDb, md5, sha1, prepareEmailForHashing, executeCallback
+  contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
+  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, isValidUrl
 } from './utils';
+import {
+  md5,
+  sha1
+} from './crypto';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
@@ -21,8 +25,8 @@ import * as swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers';
 import Popover from './popover/popover';
-import HttpModal from "./http-modal/httpModal";
 import {Uuid} from "./models/Uuid";
+import {InvalidArgumentError, InvalidArgumentReason} from "./errors/InvalidArgumentError";
 
 
 
@@ -33,8 +37,14 @@ export default class OneSignal {
    */
   static async setDefaultNotificationUrl(url: URL) {
     logMethodCall('setDefaultNotificationUrl', url);
+    if (!url)
+      throw new InvalidArgumentError('url', InvalidArgumentReason.Empty);
+    if (!isValidUrl(url))
+      throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
-    return await Database.setDefaultUrl(url);
+    const appState = await Database.getAppState();
+    appState.defaultNotificationUrl = url;
+    await Database.setAppState(appState);
   }
 
   /**

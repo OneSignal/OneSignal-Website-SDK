@@ -1,11 +1,7 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, decodeHtmlEntities } from '../utils';
-import Environment from '../environment.js';
+import { isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, delay, nothing, contains, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
 import Event from '../events.js';
 import * as Browser from 'bowser';
-import { HOST_URL } from '../vars.js';
-import AnimatedElement from './AnimatedElement.js';
-import ActiveAnimatedElement from './ActiveAnimatedElement.js';
 import Database from '../Database';
 import Helpers from '../helpers';
 import Launcher from './Launcher.js';

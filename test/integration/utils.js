@@ -2,8 +2,8 @@ import StackTraceGPS from 'stacktrace-gps';
 import {SUBDOMAIN} from './vars.js';
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
-import IndexedDb from '../src/indexedDb';
-import { executeAndTimeoutPromiseAfter } from '../src/utils';
+import IndexedDb from '../../src/IndexedDb';
+import { executeAndTimeoutPromiseAfter } from '../../src/utils';
 
 
 // URLSearchParams.toString() does a second weird URL encoding so here we have to redo the URL encoding

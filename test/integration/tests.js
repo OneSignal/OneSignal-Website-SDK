@@ -1,4 +1,5 @@
-import chai, { expect } from 'chai';
+import * as chai from 'chai';
+import { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
 import { USER_AUTH_KEY} from './vars.js';
@@ -13,12 +14,12 @@ import {
     prepareEmailForHashing,
     md5,
     sha1
-} from '../src/utils';
-import IndexedDb from '../src/indexedDb';
-import Environment from '../src/environment.js';
-import Postmam from '../src/postmam.js';
-import { DEV_FRAME_HOST } from '../src/vars.js';
-import Database from '../src/database';
+} from '../../src/utils';
+import IndexedDb from '../../src/IndexedDb';
+import Environment from '../../src/environment.js';
+import Postmam from '../../src/postmam.js';
+import { DEV_FRAME_HOST } from '../../src/vars.js';
+import Database from '../../src/database';
 import MultiStepSoloTest from './multiStepSoloTest';
 import isUuid from 'validator/lib/isUuid';
 

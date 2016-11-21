@@ -1,11 +1,9 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, clearDomElementChildren, addCssClass, removeCssClass, once, on, off, getConsoleStyle, delay, when, nothing, contains, decodeHtmlEntities } from '../utils';
-import Environment from '../environment.js';
+import { removeDomElement, addDomElement, addCssClass } from '../utils';
 import * as log from 'loglevel';
 import Event from '../events.js';
 import Helpers from '../helpers';
 import * as Browser from 'bowser';
 import * as objectAssign from 'object-assign';
-import { HOST_URL } from '../vars.js';
 
 import "./popover.scss";
 

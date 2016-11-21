@@ -6,7 +6,7 @@ import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Database from './Database';
 import * as Browser from 'bowser';
-import { isPushNotificationsSupported, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser, capitalize } from './utils';
+import { getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize } from './utils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';

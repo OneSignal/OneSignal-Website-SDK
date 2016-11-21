@@ -8,34 +8,36 @@ import Database from './Database';
 
 export default class IndexedDb {
 
+  static _instance: IndexedDb;
+
   /**
    * Returns an existing instance or creates a new instances of the database.
    * @returns {Promise} Returns a promise that is fulfilled when the database becomes accessible or rejects when an error occurs.
    */
-  static getInstance() {
+  static getInstance(): Promise<IDBDatabase> {
     return new Promise(function (resolve, reject) {
       if (IndexedDb._instance) {
         resolve(IndexedDb._instance);
       } else {
         let request = indexedDB.open("ONE_SIGNAL_SDK_DB", 1);
-        request.onsuccess = (event) => {
+        request.onsuccess = ({target}) => {
+          let db = (<any>target).result;
           if (IndexedDb._instance) {
-            let redundantDb = event.target.result;
-            redundantDb.close();
+            db.close();
             resolve(IndexedDb._instance);
           } else {
-            let database = event.target.result;
-            IndexedDb._instance = database;
-            resolve(database);
+            IndexedDb._instance = db;
+            resolve(db);
           }
         };
         request.onerror = (event) => {
-          log.error('OneSignal: Unable to open IndexedDB.', event.target.error.name + ': ' + event.target.error.message);
+          log.error('OneSignal: Unable to open IndexedDB.', (<any>event.target).error.name +
+            ': ' + (<any>event.target).error.message);
           reject(event);
         };
         request.onupgradeneeded = (event) => {
           log.info('OneSignal: IndexedDB is being rebuilt or upgraded.', event);
-          let db = event.target.result;
+          let db = (<any>event.target).result;
           db.createObjectStore("Ids", {
             keyPath: "type"
           });
@@ -45,9 +47,9 @@ export default class IndexedDb {
           db.createObjectStore("Options", {
             keyPath: "key"
           });
-          Event.trigger(Database.EVENTS.REBUILT);
+          Event.trigger(Database.EVENTS.REBUILT, null, null);
         };
-        request.onversionchange = (event) => {
+        (<any>request).onversionchange = (event) => {
           log.warn('The database is about to be deleted.');
         };
       }
@@ -60,39 +62,37 @@ export default class IndexedDb {
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
-  static get(table, key) {
+  static async get(table: string, key: string): Promise<any> {
+    let db = await IndexedDb.getInstance();
     if (key) {
       // Return a table-key value
-      return IndexedDb.getInstance().then(database => {
-        return new Promise(function (resolve, reject) {
-          var request = database.transaction(table).objectStore(table).get(key);
-          request.onsuccess = () => {
-            resolve(request.result);
-          };
-          request.onerror = () => {
-            reject(request.errorCode);
-          };
-        });
+      return new Promise((resolve, reject) => {
+        var request: IDBRequest = db.transaction(table).objectStore(table).get(key);
+        request.onsuccess = () => {
+          resolve(request.result);
+        };
+        request.onerror = () => {
+          reject(request.error);
+        };
       });
     } else {
       // Return all values in table
-      return IndexedDb.getInstance().then(database => {
-        return new Promise(function (resolve, reject) {
-          let jsonResult = {};
-          let cursor = database.transaction(table).objectStore(table).openCursor();
-          cursor.onsuccess = (event) => {
-            var cursorResult = event.target.result;
-            if (cursorResult) {
-              jsonResult[cursorResult.key] = cursorResult.value.value;
-              cursorResult.continue();
-            } else {
-              resolve(jsonResult);
-            }
-          };
-          cursor.onerror = (event) => {
-            reject(cursor.errorCode);
-          };
-        });
+      return new Promise((resolve, reject) => {
+        let jsonResult = {};
+        let cursor = db.transaction(table).objectStore(table).openCursor();
+        cursor.onsuccess = (event: any) => {
+          var cursorResult: IDBCursorWithValue = event.target.result;
+          if (cursorResult) {
+            let cursorResultKey: any = cursorResult.key;
+            jsonResult[cursorResultKey] = cursorResult.value.value;
+            cursorResult.continue();
+          } else {
+            resolve(jsonResult);
+          }
+        };
+        cursor.onerror = (event) => {
+          reject(cursor.error);
+        };
       });
     }
   }
@@ -126,7 +126,7 @@ export default class IndexedDb {
    * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
-  static remove(table, key) {
+  static remove(table: string, key?: string) {
     if (key) {
       // Remove a single key from a table
       var method = "delete";

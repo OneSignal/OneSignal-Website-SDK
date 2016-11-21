@@ -1,10 +1,8 @@
-import { isPushNotificationsSupported, getConsoleStyle, addCssClass, removeCssClass, clearDomElementChildren, once } from '../utils';
-import * as log from 'loglevel';
+import { clearDomElementChildren, once } from '../utils';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';
 import * as Browser from 'bowser';
 import Bell from './bell.js';
-import Helpers from '../helpers';
 import { HOST_URL } from '../vars.js';
 
 

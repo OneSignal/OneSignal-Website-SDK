@@ -1,14 +1,11 @@
-import * as log from 'loglevel';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import Event from './events.js';
-import { getConsoleStyle } from './utils';
-import IndexedDb from './indexedDb.js';
+import IndexedDb from './IndexedDb';
 import Environment from './environment.js';
 import {AppState} from "./models/AppState";
 import {Subscription} from "./models/Subscription";
 import {AppConfig} from "./models/AppConfig";
-import {UV_UDP_REUSEADDR} from "constants";
 import {Uuid} from "./models/Uuid";
 import {ServiceWorkerConfig} from "./models/ServiceWorkerConfig";
 import {ServiceWorkerState} from "./models/ServiceWorkerState";
