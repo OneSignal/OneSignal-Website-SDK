@@ -1,8 +1,0 @@
-{
-  "resolution": "main",
-  "tree": {
-    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/52410f6f389586942d6427bbf66ac2bf4a9cf04b/es6-error/es6-error.d.ts",
-    "raw": "registry:dt/es6-error#4.0.0+20161025103844",
-    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/52410f6f389586942d6427bbf66ac2bf4a9cf04b/es6-error/es6-error.d.ts"
-  }
-}
