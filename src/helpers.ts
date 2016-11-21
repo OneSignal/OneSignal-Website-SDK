@@ -378,7 +378,7 @@ export default class Helpers {
                     });
   }
 
-  static establishServiceWorkerChannel(serviceWorkerRegistration) {
+  static establishServiceWorkerChannel(serviceWorkerRegistration?) {
     if (OneSignal._channel) {
       OneSignal._channel.off('data');
       OneSignal._channel.off('notification.displayed');
@@ -487,7 +487,7 @@ export default class Helpers {
     return normalizedSubdomain;
   }
 
-  static createHiddenDomIFrame(url, name) {
+  static createHiddenDomIFrame(url, name?) {
     let node = document.createElement("iframe");
     node.style.display = "none";
     if (!url) {
@@ -556,7 +556,7 @@ export default class Helpers {
         top = overrides.top;
       }
     }
-    window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
+    const windowRef = window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
 
     if (data) {
       for (var key in data) {
@@ -570,9 +570,11 @@ export default class Helpers {
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+
+    return windowRef;
   };
 
   static openSubdomainPopup(url, data, overrides) {
-    Helpers.openWindowViaPost(url, data, overrides);
+    return Helpers.openWindowViaPost(url, data, overrides);
   }
 }

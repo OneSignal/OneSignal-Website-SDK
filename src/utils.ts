@@ -234,7 +234,7 @@ export function nothing() {
   return Promise.resolve();
 }
 
-export function executeAndTimeoutPromiseAfter(promise, milliseconds, displayError) {
+export function executeAndTimeoutPromiseAfter(promise, milliseconds, displayError?) {
   let timeoutPromise = new Promise(resolve => setTimeout(() => resolve('promise-timed-out'), milliseconds));
   return Promise.race([promise, timeoutPromise]).then(value => {
     if (value === 'promise-timed-out') {

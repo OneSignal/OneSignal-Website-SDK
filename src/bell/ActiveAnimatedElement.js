@@ -1,4 +1,4 @@
-import { addCssClass, removeCssClass, contains } from '../utils';
+import { addCssClass, removeCssClass, contains, once } from '../utils';
 import * as log from 'loglevel';
 import Event from '../events.js';
 import AnimatedElement from './AnimatedElement.js';

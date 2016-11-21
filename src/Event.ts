@@ -56,7 +56,7 @@ export default class Event {
    * @param data Any JavaScript variable to be passed with the event.
    * @param remoteTriggerEnv If this method is being called in a different environment (e.g. was triggered in iFrame but now retriggered on main host), this is the string of the original environment for logging purposes.
    */
-  static trigger(eventName, data, remoteTriggerEnv=null) {
+  static trigger(eventName, data?, remoteTriggerEnv=null) {
     if (!contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
       if (remoteTriggerEnv) {

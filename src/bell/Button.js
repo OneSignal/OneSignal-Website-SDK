@@ -2,7 +2,7 @@ import { removeDomElement } from '../utils';
 import Event from '../events.js';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
 import Bell from './bell.js';
-import LimitStore from '../limitStore.js';
+import LimitStore from '../LimitStore';
 import Message from './Message.js';
 
 

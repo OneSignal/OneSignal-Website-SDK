@@ -1,5 +1,6 @@
-declare var OneSignal : any;
+declare var OneSignal: string;
 
 declare module "OneSignal" {
-    export = OneSignal;
+    export type on = any;
+    export var on: any;
 }
