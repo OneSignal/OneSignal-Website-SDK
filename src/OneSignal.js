@@ -756,7 +756,7 @@ must be opened as a result of a subscription call.</span>`);
     log.debug('Called showHttpPermissionRequest().');
 
     return awaitOneSignalInitAndSupported()
-      .then(() => {
+      .then(new Promise((resolve, reject) => {
         // Safari's push notifications are one-click Allow and shouldn't support this workaround
         if (Browser.safari) {
           return;
@@ -798,7 +798,7 @@ must be opened as a result of a subscription call.</span>`);
             reject(rejectReason);
           }
         }
-      });
+      }));
   }
 
   static _initPopup() {

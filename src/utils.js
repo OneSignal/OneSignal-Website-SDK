@@ -78,7 +78,7 @@ export function awaitOneSignalInitAndSupported() {
     }
 
     if (!OneSignal.initialized) {
-      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => resolve);
+      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     } else {
       resolve();
     }
