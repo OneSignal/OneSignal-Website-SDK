@@ -17,6 +17,18 @@ interface String {
   endsWith(...args): any;
 }
 
+interface ServiceWorkerGlobalScope {
+  addEventListener(type: "push", listener: (this: this, ev: any) => any, ...args): void;
+  addEventListener(type: "notificationclose", listener: (this: this, ev: any) => any, ...args): void;
+  addEventListener(type: "notificationclick", listener: (this: this, ev: any) => any, ...args): void;
+  addEventListener(type: "install", listener: (this: this, ev: any) => any, ...args): void;
+  addEventListener(type: "activate", listener: (this: this, ev: any) => any, ...args): void;
+  addEventListener(type: "pushsubscriptionchange", listener: (this: this, ev: any) => any, ...args): void;
+  addEventListener(type: "fetch", listener: (this: this, ev: any) => any, ...args): void;
+  dispatchEvent(...args): any;
+}
+
+declare var ExtendableEvent;
 declare var swivel;
 
 declare var __VERSION__: string;

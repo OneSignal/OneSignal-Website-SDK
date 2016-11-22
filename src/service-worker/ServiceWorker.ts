@@ -1,12 +1,16 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from './vars.js';
-import Environment from './Environment'
-import OneSignalApi from './OneSignalApi';
+///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from '../vars.js';
+import Environment from '../Environment'
+import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';
-import Database from './Database';
-import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from './utils';
+import Database from '../Database';
+import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from '../utils';
 import * as objectAssign from 'object-assign';
 import * as swivel from 'swivel';
 import * as Browser from 'bowser';
+import {Notification} from "../models/Notification";
+
+declare var self: ServiceWorkerGlobalScope;
 
 
 /**
@@ -18,6 +22,11 @@ import * as Browser from 'bowser';
  * worker is registered to the iFrame pointing to subdomain.onesignal.com.
  */
 class ServiceWorker {
+  static REFETCH_REQUESTS;
+  static SKIP_REFETCH_REQUESTS;
+  static queries;
+  static UNSUBSCRIBED_FROM_NOTIFICATIONS;
+  static defaultLaunchUrl;
 
   /**
    * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
@@ -78,7 +87,7 @@ class ServiceWorker {
     self.addEventListener('pushsubscriptionchange', ServiceWorker.onPushSubscriptionChange);
 
     // Install messaging event handlers for page <-> service worker communication
-    swivel.on('data', ServiceWorker.onMessageReceived);
+    (swivel as any).on('data', ServiceWorker.onMessageReceived);
 
     // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
     // Fix: If the browser is Firefox and is v44, use the following workaround:
@@ -87,16 +96,16 @@ class ServiceWorker {
         .then(refetchRequests => {
           if (refetchRequests == true) {
             log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
-            self.REFETCH_REQUESTS = true;
+            ServiceWorker.REFETCH_REQUESTS = true;
             self.addEventListener('fetch', ServiceWorker.onFetch);
           } else {
-            self.SKIP_REFETCH_REQUESTS = true;
+            ServiceWorker.SKIP_REFETCH_REQUESTS = true;
             log.info('Detected Firefox v44 but not refetching requests because option is set to false.');
           }
         })
         .catch(e => {
           log.error(e);
-          self.REFETCH_REQUESTS = true;
+          ServiceWorker.REFETCH_REQUESTS = true;
           self.addEventListener('fetch', ServiceWorker.onFetch);
         });
     }
@@ -117,7 +126,7 @@ class ServiceWorker {
 
     if (data === 'notification.closeall') {
       // Used for testing; the host page can close active notifications
-      self.registration.getNotifications().then(notifications => {
+      self.registration.getNotifications(null).then(notifications => {
         for (let notification of notifications) {
           notification.close();
         }
@@ -129,18 +138,18 @@ class ServiceWorker {
   }
 
   static processQuery(queryType, response) {
-    if (!self.queries) {
-      log.warn(`queryClient() was not called before processQuery(). self.queries is empty.`);
+    if (!ServiceWorker.queries) {
+      log.warn(`queryClient() was not called before processQuery(). ServiceWorker.queries is empty.`);
     }
-    if (!self.queries[queryType]) {
-      log.warn(`Received query ${queryType} response ${response}. Expected self.queries to be preset to a hash.`);
+    if (!ServiceWorker.queries[queryType]) {
+      log.warn(`Received query ${queryType} response ${response}. Expected ServiceWorker.queries to be preset to a hash.`);
       return;
     } else {
-      if (!self.queries[queryType].promise) {
-        log.warn(`Expected self.queries[${queryType}].promise value to be a Promise: ${self.queries[queryType]}`);
+      if (!ServiceWorker.queries[queryType].promise) {
+        log.warn(`Expected ServiceWorker.queries[${queryType}].promise value to be a Promise: ${ServiceWorker.queries[queryType]}`);
         return;
       }
-      self.queries[queryType].promiseResolve(response);
+      ServiceWorker.queries[queryType].promiseResolve(response);
     }
   }
 
@@ -151,18 +160,18 @@ class ServiceWorker {
    * @param queryType The message to send to the client.
      */
   static queryClient(serviceWorkerClient, queryType) {
-    if (!self.queries) {
-      self.queries = {};
+    if (!ServiceWorker.queries) {
+      ServiceWorker.queries = {};
     }
-    if (!self.queries[queryType]) {
-      self.queries[queryType] = {};
+    if (!ServiceWorker.queries[queryType]) {
+      ServiceWorker.queries[queryType] = {};
     }
-    self.queries[queryType].promise = new Promise((resolve, reject) => {
-      self.queries[queryType].promiseResolve = resolve;
-      self.queries[queryType].promiseReject = reject;
-      swivel.emit(serviceWorkerClient.id, queryType);
+    ServiceWorker.queries[queryType].promise = new Promise((resolve, reject) => {
+      ServiceWorker.queries[queryType].promiseResolve = resolve;
+      ServiceWorker.queries[queryType].promiseReject = reject;
+      (swivel as any).emit(serviceWorkerClient.id, queryType);
     });
-    return self.queries[queryType].promise;
+    return ServiceWorker.queries[queryType].promise;
   }
 
   /**
@@ -193,7 +202,7 @@ class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => ServiceWorker.updateBackupNotification(notif))
-                      .then(() => swivel.broadcast('notification.displayed', notif))
+                      .then(() => (swivel as any).broadcast('notification.displayed', notif))
                       .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif))
                 }).bind(null, notification));
               }
@@ -204,7 +213,7 @@ class ServiceWorker {
             })
             .catch(e => {
               log.debug('Failed to display a notification:', e);
-              if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
+              if (ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
                 log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
               } else {
                 log.debug(
@@ -229,7 +238,7 @@ class ServiceWorker {
       .then(theUserId => {
         userId = theUserId;
       })
-      .then(() => Database.get('Options', 'webhooks.cors'))
+      .then(() => Database.get<boolean>('Options', 'webhooks.cors'))
       .then(cors => {
         isServerCorsEnabled = cors;
       })
@@ -251,10 +260,11 @@ class ServiceWorker {
             icon: notification.icon,
             data: notification.data
           };
-          let fetchOptions = {
+          let fetchOptions: any = {
             method: 'post',
             mode: 'no-cors',
-            body: JSON.stringify(postData)
+            body: JSON.stringify(postData),
+
           };
           if (isServerCorsEnabled) {
             fetchOptions.mode = 'cors';
@@ -292,7 +302,7 @@ class ServiceWorker {
                   continue;
               }
               // Indicates this window client is an HTTP subdomain iFrame
-              client.isSubdomainIframe = true;
+              (client as any).isSubdomainIframe = true;
             }
             activeClients.push(client);
           }
@@ -308,7 +318,7 @@ class ServiceWorker {
    * @param rawNotification The raw notification JSON returned from OneSignal's server.
    */
   static buildStructuredNotificationObject(rawNotification) {
-    let notification = {
+    let notification: Notification = {
       id: rawNotification.custom.i,
       heading: rawNotification.title,
       content: rawNotification.alert,
@@ -385,7 +395,7 @@ class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static displayNotification(notification, overrides) {
+  static displayNotification(notification, overrides?) {
     log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, getConsoleStyle('code'), notification);
     return Promise.all([
           // Use the default title if one isn't provided
@@ -400,7 +410,7 @@ class ServiceWorker {
         .then(([defaultTitle, defaultIcon, persistNotification, appId]) => {
           notification.heading = notification.heading ? notification.heading : defaultTitle;
           notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
-          var extra = {};
+          var extra: any = {};
           extra.tag = `${appId}`;
           extra.persistNotification = persistNotification;
 
@@ -566,7 +576,7 @@ class ServiceWorker {
           if (defaultUrl)
             ServiceWorker.defaultLaunchUrl = defaultUrl;
         })
-        .then(() => Database.get('Options', 'notificationClickHandlerMatch'))
+        .then(() => Database.get<string>('Options', 'notificationClickHandlerMatch'))
         .then(matchPreference => {
           if (matchPreference)
             notificationClickHandlerMatch = matchPreference;
@@ -586,8 +596,8 @@ class ServiceWorker {
           let doNotOpenLink = false;
           for (let client of activeClients) {
             let getClientUrlPromise = null;
-            if (client.isSubdomainIframe) {
-              getClientUrlPromise = Database.get('Options', 'defaultUrl');
+            if ((client as any).isSubdomainIframe) {
+              getClientUrlPromise = Database.get<string>('Options', 'defaultUrl');
             } else {
               getClientUrlPromise = Promise.resolve(client.url);
             }
@@ -607,7 +617,7 @@ class ServiceWorker {
 
               if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
                   (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-                client.focus();
+                (client as any).focus();
                 swivel.emit(client.id, 'notification.clicked', notification);
                 doNotOpenLink = true;
               }
@@ -646,19 +656,19 @@ class ServiceWorker {
    */
   static openUrl(url) {
     log.debug('Opening notification URL:', url);
-    clients.openWindow(url).catch(e => {
+    self.clients.openWindow(url).catch(e => {
       log.warn(`Failed to open the URL '${url}':`, e);
       // Should only fall into here if going to an external URL on Chrome older than 43.
-      clients.openWindow(`${registration.scope}redirector.html?url=${url}`);
+      self.clients.openWindow(`${self.registration.scope}redirector.html?url=${url}`);
     });
   }
 
   static onServiceWorkerInstalled(event) {
     // At this point, the old service worker is still in control
     log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    log.info(`Installing service worker: %c${self.location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
+    log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
 
-    if (contains(self.location.pathname, "OneSignalSDKWorker.js"))
+    if (contains((self as any).location.pathname, "OneSignalSDKWorker.js"))
       var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION';
     else
       var serviceWorkerVersionType = 'WORKER2_ONE_SIGNAL_SW_VERSION';

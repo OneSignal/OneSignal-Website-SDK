@@ -8,7 +8,8 @@ interface Notification {
     content: string,
     data: Map<string, any>,
     url: Url,
-    icon: Url
+    icon: Url,
+    buttons: Array<{action: string, title: string, icon: string, url: string}>
 }
 
 export { Notification };

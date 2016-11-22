@@ -24,5 +24,5 @@ if (Environment.isBrowser()) {
 }
 else if (Environment.isServiceWorker()) {
   // We're running as the service worker
-  require("expose?ServiceWorker!./ServiceWorker.js");
+  require("expose?ServiceWorker!./service-worker/ServiceWorker.ts");
 }
