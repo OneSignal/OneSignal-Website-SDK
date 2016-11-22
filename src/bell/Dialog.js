@@ -1,5 +1,5 @@
 import { clearDomElementChildren, once } from '../utils';
-import Event from '../events.js';
+import Event from '../Event.ts';
 import AnimatedElement from './AnimatedElement.js';
 import * as Browser from 'bowser';
 import Bell from './bell.js';

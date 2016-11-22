@@ -1,6 +1,6 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from './vars.js';
-import Environment from './environment.js'
-import OneSignalApi from './oneSignalApi.js';
+import Environment from './Environment'
+import OneSignalApi from './OneSignalApi';
 import * as log from 'loglevel';
 import Database from './Database';
 import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from './utils';

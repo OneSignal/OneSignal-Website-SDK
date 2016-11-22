@@ -107,7 +107,7 @@ export default class Environment {
   }
 
   /* Specifications: https://tools.ietf.org/html/bcp47 */
-  static getLanguage(testLanguage) {
+  static getLanguage(testLanguage?) {
     let languageTag = testLanguage || navigator.language;
     if (languageTag) {
       languageTag = languageTag.toLowerCase();

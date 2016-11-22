@@ -1,5 +1,5 @@
 import { removeDomElement } from '../utils';
-import Event from '../events.js';
+import Event from '../Event.ts';
 import ActiveAnimatedElement from './ActiveAnimatedElement.js';
 import Bell from './bell.js';
 import LimitStore from '../LimitStore';

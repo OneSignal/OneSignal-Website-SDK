@@ -1,4 +1,4 @@
-import Environment from './environment.js';
+import Environment from './Environment';
 import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
 import * as log from 'loglevel';
 

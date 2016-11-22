@@ -1,6 +1,6 @@
 import { removeDomElement, addDomElement, addCssClass } from '../utils';
 import * as log from 'loglevel';
-import Event from '../events.js';
+import Event from '../Event.ts';
 import * as objectAssign from 'object-assign';
 
 import "./httpModal.scss";

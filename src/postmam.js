@@ -1,7 +1,7 @@
 import { guid, contains } from './utils';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
-import Environment from './environment.js';
+import Environment from './Environment';
 import { DEV_FRAME_HOST, STAGING_FRAME_HOST } from './vars.js';
 import * as objectAssign from 'object-assign';
 import * as log from 'loglevel';

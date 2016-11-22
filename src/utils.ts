@@ -1,7 +1,7 @@
 ///<reference path="models/Action.ts"/>
 import * as log from 'loglevel';
 import * as Browser from 'bowser';
-import Environment from './environment.js';
+import Environment from './Environment';
 import IndexedDb from './IndexedDb';
 import Database from './Database';
 import PushNotSupportedError from "./errors/PushNotSupportedError";
@@ -361,7 +361,7 @@ export function wipeIndexedDb() {
  * Capitalizes the first letter of the string.
  * @returns {string} The string with the first letter capitalized.
  */
-export function capitalize(text) {
+export function capitalize(text): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 

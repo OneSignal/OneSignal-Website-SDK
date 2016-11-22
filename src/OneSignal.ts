@@ -1,9 +1,8 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars.js';
-import Environment from './environment.js';
-import OneSignalApi from './oneSignalApi.js';
+import Environment from './Environment';
+import OneSignalApi from './OneSignalApi';
 import IndexedDb from './IndexedDb';
 import * as log from 'loglevel';
-import LimitStore from './LimitStore';
 import Event from "./Event";
 import Bell from "./bell/bell.js";
 import * as Cookie from 'js-cookie';
@@ -27,6 +26,7 @@ import OneSignalHelpers from './helpers';
 import Popover from './popover/popover';
 import {Uuid} from "./models/Uuid";
 import {InvalidArgumentError, InvalidArgumentReason} from "./errors/InvalidArgumentError";
+import LimitStore from "./LimitStore";
 
 
 
@@ -80,7 +80,7 @@ export default class OneSignal {
           })
         }
       })
-      .then(result => {
+      .then((result: any) => {
         if (result && result.success) {
           return true;
         } else {
@@ -1505,7 +1505,7 @@ must be opened as a result of a subscription call.</span>`);
                  );
                }
              })
-             .then(function (subscription) {
+             .then(function (subscription: PushSubscription) {
                /*
                 7/29/16: New bug, even if the user dismisses the prompt, they'll be given a subscription
                 See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
@@ -1522,9 +1522,9 @@ must be opened as a result of a subscription call.</span>`);
                         .then(appId => {
                           log.debug("Finished subscribing for push via pushManager.subscribe().");
 
-                          var subscriptionInfo = {};
+                          var subscriptionInfo: any = {};
                           if (subscription) {
-                            if (typeof (subscription as PushSubscription).subscriptionId != "undefined") {
+                            if (typeof (subscription).subscriptionId != "undefined") {
                               // Chrome 43 & 42
                               subscriptionInfo.endpointOrToken = subscription.subscriptionId;
                             }
@@ -1575,9 +1575,9 @@ must be opened as a result of a subscription call.</span>`);
                if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
                  let manifestDom = document.querySelector('link[rel=manifest]');
                  if (manifestDom) {
-                   let manifestParentTagname = document.querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
-                   let manifestHtml = document.querySelector('link[rel=manifest]').outerHTML;
-                   let manifestLocation = document.querySelector('link[rel=manifest]').href;
+                   let manifestParentTagname = (document.querySelector('link[rel=manifest]').parentNode as any).tagName.toLowerCase();
+                   let manifestHtml = (document.querySelector('link[rel=manifest]') as any).outerHTML;
+                   let manifestLocation = (document.querySelector('link[rel=manifest]') as any).href;
                    if (manifestParentTagname !== 'head') {
                      console.warn(`OneSignal: Your manifest %c${manifestHtml}`,
                        getConsoleStyle('code'),
@@ -1640,12 +1640,12 @@ must be opened as a result of a subscription call.</span>`);
       .then(() => OneSignal.getUserId())
       .then(userId => {
         if (userId) {
-          return OneSignalApi.get(`players/${userId}`, null);
+          return OneSignalApi.get(`players/${userId}`, null, null);
         } else {
           return null;
         }
       })
-      .then(response => {
+      .then((response: any) => {
         let tags = (response ? response.tags : null);
         if (callback) {
           callback(tags);
@@ -1654,7 +1654,7 @@ must be opened as a result of a subscription call.</span>`);
       });
   }
 
-  static sendTag(key, value, callback) {
+  static sendTag(key, value, callback?) {
     return awaitOneSignalInitAndSupported()
       .then(() => {
         let tag = {};
@@ -1663,7 +1663,7 @@ must be opened as a result of a subscription call.</span>`);
       });
   }
 
-  static sendTags(tags, callback) {
+  static sendTags(tags, callback?) {
     return awaitOneSignalInitAndSupported()
       .then(() => {
         // Our backend considers false as removing a tag, so this allows false to be stored as a value
@@ -1687,7 +1687,7 @@ must be opened as a result of a subscription call.</span>`);
                      return OneSignalApi.put(`players/${userId}`, {
                        app_id: appId,
                        tags: tags
-                     })
+                     }, null)
                    }
                    else {
                      willResolveInFuture = true;
@@ -1726,7 +1726,7 @@ must be opened as a result of a subscription call.</span>`);
       });
   }
 
-  static deleteTags(tags, callback) {
+  static deleteTags(tags, callback?) {
     return awaitOneSignalInitAndSupported()
       .then(() => {
         if (tags instanceof Array && tags.length > 0) {
@@ -1749,7 +1749,7 @@ must be opened as a result of a subscription call.</span>`);
       });
   }
 
-  static addListenerForNotificationOpened(callback) {
+  static addListenerForNotificationOpened(callback?) {
     return awaitOneSignalInitAndSupported()
       .then(() => {
         OneSignal._notificationOpenedCallbacks.push(callback);
@@ -1768,8 +1768,8 @@ must be opened as a result of a subscription call.</span>`);
             .then(notificationOpened => {
               if (notificationOpened) {
                 Database.remove("NotificationOpened", document.URL);
-                let notificationData = notificationOpened.data;
-                let timestamp = notificationOpened.timestamp;
+                let notificationData = (notificationOpened as any).data;
+                let timestamp = (notificationOpened as any).timestamp;
                 let discardNotification = false;
                 // 3/4: Timestamp is a new feature and previous notification opened results don't have it
                 if (timestamp) {
@@ -1792,7 +1792,7 @@ must be opened as a result of a subscription call.</span>`);
             });
   }
 
-  static getIdsAvailable(callback) {
+  static getIdsAvailable(callback?) {
     if (!isPushNotificationsSupported()) {
       log.warn('OneSignal: Push notifications are not supported.');
       return;
@@ -1832,7 +1832,7 @@ must be opened as a result of a subscription call.</span>`);
     });
   }
 
-  static isServiceWorkerActive(callback) {
+  static isServiceWorkerActive(callback?) {
     if (!isPushNotificationsSupported()) {
       return;
     }
@@ -1979,7 +1979,7 @@ must be opened as a result of a subscription call.</span>`);
             return OneSignalApi.put('players/' + userId, {
               app_id: appId,
               notification_types: OneSignalHelpers.getNotificationTypeFromOptIn(newSubscription)
-            });
+            }, null);
           })
           .then(() => {
             OneSignal.triggerInternalSubscriptionSet(newSubscription);
@@ -2044,7 +2044,7 @@ must be opened as a result of a subscription call.</span>`);
    * @param callback A function accepting one parameter for the OneSignal registration ID.
    * @returns {Promise.<T>}
    */
-  static getRegistrationId(callback) {
+  static getRegistrationId(callback?) {
     return awaitOneSignalInitAndSupported()
       .then(() => Database.get('Ids', 'registrationId'))
       .then(result => {
@@ -2139,6 +2139,7 @@ must be opened as a result of a subscription call.</span>`);
   static __initAlreadyCalled = false;
   static _thisIsTheModal: boolean;
   static modalPostmam: any;
+  static httpPermissionRequestPostModal: any;
 
   static POSTMAM_COMMANDS = {
     CONNECTED: 'connect',

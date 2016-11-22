@@ -1,9 +1,9 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
-import Environment from './environment.js';
-import OneSignalApi from './oneSignalApi.js';
+import Environment from './Environment';
+import OneSignalApi from './OneSignalApi';
 import * as log from 'loglevel';
-import LimitStore from './limitStore.js';
-import Event from "./events.js";
+import LimitStore from './LimitStore';
+import Event from "./Event";
 import Database from './Database';
 import * as Browser from 'bowser';
 import { getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize } from './utils';
@@ -31,7 +31,7 @@ export default class Helpers {
     }
     for (let i = 0; i < manifests.length; i++) {
       let manifest = manifests[i];
-      let url = manifest.href;
+      let url = (manifest as any).href;
       if (contains(url, 'gcm_sender_id')) {
         // Move the <manifest> to the first thing in <head>
         document.querySelector('head').insertBefore(manifest, document.querySelector('head').children[0]);
@@ -65,7 +65,7 @@ export default class Helpers {
    */
   static beginTemporaryBrowserSession() {
     log.debug('OneSignal: Marking browser session as continuing.');
-    sessionStorage.setItem("ONE_SIGNAL_SESSION", true);
+    sessionStorage.setItem("ONE_SIGNAL_SESSION", "true");
     if (Environment.isPopup()) {
       // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
       // main page
@@ -128,7 +128,7 @@ export default class Helpers {
    * show it again until they open a new window or tab to the site.
    */
   static markHttpPopoverShown() {
-    sessionStorage.setItem("ONESIGNAL_HTTP_PROMPT_SHOWN", true);
+    sessionStorage.setItem("ONESIGNAL_HTTP_PROMPT_SHOWN", "true");
   }
 
   /**
@@ -182,23 +182,23 @@ export default class Helpers {
         };
 
         if (subscriptionInfo) {
-          requestData.identifier = subscriptionInfo.endpointOrToken;
+          (requestData as any).identifier = subscriptionInfo.endpointOrToken;
           // Although we're passing the full endpoint to OneSignal, we still need to store only the registration ID for our SDK API getRegistrationId()
           // Parse out the registration ID from the full endpoint URL and save it to our database
           let registrationId = subscriptionInfo.endpointOrToken.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
           Database.put("Ids", {type: "registrationId", id: registrationId});
           // New web push standard in Firefox 46+ and Chrome 50+ includes 'auth' and 'p256dh' in PushSubscription
           if (subscriptionInfo.auth) {
-            requestData.web_auth = subscriptionInfo.auth;
+            (requestData as any).web_auth = subscriptionInfo.auth;
           }
           if (subscriptionInfo.p256dh) {
-            requestData.web_p256 = subscriptionInfo.p256dh;
+            (requestData as any).web_p256 = subscriptionInfo.p256dh;
           }
         }
 
         return OneSignalApi.post(requestUrl, requestData);
       })
-      .then(response => {
+      .then((response: any) => {
         let { id: userId } = response;
 
         Helpers.beginTemporaryBrowserSession();
@@ -297,7 +297,7 @@ export default class Helpers {
    * Notification.requestPermission();
    */
   static requestNotificationPermissionPromise() {
-    return new Promise(resolve => Notification.requestPermission(resolve));
+    return new Promise(resolve => window.Notification.requestPermission(resolve));
   }
 
   static showNotifyButton() {
@@ -355,12 +355,13 @@ export default class Helpers {
   }
 
   static getNotificationIcons() {
+    var url = '';
     return OneSignal.getAppId()
                     .then(appId => {
                       if (!appId) {
                         return Promise.reject(null);
                       } else {
-                        let url = `${OneSignal._API_URL}apps/${appId}/icon`;
+                        url = `${OneSignal._API_URL}apps/${appId}/icon`;
                         return url;
                       }
                     }, () => {
@@ -368,11 +369,11 @@ export default class Helpers {
                       return;
                     })
                     .then(url => fetch(url))
-                    .then(response => response.json())
+                    .then(response => (response as any).json())
                     .then(data => {
                       if (data.errors) {
                         log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
-                        reject(null);
+                        throw new Error('Failed to get notification icons.');
                       }
                       return data;
                     });
@@ -384,7 +385,7 @@ export default class Helpers {
       OneSignal._channel.off('notification.displayed');
       OneSignal._channel.off('notification.clicked');
     }
-    OneSignal._channel = swivel.at(serviceWorkerRegistration ? serviceWorkerRegistration.active : null);
+    OneSignal._channel = (swivel as any).at(serviceWorkerRegistration ? serviceWorkerRegistration.active : null);
     OneSignal._channel.on('data', function handler(context, data) {
       log.debug(`%c${capitalize(Environment.getEnv())} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
@@ -533,8 +534,8 @@ export default class Helpers {
     form.method = 'POST';
     form.target = "onesignal-http-popup";
 
-    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : screen.left;
-    var dualScreenTop = window.screenTop != undefined ? window.screenTop : screen.top;
+    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : (screen as any).left;
+    var dualScreenTop = window.screenTop != undefined ? window.screenTop : (screen as any).top;
     var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
     var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
     var childWidth = OneSignal._windowWidth;

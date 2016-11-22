@@ -1,6 +1,6 @@
 import { isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, delay, nothing, contains, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
-import Event from '../events.js';
+import Event from '../Event.ts';
 import * as Browser from 'bowser';
 import Database from '../Database';
 import Helpers from '../helpers';

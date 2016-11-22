@@ -1,4 +1,4 @@
-declare var OneSignal: string;
+declare var OneSignal: any;
 
 declare module "OneSignal" {
     export type on = any;

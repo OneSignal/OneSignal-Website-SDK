@@ -1,6 +1,6 @@
 import { addCssClass, removeCssClass, contains, once } from '../utils';
 import * as log from 'loglevel';
-import Event from '../events.js'
+import Event from '../Event.ts'
 
 
 export default class AnimatedElement {

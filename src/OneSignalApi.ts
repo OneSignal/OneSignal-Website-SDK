@@ -5,24 +5,24 @@ import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './u
 
 export default class OneSignalApi {
 
-  static get(action, data, headers) {
+  static get(action, data?, headers?) {
     return OneSignalApi.call('GET', action, data, headers);
   }
 
-  static post(action, data, headers) {
+  static post(action, data?, headers?) {
     return OneSignalApi.call('POST', action, data, headers);
   }
 
-  static put(action, data, headers) {
+  static put(action, data?, headers?) {
     return OneSignalApi.call('PUT', action, data, headers);
   }
 
-  static delete(action, data, headers) {
+  static delete(action, data?, headers?) {
     return OneSignalApi.call('DELETE', action, data, headers);
   }
 
   static call(method, action, data, headers) {
-    let callHeaders = new Headers();
+    let callHeaders: any = new Headers();
     callHeaders.append('SDK-Version', `onesignal/web/${__VERSION__}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
     if (headers) {
@@ -37,7 +37,7 @@ export default class OneSignalApi {
       cache: 'no-cache'
     };
     if (data)
-      contents.body = JSON.stringify(data);
+      (contents as any).body = JSON.stringify(data);
 
     var status;
     return fetch(API_URL + action, contents)
@@ -118,14 +118,14 @@ export default class OneSignalApi {
       web_buttons: buttons
     };
     if (titles) {
-      params.headings = titles;
+      (params as any).headings = titles;
     }
     if (url) {
-      params.url = url;
+      (params as any).url = url;
     }
     if (icon) {
-      params.chrome_web_icon = icon;
-      params.firefox_icon = icon;
+      (params as any).chrome_web_icon = icon;
+      (params as any).firefox_icon = icon;
     }
     trimUndefined(params);
     return OneSignalApi.post('notifications', params);

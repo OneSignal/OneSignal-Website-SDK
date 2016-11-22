@@ -1,5 +1,5 @@
 import * as log from 'loglevel';
-import Environment from './environment.js';
+import Environment from './Environment';
 import { getConsoleStyle, contains, capitalize } from './utils';
 
 

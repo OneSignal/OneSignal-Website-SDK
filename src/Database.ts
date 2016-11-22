@@ -1,8 +1,8 @@
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
-import Event from './events.js';
+import Event from './Event';
 import IndexedDb from './IndexedDb';
-import Environment from './environment.js';
+import Environment from './Environment';
 import {AppState} from "./models/AppState";
 import {Subscription} from "./models/Subscription";
 import {AppConfig} from "./models/AppConfig";

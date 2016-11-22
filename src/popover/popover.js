@@ -1,6 +1,6 @@
 import { removeDomElement, addDomElement, addCssClass } from '../utils';
 import * as log from 'loglevel';
-import Event from '../events.js';
+import Event from '../Event.ts';
 import Helpers from '../helpers';
 import * as Browser from 'bowser';
 import * as objectAssign from 'object-assign';
