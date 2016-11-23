@@ -1487,7 +1487,7 @@ must be opened as a result of a subscription call.</span>`);
         } else {
           return executeAndTimeoutPromiseAfter(
               serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
-              25000,
+              15000,
               "A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing."
           );
         }
@@ -1619,6 +1619,10 @@ must be opened as a result of a subscription call.</span>`);
           if (opener && OneSignal._thisIsThePopup)
             window.close();
         });
+
+        // If there was an error subscribing like the timeout bug, close the popup anyways
+        if (opener && OneSignal._thisIsThePopup)
+          window.close();
       });
   }
 
