@@ -82,7 +82,8 @@ export default class Helpers {
   static isUsingHttpPermissionRequest() {
     return OneSignal.config.httpPermissionRequest &&
            OneSignal.config.httpPermissionRequest.enable == true &&
-           OneSignal.isUsingSubscriptionWorkaround();
+      (Environment.isIframe() ||
+       Environment.isHost() && OneSignal.isUsingSubscriptionWorkaround());
   }
 
   /**
