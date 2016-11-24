@@ -95,28 +95,24 @@ export default class Utils {
     }
 
     /**
-     * Unsubscribe from push notifications and remove the service worker.
-     */
+    * Unsubscribe from push notifications and remove the service worker.
+    */
     static wipeServiceWorkerAndUnsubscribe() {
         if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
-            return Promise.resolve();
+          return Promise.resolve();
 
-        let unsubscribePromise = navigator.serviceWorker.ready
-            .then(registration => registration.pushManager)
-            .then(pushManager => pushManager.getSubscription())
-            .then(subscription => {
-                if (subscription) {
-                    return subscription.unsubscribe();
-                }
-            });
+        const regPromise = executeAndTimeoutPromiseAfter(navigator.serviceWorker.ready.then(reg => reg), 10000, 'Could not get SW registration.');
+        const subscriptionPromise = executeAndTimeoutPromiseAfter(regPromise.then(reg => reg.pushManager.getSubscription()).then(sub => sub), 10000, 'Could not get subscription from registration.');
+        const unsubscribePromise = executeAndTimeoutPromiseAfter(subscriptionPromise.then(sub => { if (sub) { return sub.unsubscribe() } else {return false;}}).then(result => result), 10000, 'Could not unsubscribe from subscription.');
 
-        let unregisterWorkerPromise = navigator.serviceWorker.ready
-            .then(registration => registration.unregister());
+        const unregisterWorkerPromise = executeAndTimeoutPromiseAfter(regPromise.then(registration => {
+            console.warn("Dangit, I'm going to try to unregister the worker now.");
+            console.warn("What's my registration?", registration);
+            console.warn("Does the unregister method exist?", registration.unregister);
+            console.warn("Calling unregister() NOW...");
+        }).then(result => result), 10000, 'Could not unregister worker.');
 
-        return Promise.all([
-            unsubscribePromise,
-            unregisterWorkerPromise
-        ]);
+        return unsubscribePromise.then(() => unregisterWorkerPromise);
     }
 
     /**
@@ -131,15 +127,17 @@ export default class Utils {
         if (options.notificationPermission) {
             setNotificationPermission = options.notificationPermission;
         }
+        console.log('Calling Utils.initialize() with options', JSON.stringify(options, null, 4));
+        window.utils = Utils;
         return Promise.all([
                 // Wipe database and force allow notifications permission for current site origin
-                Extension.setNotificationPermission(`${location.origin}/*`, setNotificationPermission),
+                executeAndTimeoutPromiseAfter(Extension.setNotificationPermission(`${location.origin}/*`, setNotificationPermission), 10000, 'Could not enforce notification permissions via Chrome extension.'),
                 // Also allow popup permissions (only for HTTP, but doesn't hurt to enable for HTTPS)
-                Extension.setPopupPermission(`${location.origin}/*`, 'allow'),
+                executeAndTimeoutPromiseAfter(Extension.setPopupPermission(`${location.origin}/*`, 'allow'), 10000, 'Could not enforce popup permissions via Chrome extension.'),
                 // Only for HTTPS: Wipes the IndexedDB on the current site origin
-                options.dontWipeData ? null : Utils.wipeIndexedDb(),
-                options.dontWipeData ? null : Utils.wipeServiceWorkerAndUnsubscribe().catch(e => console.error('Error wiping service worker and unsubscribing from push (caught):', e)),
-                options.dontWipeData ? null : OneSignal.helpers.unmarkHttpsNativePromptDismissed()
+                options.dontWipeData ? null : executeAndTimeoutPromiseAfter(Utils.wipeIndexedDb(), 10000, 'Could not wipe IndexedDb storage.'),
+                options.dontWipeData ? null : executeAndTimeoutPromiseAfter(Utils.wipeServiceWorkerAndUnsubscribe(), 10000, 'Could not wipe service worker and unsubscribe.'),
+                options.dontWipeData ? null : executeAndTimeoutPromiseAfter(OneSignal.helpers.unmarkHttpsNativePromptDismissed(), 10000, 'Could not unmark HTTPS native prompt as dismissed.'),
             ])
             .then(() => {
                 console.log('Test Initialize: Stage 1');

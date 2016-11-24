@@ -72,7 +72,7 @@ export default class Helpers {
       if (!OneSignal.popupPostmam) {
         return;
       }
-      OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
+      OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
     }
   }
 
@@ -82,7 +82,8 @@ export default class Helpers {
   static isUsingHttpPermissionRequest() {
     return OneSignal.config.httpPermissionRequest &&
            OneSignal.config.httpPermissionRequest.enable == true &&
-           OneSignal.isUsingSubscriptionWorkaround();
+      (Environment.isIframe() ||
+       Environment.isHost() && OneSignal.isUsingSubscriptionWorkaround());
   }
 
   /**
@@ -205,24 +206,6 @@ export default class Helpers {
 
         if (userId) {
           Database.put("Ids", {type: "userId", id: userId});
-        }
-
-        if (OneSignal._thisIsThePopup) {
-          // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
-          OneSignal.getNotificationPermission()
-            .then((permission) => {
-              log.debug("Sending player Id and registrationId back to host page");
-              var creator = opener || parent;
-              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
-                permission: permission,
-                forceUpdatePermission: true
-              });
-              OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE);
-              /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
-              if (opener) {
-                window.close();
-              }
-            });
         }
       })
         .then(() => {

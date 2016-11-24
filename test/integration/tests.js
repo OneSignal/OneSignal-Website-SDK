@@ -362,8 +362,6 @@ describe('Web SDK Tests', function () {
                 let tagKey = 'string';
                 let tagValue = sentTags[tagKey];
 
-                console.log('Calling await Utils.initialize.');
-                debugger;
                 await Utils.initialize(globals, {
                         welcomeNotification: false,
                         autoRegister: true
@@ -438,7 +436,7 @@ describe('Web SDK Tests', function () {
         });
     });
 
-    describe('Server-Sided State Changes', function () {
+    describe.skip('Server-Sided State Changes', function () {
         it('should register a new user ID if user is deleted from OneSignal dashboard and opens a new site' +
               ' session', function () {
             return new MultiStepSoloTest(this.test, {}, (step, gotoStep) => {

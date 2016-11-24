@@ -97,7 +97,7 @@ export default class Event {
         // But only if the event matches certain events
         if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
           if (Environment.isPopup()) {
-            OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
+            OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
           } else {
             OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
           }

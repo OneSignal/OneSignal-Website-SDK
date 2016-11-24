@@ -507,78 +507,78 @@ export default class OneSignal {
             });
   }
 
-  /**
-   * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
-   */
-  static showHttpPrompt(options?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        /*
-         Only show the HTTP popover if:
-         - Notifications aren't already enabled
-         - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
-         */
-        if (OneSignal.__isPopoverShowing) {
-          log.debug('OneSignal: Not showing popover because it is currently being shown.');
-          return 'popover-already-shown';
-        }
-        return Promise.all([
-          OneSignal.getNotificationPermission(),
-          OneSignal.isPushNotificationsEnabled(),
-          OneSignal.getSubscription(),
-          Database.get('Options', 'popoverDoNotPrompt')
-        ])
-                      .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
-                        if (doNotPrompt === true && (!options || options.force == false)) {
-                          log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
-                          return 'popover-previously-dismissed';
-                        }
-                        if (permission === 'denied') {
-                          log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
-                          return 'notification-permission-blocked';
-                        }
-                        if (isEnabled) {
-                          log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
-                          return 'user-already-subscribed';
-                        }
-                        if (!notOptedOut) {
-                          log.debug('OneSignal: Not showing popover because the user was manually opted out.');
-                          return 'user-intentionally-unsubscribed';
-                        }
-                        if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
-                          log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
-                          return 'using-http-permission-request';
-                        }
-                        OneSignalHelpers.markHttpPopoverShown();
-                        OneSignal.popover = new Popover(OneSignal.config.promptOptions);
-                        OneSignal.popover.create();
-                        log.debug('Showing the HTTP popover.');
-                        if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
-                          OneSignal.notifyButton.launcher.waitUntilShown()
-                                   .then(() => {
-                                     OneSignal.notifyButton.launcher.hide();
-                                   });
-                        }
-                        OneSignal.once(Popover.EVENTS.SHOWN, () => {
-                          OneSignal.__isPopoverShowing = true;
-                        });
-                        OneSignal.once(Popover.EVENTS.CLOSED, () => {
-                          OneSignal.__isPopoverShowing = false;
-                          if (OneSignal.notifyButton) {
-                            OneSignal.notifyButton.launcher.show();
-                          }
-                        });
-                        OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
-                          OneSignal.popover.close();
-                          OneSignal.registerForPushNotifications({autoAccept: true});
-                        });
-                        OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
-                          log.debug("Setting flag to not show the popover to the user again.");
-                          Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
-                        });
-                      });
-      });
-  }
+    /**
+     * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
+     */
+    static showHttpPrompt(options?) {
+        return awaitOneSignalInitAndSupported()
+          .then(() => {
+            /*
+             Only show the HTTP popover if:
+             - Notifications aren't already enabled
+             - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
+             */
+            if (OneSignal.__isPopoverShowing) {
+              log.debug('OneSignal: Not showing popover because it is currently being shown.');
+              return 'popover-already-shown';
+            }
+            return Promise.all([
+              OneSignal.getNotificationPermission(),
+              OneSignal.isPushNotificationsEnabled(),
+              OneSignal.getSubscription(),
+              Database.get('Options', 'popoverDoNotPrompt')
+            ])
+              .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
+                if (doNotPrompt === true && (!options || options.force == false)) {
+                  log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
+                  return 'popover-previously-dismissed';
+                }
+                if (permission === 'denied') {
+                  log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
+                  return 'notification-permission-blocked';
+                }
+                if (isEnabled) {
+                  log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
+                  return 'user-already-subscribed';
+                }
+                if (!notOptedOut) {
+                  log.debug('OneSignal: Not showing popover because the user was manually opted out.');
+                  return 'user-intentionally-unsubscribed';
+                }
+                if (OneSignalHelpers.isUsingHttpPermissionRequest() && permission !== 'granted') {
+                  log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
+                  return 'using-http-permission-request';
+                }
+                OneSignalHelpers.markHttpPopoverShown();
+                OneSignal.popover = new Popover(OneSignal.config.promptOptions);
+                OneSignal.popover.create();
+                log.debug('Showing the HTTP popover.');
+                if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
+                  OneSignal.notifyButton.launcher.waitUntilShown()
+                    .then(() => {
+                      OneSignal.notifyButton.launcher.hide();
+                    });
+                }
+                OneSignal.once(Popover.EVENTS.SHOWN, () => {
+                  OneSignal.__isPopoverShowing = true;
+                });
+                OneSignal.once(Popover.EVENTS.CLOSED, () => {
+                  OneSignal.__isPopoverShowing = false;
+                  if (OneSignal.notifyButton) {
+                    OneSignal.notifyButton.launcher.show();
+                  }
+                });
+                OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
+                  OneSignal.popover.close();
+                  OneSignal.registerForPushNotifications({autoAccept: true});
+                });
+                OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
+                  log.debug("Setting flag to not show the popover to the user again.");
+                  Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
+                });
+              });
+          });
+    }
 
 
   static registerForPushNotifications(options?) {
@@ -639,6 +639,11 @@ must be opened as a result of a subscription call.</span>`);
     OneSignal._thisIsThePopup = options.isPopup;
     if (Environment.isPopup() || OneSignal._thisIsThePopup) {
       OneSignal.popupPostmam = new Postmam(window.opener, sendToOrigin, receiveFromOrigin);
+      OneSignal.popupPostmam.connect();
+      OneSignal.popupPostmam.on('connect', e => {
+        log.debug(`(${Environment.getEnv()}) The host page is now ready to receive commands from the HTTP popup.`);
+        Event.trigger('httpInitialize');
+      });
     }
 
     OneSignal._thisIsTheModal = options.isModal;
@@ -767,7 +772,9 @@ must be opened as a result of a subscription call.</span>`);
                })
                .catch(e => message.reply({status: 'reject', result: e}));
     });
-    Event.trigger('httpInitialize');
+    if (Environment.isIframe()) {
+      Event.trigger('httpInitialize');
+    }
   }
 
   static showHttpPermissionRequest() {
@@ -1012,11 +1019,13 @@ must be opened as a result of a subscription call.</span>`);
     log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
     var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData, overrides);
 
-    if (subdomainPopup)
-      subdomainPopup.focus();
+    if (subdomainPopup) {
+      subdomainPopup.blur();
+      window.focus();
+    }
 
     OneSignal.popupPostmam = new Postmam(subdomainPopup, sendToOrigin, receiveFromOrigin);
-    OneSignal.popupPostmam.startPostMessageReceive();
+    OneSignal.popupPostmam.listen();
 
     return new Promise((resolve, reject) => {
       OneSignal.popupPostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, message => {
@@ -1035,12 +1044,6 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
         OneSignalHelpers.triggerCustomPromptClicked('denied');
       });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE, message => {
-        log.info('ids available from popup');
-        OneSignal.popupPostmam.stopPostMessageReceive();
-        OneSignalHelpers.checkAndTriggerSubscriptionChanged();
-        resolve();
-      });
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
         log.info('Detected popup is closing.');
         Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
@@ -1053,6 +1056,19 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, message => {
         log.debug(Environment.getEnv() + " Popup window timed out and was closed.");
         Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, message => {
+        log.debug(Environment.getEnv() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
+
+        message.reply({progress: true});
+
+        OneSignal.getAppId()
+                 .then(appId => {
+                   OneSignal.triggerNotificationPermissionChanged(window.Notification.permission);
+                   OneSignal.popupPostmam.stopPostMessageReceive();
+                   OneSignalHelpers.registerWithOneSignal(appId, message.data.subscriptionInfo)
+                                   .then(() => OneSignalHelpers.checkAndTriggerSubscriptionChanged());
+                 });
       });
     });
   }
@@ -1482,41 +1498,41 @@ must be opened as a result of a subscription call.</span>`);
     OneSignal.getNotificationPermission().then((permission) => {
       notificationPermissionBeforeRequest = permission as string;
     })
-             .then(() => {
-               log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
-               Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-               /*
-                7/29/16: If the user dismisses the prompt, the prompt cannot be shown again via pushManager.subscribe()
-                See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
-                Our solution is to call Notification.requestPermission(), and then call
-                pushManager.subscribe(). Because notification and push permissions are shared, the subesequent call to
-                pushManager.subscribe() will go through successfully.
-                */
-               return OneSignalHelpers.requestNotificationPermissionPromise();
-             })
-             .then(permission => {
-               if (permission !== "granted") {
-                 throw new Error("User did not grant push permission to allow notifications.");
-               } else {
-                 return executeAndTimeoutPromiseAfter(
-                   serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
-                   25000,
-                   "A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing."
-                 );
-               }
-             })
-             .then(function (subscription: PushSubscription) {
-               /*
-                7/29/16: New bug, even if the user dismisses the prompt, they'll be given a subscription
-                See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
-                Our solution is simply to check the permission before actually subscribing the user.
-                */
-               log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`,
-                 getConsoleStyle('code'));
-               log.debug('Subscription details:', subscription);
-               // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
-               OneSignal._sessionInitAlreadyRunning = false;
-               sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", window.Notification.permission);
+      .then(() => {
+        log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+        Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+        /*
+            7/29/16: If the user dismisses the prompt, the prompt cannot be shown again via pushManager.subscribe()
+            See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
+            Our solution is to call Notification.requestPermission(), and then call
+             pushManager.subscribe(). Because notification and push permissions are shared, the subesequent call to
+             pushManager.subscribe() will go through successfully.
+         */
+        return OneSignalHelpers.requestNotificationPermissionPromise();
+      })
+      .then(permission => {
+        if (permission !== "granted") {
+          throw new Error("User did not grant push permission to allow notifications.");
+        } else {
+          return executeAndTimeoutPromiseAfter(
+              serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
+              15000,
+              "A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing."
+          );
+        }
+      })
+      .then(function (subscription: any) {
+        /*
+         7/29/16: New bug, even if the user dismisses the prompt, they'll be given a subscription
+         See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
+         Our solution is simply to check the permission before actually subscribing the user.
+         */
+        log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`,
+                  getConsoleStyle('code'));
+        log.debug('Subscription details:', subscription);
+        // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
+        OneSignal._sessionInitAlreadyRunning = false;
+        sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", window.Notification.permission);
 
                OneSignal.getAppId()
                         .then(appId => {
@@ -1567,72 +1583,96 @@ must be opened as a result of a subscription call.</span>`);
                           else
                             log.warn('Could not subscribe your browser for push notifications.');
 
-                          OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
-                        });
-             })
-             .catch(function (e) {
-               OneSignal._sessionInitAlreadyRunning = false;
-               if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
-                 let manifestDom = document.querySelector('link[rel=manifest]');
-                 if (manifestDom) {
-                   let manifestParentTagname = (document.querySelector('link[rel=manifest]').parentNode as any).tagName.toLowerCase();
-                   let manifestHtml = (document.querySelector('link[rel=manifest]') as any).outerHTML;
-                   let manifestLocation = (document.querySelector('link[rel=manifest]') as any).href;
-                   if (manifestParentTagname !== 'head') {
-                     console.warn(`OneSignal: Your manifest %c${manifestHtml}`,
-                       getConsoleStyle('code'),
-                       'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
-                       'in <${manifestParentTagname}>. Please see step 3.1 at ' +
-                       'https://documentation.onesignal.com/docs/web-push-sdk-setup-https.');
+                   if (OneSignal._thisIsThePopup) {
+                     // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
+                     // 11/22/2016 - HTTP popup should move non-essential subscription parts to the iframe
+                     OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
+                       subscriptionInfo: subscriptionInfo
+                     }, message => {
+                       if (message.data.progress === true) {
+                         log.warn('Got message from host page that remote reg. is in progress, closing popup.');
+                         var creator = opener || parent;
+                         if (opener) {
+                           /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
+                           window.close();
+                         }
+                       } else {
+                          log.warn('Got message from host page that remote reg. could not be finished.');
+                       }
+                     });
                    } else {
-                     let manifestLocationOrigin = new URL(manifestLocation).origin;
-                     let currentOrigin = location.origin;
-                     if (currentOrigin !== manifestLocationOrigin) {
-                       console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
-                         `different from the current page's origin of ${currentOrigin}. Please serve your ` +
-                         `manifest from the same origin as your page's. If you are using a content delivery ` +
-                         `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
-                         `WordPress users, please see ` +
-                         `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
-                     } else {
-                       console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
-                         getConsoleStyle('code'),
-                         "field is missing or invalid, and a valid value is required. Please see step 2 at " +
-                         "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
-                     }
+                     // If we are not doing HTTP subscription, continue finish subscribing by registering with OneSignal
+                     OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
                    }
-                 } else if (location.protocol === 'https:') {
-                   console.warn(`OneSignal: You must reference a %cmanifest.json`,
-                     getConsoleStyle('code'),
-                     "in the <head> of your page. Please see step 2 at " +
-                     "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
-                 }
-               } else {
-                 log.error('Error while subscribing for push:', e);
-               }
+                 });
+      })
+      .catch(function (e) {
+        OneSignal._sessionInitAlreadyRunning = false;
+        if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
+          let manifestDom = document.querySelector('link[rel=manifest]');
+          if (manifestDom) {
+            let manifestParentTagname = (document as any).querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
+            let manifestHtml = (document as any).querySelector('link[rel=manifest]').outerHTML;
+            let manifestLocation = (document as any).querySelector('link[rel=manifest]').href;
+            if (manifestParentTagname !== 'head') {
+              console.warn(`OneSignal: Your manifest %c${manifestHtml}`,
+                           getConsoleStyle('code'),
+                           'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
+                           'in <${manifestParentTagname}>. Please see step 3.1 at ' +
+                           'https://documentation.onesignal.com/docs/web-push-sdk-setup-https.');
+            } else {
+              let manifestLocationOrigin = new URL(manifestLocation).origin;
+              let currentOrigin = location.origin;
+              if (currentOrigin !== manifestLocationOrigin) {
+                console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
+                             `different from the current page's origin of ${currentOrigin}. Please serve your ` +
+                             `manifest from the same origin as your page's. If you are using a content delivery ` +
+                             `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
+                             `WordPress users, please see ` +
+                             `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
+              } else {
+                console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
+                             getConsoleStyle('code'),
+                             "field is missing or invalid, and a valid value is required. Please see step 2 at " +
+                             "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
+              }
+            }
+          } else if (location.protocol === 'https:') {
+            console.warn(`OneSignal: You must reference a %cmanifest.json`,
+                         getConsoleStyle('code'),
+                         "in the <head> of your page. Please see step 2 at " +
+                         "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
+          }
+        } else {
+          log.error('Error while subscribing for push:', e);
+        }
 
                // In Chrome, closing a tab while the prompt is displayed is the same as dismissing the prompt by clicking X
                // Our SDK receives the same event as if the user clicked X, when in fact the user just closed the tab. If
                // we had some code that prevented showing the prompt for 8 hours, the user would accidentally not be able
                // to subscribe.
 
-               // New addition (12/22/2015), adding support for detecting the cancel 'X'
-               // Chrome doesn't show when the user clicked 'X' for cancel
-               // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
-               OneSignal.getNotificationPermission().then((permission) => {
-                 if (permission === 'default') {
-                   // The user clicked 'X'
-                   OneSignal.triggerNotificationPermissionChanged(true);
-                   OneSignalHelpers.markHttpsNativePromptDismissed();
-                 }
+        // New addition (12/22/2015), adding support for detecting the cancel 'X'
+        // Chrome doesn't show when the user clicked 'X' for cancel
+        // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
+        OneSignal.getNotificationPermission().then((permission) => {
+          if (permission === 'default') {
+            // The user clicked 'X'
+            OneSignal.triggerNotificationPermissionChanged(true);
+            OneSignalHelpers.markHttpsNativePromptDismissed();
+          }
 
-                 if (!OneSignal._usingNativePermissionHook)
-                   OneSignal.triggerNotificationPermissionChanged();
+          if (!OneSignal._usingNativePermissionHook)
+            OneSignal.triggerNotificationPermissionChanged();
 
-                 if (opener && OneSignal._thisIsThePopup)
-                   window.close();
-               });
-             });
+          if (opener && OneSignal._thisIsThePopup)
+            window.close();
+        });
+
+        // If there was an error subscribing like the timeout bug, close the popup anyways
+        if (opener && OneSignal._thisIsThePopup)
+          window.close();
+      });
   }
 
   static getTags(callback) {
@@ -2159,13 +2199,14 @@ must be opened as a result of a subscription call.</span>`);
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
-    POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
-  };
+    FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
+    FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress'
+  }
 
   static EVENTS = {
     /**
