@@ -184,7 +184,7 @@ class ServiceWorker {
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
-            .then(notifications => {
+            .then((notifications: any) => {
               if (!notifications || notifications.length == 0) {
                 log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
                           " long as it isn't the welcome notification.");
@@ -318,7 +318,7 @@ class ServiceWorker {
    * @param rawNotification The raw notification JSON returned from OneSignal's server.
    */
   static buildStructuredNotificationObject(rawNotification) {
-    let notification: Notification = {
+    let notification: any = {
       id: rawNotification.custom.i,
       heading: rawNotification.title,
       content: rawNotification.alert,
@@ -518,7 +518,7 @@ class ServiceWorker {
     log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
     let notification = event.notification.data;
 
-    swivel.broadcast('notification.dismissed', notification);
+    (swivel as any).broadcast('notification.dismissed', notification);
     event.waitUntil(
         ServiceWorker.executeWebhooks('notification.dismissed', notification)
     );
@@ -618,7 +618,7 @@ class ServiceWorker {
               if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
                   (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
                 (client as any).focus();
-                swivel.emit(client.id, 'notification.clicked', notification);
+                (swivel as any).emit(client.id, 'notification.clicked', notification);
                 doNotOpenLink = true;
               }
             });
@@ -711,7 +711,7 @@ class ServiceWorker {
    * @param eventName An event name like 'pushsubscriptionchange'.
    */
   static simulateEvent(eventName) {
-    self.dispatchEvent(new ExtendableEvent(eventName));
+    (self as any).dispatchEvent(new ExtendableEvent(eventName));
   }
 
   static _subscribeForPush(serviceWorkerRegistration) {
@@ -732,7 +732,7 @@ class ServiceWorker {
             return Promise.resolve();
           }
         }).then(subscription => {
-          var subscriptionInfo = null;
+          var subscriptionInfo: any = null;
           if (subscription) {
             subscriptionInfo = {};
             log.debug(`Finished resubscribing for push:`, subscription);
@@ -805,7 +805,7 @@ class ServiceWorker {
           }
           let requestUrl = `players/${userId}`;
 
-          let requestData = {
+          let requestData: any = {
             app_id: appId,
             device_type: deviceType,
             language: Environment.getLanguage(),
@@ -832,7 +832,7 @@ class ServiceWorker {
 
           return OneSignalApi.put(requestUrl, requestData);
         })
-        .then(response => {
+        .then((response: any) => {
           if (!response.success) {
             log.error('Resubscription registration with OneSignal failed:', response);
           }
@@ -878,7 +878,7 @@ class ServiceWorker {
         log.debug('Received a valid encrypted push payload.');
         return Promise.resolve([event.data.json()]);
       } else {
-        return Promise.reject('Unexpected push message payload received.', event.data.text());
+        return Promise.reject('Unexpected push message payload received: ' + event.data.text());
         /*
          We received a push message payload from another service provider or a malformed
          payload. The last received notification will be displayed.
@@ -975,12 +975,12 @@ class ServiceWorker {
                       })
                       .then (unsubscriptionResult => {
                         log.debug('Unsubscribed from push notifications result:', unsubscriptionResult);
-                        self.UNSUBSCRIBED_FROM_NOTIFICATIONS = true;
+                        ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS = true;
                       });
                 });
           }
         })
-        .then(response => {
+        .then((response: any) => {
           // The response is an array literal -- response.json() has been called by apiCall()
           // The result looks like this:
           // OneSignalApi.get('players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification').then(function(response) { console.log(response); });
@@ -1000,10 +1000,10 @@ class ServiceWorker {
 }
 
 // Expose this class to the global scope
-self.OneSignalWorker = ServiceWorker;
+(ServiceWorker as any).OneSignalWorker = ServiceWorker;
 
 // Set logging to the appropriate level
-log.setDefaultLevel(__DEV__ ? log.levels.TRACE : log.levels.ERROR);
+log.setDefaultLevel(__DEV__ ? (log as any).levels.TRACE : (log as any).levels.ERROR);
 
 // Print it's happy time!
 log.info(`%cOneSignal Service Worker loaded (version ${__VERSION__}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));

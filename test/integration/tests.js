@@ -16,7 +16,7 @@ import {
     sha1
 } from '../../src/utils';
 import IndexedDb from '../../src/IndexedDb';
-import Environment from '../../src/environment.js';
+import Environment from '../../src/Environment';
 import Postmam from '../../src/postmam.js';
 import { DEV_FRAME_HOST } from '../../src/vars.js';
 import Database from '../../src/database';

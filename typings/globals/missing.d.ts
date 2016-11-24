@@ -25,7 +25,6 @@ interface ServiceWorkerGlobalScope {
   addEventListener(type: "activate", listener: (this: this, ev: any) => any, ...args): void;
   addEventListener(type: "pushsubscriptionchange", listener: (this: this, ev: any) => any, ...args): void;
   addEventListener(type: "fetch", listener: (this: this, ev: any) => any, ...args): void;
-  dispatchEvent(...args): any;
 }
 
 declare var ExtendableEvent;
