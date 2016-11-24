@@ -527,7 +527,7 @@ export default class OneSignal {
                   log.debug('OneSignal: Not showing popover because the user was manually opted out.');
                   return 'user-intentionally-unsubscribed';
                 }
-                if (OneSignalHelpers.isUsingHttpPermissionRequest()) {
+                if (OneSignalHelpers.isUsingHttpPermissionRequest() && permission !== 'granted') {
                   log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
                   return 'using-http-permission-request';
                 }
@@ -621,6 +621,11 @@ must be opened as a result of a subscription call.</span>`);
     OneSignal._thisIsThePopup = options.isPopup;
     if (Environment.isPopup() || OneSignal._thisIsThePopup) {
       OneSignal.popupPostmam = new Postmam(this.opener, sendToOrigin, receiveFromOrigin);
+      OneSignal.popupPostmam.connect();
+      OneSignal.popupPostmam.on('connect', e => {
+        log.debug(`(${Environment.getEnv()}) The host page is now ready to receive commands from the HTTP popup.`);
+        Event.trigger('httpInitialize');
+      });
     }
 
     OneSignal._thisIsTheModal = options.isModal;
@@ -749,14 +754,16 @@ must be opened as a result of a subscription call.</span>`);
               })
               .catch(e => message.reply({status: 'reject', result: e}));
     });
-    Event.trigger('httpInitialize');
+    if (Environment.isIframe()) {
+      Event.trigger('httpInitialize');
+    }
   }
 
   static showHttpPermissionRequest() {
     log.debug('Called showHttpPermissionRequest().');
 
     return awaitOneSignalInitAndSupported()
-      .then(new Promise((resolve, reject) => {
+      .then(() => new Promise((resolve, reject) => {
         // Safari's push notifications are one-click Allow and shouldn't support this workaround
         if (Browser.safari) {
           return;
@@ -992,11 +999,13 @@ must be opened as a result of a subscription call.</span>`);
     log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
     var subdomainPopup = OneSignalHelpers.openSubdomainPopup(OneSignal.popupUrl, postData, overrides);
 
-    if (subdomainPopup)
-      subdomainPopup.focus();
+    if (subdomainPopup) {
+      subdomainPopup.blur();
+      window.focus();
+    }
 
     OneSignal.popupPostmam = new Postmam(subdomainPopup, sendToOrigin, receiveFromOrigin);
-    OneSignal.popupPostmam.startPostMessageReceive();
+    OneSignal.popupPostmam.listen();
 
     return new Promise((resolve, reject) => {
       OneSignal.popupPostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, message => {
@@ -1015,12 +1024,6 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
         OneSignalHelpers.triggerCustomPromptClicked('denied');
       });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_IDS_AVAILBLE, message => {
-        log.info('ids available from popup');
-        OneSignal.popupPostmam.stopPostMessageReceive();
-        OneSignalHelpers.checkAndTriggerSubscriptionChanged();
-        resolve();
-      });
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
         log.info('Detected popup is closing.');
         Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
@@ -1033,6 +1036,19 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, message => {
         log.debug(Environment.getEnv() + " Popup window timed out and was closed.");
         Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
+      });
+      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, message => {
+        log.debug(Environment.getEnv() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
+
+        message.reply({progress: true});
+
+        OneSignal.getAppId()
+                 .then(appId => {
+                   OneSignal.triggerNotificationPermissionChanged(Notification.permission);
+                   OneSignal.popupPostmam.stopPostMessageReceive();
+                   OneSignalHelpers.registerWithOneSignal(appId, message.data.subscriptionInfo)
+                                   .then(() => OneSignalHelpers.checkAndTriggerSubscriptionChanged());
+                 });
       });
     });
   }
@@ -1554,7 +1570,27 @@ must be opened as a result of a subscription call.</span>`);
                    else
                      log.warn('Could not subscribe your browser for push notifications.');
 
-                   OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
+                   if (OneSignal._thisIsThePopup) {
+                     // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
+                     // 11/22/2016 - HTTP popup should move non-essential subscription parts to the iframe
+                     OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
+                       subscriptionInfo: subscriptionInfo
+                     }, message => {
+                       if (message.data.progress === true) {
+                         log.warn('Got message from host page that remote reg. is in progress, closing popup.');
+                         var creator = opener || parent;
+                         if (opener) {
+                           /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
+                           window.close();
+                         }
+                       } else {
+                          log.warn('Got message from host page that remote reg. could not be finished.');
+                       }
+                     });
+                   } else {
+                     // If we are not doing HTTP subscription, continue finish subscribing by registering with OneSignal
+                     OneSignalHelpers.registerWithOneSignal(appId, subscriptionInfo);
+                   }
                  });
       })
       .catch(function (e) {
@@ -2143,12 +2179,13 @@ objectAssign(OneSignal, {
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
-    POPUP_IDS_AVAILBLE: 'postman.popupIdsAvailable',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
+    FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
+    FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress'
   },
 
   EVENTS: {

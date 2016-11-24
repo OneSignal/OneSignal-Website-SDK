@@ -49,6 +49,7 @@ export default class Postmam {
    * Opens a message event listener to listen for a Postmam handshake from another browsing context. This listener is closed as soon as the connection is established.
    */
   listen() {
+    log.trace('(Postmam) Called listen().');
     if (this.isListening) {
       log.warn('(Postmam) Already listening for Postmam connections.');
       return;
@@ -110,7 +111,7 @@ export default class Postmam {
   }
 
   onWindowMessagePostmanConnectReceived(e) {
-    //log.info(`(Postmam) (${Environment.getEnv()}) Window postmessage for Postman connect received:`, e);
+    log.trace(`(Postmam) (${Environment.getEnv()}) Window postmessage for Postman connect received:`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
       log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
@@ -121,18 +122,21 @@ export default class Postmam {
       log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
       // This was not our expected handshake message
       return;
+    } else {
+      log.info('(Postmam) Got our expected Postmam handshake message (and connecting...):', e.data);
+      // This was our expected handshake message
+      // Remove our message handler so we don't get spammed with cross-domain messages
+      window.removeEventListener('message', this.onWindowMessagePostmanConnectReceived);
+      // Get the message port
+      this.messagePort = e.ports[0];
+      this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
+      log.info('(Postmam) Removed previous message event listener for handshakes, replaced with main message listener.');
+      this.messagePort.start();
+      this.isConnected = true;
+      log.info(`(Postmam) (${Environment.getEnv()}) Connected.`);
+      this.message(Postmam.CONNECTED_MESSAGE);
+      this.emit('connect');
     }
-    // This was our expected handshake message
-    // Remove our message handler so we don't get spammed with cross-domain messages
-    window.removeEventListener('message', this.onWindowMessagePostmanConnectReceived);
-    // Get the message port
-    this.messagePort = e.ports[0];
-    this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
-    this.messagePort.start();
-    this.isConnected = true;
-    log.info(`(Postmam) (${Environment.getEnv()}) Connected.`);
-    this.message(Postmam.CONNECTED_MESSAGE);
-    this.emit('connect');
   }
 
   /**
