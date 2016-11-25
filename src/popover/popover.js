@@ -1,7 +1,7 @@
 import { removeDomElement, addDomElement, addCssClass } from '../utils';
 import * as log from 'loglevel';
 import Event from '../Event.ts';
-import Helpers from '../helpers';
+import MainHelper from '../helpers/MainHelper';
 import * as Browser from 'bowser';
 import * as objectAssign from 'object-assign';
 
@@ -41,7 +41,7 @@ export default class Popover {
     create() {
         try {
             if (this.notificationIcons === null) {
-                Helpers.getNotificationIcons().then((icons) => {
+                MainHelper.getNotificationIcons().then((icons) => {
                     this.notificationIcons = icons;
 
                     // Remove any existing container

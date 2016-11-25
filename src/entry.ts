@@ -1,6 +1,7 @@
 import Environment from './Environment';
 import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
 import * as log from 'loglevel';
+import InitHelper from "./helpers/InitHelper";
 
 
 if (Environment.isBrowser()) {
@@ -19,7 +20,7 @@ if (Environment.isBrowser()) {
     require("expose?OneSignal!./OneSignal.ts");
 
     if (predefinedOneSignalPushes)
-      OneSignal._processPushes(predefinedOneSignalPushes);
+      InitHelper.processPushes(predefinedOneSignalPushes);
   }
 }
 else if (Environment.isServiceWorker()) {

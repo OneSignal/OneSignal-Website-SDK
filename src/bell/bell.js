@@ -3,7 +3,7 @@ import * as log from 'loglevel';
 import Event from '../Event';
 import * as Browser from 'bowser';
 import Database from '../Database';
-import Helpers from '../helpers';
+import MainHelper from '../helpers/MainHelper';
 import Launcher from './Launcher';
 import Badge from './Badge';
 import Button from './Button';
@@ -284,7 +284,7 @@ export default class Bell {
           this.badge.hide();
         }
         if (this.dialog.notificationIcons === null) {
-          Helpers.getNotificationIcons().then((icons) => {
+          MainHelper.getNotificationIcons().then((icons) => {
             this.dialog.notificationIcons = icons;
           });
         }
@@ -409,19 +409,19 @@ export default class Bell {
           .then(() => OneSignal.getSubscription())
           .then(isNotOptedOut => {
             if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
-              return Helpers.getNotificationIcons().then((icons) => {
+              return MainHelper.getNotificationIcons().then((icons) => {
                 this.dialog.notificationIcons = icons;
               });
             } else return nothing();
           })
           .then(() => delay(this.options.showLauncherAfter))
           .then(() => {
-            if (OneSignal.isUsingSubscriptionWorkaround() &&
+            if (SubscriptionHelper.isUsingSubscriptionWorkaround() &&
                 notOptedOut &&
                 doNotPrompt !== true &&
                 !isPushEnabled &&
                 (OneSignal.config.autoRegister === true) &&
-                !Helpers.isHttpPromptAlreadyShown()) {
+                !MainHelper.isHttpPromptAlreadyShown()) {
               log.debug('Not showing notify button because popover will be shown.');
               return nothing();
             } else {

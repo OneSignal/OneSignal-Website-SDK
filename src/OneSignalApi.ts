@@ -1,6 +1,8 @@
 import { API_URL } from './vars'
 import * as log from 'loglevel';
 import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils'
+import {Uuid} from "./models/Uuid";
+import SubscriptionHelper from "./helpers/SubscriptionHelper";
 
 
 export default class OneSignalApi {
@@ -51,7 +53,7 @@ export default class OneSignalApi {
           else {
             let error = OneSignalApi.identifyError(json);
             if (error === 'no-user-id-error') {
-              if (OneSignal.isUsingSubscriptionWorkaround()) {
+              if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
                 return wipeIndexedDb()
                     .then(() => Promise.reject(json));
               } else {
@@ -104,7 +106,7 @@ export default class OneSignalApi {
     return OneSignalApi.get(`players/${playerId}?app_id=${appId}`);
   }
 
-  static updatePlayer(id, options) {
+  static updatePlayer(id: Uuid, options?) {
     return OneSignalApi.put(`players/${id}`, options);
   }
 

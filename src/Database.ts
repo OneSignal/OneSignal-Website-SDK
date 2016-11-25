@@ -10,6 +10,7 @@ import {Uuid} from "./models/Uuid";
 import {ServiceWorkerConfig} from "./models/ServiceWorkerConfig";
 import {ServiceWorkerState} from "./models/ServiceWorkerState";
 import {Notification} from "./models/Notification";
+import SubscriptionHelper from "./helpers/SubscriptionHelper";
 
 export default class Database {
 
@@ -70,7 +71,7 @@ export default class Database {
    */
   static get<T>(table: string, key: string): Promise<T> {
     return new Promise((resolve) => {
-      if (!Environment.isServiceWorker() && OneSignal.isUsingSubscriptionWorkaround()) {
+      if (!Environment.isServiceWorker() && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{table: table, key: key}], reply => {
           let result = reply.data[0];
           Event.trigger(Database.EVENTS.RETRIEVED, {table: table, key: key, result: result});
@@ -94,7 +95,7 @@ export default class Database {
    */
   static put(table: string, keypath: any) {
     return new Promise((resolve, reject) => {
-      if (!Environment.isServiceWorker() && OneSignal.isUsingSubscriptionWorkaround()) {
+      if (!Environment.isServiceWorker() && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{table: table, keypath: keypath}], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             Event.trigger(Database.EVENTS.SET, keypath);
@@ -119,7 +120,7 @@ export default class Database {
    */
   static remove(table: string, keypath?: string) {
     return new Promise((resolve, reject) => {
-      if (!Environment.isServiceWorker() && OneSignal.isUsingSubscriptionWorkaround()) {
+      if (!Environment.isServiceWorker() && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{table: table, keypath: keypath}], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             Event.trigger(Database.EVENTS.REMOVED, [table, keypath]);

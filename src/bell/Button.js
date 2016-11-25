@@ -109,7 +109,7 @@ export default class Button extends ActiveAnimatedElement {
       });
     }
     else if (this.bell.blocked) {
-      if (OneSignal.isUsingSubscriptionWorkaround()) {
+      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
         // Show the HTTP popup so users can re-allow notifications
         OneSignal.registerForPushNotifications();
       } else {

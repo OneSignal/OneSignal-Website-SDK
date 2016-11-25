@@ -6,6 +6,7 @@ import IndexedDb from './IndexedDb';
 import Database from './Database';
 import PushNotSupportedError from "./errors/PushNotSupportedError";
 import {InvalidArgumentError, InvalidArgumentReason} from "./errors/InvalidArgumentError";
+import SubscriptionHelper from "./helpers/SubscriptionHelper";
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -378,7 +379,7 @@ export function unsubscribeFromPush() {
                          } else throw new Error('Cannot unsubscribe because not subscribed.');
                        });
   } else {
-    if (OneSignal.isUsingSubscriptionWorkaround()) {
+    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
       return new Promise((resolve, reject) => {
         log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
@@ -448,6 +449,8 @@ export function substringAfter(string, search) {
 }
 
 export function isValidUrl(url: any) {
+  if (url === null)
+    return true;
   try {
     new URL(url);
     return true;
@@ -512,7 +515,7 @@ export function incrementSdkLoadCount() {
 /**
  * Returns the email with all whitespace removed and converted to lower case.
  */
-export function prepareEmailForHashing(email) {
+export function prepareEmailForHashing(email: string): string {
   return email.replace(/\s/g, '').toLowerCase();
 }
 
