@@ -1,4 +1,4 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars';
 import Environment from './Environment';
 import OneSignalApi from './OneSignalApi';
 import * as log from 'loglevel';
@@ -12,10 +12,10 @@ import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import * as swivel from 'swivel';
 import OneSignal from './OneSignal';
-import Postmam from './postmam.js';
+import Postmam from './Postmam';
 import * as Cookie from 'js-cookie';
 import HttpModal from "./http-modal/httpModal";
-import Bell from "./bell/bell.js";
+import Bell from "./bell/bell";
 
 
 export default class Helpers {

@@ -1,4 +1,4 @@
-import { API_URL } from './vars.js'
+import { API_URL } from './vars'
 import * as log from 'loglevel';
 import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils'
 

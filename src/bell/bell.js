@@ -1,14 +1,14 @@
 import { isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, delay, nothing, contains, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event.ts';
+import Event from '../Event';
 import * as Browser from 'bowser';
 import Database from '../Database';
 import Helpers from '../helpers';
-import Launcher from './Launcher.js';
-import Badge from './Badge.js';
-import Button from './Button.js';
-import Dialog from './Dialog.js';
-import Message from './Message.js';
+import Launcher from './Launcher';
+import Badge from './Badge';
+import Button from './Button';
+import Dialog from './Dialog';
+import Message from './Message';
 
 import "./bell.scss";
 var logoSvg = require('raw!./../assets/bell.svg');

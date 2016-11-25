@@ -1,9 +1,9 @@
 import { clearDomElementChildren, once } from '../utils';
-import Event from '../Event.ts';
-import AnimatedElement from './AnimatedElement.js';
+import Event from '../Event';
+import AnimatedElement from './AnimatedElement';
 import * as Browser from 'bowser';
-import Bell from './bell.js';
-import { HOST_URL } from '../vars.js';
+import Bell from './bell';
+import { HOST_URL } from '../vars';
 
 
 export default class Dialog extends AnimatedElement {

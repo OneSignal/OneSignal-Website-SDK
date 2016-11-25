@@ -1,18 +1,18 @@
 import StackTraceGPS from 'stacktrace-gps';
-import {SUBDOMAIN} from './vars.js';
+import {SUBDOMAIN} from './vars';
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import IndexedDb from '../../src/IndexedDb';
 import { executeAndTimeoutPromiseAfter } from '../../src/utils';
-
+import Extension from './extension';
 
 // URLSearchParams.toString() does a second weird URL encoding so here we have to redo the URL encoding
 export default class Utils {
-    static urlSearchParamToString(params) {
+    static urlSearchParamToString(params, url) {
         let string = '?';
-        for (let entry of params.entries()) {
-            string += `&${entry[0]}=${entry[1]}`
-        }
+        params.forEach((value, key) => {
+          string += `&${key}=${value}`
+        });
         return string;
     }
 

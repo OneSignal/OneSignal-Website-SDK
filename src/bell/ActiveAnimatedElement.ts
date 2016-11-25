@@ -1,7 +1,7 @@
 import { addCssClass, removeCssClass, contains, once } from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event.ts';
-import AnimatedElement from './AnimatedElement.js';
+import Event from '../Event';
+import AnimatedElement from './AnimatedElement';
 import * as objectAssign from 'object-assign';
 
 export default class ActiveAnimatedElement extends AnimatedElement {
@@ -18,11 +18,16 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @param targetTransitionEvents {string} An array of properties (e.g. ['transform', 'opacity']) to look for on transitionend of show() and hide() to know the transition is complete. As long as one matches, the transition is considered complete.
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
-  constructor(selector, showClass, hideClass, activeClass, inactiveClass, state = 'shown', activeState = 'active', targetTransitionEvents = ['opacity', 'transform'], nestedContentSelector = null) {
-    super(selector, showClass, hideClass, state, targetTransitionEvents, nestedContentSelector);
-    this.activeClass = activeClass;
-    this.inactiveClass = inactiveClass;
-    this.activeState = activeState;
+  constructor(public selector: string,
+              public showClass: string,
+              public hideClass: string,
+              public activeClass: string,
+              public inactiveClass: string,
+              public state = 'shown',
+              public activeState = 'active',
+              public targetTransitionEvents = ['opacity', 'transform'],
+              public nestedContentSelector = null) {
+    super(selector, showClass, hideClass, state, targetTransitionEvents);
   }
 
   /**
@@ -45,7 +50,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.warn(`${this.constructor.name} did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.warn(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
@@ -61,7 +66,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         }
       }
       else {
-        call.warn(`Ending activate() transition (alternative).`);
+        log.warn(`Ending activate() transition (alternative).`);
         this.activeState = 'active';
         Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
         return resolve(this);
@@ -89,7 +94,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.warn(`${this.constructor.name} did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.warn(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&

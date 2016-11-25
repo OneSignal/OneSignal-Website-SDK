@@ -1,7 +1,7 @@
 import { getConsoleStyle, delay, nothing, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
-import AnimatedElement from './AnimatedElement.js';
-import Bell from './bell.js';
+import AnimatedElement from './AnimatedElement';
+import Bell from './bell';
 
 
 export default class Message extends AnimatedElement {

@@ -1,4 +1,4 @@
-import ActiveAnimatedElement from './ActiveAnimatedElement.js';
+import ActiveAnimatedElement from './ActiveAnimatedElement';
 
 
 export default class Badge extends ActiveAnimatedElement {
@@ -9,7 +9,7 @@ export default class Badge extends ActiveAnimatedElement {
 
   increment() {
     // If it IS a number (is not not a number)
-    if (!isNaN(this.content)) {
+    if (!isNaN(this.content as any)) {
       let badgeNumber = +this.content; // Coerce to int
       badgeNumber += 1;
       this.content = badgeNumber.toString();
@@ -19,7 +19,7 @@ export default class Badge extends ActiveAnimatedElement {
 
   decrement() {
     // If it IS a number (is not not a number)
-    if (!isNaN(this.content)) {
+    if (!isNaN(this.content as any)) {
       let badgeNumber = +this.content; // Coerce to int
       badgeNumber -= 1;
       if (badgeNumber > 0)

@@ -1,5 +1,5 @@
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from '../vars.js';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from '../vars';
 import Environment from '../Environment'
 import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';

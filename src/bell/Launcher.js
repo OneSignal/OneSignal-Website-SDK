@@ -1,6 +1,6 @@
-import { hasCssClass, addCssClass, removeCssClass, nothing, contains } from '../utils';
+import { hasCssClass, addCssClass, removeCssClass, nothing, contains, once } from '../utils';
 import * as log from 'loglevel';
-import ActiveAnimatedElement from './ActiveAnimatedElement.js';
+import ActiveAnimatedElement from './ActiveAnimatedElement';
 
 
 export default class Launcher extends ActiveAnimatedElement {

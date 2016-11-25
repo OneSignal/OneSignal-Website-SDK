@@ -1,27 +1,23 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars.js';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from './vars';
 import Environment from './Environment';
 import OneSignalApi from './OneSignalApi';
 import IndexedDb from './IndexedDb';
 import * as log from 'loglevel';
 import Event from "./Event";
-import Bell from "./bell/bell.js";
+import Bell from "./bell/bell";
 import * as Cookie from 'js-cookie';
 import Database from './Database';
 import * as Browser from 'bowser';
 import {
   isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
   contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
-  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, isValidUrl, once
+  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, isValidUrl, once, md5, sha1
 } from './utils';
-import {
-  md5,
-  sha1
-} from './crypto';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import * as swivel from 'swivel';
-import Postmam from './postmam.js';
+import Postmam from './Postmam';
 import OneSignalHelpers from './helpers';
 import Popover from './popover/popover';
 import {Uuid} from "./models/Uuid";

@@ -1,6 +1,6 @@
 import { addCssClass, removeCssClass, contains, once } from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event.ts'
+import Event from '../Event'
 
 
 export default class AnimatedElement {
@@ -14,14 +14,13 @@ export default class AnimatedElement {
    * @param targetTransitionEvents {string} An array of properties (e.g. ['transform', 'opacity']) to look for on transitionend of show() and hide() to know the transition is complete. As long as one matches, the transition is considered complete.
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
-  constructor(selector, showClass, hideClass, state = 'shown', targetTransitionEvents = ['opacity', 'transform'], nestedContentSelector = null) {
-    this.selector = selector;
-    this.showClass = showClass;
-    this.hideClass = hideClass;
-    this.state = state;
-    this.targetTransitionEvents = targetTransitionEvents;
-    this.nestedContentSelector = nestedContentSelector;
-    this.transitionCheckTimeout = 500;
+  constructor(public selector: string,
+              public showClass: string,
+              public hideClass: string,
+              public state = 'shown',
+              public targetTransitionEvents = ['opacity', 'transform'],
+              public nestedContentSelector: string = null,
+              public transitionCheckTimeout = 500) {
   }
 
   /**
@@ -44,7 +43,7 @@ export default class AnimatedElement {
         return resolve(this);
       } else {
         var timerId = setTimeout(() => {
-          log.warn(`${this.constructor.name} did not completely show (state: ${this.state}, activeState: ${this.activeState}).`)
+          log.warn(`Element did not completely show (state: ${this.state}).`)
         }, this.transitionCheckTimeout);
         once(this.element, 'transitionend', (event, destroyListenerFn) => {
           if (event.target === this.element &&
@@ -81,7 +80,7 @@ export default class AnimatedElement {
       } else {
         once(this.element, 'transitionend', (event, destroyListenerFn) => {
           var timerId = setTimeout(() => {
-            log.warn(`${this.constructor.name} did not completely hide (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.warn(`Element did not completely hide (state: ${this.state}).`)
           }, this.transitionCheckTimeout);
           if (event.target === this.element &&
             contains(this.targetTransitionEvents, event.propertyName)) {

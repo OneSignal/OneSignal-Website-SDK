@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
 import log from 'loglevel';
-import { USER_AUTH_KEY} from './vars.js';
+import { USER_AUTH_KEY} from './vars';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';
 import Utils from './utils';
@@ -22,6 +22,7 @@ import { DEV_FRAME_HOST } from '../../src/vars.js';
 import Database from '../../src/database';
 import MultiStepSoloTest from './multiStepSoloTest';
 import isUuid from 'validator/lib/isUuid';
+import Extension from './extension';
 
 
 chai.config.includeStack = false;
@@ -38,7 +39,7 @@ describe('Web SDK Tests', function () {
         let apps = await OneSignal.api.get(`apps`, null, {
             'Authorization': `Basic ${USER_AUTH_KEY}`
         });
-        let appName = (location.protocol === 'https:' ? 'California' : 'Washington');
+        let appName = (location.protocol === 'https:' ? 'web-push-sandbox-https' : 'web-push-sandbox-http');
         console.log('Using app name:', appName);
         for (let app of apps) {
             if (app.name === appName) {

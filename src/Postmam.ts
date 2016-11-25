@@ -2,9 +2,10 @@ import { guid, contains } from './utils';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import Environment from './Environment';
-import { DEV_FRAME_HOST, STAGING_FRAME_HOST } from './vars.js';
+import { DEV_FRAME_HOST, STAGING_FRAME_HOST } from './vars';
 import * as objectAssign from 'object-assign';
 import * as log from 'loglevel';
+import OneSignal from './OneSignal';
 
 
 /**
@@ -20,6 +21,12 @@ export default class Postmam {
     return "onesignal.postmam.connected";
   }
 
+  public channel: MessageChannel;
+  public messagePort: MessagePort;
+  public isListening: boolean;
+  public isConnected: boolean;
+  public replies: any;
+
   /**
    * Initializes Postmam with settings but does not establish a channel or set up any message listeners.
    * @param windowReference The window to postMessage() the initial MessageChannel port to.
@@ -27,17 +34,16 @@ export default class Postmam {
    * @param receiveFromOrigin The origin to allow incoming messages from. If messages do not come from this origin they will be discarded. Only affects the initial handshake.
    * @remarks The initiating (client) page must call this after the page has been loaded so that the other page has a chance to receive the initial handshake message. The receiving (server) page must set up a message listener to catch the initial handshake message.
    */
-  constructor(windowReference, sendToOrigin, receiveFromOrigin) {
+  constructor(public windowReference: any,
+              public sendToOrigin: string,
+              public receiveFromOrigin: string) {
     if (!window || !window.postMessage) {
-      throw new Error('Must pass in a valid window reference supporting postMessage().', windowReference);
+      throw new Error('Must pass in a valid window reference supporting postMessage():' + windowReference);
     }
     if (!sendToOrigin || !receiveFromOrigin) {
       throw new Error('Invalid origin. Must be set.');
     }
     heir.merge(this, new EventEmitter());
-    this.windowReference = windowReference;
-    this.sendToOrigin = sendToOrigin;
-    this.receiveFromOrigin = receiveFromOrigin;
     this.channel = new MessageChannel();
     this.messagePort = null;
     this.isListening = false;
@@ -73,7 +79,7 @@ export default class Postmam {
 
   destroy() {
     this.stopPostMessageReceive();
-    this.removeEvent();
+    (this as any).removeEvent();
   }
 
   onWindowPostMessageReceived(e) {
@@ -85,7 +91,7 @@ export default class Postmam {
     //log.debug(`(Postmam) (onWindowPostMessageReceived) (${Environment.getEnv()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
-      this.emit('connect');
+      (this as any).emit('connect');
       this.isConnected = true;
       return;
     }
@@ -100,13 +106,13 @@ export default class Postmam {
     }, messageBundle);
     if (this.replies.hasOwnProperty(messageId)) {
       log.info('(Postmam) This message is a reply.');
-      let replyFn = this.replies[messageId].bind(this.window);
+      let replyFn = this.replies[messageId].bind(window);
       let replyFnReturnValue = replyFn(messageBundleWithReply);
       if (replyFnReturnValue === false) {
         delete this.replies[messageId];
       }
     } else {
-      this.emit(messageCommand, messageBundleWithReply);
+      (this as any).emit(messageCommand, messageBundleWithReply);
     }
   }
 
@@ -135,7 +141,7 @@ export default class Postmam {
       this.isConnected = true;
       log.info(`(Postmam) (${Environment.getEnv()}) Connected.`);
       this.message(Postmam.CONNECTED_MESSAGE);
-      this.emit('connect');
+      (this as any).emit('connect');
     }
   }
 
@@ -161,7 +167,7 @@ export default class Postmam {
     }
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
-      this.emit('connect');
+      (this as any).emit('connect');
       this.isConnected = true;
       return;
     }
@@ -175,13 +181,13 @@ export default class Postmam {
       reply: this.reply.bind(this, messageBundle)
     }, messageBundle);
     if (this.replies.hasOwnProperty(messageId)) {
-      let replyFn = this.replies[messageId].bind(this.window);
+      let replyFn = this.replies[messageId].bind(window);
       let replyFnReturnValue = replyFn(messageBundleWithReply);
       if (replyFnReturnValue === false) {
         delete this.replies[messageId];
       }
     } else {
-      this.emit(messageCommand, messageBundleWithReply);
+      (this as any).emit(messageCommand, messageBundleWithReply);
     }
   }
 
@@ -194,7 +200,7 @@ export default class Postmam {
       isReply: true
     };
     if (typeof onReply === 'function') {
-      this.replies[messageId] = onReply;
+      this.replies[messageBundle.id] = onReply;
     }
     this.messagePort.postMessage(messageBundle);
   }
@@ -225,7 +231,7 @@ export default class Postmam {
   /**
    * Sends via MessageChannel.port.postMessage
    */
-  message(command, data, onReply) {
+  message(command, data?, onReply?) {
     if (!command || command == '') {
       throw new Error("(Postmam) Postmam command must not be empty.");
     }
@@ -249,7 +255,7 @@ export default class Postmam {
     if (!OneSignal.config) {
       var subdomain = "test";
     } else {
-      var subdomain = OneSignal.config.subdomainName;
+      var subdomain = OneSignal.config.subdomainName as string;
     }
 
     // If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol

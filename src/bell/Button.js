@@ -1,9 +1,9 @@
 import { removeDomElement } from '../utils';
-import Event from '../Event.ts';
-import ActiveAnimatedElement from './ActiveAnimatedElement.js';
-import Bell from './bell.js';
+import Event from '../Event';
+import ActiveAnimatedElement from './ActiveAnimatedElement';
+import Bell from './bell';
 import LimitStore from '../LimitStore';
-import Message from './Message.js';
+import Message from './Message';
 
 
 export default class Button extends ActiveAnimatedElement {
