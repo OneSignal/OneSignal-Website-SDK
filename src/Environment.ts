@@ -26,19 +26,19 @@ export default class Environment {
       // If the window is the root top-most level
       if (window === window.top) {
         if (contains(location.href, "initOneSignal") ||
-            (location.pathname === '/subscribe' &&
-             location.search === '') &&
-             (
-                 location.hostname.endsWith('.onesignal.com') ||
-                 (location.hostname.indexOf('.localhost') !== -1 && Environment.isDev())
-             )
-           )
+          (location.pathname === '/subscribe' &&
+          location.search === '') &&
+          (
+            location.hostname.endsWith('.onesignal.com') ||
+            (location.hostname.indexOf('.localhost') !== -1 && Environment.isDev())
+          )
+        )
           return Environment.POPUP;
         else
           return Environment.HOST;
       }
       else if (location.pathname === '/webPushIframe' ||
-               location.pathname === '/webPushModal') {
+        location.pathname === '/webPushModal') {
         return Environment.IFRAME;
       }
       else return Environment.CUSTOM_SUBDOMAIN;
@@ -95,7 +95,7 @@ export default class Environment {
   }
 
   static isCustomSubdomain() {
-       return Environment.getEnv() === Environment.CUSTOM_SUBDOMAIN;
+    return Environment.getEnv() === Environment.CUSTOM_SUBDOMAIN;
   }
 
   static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {

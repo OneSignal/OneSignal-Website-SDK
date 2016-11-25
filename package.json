@@ -119,7 +119,7 @@
     "gulp": "https://registry.npmjs.org/gulp/-/gulp-3.9.1.tgz",
     "ignore-loader": "^0.1.2",
     "nconf": "^0.8.4",
-    "typescript": "next",
+    "typescript": "^2.1.1",
     "webpack": "https://registry.npmjs.org/webpack/-/webpack-1.13.2.tgz",
     "webpack-bundle-analyzer": "^1.5.3"
   }

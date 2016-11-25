@@ -1,4 +1,5 @@
-import Environment from './Environment';
+import Environment from "./Environment";
+
 
 export const DEV_HOST = 'https://oregon:3001';
 export const DEV_FRAME_HOST = 'https://washington.ubuntu:3001';

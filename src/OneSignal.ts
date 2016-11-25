@@ -93,6 +93,7 @@ export default class OneSignal {
    * @PublicApi
    */
   static isPushNotificationsSupported() {
+    logMethodCall('isPushNotificationsSupported');
     return isPushNotificationsSupported();
   }
 
@@ -101,7 +102,7 @@ export default class OneSignal {
    * @PublicApi
    */
   static init(options) {
-    log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
+    logMethodCall('init', options);
 
     ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
 
