@@ -1,4 +1,7 @@
-import { isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, delay, nothing, contains, decodeHtmlEntities } from '../utils';
+import {
+  isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, delay, nothing, contains,
+  decodeHtmlEntities, once
+} from '../utils';
 import * as log from 'loglevel';
 import Event from '../Event';
 import * as Browser from 'bowser';
@@ -11,10 +14,32 @@ import Dialog from './Dialog';
 import Message from './Message';
 
 import "./bell.scss";
+import SubscriptionHelper from "../helpers/SubscriptionHelper";
 var logoSvg = require('raw!./../assets/bell.svg');
 
 
 export default class Bell {
+  public enable: boolean;
+  public size: string;
+  public position: string;
+  public theme: string;
+  public showLauncherAfter: number;
+  public showBadgeAfter: number;
+  public text: any;
+  public prenotify: boolean;
+  public showCredit: boolean;
+  public colors: any;
+  public offset: any;
+  public options: any;
+  public state: any;
+  public _ignoreSubscriptionState: boolean;
+  public hovering: boolean;
+  public initialized: boolean;
+  public _launcher: any;
+  public _button: any;
+  public _badge: any;
+  public _message: any;
+  public _dialog: any;
 
   static get EVENTS() {
     return {
@@ -346,7 +371,6 @@ export default class Bell {
       removeDomElement('#onesignal-bell-container');
     }
 
-    window.addDomElement = addDomElement;
     // Insert the bell container
     addDomElement('body', 'beforeend', '<div id="onesignal-bell-container" class="onesignal-bell-container onesignal-reset"></div>');
     // Insert the bell launcher
@@ -553,11 +577,7 @@ export default class Bell {
     let styleDom = document.createElement('style');
     styleDom.id = id;
     styleDom.type = 'text/css';
-    if (styleDom.styleSheet) {
-      styleDom.styleSheet.cssText = css;
-    } else {
-      styleDom.appendChild(document.createTextNode(css));
-    }
+    styleDom.appendChild(document.createTextNode(css));
     document.head.appendChild(styleDom);
   }
 
@@ -614,7 +634,7 @@ export default class Bell {
 
   get badge() {
     if (!this._badge)
-      this._badge = new Badge(this);
+      this._badge = new Badge();
     return this._badge;
   }
 

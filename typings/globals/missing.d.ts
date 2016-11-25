@@ -27,6 +27,10 @@ interface ServiceWorkerGlobalScope {
   addEventListener(type: "fetch", listener: (this: this, ev: any) => any, ...args): void;
 }
 
+interface ExtendableError {
+  new(someParam: any): ExtendableError
+}
+
 declare var ExtendableEvent;
 declare var swivel;
 

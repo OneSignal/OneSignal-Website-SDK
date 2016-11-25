@@ -231,7 +231,7 @@ export function delay(durationMs) {
   });
 }
 
-export function nothing() {
+export function nothing(): Promise<any> {
   return Promise.resolve();
 }
 

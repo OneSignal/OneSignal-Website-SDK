@@ -181,7 +181,9 @@ const ONESIGNAL_WEB_SDK_TESTS = {
       ],
       exclude: /(node_modules)/,
       loader: 'awesome-typescript-loader'
-    }]
+    },
+    { test: /\.scss$/, loader: 'ignore-loader' }
+    ]
   },
   resolve: {
     extensions: ["", ".ts", ".js"]

@@ -1,15 +1,19 @@
-import { removeDomElement } from '../utils';
+import {removeDomElement, addDomElement} from '../utils';
 import Event from '../Event';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
-import Bell from './bell';
+import Bell from './Bell';
 import LimitStore from '../LimitStore';
 import Message from './Message';
+import SubscriptionHelper from "../helpers/SubscriptionHelper";
 
 
 export default class Button extends ActiveAnimatedElement {
 
+  public events: any;
+  public bell: any;
+
   constructor(bell) {
-    super('.onesignal-bell-launcher-button', null, null, 'onesignal-bell-launcher-button-active', null, 'shown', []);
+    super('.onesignal-bell-launcher-button', null, null, 'onesignal-bell-launcher-button-active', null, 'shown', '');
 
     this.bell = bell;
     this.events = {

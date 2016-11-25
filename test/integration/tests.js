@@ -17,8 +17,8 @@ import {
 } from '../../src/utils';
 import IndexedDb from '../../src/IndexedDb';
 import Environment from '../../src/Environment';
-import Postmam from '../../src/postmam.js';
-import { DEV_FRAME_HOST } from '../../src/vars.js';
+import Postmam from '../../src/Postmam';
+import { DEV_FRAME_HOST } from '../../src/vars';
 import Database from '../../src/database';
 import MultiStepSoloTest from './multiStepSoloTest';
 import isUuid from 'validator/lib/isUuid';

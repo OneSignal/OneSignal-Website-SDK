@@ -1,12 +1,14 @@
 import { removeDomElement, addDomElement, addCssClass } from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event.ts';
+import Event from '../Event';
 import * as objectAssign from 'object-assign';
 
 import "./httpModal.scss";
 
 
 export default class HttpModal {
+
+    public options: any;
 
     static get EVENTS() {
         return {
@@ -60,7 +62,6 @@ export default class HttpModal {
                         </div>                   
                     `;
 
-            window.addDomElement = addDomElement;
             // Insert the container
             addDomElement('body', 'beforeend',
                 '<div id="onesignal-modal-container" class="onesignal-modal-container onesignal-reset"></div>');

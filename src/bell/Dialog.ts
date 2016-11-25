@@ -1,12 +1,17 @@
-import { clearDomElementChildren, once } from '../utils';
+import {clearDomElementChildren, once, addDomElement} from '../utils';
 import Event from '../Event';
 import AnimatedElement from './AnimatedElement';
 import * as Browser from 'bowser';
-import Bell from './bell';
+import Bell from './Bell';
 import { HOST_URL } from '../vars';
 
 
 export default class Dialog extends AnimatedElement {
+
+  public bell: any;
+  public subscribeButtonId: any;
+  public unsubscribeButtonId: any;
+  public notificationIcons: any;
 
   constructor(bell) {
     super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', null, 'hidden', ['opacity', 'transform'], '.onesignal-bell-launcher-dialog-body');

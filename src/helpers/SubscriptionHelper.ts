@@ -17,8 +17,6 @@ import * as swivel from 'swivel';
 import OneSignal from '../OneSignal';
 import Postmam from '../Postmam';
 import * as Cookie from 'js-cookie';
-import HttpModal from "../http-modal/httpModal";
-import Bell from "../bell/bell";
 import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
 import EventHelper from "./EventHelper";

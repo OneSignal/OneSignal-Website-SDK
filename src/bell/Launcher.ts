@@ -5,6 +5,9 @@ import ActiveAnimatedElement from './ActiveAnimatedElement';
 
 export default class Launcher extends ActiveAnimatedElement {
 
+  public bell: any;
+  public wasInactive: boolean;
+
   constructor(bell) {
     super('.onesignal-bell-launcher', 'onesignal-bell-launcher-active', null, null, 'onesignal-bell-launcher-inactive', 'hidden', 'active');
 
@@ -44,7 +47,7 @@ export default class Launcher extends ActiveAnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.warn(`${this.constructor.name} did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.warn(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&

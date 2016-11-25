@@ -1,6 +1,6 @@
-import { removeDomElement, addDomElement, addCssClass } from '../utils';
+import {removeDomElement, addDomElement, addCssClass, once} from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event.ts';
+import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
 import * as Browser from 'bowser';
 import * as objectAssign from 'object-assign';
@@ -9,6 +9,9 @@ import "./popover.scss";
 
 
 export default class Popover {
+
+    public options: any;
+    public notificationIcons: any;
 
     static get EVENTS() {
         return {
@@ -72,7 +75,6 @@ export default class Popover {
                     </div>                   
                 `;
 
-                    window.addDomElement = addDomElement;
                     // Insert the container
                     addDomElement('body', 'beforeend',
                                   '<div id="onesignal-popover-container" class="onesignal-popover-container onesignal-reset"></div>');

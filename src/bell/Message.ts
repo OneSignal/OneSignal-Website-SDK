@@ -1,10 +1,14 @@
 import { getConsoleStyle, delay, nothing, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
 import AnimatedElement from './AnimatedElement';
-import Bell from './bell';
+import Bell from './Bell';
 
 
 export default class Message extends AnimatedElement {
+
+  public bell: any;
+  public contentType: string;
+  public queued: any;
 
   constructor(bell) {
     super('.onesignal-bell-launcher-message', 'onesignal-bell-launcher-message-opened', null, 'hidden', ['opacity', 'transform'], '.onesignal-bell-launcher-message-body');
@@ -28,26 +32,23 @@ export default class Message extends AnimatedElement {
 
   display(type, content, duration = 0) {
     log.debug(`Calling %cdisplay(${type}, ${content}, ${duration}).`, getConsoleStyle('code'));
-    return new Promise((resolve, reject) => {
-      (this.shown ? this.hide() : nothing())
-        .then(() => {
-          this.content = decodeHtmlEntities(content);
-          this.contentType = type;
-        })
-        .then(() => {
-          return this.show();
-        })
-        .then(() => delay(duration))
-        .then(() => {
-          return this.hide();
-        })
-        .then(() => {
-          // Reset back to normal content type so stuff can show a gain
-          this.content = this.getTipForState();
-          this.contentType = 'tip';
-        })
-        .then(resolve);
-    });
+    (this.shown ? this.hide() : nothing())
+      .then(() => {
+        this.content = decodeHtmlEntities(content);
+        this.contentType = type;
+      })
+      .then(() => {
+        return this.show();
+      })
+      .then(() => delay(duration))
+      .then(() => {
+        return this.hide();
+      })
+      .then(() => {
+        // Reset back to normal content type so stuff can show a gain
+        this.content = this.getTipForState();
+        this.contentType = 'tip';
+      });
   }
 
   getTipForState() {
