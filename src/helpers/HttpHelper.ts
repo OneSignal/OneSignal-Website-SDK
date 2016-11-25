@@ -14,7 +14,6 @@ import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import * as swivel from 'swivel';
-import OneSignal from '../OneSignal';
 import Postmam from '../Postmam';
 import * as Cookie from 'js-cookie';
 import HttpModal from "../http-modal/HttpModal";
@@ -25,6 +24,8 @@ import IndexedDb from "../IndexedDb";
 import InitHelper from "./InitHelper";
 import EventHelper from "./EventHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
+
+declare var OneSignal: any;
 
 
 export default class HttpHelper {

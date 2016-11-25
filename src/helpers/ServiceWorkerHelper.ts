@@ -1,4 +1,4 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from '../vars';
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from '../vars';
 import Environment from '../Environment';
 import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';
@@ -14,11 +14,12 @@ import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import * as swivel from 'swivel';
-import OneSignal from '../OneSignal';
 import Postmam from '../Postmam';
 import * as Cookie from 'js-cookie';
 import MainHelper from "./MainHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
+
+declare var OneSignal: any;
 
 
 export default class ServiceWorkerHelper {

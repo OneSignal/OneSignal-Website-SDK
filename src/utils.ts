@@ -100,7 +100,7 @@ export function stringify(obj) {
     } else {
       return value;
     }
-  });
+  }, 4);
 }
 
 export function executeCallback<T>(callback: Action<T>, ...args: any[]) {

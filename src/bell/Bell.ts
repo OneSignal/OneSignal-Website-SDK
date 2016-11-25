@@ -13,7 +13,6 @@ import Button from './Button';
 import Dialog from './Dialog';
 import Message from './Message';
 
-import "./bell.scss";
 import SubscriptionHelper from "../helpers/SubscriptionHelper";
 var logoSvg = require('raw!./../assets/bell.svg');
 
@@ -138,6 +137,8 @@ export default class Bell {
       colors: colors,
       offset: offset,
     };
+
+    require('./bell.scss');
 
     if (!this.options.enable)
       return;

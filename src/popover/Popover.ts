@@ -5,8 +5,6 @@ import MainHelper from '../helpers/MainHelper';
 import * as Browser from 'bowser';
 import * as objectAssign from 'object-assign';
 
-import "./popover.scss";
-
 
 export default class Popover {
 
@@ -23,6 +21,7 @@ export default class Popover {
     }
 
     constructor(options) {
+        require("./popover.scss");
         if (!options) {
             this.options = {};
         } else {

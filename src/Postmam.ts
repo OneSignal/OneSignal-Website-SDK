@@ -5,7 +5,8 @@ import Environment from './Environment';
 import { DEV_FRAME_HOST, STAGING_FRAME_HOST } from './vars';
 import * as objectAssign from 'object-assign';
 import * as log from 'loglevel';
-import OneSignal from './OneSignal';
+
+declare var OneSignal: any;
 
 
 /**

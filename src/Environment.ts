@@ -1,5 +1,3 @@
-import { contains } from './utils';
-
 export default class Environment {
   static get SERVICE_WORKER() {
     return 'ServiceWorker';
@@ -25,7 +23,7 @@ export default class Environment {
     else {
       // If the window is the root top-most level
       if (window === window.top) {
-        if (contains(location.href, "initOneSignal") ||
+        if (location.href.indexOf("initOneSignal") !== -1 ||
           (location.pathname === '/subscribe' &&
           location.search === '') &&
           (
@@ -116,12 +114,12 @@ export default class Environment {
         // The language is zh-?
         // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional); OneSignal only supports these two Chinese variants
         for (let traditionalSubtag of Environment.TRADITIONAL_CHINESE_LANGUAGE_TAG) {
-          if (contains(languageSubtags, traditionalSubtag)) {
+          if (languageSubtags.indexOf(traditionalSubtag) !== -1) {
             return 'zh-Hant';
           }
         }
         for (let simpleSubtag of Environment.SIMPLIFIED_CHINESE_LANGUAGE_TAG) {
-          if (contains(languageSubtags, simpleSubtag)) {
+          if (languageSubtags.indexOf(simpleSubtag) !== -1) {
             return 'zh-Hans';
           }
         }

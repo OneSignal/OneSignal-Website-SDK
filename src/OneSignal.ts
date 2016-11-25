@@ -760,6 +760,19 @@ export default class OneSignal {
       });
   }
 
+  /**
+   * Used to load OneSignal asynchronously from a webpage.
+   * @InternalApi
+   */
+  static push(item) {
+    if (typeof(item) == "function")
+      item();
+    else {
+      var functionName = item.shift();
+      OneSignal[functionName].apply(null, item);
+    }
+  }
+
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = __VERSION__;
   static _VERSION = __VERSION__;
@@ -823,12 +836,6 @@ export default class OneSignal {
    * @InternalApi
    */
   static _initPopup = HttpHelper.initPopup;
-
-  /**
-   * Used to load OneSignal asynchronously from a webpage.
-   * @InternalApi
-   */
-  static push = InitHelper.push;
 
   static POSTMAM_COMMANDS = {
     CONNECTED: 'connect',
