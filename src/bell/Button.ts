@@ -5,6 +5,7 @@ import Bell from './Bell';
 import LimitStore from '../LimitStore';
 import Message from './Message';
 import SubscriptionHelper from "../helpers/SubscriptionHelper";
+import Database from "../Database";
 
 
 export default class Button extends ActiveAnimatedElement {
@@ -73,7 +74,7 @@ export default class Button extends ActiveAnimatedElement {
     this.bell.badge.inactivate();
   }
 
-  onClick(e) {
+  async onClick(e) {
     Event.trigger(Bell.EVENTS.BELL_CLICK);
     Event.trigger(Bell.EVENTS.LAUNCHER_CLICK);
 
@@ -82,9 +83,9 @@ export default class Button extends ActiveAnimatedElement {
       return;
     }
 
-    var setSubscriptionState = LimitStore.getLast('setsubscription.value');
+    const { optedOut } = await Database.getSubscription();
     if (this.bell.unsubscribed) {
-      if (setSubscriptionState === false) {
+      if (optedOut) {
         // The user manually called setSubscription(false), but the user is actually subscribed
         this.bell.launcher.activateIfInactive().then(() => {
           this.bell.showDialogProcedure();

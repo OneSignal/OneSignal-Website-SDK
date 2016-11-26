@@ -11,8 +11,9 @@ import * as Browser from 'bowser';
 import {
   isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
   contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
-  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, isValidUrl, once, md5, sha1
+  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, once, md5, sha1
 } from './utils';
+import { ValidatorUtils, ValidatorOptions } from './utils/ValidatorUtils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
@@ -29,6 +30,8 @@ import InitHelper from "./helpers/InitHelper";
 import ServiceWorkerHelper from "./helpers/ServiceWorkerHelper";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
 import HttpHelper from "./helpers/HttpHelper";
+import {NotificationActionButton} from "./models/NotificationActionButton";
+import { NotificationPermission } from './models/NotificationPermission';
 
 
 
@@ -39,7 +42,7 @@ export default class OneSignal {
    * @PublicApi
    */
   static async setDefaultNotificationUrl(url: URL) {
-    if (!isValidUrl(url))
+    if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);
@@ -179,7 +182,6 @@ export default class OneSignal {
       OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.on(Database.EVENTS.SET, EventHelper._onDbValueSet);
-      OneSignal.on(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, EventHelper._onInternalSubscriptionSet);
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
       subdomainPromise.then(() => {
         window.addEventListener('focus', (event) => {
@@ -249,7 +251,7 @@ export default class OneSignal {
                           log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
                           return 'popover-previously-dismissed';
                         }
-                        if (permission === 'denied') {
+                        if (permission === NotificationPermission.Denied) {
                           log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
                           return 'notification-permission-blocked';
                         }
@@ -261,7 +263,7 @@ export default class OneSignal {
                           log.debug('OneSignal: Not showing popover because the user was manually opted out.');
                           return 'user-intentionally-unsubscribed';
                         }
-                        if (MainHelper.isUsingHttpPermissionRequest() && permission !== 'granted') {
+                        if (MainHelper.isUsingHttpPermissionRequest() && permission !== NotificationPermission.Granted) {
                           log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
                           return 'using-http-permission-request';
                         }
@@ -371,7 +373,7 @@ export default class OneSignal {
    * @param callback A callback function that will be called when the browser's current notification permission has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  static getNotificationPermission(onComplete?) {
+  static getNotificationPermission(onComplete?): Promise<NotificationPermission> {
     return awaitOneSignalInitAndSupported()
       .then(() => {
         let safariWebId = null;
@@ -520,55 +522,29 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static addListenerForNotificationOpened(callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        OneSignal._notificationOpenedCallbacks.push(callback);
-        EventHelper.fireSavedNotificationClickedCallbacks();
-      });
+  static async addListenerForNotificationOpened(callback?) {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('addListenerForNotificationOpened', callback);
+    OneSignal.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
+      executeCallback(callback, notification);
+    });
+    EventHelper.fireStoredNotificationClicks()
   }
   /**
    * @PublicApi
    * @Deprecated
    */
-  static getIdsAvailable(callback?) {
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
+  static async getIdsAvailable(callback?: Action<{userId: Uuid, registrationId: string}>):
+    Promise<{userId: Uuid, registrationId: string}> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('getIdsAvailable', callback);
+    const { deviceId, pushToken } = await Database.getSubscription();
+    const bundle = {
+      userId: deviceId,
+      registrationId: pushToken
     }
-
-    console.info("OneSignal: getIdsAvailable() is deprecated. Please use getUserId() or getRegistrationId() instead.");
-
-    if (callback === undefined)
-      return;
-
-    function __getIdsAvailable() {
-      Promise.all([
-        OneSignal.getUserId(),
-        OneSignal.getRegistrationId()
-      ]).then(results => {
-        let [userId, registrationId] = results;
-
-        if (callback) {
-          callback({
-            userId: userId,
-            registrationId: registrationId
-          })
-        }
-      });
-    }
-
-    OneSignal.isPushNotificationsEnabled(isEnabled => {
-      if (!isEnabled) {
-        OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, newSubscriptionState => {
-          if (newSubscriptionState === true) {
-            __getIdsAvailable();
-          }
-        })
-      } else {
-        return __getIdsAvailable();
-      }
-    });
+    executeCallback(callback, bundle);
+    return bundle;
   }
 
   /**
@@ -576,137 +552,83 @@ export default class OneSignal {
    * @param callback A callback function that will be called when the current subscription status has been obtained.
    * @PublicApi
    */
-  static isPushNotificationsEnabled(callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => Promise.all([
-        OneSignal.getUserId(),
-        OneSignal.getRegistrationId(),
-        OneSignal.getNotificationPermission(),
-        OneSignal.getSubscription(),
-        ServiceWorkerHelper.isServiceWorkerActive()
-      ]))
-      .then(([userId, registrationId, notificationPermission, optIn, serviceWorkerActive]) => {
-        let isPushEnabled = false;
+  static async isPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('isPushNotificationsEnabled', callback);
+    const { deviceId, pushToken, optedOut } = await Database.getSubscription();
+    const notificationPermission = await OneSignal.getNotificationPermission();
+    const serviceWorkerActive = await ServiceWorkerHelper.isServiceWorkerActive();
 
-        if ('serviceWorker' in navigator && !SubscriptionHelper.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
-          isPushEnabled = userId &&
-            registrationId &&
-            notificationPermission === 'granted' &&
-            optIn &&
-            serviceWorkerActive;
-        } else {
-          isPushEnabled = userId &&
-            registrationId &&
-            notificationPermission === 'granted' &&
-            optIn;
-        }
-        isPushEnabled = (isPushEnabled == true);
+    let isPushEnabled = false;
 
-        if (callback) {
-          callback(isPushEnabled);
-        }
-        return isPushEnabled;
-      });
+    if (Environment.supportsServiceWorkers() &&
+        !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+        !Environment.isIframe()) {
+      isPushEnabled = !!(deviceId &&
+                      pushToken &&
+                      notificationPermission === NotificationPermission.Granted &&
+                      !optedOut &&
+                      serviceWorkerActive)
+    } else {
+      isPushEnabled = !!(deviceId &&
+                         pushToken &&
+                         notificationPermission === NotificationPermission.Granted &&
+                         !optedOut)
+    }
+
+    executeCallback(callback);
+    return isPushEnabled;
   }
 
   /**
    * @PublicApi
    */
-  static setSubscription(newSubscription) {
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
-    }
-
-    return new Promise((resolve, reject) => {
-      // Get the current subscription and user ID; will correctly retrieve values from remote iFrame IndexedDB if necessary
-      Promise.all([
-        OneSignal.getSubscription(),
-        OneSignal.getUserId()
-      ]).then(results => {
-        let [subscription, userId] = results;
-
-        if (!userId) {
-          log.warn(`Cannot set the user's subscription state to '${newSubscription}' because no user ID was stored.`);
-          resolve(false);
-          return;
-        }
-
-        if (subscription === newSubscription) {
-          // The user wants to set the new subscription to the same value; don't change it
-          resolve(false);
-          return;
-        }
-
-        // All checks pass, actually set the subscription
-        let dbOpPromise = null;
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-          dbOpPromise = new Promise((resolve, reject) => {
-            OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{
-              table: 'Options',
-              keypath: {key: "subscription", value: newSubscription}
-            }], reply => {
-              if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-                resolve();
-              } else {
-                reject('Tried to set remote db subscription value, but did not get complete response.');
-              }
-            });
-          });
-        } else {
-          dbOpPromise = Database.put('Options', {key: "subscription", value: newSubscription});
-        }
-
-        // Forward the result to OneSignal
-        dbOpPromise
-          .then(() => MainHelper.getAppId())
-          .then(appId => {
-            return OneSignalApi.put('players/' + userId, {
-              app_id: appId,
-              notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
-            }, null);
-          })
-          .then(() => {
-            EventHelper.triggerInternalSubscriptionSet(newSubscription);
-            resolve(true);
-          });
-      });
+  static async setSubscription(newSubscription: boolean): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('setSubscription', newSubscription);
+    const appConfig = await Database.getAppConfig();
+    const { appId } = appConfig;
+    const subscription = await Database.getSubscription();
+    const { optedOut, deviceId } = subscription;
+    if (!appConfig.appId)
+      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+    if (!ValidatorUtils.isValidBoolean(newSubscription))
+      throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
+    if (!deviceId)
+      throw new InvalidStateError(InvalidStateReason.NotSubscribed);
+    subscription.optedOut = !newSubscription;
+    await OneSignalApi.updatePlayer(deviceId, {
+      app_id: appId,
+      notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
     });
+    await Database.setSubscription(subscription);
+    EventHelper.checkAndTriggerSubscriptionChanged();
   }
 
   /**
    * @PendingPublicApi
    */
-  static isOptedOut(callback) {
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
-    }
-
-    return OneSignal.getSubscription().then(manualSubscriptionStatus => {
-      if (callback) {
-        callback(!manualSubscriptionStatus);
-      }
-      return !manualSubscriptionStatus;
-    });
+  static async isOptedOut(callback?: Action<boolean>): Promise<boolean> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('isOptedOut', callback);
+    const subscription = await Database.getSubscription();
+    const optedOut = subscription.optedOut;
+    executeCallback(callback, optedOut);
+    return optedOut;
   }
 
   /**
    * Returns a promise that resolves once the manual subscription override has been set.
    * @private
-   * @returns {Promise}
    * @PendingPublicApi
    */
-  static optOut(doOptOut, callback) {
-    if (doOptOut !== false || doOptOut !== true) {
-      throw new Error(`Invalid parameter '${doOptOut}' passed to OneSignal.optOut(). You must specify true or false.`);
-    }
-    return OneSignal.setSubscription(doOptOut).then(() => {
-        if (callback) {
-          callback();
-        }
-      }
-    );
+  static async optOut(doOptOut: boolean, callback?: Action<void>): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('optOut', doOptOut, callback);
+    if (!ValidatorUtils.isValidBoolean(doOptOut))
+      throw new InvalidArgumentError('doOptOut', InvalidArgumentReason.Malformed);
+    await OneSignal.setSubscription(!doOptOut);
+    executeCallback(callback);
   }
 
   /**
@@ -715,49 +637,66 @@ export default class OneSignal {
    * @PublicApi
    */
   static async getUserId(callback?: Action<Uuid>): Promise<Uuid> {
+    await awaitOneSignalInitAndSupported();
     logMethodCall('getUserId', callback);
-    await awaitOneSignalInitAndSupported()
-    const userId: Uuid = await Database.get<Uuid>('Ids', 'userId');
-    executeCallback<Uuid>(callback, userId);
-    return userId;
+    const subscription = await Database.getSubscription();
+    const deviceId = subscription.deviceId;
+    executeCallback(callback, deviceId);
+    return deviceId;
   }
 
   /**
-   * Returns a promise that resolves to the stored OneSignal registration ID if one is set; otherwise null.
-   * @param callback A function accepting one parameter for the OneSignal registration ID.
-   * @returns {Promise.<T>}
+   * Returns a promise that resolves to the stored push token if one is set; otherwise null.
    * @PublicApi
    */
-  static getRegistrationId(callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => Database.get('Ids', 'registrationId'))
-      .then(result => {
-        if (callback) {
-          callback(result)
-        }
-        return result;
-      });
+  static async getRegistrationId(callback?: Action<string>): Promise<string> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('getRegistrationId', callback);
+    const subscription = await Database.getSubscription();
+    const pushToken = subscription.pushToken;
+    executeCallback(callback, pushToken);
+    return pushToken;
   }
 
   /**
    * Returns a promise that resolves to false if setSubscription(false) is "in effect". Otherwise returns true.
-   * This means a return value of true does not mean the user is subscribed, only that the user did not call setSubcription(false).
+   * This means a return value of true does not mean the user is subscribed, only that the user did not call
+   * setSubcription(false).
    * @private
-   * @returns {Promise}
    * @PublicApi (given to customers)
    */
-  static getSubscription(callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => Database.get('Options', 'subscription'))
-      .then(result => {
-        if (result == null) {
-          result = true;
-        }
-        if (callback) {
-          callback(result)
-        }
-        return result;
-      });
+  static async getSubscription(callback?: Action<boolean>): Promise<boolean> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('getSubscription', callback);
+    const subscription = await Database.getSubscription();
+    const subscriptionStatus = !subscription.optedOut;
+    executeCallback(callback, subscriptionStatus);
+    return subscriptionStatus;
+  }
+
+  /**
+   * @PublicApi
+   */
+  static async sendSelfNotification(title: string = 'OneSignal Test Message',
+                              message: string = 'This is an example notification',
+                              url: string = new URL(location.href).origin + '?_osp=do_not_open',
+                              icon: URL,
+                              data: Map<String, any>,
+                              buttons: Array<NotificationActionButton>): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
+    const appConfig = await Database.getAppConfig();
+    const subscription = await Database.getSubscription();
+    if (!appConfig.appId)
+      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+    if (!subscription.deviceId)
+      throw new InvalidStateError(InvalidStateReason.NotSubscribed);
+    if (!ValidatorUtils.isValidUrl(url))
+      throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
+    if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
+      throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
+    return await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], {'en': title}, {'en': message},
+                                               url, icon, data, buttons);
   }
 
   /**
@@ -811,7 +750,6 @@ export default class OneSignal {
   static popupPostmam = null;
   static helpers = MainHelper;
   static objectAssign = objectAssign;
-  static sendSelfNotification = MainHelper.sendSelfNotification;
   static SERVICE_WORKER_UPDATER_PATH = 'OneSignalSDKUpdaterWorker.js';
   static SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';
   static SERVICE_WORKER_PARAM = {scope: '/'};
@@ -853,7 +791,6 @@ export default class OneSignal {
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
-    NOTIFICATION_OPENED: 'postmam.notificationOpened',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
@@ -898,9 +835,9 @@ export default class OneSignal {
      */
     NOTIFICATION_DISMISSED: 'notificationDismiss',
     /**
-     * An internal legacy event that should be deprecated.
+     * New event replacing legacy addNotificationOpenedHandler(). Used when the notification was clicked.
      */
-    INTERNAL_SUBSCRIPTIONSET: 'subscriptionSet',
+    NOTIFICATION_CLICKED: 'notificationDismiss',
     /**
      * Occurs after the document ready event fires and, for HTTP sites, the iFrame to subdomain.onesignal.com has
      * loaded.

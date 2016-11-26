@@ -154,14 +154,7 @@ must be opened as a result of a subscription call.</span>`);
           }
         }));
 
-        opPromises.push(Database.get("NotificationOpened", OneSignal.config.pageUrl)
-                                .then(notificationOpenedResult => {
-                                  if (notificationOpenedResult) {
-                                    Database.remove("NotificationOpened", OneSignal.config.pageUrl);
-                                    OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, notificationOpenedResult);
-                                  }
-                                }));
-
+        opPromises.push(EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl));
 
         opPromises.push(InitHelper.initSaveState());
         opPromises.push(InitHelper.storeInitialValues());
@@ -288,10 +281,6 @@ must be opened as a result of a subscription call.</span>`);
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, message => {
           let {forceUpdatePermission} = message.data;
           EventHelper.triggerNotificationPermissionChanged(forceUpdatePermission);
-          return false;
-        });
-        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, message => {
-          EventHelper.fireTransmittedNotificationClickedCallbacks(message.data);
           return false;
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, message => {

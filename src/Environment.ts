@@ -132,4 +132,8 @@ export default class Environment {
       return 'en';
     }
   }
+
+  static supportsServiceWorkers() {
+    return 'serviceWorker' in navigator;
+  }
 }

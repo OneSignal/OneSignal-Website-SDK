@@ -9,9 +9,13 @@ export class Subscription {
     /**
      * The GCM/FCM registration token, along with the full URL.
      */
-    endpoint: URL;
+    pushEndpoint: URL;
     /**
      * The GCM/FCM registration token, just the token part.
      */
-    token: string;
+    pushToken: string;
+    /**
+     * Whether the user is opted out of notifications, set by setSubscription().
+     */
+    optedOut: boolean;
 }

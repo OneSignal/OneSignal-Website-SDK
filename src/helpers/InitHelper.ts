@@ -35,7 +35,6 @@ export default class InitHelper {
       OneSignal.getSubscription()
     ])
                   .then(([isPushEnabled, notificationPermission, userId, optIn]) => {
-                    LimitStore.put('setsubscription.value', optIn);
                     return Promise.all([
                       Database.put('Options', {key: 'isPushEnabled', value: isPushEnabled}),
                       Database.put('Options', {key: 'notificationPermission', value: notificationPermission})

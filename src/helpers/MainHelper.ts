@@ -271,29 +271,6 @@ export default class MainHelper {
            });
   }
 
-  static sendSelfNotification(title, message, url, icon, data, buttons) {
-    if (!title) {
-      title = 'OneSignal Test Message';
-    }
-    if (!message) {
-      message = 'This is an example notification.';
-    }
-    if (!url) {
-      url = new URL(location.href).origin + '?_osp=do_not_open';
-    }
-    Promise.all([
-      MainHelper.getAppId(),
-      OneSignal.getUserId()
-    ])
-           .then(([appId, userId]) => {
-             if (userId && appId) {
-               OneSignalApi.sendNotification(appId, [userId], {'en': title}, {'en': message}, url, icon, data, buttons)
-             } else {
-               log.warn('Could not send self a test notification because there is no valid user ID or app ID.');
-             }
-           });
-  }
-
   /**
    * Calls Notification.requestPermission(), but returns a Promise instead of accepting a callback like the a ctual
    * Notification.requestPermission();
@@ -394,11 +371,7 @@ export default class MainHelper {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
     OneSignal._channel.on('notification.clicked', function handler(context, data) {
-      if (Environment.isHost()) {
-        EventHelper.fireTransmittedNotificationClickedCallbacks(data);
-      } else if (Environment.isIframe()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_OPENED, data);
-      }
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);

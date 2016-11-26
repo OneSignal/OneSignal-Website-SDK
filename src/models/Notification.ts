@@ -1,5 +1,6 @@
 import {Url} from "url";
 import { Uuid } from "./Uuid";
+import {NotificationActionButton} from "./NotificationActionButton";
 
 
 interface Notification {
@@ -9,7 +10,7 @@ interface Notification {
     data: Map<string, any>,
     url: Url,
     icon: Url,
-    buttons: Array<{action: string, title: string, icon: string, url: string}>
+    buttons: Array<NotificationActionButton>
 }
 
 export { Notification };

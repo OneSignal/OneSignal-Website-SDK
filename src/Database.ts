@@ -11,6 +11,7 @@ import {ServiceWorkerConfig} from "./models/ServiceWorkerConfig";
 import {ServiceWorkerState} from "./models/ServiceWorkerState";
 import {Notification} from "./models/Notification";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
+import {Timestamp} from "./models/Timestamp";
 
 export default class Database {
 
@@ -69,7 +70,7 @@ export default class Database {
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
-  static get<T>(table: string, key: string): Promise<T> {
+  static get<T>(table: string, key?: string): Promise<T> {
     return new Promise((resolve) => {
       if (!Environment.isServiceWorker() && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
         OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{table: table, key: key}], reply => {
@@ -163,6 +164,8 @@ export default class Database {
     const state = new AppState();
     state.defaultNotificationUrl = await Database.get<URL>('Options', 'defaultUrl');
     state.defaultNotificationTitle = await Database.get<string>('Options', 'defaultTitle');
+    state.lastKnownPushEnabled = await Database.get<boolean>('Options', 'isPushEnabled');
+    state.clickedNotifications = await Database.get<Map<URL, [Notification, Timestamp]>>('NotificationOpened');
     return state;
   }
 
@@ -171,6 +174,15 @@ export default class Database {
       await Database.put("Options", {key: "defaultUrl", value: appState.defaultNotificationUrl});
     if (appState.defaultNotificationTitle)
       await Database.put("Options", {key: "defaultTitle", value: appState.defaultNotificationTitle});
+    if (appState.lastKnownPushEnabled)
+      await Database.put('Options', {key: 'isPushEnabled', value: appState.lastKnownPushEnabled});
+    if (appState.clickedNotifications) {
+      appState.clickedNotifications.forEach(async (notification, url) => {
+        await Database.put('NotificationOpened', {url: url,
+                                                  data: (notification as any).data,
+                                                  timestamp: (notification as any).timestamp});
+      });
+    }
   }
 
   static async getServiceWorkerConfig(): Promise<ServiceWorkerConfig> {
@@ -213,18 +225,36 @@ export default class Database {
   static async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
     subscription.deviceId = await Database.get<Uuid>('Ids', 'userId');
-    subscription.endpoint = await Database.get<URL>('Options', 'subscriptionEndpoint');
-    subscription.token = await Database.get<string>('Ids', 'registrationId');
+    subscription.pushEndpoint = await Database.get<URL>('Options', 'subscriptionEndpoint');
+    subscription.pushToken = await Database.get<string>('Ids', 'registrationId');
+
+    // The preferred database key to store our subscription
+    const dbOptedOut = await Database.get<boolean>('Options', 'optedOut');
+    // For backwards compatibility, we need to read from this if the above is not found
+    const dbNotOptedOut = await Database.get<boolean>('Options', 'subscription');
+
+    if (dbOptedOut) {
+      subscription.optedOut = dbOptedOut;
+    } else {
+      if (dbNotOptedOut == null) {
+        subscription.optedOut = false;
+      } else {
+        subscription.optedOut = !dbNotOptedOut;
+      }
+    }
+
     return subscription;
   }
 
   static async setSubscription(subscription: Subscription) {
     if (subscription.deviceId)
       await Database.put('Ids', {type: 'userId', id: subscription.deviceId});
-    if (subscription.endpoint)
-      await Database.put('Options', {key: 'subscriptionEndpoint', value: subscription.endpoint});
-    if (subscription.token)
-      await Database.put('Ids', {key: 'registrationId', value: subscription.token});
+    if (subscription.pushEndpoint)
+      await Database.put('Options', {key: 'subscriptionEndpoint', value: subscription.pushEndpoint});
+    if (subscription.pushToken)
+      await Database.put('Ids', {type: 'registrationId', id: subscription.pushToken});
+    if (subscription.optedOut)
+      await Database.put('Options', {key: 'subscription', value: subscription.optedOut});
   }
 
   /**

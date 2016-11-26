@@ -7,7 +7,7 @@ import * as Browser from 'bowser';
 import {
   getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
   isPushNotificationsSupported, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb,
-  unsubscribeFromPush, decodeHtmlEntities
+  unsubscribeFromPush, decodeHtmlEntities, logMethodCall
 } from '../utils';
 import MainHelper from "./MainHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
@@ -20,29 +20,19 @@ export default class EventHelper {
     EventHelper.checkAndTriggerSubscriptionChanged();
   }
 
-  static checkAndTriggerSubscriptionChanged() {
-    log.info('Called %ccheckAndTriggerSubscriptionChanged', getConsoleStyle('code'));
-
-    let _currentSubscription, _subscriptionChanged;
-    Promise.all([
-      OneSignal.isPushNotificationsEnabled(),
-      Database.get('Options', 'isPushEnabled')
-    ])
-           .then(([currentSubscription, previousSubscription]) => {
-             _currentSubscription = currentSubscription;
-             let subscriptionChanged = (previousSubscription === null ||
-             previousSubscription !== currentSubscription);
-             _subscriptionChanged = subscriptionChanged;
-             if (subscriptionChanged) {
-               log.info('New Subscription:', currentSubscription);
-               return Database.put('Options', {key: 'isPushEnabled', value: currentSubscription});
-             }
-           })
-           .then(() => {
-             if (_subscriptionChanged) {
-               EventHelper.triggerSubscriptionChanged(_currentSubscription);
-             }
-           });
+  static async checkAndTriggerSubscriptionChanged() {
+    logMethodCall('checkAndTriggerSubscriptionChanged');
+    const pushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const appState = await Database.getAppState();
+    const { lastKnownPushEnabled } = appState;
+    const didStateChange = (lastKnownPushEnabled === null || pushEnabled !== lastKnownPushEnabled);
+    if (!didStateChange)
+      return;
+    log.info(`The user's subscription state changed from ` +
+              `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${pushEnabled}`);
+    appState.lastKnownPushEnabled = pushEnabled;
+    await Database.setAppState(appState);
+    EventHelper.triggerSubscriptionChanged(pushEnabled);
   }
 
   static _onSubscriptionChanged(newSubscriptionState) {
@@ -98,12 +88,6 @@ export default class EventHelper {
     }
   }
 
-  static _onInternalSubscriptionSet(event) {
-    var newSubscriptionValue = event;
-    LimitStore.put('setsubscription.value', newSubscriptionValue);
-    EventHelper.checkAndTriggerSubscriptionChanged();
-  }
-
   static onDatabaseRebuilt() {
     OneSignal._isNewVisitor = true;
   }
@@ -136,42 +120,29 @@ export default class EventHelper {
     Event.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
   }
 
-  static triggerInternalSubscriptionSet(value) {
-    Event.trigger(OneSignal.EVENTS.INTERNAL_SUBSCRIPTIONSET, value);
-  }
+  /**
+   * When notifications are clicked, because the site isn't open, the notification is stored in the database. The next
+   * time the page opens, the event is triggered if its less than 5 minutes (usually page opens instantly from click).
+   *
+   * This method is fired for both HTTPS and HTTP sites, so for HTTP sites, the host URL needs to be used, not the
+   * subdomain.onesignal.com URL.
+   */
+  static async fireStoredNotificationClicks(url: string = document.URL) {
+    const appState = await Database.getAppState();
+    const pageClickedNotifications = appState.clickedNotifications[url];
+    if (pageClickedNotifications) {
+      // Remove the clicked notification; we've processed it now
+      delete appState.clickedNotifications[url];
+      Database.setAppState(pageClickedNotifications);
 
-  static fireTransmittedNotificationClickedCallbacks(data) {
-    for (let notificationOpenedCallback of OneSignal._notificationOpenedCallbacks) {
-      notificationOpenedCallback(data);
+      const { data: notification, timestamp } = pageClickedNotifications;
+
+      if (timestamp) {
+        const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
+        if (minutesSinceNotificationClicked > 5)
+          return;
+      }
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
     }
-  }
-
-  static fireSavedNotificationClickedCallbacks() {
-    Database.get("NotificationOpened", document.URL)
-            .then(notificationOpened => {
-              if (notificationOpened) {
-                Database.remove("NotificationOpened", document.URL);
-                let notificationData = (notificationOpened as any).data;
-                let timestamp = (notificationOpened as any).timestamp;
-                let discardNotification = false;
-                // 3/4: Timestamp is a new feature and previous notification opened results don't have it
-                if (timestamp) {
-                  let now = Date.now();
-                  let diffMilliseconds = Date.now() - timestamp;
-                  let diffMinutes = diffMilliseconds / 1000 / 60;
-                  /*
-                   When the notification is clicked, its data is saved to IndexedDB, a new tab is opened, which then retrieves the just-saved data and runs this code.
-                   If more than 5 minutes has passed, the page is probably being opened a long time later; do not fire the notification click event.
-                   */
-                  discardNotification = diffMinutes > 5;
-                }
-                if (discardNotification)
-                  return;
-
-                for (let notificationOpenedCallback of OneSignal._notificationOpenedCallbacks) {
-                  notificationOpenedCallback(notificationData);
-                }
-              }
-            });
   }
 }

@@ -62,7 +62,7 @@ export default class IndexedDb {
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
-  static async get(table: string, key: string): Promise<any> {
+  static async get(table: string, key?: string): Promise<any> {
     let db = await IndexedDb.getInstance();
     if (key) {
       // Return a table-key value

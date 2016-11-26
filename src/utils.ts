@@ -448,17 +448,6 @@ export function substringAfter(string, search) {
   return string.substr(string.indexOf(search) + search.length);
 }
 
-export function isValidUrl(url: any) {
-  if (url === null)
-    return true;
-  try {
-    new URL(url);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
 export function once(targetSelectorOrElement, event, task, manualDestroy=false) {
   if (!event) {
     log.error('Cannot call on() with no event: ', event);
