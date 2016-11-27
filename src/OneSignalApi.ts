@@ -3,6 +3,7 @@ import * as log from 'loglevel';
 import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils'
 import {Uuid} from "./models/Uuid";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
+import * as objectAssign from 'object-assign';
 
 
 export default class OneSignalApi {
@@ -106,8 +107,8 @@ export default class OneSignalApi {
     return OneSignalApi.get(`players/${playerId}?app_id=${appId}`);
   }
 
-  static updatePlayer(id: Uuid, options?) {
-    return OneSignalApi.put(`players/${id}`, options);
+  static updatePlayer(appId: Uuid, playerId: Uuid, options?: Object) {
+    return OneSignalApi.put(`players/${playerId}`, objectAssign({app_id: appId}, options));
   }
 
   static sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons) {

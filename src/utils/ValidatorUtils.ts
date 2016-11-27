@@ -26,11 +26,20 @@ export class ValidatorUtils {
     }
   }
 
-  static isValidBoolean(bool: boolean, options?: ValidatorOptions) {
+  static isValidBoolean(bool: any, options?: ValidatorOptions) {
     if (options && options.allowNull && bool === null)
       return true;
     else
       return bool === true || bool === false;
+  }
+
+  static isValidArray(array: any, options?: ValidatorOptions) {
+    if (options && options.allowNull && array === null)
+      return true;
+    else if (options && options.allowEmpty && (array === null || array === undefined))
+      return true;
+    else
+      return array instanceof Array;
   }
 }
 

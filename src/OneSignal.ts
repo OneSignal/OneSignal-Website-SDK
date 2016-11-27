@@ -11,7 +11,7 @@ import * as Browser from 'bowser';
 import {
   isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
   contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
-  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, once, md5, sha1
+  wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, once, md5, sha1, awaitSdkEvent
 } from './utils';
 import { ValidatorUtils, ValidatorOptions } from './utils/ValidatorUtils';
 import * as objectAssign from 'object-assign';
@@ -77,10 +77,11 @@ export default class OneSignal {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
     logMethodCall('syncHashedEmail', email);
-    const subscription = await Database.getSubscription();
-    if (!subscription.deviceId)
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    if (!deviceId)
       throw new InvalidStateError(InvalidStateReason.NotSubscribed);
-    const result = await OneSignalApi.updatePlayer(subscription.deviceId, {
+    const result = await OneSignalApi.updatePlayer(appId, deviceId, {
       em_m: md5(sanitizedEmail),
       em_s: sha1(sanitizedEmail)
     });
@@ -393,7 +394,17 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static getTags(callback) {
+  static async getTags(callback) {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('getTags', callback);
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    const { tags } = await OneSignalApi.getPlayer(appId, deviceId);
+    if (!deviceId) {
+      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+      return null;
+    }
+
     return awaitOneSignalInitAndSupported()
       .then(() => OneSignal.getUserId())
       .then(userId => {
@@ -415,120 +426,77 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static sendTag(key, value, callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        let tag = {};
-        tag[key] = value;
-        return OneSignal.sendTags(tag, callback);
-      });
+  static async sendTag(key: string, value: any, callback?: Action<Object>): Promise<Object> {
+    const tag = {};
+    tag[key] = value;
+    return await OneSignal.sendTags(tag, callback);
   }
 
   /**
    * @PublicApi
    */
-  static sendTags(tags, callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        // Our backend considers false as removing a tag, so this allows false to be stored as a value
-        if (tags) {
-          Object.keys(tags).forEach(key => {
-            if (tags[key] === false) {
-              tags[key] = "false";
-            }
-          });
-        }
-
-        let willResolveInFuture = false;
-
-        return new Promise((innerResolve, innerReject) => {
-          Promise.all([
-            MainHelper.getAppId(),
-            OneSignal.getUserId()
-          ])
-                 .then(([appId, userId]) => {
-                   if (userId) {
-                     return OneSignalApi.put(`players/${userId}`, {
-                       app_id: appId,
-                       tags: tags
-                     }, null)
-                   }
-                   else {
-                     willResolveInFuture = true;
-                     OneSignal.on(Database.EVENTS.SET, e => {
-                       if (e && e.type === 'userId') {
-                         OneSignal.sendTags(tags, callback).then(innerResolve);
-                         return true;
-                       }
-                     });
-                   }
-                 })
-                 .then(() => {
-                   if (!willResolveInFuture) {
-                     if (callback) {
-                       callback(tags);
-                     }
-                     innerResolve(tags);
-                   }
-                 })
-                 .catch(e => {
-                   log.error('sendTags:', e);
-                   innerReject(e);
-                 });
-        });
-      })
+  static async sendTags(tags: Object, callback?: Action<Object>): Promise<Object> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('sendTags', tags, callback);
+    if (Object.keys(tags).length === 0) {
+      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+      return;
+    }
+    // Our backend considers false as removing a tag, so convert false -> "false" to allow storing as a value
+    Object.keys(tags).forEach(key => {
+      if (tags[key] === false)
+        tags[key] = "false";
+    });
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    if (!deviceId) {
+      await awaitSdkEvent(Database.EVENTS.SET);
+    }
+    await OneSignalApi.updatePlayer(appId, deviceId, {
+      tags: tags
+    });
+    executeCallback(callback, tags);
+    return tags;
   }
 
   /**
    * @PublicApi
    */
-  static deleteTag(tag) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        if (typeof tag === 'string' || tag instanceof String) {
-          return OneSignal.deleteTags([tag]);
-        } else {
-          return Promise.reject(new Error(`OneSignal: Invalid tag '${tag}' to delete. You must pass in a string.`));
-        }
-      });
+  static async deleteTag(tag: string): Promise<Array<string>> {
+    return await OneSignal.deleteTags([tag]);
   }
 
   /**
    * @PublicApi
    */
-  static deleteTags(tags, callback?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        if (tags instanceof Array && tags.length > 0) {
-          var jsonPair = {};
-          var length = tags.length;
-          for (var i = 0; i < length; i++)
-            jsonPair[tags[i]] = "";
-
-          return OneSignal.sendTags(jsonPair);
-        } else {
-          throw new Error(`OneSignal: Invalid tags '${tags}' to delete. You must pass in array of strings with at least one tag string to be deleted.`);
-        }
-      })
-      .then(emptySentTagsObj => {
-        let emptySentTags = Object.keys(emptySentTagsObj);
-        if (callback) {
-          callback(emptySentTags);
-        }
-        return emptySentTags;
-      });
+  static async deleteTags(tags: Array<string>, callback?: Action<Array<string>>): Promise<Array<string>> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('deleteTags', tags, callback);
+    if (!ValidatorUtils.isValidArray(tags))
+      throw new InvalidArgumentError('tags', InvalidArgumentReason.Malformed);
+    if (tags.length === 0) {
+      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+    }
+    const tagsToSend = {};
+    for (let tag of tags) {
+      tagsToSend[tag] = '';
+    }
+    const deletedTags = await OneSignal.sendTags(tagsToSend);
+    const deletedTagKeys = Object.keys(deletedTags);
+    executeCallback(callback, deletedTagKeys);
+    return deletedTagKeys;
   }
 
   /**
    * @PublicApi
    */
-  static async addListenerForNotificationOpened(callback?) {
+  static async addListenerForNotificationOpened(callback?: Action<void>): void {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
     OneSignal.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
       executeCallback(callback, notification);
     });
-    EventHelper.fireStoredNotificationClicks()
+    EventHelper.fireStoredNotificationClicks();
   }
   /**
    * @PublicApi
@@ -597,8 +565,7 @@ export default class OneSignal {
     if (!deviceId)
       throw new InvalidStateError(InvalidStateReason.NotSubscribed);
     subscription.optedOut = !newSubscription;
-    await OneSignalApi.updatePlayer(deviceId, {
-      app_id: appId,
+    await OneSignalApi.updatePlayer(appId, deviceId, {
       notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
     });
     await Database.setSubscription(subscription);

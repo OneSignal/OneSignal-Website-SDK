@@ -493,6 +493,16 @@ export function getSdkLoadCount() {
   return (<any>window).__oneSignalSdkLoadCount || 0;
 }
 
+export async function awaitSdkEvent(eventName: string, predicate?: Action<any>) {
+  return await new Promise((resolve, reject) => {
+    OneSignal.once(eventName, event => {
+      const predicateResult = predicate(event);
+      if (predicateResult)
+        resolve(event);
+    });
+  });
+}
+
 /**
  * Increments the counter describing the number of times the SDK has been loaded into the browser.
  * Expects a browser environment, otherwise this call will fail.
