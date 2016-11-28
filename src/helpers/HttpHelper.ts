@@ -97,9 +97,6 @@ must be opened as a result of a subscription call.</span>`);
       let retrievalOpPromises = [];
       for (let retrieval of retrievals) {
         let {table, key} = retrieval;
-        if (!table || !key) {
-          log.error('Missing table or key for remote database get.', 'table:', table, 'key:', key);
-        }
         retrievalOpPromises.push(Database.get(table, key));
       }
       Promise.all(retrievalOpPromises)

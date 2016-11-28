@@ -54,14 +54,6 @@ export default class OneSignalApi {
           else {
             let error = OneSignalApi.identifyError(json);
             if (error === 'no-user-id-error') {
-              if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-                return wipeIndexedDb()
-                    .then(() => Promise.reject(json));
-              } else {
-                return wipeIndexedDb()
-                    .then(() => unsubscribeFromPush())
-                    .then(() => Promise.reject(json));
-              }
             } else {
               return Promise.reject(json);
             }

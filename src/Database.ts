@@ -177,11 +177,12 @@ export default class Database {
     if (appState.lastKnownPushEnabled)
       await Database.put('Options', {key: 'isPushEnabled', value: appState.lastKnownPushEnabled});
     if (appState.clickedNotifications) {
-      appState.clickedNotifications.forEach(async (notification, url) => {
+      for (let url of Object.keys(appState.clickedNotifications)) {
+        const notificationDetails = appState.clickedNotifications[url];
         await Database.put('NotificationOpened', {url: url,
-                                                  data: (notification as any).data,
-                                                  timestamp: (notification as any).timestamp});
-      });
+                                                  data: (notificationDetails as any).data,
+                                                  timestamp: (notificationDetails as any).timestamp});
+      }
     }
   }
 

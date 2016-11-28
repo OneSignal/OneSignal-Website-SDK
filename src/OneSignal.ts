@@ -110,9 +110,6 @@ export default class OneSignal {
 
     ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
 
-    if (Environment.isBrowser() && window.localStorage && window.localStorage["onesignal.debugger.init"])
-      debugger;
-
     if (OneSignal._initCalled) {
       log.error(`OneSignal: Please don't call init() more than once. Any extra calls to init() are ignored. The following parameters were not processed: %c${JSON.stringify(Object.keys(options))}`, getConsoleStyle('code'));
       return 'return';
@@ -399,28 +396,14 @@ export default class OneSignal {
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    const { tags } = await OneSignalApi.getPlayer(appId, deviceId);
     if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+      log.info(new InvalidStateError(InvalidStateReason.NotSubscribed));
       return null;
     }
-
-    return awaitOneSignalInitAndSupported()
-      .then(() => OneSignal.getUserId())
-      .then(userId => {
-        if (userId) {
-          return OneSignalApi.get(`players/${userId}`, null, null);
-        } else {
-          return null;
-        }
-      })
-      .then((response: any) => {
-        let tags = (response ? response.tags : null);
-        if (callback) {
-          callback(tags);
-        }
-        return tags;
-      });
+    const { tags } = await OneSignalApi.getPlayer(appId, deviceId);
+    executeCallback(callback, tags);
+    return tags;
   }
 
   /**
@@ -438,8 +421,9 @@ export default class OneSignal {
   static async sendTags(tags: Object, callback?: Action<Object>): Promise<Object> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendTags', tags, callback);
-    if (Object.keys(tags).length === 0) {
+    if (!tags || Object.keys(tags).length === 0) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+      log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
       return;
     }
     // Our backend considers false as removing a tag, so convert false -> "false" to allow storing as a value
@@ -448,11 +432,13 @@ export default class OneSignal {
         tags[key] = "false";
     });
     const { appId } = await Database.getAppConfig();
-    const { deviceId } = await Database.getSubscription();
+    var { deviceId } = await Database.getSubscription();
     if (!deviceId) {
-      await awaitSdkEvent(Database.EVENTS.SET);
+      await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
-    await OneSignalApi.updatePlayer(appId, deviceId, {
+    // After the user subscribers, he will have a device ID, so get it again
+    var { deviceId: newDeviceId } = await Database.getSubscription();
+    await OneSignalApi.updatePlayer(appId, newDeviceId, {
       tags: tags
     });
     executeCallback(callback, tags);
@@ -476,6 +462,7 @@ export default class OneSignal {
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Malformed);
     if (tags.length === 0) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+      log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
     }
     const tagsToSend = {};
     for (let tag of tags) {
@@ -490,7 +477,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async addListenerForNotificationOpened(callback?: Action<void>): void {
+  static async addListenerForNotificationOpened(callback?: Action<void>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
     OneSignal.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
@@ -562,8 +549,11 @@ export default class OneSignal {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId)
-      throw new InvalidStateError(InvalidStateReason.NotSubscribed);
+    if (!deviceId) {
+      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
+      log.info(new InvalidStateError(InvalidStateReason.NotSubscribed));
+      return;
+    }
     subscription.optedOut = !newSubscription;
     await OneSignalApi.updatePlayer(appId, deviceId, {
       notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
@@ -645,7 +635,7 @@ export default class OneSignal {
    * @PublicApi
    */
   static async sendSelfNotification(title: string = 'OneSignal Test Message',
-                              message: string = 'This is an example notification',
+                              message: string = 'This is an example notification.',
                               url: string = new URL(location.href).origin + '?_osp=do_not_open',
                               icon: URL,
                               data: Map<String, any>,
@@ -728,6 +718,7 @@ export default class OneSignal {
   static _thisIsTheModal: boolean;
   static modalPostmam: any;
   static httpPermissionRequestPostModal: any;
+  static closeNotifications = ServiceWorkerHelper.closeNotifications;
 
 
   /**

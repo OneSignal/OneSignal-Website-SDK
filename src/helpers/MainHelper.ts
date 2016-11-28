@@ -246,7 +246,7 @@ export default class MainHelper {
                     MainHelper.beginTemporaryBrowserSession();
 
                     if (userId) {
-                      Database.put("Ids", {type: "userId", id: userId});
+                      return Database.put("Ids", {type: "userId", id: userId});
                     }
                   })
                   .then(() => {

@@ -19,7 +19,7 @@ import IndexedDb from '../../src/IndexedDb';
 import Environment from '../../src/Environment';
 import Postmam from '../../src/Postmam';
 import { DEV_FRAME_HOST } from '../../src/vars';
-import Database from '../../src/database';
+import Database from '../../src/Database';
 import MultiStepSoloTest from './multiStepSoloTest';
 import isUuid from 'validator/lib/isUuid';
 import Extension from './extension';
@@ -220,8 +220,12 @@ describe('Web SDK Tests', function () {
 
                         try {
                             // We actually do NOT want this event (if we get it the test fails)
-                            await Utils.expectEvent('permissionPromptDisplay', 2000);
-                            throw "test-failed-prompt-displayed";
+                            try {
+                                await Utils.expectEvent('permissionPromptDisplay', 2000);
+                                throw "test-failed-prompt-displayed";
+                            } catch (e) {
+
+                            }
                         } catch (e) {
                             if (e === "test-failed-prompt-displayed") {
                                 throw new Error("The test failed because the permission prompt was displayed" +
@@ -344,8 +348,6 @@ describe('Web SDK Tests', function () {
                             Object.keys(expectedTags).forEach(tag => {
                                 expect(receivedTags.hasOwnProperty(tag)).to.be.false;
                             });
-                            resolve("successful");
-                            done();
                         }
 
                         function onSendTagsComplete(tagsSent) {

@@ -33,6 +33,19 @@ export default class ServiceWorkerHelper {
     }
   }
 
+  static closeNotifications() {
+    if (navigator.serviceWorker && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      navigator.serviceWorker.getRegistration()
+        .then(registration => {
+          if (registration === undefined || !registration.active) {
+            throw new Error('There is no active service worker.');
+          } else if (OneSignal._channel) {
+            OneSignal._channel.emit('data', 'notification.closeall');
+          }
+        });
+    }
+  }
+
   /*
    Updates an existing OneSignal-only service worker if an older version exists. Does not install a new service worker if none is available or overwrite other service workers.
    This also differs from the original update code we have below in that we do not subscribe for push after.

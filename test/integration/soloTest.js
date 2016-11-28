@@ -131,7 +131,7 @@ export default class SoloTest {
             data: error ? JSON.stringify(error, Object.getOwnPropertyNames(error), 4) : JSON.stringify("test_successful"),
             callback: (success, reply) => {
                 if (reply.finished && (this.options.close !== false) && !error) {
-                    window.close();
+                    //window.close();
                 }
             }
         });

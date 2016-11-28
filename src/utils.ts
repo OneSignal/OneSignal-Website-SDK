@@ -496,9 +496,11 @@ export function getSdkLoadCount() {
 export async function awaitSdkEvent(eventName: string, predicate?: Action<any>) {
   return await new Promise((resolve, reject) => {
     OneSignal.once(eventName, event => {
-      const predicateResult = predicate(event);
-      if (predicateResult)
-        resolve(event);
+      if (predicate) {
+        const predicateResult = predicate(event);
+        if (predicateResult)
+          resolve(event);
+      } else resolve(event);
     });
   });
 }
