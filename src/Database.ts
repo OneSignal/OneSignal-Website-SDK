@@ -179,9 +179,13 @@ export default class Database {
     if (appState.clickedNotifications) {
       for (let url of Object.keys(appState.clickedNotifications)) {
         const notificationDetails = appState.clickedNotifications[url];
-        await Database.put('NotificationOpened', {url: url,
-                                                  data: (notificationDetails as any).data,
-                                                  timestamp: (notificationDetails as any).timestamp});
+        if (notificationDetails) {
+          await Database.put('NotificationOpened', {
+            url: url,
+            data: (notificationDetails as any).data,
+            timestamp: (notificationDetails as any).timestamp
+          });
+        }
       }
     }
   }
