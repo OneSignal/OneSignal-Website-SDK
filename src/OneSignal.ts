@@ -705,7 +705,11 @@ export default class OneSignal {
   static indexedDb = IndexedDb;
   static iframePostmam = null;
   static popupPostmam = null;
-  static helpers = MainHelper;
+  static mainHelper = MainHelper;
+  static subscriptionHelper = SubscriptionHelper;
+  static workerHelper = ServiceWorkerHelper;
+  static httpHelper =  HttpHelper;
+  static eventHelper = EventHelper;
   static objectAssign = objectAssign;
   static SERVICE_WORKER_UPDATER_PATH = 'OneSignalSDKUpdaterWorker.js';
   static SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';

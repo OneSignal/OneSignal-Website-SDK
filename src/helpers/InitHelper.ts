@@ -75,7 +75,7 @@ export default class InitHelper {
                });
     }
 
-    OneSignal.helpers.showNotifyButton();
+    MainHelper.showNotifyButton();
 
     if (Browser.safari && OneSignal.config.autoRegister === false) {
       OneSignal.isPushNotificationsEnabled(enabled => {

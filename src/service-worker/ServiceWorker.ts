@@ -1000,7 +1000,7 @@ class ServiceWorker {
 }
 
 // Expose this class to the global scope
-(ServiceWorker as any).OneSignalWorker = ServiceWorker;
+(self as any).OneSignalWorker = ServiceWorker;
 
 // Set logging to the appropriate level
 log.setDefaultLevel(__DEV__ ? (log as any).levels.TRACE : (log as any).levels.ERROR);

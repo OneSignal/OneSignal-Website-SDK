@@ -184,10 +184,19 @@ export default class SubscriptionHelper {
     if (Browser.safari) {
       return false;
     }
-    let result = (Environment.isHost() &&
-    (OneSignal.config.subdomainName ||
-    location.protocol === 'http:'));
-    return !!result;
+
+    if (SubscriptionHelper.isLocalhostAllowedAsSecureOrigin() &&
+        location.hostname === 'localhost' ||
+        (location.hostname as any) === '127.0.0.1') {
+      return false;
+    }
+
+    return (Environment.isHost() &&
+            (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
+  }
+
+  static isLocalhostAllowedAsSecureOrigin() {
+    return OneSignal.config && OneSignal.config.allowLocalhostAsSecureOrigin === true;
   }
 
   static subscribeForPush(serviceWorkerRegistration) {
