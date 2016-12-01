@@ -279,7 +279,7 @@ export default class InitHelper {
              .then(([appId, isPushEnabled, notificationPermission]) => {
                let modalUrl = `${OneSignal.modalUrl}?${MainHelper.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&promptType=modal`;
                log.info('Opening HTTPS modal prompt:', modalUrl);
-               let modal = MainHelper.createSubscriptionDomModal(modalUrl);
+               let modal = MainHelper.createHiddenSubscriptionDomModal(modalUrl);
 
                let sendToOrigin = `https://onesignal.com`;
                if (Environment.isDev()) {
@@ -289,33 +289,32 @@ export default class InitHelper {
                OneSignal.modalPostmam = new Postmam(modal, sendToOrigin, receiveFromOrigin);
                OneSignal.modalPostmam.startPostMessageReceive();
 
-               return new Promise((resolve, reject) => {
-                 OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_LOADED, message => {
-                   Event.trigger('modalLoaded');
-                 });
-                 OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, message => {
-                   log.debug('User accepted the HTTPS modal prompt.');
-                   OneSignal._sessionInitAlreadyRunning = false;
-                   let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
-                   iframeModalDom.parentNode.removeChild(iframeModalDom);
-                   OneSignal.modalPostmam.destroy();
-                   MainHelper.triggerCustomPromptClicked('granted');
-                   log.debug('Calling setSubscription(true)');
-                   OneSignal.setSubscription(true)
-                            .then(() => SubscriptionHelper.registerForW3CPush(options));
-                 });
-                 OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, message => {
-                   log.debug('User rejected the HTTPS modal prompt.');
-                   OneSignal._sessionInitAlreadyRunning = false;
-                   let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
-                   iframeModalDom.parentNode.removeChild(iframeModalDom);
-                   OneSignal.modalPostmam.destroy();
-                   MainHelper.triggerCustomPromptClicked('denied');
-                 });
-                 OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
-                   log.info('Detected modal is closing.');
-                   OneSignal.modalPostmam.destroy();
-                 });
+               OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_LOADED, message => {
+                 MainHelper.showSubscriptionDomModal();
+                 Event.trigger('modalLoaded');
+               });
+               OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, message => {
+                 log.debug('User accepted the HTTPS modal prompt.');
+                 OneSignal._sessionInitAlreadyRunning = false;
+                 let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
+                 iframeModalDom.parentNode.removeChild(iframeModalDom);
+                 OneSignal.modalPostmam.destroy();
+                 MainHelper.triggerCustomPromptClicked('granted');
+                 log.debug('Calling setSubscription(true)');
+                 OneSignal.setSubscription(true)
+                          .then(() => SubscriptionHelper.registerForW3CPush(options));
+               });
+               OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, message => {
+                 log.debug('User rejected the HTTPS modal prompt.');
+                 OneSignal._sessionInitAlreadyRunning = false;
+                 let iframeModalDom = document.getElementById('OneSignal-iframe-modal');
+                 iframeModalDom.parentNode.removeChild(iframeModalDom);
+                 OneSignal.modalPostmam.destroy();
+                 MainHelper.triggerCustomPromptClicked('denied');
+               });
+               OneSignal.modalPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
+                 log.info('Detected modal is closing.');
+                 OneSignal.modalPostmam.destroy();
                });
              });
     }

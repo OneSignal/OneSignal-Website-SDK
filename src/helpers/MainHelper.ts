@@ -476,9 +476,10 @@ export default class MainHelper {
     return node;
   }
 
-  static createSubscriptionDomModal(url) {
+  static createHiddenSubscriptionDomModal(url) {
     let iframeContainer = document.createElement('div');
     iframeContainer.setAttribute('id', 'OneSignal-iframe-modal');
+    iframeContainer.setAttribute('style', 'display:none !important');
     iframeContainer.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed;' +
       ' top: 0; left: 0; right: 0; bottom: 0; z-index: 3000000000; display: flex;' +
       ' align-items: center; justify-content: center;"></div>';
@@ -497,6 +498,11 @@ export default class MainHelper {
 
     document.getElementById("notif-permission").appendChild(iframe);
     return iframe;
+  }
+
+  static showSubscriptionDomModal() {
+    const iframeContainer = document.getElementById('OneSignal-iframe-modal');
+    iframeContainer.setAttribute('style', '');
   }
 
   // Arguments :
