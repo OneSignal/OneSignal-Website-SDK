@@ -723,6 +723,7 @@ export default class OneSignal {
   static modalPostmam: any;
   static httpPermissionRequestPostModal: any;
   static closeNotifications = ServiceWorkerHelper.closeNotifications;
+  static isServiceWorkerActive = ServiceWorkerHelper.isServiceWorkerActive;
 
 
   /**

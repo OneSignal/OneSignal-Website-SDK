@@ -97,7 +97,12 @@ export function stringify(obj) {
   return JSON.stringify(obj, (key, value) => {
     if (typeof value === 'function') {
       return "[Function]";
-    } else {
+    } else if (value === null) {
+      return "[ñ]";
+    } else if (value === undefined) {
+      return "[µ]";
+    }
+    else {
       return value;
     }
   }, 4);
