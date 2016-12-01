@@ -201,9 +201,9 @@ class ServiceWorker {
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
-                      .then(() => ServiceWorker.updateBackupNotification(notif))
-                      .then(() => (swivel as any).broadcast('notification.displayed', notif))
-                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif))
+                      .then(() => ServiceWorker.updateBackupNotification(notif).catch(e => log.error(e)))
+                      .then(() => { (swivel as any).broadcast('notification.displayed', notif) })
+                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif).catch(e => log.error(e)))
                 }).bind(null, notification));
               }
 
