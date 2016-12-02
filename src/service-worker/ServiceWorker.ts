@@ -582,7 +582,11 @@ class ServiceWorker {
     for (let client of activeClients) {
       let clientUrl = client.url;
       if ((client as any).isSubdomainIframe) {
-        clientUrl = await Database.get<string>('Options', 'defaultUrl');
+        const lastKnownHostUrl = await Database.get<string>('Options', 'lastKnownHostUrl');
+        clientUrl = lastKnownHostUrl;
+        if (!lastKnownHostUrl) {
+          clientUrl = await Database.get<string>('Options', 'defaultUrl');
+        }
       }
       let clientOrigin = '';
       try {

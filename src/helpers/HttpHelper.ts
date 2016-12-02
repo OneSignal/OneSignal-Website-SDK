@@ -134,6 +134,7 @@ must be opened as a result of a subscription call.</span>`);
 
       preinitializePromise.then(() => {
         OneSignal.config = objectAssign(message.data.hostInitOptions, options, {
+          defaultUrl: message.data.defaultUrl,
           pageUrl: message.data.pageUrl,
           pageTitle: message.data.pageTitle
         });
@@ -147,9 +148,20 @@ must be opened as a result of a subscription call.</span>`);
         // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
         opPromises.push(Database.get('Options', 'defaultUrl').then(defaultUrl => {
           if (!defaultUrl) {
-            return Database.put('Options', {key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin});
+            return Database.put('Options', {key: 'defaultUrl', value: new URL(OneSignal.config.defaultUrl).origin});
           }
         }));
+
+        /**
+         * When a user is on http://example.com and receives a notification, we want to open a new window only if the
+         * notification's URL is different from http://example.com. The service worker, which only controls
+         * subdomain.onesignal.com, doesn't know that the host URL is http://example.com. Although defaultUrl above
+         * sets the HTTP's origin, this can be modified if users call setDefaultTitle(). lastKnownHostUrl therefore
+         * stores the last visited full page URL.
+         */
+        opPromises.push(
+            Database.put('Options', {key: 'lastKnownHostUrl', value: OneSignal.config.pageUrl})
+        );
 
         opPromises.push(EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl));
 
@@ -258,7 +270,8 @@ must be opened as a result of a subscription call.</span>`);
 
                    OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
                      hostInitOptions: JSON.parse(JSON.stringify(OneSignal.config)), // Removes functions and unmessageable objects
-                     pageUrl: defaultUrl,
+                     defaultUrl: defaultUrl,
+                     pageUrl: window.location.href,
                      pageTitle: defaultTitle,
                    }, reply => {
                      if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {

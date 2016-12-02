@@ -111,7 +111,7 @@ export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
 }
 
 export function logMethodCall(methodName: string, ...args) {
-  return log.trace(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
+  return log.debug(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
 }
 
 export function isValidEmail(email) {
