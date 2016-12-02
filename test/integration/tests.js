@@ -196,7 +196,7 @@ describe('Web SDK Tests', function () {
             if (location.protocol === 'https:') {
                 return new MultiStepSoloTest(this.test, {}, async(step, gotoStep) => {
                     if (step === 'first') {
-                        OneSignal.helpers.unmarkHttpsNativePromptDismissed();
+                        OneSignal.testHelper.unmarkHttpsNativePromptDismissed();
                         await Extension.setNotificationPermission(`${location.origin}/*`, 'ask');
                         OneSignal.init({
                                            appId: globals.app.id,
@@ -205,7 +205,7 @@ describe('Web SDK Tests', function () {
                         try {
                             await Utils.expectEvent('permissionPromptDisplay', 5000);
                             // Simulate the X close popup
-                            OneSignal.helpers.markHttpsNativePromptDismissed();
+                            OneSignal.testHelper.markHttpsNativePromptDismissed();
                             return gotoStep('2');
                         } catch (e) {
                             console.error(e);
@@ -609,7 +609,7 @@ describe('Web SDK Tests', function () {
             ];
             let expectedNormalizedSubdomain = 'subdomain';
             for (let validSubdomain of validSubdomains) {
-                let actualNormalizedSubdomain = OneSignal.helpers.getNormalizedSubdomain(validSubdomain);
+                let actualNormalizedSubdomain = OneSignal.mainHelper.getNormalizedSubdomain(validSubdomain);
                 expect(actualNormalizedSubdomain).to.equal(expectedNormalizedSubdomain);
             }
         });

@@ -30,8 +30,15 @@ import InitHelper from "./helpers/InitHelper";
 import ServiceWorkerHelper from "./helpers/ServiceWorkerHelper";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
 import HttpHelper from "./helpers/HttpHelper";
+import TestHelper from "./helpers/TestHelper";
 import {NotificationActionButton} from "./models/NotificationActionButton";
 import { NotificationPermission } from './models/NotificationPermission';
+import PermissionMessageDismissedError from "./errors/PermissionMessageDismissedError";
+import PushPermissionNotGrantedError from "./errors/PushPermissionNotGrantedError";
+import { NotSubscribedError } from "./errors/NotSubscribedError";
+import AlreadySubscribedError from "./errors/AlreadySubscribedError";
+import { NotSubscribedReason } from "./errors/NotSubscribedError";
+import { PermissionPromptType } from './models/PermissionPromptType';
 
 
 
@@ -80,7 +87,7 @@ export default class OneSignal {
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
     if (!deviceId)
-      throw new InvalidStateError(InvalidStateReason.NotSubscribed);
+      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     const result = await OneSignalApi.updatePlayer(appId, deviceId, {
       em_m: md5(sanitizedEmail),
       em_s: sha1(sanitizedEmail)
@@ -246,24 +253,21 @@ export default class OneSignal {
         ])
                       .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
                         if (doNotPrompt === true && (!options || options.force == false)) {
-                          log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
-                          return 'popover-previously-dismissed';
+                          throw new PermissionMessageDismissedError();
                         }
                         if (permission === NotificationPermission.Denied) {
-                          log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
-                          return 'notification-permission-blocked';
+                          throw new PushPermissionNotGrantedError();
                         }
                         if (isEnabled) {
-                          log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
-                          return 'user-already-subscribed';
+                          throw new AlreadySubscribedError();
                         }
                         if (!notOptedOut) {
-                          log.debug('OneSignal: Not showing popover because the user was manually opted out.');
-                          return 'user-intentionally-unsubscribed';
+                          throw new NotSubscribedError(NotSubscribedReason.OptedOut);
                         }
                         if (MainHelper.isUsingHttpPermissionRequest() && permission !== NotificationPermission.Granted) {
-                          log.debug('OneSignal: Not showing popover because the HTTP permission request is being shown instead.');
-                          return 'using-http-permission-request';
+                          throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
+                            permissionPromptType: PermissionPromptType.HttpPermissionRequest
+                          })
                         }
                         MainHelper.markHttpPopoverShown();
                         OneSignal.popover = new Popover(OneSignal.config.promptOptions);
@@ -398,7 +402,7 @@ export default class OneSignal {
     const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      log.info(new InvalidStateError(InvalidStateReason.NotSubscribed));
+      log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
     }
     const { tags } = await OneSignalApi.getPlayer(appId, deviceId);
@@ -551,7 +555,7 @@ export default class OneSignal {
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
     if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      log.info(new InvalidStateError(InvalidStateReason.NotSubscribed));
+      log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
     subscription.optedOut = !newSubscription;
@@ -647,7 +651,7 @@ export default class OneSignal {
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!subscription.deviceId)
-      throw new InvalidStateError(InvalidStateReason.NotSubscribed);
+      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     if (!ValidatorUtils.isValidUrl(url))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
@@ -710,6 +714,7 @@ export default class OneSignal {
   static workerHelper = ServiceWorkerHelper;
   static httpHelper =  HttpHelper;
   static eventHelper = EventHelper;
+  static testHelper = TestHelper;
   static objectAssign = objectAssign;
   static SERVICE_WORKER_UPDATER_PATH = 'OneSignalSDKUpdaterWorker.js';
   static SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';

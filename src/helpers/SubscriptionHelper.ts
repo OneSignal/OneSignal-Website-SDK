@@ -20,6 +20,7 @@ import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
 import EventHelper from "./EventHelper";
 import PushPermissionNotGrantedError from "../errors/PushPermissionNotGrantedError";
+import TestHelper from "./TestHelper";
 
 declare var OneSignal: any;
 
@@ -368,7 +369,7 @@ export default class SubscriptionHelper {
                  if (permission === 'default') {
                    // The user clicked 'X'
                    EventHelper.triggerNotificationPermissionChanged(true);
-                   MainHelper.markHttpsNativePromptDismissed();
+                   TestHelper.markHttpsNativePromptDismissed();
                  }
 
                  if (!OneSignal._usingNativePermissionHook)

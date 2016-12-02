@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
     "lib": [
+      "es5",
+      "es2015.promise",
+      "es2015.collection",
       "dom",
-      "es6",
-      "dom.iterable",
       "scripthost"
     ],
     "module": "commonjs",
-    "target": "es6",
+    "target": "es5",
     "sourceMap": true,
     "allowJs": true,
     "types": ["node"],

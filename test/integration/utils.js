@@ -106,7 +106,6 @@ export default class Utils {
         const unsubscribePromise = executeAndTimeoutPromiseAfter(subscriptionPromise.then(sub => { if (sub) { return sub.unsubscribe() } else {return false;}}).then(result => result), 10000, 'Could not unsubscribe from subscription.');
 
         const unregisterWorkerPromise = executeAndTimeoutPromiseAfter(regPromise.then(registration => {
-            console.warn("Dangit, I'm going to try to unregister the worker now.");
             console.warn("What's my registration?", registration);
             console.warn("Does the unregister method exist?", registration.unregister);
             console.warn("Calling unregister() NOW...");
@@ -137,7 +136,7 @@ export default class Utils {
                 // Only for HTTPS: Wipes the IndexedDB on the current site origin
                 options.dontWipeData ? null : executeAndTimeoutPromiseAfter(Utils.wipeIndexedDb(), 10000, 'Could not wipe IndexedDb storage.'),
                 options.dontWipeData ? null : executeAndTimeoutPromiseAfter(Utils.wipeServiceWorkerAndUnsubscribe(), 10000, 'Could not wipe service worker and unsubscribe.'),
-                options.dontWipeData ? null : executeAndTimeoutPromiseAfter(OneSignal.helpers.unmarkHttpsNativePromptDismissed(), 10000, 'Could not unmark HTTPS native prompt as dismissed.'),
+                options.dontWipeData ? null : executeAndTimeoutPromiseAfter(OneSignal.testHelper.unmarkHttpsNativePromptDismissed(), 10000, 'Could not unmark HTTPS native prompt as dismissed.'),
             ])
             .then(() => {
                 console.log('Test Initialize: Stage 1');
