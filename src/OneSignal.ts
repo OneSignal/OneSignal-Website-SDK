@@ -242,8 +242,9 @@ export default class OneSignal {
          - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
          */
         if (OneSignal.__isPopoverShowing) {
-          log.debug('OneSignal: Not showing popover because it is currently being shown.');
-          return 'popover-already-shown';
+          throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
+            permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
+          });
         }
         return Promise.all([
           OneSignal.getNotificationPermission(),
@@ -264,7 +265,10 @@ export default class OneSignal {
                         if (!notOptedOut) {
                           throw new NotSubscribedError(NotSubscribedReason.OptedOut);
                         }
-                        if (MainHelper.isUsingHttpPermissionRequest() && permission !== NotificationPermission.Granted) {
+                        if (MainHelper.isUsingHttpPermissionRequest() &&
+                            permission !== NotificationPermission.Granted &&
+                            OneSignal._showingHttpPermissionRequest == true
+                            ) {
                           throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
                             permissionPromptType: PermissionPromptType.HttpPermissionRequest
                           })
@@ -328,7 +332,19 @@ export default class OneSignal {
       .then(() => new Promise((resolve, reject) => {
         // Safari's push notifications are one-click Allow and shouldn't support this workaround
         if (Browser.safari) {
-          return;
+          throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
+        }
+
+        if (OneSignal.__isPopoverShowing) {
+          throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
+            permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
+          });
+        }
+
+        if (OneSignal._showingHttpPermissionRequest) {
+          throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
+            permissionPromptType: PermissionPromptType.HttpPermissionRequest
+          });
         }
 
         if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
@@ -349,7 +365,9 @@ export default class OneSignal {
 
           log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
           if (window.Notification.permission === "default") {
+            OneSignal._showingHttpPermissionRequest = true;
             window.Notification.requestPermission(permission => {
+              OneSignal._showingHttpPermissionRequest = false;
               resolve(permission);
               log.debug('HTTP Permission Request Result:', permission);
               if (permission === 'default') {
@@ -729,6 +747,7 @@ export default class OneSignal {
   static httpPermissionRequestPostModal: any;
   static closeNotifications = ServiceWorkerHelper.closeNotifications;
   static isServiceWorkerActive = ServiceWorkerHelper.isServiceWorkerActive;
+  static _showingHttpPermissionRequest = false;
 
 
   /**

@@ -21,6 +21,7 @@ import ServiceWorkerHelper from "./ServiceWorkerHelper";
 import IndexedDb from "../IndexedDb";
 import SubscriptionHelper from "./SubscriptionHelper";
 import EventHelper from "./EventHelper";
+import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 
 declare var OneSignal: any;
 
@@ -336,7 +337,11 @@ export default class InitHelper {
         log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
       }
       if ((OneSignal.config.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {
-        OneSignal.showHttpPrompt();
+        OneSignal.showHttpPrompt().catch(e => {
+          if (e instanceof InvalidStateError && e.reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) {
+            // Another prompt is being shown, that's okay
+          } else throw e;
+        })
       }
     }
 

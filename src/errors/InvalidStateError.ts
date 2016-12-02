@@ -5,7 +5,8 @@ import { PermissionPromptType } from "../models/PermissionPromptType";
 export enum InvalidStateReason {
   MissingAppId,
   RedundantPermissionMessage,
-  PushPermissionAlreadyGranted
+  PushPermissionAlreadyGranted,
+  UnsupportedEnvironment
 }
 
 export class InvalidStateError extends OneSignalError {
@@ -22,10 +23,13 @@ export class InvalidStateError extends OneSignalError {
         let extraInfo = '';
         if (extra.permissionPromptType)
           extraInfo = `(${PermissionPromptType[extra.permissionPromptType]})`;
-        super(`Another permission message ${extraInfo} is being displayed instead.`);
+        super(`Another permission message ${extraInfo} is being displayed.`);
         break;
       case InvalidStateReason.PushPermissionAlreadyGranted:
         super(`Push permission has already been granted.`);
+        break;
+      case InvalidStateReason.UnsupportedEnvironment:
+        super(`The current environment does not support this operation.`);
         break;
     }
     this.reason = InvalidStateReason[reason];
