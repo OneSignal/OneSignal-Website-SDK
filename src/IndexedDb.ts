@@ -84,7 +84,7 @@ export default class IndexedDb {
           var cursorResult: IDBCursorWithValue = event.target.result;
           if (cursorResult) {
             let cursorResultKey: any = cursorResult.key;
-            jsonResult[cursorResultKey] = cursorResult.value.value;
+            jsonResult[cursorResultKey] = cursorResult.value;
             cursorResult.continue();
           } else {
             resolve(jsonResult);
