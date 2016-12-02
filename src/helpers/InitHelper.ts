@@ -30,16 +30,20 @@ export default class InitHelper {
 
   static storeInitialValues() {
     return Promise.all([
-      OneSignal.isPushNotificationsEnabled(),
-      OneSignal.getNotificationPermission(),
-      OneSignal.getUserId(),
-      OneSignal.getSubscription()
-    ])
-                  .then(([isPushEnabled, notificationPermission, userId, optIn]) => {
+                         OneSignal.isPushNotificationsEnabled(),
+                         OneSignal.getNotificationPermission(),
+                         OneSignal.getUserId(),
+                         OneSignal.isOptedOut()
+                       ])
+                  .then(([isPushEnabled, notificationPermission, userId, isOptedOut]) => {
+                    LimitStore.put('subscription.optedOut', isOptedOut);
                     return Promise.all([
-                      Database.put('Options', {key: 'isPushEnabled', value: isPushEnabled}),
-                      Database.put('Options', {key: 'notificationPermission', value: notificationPermission})
-                    ]);
+                                         Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled }),
+                                         Database.put('Options', {
+                                           key: 'notificationPermission',
+                                           value: notificationPermission
+                                         })
+                                       ]);
                   });
   }
 

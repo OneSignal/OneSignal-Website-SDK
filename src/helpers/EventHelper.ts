@@ -20,6 +20,10 @@ export default class EventHelper {
     EventHelper.checkAndTriggerSubscriptionChanged();
   }
 
+  static async onInternalSubscriptionSet(optedOut) {
+    LimitStore.put('subscription.optedOut', optedOut);
+  }
+
   static async checkAndTriggerSubscriptionChanged() {
     logMethodCall('checkAndTriggerSubscriptionChanged');
     const pushEnabled = await OneSignal.isPushNotificationsEnabled();

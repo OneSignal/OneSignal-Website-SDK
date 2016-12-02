@@ -566,7 +566,7 @@ export default class OneSignal {
     const appConfig = await Database.getAppConfig();
     const { appId } = appConfig;
     const subscription = await Database.getSubscription();
-    const { optedOut, deviceId } = subscription;
+    const { deviceId } = subscription;
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
@@ -581,6 +581,7 @@ export default class OneSignal {
       notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
     });
     await Database.setSubscription(subscription);
+    EventHelper.onInternalSubscriptionSet(subscription.optedOut);
     EventHelper.checkAndTriggerSubscriptionChanged();
   }
 

@@ -74,7 +74,7 @@ export default class Button extends ActiveAnimatedElement {
     this.bell.badge.inactivate();
   }
 
-  async onClick(e) {
+  onClick(e) {
     Event.trigger(Bell.EVENTS.BELL_CLICK);
     Event.trigger(Bell.EVENTS.LAUNCHER_CLICK);
 
@@ -83,10 +83,10 @@ export default class Button extends ActiveAnimatedElement {
       return;
     }
 
-    const { optedOut } = await Database.getSubscription();
+    var optedOut = LimitStore.getLast('subscription.optedOut');
     if (this.bell.unsubscribed) {
       if (optedOut) {
-        // The user manually called setSubscription(false), but the user is actually subscribed
+        // The user is manually opted out, but still "really" subscribed
         this.bell.launcher.activateIfInactive().then(() => {
           this.bell.showDialogProcedure();
         });
