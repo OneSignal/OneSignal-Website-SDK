@@ -26,7 +26,6 @@ class ServiceWorker {
   static SKIP_REFETCH_REQUESTS;
   static queries;
   static UNSUBSCRIBED_FROM_NOTIFICATIONS;
-  static defaultLaunchUrl;
 
   /**
    * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
@@ -81,7 +80,7 @@ class ServiceWorker {
   static run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
-    self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
+    self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('pushsubscriptionchange', ServiceWorker.onPushSubscriptionChange);
@@ -231,52 +230,42 @@ class ServiceWorker {
    * @param notification A JSON object containing notification details the user consumes.
    * @returns {Promise}
    */
-  static executeWebhooks(event, notification) {
-    var isServerCorsEnabled = false;
-    var userId = null;
-    return Database.get('Ids', 'userId')
-      .then(theUserId => {
-        userId = theUserId;
-      })
-      .then(() => Database.get<boolean>('Options', 'webhooks.cors'))
-      .then(cors => {
-        isServerCorsEnabled = cors;
-      })
-      .then(() => Database.get('Options', `webhooks.${event}`))
-      .then(webhookUrlQuery => {
-        if (webhookUrlQuery) {
-          let url = webhookUrlQuery;
-          // JSON.stringify() does not include undefined values
-          // Our response will not contain those fields here which have undefined values
-          let postData = {
-            event: event,
-            id: notification.id,
-            userId: userId,
-            action: notification.action,
-            buttons: notification.buttons,
-            heading: notification.heading,
-            content: notification.content,
-            url: notification.url,
-            icon: notification.icon,
-            data: notification.data
-          };
-          let fetchOptions: any = {
-            method: 'post',
-            mode: 'no-cors',
-            body: JSON.stringify(postData),
+  static async executeWebhooks(event, notification) {
+    const {deviceId} = await Database.getSubscription();
+    const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
+    const webhookTargetUrl = await Database.get('Options', `webhooks.${event}`);
 
-          };
-          if (isServerCorsEnabled) {
-            fetchOptions.mode = 'cors';
-            fetchOptions.headers = {
-              'X-OneSignal-Event': event,
-              'Content-Type': 'application/json'
-            };
-          }
-          log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${url}`, getConsoleStyle('code'), ':', postData);
-          return fetch(url, fetchOptions);
-        }
-      });
+    if (webhookTargetUrl) {
+      // JSON.stringify() does not include undefined values
+      // Our response will not contain those fields here which have undefined values
+      let postData = {
+        event: event,
+        id: notification.id,
+        userId: deviceId,
+        action: notification.action,
+        buttons: notification.buttons,
+        heading: notification.heading,
+        content: notification.content,
+        url: notification.url,
+        icon: notification.icon,
+        data: notification.data
+      };
+      let fetchOptions: any = {
+        method: 'post',
+        mode: 'no-cors',
+        body: JSON.stringify(postData),
+
+      };
+      if (isServerCorsEnabled) {
+        fetchOptions.mode = 'cors';
+        fetchOptions.headers = {
+          'X-OneSignal-Event': event,
+          'Content-Type': 'application/json'
+        };
+      }
+      log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`, getConsoleStyle('code'), ':', postData);
+      return await fetch(webhookTargetUrl, fetchOptions);
+    }
   }
 
   /**
@@ -287,28 +276,26 @@ class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static getActiveClients() {
-    return self.clients.matchAll({type: 'window', includeUncontrolled: true})
-        .then(windowClients => {
-          let activeClients = [];
+  static async getActiveClients() {
+    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    let activeClients = [];
 
-          for (let client of windowClients) {
-            // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
-            if (client.frameType && client.frameType === 'nested') {
-              // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-              if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
-                   !Environment.isDev() && !contains(client.url, '.onesignal.com') ||
-                   Environment.isStaging() && !contains(client.url, STAGING_FRAME_HOST)) {
-                  continue;
-              }
-              // Indicates this window client is an HTTP subdomain iFrame
-              (client as any).isSubdomainIframe = true;
-            }
-            activeClients.push(client);
-          }
+    for (let client of windowClients) {
+      // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
+      if (client.frameType && client.frameType === 'nested') {
+        // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
+        if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
+          !Environment.isDev() && !contains(client.url, '.onesignal.com') ||
+          Environment.isStaging() && !contains(client.url, STAGING_FRAME_HOST)) {
+          continue;
+        }
+        // Indicates this window client is an HTTP subdomain iFrame
+        (client as any).isSubdomainIframe = true;
+      }
+      activeClients.push(client);
+    }
 
-          return activeClients;
-        });
+    return activeClients;
   }
 
   /**
@@ -468,12 +455,12 @@ class ServiceWorker {
    * backup notification.
    * @param notification The most recent notification as a structured notification object.
    */
-  static updateBackupNotification(notification) {
+  static async updateBackupNotification(notification): Promise<void> {
     let isWelcomeNotification = notification.data && notification.data.__isOneSignalWelcomeNotification;
     // Don't save the welcome notification, that just looks broken
     if (isWelcomeNotification)
       return;
-    return Database.put('Ids', {type: 'backupNotification', id: notification});
+    await Database.put('Ids', {type: 'backupNotification', id: notification});
   }
 
   /**
@@ -528,26 +515,30 @@ class ServiceWorker {
    * After clicking a notification, determines the URL to open based on whether an action button was clicked or the
    * notification body was clicked.
    */
-  static getNotificationUrlToOpen(notification) {
+  static async getNotificationUrlToOpen(notification): Promise<string> {
     // Defaults to the URL the service worker was registered
     // TODO: This should be fixed for HTTP sites
-    var launchUrl = self.registration.scope;
+    let launchUrl = self.registration.scope;
 
-    // Use the user-provided default if one exists
-    if (ServiceWorker.defaultLaunchUrl)
-      launchUrl = ServiceWorker.defaultLaunchUrl;
+    // Use the user-provided default URL if one exists
+    const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
+    if (dbDefaultNotificationUrl)
+      launchUrl = dbDefaultNotificationUrl;
 
     // If the user clicked an action button, use the URL provided by the action button
     // Unless the action button URL is null
     if (notification.action) {
       // Find the URL tied to the action button that was clicked
       for (let button of notification.buttons) {
-        if (button.action === notification.action && button.url && button.url !== '') {
+        if (button.action === notification.action &&
+            button.url &&
+            button.url !== '') {
           launchUrl = button.url;
         }
       }
-    } else if (notification.url && notification.url !== '') {
-      // The user did not clicked the notification body instead of an action button
+    } else if (notification.url &&
+               notification.url !== '') {
+      // The user clicked the notification body instead of an action button
       launchUrl = notification.url;
     }
 
@@ -558,109 +549,90 @@ class ServiceWorker {
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
-  static onNotificationClicked(event) {
+  static async onNotificationClicked(event) {
     log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    var notification = event.notification.data;
+    // Close the notification first here, before we do anything that might fail
+    event.notification.close();
+
+    const notification = event.notification.data;
 
     // Chrome 48+: Get the action button that was clicked
-    notification.action = event.action;
-
-    event.notification.close();
+    if (event.action)
+      notification.action = event.action;
 
     let notificationClickHandlerMatch = 'exact';
 
-    event.waitUntil(
-      Database.get('Options', 'defaultUrl')
-        .then(defaultUrl=> {
-          if (defaultUrl)
-            ServiceWorker.defaultLaunchUrl = defaultUrl;
-        })
-        .then(() => Database.get<string>('Options', 'notificationClickHandlerMatch'))
-        .then(matchPreference => {
-          if (matchPreference)
-            notificationClickHandlerMatch = matchPreference;
-        })
-        .then(() => ServiceWorker.getActiveClients())
-        .then(activeClients => {
-          let launchUrl = ServiceWorker.getNotificationUrlToOpen(notification);
-          let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    const matchPreference = await Database.get<string>('Options', 'notificationClickHandlerMatch');
+    if (matchPreference)
+      notificationClickHandlerMatch = matchPreference;
 
-          /*
-           Check if we can focus on an existing tab instead of opening a new url.
-           If an existing tab with exactly the same URL already exists, then this existing tab is focused instead of
-           an identical new tab being created. With a special setting, any existing tab matching the origin will
-           be focused instead of an identical new tab being created.
-           */
-          let clientUrlPromises = [];
-          let doNotOpenLink = false;
-          for (let client of activeClients) {
-            let getClientUrlPromise = null;
-            if ((client as any).isSubdomainIframe) {
-              getClientUrlPromise = Database.get<string>('Options', 'defaultUrl');
-            } else {
-              getClientUrlPromise = Promise.resolve(client.url);
-            }
-            getClientUrlPromise.then(clientUrl => {
-              let clientOrigin = '';
-              try {
-                clientOrigin = new URL(clientUrl).origin;
-              } catch (e) {
-                log.error(`Failed to get the HTTP site's actual origin:`, e);
-              }
-              let launchOrigin = null;
-              try {
-                // Check if the launchUrl is valid; it can be null
-                launchOrigin = new URL(launchUrl).origin;
-              } catch (e) {
-              }
+    const activeClients = await ServiceWorker.getActiveClients();
 
-              if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
-                  (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-                (client as any).focus();
-                (swivel as any).emit(client.id, 'notification.clicked', notification);
-                doNotOpenLink = true;
-              }
-            });
-            clientUrlPromises.push(getClientUrlPromise);
-          }
-          return Promise.all(clientUrlPromises)
-                         .then(() => Database.put("NotificationOpened", {url: launchUrl, data: notification, timestamp: Date.now()}))
-                         .then(() => {
-                           if (notificationOpensLink && !doNotOpenLink) {
-                             ServiceWorker.openUrl(launchUrl);
-                           }
-                         });
-        })
-        .then(() => {
-          return Promise.all([Database.get('Ids', 'appId'), Database.get('Ids', 'userId')])
-        })
-        .then(([appId, userId]) => {
-          if (appId && userId) {
-            return OneSignalApi.put('notifications/' + notification.id, {
-              app_id: appId,
-              player_id: userId,
-              opened: true
-            });
-          }
-        })
-        .then(() => {
-          return ServiceWorker.executeWebhooks('notification.clicked', notification);
-        })
-    );
+    let launchUrl = await ServiceWorker.getNotificationUrlToOpen(notification);
+    let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+
+    /*
+     Check if we can focus on an existing tab instead of opening a new url.
+     If an existing tab with exactly the same URL already exists, then this existing tab is focused instead of
+     an identical new tab being created. With a special setting, any existing tab matching the origin will
+     be focused instead of an identical new tab being created.
+     */
+    let doNotOpenLink = false;
+    for (let client of activeClients) {
+      let clientUrl = client.url;
+      if ((client as any).isSubdomainIframe) {
+        clientUrl = await Database.get<string>('Options', 'defaultUrl');
+      }
+      let clientOrigin = '';
+      try {
+        clientOrigin = new URL(clientUrl).origin;
+      } catch (e) {
+        log.error(`Failed to get the HTTP site's actual origin:`, e);
+      }
+      let launchOrigin = null;
+      try {
+        // Check if the launchUrl is valid; it can be null
+        launchOrigin = new URL(launchUrl).origin;
+      } catch (e) {
+      }
+
+      if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
+        (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
+        (client as any).focus();
+        (swivel as any).emit(client.id, 'notification.clicked', notification);
+        doNotOpenLink = true;
+      }
+    }
+
+    await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+    if (notificationOpensLink && !doNotOpenLink) {
+      await ServiceWorker.openUrl(launchUrl);
+    }
+
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    if (appId && deviceId) {
+      return await OneSignalApi.put('notifications/' + notification.id, {
+        app_id: appId,
+        player_id: deviceId,
+        opened: true
+      });
+    }
+    return await ServiceWorker.executeWebhooks('notification.clicked', notification);
   }
 
   /**
    * Attempts to open the given url in a new browser tab. Called when a notification is clicked.
    * @param url May not be well-formed.
    */
-  static openUrl(url) {
+  static async openUrl(url): Promise<WindowClient> {
     log.debug('Opening notification URL:', url);
-    self.clients.openWindow(url).catch(e => {
+    try {
+      return await self.clients.openWindow(url);
+    } catch (e) {
       log.warn(`Failed to open the URL '${url}':`, e);
-      // Should only fall into here if going to an external URL on Chrome older than 43.
-      self.clients.openWindow(`${self.registration.scope}redirector.html?url=${url}`);
-    });
+    }
   }
 
   static onServiceWorkerInstalled(event) {

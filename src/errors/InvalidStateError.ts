@@ -6,6 +6,8 @@ export enum InvalidStateReason {
 }
 
 export class InvalidStateError extends OneSignalError {
+  reason: string;
+
   constructor(reason: InvalidStateReason) {
     switch (reason) {
       case InvalidStateReason.MissingAppId:
@@ -15,5 +17,6 @@ export class InvalidStateError extends OneSignalError {
         super(`This operation can only be performed after the user is subscribed.`);
         break;
     }
+    this.reason = InvalidStateReason[reason];
   }
 }

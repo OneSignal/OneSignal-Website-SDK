@@ -19,6 +19,7 @@ import * as Cookie from 'js-cookie';
 import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
 import EventHelper from "./EventHelper";
+import PushPermissionNotGrantedError from "../errors/PushPermissionNotGrantedError";
 
 declare var OneSignal: any;
 
@@ -220,7 +221,7 @@ export default class SubscriptionHelper {
              })
              .then(permission => {
                if (permission !== "granted") {
-                 throw new Error("User did not grant push permission to allow notifications.");
+                 throw new PushPermissionNotGrantedError();
                } else {
                  return executeAndTimeoutPromiseAfter(
                    serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
