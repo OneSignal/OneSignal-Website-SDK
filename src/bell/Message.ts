@@ -32,7 +32,7 @@ export default class Message extends AnimatedElement {
 
   display(type, content, duration = 0) {
     log.debug(`Calling %cdisplay(${type}, ${content}, ${duration}).`, getConsoleStyle('code'));
-    (this.shown ? this.hide() : nothing())
+    return (this.shown ? this.hide() : nothing())
       .then(() => {
         this.content = decodeHtmlEntities(content);
         this.contentType = type;
