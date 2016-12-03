@@ -54,6 +54,7 @@ export default class OneSignalApi {
           else {
             let error = OneSignalApi.identifyError(json);
             if (error === 'no-user-id-error') {
+              // TODO: This returns undefined
             } else {
               return Promise.reject(json);
             }

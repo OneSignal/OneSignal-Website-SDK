@@ -666,7 +666,7 @@ class ServiceWorker {
                                         .then(() => Database.get('Ids', 'userId'))
                                         .then(userId => {
                                           if (self.registration && userId) {
-                                            return ServiceWorker._subscribeForPush(self.registration);
+                                            return ServiceWorker._subscribeForPush(self.registration).catch(e => console.error(e));
                                           }
                                         });
     event.waitUntil(activationPromise);
@@ -809,13 +809,18 @@ class ServiceWorker {
           return OneSignalApi.put(requestUrl, requestData);
         })
         .then((response: any) => {
-          if (!response.success) {
-            log.error('Resubscription registration with OneSignal failed:', response);
-          }
-          let {id: userId} = response;
+          if (response) {
+            if (!response.success) {
+              log.error('Resubscription registration with OneSignal failed:', response);
+            }
+            let { id: userId } = response;
 
-          if (userId) {
-            Database.put("Ids", {type: "userId", id: userId});
+            if (userId) {
+              Database.put("Ids", { type: "userId", id: userId });
+            }
+          } else {
+            // No user ID found, this returns undefined
+            log.debug('Resubscription registration failed because no user ID found.');
           }
         });
   }
