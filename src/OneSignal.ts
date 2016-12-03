@@ -589,8 +589,7 @@ export default class OneSignal {
   static async isOptedOut(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('isOptedOut', callback);
-    const subscription = await Database.getSubscription();
-    const optedOut = subscription.optedOut;
+    const { optedOut } = await Database.getSubscription();
     executeCallback(callback, optedOut);
     return optedOut;
   }

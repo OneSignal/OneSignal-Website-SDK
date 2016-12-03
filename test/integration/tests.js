@@ -686,6 +686,49 @@ describe('Web SDK Tests', function () {
         });
     });
 
+    describe('Opting Out', function() {
+      it.only('should correctly opt in and out of notifications', function() {
+        return new SoloTest(this.test, {}, async () => {
+          await Utils.initialize(globals, {
+            welcomeNotification: false,
+            autoRegister: true,
+            notifyButton: false
+          });
+
+          const { optedOut: initialOptOut } = await Database.getSubscription();
+          expect(initialOptOut, 'After subscribing, initialOptOut should be false').to.equal(false);
+
+          await OneSignal.setSubscription(false);
+          const { optedOut: secondOptOut } = await Database.getSubscription();
+          expect(secondOptOut, 'After opting out, secondOptOut should be true').to.equal(true);
+
+          await OneSignal.setSubscription(true);
+          const { optedOut: thirdOptOut } = await Database.getSubscription();
+          expect(thirdOptOut, 'After resubscribing, thirdOptOut should be false').to.equal(false);
+
+          await OneSignal.setSubscription(false);
+          const { optedOut: fourthOptOut } = await Database.getSubscription();
+          expect(fourthOptOut, 'After opting out, fourthOptOut should be true').to.equal(true);
+
+          await OneSignal.setSubscription(true);
+          const { optedOut: fifthOptOut } = await Database.getSubscription();
+          expect(fifthOptOut, 'After resubscribing, fifthOptOut should be false').to.equal(false);
+
+          await OneSignal.setSubscription(true);
+          const { optedOut: sixthOptOut } = await Database.getSubscription();
+          expect(sixthOptOut, 'There should be no change between this and the previous, sixthOptOut should be false').to.equal(false);
+
+          await OneSignal.setSubscription(false);
+          const { optedOut: seventhOptOut } = await Database.getSubscription();
+          expect(seventhOptOut, 'After opting out, seventhOptOut should be true').to.equal(true);
+
+          await OneSignal.setSubscription(false);
+          const { optedOut: eigthOptOut } = await Database.getSubscription();
+          expect(eigthOptOut, 'There should be no change between this and the previous, eigthOptOut should be true').to.equal(true);
+        });
+      });
+    });
+
     describe('Notify Button', () => {
         it('should show site icon on notify button popup after initial subscribe', function () {
             return new SoloTest(this.test, {}, async () => {
@@ -710,7 +753,7 @@ describe('Web SDK Tests', function () {
                     await Utils.expectEvent('subscriptionChange');
                 }
                 // Check whether the icon exists in the popup HTML
-                await Utils.wait(500);
+                await Utils.wait(1500);
                 await OneSignal.notifyButton.dialog.show();
                 let dialogIconHtml = document.querySelector('.push-notification-icon').innerHTML;
                 expect(dialogIconHtml).to.include(this.test.iconUrl);

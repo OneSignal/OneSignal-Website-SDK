@@ -174,7 +174,7 @@ export default class Database {
       await Database.put("Options", {key: "defaultUrl", value: appState.defaultNotificationUrl});
     if (appState.defaultNotificationTitle)
       await Database.put("Options", {key: "defaultTitle", value: appState.defaultNotificationTitle});
-    if (appState.lastKnownPushEnabled)
+    if (appState.lastKnownPushEnabled != null)
       await Database.put('Options', {key: 'isPushEnabled', value: appState.lastKnownPushEnabled});
     if (appState.clickedNotifications) {
       for (let url of Object.keys(appState.clickedNotifications)) {
@@ -238,7 +238,7 @@ export default class Database {
     // For backwards compatibility, we need to read from this if the above is not found
     const dbNotOptedOut = await Database.get<boolean>('Options', 'subscription');
 
-    if (dbOptedOut) {
+    if (dbOptedOut != null) {
       subscription.optedOut = dbOptedOut;
     } else {
       if (dbNotOptedOut == null) {
@@ -258,8 +258,8 @@ export default class Database {
       await Database.put('Options', {key: 'subscriptionEndpoint', value: subscription.pushEndpoint});
     if (subscription.pushToken)
       await Database.put('Ids', {type: 'registrationId', id: subscription.pushToken});
-    if (subscription.optedOut)
-      await Database.put('Options', {key: 'subscription', value: subscription.optedOut});
+    if (subscription.optedOut != null) // Checks if null or undefined, allows false
+      await Database.put('Options', {key: 'optedOut', value: subscription.optedOut});
   }
 
   /**
