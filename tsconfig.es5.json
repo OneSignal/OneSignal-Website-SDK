@@ -24,7 +24,6 @@
       "useCache": false
     }
   },
-  "extends": "./src/service-worker/tsconfig.json",
   "include": [
     "src/**/*",
     "test/**/*",

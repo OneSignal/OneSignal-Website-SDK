@@ -130,6 +130,14 @@ if (SIZE_STATS) {
   }));
 }
 
+function getAwesomeTypescriptLoaderTsconfigPath() {
+  if (IS_DEV) {
+    return '?tsconfig=./tsconfig.es6.json';
+  } else {
+    return '?tsconfig=./tsconfig.es5.json';
+  }
+}
+
 const ONESIGNAL_WEB_SDK = {
   target: 'web',
   entry: getWebSdkModuleEntry(),
@@ -142,7 +150,7 @@ const ONESIGNAL_WEB_SDK = {
       test: /\.(t|j)s$/,
       include: [path.resolve(__dirname, "./src")],
       exclude: /(node_modules|bower_components|test)/,
-      loader: 'awesome-typescript-loader'
+      loader: 'awesome-typescript-loader' + getAwesomeTypescriptLoaderTsconfigPath()
     },
       {
         test: /\.scss$/,
@@ -180,7 +188,7 @@ const ONESIGNAL_WEB_SDK_TESTS = {
         path.resolve(__dirname, "./test/integration"),
       ],
       exclude: /(node_modules)/,
-      loader: 'awesome-typescript-loader'
+      loader: 'awesome-typescript-loader' + getAwesomeTypescriptLoaderTsconfigPath()
     },
     { test: /\.scss$/, loader: 'ignore-loader' }
     ]
