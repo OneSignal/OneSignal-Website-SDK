@@ -552,7 +552,7 @@ export default class OneSignal {
                          !optedOut)
     }
 
-    executeCallback(callback);
+    executeCallback(callback, isPushEnabled);
     return isPushEnabled;
   }
 
