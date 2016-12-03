@@ -250,9 +250,10 @@ export default class OneSignal {
           OneSignal.getNotificationPermission(),
           OneSignal.isPushNotificationsEnabled(),
           OneSignal.getSubscription(),
-          Database.get('Options', 'popoverDoNotPrompt')
+          Database.get('Options', 'popoverDoNotPrompt'),
+          OneSignal.httpHelper.isShowingHttpPermissionRequest()
         ])
-                      .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
+                      .then(([permission, isEnabled, notOptedOut, doNotPrompt, isShowingHttpPermissionRequest]) => {
                         if (doNotPrompt === true && (!options || options.force == false)) {
                           throw new PermissionMessageDismissedError();
                         }
@@ -267,7 +268,7 @@ export default class OneSignal {
                         }
                         if (MainHelper.isUsingHttpPermissionRequest() &&
                             permission !== NotificationPermission.Granted &&
-                            OneSignal._showingHttpPermissionRequest == true
+                            isShowingHttpPermissionRequest == true
                             ) {
                           throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
                             permissionPromptType: PermissionPromptType.HttpPermissionRequest
@@ -781,6 +782,7 @@ export default class OneSignal {
     BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
+    IS_SHOWING_HTTP_PERMISSION_REQUEST: 'postmam.isShowingHttpPermissionRequest',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
     FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
     FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress'

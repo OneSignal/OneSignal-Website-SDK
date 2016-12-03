@@ -30,6 +30,19 @@ declare var OneSignal: any;
 
 
 export default class HttpHelper {
+
+  static async isShowingHttpPermissionRequest() {
+    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      return await new Promise((resolve, reject) => {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.IS_SHOWING_HTTP_PERMISSION_REQUEST, null, reply => {
+          resolve(reply.data);
+        });
+      });
+    } else {
+      return OneSignal._showingHttpPermissionRequest;
+    }
+  }
+
   // Http only - Only called from iframe's init.js
   static initHttp(options) {
     log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
@@ -210,6 +223,11 @@ must be opened as a result of a subscription call.</span>`);
                    message.reply({ status: 'reject', result: e })
                  }
                });
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.IS_SHOWING_HTTP_PERMISSION_REQUEST, async message => {
+      const isShowingHttpPermReq = await HttpHelper.isShowingHttpPermissionRequest();
+      message.reply(isShowingHttpPermReq);
+      return false;
     });
     if (Environment.isIframe()) {
       Event.trigger('httpInitialize');
