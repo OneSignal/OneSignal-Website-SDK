@@ -24,6 +24,7 @@ import IndexedDb from "../IndexedDb";
 import InitHelper from "./InitHelper";
 import EventHelper from "./EventHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
+import { InvalidStateReason } from "../errors/InvalidStateError";
 
 declare var OneSignal: any;
 
@@ -202,7 +203,13 @@ must be opened as a result of a subscription call.</span>`);
                .then(result => {
                  message.reply({status: 'resolve', result: result});
                })
-               .catch(e => message.reply({status: 'reject', result: e}));
+               .catch(e => {
+                 if (e && e.reason === InvalidStateReason[InvalidStateReason.PushPermissionAlreadyGranted]) {
+                  // Don't do anything for this error, too common
+                 } else {
+                   message.reply({ status: 'reject', result: e })
+                 }
+               });
     });
     if (Environment.isIframe()) {
       Event.trigger('httpInitialize');

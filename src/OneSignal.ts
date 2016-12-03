@@ -380,9 +380,7 @@ export default class OneSignal {
             Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
           } else {
             Event.trigger(OneSignal.EVENTS.TEST_WOULD_DISPLAY);
-            const rejectReason = 'OneSignal: HTTP permission request not displayed because notification permission is already ' + window.Notification.permission + '.';
-            log.debug(rejectReason);
-            reject(rejectReason);
+            throw new InvalidStateError(InvalidStateReason.PushPermissionAlreadyGranted);
           }
         }
       }));
