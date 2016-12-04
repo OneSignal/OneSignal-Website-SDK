@@ -1,3 +1,5 @@
+require('es6-promise').polyfill();
+
 import Environment from './Environment';
 import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
 import * as log from 'loglevel';
