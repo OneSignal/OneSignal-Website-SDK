@@ -309,19 +309,31 @@ export default class OneSignal {
    * Prompts the user to subscribe.
    * @PublicApi
    */
-  static registerForPushNotifications(options?) {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-          HttpHelper.loadPopup(options);
-        } else {
-          if (!options)
-            options = {};
-          options.fromRegisterFor = true;
-          InitHelper.sessionInit(options);
-        }
-      });
+  static registerForPushNotifications(options) {
+    if (!isPushNotificationsSupported()) {
+      log.debug('OneSignal: Push notifications are not supported.');
+    }
+
+    // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
+    //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
+    function __registerForPushNotifications() {
+      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+        HttpHelper.loadPopup(options);
+      } else {
+        if (!options)
+          options = {};
+        options.fromRegisterFor = true;
+        InitHelper.sessionInit(options);
+      }
+    }
+
+    if (!OneSignal.initialized) {
+      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
+    } else {
+      return __registerForPushNotifications();
+    }
   }
+
   /**
    * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
    * @PublicApi
