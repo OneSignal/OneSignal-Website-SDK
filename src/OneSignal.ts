@@ -759,6 +759,7 @@ export default class OneSignal {
   static closeNotifications = ServiceWorkerHelper.closeNotifications;
   static isServiceWorkerActive = ServiceWorkerHelper.isServiceWorkerActive;
   static _showingHttpPermissionRequest = false;
+  static checkAndWipeUserSubscription = SubscriptionHelper.checkAndWipeUserSubscription;
 
 
   /**

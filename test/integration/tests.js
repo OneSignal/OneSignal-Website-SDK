@@ -687,7 +687,7 @@ describe('Web SDK Tests', function () {
     });
 
     describe('Opting Out', function() {
-      it.only('should correctly opt in and out of notifications', function() {
+      it('should correctly opt in and out of notifications', function() {
         return new SoloTest(this.test, {}, async () => {
           await Utils.initialize(globals, {
             welcomeNotification: false,
