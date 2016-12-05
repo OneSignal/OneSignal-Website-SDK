@@ -95,7 +95,17 @@ var webSdkPlugins = [
       warnings: false,
       negate_iife: true,
     },
-    mangle: IS_PROD,
+    mangle: {
+      enable: IS_PROD,
+      except: ['AlreadySubscribedError',
+        'InvalidArgumentError',
+        'InvalidStateError',
+        'InvalidUuidError',
+        'NotSubscribedError',
+        'PermissionMessageDismissedError',
+        'PushNotSupportedError',
+        'PushPermissionNotGrantedError']
+    },
     output: {
       comments: false
     }
