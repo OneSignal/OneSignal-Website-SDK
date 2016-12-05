@@ -61,7 +61,7 @@ var changesDetectedMessagePlugin = function() {
 };
 
 function getWebSdkModuleEntry() {
-  var path = './src/entry.js';
+  var path = './src/entry.ts';
   var moduleEntry = {};
   moduleEntry[getBuildPrefix() + 'OneSignalSDK'] = path;
   return moduleEntry;
@@ -130,6 +130,14 @@ if (SIZE_STATS) {
   }));
 }
 
+function getAwesomeTypescriptLoaderTsconfigPath() {
+  if (IS_DEV) {
+    return '?tsconfig=./tsconfig.es6.json';
+  } else {
+    return '?tsconfig=./tsconfig.es5.json';
+  }
+}
+
 const ONESIGNAL_WEB_SDK = {
   target: 'web',
   entry: getWebSdkModuleEntry(),
@@ -139,19 +147,18 @@ const ONESIGNAL_WEB_SDK = {
   },
   module: {
     loaders: [{
-      test: /\.js$/,
+      test: /\.(t|j)s$/,
       include: [path.resolve(__dirname, "./src")],
-      exclude: /(node_modules|bower_components|test\/server)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015'],
-        cacheDirectory: true
-      }
+      exclude: /(node_modules|bower_components|test)/,
+      loader: 'awesome-typescript-loader' + getAwesomeTypescriptLoaderTsconfigPath()
     },
       {
         test: /\.scss$/,
-        loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
+        loaders: ["style", "css", "autoprefixer-loader", "sass"]
       }]
+  },
+  resolve: {
+    extensions: ["", ".ts", ".js"]
   },
   devtool: 'source-map',
   sassLoader: {
@@ -167,7 +174,7 @@ function getWebSdkTestModuleName() {
 
 const ONESIGNAL_WEB_SDK_TESTS = {
   target: 'web',
-  entry: ['babel-polyfill', './test/entry.js'],
+  entry: ['./test/integration/entry.ts'],
   output: {
     path: path.join(__dirname, 'dist'),
     filename: getWebSdkTestModuleName() + '.js'
@@ -175,26 +182,19 @@ const ONESIGNAL_WEB_SDK_TESTS = {
   devtool: 'source-map',
   module: {
     loaders: [{
-      test: /\.js$/,
+      test: /\.(t|j)s$/,
       include: [
         path.resolve(__dirname, "./src"),
-        path.resolve(__dirname, "./test")
+        path.resolve(__dirname, "./test/integration"),
       ],
-      exclude: /(node_modules|bower_components|test\/server)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015', 'stage-0'],
-        plugins: ['transform-runtime'],
-        cacheDirectory: true
-      }
+      exclude: /(node_modules)/,
+      loader: 'awesome-typescript-loader' + getAwesomeTypescriptLoaderTsconfigPath()
     },
-      {
-        test: /\.scss$/,
-        loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
-      }]
+    { test: /\.scss$/, loader: 'ignore-loader' }
+    ]
   },
-  sassLoader: {
-    includePaths: [path.resolve(__dirname, "./src")]
+  resolve: {
+    extensions: ["", ".ts", ".js"]
   },
   debug: !IS_PROD,
   plugins: [
@@ -214,7 +214,7 @@ function getWebSdkTestServerModuleName() {
 
 const ONESIGNAL_WEB_SDK_TEST_SERVER = {
   target: 'node',
-  entry: ['babel-polyfill', './test/server.js'],
+  entry: ['babel-polyfill', './test/integration-server/entry.js'],
   output: {
     path: path.join(__dirname, 'dist'),
     filename: getWebSdkTestServerModuleName() + '.js'
@@ -223,8 +223,8 @@ const ONESIGNAL_WEB_SDK_TEST_SERVER = {
   module: {
     loaders: [{
       test: /\.js$/,
-      include: [path.resolve(__dirname, "./test/server")],
-      exclude: /(node_modules|bower_components)/,
+      include: [path.resolve(__dirname, "./test/integration-server/entry.js")],
+      exclude: /(node_modules)/,
       loader: 'babel-loader',
       query: {
         presets: ['es2015', 'stage-0'],
@@ -236,6 +236,9 @@ const ONESIGNAL_WEB_SDK_TEST_SERVER = {
         test: /\.json$/,
         loader: "json-loader"
       }]
+  },
+  resolve: {
+    extensions: ["", ".ts", ".js"]
   },
   debug: !IS_PROD,
   plugins: [

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "es6",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "module": "commonjs",
+    "target": "es6",
+    "sourceMap": true,
+    "allowJs": true,
+    "types": ["node"],
+    "pretty": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowUnreachableCode": true,
+    "allowUnusedLabels": true,
+    "skipLibCheck": false,
+    "skipDefaultLibCheck": false,
+    "outDir": "build",
+    "awesomeTypescriptLoaderOptions": {
+      "useCache": false
+    }
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "typings/**/*"
+  ]
+}

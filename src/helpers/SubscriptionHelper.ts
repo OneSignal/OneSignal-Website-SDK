@@ -1,0 +1,387 @@
+import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from '../vars';
+import Environment from '../Environment';
+import OneSignalApi from '../OneSignalApi';
+import * as log from 'loglevel';
+import LimitStore from '../LimitStore';
+import Event from "../Event";
+import Database from '../Database';
+import * as Browser from 'bowser';
+import {
+  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
+  unsubscribeFromPush, executeAndTimeoutPromiseAfter
+} from '../utils';
+import * as objectAssign from 'object-assign';
+import * as EventEmitter from 'wolfy87-eventemitter';
+import * as heir from 'heir';
+import * as swivel from 'swivel';
+import Postmam from '../Postmam';
+import * as Cookie from 'js-cookie';
+import MainHelper from "./MainHelper";
+import ServiceWorkerHelper from "./ServiceWorkerHelper";
+import EventHelper from "./EventHelper";
+import PushPermissionNotGrantedError from "../errors/PushPermissionNotGrantedError";
+import TestHelper from "./TestHelper";
+
+declare var OneSignal: any;
+
+
+export default class SubscriptionHelper {
+  /**
+   * Returns a Promise resolving to whether user subscriptions should be reset. This means clearing all of IndexedDB
+   * and actually unsubscribing from push notifications.
+   *
+   * Subscriptions are only wiped if the following conditions are met:
+   *   - The flag dangerouslyResetUserSubscriptions is set to any string  (used to name the "reset session")
+   *   - This user wasn't already reset (does this "reset session name" exist already)
+   *   - The site is using an HTTPS native integration  (HTTP sites can only reset subscriptions when the popup is open)
+   */
+  static shouldResetUserSubscription() {
+    return Promise.all([
+      OneSignal.config.dangerouslyResetUserSubscriptions,
+      Database.get('Options', 'userSubscriptionResetToken'),
+      SubscriptionHelper.isUsingSubscriptionWorkaround()
+    ]).then(([isFlagPresent, resetToken, isUsingWorkaround]) => {
+      return (isFlagPresent &&
+      resetToken !== OneSignal.config.dangerouslyResetUserSubscriptions && !isUsingWorkaround);
+    });
+  }
+
+  static checkAndWipeUserSubscription() {
+    return Promise.all([
+      OneSignal.isPushNotificationsEnabled(),
+      SubscriptionHelper.shouldResetUserSubscription()
+    ]).then(([wasPushOriginallyEnabled, shouldResetSubscription]) => {
+      if (shouldResetSubscription) {
+        console.warn(`OneSignal: Resetting user subscription. Wiping IndexedDB, unsubscribing from, ` +
+          `and resubscribing to push...`);
+        sessionStorage.clear();
+        return Database.rebuild()
+                       .then(() => Database.put('Options', {key: 'pageTitle', value: document.title}))
+                       .then(() => unsubscribeFromPush())
+                       .then(() => Database.put('Options', {
+                         key: 'userSubscriptionResetToken',
+                         value: OneSignal.config.dangerouslyResetUserSubscriptions
+                       }))
+                       .then(() => {
+                         if (wasPushOriginallyEnabled) {
+                           OneSignal.__doNotShowWelcomeNotification = true;
+                           console.warn('Wiped subscription and attempting to resubscribe.');
+                           return Database.put('Ids', {type: 'appId', id: OneSignal.config.appId})
+                         } else {
+                           Promise.reject('Wiped subscription, but not resubscribing because user was not originally subscribed.');
+                         }
+                       })
+                       .then(() => {
+                         OneSignal.registerForPushNotifications();
+                       });
+      }
+    });
+  }
+
+  static registerForW3CPush(options) {
+    log.debug(`Called %cregisterForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
+    return Database.get('Ids', 'registrationId')
+                   .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
+                     if (!registrationIdResult || !options.fromRegisterFor || window.Notification.permission != "granted" || navigator.serviceWorker.controller == null) {
+                       navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
+                         var sw_path = "";
+
+                         if (OneSignal.config.path)
+                           sw_path = OneSignal.config.path;
+
+                         if (typeof serviceWorkerRegistration === "undefined") // Nothing registered, very first run
+                           ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                         else {
+                           if (serviceWorkerRegistration.active) {
+                             let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
+                             if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+                               // OneSignalSDKWorker.js was installed
+                               Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
+                                       .then(function (version) {
+                                         if (version) {
+                                           if (version != OneSignal._VERSION) {
+                                             log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                                           }
+                                           else
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                         }
+                                         else
+                                           ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                                       });
+                             }
+                             else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                               // OneSignalSDKUpdaterWorker.js was installed
+                               Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
+                                       .then(function (version) {
+                                         if (version) {
+                                           if (version != OneSignal._VERSION) {
+                                             log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                           }
+                                           else
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                                         }
+                                         else
+                                           ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                       });
+                             } else {
+                               // Some other service worker not belonging to us was installed
+                               // Install ours over it after unregistering theirs to get a different registration token and avoid mismatchsenderid error
+                               log.info('Unregistering previous service worker:', serviceWorkerRegistration);
+                               serviceWorkerRegistration.unregister().then(unregistrationSuccessful => {
+                                 log.info('Result of unregistering:', unregistrationSuccessful);
+                                 ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                               });
+                             }
+                           }
+                           else if (serviceWorkerRegistration.installing == null)
+                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                         }
+                       });
+                     }
+                   });
+  }
+
+  static enableNotifications(existingServiceWorkerRegistration) { // is ServiceWorkerRegistration type
+    log.debug(`Called %cenableNotifications()`, getConsoleStyle('code'));
+    if (!('PushManager' in window)) {
+      log.warn("Push messaging is not supported. No PushManager.");
+      MainHelper.beginTemporaryBrowserSession();
+      return;
+    }
+
+    if (window.Notification.permission === 'denied') {
+      log.warn("The user has blocked notifications.");
+      return;
+    }
+
+    log.debug(`Calling %cnavigator.serviceWorker.ready() ...`, getConsoleStyle('code'));
+    navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+      log.debug('Finished calling %cnavigator.serviceWorker.ready', getConsoleStyle('code'));
+      MainHelper.establishServiceWorkerChannel(serviceWorkerRegistration);
+      SubscriptionHelper.subscribeForPush(serviceWorkerRegistration);
+    });
+  }
+
+  /**
+   * Returns true if web push subscription occurs on a subdomain of OneSignal.
+   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
+   * @remarks
+   *   This method returns true if:
+   *     - The browser is not Safari
+   *         - Safari uses a different method of subscription and does not require our workaround
+   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
+   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
+   *        - The protocol of the current webpage is http:
+   *   Exceptions are:
+   *     - Safe hostnames like localhost and 127.0.0.1
+   *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
+   *        - We are already in popup or iFrame mode, or this is called from the service worker
+   */
+  static isUsingSubscriptionWorkaround() {
+    if (!OneSignal.config) {
+      throw new Error(`(${Environment.getEnv()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`);
+    }
+    if (Browser.safari) {
+      return false;
+    }
+
+    if (SubscriptionHelper.isLocalhostAllowedAsSecureOrigin() &&
+        location.hostname === 'localhost' ||
+        (location.hostname as any) === '127.0.0.1') {
+      return false;
+    }
+
+    return (Environment.isHost() &&
+            (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
+  }
+
+  static isLocalhostAllowedAsSecureOrigin() {
+    return OneSignal.config && OneSignal.config.allowLocalhostAsSecureOrigin === true;
+  }
+
+  static subscribeForPush(serviceWorkerRegistration) {
+    log.debug(`Called %c_subscribeForPush()`, getConsoleStyle('code'));
+    var notificationPermissionBeforeRequest = '';
+
+    OneSignal.getNotificationPermission().then((permission) => {
+      notificationPermissionBeforeRequest = permission as string;
+    })
+             .then(() => {
+               log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
+               Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+               /*
+                7/29/16: If the user dismisses the prompt, the prompt cannot be shown again via pushManager.subscribe()
+                See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
+                Our solution is to call Notification.requestPermission(), and then call
+                pushManager.subscribe(). Because notification and push permissions are shared, the subesequent call to
+                pushManager.subscribe() will go through successfully.
+                */
+               return MainHelper.requestNotificationPermissionPromise();
+             })
+             .then(permission => {
+               if (permission !== "granted") {
+                 throw new PushPermissionNotGrantedError();
+               } else {
+                 return executeAndTimeoutPromiseAfter(
+                   serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
+                   15000,
+                   "A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing."
+                 );
+               }
+             })
+             .then(function (subscription: any) {
+               /*
+                7/29/16: New bug, even if the user dismisses the prompt, they'll be given a subscription
+                See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
+                Our solution is simply to check the permission before actually subscribing the user.
+                */
+               log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`,
+                 getConsoleStyle('code'));
+               log.debug('Subscription details:', subscription);
+               // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
+               OneSignal._sessionInitAlreadyRunning = false;
+               sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", window.Notification.permission);
+
+               MainHelper.getAppId()
+                        .then(appId => {
+                          log.debug("Finished subscribing for push via pushManager.subscribe().");
+
+                          var subscriptionInfo: any = {};
+                          if (subscription) {
+                            if (typeof (subscription).subscriptionId != "undefined") {
+                              // Chrome 43 & 42
+                              subscriptionInfo.endpointOrToken = subscription.subscriptionId;
+                            }
+                            else {
+                              // Chrome 44+ and FireFox
+                              // 4/13/16: We now store the full endpoint instead of just the registration token
+                              subscriptionInfo.endpointOrToken = subscription.endpoint;
+                            }
+
+                            // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
+                            if (subscription.getKey) {
+                              // p256dh and auth are both ArrayBuffer
+                              let p256dh = null;
+                              try {
+                                p256dh = subscription.getKey('p256dh');
+                              } catch (e) {
+                                // User is most likely running < Chrome < 50
+                              }
+                              let auth = null;
+                              try {
+                                auth = subscription.getKey('auth');
+                              } catch (e) {
+                                // User is most likely running < Firefox 45
+                              }
+
+                              if (p256dh) {
+                                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                                let p256dh_base64encoded = btoa(
+                                  String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+                                subscriptionInfo.p256dh = p256dh_base64encoded;
+                              }
+                              if (auth) {
+                                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                                let auth_base64encoded = btoa(
+                                  String.fromCharCode.apply(null, new Uint8Array(auth)));
+                                subscriptionInfo.auth = auth_base64encoded;
+                              }
+                            }
+                          }
+                          else
+                            log.warn('Could not subscribe your browser for push notifications.');
+
+                          if (OneSignal._thisIsThePopup) {
+                            // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
+                            // 11/22/2016 - HTTP popup should move non-essential subscription parts to the iframe
+                            OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
+                              subscriptionInfo: subscriptionInfo
+                            }, message => {
+                              if (message.data.progress === true) {
+                                log.warn('Got message from host page that remote reg. is in progress, closing popup.');
+                                var creator = opener || parent;
+                                if (opener) {
+                                  /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
+                                  window.close();
+                                }
+                              } else {
+                                log.warn('Got message from host page that remote reg. could not be finished.');
+                              }
+                            });
+                          } else {
+                            // If we are not doing HTTP subscription, continue finish subscribing by registering with OneSignal
+                            MainHelper.registerWithOneSignal(appId, subscriptionInfo);
+                          }
+                        });
+             })
+             .catch(function (e) {
+               OneSignal._sessionInitAlreadyRunning = false;
+               if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
+                 let manifestDom = document.querySelector('link[rel=manifest]');
+                 if (manifestDom) {
+                   let manifestParentTagname = (document as any).querySelector('link[rel=manifest]').parentNode.tagName.toLowerCase();
+                   let manifestHtml = (document as any).querySelector('link[rel=manifest]').outerHTML;
+                   let manifestLocation = (document as any).querySelector('link[rel=manifest]').href;
+                   if (manifestParentTagname !== 'head') {
+                     console.warn(`OneSignal: Your manifest %c${manifestHtml}`,
+                       getConsoleStyle('code'),
+                       'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
+                       'in <${manifestParentTagname}>. Please see step 3.1 at ' +
+                       'https://documentation.onesignal.com/docs/web-push-sdk-setup-https.');
+                   } else {
+                     let manifestLocationOrigin = new URL(manifestLocation).origin;
+                     let currentOrigin = location.origin;
+                     if (currentOrigin !== manifestLocationOrigin) {
+                       console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
+                         `different from the current page's origin of ${currentOrigin}. Please serve your ` +
+                         `manifest from the same origin as your page's. If you are using a content delivery ` +
+                         `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
+                         `WordPress users, please see ` +
+                         `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
+                     } else {
+                       console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
+                         getConsoleStyle('code'),
+                         "field is missing or invalid, and a valid value is required. Please see step 2 at " +
+                         "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
+                     }
+                   }
+                 } else if (location.protocol === 'https:') {
+                   console.warn(`OneSignal: You must reference a %cmanifest.json`,
+                     getConsoleStyle('code'),
+                     "in the <head> of your page. Please see step 2 at " +
+                     "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
+                 }
+               } else {
+                 log.error('Error while subscribing for push:', e);
+               }
+
+               // In Chrome, closing a tab while the prompt is displayed is the same as dismissing the prompt by clicking X
+               // Our SDK receives the same event as if the user clicked X, when in fact the user just closed the tab. If
+               // we had some code that prevented showing the prompt for 8 hours, the user would accidentally not be able
+               // to subscribe.
+
+               // New addition (12/22/2015), adding support for detecting the cancel 'X'
+               // Chrome doesn't show when the user clicked 'X' for cancel
+               // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
+               OneSignal.getNotificationPermission().then((permission) => {
+                 if (permission === 'default') {
+                   // The user clicked 'X'
+                   EventHelper.triggerNotificationPermissionChanged(true);
+                   TestHelper.markHttpsNativePromptDismissed();
+                 }
+
+                 if (!OneSignal._usingNativePermissionHook)
+                   EventHelper.triggerNotificationPermissionChanged();
+
+                 if (opener && OneSignal._thisIsThePopup)
+                   window.close();
+               });
+
+               // If there was an error subscribing like the timeout bug, close the popup anyways
+               if (opener && OneSignal._thisIsThePopup)
+                 window.close();
+             });
+  }
+}

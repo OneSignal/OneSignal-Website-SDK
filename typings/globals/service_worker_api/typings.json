@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/jasonpang/DefinitelyTyped/2395bb1890c366ae338087561b60b1a68267a815/service_worker_api/service_worker_api.d.ts",
+    "raw": "github:jasonpang/DefinitelyTyped/service_worker_api/service_worker_api.d.ts#2395bb1890c366ae338087561b60b1a68267a815",
+    "typings": "https://raw.githubusercontent.com/jasonpang/DefinitelyTyped/2395bb1890c366ae338087561b60b1a68267a815/service_worker_api/service_worker_api.d.ts"
+  }
+}
