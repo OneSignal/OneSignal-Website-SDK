@@ -95,7 +95,7 @@ export default class OneSignal {
     if (result && result.success) {
       return true;
     } else {
-      return result;
+      throw result;
     }
   }
 
