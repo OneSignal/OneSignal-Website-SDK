@@ -266,12 +266,12 @@ export default class OneSignal {
                         if (!notOptedOut) {
                           throw new NotSubscribedError(NotSubscribedReason.OptedOut);
                         }
-                        if (MainHelper.isUsingHttpPermissionRequest() &&
-                            permission !== NotificationPermission.Granted
+                        if (MainHelper.isUsingHttpPermissionRequest()
                             ) {
+                          log.warn('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
                           throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
                             permissionPromptType: PermissionPromptType.HttpPermissionRequest
-                          })
+                          });
                         }
                         MainHelper.markHttpPopoverShown();
                         OneSignal.popover = new Popover(OneSignal.config.promptOptions);
