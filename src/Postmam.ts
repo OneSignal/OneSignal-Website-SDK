@@ -86,7 +86,7 @@ export default class Postmam {
   onWindowPostMessageReceived(e) {
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
-      log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
+      // log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
     //log.debug(`(Postmam) (onWindowPostMessageReceived) (${Environment.getEnv()}):`, e);
@@ -121,7 +121,7 @@ export default class Postmam {
     log.trace(`(Postmam) (${Environment.getEnv()}) Window postmessage for Postman connect received:`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
-      log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
+      // log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
     var { handshake } = e.data;
