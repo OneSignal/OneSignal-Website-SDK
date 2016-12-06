@@ -296,7 +296,7 @@ export default class MainHelper {
     log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
     if (this.isUsingHttpPermissionRequest()) {
       if (OneSignal.config.autoRegister) {
-        OneSignal.showHttpPermissionRequest()
+        OneSignal.showHttpPermissionRequest({_sdkCall: true})
                  .then(result => {
                    if (result === 'granted' && !this.isUsingCustomHttpPermissionRequestPostModal()) {
                      log.debug('Showing built-in post HTTP permission request in-page modal because permission is granted and not using custom modal.');

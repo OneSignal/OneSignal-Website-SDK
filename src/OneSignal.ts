@@ -267,8 +267,7 @@ export default class OneSignal {
                           throw new NotSubscribedError(NotSubscribedReason.OptedOut);
                         }
                         if (MainHelper.isUsingHttpPermissionRequest() &&
-                            permission !== NotificationPermission.Granted &&
-                            isShowingHttpPermissionRequest == true
+                            permission !== NotificationPermission.Granted
                             ) {
                           throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
                             permissionPromptType: PermissionPromptType.HttpPermissionRequest
@@ -338,7 +337,7 @@ export default class OneSignal {
    * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
    * @PublicApi
    */
-  static showHttpPermissionRequest() {
+  static showHttpPermissionRequest(options?: {_sdkCall: boolean}) {
     log.debug('Called showHttpPermissionRequest().');
 
     return awaitOneSignalInitAndSupported()
@@ -361,7 +360,7 @@ export default class OneSignal {
         }
 
         if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, null, reply => {
+          OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, options, reply => {
             let {status, result} = reply.data;
             if (status === 'resolve') {
               resolve(result);
@@ -376,6 +375,18 @@ export default class OneSignal {
             return;
           }
 
+          // Default call by our SDK, not forced by user, don't show if the HTTP perm. req. was dismissed by user
+          if (MainHelper.wasHttpsNativePromptDismissed()) {
+            if (options._sdkCall === true) {
+              // TODO: Throw an error; Postmam currently does not serialize errors across cross-domain messaging
+              //       In the future, Postmam should serialize errors so we can throw a PermissionMessageDismissedError
+              log.debug('The HTTP perm. req. permission was dismissed, so we are not showing the request.');
+              return;
+            } else {
+              log.debug('The HTTP perm. req. was previously dismissed, but this call was made explicitly.');
+            }
+          }
+
           log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
           if (window.Notification.permission === "default") {
             OneSignal._showingHttpPermissionRequest = true;
@@ -384,6 +395,7 @@ export default class OneSignal {
               resolve(permission);
               log.debug('HTTP Permission Request Result:', permission);
               if (permission === 'default') {
+                TestHelper.markHttpsNativePromptDismissed();
                 OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
                   permission: permission,
                   forceUpdatePermission: true

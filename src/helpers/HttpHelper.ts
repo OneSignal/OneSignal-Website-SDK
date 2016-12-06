@@ -212,7 +212,12 @@ must be opened as a result of a subscription call.</span>`);
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
       log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
-      OneSignal.showHttpPermissionRequest()
+      let options = {};
+      if (message.data) {
+        options = message.data;
+      }
+      log.debug(Environment.getEnv() + 'HTTP permission request showing, message data:', message);
+      OneSignal.showHttpPermissionRequest(options)
                .then(result => {
                  message.reply({status: 'resolve', result: result});
                })
