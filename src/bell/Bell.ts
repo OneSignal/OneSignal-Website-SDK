@@ -446,7 +446,8 @@ export default class Bell {
                 doNotPrompt !== true &&
                 !isPushEnabled &&
                 (OneSignal.config.autoRegister === true) &&
-                !MainHelper.isHttpPromptAlreadyShown()) {
+                !MainHelper.isHttpPromptAlreadyShown() &&
+                !MainHelper.isUsingHttpPermissionRequest()) {
               log.debug('Not showing notify button because popover will be shown.');
               return nothing();
             } else {
