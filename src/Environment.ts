@@ -15,6 +15,10 @@ export default class Environment {
     return "iFrame";
   }
 
+  static isEs6DebuggingModule() {
+    return __IS_ES6__;
+  }
+
   static getEnv() {
     if (typeof window === "undefined") {
       if (typeof WorkerLocation !== "undefined" && location instanceof WorkerLocation)

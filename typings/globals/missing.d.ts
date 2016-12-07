@@ -37,6 +37,7 @@ declare var __VERSION__: string;
 declare var __DEV__: string;
 declare var __TEST__: string;
 declare var __STAGING__: string;
+declare var __IS_ES6__: string;
 
 declare function fetch(...args): Promise<any>;
 

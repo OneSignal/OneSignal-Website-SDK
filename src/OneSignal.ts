@@ -826,8 +826,9 @@ export default class OneSignal {
     IS_SHOWING_HTTP_PERMISSION_REQUEST: 'postmam.isShowingHttpPermissionRequest',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
     FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
-    FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress'
-  }
+    FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress',
+    POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms'
+  };
 
   static EVENTS = {
     /**
@@ -932,6 +933,9 @@ else
   log.setDefaultLevel((<any>log).levels.ERROR);
 
 log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
+if (Environment.isEs6DebuggingModule()) {
+  log.warn('OneSignal: This is a specially built version of the web SDK for debugging ES6 async/await.');
+}
 log.debug(`Current Page URL: ${location.href}`);
 log.debug(`Browser Environment: ${Browser.name} ${Browser.version}`);
 

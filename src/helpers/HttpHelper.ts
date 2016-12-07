@@ -83,7 +83,9 @@ must be opened as a result of a subscription call.</span>`);
     OneSignal._thisIsThePopup = options.isPopup;
     if (Environment.isPopup() || OneSignal._thisIsThePopup) {
       OneSignal.popupPostmam = new Postmam(window.opener, sendToOrigin, receiveFromOrigin);
-      OneSignal.popupPostmam.connect();
+      // The host page will receive this event, and then call connect()
+      OneSignal.popupPostmam.postMessage(OneSignal.POSTMAM_COMMANDS.POPUP_BEGIN_MESSAGEPORT_COMMS, null);
+      OneSignal.popupPostmam.listen();
       OneSignal.popupPostmam.on('connect', e => {
         log.debug(`(${Environment.getEnv()}) The host page is now ready to receive commands from the HTTP popup.`);
         Event.trigger('httpInitialize');
@@ -371,51 +373,49 @@ must be opened as a result of a subscription call.</span>`);
     }
 
     OneSignal.popupPostmam = new Postmam(subdomainPopup, sendToOrigin, receiveFromOrigin);
-    OneSignal.popupPostmam.listen();
+    OneSignal.popupPostmam.startPostMessageReceive();
 
-    return new Promise((resolve, reject) => {
-      OneSignal.popupPostmam.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, message => {
-        // e.g. { eventName: 'subscriptionChange', eventData: true}
-        let {eventName, eventData} = message.data;
-        Event.trigger(eventName, eventData, message.source);
-        return false;
-      });
+    OneSignal.popupPostmam.on(OneSignal.POSTMAM_COMMANDS.POPUP_BEGIN_MESSAGEPORT_COMMS, message => {
+      // e.g. { eventName: 'subscriptionChange', eventData: true}
+      log.debug(`(Popup Postmam) (${Environment.getEnv()}) Got direct postMessage() event from popup event to begin MessagePort comms.`);
+      OneSignal.popupPostmam.connect();
+      return false;
+    });
 
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_LOADED, message => {
-        Event.trigger('popupLoad');
-      });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
-        MainHelper.triggerCustomPromptClicked('granted');
-      });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
-        MainHelper.triggerCustomPromptClicked('denied');
-      });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
-        log.info('Detected popup is closing.');
-        Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
-        OneSignal.popupPostmam.destroy();
-      });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION, message => {
-        log.debug(Environment.getEnv() + " Marking current session as a continuing browsing session.");
-        MainHelper.beginTemporaryBrowserSession();
-      });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, message => {
-        log.debug(Environment.getEnv() + " Popup window timed out and was closed.");
-        Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
-      });
-      OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, message => {
-        log.debug(Environment.getEnv() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_LOADED, message => {
+      Event.trigger('popupLoad');
+    });
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, message => {
+      MainHelper.triggerCustomPromptClicked('granted');
+    });
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, message => {
+      MainHelper.triggerCustomPromptClicked('denied');
+    });
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, message => {
+      log.info('Detected popup is closing.');
+      Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
+      OneSignal.popupPostmam.destroy();
+    });
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION, message => {
+      log.debug(Environment.getEnv() + " Marking current session as a continuing browsing session.");
+      MainHelper.beginTemporaryBrowserSession();
+    });
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, message => {
+      log.debug(Environment.getEnv() + " Popup window timed out and was closed.");
+      Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
+    });
+    OneSignal.popupPostmam.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, message => {
+      log.debug(Environment.getEnv() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
 
-        message.reply({progress: true});
+      message.reply({ progress: true });
 
-        MainHelper.getAppId()
-                 .then(appId => {
-                   EventHelper.triggerNotificationPermissionChanged(window.Notification.permission);
-                   OneSignal.popupPostmam.stopPostMessageReceive();
-                   MainHelper.registerWithOneSignal(appId, message.data.subscriptionInfo)
-                             .then(() => EventHelper.checkAndTriggerSubscriptionChanged());
-                 });
-      });
+      MainHelper.getAppId()
+                .then(appId => {
+                  EventHelper.triggerNotificationPermissionChanged(window.Notification.permission);
+                  OneSignal.popupPostmam.stopPostMessageReceive();
+                  MainHelper.registerWithOneSignal(appId, message.data.subscriptionInfo)
+                            .then(() => EventHelper.checkAndTriggerSubscriptionChanged());
+                });
     });
   }
 }

@@ -10,6 +10,7 @@ var oneSignalProjectRoot = HOME_PATH + "/code/OneSignal";
 var oneSignalSdksDirName = 'sdks';
 var publicAssetsTargetPath = oneSignalProjectRoot + "/public/";
 var sdksTargetPath = publicAssetsTargetPath + oneSignalSdksDirName;
+var IS_ES6 = process.argv.indexOf('--es6') >= 0;
 var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--production') >= 0 || false;
 var IS_STAGING = process.argv.indexOf('--staging') >= 0 || false;
 var IS_TEST = process.argv.indexOf('--test') >= 0 || false;
@@ -29,6 +30,11 @@ function getBuildPrefix() {
   }
 }
 
+if (IS_ES6) {
+  console.log('');
+  console.warn("WARNING: This SDK is targeting ES6 to debug async/await. It should not be used when building for production.");
+  console.log('');
+}
 
 gulp.task("default", function() {
   runSequence(['reload-changes', 'transpile-javascript']);
@@ -44,7 +50,8 @@ gulp.task("transpile-javascript", shell.task([
   (IS_PROD ? '--production' : '') + ' ' +
   (IS_TEST ? '--test' : '') + ' ' +
   (IS_STAGING ? '--staging' : '') + ' ' +
-  (SIZE_STATS ? '--stats' : '')
+  (SIZE_STATS ? '--stats' : '') +
+  (IS_ES6 ? '--es6' : '')
 ]));
 
 function copyFile(prefix) {

@@ -252,18 +252,14 @@ export default class Postmam {
     this.messagePort.postMessage(messageBundle);
   }
 
-  isSafeOrigin(messageOrigin) {
-    if (!OneSignal.config) {
-      var subdomain = "test";
-    } else {
-      var subdomain = OneSignal.config.subdomainName as string;
-    }
-
-    // If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol
-    // Then relax the postMessage restriction to also allow the http:// protocol for the same domain
-    let otherAllowedOrigins = [];
+  /**
+   * If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol
+   * Then relax the postMessage restriction to also allow the http:// protocol for the same domain.
+   */
+  generateSafeOrigins(origin) {
+    let otherAllowedOrigins = [origin];
     try {
-      let url = new URL(this.receiveFromOrigin);
+      let url = new URL(origin);
       let host = url.host.replace('www.', '');
       if (url.protocol === 'https:') {
         otherAllowedOrigins.push(`https://${host}`);
@@ -278,6 +274,17 @@ export default class Postmam {
     } catch (ex) {
       // Invalid URL: Users can enter '*' or 'https://*.google.com' which is invalid.
     }
+    return otherAllowedOrigins;
+  }
+
+  isSafeOrigin(messageOrigin) {
+    if (!OneSignal.config) {
+      var subdomain = "test";
+    } else {
+      var subdomain = OneSignal.config.subdomainName as string;
+    }
+
+    const otherAllowedOrigins = this.generateSafeOrigins(this.receiveFromOrigin);
 
     return (// messageOrigin === '' || TODO: See if messageOrigin can be blank
             messageOrigin === 'https://onesignal.com' ||
@@ -285,7 +292,6 @@ export default class Postmam {
             (Environment.isDev() && messageOrigin === DEV_FRAME_HOST) ||
             (Environment.isStaging() && messageOrigin === STAGING_FRAME_HOST) ||
             this.receiveFromOrigin === '*' ||
-            messageOrigin === this.receiveFromOrigin ||
             contains(otherAllowedOrigins, messageOrigin));
   }
 }
