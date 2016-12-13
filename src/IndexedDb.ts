@@ -2,7 +2,7 @@ import * as log from 'loglevel';
 import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
 import Event from './Event.ts';
-import { getConsoleStyle } from './utils';
+import { getConsoleStyle, contains } from './utils';
 import Database from './Database';
 
 
@@ -19,7 +19,12 @@ export default class IndexedDb {
       if (IndexedDb._instance) {
         resolve(IndexedDb._instance);
       } else {
-        let request = indexedDB.open("ONE_SIGNAL_SDK_DB", 1);
+        try {
+          var request = indexedDB.open("ONE_SIGNAL_SDK_DB", 1);
+        } catch (e) {
+          // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
+          // for profile schema too high
+        }
         request.onsuccess = ({target}) => {
           let db = (<any>target).result;
           if (IndexedDb._instance) {
@@ -31,9 +36,14 @@ export default class IndexedDb {
           }
         };
         request.onerror = (event) => {
-          log.error('OneSignal: Unable to open IndexedDB.', (<any>event.target).error.name +
-            ': ' + (<any>event.target).error.message);
-          reject(event);
+          const error = (<any>event.target).error;
+          if (contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code')) {
+            log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
+            // Never reject the Promise
+          } else {
+            log.error('OneSignal: Unable to open IndexedDB.', error.name + ': ' + error.message);
+            reject(event);
+          }
         };
         request.onupgradeneeded = (event) => {
           log.info('OneSignal: IndexedDB is being rebuilt or upgraded.', event);
