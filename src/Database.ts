@@ -293,9 +293,9 @@ export default class Database {
          'User ID': userId
        }});
       } else {
-        console.info('App ID:', appId);
-        console.info('Registration ID:', registrationId);
-        console.info('User ID:', userId);
+        log.info('App ID:', appId);
+        log.info('Registration ID:', registrationId);
+        log.info('User ID:', userId);
       }
     });
   }

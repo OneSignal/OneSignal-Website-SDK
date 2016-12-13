@@ -52,7 +52,7 @@ export default class SubscriptionHelper {
       SubscriptionHelper.shouldResetUserSubscription()
     ]).then(([wasPushOriginallyEnabled, shouldResetSubscription]) => {
       if (shouldResetSubscription) {
-        console.warn(`OneSignal: Resetting user subscription. Wiping IndexedDB, unsubscribing from, ` +
+        log.warn(`OneSignal: Resetting user subscription. Wiping IndexedDB, unsubscribing from, ` +
           `and resubscribing to push...`);
         sessionStorage.clear();
         return Database.rebuild()
@@ -65,7 +65,7 @@ export default class SubscriptionHelper {
                        .then(() => {
                          if (wasPushOriginallyEnabled) {
                            OneSignal.__doNotShowWelcomeNotification = true;
-                           console.warn('Wiped subscription and attempting to resubscribe.');
+                           log.warn('Wiped subscription and attempting to resubscribe.');
                            return Database.put('Ids', {type: 'appId', id: OneSignal.config.appId})
                          } else {
                            Promise.reject('Wiped subscription, but not resubscribing because user was not originally subscribed.');
@@ -146,7 +146,7 @@ export default class SubscriptionHelper {
   static enableNotifications(existingServiceWorkerRegistration) { // is ServiceWorkerRegistration type
     log.debug(`Called %cenableNotifications()`, getConsoleStyle('code'));
     if (!('PushManager' in window)) {
-      log.warn("Push messaging is not supported. No PushManager.");
+      log.info("Push messaging is not supported. No PushManager.");
       MainHelper.beginTemporaryBrowserSession();
       return;
     }
@@ -300,14 +300,14 @@ export default class SubscriptionHelper {
                               subscriptionInfo: subscriptionInfo
                             }, message => {
                               if (message.data.progress === true) {
-                                log.warn('Got message from host page that remote reg. is in progress, closing popup.');
+                                log.debug('Got message from host page that remote reg. is in progress, closing popup.');
                                 var creator = opener || parent;
                                 if (opener) {
                                   /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
                                   window.close();
                                 }
                               } else {
-                                log.warn('Got message from host page that remote reg. could not be finished.');
+                                log.debug('Got message from host page that remote reg. could not be finished.');
                               }
                             });
                           } else {
@@ -325,7 +325,7 @@ export default class SubscriptionHelper {
                    let manifestHtml = (document as any).querySelector('link[rel=manifest]').outerHTML;
                    let manifestLocation = (document as any).querySelector('link[rel=manifest]').href;
                    if (manifestParentTagname !== 'head') {
-                     console.warn(`OneSignal: Your manifest %c${manifestHtml}`,
+                     log.warn(`OneSignal: Your manifest %c${manifestHtml}`,
                        getConsoleStyle('code'),
                        'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
                        'in <${manifestParentTagname}>. Please see step 3.1 at ' +
@@ -334,21 +334,21 @@ export default class SubscriptionHelper {
                      let manifestLocationOrigin = new URL(manifestLocation).origin;
                      let currentOrigin = location.origin;
                      if (currentOrigin !== manifestLocationOrigin) {
-                       console.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
+                       log.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
                          `different from the current page's origin of ${currentOrigin}. Please serve your ` +
                          `manifest from the same origin as your page's. If you are using a content delivery ` +
                          `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
                          `WordPress users, please see ` +
                          `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
                      } else {
-                       console.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
+                       log.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
                          getConsoleStyle('code'),
                          "field is missing or invalid, and a valid value is required. Please see step 2 at " +
                          "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
                      }
                    }
                  } else if (location.protocol === 'https:') {
-                   console.warn(`OneSignal: You must reference a %cmanifest.json`,
+                   log.warn(`OneSignal: You must reference a %cmanifest.json`,
                      getConsoleStyle('code'),
                      "in the <head> of your page. Please see step 2 at " +
                      "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");

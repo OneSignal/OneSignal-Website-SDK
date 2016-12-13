@@ -58,14 +58,14 @@ export default class Postmam {
   listen() {
     log.trace('(Postmam) Called listen().');
     if (this.isListening) {
-      log.warn('(Postmam) Already listening for Postmam connections.');
+      log.debug('(Postmam) Already listening for Postmam connections.');
       return;
     }
     if (!Environment.isBrowser()) {
       return;
     }
     this.isListening = true;
-    log.info('(Postmam) Listening for Postmam connections.', this);
+    log.debug('(Postmam) Listening for Postmam connections.', this);
     // One of the messages will contain our MessageChannel port
     window.addEventListener('message', this.onWindowMessagePostmanConnectReceived.bind(this));
   }
@@ -163,7 +163,7 @@ export default class Postmam {
   onMessageReceived(e) {
     //log.debug(`(Postmam) (${Environment.getEnv()}):`, e.data);
     if (!e.data) {
-      log.warn(`(${Environment.getEnv()}) Received an empty Postmam message:`, e);
+      log.debug(`(${Environment.getEnv()}) Received an empty Postmam message:`, e);
       return;
     }
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;

@@ -88,7 +88,7 @@ export default class ServiceWorkerHelper {
                              if (version != OneSignal._VERSION) {
                                // If there is a different version
                                log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
-                               log.warn(`Upgrading service worker (v${version} -> v${OneSignal._VERSION})`);
+                               log.info(`Upgrading service worker (v${version} -> v${OneSignal._VERSION})`);
                                return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                              }
                              else {

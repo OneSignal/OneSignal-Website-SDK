@@ -50,7 +50,7 @@ export default class IndexedDb {
           Event.trigger(Database.EVENTS.REBUILT, null, null);
         };
         (<any>request).onversionchange = (event) => {
-          log.warn('The database is about to be deleted.');
+          log.debug('The database is about to be deleted.');
         };
       }
     });

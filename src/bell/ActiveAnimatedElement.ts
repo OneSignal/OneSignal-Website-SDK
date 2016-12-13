@@ -50,7 +50,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.warn(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
@@ -66,7 +66,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         }
       }
       else {
-        log.warn(`Ending activate() transition (alternative).`);
+        log.debug(`Ending activate() transition (alternative).`);
         this.activeState = 'active';
         Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
         return resolve(this);
@@ -94,7 +94,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.warn(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&

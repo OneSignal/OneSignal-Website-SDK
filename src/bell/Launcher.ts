@@ -47,7 +47,7 @@ export default class Launcher extends ActiveAnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.warn(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
+            log.debug(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&

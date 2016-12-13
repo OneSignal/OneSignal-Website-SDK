@@ -240,7 +240,7 @@ export function executeAndTimeoutPromiseAfter(promise, milliseconds, displayErro
   let timeoutPromise = new Promise(resolve => setTimeout(() => resolve('promise-timed-out'), milliseconds));
   return Promise.race([promise, timeoutPromise]).then(value => {
     if (value === 'promise-timed-out') {
-      log.warn(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
+      log.info(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
       return Promise.reject(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
     }
     else return value;

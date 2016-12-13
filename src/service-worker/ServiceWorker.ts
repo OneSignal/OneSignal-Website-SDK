@@ -138,14 +138,14 @@ class ServiceWorker {
 
   static processQuery(queryType, response) {
     if (!ServiceWorker.queries) {
-      log.warn(`queryClient() was not called before processQuery(). ServiceWorker.queries is empty.`);
+      log.debug(`queryClient() was not called before processQuery(). ServiceWorker.queries is empty.`);
     }
     if (!ServiceWorker.queries[queryType]) {
-      log.warn(`Received query ${queryType} response ${response}. Expected ServiceWorker.queries to be preset to a hash.`);
+      log.debug(`Received query ${queryType} response ${response}. Expected ServiceWorker.queries to be preset to a hash.`);
       return;
     } else {
       if (!ServiceWorker.queries[queryType].promise) {
-        log.warn(`Expected ServiceWorker.queries[${queryType}].promise value to be a Promise: ${ServiceWorker.queries[queryType]}`);
+        log.debug(`Expected ServiceWorker.queries[${queryType}].promise value to be a Promise: ${ServiceWorker.queries[queryType]}`);
         return;
       }
       ServiceWorker.queries[queryType].promiseResolve(response);
@@ -666,7 +666,7 @@ class ServiceWorker {
                                         .then(() => Database.get('Ids', 'userId'))
                                         .then(userId => {
                                           if (self.registration && userId) {
-                                            return ServiceWorker._subscribeForPush(self.registration).catch(e => console.error(e));
+                                            return ServiceWorker._subscribeForPush(self.registration).catch(e => log.error(e));
                                           }
                                         });
     event.waitUntil(activationPromise);
@@ -753,7 +753,7 @@ class ServiceWorker {
             }
           }
           else {
-            log.warn('Could not subscribe your browser for push notifications.');
+            log.info('Could not subscribe your browser for push notifications.');
           }
 
           return ServiceWorker.registerWithOneSignal(appId, subscriptionInfo);
@@ -964,7 +964,7 @@ class ServiceWorker {
         .then((response: any) => {
           // The response is an array literal -- response.json() has been called by apiCall()
           // The result looks like this:
-          // OneSignalApi.get('players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification').then(function(response) { console.log(response); });
+          // OneSignalApi.get('players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification').then(function(response) { log.debug(response); });
           // ["{"custom":{"i":"6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"},"icon":"https://onesignal.com/images/notification_logo.png","alert":"asd","title":"ss"}"]
           // ^ Notice this is an array literal with JSON data inside
           for (var i = 0; i < response.length; i++) {

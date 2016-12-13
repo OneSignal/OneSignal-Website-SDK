@@ -129,7 +129,7 @@ export default class OneSignal {
     }, options);
 
     if (!isPushNotificationsSupported()) {
-      console.warn('OneSignal: Push notifications are not supported.');
+      log.warn('OneSignal: Push notifications are not supported.');
       return;
     }
 
@@ -269,7 +269,7 @@ export default class OneSignal {
                         }
                         if (MainHelper.isUsingHttpPermissionRequest()
                             ) {
-                          log.warn('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
+                          log.debug('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
                           throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
                             permissionPromptType: PermissionPromptType.HttpPermissionRequest
                           });
@@ -917,7 +917,7 @@ Object.defineProperty(OneSignal, 'LOGGING', {
       OneSignal._LOGGING = true;
     }
     else {
-      log.setDefaultLevel((<any>log).levels.ERROR);
+      log.setDefaultLevel((<any>log).levels.WARN);
       OneSignal._LOGGING = false;
     }
   },
@@ -931,7 +931,7 @@ heir.merge(OneSignal, new EventEmitter());
 if (OneSignal.LOGGING)
   log.setDefaultLevel((<any>log).levels.TRACE);
 else
-  log.setDefaultLevel((<any>log).levels.ERROR);
+  log.setDefaultLevel((<any>log).levels.WARN);
 
 log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
 if (Environment.isEs6DebuggingModule()) {

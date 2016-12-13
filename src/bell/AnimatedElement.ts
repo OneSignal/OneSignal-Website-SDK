@@ -43,7 +43,7 @@ export default class AnimatedElement {
         return resolve(this);
       } else {
         var timerId = setTimeout(() => {
-          log.warn(`Element did not completely show (state: ${this.state}).`)
+          log.debug(`Element did not completely show (state: ${this.state}).`)
         }, this.transitionCheckTimeout);
         once(this.element, 'transitionend', (event, destroyListenerFn) => {
           if (event.target === this.element &&
@@ -80,7 +80,7 @@ export default class AnimatedElement {
       } else {
         once(this.element, 'transitionend', (event, destroyListenerFn) => {
           var timerId = setTimeout(() => {
-            log.warn(`Element did not completely hide (state: ${this.state}).`)
+            log.debug(`Element did not completely hide (state: ${this.state}).`)
           }, this.transitionCheckTimeout);
           if (event.target === this.element &&
             contains(this.targetTransitionEvents, event.propertyName)) {

@@ -41,7 +41,7 @@ export default class MainHelper {
       if (contains(url, 'gcm_sender_id')) {
         // Move the <manifest> to the first thing in <head>
         document.querySelector('head').insertBefore(manifest, document.querySelector('head').children[0]);
-        log.warn('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
+        log.info('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
       }
     }
   }
@@ -81,7 +81,7 @@ export default class MainHelper {
               }
               else {
                 // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
-                console.warn(`OneSignal: Invalid init option safari_web_id %c${safariWebId}`, getConsoleStyle('code'), '. Please pass in a valid safari_web_id to OneSignal init.');
+                log.debug(`OneSignal: Invalid init option safari_web_id %c${safariWebId}`, getConsoleStyle('code'), '. Please pass in a valid safari_web_id to OneSignal init.');
               }
             }
             else {
@@ -434,7 +434,7 @@ export default class MainHelper {
   static autoCorrectSubdomain(inputSubdomain) {
     let normalizedSubdomain = MainHelper.getNormalizedSubdomain(inputSubdomain);
     if (normalizedSubdomain !== inputSubdomain) {
-      log.warn(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
+      log.info(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
     }
     return normalizedSubdomain;
   }

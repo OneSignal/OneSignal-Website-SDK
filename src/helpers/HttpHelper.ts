@@ -146,7 +146,7 @@ must be opened as a result of a subscription call.</span>`);
       return false;
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, message => {
-      log.warn(`(${Environment.getEnv()}) The iFrame has just received initOptions from the host page!`);
+      log.info(`(${Environment.getEnv()}) The iFrame has just received initOptions from the host page!`);
 
       preinitializePromise.then(() => {
         OneSignal.config = objectAssign(message.data.hostInitOptions, options, {
@@ -186,9 +186,9 @@ must be opened as a result of a subscription call.</span>`);
                .then(() => {
                  /* 3/20/16: In the future, if navigator.serviceWorker.ready is unusable inside of an insecure iFrame host, adding a message event listener will still work. */
                  //if (navigator.serviceWorker) {
-                 //log.warn('We have added an event listener for service worker messages.', Environment.getEnv());
+                 //log.info('We have added an event listener for service worker messages.', Environment.getEnv());
                  //navigator.serviceWorker.addEventListener('message', function(event) {
-                 //  log.warn('Wow! We got a message!', event);
+                 //  log.info('Wow! We got a message!', event);
                  //});
                  //}
 
@@ -208,7 +208,7 @@ must be opened as a result of a subscription call.</span>`);
       log.debug(Environment.getEnv() + " (Expected iFrame) has received the unsubscribe from push method.");
       unsubscribeFromPush()
         .then(() => message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE))
-        .catch(e => log.warn('Failed to unsubscribe from push remotely.', e));
+        .catch(e => log.debug('Failed to unsubscribe from push remotely.', e));
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
       log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
@@ -331,7 +331,7 @@ must be opened as a result of a subscription call.</span>`);
       OneSignal._sessionIframeAdded = true;
     });
     return executeAndTimeoutPromiseAfter(subdomainLoadPromise, 15000)
-      .catch(() => console.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframeUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
+      .catch(() => log.warn(`OneSignal: Could not load iFrame with URL ${OneSignal.iframeUrl}. Please check that your 'subdomainName' matches that on your OneSignal Chrome platform settings. Also please check that your Site URL on your Chrome platform settings is a valid reachable URL pointing to your site.`));
   }
 
   static loadPopup(options) {
@@ -349,7 +349,7 @@ must be opened as a result of a subscription call.</span>`);
     if (options && options.autoAccept) {
       postData['autoAccept'] = true;
     }
-    console.info('loadPopup(options):', options);
+    log.info('loadPopup(options):', options);
     if (options && options.httpPermissionRequest) {
       postData['httpPermissionRequest'] = true;
       var overrides = {
