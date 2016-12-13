@@ -113,7 +113,6 @@ export default class EventHelper {
                   .then(() => {
                     if (isUpdating) {
                       Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-                        from: null,
                         to: newPermission
                       });
                     }
@@ -136,8 +135,8 @@ export default class EventHelper {
     const pageClickedNotifications = appState.clickedNotifications[url];
     if (pageClickedNotifications) {
       // Remove the clicked notification; we've processed it now
-      delete appState.clickedNotifications[url];
-      Database.setAppState(pageClickedNotifications);
+      appState.clickedNotifications[url] = null;
+      Database.setAppState(appState);
 
       const { data: notification, timestamp } = pageClickedNotifications;
 

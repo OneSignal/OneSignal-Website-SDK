@@ -177,7 +177,8 @@ export default class Database {
     if (appState.lastKnownPushEnabled != null)
       await Database.put('Options', {key: 'isPushEnabled', value: appState.lastKnownPushEnabled});
     if (appState.clickedNotifications) {
-      for (let url of Object.keys(appState.clickedNotifications)) {
+      const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
+      for (let url of clickedNotificationUrls) {
         const notificationDetails = appState.clickedNotifications[url];
         if (notificationDetails) {
           await Database.put('NotificationOpened', {
@@ -185,6 +186,11 @@ export default class Database {
             data: (notificationDetails as any).data,
             timestamp: (notificationDetails as any).timestamp
           });
+        } else if (notificationDetails === null) {
+          // If we get an object like:
+          // { "http://site.com/page": null}
+          // It means we need to remove that entry
+          await Database.remove('NotificationOpened', url);
         }
       }
     }

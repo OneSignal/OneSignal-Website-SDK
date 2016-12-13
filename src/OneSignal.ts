@@ -39,6 +39,7 @@ import { NotSubscribedError } from "./errors/NotSubscribedError";
 import AlreadySubscribedError from "./errors/AlreadySubscribedError";
 import { NotSubscribedReason } from "./errors/NotSubscribedError";
 import { PermissionPromptType } from './models/PermissionPromptType';
+import { Notification } from "./models/Notification";
 
 
 
@@ -522,13 +523,13 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async addListenerForNotificationOpened(callback?: Action<void>) {
+  static async addListenerForNotificationOpened(callback?: Action<Notification>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
     OneSignal.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
       executeCallback(callback, notification);
     });
-    EventHelper.fireStoredNotificationClicks();
+    EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl);
   }
   /**
    * @PublicApi
@@ -542,7 +543,7 @@ export default class OneSignal {
     const bundle = {
       userId: deviceId,
       registrationId: pushToken
-    }
+    };
     executeCallback(callback, bundle);
     return bundle;
   }

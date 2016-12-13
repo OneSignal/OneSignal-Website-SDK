@@ -179,8 +179,6 @@ must be opened as a result of a subscription call.</span>`);
             Database.put('Options', {key: 'lastKnownHostUrl', value: OneSignal.config.pageUrl})
         );
 
-        opPromises.push(EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl));
-
         opPromises.push(InitHelper.initSaveState());
         opPromises.push(InitHelper.storeInitialValues());
         opPromises.push(InitHelper.saveInitOptions());
