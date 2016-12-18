@@ -1,6 +1,10 @@
 .idea/
 node_modules/
 bower_components/
+dist/
+build/
+/config.json
+
 .DS_STORE
 *.pem
-dist/
+yarn-error.log

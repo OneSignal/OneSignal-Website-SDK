@@ -40,3 +40,6 @@ Gruntfile.js
 # misc
 *.gz
 *.md
+
+# Ignore svgo-loader
+!.svgo.yml

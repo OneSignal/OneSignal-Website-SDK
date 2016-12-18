@@ -3,6 +3,7 @@ import Environment from './Environment';
 import { getConsoleStyle, contains, capitalize } from './utils';
 
 
+
 const SILENT_EVENTS = [
   'notifyButtonHovering',
   'notifyButtonHover',
@@ -81,7 +82,7 @@ export default class Event {
         else
           OneSignal.initialized = true;
       }
-      OneSignal.emit(eventName, data);
+      (OneSignal as any).emit(eventName, data);
     }
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       let legacyEventName = LEGACY_EVENT_MAP[eventName];

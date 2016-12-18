@@ -1,27 +1,28 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from '../vars';
-import Environment from '../Environment';
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import LimitStore from '../LimitStore';
+import {DEV_PREFIX, STAGING_PREFIX} from "../vars";
+import Environment from "../Environment";
+import OneSignalApi from "../OneSignalApi";
+import * as log from "loglevel";
 import Event from "../Event";
-import Database from '../Database';
-import * as Browser from 'bowser';
+import Database from "../services/Database";
+import * as Browser from "bowser";
 import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
+  getConsoleStyle,
+  contains,
+  normalizeSubdomain,
+  getDeviceTypeForBrowser,
+  capitalize,
   awaitOneSignalInitAndSupported
-} from '../utils';
-import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-import * as heir from 'heir';
-import * as swivel from 'swivel';
-import Postmam from '../Postmam';
-import * as Cookie from 'js-cookie';
+} from "../utils";
+import * as objectAssign from "object-assign";
+import * as swivel from "swivel";
+import * as Cookie from "js-cookie";
 import HttpModal from "../http-modal/HttpModal";
 import Bell from "../bell/Bell";
 import SubscriptionHelper from "./SubscriptionHelper";
 import EventHelper from "./EventHelper";
-
-declare var OneSignal: any;
+import InitHelper from "./InitHelper";
+import { InvalidStateReason, InvalidStateError } from "../errors/InvalidStateError";
+import { ResourceLoadState } from "../services/DynamicResourceLoader";
 
 
 export default class MainHelper {
@@ -309,29 +310,19 @@ export default class MainHelper {
     }
   }
 
-  static getNotificationIcons() {
-    var url = '';
-    return MainHelper.getAppId()
-                    .then(appId => {
-                      if (!appId) {
-                        return Promise.reject(null);
-                      } else {
-                        url = `${OneSignal._API_URL}apps/${appId}/icon`;
-                        return url;
-                      }
-                    }, () => {
-                      log.debug('No app ID, not getting notification icon for notify button.');
-                      return;
-                    })
-                    .then(url => fetch(url))
-                    .then(response => (response as any).json())
-                    .then(data => {
-                      if (data.errors) {
-                        log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
-                        throw new Error('Failed to get notification icons.');
-                      }
-                      return data;
-                    });
+  static async getNotificationIcons() {
+    const appId = await MainHelper.getAppId();
+    if (!appId) {
+      throw new InvalidStateError(InvalidStateReason.MissingAppId);
+    }
+    var url = `${OneSignal._API_URL}apps/${appId}/icon`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.errors) {
+      log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
+      throw new Error('Failed to get notification icons.');
+    }
+    return data;
   }
 
   static establishServiceWorkerChannel(serviceWorkerRegistration?) {
@@ -378,7 +369,12 @@ export default class MainHelper {
    * Shows the modal on the page users must click on after the local notification prompt to trigger the standard
    * HTTP popup window.
    */
-  static showHttpPermissionRequestPostModal(options) {
+  static async showHttpPermissionRequestPostModal(options?: any) {
+    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
+      log.debug('Not showing HTTP permission request post-modal because styles failed to load.');
+      return;
+    }
     OneSignal.httpPermissionRequestPostModal = new HttpModal(options);
     OneSignal.httpPermissionRequestPostModal.create();
   }

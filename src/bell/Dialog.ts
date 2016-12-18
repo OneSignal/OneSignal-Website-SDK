@@ -6,6 +6,7 @@ import Bell from './Bell';
 import { HOST_URL } from '../vars';
 
 
+
 export default class Dialog extends AnimatedElement {
 
   public bell: any;

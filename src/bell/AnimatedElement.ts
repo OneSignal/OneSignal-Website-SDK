@@ -3,6 +3,7 @@ import * as log from 'loglevel';
 import Event from '../Event'
 
 
+
 export default class AnimatedElement {
 
   /**

@@ -1,12 +1,11 @@
 ///<reference path="models/Action.ts"/>
-import * as log from 'loglevel';
-import * as Browser from 'bowser';
-import Environment from './Environment';
-import IndexedDb from './IndexedDb';
-import Database from './Database';
+import * as log from "loglevel";
+import * as Browser from "bowser";
+import Environment from "./Environment";
+import Database from "./services/Database";
 import PushNotSupportedError from "./errors/PushNotSupportedError";
-import {InvalidArgumentError, InvalidArgumentReason} from "./errors/InvalidArgumentError";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
+
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -29,6 +28,10 @@ export function decodeHtmlEntities(text) {
 }
 
 export function isPushNotificationsSupported () {
+  if (Environment.isTest()) {
+    return true;
+  }
+
   if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
     return false;
 
@@ -257,7 +260,7 @@ export function when(condition, promiseIfTrue, promiseIfFalse) {
 
 export function guid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var crypto = window.crypto || (<any>window).msCrypto;
+    var crypto = typeof window === "undefined" ? (global as any).crypto : (window.crypto || (<any>window).msCrypto);
     if (crypto) {
       var r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
@@ -337,15 +340,13 @@ export function getUrlQueryParam(name) {
 
 /**
  * Wipe OneSignal-related IndexedDB data on the current origin. OneSignal does not have to be initialized to use this.
+ *
+ * Note: This method is now deprecated. It was used to solve mismatched users issues by clearing IndexedDb state
+ *       so that users could cleanly resubscribe. It's been used for several months and this specific solution hasn't
+ *       been used again since then, so many users have probably successfully resubscribed since then. This will be
+ *       replaced by separating IndexedDb tables by app ID. Note: This method has to stay available.
  */
-export function wipeLocalIndexedDb() {
-  log.warn('OneSignal: Wiping local IndexedDB data.');
-  return Promise.all([
-    IndexedDb.remove('Ids'),
-    IndexedDb.remove('NotificationOpened'),
-    IndexedDb.remove('Options')
-  ]);
-}
+export function wipeLocalIndexedDb() { }
 
 /**
  * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.

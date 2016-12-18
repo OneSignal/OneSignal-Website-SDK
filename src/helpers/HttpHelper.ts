@@ -1,32 +1,22 @@
-import {DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST} from '../vars';
-import Environment from '../Environment';
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import LimitStore from '../LimitStore';
+import {DEV_FRAME_HOST, STAGING_FRAME_HOST} from "../vars";
+import Environment from "../Environment";
+import * as log from "loglevel";
 import Event from "../Event";
-import Database from '../Database';
-import * as Browser from 'bowser';
+import Database from "../services/Database";
 import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  isPushNotificationsSupported, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, unsubscribeFromPush
-} from '../utils';
-import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-import * as heir from 'heir';
-import * as swivel from 'swivel';
-import Postmam from '../Postmam';
-import * as Cookie from 'js-cookie';
-import HttpModal from "../http-modal/HttpModal";
-import Bell from "../bell/Bell";
+  getConsoleStyle,
+  isPushNotificationsSupported,
+  executeAndTimeoutPromiseAfter,
+  unsubscribeFromPush
+} from "../utils";
+import * as objectAssign from "object-assign";
+import Postmam from "../Postmam";
 import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
-import IndexedDb from "../IndexedDb";
 import InitHelper from "./InitHelper";
 import EventHelper from "./EventHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
-import { InvalidStateReason } from "../errors/InvalidStateError";
-
-declare var OneSignal: any;
+import {InvalidStateReason} from "../errors/InvalidStateError";
 
 
 export default class HttpHelper {
@@ -68,17 +58,8 @@ must be opened as a result of a subscription call.</span>`);
 
     let sendToOrigin = options.origin;
     let receiveFromOrigin = options.origin;
-    let shouldWipeData = getUrlQueryParam('dangerouslyWipeData') || (window.__POSTDATA && window.__POSTDATA['dangerouslyWipeData'] === true);
 
     let preinitializePromise = Promise.resolve();
-    if (shouldWipeData && Environment.isIframe()) {
-      OneSignal.LOGGING = true;
-      // Wipe IndexedDB and unsubscribe from push/unregister the service worker for testing.
-      log.warn('Wiping away previous HTTP data (called from HTTP iFrame).');
-      preinitializePromise = wipeLocalIndexedDb()
-        .then(() => unsubscribeFromPush())
-        .then(() => IndexedDb.put('Ids', {type: 'appId', id: options.appId}));
-    }
 
     OneSignal._thisIsThePopup = options.isPopup;
     if (Environment.isPopup() || OneSignal._thisIsThePopup) {
@@ -212,7 +193,7 @@ must be opened as a result of a subscription call.</span>`);
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
       log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
-      let options = {};
+      let options = null;
       if (message.data) {
         options = message.data;
       }
@@ -262,10 +243,6 @@ must be opened as a result of a subscription call.</span>`);
     let subdomainLoadPromise = new Promise((resolve, reject) => {
       log.debug(`Called %cloadSubdomainIFrame()`, getConsoleStyle('code'));
 
-      let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
-      if (dangerouslyWipeData) {
-        OneSignal.iframeUrl += '?&dangerouslyWipeData=true';
-      }
       log.debug('Loading subdomain iFrame:', OneSignal.iframeUrl);
       let iframe = MainHelper.createHiddenDomIFrame(OneSignal.iframeUrl);
       iframe.onload = () => {
@@ -341,7 +318,6 @@ must be opened as a result of a subscription call.</span>`);
       sendToOrigin = DEV_FRAME_HOST;
     }
     let receiveFromOrigin = sendToOrigin;
-    let dangerouslyWipeData = OneSignal.config.dangerouslyWipeData;
     let postData = objectAssign({}, MainHelper.getPromptOptionsPostHash(), {
       promptType: 'popup',
       parentHostname: encodeURIComponent(location.hostname)
@@ -358,9 +334,6 @@ must be opened as a result of a subscription call.</span>`);
         left: -99999999,
         top: 9999999,
       };
-    }
-    if (dangerouslyWipeData) {
-      postData['dangerouslyWipeData'] = true;
     }
     log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
     var subdomainPopup = MainHelper.openSubdomainPopup(OneSignal.popupUrl, postData, overrides);

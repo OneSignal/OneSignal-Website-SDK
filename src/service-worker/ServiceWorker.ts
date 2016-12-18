@@ -1,14 +1,13 @@
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from '../vars';
-import Environment from '../Environment'
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import Database from '../Database';
-import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from '../utils';
-import * as objectAssign from 'object-assign';
-import * as swivel from 'swivel';
-import * as Browser from 'bowser';
-import {Notification} from "../models/Notification";
+import {DEV_FRAME_HOST, API_URL, STAGING_FRAME_HOST} from "../vars";
+import Environment from "../Environment";
+import OneSignalApi from "../OneSignalApi";
+import * as log from "loglevel";
+import Database from "../services/Database";
+import {getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, isValidUuid, capitalize} from "../utils";
+import * as objectAssign from "object-assign";
+import * as swivel from "swivel";
+import * as Browser from "bowser";
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -32,7 +31,7 @@ class ServiceWorker {
    * previous version.
    */
   static get VERSION() {
-    return __VERSION__;
+    return Environment.version();
   }
 
   /**
@@ -362,6 +361,7 @@ class ServiceWorker {
   /**
    * Given a structured notification object, HTTPS-ifies the notification icon and action button icons, if they exist.
    */
+
   static ensureNotificationResourcesHttps(notification) {
     if (notification) {
       if (notification.icon) {
@@ -642,7 +642,7 @@ class ServiceWorker {
   static onServiceWorkerInstalled(event) {
     // At this point, the old service worker is still in control
     log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
+    log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${Environment.version()})`);
 
     if (contains((self as any).location.pathname, "OneSignalSDKWorker.js"))
       var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION';
@@ -651,7 +651,7 @@ class ServiceWorker {
 
 
     event.waitUntil(
-        Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
+        Database.put("Ids", {type: serviceWorkerVersionType, id: Environment.version()})
             .then(() => self.skipWaiting())
     );
   }
@@ -984,10 +984,10 @@ class ServiceWorker {
 (self as any).OneSignalWorker = ServiceWorker;
 
 // Set logging to the appropriate level
-log.setDefaultLevel(__DEV__ ? (log as any).levels.TRACE : (log as any).levels.ERROR);
+log.setDefaultLevel(Environment.isDev() ? (log as any).levels.TRACE : (log as any).levels.ERROR);
 
 // Print it's happy time!
-log.info(`%cOneSignal Service Worker loaded (version ${__VERSION__}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
+log.info(`%cOneSignal Service Worker loaded (version ${Environment.version()}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
 
 // Run our main file
 ServiceWorker.run();

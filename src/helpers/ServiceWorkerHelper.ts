@@ -1,25 +1,9 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from '../vars';
-import Environment from '../Environment';
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import LimitStore from '../LimitStore';
-import Event from "../Event";
-import Database from '../Database';
-import * as Browser from 'bowser';
-import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  isPushNotificationsSupported
-} from '../utils';
-import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-import * as heir from 'heir';
-import * as swivel from 'swivel';
-import Postmam from '../Postmam';
-import * as Cookie from 'js-cookie';
-import MainHelper from "./MainHelper";
+import {DEV_PREFIX, STAGING_PREFIX} from "../vars";
+import Environment from "../Environment";
+import * as log from "loglevel";
+import Database from "../services/Database";
+import {getConsoleStyle, contains, isPushNotificationsSupported} from "../utils";
 import SubscriptionHelper from "./SubscriptionHelper";
-
-declare var OneSignal: any;
 
 
 export default class ServiceWorkerHelper {

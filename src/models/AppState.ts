@@ -1,7 +1,7 @@
 import {Notification} from "./Notification";
 import {Timestamp} from "./Timestamp";
 class AppState {
-    defaultNotificationUrl: URL;
+    defaultNotificationUrl: string;
     defaultNotificationTitle: string;
 
     /**

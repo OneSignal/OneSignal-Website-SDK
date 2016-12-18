@@ -4,6 +4,7 @@ import Event from '../Event';
 import AnimatedElement from './AnimatedElement';
 import * as objectAssign from 'object-assign';
 
+
 export default class ActiveAnimatedElement extends AnimatedElement {
 
   /**

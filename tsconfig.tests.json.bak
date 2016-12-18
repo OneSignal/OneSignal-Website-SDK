@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "es6",
+      "es2015.promise",
+      "es2015.collection",
+      "dom",
+      "scripthost"
+    ],
+    "target": "es6",
+    "sourceRoot": "",
+    "mapRoot": "build/javascript"
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "typings/**/*"
+  ]
+}
