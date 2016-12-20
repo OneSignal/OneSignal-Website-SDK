@@ -617,7 +617,7 @@ class ServiceWorker {
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
     if (appId && deviceId) {
-      return await OneSignalApi.put('notifications/' + notification.id, {
+      await OneSignalApi.put('notifications/' + notification.id, {
         app_id: appId,
         player_id: deviceId,
         opened: true
