@@ -756,6 +756,7 @@ export default class OneSignal {
   static workerHelper = ServiceWorkerHelper;
   static httpHelper =  HttpHelper;
   static eventHelper = EventHelper;
+  static initHelper = InitHelper;
   static testHelper = TestHelper;
   static objectAssign = objectAssign;
   /**
