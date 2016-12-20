@@ -365,11 +365,6 @@ must be opened as a result of a subscription call.</span>`);
     log.info(`Opening popup window to ${OneSignal.popupUrl} with POST data:`, OneSignal.popupUrl);
     var subdomainPopup = MainHelper.openSubdomainPopup(OneSignal.popupUrl, postData, overrides);
 
-    if (subdomainPopup) {
-      subdomainPopup.blur();
-      window.focus();
-    }
-
     OneSignal.popupPostmam = new Postmam(subdomainPopup, sendToOrigin, receiveFromOrigin);
     OneSignal.popupPostmam.startPostMessageReceive();
 
