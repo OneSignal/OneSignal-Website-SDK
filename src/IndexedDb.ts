@@ -37,7 +37,8 @@ export default class IndexedDb {
         };
         request.onerror = (event) => {
           const error = (<any>event.target).error;
-          if (contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code')) {
+          if (contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
+              contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
             log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
             // Never reject the Promise
           } else {
