@@ -56,8 +56,8 @@ export function isPushNotificationsSupported () {
   if ((<any>Browser).yandexbrowser && Number(Browser.version) >= 15.12)
     return true;
 
-  // https://www.chromestatus.com/feature/5416033485586432
-  if (Browser.opera && (Browser.mobile || Browser.tablet) && Number(Browser.version) >= 37)
+  if (Browser.opera && (Browser.mobile || Browser.tablet) && Number(Browser.version) >= 37 ||
+      Browser.opera && Number(Browser.version) >= 42)
     return true;
 
   return false;
