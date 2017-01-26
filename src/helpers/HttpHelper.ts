@@ -8,7 +8,7 @@ import Database from '../Database';
 import * as Browser from 'bowser';
 import {
   getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  isPushNotificationsSupported, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, unsubscribeFromPush
+  getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb, unsubscribeFromPush
 } from '../utils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
@@ -46,11 +46,6 @@ export default class HttpHelper {
   // Http only - Only called from iframe's init.js
   static initHttp(options) {
     log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
-
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
-    }
 
     ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
 

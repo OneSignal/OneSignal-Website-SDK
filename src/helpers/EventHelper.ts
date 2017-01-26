@@ -6,7 +6,7 @@ import Database from '../Database';
 import * as Browser from 'bowser';
 import {
   getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  isPushNotificationsSupported, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb,
+  getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb,
   unsubscribeFromPush, decodeHtmlEntities, logMethodCall
 } from '../utils';
 import MainHelper from "./MainHelper";

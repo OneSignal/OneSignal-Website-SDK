@@ -9,7 +9,7 @@ import * as Cookie from 'js-cookie';
 import Database from './Database';
 import * as Browser from 'bowser';
 import {
-  isPushNotificationsSupported, logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
+  logMethodCall, isValidEmail, awaitOneSignalInitAndSupported, getConsoleStyle,
   contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter,
   wipeLocalIndexedDb, prepareEmailForHashing, executeCallback, once, md5, sha1, awaitSdkEvent
 } from './utils';
@@ -106,7 +106,7 @@ export default class OneSignal {
    */
   static isPushNotificationsSupported() {
     logMethodCall('isPushNotificationsSupported');
-    return isPushNotificationsSupported();
+    return true;
   }
 
   /**
@@ -127,11 +127,6 @@ export default class OneSignal {
     OneSignal.config = objectAssign({
       path: '/'
     }, options);
-
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
-    }
 
     if (Browser.safari && !OneSignal.config.safari_web_id) {
       log.warn("OneSignal: Required parameter %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), skipping SDK initialization.');
@@ -310,10 +305,6 @@ export default class OneSignal {
    * @PublicApi
    */
   static registerForPushNotifications(options) {
-    if (!isPushNotificationsSupported()) {
-      log.debug('OneSignal: Push notifications are not supported.');
-    }
-
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {

@@ -5,6 +5,7 @@ var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlug
 
 var IS_PROD = process.argv.indexOf('--prod') >= 0 || process.argv.indexOf('--production') >= 0;
 var IS_ES6 = process.argv.indexOf('--es6') >= 0;
+var IS_ES5 = process.argv.indexOf('--es5') >= 0;
 var IS_STAGING = process.argv.indexOf('--staging') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
 var IS_DEV = !IS_PROD && !IS_STAGING;
@@ -143,7 +144,7 @@ if (SIZE_STATS) {
 }
 
 function getAwesomeTypescriptLoaderTsconfigPath() {
-  if (IS_DEV || IS_ES6) {
+  if ((IS_DEV || IS_ES6) && !IS_ES5) {
     return '?tsconfig=./tsconfig.es6.json';
   } else {
     return '?tsconfig=./tsconfig.es5.json';

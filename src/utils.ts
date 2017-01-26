@@ -77,10 +77,6 @@ export function removeDomElement(selector) {
  */
 export function awaitOneSignalInitAndSupported() {
   return new Promise((resolve, reject) => {
-    if (!isPushNotificationsSupported()) {
-      throw new PushNotSupportedError();
-    }
-
     if (!OneSignal.initialized) {
       OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     } else {

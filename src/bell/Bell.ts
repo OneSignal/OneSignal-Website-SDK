@@ -1,5 +1,5 @@
 import {
-  isPushNotificationsSupported, removeDomElement, addDomElement, addCssClass, delay, nothing, contains,
+  removeDomElement, addDomElement, addCssClass, delay, nothing, contains,
   decodeHtmlEntities, once
 } from '../utils';
 import * as log from 'loglevel';
@@ -361,9 +361,6 @@ export default class Bell {
   }
 
   create() {
-    if (!isPushNotificationsSupported())
-      return;
-
     if (!this.options.enable)
       return;
 

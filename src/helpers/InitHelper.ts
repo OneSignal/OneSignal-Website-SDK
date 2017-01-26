@@ -8,7 +8,7 @@ import Database from '../Database';
 import * as Browser from 'bowser';
 import {
   getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize, once,
-  isPushNotificationsSupported, getUrlQueryParam, wipeLocalIndexedDb, unsubscribeFromPush
+  getUrlQueryParam, wipeLocalIndexedDb, unsubscribeFromPush
 } from '../utils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';

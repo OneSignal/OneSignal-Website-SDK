@@ -7,8 +7,7 @@ import Event from "../Event";
 import Database from '../Database';
 import * as Browser from 'bowser';
 import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  isPushNotificationsSupported
+  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize
 } from '../utils';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
@@ -152,9 +151,6 @@ export default class ServiceWorkerHelper {
   }
 
   static isServiceWorkerActive(callback?) {
-    if (!isPushNotificationsSupported()) {
-      return;
-    }
     if (!('serviceWorker' in navigator)) {
       return false;
     }
