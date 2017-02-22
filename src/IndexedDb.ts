@@ -40,7 +40,8 @@ export default class IndexedDb {
           if (contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
               contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
             log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
-            // Never reject the Promise
+            // Prevent the error from bubbling: https://bugzilla.mozilla.org/show_bug.cgi?id=1331103#c3
+            event.preventDefault();
           } else {
             log.error('OneSignal: Unable to open IndexedDB.', error.name + ': ' + error.message);
             reject(event);
