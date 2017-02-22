@@ -50,7 +50,7 @@ export function isPushNotificationsSupported () {
   if (navigator.appVersion.match(/ wv/))
     return false;
 
-  if (Browser.chrome && Number(Browser.version) >= 42)
+  if ((Browser.chrome || (<any>Browser).chromium) && Number(Browser.version) >= 42)
     return true;
 
   if ((<any>Browser).yandexbrowser && Number(Browser.version) >= 15.12)
@@ -58,6 +58,10 @@ export function isPushNotificationsSupported () {
 
   if (Browser.opera && (Browser.mobile || Browser.tablet) && Number(Browser.version) >= 37 ||
       Browser.opera && Number(Browser.version) >= 42)
+    return true;
+
+  // The earliest version of Vivaldi uses around Chrome 50
+  if (Browser.vivaldi)
     return true;
 
   return false;
@@ -174,7 +178,11 @@ var DEVICE_TYPES = {
 };
 
 export function getDeviceTypeForBrowser() {
-  if (Browser.chrome || (<any>Browser).yandexbrowser || Browser.opera) {
+  if (Browser.chrome ||
+     (<any>Browser).yandexbrowser ||
+     Browser.opera ||
+     Browser.vivaldi ||
+     (<any>Browser).chromium) {
     return DEVICE_TYPES.CHROME;
   } else if (Browser.firefox) {
     return DEVICE_TYPES.FIREFOX;
