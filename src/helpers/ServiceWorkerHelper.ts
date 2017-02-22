@@ -163,7 +163,7 @@ export default class ServiceWorkerHelper {
     }
 
     return new Promise((resolve, reject) => {
-      if (!SubscriptionHelper.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
+      if (!SubscriptionHelper.isUsingSubscriptionWorkaround() && !Environment.isIframe() && !Environment.isCustomSubdomain()) {
         let isServiceWorkerActive = false;
         if (navigator.serviceWorker.getRegistrations) {
           navigator.serviceWorker.getRegistrations().then(serviceWorkerRegistrations => {

@@ -193,7 +193,11 @@ export default class SubscriptionHelper {
       return false;
     }
 
-    return (Environment.isHost() &&
+    /*
+     * - isHost() because if we are the HTTP popup, we are already the workaround
+     * - !isIframe() because users opening an iframe to a custom subdomain is using a subscription workaround
+     */
+    return ((Environment.isHost() || !Environment.isIframe()) &&
             (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
   }
 
