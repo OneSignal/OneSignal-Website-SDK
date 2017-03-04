@@ -312,7 +312,8 @@ class ServiceWorker {
       data: rawNotification.custom.a,
       url: rawNotification.custom.u,
       icon: rawNotification.icon,
-      image: rawNotification.image
+      image: rawNotification.image,
+      tag: rawNotification.tag
     };
 
     // Add action buttons
@@ -402,7 +403,7 @@ class ServiceWorker {
           notification.heading = notification.heading ? notification.heading : defaultTitle;
           notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
           var extra: any = {};
-          extra.tag = `${appId}`;
+          extra.tag = notification.tag || appId;
           extra.persistNotification = persistNotification;
 
           // Allow overriding some values
