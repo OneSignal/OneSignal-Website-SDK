@@ -9,7 +9,7 @@ const SILENT_EVENTS = [
   'notifyButtonButtonClick',
   'notifyButtonLauncherClick',
   'animatedElementHiding',
-  'aniamtedElementHidden',
+  'animatedElementHidden',
   'animatedElementShowing',
   'animatedElementShown',
   'activeAnimatedElementActivating',
