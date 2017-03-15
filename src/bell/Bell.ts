@@ -1,5 +1,4 @@
 import {
-  isPushNotificationsSupported,
   removeDomElement,
   addDomElement,
   addCssClass,
@@ -374,9 +373,6 @@ export default class Bell {
   }
 
   async create() {
-    if (!isPushNotificationsSupported())
-      return;
-
     if (!this.options.enable)
       return;
 

@@ -1,7 +1,5 @@
-require('es6-promise').polyfill();
-
 import Environment from './Environment';
-import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
+import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from './utils';
 import * as log from 'loglevel';
 
 
@@ -18,7 +16,13 @@ if (Environment.isBrowser()) {
     if (typeof OneSignal !== "undefined")
       var predefinedOneSignalPushes = OneSignal;
 
-    (window as any).OneSignal = require('./OneSignal').default;
+    if (isPushNotificationsSupported()) {
+      (window as any).OneSignal = require('./OneSignal').default;
+    } else {
+      log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
+
+      (window as any).OneSignal = require('./OneSignalStub').default;
+    }
 
     if (predefinedOneSignalPushes)
       for (var i = 0; i < predefinedOneSignalPushes.length; i++)

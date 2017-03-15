@@ -22,7 +22,7 @@ test.beforeEach(t => {
   t.context.loadSdkStylesheet = sinon.stub(DynamicResourceLoader.prototype, 'loadSdkStylesheet');
 });
 
-test.afterEach(t => {
+test.afterEach.always(t => {
   t.context.loadSdkStylesheet.restore();
 });
 
@@ -40,6 +40,7 @@ test.only("should load if notify button is used", async t => {
     launcher: new MockLauncher(null)
   });
   notifyButton.launcher.bell = notifyButton;
+  debugger;
   await notifyButton.create();
   t.is(t.context.loadSdkStylesheet.called, true);
 });

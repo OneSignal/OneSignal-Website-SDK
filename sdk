@@ -1,4 +1,18 @@
 #! /usr/bin/env node
+
+const path = require('path');
+var fsys = require('fs');
+
+if (!fsys.existsSync(path.resolve('node_modules'))) {
+  console.log(`Error: Run 'yarn' to install Node dependencies before running this tool.`);
+  return;
+}
+
+if (!fsys.existsSync(path.resolve('config.json'))) {
+  console.log(`Error: Ensure 'config.json' exists in '${path.resolve(__dirname)}'. Copy 'config.json.example' and rename it to 'config.json'. Be sure the config paths are correct (check railsProjectRoot).`);
+  return;
+}
+
 const yargonaut = require('yargonaut')
                           .style('blue', 'required')
                           .errorsStyle('red.bold')
@@ -7,21 +21,30 @@ const yargs = require('yargs');
 const chalk = require('chalk');
 const nconf = require('nconf');
 const json5 = require('json5');
-const spawn = require('child_process').spawn;
+const childProcess = require('child_process');
+const spawn = childProcess.spawn;
 const fs = require('fs-extra');
-const path = require('path');
 const microtime = require('microtime')
 const sleep = require('sleep');
 const webpack = require('webpack');
 const rimraf = require('rimraf');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const sorcery = require('sorcery');
+const dir = require('node-dir');
+const ncp = require("copy-paste");
+const stripAnsi = require('strip-ansi');
 
 
 class BuildContext {
   constructor(config) {
     this.lastTypeScriptChangeDetected = microtime.now();
     this.isInitialBuild = true;
+    this.config = config;
+  }
+}
+
+class TestContext {
+  constructor(config) {
     this.config = config;
   }
 }
@@ -136,6 +159,58 @@ async function onBuildCommandRun(argv) {
   }
 }
 
+async function onTestCommandRun(argv) {
+  try {
+    const envConfig = createEnvConfig(argv);
+    const context = new TestContext(envConfig);
+
+    if (context.config.get('debug')) {
+      // The filename the user wants to debug (e.g. loadSdkStyles)
+      const targetFileName = context.config.get('debug');
+      // The base path to our unit tests
+      const unitTestsBasePath = path.resolve(path.join(__dirname, 'build', 'javascript', 'test', 'unit'));
+      try {
+        const filteredFiles = await new Promise((resolve, reject) => {
+          dir.files(unitTestsBasePath, async(err, files) => {
+            if (err)
+              throw err;
+            const filteredFiles = files.filter(filePath => {
+              const fileName = path.basename(filePath);
+              if (fileName.endsWith('.map')) {
+                // Ignore source map files
+                return false;
+              }
+              return fileName.toLowerCase().indexOf(targetFileName.toLowerCase()) !== -1;
+            });
+            if (filteredFiles.length === 0) {
+              reject(chalk.red(`${chalk.blue('[Debug Tests]')} ${chalk.blue(targetFileName)} not found in any subdirectory of ${chalk.blue(unitTestsBasePath)}`));
+            }
+            if (filteredFiles.length > 1) {
+              reject(chalk.red(`${chalk.blue('[Debug Tests]')} Multiple ${chalk.blue(targetFileName)} files found. Specify: ${chalk.blue(JSON.stringify(filteredFiles, null, 4))}`));
+            }
+            resolve(filteredFiles);
+          });
+        });
+        await TestModule.debugTest(context, {
+          testFilePath: filteredFiles[0]
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      if (context.config.get('only')) {
+        await TestModule.runTestsAndWatch(context, {
+          testTitle: context.config.get('only')
+        });
+      } else {
+        await TestModule.runTestsAndWatch(context);
+      }
+    }
+  } catch (e) {
+    console.error(chalk.red(`Fatal testing error: ${e.stack}`));
+  }
+}
+
 function createEnvConfig(argv) {
   var config = nconf.env()
                     .file({ file: argv.config, format: json5 });
@@ -144,6 +219,8 @@ function createEnvConfig(argv) {
   config.set('noBundle', argv.noBundle);
   config.set('verbose', argv.verbose);
   config.set('disableTransformSourceMaps', argv.disableTransformSourceMaps);
+  config.set('only', argv.only);
+  config.set('debug', argv.debug);
   return config;
 }
 
@@ -198,6 +275,83 @@ class CleanModule {
       }
     }
     console.log();
+  }
+}
+
+class TestModule {
+
+  static async debugTest(context, options) {
+    if (!options || !options.testFilePath) {
+      throw new Error("testFilePath is null");
+    }
+    return await new Promise((resolve, reject) => {
+      const testerOptions = [
+        '--inspect',
+        '--debug-brk',
+        'node_modules/ava/profile.js',
+        options.testFilePath,
+      ];
+      const tester = spawn('node', testerOptions, {
+        env: Object.assign(process.env, {
+          FORCE_COLOR: 1,
+        })
+      });
+      console.log();
+      console.log(`${chalk.blue('[Debug Tests]')} Running 'node ${testerOptions.join(' ')}'`);
+      tester.stdout.on('data', data => {
+        console.log(stripAnsi(data.toString()));
+      });
+      tester.stderr.on('data', function (data) {
+        try {
+          console.log(stripAnsi(data.toString()));
+          const urlRegexMatch = data.toString().match(/chrome-devtools:\/\/.*/);
+          if (urlRegexMatch) {
+            const url = urlRegexMatch[0];
+            ncp.copy(url, function () {
+              console.log(`Copied URL ${chalk.blue(url)} to clipboard.`);
+            })
+          }
+        } catch (e) {
+          reject(chalk.red(`${chalk.blue('[Debug Tests]')} 'node --inspect' error: ${e.toString()}`));
+        }
+      });
+      tester.on('exit', function (code) {
+        if (code !== 0) {
+          reject(chalk.red(`${chalk.blue('[Debug Tests]')} 'node' exited with code ${code}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  static async runTestsAndWatch(context, options) {
+    return await new Promise((resolve, reject) => {
+      const testerOptions = [
+        '--verbose', '--watch'
+      ];
+      if (options) {
+        if (options.testTitle) {
+          testerOptions.push(`-m="${options.testTitle}"`);
+        }
+      }
+      const tester = spawn('ava', testerOptions);
+      console.log();
+      console.log(`${chalk.blue('[Tests]')} Running 'ava ${testerOptions.join(' ')}'`);
+      tester.stdout.on('data', data => {
+        console.log(`${chalk.blue('[Tests]')} ${data.toString()}`);
+      });
+      tester.stderr.on('data', function (data) {
+        process.stdout.write(data.toString());
+      });
+      tester.on('exit', function (code) {
+        if (code !== 0) {
+          reject(chalk.red(`${chalk.blue('[Tests]')} 'ava' exited with code ${code}`));
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 }
 
@@ -617,6 +771,24 @@ const argv = yargs
     default: false,
     global: true
   })
+  .option('only', {
+    alias: 'ly',
+    description: `Only run a specific test.`,
+    requiresArg: false,
+    required: false,
+    type: 'string',
+    default: null,
+    global: true
+  })
+  .option('debug', {
+    alias: 'dbg',
+    description: `Debug a specific transpiled JS file using Chrome's developer tools.`,
+    requiresArg: false,
+    required: false,
+    type: 'string',
+    default: null,
+    global: true
+  })
   .option('disableTransformSourceMaps', {
     alias: 'dtsm',
     description: `Disables transforming of source maps.
@@ -636,8 +808,18 @@ const argv = yargs
            Optionally add '--tests' to build with tests.`,
     handler: onBuildCommandRun
   })
-  .example('./sdk build --tests', 'Build the web SDK for development (default) with tests.')
+  .command({
+    command: 'test',
+    aliases: 't',
+    desc: `Tests the web SDK, by running unit tests in the tests/ folder.  
+           Optionally add '--only' to test a single file, or '--debug' to debug the test with Chrome's Developer Tools.`,
+    handler: onTestCommandRun
+  })
+  .example('./sdk build --tests --noBundle', 'Build the web SDK for development with tests, without bundling files together (bundling is unnecessary for unit testing individual files).')
   .example('./sdk build --env prod', 'Build the web SDK for production.')
+  .example('./sdk test', 'Run all web SDK unit tests.')
+  .example('./sdk test --only="some test title*"', 'Run a specific web SDK unit test. Wildcards supported using *.')
+  .example('./sdk test --debug="transpiled-filename.js', "Debug a specific transpiled JS file using Chrome's Developer Tools.")
   .strict()
   .demand(1)
   .argv;

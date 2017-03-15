@@ -28,10 +28,6 @@ export function decodeHtmlEntities(text) {
 }
 
 export function isPushNotificationsSupported () {
-  if (Environment.isTest()) {
-    return true;
-  }
-
   if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
     return false;
 
@@ -53,14 +49,19 @@ export function isPushNotificationsSupported () {
   if (navigator.appVersion.match(/ wv/))
     return false;
 
-  if (Browser.chrome && Number(Browser.version) >= 42)
+  if ((Browser.chrome || (<any>Browser).chromium) && Number(Browser.version) >= 42)
     return true;
 
   if ((<any>Browser).yandexbrowser && Number(Browser.version) >= 15.12)
     return true;
 
   // https://www.chromestatus.com/feature/5416033485586432
-  if (Browser.opera && Browser.mobile && Number(Browser.version) >= 37)
+  if (Browser.opera && (Browser.mobile || Browser.tablet) && Number(Browser.version) >= 37 ||
+    Browser.opera && Number(Browser.version) >= 42)
+    return true;
+
+  // The earliest version of Vivaldi uses around Chrome 50
+  if ((Browser as any).vivaldi)
     return true;
 
   return false;
@@ -80,10 +81,6 @@ export function removeDomElement(selector) {
  */
 export function awaitOneSignalInitAndSupported() {
   return new Promise((resolve, reject) => {
-    if (!isPushNotificationsSupported()) {
-      throw new PushNotSupportedError();
-    }
-
     if (!OneSignal.initialized) {
       OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     } else {
@@ -181,7 +178,11 @@ var DEVICE_TYPES = {
 };
 
 export function getDeviceTypeForBrowser() {
-  if (Browser.chrome || (<any>Browser).yandexbrowser || Browser.opera) {
+  if (Browser.chrome ||
+    (<any>Browser).yandexbrowser ||
+    Browser.opera ||
+    (Browser as any).vivaldi ||
+    (<any>Browser).chromium) {
     return DEVICE_TYPES.CHROME;
   } else if (Browser.firefox) {
     return DEVICE_TYPES.FIREFOX;

@@ -5,7 +5,6 @@ import Event from "../Event";
 import Database from "../services/Database";
 import {
   getConsoleStyle,
-  isPushNotificationsSupported,
   executeAndTimeoutPromiseAfter,
   unsubscribeFromPush
 } from "../utils";
@@ -36,11 +35,6 @@ export default class HttpHelper {
   // Http only - Only called from iframe's init.js
   static initHttp(options) {
     log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
-
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
-    }
 
     ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
 

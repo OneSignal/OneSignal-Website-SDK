@@ -112,7 +112,11 @@ export default class OneSignal {
    */
   static isPushNotificationsSupported() {
     logMethodCall('isPushNotificationsSupported');
-    return isPushNotificationsSupported();
+    /*
+      Push notification support is checked in the initial entry code. If in an unsupported environment, a stubbed empty
+      version of the SDK will be loaded instead. This file will only be loaded if push notifications are supported.
+     */
+    return true;
   }
 
   /**
@@ -133,11 +137,6 @@ export default class OneSignal {
     OneSignal.config = objectAssign({
       path: '/'
     }, options);
-
-    if (!isPushNotificationsSupported()) {
-      log.warn('OneSignal: Push notifications are not supported.');
-      return;
-    }
 
     if (Browser.safari && !OneSignal.config.safari_web_id) {
       log.warn("OneSignal: Required parameter %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), skipping SDK initialization.');
@@ -315,10 +314,6 @@ export default class OneSignal {
    * @PublicApi
    */
   static registerForPushNotifications(options?: any) {
-    if (!isPushNotificationsSupported()) {
-      log.debug('OneSignal: Push notifications are not supported.');
-    }
-
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {

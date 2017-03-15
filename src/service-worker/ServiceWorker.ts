@@ -310,7 +310,8 @@ class ServiceWorker {
       content: rawNotification.alert,
       data: rawNotification.custom.a,
       url: rawNotification.custom.u,
-      icon: rawNotification.icon
+      icon: rawNotification.icon,
+      tag: rawNotification.tag
     };
 
     // Add action buttons
@@ -359,13 +360,16 @@ class ServiceWorker {
   }
 
   /**
-   * Given a structured notification object, HTTPS-ifies the notification icon and action button icons, if they exist.
+   * Given a structured notification object, HTTPS-ifies the notification icons and action button icons, if they exist.
    */
 
   static ensureNotificationResourcesHttps(notification) {
     if (notification) {
       if (notification.icon) {
         notification.icon = ServiceWorker.ensureImageResourceHttps(notification.icon);
+      }
+      if (notification.image) {
+        notification.image = ServiceWorker.ensureImageResourceHttps(notification.image);
       }
       if (notification.buttons && notification.buttons.length > 0) {
         for (let button of notification.buttons) {
@@ -398,7 +402,7 @@ class ServiceWorker {
           notification.heading = notification.heading ? notification.heading : defaultTitle;
           notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
           var extra: any = {};
-          extra.tag = `${appId}`;
+          extra.tag = notification.tag || appId;
           extra.persistNotification = persistNotification;
 
           // Allow overriding some values
@@ -411,6 +415,10 @@ class ServiceWorker {
           let notificationOptions = {
             body: notification.content,
             icon: notification.icon,
+            /*
+             On Chrome 56, a large image can be displayed: https://bugs.chromium.org/p/chromium/issues/detail?id=614456
+             */
+            image: notification.image,
             /*
              On Chrome 44+, use this property to store extra information which you can read back when the
              notification gets invoked from a notification click or dismissed event. We serialize the

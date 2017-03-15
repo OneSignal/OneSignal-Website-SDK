@@ -2,7 +2,7 @@ import {DEV_PREFIX, STAGING_PREFIX} from "../vars";
 import Environment from "../Environment";
 import * as log from "loglevel";
 import Database from "../services/Database";
-import {getConsoleStyle, contains, isPushNotificationsSupported} from "../utils";
+import {getConsoleStyle, contains} from "../utils";
 import SubscriptionHelper from "./SubscriptionHelper";
 
 
@@ -136,9 +136,6 @@ export default class ServiceWorkerHelper {
   }
 
   static isServiceWorkerActive(callback?) {
-    if (!isPushNotificationsSupported()) {
-      return;
-    }
     if (!('serviceWorker' in navigator)) {
       return false;
     }
