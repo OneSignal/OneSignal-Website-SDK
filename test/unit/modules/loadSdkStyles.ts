@@ -26,7 +26,7 @@ test.afterEach.always(t => {
   t.context.loadSdkStylesheet.restore();
 });
 
-test.only("should load if notify button is used", async t => {
+test("should load if notify button is used", async t => {
   await TestEnvironment.initialize({
     initOptions: {
       notifyButton: {
@@ -45,7 +45,7 @@ test.only("should load if notify button is used", async t => {
   t.is(t.context.loadSdkStylesheet.called, true);
 });
 
-test.only("should load if HTTP permission request is used", async t => {
+test("should load if HTTP permission request is used", async t => {
   await TestEnvironment.initialize({
     initOptions: {
       httpPermissionRequest: {
@@ -58,7 +58,7 @@ test.only("should load if HTTP permission request is used", async t => {
   t.is(t.context.loadSdkStylesheet.called, true);
 });
 
-test.only("should load if slidedown permission message is used", async t => {
+test("should load if slidedown permission message is used", async t => {
   await TestEnvironment.initialize({
     initOptions: { },
     httpOrHttps: HttpHttpsEnvironment.Https

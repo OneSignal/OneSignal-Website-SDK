@@ -28,40 +28,53 @@ export function decodeHtmlEntities(text) {
 }
 
 export function isPushNotificationsSupported () {
-  if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
+  /* During testing, the browser object may be initialized before the userAgent is injected */
+  if (Browser.name === '' && Browser.version === '') {
+    var browser = (Browser as any)._detect(navigator.userAgent);
+  } else {
+    var browser: any =  Browser;
+  }
+  let userAgent = navigator.userAgent || '';
+
+  if (browser.ios || (<any>browser).ipod || (<any>browser).iphone || (<any>browser).ipad)
     return false;
 
-  if (Browser.msedge || Browser.msie)
+  if (browser.msedge || browser.msie)
     return false;
 
-  /* Firefox on Android push notifications not supported until at least 48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
-  if (Browser.firefox && Number(Browser.version) < 48 && (Browser.mobile || Browser.tablet)) {
+  // Facebook in-app browser
+  if ((userAgent.indexOf("FBAN") > -1) || (userAgent.indexOf("FBAV") > -1)) {
     return false;
   }
-
-  if (Browser.firefox && Number(Browser.version) >= 44)
-    return true;
-
-  if (Browser.safari && Number(Browser.version) >= 7.1)
-    return true;
 
   // Android Chrome WebView
   if (navigator.appVersion.match(/ wv/))
     return false;
 
-  if ((Browser.chrome || (<any>Browser).chromium) && Number(Browser.version) >= 42)
+  /* Firefox on Android push notifications not supported until at least 48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
+  if (browser.firefox && Number(browser.version) < 48 && (browser.mobile || browser.tablet)) {
+    return false;
+  }
+
+  if (browser.firefox && Number(browser.version) >= 44)
     return true;
 
-  if ((<any>Browser).yandexbrowser && Number(Browser.version) >= 15.12)
+  if (browser.safari && Number(browser.version) >= 7.1)
+    return true;
+
+  if ((browser.chrome || (<any>browser).chromium) && Number(browser.version) >= 42)
+    return true;
+
+  if ((<any>browser).yandexbrowser && Number(browser.version) >= 15.12)
     return true;
 
   // https://www.chromestatus.com/feature/5416033485586432
-  if (Browser.opera && (Browser.mobile || Browser.tablet) && Number(Browser.version) >= 37 ||
-    Browser.opera && Number(Browser.version) >= 42)
+  if (browser.opera && (browser.mobile || browser.tablet) && Number(browser.version) >= 37 ||
+    browser.opera && Number(browser.version) >= 42)
     return true;
 
   // The earliest version of Vivaldi uses around Chrome 50
-  if ((Browser as any).vivaldi)
+  if ((browser as any).vivaldi)
     return true;
 
   return false;

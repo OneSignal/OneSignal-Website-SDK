@@ -332,7 +332,7 @@ class TestModule {
       ];
       if (options) {
         if (options.testTitle) {
-          testerOptions.push(`-m="${options.testTitle}"`);
+          testerOptions.push('-m', options.testTitle);
         }
       }
       const tester = spawn('ava', testerOptions);
