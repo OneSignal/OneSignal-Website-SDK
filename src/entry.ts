@@ -31,5 +31,7 @@ if (Environment.isBrowser()) {
 }
 else if (Environment.isServiceWorker()) {
   // We're running as the service worker
-  (self as any).OneSignalWorker = require('./service-worker/ServiceWorker');
+  const OneSignalServiceWorker = require('./service-worker/ServiceWorker');
+  (self as any).OneSignal = new OneSignalServiceWorker;
+  (self as any).OneSignal.initialize();
 }

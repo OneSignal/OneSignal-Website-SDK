@@ -7,6 +7,9 @@ import { Test } from "ava";
 import * as jsdom from 'jsdom';
 import * as DOMStorage from 'dom-storage';
 import Launcher from "../../../src/bell/Launcher";
+import fetch from 'node-fetch';
+import ServiceWorkerGlobalScope from "../mocks/service-workers/ServiceWorkerGlobalScope";
+import ServiceWorker from "../../../src/service-worker/ServiceWorker";
 
 
 var global = new Function('return this')();
@@ -112,6 +115,25 @@ export class TestEnvironment {
           callback(new Error("request canceled by user"));
         }
       };
+  }
+
+  static async stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorker> {
+    // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
+    global.self = new ServiceWorkerGlobalScope();
+    global.fetch = fetch;
+    global.location = {
+      origin: 'https://localhost:3001',
+      href: 'https://localhost:3001/webpush/sandbox?https=1',
+    };
+    global.OneSignal = ServiceWorker({
+      databaseName: Random.getRandomString(6)
+
+    }
+
+  static async stubDomEnvironment(config?: TestEnvironmentConfig) {
+      if (!config)
+        });
+    return global.OneSignal;
   }
 
   static async stubDomEnvironment(config?: TestEnvironmentConfig) {
