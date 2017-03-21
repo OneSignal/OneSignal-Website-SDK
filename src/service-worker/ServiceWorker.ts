@@ -569,7 +569,7 @@ export default class ServiceWorker {
      be focused instead of an identical new tab being created.
      */
     let doNotOpenLink = false;
-    for (let client of activeClients) {
+    for (let client: WindowClient of activeClients) {
       let clientUrl = client.url;
       if ((client as any).isSubdomainIframe) {
         const lastKnownHostUrl = await this.database.get<string>('Options', 'lastKnownHostUrl');
@@ -591,15 +591,34 @@ export default class ServiceWorker {
       } catch (e) {
       }
 
+      await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-        (client as any).focus();
-        (swivel as any).emit(client.id, 'notification.clicked', notification);
+        if (client.url === launchUrl) {
+          (swivel as any).emit(client.id, 'notification.clicked', notification);
+          await client.focus();
+        } else {
+          /*
+          We must focus first; once the client navigates away, it may not be to a service worker-controlled page, and
+          the client ID may change, making it unable to focus.
+
+          client.navigate() is available on Chrome 49+ and Firefox 50+.
+           */
+          if (client.navigate) {
+            await client.focus();
+            await client.navigate(launchUrl);
+          } else {
+            /*
+            If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
+             */
+            await ServiceWorker.openUrl(launchUrl);
+          }
+        }
         doNotOpenLink = true;
       }
     }
 
-    await this.database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
     if (notificationOpensLink && !doNotOpenLink) {
       await this.openUrl(launchUrl);
     }
