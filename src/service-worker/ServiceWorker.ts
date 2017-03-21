@@ -475,17 +475,17 @@ export default class ServiceWorker {
    * This is to avoid Chrome's forced "This site has been updated in the background" message. See this post for
    * more details: http://stackoverflow.com/a/35045513/555547.
    */
-  async displayBackupNotification() {
-    const backupNotification = await this.database.get('Ids', 'backupNotification')
+  async displayBackupNotification(): Promise<void> {
+    const backupNotification = await this.database.get<Notification>('Ids', 'backupNotification')
     let overrides = {
       // Don't persist our backup notification; users should ideally not see them
       persistNotification: false,
       data: { __isOneSignalBackupNotification: true }
     };
     if (backupNotification) {
-      return await this.displayNotification(backupNotification, overrides);
+      await this.displayNotification(backupNotification, overrides);
     } else {
-      return await this.displayNotification({
+      await this.displayNotification({
         body: 'You have new updates.'
       }, overrides);
     }
@@ -858,9 +858,9 @@ export default class ServiceWorker {
    * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
    * an array is returned for backwards compatibility with the rest of the service worker plumbing.
    */
-  parseOrFetchNotifications(event) {
+  parseOrFetchNotifications(event: PushEvent) {
     if (event.data) {
-      const isValidPayload = this.isValidPushPayload(event.data);
+      const isValidPayload = this.isValidPushPayload(event.data.json());
       if (isValidPayload) {
         log.debug('Received a valid encrypted push payload.');
         return Promise.resolve([event.data.json()]);
@@ -880,9 +880,8 @@ export default class ServiceWorker {
    * Otherwise returns false.
    * @param rawData The raw PushMessageData from the push event's event.data, not already parsed to JSON.
    */
-  isValidPushPayload(rawData) {
+  isValidPushPayload(payload: any): boolean {
     try {
-      const payload = rawData.json();
       if (payload &&
         payload.custom &&
         payload.custom.i &&

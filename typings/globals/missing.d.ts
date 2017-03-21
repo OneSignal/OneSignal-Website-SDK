@@ -13,6 +13,17 @@ interface Window {
   }
 }
 
+interface PushMessageData {
+  arrayBuffer(): ArrayBuffer;
+  blob(): Blob;
+  json(): any;
+  text(): string;
+}
+
+interface PushEvent {
+  data: PushMessageData
+}
+
 interface String {
   endsWith(...args): any;
 }
