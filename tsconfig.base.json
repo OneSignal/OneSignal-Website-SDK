@@ -11,8 +11,8 @@
     "module": "commonjs",
     "noEmitHelpers": true,
     "pretty": true,
-    "skipDefaultLibCheck": false,
-    "skipLibCheck": false,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
     "sourceMap": true,
     "types": [
       "node"

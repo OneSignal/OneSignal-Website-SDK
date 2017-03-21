@@ -21,7 +21,7 @@ interface PushMessageData {
 }
 
 interface PushEvent {
-  data: PushMessageData
+  data?: PushMessageData
 }
 
 interface String {

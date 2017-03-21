@@ -4,6 +4,7 @@ bower_components/
 dist/
 build/
 /config.json
+.vscode/
 
 .DS_STORE
 *.pem

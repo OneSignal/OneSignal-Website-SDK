@@ -32,9 +32,13 @@ export class Notification {
     static createMock(
       title: string = "Mock notification title",
       body: string = 'Mock notification body',
+      url: string = "https://onesignal.com?_osp=do_not_open",
+      icon: string = "https://onesignal.com/images/notification_logo.png",
     ) {
         return new Notification(title, {
-            icon: 'https://onesignal.com/images/notification_logo.png'
+            icon: icon,
+            body: body,
+            url: url,
         })
     }
 }

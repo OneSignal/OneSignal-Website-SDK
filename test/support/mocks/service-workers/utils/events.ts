@@ -1,4 +1,10 @@
+import PushMessageData from "../models/PushMessageData";
+import { Notification } from "../../../../../src/models/Notification";
+
 export class Event {
+  public promise: Promise<any>;
+  public response: any;
+
   constructor() {
     this.promise = null;
     this.response = null;
@@ -10,6 +16,8 @@ export class Event {
 }
 
 export class FetchEvent extends Event {
+  public request: any;
+
   constructor(args) {
     super();
     if (typeof args === 'string') {
@@ -24,16 +32,33 @@ export class FetchEvent extends Event {
 }
 
 export class PushEvent extends Event {
-  constructor(args) {
+
+  constructor(
+    public data?: PushMessageData
+  ) {
     super();
-    Object.assign(this, args);
+  }
+
+  static createMockWithPayload(
+    notification: Notification = Notification.createMock()
+  ): PushEvent {
+    return new PushEvent(new PushMessageData(JSON.stringify({
+      "custom": {
+        "i": "ab2e3893-b172-4a5d-9051-ed5d10303d8a",
+        "u": notification.url
+      },
+      "icon": notification.icon,
+      "alert": notification.body,
+      "title": notification.title
+    })));
   }
 }
 
 export class NotificationEvent extends Event {
-  constructor(args) {
+  constructor(
+    public notification?: Notification
+  ) {
     super();
-    this.notification = args;
   }
 }
 
