@@ -103,21 +103,22 @@ export class TestEnvironment {
   }
 
   static onVirtualDomDelayedResourceRequested(resource, callback) {
-      const pathname = resource.url.pathname;
-      var delay = pathname.match(/\d+/) || 1000;
-      // Simulate a delayed request
-      var timeout = setTimeout(function() {
-        callback();
-      }, delay);
-      return {
-        abort: function() {
-          clearTimeout(timeout);
-          callback(new Error("request canceled by user"));
-        }
-      };
+    const pathname = resource.url.pathname;
+    var delay = pathname.match(/\d+/) || 1000;
+    // Simulate a delayed request
+    var timeout = setTimeout(function () {
+      callback();
+    }, delay);
+    return {
+      abort: function () {
+        clearTimeout(timeout);
+      }
+    };
   }
 
   static async stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorker> {
+    if (!config)
+      config = {};
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
     global.self = new ServiceWorkerGlobalScope();
     global.fetch = fetch;
@@ -125,14 +126,12 @@ export class TestEnvironment {
       origin: 'https://localhost:3001',
       href: 'https://localhost:3001/webpush/sandbox?https=1',
     };
-    global.OneSignal = ServiceWorker({
+    global.OneSignal = new ServiceWorker({
       databaseName: Random.getRandomString(6)
-
-    }
-
-  static async stubDomEnvironment(config?: TestEnvironmentConfig) {
-      if (!config)
-        });
+    });
+    global.OneSignal.config = config.initOptions ? config.initOptions : {};
+    global.OneSignal.initialized = true;
+    global.OneSignal.getNotifications = () => global.self.registration.notifications;
     return global.OneSignal;
   }
 

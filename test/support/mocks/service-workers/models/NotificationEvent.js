@@ -1,5 +1,5 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/NotificationEvent
-class NotificationEvent {
+export default class NotificationEvent {
   constructor(notification) {
     this.notification = notification;
   }
@@ -10,5 +10,3 @@ class NotificationEvent {
 
   waitUntil() {}
 }
-
-module.exports = NotificationEvent;

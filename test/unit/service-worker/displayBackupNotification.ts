@@ -11,17 +11,18 @@ import * as sinon from 'sinon';
 
 test("should display 'You have new updates' without a valid backup notification", async t => {
   const worker = await TestEnvironment.stubServiceWorkerEnvironment();
-  const displayNotificationStub = sinon.spy(worker, 'displayNotification');
-  worker.displayBackupNotification();
-  t.is(displayNotificationStub.withArgs({
-    content: 'You have new updates'
-  }).calledOnce, true);
+  const displayNotificationSpy = sinon.spy(worker, 'displayNotification');
+  await worker.displayBackupNotification();
+  t.is((await self.registration.getNotifications())[0].body, 'You have new updates.');
+  displayNotificationSpy.restore();
 });
 
 test("should display a backup notification if a backup notification is found", async t => {
   const worker = await TestEnvironment.stubServiceWorkerEnvironment();
-  const displayNotificationStub = sinon.stub(worker, 'displayNotification');
-  worker.database.put('Ids', {type: 'backupNotification', id: Notification.createMock()});
-  worker.displayBackupNotification();
-  t.is(displayNotificationStub.called, true);
+  const displayNotificationSpy = sinon.spy(worker, 'displayNotification');
+  var notification = Notification.createMock('backup notification title');
+  worker.database.put('Ids', {type: 'backupNotification', id: notification});
+  await worker.displayBackupNotification();
+  t.is((await self.registration.getNotifications())[0].body, notification.body);
+  displayNotificationSpy.restore();
 });

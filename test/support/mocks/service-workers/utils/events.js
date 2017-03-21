@@ -50,7 +50,7 @@ export function createEvent(event, args) {
   }
 }
 
-async function handleEvent(name, args, callback) {
+export async function handleEvent(name, args, callback) {
   const event = createEvent(name, args);
   callback(event);
   return await event.promise;

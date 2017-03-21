@@ -412,7 +412,7 @@ export default class ServiceWorker {
                     this.ensureNotificationResourcesHttps(notification);
 
                     let notificationOptions = {
-                      body: notification.content,
+                      body: notification.body,
                       icon: notification.icon,
                       /*
                        On Chrome 56, a large image can be displayed: https://bugs.chromium.org/p/chromium/issues/detail?id=614456
@@ -486,7 +486,7 @@ export default class ServiceWorker {
       return await this.displayNotification(backupNotification, overrides);
     } else {
       return await this.displayNotification({
-        content: 'You have new updates.'
+        body: 'You have new updates.'
       }, overrides);
     }
   }

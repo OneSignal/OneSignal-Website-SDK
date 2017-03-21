@@ -7,7 +7,7 @@ export class Notification {
     public id: Uuid;
     public title: string;
     public body: string;
-    public data: Map<string, any>;
+    public data: any;
     public url: Url;
     public icon: Url;
     public image: Url;
@@ -29,9 +29,11 @@ export class Notification {
         this.buttons = options.buttons;
     }
 
-    static createMock() {
-        return new Notification("Mock notification title", {
-            body: 'Mock notification body',
+    static createMock(
+      title: string = "Mock notification title",
+      body: string = 'Mock notification body',
+    ) {
+        return new Notification(title, {
             icon: 'https://onesignal.com/images/notification_logo.png'
         })
     }

@@ -84,7 +84,7 @@
     "dom-storage": "^2.0.2",
     "exports-loader": "^0.6.4",
     "extract-text-webpack-plugin": "^2.1.0",
-    "fake-indexeddb": "^1.0.8",
+    "fake-indexeddb": "github:OneSignal/fakeIndexedDB#onesignal",
     "fs-extra": "^1.0.0",
     "humanize": "^0.0.9",
     "imports-loader": "^0.7.1",
@@ -117,6 +117,7 @@
     "concurrency": 1,
     "serial": true,
     "powerAssert": true,
-    "watch": true
+    "watch": true,
+    "failFast": true
   }
 }

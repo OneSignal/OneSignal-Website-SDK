@@ -105,6 +105,7 @@ export default class EventHelper {
                   })
                   .then(() => {
                     if (isUpdating) {
+                      console.trace("[TARGET] Calling triggerNotificationPermissionChanged.");
                       Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
                         to: newPermission
                       });
