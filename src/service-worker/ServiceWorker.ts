@@ -653,7 +653,7 @@ class ServiceWorker {
     log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
     log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
 
-    if (contains((self as any).location.pathname, "OneSignalSDKWorker.js"))
+    if (contains((self as any).location.pathname, "OneSignalSDKWorker"))
       var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION';
     else
       var serviceWorkerVersionType = 'WORKER2_ONE_SIGNAL_SW_VERSION';
