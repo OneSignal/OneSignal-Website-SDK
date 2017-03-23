@@ -7,11 +7,11 @@ export class NotificationActionButton {
    * and host page through events to identify which button was clicked.
    * e.g. 'like-button'
    */
-  public id: Uuid;
+  public action: string;
   /**
    * The notification action button's text.
    */
-  public text: string;
+  public title: string;
   /**
    * A valid publicly reachable HTTPS URL to an image.
    */

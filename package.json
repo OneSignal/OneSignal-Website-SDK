@@ -21,7 +21,7 @@
     "object-assign": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.0.tgz",
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
-    "swivel": "https://github.com/jasonpang/swivel.git#onesignal",
+    "swivel": "github:OneSignal/swivel#onesignal",
     "tslib": "^1.1.0",
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",

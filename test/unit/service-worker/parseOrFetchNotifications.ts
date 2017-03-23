@@ -16,7 +16,7 @@ import OneSignalApi from '../../../src/OneSignalApi';
 test("should parse payload given a valid payload", async t => {
   const worker = await TestEnvironment.stubServiceWorkerEnvironment();
   const event = PushEvent.createMockWithPayload();
-  const notifications = await worker.parseOrFetchNotifications(event);
+  const notifications = await worker.OneSignal.parseOrFetchNotifications(event);
   t.is(notifications.length, 1);
   t.deepEqual(notifications[0], event.data.json());
   t.true(Array.isArray(notifications));
@@ -39,7 +39,7 @@ test("should fetch remote notifications given an invalid payload", async t => {
   )];
   stubGetChromeWebNotification.resolves(fakePayload);
   const event = new PushEvent();
-  const notifications = await worker.parseOrFetchNotifications(event);
+  const notifications = await worker.OneSignal.parseOrFetchNotifications(event);
   t.is(notifications.length, 1);
   t.deepEqual(notifications[0], JSON.parse(fakePayload[0]));
   t.true(Array.isArray(notifications));

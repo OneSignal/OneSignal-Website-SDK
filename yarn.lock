@@ -4472,9 +4472,9 @@ svgo@^0.7.0, svgo@^0.7.2:
     sax "~1.2.1"
     whet.extend "~0.9.9"
 
-"swivel@https://github.com/jasonpang/swivel.git#onesignal":
+"swivel@github:OneSignal/swivel#onesignal":
   version "4.0.0"
-  resolved "https://github.com/jasonpang/swivel.git#5c9a45f0ab3199488e3439fe2d2d09ead9dd1039"
+  resolved "https://codeload.github.com/OneSignal/swivel/tar.gz/b6a0a192cdf323c1a4c2ab3cd8626cec8e1a9f59"
   dependencies:
     atoa "1.0.0"
     contra "1.9.1"

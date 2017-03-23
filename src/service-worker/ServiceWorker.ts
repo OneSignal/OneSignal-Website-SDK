@@ -74,7 +74,7 @@ export default class ServiceWorker {
 
     log.info(`%cOneSignal Service Worker loaded (version ${Environment.version()}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
 
-    self.addEventListener('push', this.onPushReceived);
+    self.addEventListener('push', event => event.waitUntil(this.onPushReceived(event)));
     self.addEventListener('notificationclose', this.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(this.onNotificationClicked(event)));
     self.addEventListener('install', this.onServiceWorkerInstalled);
@@ -173,52 +173,47 @@ export default class ServiceWorker {
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
    * notifications.
    */
-  onPushReceived(event) {
+  async onPushReceived(event) {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
-    event.waitUntil(
-      this.parseOrFetchNotifications(event)
-          .then((notifications: any) => {
-            if (!notifications || notifications.length == 0) {
-              log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
-                " long as it isn't the welcome notification.");
-              return this.displayBackupNotification();
-            }
+    try {
+      const notifications = await this.parseOrFetchNotifications(event);
+      if (!notifications || notifications.length == 0) {
+        log.debug("No push payload or notifications to fetch; displaying backup notification.");
+        return await this.displayBackupNotification();
+      }
 
-            //Display push notifications in the order we received them
-            let notificationEventPromiseFns = [];
+      for (let rawNotification of notifications) {
+        log.debug('Raw Notification from OneSignal:', rawNotification);
+        // TODO: Change to "Notification.createFromRaw
+        let notification = this.buildStructuredNotificationObject(rawNotification);
 
-            for (let rawNotification of notifications) {
-              log.debug('Raw Notification from OneSignal:', rawNotification);
-              // TODO: Change to "Notification.createFromRaw
-              let notification = this.buildStructuredNotificationObject(rawNotification);
+        // Never nest the following line in a callback from the point of entering from retrieveNotifications
+        notificationEventPromiseFns.push((notif => {
+          return this.displayNotification(notif)
+            .then(() => this.updateBackupNotification(notif).catch(e => log.error(e)))
+            .then(() => {
+              (swivel as any).broadcast('notification.displayed', notif)
+            })
+            .then(() => this.executeWebhooks('notification.displayed', notif).catch(e => log.error(e)))
+        }).bind(null, notification));
+      }
 
-              // Never nest the following line in a callback from the point of entering from retrieveNotifications
-              notificationEventPromiseFns.push((notif => {
-                return this.displayNotification(notif)
-                           .then(() => this.updateBackupNotification(notif).catch(e => log.error(e)))
-                           .then(() => {
-                             (swivel as any).broadcast('notification.displayed', notif)
-                           })
-                           .then(() => this.executeWebhooks('notification.displayed', notif).catch(e => log.error(e)))
-              }).bind(null, notification));
-            }
+      return notificationEventPromiseFns.reduce((p, fn) => {
+        return p = p.then(fn);
+      }, Promise.resolve());
 
-            return notificationEventPromiseFns.reduce((p, fn) => {
-              return p = p.then(fn);
-            }, Promise.resolve());
-          })
-          .catch(e => {
-            log.debug('Failed to display a notification:', e);
-            if (this.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
-              log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
-            } else {
-              log.debug(
-                "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
-              return this.displayBackupNotification();
-            }
-          })
-    )
+    }
+    catch (e) {
+      log.debug('Failed to display a notification:', e);
+      if (this.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
+        log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
+      } else {
+        log.debug(
+          "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+        return this.displayBackupNotification();
+      }
+    }
   }
 
   /**

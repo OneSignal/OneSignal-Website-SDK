@@ -8,11 +8,16 @@ import * as jsdom from 'jsdom';
 import * as DOMStorage from 'dom-storage';
 import Launcher from "../../../src/bell/Launcher";
 import fetch from 'node-fetch';
-import ServiceWorkerGlobalScope from "../mocks/service-workers/ServiceWorkerGlobalScope";
-import ServiceWorker from "../../../src/service-worker/ServiceWorker";
+import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
+import ServiceWorker from '../../../src/service-worker/ServiceWorker';
 
 
 var global = new Function('return this')();
+
+
+export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
+  OneSignal: ServiceWorker;
+}
 
 export enum HttpHttpsEnvironment {
   Http,
@@ -116,11 +121,12 @@ export class TestEnvironment {
     };
   }
 
-  static async stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorker> {
+  static async stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerTestEnvironment> {
     if (!config)
       config = {};
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
-    global.self = new ServiceWorkerGlobalScope();
+    global = new ServiceWorkerGlobalScope();
+    global.self = global;
     global.fetch = fetch;
     global.location = {
       origin: 'https://localhost:3001',
@@ -132,7 +138,7 @@ export class TestEnvironment {
     global.OneSignal.config = config.initOptions ? config.initOptions : {};
     global.OneSignal.initialized = true;
     global.OneSignal.getNotifications = () => global.self.registration.notifications;
-    return global.OneSignal;
+    return global;
   }
 
   static async stubDomEnvironment(config?: TestEnvironmentConfig) {

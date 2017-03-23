@@ -792,7 +792,7 @@ const argv = yargs
   .option('disableTransformSourceMaps', {
     alias: 'dtsm',
     description: `Disables transforming of source maps.
-                  This will cause the final source map to be the output of Webpack's bundling of the intermediate 
+                  This will cause the final source map to be the output of Webpack's bundling of the intermediate
                   transpiled TypeScript source, instead of the original TypeScript source. Used to debug source map
                   issues.`,
     requiresArg: false,
@@ -804,14 +804,14 @@ const argv = yargs
   .command({
     command: 'build',
     aliases: 'b',
-    desc: `Builds the web SDK.  
+    desc: `Builds the web SDK.
            Optionally add '--tests' to build with tests.`,
     handler: onBuildCommandRun
   })
   .command({
     command: 'test',
     aliases: 't',
-    desc: `Tests the web SDK, by running unit tests in the tests/ folder.  
+    desc: `Tests the web SDK, by running unit tests in the tests/ folder.
            Optionally add '--only' to test a single file, or '--debug' to debug the test with Chrome's Developer Tools.`,
     handler: onTestCommandRun
   })
