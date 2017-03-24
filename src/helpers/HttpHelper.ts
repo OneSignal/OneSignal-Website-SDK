@@ -52,7 +52,7 @@ export default class HttpHelper {
     var creator = window.opener || window.parent;
 
     if (creator == window) {
-      document.write(`<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and 
+      document.write(`<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and
 must be opened as a result of a subscription call.</span>`);
       return;
     }
@@ -320,6 +320,10 @@ must be opened as a result of a subscription call.</span>`);
         });
         OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, message => {
           message.reply(location.href);
+          return false;
+        });
+        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, message => {
+          window.location.href = message.data;
           return false;
         });
       };
