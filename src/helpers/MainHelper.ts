@@ -341,6 +341,12 @@ export default class MainHelper {
     OneSignal._channel.on('notification.clicked', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
+    OneSignal._channel.on('command.redirect', function handler(context, data) {
+      log.debug(`${Environment.getEnv()} Picked up command.redirect to ${data}, forwarding to host page.`, OneSignal.iframePostmam);
+      if (OneSignal.iframePostmam) {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
+      }
+    });
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });

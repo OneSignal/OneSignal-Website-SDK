@@ -831,7 +831,8 @@ export default class OneSignal {
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
     FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
     FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress',
-    POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms'
+    POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
+    SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
   };
 
   static EVENTS = {

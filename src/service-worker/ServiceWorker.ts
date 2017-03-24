@@ -595,9 +595,13 @@ export default class ServiceWorker {
 
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-        if (client.url === launchUrl) {
+        if ((client.isSubdomainIframe && clientUrl === launchUrl) || (!client.isSubdomainIframe && client.url === launchUrl)) {
           (swivel as any).emit(client.id, 'notification.clicked', notification);
-          await client.focus();
+            try {
+              await client.focus();
+            } catch (e) {
+              log.error("Failed to focus:", client, e);
+            }
         } else {
           /*
           We must focus first; once the client navigates away, it may not be to a service worker-controlled page, and
@@ -605,9 +609,37 @@ export default class ServiceWorker {
 
           client.navigate() is available on Chrome 49+ and Firefox 50+.
            */
-          if (client.navigate) {
-            await client.focus();
-            await client.navigate(launchUrl);
+          if (client.isSubdomainIframe) {
+            try {
+              log.debug('Attempting to focus() client.')
+              await client.focus();
+            } catch (e) {
+              log.error("Failed to focus:", client, e);
+            }
+            if (notificationOpensLink) {
+              log.debug(`Sending command.redirect to ${launchUrl}.`);
+              (swivel as any).emit(client.id, 'command.redirect', launchUrl);
+            } else {
+              log.debug('Not navigating because link is special.')
+            }
+          }
+          else if (client.navigate) {
+            try {
+              log.debug('Attempting to focus() client.')
+              await client.focus();
+            } catch (e) {
+              log.error("Failed to focus:", client, e);
+            }
+            try {
+              if (notificationOpensLink) {
+                log.debug(`Attempting to navigate(${launchUrl}) client.`)
+                await client.navigate(launchUrl);
+              } else {
+                log.debug('Not navigating because link is special.')
+              }
+            } catch (e) {
+              log.error("Failed to navigate:", client, launchUrl, e);
+            }
           } else {
             /*
             If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
@@ -616,6 +648,7 @@ export default class ServiceWorker {
           }
         }
         doNotOpenLink = true;
+        break;
       }
     }
 
