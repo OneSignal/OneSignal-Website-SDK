@@ -6,4 +6,6 @@ import OneSignal from "../../../src/OneSignal";
 import Random from "../../support/tester/Random";
 
 
-test.todo("should call self.registration.showNotification with all available options");
+test("should call self.registration.showNotification with all available options", async t => {
+
+});

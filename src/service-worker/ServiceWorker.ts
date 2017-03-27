@@ -10,6 +10,7 @@ import * as swivel from "swivel";
 import * as Browser from "bowser";
 import { ServiceWorkerDebugScope } from "./ServiceWorkerDebugScope";
 import { InvalidArgumentError } from "../errors/InvalidArgumentError";
+import { Notification } from '../models/Notification';
 
 
 declare var self: ServiceWorkerGlobalScope;
@@ -186,23 +187,12 @@ export default class ServiceWorker {
       for (let rawNotification of notifications) {
         log.debug('Raw Notification from OneSignal:', rawNotification);
         // TODO: Change to "Notification.createFromRaw
-        let notification = this.buildStructuredNotificationObject(rawNotification);
-
-        // Never nest the following line in a callback from the point of entering from retrieveNotifications
-        notificationEventPromiseFns.push((notif => {
-          return this.displayNotification(notif)
-            .then(() => this.updateBackupNotification(notif).catch(e => log.error(e)))
-            .then(() => {
-              (swivel as any).broadcast('notification.displayed', notif)
-            })
-            .then(() => this.executeWebhooks('notification.displayed', notif).catch(e => log.error(e)))
-        }).bind(null, notification));
+        const notification = Notification.createFromPushPayload(rawNotification);
+        await this.displayNotification(notification);
+        await this.updateBackupNotification(notification);
+        (swivel as any).broadcast('notification.displayed', notification);
+        await this.executeWebhooks('notification.displayed', notification);
       }
-
-      return notificationEventPromiseFns.reduce((p, fn) => {
-        return p = p.then(fn);
-      }, Promise.resolve());
-
     }
     catch (e) {
       log.debug('Failed to display a notification:', e);
@@ -236,7 +226,7 @@ export default class ServiceWorker {
         id: notification.id,
         userId: deviceId,
         action: notification.action,
-        buttons: notification.buttons,
+        buttons: notification.actions,
         heading: notification.heading,
         content: notification.content,
         url: notification.url,
@@ -310,9 +300,9 @@ export default class ServiceWorker {
 
     // Add action buttons
     if (rawNotification.o) {
-      notification.buttons = [];
+      notification.actions = [];
       for (let rawButton of rawNotification.o) {
-        notification.buttons.push({
+        notification.actions.push({
           action: rawButton.i,
           title: rawButton.n,
           icon: rawButton.p,
@@ -366,10 +356,10 @@ export default class ServiceWorker {
       if (notification.image) {
         notification.image = this.ensureImageResourceHttps(notification.image);
       }
-      if (notification.buttons && notification.buttons.length > 0) {
-        for (let button of notification.buttons) {
-          if (button.icon) {
-            button.icon = this.ensureImageResourceHttps(button.icon);
+      if (notification.actions && notification.actions.length > 0) {
+        for (let action of notification.actions) {
+          if (action.icon) {
+            action.icon = this.ensureImageResourceHttps(action.icon);
           }
         }
       }
@@ -426,7 +416,7 @@ export default class ServiceWorker {
                        button takes the user to a link. See:
                        https://developers.google.com/web/updates/2016/01/notification-actions
                        */
-                      actions: notification.buttons,
+                      actions: notification.actions,
                       /*
                        Tags are any string value that groups notifications together. Two or notifications sharing a tag
                        replace each other.
@@ -529,7 +519,7 @@ export default class ServiceWorker {
     // Unless the action button URL is null
     if (notification.action) {
       // Find the URL tied to the action button that was clicked
-      for (let button of notification.buttons) {
+      for (let button of notification.actions) {
         if (button.action === notification.action &&
           button.url &&
           button.url !== '') {

@@ -16,7 +16,7 @@ export class Notification {
     public tag?: string;
     public requireInteraction?: boolean;
     public renotify?: true;
-    public buttons?: Array<NotificationActionButton>;
+    public actions?: Array<NotificationActionButton>;
 
     constructor(title: string, options?: Notification) {
         this.id = options.id;
@@ -28,19 +28,21 @@ export class Notification {
         this.tag = options.tag
         this.requireInteraction = options.requireInteraction;
         this.renotify = options.renotify;
-        this.buttons = options.buttons;
+        this.actions = options.actions;
     }
 
-    static createMock(
-      title: string = "Mock notification title",
-      body: string = 'Mock notification body',
-      url: string = "https://onesignal.com?_osp=do_not_open",
-      icon: string = "https://onesignal.com/images/notification_logo.png",
-    ) {
+    static createMock({
+      title = "Mock notification title",
+      body = 'Mock notification body',
+      url = "https://onesignal.com?_osp=do_not_open",
+      icon = "https://onesignal.com/images/notification_logo.png",
+      data = {}
+    } = {}) {
         return new Notification(title, {
             icon: icon,
             body: body,
             url: url,
+            data: data
         })
     }
 

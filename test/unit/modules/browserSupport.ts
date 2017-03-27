@@ -1,67 +1,74 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from "../../support/sdk/TestEnvironment";
+import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { isPushNotificationsSupported } from "../../../src/utils";
 
-async function isPushSupported(t, userAgent: BrowserUserAgent, supported: boolean, debug?: boolean) {
+function shouldSupport(t, userAgent: BrowserUserAgent, supported: boolean) {
+  (window as any).userAgent = userAgent;
+  t.true(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be supported`)
+}
+function shouldNotSupport(t, userAgent: BrowserUserAgent, supported: boolean) {
+  (window as any).userAgent = userAgent;
+  t.false(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be unsupported`)
+}
+
+test('should support specific browser environments', async t => {
   (global as any).BrowserUserAgent = BrowserUserAgent;
   await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-    userAgent: userAgent
+    httpOrHttps: HttpHttpsEnvironment.Https
   });
-  if (debug) {
-    debugger;
-  }
-  if (supported) {
-    t.true(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be supported`)
-  } else {
-    t.false(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be unsupported`)
-  }
-}
-(isPushSupported as any).title = (_, userAgent: BrowserUserAgent, supported: boolean) => `browser support ${supported ? 'should support' : 'should not support'} ${BrowserUserAgent[userAgent]}`;
+
+  shouldSupport(t, BrowserUserAgent.FirefoxMobileSupported, true);
+  shouldSupport(t, BrowserUserAgent.FirefoxTabletSupported, true);
+  shouldSupport(t, BrowserUserAgent.FirefoxWindowsSupported, true);
+  shouldSupport(t, BrowserUserAgent.FirefoxMacSupported, true);
+  shouldSupport(t, BrowserUserAgent.FirefoxLinuxSupported, true);
+
+  shouldSupport(t, BrowserUserAgent.SafariSupportedMac, true);
+
+  shouldSupport(t, BrowserUserAgent.ChromeAndroidSupported, true);
+  shouldSupport(t, BrowserUserAgent.ChromeWindowsSupported, true);
+  shouldSupport(t, BrowserUserAgent.ChromeMacSupported, true);
+  shouldSupport(t, BrowserUserAgent.ChromeLinuxSupported, true);
+  shouldSupport(t, BrowserUserAgent.ChromeTabletSupported, true);
+
+  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedHigh, true);
+  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedLow, true);
+  shouldSupport(t, BrowserUserAgent.YandexMobileSupported, true);
+
+  shouldSupport(t, BrowserUserAgent.OperaDesktopSupported, true);
+  shouldSupport(t, BrowserUserAgent.OperaAndroidSupported, true);
+  shouldSupport(t, BrowserUserAgent.OperaTabletSupported, true);
+
+  shouldSupport(t, BrowserUserAgent.VivaldiWindowsSupported, true);
+  shouldSupport(t, BrowserUserAgent.VivaldiLinuxSupported, true);
+  shouldSupport(t, BrowserUserAgent.VivaldiMacSupported, true);
+});
 
 
-test(isPushSupported, BrowserUserAgent.iPod, false);
-test(isPushSupported, BrowserUserAgent.iPad, false);
-test(isPushSupported, BrowserUserAgent.iPhone, false);
+test('should not support specific browser environments', async t => {
+  (global as any).BrowserUserAgent = BrowserUserAgent;
+  await TestEnvironment.stubDomEnvironment({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+  shouldSupport(t, BrowserUserAgent.iPod, false);
+  shouldSupport(t, BrowserUserAgent.iPad, false);
+  shouldSupport(t, BrowserUserAgent.iPhone, false);
 
-test(isPushSupported, BrowserUserAgent.Edge, false);
-test(isPushSupported, BrowserUserAgent.IE11, false);
+  shouldSupport(t, BrowserUserAgent.Edge, false);
+  shouldSupport(t, BrowserUserAgent.IE11, false);
 
-test(isPushSupported, BrowserUserAgent.FirefoxMobileUnsupported, false);
-test(isPushSupported, BrowserUserAgent.FirefoxTabletUnsupported, false);
-test(isPushSupported, BrowserUserAgent.FirefoxMobileSupported, true);
-test(isPushSupported, BrowserUserAgent.FirefoxTabletSupported, true);
-test(isPushSupported, BrowserUserAgent.FirefoxWindowsSupported, true);
-test(isPushSupported, BrowserUserAgent.FirefoxMacSupported, true);
-test(isPushSupported, BrowserUserAgent.FirefoxLinuxSupported, true);
+  shouldSupport(t, BrowserUserAgent.FirefoxMobileUnsupported, false);
+  shouldSupport(t, BrowserUserAgent.FirefoxTabletUnsupported, false);
 
-test(isPushSupported, BrowserUserAgent.SafariUnsupportedMac, false);
-test(isPushSupported, BrowserUserAgent.SafariSupportedMac, true);
+  shouldSupport(t, BrowserUserAgent.SafariUnsupportedMac, false);
 
-test(isPushSupported, BrowserUserAgent.FacebookBrowseriOS, false);
-test(isPushSupported, BrowserUserAgent.FacebookBrowserAndroid, false);
+  shouldSupport(t, BrowserUserAgent.FacebookBrowseriOS, false);
+  shouldSupport(t, BrowserUserAgent.FacebookBrowserAndroid, false);
 
-test(isPushSupported, BrowserUserAgent.ChromeAndroidSupported, true);
-test(isPushSupported, BrowserUserAgent.ChromeWindowsSupported, true);
-test(isPushSupported, BrowserUserAgent.ChromeMacSupported, true);
-test(isPushSupported, BrowserUserAgent.ChromeLinuxSupported, true);
-test(isPushSupported, BrowserUserAgent.ChromeTabletSupported, true);
-
-test(isPushSupported, BrowserUserAgent.ChromeAndroidUnsupported, false);
-test(isPushSupported, BrowserUserAgent.ChromeWindowsUnsupported, false);
-test(isPushSupported, BrowserUserAgent.ChromeMacUnsupported, false);
-test(isPushSupported, BrowserUserAgent.ChromeLinuxUnsupported, false);
-test(isPushSupported, BrowserUserAgent.ChromeTabletUnsupported, false);
-
-test(isPushSupported, BrowserUserAgent.YandexDesktopSupportedHigh, true);
-test(isPushSupported, BrowserUserAgent.YandexDesktopSupportedLow, true);
-test(isPushSupported, BrowserUserAgent.YandexMobileSupported, true);
-
-test(isPushSupported, BrowserUserAgent.OperaDesktopSupported, true);
-test(isPushSupported, BrowserUserAgent.OperaAndroidSupported, true);
-test(isPushSupported, BrowserUserAgent.OperaTabletSupported, true);
-
-test(isPushSupported, BrowserUserAgent.VivaldiWindowsSupported, true);
-test(isPushSupported, BrowserUserAgent.VivaldiLinuxSupported, true);
-test(isPushSupported, BrowserUserAgent.VivaldiMacSupported, true);
+  shouldSupport(t, BrowserUserAgent.ChromeAndroidUnsupported, false);
+  shouldSupport(t, BrowserUserAgent.ChromeWindowsUnsupported, false);
+  shouldSupport(t, BrowserUserAgent.ChromeMacUnsupported, false);
+  shouldSupport(t, BrowserUserAgent.ChromeLinuxUnsupported, false);
+  shouldSupport(t, BrowserUserAgent.ChromeTabletUnsupported, false);
+});

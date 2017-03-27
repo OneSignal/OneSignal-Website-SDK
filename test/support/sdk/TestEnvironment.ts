@@ -125,7 +125,11 @@ export class TestEnvironment {
     if (!config)
       config = {};
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
-    global = new ServiceWorkerGlobalScope();
+    var serviceWorkerScope = new ServiceWorkerGlobalScope();
+    Object.assign(global, serviceWorkerScope);
+    global.skipWaiting = serviceWorkerScope.skipWaiting;
+    global.addEventListener = serviceWorkerScope.addEventListener;
+    global.trigger = serviceWorkerScope.trigger;
     global.self = global;
     global.fetch = fetch;
     global.location = {
@@ -149,13 +153,16 @@ export class TestEnvironment {
     } else {
       var url = 'https://localhost:3001/webpush/sandbox?https=1';
     }
-    global.window = await new Promise((resolve, reject) => {
+    global.window = global;
+    global.localStorage = new DOMStorage(null);
+    global.sessionStorage = new DOMStorage(null);
+    var windowDef = await new Promise((resolve, reject) => {
       jsdom.env({
         html: '<!doctype html><html><head></head><body></body></html>',
         url: url,
         userAgent: config.userAgent ? config.userAgent : BrowserUserAgent.Default,
         features: {
-          FetchExternalResources : ["script", "frame", "iframe", "link", "img"],
+          FetchExternalResources: ["script", "frame", "iframe", "link", "img"],
           ProcessExternalResources: ['script']
         },
         resourceLoader: TestEnvironment.onVirtualDomResourceRequested,
@@ -169,12 +176,11 @@ export class TestEnvironment {
         }
       });
     });
-    jsdom.reconfigureWindow(global.window, { top: global.window });
-    global.document = global.window.document;
-    global.navigator = global.window.navigator;
-    global.location = global.window.location;
-    global.localStorage = global.window.localStorage = new DOMStorage(null);
-    global.sessionStorage = global.window.sessionStorage = new DOMStorage(null);
+    // Node has its own console; overwriting it will cause issues
+    delete windowDef['console'];
+    jsdom.reconfigureWindow(windowDef, { top: windowDef });
+    debugger;
+    Object.assign(global, windowDef);
   }
 
   static stubNotification(config: TestEnvironmentConfig) {

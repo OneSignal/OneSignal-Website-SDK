@@ -1,4 +1,3 @@
-import ServiceWorkerGlobalScope from "../test/support/mocks/service-workers/ServiceWorkerGlobalScope";
 export default class Environment {
   static get SERVICE_WORKER() {
     return 'ServiceWorker';
@@ -22,7 +21,7 @@ export default class Environment {
 
   static getEnv() {
     if (typeof window === "undefined") {
-      if (typeof self !== "undefined" && self instanceof ServiceWorkerGlobalScope)
+      if (typeof self !== "undefined" && typeof self.registration !== "undefined")
         return Environment.SERVICE_WORKER;
     }
     else {

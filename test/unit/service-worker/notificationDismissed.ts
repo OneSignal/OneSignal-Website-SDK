@@ -14,6 +14,7 @@ test("should broadcast notification.dismissed to window clients", async t => {
   const worker = await TestEnvironment.stubServiceWorkerEnvironment();
   const spy = sinon.spy(swivel, 'broadcast');
   const notification = Notification.createMock();
+  debugger;
   worker.trigger('notificationclose', notification);
   spy.calledWithMatch('notification.dismissed', notification);
   spy.restore();
