@@ -62,9 +62,9 @@ export class Notification {
 
         // Add action buttons
         if (payload.o) {
-            notification.buttons = [];
+            notification.actions = [];
             for (let rawButton of payload.o) {
-                notification.buttons.push({
+                notification.actions.push({
                     action: rawButton.i,
                     title: rawButton.n,
                     icon: rawButton.p,

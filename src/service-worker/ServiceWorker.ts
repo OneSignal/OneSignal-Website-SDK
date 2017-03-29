@@ -569,7 +569,7 @@ export default class ServiceWorker {
      be focused instead of an identical new tab being created.
      */
     let doNotOpenLink = false;
-    for (let client: WindowClient of activeClients) {
+    for (let client of activeClients) {
       let clientUrl = client.url;
       if ((client as any).isSubdomainIframe) {
         const lastKnownHostUrl = await this.database.get<string>('Options', 'lastKnownHostUrl');
@@ -644,7 +644,7 @@ export default class ServiceWorker {
             /*
             If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
              */
-            await ServiceWorker.openUrl(launchUrl);
+            await this.openUrl(launchUrl);
           }
         }
         doNotOpenLink = true;
