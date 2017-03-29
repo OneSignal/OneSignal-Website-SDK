@@ -540,7 +540,23 @@ export default class ServiceWorker {
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
   async onNotificationClicked(event) {
-    log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    log.debug(`Called %conNotificationClickedOld(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+
+    /*
+      Always close the notification first, before we attempt anything that could otherwise fail and leave the notification open.
+      We should never allow the developer to leave a notification open, because this would be confusing to the end user.
+    */
+    event.notification.close();
+
+    // Get the structured notification object that we assigned to 'data' in the onPushReceived event
+    const notification = event.notification.data;
+
+    // Chrome 48+: Get the action button that was clicked, or null otherwise
+
+  }
+
+  async onNotificationClickedOld(event) {
+    log.debug(`Called %conNotificationClickedOld(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
     // Close the notification first here, before we do anything that might fail
     event.notification.close();

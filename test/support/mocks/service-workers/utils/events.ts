@@ -60,6 +60,12 @@ export class NotificationEvent extends Event {
   ) {
     super();
   }
+
+  static createMockWithPayload(
+    notification: Notification = Notification.createMock()
+  ): NotificationEvent {
+    return new NotificationEvent(notification);
+  }
 }
 
 export function createEvent(event, args) {
