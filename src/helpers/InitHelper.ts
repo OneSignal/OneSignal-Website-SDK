@@ -164,6 +164,15 @@ export default class InitHelper {
       opPromises.push(Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'}));
     }
 
+    if (OneSignal.config.notificationClickHandlerAction) {
+      opPromises.push(Database.put('Options', {
+        key: 'notificationClickHandlerAction',
+        value: OneSignal.config.notificationClickHandlerAction
+      }));
+    } else {
+      opPromises.push(Database.put('Options', {key: 'notificationClickHandlerAction', value: 'navigate'}));
+    }
+
     if (OneSignal.config.serviceWorkerRefetchRequests === false) {
       opPromises.push(Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false}));
     } else {

@@ -571,10 +571,15 @@ class ServiceWorker {
       notification.action = event.action;
 
     let notificationClickHandlerMatch = 'exact';
+    let notificationClickHandlerAction = 'navigate';
 
     const matchPreference = await Database.get<string>('Options', 'notificationClickHandlerMatch');
     if (matchPreference)
       notificationClickHandlerMatch = matchPreference;
+
+    const actionPreference = await this.database.get<string>('Options', 'notificationClickHandlerAction');
+    if (actionPreference)
+      notificationClickHandlerAction = actionPreference;
 
     const activeClients = await ServiceWorker.getActiveClients();
 
@@ -610,11 +615,11 @@ class ServiceWorker {
       } catch (e) {
       }
 
-      await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
-
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-        if ((client.isSubdomainIframe && clientUrl === launchUrl) || (!client.isSubdomainIframe && client.url === launchUrl)) {
+        if ((client.isSubdomainIframe && clientUrl === launchUrl) ||
+            (!client.isSubdomainIframe && client.url === launchUrl) ||
+          (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
           (swivel as any).emit(client.id, 'notification.clicked', notification);
             try {
               await client.focus();
@@ -630,13 +635,14 @@ class ServiceWorker {
            */
           if (client.isSubdomainIframe) {
             try {
-              log.debug('Attempting to focus() client.')
+              log.debug('Client is subdomain iFrame. Attempting to focus() client.')
               await client.focus();
             } catch (e) {
               log.error("Failed to focus:", client, e);
             }
             if (notificationOpensLink) {
-              log.debug(`Sending command.redirect to ${launchUrl}.`);
+              log.debug(`Redirecting HTTP site to ${launchUrl}.`);
+              await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
               (swivel as any).emit(client.id, 'command.redirect', launchUrl);
             } else {
               log.debug('Not navigating because link is special.')
@@ -644,14 +650,15 @@ class ServiceWorker {
           }
           else if (client.navigate) {
             try {
-              log.debug('Attempting to focus() client.')
+              log.debug('Client is standard HTTPS site. Attempting to focus() client.')
               await client.focus();
             } catch (e) {
               log.error("Failed to focus:", client, e);
             }
             try {
               if (notificationOpensLink) {
-                log.debug(`Attempting to navigate(${launchUrl}) client.`)
+                log.debug(`Redirecting HTTPS site to (${launchUrl}).`)
+                await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
                 await client.navigate(launchUrl);
               } else {
                 log.debug('Not navigating because link is special.')
@@ -663,6 +670,7 @@ class ServiceWorker {
             /*
             If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
              */
+            await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
             await ServiceWorker.openUrl(launchUrl);
           }
         }
@@ -672,6 +680,7 @@ class ServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
+      await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
       await ServiceWorker.openUrl(launchUrl);
     }
 
