@@ -125,12 +125,12 @@ export default class EventHelper {
    * subdomain.onesignal.com URL.
    */
   static async fireStoredNotificationClicks(url: string = document.URL) {
-    const appState = await Database.getAppState();
-    const pageClickedNotifications = appState.clickedNotifications[url];
-    if (pageClickedNotifications) {
+    async function fireEventWithNotification(appState, url) {
+      pageClickedNotifications = appState.clickedNotifications[url];
+
       // Remove the clicked notification; we've processed it now
       appState.clickedNotifications[url] = null;
-      Database.setAppState(appState);
+      await Database.setAppState(appState);
 
       const { data: notification, timestamp } = pageClickedNotifications;
 
@@ -140,6 +140,27 @@ export default class EventHelper {
           return;
       }
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
+    }
+
+    const appState = await Database.getAppState();
+    /*
+      If a user is on https://site.com, document.URL and location.href both report the page's URL as https://site.com/.
+      This causes checking for notifications for the current URL to fail, since there is a notification for https://site.com,
+      but there is no notification for https://site.com/.
+
+      As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
+    */
+    var pageClickedNotifications = appState.clickedNotifications[url];
+    if (pageClickedNotifications) {
+      await fireEventWithNotification(appState, url);
+    }
+    else if (!pageClickedNotifications &&
+      url.endsWith('/')) {
+      var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
+      pageClickedNotifications = appState.clickedNotifications[urlWithoutTrailingSlash];
+      if (pageClickedNotifications) {
+        await fireEventWithNotification(appState, urlWithoutTrailingSlash);
+      }
     }
   }
 }
