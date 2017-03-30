@@ -9,6 +9,14 @@ export default class Client {
     this.frameType = frameType;
   }
 
+  focus() {
+
+  }
+
+  async navigate(url) {
+    this.url = url;
+  }
+
   postMessage() {
     throw new Error('METHOD NOT IMPLEMENTED');
   }

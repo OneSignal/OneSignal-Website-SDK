@@ -42,6 +42,7 @@ export default class ServiceWorker {
   debug: ServiceWorkerDebugScope;
   log: any;
   public database: Database;
+  public swivel: any;
 
   constructor(config?: ServiceWorkerConfig) {
     if (!config) {
@@ -62,6 +63,7 @@ export default class ServiceWorker {
       apiUrl: API_URL,
       browser: Browser,
     };
+    this.swivel = swivel;
     this.log = log;
     this.database = new Database(config.databaseName);
   }
@@ -83,7 +85,7 @@ export default class ServiceWorker {
     self.addEventListener('pushsubscriptionchange', this.onPushSubscriptionChange);
 
     // Install messaging event handlers for page <-> service worker communication
-    (swivel as any).on('data', this.onMessageReceived);
+    (this.swivel as any).on('data', this.onMessageReceived);
 
     // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
     // Fix: If the browser is Firefox and is v44, use the following workaround:
@@ -164,7 +166,7 @@ export default class ServiceWorker {
     this.queries[queryType].promise = new Promise((resolve, reject) => {
       this.queries[queryType].promiseResolve = resolve;
       this.queries[queryType].promiseReject = reject;
-      (swivel as any).emit(serviceWorkerClient.id, queryType);
+      (this.swivel as any).emit(serviceWorkerClient.id, queryType);
     });
     return this.queries[queryType].promise;
   }
@@ -552,16 +554,22 @@ export default class ServiceWorker {
       notification.action = event.action;
 
     let notificationClickHandlerMatch = 'exact';
+    let notificationClickHandlerAction = 'navigate';
 
     const matchPreference = await this.database.get<string>('Options', 'notificationClickHandlerMatch');
     if (matchPreference)
       notificationClickHandlerMatch = matchPreference;
+
+    const actionPreference = await this.database.get<string>('Options', 'notificationClickHandlerAction');
+    if (actionPreference)
+      notificationClickHandlerAction = actionPreference;
 
     const activeClients = await this.getActiveClients();
 
     let launchUrl = await this.getNotificationUrlToOpen(notification);
     let notificationOpensLink = this.shouldOpenNotificationUrl(launchUrl);
 
+    debugger;
     /*
      Check if we can focus on an existing tab instead of opening a new url.
      If an existing tab with exactly the same URL already exists, then this existing tab is focused instead of
@@ -591,12 +599,12 @@ export default class ServiceWorker {
       } catch (e) {
       }
 
-      await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
-
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-        if ((client.isSubdomainIframe && clientUrl === launchUrl) || (!client.isSubdomainIframe && client.url === launchUrl)) {
-          (swivel as any).emit(client.id, 'notification.clicked', notification);
+        if ((client.isSubdomainIframe && clientUrl === launchUrl) ||
+            (!client.isSubdomainIframe && client.url === launchUrl) ||
+            (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
+          (this.swivel as any).emit(client.id, 'notification.clicked', notification);
             try {
               await client.focus();
             } catch (e) {
@@ -618,7 +626,8 @@ export default class ServiceWorker {
             }
             if (notificationOpensLink) {
               log.debug(`Sending command.redirect to ${launchUrl}.`);
-              (swivel as any).emit(client.id, 'command.redirect', launchUrl);
+              await this.database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+              (this.swivel as any).emit(client.id, 'command.redirect', launchUrl);
             } else {
               log.debug('Not navigating because link is special.')
             }
@@ -633,6 +642,7 @@ export default class ServiceWorker {
             try {
               if (notificationOpensLink) {
                 log.debug(`Attempting to navigate(${launchUrl}) client.`)
+                await this.database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
                 await client.navigate(launchUrl);
               } else {
                 log.debug('Not navigating because link is special.')
@@ -644,6 +654,7 @@ export default class ServiceWorker {
             /*
             If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
              */
+            await this.database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
             await this.openUrl(launchUrl);
           }
         }
@@ -653,6 +664,7 @@ export default class ServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
+      await this.database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
       await this.openUrl(launchUrl);
     }
 

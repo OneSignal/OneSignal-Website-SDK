@@ -59,6 +59,14 @@ export class NotificationEvent extends Event {
     public notification?: Notification
   ) {
     super();
+    var notificationClone = JSON.parse(JSON.stringify(this.notification));
+    this.notification.data = notificationClone;
+  }
+
+  static createMockWithPayload(
+    notification: Notification = Notification.createMock()
+  ): NotificationEvent {
+    return new NotificationEvent(notification);
   }
 }
 
@@ -83,7 +91,7 @@ export async function handleEvent(name, args, callback) {
 
 export async function handleEvents(name, args, listeners) {
   if (listeners.length === 1) {
-    return handleEvent(name, args, listeners[0]);
+    return await handleEvent(name, args, listeners[0]);
   }
   return await Promise.all(
     listeners.map(callback => handleEvent(name, args, callback))

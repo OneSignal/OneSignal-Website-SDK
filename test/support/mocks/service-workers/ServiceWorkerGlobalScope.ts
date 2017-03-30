@@ -26,10 +26,14 @@ export default class ServiceWorkerGlobalScope {
     this.listeners[name].push(callback);
   }
 
-  trigger(name, args) {
+  async trigger(name, args) {
     if (this.listeners[name]) {
-      return handleEvents(name, args, this.listeners[name]);
+      return await handleEvents(name, args, this.listeners[name]);
     }
+  }
+
+  setClients(clients) {
+    this.clients = clients;
   }
 
   snapshot() {

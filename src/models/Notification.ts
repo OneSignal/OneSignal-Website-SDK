@@ -18,7 +18,7 @@ export class Notification {
     public renotify?: true;
     public actions?: Array<NotificationActionButton>;
 
-    constructor(title: string, options?: Notification) {
+    constructor(title: string, options?: any) {
         this.id = options.id;
         this.body = options.body;
         this.data = options.data;
@@ -73,5 +73,9 @@ export class Notification {
             }
         }
         return trimUndefined(notification);
+    }
+
+    close() {
+
     }
 }
