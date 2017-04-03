@@ -3,3 +3,5 @@ node_modules/
 bower_components/
 .DS_STORE
 *.pem
+dist/Dev-OneSignalSDK.js
+dist/Dev-OneSignalSDK.js.map
