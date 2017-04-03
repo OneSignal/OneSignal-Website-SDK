@@ -134,7 +134,7 @@ export default class AnimatedElement {
       SHOWING: 'animatedElementShowing',
       SHOWN: 'animatedElementShown',
       HIDING: 'animatedElementHiding',
-      HIDDEN: 'aniamtedElementHidden',
+      HIDDEN: 'animatedElementHidden',
     };
   }
 
