@@ -347,8 +347,23 @@ export default class MainHelper {
     OneSignal._channel.on('notification.displayed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
-    OneSignal._channel.on('notification.clicked', function handler(context, data) {
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+    OneSignal._channel.on('notification.clicked', async function handler(context, data) {
+      if (OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length === 0) {
+        /*
+          A site's page can be open but not listening to the notification.clicked event because it didn't call addListenerForNotificationOpened().
+          In this case, if there are no detected event listeners, we should save the event, instead of firing it without anybody recieving it.
+
+          Or, since addListenerForNotificationOpened() only works once (you have to call it again each time), maybe it was only called once and the
+          user isn't receiving the notification.clicked event for subsequent notifications on the same browser tab.
+
+          Example: notificationClickHandlerMatch: 'origin', tab is clicked, event fires without anybody listening, calling addListenerForNotificationOpened()
+                   returns no results even though a notification was just clicked.
+        */
+        log.debug('notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.');
+        await Database.put("NotificationOpened", { url: data.url, data: data, timestamp: Date.now() });
+      } else {
+        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+      }
     });
     OneSignal._channel.on('command.redirect', function handler(context, data) {
       log.debug(`${Environment.getEnv()} Picked up command.redirect to ${data}, forwarding to host page.`, OneSignal.iframePostmam);
