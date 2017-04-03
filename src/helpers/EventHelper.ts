@@ -125,14 +125,27 @@ export default class EventHelper {
    * subdomain.onesignal.com URL.
    */
   static async fireStoredNotificationClicks(url: string = document.URL) {
-    async function fireEventWithNotification(appState, url) {
-      pageClickedNotifications = appState.clickedNotifications[url];
-
-      // Remove the clicked notification; we've processed it now
-      appState.clickedNotifications[url] = null;
+    async function fireEventWithNotification(clickedNotificationInfo) {
+      // Remove the notification from the recently clicked list
+      // Once this page processes this retroactively provided clicked event, nothing should get the same event
+      const appState = await Database.getAppState();
+      appState.clickedNotifications[clickedNotificationInfo.url] = null;
       await Database.setAppState(appState);
 
-      const { data: notification, timestamp } = pageClickedNotifications;
+      /* Clicked notifications look like:
+      {
+        "url": "https://notify.tech",
+        "data": {
+          "id": "f44dfcc7-e8cd-47c6-af7e-e2b7ac68afca",
+          "heading": "Example Notification",
+          "content": "This is an example notification.",
+          "icon": "https://onesignal.com/images/notification_logo.png"
+          (there would be a URL field here if it was set)
+        },
+        "timestamp": 1490998270607
+      }
+      */
+      const { data: notification, timestamp } = clickedNotificationInfo;
 
       if (timestamp) {
         const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
@@ -143,23 +156,44 @@ export default class EventHelper {
     }
 
     const appState = await Database.getAppState();
-    /*
-      If a user is on https://site.com, document.URL and location.href both report the page's URL as https://site.com/.
-      This causes checking for notifications for the current URL to fail, since there is a notification for https://site.com,
-      but there is no notification for https://site.com/.
 
-      As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
+    /* Is the flag notificationClickHandlerMatch: origin enabled?
+
+       If so, this means we should provide a retroactive notification.clicked event as long as there exists any recently clicked
+       notification that matches this site's origin.
+
+       Otherwise, the default behavior is to only provide a retroactive notification.clicked event if this page's URL exactly
+       matches the notification's URL.
     */
-    var pageClickedNotifications = appState.clickedNotifications[url];
-    if (pageClickedNotifications) {
-      await fireEventWithNotification(appState, url);
-    }
-    else if (!pageClickedNotifications &&
-      url.endsWith('/')) {
-      var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
-      pageClickedNotifications = appState.clickedNotifications[urlWithoutTrailingSlash];
+    const notificationClickHandlerMatch = await Database.get<string>('Options', 'notificationClickHandlerMatch');
+    if (notificationClickHandlerMatch === 'origin') {
+      for (const clickedNotificationUrl of Object.keys(appState.clickedNotifications)) {
+        // Using notificationClickHandlerMatch: 'origin', as long as the notification's URL's origin matches our current tab's origin,
+        // fire the clicked event
+        if (new URL(clickedNotificationUrl).origin === location.origin) {
+          const clickedNotification = appState.clickedNotifications[clickedNotificationUrl];
+          await fireEventWithNotification(clickedNotification);
+        }
+      }
+    } else {
+      /*
+        If a user is on https://site.com, document.URL and location.href both report the page's URL as https://site.com/.
+        This causes checking for notifications for the current URL to fail, since there is a notification for https://site.com,
+        but there is no notification for https://site.com/.
+
+        As a workaround, if there are no notifications for https://site.com/, we'll do a check for https://site.com.
+      */
+      var pageClickedNotifications = appState.clickedNotifications[url];
       if (pageClickedNotifications) {
-        await fireEventWithNotification(appState, urlWithoutTrailingSlash);
+        await fireEventWithNotification(pageClickedNotifications);
+      }
+      else if (!pageClickedNotifications &&
+        url.endsWith('/')) {
+        var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
+        pageClickedNotifications = appState.clickedNotifications[urlWithoutTrailingSlash];
+        if (pageClickedNotifications) {
+          await fireEventWithNotification(pageClickedNotifications);
+        }
       }
     }
   }
