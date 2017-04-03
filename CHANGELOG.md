@@ -1,5 +1,13 @@
 # Change Log
 
+## [v120095](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120095) (2017-04-03)
+[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120090...v120095)
+
+**Fixed bugs:**
+
+- Notification clicks event not respecting notificationClickHandlerOrigin [\#185](https://github.com/OneSignal/OneSignal-Website-SDK/issues/185)
+- notificationClickHandlerMatch origin only focuses and does not navigate to new URL [\#108](https://github.com/OneSignal/OneSignal-Website-SDK/issues/108)
+
 ## [v120090](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120090) (2017-03-30)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120085...v120090)
 
