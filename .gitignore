@@ -9,3 +9,5 @@ build/
 .DS_STORE
 *.pem
 yarn-error.log
+dist/Dev-OneSignalSDK.js
+dist/Dev-OneSignalSDK.js.map
