@@ -27,8 +27,19 @@ export function decodeHtmlEntities(text) {
   }
 }
 
-export function isPushNotificationsSupported () {
-  /* During testing, the browser object may be initialized before the userAgent is injected */
+export function isPushNotificationsSupported() {
+  /**
+   * It's possible a browser's user agent is modified, so we do some basic feature detection to make sure initializing
+   * the SDK won't fail. Promises are required to initialize the SDK.
+   */
+  if (typeof window.Promise === "undefined") {
+    return false;
+  }
+
+  /*
+   TODO: Make this a little neater
+   During testing, the browser object may be initialized before the userAgent is injected
+  */
   if (Browser.name === '' && Browser.version === '') {
     var browser = (Browser as any)._detect(navigator.userAgent);
   } else {
@@ -36,7 +47,7 @@ export function isPushNotificationsSupported () {
   }
   let userAgent = navigator.userAgent || '';
 
-  if (browser.ios || (<any>browser).ipod || (<any>browser).iphone || (<any>browser).ipad)
+  if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
     return false;
 
   if (browser.msedge || browser.msie)
