@@ -158,6 +158,7 @@ $sizes: (
             svg {
                 width: 100%;
                 height: 100%;
+                overflow: visible;
 
                 // TODO: Add this back in once Safari 9.1 beta fixes its bug with drop-shadow making the SVG disappear
                 //-webkit-filter: $bell-shadow;
