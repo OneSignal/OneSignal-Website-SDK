@@ -80,18 +80,6 @@ export default class EventHelper {
     }
   }
 
-  static _onDbValueSet(info) {
-    /*
-     For HTTPS sites, this is how the subscription change event gets fired.
-     For HTTP sites, leaving this enabled fires the subscription change event twice. The first event is from Postmam
-     remotely re-triggering the db.set event to notify the host page that the popup set the user ID in the db. The second
-     event is from Postmam remotely re-triggering the subscription.changed event which is also fired from the popup.
-     */
-    if (info.type === 'userId' && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-      EventHelper.checkAndTriggerSubscriptionChanged();
-    }
-  }
-
   static onDatabaseRebuilt() {
     OneSignal._isNewVisitor = true;
   }

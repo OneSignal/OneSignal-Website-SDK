@@ -229,6 +229,12 @@ export default class MainHelper {
                   .then(() => {
                     // We've finished registering with OneSignal, our session_count and last_active has been updated
                     Event.trigger(OneSignal.EVENTS.REGISTERED);
+                    if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+                      /*
+                      For HTTPS sites, this is how the subscription change event gets fired. For HTTP sites, leaving this enabled fires the subscription change event twice.
+                      */
+                      EventHelper.checkAndTriggerSubscriptionChanged();
+                    }
                   });
   }
 
