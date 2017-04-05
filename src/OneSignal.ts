@@ -190,7 +190,6 @@ export default class OneSignal {
 
       OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
-      Database.on(Database.EVENTS.SET, EventHelper._onDbValueSet);
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
       subdomainPromise.then(() => {
         window.addEventListener('focus', (event) => {
