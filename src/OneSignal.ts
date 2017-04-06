@@ -289,6 +289,8 @@ export default class OneSignal {
                         });
                         OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
                           OneSignal.popover.close();
+                          log.debug("Setting flag to not show the popover to the user again.");
+                          Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
                           OneSignal.registerForPushNotifications({autoAccept: true});
                         });
                         OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
