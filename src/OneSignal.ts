@@ -245,6 +245,65 @@ export default class OneSignal {
     if (OneSignal.__isPopoverShowing) {
       throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
         permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
+          });
+        }
+        return Promise.all([
+          OneSignal.getNotificationPermission(),
+          OneSignal.isPushNotificationsEnabled(),
+          OneSignal.getSubscription(),
+          Database.get('Options', 'popoverDoNotPrompt'),
+          OneSignal.httpHelper.isShowingHttpPermissionRequest()
+        ])
+                      .then(([permission, isEnabled, notOptedOut, doNotPrompt, isShowingHttpPermissionRequest]) => {
+                        if (doNotPrompt === true && (!options || options.force == false)) {
+                          throw new PermissionMessageDismissedError();
+                        }
+                        if (permission === NotificationPermission.Denied) {
+                          throw new PushPermissionNotGrantedError();
+                        }
+                        if (isEnabled) {
+                          throw new AlreadySubscribedError();
+                        }
+                        if (!notOptedOut) {
+                          throw new NotSubscribedError(NotSubscribedReason.OptedOut);
+                        }
+                        if (MainHelper.isUsingHttpPermissionRequest()
+                            ) {
+                          log.debug('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
+                          throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
+                            permissionPromptType: PermissionPromptType.HttpPermissionRequest
+                          });
+                        }
+                        MainHelper.markHttpPopoverShown();
+                        OneSignal.popover = new Popover(OneSignal.config.promptOptions);
+                        OneSignal.popover.create();
+                        log.debug('Showing the HTTP popover.');
+                        if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
+                          OneSignal.notifyButton.launcher.waitUntilShown()
+                                   .then(() => {
+                                     OneSignal.notifyButton.launcher.hide();
+                                   });
+                        }
+                        OneSignal.once(Popover.EVENTS.SHOWN, () => {
+                          OneSignal.__isPopoverShowing = true;
+                        });
+                        OneSignal.once(Popover.EVENTS.CLOSED, () => {
+                          OneSignal.__isPopoverShowing = false;
+                          if (OneSignal.notifyButton) {
+                            OneSignal.notifyButton.launcher.show();
+                          }
+                        });
+                        OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
+                          OneSignal.popover.close();
+                          log.debug("Setting flag to not show the popover to the user again.");
+                          Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
+                          OneSignal.registerForPushNotifications({autoAccept: true});
+                        });
+                        OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
+                          log.debug("Setting flag to not show the popover to the user again.");
+                          Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
+                        });
+                      });
       });
     }
 
