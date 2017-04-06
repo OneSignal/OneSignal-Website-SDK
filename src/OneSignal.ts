@@ -196,14 +196,15 @@ export default class OneSignal {
           document.head.appendChild(s);
         }
 
-        if (Environment.isCustomSubdomain()) {
-          Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          return;
-        }
-
         InitHelper.initSaveState()
-                 .then(() => InitHelper.saveInitOptions())
-                 .then(() => InitHelper.internalInit());
+          .then(() => InitHelper.saveInitOptions())
+          .then(() => {
+            if (Environment.isCustomSubdomain()) {
+              Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+            } else {
+              InitHelper.internalInit();
+            }
+          });
       });
     }
 
