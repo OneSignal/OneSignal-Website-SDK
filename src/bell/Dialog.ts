@@ -21,13 +21,6 @@ export default class Dialog extends AnimatedElement {
     this.subscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #subscribe-button';
     this.unsubscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #unsubscribe-button';
     this.notificationIcons = null;
-
-    window.addEventListener('click', (event) => {
-      if (event.target === document.querySelector(this.subscribeButtonId))
-        Event.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
-      else if (event.target === document.querySelector(this.unsubscribeButtonId))
-        Event.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK);
-    });
   }
 
   getPlatformNotificationIcon() {
@@ -152,6 +145,12 @@ export default class Dialog extends AnimatedElement {
                 `;
       }
       addDomElement(document.querySelector(this.nestedContentSelector), 'beforeend', contents);
+      if (this.subscribeButton) {
+        this.subscribeButton.addEventListener('click', () => Event.trigger(Bell.EVENTS.SUBSCRIBE_CLICK));
+      }
+      if (this.unsubscribeButton) {
+        this.unsubscribeButton.addEventListener('click', () => Event.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK));
+      }
       this.bell.setCustomColorsIfSpecified();
     });
   }
