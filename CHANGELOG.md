@@ -1,5 +1,23 @@
 # Change Log
 
+## [v120100](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120100) (2017-04-06)
+[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120095...v120100)
+
+**Fixed bugs:**
+
+- Notify button circular shadow is boxed in and flickers [\#221](https://github.com/OneSignal/OneSignal-Website-SDK/issues/221)
+- notificationPermissionChange event fires twice on main page for HTTP subscriptions [\#218](https://github.com/OneSignal/OneSignal-Website-SDK/issues/218)
+
+**Closed issues:**
+
+- Add feature detection for Promises [\#223](https://github.com/OneSignal/OneSignal-Website-SDK/issues/223)
+- Chrome push notifications not working with Linux [\#222](https://github.com/OneSignal/OneSignal-Website-SDK/issues/222)
+- Clicking Allow on the Slidedown permission message is not remembered [\#215](https://github.com/OneSignal/OneSignal-Website-SDK/issues/215)
+- Sites loaded inside an iFrame do not set the app ID on page load [\#214](https://github.com/OneSignal/OneSignal-Website-SDK/issues/214)
+- Uncaught \(in promise\) DOMException: Entry was not found. [\#204](https://github.com/OneSignal/OneSignal-Website-SDK/issues/204)
+- Implement big picture [\#198](https://github.com/OneSignal/OneSignal-Website-SDK/issues/198)
+- Subscription bell dialog button click listeners should be more specific [\#195](https://github.com/OneSignal/OneSignal-Website-SDK/issues/195)
+
 ## [v120095](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120095) (2017-04-03)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120090...v120095)
 
