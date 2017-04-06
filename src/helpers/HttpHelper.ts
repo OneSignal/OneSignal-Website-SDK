@@ -375,7 +375,6 @@ must be opened as a result of a subscription call.</span>`);
 
       MainHelper.getAppId()
                 .then(appId => {
-                  EventHelper.triggerNotificationPermissionChanged(window.Notification.permission);
                   OneSignal.popupPostmam.stopPostMessageReceive();
                   MainHelper.registerWithOneSignal(appId, message.data.subscriptionInfo)
                             .then(() => EventHelper.checkAndTriggerSubscriptionChanged());
