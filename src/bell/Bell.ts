@@ -392,7 +392,7 @@ export default class Bell {
     Promise.all([
                   OneSignal.isPushNotificationsEnabled(),
                   OneSignal.getSubscription(),
-                  Database.get('Options', 'popoverDoNotPrompt')
+                  MainHelper.wasHttpsNativePromptDismissed()
                 ])
     .then(([isPushEnabled, notOptedOut, doNotPrompt]) => {
       // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small

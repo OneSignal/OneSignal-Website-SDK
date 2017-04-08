@@ -326,6 +326,13 @@ must be opened as a result of a subscription call.</span>`);
           window.location.href = message.data;
           return false;
         });
+        OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE, message => {
+          log.debug('(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.');
+          OneSignal.showHttpPrompt({ __sdkCall: true, __useHttpPermissionRequestStyle: true }).catch(e => {
+            log.debug('[Resubscribe Prompt Error]', e);
+          });
+          return false;
+        });
       };
       OneSignal._sessionIframeAdded = true;
     });
