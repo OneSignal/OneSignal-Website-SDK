@@ -287,6 +287,7 @@ export default class SubscriptionHelper {
                             "in the <head> of your page. Please see step 2 at " +
                             "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
                  }
+               } else if (e instanceof PushPermissionNotGrantedError)  {
                } else {
                  log.error('Error while subscribing for push:', e);
                }
