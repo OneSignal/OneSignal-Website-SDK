@@ -25,6 +25,7 @@ import InitHelper from "./InitHelper";
 import EventHelper from "./EventHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
 import { InvalidStateReason } from "../errors/InvalidStateError";
+import TestHelper from './TestHelper';
 
 declare var OneSignal: any;
 
@@ -227,6 +228,12 @@ must be opened as a result of a subscription call.</span>`);
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.IS_SHOWING_HTTP_PERMISSION_REQUEST, async message => {
       const isShowingHttpPermReq = await HttpHelper.isShowingHttpPermissionRequest();
       message.reply(isShowingHttpPermReq);
+      return false;
+    });
+    OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, message => {
+      log.debug('(Reposted from iFrame -> Host) Marking prompt as dismissed.');
+      TestHelper.markHttpsNativePromptDismissed();
+      message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
       return false;
     });
     if (Environment.isIframe()) {

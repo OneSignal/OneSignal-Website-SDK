@@ -842,6 +842,7 @@ export default class OneSignal {
     POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
     SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
     HTTP_PERMISSION_REQUEST_RESUBSCRIBE: 'postmam.httpPermissionRequestResubscribe',
+    MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed'
   };
 
   static EVENTS = {
