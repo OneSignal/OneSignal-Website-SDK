@@ -32,7 +32,7 @@ export function isPushNotificationsSupported() {
    * It's possible a browser's user agent is modified, so we do some basic feature detection to make sure initializing
    * the SDK won't fail. Promises are required to initialize the SDK.
    */
-  if (typeof window.Promise === "undefined") {
+  if (typeof (window as any).Promise === "undefined") {
     return false;
   }
 

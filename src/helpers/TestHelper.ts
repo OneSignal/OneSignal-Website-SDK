@@ -4,7 +4,7 @@ import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';
 import LimitStore from '../LimitStore';
 import Event from "../Event";
-import Database from '../Database';
+import Database from '../services/Database';
 import * as Browser from 'bowser';
 import {
   getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,

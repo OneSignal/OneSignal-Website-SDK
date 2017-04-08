@@ -339,7 +339,7 @@ export default class InitHelper {
       }
       if ((OneSignal.config.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {
         OneSignal.showHttpPrompt().catch(e => {
-          if (e instanceof InvalidStateError && e.reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage] ||
+          if (e instanceof InvalidStateError && ((e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
               e instanceof PermissionMessageDismissedError ||
             e instanceof AlreadySubscribedError) {
             log.debug('[Prompt Not Showing]', e);
