@@ -409,7 +409,7 @@ export default class Bell {
 
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
     const notOptedOut = await OneSignal.getSubscription();
-    const doNotPrompt = await Database.get('Options', 'popoverDoNotPrompt');
+    const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed()
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
     let resizeTo = (isPushEnabled ? 'small' : this.options.size);

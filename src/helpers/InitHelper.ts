@@ -14,6 +14,9 @@ import EventHelper from "./EventHelper";
 import {InvalidStateError, InvalidStateReason} from "../errors/InvalidStateError";
 import AlreadySubscribedError from "../errors/AlreadySubscribedError";
 import ServiceUnavailableError from "../errors/ServiceUnavailableError";
+import PermissionMessageDismissedError from '../errors/PermissionMessageDismissedError';
+
+declare var OneSignal: any;
 
 
 export default class InitHelper {
@@ -336,8 +339,10 @@ export default class InitHelper {
       }
       if ((OneSignal.config.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {
         OneSignal.showHttpPrompt().catch(e => {
-          if (e instanceof InvalidStateError && e.reason === InvalidStateReason.RedundantPermissionMessage ||
-              e instanceof AlreadySubscribedError) {
+          if (e instanceof InvalidStateError && e.reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage] ||
+              e instanceof PermissionMessageDismissedError ||
+            e instanceof AlreadySubscribedError) {
+            log.debug('[Prompt Not Showing]', e);
             // Another prompt is being shown, that's okay
           } else throw e;
         })
