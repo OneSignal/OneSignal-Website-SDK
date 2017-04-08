@@ -253,81 +253,14 @@ export default class OneSignal {
         permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
       });
     }
-    return Promise.all([
-      OneSignal.getNotificationPermission(),
-      OneSignal.isPushNotificationsEnabled(),
-      OneSignal.getSubscription(),
-      MainHelper.wasHttpsNativePromptDismissed(),
-      OneSignal.httpHelper.isShowingHttpPermissionRequest()
-    ])
-      .then(([permission, isEnabled, notOptedOut, doNotPrompt, isShowingHttpPermissionRequest]) => {
-        if (doNotPrompt && !options.force) {
-          throw new PermissionMessageDismissedError();
-        }
-        if (permission === NotificationPermission.Denied) {
-          throw new PushPermissionNotGrantedError();
-        }
-        if (isEnabled) {
-          throw new AlreadySubscribedError();
-        }
-        if (!notOptedOut) {
-          throw new NotSubscribedError(NotSubscribedReason.OptedOut);
-        }
-        if (MainHelper.isUsingHttpPermissionRequest()) {
-          if (options.__sdkCall && options.__useHttpPermissionRequestStyle) {
-          } else {
-            log.debug('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
-            throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-              permissionPromptType: PermissionPromptType.HttpPermissionRequest
-            });
-          }
-        }
-        MainHelper.markHttpPopoverShown();
-        OneSignal.popover = new Popover(OneSignal.config.promptOptions);
-        OneSignal.popover.create();
-        log.debug('Showing the HTTP popover.');
-        if (OneSignal.notifyButton &&
-          OneSignal.notifyButton.options.enable &&
-          OneSignal.notifyButton.launcher.state !== 'hidden') {
-          OneSignal.notifyButton.launcher.waitUntilShown()
-            .then(() => {
-              OneSignal.notifyButton.launcher.hide();
-            });
-        }
-        OneSignal.once(Popover.EVENTS.SHOWN, () => {
-          OneSignal.__isPopoverShowing = true;
-        });
-        OneSignal.once(Popover.EVENTS.CLOSED, () => {
-          OneSignal.__isPopoverShowing = false;
-          if (OneSignal.notifyButton &&
-            OneSignal.notifyButton.options.enable) {
-            OneSignal.notifyButton.launcher.show();
-          }
-        });
-        OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
-          OneSignal.popover.close();
-          log.debug("Setting flag to not show the popover to the user again.");
-          TestHelper.markHttpsNativePromptDismissed();
-          if (options.__sdkCall && options.__useHttpPermissionRequestStyle) {
-            OneSignal.registerForPushNotifications({ httpPermissionRequest: true });
-          } else {
-            OneSignal.registerForPushNotifications({ autoAccept: true });
-          }
-        });
-        OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
-          log.debug("Setting flag to not show the popover to the user again.");
-          TestHelper.markHttpsNativePromptDismissed();
-        });
-      });
-
 
     const permission = await OneSignal.getNotificationPermission();
     const isEnabled = await OneSignal.isPushNotificationsEnabled();
     const notOptedOut = await OneSignal.getSubscription();
-    const doNotPrompt = await Database.get<boolean>('Options', 'popoverDoNotPrompt');
+    const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
     const isShowingHttpPermissionRequest = await OneSignal.httpHelper.isShowingHttpPermissionRequest();
 
-    if (doNotPrompt === true && (!options || options.force == false)) {
+    if (doNotPrompt && !options.force) {
       throw new PermissionMessageDismissedError();
     }
     if (permission === NotificationPermission.Denied) {
@@ -340,11 +273,15 @@ export default class OneSignal {
       throw new NotSubscribedError(NotSubscribedReason.OptedOut);
     }
     if (MainHelper.isUsingHttpPermissionRequest()) {
-      log.debug('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
-      throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-        permissionPromptType: PermissionPromptType.HttpPermissionRequest
-      });
+      if (options.__sdkCall && options.__useHttpPermissionRequestStyle) {
+      } else {
+        log.debug('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
+        throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
+          permissionPromptType: PermissionPromptType.HttpPermissionRequest
+        });
+      }
     }
+
     MainHelper.markHttpPopoverShown();
 
     const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
@@ -352,11 +289,12 @@ export default class OneSignal {
       log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-
     OneSignal.popover = new Popover(OneSignal.config.promptOptions);
-    await OneSignal.popover.create();
+    OneSignal.popover.create();
     log.debug('Showing the HTTP popover.');
-    if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
+    if (OneSignal.notifyButton &&
+      OneSignal.notifyButton.options.enable &&
+      OneSignal.notifyButton.launcher.state !== 'hidden') {
       OneSignal.notifyButton.launcher.waitUntilShown()
         .then(() => {
           OneSignal.notifyButton.launcher.hide();
@@ -367,17 +305,24 @@ export default class OneSignal {
     });
     OneSignal.once(Popover.EVENTS.CLOSED, () => {
       OneSignal.__isPopoverShowing = false;
-      if (OneSignal.notifyButton) {
+      if (OneSignal.notifyButton &&
+        OneSignal.notifyButton.options.enable) {
         OneSignal.notifyButton.launcher.show();
       }
     });
     OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
       OneSignal.popover.close();
-      OneSignal.registerForPushNotifications({ autoAccept: true });
+      log.debug("Setting flag to not show the popover to the user again.");
+      TestHelper.markHttpsNativePromptDismissed();
+      if (options.__sdkCall && options.__useHttpPermissionRequestStyle) {
+        OneSignal.registerForPushNotifications({ httpPermissionRequest: true });
+      } else {
+        OneSignal.registerForPushNotifications({ autoAccept: true });
+      }
     });
     OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
       log.debug("Setting flag to not show the popover to the user again.");
-      Database.put('Options', { key: 'popoverDoNotPrompt', value: true });
+      TestHelper.markHttpsNativePromptDismissed();
     });
   }
 
