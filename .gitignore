@@ -5,3 +5,5 @@ bower_components/
 *.pem
 dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map
+.vscode/
+build/
