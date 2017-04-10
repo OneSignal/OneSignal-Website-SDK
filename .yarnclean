@@ -40,3 +40,6 @@ Gruntfile.js
 # misc
 *.gz
 *.md
+
+# Do not clean svgo YML
+!.svgo.yml
