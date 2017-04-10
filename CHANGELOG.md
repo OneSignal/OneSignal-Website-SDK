@@ -1,5 +1,8 @@
 # Change Log
 
+## [v120105](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120105) (2017-04-10)
+[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120100...v120105)
+
 ## [v120100](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120100) (2017-04-06)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120095...v120100)
 
