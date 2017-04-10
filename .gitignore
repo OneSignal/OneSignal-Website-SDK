@@ -11,3 +11,5 @@ build/
 yarn-error.log
 dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map
+.vscode/
+build/
