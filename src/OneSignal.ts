@@ -575,11 +575,26 @@ export default class OneSignal {
     if (Environment.supportsServiceWorkers() &&
         !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
         !Environment.isIframe()) {
+
       isPushEnabled = !!(deviceId &&
                       pushToken &&
                       notificationPermission === NotificationPermission.Granted &&
                       !optedOut &&
                       serviceWorkerActive)
+
+      const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+      if (serviceWorkerRegistration) {
+        const actualSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
+        /**
+         * Check the actual subscription, and not just the stored cached subscription, to ensure the user is still really subscribed.
+         * Users typically test resubscribing by clearing their site permissions, which doesn't remove the stored subscription token
+         * in IndexedDb we get from Google. Clearing their site permission will unsubscribe them though, so this method should reflect
+         * that by checking the real state.
+         */
+        if (!actualSubscription) {
+          isPushEnabled = false;
+        }
+      }
     } else {
       isPushEnabled = !!(deviceId &&
                          pushToken &&
