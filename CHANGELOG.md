@@ -1,15 +1,11 @@
 # Change Log
 
-## [Unreleased](https://github.com/OneSignal/OneSignal-Website-SDK/tree/HEAD)
-
-[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120110...HEAD)
+## [v120110](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120110) (2017-04-13)
+[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120105...v120110)
 
 **Fixed bugs:**
 
 - Check push subscription validity when checking whether notifications are enabled [\#226](https://github.com/OneSignal/OneSignal-Website-SDK/issues/226)
-
-## [v120110](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120110) (2017-04-13)
-[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120105...v120110)
 
 ## [v120105](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120105) (2017-04-10)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120100...v120105)
