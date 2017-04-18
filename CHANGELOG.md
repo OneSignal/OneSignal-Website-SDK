@@ -1,11 +1,10 @@
 # Change Log
 
+## [v120115](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120115) (2017-04-18)
+[Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120110...v120115)
+
 ## [v120110](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120110) (2017-04-13)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120105...v120110)
-
-**Fixed bugs:**
-
-- Check push subscription validity when checking whether notifications are enabled [\#226](https://github.com/OneSignal/OneSignal-Website-SDK/issues/226)
 
 ## [v120105](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120105) (2017-04-10)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120100...v120105)
@@ -13,28 +12,8 @@
 ## [v120100](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120100) (2017-04-06)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120095...v120100)
 
-**Fixed bugs:**
-
-- Notify button circular shadow is boxed in and flickers [\#221](https://github.com/OneSignal/OneSignal-Website-SDK/issues/221)
-- notificationPermissionChange event fires twice on main page for HTTP subscriptions [\#218](https://github.com/OneSignal/OneSignal-Website-SDK/issues/218)
-
-**Closed issues:**
-
-- Add feature detection for Promises [\#223](https://github.com/OneSignal/OneSignal-Website-SDK/issues/223)
-- Chrome push notifications not working with Linux [\#222](https://github.com/OneSignal/OneSignal-Website-SDK/issues/222)
-- Clicking Allow on the Slidedown permission message is not remembered [\#215](https://github.com/OneSignal/OneSignal-Website-SDK/issues/215)
-- Sites loaded inside an iFrame do not set the app ID on page load [\#214](https://github.com/OneSignal/OneSignal-Website-SDK/issues/214)
-- Uncaught \(in promise\) DOMException: Entry was not found. [\#204](https://github.com/OneSignal/OneSignal-Website-SDK/issues/204)
-- Implement big picture [\#198](https://github.com/OneSignal/OneSignal-Website-SDK/issues/198)
-- Subscription bell dialog button click listeners should be more specific [\#195](https://github.com/OneSignal/OneSignal-Website-SDK/issues/195)
-
 ## [v120095](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120095) (2017-04-03)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120090...v120095)
-
-**Fixed bugs:**
-
-- Notification clicks event not respecting notificationClickHandlerOrigin [\#185](https://github.com/OneSignal/OneSignal-Website-SDK/issues/185)
-- notificationClickHandlerMatch origin only focuses and does not navigate to new URL [\#108](https://github.com/OneSignal/OneSignal-Website-SDK/issues/108)
 
 ## [v120090](https://github.com/OneSignal/OneSignal-Website-SDK/tree/v120090) (2017-03-30)
 [Full Changelog](https://github.com/OneSignal/OneSignal-Website-SDK/compare/v120085...v120090)
