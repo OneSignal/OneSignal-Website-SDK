@@ -55,31 +55,33 @@ export default class InitHelper {
    * For HTTP sites, this event is called after the iFrame is created, and a message is received from the iFrame signaling cross-origin messaging is ready.
    * @private
    */
-  static onSdkInitialized() {
+  static async onSdkInitialized() {
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites, since the iframe is needed for communication
     InitHelper.storeInitialValues();
     InitHelper.installNativePromptPermissionChangedHook();
 
-    if (navigator.serviceWorker && window.location.protocol === 'https:') {
-      navigator.serviceWorker.getRegistration()
-               .then(registration => {
-                 if (registration && registration.active) {
-                   MainHelper.establishServiceWorkerChannel(registration);
-                 }
-               })
-               .catch(e => {
-                 if (e.code === 9) { // Only secure origins are allowed
-                   if (location.protocol === 'http:' || Environment.isIframe()) {
-                     // This site is an HTTP site with an <iframe>
-                     // We can no longer register service workers since Chrome 42
-                     log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
-                   }
-                 } else {
-                   log.error(`Error getting Service Worker registration on ${location.href}:`, e);
-                 }
-               });
+    if (navigator.serviceWorker &&
+        window.location.protocol === 'https:' &&
+        !(await SubscriptionHelper.hasInsecureParentOrigin())) {
+          navigator.serviceWorker.getRegistration()
+            .then(registration => {
+              if (registration && registration.active) {
+                MainHelper.establishServiceWorkerChannel(registration);
+              }
+            })
+            .catch(e => {
+              if (e.code === 9) { // Only secure origins are allowed
+                if (location.protocol === 'http:' || Environment.isIframe()) {
+                  // This site is an HTTP site with an <iframe>
+                  // We can no longer register service workers since Chrome 42
+                  log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
+                }
+              } else {
+                log.error(`Error getting Service Worker registration on ${location.href}:`, e);
+              }
+            });
     }
 
     MainHelper.showNotifyButton();

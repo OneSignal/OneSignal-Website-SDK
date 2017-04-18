@@ -566,15 +566,19 @@ export default class OneSignal {
   static async isPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('isPushNotificationsEnabled', callback);
+
+    const hasInsecureParentOrigin = await SubscriptionHelper.hasInsecureParentOrigin();
     const { deviceId, pushToken, optedOut } = await Database.getSubscription();
     const notificationPermission = await OneSignal.getNotificationPermission();
-    const serviceWorkerActive = await ServiceWorkerHelper.isServiceWorkerActive();
 
     let isPushEnabled = false;
 
     if (Environment.supportsServiceWorkers() &&
         !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-        !Environment.isIframe()) {
+        !Environment.isIframe() &&
+        !hasInsecureParentOrigin) {
+
+      const serviceWorkerActive = await ServiceWorkerHelper.isServiceWorkerActive();
 
       isPushEnabled = !!(deviceId &&
                       pushToken &&
