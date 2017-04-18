@@ -1,2 +1,4 @@
-include-labels=bug,enhancement
-since-tag=v120085
+since-tag=https-integration-files
+issues=false
+pull-requests=false
+max-issues=0
