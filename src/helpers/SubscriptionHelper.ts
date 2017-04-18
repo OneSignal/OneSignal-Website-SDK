@@ -131,6 +131,27 @@ export default class SubscriptionHelper {
     (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
   }
 
+  /**
+   * Returns true if the current frame context is a child iFrame, and the parent is not HTTPS.
+   *
+   * This is used to check if isPushNotificationsEnabled() should grab the service worker registration. In an HTTPS iframe of an HTTP page,
+   * getting the service worker registration would throw an error.
+   */
+  static async hasInsecureParentOrigin() {
+    // If we are the top frame, or service workers aren't available, don't run this check
+    if (window === window.top ||
+      !('serviceWorker' in navigator) ||
+      typeof navigator.serviceWorker.getRegistration === "undefined") {
+      return false;
+    }
+    try {
+      await navigator.serviceWorker.getRegistration();
+      return false;
+    } catch (e) {
+      return true;
+    }
+  }
+
   static isLocalhostAllowedAsSecureOrigin() {
     return OneSignal.config && OneSignal.config.allowLocalhostAsSecureOrigin === true;
   }
