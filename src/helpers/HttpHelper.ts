@@ -50,7 +50,7 @@ must be opened as a result of a subscription call.</span>`);
     }
 
     // Forgetting this makes all our APIs stall forever because the promises expect this to be true
-    OneSignal.config = {};
+    OneSignal.config = options;
     OneSignal.initialized = true;
 
     let sendToOrigin = options.origin;
