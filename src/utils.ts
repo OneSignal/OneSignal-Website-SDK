@@ -364,16 +364,6 @@ export function getUrlQueryParam(name) {
 }
 
 /**
- * Wipe OneSignal-related IndexedDB data on the current origin. OneSignal does not have to be initialized to use this.
- *
- * Note: This method is now deprecated. It was used to solve mismatched users issues by clearing IndexedDb state
- *       so that users could cleanly resubscribe. It's been used for several months and this specific solution hasn't
- *       been used again since then, so many users have probably successfully resubscribed since then. This will be
- *       replaced by separating IndexedDb tables by app ID. Note: This method has to stay available.
- */
-export function wipeLocalIndexedDb() { }
-
-/**
  * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.
  */
 export function wipeIndexedDb() {
