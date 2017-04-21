@@ -4464,8 +4464,8 @@ svgo@^0.7.0, svgo@^0.7.2:
     whet.extend "~0.9.9"
 
 "swivel@github:OneSignal/swivel#onesignal":
-  version "4.0.2"
-  resolved "https://codeload.github.com/OneSignal/swivel/tar.gz/698a3b6d33314107f799901b5f4cea0a6176a9b2"
+  version "5.0"
+  resolved "https://codeload.github.com/OneSignal/swivel/tar.gz/0da3e7b069766be24e40a594da2492729caee693"
   dependencies:
     atoa "1.0.0"
     contra "1.9.1"
