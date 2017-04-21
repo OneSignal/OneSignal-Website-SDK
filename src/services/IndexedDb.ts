@@ -1,6 +1,5 @@
 import * as log from "loglevel";
 import Database from "./Database";
-import {LogUtil} from "../utils/logging/LogUtil";
 import Emitter from "../libraries/Emitter";
 import { contains } from "../utils";
 
@@ -51,7 +50,7 @@ export default class IndexedDb {
       // Prevent the error from bubbling: https://bugzilla.mozilla.org/show_bug.cgi?id=1331103#c3
       event.preventDefault();
     } else {
-      log.debug(...LogUtil.format('Database', 'specific database open error event'));
+      log.debug('IndexedDb: Specific database open error event');
     }
   }
 
@@ -61,7 +60,7 @@ export default class IndexedDb {
    * request, you can instead add a single error handler on the database object.
    */
   private onDatabaseError(event) {
-    log.debug(...LogUtil.format('Database', 'Generic database error', event.target.errorCode));
+    log.debug('IndexedDb: Generic database error', event.target.errorCode);
   }
 
   /**
@@ -69,7 +68,7 @@ export default class IndexedDb {
    * (that is, not closed) somewhere, even after the versionchange event was sent.
    */
   private onDatabaseOpenBlocked(): void {
-    log.debug(...LogUtil.format('Database', 'blocked event'));
+    log.debug('IndexedDb: Blocked event');
   }
 
   /**
@@ -81,7 +80,7 @@ export default class IndexedDb {
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase/onversionchange
    */
   private onDatabaseVersionChange(event: IDBVersionChangeEvent): void {
-    log.debug(...LogUtil.format('Database', 'versionchange event'));
+    log.debug('IndexedDb: versionchange event');
   }
 
   /**
@@ -91,7 +90,7 @@ export default class IndexedDb {
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onupgradeneeded
    */
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
-    log.debug(...LogUtil.format('Database', 'IndexedDb is being rebuilt or upgraded (upgradeneeded event).'));
+    log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
     const db = (event.target as IDBOpenDBRequest).result;
     db.createObjectStore("Ids", {
       keyPath: "type"

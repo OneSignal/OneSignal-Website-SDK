@@ -217,35 +217,17 @@ export function getDeviceTypeForBrowser() {
 
 export function getConsoleStyle(style) {
   if (style == 'code') {
-    return `
-    padding: 0 1px 1px 5px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;
-    color: #444;
-    `
+    return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;
   } else if (style == 'bold') {
-    return `
-      font-weight: 600;
-    color: rgb(51, 51, 51);
-    `;
+    return `font-weight: 600;color: rgb(51, 51, 51);`;
   } else if (style == 'alert') {
-    return `
-      font-weight: 600;
-    color: red;
-    `;
+    return `font-weight: 600;color: red;`;
   } else if (style == 'event') {
-    return `
-    color: green;
-    `;
+    return `color: green;`;
   } else if (style == 'postmessage') {
-    return `
-    color: orange;
-    `;
+    return `color: orange;`;
   } else if (style == 'serviceworkermessage') {
-    return `
-    color: purple;
-    `;
+    return `color: purple;`;
   }
 }
 

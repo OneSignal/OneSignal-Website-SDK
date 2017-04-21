@@ -41,25 +41,7 @@ export default class HttpModal {
                 removeDomElement('#onesignal-modal-container');
             }
 
-            let dialogHtml = `
-                        <div id="onesignal-modal-dialog">
-                            <div class="modal-exit">&times;</div>
-                            <div class="modal-body">
-                                <div class="modal-body-title">
-                                    ${this.options['modalTitle']}                                      
-                                </div>
-                                <div class="modal-body-message">
-                                    ${this.options['modalMessage']}                
-                                </div>
-                                <div class="clearfix"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button id="onesignal-modal-finish-button" class="primary modal-button">
-                                ${this.options['modalButtonText']}</button>
-                                <div class="clearfix"></div>
-                            </div>
-                        </div>                   
-                    `;
+            let dialogHtml = `<div id="onesignal-modal-dialog"><div class="modal-exit">&times;</div><div class="modal-body"><div class="modal-body-title">${this.options['modalTitle']}</div><div class="modal-body-message">${this.options['modalMessage']}</div><div class="clearfix"></div></div><div class="modal-footer"><button id="onesignal-modal-finish-button" class="primary modal-button">${this.options['modalButtonText']}</button><div class="clearfix"></div></div></div>`;
 
             // Insert the container
             addDomElement('body', 'beforeend',
