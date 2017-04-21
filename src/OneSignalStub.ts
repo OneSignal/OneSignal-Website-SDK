@@ -60,5 +60,3 @@ untypedOneSignalStub.setDefaultNotificationUrl = untypedOneSignalStub.setDefault
   = untypedOneSignalStub.getSubscription
   = untypedOneSignalStub.sendSelfNotification
   = untypedOneSignalStub.promiseStub;
-
-module.exports = OneSignalStub;
