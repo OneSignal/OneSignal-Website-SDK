@@ -33,9 +33,6 @@ export class InvalidStateError extends OneSignalError {
       case InvalidStateReason.UnsupportedEnvironment:
         super(`The current environment does not support this operation.`);
         break;
-      case InvalidStateReason.UnsupportedEnvironment:
-        super(`A necessary DOM element does not exist on the page.`);
-        break;
     }
     this.description = InvalidStateReason[reason];
     this.reason = reason;

@@ -73,10 +73,6 @@ export default class EventHelper {
     }
   }
 
-  static onDatabaseRebuilt() {
-    OneSignal._isNewVisitor = true;
-  }
-
   static triggerNotificationPermissionChanged(updateIfIdentical = false) {
     let newPermission, isUpdating;
     return Promise.all([
@@ -93,7 +89,6 @@ export default class EventHelper {
                   })
                   .then(() => {
                     if (isUpdating) {
-                      console.trace("[TARGET] Calling triggerNotificationPermissionChanged.");
                       Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
                         to: newPermission
                       });

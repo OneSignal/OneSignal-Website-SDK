@@ -190,7 +190,7 @@ must be opened as a result of a subscription call.</span>`);
     });
     OneSignal.iframePostmam.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, message => {
       log.debug(Environment.getEnv() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
-      let options = null;
+      let options = {};
       if (message.data) {
         options = message.data;
       }
