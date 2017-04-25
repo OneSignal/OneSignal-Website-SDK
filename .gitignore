@@ -1,8 +1,14 @@
 .idea/
 node_modules/
 bower_components/
+dist/
+build/
+/config.json
+.vscode/
+
 .DS_STORE
 *.pem
+yarn-error.log
 dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map
 .vscode/

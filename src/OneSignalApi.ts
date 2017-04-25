@@ -1,9 +1,9 @@
-import { API_URL } from './vars'
-import * as log from 'loglevel';
-import { contains, trimUndefined, wipeIndexedDb, unsubscribeFromPush } from './utils'
+import {API_URL} from "./vars";
+import * as log from "loglevel";
+import {contains, trimUndefined} from "./utils";
 import {Uuid} from "./models/Uuid";
-import SubscriptionHelper from "./helpers/SubscriptionHelper";
-import * as objectAssign from 'object-assign';
+import * as objectAssign from "object-assign";
+import Environment from "./Environment";
 
 
 export default class OneSignalApi {
@@ -26,7 +26,7 @@ export default class OneSignalApi {
 
   static call(method, action, data, headers) {
     let callHeaders: any = new Headers();
-    callHeaders.append('SDK-Version', `onesignal/web/${__VERSION__}`);
+    callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
     if (headers) {
       for (let key of Object.keys(headers)) {

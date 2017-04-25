@@ -3,12 +3,12 @@ import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from
 import Environment from '../Environment'
 import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';
-import Database from '../Database';
 import { getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from '../utils';
 import * as objectAssign from 'object-assign';
 import * as swivel from 'swivel';
 import * as Browser from 'bowser';
 import {Notification} from "../models/Notification";
+import Database from '../services/Database';
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -593,7 +593,7 @@ class ServiceWorker {
      be focused instead of an identical new tab being created.
      */
     let doNotOpenLink = false;
-    for (let client: WindowClient of activeClients) {
+    for (let client of activeClients) {
       let clientUrl = client.url;
       if ((client as any).isSubdomainIframe) {
         const lastKnownHostUrl = await Database.get<string>('Options', 'lastKnownHostUrl');
@@ -1005,7 +1005,7 @@ class ServiceWorker {
                         Database.put('Ids', {type: 'userId', id: recoveredUserId}),
                         Database.put('Ids', {
                           type: 'registrationId',
-                          id: identifier.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "")
+                          id: (identifier as string).replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "")
                         }),
                       ]).then(() => {
                         // Try getting the notification again
@@ -1051,13 +1051,20 @@ class ServiceWorker {
 }
 
 // Expose this class to the global scope
-(self as any).OneSignalWorker = ServiceWorker;
+if (typeof self === "undefined" &&
+    typeof global !== "undefined") {
+  (global as any).OneSignalWorker = ServiceWorker;
+} else {
+  (self as any).OneSignalWorker = ServiceWorker;
+}
 
 // Set logging to the appropriate level
-log.setDefaultLevel(__DEV__ ? (log as any).levels.TRACE : (log as any).levels.ERROR);
+log.setDefaultLevel(Environment.isDev() ? (log as any).levels.TRACE : (log as any).levels.ERROR);
 
 // Print it's happy time!
-log.info(`%cOneSignal Service Worker loaded (version ${__VERSION__}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
+log.info(`%cOneSignal Service Worker loaded (version ${Environment.version()}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
 
 // Run our main file
-ServiceWorker.run();
+if (typeof self !== "undefined") {
+  ServiceWorker.run();
+}

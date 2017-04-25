@@ -27,36 +27,36 @@ export default class OneSignalStub {
   }
 }
 
-OneSignalStub.init = OneSignalStub.showHttpPrompt
-                   = OneSignalStub.registerForPushNotifications
-                   = OneSignalStub.showHttpPermissionRequest
-                   = OneSignalStub.getNotificationPermission
-                   = OneSignalStub.on
-                   = OneSignalStub.off
-                   = OneSignalStub.once
-                   = OneSignalStub.config
-                   = OneSignalStub.SERVICE_WORKER_PATH
-                   = OneSignalStub.SERVICE_WORKER_UPDATER_PATH
-                   = OneSignalStub.checkAndWipeUserSubscription
-                   = OneSignalStub.subscriptionBell
-                   = OneSignalStub.notifyButton
-                   = function() { };
+var untypedOneSignalStub = OneSignalStub as any;
 
-OneSignalStub.setDefaultNotificationUrl = OneSignalStub.setDefaultTitle
-                                        = OneSignalStub.syncHashedEmail
-                                        = OneSignalStub.getTags
-                                        = OneSignalStub.sendTag
-                                        = OneSignalStub.sendTags
-                                        = OneSignalStub.deleteTag
-                                        = OneSignalStub.deleteTags
-                                        = OneSignalStub.addListenerForNotificationOpened
-                                        = OneSignalStub.getIdsAvailable
-                                        = OneSignalStub.isPushNotificationsEnabled
-                                        = OneSignalStub.setSubscription
-                                        = OneSignalStub.getUserId
-                                        = OneSignalStub.getRegistrationId
-                                        = OneSignalStub.getSubscription
-                                        = OneSignalStub.sendSelfNotification
-                                        = OneSignalStub.promiseStub;
+untypedOneSignalStub.init = untypedOneSignalStub.showHttpPrompt
+  = untypedOneSignalStub.registerForPushNotifications
+  = untypedOneSignalStub.showHttpPermissionRequest
+  = untypedOneSignalStub.getNotificationPermission
+  = untypedOneSignalStub.on
+  = untypedOneSignalStub.off
+  = untypedOneSignalStub.once
+  = untypedOneSignalStub.config
+  = untypedOneSignalStub.SERVICE_WORKER_PATH
+  = untypedOneSignalStub.SERVICE_WORKER_UPDATER_PATH
+  = untypedOneSignalStub.checkAndWipeUserSubscription
+  = untypedOneSignalStub.subscriptionBell
+  = untypedOneSignalStub.notifyButton
+  = function() { };
 
-module.exports = OneSignalStub;
+untypedOneSignalStub.setDefaultNotificationUrl = untypedOneSignalStub.setDefaultTitle
+  = untypedOneSignalStub.syncHashedEmail
+  = untypedOneSignalStub.getTags
+  = untypedOneSignalStub.sendTag
+  = untypedOneSignalStub.sendTags
+  = untypedOneSignalStub.deleteTag
+  = untypedOneSignalStub.deleteTags
+  = untypedOneSignalStub.addListenerForNotificationOpened
+  = untypedOneSignalStub.getIdsAvailable
+  = untypedOneSignalStub.isPushNotificationsEnabled
+  = untypedOneSignalStub.setSubscription
+  = untypedOneSignalStub.getUserId
+  = untypedOneSignalStub.getRegistrationId
+  = untypedOneSignalStub.getSubscription
+  = untypedOneSignalStub.sendSelfNotification
+  = untypedOneSignalStub.promiseStub;

@@ -1,12 +1,11 @@
 ///<reference path="models/Action.ts"/>
-import * as log from 'loglevel';
-import * as Browser from 'bowser';
-import Environment from './Environment';
-import IndexedDb from './IndexedDb';
-import Database from './Database';
+import * as log from "loglevel";
+import * as Browser from "bowser";
+import Environment from "./Environment";
+import Database from "./services/Database";
 import PushNotSupportedError from "./errors/PushNotSupportedError";
-import {InvalidArgumentError, InvalidArgumentReason} from "./errors/InvalidArgumentError";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
+
 
 export function isArray(variable) {
   return Object.prototype.toString.call( variable ) === '[object Array]';
@@ -33,43 +32,60 @@ export function isPushNotificationsSupported() {
    * It's possible a browser's user agent is modified, so we do some basic feature detection to make sure initializing
    * the SDK won't fail. Promises are required to initialize the SDK.
    */
-  if (typeof window.Promise === "undefined") {
+  if (typeof (window as any).Promise === "undefined") {
     return false;
   }
+
+  /*
+   TODO: Make this a little neater
+   During testing, the browser object may be initialized before the userAgent is injected
+  */
+  if (Browser.name === '' && Browser.version === '') {
+    var browser = (Browser as any)._detect(navigator.userAgent);
+  } else {
+    var browser: any =  Browser;
+  }
+  let userAgent = navigator.userAgent || '';
 
   if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
     return false;
 
-  if (Browser.msedge || Browser.msie)
+  if (browser.msedge || browser.msie)
     return false;
 
-  /* Firefox on Android push notifications not supported until at least 48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
-  if (Browser.firefox && Number(Browser.version) < 48 && (Browser.mobile || Browser.tablet)) {
+  // Facebook in-app browser
+  if ((userAgent.indexOf("FBAN") > -1) || (userAgent.indexOf("FBAV") > -1)) {
     return false;
   }
-
-  if (Browser.firefox && Number(Browser.version) >= 44)
-    return true;
-
-  if (Browser.safari && Number(Browser.version) >= 7.1)
-    return true;
 
   // Android Chrome WebView
   if (navigator.appVersion.match(/ wv/))
     return false;
 
-  if ((Browser.chrome || (<any>Browser).chromium) && Number(Browser.version) >= 42)
+  /* Firefox on Android push notifications not supported until at least 48: https://bugzilla.mozilla.org/show_bug.cgi?id=1206207#c6 */
+  if (browser.firefox && Number(browser.version) < 48 && (browser.mobile || browser.tablet)) {
+    return false;
+  }
+
+  if (browser.firefox && Number(browser.version) >= 44)
     return true;
 
-  if ((<any>Browser).yandexbrowser && Number(Browser.version) >= 15.12)
+  if (browser.safari && Number(browser.version) >= 7.1)
     return true;
 
-  if (Browser.opera && (Browser.mobile || Browser.tablet) && Number(Browser.version) >= 37 ||
-      Browser.opera && Number(Browser.version) >= 42)
+  if ((browser.chrome || (<any>browser).chromium) && Number(browser.version) >= 42)
+    return true;
+
+  if ((<any>browser).yandexbrowser && Number(browser.version) >= 15.12)
+    return true;
+
+  // https://www.chromestatus.com/feature/5416033485586432
+  if (browser.opera && (browser.mobile || browser.tablet) && Number(browser.version) >= 37 ||
+    browser.opera && Number(browser.version) >= 42)
     return true;
 
   // The earliest version of Vivaldi uses around Chrome 50
-  if (Browser.vivaldi)
+  if ((browser as any).vivaldi)
     return true;
 
   return false;
@@ -187,10 +203,10 @@ var DEVICE_TYPES = {
 
 export function getDeviceTypeForBrowser() {
   if (Browser.chrome ||
-     (<any>Browser).yandexbrowser ||
-     Browser.opera ||
-     Browser.vivaldi ||
-     (<any>Browser).chromium) {
+    (<any>Browser).yandexbrowser ||
+    Browser.opera ||
+    (Browser as any).vivaldi ||
+    (<any>Browser).chromium) {
     return DEVICE_TYPES.CHROME;
   } else if (Browser.firefox) {
     return DEVICE_TYPES.FIREFOX;
@@ -201,35 +217,17 @@ export function getDeviceTypeForBrowser() {
 
 export function getConsoleStyle(style) {
   if (style == 'code') {
-    return `
-    padding: 0 1px 1px 5px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;
-    color: #444;
-    `
+    return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;
   } else if (style == 'bold') {
-    return `
-      font-weight: 600;
-    color: rgb(51, 51, 51);
-    `;
+    return `font-weight: 600;color: rgb(51, 51, 51);`;
   } else if (style == 'alert') {
-    return `
-      font-weight: 600;
-    color: red;
-    `;
+    return `font-weight: 600;color: red;`;
   } else if (style == 'event') {
-    return `
-    color: green;
-    `;
+    return `color: green;`;
   } else if (style == 'postmessage') {
-    return `
-    color: orange;
-    `;
+    return `color: orange;`;
   } else if (style == 'serviceworkermessage') {
-    return `
-    color: purple;
-    `;
+    return `color: purple;`;
   }
 }
 
@@ -269,7 +267,7 @@ export function when(condition, promiseIfTrue, promiseIfFalse) {
 
 export function guid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var crypto = window.crypto || (<any>window).msCrypto;
+    var crypto = typeof window === "undefined" ? (global as any).crypto : (window.crypto || (<any>window).msCrypto);
     if (crypto) {
       var r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
@@ -345,18 +343,6 @@ export function getUrlQueryParam(name) {
   if (!results) return null;
   if (!results[2]) return '';
   return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
-/**
- * Wipe OneSignal-related IndexedDB data on the current origin. OneSignal does not have to be initialized to use this.
- */
-export function wipeLocalIndexedDb() {
-  log.warn('OneSignal: Wiping local IndexedDB data.');
-  return Promise.all([
-    IndexedDb.remove('Ids'),
-    IndexedDb.remove('NotificationOpened'),
-    IndexedDb.remove('Options')
-  ]);
 }
 
 /**

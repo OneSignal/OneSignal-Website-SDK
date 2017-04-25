@@ -1,6 +1,7 @@
 import { hasCssClass, addCssClass, removeCssClass, nothing, contains, once } from '../utils';
 import * as log from 'loglevel';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
+import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 
 
 export default class Launcher extends ActiveAnimatedElement {
@@ -15,7 +16,12 @@ export default class Launcher extends ActiveAnimatedElement {
     this.wasInactive = false;
   }
 
-  resize(size) {
+  async resize(size) {
+    if (!this.element) {
+      // Notify button doesn't exist
+      throw new InvalidStateError(InvalidStateReason.MissingDomElement);
+    }
+
     // If the size is the same, do nothing and resolve an empty promise
     if ((size === 'small' && hasCssClass(this.element, 'onesignal-bell-launcher-sm')) ||
         (size === 'medium' && hasCssClass(this.element, 'onesignal-bell-launcher-md')) ||
@@ -26,22 +32,22 @@ export default class Launcher extends ActiveAnimatedElement {
     removeCssClass(this.element, 'onesignal-bell-launcher-md');
     removeCssClass(this.element, 'onesignal-bell-launcher-lg');
     if (size === 'small') {
-      addCssClass(this.element, 'onesignal-bell-launcher-sm')
+      addCssClass(this.element, 'onesignal-bell-launcher-sm');
     }
     else if (size === 'medium') {
-      addCssClass(this.element, 'onesignal-bell-launcher-md')
+      addCssClass(this.element, 'onesignal-bell-launcher-md');
     }
     else if (size === 'large') {
-      addCssClass(this.element, 'onesignal-bell-launcher-lg')
+      addCssClass(this.element, 'onesignal-bell-launcher-lg');
     }
     else {
       throw new Error('Invalid OneSignal bell size ' + size);
     }
     if (!this.shown) {
-      return Promise.resolve(this);
+      return this;
     }
     else {
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         // Once the launcher has finished shrinking down
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);

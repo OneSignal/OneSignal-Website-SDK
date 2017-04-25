@@ -1,18 +1,11 @@
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import LimitStore from '../LimitStore';
+import OneSignalApi from "../OneSignalApi";
+import * as log from "loglevel";
+import LimitStore from "../LimitStore";
 import Event from "../Event";
-import Database from '../Database';
-import * as Browser from 'bowser';
-import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb,
-  unsubscribeFromPush, decodeHtmlEntities, logMethodCall
-} from '../utils';
+import Database from "../services/Database";
+import {decodeHtmlEntities, logMethodCall} from "../utils";
 import MainHelper from "./MainHelper";
 import SubscriptionHelper from "./SubscriptionHelper";
-
-declare var OneSignal: any;
 
 
 export default class EventHelper {
@@ -78,10 +71,6 @@ export default class EventHelper {
                }
              });
     }
-  }
-
-  static onDatabaseRebuilt() {
-    OneSignal._isNewVisitor = true;
   }
 
   static triggerNotificationPermissionChanged(updateIfIdentical = false) {

@@ -6,6 +6,7 @@ import Bell from './Bell';
 import { HOST_URL } from '../vars';
 
 
+
 export default class Dialog extends AnimatedElement {
 
   public bell: any;
@@ -62,8 +63,7 @@ export default class Dialog extends AnimatedElement {
 
       var footer = '';
       if (this.bell.options.showCredit) {
-        footer = `<div class="divider"></div>
-                  <div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`;
+        footer = `<div class="divider"></div><div class="kickback">Powered by <a href="https://onesignal.com" class="kickback" target="_blank">OneSignal</a></div>`;
       }
 
       if (this.bell.state === Bell.STATES.SUBSCRIBED && currentSetSubscription === true ||
@@ -83,24 +83,7 @@ export default class Dialog extends AnimatedElement {
         else
           buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.text['dialog.main.button.unsubscribe']}</button>`;
 
-        contents = `
-                  <h1>${this.bell.text['dialog.main.title']}</h1>
-                  <div class="divider"></div>
-                  <div class="push-notification">
-                    ${notificationIconHtml}
-                    <div class="push-notification-text-container">
-                      <div class="push-notification-text push-notification-text-short"></div>
-                      <div class="push-notification-text"></div>
-                      <div class="push-notification-text push-notification-text-medium"></div>
-                      <div class="push-notification-text"></div>
-                      <div class="push-notification-text push-notification-text-medium"></div>
-                    </div>
-                  </div>
-                  <div class="action-container">
-                    ${buttonHtml}
-                  </div>
-                  ${footer}
-                `;
+        contents = `<h1>${this.bell.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
       }
       else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
@@ -116,32 +99,13 @@ export default class Dialog extends AnimatedElement {
 
         let instructionsHtml = '';
         if (imageUrl) {
-          instructionsHtml = `
-
-            <a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>
-            `;
+          instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
         }
 
         if ((Browser.mobile || Browser.tablet) && Browser.chrome) {
-          instructionsHtml = `
-            <ol>
-            <li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li>
-            <li>Click <strong>Site settings</strong> under Advanced.</li>
-            <li>Click <strong>Notifications</strong>.</li>
-            <li>Find and click this entry for this website.</li>
-            <li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li>
-            </ol>
-          `;
+          instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
         }
-        contents = `
-                  <h1>${this.bell.text['dialog.blocked.title']}</h1>
-                  <div class="divider"></div>
-                  <div class="instructions">
-                  <p>${this.bell.text['dialog.blocked.message']}</p>
-                  ${instructionsHtml}
-                  </div>
-                  ${footer}
-                `;
+        contents = `<h1>${this.bell.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;
       }
       addDomElement(document.querySelector(this.nestedContentSelector), 'beforeend', contents);
       if (this.subscribeButton) {

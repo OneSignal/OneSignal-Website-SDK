@@ -41,5 +41,5 @@ Gruntfile.js
 *.gz
 *.md
 
-# Do not clean svgo YML
+# Ignore svgo-loader
 !.svgo.yml

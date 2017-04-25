@@ -6,11 +6,13 @@ export enum InvalidStateReason {
   MissingAppId,
   RedundantPermissionMessage,
   PushPermissionAlreadyGranted,
-  UnsupportedEnvironment
+  UnsupportedEnvironment,
+  MissingDomElement
 }
 
 export class InvalidStateError extends OneSignalError {
-  reason: string;
+  description: string;
+  reason: InvalidStateReason;
 
   constructor(reason: InvalidStateReason, extra?: {
     permissionPromptType: PermissionPromptType
@@ -32,6 +34,7 @@ export class InvalidStateError extends OneSignalError {
         super(`The current environment does not support this operation.`);
         break;
     }
-    this.reason = InvalidStateReason[reason];
+    this.description = InvalidStateReason[reason];
+    this.reason = reason;
   }
 }

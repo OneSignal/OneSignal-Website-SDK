@@ -15,13 +15,13 @@ export default class Environment {
     return "iFrame";
   }
 
-  static isEs6DebuggingModule() {
-    return __IS_ES6__;
+  static get TEST() {
+    return "test";
   }
 
   static getEnv() {
     if (typeof window === "undefined") {
-      if (typeof WorkerLocation !== "undefined" && location instanceof WorkerLocation)
+      if (typeof self !== "undefined" && typeof self.registration !== "undefined")
         return Environment.SERVICE_WORKER;
     }
     else {
@@ -85,15 +85,19 @@ export default class Environment {
   }
 
   static isStaging() {
-    return __STAGING__;
+    return (typeof __STAGING__ === "undefined" ? false : __STAGING__);
   }
 
   static isDev() {
-    return __DEV__;
+    return (typeof __DEV__ === "undefined" ? true : __DEV__);
   }
 
   static isTest() {
-    return __TEST__;
+    return (typeof __TEST__ === "undefined" ? true : __TEST__);
+  }
+
+  static version() {
+    return (typeof __VERSION__ === "undefined" ? 1 : __VERSION__);
   }
 
   static isCustomSubdomain() {
@@ -138,6 +142,7 @@ export default class Environment {
   }
 
   static supportsServiceWorkers() {
-    return 'serviceWorker' in navigator;
+    return typeof navigator !== "undefined" &&
+           'serviceWorker' in navigator;
   }
 }

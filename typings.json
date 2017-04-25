@@ -1,5 +1,0 @@
-{
-  "globalDependencies": {
-    "service_worker_api": "registry:dt/service_worker_api#0.0.0+20160803024618"
-  }
-}

@@ -1,83 +1,17 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from '../vars';
-import Environment from '../Environment';
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import LimitStore from '../LimitStore';
+import Environment from "../Environment";
+import * as log from "loglevel";
 import Event from "../Event";
-import Database from '../Database';
-import * as Browser from 'bowser';
-import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
-  unsubscribeFromPush, executeAndTimeoutPromiseAfter
-} from '../utils';
-import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-import * as heir from 'heir';
-import * as swivel from 'swivel';
-import Postmam from '../Postmam';
-import * as Cookie from 'js-cookie';
+import Database from "../services/Database";
+import * as Browser from "bowser";
+import {getConsoleStyle, contains, executeAndTimeoutPromiseAfter} from "../utils";
 import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
 import EventHelper from "./EventHelper";
 import PushPermissionNotGrantedError from "../errors/PushPermissionNotGrantedError";
 import TestHelper from "./TestHelper";
 
-declare var OneSignal: any;
-
 
 export default class SubscriptionHelper {
-  /**
-   * Returns a Promise resolving to whether user subscriptions should be reset. This means clearing all of IndexedDB
-   * and actually unsubscribing from push notifications.
-   *
-   * Subscriptions are only wiped if the following conditions are met:
-   *   - The flag dangerouslyResetUserSubscriptions is set to any string  (used to name the "reset session")
-   *   - This user wasn't already reset (does this "reset session name" exist already)
-   *   - The site is using an HTTPS native integration  (HTTP sites can only reset subscriptions when the popup is open)
-   */
-  static shouldResetUserSubscription() {
-    return Promise.all([
-      OneSignal.config.dangerouslyResetUserSubscriptions,
-      Database.get('Options', 'userSubscriptionResetToken'),
-      SubscriptionHelper.isUsingSubscriptionWorkaround()
-    ]).then(([isFlagPresent, resetToken, isUsingWorkaround]) => {
-      return (isFlagPresent &&
-      resetToken !== OneSignal.config.dangerouslyResetUserSubscriptions && !isUsingWorkaround);
-    });
-  }
-
-  static checkAndWipeUserSubscription() {
-    return Promise.all([
-      OneSignal.isPushNotificationsEnabled(),
-      SubscriptionHelper.shouldResetUserSubscription()
-    ]).then(([wasPushOriginallyEnabled, shouldResetSubscription]) => {
-      if (shouldResetSubscription) {
-        log.warn(`OneSignal: Resetting user subscription. Wiping IndexedDB, unsubscribing from, ` +
-          `and resubscribing to push...`);
-        sessionStorage.clear();
-        return Database.rebuild()
-                       .then(() => Database.put('Options', {key: 'pageTitle', value: document.title}))
-                       .then(() => unsubscribeFromPush())
-                       .then(() => Database.put('Options', {
-                         key: 'userSubscriptionResetToken',
-                         value: OneSignal.config.dangerouslyResetUserSubscriptions
-                       }))
-                       .then(() => {
-                         if (wasPushOriginallyEnabled) {
-                           OneSignal.__doNotShowWelcomeNotification = true;
-                           log.warn('Wiped subscription and attempting to resubscribe.');
-                           return Database.put('Ids', {type: 'appId', id: OneSignal.config.appId})
-                         } else {
-                           Promise.reject('Wiped subscription, but not resubscribing because user was not originally subscribed.');
-                         }
-                       })
-                       .then(() => {
-                         OneSignal.registerForPushNotifications();
-                       });
-      }
-    });
-  }
-
   static registerForW3CPush(options) {
     log.debug(`Called %cregisterForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
     return Database.get('Ids', 'registrationId')
@@ -188,13 +122,13 @@ export default class SubscriptionHelper {
     }
 
     if (SubscriptionHelper.isLocalhostAllowedAsSecureOrigin() &&
-        location.hostname === 'localhost' ||
-        (location.hostname as any) === '127.0.0.1') {
+      location.hostname === 'localhost' ||
+      (location.hostname as any) === '127.0.0.1') {
       return false;
     }
 
     return (Environment.isHost() &&
-            (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
+    (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
   }
 
   /**
@@ -227,7 +161,7 @@ export default class SubscriptionHelper {
     var notificationPermissionBeforeRequest = '';
 
     OneSignal.getNotificationPermission().then((permission) => {
-      notificationPermissionBeforeRequest = permission as string;
+      notificationPermissionBeforeRequest = permission as any;
     })
              .then(() => {
                log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
@@ -259,83 +193,83 @@ export default class SubscriptionHelper {
                 Our solution is simply to check the permission before actually subscribing the user.
                 */
                log.debug(`Finished calling %cServiceWorkerRegistration.pushManager.subscribe()`,
-                 getConsoleStyle('code'));
+                         getConsoleStyle('code'));
                log.debug('Subscription details:', subscription);
                // The user allowed the notification permission prompt, or it was already allowed; set sessionInit flag to false
                OneSignal._sessionInitAlreadyRunning = false;
                sessionStorage.setItem("ONE_SIGNAL_NOTIFICATION_PERMISSION", window.Notification.permission);
 
                MainHelper.getAppId()
-                        .then(appId => {
-                          log.debug("Finished subscribing for push via pushManager.subscribe().");
+                         .then(appId => {
+                           log.debug("Finished subscribing for push via pushManager.subscribe().");
 
-                          var subscriptionInfo: any = {};
-                          if (subscription) {
-                            if (typeof (subscription).subscriptionId != "undefined") {
-                              // Chrome 43 & 42
-                              subscriptionInfo.endpointOrToken = subscription.subscriptionId;
-                            }
-                            else {
-                              // Chrome 44+ and FireFox
-                              // 4/13/16: We now store the full endpoint instead of just the registration token
-                              subscriptionInfo.endpointOrToken = subscription.endpoint;
-                            }
+                           var subscriptionInfo: any = {};
+                           if (subscription) {
+                             if (typeof (subscription).subscriptionId != "undefined") {
+                               // Chrome 43 & 42
+                               subscriptionInfo.endpointOrToken = subscription.subscriptionId;
+                             }
+                             else {
+                               // Chrome 44+ and FireFox
+                               // 4/13/16: We now store the full endpoint instead of just the registration token
+                               subscriptionInfo.endpointOrToken = subscription.endpoint;
+                             }
 
-                            // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
-                            if (subscription.getKey) {
-                              // p256dh and auth are both ArrayBuffer
-                              let p256dh = null;
-                              try {
-                                p256dh = subscription.getKey('p256dh');
-                              } catch (e) {
-                                // User is most likely running < Chrome < 50
-                              }
-                              let auth = null;
-                              try {
-                                auth = subscription.getKey('auth');
-                              } catch (e) {
-                                // User is most likely running < Firefox 45
-                              }
+                             // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
+                             if (subscription.getKey) {
+                               // p256dh and auth are both ArrayBuffer
+                               let p256dh = null;
+                               try {
+                                 p256dh = subscription.getKey('p256dh');
+                               } catch (e) {
+                                 // User is most likely running < Chrome < 50
+                               }
+                               let auth = null;
+                               try {
+                                 auth = subscription.getKey('auth');
+                               } catch (e) {
+                                 // User is most likely running < Firefox 45
+                               }
 
-                              if (p256dh) {
-                                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-                                let p256dh_base64encoded = btoa(
-                                  String.fromCharCode.apply(null, new Uint8Array(p256dh)));
-                                subscriptionInfo.p256dh = p256dh_base64encoded;
-                              }
-                              if (auth) {
-                                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-                                let auth_base64encoded = btoa(
-                                  String.fromCharCode.apply(null, new Uint8Array(auth)));
-                                subscriptionInfo.auth = auth_base64encoded;
-                              }
-                            }
-                          }
-                          else
-                            log.warn('Could not subscribe your browser for push notifications.');
+                               if (p256dh) {
+                                 // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                                 let p256dh_base64encoded = btoa(
+                                   String.fromCharCode.apply(null, new Uint8Array(p256dh)));
+                                 subscriptionInfo.p256dh = p256dh_base64encoded;
+                               }
+                               if (auth) {
+                                 // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
+                                 let auth_base64encoded = btoa(
+                                   String.fromCharCode.apply(null, new Uint8Array(auth)));
+                                 subscriptionInfo.auth = auth_base64encoded;
+                               }
+                             }
+                           }
+                           else
+                             log.warn('Could not subscribe your browser for push notifications.');
 
-                          if (OneSignal._thisIsThePopup) {
-                            // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
-                            // 11/22/2016 - HTTP popup should move non-essential subscription parts to the iframe
-                            OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
-                              subscriptionInfo: subscriptionInfo
-                            }, message => {
-                              if (message.data.progress === true) {
-                                log.debug('Got message from host page that remote reg. is in progress, closing popup.');
-                                var creator = opener || parent;
-                                if (opener) {
-                                  /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
-                                  window.close();
-                                }
-                              } else {
-                                log.debug('Got message from host page that remote reg. could not be finished.');
-                              }
-                            });
-                          } else {
-                            // If we are not doing HTTP subscription, continue finish subscribing by registering with OneSignal
-                            MainHelper.registerWithOneSignal(appId, subscriptionInfo);
-                          }
-                        });
+                           if (OneSignal._thisIsThePopup) {
+                             // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
+                             // 11/22/2016 - HTTP popup should move non-essential subscription parts to the iframe
+                             OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
+                               subscriptionInfo: subscriptionInfo
+                             }, message => {
+                               if (message.data.progress === true) {
+                                 log.debug('Got message from host page that remote reg. is in progress, closing popup.');
+                                 var creator = opener || parent;
+                                 if (opener) {
+                                   /* Note: This is hard to find, but this is actually the code that closes the HTTP popup window */
+                                   window.close();
+                                 }
+                               } else {
+                                 log.debug('Got message from host page that remote reg. could not be finished.');
+                               }
+                             });
+                           } else {
+                             // If we are not doing HTTP subscription, continue finish subscribing by registering with OneSignal
+                             MainHelper.registerWithOneSignal(appId, subscriptionInfo);
+                           }
+                         });
              })
              .catch(function (e) {
                OneSignal._sessionInitAlreadyRunning = false;
@@ -347,32 +281,32 @@ export default class SubscriptionHelper {
                    let manifestLocation = (document as any).querySelector('link[rel=manifest]').href;
                    if (manifestParentTagname !== 'head') {
                      log.warn(`OneSignal: Your manifest %c${manifestHtml}`,
-                       getConsoleStyle('code'),
-                       'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
-                       'in <${manifestParentTagname}>. Please see step 3.1 at ' +
-                       'https://documentation.onesignal.com/docs/web-push-sdk-setup-https.');
+                              getConsoleStyle('code'),
+                              'must be referenced in the <head> tag to be detected properly. It is currently referenced ' +
+                              'in <${manifestParentTagname}>. Please see step 3.1 at ' +
+                              'https://documentation.onesignal.com/docs/web-push-sdk-setup-https.');
                    } else {
                      let manifestLocationOrigin = new URL(manifestLocation).origin;
                      let currentOrigin = location.origin;
                      if (currentOrigin !== manifestLocationOrigin) {
                        log.warn(`OneSignal: Your manifest is being served from ${manifestLocationOrigin}, which is ` +
-                         `different from the current page's origin of ${currentOrigin}. Please serve your ` +
-                         `manifest from the same origin as your page's. If you are using a content delivery ` +
-                         `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
-                         `WordPress users, please see ` +
-                         `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
+                                `different from the current page's origin of ${currentOrigin}. Please serve your ` +
+                                `manifest from the same origin as your page's. If you are using a content delivery ` +
+                                `network (CDN), please add an exception so that the manifest is not served by your CDN. ` +
+                                `WordPress users, please see ` +
+                                `https://documentation.onesignal.com/docs/troubleshooting-web-push#section-wordpress-cdn-support.`);
                      } else {
                        log.warn(`OneSignal: Please check your manifest at ${manifestLocation}. The %cgcm_sender_id`,
-                         getConsoleStyle('code'),
-                         "field is missing or invalid, and a valid value is required. Please see step 2 at " +
-                         "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
+                                getConsoleStyle('code'),
+                                "field is missing or invalid, and a valid value is required. Please see step 2 at " +
+                                "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
                      }
                    }
                  } else if (location.protocol === 'https:') {
                    log.warn(`OneSignal: You must reference a %cmanifest.json`,
-                     getConsoleStyle('code'),
-                     "in the <head> of your page. Please see step 2 at " +
-                     "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
+                            getConsoleStyle('code'),
+                            "in the <head> of your page. Please see step 2 at " +
+                            "https://documentation.onesignal.com/docs/web-push-sdk-setup-https.");
                  }
                } else if (e instanceof PushPermissionNotGrantedError)  {
                } else {
@@ -388,7 +322,7 @@ export default class SubscriptionHelper {
                // Chrome doesn't show when the user clicked 'X' for cancel
                // We get the same error as if the user had clicked denied, but we can check Notification.permission to see if it is still 'default'
                OneSignal.getNotificationPermission().then((permission) => {
-                 if (permission === 'default') {
+                 if (permission as any === 'default') {
                    // The user clicked 'X'
                    EventHelper.triggerNotificationPermissionChanged(true);
                    TestHelper.markHttpsNativePromptDismissed();

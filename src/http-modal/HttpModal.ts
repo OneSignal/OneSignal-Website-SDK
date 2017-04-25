@@ -4,6 +4,7 @@ import Event from '../Event';
 import * as objectAssign from 'object-assign';
 
 
+
 export default class HttpModal {
 
     public options: any;
@@ -31,8 +32,6 @@ export default class HttpModal {
         this.options['modalTitle'] = this.options['modalTitle'].substring(0, 50);
         this.options['modalMessage'] = this.options['modalMessage'].substring(0, 90);
         this.options['modalButtonText'] = this.options['modalButtonText'].substring(0, 35);
-
-        require("./httpModal.scss");
     }
 
     create() {
@@ -42,25 +41,7 @@ export default class HttpModal {
                 removeDomElement('#onesignal-modal-container');
             }
 
-            let dialogHtml = `
-                        <div id="onesignal-modal-dialog">
-                            <div class="modal-exit">&times;</div>
-                            <div class="modal-body">
-                                <div class="modal-body-title">
-                                    ${this.options['modalTitle']}                                      
-                                </div>
-                                <div class="modal-body-message">
-                                    ${this.options['modalMessage']}                
-                                </div>
-                                <div class="clearfix"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button id="onesignal-modal-finish-button" class="primary modal-button">
-                                ${this.options['modalButtonText']}</button>
-                                <div class="clearfix"></div>
-                            </div>
-                        </div>                   
-                    `;
+            let dialogHtml = `<div id="onesignal-modal-dialog"><div class="modal-exit">&times;</div><div class="modal-body"><div class="modal-body-title">${this.options['modalTitle']}</div><div class="modal-body-message">${this.options['modalMessage']}</div><div class="clearfix"></div></div><div class="modal-footer"><button id="onesignal-modal-finish-button" class="primary modal-button">${this.options['modalButtonText']}</button><div class="clearfix"></div></div></div>`;
 
             // Insert the container
             addDomElement('body', 'beforeend',

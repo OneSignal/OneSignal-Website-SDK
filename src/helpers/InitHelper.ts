@@ -1,28 +1,19 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from '../vars';
-import Environment from '../Environment';
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import LimitStore from '../LimitStore';
+import {DEV_FRAME_HOST} from "../vars";
+import Environment from "../Environment";
+import * as log from "loglevel";
+import LimitStore from "../LimitStore";
 import Event from "../Event";
-import Database from '../Database';
-import * as Browser from 'bowser';
-import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize, once,
-  getUrlQueryParam, wipeLocalIndexedDb, unsubscribeFromPush
-} from '../utils';
-import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-import * as heir from 'heir';
-import * as swivel from 'swivel';
-import Postmam from '../Postmam';
-import * as Cookie from 'js-cookie';
+import Database from "../services/Database";
+import * as Browser from "bowser";
+import {getConsoleStyle, once} from "../utils";
+import Postmam from "../Postmam";
 import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
-import IndexedDb from "../IndexedDb";
 import SubscriptionHelper from "./SubscriptionHelper";
 import EventHelper from "./EventHelper";
-import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
+import {InvalidStateError, InvalidStateReason} from "../errors/InvalidStateError";
 import AlreadySubscribedError from "../errors/AlreadySubscribedError";
+import ServiceUnavailableError from "../errors/ServiceUnavailableError";
 import PermissionMessageDismissedError from '../errors/PermissionMessageDismissedError';
 
 declare var OneSignal: any;
@@ -119,7 +110,6 @@ export default class InitHelper {
       });
     }
 
-    SubscriptionHelper.checkAndWipeUserSubscription();
     MainHelper.checkAndDoHttpPermissionRequest();
   }
 
@@ -239,16 +229,12 @@ export default class InitHelper {
             });
   }
 
-  static initSaveState() {
-    return MainHelper.getAppId()
-                    .then(appId => {
-                      return Promise.all([
-                        Database.put("Ids", {type: "appId", id: appId}),
-                        Database.put("Options", {key: "pageTitle", value: document.title})
-                      ]).then(() => {
-                        log.info(`OneSignal: Set pageTitle to be '${document.title}'.`);
-                      });
-                    });
+  static async initSaveState() {
+    const appId = await MainHelper.getAppId()
+    await Database.put("Ids", { type: "appId", id: appId });
+    const initialPageTitle = document.title || 'Notification';
+    await Database.put("Options", { key: "pageTitle", value: initialPageTitle });
+    log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
   }
 
   static sessionInit(options) {
@@ -295,7 +281,7 @@ export default class InitHelper {
         OneSignal.getNotificationPermission()
       ])
              .then(([appId, isPushEnabled, notificationPermission]) => {
-               let modalUrl = `${OneSignal.modalUrl}?${MainHelper.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${notificationPermission === 'denied'}&promptType=modal`;
+               let modalUrl = `${OneSignal.modalUrl}?${MainHelper.getPromptOptionsQueryString()}&id=${appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
                log.info('Opening HTTPS modal prompt:', modalUrl);
                let modal = MainHelper.createHiddenSubscriptionDomModal(modalUrl);
 
@@ -355,7 +341,7 @@ export default class InitHelper {
       }
       if ((OneSignal.config.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {
         OneSignal.showHttpPrompt().catch(e => {
-          if (e instanceof InvalidStateError && e.reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage] ||
+          if (e instanceof InvalidStateError && ((e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
               e instanceof PermissionMessageDismissedError ||
             e instanceof AlreadySubscribedError) {
             log.debug('[Prompt Not Showing]', e);

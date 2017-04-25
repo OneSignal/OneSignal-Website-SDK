@@ -23,6 +23,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-object-assign pollyfill (MIT License) Copyright © 2015 Sindre Sorhus (https://github.com/sindresorhus/object-assign)
-swivel (MIT License) Copyright © 2015 Nicolas Bevacqua (https://github.com/bevacqua/swivel)
-postmessage-plus (MIT License) Copyright © 2015 Taylor Hakes (https://github.com/taylorhakes/postmessage-plus)
+object-assign pollyfill (MIT License) Copyright © Sindre Sorhus (https://github.com/sindresorhus/object-assign)
+swivel (MIT License) Copyright © Nicolas Bevacqua (https://github.com/bevacqua/swivel)
+postmessage-plus (MIT License) Copyright © Taylor Hakes (https://github.com/taylorhakes/postmessage-plus)
+emitter-es6 (MIT License) Copyright © Guille Paz (https://github.com/pazguille/emitter-es6)

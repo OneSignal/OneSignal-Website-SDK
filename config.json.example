@@ -1,0 +1,61 @@
+/*
+  Purpose: Configuration file for OneSignal web SDK build process and tests runner
+
+  Description:
+
+  The tests execute in a browser environment, but a NodeJS test server runs side by side to facilitate database access
+  and perform other commands (e.g. possibly mouse clicks in the future) that would not be possible inside of a
+  browser's sandbox environment.
+
+  This configuration file is first requested before the tests begin running.
+*/
+{
+  build: {
+    /*
+     The intermediate build folder.
+
+     WARNING: Silently removed on each build !!!
+     */
+    tempDirectory: "build",
+    /**
+     * The directory to output the transpiled TypeScript files to. Overrides tsconfig.json.
+     */
+    typescriptOutDir: "build/javascript",
+    bundlerOutDir: "build/bundler",
+    /**
+      The directory containing all stylesheets that will be watched for changes and bundled together (and minified).
+    */
+    stylesheetsSrcDir: "src/stylesheets",
+    stylesheetsBundleName: 'OneSignalSDKStyles.css',
+    /**
+      The filename of the intermediate bundle. Does not affect the final bundle name because the final bundle name is
+      always <ENVIRONMENT>-OneSignalSDK.js, except production which is just OneSignalSDK.js.
+     */
+    sdkBundleName: 'OneSignalSDK.js',
+    integrationTestsBundleName: 'integration-tests.js',
+    unitTestsBundleName: 'unit-tests.js',
+    railsProjectRoot: "/home/jpang/code/OneSignal"
+  },
+  test: {
+    server: {
+      rails_host_http: "localhost:3000",
+      rails_host_https: "localhost:3001",
+      // The host to OneSignal's database that contains the HTTP and HTTPS apps for testing
+      database_host: "localhost:5432",
+      database_user: "postgres",
+      database_pass: "",
+      master_database: "gamethrive_00",
+      shard_1_database: "gamethrive_80",
+    },
+    tests: {
+      rails_host_http: "ubuntu:3000",
+      rails_host_https: "ubuntu:3001",
+      // OneSignal user auth key to create, delete, and list apps
+      user_auth_key: "NjZmZDM5YmQtNjRiMS00MTk5LTkwY2UtMGRiYTgzNzM2NGM0",
+    },
+    chrome_extension: {
+      // The Chrome extension ID, which stays consistent due to our setting the key property of the extension's manifest.json
+      extension_id: "engiogdknecmkikekehomfbhnneekmng"
+    }
+  }
+}

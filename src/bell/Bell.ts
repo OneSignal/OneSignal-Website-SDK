@@ -1,20 +1,29 @@
 import {
-  removeDomElement, addDomElement, addCssClass, delay, nothing, contains,
-  decodeHtmlEntities, once
-} from '../utils';
-import * as log from 'loglevel';
-import Event from '../Event';
-import * as Browser from 'bowser';
-import Database from '../Database';
-import MainHelper from '../helpers/MainHelper';
-import Launcher from './Launcher';
-import Badge from './Badge';
-import Button from './Button';
-import Dialog from './Dialog';
-import Message from './Message';
-
+  removeDomElement,
+  addDomElement,
+  addCssClass,
+  delay,
+  nothing,
+  contains,
+  decodeHtmlEntities,
+  once
+} from "../utils";
+import * as log from "loglevel";
+import Event from "../Event";
+import * as Browser from "bowser";
+import Database from "../services/Database";
+import MainHelper from "../helpers/MainHelper";
+import Launcher from "./Launcher";
+import Badge from "./Badge";
+import Button from "./Button";
+import Dialog from "./Dialog";
+import Message from "./Message";
 import SubscriptionHelper from "../helpers/SubscriptionHelper";
-var logoSvg = require('raw!./../assets/bell.svg');
+import InitHelper from "../helpers/InitHelper";
+import Environment from "../Environment";
+import { DynamicResourceLoader, ResourceLoadState } from "../services/DynamicResourceLoader";
+
+var logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
 
 export default class Bell {
@@ -122,7 +131,8 @@ export default class Bell {
     prenotify = true,
     showCredit = true,
     colors = null,
-    offset = null
+    offset = null,
+    launcher = null
     } = {}) {
     this.options = {
       enable: enable,
@@ -135,10 +145,8 @@ export default class Bell {
       prenotify: prenotify,
       showCredit: showCredit,
       colors: colors,
-      offset: offset,
+      offset: offset
     };
-
-    require('./bell.scss');
 
     if (!this.options.enable)
       return;
@@ -182,6 +190,7 @@ export default class Bell {
       this.text['dialog.blocked.title'] = 'Unblock Notifications';
     if (!this.text['dialog.blocked.message'])
       this.text['dialog.blocked.message'] = 'Follow these instructions to allow notifications:';
+    this._launcher = launcher;
     this.substituteText();
     this.state = Bell.STATES.UNINITIALIZED;
     this._ignoreSubscriptionState = false;
@@ -304,15 +313,14 @@ export default class Bell {
       }
     });
 
-    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async isSubscribed => {
       if (isSubscribed == true) {
         if (this.badge.shown && this.options.prenotify) {
           this.badge.hide();
         }
         if (this.dialog.notificationIcons === null) {
-          MainHelper.getNotificationIcons().then((icons) => {
-            this.dialog.notificationIcons = icons;
-          });
+          const icons = await MainHelper.getNotificationIcons();
+          this.dialog.notificationIcons = icons;
         }
       }
 
@@ -324,6 +332,10 @@ export default class Bell {
     });
 
     OneSignal.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+      if (!this.launcher.element) {
+        // Notify button doesn't exist
+        return;
+      }
       if (state.to === Bell.STATES.SUBSCRIBED) {
         this.launcher.inactivate();
       } else if (state.to === Bell.STATES.UNSUBSCRIBED ||
@@ -360,9 +372,15 @@ export default class Bell {
     }
   }
 
-  create() {
+  async create() {
     if (!this.options.enable)
       return;
+
+    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
+      log.debug('Not showing notify button because styles failed to load.');
+      return;
+    }
 
     // Remove any existing bell
     if (this.container) {
@@ -389,81 +407,74 @@ export default class Bell {
     // Add visual elements
     addDomElement(this.button.selector, 'beforeEnd', logoSvg);
 
-    Promise.all([
-                  OneSignal.isPushNotificationsEnabled(),
-                  OneSignal.getSubscription(),
-                  MainHelper.wasHttpsNativePromptDismissed()
-                ])
-    .then(([isPushEnabled, notOptedOut, doNotPrompt]) => {
-      // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
-      let resizeTo = (isPushEnabled ? 'small' : this.options.size);
-      // Add default classes
-      this.launcher.resize(resizeTo).then(() => {
-        if (this.options.position === 'bottom-left') {
-          addCssClass(this.container, 'onesignal-bell-container-bottom-left')
-          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-left')
-        }
-        else if (this.options.position === 'bottom-right') {
-          addCssClass(this.container, 'onesignal-bell-container-bottom-right')
-          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right')
-        }
-        else {
-          throw new Error('Invalid OneSignal notify button position ' + this.options.position);
-        }
+    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const notOptedOut = await OneSignal.getSubscription();
+    const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed()
 
-        if (this.options.theme === 'default') {
-          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-default')
-        }
-        else if (this.options.theme === 'inverse') {
-          addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse')
-        }
-        else {
-          throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
-        }
+    // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
+    let resizeTo = (isPushEnabled ? 'small' : this.options.size);
+    // Add default classes
+    await this.launcher.resize(resizeTo);
+    if (this.options.position === 'bottom-left') {
+      addCssClass(this.container, 'onesignal-bell-container-bottom-left')
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-left')
+    }
+    else if (this.options.position === 'bottom-right') {
+      addCssClass(this.container, 'onesignal-bell-container-bottom-right')
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right')
+    }
+    else {
+      throw new Error('Invalid OneSignal notify button position ' + this.options.position);
+    }
 
-        this.applyOffsetIfSpecified();
-        this.setCustomColorsIfSpecified();
-        this.patchSafariSvgFilterBug();
+    if (this.options.theme === 'default') {
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-default')
+    }
+    else if (this.options.theme === 'inverse') {
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse')
+    }
+    else {
+      throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
+    }
 
-        log.info('Showing the notify button.');
+    this.applyOffsetIfSpecified();
+    this.setCustomColorsIfSpecified();
+    this.patchSafariSvgFilterBug();
 
-        (isPushEnabled ? this.launcher.inactivate() : nothing())
-          .then(() => OneSignal.getSubscription())
-          .then(isNotOptedOut => {
-            if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
-              return MainHelper.getNotificationIcons().then((icons) => {
-                this.dialog.notificationIcons = icons;
-              });
-            } else return nothing();
-          })
-          .then(() => delay(this.options.showLauncherAfter))
-          .then(() => {
-            if (SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-                notOptedOut &&
-                doNotPrompt !== true &&
-                !isPushEnabled &&
-                (OneSignal.config.autoRegister === true) &&
-                !MainHelper.isHttpPromptAlreadyShown() &&
-                !MainHelper.isUsingHttpPermissionRequest()) {
-              log.debug('Not showing notify button because popover will be shown.');
-              return nothing();
-            } else {
-              return this.launcher.show();
-            }
-          })
-          .then(() => {
-            return delay(this.options.showBadgeAfter);
-          })
-          .then(() => {
-            if (this.options.prenotify && !isPushEnabled && OneSignal._isNewVisitor) {
-              return this.message.enqueue(this.text['message.prenotify'])
-                .then(() => this.badge.show());
-            }
-            else return nothing();
-          })
-          .then(() => this.initialized = true);
-      });
-    });
+    log.info('Showing the notify button.');
+
+    await (isPushEnabled ? this.launcher.inactivate() : nothing())
+      .then(() => OneSignal.getSubscription())
+      .then(isNotOptedOut => {
+        if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
+          return MainHelper.getNotificationIcons().then((icons) => {
+            this.dialog.notificationIcons = icons;
+          });
+        } else return nothing();
+      })
+      .then(() => delay(this.options.showLauncherAfter))
+      .then(() => {
+        if (SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+          notOptedOut &&
+          doNotPrompt !== true && !isPushEnabled &&
+          (OneSignal.config.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown() && !MainHelper.isUsingHttpPermissionRequest()) {
+          log.debug('Not showing notify button because popover will be shown.');
+          return nothing();
+        } else {
+          return this.launcher.show();
+        }
+      })
+      .then(() => {
+        return delay(this.options.showBadgeAfter);
+      })
+      .then(() => {
+        if (this.options.prenotify && !isPushEnabled && OneSignal._isNewVisitor) {
+          return this.message.enqueue(this.text['message.prenotify'])
+                     .then(() => this.badge.show());
+        }
+        else return nothing();
+      })
+      .then(() => this.initialized = true);
   }
 
   patchSafariSvgFilterBug() {
@@ -590,7 +601,7 @@ export default class Bell {
     ])
     .then(([isEnabled, permission]) => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
-      if (permission === 'denied') {
+      if (permission as any === 'denied') {
         this.setState(Bell.STATES.BLOCKED);
       }
     });

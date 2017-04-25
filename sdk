@@ -1,0 +1,825 @@
+#! /usr/bin/env node
+
+const path = require('path');
+var fsys = require('fs');
+
+if (!fsys.existsSync(path.resolve('node_modules'))) {
+  console.log(`Error: Run 'yarn' to install Node dependencies before running this tool.`);
+  return;
+}
+
+if (!fsys.existsSync(path.resolve('config.json'))) {
+  console.log(`Error: Ensure 'config.json' exists in '${path.resolve(__dirname)}'. Copy 'config.json.example' and rename it to 'config.json'. Be sure the config paths are correct (check railsProjectRoot).`);
+  return;
+}
+
+const yargonaut = require('yargonaut')
+                          .style('blue', 'required')
+                          .errorsStyle('red.bold')
+                          .helpStyle('green')
+const yargs = require('yargs');
+const chalk = require('chalk');
+const nconf = require('nconf');
+const json5 = require('json5');
+const childProcess = require('child_process');
+const spawn = childProcess.spawn;
+const fs = require('fs-extra');
+const microtime = require('microtime')
+const sleep = require('sleep');
+const webpack = require('webpack');
+const rimraf = require('rimraf');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const sorcery = require('sorcery');
+const dir = require('node-dir');
+const ncp = require("copy-paste");
+const stripAnsi = require('strip-ansi');
+
+
+class BuildContext {
+  constructor(config) {
+    this.lastTypeScriptChangeDetected = microtime.now();
+    this.isInitialBuild = true;
+    this.config = config;
+  }
+}
+
+class TestContext {
+  constructor(config) {
+    this.config = config;
+  }
+}
+
+class Utils {
+  static printBanner() {
+    console.log('OneSignal Web SDK Build Tool');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  }
+
+  static printEnvironment(config) {
+    let env = config.get('env')
+    let color = chalk.white.bgBlue;
+    if (env === 'staging') {
+      color = chalk.white.bgMagenta;
+    }
+    else if (env === 'production') {
+      color = chalk.white.bgRed;
+    }
+    console.log(`${chalk.blue('Environment:')} ${color(env.toUpperCase())}`)
+    console.log(`${chalk.blue('Current Working Directory:')} ${process.cwd()}`)
+    console.log();
+  }
+
+  static getFileSizeBytes(path) {
+    const stats = fs.statSync(path);
+    return stats.size;
+  }
+
+  static ensureNonEmptyFileSize(path) {
+    const waitTimeMs = 25;
+    do {
+      var fileSize = Utils.getFileSizeBytes(path);
+      if (fileSize == 0) {
+        //console.log(`Failed Integrity Check: File size too low. '${path}' file size is ${fileSize} bytes. Waiting ${waitTimeMs}ms for non-empty file...`);
+        sleep.msleep(waitTimeMs);
+      }
+      else {
+        //console.log(`Passed Integrity Check: File size of '${path}' is ${fileSize} bytes.`);
+      }
+    }
+    while (fileSize == 0);
+  }
+
+  static ensureNonEmptyCopyFile(copyFromFilePath, copyToFilePath) {
+    Utils.ensureNonEmptyFileSize(copyFromFilePath);
+    do {
+      console.log(`${chalk.blue('[Distribute Files]')} Copy ${chalk.blue(copyFromFilePath)} --> ${chalk.blue(copyToFilePath)}`);
+      fs.copySync(copyFromFilePath, copyToFilePath, {
+        overwrite: true,
+        errorOnExist: false
+      });
+      var isEmptyFile = (Utils.getFileSizeBytes(copyToFilePath) == 0);
+      if (isEmptyFile) {
+        console.log(`Empty Copy Error: '${copyFromFilePath}' is empty; re-trying...`);
+        sleep.msleep(25);
+      }
+    }
+    while (isEmptyFile);
+  }
+
+  static cloneFile(srcPath, cloneTargetPaths) {
+    for (const cloneTargetPath of cloneTargetPaths) {
+      console.log(`${chalk.blue('[Distribute Files]')} Copy ${chalk.blue(srcPath)} --> ${chalk.blue(cloneTargetPath)}`);
+      fs.copySync(srcPath, cloneTargetPath);
+    }
+  }
+
+  static walkSync(dir, filelist) {
+    var files = fs.readdirSync(dir)
+    filelist = filelist || []
+    files.forEach(function (file) {
+      var nestedPath = path.join(dir, file)
+      filelist.push(nestedPath)
+    })
+    return filelist;
+  }
+
+  static readCurrentSdkVersion() {
+    try {
+      return require('./package.json').sdkVersion;
+    } catch (e) {
+      console.error(chalk.red(`Could not read SDK version: ${e.toString()}`));
+      return null;
+    }
+  }
+
+  static async printFinalBuildTimeString(context, sdkVersion) {
+    const timeDeltaMs = Math.round((microtime.now() - context.lastTypeScriptChangeDetected) / 1000);
+    const buildType = context.isInitialBuild ? 'Initial' : 'Incremental';
+    const sdkVersionPrefix = sdkVersion ? `Finished building ${chalk.yellow(`SDK version ${sdkVersion}`)} in` : 'Finished in';
+
+    console.log();
+    console.log(`${chalk.yellow(`[${buildType} Build Finished]`)} ${sdkVersionPrefix} ${chalk.blue(timeDeltaMs)}ms. Watching for changes...`);
+    console.log();
+    console.log(`${Array(process.stdout.columns).join('┄')}`);
+    console.log();
+  }
+}
+
+async function onBuildCommandRun(argv) {
+  try {
+    const envConfig = createEnvConfig(argv);
+    const context = new BuildContext(envConfig);
+
+    Utils.printBanner();
+    Utils.printEnvironment(context.config);
+
+    await runBuildPipeline(context);
+  } catch (e) {
+    console.error(chalk.red(`Fatal build error: ${e.toString()}`));
+  }
+}
+
+async function onTestCommandRun(argv) {
+  try {
+    const envConfig = createEnvConfig(argv);
+    const context = new TestContext(envConfig);
+
+    if (context.config.get('debug')) {
+      // The filename the user wants to debug (e.g. loadSdkStyles)
+      const targetFileName = context.config.get('debug');
+      // The base path to our unit tests
+      const unitTestsBasePath = path.resolve(path.join(__dirname, 'build', 'javascript', 'test', 'unit'));
+      try {
+        const filteredFiles = await new Promise((resolve, reject) => {
+          dir.files(unitTestsBasePath, async(err, files) => {
+            if (err)
+              throw err;
+            const filteredFiles = files.filter(filePath => {
+              const fileName = path.basename(filePath);
+              if (fileName.endsWith('.map')) {
+                // Ignore source map files
+                return false;
+              }
+              return fileName.toLowerCase().indexOf(targetFileName.toLowerCase()) !== -1;
+            });
+            if (filteredFiles.length === 0) {
+              reject(chalk.red(`${chalk.blue('[Debug Tests]')} ${chalk.blue(targetFileName)} not found in any subdirectory of ${chalk.blue(unitTestsBasePath)}`));
+            }
+            if (filteredFiles.length > 1) {
+              reject(chalk.red(`${chalk.blue('[Debug Tests]')} Multiple ${chalk.blue(targetFileName)} files found. Specify: ${chalk.blue(JSON.stringify(filteredFiles, null, 4))}`));
+            }
+            resolve(filteredFiles);
+          });
+        });
+        await TestModule.debugTest(context, {
+          testFilePath: filteredFiles[0]
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      if (context.config.get('only')) {
+        await TestModule.runTestsAndWatch(context, {
+          testTitle: context.config.get('only')
+        });
+      } else {
+        await TestModule.runTestsAndWatch(context);
+      }
+    }
+  } catch (e) {
+    console.error(chalk.red(`Fatal testing error: ${e.stack}`));
+  }
+}
+
+function createEnvConfig(argv) {
+  var config = nconf.env()
+                    .file({ file: argv.config, format: json5 });
+  config.set('env', argv.env);
+  config.set('tests', argv.tests);
+  config.set('noBundle', argv.noBundle);
+  config.set('verbose', argv.verbose);
+  config.set('disableTransformSourceMaps', argv.disableTransformSourceMaps);
+  config.set('only', argv.only);
+  config.set('debug', argv.debug);
+  return config;
+}
+
+async function runBuildPipeline(context) {
+  await CleanModule.cleanPreviousBuildFiles(context);
+  await TranspileModule.transpileTypescriptAndWatch(context, async () => {
+    try {
+      if (context.config.get('noBundle')) {
+
+      } else {
+        // Occurs every time the watch triggers a new build and completes
+        await BundlerModule.runModuleBundler(context);
+        await SourceMapsModule.transformSourceMaps(context);
+        await DistributeModule.distributeBundleFiles(context);
+      }
+      Utils.printFinalBuildTimeString(context, Utils.readCurrentSdkVersion());
+    } catch (e) {
+      console.error(chalk.red(`Fatal build error: ${e.toString()}`));
+    }
+  });
+}
+
+class CleanModule {
+  static async remove(path) {
+    return await new Promise((resolve, reject) => {
+      rimraf(path, { disableGlob: true }, error => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  static async cleanPreviousBuildFiles(context) {
+    const pathsToRemove = [
+      path.resolve(context.config.get('build:tempDirectory'))
+    ];
+    for (let path of pathsToRemove) {
+      if (!path.endsWith('/build')) {
+        console.log(`${chalk.red('[Clean]')} For safety reasons, will not remove ${chalk.blue(path)} not ending in '/build'. This check is hardcoded.`);
+        throw new Error('Check build path, not removing for safety reasons.');
+        return;
+      }
+      console.log(`${chalk.blue('[Clean]')} Remove ${chalk.blue(path)}`);
+      try {
+        await CleanModule.remove(path);
+      } catch (e) {
+        console.log(chalk.red(`${chalk.blue('[Clean]')} Failed to remove ${chalk.blue(path)}: ${e}`));
+        throw e;
+      }
+    }
+    console.log();
+  }
+}
+
+class TestModule {
+
+  static async debugTest(context, options) {
+    if (!options || !options.testFilePath) {
+      throw new Error("testFilePath is null");
+    }
+    return await new Promise((resolve, reject) => {
+      const testerOptions = [
+        '--inspect',
+        '--debug-brk',
+        'node_modules/ava/profile.js',
+        options.testFilePath,
+      ];
+      const tester = spawn('node', testerOptions, {
+        env: Object.assign(process.env, {
+          FORCE_COLOR: 1,
+        })
+      });
+      console.log();
+      console.log(`${chalk.blue('[Debug Tests]')} Running 'node ${testerOptions.join(' ')}'`);
+      tester.stdout.on('data', data => {
+        console.log(stripAnsi(data.toString()));
+      });
+      tester.stderr.on('data', function (data) {
+        try {
+          console.log(stripAnsi(data.toString()));
+          const urlRegexMatch = data.toString().match(/chrome-devtools:\/\/.*/);
+          if (urlRegexMatch) {
+            const url = urlRegexMatch[0];
+            ncp.copy(url, function () {
+              console.log(`Copied URL ${chalk.blue(url)} to clipboard.`);
+            })
+          }
+        } catch (e) {
+          reject(chalk.red(`${chalk.blue('[Debug Tests]')} 'node --inspect' error: ${e.toString()}`));
+        }
+      });
+      tester.on('exit', function (code) {
+        if (code !== 0) {
+          reject(chalk.red(`${chalk.blue('[Debug Tests]')} 'node' exited with code ${code}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  static async runTestsAndWatch(context, options) {
+    return await new Promise((resolve, reject) => {
+      const testerOptions = [
+        '--verbose', '--watch'
+      ];
+      if (options) {
+        if (options.testTitle) {
+          testerOptions.push('-m', options.testTitle);
+        }
+      }
+      const tester = spawn('ava', testerOptions);
+      console.log();
+      console.log(`${chalk.blue('[Tests]')} Running 'ava ${testerOptions.join(' ')}'`);
+      tester.stdout.on('data', data => {
+        console.log(`${chalk.blue('[Tests]')} ${data.toString()}`);
+      });
+      tester.stderr.on('data', function (data) {
+        process.stdout.write(data.toString());
+      });
+      tester.on('exit', function (code) {
+        if (code !== 0) {
+          reject(chalk.red(`${chalk.blue('[Tests]')} 'ava' exited with code ${code}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+}
+
+class TranspileModule {
+  /**
+   * Transpiles source TypeScript files to individual JavaScript files based on passed tsconfig.json.
+   *
+   * Watches for changes to source TypeScript files (even over VMWare network file system!).
+   */
+  static async transpileTypescriptAndWatch(context, onTranspileComplete) {
+    context.lastTypeScriptChangeDetected = microtime.now();
+    const tsconfigFilename = context.config.get('tests') ? 'tsconfig.tests.json' : 'tsconfig.json';
+    return await new Promise((resolve, reject) => {
+      const transpiler = spawn('tsc', [
+        '--project',
+        tsconfigFilename,
+        '--watch',
+        '--rootDir',
+        './',
+        '--outDir',
+        context.config.get("build:typescriptOutDir")
+      ]);
+      console.log(`${chalk.blue('[TypeScript Transpiler]')} Using TypeScript config file: '${tsconfigFilename}'`);
+      transpiler.stdout.on('data', data => {
+        const message = data.toString();
+        console.log(`${chalk.blue('[TypeScript Transpiler]')} ${message}`);
+        if (message.includes('Compilation complete.')) {
+          resolve();
+          onTranspileComplete();
+        } else if (message.includes('File change detected. Starting incremental compilation')) {
+          context.isInitialBuild = false;
+          context.lastTypeScriptChangeDetected = microtime.now();
+        }
+      });
+      transpiler.stderr.on('data', function (data) {
+        console.error(chalk.red(`${chalk.blue('[TypeScript Transpiler]')} ${data.toString()}`));
+      });
+      transpiler.on('exit', function (code) {
+        if (code !== 0) {
+          reject(chalk.red(`${chalk.blue('[TypeScript Transpiler]')} 'tsc' exited with code ${code}`));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+}
+
+class BundlerModule {
+  /**
+   * Watches for changes to TypeScript transpiler's generated JavaScript files, and bundles all JavaScript files
+   * together into one bundle. Pipeline transformations are as follows:
+   *
+   * 1. Bundle JS files into one module.
+   * 2. Bundle SCSS files into one CSS file.
+   * 3. Replaces $_VAR preprocessor variables for things like $_VERSION and $_DEV.
+   * 4. Minifies the CSS using cleanPreviousBuildFiles-css.
+   * 5. Minifies the JavaScript using UglifyJS.
+   *
+   * These transformations are controlled by the brunch-config.js file.
+   */
+  static async runModuleBundler(context) {
+    const env = context.config.get('env');
+    const noBundle = context.config.get('noBundle');
+
+    if (noBundle) {
+      console.log(`${chalk.blue('[Module Bundler]')} Not bundling files because --noBundle was enabled.`);
+      return;
+    }
+
+    const webpackConfig = BundlerModule.generateWebpackConfig(context.config, BundlerModule.getWebpackPlugins(context.config));
+    const webpackCompiler = BundlerModule.createWebpackCompiler(webpackConfig);
+
+    return await new Promise((resolve, reject) => {
+      webpackCompiler.run((error, stats) => {
+        if (error) {
+          reject(chalk.red(`${chalk.blue('[Module Bundler]')} Webpack fatal error: ${error}`));
+          return;
+        }
+
+        const info = stats.toJson();
+
+        console.log(chalk.blue('[Module Bundler]') +
+          '\n' +
+          stats.toString({
+            chunks: false,
+            colors: true,
+            timings: true,
+            errors: true,
+            warnings: true
+          }));
+        console.log();
+
+        resolve();
+      });
+    });
+  }
+
+  static createWebpackCompiler(compilerConfig) {
+    try {
+      return webpack(compilerConfig);
+    } catch (e) {
+      console.error(chalk.red(`${chalk.blue('[Module Bundler]')} ${e.toString()}`));
+    }
+  }
+
+  /**
+   * Build constants that get inserted into src/environment.js.
+   */
+  static getBuildDefines(config) {
+    const env = config.get('env');
+    var buildDefines = {
+      __DEV__: env === "development",
+      __TEST__: config.get('tests'),
+      __STAGING__: env === "staging",
+      __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
+    };
+    if (env === "production") {
+      buildDefines['process.env.NODE_ENV'] = JSON.stringify('production');
+    }
+    return buildDefines;
+  }
+
+  static getWebSdkModuleEntry(config) {
+    return path.resolve(path.join(config.get('build:typescriptOutDir'), 'src', 'entry.js'));
+  }
+
+  static getWebSdkStylesheetsModuleEntry(config) {
+    return path.resolve(path.join(__dirname, config.get('build:stylesheetsSrcDir'), 'all.scss'));
+  }
+
+  /**
+   * Returns Dev- for dev builds, Staging- for staging builds.
+   */
+  static getBuildPrefix(config) {
+    const env = config.get('env');
+    if (env === "staging") {
+      return 'Staging-';
+    } else if (env === "development") {
+      return 'Dev-';
+    } else {
+      return '';
+    }
+  }
+
+  static getWebpackPlugins(config) {
+    return [
+      new ExtractTextPlugin(config.get('build:stylesheetsBundleName')),
+      new webpack.ProvidePlugin({
+        'fetch': 'imports-loader?this=>global!exports-loader?global.fetch!whatwg-fetch'
+      }),
+      new webpack.optimize.UglifyJsPlugin({
+        sourceMap: true,
+        compress: {
+          sequences: true,
+          properties: true,
+          dead_code: true,
+          conditionals: true,
+          comparisons: true,
+          evaluate: true,
+          booleans: true,
+          loops: true,
+          unused: true,
+          hoist_funs: true,
+          if_return: true,
+          join_vars: true,
+          cascade: true,
+          collapse_vars: true,
+          drop_console: false,
+          drop_debugger: false,
+          warnings: false,
+          negate_iife: true,
+        },
+        mangle: {
+          enable: config.get('env') === 'production',
+          except: ['AlreadySubscribedError',
+            'InvalidArgumentError',
+            'InvalidStateError',
+            'InvalidUuidError',
+            'NotSubscribedError',
+            'PermissionMessageDismissedError',
+            'PushNotSupportedError',
+            'PushPermissionNotGrantedError']
+        },
+        output: {
+          comments: false
+        }
+      }),
+      new webpack.DefinePlugin(BundlerModule.getBuildDefines(config))
+    ];
+  }
+
+  static generateWebpackConfig(config, plugins) {
+    var moduleIncludePaths = [
+      config.get('build:typescriptOutDir')
+    ];
+
+    const entryModules = {};
+    entryModules[BundlerModule.getBuildPrefix(config) + config.get('build:sdkBundleName')] = BundlerModule.getWebSdkModuleEntry(config);
+    entryModules[config.get('build:stylesheetsBundleName')] = BundlerModule.getWebSdkStylesheetsModuleEntry(config);
+    return {
+      target: 'web',
+      entry: entryModules,
+      output: {
+        path: path.resolve(path.join(__dirname, config.get('build:bundlerOutDir'))),
+        filename: '[name]'
+      },
+      module: {
+        rules: [
+          {
+            test: /\.js$/,
+            include: moduleIncludePaths,
+            exclude: /(node_modules|bower_components)/,
+            use: 'val-loader'
+          },
+          {
+            test: /\.scss$/,
+            use: ExtractTextPlugin.extract({
+              use: [{
+                loader: 'css-loader',
+                options: {
+                  sourceMap: true,
+                  minimize: true,
+                },
+              },
+                {
+                  loader: 'postcss-loader',
+                  options: {
+                    plugins: function () {
+                      return [
+                        require('autoprefixer')
+                      ];
+                    }
+                  }
+                },
+                'sass-loader'
+              ],
+            })
+          }]
+      },
+      resolve: {
+        extensions: [".js", ".ts"],
+        modules: [
+          path.resolve(path.join(__dirname, config.get('build:typescriptOutDir'))),
+          path.resolve(path.join(__dirname, 'node_modules'))
+        ]
+      },
+      devtool: 'source-map',
+      plugins: plugins
+    };
+  }
+}
+
+class SourceMapsModule {
+  /**
+   * 6. Transforms multi-level source map back to original source map using Sorcery.
+   *
+   * For some reason, Sorcery requires the file and map to be at the project root.
+   *
+   * Copy src/map to root -> Apply Sorcery -> Copy files to build/bundler-sourcemapped/ -> Remove copies
+   */
+  static async transformSourceMaps(context) {
+    if (context.config.get('disableTransformSourceMaps')) {
+      console.log(`${chalk.blue('[Transform Source Maps]')} Skipping transform source maps because --disableTransformSourceMaps is enabled.`);
+      console.log();
+      return;
+    }
+    const prefix = BundlerModule.getBuildPrefix(context.config);
+    const buildDir = context.config.get('build:bundlerOutDir');
+    const bundledFilenames = Utils.walkSync(path.resolve(buildDir))
+                                  .map(file => file.slice(file.lastIndexOf('/') + 1))
+                                  .filter(filename => !filename.endsWith('.map'));
+
+    for (let bundledFilename of bundledFilenames) {
+      const filePath = path.resolve(path.join(buildDir, bundledFilename));
+      try {
+        var chain = sorcery.loadSync(filePath);
+        var map = chain.apply();
+        chain.writeSync();
+        console.log(`${chalk.blue('[Transform Source Maps]')} Recreating multi-level source map: ${filePath}`);
+      } catch (e) {
+        console.error(`${chalk.blue('[Transform Source Maps]')} ${chalk.red(e.toString())}`);
+      }
+    }
+    console.log();
+  }
+}
+
+class DistributeModule {
+  static async distributeBundleFiles(context) {
+    const config = context.config;
+    const prefix = BundlerModule.getBuildPrefix(config);
+    const buildDir = context.config.get('build:bundlerOutDir');
+
+    const railsProjectRoot = path.resolve(config.get('build:railsProjectRoot'));
+    const railsPublicDir = railsProjectRoot + '/public';
+    const railsPublicSdksDir = railsProjectRoot + '/public/sdks';
+    const sdkBundleName = config.get('build:sdkBundleName');
+
+    /**
+     * Copy: ./OneSignalSDK.js  ==>  OneSignal/public/sdks/OneSignalSDK.js
+     *                               OneSignal/public/sdks/OneSignalSDKWorker.js
+     *                               OneSignal/public/OneSignalSDKWorker.js
+     *                               OneSignal/public/OneSignalSDKUpdaterWorker.js
+     */
+    {
+      let sourceFilename = 'OneSignalSDK.js';
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicSdksDir, prefix + 'OneSignalSDK.js'))
+      );
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicSdksDir, prefix + 'OneSignalSDKWorker.js'))
+      );
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicDir, prefix + 'OneSignalSDKWorker.js'))
+      );
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicDir, prefix + 'OneSignalSDKUpdaterWorker.js'))
+      );
+    }
+
+    /**
+    * Copy: ./OneSignalSDK.js.map  ==>  OneSignal/public/sdks/OneSignalSDK.js.map
+    *                                   OneSignal/public/sdks/OneSignalSDKWorker.js.map
+    *                                   OneSignal/public/OneSignalSDKWorker.js.map
+    *                                   OneSignal/public/OneSignalSDKUpdaterWorker.js.map
+    */
+    {
+      let sourceFilename = 'OneSignalSDK.js.map';
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicSdksDir, prefix + 'OneSignalSDK.js.map'))
+      );
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicSdksDir, prefix + 'OneSignalSDKWorker.js.map'))
+      );
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicDir, prefix + 'OneSignalSDKWorker.js.map'))
+      );
+      Utils.ensureNonEmptyCopyFile(
+        path.resolve(path.join(buildDir, prefix + sourceFilename)),
+        path.resolve(path.join(railsPublicDir, prefix + 'OneSignalSDKUpdaterWorker.js.map'))
+      );
+    }
+
+    /**
+    * Copy: ./OneSignalSDKStyles.css  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css
+    *
+    * Copy: ./OneSignalSDKStyles.css.map  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css.map
+    *
+    */
+    Utils.ensureNonEmptyCopyFile(
+      path.resolve(path.join(buildDir, config.get('build:stylesheetsBundleName'))),
+      path.resolve(path.join(railsPublicSdksDir, config.get('build:stylesheetsBundleName')))
+    );
+    Utils.ensureNonEmptyCopyFile(
+      path.resolve(path.join(buildDir, config.get('build:stylesheetsBundleName') + '.map')),
+      path.resolve(path.join(railsPublicSdksDir, config.get('build:stylesheetsBundleName') + '.map'))
+    );
+  }
+}
+
+const argv = yargs
+  .usage('★ OneSignal Web SDK Build Tool ★')
+  .help('help').alias('help', 'h')
+  .wrap(120)
+  .option('env', {
+    alias: 'e',
+    choices: ['development', 'staging', 'production'],
+    description: `The target environment for this build.`,
+    requiresArg: true,
+    type: 'string',
+    required: true,
+    default: 'development',
+    global: true,
+  })
+  .option('config', {
+    alias: 'c',
+    description: `Path to config.json file.`,
+    requiresArg: true,
+    required: true,
+    default: './config.json',
+    global: true
+  })
+  .option('tests', {
+    alias: 't',
+    description: `Include this flag to build tests as well.
+                  Increases compilation time.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .option('noBundle', {
+    alias: 'nb',
+    description: `Do not bundle transpiled JavaScript files into a single OneSignalSDK.js file.
+                  Decreases compilation time, useful for developing and running tests.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .option('verbose', {
+    alias: 'v',
+    description: `Displays a lot of output for when the build is failing.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .option('only', {
+    alias: 'ly',
+    description: `Only run a specific test.`,
+    requiresArg: false,
+    required: false,
+    type: 'string',
+    default: null,
+    global: true
+  })
+  .option('debug', {
+    alias: 'dbg',
+    description: `Debug a specific transpiled JS file using Chrome's developer tools.`,
+    requiresArg: false,
+    required: false,
+    type: 'string',
+    default: null,
+    global: true
+  })
+  .option('disableTransformSourceMaps', {
+    alias: 'dtsm',
+    description: `Disables transforming of source maps.
+                  This will cause the final source map to be the output of Webpack's bundling of the intermediate
+                  transpiled TypeScript source, instead of the original TypeScript source. Used to debug source map
+                  issues.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .command({
+    command: 'build',
+    aliases: 'b',
+    desc: `Builds the web SDK.
+           Optionally add '--tests' to build with tests.`,
+    handler: onBuildCommandRun
+  })
+  .command({
+    command: 'test',
+    aliases: 't',
+    desc: `Tests the web SDK, by running unit tests in the tests/ folder.
+           Optionally add '--only' to test a single file, or '--debug' to debug the test with Chrome's Developer Tools.`,
+    handler: onTestCommandRun
+  })
+  .example('./sdk build --tests --noBundle', 'Build the web SDK for development with tests, without bundling files together (bundling is unnecessary for unit testing individual files).')
+  .example('./sdk build --env prod', 'Build the web SDK for production.')
+  .example('./sdk test', 'Run all web SDK unit tests.')
+  .example('./sdk test --only="some test title*"', 'Run a specific web SDK unit test. Wildcards supported using *.')
+  .example('./sdk test --debug="transpiled-filename.js', "Debug a specific transpiled JS file using Chrome's Developer Tools.")
+  .strict()
+  .demand(1)
+  .argv;
