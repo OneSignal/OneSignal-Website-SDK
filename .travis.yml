@@ -19,7 +19,7 @@ before_script:
   # --noWatch prevents the SDK build tool running as a daemon, so it can exit and Travis can proceed
   - './sdk build --tests --noBundle --noWatch'
 script:
-  - 'ava --verbose'
+  - 'ava --verbose --watch=false'
 git:
   depth: 5
 env:
