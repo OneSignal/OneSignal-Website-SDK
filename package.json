@@ -1,9 +1,9 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "130000",
+  "sdkVersion": "130005",
   "description": "Web push notifications from OneSignal.",
-  "main": "src/entry.js",
+  "main": "src/entry.ts",
   "dependencies": {
     "bowser": "https://registry.npmjs.org/bowser/-/bowser-1.4.6.tgz",
     "decamelize": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
