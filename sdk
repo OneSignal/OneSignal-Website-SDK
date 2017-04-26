@@ -138,7 +138,10 @@ class Utils {
     const sdkVersionPrefix = sdkVersion ? `Finished building ${chalk.yellow(`SDK version ${sdkVersion}`)} in` : 'Finished in';
 
     console.log();
-    console.log(`${chalk.yellow(`[${buildType} Build Finished]`)} ${sdkVersionPrefix} ${chalk.blue(timeDeltaMs)}ms. Watching for changes...`);
+    if (!context.config.get("noWatch")) {
+      var suffix = "Watching for changes...";
+    }
+    console.log(`${chalk.yellow(`[${buildType} Build Finished]`)} ${sdkVersionPrefix} ${chalk.blue(timeDeltaMs)}ms. ${suffix || ''}`);
     console.log();
     console.log(`${Array(process.stdout.columns).join('┄')}`);
     console.log();
@@ -221,6 +224,7 @@ function createEnvConfig(argv) {
   config.set('disableTransformSourceMaps', argv.disableTransformSourceMaps);
   config.set('only', argv.only);
   config.set('debug', argv.debug);
+  config.set('noWatch', argv.noWatch);
   return config;
 }
 
@@ -328,8 +332,11 @@ class TestModule {
   static async runTestsAndWatch(context, options) {
     return await new Promise((resolve, reject) => {
       const testerOptions = [
-        '--verbose', '--watch'
+        '--verbose'
       ];
+      if (!context.config.get("noWatch")) {
+        testerOptions.push("--watch");
+      }
       if (options) {
         if (options.testTitle) {
           testerOptions.push('-m', options.testTitle);
@@ -365,15 +372,18 @@ class TranspileModule {
     context.lastTypeScriptChangeDetected = microtime.now();
     const tsconfigFilename = context.config.get('tests') ? 'tsconfig.tests.json' : 'tsconfig.json';
     return await new Promise((resolve, reject) => {
-      const transpiler = spawn('tsc', [
+      const options = [
         '--project',
-        tsconfigFilename,
-        '--watch',
-        '--rootDir',
-        './',
-        '--outDir',
-        context.config.get("build:typescriptOutDir")
-      ]);
+        tsconfigFilename
+      ];
+      if (!context.config.get("noWatch")) {
+        options.push('--watch');
+      }
+      options.push('--rootDir');
+      options.push('./');
+      options.push('--outDir');
+      options.push(context.config.get("build:typescriptOutDir"));
+      const transpiler = spawn('tsc', options);
       console.log(`${chalk.blue('[TypeScript Transpiler]')} Using TypeScript config file: '${tsconfigFilename}'`);
       transpiler.stdout.on('data', data => {
         const message = data.toString();
@@ -394,6 +404,7 @@ class TranspileModule {
           reject(chalk.red(`${chalk.blue('[TypeScript Transpiler]')} 'tsc' exited with code ${code}`));
         } else {
           resolve();
+          onTranspileComplete();
         }
       });
     });
@@ -755,7 +766,6 @@ const argv = yargs
     global: true,
   })
   .option('config', {
-    alias: 'c',
     description: `Path to config.json file.`,
     requiresArg: true,
     required: true,
@@ -773,7 +783,7 @@ const argv = yargs
     global: true
   })
   .option('noBundle', {
-    alias: 'nb',
+    alias: 'n',
     description: `Do not bundle transpiled JavaScript files into a single OneSignalSDK.js file.
                   Decreases compilation time, useful for developing and running tests.`,
     requiresArg: false,
@@ -792,7 +802,7 @@ const argv = yargs
     global: true
   })
   .option('only', {
-    alias: 'ly',
+    alias: 'o',
     description: `Only run a specific test.`,
     requiresArg: false,
     required: false,
@@ -801,7 +811,7 @@ const argv = yargs
     global: true
   })
   .option('debug', {
-    alias: 'dbg',
+    alias: 'd',
     description: `Debug a specific transpiled JS file using Chrome's developer tools.`,
     requiresArg: false,
     required: false,
@@ -810,11 +820,18 @@ const argv = yargs
     global: true
   })
   .option('disableTransformSourceMaps', {
-    alias: 'dtsm',
     description: `Disables transforming of source maps.
                   This will cause the final source map to be the output of Webpack's bundling of the intermediate
                   transpiled TypeScript source, instead of the original TypeScript source. Used to debug source map
                   issues.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .option('noWatch', {
+    description: `Do not run as a daemon and do not watch for changes. Exits immediately after the action has taken place.`,
     requiresArg: false,
     required: false,
     type: 'boolean',
