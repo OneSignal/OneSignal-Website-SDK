@@ -838,8 +838,8 @@ const argv = yargs
   .example('./sdk build --tests --noBundle', 'Build the web SDK for development with tests, without bundling files together (bundling is unnecessary for unit testing individual files).')
   .example('./sdk build --env prod', 'Build the web SDK for production.')
   .example('./sdk test', 'Run all web SDK unit tests.')
-  .example('./sdk test --only="some test title*"', 'Run a specific web SDK unit test. Wildcards supported using *.')
-  .example('./sdk test --debug="transpiled-filename.js', "Debug a specific transpiled JS file using Chrome's Developer Tools.")
+  .example('./sdk test --only="some test title*"', 'Run a specific web SDK unit test name. Wildcards supported using *. Note the parameter is a test name, not a file name.')
+  .example('./sdk test --debug="transpiled-filename.js', "Debug a specific transpiled JS file using Chrome's Developer Tools. Note the parameter is a file name, not a test name.")
   .strict()
   .demand(1)
   .argv;
