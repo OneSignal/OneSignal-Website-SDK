@@ -1,0 +1,32 @@
+# Travis CI Configuration File
+#
+# Setting up w/ NodeJS: https://docs.travis-ci.com/user/languages/javascript-with-nodejs/
+
+language: node_js
+node_js:
+  - '7.7.1'
+cache:
+  yarn: true
+  directories:
+    - node_modules
+before_script:
+  # The SDK build tool relies on a config.json in the project root
+  # It contains various path configs to tell where the build tool to copy or read files
+  - 'cp config.json.example config.json'
+
+  # --tests allows the SDK build tool to transpile tests, otherwise it ignores building tests for performance reasons
+  # --noBundle avoids copying the web SDK files to the Rails project root, and avoids UglifyJS
+  # --noWatch prevents the SDK build tool running as a daemon, so it can exit and Travis can proceed
+  - './sdk build --tests --noBundle --noWatch'
+script:
+  - 'ava --verbose'
+git:
+  depth: 5
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
