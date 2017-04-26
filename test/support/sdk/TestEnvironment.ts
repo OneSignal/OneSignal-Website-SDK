@@ -82,10 +82,10 @@ export class TestEnvironment {
       if (pathname.startsWith('https://test.node/scripts/delayed')) {
         TestEnvironment.onVirtualDomDelayedResourceRequested(
           resource,
-          callback.bind(null, null, `var __NODE_TEST_SCRIPT = true; var __DELAYED = true;`)
+          callback.bind(null, null, `window.__NODE_TEST_SCRIPT = true; window.__DELAYED = true;`)
         );
       } else {
-        callback(null, `var __NODE_TEST_SCRIPT = true;`);
+        callback(null, `window.__NODE_TEST_SCRIPT = true;`);
       }
     } else if (pathname.startsWith('https://test.node/styles/')) {
       if (pathname.startsWith('https://test.node/scripts/delayed')) {
@@ -136,9 +136,9 @@ export class TestEnvironment {
       origin: 'https://localhost:3001',
       href: 'https://localhost:3001/webpush/sandbox?https=1',
     };
-    global.OneSignal = new ServiceWorker({
-      databaseName: Random.getRandomString(6)
-    });
+    // global.OneSignal = new ServiceWorker({
+    //   databaseName: Random.getRandomString(6)
+    // });
     global.OneSignal.config = config.initOptions ? config.initOptions : {};
     global.OneSignal.initialized = true;
     global.OneSignal.getNotifications = () => global.self.registration.notifications;
@@ -179,7 +179,6 @@ export class TestEnvironment {
     // Node has its own console; overwriting it will cause issues
     delete windowDef['console'];
     jsdom.reconfigureWindow(windowDef, { top: windowDef });
-    debugger;
     Object.assign(global, windowDef);
   }
 

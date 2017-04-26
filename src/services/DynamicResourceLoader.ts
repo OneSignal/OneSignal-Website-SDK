@@ -1,3 +1,4 @@
+import * as objectAssign from 'object-assign';
 export const enum ResourceType {
   Stylesheet,
   Script
@@ -14,12 +15,21 @@ export const enum ResourceLoadState {
   Failed
 }
 
+interface DynamicResourceLoaderCache {
+  [key: string]: Promise<ResourceLoadState>;
+}
+
 export class DynamicResourceLoader {
 
-  private cache: Map<string, Promise<ResourceLoadState>>;
+  private cache: DynamicResourceLoaderCache;
 
   constructor() {
-    this.cache = new Map();
+    this.cache = {};
+  }
+
+  getCache(): DynamicResourceLoaderCache {
+    // Cache is private; return a cloned copy just for testing
+    return objectAssign({}, this.cache);
   }
 
   async loadSdkStylesheet(): Promise<ResourceLoadState> {
@@ -32,12 +42,12 @@ export class DynamicResourceLoader {
    */
   async loadIfNew(type: ResourceType, url: URL): Promise<ResourceLoadState> {
     // Load for first time
-    if (!this.cache.has(url.toString())) {
-      this.cache.set(url.toString(), DynamicResourceLoader.load(type, url));
+    if (!this.cache[url.toString()]) {
+      this.cache[url.toString()] = DynamicResourceLoader.load(type, url);
     }
     // Resource is loading; multiple calls can be made to this while the same resource is loading
     // Waiting on the Promise is what we want here
-    return await this.cache.get(url.toString());
+    return await this.cache[url.toString()];
   }
 
   /**
