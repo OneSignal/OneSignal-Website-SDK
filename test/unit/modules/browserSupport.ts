@@ -66,6 +66,8 @@ test('should not support specific browser environments', async t => {
   shouldSupport(t, BrowserUserAgent.FacebookBrowseriOS, false);
   shouldSupport(t, BrowserUserAgent.FacebookBrowserAndroid, false);
 
+  shouldSupport(t, BrowserUserAgent.OperaMiniUnsupported, false);
+
   shouldSupport(t, BrowserUserAgent.ChromeAndroidUnsupported, false);
   shouldSupport(t, BrowserUserAgent.ChromeWindowsUnsupported, false);
   shouldSupport(t, BrowserUserAgent.ChromeMacUnsupported, false);
