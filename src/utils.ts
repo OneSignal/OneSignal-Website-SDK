@@ -47,6 +47,13 @@ export function isPushNotificationsSupported() {
   }
   let userAgent = navigator.userAgent || '';
 
+  if (!Browser.safari && typeof navigator.serviceWorker === "undefined") {
+    /**
+     * Browsers like Firefox Extended Support Release don't support service workers
+     */
+    return false;
+  }
+
   if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
     return false;
 

@@ -45,7 +45,6 @@ test('should support specific browser environments', async t => {
   shouldSupport(t, BrowserUserAgent.VivaldiMacSupported, true);
 });
 
-
 test('should not support specific browser environments', async t => {
   (global as any).BrowserUserAgent = BrowserUserAgent;
   await TestEnvironment.stubDomEnvironment({
@@ -73,4 +72,23 @@ test('should not support specific browser environments', async t => {
   shouldSupport(t, BrowserUserAgent.ChromeMacUnsupported, false);
   shouldSupport(t, BrowserUserAgent.ChromeLinuxUnsupported, false);
   shouldSupport(t, BrowserUserAgent.ChromeTabletUnsupported, false);
+});
+
+test('should not support environments without service workers (except Safari)', async t => {
+  (global as any).BrowserUserAgent = BrowserUserAgent;
+  await TestEnvironment.stubDomEnvironment({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+  // Remove serviceWorker from navigator for testing
+  Object.defineProperty(navigator, 'serviceWorker', {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: undefined
+  });
+  (window as any).userAgent = BrowserUserAgent.ChromeMacSupported;
+  t.false(isPushNotificationsSupported(), `Expected push to be unsupported if service workers don't exist in a non-Safari browser`);
+
+  (window as any).userAgent = BrowserUserAgent.SafariSupportedMac;
+  t.false(isPushNotificationsSupported(), `Expected push to be supported if service workers don't exist in Safari`)
 });
