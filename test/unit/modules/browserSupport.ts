@@ -3,12 +3,21 @@ import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { isPushNotificationsSupported } from "../../../src/utils";
 
-function shouldSupport(t, userAgent: BrowserUserAgent, supported: boolean) {
-  (window as any).userAgent = userAgent;
+function setUserAgent(userAgent: BrowserUserAgent) {
+  Object.defineProperty((window as any).navigator, 'userAgent', {
+      value: userAgent,
+      configurable: true,
+      enumerable: true,
+      writable: true
+  });
+}
+
+function shouldSupport(t, userAgent: BrowserUserAgent) {
+  setUserAgent(userAgent);
   t.true(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be supported`)
 }
-function shouldNotSupport(t, userAgent: BrowserUserAgent, supported: boolean) {
-  (window as any).userAgent = userAgent;
+function shouldNotSupport(t, userAgent: BrowserUserAgent) {
+  setUserAgent(userAgent);
   t.false(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be unsupported`)
 }
 
@@ -18,31 +27,31 @@ test('should support specific browser environments', async t => {
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  shouldSupport(t, BrowserUserAgent.FirefoxMobileSupported, true);
-  shouldSupport(t, BrowserUserAgent.FirefoxTabletSupported, true);
-  shouldSupport(t, BrowserUserAgent.FirefoxWindowsSupported, true);
-  shouldSupport(t, BrowserUserAgent.FirefoxMacSupported, true);
-  shouldSupport(t, BrowserUserAgent.FirefoxLinuxSupported, true);
+  shouldSupport(t, BrowserUserAgent.FirefoxMobileSupported);
+  shouldSupport(t, BrowserUserAgent.FirefoxTabletSupported);
+  shouldSupport(t, BrowserUserAgent.FirefoxWindowsSupported);
+  shouldSupport(t, BrowserUserAgent.FirefoxMacSupported);
+  shouldSupport(t, BrowserUserAgent.FirefoxLinuxSupported);
 
-  shouldSupport(t, BrowserUserAgent.SafariSupportedMac, true);
+  shouldSupport(t, BrowserUserAgent.SafariSupportedMac);
 
-  shouldSupport(t, BrowserUserAgent.ChromeAndroidSupported, true);
-  shouldSupport(t, BrowserUserAgent.ChromeWindowsSupported, true);
-  shouldSupport(t, BrowserUserAgent.ChromeMacSupported, true);
-  shouldSupport(t, BrowserUserAgent.ChromeLinuxSupported, true);
-  shouldSupport(t, BrowserUserAgent.ChromeTabletSupported, true);
+  shouldSupport(t, BrowserUserAgent.ChromeAndroidSupported);
+  shouldSupport(t, BrowserUserAgent.ChromeWindowsSupported);
+  shouldSupport(t, BrowserUserAgent.ChromeMacSupported);
+  shouldSupport(t, BrowserUserAgent.ChromeLinuxSupported);
+  shouldSupport(t, BrowserUserAgent.ChromeTabletSupported);
 
-  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedHigh, true);
-  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedLow, true);
-  shouldSupport(t, BrowserUserAgent.YandexMobileSupported, true);
+  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedHigh);
+  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedLow);
+  shouldSupport(t, BrowserUserAgent.YandexMobileSupported);
 
-  shouldSupport(t, BrowserUserAgent.OperaDesktopSupported, true);
-  shouldSupport(t, BrowserUserAgent.OperaAndroidSupported, true);
-  shouldSupport(t, BrowserUserAgent.OperaTabletSupported, true);
+  shouldSupport(t, BrowserUserAgent.OperaDesktopSupported);
+  shouldSupport(t, BrowserUserAgent.OperaAndroidSupported);
+  shouldSupport(t, BrowserUserAgent.OperaTabletSupported);
 
-  shouldSupport(t, BrowserUserAgent.VivaldiWindowsSupported, true);
-  shouldSupport(t, BrowserUserAgent.VivaldiLinuxSupported, true);
-  shouldSupport(t, BrowserUserAgent.VivaldiMacSupported, true);
+  shouldSupport(t, BrowserUserAgent.VivaldiWindowsSupported);
+  shouldSupport(t, BrowserUserAgent.VivaldiLinuxSupported);
+  shouldSupport(t, BrowserUserAgent.VivaldiMacSupported);
 });
 
 test('should not support specific browser environments', async t => {
@@ -50,28 +59,28 @@ test('should not support specific browser environments', async t => {
   await TestEnvironment.stubDomEnvironment({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
-  shouldSupport(t, BrowserUserAgent.iPod, false);
-  shouldSupport(t, BrowserUserAgent.iPad, false);
-  shouldSupport(t, BrowserUserAgent.iPhone, false);
+  shouldNotSupport(t, BrowserUserAgent.iPod);
+  shouldNotSupport(t, BrowserUserAgent.iPad);
+  shouldNotSupport(t, BrowserUserAgent.iPhone);
 
-  shouldSupport(t, BrowserUserAgent.Edge, false);
-  shouldSupport(t, BrowserUserAgent.IE11, false);
+  shouldNotSupport(t, BrowserUserAgent.Edge);
+  shouldNotSupport(t, BrowserUserAgent.IE11);
 
-  shouldSupport(t, BrowserUserAgent.FirefoxMobileUnsupported, false);
-  shouldSupport(t, BrowserUserAgent.FirefoxTabletUnsupported, false);
+  shouldNotSupport(t, BrowserUserAgent.FirefoxMobileUnsupported);
+  shouldNotSupport(t, BrowserUserAgent.FirefoxTabletUnsupported);
 
-  shouldSupport(t, BrowserUserAgent.SafariUnsupportedMac, false);
+  shouldNotSupport(t, BrowserUserAgent.SafariUnsupportedMac);
 
-  shouldSupport(t, BrowserUserAgent.FacebookBrowseriOS, false);
-  shouldSupport(t, BrowserUserAgent.FacebookBrowserAndroid, false);
+  shouldNotSupport(t, BrowserUserAgent.FacebookBrowseriOS);
+  shouldNotSupport(t, BrowserUserAgent.FacebookBrowserAndroid);
 
-  shouldSupport(t, BrowserUserAgent.OperaMiniUnsupported, false);
+  shouldNotSupport(t, BrowserUserAgent.OperaMiniUnsupported);
 
-  shouldSupport(t, BrowserUserAgent.ChromeAndroidUnsupported, false);
-  shouldSupport(t, BrowserUserAgent.ChromeWindowsUnsupported, false);
-  shouldSupport(t, BrowserUserAgent.ChromeMacUnsupported, false);
-  shouldSupport(t, BrowserUserAgent.ChromeLinuxUnsupported, false);
-  shouldSupport(t, BrowserUserAgent.ChromeTabletUnsupported, false);
+  shouldNotSupport(t, BrowserUserAgent.ChromeAndroidUnsupported);
+  shouldNotSupport(t, BrowserUserAgent.ChromeWindowsUnsupported);
+  shouldNotSupport(t, BrowserUserAgent.ChromeMacUnsupported);
+  shouldNotSupport(t, BrowserUserAgent.ChromeLinuxUnsupported);
+  shouldNotSupport(t, BrowserUserAgent.ChromeTabletUnsupported);
 });
 
 test('should not support environments without service workers (except Safari)', async t => {
@@ -86,9 +95,9 @@ test('should not support environments without service workers (except Safari)', 
     writable: true,
     value: undefined
   });
-  (window as any).userAgent = BrowserUserAgent.ChromeMacSupported;
+  setUserAgent(BrowserUserAgent.ChromeMacSupported);
   t.false(isPushNotificationsSupported(), `Expected push to be unsupported if service workers don't exist in a non-Safari browser`);
 
-  (window as any).userAgent = BrowserUserAgent.SafariSupportedMac;
-  t.false(isPushNotificationsSupported(), `Expected push to be supported if service workers don't exist in Safari`)
+  setUserAgent(BrowserUserAgent.SafariSupportedMac);
+  t.true(isPushNotificationsSupported(), `Expected push to be supported if service workers don't exist in Safari`)
 });

@@ -47,14 +47,14 @@ export function isPushNotificationsSupported() {
   }
   let userAgent = navigator.userAgent || '';
 
-  if (!Browser.safari && typeof navigator.serviceWorker === "undefined") {
+  if (!browser.safari && typeof navigator.serviceWorker === "undefined") {
     /**
      * Browsers like Firefox Extended Support Release don't support service workers
      */
     return false;
   }
 
-  if (Browser.ios || (<any>Browser).ipod || (<any>Browser).iphone || (<any>Browser).ipad)
+  if (browser.ios || (<any>browser).ipod || (<any>browser).iphone || (<any>browser).ipad)
     return false;
 
   if (browser.msedge || browser.msie)
