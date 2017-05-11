@@ -141,7 +141,8 @@ export default class ServiceWorkerHelper {
     }
 
     function isServiceWorkerRegistrationActive(serviceWorkerRegistration) {
-      return serviceWorkerRegistration.active &&
+      return serviceWorkerRegistration &&
+        serviceWorkerRegistration.active &&
         serviceWorkerRegistration.active.state === 'activated' &&
         (contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKWorker') ||
         contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKUpdaterWorker'));
