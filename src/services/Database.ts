@@ -127,22 +127,23 @@ export default class Database {
    * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
-  async remove(table: string, keypath?: string) {
-    return new Promise(async (resolve, reject) => {
-      if (!Environment.isServiceWorker() &&
-        SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-        !Environment.isTest()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{table: table, keypath: keypath}], reply => {
+  remove(table: string, keypath?: string) {
+    if (!Environment.isServiceWorker() &&
+      SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+      !Environment.isTest()) {
+      return new Promise((resolve, reject) => {
+        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{ table: table, keypath: keypath }], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
             reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}), but did not get success response.`);
           }
         });
-      } else {
-        return await this.database.remove(table, keypath);
-      }
-    });
+      });
+    }
+    else {
+      return this.database.remove(table, keypath);
+    }
   }
 
   async getAppConfig(): Promise<AppConfig> {

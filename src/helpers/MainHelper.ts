@@ -357,7 +357,13 @@ export default class MainHelper {
                    returns no results even though a notification was just clicked.
         */
         log.debug('notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.');
-        await Database.put("NotificationOpened", { url: data.url, data: data, timestamp: Date.now() });
+        /* For empty notifications without a URL, use the current document's URL */
+        let url = data.url;
+        if (!data.url) {
+          // Least likely to modify, since modifying this property changes the page's URL
+          url = location.href;
+        }
+        await Database.put("NotificationOpened", { url: url, data: data, timestamp: Date.now() });
       } else {
         Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
       }

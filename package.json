@@ -1,7 +1,7 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "130015",
+  "sdkVersion": "130020",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.ts",
   "dependencies": {
@@ -100,7 +100,7 @@
     "sorcery": "github:OneSignal/sorcery#onesignal",
     "strip-ansi": "^3.0.1",
     "svgo": "^0.7.2",
-    "typescript": "^2.2.2",
+    "typescript": "^2.3.2",
     "webpack": "^2.3.2",
     "yargonaut": "^1.1.2",
     "yargs": "^6.5.0"

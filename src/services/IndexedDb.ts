@@ -13,8 +13,8 @@ export default class IndexedDb {
     this.emitter = new Emitter();
   }
 
-  private async open(databaseName: string): Promise<IDBDatabase> {
-    return await new Promise<IDBDatabase>((resolve, reject) => {
+  private open(databaseName: string): Promise<IDBDatabase> {
+    return new Promise<IDBDatabase>((resolve, reject) => {
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
         var request: IDBOpenDBRequest = indexedDB.open(databaseName, 1);
@@ -106,13 +106,6 @@ export default class IndexedDb {
     db.createObjectStore("Options", {
       keyPath: "key"
     });
-    /*
-     TODO: Database rebuilt event for bell prenotify badge
-
-     The event needs to be triggered across HTTP and HTTPS
-     Original Code: Event.trigger('dbRebuilt', null, null);
-     */
-    //this.emitter.emit(Events.DB_REBUILT);
   }
 
   /**
@@ -182,7 +175,7 @@ export default class IndexedDb {
    * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
-  public async remove(table: string, key?: string) {
+  public remove(table: string, key?: string) {
     if (key) {
       // Remove a single key from a table
       var method = "delete";
