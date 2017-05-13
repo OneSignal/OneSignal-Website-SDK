@@ -80,6 +80,12 @@ export function isPushNotificationsSupported() {
   if (browser.safari && Number(browser.version) >= 7.1)
     return true;
 
+  // Web push is supported in Samsung Internet for Android 4.0+
+  // http://developer.samsung.com/internet/android/releases
+  if (browser.samsungBrowser && Number(browser.version) >= 4) {
+    return true;
+  }
+
   if ((browser.chrome || (<any>browser).chromium) && Number(browser.version) >= 42)
     return true;
 
@@ -213,15 +219,17 @@ export function getDeviceTypeForBrowser() {
     (<any>Browser).yandexbrowser ||
     Browser.opera ||
     (Browser as any).vivaldi ||
+    (Browser as any).samsungBrowser ||
     (<any>Browser).chromium) {
     return DEVICE_TYPES.CHROME;
   } else if (Browser.firefox) {
     return DEVICE_TYPES.FIREFOX;
   } else if (Browser.safari) {
     return DEVICE_TYPES.SAFARI;
+  } else {
+    log.error(`OneSignal: Unable to associate device type for browser ${Browser.name} ${Browser.version}`);
   }
 }
-
 export function getConsoleStyle(style) {
   if (style == 'code') {
     return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;

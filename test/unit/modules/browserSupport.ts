@@ -52,6 +52,8 @@ test('should support specific browser environments', async t => {
   shouldSupport(t, BrowserUserAgent.VivaldiWindowsSupported);
   shouldSupport(t, BrowserUserAgent.VivaldiLinuxSupported);
   shouldSupport(t, BrowserUserAgent.VivaldiMacSupported);
+
+  shouldSupport(t, BrowserUserAgent.SamsungBrowserSupported);
 });
 
 test('should not support specific browser environments', async t => {
@@ -81,6 +83,8 @@ test('should not support specific browser environments', async t => {
   shouldNotSupport(t, BrowserUserAgent.ChromeMacUnsupported);
   shouldNotSupport(t, BrowserUserAgent.ChromeLinuxUnsupported);
   shouldNotSupport(t, BrowserUserAgent.ChromeTabletUnsupported);
+
+  shouldNotSupport(t, BrowserUserAgent.SamsungBrowserUnsupported);
 });
 
 test('should not support environments without service workers (except Safari)', async t => {
