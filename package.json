@@ -1,7 +1,7 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "130020",
+  "sdkVersion": "130025",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.ts",
   "dependencies": {
@@ -13,6 +13,7 @@
     "heir": "git://github.com/jasonpang/heir.git#754e476f7cc62b258a0b69deddd243fde41fd072",
     "js-cookie": "https://registry.npmjs.org/js-cookie/-/js-cookie-2.1.3.tgz",
     "jsdom": "^9.12.0",
+    "jsonp": "^0.2.1",
     "loglevel": "https://registry.npmjs.org/loglevel/-/loglevel-1.4.1.tgz",
     "morgan": "https://registry.npmjs.org/morgan/-/morgan-1.7.0.tgz",
     "node-sass": "https://registry.npmjs.org/node-sass/-/node-sass-3.10.1.tgz",
@@ -65,10 +66,12 @@
     "@types/cors": "latest",
     "@types/express": "latest",
     "@types/js-cookie": "latest",
+    "@types/jsdom": "^2.0.30",
     "@types/loglevel": "latest",
     "@types/mocha": "latest",
     "@types/nconf": "latest",
     "@types/node": "latest",
+    "@types/object-assign": "^4.0.30",
     "@types/requirejs": "latest",
     "@types/validator": "latest",
     "@types/whatwg-fetch": "latest",
@@ -102,6 +105,7 @@
     "svgo": "^0.7.2",
     "typescript": "^2.3.2",
     "webpack": "^2.3.2",
+    "webpack-bundle-analyzer": "^2.8.2",
     "yargonaut": "^1.1.2",
     "yargs": "^6.5.0"
   },

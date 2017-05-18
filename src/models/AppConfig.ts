@@ -2,11 +2,15 @@ import { Uuid } from "./Uuid";
 import { ServiceWorkerConfig } from "./ServiceWorkerConfig";
 
 
-class AppConfig {
+export class AppConfig {
     appId: Uuid;
     subdomain: string;
-    autoRegister: boolean;
-    serviceWorkerConfig: ServiceWorkerConfig;
+    autoRegister?: boolean;
+    serviceWorkerConfig?: ServiceWorkerConfig;
+    /**
+     * Describes whether the subdomain HTTP users subscribe to should belong to
+     * the legacy domain onesignal.com, or the newer domain os.tc.
+     */
+    httpUseOneSignalCom?: boolean;
+    safariWebId?: string;
 }
-
-export { AppConfig };

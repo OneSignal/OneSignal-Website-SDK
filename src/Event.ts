@@ -1,12 +1,15 @@
+import ProxyFrameHost from './modules/frames/ProxyFrameHost';
 import * as log from 'loglevel';
 import Environment from './Environment';
 import { getConsoleStyle, contains, capitalize } from './utils';
-
+import SdkEnvironment from "./managers/SdkEnvironment";
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',
   'notifyButtonHover',
+
   'notifyButtonButtonClick',
   'notifyButtonLauncherClick',
   'animatedElementHiding',
@@ -62,9 +65,9 @@ export default class Event {
     if (!contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
       if (remoteTriggerEnv) {
-        var env = `${capitalize(Environment.getEnv())} ⬸ ${capitalize(remoteTriggerEnv)}`;
+        var env = `${capitalize(SdkEnvironment.getWindowEnv().toString())} ⬸ ${capitalize(remoteTriggerEnv)}`;
       } else {
-        var env = capitalize(Environment.getEnv());
+        var env = capitalize(SdkEnvironment.getWindowEnv().toString());
       }
 
       if (displayData || displayData === false) {
@@ -91,17 +94,18 @@ export default class Event {
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
     if (Environment.isBrowser() &&
-        (Environment.isPopup() || Environment.isIframe())) {
+        (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
+         SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
       var creator = opener || parent;
       if (!creator) {
         log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
       } else {
         // But only if the event matches certain events
         if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-          if (Environment.isPopup()) {
-            OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
+          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+            OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
           } else {
-            OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
+            OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);
           }
         }
       }

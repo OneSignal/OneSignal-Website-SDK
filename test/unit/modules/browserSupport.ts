@@ -2,15 +2,8 @@ import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { isPushNotificationsSupported } from "../../../src/utils";
+import { setUserAgent } from '../../support/tester/browser';
 
-function setUserAgent(userAgent: BrowserUserAgent) {
-  Object.defineProperty((window as any).navigator, 'userAgent', {
-      value: userAgent,
-      configurable: true,
-      enumerable: true,
-      writable: true
-  });
-}
 
 function shouldSupport(t, userAgent: BrowserUserAgent) {
   setUserAgent(userAgent);

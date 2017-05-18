@@ -3,7 +3,7 @@ import Event from '../Event';
 import AnimatedElement from './AnimatedElement';
 import * as Browser from 'bowser';
 import Bell from './Bell';
-import { HOST_URL } from '../vars';
+import SdkEnvironment from '../managers/SdkEnvironment';
 
 
 
@@ -89,13 +89,13 @@ export default class Dialog extends AnimatedElement {
         let imageUrl = null;
         if (Browser.chrome) {
           if (!Browser.mobile && !Browser.tablet) {
-            imageUrl = HOST_URL + '/bell/chrome-unblock.jpg';
+            imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/chrome-unblock.jpg';
           }
         }
         else if (Browser.firefox)
-          imageUrl = HOST_URL + '/bell/firefox-unblock.jpg';
+          imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/firefox-unblock.jpg';
         else if (Browser.safari)
-          imageUrl = HOST_URL + '/bell/safari-unblock.jpg';
+          imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/safari-unblock.jpg';
 
         let instructionsHtml = '';
         if (imageUrl) {

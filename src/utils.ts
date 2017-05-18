@@ -1,10 +1,12 @@
-///<reference path="models/Action.ts"/>
 import * as log from "loglevel";
 import * as Browser from "bowser";
 import Environment from "./Environment";
 import Database from "./services/Database";
 import PushNotSupportedError from "./errors/PushNotSupportedError";
 import SubscriptionHelper from "./helpers/SubscriptionHelper";
+import SdkEnvironment from "./managers/SdkEnvironment";
+import { WindowEnvironmentKind } from "./models/WindowEnvironmentKind";
+import TimeoutError from "./errors/TimeoutError";
 
 
 export function isArray(variable) {
@@ -261,15 +263,13 @@ export function nothing(): Promise<any> {
   return Promise.resolve();
 }
 
-export function executeAndTimeoutPromiseAfter(promise, milliseconds, displayError?) {
-  let timeoutPromise = new Promise(resolve => setTimeout(() => resolve('promise-timed-out'), milliseconds));
-  return Promise.race([promise, timeoutPromise]).then(value => {
-    if (value === 'promise-timed-out') {
-      log.info(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
-      return Promise.reject(displayError || `Promise ${promise} timed out after ${milliseconds} ms.`);
-    }
-    else return value;
+export function timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<TimeoutError | any> {
+  const timeoutPromise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new TimeoutError())
+    }, milliseconds);
   });
+  return Promise.race([promise, timeoutPromise]);
 }
 
 export function when(condition, promiseIfTrue, promiseIfFalse) {
@@ -278,21 +278,6 @@ export function when(condition, promiseIfTrue, promiseIfFalse) {
   if (promiseIfFalse === undefined)
     promiseIfFalse = nothing();
   return (condition ? promiseIfTrue : promiseIfFalse);
-}
-
-export function guid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var crypto = typeof window === "undefined" ? (global as any).crypto : (window.crypto || (<any>window).msCrypto);
-    if (crypto) {
-      var r = crypto.getRandomValues(new Uint8Array(1))[0] % 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    } else {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-      });
-    }
-  });
 }
 
 /**
@@ -328,25 +313,6 @@ export function trimUndefined(object) {
  */
 export function isValidUuid(uuid) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(uuid);
-}
-
-/**
- * Returns the correct subdomain if 'https://subdomain.onesignal.com' or something similar is passed.
- */
-export function normalizeSubdomain(subdomain) {
-  subdomain = subdomain.trim();
-  let removeSubstrings = [
-    'http://www.',
-    'https://www.',
-    'http://',
-    'https://',
-    '.onesignal.com/',
-    '.onesignal.com'
-  ];
-  for (let removeSubstring of removeSubstrings) {
-    subdomain = subdomain.replace(removeSubstring, '');
-  }
-  return subdomain.toLowerCase();
 }
 
 export function getUrlQueryParam(name) {
@@ -385,7 +351,7 @@ export function capitalize(text): string {
  */
 export function unsubscribeFromPush() {
   log.warn('OneSignal: Unsubscribing from push.');
-  if (Environment.isServiceWorker()) {
+  if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
     return (<any>self).registration.pushManager.getSubscription()
                        .then(subscription => {
                          if (subscription) {
@@ -396,7 +362,7 @@ export function unsubscribeFromPush() {
     if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
       return new Promise((resolve, reject) => {
         log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
           log.debug("Unsubscribe from push succesfully remotely executed.");
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
@@ -427,7 +393,7 @@ export function unsubscribeFromPush() {
  */
 export function wipeServiceWorker() {
   log.warn('OneSignal: Unregistering service worker.');
-  if (Environment.isIframe()) {
+  if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
     return;
   }
   if (!navigator.serviceWorker || !navigator.serviceWorker.controller)

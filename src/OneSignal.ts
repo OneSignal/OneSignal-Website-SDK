@@ -1,12 +1,12 @@
-import {DEV_FRAME_HOST, API_URL, STAGING_FRAME_HOST} from "./vars";
+import TimeoutError from './errors/TimeoutError';
 import Environment from "./Environment";
 import OneSignalApi from "./OneSignalApi";
 import IndexedDb from "./services/IndexedDb";
-import * as log from "loglevel";
+import * as log from 'loglevel';
 import Event from "./Event";
-import * as Cookie from "js-cookie";
+import * as Cookie from 'js-cookie';
 import Database from "./services/Database";
-import * as Browser from "bowser";
+import * as Browser from 'bowser';
 import {
   isPushNotificationsSupported,
   logMethodCall,
@@ -18,13 +18,14 @@ import {
   executeCallback,
   md5,
   sha1,
-  awaitSdkEvent
+  awaitSdkEvent,
+  contains
 } from "./utils";
 import {ValidatorUtils} from "./utils/ValidatorUtils";
-import * as objectAssign from "object-assign";
-import * as EventEmitter from "wolfy87-eventemitter";
-import * as heir from "heir";
-import * as swivel from "swivel";
+import * as objectAssign from 'object-assign';
+import * as EventEmitter from 'wolfy87-eventemitter';
+import * as heir from 'heir';
+import * as swivel from 'swivel';
 import EventHelper from "./helpers/EventHelper";
 import MainHelper from "./helpers/MainHelper";
 import Popover from "./popover/Popover";
@@ -47,6 +48,19 @@ import {PermissionPromptType} from "./models/PermissionPromptType";
 import {Notification} from "./models/Notification";
 import Context from "./models/Context";
 import { DynamicResourceLoader, ResourceLoadState } from "./services/DynamicResourceLoader";
+import SdkEnvironment from './managers/SdkEnvironment';
+import { BuildEnvironmentKind } from './models/BuildEnvironmentKind';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import AltOriginManager from './managers/AltOriginManager';
+import { AppConfig } from './models/AppConfig';
+import LegacyManager from './managers/LegacyManager';
+import ProxyFrameHost from './modules/frames/ProxyFrameHost';
+import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
+import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
+import SubscriptionPopup from './modules/frames/SubscriptionPopup';
+import SubscriptionModal from './modules/frames/SubscriptionModal';
+import ProxyFrame from './modules/frames/ProxyFrame';
+import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
 
 
 export default class OneSignal {
@@ -123,97 +137,104 @@ export default class OneSignal {
    * Initializes the SDK, called by the developer.
    * @PublicApi
    */
-  static init(options) {
-    logMethodCall('init', options);
+  static async init(options) {
+    logMethodCall('init');
+
+    // If Safari - add 'fetch' pollyfill if it isn't already added.
+    if (Browser.safari && typeof window.fetch == "undefined") {
+      log.debug('Loading fetch polyfill for Safari..');
+      try {
+        await OneSignal.context.dynamicResourceLoader.loadFetchPolyfill();
+        log.debug('Done loading fetch polyfill.');
+      } catch (e) {
+        log.debug('Error loading fetch polyfill:', e);
+      }
+    }
 
     ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
 
     if (OneSignal._initCalled) {
-      log.error(`OneSignal: Please don't call init() more than once. Any extra calls to init() are ignored. The following parameters were not processed: %c${JSON.stringify(Object.keys(options))}`, getConsoleStyle('code'));
-      return 'return';
+      throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
     }
     OneSignal._initCalled = true;
 
-    OneSignal.config = objectAssign({
-      path: '/'
-    }, options);
+    let appConfig: AppConfig;
+    try {
+      appConfig = await OneSignalApi.getAppConfig(new Uuid(options.appId));
+      OneSignal.config = InitHelper.getMergedLegacyConfig(options, appConfig);
+      log.debug(`OneSignal: Final web app config: %c${JSON.stringify(OneSignal.config, null, 4)}`, getConsoleStyle('code'));
+    } catch (e) {
+      if (e) {
+        if (e.code === 1) {
+          throw new SdkInitError(SdkInitErrorKind.InvalidAppId)
+        }
+        else if (e.code === 2) {
+          throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
+        }
+      }
+      throw e;
+    }
 
     if (Browser.safari && !OneSignal.config.safari_web_id) {
-      log.warn("OneSignal: Required parameter %csafari_web_id", getConsoleStyle('code'), 'was not passed to OneSignal.init(), skipping SDK initialization.');
+      /**
+       * Don't throw an error for missing Safari config; many users set up
+       * support on Chrome/Firefox and don't intend to support Safari but don't
+       * place conditional initialization checks.
+       */
+      log.warn(new SdkInitError(SdkInitErrorKind.MissingSafariWebId));
       return;
     }
 
-    function __init() {
+    async function __init() {
       if (OneSignal.__initAlreadyCalled) {
-        // Call from window.addEventListener('DOMContentLoaded', () => {
-        // Call from if (document.readyState === 'complete' || document.readyState === 'interactive')
         return;
       } else {
         OneSignal.__initAlreadyCalled = true;
       }
+
       MainHelper.fixWordpressManifestIfMisplaced();
-
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        if (OneSignal.config.subdomainName) {
-          OneSignal.config.subdomainName = MainHelper.autoCorrectSubdomain(OneSignal.config.subdomainName);
-        } else {
-          log.error('OneSignal: Your JavaScript initialization code is missing a required parameter %csubdomainName',
-            getConsoleStyle('code'),
-            '. HTTP sites require this parameter to initialize correctly. Please see steps 1.4 and 2 at ' +
-            'https://documentation.onesignal.com/docs/web-push-sdk-setup-http)');
-          return;
-        }
-
-        if (Environment.isDev()) {
-          OneSignal.iframeUrl = `${DEV_FRAME_HOST}/webPushIframe`;
-          OneSignal.popupUrl = `${DEV_FRAME_HOST}/subscribe`;
-        }
-        else {
-          OneSignal.iframeUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/webPushIframe`;
-          OneSignal.popupUrl = `https://${OneSignal.config.subdomainName}.onesignal.com/subscribe`;
-        }
-      } else {
-        if (Environment.isDev()) {
-          OneSignal.modalUrl = `${DEV_FRAME_HOST}/webPushModal`;
-        } else if (Environment.isStaging()) {
-          OneSignal.modalUrl = `${STAGING_FRAME_HOST}/webPushModal`;
-        } else {
-          OneSignal.modalUrl = `https://onesignal.com/webPushModal`;
-        }
-      }
-
-      let subdomainPromise = Promise.resolve();
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        subdomainPromise = HttpHelper.loadSubdomainIFrame()
-                                    .then(() => log.info('Subdomain iFrame loaded'))
-      }
 
       OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
-      subdomainPromise.then(() => {
-        window.addEventListener('focus', (event) => {
-          // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
-          MainHelper.checkAndTriggerNotificationPermissionChanged();
-        });
 
-        // If Safari - add 'fetch' pollyfill if it isn't already added.
-        if (Browser.safari && typeof window.fetch == "undefined") {
-          var s = document.createElement('script');
-          s.setAttribute('src', "https://cdnjs.cloudflare.com/ajax/libs/fetch/0.9.0/fetch.js");
-          document.head.appendChild(s);
+      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+        OneSignal.appConfig = appConfig;
+
+        /**
+         * The user may have forgot to choose a subdomain in his web app setup.
+         *
+         * Or, the user may have an HTTP & HTTPS site while using an HTTPS-only
+         * config on both variants. This would cause the HTTPS site to work
+         * perfectly, while causing errors and preventing web push from working
+         * on the HTTP site.
+         */
+        if (!appConfig.subdomain) {
+          throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
         }
+        /**
+         * The iFrame may never load (e.g. OneSignal might be down), in which
+         * case the rest of the SDK's initialization will be blocked. This is a
+         * good thing! We don't want to access IndexedDb before we know which
+         * origin to store data on.
+         */
+        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(appConfig);
+      }
 
-        InitHelper.initSaveState()
-          .then(() => InitHelper.saveInitOptions())
-          .then(() => {
-            if (Environment.isCustomSubdomain()) {
-              Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-            } else {
-              InitHelper.internalInit();
-            }
-          });
+      window.addEventListener('focus', (event) => {
+        // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
+        MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
+
+      InitHelper.initSaveState(document.title)
+        .then(() => InitHelper.saveInitOptions())
+        .then(() => {
+          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe) {
+            Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+          } else {
+            InitHelper.internalInit();
+          }
+        });
     }
 
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
@@ -335,7 +356,15 @@ export default class OneSignal {
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
       if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        HttpHelper.loadPopup(options);
+          /**
+           * Users may be subscribed to either .onesignal.com or .os.tc. By this time
+           * that they are subscribing to the popup, the Proxy Frame has already been
+           * loaded and the user's subscription status has been obtained. We can then
+           * use the Proxy Frame present now and check its URL to see whether the user
+           * is finally subscribed to .onesignal.com or .os.tc.
+           */
+        OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
+        OneSignal.subscriptionPopupHost.load();
       } else {
         if (!options)
           options = {};
@@ -379,7 +408,7 @@ export default class OneSignal {
 
     if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
       return await new Promise<NotificationPermission>((resolve, reject) => {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, options, reply => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, options, reply => {
           let { status, result } = reply.data;
           if (status === 'resolve') {
             resolve(<NotificationPermission>result);
@@ -410,7 +439,7 @@ export default class OneSignal {
       const notificationPermission = await OneSignal.getNotificationPermission();
 
       if (notificationPermission === NotificationPermission.Default) {
-        log.debug(`(${Environment.getEnv()}) Showing HTTP permission request.`);
+        log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Showing HTTP permission request.`);
         OneSignal._showingHttpPermissionRequest = true;
         return await new Promise((resolve, reject) => {
           window.Notification.requestPermission(permission => {
@@ -419,7 +448,7 @@ export default class OneSignal {
             log.debug('HTTP Permission Request Result:', permission);
             if (permission === 'default') {
               TestHelper.markHttpsNativePromptDismissed();
-              OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+              (OneSignal.proxyFrame as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
                 permission: permission,
                 forceUpdatePermission: true
               });
@@ -430,7 +459,7 @@ export default class OneSignal {
       } else if (notificationPermission === NotificationPermission.Granted &&
         !(await OneSignal.isPushNotificationsEnabled())) {
         // User unsubscribed but permission granted. Reprompt the user for push on the host page
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE);
+        (OneSignal.proxyFrame as any).message(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE);
       }
     }
   }
@@ -588,7 +617,7 @@ export default class OneSignal {
 
     if (Environment.supportsServiceWorkers() &&
         !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-        !Environment.isIframe() &&
+        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.OneSignalProxyFrame &&
         !hasInsecureParentOrigin) {
 
       const serviceWorkerActive = await ServiceWorkerHelper.isServiceWorkerActive();
@@ -760,20 +789,16 @@ export default class OneSignal {
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = Environment.version();
   static _VERSION = Environment.version();
-  static _API_URL = API_URL;
+  static sdkEnvironment = SdkEnvironment;
   static _notificationOpenedCallbacks = [];
   static _idsAvailable_callback = [];
   static _defaultLaunchURL = null;
   static config = null;
-  static _thisIsThePopup = false;
   static __isPopoverShowing = false;
   static _sessionInitAlreadyRunning = false;
   static _isNotificationEnabledCallback = [];
   static _subscriptionSet = true;
-  static iframeUrl = null;
-  static popupUrl = null;
   static modalUrl = null;
-  static _sessionIframeAdded = false;
   static _windowWidth = 650;
   static _windowHeight = 568;
   static _isNewVisitor = false;
@@ -791,8 +816,6 @@ export default class OneSignal {
   static swivel = swivel;
   static api = OneSignalApi;
   static indexedDb = IndexedDb;
-  static iframePostmam = null;
-  static popupPostmam = null;
   static mainHelper = MainHelper;
   static subscriptionHelper = SubscriptionHelper;
   static workerHelper = ServiceWorkerHelper;
@@ -801,6 +824,14 @@ export default class OneSignal {
   static initHelper = InitHelper;
   static testHelper = TestHelper;
   static objectAssign = objectAssign;
+  static appConfig = null;
+  static subscriptionPopup: SubscriptionPopup;
+  static subscriptionPopupHost: SubscriptionPopupHost;
+  static subscriptionModal: SubscriptionModal;
+  static subscriptionModalHost: SubscriptionModalHost;
+  static proxyFrameHost: ProxyFrameHost;
+  static proxyFrame: ProxyFrame;
+
   /**
    * The additional path to the worker file.
    *
@@ -825,8 +856,6 @@ export default class OneSignal {
   static _usingNativePermissionHook = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
-  static _thisIsTheModal: boolean;
-  static modalPostmam: any;
   static httpPermissionRequestPostModal: any;
   static closeNotifications = ServiceWorkerHelper.closeNotifications;
   static isServiceWorkerActive = ServiceWorkerHelper.isServiceWorkerActive;
@@ -845,7 +874,7 @@ export default class OneSignal {
    * Used by Rails-side HTTP popup. Must keep the same name.
    * @InternalApi
    */
-  static _initPopup = HttpHelper.initPopup;
+  static _initPopup = () => OneSignal.subscriptionPopup.subscribe();
 
   static POSTMAM_COMMANDS = {
     CONNECTED: 'connect',
@@ -875,7 +904,8 @@ export default class OneSignal {
     POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
     SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
     HTTP_PERMISSION_REQUEST_RESUBSCRIBE: 'postmam.httpPermissionRequestResubscribe',
-    MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed'
+    MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
+    IS_SUBSCRIBED: 'postmam.isSubscribed'
   };
 
   static EVENTS = {
@@ -983,6 +1013,8 @@ else {
   log.setDefaultLevel((<any>log).levels.WARN);
 }
 
-log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
+LegacyManager.ensureBackwardsCompatibility(OneSignal);
+
+log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
 log.debug(`Browser Environment: ${Browser.name} ${Browser.version}`);

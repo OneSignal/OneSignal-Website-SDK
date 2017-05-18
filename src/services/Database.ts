@@ -10,6 +10,9 @@ import {Notification} from "../models/Notification";
 import SubscriptionHelper from "../helpers/SubscriptionHelper";
 import {Timestamp} from "../models/Timestamp";
 import Emitter from "../libraries/Emitter";
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 enum DatabaseEventName {
   SET
@@ -80,10 +83,10 @@ export default class Database {
    */
   async get<T>(table: string, key?: string): Promise<T> {
     return await new Promise<T>(async (resolve) => {
-      if (!Environment.isServiceWorker() &&
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
           SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-          !Environment.isTest()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
+          SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
         }], reply => {
@@ -105,10 +108,10 @@ export default class Database {
    */
   async put(table: string, keypath: any) {
     await new Promise(async (resolve, reject) => {
-      if (!Environment.isServiceWorker() &&
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-        !Environment.isTest()) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{table: table, keypath: keypath}], reply => {
+        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{table: table, keypath: keypath}], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
@@ -128,11 +131,11 @@ export default class Database {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   remove(table: string, keypath?: string) {
-    if (!Environment.isServiceWorker() &&
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-      !Environment.isTest()) {
+      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
       return new Promise((resolve, reject) => {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{ table: table, keypath: keypath }], reply => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{ table: table, keypath: keypath }], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
@@ -164,6 +167,10 @@ export default class Database {
       await this.put('Options', {key: 'autoRegister', value: appConfig.autoRegister})
     if (appConfig.serviceWorkerConfig)
       await this.put('Options', {key: 'serviceWorkerConfig', value: appConfig.serviceWorkerConfig})
+    if (appConfig.httpUseOneSignalCom)
+      await this.put('Options', { key: 'httpUseOneSignalCom', value: true })
+    else
+      await this.put('Options', {key: 'httpUseOneSignalCom', value: false })
   }
 
   async getAppState(): Promise<AppState> {

@@ -1,4 +1,5 @@
 import * as objectAssign from 'object-assign';
+
 export const enum ResourceType {
   Stylesheet,
   Script
@@ -34,6 +35,10 @@ export class DynamicResourceLoader {
 
   async loadSdkStylesheet(): Promise<ResourceLoadState> {
     return await this.loadIfNew(ResourceType.Stylesheet, new URL('https://cdn.onesignal.com/sdks/OneSignalSDKStyles.css'));
+  }
+
+  async loadFetchPolyfill(): Promise<ResourceLoadState> {
+    return await this.loadIfNew(ResourceType.Script, new URL('https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js'));
   }
 
   /**

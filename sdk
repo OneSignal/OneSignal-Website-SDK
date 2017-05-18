@@ -2,6 +2,7 @@
 
 const path = require('path');
 var fsys = require('fs');
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 if (!fsys.existsSync(path.resolve('node_modules'))) {
   console.log(`Error: Run 'yarn' to install Node dependencies before running this tool.`);
@@ -220,6 +221,7 @@ function createEnvConfig(argv) {
   config.set('env', argv.env);
   config.set('tests', argv.tests);
   config.set('noBundle', argv.noBundle);
+  config.set('analyze', argv.analyze);
   config.set('verbose', argv.verbose);
   config.set('disableTransformSourceMaps', argv.disableTransformSourceMaps);
   config.set('only', argv.only);
@@ -268,7 +270,6 @@ class CleanModule {
       if (!path.endsWith('/build')) {
         console.log(`${chalk.red('[Clean]')} For safety reasons, will not remove ${chalk.blue(path)} not ending in '/build'. This check is hardcoded.`);
         throw new Error('Check build path, not removing for safety reasons.');
-        return;
       }
       console.log(`${chalk.blue('[Clean]')} Remove ${chalk.blue(path)}`);
       try {
@@ -509,11 +510,9 @@ class BundlerModule {
   }
 
   static getWebpackPlugins(config) {
-    return [
+    const plugins = [
       new ExtractTextPlugin(config.get('build:stylesheetsBundleName')),
-      new webpack.ProvidePlugin({
-        'fetch': 'imports-loader?this=>global!exports-loader?global.fetch!whatwg-fetch'
-      }),
+      new webpack.DefinePlugin(BundlerModule.getBuildDefines(config)),
       new webpack.optimize.UglifyJsPlugin({
         sourceMap: true,
         compress: {
@@ -545,14 +544,46 @@ class BundlerModule {
             'NotSubscribedError',
             'PermissionMessageDismissedError',
             'PushNotSupportedError',
-            'PushPermissionNotGrantedError']
+            'PushPermissionNotGrantedError',
+            'SdkInitError',
+            'TimeoutError']
         },
         output: {
           comments: false
         }
-      }),
-      new webpack.DefinePlugin(BundlerModule.getBuildDefines(config))
+      })
     ];
+    if (config.get('analyze')) {
+      const sizeAnalysisReportPath = config.get('build:sizeAnalysisFilePath') || path.resolve(path.join(config.get('build:tempDirectory'), 'size-analysis.html'));
+      plugins.push(new BundleAnalyzerPlugin({
+        // Can be `server`, `static` or `disabled`.
+        // In `server` mode analyzer will start HTTP server to show bundle report.
+        // In `static` mode single HTML file with bundle report will be generated.
+        // In `disabled` mode you can use this plugin to just generate Webpack Stats JSON file by setting `generateStatsFile` to `true`.
+        analyzerMode: 'static',
+        // Path to bundle report file that will be generated in `static` mode.
+        // Relative to bundles output directory.
+        reportFilename: sizeAnalysisReportPath,
+        // Module sizes to show in report by default.
+        // Should be one of `stat`, `parsed` or `gzip`.
+        // See "Definitions" section for more information.
+        defaultSizes: 'gzip',
+        // Automatically open report in default browser
+        openAnalyzer: false,
+        // If `true`, Webpack Stats JSON file will be generated in bundles output directory
+        generateStatsFile: false,
+        // Name of Webpack Stats JSON file that will be generated if `generateStatsFile` is `true`.
+        // Relative to bundles output directory.
+        statsFilename: 'stats.json',
+        // Options for `stats.toJson()` method.
+        // For example you can exclude sources of your modules from stats file with `source: false` option.
+        // See more options here: https://github.com/webpack/webpack/blob/webpack-1/lib/Stats.js#L21
+        statsOptions: null,
+        // Log level. Can be 'info', 'warn', 'error' or 'silent'.
+        logLevel: 'info'
+      }));
+    }
+    return plugins;
   }
 
   static generateWebpackConfig(config, plugins) {
@@ -832,6 +863,14 @@ const argv = yargs
   })
   .option('noWatch', {
     description: `Do not run as a daemon and do not watch for changes. Exits immediately after the action has taken place.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .option('analyze', {
+    description: `Output module size information.`,
     requiresArg: false,
     required: false,
     type: 'boolean',

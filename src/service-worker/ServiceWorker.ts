@@ -1,6 +1,5 @@
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST } from '../vars';
-import Environment from '../Environment'
+import Environment from '../Environment';
 import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';
 import { getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from '../utils';
@@ -9,6 +8,8 @@ import * as swivel from 'swivel';
 import * as Browser from 'bowser';
 import {Notification} from "../models/Notification";
 import Database from '../services/Database';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -21,7 +22,7 @@ declare var self: ServiceWorkerGlobalScope;
  * For HTTPS sites, the service worker is registered site-wide at the top-level scope. For HTTP sites, the service
  * worker is registered to the iFrame pointing to subdomain.onesignal.com.
  */
-class ServiceWorker {
+export class ServiceWorker {
   static REFETCH_REQUESTS;
   static SKIP_REFETCH_REQUESTS;
   static queries;
@@ -32,7 +33,7 @@ class ServiceWorker {
    * previous version.
    */
   static get VERSION() {
-    return __VERSION__;
+    return Environment.version();
   }
 
   /**
@@ -63,8 +64,8 @@ class ServiceWorker {
     return Database;
   }
 
-  static get apiUrl() {
-    return API_URL;
+  static get sdkEnvironment() {
+    return SdkEnvironment;
   }
 
   /**
@@ -116,7 +117,7 @@ class ServiceWorker {
    * @param data The message contents.
    */
   static onMessageReceived(context, data) {
-    log.debug(`%c${capitalize(Environment.getEnv())} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
+    log.debug(`%c${capitalize(SdkEnvironment.getWindowEnv().toString())} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
 
     if (!data) {
       log.debug('Returning from empty data message.');
@@ -284,9 +285,8 @@ class ServiceWorker {
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-        if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
-          !Environment.isDev() && !contains(client.url, '.onesignal.com') ||
-          Environment.isStaging() && !contains(client.url, STAGING_FRAME_HOST)) {
+        if (!contains(client.url, SdkEnvironment.getOneSignalApiUrl().host) &&
+            !contains(client.url, '.os.tc')) {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
@@ -313,7 +313,9 @@ class ServiceWorker {
       url: rawNotification.custom.u,
       icon: rawNotification.icon,
       image: rawNotification.image,
-      tag: rawNotification.tag
+      tag: rawNotification.tag,
+      badge: rawNotification.badge,
+      vibrate: rawNotification.vibrate
     };
 
     // Add action buttons
@@ -417,43 +419,97 @@ class ServiceWorker {
             body: notification.content,
             icon: notification.icon,
             /*
-             On Chrome 56, a large image can be displayed: https://bugs.chromium.org/p/chromium/issues/detail?id=614456
+             On Chrome 56, a large image can be displayed:
+             https://bugs.chromium.org/p/chromium/issues/detail?id=614456
              */
             image: notification.image,
             /*
-             On Chrome 44+, use this property to store extra information which you can read back when the
-             notification gets invoked from a notification click or dismissed event. We serialize the
-             notification in the 'data' field and read it back in other events. See:
+             On Chrome 44+, use this property to store extra information which
+             you can read back when the notification gets invoked from a
+             notification click or dismissed event. We serialize the
+             notification in the 'data' field and read it back in other events.
+             See:
              https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
              */
             data: notification,
             /*
-             On Chrome 48+, action buttons show below the message body of the notification. Clicking either
-             button takes the user to a link. See:
+             On Chrome 48+, action buttons show below the message body of the
+             notification. Clicking either button takes the user to a link. See:
              https://developers.google.com/web/updates/2016/01/notification-actions
              */
             actions: notification.buttons,
             /*
-             Tags are any string value that groups notifications together. Two or notifications sharing a tag
-             replace each other.
+             Tags are any string value that groups notifications together. Two
+             or notifications sharing a tag replace each other.
              */
             tag: extra.tag,
             /*
-             On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
-             is set to true. See:
+             On Chrome 47+ (desktop), notifications will be dismissed after 20
+             seconds unless requireInteraction is set to true. See:
              https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
              */
             requireInteraction: extra.persistNotification,
             /*
-             On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
-             vibrate/signal the user that a new notification has come in. This flag allows subsequent
+             On Chrome 50+, by default notifications replacing
+             identically-tagged notifications no longer vibrate/signal the user
+             that a new notification has come in. This flag allows subsequent
              notifications to re-alert the user. See:
              https://developers.google.com/web/updates/2016/03/notifications
              */
-            renotify: true
+            renotify: true,
+            /*
+             On Chrome 53+, returns the URL of the image used to represent the
+             notification when there is not enough space to display the
+             notification itself.
+
+             The URL of an image to represent the notification when there is not
+             enough space to display the notification itself such as, for
+             example, the Android Notification Bar. On Android devices, the
+             badge should accommodate devices up to 4x resolution, about 96 by
+             96 px, and the image will be automatically masked.
+             */
+            badge: notification.badge,
+            /*
+            A vibration pattern to run with the display of the notification. A
+            vibration pattern can be an array with as few as one member. The
+            values are times in milliseconds where the even indices (0, 2, 4,
+            etc.) indicate how long to vibrate and the odd indices indicate how
+            long to pause. For example [300, 100, 400] would vibrate 300ms,
+            pause 100ms, then vibrate 400ms.
+             */
+            vibrate: notification.vibrate
           };
+
+          notificationOptions = ServiceWorker.filterNotificationOptions(notificationOptions);
           return self.registration.showNotification(notification.heading, notificationOptions)
         });
+  }
+
+  static filterNotificationOptions(options): any {
+    /**
+     * Due to Chrome 59+ notifications on Mac OS X using the native toast style
+     * which limits the number of characters available to display the subdomain
+     * to 14 with requireInteraction and 28 without, we force Mac OS X Chrome
+     * notifications to be transient.
+     */
+    if (typeof options !== "object") {
+      return options;
+    } else {
+      const clone = objectAssign({}, options);
+
+      if (Browser.name === '' && Browser.version === '') {
+        var browser = (Browser as any)._detect(navigator.userAgent);
+      } else {
+        var browser: any = Browser;
+      }
+
+      if (browser.chrome &&
+        browser.mac &&
+        clone) {
+        clone.requireInteraction = false;
+      }
+      return clone;
+    }
   }
 
   /**
@@ -712,7 +768,7 @@ class ServiceWorker {
   static onServiceWorkerInstalled(event) {
     // At this point, the old service worker is still in control
     log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${__VERSION__})`);
+    log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${Environment.version()})`);
 
     if (contains((self as any).location.pathname, "OneSignalSDKWorker"))
       var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION';
@@ -721,7 +777,7 @@ class ServiceWorker {
 
 
     event.waitUntil(
-        Database.put("Ids", {type: serviceWorkerVersionType, id: __VERSION__})
+        Database.put("Ids", {type: serviceWorkerVersionType, id: Environment.version()})
             .then(() => self.skipWaiting())
     );
   }
@@ -1042,7 +1098,7 @@ class ServiceWorker {
           }
           if (notifications.length == 0) {
             log.warn('OneSignal Worker: Received a GCM push signal, but there were no messages to retrieve. Are you' +
-                ' using the wrong API URL?', API_URL);
+                ' using the wrong API URL?', SdkEnvironment.getOneSignalApiUrl().toString());
           }
           resolve(notifications);
         });
@@ -1059,10 +1115,10 @@ if (typeof self === "undefined" &&
 }
 
 // Set logging to the appropriate level
-log.setDefaultLevel(Environment.isDev() ? (log as any).levels.TRACE : (log as any).levels.ERROR);
+log.setDefaultLevel(SdkEnvironment.getBuildEnv() === BuildEnvironmentKind.Development ? (log as any).levels.TRACE : (log as any).levels.ERROR);
 
 // Print it's happy time!
-log.info(`%cOneSignal Service Worker loaded (version ${Environment.version()}, ${Environment.getEnv()} environment).`, getConsoleStyle('bold'));
+log.info(`%cOneSignal Service Worker loaded (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 
 // Run our main file
 if (typeof self !== "undefined") {

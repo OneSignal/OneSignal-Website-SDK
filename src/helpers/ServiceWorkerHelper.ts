@@ -1,20 +1,16 @@
-import {DEV_PREFIX, STAGING_PREFIX} from "../vars";
 import Environment from "../Environment";
 import * as log from "loglevel";
 import Database from "../services/Database";
 import {getConsoleStyle, contains} from "../utils";
 import SubscriptionHelper from "./SubscriptionHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
+import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 
 
 export default class ServiceWorkerHelper {
   static applyServiceWorkerEnvPrefixes() {
-    if (Environment.isDev()) {
-      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    } else if (Environment.isStaging()) {
-      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    }
+      OneSignal.SERVICE_WORKER_PATH = SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKWorker.js';
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKUpdaterWorker.js';
   }
 
   static closeNotifications() {
@@ -40,7 +36,7 @@ export default class ServiceWorkerHelper {
   static updateServiceWorker() {
 
     let updateCheckAlreadyRan = sessionStorage.getItem('onesignal-update-serviceworker-completed');
-    if (!navigator.serviceWorker || !Environment.isHost() || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
+    if (!navigator.serviceWorker || (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.Host) || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
       log.debug('Skipping service worker update for existing session.');
       return;
     }
@@ -149,7 +145,7 @@ export default class ServiceWorkerHelper {
     }
 
     return new Promise((resolve, reject) => {
-      if (!SubscriptionHelper.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
+      if (!SubscriptionHelper.isUsingSubscriptionWorkaround() && SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.OneSignalProxyFrame) {
         let isServiceWorkerActive = false;
         if (navigator.serviceWorker.getRegistrations) {
           navigator.serviceWorker.getRegistrations().then(serviceWorkerRegistrations => {

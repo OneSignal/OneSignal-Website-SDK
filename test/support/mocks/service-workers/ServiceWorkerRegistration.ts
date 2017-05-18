@@ -1,3 +1,5 @@
+import NotImplementedError from "../../../../src/errors/NotImplementedError";
+
 export class ServiceWorkerRegistration implements EventTarget {
   installing: ServiceWorker;
   waiting: ServiceWorker;
@@ -17,4 +19,8 @@ export class ServiceWorkerRegistration implements EventTarget {
     this.active = null;
     return true;
   }
+
+  addEventListener = () => { throw new NotImplementedError() };
+  removeEventListener = () => { throw new NotImplementedError() };
+  dispatchEvent = () => { throw new NotImplementedError() };
 };

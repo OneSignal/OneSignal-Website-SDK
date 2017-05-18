@@ -1,9 +1,12 @@
-import {API_URL} from "./vars";
 import * as log from "loglevel";
 import {contains, trimUndefined} from "./utils";
 import {Uuid} from "./models/Uuid";
 import * as objectAssign from "object-assign";
 import Environment from "./Environment";
+import { AppConfig } from "./models/AppConfig";
+import SdkEnvironment from './managers/SdkEnvironment';
+import * as JSONP from 'jsonp';
+import { SdkInitErrorKind, SdkInitError } from './errors/SdkInitError';
 
 
 export default class OneSignalApi {
@@ -43,7 +46,7 @@ export default class OneSignalApi {
       (contents as any).body = JSON.stringify(data);
 
     var status;
-    return fetch(API_URL + action, contents)
+    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
         .then(response => {
           status = response.status;
           return response.json();
@@ -125,5 +128,39 @@ export default class OneSignalApi {
     }
     trimUndefined(params);
     return OneSignalApi.post('notifications', params);
+  }
+
+  static async getAppConfig(appId: Uuid): Promise<AppConfig> {
+    try {
+      const serverConfig = await new Promise<any>((resolve, reject) => {
+        /**
+         * Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
+         */
+        JSONP(`${SdkEnvironment.getOneSignalApiUrl().toString()}/config/${appId.value}/web`, null, (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            if (data.success) {
+              resolve(data);
+            } else {
+              // For JSONP, we return a 200 even for errors, there's a success: false param
+              reject(data);
+            }
+          }
+        });
+      });
+      const {
+        subdomain: subdomain,
+        http_use_onesignal_com: httpUseOneSignalCom,
+        safari_web_id: safariWebId
+      } = serverConfig;
+      const config = new AppConfig();
+      config.subdomain = subdomain;
+      config.httpUseOneSignalCom = httpUseOneSignalCom;
+      config.safariWebId = safariWebId;
+      return config;
+    } catch (e) {
+      throw e;
+    }
   }
 }
