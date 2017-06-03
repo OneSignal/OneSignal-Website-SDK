@@ -8,10 +8,6 @@ import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 
 
 export default class ServiceWorkerHelper {
-  static applyServiceWorkerEnvPrefixes() {
-      OneSignal.SERVICE_WORKER_PATH = SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKUpdaterWorker.js';
-  }
 
   static closeNotifications() {
     if (navigator.serviceWorker && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
@@ -56,7 +52,7 @@ export default class ServiceWorkerHelper {
       if (serviceWorkerRegistration && serviceWorkerRegistration.active) {
         // An existing service worker
         let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
-        if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+        if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH)) {
           // OneSignalSDKWorker.js was installed
           log.debug('(Service Worker Update)', 'The main service worker is active.');
           return Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
@@ -69,7 +65,7 @@ export default class ServiceWorkerHelper {
                                // If there is a different version
                                log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
                                log.info(`Upgrading service worker (v${version} -> v${OneSignal._VERSION})`);
-                               return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                               return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                              }
                              else {
                                // No changed service worker version
@@ -81,12 +77,12 @@ export default class ServiceWorkerHelper {
                              // No version was saved; somehow this got overwritten
                              // Reinstall the alternate service worker
                              log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
-                             return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                             return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                            }
 
                          });
         }
-        else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+        else if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
           // OneSignalSDKUpdaterWorker.js was installed
           log.debug('(Service Worker Update)', 'The alternate service worker is active.');
           return Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
@@ -99,7 +95,7 @@ export default class ServiceWorkerHelper {
                                // If there is a different version
                                log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
                                log.info(`Upgrading new service worker (v${version} -> v${OneSignal._VERSION})`);
-                               return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                               return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                              }
                              else {
                                // No changed service worker version
@@ -111,7 +107,7 @@ export default class ServiceWorkerHelper {
                              // No version was saved; somehow this got overwritten
                              // Reinstall the alternate service worker
                              log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
-                             return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                             return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                            }
                          });
         } else {

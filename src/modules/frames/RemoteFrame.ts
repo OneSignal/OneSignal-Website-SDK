@@ -50,8 +50,6 @@ export default class RemoteFrame implements Disposable {
    * forever for the first handshake message.
    */
   initialize(): Promise<void> {
-    ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
-
     const creator = window.opener || window.parent;
     if (creator == window) {
       document.write(`<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`);
@@ -95,7 +93,7 @@ export default class RemoteFrame implements Disposable {
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
     if (!isPushEnabled) {
       try {
-        const workerRegistration = await navigator.serviceWorker.register(OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM)
+        const workerRegistration = await navigator.serviceWorker.register(SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM)
         SubscriptionHelper.enableNotifications(workerRegistration);
       } catch (e) {
         log.error('Failed to register service worker in the popup/modal:', e);

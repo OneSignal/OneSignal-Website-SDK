@@ -22,6 +22,7 @@ import AltOriginManager from "../managers/AltOriginManager";
 import { AppConfig } from "../models/AppConfig";
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import * as objectAssign from 'object-assign';
+import CookieSyncer from '../modules/CookieSyncer';
 
 declare var OneSignal: any;
 
@@ -118,6 +119,7 @@ export default class InitHelper {
     }
 
     MainHelper.checkAndDoHttpPermissionRequest();
+    OneSignal.cookieSyncer.install();
   }
 
   static installNativePromptPermissionChangedHook() {
@@ -329,13 +331,25 @@ export default class InitHelper {
      * with the same name below it. The bottom-most hash properties are the most
      * final "source of truth".
      */
-    return objectAssign({
+    const finalConfig = objectAssign({
       path: '/'
     }, {
         subdomainName: serverConfig.subdomain
       }, {
         safari_web_id: serverConfig.safariWebId
+      }, {
+        cookieSyncEnabled: serverConfig.cookieSyncEnabled
       },
       userConfig);
+
+    // For users that do not specify a subdomainName but have one still assigned
+    // in the dashboard, do not assign the dashboard-provided subdomain,
+    // otherwise the site that may be intended for an HTTPS integration will
+    // become HTTP-only
+    if (!userConfig.subdomainName) {
+      delete finalConfig.subdomainName;
+    }
+
+    return finalConfig;
   }
 }

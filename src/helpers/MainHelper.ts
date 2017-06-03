@@ -288,11 +288,6 @@ export default class MainHelper {
     }
   }
 
-  static getPrefixedServiceWorkerNameForEnv() {
-      OneSignal.SERVICE_WORKER_PATH = SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKUpdaterWorker.js';
-  }
-
   static checkAndDoHttpPermissionRequest() {
     log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
     if (this.isUsingHttpPermissionRequest()) {

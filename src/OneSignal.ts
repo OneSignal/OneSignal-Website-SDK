@@ -61,6 +61,7 @@ import SubscriptionPopup from './modules/frames/SubscriptionPopup';
 import SubscriptionModal from './modules/frames/SubscriptionModal';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
+import CookieSyncer from './modules/CookieSyncer';
 
 
 export default class OneSignal {
@@ -151,8 +152,6 @@ export default class OneSignal {
       }
     }
 
-    ServiceWorkerHelper.applyServiceWorkerEnvPrefixes();
-
     if (OneSignal._initCalled) {
       throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
     }
@@ -161,6 +160,7 @@ export default class OneSignal {
     let appConfig: AppConfig;
     try {
       appConfig = await OneSignalApi.getAppConfig(new Uuid(options.appId));
+      OneSignal.cookieSyncer = new CookieSyncer(appConfig.cookieSyncEnabled);
       OneSignal.config = InitHelper.getMergedLegacyConfig(options, appConfig);
       log.debug(`OneSignal: Final web app config: %c${JSON.stringify(OneSignal.config, null, 4)}`, getConsoleStyle('code'));
     } catch (e) {
@@ -861,7 +861,8 @@ export default class OneSignal {
   static isServiceWorkerActive = ServiceWorkerHelper.isServiceWorkerActive;
   static _showingHttpPermissionRequest = false;
   static context: Context;
-  static checkAndWipeUserSubscription = function() { }
+  static checkAndWipeUserSubscription = function () { }
+  static cookieSyncer: CookieSyncer;
 
 
   /**
