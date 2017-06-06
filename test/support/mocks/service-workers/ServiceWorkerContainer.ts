@@ -1,4 +1,5 @@
 import { ServiceWorkerRegistration } from './ServiceWorkerRegistration';
+import NotImplementedError from "../../../../src/errors/NotImplementedError";
 
 export class ServiceWorkerContainer implements EventTarget {
     private _serviceWorkerRegistration: ServiceWorkerRegistration;
@@ -39,6 +40,9 @@ export class ServiceWorkerContainer implements EventTarget {
       }
     }
 
+    addEventListener = () => { throw new NotImplementedError() };
+    removeEventListener = () => { throw new NotImplementedError() };
+    dispatchEvent = () => { throw new NotImplementedError() };
     // EventHandler oncontrollerchange;
     // EventHandler onmessage; // event.source of message events is ServiceWorker object
     // EventHandler onmessageerror;

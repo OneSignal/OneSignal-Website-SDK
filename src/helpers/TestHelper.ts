@@ -1,4 +1,3 @@
-import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL, STAGING_FRAME_HOST, DEV_PREFIX, STAGING_PREFIX } from '../vars';
 import Environment from '../Environment';
 import OneSignalApi from '../OneSignalApi';
 import * as log from 'loglevel';
@@ -7,7 +6,7 @@ import Event from "../Event";
 import Database from '../services/Database';
 import * as Browser from 'bowser';
 import {
-  getConsoleStyle, contains, normalizeSubdomain, getDeviceTypeForBrowser, capitalize,
+  getConsoleStyle, contains, getDeviceTypeForBrowser, capitalize,
   awaitOneSignalInitAndSupported
 } from '../utils';
 import * as objectAssign from 'object-assign';
@@ -21,6 +20,7 @@ import Bell from "../bell/Bell";
 import SubscriptionHelper from "./SubscriptionHelper";
 import EventHelper from "./EventHelper";
 import { Subscription } from '../models/Subscription';
+import SdkEnvironment from "../managers/SdkEnvironment";
 declare var OneSignal: any;
 
 export default class TestHelper {
@@ -50,7 +50,7 @@ export default class TestHelper {
      */
     if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
       await new Promise((resolve, reject) => {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, {}, reply => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, {}, reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
@@ -60,7 +60,6 @@ export default class TestHelper {
       });
     }
     let dismissCount = await Database.get<number>('Options', 'promptDismissCount');
-    console.log(`(${Environment.getEnv()}) dismissCount: ${dismissCount}`)
     if (!dismissCount) {
       dismissCount = 0;
     }
@@ -77,7 +76,7 @@ export default class TestHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    log.debug(`(${Environment.getEnv()}) OneSignal: User dismissed the native notification prompt; reprompt after ${dismissDays} days.`);
+    log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the native notification prompt; reprompt after ${dismissDays} days.`);
     await Database.put('Options', { key: 'promptDismissCount', value: dismissCount });
     return Cookie.set('onesignal-notification-prompt', 'dismissed', {
       // In 8 hours, or 1/3 of the day

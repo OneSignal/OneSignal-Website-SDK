@@ -1,6 +1,8 @@
 import Environment from './Environment';
 import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from './utils';
 import * as log from 'loglevel';
+import SdkEnvironment from './managers/SdkEnvironment';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 
 
 if (Environment.isBrowser()) {
@@ -29,7 +31,7 @@ if (Environment.isBrowser()) {
         OneSignal.push(predefinedOneSignalPushes[i]);
   }
 }
-else if (Environment.isServiceWorker()) {
+else if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
   // We're running as the service worker
   (self as any).OneSignal = require('./service-worker/ServiceWorker').default;
 }

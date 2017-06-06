@@ -3,12 +3,15 @@ import * as log from "loglevel";
 import Event from "../Event";
 import Database from "../services/Database";
 import * as Browser from "bowser";
-import {getConsoleStyle, contains, executeAndTimeoutPromiseAfter} from "../utils";
+import {getConsoleStyle, contains, timeoutPromise} from "../utils";
 import MainHelper from "./MainHelper";
 import ServiceWorkerHelper from "./ServiceWorkerHelper";
 import EventHelper from "./EventHelper";
 import PushPermissionNotGrantedError from "../errors/PushPermissionNotGrantedError";
 import TestHelper from "./TestHelper";
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import TimeoutError from '../errors/TimeoutError';
 
 
 export default class SubscriptionHelper {
@@ -24,40 +27,40 @@ export default class SubscriptionHelper {
                            sw_path = OneSignal.config.path;
 
                          if (typeof serviceWorkerRegistration === "undefined") // Nothing registered, very first run
-                           ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                           ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
                          else {
                            if (serviceWorkerRegistration.active) {
                              let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
-                             if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+                             if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH)) {
                                // OneSignalSDKWorker.js was installed
                                Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
                                        .then(function (version) {
                                          if (version) {
                                            if (version != OneSignal._VERSION) {
                                              log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                                            }
                                            else
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
                                          }
                                          else
-                                           ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                                           ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                                        });
                              }
-                             else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                             else if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
                                // OneSignalSDKUpdaterWorker.js was installed
                                Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
                                        .then(function (version) {
                                          if (version) {
                                            if (version != OneSignal._VERSION) {
                                              log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
                                            }
                                            else
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
                                          }
                                          else
-                                           ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                           ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
                                        });
                              } else {
                                // Some other service worker not belonging to us was installed
@@ -65,12 +68,12 @@ export default class SubscriptionHelper {
                                log.info('Unregistering previous service worker:', serviceWorkerRegistration);
                                serviceWorkerRegistration.unregister().then(unregistrationSuccessful => {
                                  log.info('Result of unregistering:', unregistrationSuccessful);
-                                 ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                                 ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
                                });
                              }
                            }
                            else if (serviceWorkerRegistration.installing == null)
-                             ServiceWorkerHelper.registerServiceWorker(sw_path + OneSignal.SERVICE_WORKER_PATH);
+                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
                          }
                        });
                      }
@@ -115,7 +118,7 @@ export default class SubscriptionHelper {
    */
   static isUsingSubscriptionWorkaround() {
     if (!OneSignal.config) {
-      throw new Error(`(${Environment.getEnv()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`);
+      throw new Error(`(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`);
     }
     if (Browser.safari) {
       return false;
@@ -127,7 +130,7 @@ export default class SubscriptionHelper {
       return false;
     }
 
-    return (Environment.isHost() &&
+    return ((SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host) &&
     (!!OneSignal.config.subdomainName || location.protocol === 'http:'));
   }
 
@@ -179,10 +182,9 @@ export default class SubscriptionHelper {
                if (permission !== "granted") {
                  throw new PushPermissionNotGrantedError();
                } else {
-                 return executeAndTimeoutPromiseAfter(
+                 return timeoutPromise(
                    serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}),
-                   15000,
-                   "A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing."
+                   15000
                  );
                }
              })
@@ -248,10 +250,10 @@ export default class SubscriptionHelper {
                            else
                              log.warn('Could not subscribe your browser for push notifications.');
 
-                           if (OneSignal._thisIsThePopup) {
+                           if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
                              // 12/16/2015 -- At this point, the user has just clicked Allow on the HTTP popup!!
                              // 11/22/2016 - HTTP popup should move non-essential subscription parts to the iframe
-                             OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
+                             OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, {
                                subscriptionInfo: subscriptionInfo
                              }, message => {
                                if (message.data.progress === true) {
@@ -273,6 +275,9 @@ export default class SubscriptionHelper {
              })
              .catch(function (e) {
                OneSignal._sessionInitAlreadyRunning = false;
+               if (e instanceof TimeoutError) {
+                 log.error("A possible Chrome bug (https://bugs.chromium.org/p/chromium/issues/detail?id=623062) is preventing this subscription from completing.");
+               }
                if (e.message === 'Registration failed - no sender id provided' || e.message === 'Registration failed - manifest empty or missing') {
                  let manifestDom = document.querySelector('link[rel=manifest]');
                  if (manifestDom) {
@@ -331,12 +336,12 @@ export default class SubscriptionHelper {
                  if (!OneSignal._usingNativePermissionHook)
                    EventHelper.triggerNotificationPermissionChanged();
 
-                 if (opener && OneSignal._thisIsThePopup)
+                 if (opener && SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup)
                    window.close();
                });
 
                // If there was an error subscribing like the timeout bug, close the popup anyways
-               if (opener && OneSignal._thisIsThePopup)
+               if (opener && SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup)
                  window.close();
              });
   }

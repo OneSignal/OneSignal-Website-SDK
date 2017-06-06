@@ -1,21 +1,13 @@
-import {DEV_PREFIX, STAGING_PREFIX} from "../vars";
 import Environment from "../Environment";
 import * as log from "loglevel";
 import Database from "../services/Database";
 import {getConsoleStyle, contains} from "../utils";
 import SubscriptionHelper from "./SubscriptionHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
+import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 
 
 export default class ServiceWorkerHelper {
-  static applyServiceWorkerEnvPrefixes() {
-    if (Environment.isDev()) {
-      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    } else if (Environment.isStaging()) {
-      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    }
-  }
 
   static closeNotifications() {
     if (navigator.serviceWorker && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
@@ -40,7 +32,7 @@ export default class ServiceWorkerHelper {
   static updateServiceWorker() {
 
     let updateCheckAlreadyRan = sessionStorage.getItem('onesignal-update-serviceworker-completed');
-    if (!navigator.serviceWorker || !Environment.isHost() || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
+    if (!navigator.serviceWorker || (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.Host) || location.protocol !== 'https:' || updateCheckAlreadyRan == "true") {
       log.debug('Skipping service worker update for existing session.');
       return;
     }
@@ -60,7 +52,7 @@ export default class ServiceWorkerHelper {
       if (serviceWorkerRegistration && serviceWorkerRegistration.active) {
         // An existing service worker
         let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
-        if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_PATH)) {
+        if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH)) {
           // OneSignalSDKWorker.js was installed
           log.debug('(Service Worker Update)', 'The main service worker is active.');
           return Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
@@ -73,7 +65,7 @@ export default class ServiceWorkerHelper {
                                // If there is a different version
                                log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
                                log.info(`Upgrading service worker (v${version} -> v${OneSignal._VERSION})`);
-                               return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                               return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                              }
                              else {
                                // No changed service worker version
@@ -85,12 +77,12 @@ export default class ServiceWorkerHelper {
                              // No version was saved; somehow this got overwritten
                              // Reinstall the alternate service worker
                              log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
-                             return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                             return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                            }
 
                          });
         }
-        else if (contains(previousWorkerUrl, sw_path + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+        else if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
           // OneSignalSDKUpdaterWorker.js was installed
           log.debug('(Service Worker Update)', 'The alternate service worker is active.');
           return Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
@@ -103,7 +95,7 @@ export default class ServiceWorkerHelper {
                                // If there is a different version
                                log.debug('(Service Worker Update)', 'New service worker version exists:', OneSignal._VERSION);
                                log.info(`Upgrading new service worker (v${version} -> v${OneSignal._VERSION})`);
-                               return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                               return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                              }
                              else {
                                // No changed service worker version
@@ -115,7 +107,7 @@ export default class ServiceWorkerHelper {
                              // No version was saved; somehow this got overwritten
                              // Reinstall the alternate service worker
                              log.debug('(Service Worker Update)', 'No stored service worker version. Reinstalling the service worker.');
-                             return navigator.serviceWorker.register(sw_path + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
+                             return navigator.serviceWorker.register(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM);
                            }
                          });
         } else {
@@ -149,7 +141,7 @@ export default class ServiceWorkerHelper {
     }
 
     return new Promise((resolve, reject) => {
-      if (!SubscriptionHelper.isUsingSubscriptionWorkaround() && !Environment.isIframe()) {
+      if (!SubscriptionHelper.isUsingSubscriptionWorkaround() && SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.OneSignalProxyFrame) {
         let isServiceWorkerActive = false;
         if (navigator.serviceWorker.getRegistrations) {
           navigator.serviceWorker.getRegistrations().then(serviceWorkerRegistrations => {

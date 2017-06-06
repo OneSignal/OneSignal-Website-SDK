@@ -1,4 +1,3 @@
-import {DEV_PREFIX, STAGING_PREFIX} from "../vars";
 import Environment from "../Environment";
 import OneSignalApi from "../OneSignalApi";
 import * as log from "loglevel";
@@ -8,7 +7,6 @@ import * as Browser from "bowser";
 import {
   getConsoleStyle,
   contains,
-  normalizeSubdomain,
   getDeviceTypeForBrowser,
   capitalize,
   awaitOneSignalInitAndSupported
@@ -23,6 +21,8 @@ import EventHelper from "./EventHelper";
 import InitHelper from "./InitHelper";
 import { InvalidStateReason, InvalidStateError } from "../errors/InvalidStateError";
 import { ResourceLoadState } from "../services/DynamicResourceLoader";
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 
 export default class MainHelper {
@@ -69,7 +69,7 @@ export default class MainHelper {
         return new Promise((resolve, reject) => {
           if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
             // User is using our subscription workaround
-            OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
+            OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
               let remoteNotificationPermission = reply.data;
               resolve(remoteNotificationPermission);
             });
@@ -108,13 +108,12 @@ export default class MainHelper {
   static beginTemporaryBrowserSession() {
     log.debug('OneSignal: Marking browser session as continuing.');
     sessionStorage.setItem("ONE_SIGNAL_SESSION", "true");
-    if (Environment.isPopup()) {
+    if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
       // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
       // main page
-      if (!OneSignal.popupPostmam) {
-        return;
+      if (OneSignal.subscriptionPopup) {
+        OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
       }
-      OneSignal.popupPostmam.message(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION);
     }
   }
 
@@ -124,8 +123,8 @@ export default class MainHelper {
   static isUsingHttpPermissionRequest() {
     return OneSignal.config.httpPermissionRequest &&
       OneSignal.config.httpPermissionRequest.enable == true &&
-      (Environment.isIframe() ||
-      Environment.isHost() && SubscriptionHelper.isUsingSubscriptionWorkaround());
+      (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame ||
+      SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host && SubscriptionHelper.isUsingSubscriptionWorkaround());
   }
 
   /**
@@ -289,16 +288,6 @@ export default class MainHelper {
     }
   }
 
-  static getPrefixedServiceWorkerNameForEnv() {
-    if (Environment.isDev()) {
-      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    } else if (Environment.isStaging()) {
-      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
-    }
-  }
-
   static checkAndDoHttpPermissionRequest() {
     log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
     if (this.isUsingHttpPermissionRequest()) {
@@ -321,7 +310,7 @@ export default class MainHelper {
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
-    var url = `${OneSignal._API_URL}apps/${appId}/icon`;
+    var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
@@ -339,7 +328,7 @@ export default class MainHelper {
     }
     OneSignal._channel = (swivel as any).at(serviceWorkerRegistration ? serviceWorkerRegistration.active : null);
     OneSignal._channel.on('data', function handler(context, data) {
-      log.debug(`%c${capitalize(Environment.getEnv())} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
+      log.debug(`%c${capitalize(SdkEnvironment.getWindowEnv().toString())} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
     OneSignal._channel.on('notification.displayed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
@@ -369,20 +358,14 @@ export default class MainHelper {
       }
     });
     OneSignal._channel.on('command.redirect', function handler(context, data) {
-      log.debug(`${Environment.getEnv()} Picked up command.redirect to ${data}, forwarding to host page.`, OneSignal.iframePostmam);
-      if (OneSignal.iframePostmam) {
-        OneSignal.iframePostmam.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
+      log.debug(`${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`);
+      if (OneSignal.proxyFrameHost) {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
       }
     });
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
-  }
-
-  static getNormalizedSubdomain(subdomain) {
-    if (subdomain) {
-      return normalizeSubdomain(subdomain);
-    }
   }
 
   static getPromptOptionsQueryString() {
@@ -458,111 +441,6 @@ export default class MainHelper {
     Event.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
       result: clickResult
     });
-  }
-
-  static autoCorrectSubdomain(inputSubdomain) {
-    let normalizedSubdomain = MainHelper.getNormalizedSubdomain(inputSubdomain);
-    if (normalizedSubdomain !== inputSubdomain) {
-      log.info(`Auto-corrected subdomain '${inputSubdomain}' to '${normalizedSubdomain}'.`);
-    }
-    return normalizedSubdomain;
-  }
-
-  static createHiddenDomIFrame(url, name?) {
-    let node = document.createElement("iframe");
-    node.style.display = "none";
-    if (!url) {
-      url = 'about:blank';
-    }
-    node.src = url;
-    if (name) {
-      node.name = name;
-    }
-    document.body.appendChild(node);
-    return node;
-  }
-
-  static createHiddenSubscriptionDomModal(url) {
-    let iframeContainer = document.createElement('div');
-    iframeContainer.setAttribute('id', 'OneSignal-iframe-modal');
-    iframeContainer.setAttribute('style', 'display:none !important');
-    iframeContainer.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed;' +
-      ' top: 0; left: 0; right: 0; bottom: 0; z-index: 3000000000; display: flex;' +
-      ' align-items: center; justify-content: center;"></div>';
-    document.body.appendChild(iframeContainer);
-
-    let iframeContainerStyle = document.createElement('style');
-    iframeContainerStyle.innerHTML = `@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} }`;
-    document.getElementsByTagName('head')[0].appendChild(iframeContainerStyle);
-
-    let iframe = document.createElement("iframe");
-    iframe.className = "OneSignal-permission-iframe";
-    iframe.setAttribute('frameborder', '0');
-    iframe.width = OneSignal._windowWidth.toString();
-    iframe.height = OneSignal._windowHeight.toString();
-    iframe.src = url;
-
-    document.getElementById("notif-permission").appendChild(iframe);
-    return iframe;
-  }
-
-  static showSubscriptionDomModal() {
-    const iframeContainer = document.getElementById('OneSignal-iframe-modal');
-    iframeContainer.setAttribute('style', '');
-  }
-
-  // Arguments :
-  //  verb : 'GET'|'POST'
-  //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
-  static openWindowViaPost(url, data, overrides) {
-    var form = document.createElement("form");
-    form.action = url;
-    form.method = 'POST';
-    form.target = "onesignal-http-popup";
-
-    var dualScreenLeft = window.screenLeft != undefined ? window.screenLeft : (screen as any).left;
-    var dualScreenTop = window.screenTop != undefined ? window.screenTop : (screen as any).top;
-    var thisWidth = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
-    var thisHeight = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
-    var childWidth = OneSignal._windowWidth;
-    var childHeight = OneSignal._windowHeight;
-    var left = ((thisWidth / 2) - (childWidth / 2)) + dualScreenLeft;
-    var top = ((thisHeight / 2) - (childHeight / 2)) + dualScreenTop;
-
-    if (overrides) {
-      if (overrides.childWidth) {
-        childWidth = overrides.childWidth;
-      }
-      if (overrides.childHeight) {
-        childHeight = overrides.childHeight;
-      }
-      if (overrides.left) {
-        left = overrides.left;
-      }
-      if (overrides.top) {
-        top = overrides.top;
-      }
-    }
-    const windowRef = window.open('about:blank', "onesignal-http-popup", `'scrollbars=yes, width=${childWidth}, height=${childHeight}, top=${top}, left=${left}`);
-
-    if (data) {
-      for (var key in data) {
-        var input = document.createElement("textarea");
-        input.name = key;
-        input.value = typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key];
-        form.appendChild(input);
-      }
-    }
-    form.style.display = 'none';
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-
-    return windowRef;
-  };
-
-  static openSubdomainPopup(url, data, overrides) {
-    return MainHelper.openWindowViaPost(url, data, overrides);
   }
 
   static getAppId() {

@@ -1,3 +1,5 @@
+import NotImplementedError from '../../../../src/errors/NotImplementedError';
+
 export default class ServiceWorker implements EventTarget {
   scriptURL: String;
   state: ServiceWorkerState;
@@ -6,6 +8,9 @@ export default class ServiceWorker implements EventTarget {
 
   }
 
+  addEventListener = () => { throw new NotImplementedError() };
+  removeEventListener = () => { throw new NotImplementedError() };
+  dispatchEvent = () => { throw new NotImplementedError() };
   // event
   // EventHandler onstatechange;
 };

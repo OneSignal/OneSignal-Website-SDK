@@ -38,6 +38,8 @@ interface ServiceWorkerGlobalScope {
   addEventListener(type: "fetch", listener: (this: this, ev: any) => any, ...args): void;
 }
 
+type ServiceWorkerState = "installing" | "installed" | "activating" | "activated" | "redundant";
+
 interface TestContext {
   context: any;
 }
