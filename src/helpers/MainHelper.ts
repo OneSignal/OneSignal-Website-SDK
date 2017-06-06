@@ -291,11 +291,11 @@ export default class MainHelper {
 
   static getPrefixedServiceWorkerNameForEnv() {
     if (Environment.isDev()) {
-      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + OneSignal.SERVICE_WORKER_PATH;
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + OneSignal.SERVICE_WORKER_UPDATER_PATH;
     } else if (Environment.isStaging()) {
-      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + OneSignal.SERVICE_WORKER_PATH;
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + OneSignal.SERVICE_WORKER_UPDATER_PATH;
     }
   }
 

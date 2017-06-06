@@ -9,11 +9,11 @@ import SubscriptionHelper from "./SubscriptionHelper";
 export default class ServiceWorkerHelper {
   static applyServiceWorkerEnvPrefixes() {
     if (Environment.isDev()) {
-      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+      OneSignal.SERVICE_WORKER_PATH = DEV_PREFIX + OneSignal.SERVICE_WORKER_PATH;
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = DEV_PREFIX + OneSignal.SERVICE_WORKER_UPDATER_PATH;
     } else if (Environment.isStaging()) {
-      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + 'OneSignalSDKWorker.js';
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + 'OneSignalSDKUpdaterWorker.js';
+      OneSignal.SERVICE_WORKER_PATH = STAGING_PREFIX + OneSignal.SERVICE_WORKER_PATH;
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = STAGING_PREFIX + OneSignal.SERVICE_WORKER_UPDATER_PATH;
     }
   }
 
@@ -144,8 +144,8 @@ export default class ServiceWorkerHelper {
       return serviceWorkerRegistration &&
         serviceWorkerRegistration.active &&
         serviceWorkerRegistration.active.state === 'activated' &&
-        (contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKWorker') ||
-        contains(serviceWorkerRegistration.active.scriptURL, 'OneSignalSDKUpdaterWorker'));
+        (contains(serviceWorkerRegistration.active.scriptURL, OneSignal.SERVICE_WORKER_PATH) ||
+        contains(serviceWorkerRegistration.active.scriptURL, OneSignal.SERVICE_WORKER_UPDATER_PATH));
     }
 
     return new Promise((resolve, reject) => {
