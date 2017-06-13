@@ -46,7 +46,7 @@ export default class OneSignalApi {
       (contents as any).body = JSON.stringify(data);
 
     var status;
-    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
+    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + action, contents)
         .then(response => {
           status = response.status;
           return response.json();
