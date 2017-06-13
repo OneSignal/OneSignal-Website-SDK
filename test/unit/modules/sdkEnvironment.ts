@@ -65,3 +65,10 @@ test('should get custom iFrame window environment', async t => {
   browser.changeURL(window, "https://my-special-site.com/somepage");
   t.is(SdkEnvironment.getWindowEnv(), WindowEnvironmentKind.CustomIframe);
 });
+
+test('API URL should be valid', async t => {
+  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Development).toString(), 'https://localhost:3001/api/v1');
+  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Staging).toString(), 'https://onesignal-staging.pw/api/v1');
+  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Production).toString(), 'https://onesignal.com/api/v1');
+});
+
