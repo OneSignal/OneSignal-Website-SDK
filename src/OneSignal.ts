@@ -16,8 +16,6 @@ import {
   unsubscribeFromPush,
   prepareEmailForHashing,
   executeCallback,
-  md5,
-  sha1,
   awaitSdkEvent,
   contains
 } from "./utils";
@@ -62,6 +60,7 @@ import SubscriptionModal from './modules/frames/SubscriptionModal';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
 import CookieSyncer from './modules/CookieSyncer';
+import Crypto from './services/Crypto';
 
 
 export default class OneSignal {
@@ -111,8 +110,9 @@ export default class OneSignal {
     if (!deviceId)
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     const result = await OneSignalApi.updatePlayer(appId, deviceId, {
-      em_m: md5(sanitizedEmail),
-      em_s: sha1(sanitizedEmail)
+      em_m: Crypto.md5(sanitizedEmail),
+      em_s: Crypto.sha1(sanitizedEmail),
+      em_s256: Crypto.sha256(sanitizedEmail)
     });
     if (result && result.success) {
       return true;
@@ -863,6 +863,7 @@ export default class OneSignal {
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
   static cookieSyncer: CookieSyncer;
+  static crypto = Crypto;
 
 
   /**
