@@ -1,9 +1,9 @@
 import Postmam from '../../Postmam';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
-import Database from "../../services/Database";
+import Database from '../../services/Database';
 import Event from "../../Event";
 import EventHelper from "../../helpers/EventHelper";
-import { timeoutPromise, unsubscribeFromPush, isPushNotificationsSupported } from '../../utils';
+import { timeoutPromise, unsubscribeFromPush, isPushNotificationsSupported, decodeHtmlEntities } from '../../utils';
 import TimeoutError from '../../errors/TimeoutError';
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import { Uuid } from '../../models/Uuid';
@@ -58,6 +58,7 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.IS_SHOWING_HTTP_PERMISSION_REQUEST, this.onIsShowingHttpPermissionRequest.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, this.onMarkPromptDismissed.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, this.onIsSubscribed.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, this.onUnsubscribeProxyFrame.bind(this));
     this.messenger.listen();
   }
 
@@ -203,6 +204,27 @@ export default class ProxyFrame extends RemoteFrame {
   async onIsSubscribed(message: MessengerMessageEvent) {
     const isSubscribed = await OneSignal.isPushNotificationsEnabled();
     message.reply(isSubscribed);
+    return false;
+  }
+
+  async onUnsubscribeProxyFrame(message: MessengerMessageEvent) {
+    const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+    if (isSubscribed) {
+      /*
+        Set a flag to prevent a notification from being sent from OneSignal's
+        side. The subscription stored locally on the browser is live and
+        messageable, but we can't query it or unsubscribe from it since we're on
+        an insecure origin. The most we can do is have our SDK delete the stored
+        information to pretend we're not subscribed on both the client SDK side
+        and the server side.
+      */
+      // Set a flag remotely to prevent notifications from being sent
+      await OneSignal.setSubscription(false);
+      // Orphan the subscription by removing data stored about it
+      // This causes our SDK to think we're no longer subscribed on this frame
+      await OneSignal.database.rebuild();
+    }
+    message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }
 }

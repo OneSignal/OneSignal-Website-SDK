@@ -285,32 +285,13 @@ export default class Database {
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
    */
-  async rebuild() {
+  static async rebuild() {
+    Database.ensureSingletonInstance();
     return Promise.all([
-      this.remove('Ids'),
-      this.remove('NotificationOpened'),
-      this.remove('Options'),
+      Database.databaseInstance.remove('Ids'),
+      Database.databaseInstance.remove('NotificationOpened'),
+      Database.databaseInstance.remove('Options'),
     ]);
-  }
-
-  async printIds() {
-    return Promise.all([
-      this.get('Ids', 'appId'),
-      this.get('Ids', 'registrationId'),
-      this.get('Ids', 'userId')
-    ]).then(function([appId, registrationId, userId]) {
-      if (console.table) {
-       console.table({'OneSignal Database IDs': {
-         'App ID': appId,
-         'Registration ID': registrationId,
-         'User ID': userId
-       }});
-      } else {
-        log.info('App ID:', appId);
-        log.info('Registration ID:', registrationId);
-        log.info('User ID:', userId);
-      }
-    });
   }
 
   /* Temp Database Proxy */

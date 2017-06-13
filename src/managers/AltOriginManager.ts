@@ -9,6 +9,7 @@ import Database from '../services/Database';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import { contains } from '../utils';
 import * as log from 'loglevel';
+import OneSignalStub from '../OneSignalStub';
 
 export default class AltOriginManager {
 
@@ -18,27 +19,77 @@ export default class AltOriginManager {
 
   static async discoverAltOrigin(appConfig): Promise<ProxyFrameHost> {
     const iframeUrls = AltOriginManager.getOneSignalProxyIframeUrls(appConfig);
+    const allProxyFrameHosts: ProxyFrameHost[] = [];
+    let targetProxyFrameHost;
     for (const iframeUrl of iframeUrls) {
       const proxyFrameHost = new ProxyFrameHost(iframeUrl);
       // A TimeoutError could happen here; it gets rejected out of this entire loop
       await proxyFrameHost.load();
-      if (await proxyFrameHost.isSubscribed()) {
-        // If we're subscribed, we're done searching for the iframe
-        return proxyFrameHost;
-      } else {
-        if (contains(proxyFrameHost.url.host, '.os.tc')) {
-          // We've already loaded .onesignal.com and they're not subscribed
-          // There's no other frames to check; the user is completely not subscribed
-          return proxyFrameHost;
+      allProxyFrameHosts.push(proxyFrameHost);
+    }
+    const nonDuplicatedAltOriginSubscriptions = await AltOriginManager.removeDuplicatedAltOriginSubscription(allProxyFrameHosts);
+
+    if (nonDuplicatedAltOriginSubscriptions) {
+      targetProxyFrameHost = nonDuplicatedAltOriginSubscriptions[0];
+    } else {
+      for (const proxyFrameHost of allProxyFrameHosts) {
+        if (await proxyFrameHost.isSubscribed()) {
+          // If we're subscribed, we're done searching for the iframe
+          targetProxyFrameHost = proxyFrameHost;
         } else {
-          // We've just loaded .onesignal.com and they're not subscribed
-          // Load the .os.tc frame next to check
-          // Remove the .onesignal.com frame; there's no need to keep it around anymore
-          log.debug(`Loaded ${proxyFrameHost.url.host} iFrame, but the user was not subscribed.`);
-          proxyFrameHost.dispose();
-          continue;
+          if (contains(proxyFrameHost.url.host, '.os.tc')) {
+            if (!targetProxyFrameHost) {
+              // We've already loaded .onesignal.com and they're not subscribed
+              // There's no other frames to check; the user is completely not subscribed
+              targetProxyFrameHost = proxyFrameHost;
+            } else {
+              // Already subscribed to .onesignal.com; remove os.tc frame
+            proxyFrameHost.dispose();
+            }
+          } else {
+            // We've just loaded .onesignal.com and they're not subscribed
+            // Load the .os.tc frame next to check
+            // Remove the .onesignal.com frame; there's no need to keep it around anymore
+            // Actually don't dispose it, so we can check for duplicate subscriptions
+            proxyFrameHost.dispose();
+            continue;
+          }
         }
       }
+    }
+
+    return targetProxyFrameHost;
+  }
+
+  static async removeDuplicatedAltOriginSubscription(proxyFrameHosts: ProxyFrameHost[]): Promise<void | ProxyFrameHost[]> {
+    const subscribedProxyFrameHosts = [];
+    for (const proxyFrameHost of proxyFrameHosts) {
+      if (await proxyFrameHost.isSubscribed()) {
+        subscribedProxyFrameHosts.push(proxyFrameHost);
+      }
+    }
+    if (subscribedProxyFrameHosts.length < 2) {
+      // If the user is only subscribed on one host, or not subscribed at all,
+      // they don't have duplicate subscriptions
+      return null;
+    }
+    if (SdkEnvironment.getBuildEnv() == BuildEnvironmentKind.Development) {
+      var hostToCheck = '.localhost:3001';
+    } else if (SdkEnvironment.getBuildEnv() == BuildEnvironmentKind.Production) {
+      var hostToCheck = '.onesignal.com';
+    }
+    var oneSignalComProxyFrameHost: ProxyFrameHost = (subscribedProxyFrameHosts as any).find(proxyFrameHost => contains(proxyFrameHost.url.host, hostToCheck));
+    if (!oneSignalComProxyFrameHost) {
+      // They aren't subscribed to the .onesignal.com frame; shouldn't happen
+      // unless we have 2 other frames in the future they can subscribe to
+      return null;
+    } else {
+      await oneSignalComProxyFrameHost.unsubscribeFromPush();
+      oneSignalComProxyFrameHost.dispose();
+
+      const indexToRemove = proxyFrameHosts.indexOf(oneSignalComProxyFrameHost);
+      proxyFrameHosts.splice(indexToRemove, 1);
+      return proxyFrameHosts;
     }
   }
 
