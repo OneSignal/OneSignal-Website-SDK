@@ -3,7 +3,7 @@ import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Database from "../../services/Database";
 import Event from "../../Event";
 import EventHelper from "../../helpers/EventHelper";
-import { timeoutPromise } from "../../utils";
+import { timeoutPromise, unsubscribeFromPush } from '../../utils';
 import TimeoutError from '../../errors/TimeoutError';
 import * as log from 'loglevel';
 import { NotificationPermission } from '../../models/NotificationPermission';
@@ -181,6 +181,14 @@ export default class ProxyFrameHost implements Disposable {
     return new Promise((resolve, reject) => {
       this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, reply => {
         resolve(reply.data);
+      });
+    });
+  }
+
+  unsubscribeFromPush(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.messenger.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null, reply => {
+        resolve();
       });
     });
   }

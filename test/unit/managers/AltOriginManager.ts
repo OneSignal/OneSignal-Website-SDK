@@ -76,6 +76,14 @@ function setupDiscoverAltOriginTest(t: any) {
       return false;
     }
   }
+
+  t.context.stubIsSubscribedToBothImpl = async function() {
+    if (this.url.host === t.context.subdomainOneSignalHost) {
+      return true;
+    } else if (this.url.host === t.context.subdomainOsTcHost) {
+      return true;
+    }
+  }
 }
 
 test(`should discover alt origin to be subdomain.onesignal.com if user is already subscribed there`, async t => {
@@ -83,10 +91,12 @@ test(`should discover alt origin to be subdomain.onesignal.com if user is alread
   const { appConfig, stubIsSubscribedToOneSignal } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToOneSignalImpl);
+  const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
 
   const proxyFrame = await AltOriginManager.discoverAltOrigin(appConfig);
   t.is(proxyFrame.url.host, t.context.subdomainOneSignalHost);
 
+  stubRemoveDuplicatedAltOriginSubscription.restore();
   stubIsSubscribed.restore();
   stubLoad.restore();
 });
@@ -96,10 +106,12 @@ test(`should discover alt origin to be subdomain.os.tc if user is not subscribed
   const { appConfig, stubIsSubscribedToOneSignal } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToOsTcImpl);
+  const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
 
   const proxyFrame = await AltOriginManager.discoverAltOrigin(appConfig);
   t.is(proxyFrame.url.host, t.context.subdomainOsTcHost);
 
+  stubRemoveDuplicatedAltOriginSubscription.restore();
   stubIsSubscribed.restore();
   stubLoad.restore();
 });
@@ -109,10 +121,29 @@ test(`should discover alt origin to be subdomain.os.tc if user is not subscribed
   const { appConfig, stubIsSubscribedToOneSignal } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToNoneImpl);
+  const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
 
   const proxyFrame = await AltOriginManager.discoverAltOrigin(appConfig);
   t.is(proxyFrame.url.host, t.context.subdomainOsTcHost);
 
+  stubRemoveDuplicatedAltOriginSubscription.restore();
   stubIsSubscribed.restore();
   stubLoad.restore();
 });
+
+test(`should discover alt origin to be subdomain.os.tc if user is subscribed to both onesignal.com and os.tc`, async t => {
+  setupDiscoverAltOriginTest(t);
+  const { appConfig, stubIsSubscribedToOneSignal } = t.context;
+  const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
+  const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToBothImpl);
+  const stubUnsubscribeFromPush = sinon.stub(ProxyFrameHost.prototype, 'unsubscribeFromPush').resolves(undefined);
+
+  const proxyFrame = await AltOriginManager.discoverAltOrigin(appConfig);
+  t.is(proxyFrame.url.host, t.context.subdomainOsTcHost);
+  t.true(stubUnsubscribeFromPush.called);
+
+  stubUnsubscribeFromPush.restore();
+  stubIsSubscribed.restore();
+  stubLoad.restore();
+});
+
