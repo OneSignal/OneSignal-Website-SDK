@@ -20,20 +20,20 @@ export default class AnimatedElement {
               public hideClass: string,
               public state = 'shown',
               public targetTransitionEvents = ['opacity', 'transform'],
-              public nestedContentSelector: string = null,
+              public nestedContentSelector?: string,
               public transitionCheckTimeout = 500) {
   }
 
   /**
    * Asynchronously shows an element by applying its {showClass} CSS class.
-   * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
+   *
+   * Returns a promise that is resolved with this element when it has completed its transition.
    */
-  show() {
+  show(): Promise<AnimatedElement> {
     if (!this.hidden) {
       return Promise.resolve(this);
     }
     else return new Promise((resolve) => {
-      var self = this;
       this.state = 'showing';
       Event.trigger(AnimatedElement.EVENTS.SHOWING, this);
       if (this.hideClass)
@@ -106,7 +106,6 @@ export default class AnimatedElement {
       return Promise.resolve(this);
     else return new Promise((resolve) => {
       OneSignal.once(AnimatedElement.EVENTS.SHOWN, (event) => {
-        var self = this;
         if (event === this) {
           return resolve(this);
         }

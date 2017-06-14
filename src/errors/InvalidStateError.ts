@@ -7,7 +7,8 @@ export enum InvalidStateReason {
   RedundantPermissionMessage,
   PushPermissionAlreadyGranted,
   UnsupportedEnvironment,
-  MissingDomElement
+  MissingDomElement,
+  ServiceWorkerNotActivated
 }
 
 export class InvalidStateError extends OneSignalError {
@@ -32,6 +33,9 @@ export class InvalidStateError extends OneSignalError {
         break;
       case InvalidStateReason.UnsupportedEnvironment:
         super(`The current environment does not support this operation.`);
+        break;
+      case InvalidStateReason.ServiceWorkerNotActivated:
+        super(`The service worker must be activated first.`);
         break;
     }
     this.description = InvalidStateReason[reason];

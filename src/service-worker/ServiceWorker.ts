@@ -1,16 +1,21 @@
-///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
-import Environment from '../Environment';
-import OneSignalApi from '../OneSignalApi';
-import * as log from 'loglevel';
-import { getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid, capitalize } from '../utils';
-import * as objectAssign from 'object-assign';
-import * as swivel from 'swivel';
 import * as Browser from 'bowser';
-import {Notification} from "../models/Notification";
-import Database from '../services/Database';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
+import * as log from 'loglevel';
+import * as objectAssign from 'object-assign';
 
+import Environment from '../Environment';
+import { WorkerMessenger, WorkerMessengerCommand } from '../libraries/WorkerMessenger';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { SubscriptionManager } from '../managers/SubscriptionManager';
+import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
+import Context from '../models/Context';
+import OneSignalApi from '../OneSignalApi';
+import Database from '../services/Database';
+import { contains, getConsoleStyle, getDeviceTypeForBrowser, isValidUuid, trimUndefined } from '../utils';
+import { Uuid } from '../models/Uuid';
+import { AppConfig } from '../models/AppConfig';
+import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
+
+///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
 
 
@@ -23,9 +28,6 @@ declare var self: ServiceWorkerGlobalScope;
  * worker is registered to the iFrame pointing to subdomain.onesignal.com.
  */
 export class ServiceWorker {
-  static REFETCH_REQUESTS;
-  static SKIP_REFETCH_REQUESTS;
-  static queries;
   static UNSUBSCRIBED_FROM_NOTIFICATIONS;
 
   /**
@@ -48,16 +50,6 @@ export class ServiceWorker {
   }
 
   /**
-   * Allows message passing between this service worker and its controlled clients, or webpages. Controlled
-   * clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
-   * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
-   * clients to communicate with the service worker to close all active notifications.
-   */
-  static get swivel() {
-    return swivel;
-  }
-
-  /**
    * An interface to the browser's IndexedDB.
    */
   static get database() {
@@ -76,6 +68,19 @@ export class ServiceWorker {
   }
 
   /**
+   * Allows message passing between this service worker and its controlled clients, or webpages. Controlled
+   * clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
+   * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
+   * clients to communicate with the service worker to close all active notifications.
+   */
+  static get workerMessenger(): WorkerMessenger {
+    if (!(self as any).workerMessenger) {
+      (self as any).workerMessenger = new WorkerMessenger(null);
+    }
+    return (self as any).workerMessenger;
+  }
+
+  /**
    * Service worker entry point.
    */
   static run() {
@@ -85,93 +90,77 @@ export class ServiceWorker {
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('pushsubscriptionchange', ServiceWorker.onPushSubscriptionChange);
+    /*
+      According to
+      https://w3c.github.io/ServiceWorker/#run-service-worker-algorithm:
 
+      "user agents are encouraged to show a warning that the event listeners
+      must be added on the very first evaluation of the worker script."
+
+      We have to register our event handler statically (not within an
+      asynchronous method) so that the browser can optimize not waking up the
+      service worker for events that aren't known for sure to be listened for.
+
+      Also see: https://github.com/w3c/ServiceWorker/issues/1156
+    */
+    log.debug('Setting up message listeners.');
+    // self.addEventListener('message') is statically added inside the listen() method
+    ServiceWorker.workerMessenger.listen();
     // Install messaging event handlers for page <-> service worker communication
-    (swivel as any).on('data', ServiceWorker.onMessageReceived);
-
-    // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
-    // Fix: If the browser is Firefox and is v44, use the following workaround:
-    if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
-      Database.get('Options', 'serviceWorkerRefetchRequests')
-        .then(refetchRequests => {
-          if (refetchRequests == true) {
-            log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
-            ServiceWorker.REFETCH_REQUESTS = true;
-            self.addEventListener('fetch', ServiceWorker.onFetch);
-          } else {
-            ServiceWorker.SKIP_REFETCH_REQUESTS = true;
-            log.info('Detected Firefox v44 but not refetching requests because option is set to false.');
-          }
-        })
-        .catch(e => {
-          log.error(e);
-          ServiceWorker.REFETCH_REQUESTS = true;
-          self.addEventListener('fetch', ServiceWorker.onFetch);
-        });
-    }
+    ServiceWorker.setupMessageListeners();
   }
 
-  /**
-   * Occurs when a control message is received from the host page. Not related to the actual push message event.
-   * @param context Used to reply to the host page.
-   * @param data The message contents.
-   */
-  static onMessageReceived(context, data) {
-    log.debug(`%c${capitalize(SdkEnvironment.getWindowEnv().toString())} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
-
-    if (!data) {
-      log.debug('Returning from empty data message.');
-      return;
-    }
-
-    if (data === 'notification.closeall') {
-      // Used for testing; the host page can close active notifications
-      self.registration.getNotifications(null).then(notifications => {
-        for (let notification of notifications) {
-          notification.close();
-        }
-      });
-    }
-    else if (data.query) {
-      ServiceWorker.processQuery(data.query, data.response);
-    }
-  }
-
-  static processQuery(queryType, response) {
-    if (!ServiceWorker.queries) {
-      log.debug(`queryClient() was not called before processQuery(). ServiceWorker.queries is empty.`);
-    }
-    if (!ServiceWorker.queries[queryType]) {
-      log.debug(`Received query ${queryType} response ${response}. Expected ServiceWorker.queries to be preset to a hash.`);
-      return;
+  static async getAppId(): Promise<Uuid> {
+    if (self.location.search) {
+      // Successful regex matches are at position 1
+      const appId = self.location.search.match(/appId=([0-9a-z-]+)&?/i)[1];
+      return new Uuid(appId);
     } else {
-      if (!ServiceWorker.queries[queryType].promise) {
-        log.debug(`Expected ServiceWorker.queries[${queryType}].promise value to be a Promise: ${ServiceWorker.queries[queryType]}`);
-        return;
-      }
-      ServiceWorker.queries[queryType].promiseResolve(response);
+      const { appId } = await Database.getAppConfig();
+      return appId;
     }
   }
 
-  /**
-   * Messages the service worker client the specified queryString via postMessage(), and returns a Promise that
-   * resolves to the client's response.
-   * @param serviceWorkerClient A service worker client.
-   * @param queryType The message to send to the client.
-     */
-  static queryClient(serviceWorkerClient, queryType) {
-    if (!ServiceWorker.queries) {
-      ServiceWorker.queries = {};
-    }
-    if (!ServiceWorker.queries[queryType]) {
-      ServiceWorker.queries[queryType] = {};
-    }
-    ServiceWorker.queries[queryType].promise = new Promise((resolve, reject) => {
-      ServiceWorker.queries[queryType].promiseResolve = resolve;
-      ServiceWorker.queries[queryType].promiseReject = reject;
-      (swivel as any).emit(serviceWorkerClient.id, queryType);
+  static async setupMessageListeners() {
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.WorkerVersion, _ => {
+      log.debug('[Service Worker] Received worker version message.');
+      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.WorkerVersion, Environment.version());
     });
-    return ServiceWorker.queries[queryType].promise;
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.Subscribe, async (appConfigBundle: any) => {
+      const appConfig = AppConfig.deserialize(appConfigBundle);
+      log.debug('[Service Worker] Received subscribe message.');
+      const context = new Context(appConfig);
+      const subscription = await context.subscriptionManager.subscribe();
+      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
+    });
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (appConfigBundle: any) => {
+      console.log('[Service Worker] Received AMP subscription state message.');
+      const pushSubscription = await self.registration.pushManager.getSubscription();
+      if (!pushSubscription) {
+        ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, false);
+      } else {
+        const permission = await self.registration.pushManager.permissionState(pushSubscription.options);
+        const { optedOut } = await Database.getSubscription();
+        const isSubscribed = !!pushSubscription && permission === "granted" && optedOut !== true;
+        ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, isSubscribed);
+      }
+    });
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, async () => {
+      console.log('[Service Worker] Received AMP subscribe message.');
+      const appId = await ServiceWorker.getAppId();
+      const appConfig = await OneSignalApi.getAppConfig(appId);
+      const context = new Context(appConfig);
+      const subscription = await context.subscriptionManager.subscribe();
+      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
+    });
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
+      console.log('[Service Worker] Received AMP unsubscribe message.');
+      const appId = await ServiceWorker.getAppId();
+      const appConfig = await OneSignalApi.getAppConfig(appId);
+      const context = new Context(appConfig);
+      await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
+      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
+    });
   }
 
   /**
@@ -202,8 +191,9 @@ export class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => ServiceWorker.updateBackupNotification(notif).catch(e => log.error(e)))
-                      .then(() => { (swivel as any).broadcast('notification.displayed', notif) })
-                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif).catch(e => log.error(e)))
+                    .then(() => {
+                      return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => log.error(e))
+                    })
                 }).bind(null, notification));
               }
 
@@ -215,6 +205,7 @@ export class ServiceWorker {
               log.debug('Failed to display a notification:', e);
               if (ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
                 log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
+                return undefined;
               } else {
                 log.debug(
                     "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
@@ -277,9 +268,9 @@ export class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static async getActiveClients() {
-    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    let activeClients = [];
+  static async getActiveClients(): Promise<Array<WindowClient>> {
+    const windowClients: Array<WindowClient> = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    let activeClients: Array<WindowClient> = [];
 
     for (let client of windowClients) {
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
@@ -389,103 +380,105 @@ export class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static displayNotification(notification, overrides?) {
+  static async displayNotification(notification, overrides?) {
     log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, getConsoleStyle('code'), notification);
-    return Promise.all([
-          // Use the default title if one isn't provided
-          ServiceWorker._getTitle(),
-          // Use the default icon if one isn't provided
-          Database.get('Options', 'defaultIcon'),
-          // Get option of whether we should leave notification displaying indefinitely
-          Database.get('Options', 'persistNotification'),
-          // Get app ID for tag value
-          Database.get('Ids', 'appId')
-        ])
-        .then(([defaultTitle, defaultIcon, persistNotification, appId]) => {
-          notification.heading = notification.heading ? notification.heading : defaultTitle;
-          notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
-          var extra: any = {};
-          extra.tag = notification.tag || appId;
-          extra.persistNotification = persistNotification;
 
-          // Allow overriding some values
-          if (!overrides)
-            overrides = {};
-          notification = objectAssign(notification, overrides);
+    // Use the default title if one isn't provided
+    const defaultTitle = await ServiceWorker._getTitle();
+    // Use the default icon if one isn't provided
+    const defaultIcon = await Database.get('Options', 'defaultIcon');
+    // Get option of whether we should leave notification displaying indefinitely
+    const persistNotification = await Database.get('Options', 'persistNotification');
+    // Get app ID for tag value
+    const appId = await ServiceWorker.getAppId();
 
-          ServiceWorker.ensureNotificationResourcesHttps(notification);
+    notification.heading = notification.heading ? notification.heading : defaultTitle;
+    notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
+    var extra: any = {};
+    extra.tag = notification.tag || appId.toString();
+    if (persistNotification === 'force') {
+      extra.persistNotification = true;
+    } else {
+      extra.persistNotification = persistNotification;
+    }
 
-          let notificationOptions = {
-            body: notification.content,
-            icon: notification.icon,
-            /*
-             On Chrome 56, a large image can be displayed:
-             https://bugs.chromium.org/p/chromium/issues/detail?id=614456
-             */
-            image: notification.image,
-            /*
-             On Chrome 44+, use this property to store extra information which
-             you can read back when the notification gets invoked from a
-             notification click or dismissed event. We serialize the
-             notification in the 'data' field and read it back in other events.
-             See:
-             https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
-             */
-            data: notification,
-            /*
-             On Chrome 48+, action buttons show below the message body of the
-             notification. Clicking either button takes the user to a link. See:
-             https://developers.google.com/web/updates/2016/01/notification-actions
-             */
-            actions: notification.buttons,
-            /*
-             Tags are any string value that groups notifications together. Two
-             or notifications sharing a tag replace each other.
-             */
-            tag: extra.tag,
-            /*
-             On Chrome 47+ (desktop), notifications will be dismissed after 20
-             seconds unless requireInteraction is set to true. See:
-             https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
-             */
-            requireInteraction: extra.persistNotification,
-            /*
-             On Chrome 50+, by default notifications replacing
-             identically-tagged notifications no longer vibrate/signal the user
-             that a new notification has come in. This flag allows subsequent
-             notifications to re-alert the user. See:
-             https://developers.google.com/web/updates/2016/03/notifications
-             */
-            renotify: true,
-            /*
-             On Chrome 53+, returns the URL of the image used to represent the
-             notification when there is not enough space to display the
-             notification itself.
+    // Allow overriding some values
+    if (!overrides)
+      overrides = {};
+    notification = objectAssign(notification, overrides);
 
-             The URL of an image to represent the notification when there is not
-             enough space to display the notification itself such as, for
-             example, the Android Notification Bar. On Android devices, the
-             badge should accommodate devices up to 4x resolution, about 96 by
-             96 px, and the image will be automatically masked.
-             */
-            badge: notification.badge,
-            /*
-            A vibration pattern to run with the display of the notification. A
-            vibration pattern can be an array with as few as one member. The
-            values are times in milliseconds where the even indices (0, 2, 4,
-            etc.) indicate how long to vibrate and the odd indices indicate how
-            long to pause. For example [300, 100, 400] would vibrate 300ms,
-            pause 100ms, then vibrate 400ms.
-             */
-            vibrate: notification.vibrate
-          };
+    ServiceWorker.ensureNotificationResourcesHttps(notification);
 
-          notificationOptions = ServiceWorker.filterNotificationOptions(notificationOptions);
-          return self.registration.showNotification(notification.heading, notificationOptions)
-        });
+    let notificationOptions = {
+      body: notification.content,
+      icon: notification.icon,
+      /*
+       On Chrome 56, a large image can be displayed:
+       https://bugs.chromium.org/p/chromium/issues/detail?id=614456
+       */
+      image: notification.image,
+      /*
+       On Chrome 44+, use this property to store extra information which
+       you can read back when the notification gets invoked from a
+       notification click or dismissed event. We serialize the
+       notification in the 'data' field and read it back in other events.
+       See:
+       https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
+       */
+      data: notification,
+      /*
+       On Chrome 48+, action buttons show below the message body of the
+       notification. Clicking either button takes the user to a link. See:
+       https://developers.google.com/web/updates/2016/01/notification-actions
+       */
+      actions: notification.buttons,
+      /*
+       Tags are any string value that groups notifications together. Two
+       or notifications sharing a tag replace each other.
+       */
+      tag: extra.tag,
+      /*
+       On Chrome 47+ (desktop), notifications will be dismissed after 20
+       seconds unless requireInteraction is set to true. See:
+       https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
+       */
+      requireInteraction: extra.persistNotification,
+      /*
+       On Chrome 50+, by default notifications replacing
+       identically-tagged notifications no longer vibrate/signal the user
+       that a new notification has come in. This flag allows subsequent
+       notifications to re-alert the user. See:
+       https://developers.google.com/web/updates/2016/03/notifications
+       */
+      renotify: true,
+      /*
+       On Chrome 53+, returns the URL of the image used to represent the
+       notification when there is not enough space to display the
+       notification itself.
+
+       The URL of an image to represent the notification when there is not
+       enough space to display the notification itself such as, for
+       example, the Android Notification Bar. On Android devices, the
+       badge should accommodate devices up to 4x resolution, about 96 by
+       96 px, and the image will be automatically masked.
+       */
+      badge: notification.badge,
+      /*
+      A vibration pattern to run with the display of the notification. A
+      vibration pattern can be an array with as few as one member. The
+      values are times in milliseconds where the even indices (0, 2, 4,
+      etc.) indicate how long to vibrate and the odd indices indicate how
+      long to pause. For example [300, 100, 400] would vibrate 300ms,
+      pause 100ms, then vibrate 400ms.
+       */
+      vibrate: notification.vibrate
+    };
+
+    notificationOptions = ServiceWorker.filterNotificationOptions(notificationOptions, persistNotification === 'force');
+    return self.registration.showNotification(notification.heading, notificationOptions);
   }
 
-  static filterNotificationOptions(options): any {
+  static filterNotificationOptions(options: any, forcePersistNotifications?: boolean): any {
     /**
      * Due to Chrome 59+ notifications on Mac OS X using the native toast style
      * which limits the number of characters available to display the subdomain
@@ -507,6 +500,9 @@ export class ServiceWorker {
         browser.mac &&
         clone) {
         clone.requireInteraction = false;
+      }
+      if (forcePersistNotifications) {
+        clone.requireInteraction = true;
       }
       return clone;
     }
@@ -570,7 +566,7 @@ export class ServiceWorker {
     log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
     let notification = event.notification.data;
 
-    (swivel as any).broadcast('notification.dismissed', notification);
+    ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => log.error(e))
     event.waitUntil(
         ServiceWorker.executeWebhooks('notification.dismissed', notification)
     );
@@ -673,10 +669,10 @@ export class ServiceWorker {
 
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
-        if ((client.isSubdomainIframe && clientUrl === launchUrl) ||
-            (!client.isSubdomainIframe && client.url === launchUrl) ||
+        if ((client['isSubdomainIframe'] && clientUrl === launchUrl) ||
+            (!client['isSubdomainIframe'] && client.url === launchUrl) ||
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
-          (swivel as any).emit(client.id, 'notification.clicked', notification);
+          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notification, client);
             try {
               await client.focus();
             } catch (e) {
@@ -689,7 +685,7 @@ export class ServiceWorker {
 
           client.navigate() is available on Chrome 49+ and Firefox 50+.
            */
-          if (client.isSubdomainIframe) {
+          if (client['isSubdomainIframe']) {
             try {
               log.debug('Client is subdomain iFrame. Attempting to focus() client.')
               await client.focus();
@@ -699,15 +695,15 @@ export class ServiceWorker {
             if (notificationOpensLink) {
               log.debug(`Redirecting HTTP site to ${launchUrl}.`);
               await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
-              (swivel as any).emit(client.id, 'command.redirect', launchUrl);
+              ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.RedirectPage, launchUrl, client);
             } else {
               log.debug('Not navigating because link is special.')
             }
           }
           else if (client.navigate) {
             try {
-              log.debug('Client is standard HTTPS site. Attempting to focus() client.')
-              await client.focus();
+              //log.debug('Client is standard HTTPS site. Attempting to focus() client.')
+              //await client.focus();
             } catch (e) {
               log.error("Failed to focus:", client, e);
             }
@@ -720,6 +716,9 @@ export class ServiceWorker {
                 log.debug('Not navigating because link is special.')
               }
             } catch (e) {
+              console.error("Failed to navigate.");
+              console.error("Failed to navigate because:", e);
+              console.error("Failed to navigate to " + launchUrl + " because:", e);
               log.error("Failed to navigate:", client, launchUrl, e);
             }
           } else {
@@ -744,8 +743,8 @@ export class ServiceWorker {
     const { deviceId } = await Database.getSubscription();
     if (appId && deviceId) {
       await OneSignalApi.put('notifications/' + notification.id, {
-        app_id: appId,
-        player_id: deviceId,
+        app_id: appId.toString(),
+        player_id: deviceId.toString(),
         opened: true
       });
     }
@@ -762,24 +761,13 @@ export class ServiceWorker {
       return await self.clients.openWindow(url);
     } catch (e) {
       log.warn(`Failed to open the URL '${url}':`, e);
+      return undefined;
     }
   }
 
   static onServiceWorkerInstalled(event) {
     // At this point, the old service worker is still in control
-    log.debug(`Called %conServiceWorkerInstalled(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    log.info(`Installing service worker: %c${(self as any).location.pathname}`, getConsoleStyle('code'), `(version ${Environment.version()})`);
-
-    if (contains((self as any).location.pathname, "OneSignalSDKWorker"))
-      var serviceWorkerVersionType = 'WORKER1_ONE_SIGNAL_SW_VERSION';
-    else
-      var serviceWorkerVersionType = 'WORKER2_ONE_SIGNAL_SW_VERSION';
-
-
-    event.waitUntil(
-        Database.put("Ids", {type: serviceWorkerVersionType, id: Environment.version()})
-            .then(() => self.skipWaiting())
-    );
+    event.waitUntil(self.skipWaiting());
   }
 
   /*
@@ -787,25 +775,13 @@ export class ServiceWorker {
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
-    log.debug(`Called %conServiceWorkerActivated(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    var activationPromise = self.clients.claim()
-                                        .then(() => Database.get('Ids', 'userId'))
-                                        .then(userId => {
-                                          if (self.registration && userId) {
-                                            return ServiceWorker._subscribeForPush(self.registration).catch(e => log.error(e));
-                                          }
-                                        });
-    event.waitUntil(activationPromise);
-  }
-
-  static onFetch(event) {
-    event.respondWith(fetch(event.request));
+    log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
+    event.waitUntil(self.clients.claim());
   }
 
   static onPushSubscriptionChange(event) {
     // Subscription expired
     log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-    event.waitUntil(ServiceWorker._subscribeForPush(self.registration));
   }
 
   /**
@@ -816,146 +792,11 @@ export class ServiceWorker {
     (self as any).dispatchEvent(new ExtendableEvent(eventName));
   }
 
-  static _subscribeForPush(serviceWorkerRegistration) {
-    log.debug(`Called %c_subscribeForPush()`, getConsoleStyle('code'));
-
-    var appId = null;
-    return Database.get('Ids', 'appId')
-        .then(retrievedAppId => {
-          appId = retrievedAppId;
-          return serviceWorkerRegistration.pushManager.getSubscription()
-        }).then(oldSubscription => {
-          log.debug(`Resubscribing old subscription`, oldSubscription, `within the service worker ...`);
-          // Only re-subscribe if there was an existing subscription and we are on Chrome 54+ wth PushSubscriptionOptions
-          // Otherwise there's really no way to resubscribe since we don't have the manifest.json sender ID
-          if (oldSubscription && oldSubscription.options) {
-            return serviceWorkerRegistration.pushManager.subscribe(oldSubscription.options);
-          } else {
-            return Promise.resolve();
-          }
-        }).then(subscription => {
-          var subscriptionInfo: any = null;
-          if (subscription) {
-            subscriptionInfo = {};
-            log.debug(`Finished resubscribing for push:`, subscription);
-            if (typeof subscription.subscriptionId != "undefined") {
-              // Chrome 43 & 42
-              subscriptionInfo.endpointOrToken = subscription.subscriptionId;
-            }
-            else {
-              // Chrome 44+ and FireFox
-              // 4/13/16: We now store the full endpoint instead of just the registration token
-              subscriptionInfo.endpointOrToken = subscription.endpoint;
-            }
-
-            // 4/13/16: Retrieve p256dh and auth for new encrypted web push protocol in Chrome 50
-            if (subscription.getKey) {
-              // p256dh and auth are both ArrayBuffer
-              let p256dh = null;
-              try {
-                p256dh = subscription.getKey('p256dh');
-              } catch (e) {
-                // User is most likely running < Chrome < 50
-              }
-              let auth = null;
-              try {
-                auth = subscription.getKey('auth');
-              } catch (e) {
-                // User is most likely running < Firefox 45
-              }
-
-              if (p256dh) {
-                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-                let p256dh_base64encoded = btoa(
-                  String.fromCharCode.apply(null, new Uint8Array(p256dh)));
-                subscriptionInfo.p256dh = p256dh_base64encoded;
-              }
-              if (auth) {
-                // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-                let auth_base64encoded = btoa(
-                  String.fromCharCode.apply(null, new Uint8Array(auth)));
-                subscriptionInfo.auth = auth_base64encoded;
-              }
-            }
-          }
-          else {
-            log.info('Could not subscribe your browser for push notifications.');
-          }
-
-          return ServiceWorker.registerWithOneSignal(appId, subscriptionInfo);
-        });
-  }
-
-  /**
-   * Creates a new or updates an existing OneSignal user (player) on the server.
-   *
-   * @param appId The app ID passed to init.
-   *        subscriptionInfo A hash containing 'endpointOrToken', 'auth', and 'p256dh'.
-   *
-   * @remarks Called from both the host page and HTTP popup.
-   *          If a user already exists and is subscribed, updates the session count by calling /players/:id/on_session; otherwise, a new player is registered via the /players endpoint.
-   *          Saves the user ID and registration ID to the local web database after the response from OneSignal.
-   */
-  static registerWithOneSignal(appId, subscriptionInfo) {
-    let deviceType = getDeviceTypeForBrowser();
-    return Promise.all([
-      Database.get('Ids', 'userId'),
-    ])
-        .then(([userId, subscription]) => {
-          if (!userId) {
-            return Promise.reject('No user ID found; cannot update existing player info');
-          }
-          let requestUrl = `players/${userId}`;
-
-          let requestData: any = {
-            app_id: appId,
-            device_type: deviceType,
-            language: Environment.getLanguage(),
-            timezone: new Date().getTimezoneOffset() * -60,
-            device_model: navigator.platform + " " + Browser.name,
-            device_os: Browser.version,
-            sdk: ServiceWorker.VERSION,
-          };
-
-          if (subscriptionInfo) {
-            requestData.identifier = subscriptionInfo.endpointOrToken;
-            // Although we're passing the full endpoint to OneSignal, we still need to store only the registration ID for our SDK API getRegistrationId()
-            // Parse out the registration ID from the full endpoint URL and save it to our database
-            let registrationId = subscriptionInfo.endpointOrToken.replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "");
-            Database.put("Ids", {type: "registrationId", id: registrationId});
-            // New web push standard in Firefox 46+ and Chrome 50+ includes 'auth' and 'p256dh' in PushSubscription
-            if (subscriptionInfo.auth) {
-              requestData.web_auth = subscriptionInfo.auth;
-            }
-            if (subscriptionInfo.p256dh) {
-              requestData.web_p256 = subscriptionInfo.p256dh;
-            }
-          }
-
-          return OneSignalApi.put(requestUrl, requestData);
-        })
-        .then((response: any) => {
-          if (response) {
-            if (!response.success) {
-              log.error('Resubscription registration with OneSignal failed:', response);
-            }
-            let { id: userId } = response;
-
-            if (userId) {
-              Database.put("Ids", { type: "userId", id: userId });
-            }
-          } else {
-            // No user ID found, this returns undefined
-            log.debug('Resubscription registration failed because no user ID found.');
-          }
-        });
-  }
-
   /**
    * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
    */
   static _getTitle() {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
         .then(([defaultTitle, pageTitle]) => {
           if (defaultTitle !== null) {
@@ -1025,7 +866,7 @@ export class ServiceWorker {
    * notification contents will arrive with the push signal. The legacy format must be supported for a while.
    */
   static retrieveNotifications() {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       var notifications = [];
       // Each entry is like:
       /*
@@ -1047,13 +888,13 @@ export class ServiceWorker {
           else {
             log.debug('Tried to get notification contents, but IndexedDB is missing user ID info.');
             return Promise.all([
-                    Database.get('Ids', 'appId'),
+                    ServiceWorker.getAppId(),
                     self.registration.pushManager.getSubscription().then(subscription => subscription.endpoint)
                   ])
                 .then(([appId, identifier]) => {
                   let deviceType = getDeviceTypeForBrowser();
                   // Get the user ID from OneSignal
-                  return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier).then(recoveredUserId => {
+                  return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId.toString(), deviceType, identifier).then(recoveredUserId => {
                     if (recoveredUserId) {
                       log.debug('Recovered OneSignal user ID:', recoveredUserId);
                       // We now have our OneSignal user ID again
@@ -1116,9 +957,6 @@ if (typeof self === "undefined" &&
 
 // Set logging to the appropriate level
 log.setDefaultLevel(SdkEnvironment.getBuildEnv() === BuildEnvironmentKind.Development ? (log as any).levels.TRACE : (log as any).levels.ERROR);
-
-// Print it's happy time!
-log.info(`%cOneSignal Service Worker loaded (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 
 // Run our main file
 if (typeof self !== "undefined") {

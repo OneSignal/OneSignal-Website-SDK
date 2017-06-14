@@ -1,5 +1,5 @@
-import SdkEnvironment from './SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import SdkEnvironment from './SdkEnvironment';
 
 
 /**
@@ -23,11 +23,11 @@ export default class LegacyManager {
   }
 
   static postmams(oneSignal) {
-    const postmamMessageFunc = function message(...args) {
+    const postmamMessageFunc = function message(this: any) {
       this.messenger.message.apply(this.messenger, arguments);
     }
 
-    const postmamPostMessageFunc = function postMessage(...args) {
+    const postmamPostMessageFunc = function postMessage(this: any) {
       this.messenger.postMessage.apply(this.messenger, arguments);
     }
 

@@ -1,7 +1,5 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import OneSignalError from "../../../src/errors/OneSignalError";
-import { throws } from "../../support/tester/asyncFunctions";
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { setUserAgent } from '../../support/tester/browser';
 import { BrowserUserAgent, TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';

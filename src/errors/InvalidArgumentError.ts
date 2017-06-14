@@ -2,7 +2,8 @@ import OneSignalError from "./OneSignalError";
 
 export enum InvalidArgumentReason {
   Empty,
-  Malformed
+  Malformed,
+  EnumOutOfRange
 }
 
 export class InvalidArgumentError extends OneSignalError {
@@ -16,6 +17,9 @@ export class InvalidArgumentError extends OneSignalError {
         break;
       case InvalidArgumentReason.Malformed:
         super(`The value for '${argName}' was malformed.`);
+        break;
+      case InvalidArgumentReason.EnumOutOfRange:
+        super(`The value for '${argName}' was out of range of the expected input enum.`);
         break;
     }
     this.argument = argName;

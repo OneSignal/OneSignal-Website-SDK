@@ -1,7 +1,5 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import IndexedDb from "../../../src/services/IndexedDb";
-import Random from "../../support/tester/Random";
 import { DynamicResourceLoader, ResourceType, ResourceLoadState } from "../../../src/services/DynamicResourceLoader";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 

@@ -1,7 +1,8 @@
-import { hasCssClass, addCssClass, removeCssClass, nothing, contains, once } from '../utils';
 import * as log from 'loglevel';
+
+import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
+import { addCssClass, contains, hasCssClass, nothing, once, removeCssClass } from '../utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
-import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 
 
 export default class Launcher extends ActiveAnimatedElement {

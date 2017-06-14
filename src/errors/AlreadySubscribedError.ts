@@ -1,4 +1,4 @@
-import OneSignalError from "./OneSignalError";
+import OneSignalError from './OneSignalError';
 
 
 export default class AlreadySubscribedError extends OneSignalError {

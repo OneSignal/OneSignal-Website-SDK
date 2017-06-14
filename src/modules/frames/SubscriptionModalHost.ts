@@ -1,26 +1,12 @@
-import Postmam from '../../Postmam';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
-import Database from "../../services/Database";
-import Event from "../../Event";
-import EventHelper from "../../helpers/EventHelper";
-import { timeoutPromise, unsubscribeFromPush, isPushNotificationsSupported } from '../../utils';
-import TimeoutError from '../../errors/TimeoutError';
-import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
-import { Uuid } from '../../models/Uuid';
-import ServiceWorkerHelper from "../../helpers/ServiceWorkerHelper";
-import * as objectAssign from 'object-assign';
-import SdkEnvironment from '../../managers/SdkEnvironment';
-import { InvalidStateReason } from "../../errors/InvalidStateError";
-import HttpHelper from "../../helpers/HttpHelper";
-import TestHelper from "../../helpers/TestHelper";
-import InitHelper from "../../helpers/InitHelper";
-import MainHelper from "../../helpers/MainHelper";
-import AltOriginManager from '../../managers/AltOriginManager';
-import { AppConfig } from '../../models/AppConfig';
-import { SubscriptionModalInitOptions } from '../../models/SubscriptionModalInitOptions';
-import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import * as log from 'loglevel';
-import { BuildEnvironmentKind } from '../../models/BuildEnvironmentKind';
+
+import Event from '../../Event';
+import MainHelper from '../../helpers/MainHelper';
+import SubscriptionHelper from '../../helpers/SubscriptionHelper';
+import SdkEnvironment from '../../managers/SdkEnvironment';
+import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import { Uuid } from '../../models/Uuid';
+import Postmam from '../../Postmam';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -29,15 +15,13 @@ import { BuildEnvironmentKind } from '../../models/BuildEnvironmentKind';
  */
 export default class SubscriptionModalHost implements Disposable {
   private messenger: Postmam;
-  private options: SubscriptionModalInitOptions;
+  private appId: Uuid;
   private modal: HTMLIFrameElement;
   private url: URL;
   private registrationOptions: any;
 
-  constructor(initOptions: any, registrationOptions: any) {
-    this.options = {
-      appId: new Uuid(initOptions.appId)
-    };
+  constructor(appId: Uuid, registrationOptions: any) {
+    this.appId = appId;
     this.registrationOptions = registrationOptions;
   }
 
@@ -57,7 +41,7 @@ export default class SubscriptionModalHost implements Disposable {
     const notificationPermission = await OneSignal.getNotificationPermission();
     this.url = SdkEnvironment.getOneSignalApiUrl();
     this.url.pathname = 'webPushModal';
-    this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.options.appId.value}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
+    this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId.value}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
     log.info(`Loading iFrame for HTTPS subscription modal at ${this.url.toString()}`);
 
     this.modal = this.createHiddenSubscriptionDomModal(this.url.toString());
@@ -111,29 +95,29 @@ export default class SubscriptionModalHost implements Disposable {
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, this.onModalClosing.bind(this));
   }
 
-  onModalLoaded(message: MessengerMessageEvent) {
+  onModalLoaded(_: MessengerMessageEvent) {
     this.showSubscriptionDomModal();
     Event.trigger('modalLoaded');
   }
 
-  async onModalAccepted(message: MessengerMessageEvent) {
-    log.debug('User accepted the HTTPS modal prompt.');
+  async onModalAccepted(_: MessengerMessageEvent) {
+    log.debug('User accepted the HTTPS modal prompt.', location.origin);
     OneSignal._sessionInitAlreadyRunning = false;
     this.dispose();
     MainHelper.triggerCustomPromptClicked('granted');
     log.debug('Calling setSubscription(true)');
-    await OneSignal.setSubscription(true)
-    SubscriptionHelper.registerForW3CPush(this.registrationOptions);
+    await SubscriptionHelper.registerForPush();
+    await OneSignal.setSubscription(true);
   }
 
-  onModalRejected(message: MessengerMessageEvent) {
+  onModalRejected(_: MessengerMessageEvent) {
     log.debug('User rejected the HTTPS modal prompt.');
     OneSignal._sessionInitAlreadyRunning = false;
     this.dispose();
     MainHelper.triggerCustomPromptClicked('denied');
   }
 
-  onModalClosing(message: MessengerMessageEvent) {
+  onModalClosing(_: MessengerMessageEvent) {
     log.info('Detected modal is closing.');
     this.dispose();
   }

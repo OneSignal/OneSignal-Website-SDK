@@ -5,6 +5,10 @@ export default class Notification {
     Object.assign(this, options);
   }
 
+  close() {
+
+  }
+
   snapshot() {
     const keys = Object.keys(this);
     const result = {};

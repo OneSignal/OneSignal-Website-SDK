@@ -1,9 +1,7 @@
 import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
-import Environment from '../Environment';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
-import { TestEnvironment } from '../../test/support/sdk/TestEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { AppConfig } from '../models/AppConfig';
+import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 
 export default class SdkEnvironment {
   /**
@@ -62,15 +60,10 @@ export default class SdkEnvironment {
   /**
    * Describes whether the SDK is built in tests mode or not.
    *
-   * The magic constants used to detect the environment is set or unset when
-   * building the SDK.
+   * This method is overriden when tests are run.
    */
   static getTestEnv(): TestEnvironmentKind {
-    if ((typeof __TEST__ !== undefined && __TEST__)) {
-      return TestEnvironmentKind.UnitTesting;
-    } else {
-      return TestEnvironmentKind.None;
-    }
+    return TestEnvironmentKind.None;
   }
 
   /**
@@ -88,6 +81,8 @@ export default class SdkEnvironment {
         return 'Staging-';
       case BuildEnvironmentKind.Production:
         return '';
+      default:
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
   }
 
@@ -103,6 +98,8 @@ export default class SdkEnvironment {
         return new URL('https://onesignal-staging.pw/api/v1');
       case BuildEnvironmentKind.Production:
         return new URL('https://onesignal.com/api/v1');
+      default:
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
   }
 }

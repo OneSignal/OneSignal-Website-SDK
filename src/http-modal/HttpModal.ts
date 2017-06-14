@@ -1,7 +1,8 @@
-import { removeDomElement, addDomElement, addCssClass } from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event';
 import * as objectAssign from 'object-assign';
+
+import Event from '../Event';
+import { addCssClass, addDomElement, removeDomElement } from '../utils';
 
 
 
@@ -56,7 +57,7 @@ export default class HttpModal {
         }
     }
 
-    onHttpModalFinished(e) {
+    onHttpModalFinished(_) {
         OneSignal.registerForPushNotifications({httpPermissionRequest: true});
         Event.trigger(HttpModal.EVENTS.FINISH_CLICK);
         this.close();

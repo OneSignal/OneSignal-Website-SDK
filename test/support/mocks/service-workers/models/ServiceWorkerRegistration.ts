@@ -1,23 +1,38 @@
 import PushManager from './PushManager';
 import Notification from './Notification';
 import NotificationEvent from './NotificationEvent';
+import ServiceWorker from '../ServiceWorker';
+import { ServiceWorkerContainer } from '../ServiceWorkerContainer';
 
 
 // https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration
 export default class ServiceWorkerRegistration {
+  active: ServiceWorker;
+  installing: ServiceWorker;
+  waiting: ServiceWorker;
+  onupdatefound: (e: Event) => void;
+  pushManager: PushManager;
+  private notifications: Array<Notification>;
+
   constructor() {
     this.active = null;
     this.installing = null;
     this.onupdatefound = null;
     this.pushManager = new PushManager();
-    this.scope = '/';
     this.waiting = null;
 
     this.notifications = [];
   }
 
-  getNotifications() {
-    return Promise.resolve(this.notifications);
+  get scope() {
+    if (this.active) {
+      return new URL(this.active.scriptURL).origin;
+    }
+    return null;
+  }
+
+  async getNotifications() {
+    return this.notifications;
   }
 
   showNotification(title, options) {
@@ -30,12 +45,13 @@ export default class ServiceWorkerRegistration {
     return Promise.resolve(new NotificationEvent(notification));
   }
 
-  update() {
-    return Promise.resolve();
+  async update() {
   }
 
-  unregister() {
-    return Promise.resolve();
+  async unregister() {
+    const container: ServiceWorkerContainer = navigator.serviceWorker as any;
+    container._serviceWorkerRegistration = null;
+    this.active = null;
   }
 
   snapshot() {

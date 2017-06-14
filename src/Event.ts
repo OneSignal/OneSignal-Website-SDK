@@ -1,9 +1,9 @@
-import ProxyFrameHost from './modules/frames/ProxyFrameHost';
 import * as log from 'loglevel';
+
 import Environment from './Environment';
-import { getConsoleStyle, contains, capitalize } from './utils';
-import SdkEnvironment from "./managers/SdkEnvironment";
+import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import { capitalize, contains, getConsoleStyle } from './utils';
 
 
 const SILENT_EVENTS = [

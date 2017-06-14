@@ -1,29 +1,14 @@
-import Environment from "../Environment";
-import * as log from "loglevel";
-import Event from "../Event";
-import Database from "../services/Database";
-import {
-  getConsoleStyle,
-  timeoutPromise,
-  unsubscribeFromPush
-} from "../utils";
-import * as objectAssign from "object-assign";
-import Postmam from "../Postmam";
-import MainHelper from "./MainHelper";
-import ServiceWorkerHelper from "./ServiceWorkerHelper";
-import InitHelper from "./InitHelper";
-import EventHelper from "./EventHelper";
-import SubscriptionHelper from "./SubscriptionHelper";
-import { InvalidStateReason } from "../errors/InvalidStateError";
-import TestHelper from './TestHelper';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { BuildEnvironmentKind } from "../models/BuildEnvironmentKind";
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import AltOriginManager from '../managers/AltOriginManager';
-import SubscriptionModal from '../modules/frames/SubscriptionModal';
-import SubscriptionPopup from "../modules/frames/SubscriptionPopup";
-import ProxyFrame from "../modules/frames/ProxyFrame";
+import * as log from 'loglevel';
+
+import Event from '../Event';
 import LegacyManager from '../managers/LegacyManager';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import ProxyFrame from '../modules/frames/ProxyFrame';
+import SubscriptionModal from '../modules/frames/SubscriptionModal';
+import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
+import { getConsoleStyle } from '../utils';
+import SubscriptionHelper from './SubscriptionHelper';
 
 declare var OneSignal: any;
 
@@ -66,11 +51,23 @@ export default class HttpHelper {
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         OneSignal.subscriptionModal = new SubscriptionModal(options);
-        // Do not await on modal initialization; the modal uses direct
-        // postmessage and does not establish a "connection" to wait on
+
+        /*
+          WARNING: Do not await on modal initialization; the modal uses direct
+          postmessage and does not establish a "connection" to wait on
+        */
+        /*
+          WARNING: The establishCrossOriginMessaging() statement is necessary.
+          The common base class implementation of initialize() does an
+          asynchronous download of settings, but the modal needs the 'messenger'
+          variable (created by calling establishCrossOriginmessaging()) to exist
+          immediately. The hacky way to solve this for now is to force this part
+          of the initialization earlier.
+        */
+        OneSignal.subscriptionModal.establishCrossOriginMessaging();
         OneSignal.subscriptionModal.initialize();
-        /**
-         * Our Rails-side subscription popup/modal depends on
+
+        /* Our Rails-side subscription popup/modal depends on
          * OneSignal.iframePostmam, OneSignal.popupPostmam, and
          * OneSignal.modalPostmam, which don't exist anymore.
          */

@@ -1,11 +1,12 @@
-import { contains } from './utils';
-import * as EventEmitter from 'wolfy87-eventemitter';
 import * as heir from 'heir';
-import Environment from './Environment';
-import * as objectAssign from 'object-assign';
 import * as log from 'loglevel';
+import * as objectAssign from 'object-assign';
+import * as EventEmitter from 'wolfy87-eventemitter';
+
+import Environment from './Environment';
+import SdkEnvironment from './managers/SdkEnvironment';
 import { Uuid } from './models/Uuid';
-import SdkEnvironment from "./managers/SdkEnvironment";
+import { contains } from './utils';
 
 
 
@@ -218,7 +219,7 @@ export default class Postmam {
       return;
     }
     const messageBundle = {
-      id: Uuid.generate(),
+      id: Uuid.generate().toString(),
       command: command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString()
@@ -241,7 +242,7 @@ export default class Postmam {
       return;
     }
     const messageBundle = {
-      id: Uuid.generate(),
+      id: Uuid.generate().toString(),
       command: command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString()
@@ -281,7 +282,7 @@ export default class Postmam {
     if (!OneSignal.config) {
       var subdomain = "x";
     } else {
-      var subdomain = OneSignal.config.subdomainName as string;
+      var subdomain = OneSignal.config.subdomain as string;
     }
 
     const otherAllowedOrigins = this.generateSafeOrigins(this.receiveFromOrigin);
@@ -296,11 +297,11 @@ export default class Postmam {
             contains(otherAllowedOrigins, messageOrigin));
   }
 
-  on(...args) {
+  on(..._) {
     // Overriden by event emitter lib
   }
 
-  once(...args) {
+  once(..._) {
     // Overriden by event emitter lib
   }
 }

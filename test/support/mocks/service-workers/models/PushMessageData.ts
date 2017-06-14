@@ -17,7 +17,7 @@ export default class PushMessageData {
 
   text(): string {
     if (this.data || this.data === false) {
-      this.data.toString();
+      return this.data.toString();
     }
     else return this.data;
   }

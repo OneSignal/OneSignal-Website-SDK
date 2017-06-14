@@ -1,4 +1,3 @@
-import Database from '../services/Database';
 import * as log from 'loglevel';
 
 export default class CookieSyncer {

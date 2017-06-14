@@ -4,7 +4,6 @@ import Database from "../../../src/services/Database";
 import Macros from "../../support/tester/Macros";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
-import IndexedDb from "../../../src/services/IndexedDb";
 
 test("url cannot be null",
      Macros.expectInvalidArgumentError,

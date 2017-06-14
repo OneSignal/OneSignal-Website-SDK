@@ -1,25 +1,21 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
-import Random from "../../support/tester/Random";
-import Environment from "../../../src/Environment";
-import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import * as sinon from 'sinon';
 import Bell from "../../../src/bell/Bell";
-import InitHelper from "../../../src/helpers/InitHelper";
 import MainHelper from "../../../src/helpers/MainHelper";
 import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";
-import Launcher from "../../../src/bell/Launcher";
-import MockDummy from "../../support/mocks/MockDummy";
-import ActiveAnimatedElement from "../../../src/bell/ActiveAnimatedElement";
-import AnimatedElement from "../../../src/bell/AnimatedElement";
 import MockLauncher from "../../support/mocks/MockLauncher";
 import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
-import { contains } from '../../../src/utils';
+import { AppConfig } from '../../../src/models/AppConfig';
+import Context from '../../../src/models/Context';
+import InitHelper from '../../../src/helpers/InitHelper';
 
 test.beforeEach(t => {
+  const appConfig = new AppConfig();
+  t.context.appConfig = appConfig;
+
   t.context.loadSdkStylesheet = sinon.stub(DynamicResourceLoader.prototype, 'loadSdkStylesheet');
 });
 
@@ -36,6 +32,7 @@ test("should call loadSdkStylesheet if notify button is used", async t => {
     },
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  OneSignal.context = new Context(t.context.appConfig);
   const notifyButton = new Bell({
     enable: true,
     launcher: new MockLauncher(null)
@@ -63,6 +60,8 @@ test("should call loadSdkStylesheet if slidedown permission message is used", as
     initOptions: { },
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  OneSignal.context = new Context(t.context.appConfig);
+  OneSignal.config = InitHelper.getMergedUserServerAppConfig({}, t.context.appConfig);
   try {
     await OneSignal.showHttpPrompt();
   } catch (e) {
@@ -73,7 +72,7 @@ test("should call loadSdkStylesheet if slidedown permission message is used", as
 });
 
 test("loadIfNew called twice should not load the same stylesheet or script more than once", async t => {
-  t.context.load = sinon.stub(DynamicResourceLoader.prototype, 'load').resolves(ResourceLoadState.Loaded);
+  t.context.load = sinon.stub(DynamicResourceLoader.prototype as any, 'load').resolves(ResourceLoadState.Loaded);
 
   await TestEnvironment.initialize({
     initOptions: { },
