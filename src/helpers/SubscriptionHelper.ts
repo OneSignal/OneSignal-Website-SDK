@@ -168,7 +168,9 @@ export default class SubscriptionHelper {
     })
              .then(() => {
                log.debug(`Calling %cServiceWorkerRegistration.pushManager.subscribe()`, getConsoleStyle('code'));
-               Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+               if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+                 Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+               }
                /*
                 7/29/16: If the user dismisses the prompt, the prompt cannot be shown again via pushManager.subscribe()
                 See: https://bugs.chromium.org/p/chromium/issues/detail?id=621461
