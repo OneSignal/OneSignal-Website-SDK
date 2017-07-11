@@ -406,7 +406,11 @@ export class ServiceWorker {
           notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
           var extra: any = {};
           extra.tag = notification.tag || appId;
-          extra.persistNotification = persistNotification;
+          if (persistNotification === 'force') {
+            extra.persistNotification = true;
+          } else {
+            extra.persistNotification = persistNotification;
+          }
 
           // Allow overriding some values
           if (!overrides)
@@ -480,12 +484,12 @@ export class ServiceWorker {
             vibrate: notification.vibrate
           };
 
-          notificationOptions = ServiceWorker.filterNotificationOptions(notificationOptions);
+          notificationOptions = ServiceWorker.filterNotificationOptions(notificationOptions, persistNotification === 'force');
           return self.registration.showNotification(notification.heading, notificationOptions)
         });
   }
 
-  static filterNotificationOptions(options): any {
+  static filterNotificationOptions(options: any, forcePersistNotifications: boolean): any {
     /**
      * Due to Chrome 59+ notifications on Mac OS X using the native toast style
      * which limits the number of characters available to display the subdomain
@@ -507,6 +511,9 @@ export class ServiceWorker {
         browser.mac &&
         clone) {
         clone.requireInteraction = false;
+      }
+      if (forcePersistNotifications) {
+        clone.requireInteraction = true;
       }
       return clone;
     }

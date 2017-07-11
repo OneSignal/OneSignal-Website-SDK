@@ -140,7 +140,11 @@ export default class InitHelper {
     if (OneSignal.config.persistNotification === false) {
       opPromises.push(Database.put('Options', {key: 'persistNotification', value: false}));
     } else {
-      opPromises.push(Database.put('Options', {key: 'persistNotification', value: true}));
+      if (OneSignal.config.persistNotification === true) {
+        opPromises.push(Database.put('Options', { key: 'persistNotification', value: 'force' }));
+      } else {
+        opPromises.push(Database.put('Options', { key: 'persistNotification', value: true }));
+      }
     }
 
     let webhookOptions = OneSignal.config.webhooks;
