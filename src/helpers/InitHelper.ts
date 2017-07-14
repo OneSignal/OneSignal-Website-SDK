@@ -16,6 +16,7 @@ import ServiceUnavailableError from "../errors/ServiceUnavailableError";
 import PermissionMessageDismissedError from '../errors/PermissionMessageDismissedError';
 import OneSignalApi from "../OneSignalApi";
 import { Uuid } from '../models/Uuid';
+import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import AltOriginManager from "../managers/AltOriginManager";
@@ -60,6 +61,15 @@ export default class InitHelper {
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites, since the iframe is needed for communication
     InitHelper.storeInitialValues();
     InitHelper.installNativePromptPermissionChangedHook();
+
+    if (await OneSignal.getNotificationPermission() === NotificationPermission.Granted) {
+      /*
+        If the user has already granted permission, the user has previously
+        already subscribed. Don't show welcome notifications if the user is
+        automatically resubscribed.
+      */
+      OneSignal.__doNotShowWelcomeNotification = true;
+    }
 
     if (navigator.serviceWorker &&
         window.location.protocol === 'https:' &&

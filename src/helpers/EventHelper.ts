@@ -34,7 +34,7 @@ export default class EventHelper {
 
   static _onSubscriptionChanged(newSubscriptionState) {
     if (OneSignal.__doNotShowWelcomeNotification) {
-      log.debug('Not showing welcome notification because user state was reset.');
+      log.debug('Not showing welcome notification because user has previously subscribed.');
       return;
     }
     if (newSubscriptionState === true) {

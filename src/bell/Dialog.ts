@@ -109,7 +109,19 @@ export default class Dialog extends AnimatedElement {
       }
       addDomElement(document.querySelector(this.nestedContentSelector), 'beforeend', contents);
       if (this.subscribeButton) {
-        this.subscribeButton.addEventListener('click', () => Event.trigger(Bell.EVENTS.SUBSCRIBE_CLICK));
+        this.subscribeButton.addEventListener('click', () => {
+          /*
+            The welcome notification should only be shown if the user is
+            subscribing for the first time and resubscribing via the notify
+            button.
+
+            If permission is already granted, __doNotShowWelcomeNotification is
+            set to true to prevent showing a notification, but we actually want
+            a notification shown in this resubscription case.
+           */
+          OneSignal.__doNotShowWelcomeNotification = false;
+          Event.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
+        });
       }
       if (this.unsubscribeButton) {
         this.unsubscribeButton.addEventListener('click', () => Event.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK));
