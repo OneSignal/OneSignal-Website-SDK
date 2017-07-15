@@ -24,6 +24,7 @@ import { AppConfig } from "../models/AppConfig";
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import * as objectAssign from 'object-assign';
 import CookieSyncer from '../modules/CookieSyncer';
+import TestHelper from './TestHelper';
 
 declare var OneSignal: any;
 
@@ -317,6 +318,7 @@ export default class InitHelper {
           }
           else if (window.Notification.permission === "default") {
             EventHelper.triggerNotificationPermissionChanged(true);
+            TestHelper.markHttpsNativePromptDismissed();
           }
         });
       } else if (options.__sdkCall && MainHelper.wasHttpsNativePromptDismissed()) {
