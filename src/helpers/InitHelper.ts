@@ -309,23 +309,27 @@ export default class InitHelper {
         });
     }
     else if ('serviceWorker' in navigator && !SubscriptionHelper.isUsingSubscriptionWorkaround()) { // If HTTPS - Show native prompt
-      if (options.__sdkCall && !MainHelper.wasHttpsNativePromptDismissed()) {
-        Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      if (options.__sdkCall && MainHelper.wasHttpsNativePromptDismissed()) {
+        log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
+        OneSignal._sessionInitAlreadyRunning = false;
+      } else {
+        const permission = window.Notification.permission;
+        if (permission === NotificationPermission.Default) {
+          Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+        }
         window.Notification.requestPermission(permission => {
           MainHelper.checkAndTriggerNotificationPermissionChanged();
           if (permission === "granted") {
             SubscriptionHelper.registerForW3CPush(options);
           }
           else if (window.Notification.permission === "default") {
+            OneSignal._sessionInitAlreadyRunning = false;
             EventHelper.triggerNotificationPermissionChanged(true);
             TestHelper.markHttpsNativePromptDismissed();
+          } else if (window.Notification.permission === "denied") {
+            OneSignal._sessionInitAlreadyRunning = false;
           }
         });
-      } else if (options.__sdkCall && MainHelper.wasHttpsNativePromptDismissed()) {
-        log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
-        OneSignal._sessionInitAlreadyRunning = false;
-      } else {
-        SubscriptionHelper.registerForW3CPush(options);
       }
     }
     else {

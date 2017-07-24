@@ -18,66 +18,68 @@ export default class SubscriptionHelper {
   static registerForW3CPush(options) {
     log.debug(`Called %cregisterForW3CPush(${JSON.stringify(options)})`, getConsoleStyle('code'));
     return Database.get('Ids', 'registrationId')
-                   .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
-                     if (!registrationIdResult || !options.fromRegisterFor || window.Notification.permission != "granted" || navigator.serviceWorker.controller == null) {
-                       navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
-                         var sw_path = "";
+      .then(function _registerForW3CPush_GotRegistrationId(registrationIdResult) {
+        if (!registrationIdResult || !options.fromRegisterFor || window.Notification.permission != "granted" || navigator.serviceWorker.controller == null) {
+          navigator.serviceWorker.getRegistration().then(function (serviceWorkerRegistration) {
+            var sw_path = "";
 
-                         if (OneSignal.config.path)
-                           sw_path = OneSignal.config.path;
+            if (OneSignal.config.path)
+              sw_path = OneSignal.config.path;
 
-                         if (typeof serviceWorkerRegistration === "undefined") // Nothing registered, very first run
-                           ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
-                         else {
-                           if (serviceWorkerRegistration.active) {
-                             let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
-                             if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH)) {
-                               // OneSignalSDKWorker.js was installed
-                               Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
-                                       .then(function (version) {
-                                         if (version) {
-                                           if (version != OneSignal._VERSION) {
-                                             log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
-                                           }
-                                           else
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
-                                         }
-                                         else
-                                           ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
-                                       });
-                             }
-                             else if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
-                               // OneSignalSDKUpdaterWorker.js was installed
-                               Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
-                                       .then(function (version) {
-                                         if (version) {
-                                           if (version != OneSignal._VERSION) {
-                                             log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
-                                           }
-                                           else
-                                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
-                                         }
-                                         else
-                                           ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
-                                       });
-                             } else {
-                               // Some other service worker not belonging to us was installed
-                               // Install ours over it after unregistering theirs to get a different registration token and avoid mismatchsenderid error
-                               log.info('Unregistering previous service worker:', serviceWorkerRegistration);
-                               serviceWorkerRegistration.unregister().then(unregistrationSuccessful => {
-                                 log.info('Result of unregistering:', unregistrationSuccessful);
-                                 ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
-                               });
-                             }
-                           }
-                           else if (serviceWorkerRegistration.installing == null)
-                             ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
-                         }
-                       });
-                     }
-                   });
+            if (typeof serviceWorkerRegistration === "undefined") // Nothing registered, very first run
+              ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
+            else {
+              if (serviceWorkerRegistration.active) {
+                let previousWorkerUrl = serviceWorkerRegistration.active.scriptURL;
+                if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH)) {
+                  // OneSignalSDKWorker.js was installed
+                  Database.get('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION')
+                    .then(function (version) {
+                      if (version) {
+                        if (version != OneSignal._VERSION) {
+                          log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
+                          ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                        }
+                        else
+                          ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
+                      }
+                      else
+                        ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                    });
+                }
+                else if (contains(previousWorkerUrl, sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH)) {
+                  // OneSignalSDKUpdaterWorker.js was installed
+                  Database.get('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION')
+                    .then(function (version) {
+                      if (version) {
+                        if (version != OneSignal._VERSION) {
+                          log.info(`Installing new service worker (${version} -> ${OneSignal._VERSION})`);
+                          ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
+                        }
+                        else
+                          ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_UPDATER_PATH);
+                      }
+                      else
+                        ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
+                    });
+                } else {
+                  // Some other service worker not belonging to us was installed
+                  // Install ours over it after unregistering theirs to get a different registration token and avoid mismatchsenderid error
+                  log.info('Unregistering previous service worker:', serviceWorkerRegistration);
+                  serviceWorkerRegistration.unregister().then(unregistrationSuccessful => {
+                    log.info('Result of unregistering:', unregistrationSuccessful);
+                    ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
+                  });
+                }
+              }
+              else if (serviceWorkerRegistration.installing == null)
+                ServiceWorkerHelper.registerServiceWorker(sw_path + SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH);
+            }
+          });
+        } else {
+          OneSignal._sessionInitAlreadyRunning = false;
+        }
+      });
   }
 
   static enableNotifications(existingServiceWorkerRegistration) { // is ServiceWorkerRegistration type
@@ -178,7 +180,19 @@ export default class SubscriptionHelper {
                 pushManager.subscribe(). Because notification and push permissions are shared, the subesequent call to
                 pushManager.subscribe() will go through successfully.
                 */
-               return MainHelper.requestNotificationPermissionPromise();
+
+               /*
+                We're now requesting Notification permissions before registering
+                the service worker, so this code only gets called for the HTTP
+                popup. Calling this a second time doesn't show any extra
+                prompts, but it may cause the browser to block the request in
+                the future without a user-visible gesture.
+                */
+               if (Notification.permission !== "granted") {
+                 return MainHelper.requestNotificationPermissionPromise();
+               } else {
+                 return "granted";
+               }
              })
              .then(permission => {
                if (permission !== "granted") {

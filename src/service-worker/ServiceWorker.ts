@@ -826,6 +826,8 @@ export class ServiceWorker {
   static _subscribeForPush(serviceWorkerRegistration) {
     log.debug(`Called %c_subscribeForPush()`, getConsoleStyle('code'));
 
+    let oldSubscription = null;
+    let newSubscription = null;
     var appId = null;
     return Database.get('Ids', 'appId')
         .then(retrievedAppId => {
@@ -836,11 +838,13 @@ export class ServiceWorker {
           // Only re-subscribe if there was an existing subscription and we are on Chrome 54+ wth PushSubscriptionOptions
           // Otherwise there's really no way to resubscribe since we don't have the manifest.json sender ID
           if (oldSubscription && oldSubscription.options) {
+            oldSubscription = oldSubscription;
             return serviceWorkerRegistration.pushManager.subscribe(oldSubscription.options);
           } else {
             return Promise.resolve();
           }
         }).then(subscription => {
+          newSubscription = subscription;
           var subscriptionInfo: any = null;
           if (subscription) {
             subscriptionInfo = {};
@@ -889,7 +893,12 @@ export class ServiceWorker {
             log.info('Could not subscribe your browser for push notifications.');
           }
 
-          return ServiceWorker.registerWithOneSignal(appId, subscriptionInfo);
+          if (oldSubscription && newSubscription && oldSubscription.endpoint !== newSubscription.endpoint) {
+            log.debug(`Registering resubscription with OneSignal because endpoints are different:`);
+            return ServiceWorker.registerWithOneSignal(appId, subscriptionInfo);
+          } else {
+            log.debug(`Not registering resubscription with OneSignal because endpoints are identical.`);
+          }
         });
   }
 
