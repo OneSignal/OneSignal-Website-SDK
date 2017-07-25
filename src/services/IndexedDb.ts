@@ -106,7 +106,10 @@ export default class IndexedDb {
     db.createObjectStore("Options", {
       keyPath: "key"
     });
-    OneSignal._isNewVisitor = true;
+    // Wrap in conditional for tests
+    if (typeof OneSignal !== "undefined") {
+      OneSignal._isNewVisitor = true;
+    }
   }
 
   /**
