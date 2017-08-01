@@ -17,6 +17,11 @@ export default class Badge extends ActiveAnimatedElement {
     }
   }
 
+  show() {
+    super.show();
+    OneSignal.notifyButton.setCustomColorsIfSpecified();
+  }
+
   decrement() {
     // If it IS a number (is not not a number)
     if (!isNaN(this.content as any)) {
