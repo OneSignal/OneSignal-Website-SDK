@@ -23,6 +23,7 @@ import { InvalidStateReason, InvalidStateError } from "../errors/InvalidStateErr
 import { ResourceLoadState } from "../services/DynamicResourceLoader";
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {NotificationPermission} from '../models/NotificationPermission'
 
 
 export default class MainHelper {
@@ -63,10 +64,10 @@ export default class MainHelper {
    Returns the current browser-agnostic notification permission as "default", "granted", "denied".
    safariWebId: Used only to get the current notification permission state in Safari (required as part of the spec).
    */
-  static getNotificationPermission(safariWebId) {
+  static getNotificationPermission(safariWebId): Promise<NotificationPermission> {
     return awaitOneSignalInitAndSupported()
       .then(() => {
-        return new Promise((resolve, reject) => {
+        return new Promise<NotificationPermission>((resolve, reject) => {
           if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
             // User is using our subscription workaround
             OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, {safariWebId: safariWebId}, reply => {
@@ -83,6 +84,7 @@ export default class MainHelper {
               else {
                 // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
                 log.debug(`OneSignal: Invalid init option safari_web_id %c${safariWebId}`, getConsoleStyle('code'), '. Please pass in a valid safari_web_id to OneSignal init.');
+                resolve(NotificationPermission.Denied);
               }
             }
             else {
@@ -331,40 +333,52 @@ export default class MainHelper {
       log.debug(`%c${capitalize(SdkEnvironment.getWindowEnv().toString())} ⬸ ServiceWorker:`, getConsoleStyle('serviceworkermessage'), data, context);
     });
     OneSignal._channel.on('notification.displayed', function handler(context, data) {
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
+        OneSignal.proxyFrame.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, data);
+      } else {
+        Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      }
     });
     OneSignal._channel.on('notification.clicked', async function handler(context, data) {
-      if (OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length === 0) {
-        /*
-          A site's page can be open but not listening to the notification.clicked event because it didn't call addListenerForNotificationOpened().
-          In this case, if there are no detected event listeners, we should save the event, instead of firing it without anybody recieving it.
-
-          Or, since addListenerForNotificationOpened() only works once (you have to call it again each time), maybe it was only called once and the
-          user isn't receiving the notification.clicked event for subsequent notifications on the same browser tab.
-
-          Example: notificationClickHandlerMatch: 'origin', tab is clicked, event fires without anybody listening, calling addListenerForNotificationOpened()
-                   returns no results even though a notification was just clicked.
-        */
-        log.debug('notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.');
-        /* For empty notifications without a URL, use the current document's URL */
-        let url = data.url;
-        if (!data.url) {
-          // Least likely to modify, since modifying this property changes the page's URL
-          url = location.href;
-        }
-        await Database.put("NotificationOpened", { url: url, data: data, timestamp: Date.now() });
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
+        OneSignal.proxyFrame.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_CLICKED, data);
       } else {
-        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+          if (OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length === 0) {
+            /*
+              A site's page can be open but not listening to the notification.clicked event because it didn't call addListenerForNotificationOpened().
+              In this case, if there are no detected event listeners, we should save the event, instead of firing it without anybody recieving it.
+
+              Or, since addListenerForNotificationOpened() only works once (you have to call it again each time), maybe it was only called once and the
+              user isn't receiving the notification.clicked event for subsequent notifications on the same browser tab.
+
+              Example: notificationClickHandlerMatch: 'origin', tab is clicked, event fires without anybody listening, calling addListenerForNotificationOpened()
+                      returns no results even though a notification was just clicked.
+            */
+            log.debug('notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.');
+            /* For empty notifications without a URL, use the current document's URL */
+            let url = data.url;
+            if (!data.url) {
+              // Least likely to modify, since modifying this property changes the page's URL
+              url = location.href;
+            }
+            await Database.put("NotificationOpened", { url: url, data: data, timestamp: Date.now() });
+          } else {
+            Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+          }
       }
     });
     OneSignal._channel.on('command.redirect', function handler(context, data) {
       log.debug(`${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`);
-      if (OneSignal.proxyFrameHost) {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
+        OneSignal.proxyFrame.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
       }
     });
     OneSignal._channel.on('notification.dismissed', function handler(context, data) {
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
+        OneSignal.proxyFrame.message(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISMISSED, data);
+      } else {
+        Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+      }
     });
   }
 

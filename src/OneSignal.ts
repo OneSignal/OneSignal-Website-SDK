@@ -908,7 +908,10 @@ export default class OneSignal {
     HTTP_PERMISSION_REQUEST_RESUBSCRIBE: 'postmam.httpPermissionRequestResubscribe',
     MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
     IS_SUBSCRIBED: 'postmam.isSubscribed',
-    UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame'
+    UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame',
+    NOTIFICATION_DISPLAYED: 'postmam.notificationDisplayed',
+    NOTIFICATION_CLICKED: 'postmam.notificationClicked',
+    NOTIFICATION_DISMISSED: 'postmam.notificationDismissed',
   };
 
   static EVENTS = {

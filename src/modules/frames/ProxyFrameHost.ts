@@ -109,6 +109,9 @@ export default class ProxyFrameHost implements Disposable {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, this.onRequestHostUrl.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, this.onServiceWorkerCommandRedirect.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE, this.onHttpPermissionRequestResubscribe.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISPLAYED, this.onNotificationDisplayed.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_CLICKED, this.onNotificationClicked.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.NOTIFICATION_DISMISSED, this.onNotificationDismissed.bind(this));
     this.messenger.connect();
   }
 
@@ -174,6 +177,43 @@ export default class ProxyFrameHost implements Disposable {
     OneSignal.showHttpPrompt({ __sdkCall: true, __useHttpPermissionRequestStyle: true }).catch(e => {
       log.debug('[Resubscribe Prompt Error]', e);
     });
+    return false;
+  }
+
+  onNotificationDisplayed(message: MessengerMessageEvent) {
+    Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, message.data);
+    return false;
+  }
+
+  async onNotificationClicked(message: MessengerMessageEvent) {
+    console.warn('2');
+    if (OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length === 0) {
+      /*
+        A site's page can be open but not listening to the notification.clicked event because it didn't call addListenerForNotificationOpened().
+        In this case, if there are no detected event listeners, we should save the event, instead of firing it without anybody recieving it.
+
+        Or, since addListenerForNotificationOpened() only works once (you have to call it again each time), maybe it was only called once and the
+        user isn't receiving the notification.clicked event for subsequent notifications on the same browser tab.
+
+        Example: notificationClickHandlerMatch: 'origin', tab is clicked, event fires without anybody listening, calling addListenerForNotificationOpened()
+                  returns no results even though a notification was just clicked.
+      */
+      log.debug('notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.');
+      /* For empty notifications without a URL, use the current document's URL */
+      let url = message.data.url;
+      if (!message.data.url) {
+        // Least likely to modify, since modifying this property changes the page's URL
+        url = location.href;
+      }
+      await Database.put("NotificationOpened", { url: url, data: message.data, timestamp: Date.now() });
+    } else {
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, message.data);
+    }
+    return false;
+  }
+
+  onNotificationDismissed(message: MessengerMessageEvent) {
+    Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, message.data);
     return false;
   }
 
