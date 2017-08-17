@@ -198,7 +198,7 @@ export class SubscriptionManager {
         `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
         this.config.safariWebId,
         {
-          app_id: this.config.appId
+          app_id: this.config.appId.value
         },
         response => {
           if ((response as any).deviceToken) {
@@ -263,10 +263,12 @@ export class SubscriptionManager {
         case NotificationPermission.Default:
           log.debug('Exiting subscription and not registering worker because the permission was dismissed.');
           OneSignal._sessionInitAlreadyRunning = false;
+          OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Dismissed);
         case NotificationPermission.Denied:
           log.debug('Exiting subscription and not registering worker because the permission was blocked.');
           OneSignal._sessionInitAlreadyRunning = false;
+          OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
       }
     }

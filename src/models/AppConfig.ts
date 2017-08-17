@@ -157,6 +157,7 @@ export interface ServerAppConfig {
   };
   config: {
     vapid_public_key: string;
+    onesignal_vapid_public_key: string;
     http_use_onesignal_com: boolean;
     safari_web_id: string;
     subdomain: string;

@@ -1,5 +1,5 @@
 export enum DeliveryPlatformKind {
   ChromeLike = 5,
-  Firefox = 7,
-  Safari = 8
+  Safari = 7,
+  Firefox = 8
 }

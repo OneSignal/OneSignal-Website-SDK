@@ -97,7 +97,9 @@ export class RawPushSubscription implements Serializable {
       w3cEndpoint: this.w3cEndpoint.toString(),
       w3cP256dh: this.w3cP256dh,
       w3cAuth: this.w3cAuth,
-      existingPushSubscription: this.existingW3cPushSubscription ? this.existingW3cPushSubscription.serialize() : null
+      safariDeviceToken: this.safariDeviceToken,
+      existingPushSubscription: this.existingW3cPushSubscription ? this.existingW3cPushSubscription.serialize() : null,
+      existingSafariDeviceToken: this.existingSafariDeviceToken
     };
 
     return serializedBundle;
@@ -105,12 +107,18 @@ export class RawPushSubscription implements Serializable {
 
   public static deserialize(bundle: any): RawPushSubscription {
     const subscription = new RawPushSubscription();
-    subscription.w3cEndpoint = new URL(bundle.w3cEndpoint);
+    try {
+      subscription.w3cEndpoint = new URL(bundle.w3cEndpoint);
+    } catch (e) {
+      // w3cEndpoint will be null for Safari
+    }
     subscription.w3cP256dh = bundle.w3cP256dh;
     subscription.w3cAuth = bundle.w3cAuth;
     subscription.existingW3cPushSubscription = bundle.existingPushSubscription
       ? RawPushSubscription.deserialize(bundle.existingPushSubscription)
       : null;
+    subscription.safariDeviceToken = bundle.safariDeviceToken;
+    subscription.existingSafariDeviceToken = bundle.existingSafariDeviceToken;
     return subscription;
   }
 }
