@@ -240,6 +240,7 @@ function createEnvConfig(argv) {
   config.set('only', argv.only);
   config.set('debug', argv.debug);
   config.set('noWatch', argv.noWatch);
+  config.set('codeCoverage', argv.codeCoverage)
   return config;
 }
 
@@ -340,8 +341,10 @@ class TestModule {
   }
 
   static async runTestsAndWatch(context, options) {
+    let isUsingTestCoverageTool = false;
+
     return await new Promise((resolve, reject) => {
-      const testerOptions = ['--verbose', '--color'];
+      let testerOptions = ['--verbose', '--color'];
       if (!context.config.get('noWatch')) {
         testerOptions.push('--watch');
       }
@@ -350,22 +353,46 @@ class TestModule {
           testerOptions.push('-m', options.testTitle);
         }
       }
-      const tester = spawn('ava', testerOptions);
-      console.log();
-      console.log(`${chalk.blue('[Tests]')} Running 'ava ${testerOptions.join(' ')}'`);
-      tester.stdout.on('data', data => {
-        console.log(`${chalk.blue('[Tests]')} ${data.toString()}`);
-      });
-      tester.stderr.on('data', function(data) {
-        process.stdout.write(data.toString());
-      });
-      tester.on('exit', function(code) {
-        if (code !== 0) {
-          reject(chalk.red(`${chalk.blue('[Tests]')} 'ava' exited with code ${code}`));
-        } else {
-          resolve();
-        }
-      });
+      if (context.config.get('codeCoverage')) {
+        isUsingTestCoverageTool = true;
+      }
+
+      if (isUsingTestCoverageTool) {
+        testerOptions = ['ava', '--verbose', '--color'];
+        const tester = spawn('nyc', testerOptions);
+        console.log();
+        console.log(`${chalk.blue('[Tests]')} Running 'nyc ${testerOptions.join(' ')}'`);
+        tester.stdout.on('data', data => {
+          console.log(`${chalk.blue('[Tests]')} ${data.toString()}`);
+        });
+        tester.stderr.on('data', function(data) {
+          process.stdout.write(data.toString());
+        });
+        tester.on('exit', function(code) {
+          if (code !== 0) {
+            reject(chalk.red(`${chalk.blue('[Tests]')} 'nyc' exited with code ${code}`));
+          } else {
+            resolve();
+          }
+        });
+      } else {
+        const tester = spawn('ava', testerOptions);
+        console.log();
+        console.log(`${chalk.blue('[Tests]')} Running 'ava ${testerOptions.join(' ')}'`);
+        tester.stdout.on('data', data => {
+          console.log(`${chalk.blue('[Tests]')} ${data.toString()}`);
+        });
+        tester.stderr.on('data', function(data) {
+          process.stdout.write(data.toString());
+        });
+        tester.on('exit', function(code) {
+          if (code !== 0) {
+            reject(chalk.red(`${chalk.blue('[Tests]')} 'ava' exited with code ${code}`));
+          } else {
+            resolve();
+          }
+        });
+      }
     });
   }
 }
@@ -980,6 +1007,15 @@ const argv = yargs
     alias: 'n',
     description: `Do not bundle transpiled JavaScript files into a single OneSignalSDK.js file.
                   Decreases compilation time, useful for developing and running tests.`,
+    requiresArg: false,
+    required: false,
+    type: 'boolean',
+    default: false,
+    global: true
+  })
+  .option('codeCoverage', {
+    alias: 'cc',
+    description: `Include code coverage using the NYC code coverage reporter tool.`,
     requiresArg: false,
     required: false,
     type: 'boolean',

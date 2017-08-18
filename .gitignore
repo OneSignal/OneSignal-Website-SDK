@@ -13,3 +13,6 @@ dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map
 .vscode/
 build/
+
+coverage
+.nyc_output

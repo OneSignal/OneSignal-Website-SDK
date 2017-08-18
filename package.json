@@ -95,6 +95,7 @@
     "nconf": "^0.8.4",
     "node-dir": "^0.1.16",
     "node-fetch": "^1.6.3",
+    "nyc": "^11.1.0",
     "openurl": "^1.1.1",
     "postcss-loader": "^2.0.6",
     "rimraf": "^2.6.1",
@@ -123,5 +124,13 @@
     "powerAssert": true,
     "watch": true,
     "failFast": true
+  },
+  "nyc": {
+    "cache": true,
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ],
+    "include": ["build/javascript/src/**/*.js"]
   }
 }
