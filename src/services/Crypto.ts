@@ -1,3 +1,4 @@
+
 var sjcl = null as any;
 sjcl = {
   /**
@@ -52,8 +53,8 @@ sjcl = {
      * @constructor
      */
     corrupt: function(message) {
-      this.toString = function() { return "CORRUPT: "+this.message; };
-      this.message = message;
+      this.toString = function() { return "CORRUPT: "+(this as any).message; };
+      (this as any).message = message;
     },
 
     /**
@@ -61,8 +62,8 @@ sjcl = {
      * @constructor
      */
     invalid: function(message) {
-      this.toString = function() { return "INVALID: "+this.message; };
-      this.message = message;
+      this.toString = function() { return "INVALID: "+(this as any).message; };
+      (this as any).message = message;
     },
 
     /**
@@ -70,8 +71,8 @@ sjcl = {
      * @constructor
      */
     bug: function(message) {
-      this.toString = function() { return "BUG: "+this.message; };
-      this.message = message;
+      this.toString = function() { return "BUG: "+(this as any).message; };
+      (this as any).message = message;
     },
 
     /**
@@ -79,8 +80,8 @@ sjcl = {
      * @constructor
      */
     notReady: function(message) {
-      this.toString = function() { return "NOT READY: "+this.message; };
-      this.message = message;
+      this.toString = function() { return "NOT READY: "+(this as any).message; };
+      (this as any).message = message;
     }
   }
 };
@@ -921,7 +922,7 @@ sjcl.hash.sha1.prototype = {
       return (b & c) | (b & d) | (c & d);
     } else if (t <= 79) {
       return b ^ c ^ d;
-    }
+    } else return undefined;
   },
 
   /**

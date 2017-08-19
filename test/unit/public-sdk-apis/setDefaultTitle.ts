@@ -3,7 +3,6 @@ import test from "ava";
 import Database from "../../../src/services/Database";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
-import Random from "../../support/tester/Random";
 
 
 test("title can be null", async t => {

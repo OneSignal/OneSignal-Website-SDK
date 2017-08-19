@@ -1,7 +1,5 @@
-import { TestContext } from 'ava/types/generated';
 import '../../support/polyfills/polyfills';
 import test from "ava";
-import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import AltOriginManager from '../../../src/managers/AltOriginManager';
 import { AppConfig } from '../../../src/models/AppConfig';
 import { BuildEnvironmentKind } from '../../../src/models/BuildEnvironmentKind'
@@ -56,39 +54,30 @@ function setupDiscoverAltOriginTest(t: any) {
   t.context.stubIsSubscribedToOneSignalImpl = async function() {
     if (this.url.host === t.context.subdomainOneSignalHost) {
       return true;
-    } else if (this.url.host === t.context.subdomainOsTcHost) {
-      return false;
-    }
+    } else return false;
   }
 
   t.context.stubIsSubscribedToOsTcImpl = async function() {
-    if (this.url.host === t.context.subdomainOneSignalHost) {
-      return false;
-    } else if (this.url.host === t.context.subdomainOsTcHost) {
+    if (this.url.host === t.context.subdomainOsTcHost) {
       return true;
-    }
+    } else return false;
   }
 
   t.context.stubIsSubscribedToNoneImpl = async function() {
-    if (this.url.host === t.context.subdomainOneSignalHost) {
-      return false;
-    } else if (this.url.host === t.context.subdomainOsTcHost) {
-      return false;
-    }
+    return false;
   }
 
   t.context.stubIsSubscribedToBothImpl = async function() {
-    if (this.url.host === t.context.subdomainOneSignalHost) {
+    if (this.url.host === t.context.subdomainOneSignalHost ||
+      this.url.host === t.context.subdomainOsTcHost) {
       return true;
-    } else if (this.url.host === t.context.subdomainOsTcHost) {
-      return true;
-    }
+    } else return false;
   }
 }
 
 test(`should discover alt origin to be subdomain.onesignal.com if user is already subscribed there`, async t => {
   setupDiscoverAltOriginTest(t);
-  const { appConfig, stubIsSubscribedToOneSignal } = t.context;
+  const { appConfig } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToOneSignalImpl);
   const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
@@ -103,7 +92,7 @@ test(`should discover alt origin to be subdomain.onesignal.com if user is alread
 
 test(`should discover alt origin to be subdomain.os.tc if user is not subscribed to onesignal.com but is subscribed to os.tc`, async t => {
   setupDiscoverAltOriginTest(t);
-  const { appConfig, stubIsSubscribedToOneSignal } = t.context;
+  const { appConfig } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToOsTcImpl);
   const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
@@ -118,7 +107,7 @@ test(`should discover alt origin to be subdomain.os.tc if user is not subscribed
 
 test(`should discover alt origin to be subdomain.os.tc if user is not subscribed to either onesignal.com or os.tc`, async t => {
   setupDiscoverAltOriginTest(t);
-  const { appConfig, stubIsSubscribedToOneSignal } = t.context;
+  const { appConfig } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToNoneImpl);
   const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
@@ -133,7 +122,7 @@ test(`should discover alt origin to be subdomain.os.tc if user is not subscribed
 
 test(`should discover alt origin to be subdomain.os.tc if user is subscribed to both onesignal.com and os.tc`, async t => {
   setupDiscoverAltOriginTest(t);
-  const { appConfig, stubIsSubscribedToOneSignal } = t.context;
+  const { appConfig } = t.context;
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToBothImpl);
   const stubUnsubscribeFromPush = sinon.stub(ProxyFrameHost.prototype, 'unsubscribeFromPush').resolves(undefined);

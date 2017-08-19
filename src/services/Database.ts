@@ -1,18 +1,17 @@
-import IndexedDb from "./IndexedDb";
-import Environment from "../Environment";
-import {AppState} from "../models/AppState";
-import {Subscription} from "../models/Subscription";
-import {AppConfig} from "../models/AppConfig";
-import {Uuid} from "../models/Uuid";
-import {ServiceWorkerConfig} from "../models/ServiceWorkerConfig";
-import {ServiceWorkerState} from "../models/ServiceWorkerState";
-import {Notification} from "../models/Notification";
-import SubscriptionHelper from "../helpers/SubscriptionHelper";
-import {Timestamp} from "../models/Timestamp";
-import Emitter from "../libraries/Emitter";
+import SubscriptionHelper from '../helpers/SubscriptionHelper';
+import Emitter from '../libraries/Emitter';
 import SdkEnvironment from '../managers/SdkEnvironment';
+import { AppConfig } from '../models/AppConfig';
+import { AppState } from '../models/AppState';
+import { Notification } from '../models/Notification';
+import { ServiceWorkerState } from '../models/ServiceWorkerState';
+import { Subscription } from '../models/Subscription';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
+import { Timestamp } from '../models/Timestamp';
+import { Uuid } from '../models/Uuid';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import IndexedDb from './IndexedDb';
+import * as Browser from 'bowser';
 
 enum DatabaseEventName {
   SET
@@ -45,7 +44,6 @@ export default class Database {
         } else {
           return null;
         }
-        break;
       case 'Ids':
         if (result && key) {
           return result.id;
@@ -54,7 +52,6 @@ export default class Database {
         } else {
           return null;
         }
-        break;
       case 'NotificationOpened':
         if (result && key) {
           return {data: result.data, timestamp: result.timestamp};
@@ -63,14 +60,12 @@ export default class Database {
         } else {
           return null;
         }
-        break;
       default:
         if (result) {
           return result;
         } else {
           return null;
         }
-        break;
     }
   }
 
@@ -151,26 +146,23 @@ export default class Database {
 
   async getAppConfig(): Promise<AppConfig> {
     const config = new AppConfig();
-    config.appId = await this.get<Uuid>('Ids', 'appId');
+    config.appId = new Uuid(await this.get<string>('Ids', 'appId'));
     config.subdomain = await this.get<string>('Options', 'subdomain');
-    config.autoRegister = await this.get<boolean>('Options', 'autoRegister');
-    config.serviceWorkerConfig = await this.get<ServiceWorkerConfig>('Options', 'serviceWorkerConfig');
+    config.vapidPublicKey = await Database.get<string>('Options', 'vapidPublicKey');
     return config;
   }
 
   async setAppConfig(appConfig: AppConfig) {
-    if (appConfig.appId)
-      await this.put('Ids', {type: 'appId', id: appConfig.appId})
+    if (appConfig.appId && appConfig.appId.value)
+      await this.put('Ids', {type: 'appId', id: appConfig.appId.value})
     if (appConfig.subdomain)
       await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})
-    if (appConfig.autoRegister)
-      await this.put('Options', {key: 'autoRegister', value: appConfig.autoRegister})
-    if (appConfig.serviceWorkerConfig)
-      await this.put('Options', {key: 'serviceWorkerConfig', value: appConfig.serviceWorkerConfig})
     if (appConfig.httpUseOneSignalCom)
       await this.put('Options', { key: 'httpUseOneSignalCom', value: true })
     else
       await this.put('Options', {key: 'httpUseOneSignalCom', value: false })
+    if (appConfig.vapidPublicKey)
+      await this.put('Options', {key: 'vapidPublicKey', value: appConfig.vapidPublicKey})
   }
 
   async getAppState(): Promise<AppState> {
@@ -209,26 +201,6 @@ export default class Database {
     }
   }
 
-  async getServiceWorkerConfig(): Promise<ServiceWorkerConfig> {
-    const config = new ServiceWorkerConfig();
-    config.scope = await this.get<string>('Options', 'workerScope');
-    config.workerName = await this.get<string>('Options', 'workerName');
-    config.updaterWorkerName = await this.get<string>('Options', 'updaterWorkerName');
-    config.workerFilePath = await this.get<string>('Options', 'workerFilePath');
-    return config;
-  }
-
-  async setServiceWorkerConfig(config: ServiceWorkerConfig) {
-    if (config.scope)
-      await this.put('Options', {key: 'workerScope', value: config.scope});
-    if (config.workerName)
-      await this.put('Options', {key: 'workerName', value: config.workerName});
-    if (config.updaterWorkerName)
-      await this.put('Options', {key: 'updaterWorkerName', value: config.updaterWorkerName});
-    if (config.workerFilePath)
-      await this.put('Options', {key: 'workerFilePath', value: config.workerFilePath});
-  }
-
   async getServiceWorkerState(): Promise<ServiceWorkerState> {
     const state = new ServiceWorkerState();
     state.workerVersion = await this.get<number>('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION');
@@ -248,9 +220,8 @@ export default class Database {
 
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
-    subscription.deviceId = await this.get<Uuid>('Ids', 'userId');
-    subscription.pushEndpoint = await this.get<URL>('Options', 'subscriptionEndpoint');
-    subscription.pushToken = await this.get<string>('Ids', 'registrationId');
+    subscription.deviceId = new Uuid(await this.get<string>('Ids', 'userId'));
+    subscription.subscriptionToken = await this.get<string>('Ids', 'registrationId');
 
     // The preferred database key to store our subscription
     const dbOptedOut = await this.get<boolean>('Options', 'optedOut');
@@ -271,14 +242,15 @@ export default class Database {
   }
 
   async setSubscription(subscription: Subscription) {
-    if (subscription.deviceId)
-      await this.put('Ids', {type: 'userId', id: subscription.deviceId});
-    if (subscription.pushEndpoint)
-      await this.put('Options', {key: 'subscriptionEndpoint', value: subscription.pushEndpoint});
-    if (subscription.pushToken)
-      await this.put('Ids', {type: 'registrationId', id: subscription.pushToken});
-    if (subscription.optedOut != null) // Checks if null or undefined, allows false
-      await this.put('Options', {key: 'optedOut', value: subscription.optedOut});
+    if (subscription.deviceId && subscription.deviceId.value) {
+      await this.put('Ids', { type: 'userId', id: subscription.deviceId.value });
+    }
+    if (subscription.subscriptionToken) {
+      await this.put('Ids', { type: 'registrationId', id: subscription.subscriptionToken });
+    }
+    if (subscription.optedOut != null) { // Checks if null or undefined, allows false
+      await this.put('Options', { key: 'optedOut', value: subscription.optedOut });
+    }
   }
 
   /**
@@ -309,56 +281,48 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.emitter.on.apply(Database.databaseInstance.emitter, args);
   }
-  static async setSubscription(...args: any[]) {
+  static async setSubscription(subscription: Subscription) {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.setSubscription.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.setSubscription.call(Database.databaseInstance, subscription);
   }
-  static async getSubscription(...args: any[]): Promise<Subscription> {
+  static async getSubscription(): Promise<Subscription> {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.getSubscription.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.getSubscription.call(Database.databaseInstance);
   }
-  static async setServiceWorkerState(...args: any[]) {
+  static async setServiceWorkerState(workerState: ServiceWorkerState) {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.setServiceWorkerState.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.setServiceWorkerState.call(Database.databaseInstance, workerState);
   }
-  static async getServiceWorkerState(...args: any[]): Promise<ServiceWorkerState> {
+  static async getServiceWorkerState(): Promise<ServiceWorkerState> {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.getServiceWorkerState.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.getServiceWorkerState.call(Database.databaseInstance);
   }
-  static async setServiceWorkerConfig(...args: any[]) {
+  static async setAppState(appState: AppState) {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.setServiceWorkerConfig.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.setAppState.call(Database.databaseInstance, appState);
   }
-  static async getServiceWorkerConfig(...args: any[]): Promise<ServiceWorkerConfig> {
+  static async getAppState(): Promise<AppState> {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.getServiceWorkerConfig.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.getAppState.call(Database.databaseInstance);
   }
-  static async setAppState(...args: any[]) {
+  static async setAppConfig(appConfig: AppConfig) {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.setAppState.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.setAppConfig.call(Database.databaseInstance, appConfig);
   }
-  static async getAppState(...args: any[]): Promise<AppState> {
+  static async getAppConfig(): Promise<AppConfig> {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.getAppState.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.getAppConfig.call(Database.databaseInstance);
   }
-  static async setAppConfig(...args: any[]) {
+  static async remove(table: string, keypath?: string) {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.setAppConfig.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.remove.call(Database.databaseInstance, table, keypath);
   }
-  static async getAppConfig(...args: any[]): Promise<AppConfig> {
+  static async put(table: string, keypath: any) {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.getAppConfig.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.put.call(Database.databaseInstance, table, keypath);
   }
-  static async remove(...args: any[]) {
+  static async get<T>(table: string, key?: string): Promise<T> {
     Database.ensureSingletonInstance();
-    return Database.databaseInstance.remove.apply(Database.databaseInstance, args);
-  }
-  static async put(...args: any[]) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.put.apply(Database.databaseInstance, args);
-  }
-  static async get<T>(...args: any[]): Promise<T> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.get.apply(Database.databaseInstance, args);
+    return Database.databaseInstance.get.call(Database.databaseInstance, table, key);
   }
 }

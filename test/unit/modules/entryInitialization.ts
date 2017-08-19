@@ -1,8 +1,5 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { Notification } from "../../../src/models/Notification";
-import * as sinon from "sinon";
 
 
 test.todo("should initialize a global instance in Service Worker environment");

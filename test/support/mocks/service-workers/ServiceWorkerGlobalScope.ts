@@ -29,7 +29,7 @@ export default class ServiceWorkerGlobalScope {
   trigger(name, args) {
     if (this.listeners[name]) {
       return handleEvents(name, args, this.listeners[name]);
-    }
+    } else return undefined;
   }
 
   snapshot() {

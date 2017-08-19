@@ -1,12 +1,15 @@
-import * as log from "loglevel";
-import {contains, trimUndefined} from "./utils";
-import {Uuid} from "./models/Uuid";
-import * as objectAssign from "object-assign";
-import Environment from "./Environment";
-import { AppConfig, ServerAppConfig } from './models/AppConfig';
-import SdkEnvironment from './managers/SdkEnvironment';
 import * as JSONP from 'jsonp';
-import { SdkInitErrorKind, SdkInitError } from './errors/SdkInitError';
+import * as log from 'loglevel';
+import * as objectAssign from 'object-assign';
+
+import Environment from './Environment';
+import SdkEnvironment from './managers/SdkEnvironment';
+import { AppConfig, ServerAppConfig } from './models/AppConfig';
+import { PushRegistration } from './models/PushRegistration';
+import { Uuid } from './models/Uuid';
+import { contains, trimUndefined } from './utils';
+import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 
 
 export default class OneSignalApi {
@@ -104,14 +107,14 @@ export default class OneSignalApi {
   }
 
   static updatePlayer(appId: Uuid, playerId: Uuid, options?: Object) {
-    return OneSignalApi.put(`players/${playerId}`, objectAssign({app_id: appId}, options));
+    return OneSignalApi.put(`players/${playerId.value}`, objectAssign({app_id: appId.value}, options));
   }
 
-  static sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons) {
+  static sendNotification(appId: Uuid, playerIds: Array<Uuid>, titles, contents, url, icon, data, buttons) {
     var params = {
-      app_id: appId,
+      app_id: appId.value,
       contents: contents,
-      include_player_ids: playerIds,
+      include_player_ids: playerIds.map(x => x.value),
       isAnyWeb: true,
       data: data,
       web_buttons: buttons
@@ -133,23 +136,28 @@ export default class OneSignalApi {
   static async getAppConfig(appId: Uuid): Promise<AppConfig> {
     try {
       const serverConfig = await new Promise<ServerAppConfig>((resolve, reject) => {
-        /**
-         * Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
-         */
-        JSONP(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId.value}/web`, null, (err, data) => {
-          if (err) {
-            reject(err);
-          } else {
-            if (data.success) {
-              resolve(data);
+        if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+          /**
+           * Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
+           */
+          JSONP(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId.value}/web`, null, (err, data) => {
+            if (err) {
+              reject(err);
             } else {
-              // For JSONP, we return a 200 even for errors, there's a success: false param
-              reject(data);
+              if (data.success) {
+                resolve(data);
+              } else {
+                // For JSONP, we return a 200 even for errors, there's a success: false param
+                reject(data);
+              }
             }
-          }
-        });
+          });
+        } else {
+          resolve(OneSignalApi.get(`sync/${appId.value}/web`, null));
+        }
       });
       const config = new AppConfig();
+      config.appId = appId;
       if (serverConfig.features) {
         if (serverConfig.features.cookie_sync && serverConfig.features.cookie_sync.enable) {
           config.cookieSyncEnabled = true;
@@ -165,10 +173,42 @@ export default class OneSignalApi {
         if (serverConfig.config.subdomain) {
           config.subdomain = serverConfig.config.subdomain
         }
+        if (serverConfig.config.vapid_public_key) {
+          config.vapidPublicKey = serverConfig.config.vapid_public_key;
+        }
+        if (serverConfig.config.onesignal_vapid_public_key) {
+          config.onesignalVapidPublicKey = serverConfig.config.onesignal_vapid_public_key;
+        }
       }
       return config;
     } catch (e) {
       throw e;
+    }
+  }
+
+  static async createUser(pushRegistration: PushRegistration): Promise<Uuid> {
+    const response = await OneSignalApi.post(`players`, pushRegistration.serialize());
+    if (response && response.success) {
+      return new Uuid(response.id);
+    } else {
+      return null;
+    }
+  }
+
+  static async updateUserSession(userId: Uuid, pushRegistration: PushRegistration): Promise<Uuid> {
+    try {
+      const response = await OneSignalApi.post(`players/${userId.value}/on_session`, pushRegistration.serialize());
+      if (response.id) {
+        // A new user ID can be returned
+        return new Uuid(response.id);
+      } else {
+        return userId;
+      }
+    } catch (e) {
+      if (e && Array.isArray(e.errors) && e.errors.length > 0 && contains(e.errors[0], 'app_id not found')) {
+        throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
+
+      } else throw e;
     }
   }
 }

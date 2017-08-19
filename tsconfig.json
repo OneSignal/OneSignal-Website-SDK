@@ -15,5 +15,8 @@
   "include": [
     "src/**/*",
     "typings/**/*"
+  ],
+  "exclude": [
+    "dist/**/*"
   ]
 }

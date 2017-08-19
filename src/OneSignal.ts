@@ -1,66 +1,63 @@
-import TimeoutError from './errors/TimeoutError';
-import Environment from "./Environment";
-import OneSignalApi from "./OneSignalApi";
-import IndexedDb from "./services/IndexedDb";
-import * as log from 'loglevel';
-import Event from "./Event";
-import * as Cookie from 'js-cookie';
-import Database from "./services/Database";
 import * as Browser from 'bowser';
-import {
-  isPushNotificationsSupported,
-  logMethodCall,
-  isValidEmail,
-  awaitOneSignalInitAndSupported,
-  getConsoleStyle,
-  unsubscribeFromPush,
-  prepareEmailForHashing,
-  executeCallback,
-  awaitSdkEvent,
-  contains
-} from "./utils";
-import {ValidatorUtils} from "./utils/ValidatorUtils";
+import * as heir from 'heir';
+import * as Cookie from 'js-cookie';
+import * as log from 'loglevel';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
-import * as heir from 'heir';
-import * as swivel from 'swivel';
-import EventHelper from "./helpers/EventHelper";
-import MainHelper from "./helpers/MainHelper";
-import Popover from "./popover/Popover";
-import {Uuid} from "./models/Uuid";
-import {InvalidArgumentError, InvalidArgumentReason} from "./errors/InvalidArgumentError";
-import LimitStore from "./LimitStore";
-import {InvalidStateError, InvalidStateReason} from "./errors/InvalidStateError";
-import InitHelper from "./helpers/InitHelper";
-import ServiceWorkerHelper from "./helpers/ServiceWorkerHelper";
-import SubscriptionHelper from "./helpers/SubscriptionHelper";
-import HttpHelper from "./helpers/HttpHelper";
-import TestHelper from "./helpers/TestHelper";
-import {NotificationActionButton} from "./models/NotificationActionButton";
-import {NotificationPermission} from "./models/NotificationPermission";
-import PermissionMessageDismissedError from "./errors/PermissionMessageDismissedError";
-import PushPermissionNotGrantedError from "./errors/PushPermissionNotGrantedError";
-import {NotSubscribedError, NotSubscribedReason} from "./errors/NotSubscribedError";
-import AlreadySubscribedError from "./errors/AlreadySubscribedError";
-import {PermissionPromptType} from "./models/PermissionPromptType";
-import {Notification} from "./models/Notification";
-import Context from "./models/Context";
-import { DynamicResourceLoader, ResourceLoadState } from "./services/DynamicResourceLoader";
-import SdkEnvironment from './managers/SdkEnvironment';
-import { BuildEnvironmentKind } from './models/BuildEnvironmentKind';
-import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+
+import Environment from './Environment';
+import AlreadySubscribedError from './errors/AlreadySubscribedError';
+import { InvalidArgumentError, InvalidArgumentReason } from './errors/InvalidArgumentError';
+import { InvalidStateError, InvalidStateReason } from './errors/InvalidStateError';
+import { NotSubscribedError, NotSubscribedReason } from './errors/NotSubscribedError';
+import PermissionMessageDismissedError from './errors/PermissionMessageDismissedError';
+import PushPermissionNotGrantedError from './errors/PushPermissionNotGrantedError';
+import { PushPermissionNotGrantedErrorReason } from './errors/PushPermissionNotGrantedError';
+import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
+import Event from './Event';
+import EventHelper from './helpers/EventHelper';
+import HttpHelper from './helpers/HttpHelper';
+import InitHelper from './helpers/InitHelper';
+import MainHelper from './helpers/MainHelper';
+import SubscriptionHelper from './helpers/SubscriptionHelper';
+import TestHelper from './helpers/TestHelper';
+import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
-import { AppConfig } from './models/AppConfig';
 import LegacyManager from './managers/LegacyManager';
+import SdkEnvironment from './managers/SdkEnvironment';
+import { ServiceWorkerActiveState, ServiceWorkerManager } from './managers/ServiceWorkerManager';
+import { SubscriptionManager } from './managers/SubscriptionManager';
+import { AppConfig } from './models/AppConfig';
+import Context from './models/Context';
+import { Notification } from './models/Notification';
+import { NotificationActionButton } from './models/NotificationActionButton';
+import { NotificationPermission } from './models/NotificationPermission';
+import { PermissionPromptType } from './models/PermissionPromptType';
+import { Uuid } from './models/Uuid';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
-import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
+import SubscriptionModal from './modules/frames/SubscriptionModal';
 import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
 import SubscriptionPopup from './modules/frames/SubscriptionPopup';
-import SubscriptionModal from './modules/frames/SubscriptionModal';
-import ProxyFrame from './modules/frames/ProxyFrame';
-import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
-import CookieSyncer from './modules/CookieSyncer';
+import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
+import OneSignalApi from './OneSignalApi';
+import Popover from './popover/Popover';
 import Crypto from './services/Crypto';
+import Database from './services/Database';
+import { ResourceLoadState } from './services/DynamicResourceLoader';
+import IndexedDb from './services/IndexedDb';
+import {
+  awaitOneSignalInitAndSupported,
+  awaitSdkEvent,
+  executeCallback,
+  getConsoleStyle,
+  isValidEmail,
+  logMethodCall,
+  prepareEmailForHashing,
+} from './utils';
+import { ValidatorUtils } from './utils/ValidatorUtils';
+import { PushRegistration } from './models/PushRegistration';
 
 
 export default class OneSignal {
@@ -107,7 +104,7 @@ export default class OneSignal {
     logMethodCall('syncHashedEmail', email);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId)
+    if (!deviceId || !deviceId.value)
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     const result = await OneSignalApi.updatePlayer(appId, deviceId, {
       em_m: Crypto.md5(sanitizedEmail),
@@ -141,41 +138,16 @@ export default class OneSignal {
   static async init(options) {
     logMethodCall('init');
 
-    // If Safari - add 'fetch' pollyfill if it isn't already added.
-    if (Browser.safari && typeof window.fetch == "undefined") {
-      log.debug('Loading fetch polyfill for Safari..');
-      try {
-        await OneSignal.context.dynamicResourceLoader.loadFetchPolyfill();
-        log.debug('Done loading fetch polyfill.');
-      } catch (e) {
-        log.debug('Error loading fetch polyfill:', e);
-      }
-    }
+    InitHelper.ponyfillSafariFetch();
+    InitHelper.errorIfInitAlreadyCalled();
 
-    if (OneSignal._initCalled) {
-      throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
-    }
-    OneSignal._initCalled = true;
+    const appConfig = await InitHelper.downloadAndMergeAppConfig(options);
+    log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
+    OneSignal.context = new Context(appConfig);
+    OneSignal.config = OneSignal.context.appConfig;
+    OneSignal.context.workerMessenger.listen();
 
-    let appConfig: AppConfig;
-    try {
-      appConfig = await OneSignalApi.getAppConfig(new Uuid(options.appId));
-      OneSignal.cookieSyncer = new CookieSyncer(appConfig.cookieSyncEnabled);
-      OneSignal.config = InitHelper.getMergedLegacyConfig(options, appConfig);
-      log.debug(`OneSignal: Final web app config: %c${JSON.stringify(OneSignal.config, null, 4)}`, getConsoleStyle('code'));
-    } catch (e) {
-      if (e) {
-        if (e.code === 1) {
-          throw new SdkInitError(SdkInitErrorKind.InvalidAppId)
-        }
-        else if (e.code === 2) {
-          throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
-        }
-      }
-      throw e;
-    }
-
-    if (Browser.safari && !OneSignal.config.safari_web_id) {
+    if (Browser.safari && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't
@@ -221,7 +193,7 @@ export default class OneSignal {
         OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(appConfig);
       }
 
-      window.addEventListener('focus', (event) => {
+      window.addEventListener('focus', () => {
         // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
         MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
@@ -279,13 +251,12 @@ export default class OneSignal {
     const isEnabled = await OneSignal.isPushNotificationsEnabled();
     const notOptedOut = await OneSignal.getSubscription();
     const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
-    const isShowingHttpPermissionRequest = await OneSignal.httpHelper.isShowingHttpPermissionRequest();
 
     if (doNotPrompt && !options.force) {
       throw new PermissionMessageDismissedError();
     }
     if (permission === NotificationPermission.Denied) {
-      throw new PushPermissionNotGrantedError();
+      throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
     }
     if (isEnabled) {
       throw new AlreadySubscribedError();
@@ -310,7 +281,7 @@ export default class OneSignal {
       log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-    OneSignal.popover = new Popover(OneSignal.config.promptOptions);
+    OneSignal.popover = new Popover(OneSignal.config.userConfig.promptOptions);
     OneSignal.popover.create();
     log.debug('Showing the HTTP popover.');
     if (OneSignal.notifyButton &&
@@ -441,7 +412,7 @@ export default class OneSignal {
       if (notificationPermission === NotificationPermission.Default) {
         log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Showing HTTP permission request.`);
         OneSignal._showingHttpPermissionRequest = true;
-        return await new Promise((resolve, reject) => {
+        return await new Promise(resolve => {
           window.Notification.requestPermission(permission => {
             OneSignal._showingHttpPermissionRequest = false;
             resolve(permission);
@@ -474,11 +445,11 @@ export default class OneSignal {
       .then(() => {
         let safariWebId = null;
         if (OneSignal.config) {
-          safariWebId = OneSignal.config.safari_web_id;
+          safariWebId = OneSignal.config.safariWebId;
         }
         return MainHelper.getNotificationPermission(safariWebId);
       })
-      .then(permission => {
+      .then((permission: NotificationPermission) => {
         if (onComplete) {
           onComplete(permission);
         }
@@ -494,7 +465,7 @@ export default class OneSignal {
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
+    if (!deviceId || !deviceId.value) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
@@ -522,7 +493,7 @@ export default class OneSignal {
     if (!tags || Object.keys(tags).length === 0) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
-      return;
+      return null;
     }
     // Our backend considers false as removing a tag, so convert false -> "false" to allow storing as a value
     Object.keys(tags).forEach(key => {
@@ -531,7 +502,7 @@ export default class OneSignal {
     });
     const { appId } = await Database.getAppConfig();
     var { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
+    if (!deviceId || !deviceId.value) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
     // After the user subscribers, he will have a device ID, so get it again
@@ -581,7 +552,7 @@ export default class OneSignal {
     OneSignal.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
       executeCallback(callback, notification);
     });
-    EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl);
+    EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl || OneSignal.config.userConfig.pageUrl);
   }
   /**
    * @PublicApi
@@ -591,10 +562,10 @@ export default class OneSignal {
     Promise<{userId: Uuid, registrationId: string}> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getIdsAvailable', callback);
-    const { deviceId, pushToken } = await Database.getSubscription();
+    const { deviceId, subscriptionToken } = await Database.getSubscription();
     const bundle = {
       userId: deviceId,
-      registrationId: pushToken
+      registrationId: subscriptionToken
     };
     executeCallback(callback, bundle);
     return bundle;
@@ -610,7 +581,7 @@ export default class OneSignal {
     logMethodCall('isPushNotificationsEnabled', callback);
 
     const hasInsecureParentOrigin = await SubscriptionHelper.hasInsecureParentOrigin();
-    const { deviceId, pushToken, optedOut } = await Database.getSubscription();
+    const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
     const notificationPermission = await OneSignal.getNotificationPermission();
 
     let isPushEnabled = false;
@@ -620,10 +591,12 @@ export default class OneSignal {
         SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.OneSignalProxyFrame &&
         !hasInsecureParentOrigin) {
 
-      const serviceWorkerActive = await ServiceWorkerHelper.isServiceWorkerActive();
+      const serviceWorkerActiveState = await OneSignal.context.serviceWorkerManager.getActiveState();
+      const serviceWorkerActive = (serviceWorkerActiveState === ServiceWorkerActiveState.WorkerA) ||
+        (serviceWorkerActiveState === ServiceWorkerActiveState.WorkerB);
 
       isPushEnabled = !!(deviceId &&
-                      pushToken &&
+                      subscriptionToken &&
                       notificationPermission === NotificationPermission.Granted &&
                       !optedOut &&
                       serviceWorkerActive)
@@ -643,7 +616,7 @@ export default class OneSignal {
       }
     } else {
       isPushEnabled = !!(deviceId &&
-                         pushToken &&
+                         subscriptionToken &&
                          notificationPermission === NotificationPermission.Granted &&
                          !optedOut)
     }
@@ -666,7 +639,7 @@ export default class OneSignal {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId) {
+    if (!deviceId || !deviceId.value) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
@@ -710,13 +683,13 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal user ID.
    * @PublicApi
    */
-  static async getUserId(callback?: Action<Uuid>): Promise<Uuid> {
+  static async getUserId(callback?: Action<Uuid>): Promise<string> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getUserId', callback);
     const subscription = await Database.getSubscription();
     const deviceId = subscription.deviceId;
     executeCallback(callback, deviceId);
-    return deviceId;
+    return deviceId.value;
   }
 
   /**
@@ -727,9 +700,9 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getRegistrationId', callback);
     const subscription = await Database.getSubscription();
-    const pushToken = subscription.pushToken;
-    executeCallback(callback, pushToken);
-    return pushToken;
+    const subscriptionToken = subscription.subscriptionToken;
+    executeCallback(callback, subscriptionToken);
+    return subscriptionToken;
   }
 
   /**
@@ -813,12 +786,10 @@ export default class OneSignal {
   static browser = Browser;
   static popover = null;
   static log = log;
-  static swivel = swivel;
   static api = OneSignalApi;
   static indexedDb = IndexedDb;
   static mainHelper = MainHelper;
   static subscriptionHelper = SubscriptionHelper;
-  static workerHelper = ServiceWorkerHelper;
   static httpHelper =  HttpHelper;
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
@@ -850,20 +821,20 @@ export default class OneSignal {
    * slash). This would allow pages to function correctly as not to block the service worker ready call, which would
    * hang indefinitely if we requested root scope registration but the service was only available in a child scope.
    */
-  static SERVICE_WORKER_PARAM = {scope: '/'};
+  static SERVICE_WORKER_PARAM: { scope: string } = {scope: '/'};
   static _LOGGING = false;
   static LOGGING = false;
   static _usingNativePermissionHook = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
   static httpPermissionRequestPostModal: any;
-  static closeNotifications = ServiceWorkerHelper.closeNotifications;
-  static isServiceWorkerActive = ServiceWorkerHelper.isServiceWorkerActive;
   static _showingHttpPermissionRequest = false;
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
-  static cookieSyncer: CookieSyncer;
   static crypto = Crypto;
+  static PushRegistration = PushRegistration;
+
+  static notificationPermission = NotificationPermission;
 
 
   /**
@@ -896,7 +867,7 @@ export default class OneSignal {
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
-    BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
+    SET_SESSION_COUNT: 'postmam.setSessionCount',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
     IS_SHOWING_HTTP_PERMISSION_REQUEST: 'postmam.isShowingHttpPermissionRequest',
@@ -908,7 +879,8 @@ export default class OneSignal {
     HTTP_PERMISSION_REQUEST_RESUBSCRIBE: 'postmam.httpPermissionRequestResubscribe',
     MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
     IS_SUBSCRIBED: 'postmam.isSubscribed',
-    UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame'
+    UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame',
+    GET_EVENT_LISTENER_COUNT: 'postmam.getEventListenerCount'
   };
 
   static EVENTS = {
@@ -982,9 +954,9 @@ export default class OneSignal {
   };
 
   /** To appease TypeScript, EventEmitter later overrides this */
-  static on(...args) {}
-  static off(...args) {}
-  static once(...args) {}
+  static on(..._) {}
+  static off(..._) {}
+  static once(..._) {}
 }
 
 Object.defineProperty(OneSignal, 'LOGGING', {
@@ -1004,8 +976,6 @@ Object.defineProperty(OneSignal, 'LOGGING', {
   enumerable: true,
   configurable: true
 });
-
-OneSignal.context = new Context();
 
 heir.merge(OneSignal, new EventEmitter());
 

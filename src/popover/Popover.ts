@@ -1,9 +1,9 @@
-import {removeDomElement, addDomElement, addCssClass, once} from '../utils';
-import * as log from 'loglevel';
-import Event from '../Event';
-import MainHelper from '../helpers/MainHelper';
 import * as Browser from 'bowser';
 import * as objectAssign from 'object-assign';
+
+import Event from '../Event';
+import MainHelper from '../helpers/MainHelper';
+import { addCssClass, addDomElement, once, removeDomElement } from '../utils';
 
 
 export default class Popover {
@@ -70,11 +70,11 @@ export default class Popover {
         }
     }
 
-    onPopoverAllowed(e) {
+    onPopoverAllowed(_) {
         Event.trigger(Popover.EVENTS.ALLOW_CLICK);
     }
 
-    onPopoverCanceled(e) {
+    onPopoverCanceled(_) {
         Event.trigger(Popover.EVENTS.CANCEL_CLICK);
         this.close();
     }

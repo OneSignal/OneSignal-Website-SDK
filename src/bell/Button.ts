@@ -20,60 +20,60 @@ export default class Button extends ActiveAnimatedElement {
       mouse: 'bell.launcher.button.mouse'
     };
 
-    this.element.addEventListener('touchstart', (e) => {
-      this.onHovering(e);
-      this.onTap(e);
+    this.element.addEventListener('touchstart', () => {
+      this.onHovering();
+      this.onTap();
+    }, { passive: true });
+
+    this.element.addEventListener('mouseenter', () => {
+      this.onHovering();
     });
 
-    this.element.addEventListener('mouseenter', (e) => {
-      this.onHovering(e);
+    this.element.addEventListener('mouseleave', () => {
+      this.onHovered();
+    });
+    this.element.addEventListener('touchmove', () => {
+      this.onHovered();
+    }, { passive: true });
+
+    this.element.addEventListener('mousedown', () => {
+      this.onTap();
     });
 
-    this.element.addEventListener('mouseleave', (e) => {
-      this.onHovered(e);
-    });
-    this.element.addEventListener('touchmove', (e) => {
-      this.onHovered(e);
+    this.element.addEventListener('mouseup', () => {
+      this.onEndTap();
     });
 
-    this.element.addEventListener('mousedown', (e) => {
-      this.onTap(e);
-    });
-
-    this.element.addEventListener('mouseup', (e) => {
-      this.onEndTap(e);
-    });
-
-    this.element.addEventListener('click', (e) => {
-      this.onHovered(e);
-      this.onClick(e);
+    this.element.addEventListener('click', () => {
+      this.onHovered();
+      this.onClick();
     });
   }
 
-  onHovering(e) {
+  onHovering() {
     if (LimitStore.isEmpty(this.events.mouse) || LimitStore.getLast(this.events.mouse) === 'out') {
       Event.trigger(Bell.EVENTS.HOVERING);
     }
     LimitStore.put(this.events.mouse, 'over');
   }
 
-  onHovered(e) {
+  onHovered() {
     LimitStore.put(this.events.mouse, 'out');
     Event.trigger(Bell.EVENTS.HOVERED);
   }
 
-  onTap(e) {
+  onTap() {
     this.pulse();
     this.activate();
     this.bell.badge.activate();
   }
 
-  onEndTap(e) {
+  onEndTap() {
     this.inactivate();
     this.bell.badge.inactivate();
   }
 
-  onClick(e) {
+  onClick() {
     Event.trigger(Bell.EVENTS.BELL_CLICK);
     Event.trigger(Bell.EVENTS.LAUNCHER_CLICK);
 
@@ -98,7 +98,7 @@ export default class Button extends ActiveAnimatedElement {
         //  this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribing'], Message.TIMEOUT)
         //}
         this.bell._ignoreSubscriptionState = true;
-        OneSignal.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, isSubscribed => {
+        OneSignal.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribed'], Message.TIMEOUT)
             .then(() => {
               this.bell._ignoreSubscriptionState = false;

@@ -1,8 +1,9 @@
-import { addCssClass, removeCssClass, contains, once } from '../utils';
 import * as log from 'loglevel';
-import Event from '../Event';
-import AnimatedElement from './AnimatedElement';
 import * as objectAssign from 'object-assign';
+
+import Event from '../Event';
+import { addCssClass, contains, once, removeCssClass } from '../utils';
+import AnimatedElement from './AnimatedElement';
 
 
 export default class ActiveAnimatedElement extends AnimatedElement {
@@ -27,7 +28,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
               public state = 'shown',
               public activeState = 'active',
               public targetTransitionEvents = ['opacity', 'transform'],
-              public nestedContentSelector = null) {
+              public nestedContentSelector?: string) {
     super(selector, showClass, hideClass, state, targetTransitionEvents);
   }
 

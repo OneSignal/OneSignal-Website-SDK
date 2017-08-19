@@ -1,5 +1,6 @@
-import { getConsoleStyle, delay, nothing, decodeHtmlEntities } from '../utils';
 import * as log from 'loglevel';
+
+import { decodeHtmlEntities, delay, getConsoleStyle, nothing } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -60,7 +61,7 @@ export default class Message extends AnimatedElement {
       return this.bell.text['tip.state.blocked'];
   }
 
-  enqueue(message, notify = false) {
+  enqueue(message) {
     this.queued.push(decodeHtmlEntities(message));
     return new Promise((resolve) => {
       if (this.bell.badge.shown) {

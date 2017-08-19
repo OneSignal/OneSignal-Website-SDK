@@ -1,9 +1,10 @@
-import {clearDomElementChildren, once, addDomElement} from '../utils';
-import Event from '../Event';
-import AnimatedElement from './AnimatedElement';
 import * as Browser from 'bowser';
-import Bell from './Bell';
+
+import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
+import { addDomElement, clearDomElementChildren } from '../utils';
+import AnimatedElement from './AnimatedElement';
+import Bell from './Bell';
 
 
 

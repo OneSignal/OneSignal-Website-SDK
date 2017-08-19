@@ -1,14 +1,11 @@
-import Postmam from '../../Postmam';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
-import Database from "../../services/Database";
-import Event from "../../Event";
-import EventHelper from "../../helpers/EventHelper";
-import { timeoutPromise, unsubscribeFromPush } from '../../utils';
-import TimeoutError from '../../errors/TimeoutError';
 import * as log from 'loglevel';
-import { NotificationPermission } from '../../models/NotificationPermission';
+
 import Environment from '../../Environment';
-import SdkEnvironment from '../../managers/SdkEnvironment';
+import Event from '../../Event';
+import EventHelper from '../../helpers/EventHelper';
+import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import Postmam from '../../Postmam';
+import { timeoutPromise } from '../../utils';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -75,7 +72,7 @@ export default class ProxyFrameHost implements Disposable {
 
     this.element = iframe;
     // Display a timeout warning if frame doesn't load in time, but don't prevent it from loading if the network is just slow
-    timeoutPromise(this.loadPromise.promise, ProxyFrameHost.LOAD_TIMEOUT_MS).catch(e => {
+    timeoutPromise(this.loadPromise.promise, ProxyFrameHost.LOAD_TIMEOUT_MS).catch(() => {
       if (window === window.top) {
         log.warn(`OneSignal: Loading the required iFrame ${this.url.toString()} timed out. Check that the Site URL onesignal.com dashboard web config is ${location.origin}. Only the Site URL specified there is allowed to use load the iFrame.`);
       }
@@ -93,7 +90,7 @@ export default class ProxyFrameHost implements Disposable {
     }
   }
 
-  onFrameLoad(e: UIEvent): void {
+  onFrameLoad(_: UIEvent): void {
     this.establishCrossOriginMessaging();
   }
 
@@ -109,6 +106,7 @@ export default class ProxyFrameHost implements Disposable {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, this.onRequestHostUrl.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, this.onServiceWorkerCommandRedirect.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE, this.onHttpPermissionRequestResubscribe.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT, this.onGetEventListenerCount.bind(this));
     this.messenger.connect();
   }
 
@@ -128,7 +126,7 @@ export default class ProxyFrameHost implements Disposable {
     });
   }
 
-  async onMessengerConnect(e: MessengerMessageEvent) {
+  async onMessengerConnect(_: MessengerMessageEvent) {
     log.debug(`Successfully established cross-origin communication for iFrame at ${this.url.toString()}`);
 
     this.messenger.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
@@ -169,7 +167,7 @@ export default class ProxyFrameHost implements Disposable {
     return false;
   }
 
-  onHttpPermissionRequestResubscribe(message: MessengerMessageEvent) {
+  onHttpPermissionRequestResubscribe(_: MessengerMessageEvent) {
     log.debug('(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.');
     OneSignal.showHttpPrompt({ __sdkCall: true, __useHttpPermissionRequestStyle: true }).catch(e => {
       log.debug('[Resubscribe Prompt Error]', e);
@@ -177,8 +175,16 @@ export default class ProxyFrameHost implements Disposable {
     return false;
   }
 
+  onGetEventListenerCount(message: MessengerMessageEvent) {
+    const eventName: string = message.data;
+    log.debug('(Reposted from iFrame -> Host) Getting event listener count for ', eventName);
+    const listenerEventCount = OneSignal.getListeners(eventName).length;
+    message.reply(listenerEventCount);
+    return false;
+  }
+
   isSubscribed(): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, reply => {
         resolve(reply.data);
       });
@@ -186,8 +192,8 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   unsubscribeFromPush(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null, reply => {
+    return new Promise<void>(resolve => {
+      this.messenger.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null, _ => {
         resolve();
       });
     });
@@ -196,7 +202,7 @@ export default class ProxyFrameHost implements Disposable {
   /**
    * Shortcut method to messenger.message().
    */
-  message(...args) {
+  message(..._) {
     this.messenger.message.apply(this.messenger, arguments);
   }
 }

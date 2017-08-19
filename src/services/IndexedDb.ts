@@ -1,7 +1,7 @@
-import * as log from "loglevel";
-import Database from "./Database";
-import Emitter from "../libraries/Emitter";
-import { contains } from "../utils";
+import * as log from 'loglevel';
+
+import Emitter from '../libraries/Emitter';
+import { contains } from '../utils';
 
 export default class IndexedDb {
 
@@ -14,7 +14,7 @@ export default class IndexedDb {
   }
 
   private open(databaseName: string): Promise<IDBDatabase> {
-    return new Promise<IDBDatabase>((resolve, reject) => {
+    return new Promise<IDBDatabase>(resolve => {
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
         var request: IDBOpenDBRequest = indexedDB.open(databaseName, 1);
@@ -84,7 +84,7 @@ export default class IndexedDb {
    *
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase/onversionchange
    */
-  private onDatabaseVersionChange(event: IDBVersionChangeEvent): void {
+  private onDatabaseVersionChange(_: IDBVersionChangeEvent): void {
     log.debug('IndexedDb: versionchange event');
   }
 
@@ -127,7 +127,7 @@ export default class IndexedDb {
         request.onsuccess = () => {
           resolve(request.result);
         };
-        request.onerror = e => {
+        request.onerror = () => {
           reject(request.error);
         };
       });
@@ -146,7 +146,7 @@ export default class IndexedDb {
             resolve(jsonResult);
           }
         };
-        cursor.onerror = (event) => {
+        cursor.onerror = () => {
           reject(cursor.error);
         };
       });
@@ -161,7 +161,7 @@ export default class IndexedDb {
     return await new Promise((resolve, reject) => {
       try {
         let request = this.database.transaction([table], 'readwrite').objectStore(table).put(key);
-        request.onsuccess = (event) => {
+        request.onsuccess = () => {
           resolve(key);
         };
         request.onerror = (e) => {
@@ -190,7 +190,7 @@ export default class IndexedDb {
     return new Promise((resolve, reject) => {
       try {
         let request = this.database.transaction([table], 'readwrite').objectStore(table)[method](key);
-        request.onsuccess = (event) => {
+        request.onsuccess = () => {
           resolve(key);
         };
         request.onerror = (e) => {

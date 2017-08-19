@@ -1,22 +1,18 @@
-import Postmam from '../../Postmam';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
-import Database from '../../services/Database';
-import Event from "../../Event";
-import EventHelper from "../../helpers/EventHelper";
-import { timeoutPromise, unsubscribeFromPush, isPushNotificationsSupported, decodeHtmlEntities } from '../../utils';
-import TimeoutError from '../../errors/TimeoutError';
-import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
-import { Uuid } from '../../models/Uuid';
-import ServiceWorkerHelper from "../../helpers/ServiceWorkerHelper";
-import * as objectAssign from 'object-assign';
-import SdkEnvironment from '../../managers/SdkEnvironment';
-import { InvalidStateReason } from "../../errors/InvalidStateError";
-import HttpHelper from "../../helpers/HttpHelper";
-import TestHelper from "../../helpers/TestHelper";
-import InitHelper from "../../helpers/InitHelper";
-import MainHelper from "../../helpers/MainHelper";
-import RemoteFrame from './RemoteFrame';
 import * as log from 'loglevel';
+import * as objectAssign from 'object-assign';
+
+import { InvalidStateReason } from '../../errors/InvalidStateError';
+import Event from '../../Event';
+import HttpHelper from '../../helpers/HttpHelper';
+import InitHelper from '../../helpers/InitHelper';
+import MainHelper from '../../helpers/MainHelper';
+import TestHelper from '../../helpers/TestHelper';
+import SdkEnvironment from '../../managers/SdkEnvironment';
+import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import Postmam from '../../Postmam';
+import Database from '../../services/Database';
+import { unsubscribeFromPush } from '../../utils';
+import RemoteFrame from './RemoteFrame';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -24,6 +20,7 @@ import * as log from 'loglevel';
  * subdomain.os.tc/webPushIFrame. *
  */
 export default class ProxyFrame extends RemoteFrame {
+  public messenger: Postmam;
 
   /**
    * Loads the messenger on the iFrame to communicate with the host page and
@@ -66,7 +63,7 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName, eventData});
   }
 
-  async onMessengerConnect(message: MessengerMessageEvent) {
+  async onMessengerConnect(_: MessengerMessageEvent) {
     log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin communication.`);
     this.finishInitialization();
     return false;
@@ -119,7 +116,7 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onRemoteDatabaseGet(message: MessengerMessageEvent) {
     // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys:
-    // 'userId'}, {table: 'Ids', keys: 'registrationId'}]
+    // 'someId'}, {table: 'Ids', keys: 'someId'}]
     const retrievals: Array<{table, key}> = message.data;
     const retrievalOpPromises = [];
     for (let retrieval of retrievals) {
@@ -140,7 +137,7 @@ export default class ProxyFrame extends RemoteFrame {
       let {table, keypath} = insertion;
       insertionOpPromises.push(Database.put(table, keypath));
     }
-    const results = await Promise.all(insertionOpPromises);
+    await Promise.all(insertionOpPromises);
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }
@@ -154,7 +151,7 @@ export default class ProxyFrame extends RemoteFrame {
       let {table, keypath} = removal;
       removalOpPromises.push(Database.remove(table, keypath));
     }
-    const results = await Promise.all(removalOpPromises);
+    await Promise.all(removalOpPromises);
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }

@@ -1,5 +1,6 @@
+import * as Browser from 'bowser';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { BuildEnvironmentKind } from './models/BuildEnvironmentKind';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 
 export default class Environment {
 
@@ -11,7 +12,7 @@ export default class Environment {
   }
 
   static version() {
-    return (typeof __VERSION__ === "undefined" ? 1 : __VERSION__);
+    return (typeof __VERSION__ === "undefined" ? 1 : Number(__VERSION__));
   }
 
   static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
@@ -23,8 +24,8 @@ export default class Environment {
   }
 
   /* Specifications: https://tools.ietf.org/html/bcp47 */
-  static getLanguage(testLanguage?) {
-    let languageTag = testLanguage || navigator.language;
+  static getLanguage() {
+    let languageTag = navigator.language;
     if (languageTag) {
       languageTag = languageTag.toLowerCase();
       let languageSubtags = languageTag.split('-');
@@ -52,7 +53,14 @@ export default class Environment {
   }
 
   static supportsServiceWorkers() {
-    return typeof navigator !== "undefined" &&
-           'serviceWorker' in navigator;
+    const env = SdkEnvironment.getWindowEnv();
+
+    switch (env) {
+      case WindowEnvironmentKind.ServiceWorker:
+        return true;
+      default:
+        return typeof navigator !== "undefined" &&
+          'serviceWorker' in navigator;
+    }
   }
 }

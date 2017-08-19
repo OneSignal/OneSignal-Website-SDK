@@ -1,12 +1,12 @@
-import * as log from "loglevel";
-import * as Browser from "bowser";
-import Environment from "./Environment";
-import Database from "./services/Database";
-import PushNotSupportedError from "./errors/PushNotSupportedError";
-import SubscriptionHelper from "./helpers/SubscriptionHelper";
-import SdkEnvironment from "./managers/SdkEnvironment";
-import { WindowEnvironmentKind } from "./models/WindowEnvironmentKind";
-import TimeoutError from "./errors/TimeoutError";
+import * as Browser from 'bowser';
+import * as log from 'loglevel';
+
+import Environment from './Environment';
+import TimeoutError from './errors/TimeoutError';
+import SubscriptionHelper from './helpers/SubscriptionHelper';
+import SdkEnvironment from './managers/SdkEnvironment';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import Database from './services/Database';
 
 
 export function isArray(variable) {
@@ -92,6 +92,7 @@ export function isPushNotificationsSupported() {
     return true;
 
   if ((<any>browser).yandexbrowser && Number(browser.version) >= 15.12)
+    // 17.3.1.838 supports VAPID on Mac OS X
     return true;
 
   // https://www.chromestatus.com/feature/5416033485586432
@@ -119,7 +120,7 @@ export function removeDomElement(selector) {
  * not supported, and wraps these tasks in a Promise.
  */
 export function awaitOneSignalInitAndSupported() {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     if (!OneSignal.initialized) {
       OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     } else {
@@ -133,7 +134,7 @@ export function awaitOneSignalInitAndSupported() {
  * Helps when logging method calls.
  */
 export function stringify(obj) {
-  return JSON.stringify(obj, (key, value) => {
+  return JSON.stringify(obj, (_, value) => {
     if (typeof value === 'function') {
       return "[Function]";
     }
@@ -214,6 +215,7 @@ var DEVICE_TYPES = {
   CHROME: 5,
       SAFARI: 7,
       FIREFOX: 8,
+      UNKNOWN: -99
 };
 
 export function getDeviceTypeForBrowser() {
@@ -230,6 +232,7 @@ export function getDeviceTypeForBrowser() {
     return DEVICE_TYPES.SAFARI;
   } else {
     log.error(`OneSignal: Unable to associate device type for browser ${Browser.name} ${Browser.version}`);
+    return DEVICE_TYPES.UNKNOWN;
   }
 }
 export function getConsoleStyle(style) {
@@ -245,6 +248,8 @@ export function getConsoleStyle(style) {
     return `color: orange;`;
   } else if (style == 'serviceworkermessage') {
     return `color: purple;`;
+  } else {
+    return '';
   }
 }
 
@@ -264,7 +269,7 @@ export function nothing(): Promise<any> {
 }
 
 export function timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<TimeoutError | any> {
-  const timeoutPromise = new Promise((resolve, reject) => {
+  const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
       reject(new TimeoutError())
     }, milliseconds);
@@ -378,9 +383,11 @@ export function unsubscribeFromPush() {
       return navigator.serviceWorker.ready
                       .then(registration => registration.pushManager)
                       .then(pushManager => pushManager.getSubscription())
-                      .then(subscription => {
+                      .then((subscription: any) => {
                         if (subscription) {
                           return subscription.unsubscribe();
+                        } else {
+                          return Promise.resolve();
                         }
                       });
     }
@@ -394,7 +401,7 @@ export function unsubscribeFromPush() {
 export function wipeServiceWorker() {
   log.warn('OneSignal: Unregistering service worker.');
   if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
-    return;
+    return Promise.resolve();
   }
   if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
     return Promise.resolve();
@@ -474,7 +481,7 @@ export function getSdkLoadCount() {
 }
 
 export async function awaitSdkEvent(eventName: string, predicate?: Action<any>) {
-  return await new Promise((resolve, reject) => {
+  return await new Promise(resolve => {
     OneSignal.once(eventName, event => {
       if (predicate) {
         const predicateResult = predicate(event);
@@ -498,4 +505,14 @@ export function incrementSdkLoadCount() {
  */
 export function prepareEmailForHashing(email: string): string {
   return email.replace(/\s/g, '').toLowerCase();
+}
+
+export function encodeHashAsUriComponent(hash: object): string {
+  let uriComponent = '';
+  const keys = Object.keys(hash);
+  for (var key of keys) {
+    const value = hash[key];
+    uriComponent += `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+  }
+  return uriComponent;
 }

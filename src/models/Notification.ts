@@ -1,8 +1,7 @@
-import {Url} from "url";
-import { Uuid } from "./Uuid";
-import {NotificationActionButton} from "./NotificationActionButton";
-import { trimUndefined } from '../utils';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
+import { trimUndefined } from '../utils';
+import { NotificationActionButton } from './NotificationActionButton';
+import { Uuid } from './Uuid';
 
 
 export class Notification {
@@ -19,16 +18,17 @@ export class Notification {
     public actions?: Array<NotificationActionButton>;
 
     constructor(title: string, options?: Notification) {
-        this.id = options.id;
-        this.body = options.body;
-        this.data = options.data;
-        this.url = options.url;
-        this.icon = options.icon;
-        this.image = options.image;
-        this.tag = options.tag
-        this.requireInteraction = options.requireInteraction;
-        this.renotify = options.renotify;
-        this.actions = options.actions;
+      this.title = title;
+      this.id = options.id;
+      this.body = options.body;
+      this.data = options.data;
+      this.url = options.url;
+      this.icon = options.icon;
+      this.image = options.image;
+      this.tag = options.tag
+      this.requireInteraction = options.requireInteraction;
+      this.renotify = options.renotify;
+      this.actions = options.actions;
     }
 
     static createMock({

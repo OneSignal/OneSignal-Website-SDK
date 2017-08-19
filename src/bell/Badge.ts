@@ -1,4 +1,5 @@
 import ActiveAnimatedElement from './ActiveAnimatedElement';
+import AnimatedElement from './AnimatedElement';
 
 
 export default class Badge extends ActiveAnimatedElement {
@@ -7,19 +8,19 @@ export default class Badge extends ActiveAnimatedElement {
     super('.onesignal-bell-launcher-badge', 'onesignal-bell-launcher-badge-opened', null, 'onesignal-bell-launcher-badge-active', null, 'hidden');
   }
 
-  increment() {
+  increment(): void {
     // If it IS a number (is not not a number)
     if (!isNaN(this.content as any)) {
       let badgeNumber = +this.content; // Coerce to int
       badgeNumber += 1;
       this.content = badgeNumber.toString();
-      return badgeNumber;
     }
   }
 
-  show() {
-    super.show();
+  show(): Promise<AnimatedElement> {
+    const promise = super.show();
     OneSignal.notifyButton.setCustomColorsIfSpecified();
+    return promise;
   }
 
   decrement() {
@@ -31,7 +32,6 @@ export default class Badge extends ActiveAnimatedElement {
         this.content = badgeNumber.toString();
       else
         this.content = '';
-      return badgeNumber;
     }
   }
 }

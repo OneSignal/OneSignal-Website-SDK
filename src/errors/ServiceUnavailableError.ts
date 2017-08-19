@@ -1,5 +1,4 @@
-import OneSignalError from "./OneSignalError";
-import { PermissionPromptType } from "../models/PermissionPromptType";
+import OneSignalError from './OneSignalError';
 
 export default class ServiceUnavailableError extends OneSignalError {
   constructor(public description: string) {

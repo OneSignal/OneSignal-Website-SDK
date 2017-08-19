@@ -1,15 +1,8 @@
-import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import { AppConfig } from '../models/AppConfig';
-import SdkEnvironment from './SdkEnvironment';
 import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import OneSignalApi from '../OneSignalApi';
-import { Uuid } from '../models/Uuid';
-import Database from '../services/Database';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import { contains } from '../utils';
-import * as log from 'loglevel';
-import OneSignalStub from '../OneSignalStub';
+import SdkEnvironment from './SdkEnvironment';
 
 export default class AltOriginManager {
 

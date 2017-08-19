@@ -1,4 +1,3 @@
-import { Uuid } from './Uuid';
 import { AppConfig } from './AppConfig';
 
 export interface ProxyFrameInitOptions extends AppConfig {

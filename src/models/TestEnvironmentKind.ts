@@ -1,4 +1,4 @@
 export enum TestEnvironmentKind {
-  None = <any>"None",
-  UnitTesting = <any>"Unit Testing"
+  None = "None",
+  UnitTesting = "Unit Testing"
 }

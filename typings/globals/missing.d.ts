@@ -2,6 +2,11 @@ interface Navigator {
   permissions: any;
 }
 
+interface String {
+    repeat(count: number): string
+    substr(from: number, length?: number): string
+}
+
 interface Window {
   Notification: any;
   __POSTDATA: any;
@@ -11,6 +16,17 @@ interface Window {
       requestPermission: any;
     }
   }
+}
+
+interface ServiceWorkerClients {
+  matchAll(options: ServiceWorkerClientsMatchOptions): Promise<Array<WindowClient>>;
+}
+
+interface WindowClient extends ServiceWorkerClient {
+  /**
+   * Loads a specified URL into a controlled client page.
+   */
+  navigate(url: string): Promise<WindowClient>;
 }
 
 interface PushMessageData {
@@ -36,6 +52,7 @@ interface ServiceWorkerGlobalScope {
   addEventListener(type: "activate", listener: (this: this, ev: any) => any, ...args): void;
   addEventListener(type: "pushsubscriptionchange", listener: (this: this, ev: any) => any, ...args): void;
   addEventListener(type: "fetch", listener: (this: this, ev: any) => any, ...args): void;
+  readonly location: Location;
 }
 
 type ServiceWorkerState = "installing" | "installed" | "activating" | "activated" | "redundant";
@@ -47,7 +64,12 @@ interface TestContext {
 declare module ExtendableError {
 }
 
+interface Element extends Node, GlobalEventHandlers, ElementTraversal, NodeSelector, ChildNode, ParentNode {
+  addEventListener<K extends keyof ElementEventMap>(type: K, listener: (this: Element, ev: ElementEventMap[K]) => any, optionsOruseCapture?: boolean | { passive: boolean }): void;
+}
+
 declare var OneSignal: any;
+declare var __VERSION__: any;
 
 declare var ExtendableEvent;
 declare var swivel;

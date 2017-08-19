@@ -39,11 +39,11 @@ export default class MockDummy {
     }
   }
 
-  dummyFunction(...args: any[]) {
+  dummyFunction(..._: any[]) {
     return `Called dummyFunction(${arguments})`;
   }
 
-  async dummyFunctionAsync(...args: any[]) {
+  async dummyFunctionAsync(..._: any[]) {
     return `Called dummyFunctionAsync()`;
   }
 }

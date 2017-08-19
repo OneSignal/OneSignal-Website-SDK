@@ -1,22 +1,14 @@
-import Postmam from '../../Postmam';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
-import Database from "../../services/Database";
-import Event from "../../Event";
-import EventHelper from "../../helpers/EventHelper";
-import { timeoutPromise, unsubscribeFromPush } from "../../utils";
-import TimeoutError from '../../errors/TimeoutError';
+import * as log from 'loglevel';
+import * as objectAssign from 'object-assign';
+
+import SubscriptionHelper from '../../helpers/SubscriptionHelper';
+import SdkEnvironment from '../../managers/SdkEnvironment';
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import { Uuid } from '../../models/Uuid';
-import ServiceWorkerHelper from "../../helpers/ServiceWorkerHelper";
-import * as objectAssign from 'object-assign';
-import SdkEnvironment from '../../managers/SdkEnvironment';
-import { InvalidStateReason } from "../../errors/InvalidStateError";
-import HttpHelper from "../../helpers/HttpHelper";
-import TestHelper from "../../helpers/TestHelper";
-import InitHelper from "../../helpers/InitHelper";
-import MainHelper from "../../helpers/MainHelper";
-import SubscriptionHelper from '../../helpers/SubscriptionHelper';
-import * as log from 'loglevel';
+import Postmam from '../../Postmam';
+import Context from '../../models/Context';
+import { SubscriptionManager } from '../../managers/SubscriptionManager';
+import InitHelper from '../../helpers/InitHelper';
 
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;
@@ -25,16 +17,32 @@ export default class RemoteFrame implements Disposable {
   // Promise to track whether connecting back to the host
   // page has finished
   private loadPromise: {
-    promise: Promise<void>,
-    resolver: Function,
-    rejector: Function
-  }
+    promise: Promise<void>;
+    resolver: Function;
+    rejector: Function;
+  };
 
-  constructor(initOptions: any) {
+  constructor(initOptions: {
+    /*
+      These options are passed from the Rails app as plain raw untyped values.
+
+      They have to be converted to the right types.
+      */
+    appId: string;
+    /* Passed to both the iFrame and popup */
+    subdomainName: string;
+    /* Passed to both the iFrame and popup. Represents Site URL in dashboard config. */
+    origin: string;
+    /* These three flags may be deprecated */
+    continuePressed: boolean;
+    isPopup: boolean;
+    isModal: boolean;
+  }) {
     this.options = {
       appId: new Uuid(initOptions.appId),
       subdomain: initOptions.subdomainName,
-      origin: initOptions.origin
+      origin: initOptions.origin,
+      serialize: undefined
     };
   }
 
@@ -49,13 +57,14 @@ export default class RemoteFrame implements Disposable {
    * There is no load timeout here; the iFrame initializes it scripts and waits
    * forever for the first handshake message.
    */
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     const creator = window.opener || window.parent;
     if (creator == window) {
-      document.write(`<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`);
-      return;
+      document.write(
+        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`
+      );
+      return Promise.resolve();
     }
-
     // The rest of our SDK isn't refactored enough yet to accept typed objects
     // Within this class, we can use them, but when we assign them to
     // OneSignal.config, assign the simple string versions
@@ -63,21 +72,24 @@ export default class RemoteFrame implements Disposable {
     rasterizedOptions.appId = rasterizedOptions.appId.value;
     rasterizedOptions.origin = rasterizedOptions.origin;
     OneSignal.config = rasterizedOptions || {};
+
+    const appConfig = await InitHelper.downloadAndMergeAppConfig(rasterizedOptions);
+    OneSignal.context = new Context(appConfig);
+    OneSignal.context.workerMessenger.listen(true);
+
     OneSignal.initialized = true;
 
     (this as any).loadPromise = {};
     (this as any).loadPromise.promise = new Promise((resolve, reject) => {
-        this.loadPromise.resolver = resolve;
-        this.loadPromise.rejector = reject;
+      this.loadPromise.resolver = resolve;
+      this.loadPromise.rejector = reject;
     });
 
     this.establishCrossOriginMessaging();
     return this.loadPromise.promise;
   }
 
-  establishCrossOriginMessaging(): void {
-
-  }
+  establishCrossOriginMessaging(): void {}
 
   dispose(): void {
     // Removes all events
@@ -91,15 +103,14 @@ export default class RemoteFrame implements Disposable {
   async subscribe() {
     // Do not register OneSignalSDKUpdaterWorker.js for HTTP popup sites; the file does not exist
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const windowCreator = opener || parent;
+
     if (!isPushEnabled) {
-      try {
-        const workerRegistration = await navigator.serviceWorker.register(SdkEnvironment.getBuildEnvPrefix() + OneSignal.SERVICE_WORKER_PATH, OneSignal.SERVICE_WORKER_PARAM)
-        SubscriptionHelper.enableNotifications(workerRegistration);
-      } catch (e) {
-        log.error('Failed to register service worker in the popup/modal:', e);
-      }
+      SubscriptionHelper.registerForPush();
     } else {
-      window.close();
+      if (windowCreator) {
+        window.close();
+      }
     }
   }
 }

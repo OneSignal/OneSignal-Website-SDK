@@ -4,6 +4,6 @@ import {InvalidArgumentError, InvalidArgumentReason} from "../../../src/errors/I
 import Macros from "../../support/tester/Macros";
 
 
-test("macro expectInvalidArgumentError", Macros.expectInvalidArgumentError, (param) => {
+test("macro expectInvalidArgumentError", Macros.expectInvalidArgumentError, () => {
   throw new InvalidArgumentError("param", InvalidArgumentReason.Empty);
 });
