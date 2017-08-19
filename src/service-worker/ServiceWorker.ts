@@ -134,7 +134,7 @@ export class ServiceWorker {
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (appConfigBundle: any) => {
-      console.log('[Service Worker] Received AMP subscription state message.');
+      log.debug('[Service Worker] Received AMP subscription state message.');
       const pushSubscription = await self.registration.pushManager.getSubscription();
       if (!pushSubscription) {
         ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, false);
@@ -146,7 +146,7 @@ export class ServiceWorker {
       }
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, async () => {
-      console.log('[Service Worker] Received AMP subscribe message.');
+      log.debug('[Service Worker] Received AMP subscribe message.');
       const appId = await ServiceWorker.getAppId();
       const appConfig = await OneSignalApi.getAppConfig(appId);
       const context = new Context(appConfig);
@@ -154,7 +154,7 @@ export class ServiceWorker {
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
-      console.log('[Service Worker] Received AMP unsubscribe message.');
+      log.debug('[Service Worker] Received AMP unsubscribe message.');
       const appId = await ServiceWorker.getAppId();
       const appConfig = await OneSignalApi.getAppConfig(appId);
       const context = new Context(appConfig);
