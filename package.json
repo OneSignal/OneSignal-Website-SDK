@@ -91,6 +91,7 @@
     "humanize": "^0.0.9",
     "imports-loader": "^0.7.1",
     "json5": "^0.5.1",
+    "md5-file": "^3.2.2",
     "microtime": "^2.1.2",
     "nconf": "^0.8.4",
     "node-dir": "^0.1.16",
@@ -131,6 +132,8 @@
       "lcov",
       "text-summary"
     ],
-    "include": ["build/javascript/src/**/*.js"]
+    "include": [
+      "build/javascript/src/**/*.js"
+    ]
   }
 }

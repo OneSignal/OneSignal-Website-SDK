@@ -35,6 +35,8 @@ const sorcery = require('sorcery');
 const dir = require('node-dir');
 const ncp = require('copy-paste');
 const stripAnsi = require('strip-ansi');
+const md5file = require('md5-file');
+const crypto = require('crypto');
 
 class BuildContext {
   constructor(config) {
@@ -398,6 +400,40 @@ class TestModule {
 }
 
 class TranspileModule {
+  static async getStylesheetsHash(config) {
+    const styleSheetsPath = config.get('build:stylesheetsSrcDir');
+
+    return await new Promise((resolve, reject) => {
+      dir.files(styleSheetsPath, async (err, files) => {
+        if (err) throw err;
+        const filteredFiles = files.filter(filePath => {
+          const fileName = path.basename(filePath);
+          if (fileName.endsWith('.scss')) {
+            // Only hash SCSS source files
+            return true;
+          }
+        });
+        if (filteredFiles.length === 0) {
+          reject(
+            chalk.red(
+              `${chalk.blue('[Transpile Module]')} No .scss files were found in ${chalk.blue(styleSheetsPath)}, but SCSS files were expected. SCSS stylesheets in this directory are MD5 hashed and added as a build-time variable so loading the stylesheet from the global CDN always loads the correct version. You can adjust config.json 'stylesheetsSrcDir' to change the stylesheets directory.`
+            )
+          );
+        }
+        let hashes = [];
+        for (let styleSheetPath of filteredFiles) {
+          const hash = md5file.sync(styleSheetPath);
+          hashes.push(hash);
+        }
+        // Strangely enough, the order is inconsistent so we have to sort the hashes
+        hashes = hashes.sort();
+        const joinedHashesStr = hashes.join('-');
+        const combinedHash = crypto.createHash('md5').update(joinedHashesStr).digest("hex");
+        console.log(`${chalk.blue('[Transpile Module]')} MD5 hash of SCSS source files in ${chalk.blue(styleSheetsPath)} is ${combinedHash}.`);
+        resolve(combinedHash);
+      });
+    });
+  }
   /**
    * Transpiles source TypeScript files to individual JavaScript files based on passed tsconfig.json.
    *
@@ -467,7 +503,7 @@ class BundlerModule {
 
     const webpackConfig = BundlerModule.generateWebpackConfig(
       context.config,
-      BundlerModule.getWebpackPlugins(context.config)
+      await BundlerModule.getWebpackPlugins(context.config)
     );
     const webpackCompiler = BundlerModule.createWebpackCompiler(webpackConfig);
 
@@ -590,13 +626,14 @@ class BundlerModule {
   /**
    * Build constants that get inserted into src/environment.js.
    */
-  static getBuildDefines(config) {
+  static async getBuildDefines(config) {
     const env = config.get('env');
     var buildDefines = {
       __DEV__: env === 'development',
       __TEST__: config.get('tests'),
       __STAGING__: env === 'staging',
-      __VERSION__: JSON.stringify(require('./package.json').sdkVersion)
+      __VERSION__: JSON.stringify(require('./package.json').sdkVersion),
+      __SRC_STYLESHEETS_MD5_HASH__: JSON.stringify(await TranspileModule.getStylesheetsHash(config)),
     };
     if (env === 'production') {
       buildDefines['process.env.NODE_ENV'] = JSON.stringify('production');
@@ -626,11 +663,11 @@ class BundlerModule {
     }
   }
 
-  static getWebpackPlugins(config) {
+  static async getWebpackPlugins(config) {
     const plugins = [
       new webpack.optimize.ModuleConcatenationPlugin(),
       new ExtractTextPlugin(config.get('build:stylesheetsBundleName')),
-      new webpack.DefinePlugin(BundlerModule.getBuildDefines(config)),
+      new webpack.DefinePlugin(await BundlerModule.getBuildDefines(config)),
       new webpack.optimize.UglifyJsPlugin({
         sourceMap: true,
         compress: {

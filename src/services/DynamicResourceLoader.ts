@@ -1,4 +1,7 @@
 import * as objectAssign from 'object-assign';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
+import Environment from '../Environment';
 
 export const enum ResourceType {
   Stylesheet,
@@ -21,7 +24,6 @@ interface DynamicResourceLoaderCache {
 }
 
 export class DynamicResourceLoader {
-
   private cache: DynamicResourceLoaderCache;
 
   constructor() {
@@ -34,11 +36,18 @@ export class DynamicResourceLoader {
   }
 
   async loadSdkStylesheet(): Promise<ResourceLoadState> {
-    return await this.loadIfNew(ResourceType.Stylesheet, new URL('https://cdn.onesignal.com/sdks/OneSignalSDKStyles.css'));
+    const originForEnv = SdkEnvironment.getOneSignalApiUrl().origin;
+    return await this.loadIfNew(
+      ResourceType.Stylesheet,
+      new URL(`${originForEnv}/sdks/OneSignalSDKStyles.css?v=${Environment.getSdkStylesVersionHash()}`)
+    );
   }
 
   async loadFetchPolyfill(): Promise<ResourceLoadState> {
-    return await this.loadIfNew(ResourceType.Script, new URL('https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js'));
+    return await this.loadIfNew(
+      ResourceType.Script,
+      new URL('https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.min.js')
+    );
   }
 
   /**

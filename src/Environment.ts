@@ -63,4 +63,12 @@ export default class Environment {
           'serviceWorker' in navigator;
     }
   }
+
+  /*
+    Returns the MD5 hash of all stylesheets within the src/stylesheets
+    directory.
+   */
+  static getSdkStylesVersionHash() {
+    return (typeof __SRC_STYLESHEETS_MD5_HASH__ === "undefined" ? '1' : __SRC_STYLESHEETS_MD5_HASH__);
+  }
 }

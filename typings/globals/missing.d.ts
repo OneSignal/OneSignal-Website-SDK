@@ -69,7 +69,6 @@ interface Element extends Node, GlobalEventHandlers, ElementTraversal, NodeSelec
 }
 
 declare var OneSignal: any;
-declare var __VERSION__: any;
 
 declare var ExtendableEvent;
 declare var swivel;
@@ -79,6 +78,7 @@ declare var __DEV__: string;
 declare var __TEST__: string;
 declare var __STAGING__: string;
 declare var __IS_ES6__: string;
+declare var __SRC_STYLESHEETS_MD5_HASH__: string;
 
 declare var $_VERSION: string;
 declare var $_DEV: string;
