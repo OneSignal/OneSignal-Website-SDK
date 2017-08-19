@@ -23,6 +23,19 @@ export default class SubscriptionHelper {
     let subscription: Subscription;
     const context: Context = OneSignal.context;
 
+    /*
+      Within the same page navigation (the same session), do not register for
+      push if the user is already subscribed, otherwise the user will have its
+      session count incremented on each page refresh. However, if the user is
+      not subscribed, subscribe.
+    */
+    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+
+    if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
+      log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
+      return null;
+    }
+
     if (typeof OneSignal !== "undefined") {
       if (OneSignal._isRegisteringForPush) {
         return null;
@@ -35,7 +48,7 @@ export default class SubscriptionHelper {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         subscription = await context.subscriptionManager.subscribe();
-        MainHelper.beginTemporaryBrowserSession();
+        context.sessionManager.incrementPageViewCount();
         EventHelper.triggerNotificationPermissionChanged();
         EventHelper.checkAndTriggerSubscriptionChanged();
         break;

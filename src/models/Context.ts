@@ -6,6 +6,7 @@ import CookieSyncer from '../modules/CookieSyncer';
 import { AppConfig } from './AppConfig';
 import Path from './Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
+import { SessionManager } from '../managers/SessionManager';
 
 
 export default class Context {
@@ -16,6 +17,7 @@ export default class Context {
   public serviceWorkerManager: ServiceWorkerManager;
   public workerMessenger: WorkerMessenger;
   public cookieSyncer: CookieSyncer;
+  public sessionManager: SessionManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -47,5 +49,7 @@ export default class Context {
 
     this.workerMessenger = new WorkerMessenger(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
+
+    this.sessionManager = new SessionManager();
   }
 }

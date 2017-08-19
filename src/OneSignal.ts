@@ -867,7 +867,7 @@ export default class OneSignal {
     REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
-    BEGIN_BROWSING_SESSION: 'postmam.beginBrowsingSession',
+    SET_SESSION_COUNT: 'postmam.setSessionCount',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
     IS_SHOWING_HTTP_PERMISSION_REQUEST: 'postmam.isShowingHttpPermissionRequest',

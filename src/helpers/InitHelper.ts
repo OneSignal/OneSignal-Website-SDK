@@ -62,6 +62,8 @@ export default class InitHelper {
     InitHelper.storeInitialValues();
     InitHelper.installNativePromptPermissionChangedHook();
 
+    const context: Context = OneSignal.context;
+
     if (await OneSignal.getNotificationPermission() === NotificationPermission.Granted) {
       /*
         If the user has already granted permission, the user has previously
@@ -119,7 +121,7 @@ export default class InitHelper {
       });
     }
 
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround() && !MainHelper.isContinuingBrowserSession()) {
+    if (SubscriptionHelper.isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
       /*
        The user is on an HTTP site and they accessed this site by opening a new window or tab (starting a new
        session). This means we should increment their session_count and last_active by calling
@@ -205,10 +207,12 @@ export default class InitHelper {
   static async internalInit() {
     log.debug('Called %cinternalInit()', getConsoleStyle('code'));
 
-    // Always check for an updated service worker
-    OneSignal.context.serviceWorkerManager.updateWorker();
+    const context: Context = OneSignal.context;
 
-    MainHelper.beginTemporaryBrowserSession();
+    // Always check for an updated service worker
+    context.serviceWorkerManager.updateWorker();
+
+    context.sessionManager.incrementPageViewCount();
 
     // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
     if (

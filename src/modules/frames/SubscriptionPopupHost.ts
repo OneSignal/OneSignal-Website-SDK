@@ -11,6 +11,7 @@ import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
 import Database from '../../services/Database';
+import Context from '../../models/Context';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -139,7 +140,7 @@ export default class SubscriptionPopupHost implements Disposable {
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_ACCEPTED, this.onPopupAccepted.bind(this));
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_REJECTED, this.onPopupRejected.bind(this));
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, this.onPopupClosing.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.BEGIN_BROWSING_SESSION, this.onBeginBrowsingSession.bind(this));
+    this.messenger.once(OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT, this.onSetSessionCount.bind(this));
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, this.onWindowTimeout.bind(this));
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, this.onFinishingRegistrationRemotely.bind(this));
     this.messenger.startPostMessageReceive();
@@ -175,9 +176,11 @@ export default class SubscriptionPopupHost implements Disposable {
     this.dispose();
   }
 
-  async onBeginBrowsingSession(_: MessengerMessageEvent) {
+  async onSetSessionCount(message: MessengerMessageEvent) {
     log.debug(SdkEnvironment.getWindowEnv().toString() + " Marking current session as a continuing browsing session.");
-    MainHelper.beginTemporaryBrowserSession();
+    const { sessionCount }: { sessionCount: number } = message.data;
+    const context: Context = OneSignal.context;
+    context.sessionManager.setPageViewCount(sessionCount);
   }
 
   async onWindowTimeout(_: MessengerMessageEvent) {
