@@ -66,7 +66,7 @@ export class SessionManager {
 
     const newCount = this.getPageViewCount() + 1;
     this.setPageViewCount(newCount);
-    log.debug(`Incremented session count to ${newCount}.`);
+    log.debug(`Incremented page view count to ${newCount}.`);
     this.incrementedPageViewCount = true;
   }
 

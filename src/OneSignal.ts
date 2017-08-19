@@ -104,7 +104,7 @@ export default class OneSignal {
     logMethodCall('syncHashedEmail', email);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId)
+    if (!deviceId || !deviceId.value)
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     const result = await OneSignalApi.updatePlayer(appId, deviceId, {
       em_m: Crypto.md5(sanitizedEmail),
@@ -465,7 +465,7 @@ export default class OneSignal {
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
+    if (!deviceId || !deviceId.value) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
@@ -502,7 +502,7 @@ export default class OneSignal {
     });
     const { appId } = await Database.getAppConfig();
     var { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
+    if (!deviceId || !deviceId.value) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
     // After the user subscribers, he will have a device ID, so get it again
@@ -639,7 +639,7 @@ export default class OneSignal {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId) {
+    if (!deviceId || !deviceId.value) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
