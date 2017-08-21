@@ -558,13 +558,13 @@ export default class OneSignal {
    * @PublicApi
    * @Deprecated
    */
-  static async getIdsAvailable(callback?: Action<{userId: Uuid, registrationId: string}>):
-    Promise<{userId: Uuid, registrationId: string}> {
+  static async getIdsAvailable(callback?: Action<{userId: string, registrationId: string}>):
+    Promise<{userId: string, registrationId: string}> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getIdsAvailable', callback);
     const { deviceId, subscriptionToken } = await Database.getSubscription();
     const bundle = {
-      userId: deviceId,
+      userId: deviceId.value,
       registrationId: subscriptionToken
     };
     executeCallback(callback, bundle);
@@ -683,12 +683,12 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal user ID.
    * @PublicApi
    */
-  static async getUserId(callback?: Action<Uuid>): Promise<string> {
+  static async getUserId(callback?: Action<string>): Promise<string> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getUserId', callback);
     const subscription = await Database.getSubscription();
     const deviceId = subscription.deviceId;
-    executeCallback(callback, deviceId);
+    executeCallback(callback, deviceId.value);
     return deviceId.value;
   }
 
