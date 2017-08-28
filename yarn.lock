@@ -869,9 +869,9 @@ boom@2.x.x:
   dependencies:
     hoek "2.x.x"
 
-bowser@^1.7.1:
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/bowser/-/bowser-1.7.1.tgz#a4de8f18a1a0dc9531eb2a92a1521fb6a9ba96a5"
+"bowser@github:OneSignal/bowser#fix-android8-opr6-build-detection":
+  version "1.7.2"
+  resolved "https://codeload.github.com/OneSignal/bowser/tar.gz/acdbf27b721d27e7abdb559be1e20773f21d1da5"
 
 boxen@^1.0.0:
   version "1.2.1"

@@ -32,9 +32,9 @@ export class PushRegistration implements Serializable {
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
     this.browserName = Browser.name;
-    this.browserVersion = parseInt(Browser.version) !== NaN ? parseInt(Browser.version) : -1;
+    this.browserVersion = parseInt(String(Browser.version)) !== NaN ? parseInt(String(Browser.version)) : -1;
     this.operatingSystem = this.getBrowserOperatingSystem();
-    this.operatingSystemVersion = Browser.osversion;
+    this.operatingSystemVersion = String(Browser.osversion);
     this.devicePlatform = this.getDevicePlatformKind();
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();

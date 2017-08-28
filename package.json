@@ -1,11 +1,11 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "140005",
+  "sdkVersion": "140010",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.ts",
   "dependencies": {
-    "bowser": "^1.7.1",
+    "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "decamelize": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
     "defined": "https://registry.npmjs.org/defined/-/defined-1.0.0.tgz",
     "es6-error": "^4.0.0",
