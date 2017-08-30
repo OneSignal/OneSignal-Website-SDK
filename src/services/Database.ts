@@ -146,7 +146,8 @@ export default class Database {
 
   async getAppConfig(): Promise<AppConfig> {
     const config = new AppConfig();
-    config.appId = new Uuid(await this.get<string>('Ids', 'appId'));
+    const appIdStr: string = await this.get<string>('Ids', 'appId');
+    config.appId = new Uuid(appIdStr);
     config.subdomain = await this.get<string>('Options', 'subdomain');
     config.vapidPublicKey = await Database.get<string>('Options', 'vapidPublicKey');
     return config;
@@ -220,7 +221,8 @@ export default class Database {
 
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
-    subscription.deviceId = new Uuid(await this.get<string>('Ids', 'userId'));
+    const deviceIdStr: string = await this.get<string>('Ids', 'userId');
+    subscription.deviceId = new Uuid(deviceIdStr);
     subscription.subscriptionToken = await this.get<string>('Ids', 'registrationId');
 
     // The preferred database key to store our subscription
