@@ -14,6 +14,7 @@ import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
 import { Uuid } from '../../../src/models/Uuid';
 import { AppConfig } from '../../../src/models/AppConfig';
+import OneSignal from '../../../src/OneSignal';
 
 test('getActiveState() detects no installed worker', async t => {
   await TestEnvironment.stubDomEnvironment();
@@ -179,6 +180,7 @@ test('installWorker() installs worker A with the correct file name and query par
   const appConfig = new AppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
+  OneSignal.context = context;
 
   const manager = new ServiceWorkerManager(context, {
     workerAPath: new Path(`/Worker-A.js`),

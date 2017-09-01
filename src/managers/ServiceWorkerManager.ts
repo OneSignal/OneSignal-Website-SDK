@@ -11,6 +11,7 @@ import { Subscription } from '../models/Subscription';
 import { encodeHashAsUriComponent, timeoutPromise } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
+import MainHelper from '../helpers/MainHelper';
 
 export enum ServiceWorkerActiveState {
   /**
@@ -298,6 +299,8 @@ export class ServiceWorkerManager {
       // If the worker is Worker B, reinstall Worker A
       await this.installAlternatingWorker();
     }
+
+    MainHelper.establishServiceWorkerChannel();
   }
 
   /**
