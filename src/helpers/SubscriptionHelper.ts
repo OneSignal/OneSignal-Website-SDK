@@ -15,8 +15,10 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Context from '../models/Context';
 import { ServiceWorkerActiveState } from '../managers/ServiceWorkerManager';
 import { Subscription } from '../models/Subscription';
+import { NotificationPermission } from '../models/NotificationPermission';
 import Database from '../services/Database';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
+import { RawPushSubscription } from '../models/RawPushSubscription';
 
 export default class SubscriptionHelper {
   static async registerForPush(): Promise<Subscription> {
@@ -53,8 +55,47 @@ export default class SubscriptionHelper {
         EventHelper.checkAndTriggerSubscriptionChanged();
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionPopup:
-        const rawSubscription = await context.subscriptionManager.subscribePartially();
+        /*
+          This is the code for the HTTP popup.
+         */
         const windowCreator = opener || parent;
+        let rawSubscription: RawPushSubscription;
+
+        try {
+          /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
+          rawSubscription = await context.subscriptionManager.subscribePartially();
+        } catch (e) {
+          if (e instanceof PushPermissionNotGrantedError) {
+            switch ((e as PushPermissionNotGrantedError).reason) {
+              case PushPermissionNotGrantedErrorReason.Blocked:
+                /* Force update false, because the iframe installs a native
+                permission change handler that will be triggered when the user
+                clicks out of the popup back to the parent page */
+                (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+                  permission: NotificationPermission.Denied,
+                  forceUpdatePermission: false
+                });
+                break;
+              case PushPermissionNotGrantedErrorReason.Dismissed:
+                /* Force update true because default permissions (before
+                prompting) -> default permissions (after prompting) isn't a
+                change, but we still want to be notified about it */
+                (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
+                  permission: NotificationPermission.Default,
+                  forceUpdatePermission: true
+                });
+                break;
+            }
+          }
+          /*
+            Popup native permission request was blocked or dismissed
+            Close the window
+          */
+          if (windowCreator) {
+            window.close();
+            return null;
+          }
+        }
 
         OneSignal.subscriptionPopup.message(
           OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION,

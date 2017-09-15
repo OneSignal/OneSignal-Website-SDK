@@ -8,7 +8,7 @@ export enum PushPermissionNotGrantedErrorReason {
 }
 
 export default class PushPermissionNotGrantedError extends OneSignalError {
-  reason: string;
+  reason: PushPermissionNotGrantedErrorReason;
 
   constructor(reason: PushPermissionNotGrantedErrorReason) {
     switch (reason) {
@@ -22,5 +22,7 @@ export default class PushPermissionNotGrantedError extends OneSignalError {
         super('Notification permissions have not been granted yet.');
         break;
     }
+
+    this.reason = reason;
   }
 }

@@ -143,6 +143,7 @@ export default class SubscriptionPopupHost implements Disposable {
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT, this.onSetSessionCount.bind(this));
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.WINDOW_TIMEOUT, this.onWindowTimeout.bind(this));
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION, this.onFinishingRegistrationRemotely.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, this.onRemoteRetriggerEvent.bind(this));
     this.messenger.startPostMessageReceive();
   }
 
@@ -202,6 +203,13 @@ export default class SubscriptionPopupHost implements Disposable {
     const subscription = await subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
 
     EventHelper.checkAndTriggerSubscriptionChanged();
+  }
+
+  onRemoteRetriggerEvent(message: MessengerMessageEvent) {
+    // e.g. { eventName: 'subscriptionChange', eventData: true}
+    let {eventName, eventData} = (message.data as any);
+    Event.trigger(eventName, eventData, message.source);
+    return false;
   }
 
   /**
