@@ -702,8 +702,8 @@ export class ServiceWorker {
           }
           else if (client.navigate) {
             try {
-              //log.debug('Client is standard HTTPS site. Attempting to focus() client.')
-              //await client.focus();
+              log.debug('Client is standard HTTPS site. Attempting to focus() client.')
+              await client.focus();
             } catch (e) {
               log.error("Failed to focus:", client, e);
             }
