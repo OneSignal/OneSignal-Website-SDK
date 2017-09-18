@@ -85,7 +85,6 @@ export class SubscriptionManager {
 
         if (this.isSafari()) {
           rawPushSubscription = await this.subscribeSafari();
-          EventHelper.triggerNotificationPermissionChanged();
         } else {
           rawPushSubscription = await this.subscribeFcmFromPage();
         }
@@ -223,6 +222,7 @@ export class SubscriptionManager {
     pushSubscriptionDetails.existingSafariDeviceToken = existingDeviceToken;
 
     const deviceToken = await this.subscribeSafariPromptPermission();
+    EventHelper.triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
     } else {
