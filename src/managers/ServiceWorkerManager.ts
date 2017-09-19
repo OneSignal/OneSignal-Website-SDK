@@ -33,6 +33,11 @@ export enum ServiceWorkerActiveState {
    */
   ThirdParty = '3rd Party',
   /**
+   * A service worker is currently installing and we can't determine its final state yet. Wait until
+   * the service worker is finished installing by checking for a controllerchange property..
+   */
+  Installing = 'Installing',
+  /**
    * No service worker is installed.
    */
   None = 'None',
@@ -110,33 +115,34 @@ export class ServiceWorkerManager {
     const workerRegistration = await navigator.serviceWorker.getRegistration();
     if (!workerRegistration) {
       /*
-        A site may have a service worker nested at /folder1/folder2/folder3,
-        while the user is currently on /folder1. The nested service worker does
-        not control /folder1 though. Although the nested service worker can
-        receive push notifications without issue, it cannot perform other SDK
-        operations like checking whether existing tabs are optn eo the site on
-        /folder1 (used to prevent opening unnecessary new tabs on notification
-        click.)
+        A site may have a service worker nested at /folder1/folder2/folder3, while the user is
+        currently on /folder1. The nested service worker does not control /folder1 though. Although
+        the nested service worker can receive push notifications without issue, it cannot perform
+        other SDK operations like checking whether existing tabs are optn eo the site on /folder1
+        (used to prevent opening unnecessary new tabs on notification click.)
 
-        Because we rely on being able to communicate with the service worker for
-        SDK operations, we only say we're active if the service worker directly
-        controls this page.
+        Because we rely on being able to communicate with the service worker for SDK operations, we
+        only say we're active if the service worker directly controls this page.
        */
       return ServiceWorkerActiveState.None;
-    } else if (!workerRegistration.active) {
+    } else if (workerRegistration.installing) {
       /*
-        Workers that are installing or waiting won't be our service workers,
-        since we use clients.claim() and skipWaiting() to bypass the install and
-        waiting stages.
+        Workers that are installing block for a while, since we can't use them until they're done
+        installing.
+       */
+      return ServiceWorkerActiveState.Installing;
+    } else if (workerRegistration.waiting) {
+      /*
+        Workers that are waiting won't be our service workers, since we use clients.claim() and
+        skipWaiting() to bypass the install and waiting stages.
        */
       return ServiceWorkerActiveState.ThirdParty;
     }
 
     /*
-      A service worker registration can be both active and in the controlling
-      scope of the current page, but if the page was hard refreshed to bypass
-      the cache (e.g. Ctrl + Shift + R), a service worker will not control the
-      page.
+      A service worker registration can be both active and in the controlling scope of the current
+      page, but if the page was hard refreshed to bypass the cache (e.g. Ctrl + Shift + R), a
+      service worker will not control the page.
      */
     const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
 
@@ -284,12 +290,14 @@ export class ServiceWorkerManager {
     await this.installAlternatingWorker();
     await new Promise(async resolve => {
       const postInstallWorkerState = await this.getActiveState();
-      if (preInstallWorkerState !== postInstallWorkerState) {
+      if (preInstallWorkerState !== postInstallWorkerState &&
+        postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
         resolve();
       } else {
         navigator.serviceWorker.addEventListener('controllerchange', async e => {
           const postInstallWorkerState = await this.getActiveState();
-          if (postInstallWorkerState !== preInstallWorkerState) {
+          if (postInstallWorkerState !== preInstallWorkerState &&
+            postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
             resolve();
           }
         });
