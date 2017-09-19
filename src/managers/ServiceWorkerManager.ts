@@ -131,7 +131,7 @@ export class ServiceWorkerManager {
         installing.
        */
       return ServiceWorkerActiveState.Installing;
-    } else if (workerRegistration.waiting) {
+    } else if (!workerRegistration.active) {
       /*
         Workers that are waiting won't be our service workers, since we use clients.claim() and
         skipWaiting() to bypass the install and waiting stages.
