@@ -2,7 +2,7 @@ import * as Browser from 'bowser';
 
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { addDomElement, clearDomElementChildren } from '../utils';
+import { addDomElement, clearDomElementChildren, isChromeLikeBrowser } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -26,7 +26,7 @@ export default class Dialog extends AnimatedElement {
 
   getPlatformNotificationIcon() {
     if (this.notificationIcons) {
-      if (Browser.chrome || Browser.firefox) {
+      if (isChromeLikeBrowser() || Browser.firefox) {
         return this.notificationIcons.chrome || this.notificationIcons.safari;
       }
       else if (Browser.safari) {

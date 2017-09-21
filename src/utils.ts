@@ -107,6 +107,13 @@ export function isPushNotificationsSupported() {
   return false;
 }
 
+export function isChromeLikeBrowser() {
+  return Browser.chrome ||
+         (Browser as any).chromium ||
+         (Browser as any).opera ||
+         (Browser as any).yandex;
+}
+
 export function removeDomElement(selector) {
   var els = document.querySelectorAll(selector);
   if (els.length > 0) {

@@ -3,7 +3,7 @@ import * as objectAssign from 'object-assign';
 
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
-import { addCssClass, addDomElement, once, removeDomElement } from '../utils';
+import { addCssClass, addDomElement, once, removeDomElement, isChromeLikeBrowser } from '../utils';
 
 
 export default class Popover {
@@ -94,7 +94,7 @@ export default class Popover {
 
     getPlatformNotificationIcon() {
         if (this.notificationIcons) {
-            if (Browser.chrome || Browser.firefox) {
+            if (isChromeLikeBrowser() || Browser.firefox) {
                 if (this.notificationIcons.chrome) {
                     return this.notificationIcons.chrome;
                 } else if (this.notificationIcons.firefox) {
