@@ -227,6 +227,16 @@ export default class OneSignal {
   }
 
   /**
+   * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
+   * @PublicApi
+   */
+  static async showHttpPermissionRequest(options?: {_sdkCall: boolean}): Promise<any> {
+    log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
+
+    OneSignal.showHttpPrompt();
+  }
+
+  /**
    * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
    * @PublicApi
    */
@@ -264,15 +274,6 @@ export default class OneSignal {
     if (!notOptedOut) {
       throw new NotSubscribedError(NotSubscribedReason.OptedOut);
     }
-    if (MainHelper.isUsingHttpPermissionRequest()) {
-      if (options.__sdkCall && options.__useHttpPermissionRequestStyle) {
-      } else {
-        log.debug('The slidedown permission message cannot be used while the HTTP perm. req. is enabled.');
-        throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-          permissionPromptType: PermissionPromptType.HttpPermissionRequest
-        });
-      }
-    }
 
     MainHelper.markHttpPopoverShown();
 
@@ -306,11 +307,7 @@ export default class OneSignal {
       OneSignal.popover.close();
       log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      if (options.__sdkCall && options.__useHttpPermissionRequestStyle) {
-        OneSignal.registerForPushNotifications({ httpPermissionRequest: true });
-      } else {
-        OneSignal.registerForPushNotifications({ autoAccept: true });
-      }
+      OneSignal.registerForPushNotifications({ autoAccept: true });
     });
     OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
       log.debug("Setting flag to not show the popover to the user again.");
@@ -348,90 +345,6 @@ export default class OneSignal {
       OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
     } else {
       return __registerForPushNotifications();
-    }
-  }
-
-  /**
-   * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
-   * @PublicApi
-   */
-  static async showHttpPermissionRequest(options?: {_sdkCall: boolean}): Promise<any> {
-    log.debug('Called showHttpPermissionRequest().');
-
-    await awaitOneSignalInitAndSupported();
-
-    // Safari's push notifications are one-click Allow and shouldn't support this workaround
-    if (Browser.safari) {
-      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
-
-    if (OneSignal.__isPopoverShowing) {
-      throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-        permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
-      });
-    }
-
-    if (OneSignal._showingHttpPermissionRequest) {
-      throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-        permissionPromptType: PermissionPromptType.HttpPermissionRequest
-      });
-    }
-
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-      return await new Promise<NotificationPermission>((resolve, reject) => {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, options, reply => {
-          let { status, result } = reply.data;
-          if (status === 'resolve') {
-            resolve(<NotificationPermission>result);
-          } else {
-            reject(result);
-          }
-        });
-      });
-    } else {
-      if (!MainHelper.isUsingHttpPermissionRequest()) {
-        log.debug('Not showing HTTP permission request because its not enabled. Check init option httpPermissionRequest.');
-        return;
-      }
-
-      // Default call by our SDK, not forced by user, don't show if the HTTP perm. req. was dismissed by user
-      if (MainHelper.wasHttpsNativePromptDismissed()) {
-        if (options._sdkCall === true) {
-          // TODO: Throw an error; Postmam currently does not serialize errors across cross-domain messaging
-          //       In the future, Postmam should serialize errors so we can throw a PermissionMessageDismissedError
-          log.debug('The HTTP perm. req. permission was dismissed, so we are not showing the request.');
-          return;
-        } else {
-          log.debug('The HTTP perm. req. was previously dismissed, but this call was made explicitly.');
-        }
-      }
-
-
-      const notificationPermission = await OneSignal.getNotificationPermission();
-
-      if (notificationPermission === NotificationPermission.Default) {
-        log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Showing HTTP permission request.`);
-        OneSignal._showingHttpPermissionRequest = true;
-        return await new Promise(resolve => {
-          window.Notification.requestPermission(permission => {
-            OneSignal._showingHttpPermissionRequest = false;
-            resolve(permission);
-            log.debug('HTTP Permission Request Result:', permission);
-            if (permission === 'default') {
-              TestHelper.markHttpsNativePromptDismissed();
-              (OneSignal.proxyFrame as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
-                permission: permission,
-                forceUpdatePermission: true
-              });
-            }
-          });
-          Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-        });
-      } else if (notificationPermission === NotificationPermission.Granted &&
-        !(await OneSignal.isPushNotificationsEnabled())) {
-        // User unsubscribed but permission granted. Reprompt the user for push on the host page
-        (OneSignal.proxyFrame as any).message(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE);
-      }
     }
   }
 
@@ -827,8 +740,6 @@ export default class OneSignal {
   static _usingNativePermissionHook = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
-  static httpPermissionRequestPostModal: any;
-  static _showingHttpPermissionRequest = false;
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
   static crypto = Crypto;
@@ -869,14 +780,11 @@ export default class OneSignal {
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     SET_SESSION_COUNT: 'postmam.setSessionCount',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
-    SHOW_HTTP_PERMISSION_REQUEST: 'postmam.showHttpPermissionRequest',
-    IS_SHOWING_HTTP_PERMISSION_REQUEST: 'postmam.isShowingHttpPermissionRequest',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
     FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
     FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress',
     POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
     SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
-    HTTP_PERMISSION_REQUEST_RESUBSCRIBE: 'postmam.httpPermissionRequestResubscribe',
     MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
     IS_SUBSCRIBED: 'postmam.isSubscribed',
     UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame',

@@ -7,7 +7,6 @@ import Bell from '../bell/Bell';
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
-import HttpModal from '../http-modal/HttpModal';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { Uuid } from '../models/Uuid';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -100,29 +99,6 @@ export default class MainHelper {
   }
 
   /**
-   * Returns true if the experimental HTTP permission request is being used to prompt the user.
-   */
-  static isUsingHttpPermissionRequest() {
-    return (
-      OneSignal.config.userConfig.httpPermissionRequest &&
-      OneSignal.config.userConfig.httpPermissionRequest.enable == true &&
-      (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame ||
-        (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host &&
-          SubscriptionHelper.isUsingSubscriptionWorkaround()))
-    );
-  }
-
-  /**
-   * Returns true if the site using the HTTP permission request is supplying its own modal prompt to the user.
-   */
-  static isUsingCustomHttpPermissionRequestPostModal() {
-    return (
-      OneSignal.config.userConfig.httpPermissionRequest &&
-      OneSignal.config.userConfig.httpPermissionRequest.useCustomModal == true
-    );
-  }
-
-  /**
    * Returns true if a session cookie exists for noting the user dismissed the native prompt.
    */
   static wasHttpsNativePromptDismissed() {
@@ -182,24 +158,6 @@ export default class MainHelper {
       } else {
         OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
         OneSignal.notifyButton.create();
-      }
-    }
-  }
-
-  static checkAndDoHttpPermissionRequest() {
-    log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
-    if (this.isUsingHttpPermissionRequest()) {
-      if (OneSignal.config.userConfig.autoRegister) {
-        OneSignal.showHttpPermissionRequest({ _sdkCall: true }).then(result => {
-          if (result === 'granted' && !this.isUsingCustomHttpPermissionRequestPostModal()) {
-            log.debug(
-              'Showing built-in post HTTP permission request in-page modal because permission is granted and not using custom modal.'
-            );
-            this.showHttpPermissionRequestPostModal(OneSignal.config.userConfig.httpPermissionRequest);
-          }
-        });
-      } else {
-        Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
       }
     }
   }
@@ -306,20 +264,6 @@ export default class MainHelper {
       }
     }
     return promptOptionsStr;
-  }
-
-  /**
-   * Shows the modal on the page users must click on after the local notification prompt to trigger the standard
-   * HTTP popup window.
-   */
-  static async showHttpPermissionRequestPostModal(options?: any) {
-    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
-    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log.debug('Not showing HTTP permission request post-modal because styles failed to load.');
-      return;
-    }
-    OneSignal.httpPermissionRequestPostModal = new HttpModal(options);
-    OneSignal.httpPermissionRequestPostModal.create();
   }
 
   static getPromptOptionsPostHash() {

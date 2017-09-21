@@ -137,7 +137,6 @@ export default class InitHelper {
       }
     }
 
-    MainHelper.checkAndDoHttpPermissionRequest();
     OneSignal.context.cookieSyncer.install();
   }
 
