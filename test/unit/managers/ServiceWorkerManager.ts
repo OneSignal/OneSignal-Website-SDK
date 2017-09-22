@@ -129,16 +129,17 @@ test('getActiveState() detects a 3rd party worker, a worker that is activated bu
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
 });
 
-test('getActiveState() detects a page loaded bypassing service workers', async t => {
+test('getActiveState() detects a page loaded by hard-refresh with our service worker as bypassed', async t => {
   await TestEnvironment.stubDomEnvironment();
 
   const mockWorkerRegistration = new ServiceWorkerRegistration();
   const mockInstallingWorker = new ServiceWorker();
   mockInstallingWorker.state = 'activated';
-  mockInstallingWorker.scriptURL = 'https://site.com/another-service-worker.js';
+  mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
   mockWorkerRegistration.active = mockInstallingWorker;
 
   const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  const controllerStub = sinon.stub(navigator.serviceWorker, 'controller').resolves(null);
   const manager = new ServiceWorkerManager(null, {
     workerAPath: new Path('/Worker-A.js'),
     workerBPath: new Path('/Worker-B.js'),
@@ -148,6 +149,30 @@ test('getActiveState() detects a page loaded bypassing service workers', async t
   });
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Bypassed);
   getRegistrationStub.restore();
+  controllerStub.restore();
+});
+
+test('getActiveState() detects an activated third-party service worker not controlling the page as third-party and not bypassed', async t => {
+  await TestEnvironment.stubDomEnvironment();
+
+  const mockWorkerRegistration = new ServiceWorkerRegistration();
+  const mockInstallingWorker = new ServiceWorker();
+  mockInstallingWorker.state = 'activated';
+  mockInstallingWorker.scriptURL = 'https://site.com/another-worker.js';
+  mockWorkerRegistration.active = mockInstallingWorker;
+
+  const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  const controllerStub = sinon.stub(navigator.serviceWorker, 'controller').resolves(null);
+  const manager = new ServiceWorkerManager(null, {
+    workerAPath: new Path('/Worker-A.js'),
+    workerBPath: new Path('/Worker-B.js'),
+    registrationOptions: {
+      scope: '/'
+    }
+  });
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
+  getRegistrationStub.restore();
+  controllerStub.restore();
 });
 
 test('getActiveState() returns an indeterminate status for insecure HTTP pages', async t => {

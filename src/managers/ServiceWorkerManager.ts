@@ -139,27 +139,39 @@ export class ServiceWorkerManager {
       return ServiceWorkerActiveState.ThirdParty;
     }
 
+    const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
+    let workerState: ServiceWorkerActiveState;
+
     /*
-      A service worker registration can be both active and in the controlling scope of the current
+      At this point, there is an active service worker registration controlling this page.
+
+      Check the filename to see if it belongs to our A / B worker.
+    */
+    if (new Path(workerScriptPath).getFileName() == this.config.workerAPath.getFileName()) {
+      workerState = ServiceWorkerActiveState.WorkerA;
+    } else if (new Path(workerScriptPath).getFileName() == this.config.workerBPath.getFileName()) {
+      workerState = ServiceWorkerActiveState.WorkerB;
+    } else {
+      workerState = ServiceWorkerActiveState.ThirdParty;
+    }
+
+    /*
+      Our service worker registration can be both active and in the controlling scope of the current
       page, but if the page was hard refreshed to bypass the cache (e.g. Ctrl + Shift + R), a
       service worker will not control the page.
+
+      For a third-party service worker, if it does not call clients.claim(), even if its
+      registration is both active and in the controlling scope of the current page,
+      navigator.serviceWorker.controller will still be null on the first page visit. So we only
+      check if the controller is null for our worker, which we know uses clients.claim().
      */
-    const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
-
-    if (!navigator.serviceWorker.controller) {
+    if (!navigator.serviceWorker.controller && (
+      workerState === ServiceWorkerActiveState.WorkerA ||
+      workerState === ServiceWorkerActiveState.WorkerB
+    )) {
       return ServiceWorkerActiveState.Bypassed;
-    } else if (new Path(workerScriptPath).getFileName() == this.config.workerAPath.getFileName()) {
-      /*
-        At this point, there is an active service worker registration
-        controlling this page.
-
-        Check the filename to see if it belongs to our A / B worker.
-      */
-      return ServiceWorkerActiveState.WorkerA;
-    } else if (new Path(workerScriptPath).getFileName() == this.config.workerBPath.getFileName()) {
-      return ServiceWorkerActiveState.WorkerB;
     } else {
-      return ServiceWorkerActiveState.ThirdParty;
+      return workerState;
     }
   }
 
