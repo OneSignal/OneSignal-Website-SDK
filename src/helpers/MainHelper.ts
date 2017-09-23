@@ -25,6 +25,8 @@ import EventHelper from './EventHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { WorkerMessengerCommand, WorkerMessenger } from '../libraries/WorkerMessenger';
 import ProxyFrame from '../modules/frames/ProxyFrame';
+import { NotificationPermission } from '../models/NotificationPermission';
+import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 
 export default class MainHelper {
   /**
@@ -57,46 +59,6 @@ export default class MainHelper {
     } else {
       return -2;
     }
-  }
-
-  /*
-   Returns the current browser-agnostic notification permission as "default", "granted", "denied".
-   safariWebId: Used only to get the current notification permission state in Safari (required as part of the spec).
-   */
-  static getNotificationPermission(safariWebId) {
-    return awaitOneSignalInitAndSupported().then(() => {
-      return new Promise(resolve => {
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-          // User is using our subscription workaround
-          OneSignal.proxyFrameHost.message(
-            OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
-            { safariWebId: safariWebId },
-            reply => {
-              let remoteNotificationPermission = reply.data;
-              resolve(remoteNotificationPermission);
-            }
-          );
-        } else {
-          if (Browser.safari) {
-            // The user is on Safari
-            // A web ID is required to determine the current notificiation permission
-            if (safariWebId) {
-              resolve(window.safari.pushNotification.permission(safariWebId).permission);
-            } else {
-              // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
-              log.debug(
-                `OneSignal: Invalid init option safari_web_id %c${safariWebId}`,
-                getConsoleStyle('code'),
-                '. Please pass in a valid safari_web_id to OneSignal init.'
-              );
-            }
-          } else {
-            // Identical API on Firefox and Chrome
-            resolve(window.Notification.permission);
-          }
-        }
-      });
-    });
   }
 
   /**

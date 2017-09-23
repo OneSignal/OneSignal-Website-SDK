@@ -440,21 +440,16 @@ export default class OneSignal {
    * @param callback A callback function that will be called when the browser's current notification permission has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  static getNotificationPermission(onComplete?): Promise<NotificationPermission> {
-    return awaitOneSignalInitAndSupported()
-      .then(() => {
-        let safariWebId = null;
-        if (OneSignal.config) {
-          safariWebId = OneSignal.config.safariWebId;
-        }
-        return MainHelper.getNotificationPermission(safariWebId);
-      })
-      .then((permission: NotificationPermission) => {
-        if (onComplete) {
-          onComplete(permission);
-        }
-        return permission;
-      });
+  public static async getNotificationPermission(onComplete?): Promise<NotificationPermission> {
+    await awaitOneSignalInitAndSupported();
+
+    const permission = OneSignal.context.permissionManager.getNotificationPermission(OneSignal.config.safariWebId);
+
+    if (onComplete) {
+      onComplete(permission);
+    }
+
+    return permission;
   }
 
   /**
