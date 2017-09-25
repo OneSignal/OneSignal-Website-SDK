@@ -74,7 +74,8 @@ export interface TestEnvironmentConfig {
   httpOrHttps?: HttpHttpsEnvironment,
   permission?: NotificationPermission,
   userAgent?: BrowserUserAgent,
-  url?: URL
+  url?: URL,
+  initializeAsIframe?: boolean
 }
 
 export class TestEnvironment {
@@ -187,7 +188,15 @@ export class TestEnvironment {
     const { TextEncoder, TextDecoder } = require('text-encoding');
     (windowDef as any).TextEncoder = TextEncoder;
     (windowDef as any).TextDecoder = TextDecoder;
-    jsdom.reconfigureWindow(windowDef, { top: windowDef });
+
+    let topWindow = config.initializeAsIframe ? {
+      location: {
+        get origin() {
+          throw new Error("SecurityError: Permission denied to access property 'origin' on cross-origin object");
+        }
+      }
+    } as any : windowDef;
+    jsdom.reconfigureWindow(windowDef, { top: topWindow });
     objectAssign(global, windowDef);
     return jsdom;
   }

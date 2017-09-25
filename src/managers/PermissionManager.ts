@@ -1,4 +1,4 @@
-import { awaitOneSignalInitAndSupported } from '../utils';
+import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import * as Browser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
@@ -134,9 +134,12 @@ export default class PermissionManager {
    *
    *   - And the current frame context is either a cross-origin iframe or insecure
    */
-  private async isPermissionEnvironmentAmbiguous(permission: NotificationPermission): Promise<boolean> {
-    return (!Browser.safari &&
-            !Browser.firefox &&
+  public async isPermissionEnvironmentAmbiguous(permission: NotificationPermission): Promise<boolean> {
+    // For testing purposes, allows changing the browser user agent
+    const browser = redetectBrowserUserAgent();
+
+    return (!browser.safari &&
+            !browser.firefox &&
             permission === NotificationPermission.Denied &&
             (this.isCurrentFrameContextCrossOrigin() || await SubscriptionHelper.hasInsecureParentOrigin())
            );
@@ -151,7 +154,7 @@ export default class PermissionManager {
    *   - We're unable to access to the top-level frame's origin, or we can access the origin but it
    *     is different. On most browsers, accessing the top-level origin should throw an exception.
    */
-  private isCurrentFrameContextCrossOrigin(): boolean {
+  public isCurrentFrameContextCrossOrigin(): boolean {
     let topFrameOrigin: string;
 
     try {
@@ -176,7 +179,7 @@ export default class PermissionManager {
    * @param reportedPermission The notification permission as reported by the browser without any
    * modifications.
    */
-  private async getInterpretedAmbiguousPermission(reportedPermission: NotificationPermission) {
+  public async getInterpretedAmbiguousPermission(reportedPermission: NotificationPermission) {
     switch (reportedPermission) {
       case NotificationPermission.Denied:
         const storedPermission = await this.getStoredPermission();
@@ -193,7 +196,7 @@ export default class PermissionManager {
     }
   }
 
-  private async getStoredPermission(): Promise<NotificationPermission> {
+  public async getStoredPermission(): Promise<NotificationPermission> {
     return await Database.get<NotificationPermission>('Options', 'notificationPermission');
   }
 
