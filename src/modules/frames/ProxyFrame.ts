@@ -13,6 +13,7 @@ import Postmam from '../../Postmam';
 import Database from '../../services/Database';
 import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
+import Context from '../../models/Context';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -109,7 +110,8 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   async onRemoteNotificationPermission(message: MessengerMessageEvent) {
-    const permission = await OneSignal.getNotificationPermission();
+    const context: Context = OneSignal.context;
+    const permission = await context.permissionManager.getReportedNotificationPermission(context.appConfig.safariWebId);
     message.reply(permission);
     return false;
   }

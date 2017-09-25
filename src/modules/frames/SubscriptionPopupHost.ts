@@ -203,6 +203,7 @@ export default class SubscriptionPopupHost implements Disposable {
     const subscription = await subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
 
     EventHelper.checkAndTriggerSubscriptionChanged();
+    MainHelper.checkAndTriggerNotificationPermissionChanged();
   }
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {

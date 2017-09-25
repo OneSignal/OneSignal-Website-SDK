@@ -12,6 +12,10 @@ import MainHelper from '../helpers/MainHelper';
  */
 export default class PermissionManager {
 
+  static get STORED_PERMISSION_KEY() {
+    return 'storedNotificationPermission';
+  }
+
   /**
    * Returns an interpreted version of the browser's notification permission.
    *
@@ -59,7 +63,7 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  private async getReportedNotificationPermission(safariWebId: string) {
+  public async getReportedNotificationPermission(safariWebId: string) {
     if (Browser.safari) {
       return this.getSafariNotificationPermission(safariWebId);
     } else {
@@ -197,10 +201,16 @@ export default class PermissionManager {
   }
 
   public async getStoredPermission(): Promise<NotificationPermission> {
-    return await Database.get<NotificationPermission>('Options', 'notificationPermission');
+    return await Database.get<NotificationPermission>('Options', PermissionManager.STORED_PERMISSION_KEY);
   }
 
   public async setStoredPermission(permission: NotificationPermission) {
-    await Database.put('Options', { key: 'notificationPermission', value: permission });
+    await Database.put('Options', { key: PermissionManager.STORED_PERMISSION_KEY, value: permission });
   }
+
+    public async updateStoredPermission() {
+      const permission = await this.getNotificationPermission(null);
+      console.log("updateStoredPermission():", permission);
+      return await this.setStoredPermission(permission);
+    }
 }

@@ -93,10 +93,6 @@ export default class Button extends ActiveAnimatedElement {
       else {
         // The user is actually subscribed, register him for notifications
         OneSignal.registerForPushNotifications();
-        //// Show the 'Click Allow to receive notifications' tip, if they haven't already enabled permissions
-        //if (OneSignal.getNotificationPermission() === 'default') {
-        //  this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribing'], Message.TIMEOUT)
-        //}
         this.bell._ignoreSubscriptionState = true;
         OneSignal.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribed'], Message.TIMEOUT)

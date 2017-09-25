@@ -61,13 +61,24 @@ export default class SubscriptionHelper {
         const windowCreator = opener || parent;
         let rawSubscription: RawPushSubscription;
 
+        // Update the stored permission first, so we know the real value even if the user closes the
+        // popup
+        await context.permissionManager.updateStoredPermission();
+
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
           rawSubscription = await context.subscriptionManager.subscribePartially();
+
+          // Update the permission to granted
+          await context.permissionManager.updateStoredPermission();
         } catch (e) {
+          // Update the permission to denied or default
+          await context.permissionManager.updateStoredPermission();
+
           if (e instanceof PushPermissionNotGrantedError) {
             switch ((e as PushPermissionNotGrantedError).reason) {
               case PushPermissionNotGrantedErrorReason.Blocked:
+                await context.permissionManager.updateStoredPermission();
                 /* Force update false, because the iframe installs a native
                 permission change handler that will be triggered when the user
                 clicks out of the popup back to the parent page */
