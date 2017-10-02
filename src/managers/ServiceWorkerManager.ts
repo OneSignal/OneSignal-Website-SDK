@@ -348,13 +348,13 @@ export class ServiceWorkerManager {
 
     // Determine which worker to install
     if (
-      workerState === ServiceWorkerActiveState.WorkerA ||
-      workerState === ServiceWorkerActiveState.ThirdParty ||
-      workerState === ServiceWorkerActiveState.None
+      workerState === ServiceWorkerActiveState.WorkerA
     ) {
       workerDirectory = this.config.workerBPath.getPathWithoutFileName();
       workerFileName = this.config.workerBPath.getFileName();
-    } else if (workerState === ServiceWorkerActiveState.WorkerB) {
+    } else if (workerState === ServiceWorkerActiveState.WorkerB ||
+      workerState === ServiceWorkerActiveState.ThirdParty ||
+      workerState === ServiceWorkerActiveState.None) {
       workerDirectory = this.config.workerAPath.getPathWithoutFileName();
       workerFileName = this.config.workerAPath.getFileName();
     } else if (workerState === ServiceWorkerActiveState.Bypassed) {
