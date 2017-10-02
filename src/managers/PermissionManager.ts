@@ -19,16 +19,25 @@ export default class PermissionManager {
   /**
    * Returns an interpreted version of the browser's notification permission.
    *
-   * On some environments, it isn't possible to obtain the actual notification permission. For
-   * example, starting with Chrome 62+, cross-origin iframes and insecure origins can no longer
-   * accurately detect the default notification permission state ("denied" is returned instead of
-   * "default".)
+   * On some environments, it isn't possible to obtain the actual notification
+   * permission. For example, starting with Chrome 62+, cross-origin iframes and
+   * insecure origins can no longer accurately detect the default notification
+   * permission state.
    *
-   * This method therefore returns the notification permission best suited for our SDK, and it may
-   * not always be accurate. On most environments (i.e. not Chrome 62+), the returned permission
-   * will be accurate.
+   * For cross-origin iframes, returned permissions are correct except that
+   * "denied" is returned instead of "default".
    *
-   * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
+   * For insecure origins, returned permissions are always "denied". This
+   * differs from cross-origin iframes where the cross-origin iframes are
+   * acurrate if returning "granted", but insecure origins will always return
+   * "denied" regardless of the actual permission.
+   *
+   * This method therefore returns the notification permission best suited for
+   * our SDK, and it may not always be accurate. On most environments (i.e. not
+   * Chrome 62+), the returned permission will be accurate.
+   *
+   * @param safariWebId The Safari web ID necessary to access the permission
+   * state on Safari.
    */
   public async getNotificationPermission(safariWebId: string) {
     const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
@@ -174,14 +183,16 @@ export default class PermissionManager {
   }
 
   /**
-   * To workaround Chrome 62+'s permission ambiguity for "denied" permissions, we assume the
-   * permission is "default" until we actually record the permission being "denied".
+   * To workaround Chrome 62+'s permission ambiguity for "denied" permissions,
+   * we assume the permission is "default" until we actually record the
+   * permission being "denied" or "granted".
    *
-   * This allows our best-effort approach to subscribe new users, and upon subscribing, if we
-   * discover the actual permission to be denied, we record this for next time.
+   * This allows our best-effort approach to subscribe new users, and upon
+   * subscribing, if we discover the actual permission to be denied, we record
+   * this for next time.
    *
-   * @param reportedPermission The notification permission as reported by the browser without any
-   * modifications.
+   * @param reportedPermission The notification permission as reported by the
+   * browser without any modifications.
    */
   public async getInterpretedAmbiguousPermission(reportedPermission: NotificationPermission) {
     switch (reportedPermission) {
@@ -210,7 +221,6 @@ export default class PermissionManager {
 
     public async updateStoredPermission() {
       const permission = await this.getNotificationPermission(null);
-      console.log("updateStoredPermission():", permission);
       return await this.setStoredPermission(permission);
     }
 }
