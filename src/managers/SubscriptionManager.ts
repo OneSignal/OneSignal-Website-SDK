@@ -26,6 +26,7 @@ import { Subscription } from '../models/Subscription';
 import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
 import NotImplementedError from '../errors/NotImplementedError';
 import { base64ToUint8Array } from '../utils/Encoding';
+import { HttpsPermissionRequest } from '../prompts/HttpsPermissionRequest';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -102,15 +103,6 @@ export class SubscriptionManager {
     return await this.subscribeFcmFromPage();
   }
 
-  /**
-   * Used before subscribing for push, we request notification permissions
-   * before installing the service worker to prevent non-subscribers from
-   * querying our server for an updated service worker every 24 hours.
-   */
-  private async requestPresubscribeNotificationPermission(): Promise<NotificationPermission> {
-    return SubscriptionManager.requestNotificationPermission();
-  }
-
   public async unsubscribe(strategy: UnsubscriptionStrategy) {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw new NotImplementedError();
@@ -129,14 +121,6 @@ export class SubscriptionManager {
     } else {
       throw new NotImplementedError();
     }
-  }
-
-  /**
-   * Calls Notification.requestPermission(), but returns a Promise instead of
-   * accepting a callback like the actual Notification.requestPermission();
-   */
-  public static requestNotificationPermission(): Promise<NotificationPermission> {
-    return new Promise(resolve => window.Notification.requestPermission(resolve));
   }
 
   public async registerSubscriptionWithOneSignal(pushSubscription: RawPushSubscription): Promise<Subscription> {
@@ -267,31 +251,17 @@ export class SubscriptionManager {
       SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       window.Notification.permission === NotificationPermission.Default
     ) {
-      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-      const permission = await this.requestPresubscribeNotificationPermission();
+      await this.context.promptManager.prompt(new HttpsPermissionRequest());
 
-      /*
-        Notification permission changes are already broadcast by the page's
-        notificationpermissionchange handler. This means that allowing or
-        denying the permission prompt will cause double events. However, the
-        native event handler does not broadcast an event for dismissing the
-        prompt, because going from "default" permissions to "default"
-        permissions isn't a change. We specifically broadcast "default" to "default" changes.
-       */
-      if (permission === NotificationPermission.Default) {
-        EventHelper.triggerNotificationPermissionChanged(true);
-      }
+      const permission: NotificationPermission = window.Notification.permission;
+
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case NotificationPermission.Default:
           log.debug('Exiting subscription and not registering worker because the permission was dismissed.');
-          OneSignal._sessionInitAlreadyRunning = false;
-          OneSignal._isRegisteringForPush = false;
-          throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Dismissed);
+          throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Default);
         case NotificationPermission.Denied:
           log.debug('Exiting subscription and not registering worker because the permission was blocked.');
-          OneSignal._sessionInitAlreadyRunning = false;
-          OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
       }
     }

@@ -40,7 +40,6 @@ import ProxyFrameHost from './modules/frames/ProxyFrameHost';
 import SubscriptionModal from './modules/frames/SubscriptionModal';
 import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
 import SubscriptionPopup from './modules/frames/SubscriptionPopup';
-import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
 import Popover from './popover/Popover';
 import Crypto from './services/Crypto';
@@ -58,6 +57,7 @@ import {
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { PushRegistration } from './models/PushRegistration';
+import { HttpFullscreenPermissionMessage } from './prompts/HttpFullscreenPermissionMessage';
 
 
 export default class OneSignal {
@@ -334,8 +334,7 @@ export default class OneSignal {
            * use the Proxy Frame present now and check its URL to see whether the user
            * is finally subscribed to .onesignal.com or .os.tc.
            */
-        OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
-        OneSignal.subscriptionPopupHost.load();
+        OneSignal.context.promptManager.prompt(new HttpFullscreenPermissionMessage(OneSignal.proxyFrameHost.url, options));
       } else {
         if (!options)
           options = {};
@@ -792,7 +791,6 @@ export default class OneSignal {
   static objectAssign = objectAssign;
   static appConfig = null;
   static subscriptionPopup: SubscriptionPopup;
-  static subscriptionPopupHost: SubscriptionPopupHost;
   static subscriptionModal: SubscriptionModal;
   static subscriptionModalHost: SubscriptionModalHost;
   static proxyFrameHost: ProxyFrameHost;

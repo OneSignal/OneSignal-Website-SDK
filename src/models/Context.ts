@@ -8,6 +8,7 @@ import Path from './Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { SessionManager } from '../managers/SessionManager';
 import PermissionManager from '../managers/PermissionManager';
+import { PromptManager } from '../managers/PromptManager';
 
 
 export default class Context {
@@ -20,6 +21,7 @@ export default class Context {
   public cookieSyncer: CookieSyncer;
   public sessionManager: SessionManager;
   public permissionManager: PermissionManager;
+  public promptManager: PromptManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -54,5 +56,6 @@ export default class Context {
 
     this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
+    this.promptManager = new PromptManager();
   }
 }

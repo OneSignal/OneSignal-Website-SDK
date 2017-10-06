@@ -83,25 +83,25 @@ export interface AppUserConfigHttpPermissionRequest {
 }
 
 export interface AppUserConfigPromptOptions {
-  subscribeText: string;
-  showGraphic: boolean;
-  timeout: number;
-  autoAcceptTitle: string;
-  actionMessage: string;
-  exampleNotificationTitleDesktop: string;
-  exampleNotificationMessageDesktop: string;
-  exampleNotificationTitleMobile: string;
-  exampleNotificationMessageMobile: string;
-  exampleNotificationCaption: string;
-  acceptButtonText: string;
-  cancelButtonText: string;
-  showCredit: string;
+  actionMessage: string; // X
+  autoAcceptTitle: string; // X
+  siteName: string; // X
+  exampleNotificationTitleDesktop: string; // X
+  exampleNotificationMessageDesktop: string; // X
+  exampleNotificationTitleMobile: string; // X
+  exampleNotificationMessageMobile: string; // X
+  exampleNotificationCaption: string; // X
+  acceptButtonText: string; // X
+  cancelButtonText: string; // X
+  showGraphic: boolean; // X
+  subscribeText: string; // X
+  timeout: number; // X
 }
 
 export interface AppUserConfigWelcomeNotification {
-  disable: boolean;
-  title: string;
-  message: string;
+  disable: boolean; // X
+  title: string; // X
+  message: string; // X
 }
 
 export interface AppUserConfigNotifyButton {
@@ -110,10 +110,9 @@ export interface AppUserConfigNotifyButton {
   size: 'small' | 'medium' | 'large';
   position: 'bottom-left' | 'bottom-right';
   offset: { bottom: number; left: number; right: number };
-  modalPrompt: boolean;
   prenotify: boolean;
   showCredit: boolean;
-  colors: {
+  colors: { // X (inclusive)
     'circle.background': string;
     'circle.foreground': string;
     'badge.background': string;
@@ -125,7 +124,7 @@ export interface AppUserConfigNotifyButton {
     'dialog.button.background': string;
     'dialog.button.foreground': string;
   };
-  text: {
+  text: { // X (inclusive)
     'tip.state.unsubscribed': string;
     'tip.state.subscribed': string;
     'tip.state.blocked': string;

@@ -258,8 +258,9 @@ export default class Postmam {
    * Then relax the postMessage restriction to also allow the http:// protocol for the same domain.
    */
   generateSafeOrigins(origin) {
-    let otherAllowedOrigins = [origin];
+    let otherAllowedOrigins = [];
     try {
+      otherAllowedOrigins.push(new URL(origin).origin);
       let url = new URL(origin);
       let host = url.host.replace('www.', '');
       if (url.protocol === 'https:') {

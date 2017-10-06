@@ -4,7 +4,6 @@ import * as log from 'loglevel';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 
-
 if (Environment.isBrowser()) {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {

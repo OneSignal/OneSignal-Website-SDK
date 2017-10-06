@@ -152,6 +152,16 @@ export class ServiceWorker {
       const context = new Context(appConfig);
       const subscription = await context.subscriptionManager.subscribe();
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
+      OneSignalApi.sendNotification(
+        appId,
+        [subscription.deviceId],
+        { en: 'AMP News Article Demo' },
+        { en: 'Thanks for subscribing!' },
+        'https://onesignal.com?_osp=do_not_open',
+        'https://i.imgur.com/IYWxiXS.jpg',
+        { __isOneSignalWelcomeNotification: true },
+        undefined
+      );
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
       log.debug('[Service Worker] Received AMP unsubscribe message.');
