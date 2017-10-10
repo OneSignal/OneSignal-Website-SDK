@@ -77,7 +77,11 @@ export class SubscriptionManager {
 
           - If notifications are blocked, we can't subscribe.
           - If notifications are granted, the user should be completely resubscribed.
-          - If notifications permissions are untouched, the user will be prompted and then subscribed.
+          - If notifications permissions are untouched, the user will be prompted and then
+            subscribed.
+
+          Subscribing is only possible on the top-level frame, so there's no permission ambiguity
+          here.
         */
         if ((await OneSignal.getNotificationPermission()) === NotificationPermission.Denied) {
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);

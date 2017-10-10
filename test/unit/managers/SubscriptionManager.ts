@@ -71,8 +71,6 @@ test('subscribeFcmVapidOrLegacyKey() subscribes using globally shared VAPID key 
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
-  const firefoxStub = sinon.stub(Browser, 'firefox').returns(true);
-
   const manager = new SubscriptionManager(context, {
     safariWebId: null,
     appId: Uuid.generate(),
@@ -97,7 +95,6 @@ test('subscribeFcmVapidOrLegacyKey() subscribes using globally shared VAPID key 
   await manager.subscribeFcmVapidOrLegacyKey(registration);
 
   t.true(spy.getCall(0).calledWithExactly(options));
-  firefoxStub.restore();
   spy.restore();
 });
 

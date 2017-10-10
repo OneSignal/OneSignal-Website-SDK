@@ -15,14 +15,6 @@ declare var OneSignal: any;
 
 export default class HttpHelper {
 
-  static async isShowingHttpPermissionRequest() {
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-      return await OneSignal.proxyFrameHost.isShowingHttpPermissionRequest();
-    } else {
-      return OneSignal._showingHttpPermissionRequest;
-    }
-  }
-
   // Http only - Only called from iframe's init.js
   static async initHttp(options) {
     log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));

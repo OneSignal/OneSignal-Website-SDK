@@ -1,9 +1,5 @@
 export enum PermissionPromptType {
   /**
-   * Local notification hack for HTTP sites triggered by prompting for local notification permissions.
-   */
-  HttpPermissionRequest = <any>'HTTP permission request',
-  /**
    * The "main" browser native permission request dialog when prompting for local or push notification permissions.
    */
   HttpsPermissionRequest = <any>'HTTPS permission request',

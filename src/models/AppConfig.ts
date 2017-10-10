@@ -63,7 +63,6 @@ export interface AppUserConfig {
   serviceWorkerUpdaterPath?: string;
   serviceWorkerParam?: any;
   subdomainName?: string;
-  httpPermissionRequest?: AppUserConfigHttpPermissionRequest;
   promptOptions?: AppUserConfigPromptOptions;
   welcomeNotification?: AppUserConfigWelcomeNotification;
   notifyButton?: AppUserConfigNotifyButton;
@@ -72,14 +71,6 @@ export interface AppUserConfig {
   notificationClickHandlerMatch?: object;
   notificationClickHandlerAction?: object;
   allowLocalhostAsSecureOrigin?: boolean;
-}
-
-export interface AppUserConfigHttpPermissionRequest {
-  enable: boolean;
-  useCustomModal: boolean;
-  modalTitle: string;
-  modalMessage: string;
-  modalButtonText: string;
 }
 
 export interface AppUserConfigPromptOptions {
