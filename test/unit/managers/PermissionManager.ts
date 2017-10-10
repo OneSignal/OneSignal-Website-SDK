@@ -125,7 +125,6 @@ test('should detect an ambiguous permission environment', async t => {
   const permissionManager = OneSignal.context.permissionManager;
 
   setUserAgent(BrowserUserAgent.OperaDesktopSupported);
-  await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied);
 
   const isCurrentFrameContextCrossOriginStub = sinon
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
