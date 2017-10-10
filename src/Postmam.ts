@@ -257,25 +257,29 @@ export default class Postmam {
    * If the provided Site URL on the dashboard, which restricts the post message origin, uses the https:// protocol
    * Then relax the postMessage restriction to also allow the http:// protocol for the same domain.
    */
-  generateSafeOrigins(origin) {
-    let otherAllowedOrigins = [origin];
+  generateSafeOrigins(inputOrigin: string) {
+    // Trims trailing slashes and other undesirable artifacts
+    const safeOrigins = [];
     try {
-      let url = new URL(origin);
-      let host = url.host.replace('www.', '');
+      const url = new URL(inputOrigin);
+      let reducedHost = url.host;
+      if (url.host.startsWith('www.')) {
+        reducedHost = url.host.replace('www.', '');
+      }
       if (url.protocol === 'https:') {
-        otherAllowedOrigins.push(`https://${host}`);
-        otherAllowedOrigins.push(`https://www.${host}`);
+        safeOrigins.push(`https://${reducedHost}`);
+        safeOrigins.push(`https://www.${reducedHost}`);
       }
       else if (url.protocol === 'http:') {
-        otherAllowedOrigins.push(`http://${host}`);
-        otherAllowedOrigins.push(`http://www.${host}`);
-        otherAllowedOrigins.push(`https://${host}`);
-        otherAllowedOrigins.push(`https://www.${host}`);
+        safeOrigins.push(`http://${reducedHost}`);
+        safeOrigins.push(`http://www.${reducedHost}`);
+        safeOrigins.push(`https://${reducedHost}`);
+        safeOrigins.push(`https://www.${reducedHost}`);
       }
     } catch (ex) {
       // Invalid URL: Users can enter '*' or 'https://*.google.com' which is invalid.
     }
-    return otherAllowedOrigins;
+    return safeOrigins;
   }
 
   isSafeOrigin(messageOrigin) {
