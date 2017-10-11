@@ -191,9 +191,10 @@ export class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => ServiceWorker.updateBackupNotification(notif).catch(e => log.error(e)))
-                    .then(() => {
-                      return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => log.error(e))
-                    })
+                      .then(() => {
+                        return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => log.error(e))
+                      })
+                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif).catch(e => log.error(e)))
                 }).bind(null, notification));
               }
 
