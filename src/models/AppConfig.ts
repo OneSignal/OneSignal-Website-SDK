@@ -17,6 +17,11 @@ export class AppConfig implements Serializable {
    */
   httpUseOneSignalCom?: boolean;
   cookieSyncEnabled?: boolean;
+  metrics: {
+    enable: boolean;
+    mixpanelReportingToken: string;
+  };
+
   safariWebId?: string;
   /**
    * Chrome and Chrome-like browsers including Opera and Yandex use VAPID for
@@ -29,6 +34,13 @@ export class AppConfig implements Serializable {
    */
   onesignalVapidPublicKey?: string;
   userConfig?: AppUserConfig;
+
+  constructor() {
+    this.metrics = {
+      enable: false,
+      mixpanelReportingToken: '',
+    };
+  }
 
   serialize(): object {
     return {
@@ -144,6 +156,10 @@ export interface ServerAppConfig {
   features: {
     cookie_sync: {
       enable: boolean;
+    },
+    metrics: {
+      enable: boolean;
+      mixpanel_reporting_token: string;
     };
   };
   config: {

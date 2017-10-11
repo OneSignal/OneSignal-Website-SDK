@@ -42,7 +42,11 @@ export default class RemoteFrame implements Disposable {
       appId: new Uuid(initOptions.appId),
       subdomain: initOptions.subdomainName,
       origin: initOptions.origin,
-      serialize: undefined
+      serialize: undefined,
+      metrics: {
+        enable: false,
+        mixpanelReportingToken: null
+      }
     };
   }
 

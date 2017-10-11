@@ -162,16 +162,20 @@ export default class OneSignalApi {
         if (serverConfig.features.cookie_sync && serverConfig.features.cookie_sync.enable) {
           config.cookieSyncEnabled = true;
         }
+        if (serverConfig.features.metrics && serverConfig.features.metrics.enable) {
+          config.metrics.enable = true;
+          config.metrics.mixpanelReportingToken = serverConfig.features.metrics.mixpanel_reporting_token;
+        }
       }
       if (serverConfig.config) {
         if (serverConfig.config.http_use_onesignal_com) {
           config.httpUseOneSignalCom = true;
         }
         if (serverConfig.config.safari_web_id) {
-          config.safariWebId = serverConfig.config.safari_web_id
+          config.safariWebId = serverConfig.config.safari_web_id;
         }
         if (serverConfig.config.subdomain) {
-          config.subdomain = serverConfig.config.subdomain
+          config.subdomain = serverConfig.config.subdomain;
         }
         if (serverConfig.config.vapid_public_key) {
           config.vapidPublicKey = serverConfig.config.vapid_public_key;
