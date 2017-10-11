@@ -58,6 +58,7 @@ import {
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { PushRegistration } from './models/PushRegistration';
+import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
 
 
 export default class OneSignal {
@@ -323,6 +324,17 @@ export default class OneSignal {
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
+      if (options && options.httpPermissionRequest) {
+        /*
+          Do not throw an error because it may cause the parent event handler to
+          throw and stop processing the rest of their code. Typically, for this
+          prompt sequence, a custom modal is being shown thanking the user for
+          granting permissions. Throwing an error might cause the modal to stay
+          on screen and not close.
+         */
+        log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
+        return;
+      }
       if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
           /**
            * Users may be subscribed to either .onesignal.com or .os.tc. By this time
