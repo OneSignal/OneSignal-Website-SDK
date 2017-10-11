@@ -29,6 +29,19 @@ export function decodeHtmlEntities(text) {
   }
 }
 
+export function redetectBrowserUserAgent(): Browser.IBowser  {
+    /*
+   TODO: Make this a little neater
+   During testing, the browser object may be initialized before the userAgent is injected
+  */
+  if (Browser.name === '' && Browser.version === '') {
+    var browser = Browser._detect(navigator.userAgent);
+  } else {
+    var browser = Browser;
+  }
+  return browser;
+}
+
 export function isPushNotificationsSupported() {
   /**
    * It's possible a browser's user agent is modified, so we do some basic feature detection to make sure initializing
@@ -38,15 +51,7 @@ export function isPushNotificationsSupported() {
     return false;
   }
 
-  /*
-   TODO: Make this a little neater
-   During testing, the browser object may be initialized before the userAgent is injected
-  */
-  if (Browser.name === '' && Browser.version === '') {
-    var browser = (Browser as any)._detect(navigator.userAgent);
-  } else {
-    var browser: any =  Browser;
-  }
+  const browser = redetectBrowserUserAgent();
   let userAgent = navigator.userAgent || '';
 
   if (!browser.safari && typeof navigator.serviceWorker === "undefined") {
@@ -84,7 +89,7 @@ export function isPushNotificationsSupported() {
 
   // Web push is supported in Samsung Internet for Android 4.0+
   // http://developer.samsung.com/internet/android/releases
-  if (browser.samsungBrowser && Number(browser.version) >= 4) {
+  if ((browser as any).samsungBrowser && Number(browser.version) >= 4) {
     return true;
   }
 

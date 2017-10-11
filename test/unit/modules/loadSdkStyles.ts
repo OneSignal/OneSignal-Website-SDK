@@ -42,19 +42,6 @@ test("should call loadSdkStylesheet if notify button is used", async t => {
   t.is(t.context.loadSdkStylesheet.called, true);
 });
 
-test("should call loadSdkStylesheet if HTTP permission request is used", async t => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true
-      }
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http
-  });
-  await MainHelper.showHttpPermissionRequestPostModal();
-  t.is(t.context.loadSdkStylesheet.called, true);
-});
-
 test("should call loadSdkStylesheet if slidedown permission message is used", async t => {
   await TestEnvironment.initialize({
     initOptions: { },

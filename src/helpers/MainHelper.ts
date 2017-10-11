@@ -7,7 +7,6 @@ import Bell from '../bell/Bell';
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
-import HttpModal from '../http-modal/HttpModal';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { Uuid } from '../models/Uuid';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -25,6 +24,8 @@ import EventHelper from './EventHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { WorkerMessengerCommand, WorkerMessenger } from '../libraries/WorkerMessenger';
 import ProxyFrame from '../modules/frames/ProxyFrame';
+import { NotificationPermission } from '../models/NotificationPermission';
+import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 
 export default class MainHelper {
   /**
@@ -57,69 +58,6 @@ export default class MainHelper {
     } else {
       return -2;
     }
-  }
-
-  /*
-   Returns the current browser-agnostic notification permission as "default", "granted", "denied".
-   safariWebId: Used only to get the current notification permission state in Safari (required as part of the spec).
-   */
-  static getNotificationPermission(safariWebId) {
-    return awaitOneSignalInitAndSupported().then(() => {
-      return new Promise(resolve => {
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-          // User is using our subscription workaround
-          OneSignal.proxyFrameHost.message(
-            OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
-            { safariWebId: safariWebId },
-            reply => {
-              let remoteNotificationPermission = reply.data;
-              resolve(remoteNotificationPermission);
-            }
-          );
-        } else {
-          if (Browser.safari) {
-            // The user is on Safari
-            // A web ID is required to determine the current notificiation permission
-            if (safariWebId) {
-              resolve(window.safari.pushNotification.permission(safariWebId).permission);
-            } else {
-              // The user didn't set up Safari web push properly; notifications are unlikely to be enabled
-              log.debug(
-                `OneSignal: Invalid init option safari_web_id %c${safariWebId}`,
-                getConsoleStyle('code'),
-                '. Please pass in a valid safari_web_id to OneSignal init.'
-              );
-            }
-          } else {
-            // Identical API on Firefox and Chrome
-            resolve(window.Notification.permission);
-          }
-        }
-      });
-    });
-  }
-
-  /**
-   * Returns true if the experimental HTTP permission request is being used to prompt the user.
-   */
-  static isUsingHttpPermissionRequest() {
-    return (
-      OneSignal.config.userConfig.httpPermissionRequest &&
-      OneSignal.config.userConfig.httpPermissionRequest.enable == true &&
-      (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame ||
-        (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host &&
-          SubscriptionHelper.isUsingSubscriptionWorkaround()))
-    );
-  }
-
-  /**
-   * Returns true if the site using the HTTP permission request is supplying its own modal prompt to the user.
-   */
-  static isUsingCustomHttpPermissionRequestPostModal() {
-    return (
-      OneSignal.config.userConfig.httpPermissionRequest &&
-      OneSignal.config.userConfig.httpPermissionRequest.useCustomModal == true
-    );
   }
 
   /**
@@ -182,24 +120,6 @@ export default class MainHelper {
       } else {
         OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
         OneSignal.notifyButton.create();
-      }
-    }
-  }
-
-  static checkAndDoHttpPermissionRequest() {
-    log.debug('Called %ccheckAndDoHttpPermissionRequest()', getConsoleStyle('code'));
-    if (this.isUsingHttpPermissionRequest()) {
-      if (OneSignal.config.userConfig.autoRegister) {
-        OneSignal.showHttpPermissionRequest({ _sdkCall: true }).then(result => {
-          if (result === 'granted' && !this.isUsingCustomHttpPermissionRequestPostModal()) {
-            log.debug(
-              'Showing built-in post HTTP permission request in-page modal because permission is granted and not using custom modal.'
-            );
-            this.showHttpPermissionRequestPostModal(OneSignal.config.userConfig.httpPermissionRequest);
-          }
-        });
-      } else {
-        Event.trigger(OneSignal.EVENTS.TEST_INIT_OPTION_DISABLED);
       }
     }
   }
@@ -306,20 +226,6 @@ export default class MainHelper {
       }
     }
     return promptOptionsStr;
-  }
-
-  /**
-   * Shows the modal on the page users must click on after the local notification prompt to trigger the standard
-   * HTTP popup window.
-   */
-  static async showHttpPermissionRequestPostModal(options?: any) {
-    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
-    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log.debug('Not showing HTTP permission request post-modal because styles failed to load.');
-      return;
-    }
-    OneSignal.httpPermissionRequestPostModal = new HttpModal(options);
-    OneSignal.httpPermissionRequestPostModal.create();
   }
 
   static getPromptOptionsPostHash() {

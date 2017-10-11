@@ -43,7 +43,6 @@ export default class SubscriptionPopupHost implements Disposable {
     this.url.pathname = 'subscribe';
     this.options = options || {
       autoAccept: false,
-      httpPermissionRequest: false
     };
   }
 
@@ -60,17 +59,8 @@ export default class SubscriptionPopupHost implements Disposable {
     if (this.options.autoAccept) {
       postData['autoAccept'] = true;
     }
-    if (this.options.httpPermissionRequest) {
-      postData['httpPermissionRequest'] = true;
-      var overrides = {
-        childWidth: 250,
-        childHeight: 150,
-        left: -99999999,
-        top: 9999999,
-      };
-    }
     log.info(`Opening a popup to ${this.url.toString()} with POST data:`, postData);
-    this.popupWindow = this.openWindowViaPost(this.url.toString(), postData, overrides);
+    this.popupWindow = this.openWindowViaPost(this.url.toString(), postData, null);
 
     this.establishCrossOriginMessaging();
     (this as any).loadPromise = {};
@@ -203,6 +193,7 @@ export default class SubscriptionPopupHost implements Disposable {
     const subscription = await subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
 
     EventHelper.checkAndTriggerSubscriptionChanged();
+    MainHelper.checkAndTriggerNotificationPermissionChanged();
   }
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {

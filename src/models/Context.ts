@@ -7,6 +7,8 @@ import { AppConfig } from './AppConfig';
 import Path from './Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { SessionManager } from '../managers/SessionManager';
+import PermissionManager from '../managers/PermissionManager';
+import MetricsManager from '../managers/MetricsManager';
 
 
 export default class Context {
@@ -18,6 +20,8 @@ export default class Context {
   public workerMessenger: WorkerMessenger;
   public cookieSyncer: CookieSyncer;
   public sessionManager: SessionManager;
+  public permissionManager: PermissionManager;
+  public metricsManager: MetricsManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -51,5 +55,7 @@ export default class Context {
     this.dynamicResourceLoader = new DynamicResourceLoader();
 
     this.sessionManager = new SessionManager();
+    this.permissionManager = new PermissionManager();
+    this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
   }
 }

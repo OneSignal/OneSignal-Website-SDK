@@ -13,6 +13,7 @@ import Postmam from '../../Postmam';
 import Database from '../../services/Database';
 import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
+import Context from '../../models/Context';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -51,8 +52,6 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, this.onRemoteDatabasePut.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, this.onRemoteDatabaseRemove.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, this.onUnsubscribeFromPush.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SHOW_HTTP_PERMISSION_REQUEST, this.onShowHttpPermissionRequest.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.IS_SHOWING_HTTP_PERMISSION_REQUEST, this.onIsShowingHttpPermissionRequest.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, this.onMarkPromptDismissed.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, this.onIsSubscribed.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, this.onUnsubscribeProxyFrame.bind(this));
@@ -109,7 +108,8 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   async onRemoteNotificationPermission(message: MessengerMessageEvent) {
-    const permission = await OneSignal.getNotificationPermission();
+    const context: Context = OneSignal.context;
+    const permission = await context.permissionManager.getReportedNotificationPermission(context.appConfig.safariWebId);
     message.reply(permission);
     return false;
   }
@@ -164,31 +164,6 @@ export default class ProxyFrame extends RemoteFrame {
     } catch (e) {
       log.debug('Failed to unsubscribe from push remotely:', e);
     }
-  }
-
-  async onShowHttpPermissionRequest(message: MessengerMessageEvent) {
-    log.debug(SdkEnvironment.getWindowEnv().toString() + " Calling showHttpPermissionRequest() inside the iFrame, proxied from host.");
-    let options = {};
-    if (message.data) {
-      options = message.data;
-    }
-    log.debug(`${SdkEnvironment.getWindowEnv().toString()} HTTP permission request showing, message data:`, message);
-    try {
-      const result = await OneSignal.showHttpPermissionRequest(options);
-      message.reply({ status: 'resolve', result: result });
-    } catch (e) {
-      if (e && e.reason === InvalidStateReason[InvalidStateReason.PushPermissionAlreadyGranted]) {
-      // Don't do anything for this error, too common
-      } else {
-        message.reply({ status: 'reject', result: e })
-      }
-    }
-  }
-
-  async onIsShowingHttpPermissionRequest(message: MessengerMessageEvent) {
-    const isShowingHttpPermReq = await HttpHelper.isShowingHttpPermissionRequest();
-    message.reply(isShowingHttpPermReq);
-    return false;
   }
 
   async onMarkPromptDismissed(message: MessengerMessageEvent) {

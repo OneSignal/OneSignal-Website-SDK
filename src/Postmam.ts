@@ -263,7 +263,7 @@ export default class Postmam {
     try {
       const url = new URL(inputOrigin);
       let reducedHost = url.host;
-      if (url.host.startsWith('www.')) {
+      if (url.host.indexOf('www.') === 0) {
         reducedHost = url.host.replace('www.', '');
       }
       if (url.protocol === 'https:') {

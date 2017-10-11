@@ -105,7 +105,6 @@ export default class ProxyFrameHost implements Disposable {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, this.onRemoteNotificationPermissionChanged.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, this.onRequestHostUrl.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, this.onServiceWorkerCommandRedirect.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.HTTP_PERMISSION_REQUEST_RESUBSCRIBE, this.onHttpPermissionRequestResubscribe.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT, this.onGetEventListenerCount.bind(this));
     this.messenger.connect();
   }
@@ -116,14 +115,6 @@ export default class ProxyFrameHost implements Disposable {
       this.messenger.destroy();
     }
     this.removeFrame();
-  }
-
-  async isShowingHttpPermissionRequest(): Promise<boolean> {
-    return new Promise<boolean>(resolve => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SHOWING_HTTP_PERMISSION_REQUEST, null, reply => {
-        resolve(reply.data);
-      });
-    });
   }
 
   async onMessengerConnect(_: MessengerMessageEvent) {
@@ -164,14 +155,6 @@ export default class ProxyFrameHost implements Disposable {
 
   onServiceWorkerCommandRedirect(message: MessengerMessageEvent) {
     window.location.href = (message.data as any);
-    return false;
-  }
-
-  onHttpPermissionRequestResubscribe(_: MessengerMessageEvent) {
-    log.debug('(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.');
-    OneSignal.showHttpPrompt({ __sdkCall: true, __useHttpPermissionRequestStyle: true }).catch(e => {
-      log.debug('[Resubscribe Prompt Error]', e);
-    });
     return false;
   }
 
