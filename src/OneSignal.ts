@@ -324,13 +324,17 @@ export default class OneSignal {
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
-      if (options && options.httpPermissionRequest) {
+      if (options && options.httpPermissionRequest && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
         /*
           Do not throw an error because it may cause the parent event handler to
           throw and stop processing the rest of their code. Typically, for this
           prompt sequence, a custom modal is being shown thanking the user for
           granting permissions. Throwing an error might cause the modal to stay
           on screen and not close.
+
+          Only log an error for HTTP sites. A few HTTPS sites are mistakenly be
+          using this API instead of the parameter-less version to register for
+          push notifications.
          */
         log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
         return;
