@@ -372,7 +372,7 @@ export default class OneSignal {
   public static async getNotificationPermission(onComplete?): Promise<NotificationPermission> {
     await awaitOneSignalInitAndSupported();
 
-    const permission = OneSignal.context.permissionManager.getNotificationPermission(OneSignal.config.safariWebId);
+    const permission = await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.config.safariWebId);
 
     if (onComplete) {
       onComplete(permission);
