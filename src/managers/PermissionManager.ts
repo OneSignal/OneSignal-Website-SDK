@@ -42,7 +42,7 @@ export default class PermissionManager {
   public async getNotificationPermission(safariWebId: string) {
     const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
 
-    if (this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
+    if (await this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
       return this.getInterpretedAmbiguousPermission(reportedPermission);
     } else {
       return reportedPermission;

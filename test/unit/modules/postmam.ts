@@ -86,7 +86,6 @@ test('should generate correct safe HTTP site origins for varying inputs of the s
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
     const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
     for (const expectedSafeHttpOrigin of t.context.expectedSafeHttpOrigins) {
-      debugger;
       t.true(postmam.isSafeOrigin(expectedSafeHttpOrigin));
     }
   }

@@ -121,6 +121,23 @@ test('should not detect an ambiguous permission environment', async t => {
   hasInsecureParentOriginStub.restore();
 });
 
+test('should use browser reported permission value in non-ambiguous environment for getNotificationPermission', async t => {
+  // Catches the case where getNotificationPermission doesn't wait on the isPermissionEnvironmentAmbiguous promise
+  const permissionManager = OneSignal.context.permissionManager;
+  (window as any).Notification.permission = "denied";
+  setUserAgent(BrowserUserAgent.FirefoxLinuxSupported);
+
+  const isCurrentFrameContextCrossOriginStub = sinon
+    .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
+    .returns(false);
+  const hasInsecureParentOriginStub = sinon
+    .stub(SubscriptionHelper, 'hasInsecureParentOrigin')
+    .resolves(false);
+  t.deepEqual(await permissionManager.getNotificationPermission(null), NotificationPermission.Denied);
+  isCurrentFrameContextCrossOriginStub.restore();
+  hasInsecureParentOriginStub.restore();
+});
+
 test('should detect an ambiguous permission environment', async t => {
   const permissionManager = OneSignal.context.permissionManager;
 
