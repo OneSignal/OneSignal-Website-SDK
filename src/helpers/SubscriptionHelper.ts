@@ -49,10 +49,14 @@ export default class SubscriptionHelper {
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
-        subscription = await context.subscriptionManager.subscribe();
-        context.sessionManager.incrementPageViewCount();
-        EventHelper.triggerNotificationPermissionChanged();
-        EventHelper.checkAndTriggerSubscriptionChanged();
+        try {
+          subscription = await context.subscriptionManager.subscribe();
+          context.sessionManager.incrementPageViewCount();
+          EventHelper.triggerNotificationPermissionChanged();
+          EventHelper.checkAndTriggerSubscriptionChanged();
+        } catch (e) {
+          log.info(e);
+        }
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionPopup:
         /*

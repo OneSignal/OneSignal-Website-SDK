@@ -234,7 +234,7 @@ export default class OneSignal {
   static async showHttpPermissionRequest(options?: {_sdkCall: boolean}): Promise<any> {
     log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
 
-    OneSignal.showHttpPrompt();
+    OneSignal.showHttpPrompt().catch(e => log.info(e));
   }
 
   /**
@@ -264,10 +264,12 @@ export default class OneSignal {
     const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
 
     if (doNotPrompt && !options.force) {
-      throw new PermissionMessageDismissedError();
+      log.info(new PermissionMessageDismissedError());
+      return;
     }
     if (permission === NotificationPermission.Denied) {
-      throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
+      log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
+      return;
     }
     if (isEnabled) {
       throw new AlreadySubscribedError();

@@ -28,6 +28,7 @@ import Context from '../models/Context';
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { PushRegistration } from '../models/PushRegistration';
+import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 
 declare var OneSignal: any;
 
@@ -318,11 +319,12 @@ export default class InitHelper {
             (e instanceof InvalidStateError &&
               (e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
             e instanceof PermissionMessageDismissedError ||
-            e instanceof AlreadySubscribedError
+            e instanceof AlreadySubscribedError ||
+            e instanceof PushPermissionNotGrantedError
           ) {
             log.debug('[Prompt Not Showing]', e);
             // Another prompt is being shown, that's okay
-          } else throw e;
+          } else log.info(e);
         });
       }
       OneSignal._sessionInitAlreadyRunning = false;
