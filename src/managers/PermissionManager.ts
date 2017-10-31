@@ -154,7 +154,11 @@ export default class PermissionManager {
     return (!browser.safari &&
             !browser.firefox &&
             permission === NotificationPermission.Denied &&
-            (this.isCurrentFrameContextCrossOrigin() || await SubscriptionHelper.hasInsecureParentOrigin())
+            (
+              this.isCurrentFrameContextCrossOrigin() ||
+              await SubscriptionHelper.hasInsecureParentOrigin() ||
+              SubscriptionHelper.isInsecureOrigin()
+            )
            );
   }
 

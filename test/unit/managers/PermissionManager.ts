@@ -83,6 +83,18 @@ test('should interpret ambiguous browser permission correctly', async t => {
   );
 });
 
+test('should detect an insecure top-level frame', async t => {
+  const permissionManager = OneSignal.context.permissionManager;
+
+  t.false(SubscriptionHelper.isInsecureOrigin());
+
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    initializeAsIframe: false
+  });
+  t.true(SubscriptionHelper.isInsecureOrigin());
+});
+
 test('should detect a cross-origin frame-context', async t => {
   const permissionManager = OneSignal.context.permissionManager;
 

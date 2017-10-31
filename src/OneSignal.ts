@@ -662,7 +662,7 @@ export default class OneSignal {
     const subscription = await Database.getSubscription();
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!subscription.deviceId)
+    if (!(await OneSignal.isPushNotificationsEnabled()))
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     if (!ValidatorUtils.isValidUrl(url))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);

@@ -206,6 +206,10 @@ export default class SubscriptionHelper {
     }
   }
 
+  static isInsecureOrigin() {
+    return window.location.protocol === "http:";
+  }
+
   static isLocalhostAllowedAsSecureOrigin() {
     return (
       OneSignal.config &&
