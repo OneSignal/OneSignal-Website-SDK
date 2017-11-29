@@ -12,8 +12,9 @@ import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { contains, getConsoleStyle, getDeviceTypeForBrowser, isValidUuid, trimUndefined } from '../utils';
 import { Uuid } from '../models/Uuid';
-import { AppConfig } from '../models/AppConfig';
+import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
+import ConfigManager from '../managers/ConfigManager';
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -127,7 +128,7 @@ export class ServiceWorker {
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.WorkerVersion, Environment.version());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.Subscribe, async (appConfigBundle: any) => {
-      const appConfig = AppConfig.deserialize(appConfigBundle);
+      const appConfig = deserializeAppConfig(appConfigBundle);
       log.debug('[Service Worker] Received subscribe message.');
       const context = new Context(appConfig);
       const subscription = await context.subscriptionManager.subscribe();
@@ -148,7 +149,9 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, async () => {
       log.debug('[Service Worker] Received AMP subscribe message.');
       const appId = await ServiceWorker.getAppId();
-      const appConfig = await OneSignalApi.getAppConfig(appId);
+      const appConfig = await new ConfigManager().getAppConfig({
+        appId: appId.value
+      });
       const context = new Context(appConfig);
       const subscription = await context.subscriptionManager.subscribe();
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
@@ -156,7 +159,9 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
       log.debug('[Service Worker] Received AMP unsubscribe message.');
       const appId = await ServiceWorker.getAppId();
-      const appConfig = await OneSignalApi.getAppConfig(appId);
+      const appConfig = await new ConfigManager().getAppConfig({
+        appId: appId.value
+      });
       const context = new Context(appConfig);
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);

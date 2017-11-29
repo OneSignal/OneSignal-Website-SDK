@@ -7,6 +7,7 @@ import OneSignal from "../../../src/OneSignal";
 import Context from '../../../src/models/Context';
 import InitHelper from '../../../src/helpers/InitHelper';
 import { AppConfig } from '../../../src/models/AppConfig';
+import ConfigManager from '../../../src/managers/ConfigManager';
 
 test("correct degree of persistNotification setting should be stored", async t => {
   await TestEnvironment.initialize({
@@ -14,9 +15,9 @@ test("correct degree of persistNotification setting should be stored", async t =
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   OneSignal.context = new Context(appConfig);
-  OneSignal.config = InitHelper.getMergedUserServerAppConfig({}, appConfig);
+  OneSignal.config = appConfig;
   const config: AppConfig = OneSignal.config;
 
   {

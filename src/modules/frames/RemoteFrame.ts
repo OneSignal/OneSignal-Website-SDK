@@ -9,6 +9,7 @@ import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
 import InitHelper from '../../helpers/InitHelper';
+import ConfigManager from '../../managers/ConfigManager';
 
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;
@@ -42,7 +43,6 @@ export default class RemoteFrame implements Disposable {
       appId: new Uuid(initOptions.appId),
       subdomain: initOptions.subdomainName,
       origin: initOptions.origin,
-      serialize: undefined,
       metrics: {
         enable: false,
         mixpanelReportingToken: null
@@ -77,7 +77,7 @@ export default class RemoteFrame implements Disposable {
     rasterizedOptions.origin = rasterizedOptions.origin;
     OneSignal.config = rasterizedOptions || {};
 
-    const appConfig = await InitHelper.downloadAndMergeAppConfig(rasterizedOptions);
+    const appConfig = await new ConfigManager().getAppConfig(rasterizedOptions);
     OneSignal.context = new Context(appConfig);
     OneSignal.context.workerMessenger.listen(true);
 

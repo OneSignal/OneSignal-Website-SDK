@@ -144,8 +144,8 @@ export default class Database {
     }
   }
 
-  async getAppConfig(): Promise<AppConfig> {
-    const config = new AppConfig();
+  async getAppConfig(): Promise<any> {
+    const config: any = {};
     const appIdStr: string = await this.get<string>('Ids', 'appId');
     config.appId = new Uuid(appIdStr);
     config.subdomain = await this.get<string>('Options', 'subdomain');

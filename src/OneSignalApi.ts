@@ -133,7 +133,7 @@ export default class OneSignalApi {
     return OneSignalApi.post('notifications', params);
   }
 
-  static async getAppConfig(appId: Uuid): Promise<AppConfig> {
+  static async downloadServerAppConfig(appId: Uuid): Promise<ServerAppConfig> {
     try {
       const serverConfig = await new Promise<ServerAppConfig>((resolve, reject) => {
         if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
@@ -156,35 +156,7 @@ export default class OneSignalApi {
           resolve(OneSignalApi.get(`sync/${appId.value}/web`, null));
         }
       });
-      const config = new AppConfig();
-      config.appId = appId;
-      if (serverConfig.features) {
-        if (serverConfig.features.cookie_sync && serverConfig.features.cookie_sync.enable) {
-          config.cookieSyncEnabled = true;
-        }
-        if (serverConfig.features.metrics && serverConfig.features.metrics.enable) {
-          config.metrics.enable = true;
-          config.metrics.mixpanelReportingToken = serverConfig.features.metrics.mixpanel_reporting_token;
-        }
-      }
-      if (serverConfig.config) {
-        if (serverConfig.config.http_use_onesignal_com) {
-          config.httpUseOneSignalCom = true;
-        }
-        if (serverConfig.config.safari_web_id) {
-          config.safariWebId = serverConfig.config.safari_web_id;
-        }
-        if (serverConfig.config.subdomain) {
-          config.subdomain = serverConfig.config.subdomain;
-        }
-        if (serverConfig.config.vapid_public_key) {
-          config.vapidPublicKey = serverConfig.config.vapid_public_key;
-        }
-        if (serverConfig.config.onesignal_vapid_public_key) {
-          config.onesignalVapidPublicKey = serverConfig.config.onesignal_vapid_public_key;
-        }
-      }
-      return config;
+      return serverConfig;
     } catch (e) {
       throw e;
     }

@@ -26,6 +26,8 @@ import { WorkerMessengerCommand, WorkerMessenger } from '../libraries/WorkerMess
 import ProxyFrame from '../modules/frames/ProxyFrame';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
+import { AppUserConfigPromptOptions } from '../models/AppConfig';
+import { SlidedownPermissionMessageOptions } from '../popover/Popover';
 
 export default class MainHelper {
   /**
@@ -215,8 +217,40 @@ export default class MainHelper {
     });
   }
 
+  static getSlidedownPermissionMessageOptions(): AppUserConfigPromptOptions {
+    const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
+    if (promptOptions && !promptOptions.slidedown) {
+      return promptOptions;
+    }
+
+    return {
+      actionMessage: promptOptions.slidedown.actionMessage,
+      acceptButtonText: promptOptions.slidedown.acceptButtonText,
+      cancelButtonText: promptOptions.slidedown.cancelButtonText,
+    };
+  }
+
+  static getFullscreenPermissionMessageOptions(): AppUserConfigPromptOptions {
+    const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
+    if (promptOptions && !promptOptions.fullscreen) {
+      return promptOptions;
+    }
+
+    return {
+      autoAcceptTitle: promptOptions.fullscreen.autoAcceptTitle,
+      actionMessage: promptOptions.fullscreen.actionMessage,
+      exampleNotificationTitleDesktop: promptOptions.fullscreen.title,
+      exampleNotificationTitleMobile: promptOptions.fullscreen.title,
+      exampleNotificationMessageDesktop: promptOptions.fullscreen.message,
+      exampleNotificationMessageMobile: promptOptions.fullscreen.message,
+      exampleNotificationCaption: promptOptions.fullscreen.caption,
+      acceptButtonText: promptOptions.fullscreen.acceptButton,
+      cancelButtonText: promptOptions.fullscreen.cancelButton,
+    };
+  }
+
   static getPromptOptionsQueryString() {
-    let promptOptions = OneSignal.config.userConfig.promptOptions;
+    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions();
     let promptOptionsStr = '';
     if (promptOptions) {
       let hash = MainHelper.getPromptOptionsPostHash();
@@ -229,7 +263,7 @@ export default class MainHelper {
   }
 
   static getPromptOptionsPostHash() {
-    let promptOptions = OneSignal.config.userConfig.promptOptions;
+    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions();
     if (promptOptions) {
       var legacyParams = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',

@@ -31,7 +31,7 @@ test('subscribeFcmVapidOrLegacyKey() subscribes using unique VAPID for a non-Fir
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
@@ -67,7 +67,7 @@ test('subscribeFcmVapidOrLegacyKey() subscribes using globally shared VAPID key 
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
@@ -103,7 +103,7 @@ test("subscribeFcmVapidOrLegacyKey() subscribes using FCM sender ID for a new us
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
@@ -140,7 +140,7 @@ test("subscribeFcmVapidOrLegacyKey() subscribes using last known subscription op
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
@@ -214,7 +214,7 @@ test("subscribeFcmVapidOrLegacyKey() unsubscribes if existing subscription is pr
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
