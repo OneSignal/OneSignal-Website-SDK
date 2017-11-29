@@ -5,6 +5,7 @@ export enum SdkInitErrorKind {
   InvalidAppId,
   AppNotConfiguredForWebPush,
   MissingSubdomain,
+  WrongSiteUrl,
   MultipleInitialization,
   MissingSafariWebId,
   Unknown
@@ -13,7 +14,9 @@ export enum SdkInitErrorKind {
 export class SdkInitError extends OneSignalError {
   reason: string;
 
-  constructor(reason: SdkInitErrorKind) {
+  constructor(reason: SdkInitErrorKind, extra?: {
+    siteUrl: string;
+  }) {
     switch (reason) {
       case SdkInitErrorKind.InvalidAppId:
         super('OneSignal: This app ID does match any existing app. Double check your app ID.');
@@ -23,6 +26,13 @@ export class SdkInitError extends OneSignalError {
         break;
       case SdkInitErrorKind.MissingSubdomain:
         super('OneSignal: Non-HTTPS pages require a subdomain of OneSignal to be chosen on your dashboard. See step 1.4 on our setup guide (https://goo.gl/xip6JB).');
+        break;
+      case SdkInitErrorKind.WrongSiteUrl:
+        if (extra && extra.siteUrl) {
+          super(`OneSignal: This web push config can only be used on ${new URL(extra.siteUrl).origin}. Your current origin is ${location.origin}.`);
+        } else {
+          super('OneSignal: This web push config can not be used on the current site.');
+        }
         break;
       case SdkInitErrorKind.MultipleInitialization:
         super('OneSignal: The OneSignal web SDK can only be initialized once. Extra initializations are ignored. Please remove calls initializing the SDK more than once.');

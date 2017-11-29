@@ -25,6 +25,13 @@ export default class ConfigManager {
     try {
       const serverConfig = await OneSignalApi.downloadServerAppConfig(new Uuid(userConfig.appId));
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
+      if (appConfig.restrictedOriginEnabled) {
+        if (!this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+          throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
+            siteUrl: appConfig.origin
+          });
+        }
+      }
       return appConfig;
     } catch (e) {
       if (e) {
@@ -38,6 +45,14 @@ export default class ConfigManager {
     }
   }
 
+  private doesCurrentOriginMatchConfigOrigin(configOrigin) {
+    try {
+      return window.location.origin === new URL(configOrigin).origin;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /**
    * Merges configuration downloaded from the OneSignal dashboard with user-provided JavaScript configuration to produce
    * a final web SDK-specific configuration.
@@ -47,8 +62,10 @@ export default class ConfigManager {
     return {
       appId: new Uuid(serverConfig.app_id),
       subdomain: this.getSubdomainForIntegrationKind(integrationKind, userConfig, serverConfig),
+      origin: serverConfig.config.siteInfo.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       cookieSyncEnabled: serverConfig.features.cookie_sync.enable,
+      restrictedOriginEnabled: serverConfig.features.restrict_origin.enable,
       metrics: {
         enable: serverConfig.features.metrics.enable,
         mixpanelReportingToken: serverConfig.features.metrics.mixpanel_reporting_token

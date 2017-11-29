@@ -13,11 +13,16 @@ export interface AppConfig {
    */
   subdomain: string;
   /**
+   * The allowed origin this web push config is allowed to run on.
+   */
+  origin: string;
+  /**
    * Describes whether the subdomain HTTP users subscribe to should belong to
    * the legacy domain onesignal.com, or the newer domain os.tc.
    */
   httpUseOneSignalCom?: boolean;
   cookieSyncEnabled?: boolean;
+  restrictedOriginEnabled?: boolean;
   metrics: {
     enable: boolean;
     mixpanelReportingToken: string;
@@ -286,6 +291,9 @@ export interface ServerAppConfig {
       enable: boolean;
       mixpanel_reporting_token: string;
     };
+    restrict_origin: {
+      enable: boolean;
+    }
   };
   config: {
     staticPrompts: ServerAppConfigPrompt;
