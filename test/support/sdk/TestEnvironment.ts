@@ -246,6 +246,8 @@ export class TestEnvironment {
       subdomain: undefined,
       httpUseOneSignalCom: false,
       cookieSyncEnabled: true,
+      restrictedOriginEnabled: true,
+      origin: 'https://example.com',
       metrics: {
         enable: true,
         mixpanelReportingToken: 'mixpanel-token'
@@ -262,6 +264,9 @@ export class TestEnvironment {
       success: true,
       app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       features: {
+        restrict_origin: {
+          enable: true,
+        },
         cookie_sync: {
           enable: false
         },

@@ -147,8 +147,8 @@ export default class ConfigManager {
             colors: {
               'circle.background': serverConfig.config.staticPrompts.bell.color.main,
               'circle.foreground': serverConfig.config.staticPrompts.bell.color.accent,
-              'badge.background': serverConfig.config.staticPrompts.bell.color.main,
-              'badge.foreground': serverConfig.config.staticPrompts.bell.color.accent,
+              'badge.background': 'black',
+              'badge.foreground': 'white',
               'badge.bordercolor': 'black',
               'pulse.color': serverConfig.config.staticPrompts.bell.color.accent,
               'dialog.button.background.hovering': serverConfig.config.staticPrompts.bell.color.main,
@@ -224,37 +224,48 @@ export default class ConfigManager {
         break;
     }
 
-    if (serverValue && !this.shouldUseServerConfigSubdomain(userValue)) {
+    if (serverValue && !this.shouldUseServerConfigSubdomain(userValue, integrationKind)) {
       return undefined;
     } else {
       return serverValue;
     }
   }
 
-  /**
-   * An HTTPS site may be using either a native push integration or a fallback
-   * subdomain integration. Our SDK decides the integration based on whether
-   * init option subdomainName appears and the site's protocol.
-   *
-   * To avoid having developers write JavaScript to customize the SDK,
-   * configuration properties like subdomainName are downloaded on page start.
-   *
-   * New developers setting up web push can omit subdomainName, but existing
-   * developers already having written code to configure OneSignal aren't
-   * removing their code.
-   *
-   * When an HTTPS site is configured with a subdomain on the server-side, we do
-   * not apply it even though we've downloaded this configuration unless the
-   * user also declares it manually in their initialization code.
-   */
-  private shouldUseServerConfigSubdomain(userProvidedSubdomain: string): boolean {
-    switch (window.location.protocol) {
-      case 'https:':
-        return !!userProvidedSubdomain;
-      case 'http:':
+  private shouldUseServerConfigSubdomain(
+    userProvidedSubdomain: string,
+    integrationKind: IntegrationKind
+  ): boolean {
+    switch (integrationKind) {
+      case IntegrationKind.TypicalSite:
+        /*
+          Dashboard config using the new web config editor always takes precedence.
+         */
         return true;
       default:
-        return false;
+        /*
+         * An HTTPS site may be using either a native push integration or a fallback
+         * subdomain integration. Our SDK decides the integration based on whether
+         * init option subdomainName appears and the site's protocol.
+         *
+         * To avoid having developers write JavaScript to customize the SDK,
+         * configuration properties like subdomainName are downloaded on page start.
+         *
+         * New developers setting up web push can omit subdomainName, but existing
+         * developers already having written code to configure OneSignal aren't
+         * removing their code.
+         *
+         * When an HTTPS site is configured with a subdomain on the server-side, we do
+         * not apply it even though we've downloaded this configuration unless the
+         * user also declares it manually in their initialization code.
+         */
+        switch (window.location.protocol) {
+          case 'https:':
+            return !!userProvidedSubdomain;
+          case 'http:':
+            return true;
+          default:
+            return false;
+        }
     }
   }
 }

@@ -139,6 +139,19 @@ export default class InitHelper {
     }
 
     OneSignal.context.cookieSyncer.install();
+
+    InitHelper.showPromptsFromWebConfigEditor();
+  }
+
+  private static async showPromptsFromWebConfigEditor() {
+    const config: AppConfig = OneSignal.config;
+    if (!(await OneSignal.isPushNotificationsEnabled()) &&
+      config.userConfig.promptOptions &&
+      config.userConfig.promptOptions.slidedown &&
+      config.userConfig.promptOptions.slidedown.autoPrompt &&
+      !(await OneSignal.isOptedOut())) {
+      OneSignal.showHttpPrompt();
+    }
   }
 
   static installNativePromptPermissionChangedHook() {
@@ -304,7 +317,17 @@ export default class InitHelper {
         log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
         OneSignal._sessionInitAlreadyRunning = false;
       } else {
-        SubscriptionHelper.registerForPush();
+        /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
+        prevent the popup from opening. */
+        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+          SubscriptionHelper.registerForPush();
+        } else {
+          OneSignal.isOptedOut().then(isOptedOut => {
+            if (!isOptedOut) {
+              SubscriptionHelper.registerForPush();
+            }
+          });
+        }
       }
     } else {
       if (OneSignal.config.userConfig.autoRegister !== true) {
