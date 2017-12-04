@@ -304,7 +304,24 @@ export default class InitHelper {
         log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
         OneSignal._sessionInitAlreadyRunning = false;
       } else {
-        SubscriptionHelper.registerForPush();
+        /*
+         * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+         * permanent blocks, we want to replace sites automatically showing the native browser request
+         * with a slide prompt first.
+         */
+        if (
+          (
+            !options ||
+            options && !options.fromRegisterFor
+          ) &&
+          Browser.chrome &&
+          Number(Browser.version) >= 63 &&
+          (Browser.tablet || Browser.mobile)
+          ) {
+          OneSignal.showHttpPrompt();
+        } else {
+          SubscriptionHelper.registerForPush();
+        }
       }
     } else {
       if (OneSignal.config.userConfig.autoRegister !== true) {
