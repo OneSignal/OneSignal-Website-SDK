@@ -97,7 +97,7 @@ export default class ConfigManager {
         */
         return {
           appId: serverConfig.app_id,
-          autoRegister: true,
+          autoRegister: false,
           path: serverConfig.config.serviceWorker.path,
           serviceWorkerPath: serverConfig.config.serviceWorker.workerName,
           serviceWorkerUpdaterPath: serverConfig.config.serviceWorker.updaterWorkerName,
