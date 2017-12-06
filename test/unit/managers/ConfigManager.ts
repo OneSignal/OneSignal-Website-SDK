@@ -28,16 +28,39 @@ test('can customize initialization options', async t => {
     fakeServerConfig
   );
 
-  // console.warn('----------------------------------------------');
-  // console.warn("User Config:", fakeUserConfig);
-  // console.warn('----------------------------------------------');
-  // console.warn("Server Config:", fakeServerConfig);
-  // console.warn('----------------------------------------------');
-  // console.warn("Merged Config:", fakeMergedConfig);
-  // console.warn('----------------------------------------------');
-  // console.warn("Merged Config:", fakeMergedConfig.userConfig.promptOptions);
-
   for (const userConfigKey in Object.keys(fakeUserConfig)) {
     t.deepEqual(fakeMergedConfig.userConfig[userConfigKey], fakeUserConfig[userConfigKey]);
   }
+});
+
+test('should use server-provided subdomain if enabled', async t => {
+  const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig();
+  fakeServerConfig.config.integration.kind = IntegrationKind.TypicalSite;
+  fakeServerConfig.config.siteInfo.proxyOriginEnabled = true;
+  fakeServerConfig.config.siteInfo.proxyOrigin = "some-subdomain";
+
+  const configManager = new ConfigManager();
+  const fakeMergedConfig = configManager.getMergedConfig(
+    fakeUserConfig,
+    fakeServerConfig
+  );
+
+  t.deepEqual(fakeMergedConfig.subdomain, "some-subdomain");
+});
+
+test('should not use server-provided subdomain if not enabled', async t => {
+  const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig();
+  fakeServerConfig.config.integration.kind = IntegrationKind.TypicalSite;
+  fakeServerConfig.config.siteInfo.proxyOriginEnabled = false;
+  fakeServerConfig.config.siteInfo.proxyOrigin = "some-subdomain";
+
+  const configManager = new ConfigManager();
+  const fakeMergedConfig = configManager.getMergedConfig(
+    fakeUserConfig,
+    fakeServerConfig
+  );
+
+  t.deepEqual(fakeMergedConfig.subdomain, undefined);
 });

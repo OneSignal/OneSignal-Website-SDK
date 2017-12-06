@@ -217,7 +217,9 @@ export default class ConfigManager {
 
     switch (integrationKind) {
       case IntegrationKind.TypicalSite:
-        serverValue = serverConfig.config.siteInfo.proxyOrigin;
+        serverValue = serverConfig.config.siteInfo.proxyOriginEnabled ?
+          serverConfig.config.siteInfo.proxyOrigin :
+          undefined;
         break;
       default:
         serverValue = serverConfig.config.subdomain;
