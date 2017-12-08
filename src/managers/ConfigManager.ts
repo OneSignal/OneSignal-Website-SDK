@@ -13,6 +13,21 @@ enum ObjectType {
   Number
 }
 
+export enum IntegrationConfigurationKind {
+  /**
+   * Configuration comes from the dashboard only.
+   */
+  Dashboard,
+  /**
+   * Configuration comes from user-provided JavaScript code only.
+   */
+  JavaScript
+}
+
+export interface IntegrationCapabilities {
+  configuration: IntegrationConfigurationKind;
+}
+
 /**
  * Handles downloading settings from OneSignal and performing any other initialization-related tasks.
  */
@@ -53,6 +68,20 @@ export default class ConfigManager {
     }
   }
 
+  private getIntegrationCapabilities(integration: IntegrationKind): IntegrationCapabilities {
+    switch (integration) {
+      case IntegrationKind.Custom:
+      case IntegrationKind.WordPress:
+        return {
+          configuration: IntegrationConfigurationKind.JavaScript,
+        };
+      default:
+        return {
+          configuration: IntegrationConfigurationKind.Dashboard,
+        };
+    }
+  }
+
   /**
    * Merges configuration downloaded from the OneSignal dashboard with user-provided JavaScript configuration to produce
    * a final web SDK-specific configuration.
@@ -90,8 +119,9 @@ export default class ConfigManager {
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig
   ): AppUserConfig {
-    switch (integrationKind) {
-      case IntegrationKind.TypicalSite:
+    const integrationCapabilities = this.getIntegrationCapabilities(integrationKind);
+    switch (integrationCapabilities.configuration) {
+      case IntegrationConfigurationKind.Dashboard:
        /*
          Ignores code-based initialization configuration and uses dashboard configuration only.
         */
@@ -182,9 +212,7 @@ export default class ConfigManager {
           notificationClickHandlerAction: serverConfig.config.notificationBehavior.click.action,
           allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin
         };
-      default:
-      case IntegrationKind.WordPress:
-      case IntegrationKind.Custom:
+      case IntegrationConfigurationKind.JavaScript:
         /*
           Ignores dashboard configuration and uses code-based configuration only.
         */
@@ -211,22 +239,22 @@ export default class ConfigManager {
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig
   ): string {
-
+    const integrationCapabilities = this.getIntegrationCapabilities(integrationKind);
     let userValue = userConfig.subdomainName;
     let serverValue = '';
 
-    switch (integrationKind) {
-      case IntegrationKind.TypicalSite:
+    switch (integrationCapabilities.configuration) {
+      case IntegrationConfigurationKind.Dashboard:
         serverValue = serverConfig.config.siteInfo.proxyOriginEnabled ?
           serverConfig.config.siteInfo.proxyOrigin :
           undefined;
         break;
-      default:
+      case IntegrationConfigurationKind.JavaScript:
         serverValue = serverConfig.config.subdomain;
         break;
     }
 
-    if (serverValue && !this.shouldUseServerConfigSubdomain(userValue, integrationKind)) {
+    if (serverValue && !this.shouldUseServerConfigSubdomain(userValue, integrationCapabilities)) {
       return undefined;
     } else {
       return serverValue;
@@ -235,15 +263,15 @@ export default class ConfigManager {
 
   private shouldUseServerConfigSubdomain(
     userProvidedSubdomain: string,
-    integrationKind: IntegrationKind
+    capabilities: IntegrationCapabilities
   ): boolean {
-    switch (integrationKind) {
-      case IntegrationKind.TypicalSite:
+    switch (capabilities.configuration) {
+      case IntegrationConfigurationKind.Dashboard:
         /*
           Dashboard config using the new web config editor always takes precedence.
          */
         return true;
-      default:
+      case IntegrationConfigurationKind.JavaScript:
         /*
          * An HTTPS site may be using either a native push integration or a fallback
          * subdomain integration. Our SDK decides the integration based on whether

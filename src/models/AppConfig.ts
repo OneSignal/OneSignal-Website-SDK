@@ -69,6 +69,13 @@ export function deserializeAppConfig(bundle: any): AppConfig {
 export enum IntegrationKind {
   TypicalSite = 'typical',
   WordPress = 'wordpress',
+  Shopify = 'shopify',
+  Blogger = 'blogger',
+  Magento = 'magento',
+  Drupal = 'drupal',
+  SquareSpace = 'squarespace',
+  Joomla = 'joomla',
+  Weebly = 'weebly',
   Custom = 'custom'
 }
 

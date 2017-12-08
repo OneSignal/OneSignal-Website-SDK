@@ -12,7 +12,7 @@ import * as objectAssign from 'object-assign';
 import IndexedDb from '../../../src/services/IndexedDb';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
-import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig } from '../../../src/models/AppConfig';
+import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, IntegrationKind } from '../../../src/models/AppConfig';
 import { Uuid } from '../../../src/models/Uuid';
 
 
@@ -259,7 +259,7 @@ export class TestEnvironment {
     };
   }
 
-  static getFakeServerAppConfig(): ServerAppConfig {
+  static getFakeServerAppConfig(integrationKind: IntegrationKind): ServerAppConfig {
     return {
       success: true,
       app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
@@ -348,7 +348,7 @@ export class TestEnvironment {
           notificationDisplayedHook: undefined
         },
         integration: {
-          kind: undefined
+          kind: integrationKind
         },
         serviceWorker: {
           path: undefined,

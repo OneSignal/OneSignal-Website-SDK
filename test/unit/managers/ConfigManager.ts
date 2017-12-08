@@ -20,7 +20,7 @@ test.beforeEach(async t => {
 
 test('can customize initialization options', async t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(IntegrationKind.Custom);
 
   const configManager = new ConfigManager();
   const fakeMergedConfig = configManager.getMergedConfig(
@@ -35,7 +35,7 @@ test('can customize initialization options', async t => {
 
 test('should use server-provided subdomain if enabled', async t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(IntegrationKind.TypicalSite);
   fakeServerConfig.config.integration.kind = IntegrationKind.TypicalSite;
   fakeServerConfig.config.siteInfo.proxyOriginEnabled = true;
   fakeServerConfig.config.siteInfo.proxyOrigin = "some-subdomain";
@@ -51,7 +51,7 @@ test('should use server-provided subdomain if enabled', async t => {
 
 test('should not use server-provided subdomain if not enabled', async t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(IntegrationKind.TypicalSite);
   fakeServerConfig.config.integration.kind = IntegrationKind.TypicalSite;
   fakeServerConfig.config.siteInfo.proxyOriginEnabled = false;
   fakeServerConfig.config.siteInfo.proxyOrigin = "some-subdomain";
