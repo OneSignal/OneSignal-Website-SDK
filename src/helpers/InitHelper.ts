@@ -320,7 +320,11 @@ export default class InitHelper {
           ) {
           OneSignal.showHttpPrompt();
         } else {
-          SubscriptionHelper.registerForPush();
+          OneSignal.isOptedOut().then(isOptedOut => {
+            if (!isOptedOut) {
+              SubscriptionHelper.registerForPush();
+            }
+          });
         }
       }
     } else {
