@@ -265,7 +265,7 @@ export class TestEnvironment {
       app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       features: {
         restrict_origin: {
-          enable: true,
+          enable: false,
         },
         cookie_sync: {
           enable: false
@@ -276,6 +276,7 @@ export class TestEnvironment {
         }
       },
       config: {
+        origin: "https://example.com",
         subdomain: undefined,
         http_use_onesignal_com: false,
         staticPrompts: {
