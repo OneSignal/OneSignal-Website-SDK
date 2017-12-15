@@ -5,10 +5,11 @@ import { AppConfig } from '../../../src/models/AppConfig';
 import { BuildEnvironmentKind } from '../../../src/models/BuildEnvironmentKind'
 import * as sinon from 'sinon';
 import ProxyFrameHost from '../../../src/modules/frames/ProxyFrameHost';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 
 
 test(`should get correct canonical subscription URL`, async t => {
-  const config = new AppConfig();
+  const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;
 
@@ -43,7 +44,7 @@ test(`should get correct canonical subscription URL`, async t => {
 });
 
 function setupDiscoverAltOriginTest(t: any) {
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.subdomain = 'test';
   appConfig.httpUseOneSignalCom = true;
 

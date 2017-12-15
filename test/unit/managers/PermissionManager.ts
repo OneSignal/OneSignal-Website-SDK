@@ -20,7 +20,7 @@ test.beforeEach(async t => {
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   OneSignal.context = new Context(appConfig);
 });

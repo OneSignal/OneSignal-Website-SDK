@@ -17,7 +17,7 @@ test.beforeEach(async t => {
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   OneSignal.context = new Context(appConfig);
 });
@@ -41,7 +41,7 @@ test('should subscribe user on subsequent page views if the user is not subscrib
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   OneSignal.context = new Context(appConfig);
 
@@ -63,7 +63,7 @@ test('should resubscribe an already subscribed user on first page view', async t
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   OneSignal.context = new Context(appConfig);
 

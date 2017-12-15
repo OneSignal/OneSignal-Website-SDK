@@ -12,6 +12,8 @@ import * as objectAssign from 'object-assign';
 import IndexedDb from '../../../src/services/IndexedDb';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
+import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, IntegrationKind } from '../../../src/models/AppConfig';
+import { Uuid } from '../../../src/models/Uuid';
 
 
 var global = new Function('return this')();
@@ -236,5 +238,232 @@ export class TestEnvironment {
     TestEnvironment.stubNotifyButtonTransitionEvents();
     TestEnvironment.stubNotification(config);
     return global.OneSignal;
+  }
+
+  static getFakeAppConfig(): AppConfig {
+    return {
+      appId: new Uuid('307218b1-c450-457d-b6cd-894060e517ee'),
+      subdomain: undefined,
+      httpUseOneSignalCom: false,
+      cookieSyncEnabled: true,
+      restrictedOriginEnabled: true,
+      origin: 'https://example.com',
+      metrics: {
+        enable: true,
+        mixpanelReportingToken: 'mixpanel-token'
+      },
+      safariWebId: undefined,
+      vapidPublicKey: 'ImZRmh5eOX2onbZDIrSuC6ym6nyMRQ03OwxYQWYgejhN30Zs9VKKuKydxdppZiDlGLvuN3dGuFb66tD2wO1pm9e',
+      onesignalVapidPublicKey: '3y84Zfh6QXKVidhc0RvBciX5DUEznaaiJY5aoB05TWvfvKn2duHcrm1mMyIboDLGc5jC8I5YncqDz2ERRn6QnZ5',
+      userConfig: {},
+    };
+  }
+
+  static getFakeServerAppConfig(integrationKind: IntegrationKind): ServerAppConfig {
+    return {
+      success: true,
+      app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      features: {
+        restrict_origin: {
+          enable: false,
+        },
+        cookie_sync: {
+          enable: false
+        },
+        metrics: {
+          enable: true,
+          mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673'
+        }
+      },
+      config: {
+        origin: "https://example.com",
+        subdomain: undefined,
+        http_use_onesignal_com: false,
+        staticPrompts: {
+          bell: {
+            size: 'large',
+            color: {
+              main: 'red',
+              accent: 'white',
+            },
+            dialog: {
+              main: {
+                title: 'Manage Notifications',
+                subscribeButton: 'Subscribe',
+                unsubscribeButton: 'Unsubscribe',
+              },
+              blocked: {
+                title: 'Unblock Notifications',
+                message: 'Click here to learn how to unblock notifications.',
+              },
+            },
+            offset: {
+              left: 0,
+              right: 0,
+              bottom: 0,
+            },
+            enabled: true,
+            message: {
+              subscribing: 'Thanks for subscribing!',
+              unsubscribing: "You won't receive notifications again",
+            },
+            tooltip: {
+              blocked: "You've blocked notifications",
+              subscribed: "You're subscribed to notifications",
+              unsubscribed: "Subscribe to notifications",
+            },
+            location: 'bottom-right',
+            hideWhenSubscribed: false,
+            customizeTextEnabled: true,
+          },
+          slidedown: {
+            enabled: true,
+            acceptButton: 'Allow',
+            cancelButton: 'No Thanks',
+            actionMessage: "We'd like to send you notifications for the latest news and updates.",
+            customizeTextEnabled: true,
+          },
+          fullscreen: {
+            title: "example.com",
+            caption: "You can unsubscribe anytime",
+            enabled: true,
+            message: "This is an example notification message.",
+            acceptButton: "Continue",
+            cancelButton: "No Thanks",
+            actionMessage: "We'd like to send you notifications for the latest news and updates.",
+            customizeTextEnabled: true,
+          },
+        },
+        siteInfo: {
+          name: 'My Website',
+          origin: 'https://www.site.com',
+          proxyOrigin: undefined,
+          defaultIconUrl: 'https://onesignal.com/images/notification_logo.png',
+          proxyOriginEnabled: false
+        },
+        webhooks: {
+          enable: false,
+          corsEnable: false,
+          notificationClickedHook: undefined,
+          notificationDismissedHook: undefined,
+          notificationDisplayedHook: undefined
+        },
+        integration: {
+          kind: integrationKind
+        },
+        serviceWorker: {
+          path: undefined,
+          workerName: undefined,
+          registrationScope: undefined,
+          updaterWorkerName: undefined,
+          customizationEnabled: true
+        },
+        setupBehavior: {
+          allowLocalhostAsSecureOrigin: false
+        },
+        welcomeNotification: {
+          url: undefined,
+          title: undefined,
+          enable: false,
+          message: undefined,
+          urlEnabled: undefined
+        },
+        notificationBehavior: {
+          click: {
+            match: NotificationClickMatchBehavior.Exact,
+            action: NotificationClickActionBehavior.Navigate
+          },
+          display: {
+            persist: false
+          }
+        },
+        vapid_public_key: 'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
+        onesignal_vapid_public_key:
+          'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
+        safari_web_id: 'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d'
+      },
+      generated_at: 1511912065
+    };
+  }
+
+  static getFakeAppUserConfig(): AppUserConfig {
+    return {
+      appId: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      autoRegister: true,
+      path: '/fake-page',
+      serviceWorkerPath: 'fakeWorkerName.js',
+      serviceWorkerUpdaterPath: 'fakeUpdaterWorkerName.js',
+      serviceWorkerParam: { scope: '/fake-page' },
+      subdomainName: 'fake-subdomain',
+      promptOptions: {
+        slidedown: {
+          autoPrompt: true,
+          actionMessage: "slidedown action message",
+          acceptButtonText: 'slidedown accept button',
+          cancelButtonText: 'slidedown cancel button',
+        },
+        fullscreen: {
+          actionMessage: 'fullscreen action message',
+          acceptButton: 'fullscreenaccept button',
+          cancelButton: 'fullscreencancel button',
+          title: 'fullscreen notification title',
+          message: 'fullscreen notification message',
+          caption: 'fullscreen notification caption'
+        }
+      },
+      welcomeNotification: {
+        disable: false,
+        title: 'Welcome notification title',
+        message: 'Welcome notification message',
+        url: 'https://fake-config.com/welcome'
+      },
+      notifyButton: {
+        enable: true,
+        displayPredicate: undefined,
+        size: 'medium',
+        position: 'bottom-left',
+        offset: {
+          bottom: '1px',
+          left: '1px',
+          right: '1px'
+        },
+        colors: {
+          'circle.background': '1',
+          'circle.foreground': '1',
+          'badge.background': '1',
+          'badge.foreground': '1',
+          'badge.bordercolor': 'black',
+          'pulse.color': '1',
+          'dialog.button.background.hovering': '1',
+          'dialog.button.background.active': '1',
+          'dialog.button.background': '1',
+          'dialog.button.foreground': '1',
+        },
+        text: {
+          'tip.state.unsubscribed': '1',
+          'tip.state.subscribed': '1',
+          'tip.state.blocked': '1',
+          'message.prenotify': "Click to subscribe to notifications",
+          'message.action.subscribed': '1',
+          'message.action.resubscribed': '1',
+          'message.action.unsubscribed': '1',
+          'dialog.main.title': '1',
+          'dialog.main.button.subscribe': '1',
+          'dialog.main.button.unsubscribe': '1',
+          'dialog.blocked.title': '1',
+          'dialog.blocked.message': '1',
+        }
+      },
+      persistNotification: false,
+      webhooks: {
+        cors: true,
+        'notification.displayed': 'https://fake-config.com/notification-displayed',
+        'notification.clicked': 'https://fake-config.com/notification-clicked',
+        'notification.dismissed': 'https://fake-config.com/notification-dismissed',
+      },
+      notificationClickHandlerMatch: NotificationClickMatchBehavior.Origin,
+      notificationClickHandlerAction: NotificationClickActionBehavior.Focus,
+      allowLocalhostAsSecureOrigin: true,
+    };
   }
 }

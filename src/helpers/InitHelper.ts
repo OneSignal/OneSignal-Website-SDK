@@ -139,6 +139,19 @@ export default class InitHelper {
     }
 
     OneSignal.context.cookieSyncer.install();
+
+    InitHelper.showPromptsFromWebConfigEditor();
+  }
+
+  private static async showPromptsFromWebConfigEditor() {
+    const config: AppConfig = OneSignal.config;
+    if (!(await OneSignal.isPushNotificationsEnabled()) &&
+      config.userConfig.promptOptions &&
+      config.userConfig.promptOptions.slidedown &&
+      config.userConfig.promptOptions.slidedown.autoPrompt &&
+      !(await OneSignal.isOptedOut())) {
+      OneSignal.showHttpPrompt();
+    }
   }
 
   static installNativePromptPermissionChangedHook() {
@@ -304,25 +317,31 @@ export default class InitHelper {
         log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
         OneSignal._sessionInitAlreadyRunning = false;
       } else {
-        /*
-         * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-         * permanent blocks, we want to replace sites automatically showing the native browser request
-         * with a slide prompt first.
-         */
-        if (
-          (
-            !options ||
-            options && !options.fromRegisterFor
-          ) &&
-          Browser.chrome &&
-          Number(Browser.version) >= 63 &&
-          (Browser.tablet || Browser.mobile)
-          ) {
-          OneSignal.showHttpPrompt();
+        /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
+        prevent the popup from opening. */
+        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+          SubscriptionHelper.registerForPush();
         } else {
           OneSignal.isOptedOut().then(isOptedOut => {
             if (!isOptedOut) {
-              SubscriptionHelper.registerForPush();
+             /*
+              * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+              * permanent blocks, we want to replace sites automatically showing the native browser request
+              * with a slide prompt first.
+              */
+              if (
+                (
+                  !options ||
+                  options && !options.fromRegisterFor
+                ) &&
+                Browser.chrome &&
+                Number(Browser.version) >= 63 &&
+                (Browser.tablet || Browser.mobile)
+                ) {
+                OneSignal.showHttpPrompt();
+              } else {
+               SubscriptionHelper.registerForPush();
+              }
             }
           });
         }
@@ -372,83 +391,5 @@ export default class InitHelper {
       throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
     }
     OneSignal._initCalled = true;
-  }
-
-  public static async downloadAndMergeAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
-    try {
-      const serverConfig = await OneSignalApi.getAppConfig(new Uuid(userConfig.appId));
-      const appConfig = InitHelper.getMergedUserServerAppConfig(userConfig, serverConfig);
-      return appConfig;
-    } catch (e) {
-      if (e) {
-        if (e.code === 1) {
-          throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
-        } else if (e.code === 2) {
-          throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
-        }
-      }
-      throw e;
-    }
-  }
-
-  public static getMergedUserServerAppConfig(userConfig: AppUserConfig, serverConfig: AppConfig): AppConfig {
-    // Start with the server's downloaded configuration
-    const mergedConfig = objectAssign({}, serverConfig);
-
-    // The app ID is central to locating the right app config; it must always be
-    // supplied by the user so just use the provided app ID
-    mergedConfig.appId = new Uuid(userConfig.appId);
-    mergedConfig.userConfig = objectAssign({}, userConfig);
-
-    // Assign service worker defaults if install settings provided
-    mergedConfig.userConfig.serviceWorkerParam =
-      typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
-        ? OneSignal.SERVICE_WORKER_PARAM
-        : { scope: '/' };
-
-    mergedConfig.userConfig.serviceWorkerPath =
-      typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
-        ? OneSignal.SERVICE_WORKER_PATH
-        : 'OneSignalSDKWorker.js';
-
-    mergedConfig.userConfig.serviceWorkerUpdaterPath =
-      typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
-        ? OneSignal.SERVICE_WORKER_UPDATER_PATH
-        : 'OneSignalSDUpdaterKWorker.js';
-
-    mergedConfig.userConfig.path = !!userConfig.path ? userConfig.path : '/';
-
-    if (mergedConfig.subdomain && !InitHelper.shouldUseServerConfigSubdomain(mergedConfig)) {
-      delete mergedConfig.subdomain;
-    }
-
-    return mergedConfig;
-  }
-
-  /**
-   * An HTTPS site may be using either a native push integration or a fallback
-   * subdomain integration. Our SDK decides the integration based on whether
-   * init option subdomainName appears and the site's protocol.
-   *
-   * To avoid having developers write JavaScript to customize the SDK,
-   * configuration properties like subdomainName are downloaded on page start.
-   *
-   * New developers setting up web push can omit subdomainName, but existing
-   * developers already having written code to configure OneSignal aren't
-   * removing their code.
-   *
-   * When an HTTPS site is configured with a subdomain on the server-side, we do
-   * not apply it even though we've downloaded this configuration unless the
-   * user also declares it manually in their initialization code.
-   */
-  static shouldUseServerConfigSubdomain(mergedConfig: AppConfig): boolean {
-    switch (window.location.protocol) {
-      case 'https:':
-        return mergedConfig && mergedConfig.userConfig && !!mergedConfig.userConfig.subdomainName;
-      case 'http:':
-        return true;
-      default:
-        return false;
-    }
   }
 }

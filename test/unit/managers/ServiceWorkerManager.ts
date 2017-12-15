@@ -201,7 +201,7 @@ test('installWorker() installs worker A with the correct file name and query par
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
   OneSignal.context = context;
@@ -225,7 +225,7 @@ test('installWorker() installs worker A when a third party service worker exists
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 
@@ -249,7 +249,7 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   const context = new Context(appConfig);
 

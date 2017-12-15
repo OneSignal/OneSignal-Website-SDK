@@ -15,7 +15,7 @@ test(`database should not be shared across service worker test environment initi
 
   {
     await TestEnvironment.initializeForServiceWorker();
-    const appConfig = new AppConfig();
+    const appConfig = TestEnvironment.getFakeAppConfig();
     appConfig.appId = Uuid.generate();
     firstAppId = appConfig.appId;
     firstDatabaseInstance = Database.databaseInstance;
@@ -27,7 +27,7 @@ test(`database should not be shared across service worker test environment initi
 
   {
     await TestEnvironment.initializeForServiceWorker();
-    const appConfig = new AppConfig();
+    const appConfig = TestEnvironment.getFakeAppConfig();
     appConfig.appId = Uuid.generate();
     await Database.setAppConfig(appConfig);
     const { appId } = await Database.getAppConfig();
@@ -45,7 +45,7 @@ test(`database should not be shared across DOM test environment initializations`
 
   {
     await TestEnvironment.initialize();
-    const appConfig = new AppConfig();
+    const appConfig = TestEnvironment.getFakeAppConfig();
     appConfig.appId = Uuid.generate();
     firstAppId = appConfig.appId;
     firstDatabaseInstance = Database.databaseInstance;
@@ -57,7 +57,7 @@ test(`database should not be shared across DOM test environment initializations`
 
   {
     await TestEnvironment.initialize();
-    const appConfig = new AppConfig();
+    const appConfig = TestEnvironment.getFakeAppConfig();
     appConfig.appId = Uuid.generate();
     await Database.setAppConfig(appConfig);
     const { appId } = await Database.getAppConfig();

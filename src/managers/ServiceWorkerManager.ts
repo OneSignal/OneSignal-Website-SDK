@@ -12,6 +12,7 @@ import { encodeHashAsUriComponent, timeoutPromise } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
 import MainHelper from '../helpers/MainHelper';
+import { serializeAppConfig } from '../models/AppConfig';
 
 export enum ServiceWorkerActiveState {
   /**
@@ -209,7 +210,7 @@ export class ServiceWorkerManager {
       this.context.workerMessenger.once(WorkerMessengerCommand.Subscribe, subscription => {
         resolve(Subscription.deserialize(subscription));
       });
-      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, this.context.appConfig.serialize());
+      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, serializeAppConfig(this.context.appConfig));
     });
   }
 

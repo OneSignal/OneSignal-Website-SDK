@@ -4,11 +4,18 @@ import * as objectAssign from 'object-assign';
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
 import { addCssClass, addDomElement, once, removeDomElement, isChromeLikeBrowser } from '../utils';
+import { AppUserConfigPromptOptions } from '../models/AppConfig';
 
+export interface SlidedownPermissionMessageOptions {
+  autoPrompt: boolean;
+  actionMessage: string;
+  acceptButtonText: string;
+  cancelButtonText: string;
+}
 
 export default class Popover {
 
-    public options: any;
+    public options: AppUserConfigPromptOptions;
     public notificationIcons: any;
 
     static get EVENTS() {
@@ -20,9 +27,9 @@ export default class Popover {
         };
     }
 
-    constructor(options) {
+    constructor(options: AppUserConfigPromptOptions) {
         if (!options) {
-            this.options = {};
+            (this.options as any) = {};
         } else {
             this.options = objectAssign({}, options);
         }

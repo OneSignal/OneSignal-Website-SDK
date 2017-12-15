@@ -11,9 +11,10 @@ import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../..
 import { AppConfig } from '../../../src/models/AppConfig';
 import Context from '../../../src/models/Context';
 import InitHelper from '../../../src/helpers/InitHelper';
+import ConfigManager from '../../../src/managers/ConfigManager';
 
 test.beforeEach(t => {
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   t.context.appConfig = appConfig;
 
   t.context.loadSdkStylesheet = sinon.stub(DynamicResourceLoader.prototype, 'loadSdkStylesheet');
@@ -48,7 +49,7 @@ test("should call loadSdkStylesheet if slidedown permission message is used", as
     httpOrHttps: HttpHttpsEnvironment.Https
   });
   OneSignal.context = new Context(t.context.appConfig);
-  OneSignal.config = InitHelper.getMergedUserServerAppConfig({}, t.context.appConfig);
+  OneSignal.config = t.context.appConfig;
   try {
     await OneSignal.showHttpPrompt();
   } catch (e) {

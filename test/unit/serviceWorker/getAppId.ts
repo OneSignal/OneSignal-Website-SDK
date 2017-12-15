@@ -32,7 +32,7 @@ test(`getAppId should retrieve app ID from database if registration URL does not
   });
 
   const uuid = Uuid.generate();
-  const appConfig = new AppConfig();
+  const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = uuid;
   await Database.setAppConfig(appConfig);
 

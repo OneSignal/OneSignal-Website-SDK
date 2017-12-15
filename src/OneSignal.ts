@@ -59,6 +59,7 @@ import {
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { PushRegistration } from './models/PushRegistration';
 import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
+import ConfigManager from './managers/ConfigManager';
 
 
 export default class OneSignal {
@@ -142,7 +143,7 @@ export default class OneSignal {
     InitHelper.ponyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
 
-    const appConfig = await InitHelper.downloadAndMergeAppConfig(options);
+    const appConfig = await new ConfigManager().getAppConfig(options);
     log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
     OneSignal.context = new Context(appConfig);
     OneSignal.config = OneSignal.context.appConfig;
@@ -285,7 +286,7 @@ export default class OneSignal {
       log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-    OneSignal.popover = new Popover(OneSignal.config.userConfig.promptOptions);
+    OneSignal.popover = new Popover(MainHelper.getSlidedownPermissionMessageOptions());
     OneSignal.popover.create();
     log.debug('Showing the HTTP popover.');
     if (OneSignal.notifyButton &&
