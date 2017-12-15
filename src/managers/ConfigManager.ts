@@ -5,7 +5,7 @@ import InitHelper from '../helpers/InitHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import * as objectAssign from 'object-assign';
 import Badge from '../bell/Badge';
-import { trimUndefined } from '../utils';
+import { trimUndefined, contains } from '../utils';
 
 enum ObjectType {
   Boolean,
@@ -41,7 +41,10 @@ export default class ConfigManager {
       const serverConfig = await OneSignalApi.downloadServerAppConfig(new Uuid(userConfig.appId));
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       if (appConfig.restrictedOriginEnabled) {
-        if (!this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+        if (window.top === window &&
+          !contains(window.location.hostname, ".os.tc") &&
+          !contains(window.location.hostname, ".onesignal.com") &&
+          !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
           throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
             siteUrl: appConfig.origin
           });
