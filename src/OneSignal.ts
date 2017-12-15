@@ -311,11 +311,13 @@ export default class OneSignal {
       OneSignal.popover.close();
       log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
+      OneSignal._sessionInitAlreadyRunning = false;
       OneSignal.registerForPushNotifications({ autoAccept: true });
     });
     OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
       log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
+      OneSignal._sessionInitAlreadyRunning = false;
     });
   }
 

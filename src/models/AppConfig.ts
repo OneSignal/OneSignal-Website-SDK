@@ -303,6 +303,10 @@ export interface ServerAppConfig {
     }
   };
   config: {
+    /**
+     * The allowed origin this web push config is allowed to run on.
+     */
+    origin: string;
     staticPrompts: ServerAppConfigPrompt;
     siteInfo: {
       name: string;

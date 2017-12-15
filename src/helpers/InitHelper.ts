@@ -324,7 +324,24 @@ export default class InitHelper {
         } else {
           OneSignal.isOptedOut().then(isOptedOut => {
             if (!isOptedOut) {
-              SubscriptionHelper.registerForPush();
+             /*
+              * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+              * permanent blocks, we want to replace sites automatically showing the native browser request
+              * with a slide prompt first.
+              */
+              if (
+                (
+                  !options ||
+                  options && !options.fromRegisterFor
+                ) &&
+                Browser.chrome &&
+                Number(Browser.version) >= 63 &&
+                (Browser.tablet || Browser.mobile)
+                ) {
+                OneSignal.showHttpPrompt();
+              } else {
+               SubscriptionHelper.registerForPush();
+              }
             }
           });
         }

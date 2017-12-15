@@ -94,10 +94,10 @@ export default class ConfigManager {
     return {
       appId: new Uuid(serverConfig.app_id),
       subdomain: this.getSubdomainForIntegrationKind(integrationKind, userConfig, serverConfig),
-      origin: serverConfig.config.siteInfo.origin,
+      origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       cookieSyncEnabled: serverConfig.features.cookie_sync.enable,
-      restrictedOriginEnabled: serverConfig.features.restrict_origin.enable,
+      restrictedOriginEnabled: serverConfig.features.restrict_origin && serverConfig.features.restrict_origin.enable,
       metrics: {
         enable: serverConfig.features.metrics.enable,
         mixpanelReportingToken: serverConfig.features.metrics.mixpanel_reporting_token
