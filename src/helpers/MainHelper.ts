@@ -217,8 +217,11 @@ export default class MainHelper {
     });
   }
 
-  static getSlidedownPermissionMessageOptions(): AppUserConfigPromptOptions {
+  static getSlidedownPermissionMessageOptions(): AppUserConfigPromptOptions | null {
     const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
+    if (!promptOptions) {
+      return null;
+    }
     if (promptOptions && !promptOptions.slidedown) {
       return promptOptions;
     }
@@ -230,8 +233,11 @@ export default class MainHelper {
     };
   }
 
-  static getFullscreenPermissionMessageOptions(): AppUserConfigPromptOptions {
+  static getFullscreenPermissionMessageOptions(): AppUserConfigPromptOptions | null {
     const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
+    if (!promptOptions) {
+      return null;
+    }
     if (promptOptions && !promptOptions.fullscreen) {
       return promptOptions;
     }
