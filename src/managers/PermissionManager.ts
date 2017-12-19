@@ -157,6 +157,7 @@ export default class PermissionManager {
             (
               this.isCurrentFrameContextCrossOrigin() ||
               await SubscriptionHelper.hasInsecureParentOrigin() ||
+              SubscriptionHelper.isUsingSubscriptionWorkaround() ||
               SubscriptionHelper.isInsecureOrigin()
             )
            );
