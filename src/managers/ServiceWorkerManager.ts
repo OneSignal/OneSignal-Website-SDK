@@ -113,7 +113,12 @@ export class ServiceWorkerManager {
       return ServiceWorkerActiveState.Indeterminate;
     }
 
-    const workerRegistration = await navigator.serviceWorker.getRegistration();
+    let workerRegistration: ServiceWorkerRegistration = null;
+    try {
+      workerRegistration = await navigator.serviceWorker.getRegistration();
+    } catch (e) {
+      /* This could be null in an HTTP context or error if the user doesn't accept cookies */
+    }
     if (!workerRegistration) {
       /*
         A site may have a service worker nested at /folder1/folder2/folder3, while the user is

@@ -22,6 +22,9 @@ export default class IndexedDb {
         // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
         // for profile schema too high
       }
+      if (!request) {
+        return null;
+      }
       request.onerror = this.onDatabaseOpenError;
       request.onblocked = this.onDatabaseOpenBlocked;
       request.onupgradeneeded = this.onDatabaseUpgradeNeeded;
