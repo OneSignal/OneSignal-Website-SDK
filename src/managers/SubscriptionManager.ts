@@ -95,7 +95,9 @@ export class SubscriptionManager {
         break;
     }
 
-    return this.registerSubscriptionWithOneSignal(rawPushSubscription);
+    const subscription = await this.registerSubscriptionWithOneSignal(rawPushSubscription);
+    OneSignal._sessionInitAlreadyRunning = false;
+    return subscription;
   }
 
   public async subscribePartially(): Promise<RawPushSubscription> {

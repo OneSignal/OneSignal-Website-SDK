@@ -342,6 +342,8 @@ export default class InitHelper {
               } else {
                SubscriptionHelper.registerForPush();
               }
+            } else {
+              OneSignal._sessionInitAlreadyRunning = false;
             }
           });
         }
