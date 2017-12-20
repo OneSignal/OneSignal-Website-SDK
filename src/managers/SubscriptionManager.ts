@@ -96,7 +96,9 @@ export class SubscriptionManager {
     }
 
     const subscription = await this.registerSubscriptionWithOneSignal(rawPushSubscription);
-    OneSignal._sessionInitAlreadyRunning = false;
+    if (typeof OneSignal !== "undefined") {
+      OneSignal._sessionInitAlreadyRunning = false;
+    }
     return subscription;
   }
 

@@ -6,6 +6,8 @@ import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import * as objectAssign from 'object-assign';
 import Badge from '../bell/Badge';
 import { trimUndefined, contains } from '../utils';
+import SdkEnvironment from './SdkEnvironment';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 enum ObjectType {
   Boolean,
@@ -41,13 +43,15 @@ export default class ConfigManager {
       const serverConfig = await OneSignalApi.downloadServerAppConfig(new Uuid(userConfig.appId));
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       if (appConfig.restrictedOriginEnabled) {
-        if (window.top === window &&
-          !contains(window.location.hostname, ".os.tc") &&
-          !contains(window.location.hostname, ".onesignal.com") &&
-          !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
-          throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-            siteUrl: appConfig.origin
-          });
+        if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+          if (window.top === window &&
+            !contains(window.location.hostname, ".os.tc") &&
+            !contains(window.location.hostname, ".onesignal.com") &&
+            !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+            throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
+              siteUrl: appConfig.origin
+            });
+          }
         }
       }
       return appConfig;
@@ -65,7 +69,7 @@ export default class ConfigManager {
 
   private doesCurrentOriginMatchConfigOrigin(configOrigin) {
     try {
-      return window.location.origin === new URL(configOrigin).origin;
+      return location.origin === new URL(configOrigin).origin;
     } catch (e) {
       return false;
     }
@@ -291,7 +295,7 @@ export default class ConfigManager {
          * not apply it even though we've downloaded this configuration unless the
          * user also declares it manually in their initialization code.
          */
-        switch (window.location.protocol) {
+        switch (location.protocol) {
           case 'https:':
             return !!userProvidedSubdomain;
           case 'http:':
