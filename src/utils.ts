@@ -116,7 +116,7 @@ export function isChromeLikeBrowser() {
   return Browser.chrome ||
          (Browser as any).chromium ||
          (Browser as any).opera ||
-         (Browser as any).yandex;
+         (Browser as any).yandexbrowser;
 }
 
 export function removeDomElement(selector) {
