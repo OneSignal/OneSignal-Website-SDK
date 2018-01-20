@@ -176,8 +176,14 @@ export default class SubscriptionHelper {
     }
 
     return (
-      SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host &&
-      (!!OneSignal.config.subdomain || location.protocol === 'http:')
+      (
+        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host ||
+        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe
+      ) &&
+      (
+        !!OneSignal.config.subdomain ||
+        location.protocol === 'http:'
+      )
     );
   }
 
