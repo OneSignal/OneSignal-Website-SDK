@@ -121,6 +121,52 @@ export default class OneSignal {
   }
 
   /**
+   * @PublicApi
+   */
+  static async setEmail(email: string, options?: SetEmailOptions): Promise<void> {
+    if (!email)
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
+    if (!isValidEmail(email))
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
+    if (options && options.emailAuthHash && options.emailAuthHash.length !== 64) {
+      throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
+    }
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('setEmail', email, options);
+
+    const emailProfile = await Database.getEmailProfile();
+    const appConfig = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+
+    let newEmailId: Uuid;
+    if (emailProfile.emailId && appConfig.emailAuthRequired) {
+      newEmailId = await OneSignalApi.updateEmailRecord(
+        appConfig,
+        emailProfile,
+        deviceId
+      );
+    } else {
+      newEmailId = await OneSignalApi.createEmailRecord(
+        appConfig,
+        emailProfile,
+        deviceId
+      );
+    }
+
+    if (emailProfile.emailId !== newEmailId) {
+      await OneSignalApi.updatePlayer(
+        appConfig.appId,
+        deviceId,
+        {
+          parent_player_id: newEmailId
+        }
+      );
+    }
+
+    await Database.setEmailProfile(emailProfile);
+  }
+
+  /**
    * Returns true if the current browser supports web push.
    * @PublicApi
    */

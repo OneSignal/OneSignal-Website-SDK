@@ -10,6 +10,7 @@ import { Uuid } from './models/Uuid';
 import { contains, trimUndefined } from './utils';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import { EmailProfile } from './models/EmailProfile';
 
 
 export default class OneSignalApi {
@@ -164,6 +165,42 @@ export default class OneSignalApi {
 
   static async createUser(pushRegistration: PushRegistration): Promise<Uuid> {
     const response = await OneSignalApi.post(`players`, pushRegistration.serialize());
+    if (response && response.success) {
+      return new Uuid(response.id);
+    } else {
+      return null;
+    }
+  }
+
+  static async createEmailRecord(
+    appConfig: AppConfig,
+    emailProfile: EmailProfile,
+    pushId?: Uuid
+  ): Promise<Uuid> {
+    const response = await OneSignalApi.post(`${appConfig.appId.value}/players`, {
+      device_type: 11,
+      email: emailProfile.emailAddress,
+      device_player_id: pushId ? pushId.value : null,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
+    });
+    if (response && response.success) {
+      return new Uuid(response.id);
+    } else {
+      return null;
+    }
+  }
+
+  static async updateEmailRecord(
+    appConfig: AppConfig,
+    emailProfile: EmailProfile,
+    pushId?: Uuid
+  ): Promise<Uuid> {
+    const response = await OneSignalApi.put(`${appConfig.appId.value}/players/${emailProfile.emailId.value}`, {
+      device_type: 11,
+      email: emailProfile.emailAddress,
+      device_player_id: pushId ? pushId.value : null,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
+    });
     if (response && response.success) {
       return new Uuid(response.id);
     } else {
