@@ -1,7 +1,19 @@
 import "../../support/polyfills/polyfills";
-import test from "ava";
+import test, { TestContext, Context } from "ava";
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
+import OneSignal from '../../../src/OneSignal';
+import * as nock from 'nock';
+import Database from '../../../src/services/Database';
+import { EmailProfile } from '../../../src/models/EmailProfile';
+import { Uuid } from '../../../src/models/Uuid';
+import { Subscription } from '../../../src/models/Subscription';
 
 test.beforeEach(t => {
+  t.context.simpleTags = {
+    'string': 'This is a string.',
+    'number': 123456789,
+  };
+
   t.context.sentTags = {
     'null': null,
     'undefined': undefined,
@@ -39,4 +51,71 @@ test.beforeEach(t => {
   t.context.tagsToCheckDeepEqual = Object.keys(t.context.sentTags).filter(x => t.context.expectedTagsUnsent.concat(['string', 'false']).indexOf(x) < 0);
 });
 
-test.todo("todo later");
+async function expectPushRecordTagUpdateRequest(
+  t: TestContext & Context<any>,
+  pushDevicePlayerId: Uuid,
+  emailAuthHash: string,
+) {
+  nock('https://onesignal.com')
+    .put(`/api/v1/players/${pushDevicePlayerId.value}`)
+    .reply(200, (uri, requestBody) => {
+      t.deepEqual(
+        requestBody,
+        JSON.stringify({
+          app_id: null,
+          tags: t.context.simpleTags,
+          email_auth_hash: emailAuthHash ? emailAuthHash : undefined,
+        })
+      );
+      return { "success":true };
+    });
+}
+
+test("sendTags sends to email record and push record with email auth hash", async t => {
+  await TestEnvironment.initialize();
+
+  const emailProfile = new EmailProfile();
+  emailProfile.emailId = new Uuid("dafb31e3-19a5-473c-b319-62082bd696fb");
+  emailProfile.emailAddress = "test@example.com";
+  emailProfile.emailAuthHash = "email-auth-hash";
+
+  const subscription = new Subscription();
+  subscription.deviceId = new Uuid("55b9bc29-5f07-48b9-b85d-7e6efe2396fb");
+  await Database.setSubscription(subscription);
+
+  await Database.setEmailProfile(emailProfile);
+  expectPushRecordTagUpdateRequest(t, emailProfile.emailId, emailProfile.emailAuthHash);
+  expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
+  await OneSignal.sendTags(t.context.simpleTags);
+});
+
+test("sendTags sends to email record and push record without email auth hash", async t => {
+  await TestEnvironment.initialize();
+
+  const emailProfile = new EmailProfile();
+  emailProfile.emailId = new Uuid("dafb31e3-19a5-473c-b319-62082bd696fb");
+  emailProfile.emailAddress = "test@example.com";
+
+  const subscription = new Subscription();
+  subscription.deviceId = new Uuid("55b9bc29-5f07-48b9-b85d-7e6efe2396fb");
+  await Database.setSubscription(subscription);
+
+  await Database.setEmailProfile(emailProfile);
+  expectPushRecordTagUpdateRequest(t, emailProfile.emailId, emailProfile.emailAuthHash);
+  expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
+  await OneSignal.sendTags(t.context.simpleTags);
+});
+
+test("sendTags sends to push record only without email", async t => {
+  await TestEnvironment.initialize();
+
+  const subscription = new Subscription();
+  subscription.deviceId = new Uuid("55b9bc29-5f07-48b9-b85d-7e6efe2396fb");
+  await Database.setSubscription(subscription);
+
+  // Without this, emailProfile.emailId is undefined, but in real scenarios it is Uuid { value: null}
+  await Database.setEmailProfile(new EmailProfile());
+
+  expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
+  await OneSignal.sendTags(t.context.simpleTags);
+});

@@ -27,9 +27,11 @@ import Path from '../models/Path';
 import Context from '../models/Context';
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { PushRegistration } from '../models/PushRegistration';
+import { DeviceRecord } from '../models/DeviceRecord';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PageViewMetricEngagement } from '../managers/MetricsManager';
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 
 declare var OneSignal: any;
 
@@ -135,13 +137,30 @@ export default class InitHelper {
       if (isPushEnabled) {
         const context: Context = OneSignal.context;
         const { deviceId } = await Database.getSubscription();
-        OneSignalApi.updateUserSession(deviceId, new PushRegistration());
+        OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
       }
     }
 
+    InitHelper.updateEmailSessionCount();
+
     OneSignal.context.cookieSyncer.install();
+
     InitHelper.showPromptsFromWebConfigEditor();
     context.metricsManager.reportPageView();
+  }
+
+  public static async updateEmailSessionCount() {
+    const context: Context = OneSignal.context;
+    /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
+    if (context.sessionManager.isFirstPageView()) {
+      const emailProfile = await Database.getEmailProfile();
+      if (emailProfile.emailId && emailProfile.emailId.value) {
+        OneSignalApi.updateUserSession(
+          emailProfile.emailId,
+          new EmailDeviceRecord(null, emailProfile.emailAuthHash)
+        );
+      }
+    }
   }
 
   private static async showPromptsFromWebConfigEditor() {
@@ -291,6 +310,8 @@ export default class InitHelper {
     const initialPageTitle = overridingPageTitle || document.title || 'Notification';
     await Database.put('Options', { key: 'pageTitle', value: initialPageTitle });
     log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
+    const config: AppConfig = OneSignal.config;
+    await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
   }
 
   static sessionInit(options) {

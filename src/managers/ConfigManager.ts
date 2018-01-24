@@ -109,6 +109,7 @@ export default class ConfigManager {
       safariWebId: serverConfig.config.safari_web_id,
       vapidPublicKey: serverConfig.config.vapid_public_key,
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
+      emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: this.getUserConfigForIntegrationKind(integrationKind, userConfig, serverConfig),
     };
   }

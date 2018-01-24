@@ -18,7 +18,6 @@ import { Uuid } from '../../../src/models/Uuid';
 
 var global = new Function('return this')();
 
-
 export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
   OneSignal: ServiceWorker;
 }
@@ -80,6 +79,9 @@ export interface TestEnvironmentConfig {
   initializeAsIframe?: boolean
 }
 
+/**
+ *
+ */
 export class TestEnvironment {
 
   /**
@@ -273,6 +275,9 @@ export class TestEnvironment {
         metrics: {
           enable: true,
           mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673'
+        },
+        email: {
+          require_auth: true,
         }
       },
       config: {

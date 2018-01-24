@@ -21,8 +21,8 @@ test.beforeEach(async t => {
 
   // Stub MessageChannel
   const fakeClass = class Test { };
-  t.context.originalMessageChannel = global.MessageChannel;
-  global.MessageChannel = fakeClass;
+  t.context.originalMessageChannel = (global as any).MessageChannel;
+  (global as any).MessageChannel = fakeClass;
 
   t.context.expectedSafeHttpOrigins = [
     'http://site.com',
@@ -50,7 +50,7 @@ test.beforeEach(async t => {
 });
 
 test.afterEach(async t => {
-  global.MessageChannel = t.context.originalMessageChannel;
+  (global as any).MessageChannel = t.context.originalMessageChannel;
 });
 
 /*

@@ -60,4 +60,6 @@ untypedOneSignalStub.setDefaultNotificationUrl = untypedOneSignalStub.setDefault
   = untypedOneSignalStub.getRegistrationId
   = untypedOneSignalStub.getSubscription
   = untypedOneSignalStub.sendSelfNotification
+  = untypedOneSignalStub.setEmail
+  = untypedOneSignalStub.logoutEmail
   = untypedOneSignalStub.promiseStub;

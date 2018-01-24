@@ -1,7 +1,7 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "150085",
+  "sdkVersion": "150090",
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.ts",
   "dependencies": {
@@ -67,6 +67,7 @@
     "@types/loglevel": "latest",
     "@types/mocha": "latest",
     "@types/nconf": "latest",
+    "@types/nock": "^9.1.2",
     "@types/node": "latest",
     "@types/object-assign": "^4.0.30",
     "@types/requirejs": "latest",
@@ -92,6 +93,7 @@
     "md5-file": "^3.2.2",
     "microtime": "^2.1.2",
     "nconf": "^0.8.4",
+    "nock": "^9.1.6",
     "node-dir": "^0.1.16",
     "node-fetch": "^1.6.3",
     "nyc": "^11.1.0",
@@ -106,7 +108,7 @@
     "svgo": "^0.7.2",
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
-    "typescript": "^2.4.2",
+    "typescript": "^2.7.1",
     "webpack": "^3.4.1",
     "webpack-bundle-analyzer": "^2.8.3",
     "yargonaut": "^1.1.2",
