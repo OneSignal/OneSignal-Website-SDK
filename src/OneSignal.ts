@@ -60,6 +60,7 @@ import { PushRegistration } from './models/PushRegistration';
 import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
 import ConfigManager from './managers/ConfigManager';
 import TimedLocalStorage from './modules/TimedLocalStorage';
+import { EmailProfile } from './models/EmailProfile';
 
 
 export default class OneSignal {
@@ -164,6 +165,28 @@ export default class OneSignal {
     }
 
     await Database.setEmailProfile(emailProfile);
+  }
+
+  /**
+   * @PublicApi
+   */
+  static async logoutEmail() {
+    await awaitOneSignalInitAndSupported();
+
+    const appConfig = await Database.getAppConfig();
+    const emailProfile = await Database.getEmailProfile();
+    const { deviceId } = await Database.getSubscription();
+
+    if (!emailProfile.emailId) {
+      log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
+      return;
+    }
+
+    if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
+      log.warn("Failed to logout email.");
+    }
+
+    await Database.setEmailProfile(new EmailProfile());
   }
 
   /**

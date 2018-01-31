@@ -263,7 +263,11 @@ export default class Database {
 
   async getEmailProfile(): Promise<EmailProfile> {
     const profileJson = await this.get<string>('Ids', 'emailProfile');
-    return EmailProfile.deserialize(profileJson);
+    if (profileJson) {
+      return EmailProfile.deserialize(profileJson);
+    } else {
+      return new EmailProfile();
+    }
   }
 
   async setEmailProfile(emailProfile: EmailProfile): Promise<void> {

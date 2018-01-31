@@ -193,18 +193,30 @@ export default class OneSignalApi {
   static async updateEmailRecord(
     appConfig: AppConfig,
     emailProfile: EmailProfile,
-    pushId?: Uuid
+    deviceId?: Uuid
   ): Promise<Uuid> {
     const response = await OneSignalApi.put(`${appConfig.appId.value}/players/${emailProfile.emailId.value}`, {
       device_type: 11,
       email: emailProfile.emailAddress,
-      device_player_id: pushId ? pushId.value : null,
+      device_player_id: deviceId ? deviceId.value : null,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
     });
     if (response && response.success) {
       return new Uuid(response.id);
     } else {
       return null;
+    }
+  }
+
+  static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: Uuid): Promise<boolean> {
+    const response = await OneSignalApi.post(`${appConfig.appId.value}/players/${emailProfile.emailId.value}/email_logout`, {
+      device_player_id: deviceId.value,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
+    });
+    if (response && response.success) {
+      return true;
+    } else {
+      return false;
     }
   }
 
