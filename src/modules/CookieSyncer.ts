@@ -1,28 +1,24 @@
 import * as log from 'loglevel';
+import Context from '../models/Context';
+import { ResourceType } from "../services/DynamicResourceLoader";
 
 export default class CookieSyncer {
-
   private isFeatureEnabled: boolean;
+  private context: Context;
 
-  constructor(isFeatureEnabled: boolean) {
+  constructor(context: Context, isFeatureEnabled: boolean) {
+    this.context = context;
     this.isFeatureEnabled = isFeatureEnabled;
   }
 
-  static get SYNC_URL() {
-    return 'https://rc.rlcdn.com/463096.gif?n=5';
-  }
-  static get DOM_ID() {
-    return 'onesignal-cookie-sync';
+  static get PUBLISHER_ID(): string {
+    return 'os!onesignalwebsdk';
   }
 
-  getElement() {
-    return document.getElementById(CookieSyncer.DOM_ID);
-  }
-
-  uninstall() {
-    if (this.getElement()) {
-      this.getElement().remove();
-    }
+  static get SDK_URL(): URL {
+    const url = new URL("https://cdn.tynt.com/afx.js");
+    url.protocol = window.location.protocol;
+    return url;
   }
 
   install() {
@@ -30,16 +26,15 @@ export default class CookieSyncer {
       log.debug('Cookie sync feature is disabled.');
       return;
     }
-    this.uninstall();
-    const domElement = document.createElement('img');
-    domElement.setAttribute('id', CookieSyncer.DOM_ID);
-    domElement.setAttribute('border', '0');
-    domElement.setAttribute('hspace', '0');
-    domElement.setAttribute('vspace', '0');
-    domElement.setAttribute('width', '1');
-    domElement.setAttribute('height', '1');
-    domElement.setAttribute('src', CookieSyncer.SYNC_URL);
-    document.querySelector('body').appendChild(domElement);
+    if (window.top !== window) {
+      /* This cookie integration can only be injected into the top frame, so that it's targeting the intended site. */
+      return;
+    }
+
+    (window as any).Tynt = (window as any).Tynt || [];
+    (window as any).Tynt.push(CookieSyncer.PUBLISHER_ID);
+
+    this.context.dynamicResourceLoader.loadIfNew(ResourceType.Script, CookieSyncer.SDK_URL);
     log.debug('Enabled cookie sync feature.');
   }
 }

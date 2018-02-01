@@ -2,32 +2,63 @@ import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import CookieSyncer from '../../../src/modules/CookieSyncer';
+import OneSignal from '../../../src/OneSignal';
+import { Uuid } from '../../../src/models/Uuid';
+import Context from '../../../src/models/Context';
 
-
-test("should add 1 pixel image to webpage", async t => {
+test.beforeEach(async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
-  const cookieSyncer = new CookieSyncer(true);
+
+  const appConfig = TestEnvironment.getFakeAppConfig();
+  appConfig.appId = Uuid.generate();
+  OneSignal.context = new Context(appConfig);
+});
+
+test("should load Tynt SDK script as HTTPS", async t => {
+  const cookieSyncer = new CookieSyncer(OneSignal.context, true);
   cookieSyncer.install();
-  const element = cookieSyncer.getElement();
-  t.is(document.getElementById('onesignal-cookie-sync'), element);
-  t.is(element.tagName.toLowerCase(), 'img');
-  t.is(element.getAttribute('border'), '0');
-  t.is(element.getAttribute('hspace'), '0');
-  t.is(element.getAttribute('vspace'), '0');
-  t.is(element.getAttribute('width'), '1');
-  t.is(element.getAttribute('height'), '1');
-  t.is(element.getAttribute('src'), 'https://rc.rlcdn.com/463096.gif?n=5');
+  const element = document.querySelector("script[src='https://cdn.tynt.com/afx.js']")
+  t.is(element.tagName.toLowerCase(), 'script');
+  t.is(element.getAttribute('src'), 'https://cdn.tynt.com/afx.js');
+});
+
+test("should load Tynt SDK script as HTTP", async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Http
+  });
+
+  const cookieSyncer = new CookieSyncer(OneSignal.context, true);
+  cookieSyncer.install();
+  const element = document.querySelector("script[src='http://cdn.tynt.com/afx.js']")
+  t.is(element.tagName.toLowerCase(), 'script');
+  t.is(element.getAttribute('src'), 'http://cdn.tynt.com/afx.js');
 });
 
 test("should not add anything if feature is disabled", async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
-  const cookieSyncer = new CookieSyncer(false);
+  const cookieSyncer = new CookieSyncer(OneSignal.context, false);
   cookieSyncer.install();
-  const element = cookieSyncer.getElement();
+  const element = document.querySelector("script[src='https://cdn.tynt.com/afx.js']")
   t.is(element, null);
 });
 
+test("should not run if we are not the top window", async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    initializeAsIframe: true,
+  });
+  const cookieSyncer = new CookieSyncer(OneSignal.context, true);
+  cookieSyncer.install();
+  t.is((window as any).Tynt, undefined);
+});
+
+test("should set global tynt variable with publisher ID", async t => {
+  const cookieSyncer = new CookieSyncer(OneSignal.context, true);
+  cookieSyncer.install();
+  t.not((window as any).Tynt, undefined);
+  t.deepEqual((window as any).Tynt, ["os!onesignalwebsdk"]);
+});

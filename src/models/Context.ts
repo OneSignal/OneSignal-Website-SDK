@@ -26,7 +26,7 @@ export default class Context {
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
 
-    this.cookieSyncer = new CookieSyncer(appConfig.cookieSyncEnabled);
+    this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
 
     this.subscriptionManager = new SubscriptionManager(this, {
       safariWebId: appConfig.safariWebId,
