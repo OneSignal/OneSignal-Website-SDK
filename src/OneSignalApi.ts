@@ -179,7 +179,7 @@ export default class OneSignalApi {
   ): Promise<Uuid> {
     const response = await OneSignalApi.post(`${appConfig.appId.value}/players`, {
       device_type: 11,
-      email: emailProfile.emailAddress,
+      identifier: emailProfile.emailAddress,
       device_player_id: pushId ? pushId.value : null,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
     });
@@ -197,7 +197,7 @@ export default class OneSignalApi {
   ): Promise<Uuid> {
     const response = await OneSignalApi.put(`${appConfig.appId.value}/players/${emailProfile.emailId.value}`, {
       device_type: 11,
-      email: emailProfile.emailAddress,
+      identifier: emailProfile.emailAddress,
       device_player_id: deviceId ? deviceId.value : null,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
     });
