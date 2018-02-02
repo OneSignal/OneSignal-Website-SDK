@@ -160,13 +160,13 @@ export default class Database {
       await this.put('Ids', {type: 'appId', id: appConfig.appId.value})
     if (appConfig.subdomain)
       await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})
-    if (appConfig.httpUseOneSignalCom)
+    if (appConfig.httpUseOneSignalCom === true)
       await this.put('Options', { key: 'httpUseOneSignalCom', value: true })
-    else
+    else if (appConfig.httpUseOneSignalCom === false)
       await this.put('Options', {key: 'httpUseOneSignalCom', value: false })
-    if (appConfig.emailAuthRequired)
+    if (appConfig.emailAuthRequired === true)
       await this.put('Options', { key: 'emailAuthRequired', value: true })
-    else
+    else if (appConfig.emailAuthRequired === false)
       await this.put('Options', {key: 'emailAuthRequired', value: false })
     if (appConfig.vapidPublicKey)
       await this.put('Options', {key: 'vapidPublicKey', value: appConfig.vapidPublicKey})

@@ -312,7 +312,10 @@ export interface ServerAppConfig {
     };
     restrict_origin: {
       enable: boolean;
-    }
+    };
+    email: {
+      require_auth: boolean;
+    };
   };
   config: {
     /**

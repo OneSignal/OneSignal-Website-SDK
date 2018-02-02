@@ -11,9 +11,11 @@ import { Uuid } from './Uuid';
 
 
 /**
- * Describes the payload to be sent to OneSignal for user registration.
+ * Describes the fields of a OneSignal "player" device record.
+ *
+ * This is used when creating or modifying push and email records.
  */
-export class PushRegistration implements Serializable {
+export abstract class DeviceRecord implements Serializable {
   public appId: Uuid;
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;
@@ -26,7 +28,6 @@ export class PushRegistration implements Serializable {
   public deviceModel: string;
   public sdkVersion: string;
   public subscriptionState: SubscriptionStateKind;
-  public subscription: RawPushSubscription;
 
   constructor() {
     this.language = Environment.getLanguage();
@@ -35,13 +36,13 @@ export class PushRegistration implements Serializable {
     this.browserVersion = parseInt(String(Browser.version)) !== NaN ? parseInt(String(Browser.version)) : -1;
     this.operatingSystem = this.getBrowserOperatingSystem();
     this.operatingSystemVersion = String(Browser.osversion);
-    this.devicePlatform = this.getDevicePlatformKind();
+    this.devicePlatform = this.getDevicePlatform();
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();
     // Unimplemented properties are appId, deliveryPlatform, subscriptionState, and subscription
   }
 
-  getDevicePlatformKind(): DevicePlatformKind {
+  getDevicePlatform(): DevicePlatformKind {
     const isMobile = Browser.mobile;
     const isTablet = Browser.tablet;
 
@@ -132,14 +133,8 @@ export class PushRegistration implements Serializable {
       serializedBundle.app_id = this.appId.value;
     }
 
-    if (this.subscription) {
-      serializedBundle.identifier = Browser.safari ? this.subscription.safariDeviceToken : this.subscription.w3cEndpoint.toString();
-      serializedBundle.web_auth = this.subscription.w3cAuth;
-      serializedBundle.web_p256 = this.subscription.w3cP256dh;
-    }
-
     return serializedBundle;
   }
 
-  deserialize(_: object): PushRegistration { throw new NotImplementedError(); }
+  deserialize(_: object): DeviceRecord { throw new NotImplementedError(); }
 }

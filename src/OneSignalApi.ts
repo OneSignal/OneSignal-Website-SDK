@@ -5,7 +5,7 @@ import * as objectAssign from 'object-assign';
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
-import { PushRegistration } from './models/PushRegistration';
+import { DeviceRecord } from './models/DeviceRecord';
 import { Uuid } from './models/Uuid';
 import { contains, trimUndefined } from './utils';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
@@ -163,8 +163,8 @@ export default class OneSignalApi {
     }
   }
 
-  static async createUser(pushRegistration: PushRegistration): Promise<Uuid> {
-    const response = await OneSignalApi.post(`players`, pushRegistration.serialize());
+  static async createUser(deviceRecord: DeviceRecord): Promise<Uuid> {
+    const response = await OneSignalApi.post(`players`, deviceRecord.serialize());
     if (response && response.success) {
       return new Uuid(response.id);
     } else {
@@ -209,8 +209,8 @@ export default class OneSignalApi {
   }
 
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: Uuid): Promise<boolean> {
-    const response = await OneSignalApi.post(`${appConfig.appId.value}/players/${emailProfile.emailId.value}/email_logout`, {
-      device_player_id: deviceId.value,
+    const response = await OneSignalApi.post(`${appConfig.appId.value}/players/${deviceId.value}/email_logout`, {
+      parent_player_id: emailProfile.emailId.value,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
     });
     if (response && response.success) {
@@ -220,9 +220,12 @@ export default class OneSignalApi {
     }
   }
 
-  static async updateUserSession(userId: Uuid, pushRegistration: PushRegistration): Promise<Uuid> {
+  static async updateUserSession(
+    userId: Uuid,
+    deviceRecord: DeviceRecord,
+  ): Promise<Uuid> {
     try {
-      const response = await OneSignalApi.post(`players/${userId.value}/on_session`, pushRegistration.serialize());
+      const response = await OneSignalApi.post(`players/${userId.value}/on_session`, deviceRecord.serialize());
       if (response.id) {
         // A new user ID can be returned
         return new Uuid(response.id);

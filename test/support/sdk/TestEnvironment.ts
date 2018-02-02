@@ -273,6 +273,9 @@ export class TestEnvironment {
         metrics: {
           enable: true,
           mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673'
+        },
+        email: {
+          require_auth: true,
         }
       },
       config: {

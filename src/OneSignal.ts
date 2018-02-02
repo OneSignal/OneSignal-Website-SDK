@@ -56,7 +56,7 @@ import {
   prepareEmailForHashing,
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
-import { PushRegistration } from './models/PushRegistration';
+import { DeviceRecord } from './models/DeviceRecord';
 import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
 import ConfigManager from './managers/ConfigManager';
 import TimedLocalStorage from './modules/TimedLocalStorage';
@@ -828,7 +828,7 @@ export default class OneSignal {
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
   static crypto = Crypto;
-  static PushRegistration = PushRegistration;
+  static DeviceRecord = DeviceRecord;
 
   static notificationPermission = NotificationPermission;
 

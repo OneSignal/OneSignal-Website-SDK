@@ -4,7 +4,8 @@ import { Serializable } from './Serializable';
 
 export class EmailProfile implements Serializable {
   /**
-   * The OneSignal email player ID.
+   * The OneSignal email player ID obtained after creating an email device record with the plain
+   * text email address.
    */
   emailId: Uuid;
   /**

@@ -27,8 +27,10 @@ import Path from '../models/Path';
 import Context from '../models/Context';
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { PushRegistration } from '../models/PushRegistration';
+import { DeviceRecord } from '../models/DeviceRecord';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 
 declare var OneSignal: any;
 
@@ -134,7 +136,11 @@ export default class InitHelper {
       if (isPushEnabled) {
         const context: Context = OneSignal.context;
         const { deviceId } = await Database.getSubscription();
-        OneSignalApi.updateUserSession(deviceId, new PushRegistration());
+        OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
+      }
+      const emailProfile = await Database.getEmailProfile();
+      if (emailProfile.emailId) {
+        OneSignalApi.updateUserSession(emailProfile.emailId, new EmailDeviceRecord(null));
       }
     }
 
@@ -290,6 +296,8 @@ export default class InitHelper {
     const initialPageTitle = overridingPageTitle || document.title || 'Notification';
     await Database.put('Options', { key: 'pageTitle', value: initialPageTitle });
     log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
+    const config: AppConfig = OneSignal.config;
+    await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
   }
 
   static sessionInit(options) {
