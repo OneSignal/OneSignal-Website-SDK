@@ -499,6 +499,14 @@ export default class OneSignal {
         tags[key] = "false";
     });
     const { appId } = await Database.getAppConfig();
+
+    const emailProfile = await Database.getEmailProfile();
+    if (emailProfile.emailId) {
+      await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
+        tags: tags
+      });
+    }
+
     var { deviceId } = await Database.getSubscription();
     if (!deviceId || !deviceId.value) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
