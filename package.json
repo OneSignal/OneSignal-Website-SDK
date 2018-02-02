@@ -5,6 +5,7 @@
   "description": "Web push notifications from OneSignal.",
   "main": "src/entry.ts",
   "dependencies": {
+    "@types/nock": "^9.1.2",
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "decamelize": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
     "defined": "https://registry.npmjs.org/defined/-/defined-1.0.0.tgz",
@@ -92,6 +93,7 @@
     "md5-file": "^3.2.2",
     "microtime": "^2.1.2",
     "nconf": "^0.8.4",
+    "nock": "^9.1.6",
     "node-dir": "^0.1.16",
     "node-fetch": "^1.6.3",
     "nyc": "^11.1.0",
