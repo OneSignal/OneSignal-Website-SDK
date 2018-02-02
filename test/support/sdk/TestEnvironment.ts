@@ -18,7 +18,6 @@ import { Uuid } from '../../../src/models/Uuid';
 
 var global = new Function('return this')();
 
-
 export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
   OneSignal: ServiceWorker;
 }
@@ -80,6 +79,9 @@ export interface TestEnvironmentConfig {
   initializeAsIframe?: boolean
 }
 
+/**
+ *
+ */
 export class TestEnvironment {
 
   /**
