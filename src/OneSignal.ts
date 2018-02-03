@@ -61,6 +61,7 @@ import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiE
 import ConfigManager from './managers/ConfigManager';
 import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
+import TimeoutError from './errors/TimeoutError';
 
 
 export default class OneSignal {
@@ -129,42 +130,68 @@ export default class OneSignal {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     if (!isValidEmail(email))
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
+    // emailAuthHash is expected to be a 64 character SHA-256 hex hash
     if (options && options.emailAuthHash && options.emailAuthHash.length !== 64) {
       throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
     }
     await awaitOneSignalInitAndSupported();
     logMethodCall('setEmail', email, options);
 
-    const emailProfile = await Database.getEmailProfile();
     const appConfig = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
+    const existingEmailProfile = await Database.getEmailProfile();
 
-    let newEmailId: Uuid;
-    if (emailProfile.emailId && appConfig.emailAuthRequired) {
-      newEmailId = await OneSignalApi.updateEmailRecord(
+    const newEmailProfile = new EmailProfile();
+    newEmailProfile.emailId = existingEmailProfile.emailId;
+    newEmailProfile.emailAddress = email;
+    if (options && options.emailAuthHash) {
+      newEmailProfile.emailAuthHash = options.emailAuthHash
+    }
+
+    if (existingEmailProfile.emailId && appConfig.emailAuthRequired) {
+      // If we already have a saved email player ID, make a PUT call to update the existing email record
+      newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
         appConfig,
-        emailProfile,
+        newEmailProfile,
         deviceId
       );
     } else {
-      newEmailId = await OneSignalApi.createEmailRecord(
+      // Otherwise, make a POST call to create a new email record
+      newEmailProfile.emailId = await OneSignalApi.createEmailRecord(
         appConfig,
-        emailProfile,
+        newEmailProfile,
         deviceId
       );
     }
 
-    if (emailProfile.emailId !== newEmailId) {
+    if (
+      /* If we are subscribed to web push */
+      deviceId && deviceId.value &&
+      /* And if we previously saved a player ID and it's different from the new returned ID */
+      (
+        (
+          existingEmailProfile.emailId &&
+          existingEmailProfile.emailId.value !== newEmailProfile.emailId.value
+        ) ||
+        /* Or if we previously saved an email and the email changed */
+        (
+          existingEmailProfile.emailAddress &&
+          newEmailProfile.emailAddress !== existingEmailProfile.emailAddress
+        )
+      )
+    ) {
+      // Then update the push device record with a reference to the new email ID and email address
       await OneSignalApi.updatePlayer(
         appConfig.appId,
         deviceId,
         {
-          parent_player_id: newEmailId
+          parent_player_id: newEmailProfile.emailId.value,
+          email: newEmailProfile.emailAddress
         }
       );
     }
 
-    await Database.setEmailProfile(emailProfile);
+    await Database.setEmailProfile(newEmailProfile);
   }
 
   /**

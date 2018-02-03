@@ -18,11 +18,16 @@ export class EmailProfile implements Serializable {
   emailAuthHash: string;
 
   serialize() {
-    return {
-      emailId: this.emailId.serialize(),
+    const bundle: any = {
       emailAddress: this.emailAddress,
       emailAuthHash: this.emailAuthHash
     }
+
+    if (this.emailId) {
+      bundle.emailId = this.emailId.serialize();
+    }
+
+    return bundle;
   }
 
   static deserialize(bundle: any): EmailProfile {

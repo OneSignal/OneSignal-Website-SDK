@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test from "ava";
+import test, { TestContext, Context } from "ava";
 import Database from "../../../src/services/Database";
 import Macros from "../../support/tester/Macros";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
@@ -7,6 +7,9 @@ import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
 import { Uuid } from '../../../src/models/Uuid';
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
+import * as nock from 'nock';
+import { AppConfig } from '../../../src/models/AppConfig';
+import { EmailProfile } from '../../../src/models/EmailProfile';
 
 test("setEmail should reject an empty or invalid emails", async t => {
     await TestEnvironment.initialize();
@@ -51,18 +54,278 @@ test("setEmail should not accept an email auth SHA-256 hex hash not 64 character
   }
 });
 
-// test("setEmail should reject an invalid email", async t => {
-//   await TestEnvironment.initialize();
+/*
+ * Test Case | Description
+ * -----------------------
+ * No push subscription, no email, first setEmail call
+ * No push subscription, existing identical email, refreshing setEmail call
+ * No push subscription, existing different email, updating email
+ * Existing push subscription, no email, first setEmail call
+ * Existing push subscription, existing identical email, refreshing setEmail call
+ * Existing push subscription, existing different email, updating email
+ *
+ * ---
+ *
+ * ..., existing email (identical or not), emailAuthHash --> makes a PUT call instead of POST
+ */
 
-//   OneSignal.setEmail()
+async function expectEmailRecordCreationRequest(
+  t: TestContext & Context<any>,
+  emailAddress: string,
+  pushDevicePlayerId: Uuid,
+  emailAuthHash: string,
+  newCreatedEmailId: Uuid
+) {
+  nock('https://onesignal.com')
+    .post(`/api/v1/players`)
+    .reply(200, (uri, requestBody) => {
+      t.deepEqual(
+        requestBody,
+        JSON.stringify({
+          app_id: null,
+          device_type: 11,
+          identifier: emailAddress,
+          device_player_id: pushDevicePlayerId ? pushDevicePlayerId.value : undefined,
+          email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+        })
+      );
+      return { "success":true, "id": newCreatedEmailId.value };
+    });
+}
 
-//   const subscription = new Subscription();
-//   subscription.deviceId = new Uuid('f7cf25b7-246a-42a1-8c40-eb8eae19cc9e');
-//   await OneSignal.database.setSubscription(subscription);
-//   const userIdByPromise = await OneSignal.getUserId()
-//   const userIdByCallback = await new Promise(resolve => {
-//     OneSignal.getUserId(resolve)
-//   });
-//   t.is(userIdByPromise, 'f7cf25b7-246a-42a1-8c40-eb8eae19cc9e');
-//   t.is(userIdByCallback, 'f7cf25b7-246a-42a1-8c40-eb8eae19cc9e');
-// });
+async function expectEmailRecordUpdateRequest(
+  t: TestContext & Context<any>,
+  emailId: Uuid,
+  emailAddress: string,
+  pushDevicePlayerId: Uuid,
+  emailAuthHash: string,
+  newUpdatedEmailId: Uuid
+) {
+  nock('https://onesignal.com')
+    .put(`/api/v1/players/${emailId.value}`)
+    .reply(200, (uri, requestBody) => {
+      t.deepEqual(
+        requestBody,
+        JSON.stringify({
+          app_id: null,
+          identifier: emailAddress,
+          device_player_id: pushDevicePlayerId ? pushDevicePlayerId.value : undefined,
+          email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+        })
+      );
+      return { "success":true, "id": newUpdatedEmailId.value };
+    });
+}
+
+async function expectPushRecordUpdateRequest(
+  t: TestContext & Context<any>,
+  pushDevicePlayerId: Uuid,
+  newEmailId: Uuid,
+  emailAddress: string,
+  newUpdatedPlayerId: Uuid
+) {
+  nock('https://onesignal.com')
+    .put(`/api/v1/players/${pushDevicePlayerId.value}`)
+    .reply(200, (uri, requestBody) => {
+      t.deepEqual(
+        requestBody,
+        JSON.stringify({
+          app_id: null,
+          parent_player_id: newEmailId ? newEmailId.value : undefined,
+          email: emailAddress,
+        })
+      );
+      return { "success":true, "id": newUpdatedPlayerId.value };
+    });
+}
+
+enum SetEmailRequestType {
+  Update,
+  Create
+}
+
+interface SetEmailTestData {
+  emailAddress: string;
+  existingPushDeviceId: Uuid;
+  emailAuthHash: string;
+  newCreatedEmailId: Uuid;
+}
+
+async function setEmailTest(
+  t: TestContext & Context<any>,
+  testData: SetEmailTestData,
+  setEmailRequestType: SetEmailRequestType
+) {
+
+  /* If test data has an email auth has, fake the config parameter */
+  if (testData.emailAuthHash) {
+    const appConfig = await Database.getAppConfig();
+    appConfig.emailAuthRequired = true;
+    await Database.setAppConfig(appConfig);
+  }
+
+  /* If an existing push device ID is set, create a fake one here */
+  if (testData.existingPushDeviceId) {
+    const subscription = new Subscription();
+    subscription.deviceId = testData.existingPushDeviceId;
+    await Database.setSubscription(subscription);
+  }
+
+  if (setEmailRequestType === SetEmailRequestType.Create) {
+    expectEmailRecordCreationRequest(
+      t,
+      testData.emailAddress,
+      testData.existingPushDeviceId,
+      testData.emailAuthHash,
+      testData.newCreatedEmailId
+    );
+  } else {
+    const { emailId: existingEmailId } = await Database.getEmailProfile();
+
+    expectEmailRecordUpdateRequest(
+      t,
+      existingEmailId,
+      testData.emailAddress,
+      testData.existingPushDeviceId,
+      testData.emailAuthHash,
+      testData.newCreatedEmailId
+    );
+  }
+
+  await OneSignal.setEmail(
+    testData.emailAddress,
+    testData.emailAuthHash ?
+      { emailAuthHash: testData.emailAuthHash } :
+      undefined
+  );
+
+  const { deviceId: finalPushDeviceId } = await Database.getSubscription();
+  const finalEmailProfile = await Database.getEmailProfile();
+
+  t.deepEqual(finalPushDeviceId.value, testData.existingPushDeviceId ? testData.existingPushDeviceId.value : null);
+  t.deepEqual(finalEmailProfile.emailAddress, testData.emailAddress);
+  t.deepEqual(finalEmailProfile.emailAuthHash, testData.emailAuthHash);
+  t.deepEqual(finalEmailProfile.emailId, testData.newCreatedEmailId);
+}
+
+test("No push subscription, no email, first setEmail call", async t => {
+  const testData = {
+    emailAddress: "test@example.com",
+    existingPushDeviceId: null,
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+  await TestEnvironment.initialize();
+
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+});
+
+test("No push subscription, existing identical email, refreshing setEmail call", async t => {
+  const testData = {
+    emailAddress: "test@example.com",
+    existingPushDeviceId: null,
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+  await TestEnvironment.initialize();
+
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+
+  // The second call simulates a new page view that sets the same email
+  // Should not change anything
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+});
+
+test("No push subscription, existing different email, updating setEmail call", async t => {
+  let testData = {
+    emailAddress: "test@example.com",
+    existingPushDeviceId: null,
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+  await TestEnvironment.initialize();
+
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+
+  const newTestData = {
+    emailAddress: "new-test@example.com",
+    existingPushDeviceId: null,
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+
+  await setEmailTest(t, newTestData, SetEmailRequestType.Create);
+});
+
+test("Existing push subscription, no email, first setEmail call", async t => {
+  let testData = {
+    emailAddress: "test@example.com",
+    existingPushDeviceId: Uuid.generate(),
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+  await TestEnvironment.initialize();
+
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+});
+
+test("Existing push subscription, existing identical email, refreshing setEmail call", async t => {
+  let testData = {
+    emailAddress: "test@example.com",
+    existingPushDeviceId: Uuid.generate(),
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+  await TestEnvironment.initialize();
+
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+});
+
+
+test("Existing push subscription, existing different email, updating setEmail call", async t => {
+  let testData = {
+    emailAddress: "test@example.com",
+    existingPushDeviceId: Uuid.generate(),
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+  await TestEnvironment.initialize();
+
+  await setEmailTest(t, testData, SetEmailRequestType.Create);
+
+  const newTestData = {
+    emailAddress: "new-test@example.com",
+    existingPushDeviceId: testData.existingPushDeviceId,
+    emailAuthHash: undefined,
+    newCreatedEmailId: Uuid.generate()
+  };
+
+  expectPushRecordUpdateRequest(
+    t,
+    newTestData.existingPushDeviceId,
+    newTestData.newCreatedEmailId,
+    newTestData.emailAddress,
+    Uuid.generate(),
+  );
+
+  await setEmailTest(t, newTestData, SetEmailRequestType.Create);
+});
+
+test(
+  "Existing push subscription, existing identical email, with emailAuthHash, refreshing setEmail call",
+  async t => {
+    let testData = {
+      emailAddress: "test@example.com",
+      existingPushDeviceId: Uuid.generate(),
+      emailAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
+      newCreatedEmailId: Uuid.generate()
+    };
+    await TestEnvironment.initialize();
+
+    await setEmailTest(t, testData, SetEmailRequestType.Create);
+
+    const finalEmailProfile = await Database.getEmailProfile();
+    // On this second call, because the first call saved an email address / id, this next call will be a PUT update call
+    await setEmailTest(t, testData, SetEmailRequestType.Update);
+});

@@ -177,11 +177,12 @@ export default class OneSignalApi {
     emailProfile: EmailProfile,
     pushId?: Uuid
   ): Promise<Uuid> {
-    const response = await OneSignalApi.post(`${appConfig.appId.value}/players`, {
+    const response = await OneSignalApi.post(`players`, {
+      app_id: appConfig.appId.value,
       device_type: 11,
       identifier: emailProfile.emailAddress,
-      device_player_id: pushId ? pushId.value : null,
-      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
+      device_player_id: (pushId && pushId.value) ? pushId.value : undefined,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
     });
     if (response && response.success) {
       return new Uuid(response.id);
@@ -195,11 +196,11 @@ export default class OneSignalApi {
     emailProfile: EmailProfile,
     deviceId?: Uuid
   ): Promise<Uuid> {
-    const response = await OneSignalApi.put(`${appConfig.appId.value}/players/${emailProfile.emailId.value}`, {
-      device_type: 11,
+    const response = await OneSignalApi.put(`players/${emailProfile.emailId.value}`, {
+      app_id: appConfig.appId.value,
       identifier: emailProfile.emailAddress,
-      device_player_id: deviceId ? deviceId.value : null,
-      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
+      device_player_id: (deviceId && deviceId.value) ? deviceId.value : undefined,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
     });
     if (response && response.success) {
       return new Uuid(response.id);
@@ -209,9 +210,10 @@ export default class OneSignalApi {
   }
 
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: Uuid): Promise<boolean> {
-    const response = await OneSignalApi.post(`${appConfig.appId.value}/players/${deviceId.value}/email_logout`, {
+    const response = await OneSignalApi.post(`players/${deviceId.value}/email_logout`, {
+      app_id: appConfig.appId.value,
       parent_player_id: emailProfile.emailId.value,
-      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : null
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
     });
     if (response && response.success) {
       return true;
