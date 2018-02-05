@@ -714,6 +714,20 @@ export default class OneSignal {
   }
 
   /**
+   * Returns a promise that resolves to the stored OneSignal email ID if one is set; otherwise null.
+   * @param callback A function accepting one parameter for the OneSignal email ID.
+   * @PublicApi
+   */
+  static async getEmailId(callback?: Action<string>): Promise<string> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('getEmailId', callback);
+    const emailProfile = await Database.getEmailProfile();
+    const emailId = emailProfile.emailId;
+    executeCallback(callback, emailId.value);
+    return emailId.value;
+  }
+
+  /**
    * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
    * @param callback A function accepting one parameter for the OneSignal user ID.
    * @PublicApi
