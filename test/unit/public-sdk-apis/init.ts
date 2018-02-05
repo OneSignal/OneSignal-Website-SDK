@@ -71,7 +71,7 @@ async function expectUserSessionCountUpdateRequest(
 
 test("email session should be updated on first page view", async t => {
   const testData = {
-    pushDevicePlayerId: Uuid.generate()
+    emailPlayerId: Uuid.generate()
   };
   await TestEnvironment.initialize();
 
@@ -85,7 +85,7 @@ test("email session should be updated on first page view", async t => {
   sessionManager.setPageViewCount(1);
   t.true(sessionManager.isFirstPageView());
 
-  expectUserSessionCountUpdateRequest(t, testData.pushDevicePlayerId);
+  expectUserSessionCountUpdateRequest(t, testData.emailPlayerId);
 
   await InitHelper.updateEmailSessionCount();
 });
