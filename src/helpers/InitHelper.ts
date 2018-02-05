@@ -140,6 +140,15 @@ export default class InitHelper {
       }
     }
 
+    InitHelper.updateEmailSessionCount();
+
+    OneSignal.context.cookieSyncer.install();
+
+    InitHelper.showPromptsFromWebConfigEditor();
+  }
+
+  public static async updateEmailSessionCount() {
+    const context: Context = OneSignal.context;
     /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
@@ -147,10 +156,6 @@ export default class InitHelper {
         OneSignalApi.updateUserSession(emailProfile.emailId, new EmailDeviceRecord(null));
       }
     }
-
-    OneSignal.context.cookieSyncer.install();
-
-    InitHelper.showPromptsFromWebConfigEditor();
   }
 
   private static async showPromptsFromWebConfigEditor() {
