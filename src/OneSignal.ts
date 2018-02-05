@@ -62,6 +62,7 @@ import ConfigManager from './managers/ConfigManager';
 import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
 import TimeoutError from './errors/TimeoutError';
+import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 
 
 export default class OneSignal {
@@ -865,6 +866,7 @@ export default class OneSignal {
   static checkAndWipeUserSubscription = function () { }
   static crypto = Crypto;
   static DeviceRecord = DeviceRecord;
+  static EmailDeviceRecord = EmailDeviceRecord;
 
   static notificationPermission = NotificationPermission;
 
