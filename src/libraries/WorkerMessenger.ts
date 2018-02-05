@@ -191,8 +191,14 @@ export class WorkerMessenger {
     log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
   }
 
-  async onWorkerMessageReceivedFromPage(event: ServiceWorkerMessageEvent) {
+  onWorkerMessageReceivedFromPage(event: ServiceWorkerMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
+
+    /* If this message doesn't contain our expected fields, discard the message */
+    if (!data || !data.command || !data.payload) {
+      return;
+    }
+
     const listenerRecords = this.replies.findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
@@ -221,8 +227,14 @@ export class WorkerMessenger {
   message topic. If no one is listening to the message, it is discarded;
   otherwise, the listener callback is executed.
   */
-  async onPageMessageReceivedFromServiceWorker(event: ServiceWorkerMessageEvent) {
+  onPageMessageReceivedFromServiceWorker(event: ServiceWorkerMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
+
+    /* If this message doesn't contain our expected fields, discard the message */
+    if (!data || !data.command || !data.payload) {
+      return;
+    }
+
     const listenerRecords = this.replies.findListenersForMessage(data.command);
     const listenersToRemove = [];
     const listenersToCall = [];
