@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test from "ava";
+import test, { TestContext, Context } from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/OneSignal';
 import * as nock from 'nock';
@@ -7,6 +7,7 @@ import Database from '../../../src/services/Database';
 import { EmailProfile } from "../../../src/models/EmailProfile";
 import { Uuid } from '../../../src/models/Uuid';
 import { Subscription } from '../../../src/models/Subscription';
+import Context from 'ava';
 
 test.beforeEach(t => {
   t.context.simpleTags = {
@@ -51,6 +52,24 @@ test.beforeEach(t => {
   t.context.tagsToCheckDeepEqual = Object.keys(t.context.sentTags).filter(x => t.context.expectedTagsUnsent.concat(['string', 'false']).indexOf(x) < 0);
 });
 
+async function expectPushRecordTagUpdateRequest(
+  t: TestContext & Context<any>,
+  pushDevicePlayerId: Uuid,
+) {
+  nock('https://onesignal.com')
+    .put(`/api/v1/players/${pushDevicePlayerId.value}`)
+    .reply(200, (uri, requestBody) => {
+      t.deepEqual(
+        requestBody,
+        JSON.stringify({
+          app_id: null,
+          tags: t.context.simpleTags,
+        })
+      );
+      return { "success":true };
+    });
+}
+
 test("sendTags sends to email record and push record", async t => {
   await TestEnvironment.initialize();
 
@@ -64,26 +83,8 @@ test("sendTags sends to email record and push record", async t => {
   await Database.setSubscription(subscription);
 
   await Database.setEmailProfile(emailProfile);
-  const emailMock = nock('https://onesignal.com')
-  .put(`/api/v1/players/${emailProfile.emailId}`)
-  .reply(200, (uri, requestBody) => {
-    t.deepEqual(
-      JSON.parse(requestBody),
-      { app_id: null, tags: t.context.simpleTags },
-    );
-    return {};
-  });
-
-  const pushMock = nock('https://onesignal.com')
-  .put(`/api/v1/players/${subscription.deviceId}`)
-  .reply(200, (uri, requestBody) => {
-    t.deepEqual(
-      JSON.parse(requestBody),
-      { app_id: null, tags: t.context.simpleTags },
-    );
-    return {};
-  });
-
+  expectPushRecordTagUpdateRequest(t, emailProfile.emailId);
+  expectPushRecordTagUpdateRequest(t, subscription.deviceId);
   await OneSignal.sendTags(t.context.simpleTags);
 });
 
@@ -99,15 +100,6 @@ test("sendTags sends to push record only without email", async t => {
   subscription.deviceId = new Uuid("55b9bc29-5f07-48b9-b85d-7e6efe2396fb");
   await Database.setSubscription(subscription);
 
-  const pushMock = nock('https://onesignal.com')
-  .put(`/api/v1/players/${subscription.deviceId}`)
-  .reply(200, (uri, requestBody) => {
-    t.deepEqual(
-      JSON.parse(requestBody),
-      { app_id: null, tags: t.context.simpleTags },
-    );
-    return {};
-  });
-
+  expectPushRecordTagUpdateRequest(t, subscription.deviceId);
   await OneSignal.sendTags(t.context.simpleTags);
 });

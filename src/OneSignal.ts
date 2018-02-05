@@ -204,13 +204,14 @@ export default class OneSignal {
     const emailProfile = await Database.getEmailProfile();
     const { deviceId } = await Database.getSubscription();
 
-    if (!emailProfile.emailId) {
+    if (!emailProfile.emailId || !emailProfile.emailId.value) {
       log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return;
     }
 
     if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
       log.warn("Failed to logout email.");
+      return;
     }
 
     await Database.setEmailProfile(new EmailProfile());
