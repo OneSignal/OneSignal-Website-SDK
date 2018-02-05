@@ -168,15 +168,16 @@ export default class OneSignal {
     if (
       /* If we are subscribed to web push */
       deviceId && deviceId.value &&
-      /* And if we previously saved a player ID and it's different from the new returned ID */
       (
+        /* And if we previously saved an email ID and it's different from the new returned ID */
         (
-          existingEmailProfile.emailId &&
+          !existingEmailProfile.emailId ||
+          !existingEmailProfile.emailId.value ||
           existingEmailProfile.emailId.value !== newEmailProfile.emailId.value
         ) ||
         /* Or if we previously saved an email and the email changed */
         (
-          existingEmailProfile.emailAddress &&
+          !existingEmailProfile.emailAddress ||
           newEmailProfile.emailAddress !== existingEmailProfile.emailAddress
         )
       )
@@ -530,7 +531,7 @@ export default class OneSignal {
     const { appId } = await Database.getAppConfig();
 
     const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.emailId) {
+    if (emailProfile.emailId && emailProfile.emailId.value) {
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
         tags: tags
       });

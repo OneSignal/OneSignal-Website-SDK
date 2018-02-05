@@ -4,7 +4,7 @@ import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/OneSignal';
 import * as nock from 'nock';
 import Database from '../../../src/services/Database';
-import { EmailProfile } from "../../../src/models/EmailProfile";
+import { EmailProfile } from '../../../src/models/EmailProfile';
 import { Uuid } from '../../../src/models/Uuid';
 import { Subscription } from '../../../src/models/Subscription';
 import Context from 'ava';
@@ -91,14 +91,12 @@ test("sendTags sends to email record and push record", async t => {
 test("sendTags sends to push record only without email", async t => {
   await TestEnvironment.initialize();
 
-  const emailProfile = new EmailProfile();
-  emailProfile.emailId = new Uuid("dafb31e3-19a5-473c-b319-62082bd696fb");
-  emailProfile.emailAddress = "test@example.com";
-  emailProfile.emailAuthHash = "email-auth-hash";
-
   const subscription = new Subscription();
   subscription.deviceId = new Uuid("55b9bc29-5f07-48b9-b85d-7e6efe2396fb");
   await Database.setSubscription(subscription);
+
+  // Without this, emailProfile.emailId is undefined, but in real scenarios it is Uuid { value: null}
+  await Database.setEmailProfile(new EmailProfile());
 
   expectPushRecordTagUpdateRequest(t, subscription.deviceId);
   await OneSignal.sendTags(t.context.simpleTags);

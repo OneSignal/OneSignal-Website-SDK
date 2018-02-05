@@ -139,45 +139,60 @@ async function expectPushRecordUpdateRequest(
     });
 }
 
-enum SetEmailRequestType {
-  Update,
-  Create
-}
-
 interface SetEmailTestData {
-  emailAddress: string;
+  existingEmailAddress: string;
+  newEmailAddress: string; /* Email address used for setEmail */
   existingPushDeviceId: Uuid;
   emailAuthHash: string;
-  newCreatedEmailId: Uuid;
+  existingEmailId: Uuid;
+  newEmailId: Uuid; /* Returned by the create or update email record call */
 }
 
 async function setEmailTest(
   t: TestContext & Context<any>,
-  testData: SetEmailTestData,
-  setEmailRequestType: SetEmailRequestType
+  testData: SetEmailTestData
 ) {
 
-  /* If test data has an email auth has, fake the config parameter */
-  if (testData.emailAuthHash) {
-    const appConfig = await Database.getAppConfig();
-    appConfig.emailAuthRequired = true;
-    await Database.setAppConfig(appConfig);
+  if (testData.existingEmailAddress) {
+    const emailProfile = await Database.getEmailProfile();
+    emailProfile.emailAddress = testData.existingEmailAddress;
+    await Database.setEmailProfile(emailProfile);
   }
 
   /* If an existing push device ID is set, create a fake one here */
   if (testData.existingPushDeviceId) {
-    const subscription = new Subscription();
+    const subscription = await Database.getSubscription();
     subscription.deviceId = testData.existingPushDeviceId;
     await Database.setSubscription(subscription);
   }
 
-  if (setEmailRequestType === SetEmailRequestType.Create) {
+  /* If test data has an email auth hash, fake the config parameter */
+  if (testData.emailAuthHash) {
+    const appConfig = await Database.getAppConfig();
+    appConfig.emailAuthRequired = true;
+    await Database.setAppConfig(appConfig);
+
+    const emailProfile = await Database.getEmailProfile();
+    emailProfile.emailAuthHash = testData.emailAuthHash;
+    await Database.setEmailProfile(emailProfile);
+  }
+
+  if (testData.existingEmailId) {
+    const emailProfile = await Database.getEmailProfile();
+    emailProfile.emailId = testData.existingEmailId;
+    await Database.setEmailProfile(emailProfile);
+  }
+
+  // Mock the one or two requests we expect to occur
+  const isUpdateRequest = testData.emailAuthHash && testData.existingEmailId;
+
+  if (!isUpdateRequest) {
     expectEmailRecordCreationRequest(
       t,
-      testData.emailAddress,
+      testData.newEmailAddress,
       testData.existingPushDeviceId,
       testData.emailAuthHash,
-      testData.newCreatedEmailId
+      testData.newEmailId
     );
   } else {
     const { emailId: existingEmailId } = await Database.getEmailProfile();
@@ -185,15 +200,26 @@ async function setEmailTest(
     expectEmailRecordUpdateRequest(
       t,
       existingEmailId,
-      testData.emailAddress,
+      testData.newEmailAddress,
       testData.existingPushDeviceId,
       testData.emailAuthHash,
-      testData.newCreatedEmailId
+      testData.newEmailId
+    );
+  }
+
+  if (!(testData.existingEmailId === testData.newEmailId &&
+      testData.existingEmailAddress === testData.newEmailAddress)) {
+    expectPushRecordUpdateRequest(
+      t,
+      newTestData.existingPushDeviceId,
+      newTestData.newCreatedEmailId,
+      newTestData.emailAddress,
+      Uuid.generate(),
     );
   }
 
   await OneSignal.setEmail(
-    testData.emailAddress,
+    testData.newEmailAddress,
     testData.emailAuthHash ?
       { emailAuthHash: testData.emailAuthHash } :
       undefined
@@ -203,9 +229,9 @@ async function setEmailTest(
   const finalEmailProfile = await Database.getEmailProfile();
 
   t.deepEqual(finalPushDeviceId.value, testData.existingPushDeviceId ? testData.existingPushDeviceId.value : null);
-  t.deepEqual(finalEmailProfile.emailAddress, testData.emailAddress);
+  t.deepEqual(finalEmailProfile.emailAddress, testData.newEmailAddress);
   t.deepEqual(finalEmailProfile.emailAuthHash, testData.emailAuthHash);
-  t.deepEqual(finalEmailProfile.emailId, testData.newCreatedEmailId);
+  t.deepEqual(finalEmailProfile.emailId, testData.newEmailId);
 }
 
 test("No push subscription, no email, first setEmail call", async t => {
