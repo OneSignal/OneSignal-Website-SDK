@@ -3,6 +3,8 @@ export async function throws(testContext, func, error) {
     await func();
     testContext.fail('expected exception not caught');
   } catch (e) {
+    console.log("Error:", e);
+    console.log("Expected Error:", error);
     testContext.truthy(e instanceof error);
   }
 }
