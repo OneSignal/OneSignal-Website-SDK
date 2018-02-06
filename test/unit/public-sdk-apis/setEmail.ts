@@ -152,6 +152,7 @@ async function setEmailTest(
   t: TestContext & Context<any>,
   testData: SetEmailTestData
 ) {
+  await TestEnvironment.initialize();
 
   if (testData.existingEmailAddress) {
     const emailProfile = await Database.getEmailProfile();
@@ -186,7 +187,18 @@ async function setEmailTest(
   // Mock the one or two requests we expect to occur
   const isUpdateRequest = testData.emailAuthHash && testData.existingEmailId;
 
-  if (!isUpdateRequest) {
+  if (isUpdateRequest) {
+    // Means we're making a PUT call to /players/<id>
+    expectEmailRecordUpdateRequest(
+      t,
+      testData.existingEmailId,
+      testData.newEmailAddress,
+      testData.existingPushDeviceId,
+      testData.emailAuthHash,
+      testData.newEmailId
+    );
+  } else {
+    // Means we're making a POST call to /players
     expectEmailRecordCreationRequest(
       t,
       testData.newEmailAddress,
@@ -194,26 +206,25 @@ async function setEmailTest(
       testData.emailAuthHash,
       testData.newEmailId
     );
-  } else {
-    const { emailId: existingEmailId } = await Database.getEmailProfile();
-
-    expectEmailRecordUpdateRequest(
-      t,
-      existingEmailId,
-      testData.newEmailAddress,
-      testData.existingPushDeviceId,
-      testData.emailAuthHash,
-      testData.newEmailId
-    );
   }
 
-  if (!(testData.existingEmailId === testData.newEmailId &&
-      testData.existingEmailAddress === testData.newEmailAddress)) {
+  if (
+      testData.existingPushDeviceId &&
+      !(
+        testData.existingEmailId === testData.newEmailId &&
+        testData.existingEmailAddress === testData.newEmailAddress
+      )
+    ) {
+    /*
+      Expect a second call to be made if:
+        - We're subscribed to web push (existing player ID)
+        - The email ID or plain text email address changes from what we have saved, or if neither was ever saved
+    */
     expectPushRecordUpdateRequest(
       t,
-      newTestData.existingPushDeviceId,
-      newTestData.newCreatedEmailId,
-      newTestData.emailAddress,
+      testData.existingPushDeviceId,
+      testData.newEmailId,
+      testData.newEmailAddress,
       Uuid.generate(),
     );
   }
@@ -235,123 +246,90 @@ async function setEmailTest(
 }
 
 test("No push subscription, no email, first setEmail call", async t => {
-  const testData = {
-    emailAddress: "test@example.com",
+  const testData: SetEmailTestData = {
+    existingEmailAddress: null,
+    newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
     emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
+    existingEmailId: null,
+    newEmailId: Uuid.generate()
   };
-  await TestEnvironment.initialize();
-
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData);
 });
 
 test("No push subscription, existing identical email, refreshing setEmail call", async t => {
-  const testData = {
-    emailAddress: "test@example.com",
+  const emailId = Uuid.generate();
+  const testData: SetEmailTestData = {
+    existingEmailAddress: "test@example.com",
+    newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
     emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
+    existingEmailId: emailId,
+    newEmailId: emailId
   };
-  await TestEnvironment.initialize();
-
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
-
-  // The second call simulates a new page view that sets the same email
-  // Should not change anything
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData);
 });
 
 test("No push subscription, existing different email, updating setEmail call", async t => {
-  let testData = {
-    emailAddress: "test@example.com",
+  const testData: SetEmailTestData = {
+    existingEmailAddress: "existing-different-email-address@example.com",
+    newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
     emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
+    existingEmailId: Uuid.generate(),
+    newEmailId: Uuid.generate()
   };
-  await TestEnvironment.initialize();
-
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
-
-  const newTestData = {
-    emailAddress: "new-test@example.com",
-    existingPushDeviceId: null,
-    emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
-  };
-
-  await setEmailTest(t, newTestData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData);
 });
 
 test("Existing push subscription, no email, first setEmail call", async t => {
-  let testData = {
-    emailAddress: "test@example.com",
+  const testData: SetEmailTestData = {
+    existingEmailAddress: null,
+    newEmailAddress: "test@example.com",
     existingPushDeviceId: Uuid.generate(),
     emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
+    existingEmailId: null,
+    newEmailId: Uuid.generate()
   };
-  await TestEnvironment.initialize();
-
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData);
 });
 
 test("Existing push subscription, existing identical email, refreshing setEmail call", async t => {
-  let testData = {
-    emailAddress: "test@example.com",
+  const emailId = Uuid.generate();
+  const testData: SetEmailTestData = {
+    existingEmailAddress: "test@example.com",
+    newEmailAddress: "test@example.com",
     existingPushDeviceId: Uuid.generate(),
     emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
+    existingEmailId: emailId,
+    newEmailId: emailId
   };
-  await TestEnvironment.initialize();
-
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData);
 });
 
 
 test("Existing push subscription, existing different email, updating setEmail call", async t => {
-  let testData = {
-    emailAddress: "test@example.com",
+  const testData: SetEmailTestData = {
+    existingEmailAddress: "existing-different-email@example.com",
+    newEmailAddress: "test@example.com",
     existingPushDeviceId: Uuid.generate(),
     emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
+    existingEmailId: Uuid.generate(),
+    newEmailId: Uuid.generate(),
   };
-  await TestEnvironment.initialize();
-
-  await setEmailTest(t, testData, SetEmailRequestType.Create);
-
-  const newTestData = {
-    emailAddress: "new-test@example.com",
-    existingPushDeviceId: testData.existingPushDeviceId,
-    emailAuthHash: undefined,
-    newCreatedEmailId: Uuid.generate()
-  };
-
-  expectPushRecordUpdateRequest(
-    t,
-    newTestData.existingPushDeviceId,
-    newTestData.newCreatedEmailId,
-    newTestData.emailAddress,
-    Uuid.generate(),
-  );
-
-  await setEmailTest(t, newTestData, SetEmailRequestType.Create);
+  await setEmailTest(t, testData);
 });
 
 test(
   "Existing push subscription, existing identical email, with emailAuthHash, refreshing setEmail call",
   async t => {
-    let testData = {
-      emailAddress: "test@example.com",
+    const testData: SetEmailTestData = {
+      existingEmailAddress: "existing-different-email@example.com",
+      newEmailAddress: "test@example.com",
       existingPushDeviceId: Uuid.generate(),
       emailAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
-      newCreatedEmailId: Uuid.generate()
+      existingEmailId: Uuid.generate(),
+      newEmailId: Uuid.generate(),
     };
-    await TestEnvironment.initialize();
-
-    await setEmailTest(t, testData, SetEmailRequestType.Create);
-
-    const finalEmailProfile = await Database.getEmailProfile();
-    // On this second call, because the first call saved an email address / id, this next call will be a PUT update call
-    await setEmailTest(t, testData, SetEmailRequestType.Update);
+    await setEmailTest(t, testData);
 });

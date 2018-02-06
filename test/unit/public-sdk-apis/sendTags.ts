@@ -7,7 +7,6 @@ import Database from '../../../src/services/Database';
 import { EmailProfile } from '../../../src/models/EmailProfile';
 import { Uuid } from '../../../src/models/Uuid';
 import { Subscription } from '../../../src/models/Subscription';
-import Context from 'ava';
 
 test.beforeEach(t => {
   t.context.simpleTags = {
