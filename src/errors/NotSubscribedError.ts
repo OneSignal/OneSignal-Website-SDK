@@ -17,7 +17,7 @@ export class NotSubscribedError extends OneSignalError {
         super('This operation can only be performed after the user is subscribed.');
         break;
       case NotSubscribedReason.NoEmailSet:
-        super('No email has been set yet.');
+        super('No email is currently set.');
         break;
       case NotSubscribedReason.OptedOut:
         super('The user has manually opted out of receiving of notifications. This operation can only be performed after the user is fully resubscribed.');

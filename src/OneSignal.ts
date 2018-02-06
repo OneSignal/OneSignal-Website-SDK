@@ -211,6 +211,11 @@ export default class OneSignal {
       return;
     }
 
+    if (!deviceId || !deviceId.value) {
+      log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+      return;
+    }
+
     if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
       log.warn("Failed to logout email.");
       return;

@@ -144,6 +144,27 @@ export class SubscriptionManager {
     return new Promise(resolve => window.Notification.requestPermission(resolve));
   }
 
+  /**
+   * Called after registering a subscription with OneSignal to associate this subscription with an
+   * email record if one exists.
+   */
+  public async associateSubscriptionWithEmail(newDeviceId: Uuid) {
+    const emailProfile = await Database.getEmailProfile();
+    if (!emailProfile.emailId || !emailProfile.emailId.value) {
+      return;
+    }
+
+    // Update the push device record with a reference to the new email ID and email address
+    await OneSignalApi.updatePlayer(
+      this.config.appId,
+      newDeviceId,
+      {
+        parent_player_id: emailProfile.emailId.value,
+        email: emailProfile.emailAddress
+      }
+    );
+  }
+
   public async registerSubscriptionWithOneSignal(pushSubscription: RawPushSubscription): Promise<Subscription> {
     pushSubscription = RawPushSubscription.deserialize(pushSubscription);
     let deviceRecord = new PushDeviceRecord(pushSubscription);
@@ -178,6 +199,9 @@ export class SubscriptionManager {
       newDeviceId = id;
       log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
     }
+
+    await this.associateSubscriptionWithEmail(newDeviceId);
+
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       Event.trigger(OneSignal.EVENTS.REGISTERED);
     }
