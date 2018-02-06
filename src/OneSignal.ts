@@ -149,7 +149,7 @@ export default class OneSignal {
       newEmailProfile.emailAuthHash = options.emailAuthHash
     }
 
-    if (existingEmailProfile.emailId && appConfig.emailAuthRequired) {
+    if (existingEmailProfile.emailId && existingEmailProfile.emailId.value && appConfig.emailAuthRequired) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
         appConfig,
