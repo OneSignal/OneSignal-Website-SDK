@@ -16,7 +16,7 @@ export default class CookieSyncer {
 
     try {
       const appId = this.context.appConfig.appId.value;
-      const truncatedAppId = appId.replace(/-/g, '').substr(0, 15);
+      const truncatedAppId = appId.replace(/-/g, '').substr(0, 15).toLowerCase();
       return `os!${truncatedAppId}`;
     } catch (e) {
       return defaultId;
