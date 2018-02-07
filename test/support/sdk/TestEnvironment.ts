@@ -242,7 +242,7 @@ export class TestEnvironment {
 
   static getFakeAppConfig(): AppConfig {
     return {
-      appId: new Uuid('307218b1-c450-457d-b6cd-894060e517ee'),
+      appId: Uuid.generate(),
       subdomain: undefined,
       httpUseOneSignalCom: false,
       cookieSyncEnabled: true,
