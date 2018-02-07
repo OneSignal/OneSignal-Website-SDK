@@ -13,7 +13,6 @@
     "heir": "git://github.com/jasonpang/heir.git#754e476f7cc62b258a0b69deddd243fde41fd072",
     "jsdom": "^9.12.0",
     "jsonp": "github:OneSignal/jsonp#onesignal",
-    "keccak": "github:OneSignal/keccak",
     "loglevel": "https://registry.npmjs.org/loglevel/-/loglevel-1.4.1.tgz",
     "morgan": "https://registry.npmjs.org/morgan/-/morgan-1.7.0.tgz",
     "node-sass": "^4.5.3",

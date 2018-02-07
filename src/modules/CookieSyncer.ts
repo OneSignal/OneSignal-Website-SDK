@@ -1,7 +1,6 @@
 import * as log from 'loglevel';
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
-import * as createKeccakHash from 'keccak';
 
 export default class CookieSyncer {
   private isFeatureEnabled: boolean;
@@ -17,9 +16,8 @@ export default class CookieSyncer {
 
     try {
       const appId = this.context.appConfig.appId.value;
-      const outputByteLength = 60 / 8; // 15 characters max, or 60 bits
-      const digest = createKeccakHash('shake256').update(appId).squeeze(outputByteLength, 'hex');
-      return `os!${digest}`;
+      const truncatedAppId = appId.replace(/-/g, '').substr(0, 15);
+      return `os!${truncatedAppId}`;
     } catch (e) {
       return defaultId;
     }
