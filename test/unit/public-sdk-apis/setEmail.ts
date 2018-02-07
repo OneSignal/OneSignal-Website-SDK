@@ -145,6 +145,7 @@ interface SetEmailTestData {
   existingPushDeviceId: Uuid;
   emailAuthHash: string;
   existingEmailId: Uuid;
+  requireEmailAuth: boolean;
   newEmailId: Uuid; /* Returned by the create or update email record call */
 }
 
@@ -167,12 +168,14 @@ async function setEmailTest(
     await Database.setSubscription(subscription);
   }
 
-  /* If test data has an email auth hash, fake the config parameter */
-  if (testData.emailAuthHash) {
+  if (testData.requireEmailAuth) {
     const appConfig = await Database.getAppConfig();
     appConfig.emailAuthRequired = true;
     await Database.setAppConfig(appConfig);
+  }
 
+  /* If test data has an email auth hash, fake the config parameter */
+  if (testData.emailAuthHash) {
     const emailProfile = await Database.getEmailProfile();
     emailProfile.emailAuthHash = testData.emailAuthHash;
     await Database.setEmailProfile(emailProfile);
@@ -252,6 +255,7 @@ test("No push subscription, no email, first setEmail call", async t => {
     existingPushDeviceId: null,
     emailAuthHash: undefined,
     existingEmailId: null,
+    requireEmailAuth: false,
     newEmailId: Uuid.generate()
   };
   await setEmailTest(t, testData);
@@ -265,6 +269,7 @@ test("No push subscription, existing identical email, refreshing setEmail call",
     existingPushDeviceId: null,
     emailAuthHash: undefined,
     existingEmailId: emailId,
+    requireEmailAuth: false,
     newEmailId: emailId
   };
   await setEmailTest(t, testData);
@@ -277,6 +282,7 @@ test("No push subscription, existing different email, updating setEmail call", a
     existingPushDeviceId: null,
     emailAuthHash: undefined,
     existingEmailId: Uuid.generate(),
+    requireEmailAuth: false,
     newEmailId: Uuid.generate()
   };
   await setEmailTest(t, testData);
@@ -289,6 +295,7 @@ test("Existing push subscription, no email, first setEmail call", async t => {
     existingPushDeviceId: Uuid.generate(),
     emailAuthHash: undefined,
     existingEmailId: null,
+    requireEmailAuth: false,
     newEmailId: Uuid.generate()
   };
   await setEmailTest(t, testData);
@@ -302,6 +309,7 @@ test("Existing push subscription, existing identical email, refreshing setEmail 
     existingPushDeviceId: Uuid.generate(),
     emailAuthHash: undefined,
     existingEmailId: emailId,
+    requireEmailAuth: false,
     newEmailId: emailId
   };
   await setEmailTest(t, testData);
@@ -315,6 +323,7 @@ test("Existing push subscription, existing different email, updating setEmail ca
     existingPushDeviceId: Uuid.generate(),
     emailAuthHash: undefined,
     existingEmailId: Uuid.generate(),
+    requireEmailAuth: false,
     newEmailId: Uuid.generate(),
   };
   await setEmailTest(t, testData);
@@ -329,7 +338,29 @@ test(
       existingPushDeviceId: Uuid.generate(),
       emailAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
       existingEmailId: Uuid.generate(),
+      requireEmailAuth: true,
       newEmailId: Uuid.generate(),
     };
     await setEmailTest(t, testData);
+});
+
+test(
+  "require email auth without emailAuthHash setEmail call",
+  async t => {
+    const testData: SetEmailTestData = {
+      existingEmailAddress: "existing-different-email@example.com",
+      newEmailAddress: "test@example.com",
+      existingPushDeviceId: Uuid.generate(),
+      emailAuthHash: undefined,
+      existingEmailId: Uuid.generate(),
+      requireEmailAuth: true,
+      newEmailId: Uuid.generate(),
+    };
+
+    try {
+      await OneSignal.setEmail(null);
+      t.fail('expected exception not caught');
+    } catch (e) {
+      t.truthy(e instanceof InvalidArgumentError);
+    }
 });

@@ -142,6 +142,10 @@ export default class OneSignal {
     const { deviceId } = await Database.getSubscription();
     const existingEmailProfile = await Database.getEmailProfile();
 
+    if (appConfig.emailAuthRequired && !(options && options.emailAuthHash)) {
+      throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Empty);
+    }
+
     const newEmailProfile = new EmailProfile();
     newEmailProfile.emailId = existingEmailProfile.emailId;
     newEmailProfile.emailAddress = email;
