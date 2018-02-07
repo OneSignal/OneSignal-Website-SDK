@@ -1,6 +1,7 @@
 import * as log from 'loglevel';
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
+import * as createKeccakHash from 'keccak';
 
 export default class CookieSyncer {
   private isFeatureEnabled: boolean;
@@ -11,8 +12,17 @@ export default class CookieSyncer {
     this.isFeatureEnabled = isFeatureEnabled;
   }
 
-  static get PUBLISHER_ID(): string {
-    return 'os!onesignalwebsdk';
+  get PUBLISHER_ID(): string {
+    const defaultId = "os!os";
+
+    try {
+      const appId = this.context.appConfig.appId.value;
+      const outputByteLength = 60 / 8; // 15 characters max, or 60 bits
+      const digest = createKeccakHash('shake256').update(appId).squeeze(outputByteLength, 'hex');
+      return `os!${digest}`;
+    } catch (e) {
+      return defaultId;
+    }
   }
 
   static get SDK_URL(): URL {
@@ -32,7 +42,7 @@ export default class CookieSyncer {
     }
 
     (window as any).Tynt = (window as any).Tynt || [];
-    (window as any).Tynt.push(CookieSyncer.PUBLISHER_ID);
+    (window as any).Tynt.push(this.PUBLISHER_ID);
 
     this.context.dynamicResourceLoader.loadIfNew(ResourceType.Script, CookieSyncer.SDK_URL);
     log.debug('Enabled cookie sync feature.');

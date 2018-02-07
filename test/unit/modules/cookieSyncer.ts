@@ -5,6 +5,7 @@ import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
 import { Uuid } from '../../../src/models/Uuid';
 import Context from '../../../src/models/Context';
+import * as createKeccakHash from 'keccak';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -57,8 +58,15 @@ test("should not run if we are not the top window", async t => {
 });
 
 test("should set global tynt variable with publisher ID", async t => {
+  const context: Context = OneSignal.context;
+  const appId = context.appConfig.appId;
+
+  // The digest is the portion of the publisher ID after the os! prefix
+  // It's limited to 15 characters, so we're this variable hash to obtain a 1-1 mapping from app ID to publisher ID
+  const digest = createKeccakHash('shake256').update(appId.value).squeeze(60 / 8, 'hex');
+
   const cookieSyncer = new CookieSyncer(OneSignal.context, true);
   cookieSyncer.install();
   t.not((window as any).Tynt, undefined);
-  t.deepEqual((window as any).Tynt, ["os!onesignalwebsdk"]);
+  t.deepEqual((window as any).Tynt, [`os!${digest}`]);
 });
