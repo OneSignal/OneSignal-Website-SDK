@@ -55,9 +55,9 @@ test('should not collect pageviews if system clock is out of sync', async t => {
   });
   t.true(OneSignal.context.metricsManager.shouldCollectPageView());
 
-  // Feb 10th should not be okay
+  // Feb 11th should not be okay
   timemachine.config({
-    dateString: "February 10 2018"
+    dateString: "February 11 2018"
   });
   t.false(OneSignal.context.metricsManager.shouldCollectPageView());
 });

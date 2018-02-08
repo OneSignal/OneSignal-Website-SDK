@@ -131,7 +131,7 @@ export default class MetricsManager {
     const date = new Date();
     return (
       (date.getUTCMonth() + 1) <= 2 &&
-      date.getUTCDate() <= 9 &&
+      date.getUTCDate() <= 10 &&
       date.getUTCFullYear() <= 2018 &&
       (date.getUTCMonth() + 1) >= 2 &&
       date.getUTCDate() >= 8 &&
