@@ -153,7 +153,8 @@ export default class ConfigManager {
               cancelButton: serverConfig.config.staticPrompts.fullscreen.cancelButton,
               title: serverConfig.config.staticPrompts.fullscreen.title,
               message: serverConfig.config.staticPrompts.fullscreen.message,
-              caption: serverConfig.config.staticPrompts.fullscreen.caption
+              caption: serverConfig.config.staticPrompts.fullscreen.caption,
+              autoAcceptTitle: serverConfig.config.staticPrompts.fullscreen.autoAcceptTitle,
             }
           },
           welcomeNotification: {

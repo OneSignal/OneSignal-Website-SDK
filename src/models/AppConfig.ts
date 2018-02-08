@@ -283,6 +283,7 @@ export interface ServerAppConfigPrompt {
     acceptButton: string;
     cancelButton: string;
     actionMessage: string;
+    autoAcceptTitle: string;
     customizeTextEnabled: boolean;
   };
 }
