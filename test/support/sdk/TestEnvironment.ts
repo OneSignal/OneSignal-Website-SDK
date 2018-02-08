@@ -331,6 +331,7 @@ export class TestEnvironment {
             acceptButton: "Continue",
             cancelButton: "No Thanks",
             actionMessage: "We'd like to send you notifications for the latest news and updates.",
+            autoAcceptTitle: "Click Allow",
             customizeTextEnabled: true,
           },
         },
