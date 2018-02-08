@@ -3,3 +3,7 @@ declare module "OneSignal" {
     export var on: any;
     export var emit: any;
 }
+
+interface SetEmailOptions {
+  emailAuthHash: string;
+}
