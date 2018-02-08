@@ -195,7 +195,14 @@ export class WorkerMessenger {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
-    if (!data || !data.command || !data.payload) {
+    /* The payload may be null. AMP web push sends commands to our service worker in the format:
+
+       { command: "amp-web-push-subscription-state", payload: null }
+       { command: "amp-web-push-unsubscribe", payload: null }
+       { command: "amp-web-push-subscribe", payload: null }
+
+    */
+    if (!data || !data.command) {
       return;
     }
 
@@ -231,7 +238,7 @@ export class WorkerMessenger {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
-    if (!data || !data.command || !data.payload) {
+    if (!data || !data.command) {
       return;
     }
 
