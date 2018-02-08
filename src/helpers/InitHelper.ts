@@ -29,6 +29,7 @@ import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { PushRegistration } from '../models/PushRegistration';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
+import { PageViewMetricEngagement } from '../managers/MetricsManager';
 
 declare var OneSignal: any;
 
@@ -139,8 +140,8 @@ export default class InitHelper {
     }
 
     OneSignal.context.cookieSyncer.install();
-
     InitHelper.showPromptsFromWebConfigEditor();
+    context.metricsManager.reportPageView();
   }
 
   private static async showPromptsFromWebConfigEditor() {
