@@ -14,6 +14,11 @@ abstract class MetricEvent {
   }
 }
 
+abstract class MetricEngagement {
+  abstract getProfileName();
+  abstract getOperationData();
+}
+
 export enum ApiUsageMetricKind {
   HttpPermissionRequest = 'HttpPermissionRequest'
 }
@@ -31,6 +36,34 @@ export class ApiUsageMetricEvent extends MetricEvent {
     return objectAssign({}, {
       api: this.apiName.toString(),
     }, super.getPropertiesAsJson());
+  }
+}
+
+export class PageViewMetricEngagement extends MetricEngagement {
+  constructor() {
+    super();
+  }
+
+  getProfileName() {
+    return "all_websites";
+  }
+
+  getDateUtc() {
+    const date = new Date();
+    return `${date.getUTCMonth() + 1}_${date.getUTCDate()}_${date.getUTCFullYear()}`;
+  }
+
+  getOperationData() {
+    const payload = {
+      $add: {
+
+      },
+      $ignore_time: true
+    };
+
+    payload[`$add`][`pageview_${this.getDateUtc()}`] = 1;
+
+    return payload;
   }
 }
 
@@ -71,5 +104,39 @@ export default class MetricsManager {
     };
 
     return fetch(`${MetricsManager.MIXPANEL_REPORTING_URL}/track/?data=${queryParams}`, requestOptions);
+  }
+
+  reportEngagement(engagement: MetricEngagement) {
+    if (!this.isEnabled()) {
+      return Promise.resolve(null);
+    }
+
+    let queryParamsData = {
+      $token: this.mixpanelReportingToken,
+      $distinct_id: engagement.getProfileName(),
+    };
+    queryParamsData = objectAssign({}, queryParamsData, engagement.getOperationData());
+    const queryParams = base64Encode(JSON.stringify(queryParamsData));
+
+    const requestOptions = {
+      method: 'GET',
+      headers: new Headers(),
+      cache: 'no-cache',
+    };
+
+    return fetch(`${MetricsManager.MIXPANEL_REPORTING_URL}/engage/?data=${queryParams}`, requestOptions);
+  }
+
+  reportPageView() {
+    const date = new Date();
+    // Collect for one week from feature release date
+    const shouldCollectPageView = (
+      (date.getUTCMonth() + 1) <= 2 &&
+      date.getUTCDate() <= 11 &&
+      date.getUTCFullYear() <= 2018
+    );
+    if (shouldCollectPageView) {
+      this.reportEngagement(new PageViewMetricEngagement());
+    }
   }
 }
