@@ -127,15 +127,21 @@ export default class MetricsManager {
     return fetch(`${MetricsManager.MIXPANEL_REPORTING_URL}/engage/?data=${queryParams}`, requestOptions);
   }
 
-  reportPageView() {
+  shouldCollectPageView() {
     const date = new Date();
-    // Collect for one week from feature release date
-    const shouldCollectPageView = (
+    return (
       (date.getUTCMonth() + 1) <= 2 &&
-      date.getUTCDate() <= 11 &&
-      date.getUTCFullYear() <= 2018
+      date.getUTCDate() <= 9 &&
+      date.getUTCFullYear() <= 2018 &&
+      (date.getUTCMonth() + 1) >= 2 &&
+      date.getUTCDate() >= 8 &&
+      date.getUTCFullYear() >= 2018
     );
-    if (shouldCollectPageView) {
+  }
+
+  reportPageView() {
+    // Collect for a couple days from feature release date
+    if (this.shouldCollectPageView()) {
       this.reportEngagement(new PageViewMetricEngagement());
     }
   }

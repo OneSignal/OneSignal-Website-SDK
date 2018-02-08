@@ -50,7 +50,6 @@ test("should set and get item with expiration", async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
-  debugger;
   TimedLocalStorage.setItem("my-key", "my-value", 3);
   t.deepEqual(TimedLocalStorage.getItem("my-key"), "my-value");
   timemachine.config({
