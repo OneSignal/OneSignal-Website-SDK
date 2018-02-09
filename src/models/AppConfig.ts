@@ -88,7 +88,8 @@ export enum IntegrationKind {
   SquareSpace = 'squarespace',
   Joomla = 'joomla',
   Weebly = 'weebly',
-  Custom = 'custom'
+  Wix = "wix",
+  Custom = 'custom',
 }
 
 export enum NotificationClickMatchBehavior {
