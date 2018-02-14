@@ -26,6 +26,8 @@ test('should support specific browser environments', async t => {
   shouldSupport(t, BrowserUserAgent.FirefoxMacSupported);
   shouldSupport(t, BrowserUserAgent.FirefoxLinuxSupported);
 
+  shouldSupport(t, BrowserUserAgent.EdgeSupported);
+
   shouldSupport(t, BrowserUserAgent.SafariSupportedMac);
 
   shouldSupport(t, BrowserUserAgent.ChromeAndroidSupported);
@@ -58,7 +60,8 @@ test('should not support specific browser environments', async t => {
   shouldNotSupport(t, BrowserUserAgent.iPad);
   shouldNotSupport(t, BrowserUserAgent.iPhone);
 
-  shouldNotSupport(t, BrowserUserAgent.Edge);
+  shouldNotSupport(t, BrowserUserAgent.EdgeUnsupported);
+  shouldNotSupport(t, BrowserUserAgent.EdgeUnsupported2);
   shouldNotSupport(t, BrowserUserAgent.IE11);
 
   shouldNotSupport(t, BrowserUserAgent.FirefoxMobileUnsupported);
