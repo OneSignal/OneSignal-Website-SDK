@@ -101,7 +101,7 @@ export default class Popover {
 
     getPlatformNotificationIcon() {
         if (this.notificationIcons) {
-            if (isChromeLikeBrowser() || Browser.firefox) {
+            if (isChromeLikeBrowser() || Browser.firefox || Browser.msedge) {
                 if (this.notificationIcons.chrome) {
                     return this.notificationIcons.chrome;
                 } else if (this.notificationIcons.firefox) {

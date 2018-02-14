@@ -64,8 +64,12 @@ export function isPushNotificationsSupported() {
   if (browser.ios || (<any>browser).ipod || (<any>browser).iphone || (<any>browser).ipad)
     return false;
 
-  if (browser.msedge || browser.msie)
+  if (browser.msie)
     return false;
+
+    // Microsoft Edge
+  if (browser.msedge && Number(browser.version) >= 17.17063)
+    return true;
 
   // Facebook in-app browser
   if ((userAgent.indexOf("FBAN") > -1) || (userAgent.indexOf("FBAV") > -1)) {
