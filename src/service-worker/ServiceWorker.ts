@@ -15,6 +15,8 @@ import { Uuid } from '../models/Uuid';
 import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
+import { RawPushSubscription } from '../models/RawPushSubscription';
+import { PushRegistration } from '../models/PushRegistration';
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -90,7 +92,9 @@ export class ServiceWorker {
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
-    self.addEventListener('pushsubscriptionchange', ServiceWorker.onPushSubscriptionChange);
+    self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
+      event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
+    });
     /*
       According to
       https://w3c.github.io/ServiceWorker/#run-service-worker-algorithm:
@@ -785,9 +789,60 @@ export class ServiceWorker {
     event.waitUntil(self.clients.claim());
   }
 
-  static onPushSubscriptionChange(event) {
-    // Subscription expired
+  static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
     log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+
+    const appId = await ServiceWorker.getAppId();
+    if (!appId || !appId.value) {
+      // Without an app ID, we can't make any calls
+      return;
+    }
+    const appConfig = await new ConfigManager().getAppConfig({
+      appId: appId.value
+    });
+    if (!appConfig) {
+      // Without a valid app config (e.g. deleted app), we can't make any calls
+      return;
+    }
+    const context = new Context(appConfig);
+
+    // Get our current device ID
+    let { deviceId } = await Database.getSubscription();
+    const deviceIdExists = !!(deviceId && deviceId.value);
+    if (!deviceIdExists && event.oldSubscription) {
+      // We don't have the device ID stored, but we can look it up from our old subscription
+      deviceId = await OneSignalApi.getUserIdFromSubscriptionIdentifier(
+        appId.value,
+        getDeviceTypeForBrowser(),
+        event.oldSubscription.endpoint
+      );
+    }
+
+    // Get our new push subscription
+    let rawPushSubscription: RawPushSubscription;
+
+    // Set it initially by the provided new push subscription
+    const providedNewSubscription = event.newSubscription;
+    if (providedNewSubscription) {
+      rawPushSubscription = RawPushSubscription.setFromW3cSubscription(providedNewSubscription);
+    } else {
+      // Otherwise set our push registration by resubscribing
+      try {
+        rawPushSubscription = await context.subscriptionManager.subscribeFcmFromWorker();
+      } catch (e) {
+        // Let rawPushSubscription be null
+      }
+    }
+    const hasNewSubscription = !!rawPushSubscription;
+
+    if (!deviceIdExists && !hasNewSubscription) {
+      await Database.remove('Ids', 'userId');
+      await Database.remove('Ids', 'registrationId');
+    }
+
+    // rawPushSubscription may be null if no push subscription was retrieved; in this case, the user will be
+    // marked as not subscribed
+    await context.subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
   }
 
   /**
