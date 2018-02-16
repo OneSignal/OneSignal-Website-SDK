@@ -17,7 +17,7 @@ export function base64ToUint8Array(base64String: string): Uint8Array {
 /**
  * Used for VAPID, converts a browser-provided ArrayBuffer of the applicationServerKey back to its string form.
  */
-export function arrayBufferToBase64(arrayBuffer: ArrayBuffer): string {
+export function arrayBufferToBase64(arrayBuffer: ArrayBufferLike): string {
   var base64 = '';
   var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 

@@ -235,19 +235,21 @@ var DEVICE_TYPES = {
 };
 
 export function getDeviceTypeForBrowser() {
-  if (Browser.chrome ||
+  const browser = redetectBrowserUserAgent();
+
+  if (browser.chrome ||
     (<any>Browser).yandexbrowser ||
-    Browser.opera ||
-    (Browser as any).vivaldi ||
-    (Browser as any).samsungBrowser ||
-    (<any>Browser).chromium) {
+    browser.opera ||
+    (browser as any).vivaldi ||
+    (browser as any).samsungBrowser ||
+    (<any>browser).chromium) {
     return DEVICE_TYPES.CHROME;
-  } else if (Browser.firefox) {
+  } else if (browser.firefox) {
     return DEVICE_TYPES.FIREFOX;
-  } else if (Browser.safari) {
+  } else if (browser.safari) {
     return DEVICE_TYPES.SAFARI;
   } else {
-    log.error(`OneSignal: Unable to associate device type for browser ${Browser.name} ${Browser.version}`);
+    log.error(`OneSignal: Unable to associate device type for browser ${browser.name} ${browser.version}`);
     return DEVICE_TYPES.UNKNOWN;
   }
 }

@@ -8,12 +8,14 @@ import fetch from 'node-fetch';
 import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { ServiceWorkerContainer } from '../mocks/service-workers/ServiceWorkerContainer';
+import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
 import * as objectAssign from 'object-assign';
 import IndexedDb from '../../../src/services/IndexedDb';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
 import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, IntegrationKind } from '../../../src/models/AppConfig';
 import { Uuid } from '../../../src/models/Uuid';
+import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
 
 
 var global = new Function('return this')();
@@ -134,24 +136,23 @@ export class TestEnvironment {
     };
   }
 
-  static async stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerTestEnvironment> {
+  static stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerTestEnvironment> {
     if (!config)
       config = {};
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
     var serviceWorkerScope = new ServiceWorkerGlobalScope();
-    objectAssign(global, serviceWorkerScope);
-    global.skipWaiting = serviceWorkerScope.skipWaiting;
-    global.addEventListener = serviceWorkerScope.addEventListener;
-    global.trigger = serviceWorkerScope.trigger;
-    global.self = global;
     global.fetch = fetch;
     global.location = config.url ? config.url : new URL('https://localhost:3001/webpush/sandbox?https=1');
-    // global.OneSignal = new ServiceWorker({
-    //   databaseName: Random.getRandomString(6)
-    // });
-    // global.OneSignal.config = config.initOptions ? config.initOptions : {};
-    // global.OneSignal.initialized = true;
-    // global.OneSignal.getNotifications = () => global.self.registration.notifications;
+
+    // Install a fake service worker
+    const workerInstance = new MockServiceWorker();
+    workerInstance.scriptURL = "https://site.com";
+    workerInstance.state = "activated";
+    serviceWorkerScope.registration = new ServiceWorkerRegistration();
+    serviceWorkerScope.registration.active = workerInstance;
+
+    Object.assign(global, serviceWorkerScope);
+    global.self = global;
     return global;
   }
 
@@ -263,10 +264,10 @@ export class TestEnvironment {
     };
   }
 
-  static getFakeServerAppConfig(integrationKind: IntegrationKind): ServerAppConfig {
+  static getFakeServerAppConfig(integrationKind: IntegrationKind, appId?: Uuid): ServerAppConfig {
     return {
       success: true,
-      app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      app_id: appId ? appId.value : '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       features: {
         restrict_origin: {
           enable: false,

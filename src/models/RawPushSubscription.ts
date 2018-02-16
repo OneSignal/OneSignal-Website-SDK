@@ -1,4 +1,5 @@
 import { Serializable } from './Serializable';
+import { SubscriptionStateKind } from './SubscriptionStateKind';
 export class RawPushSubscription implements Serializable {
   /**
      * The GCM/FCM registration token, along with the full URL. Not used for Safari.

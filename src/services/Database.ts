@@ -253,7 +253,8 @@ export default class Database {
     if (subscription.deviceId && subscription.deviceId.value) {
       await this.put('Ids', { type: 'userId', id: subscription.deviceId.value });
     }
-    if (subscription.subscriptionToken) {
+    if (typeof subscription.subscriptionToken !== "undefined") {
+      // Allow null subscriptions to be set
       await this.put('Ids', { type: 'registrationId', id: subscription.subscriptionToken });
     }
     if (subscription.optedOut != null) { // Checks if null or undefined, allows false

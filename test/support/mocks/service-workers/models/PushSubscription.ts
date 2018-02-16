@@ -1,70 +1,91 @@
 import PushSubscriptionOptions from './PushSubscriptionOptions';
 import PushManager from './PushManager';
 import { base64ToUint8Array } from '../../../../../src/utils/Encoding';
-// https://developer.mozilla.org/en-US/docs/Web/API/PushManager
+import Random from "../../../tester/Random";
 
 /**
- * Represents a mock PushSubscription.
- *
- * Both mock VAPID subscriptions and mock FCM subscriptions are supported.
+ * The PushSubscription interface of the Push API provides a subcription's URL endpoint and allows
+ * unsubscription from a push service.
  */
 export default class PushSubscription {
-
+  /**
+   * The endpoint associated with the push subscription.
+   */
   public endpoint: string;
-  public options: PushSubscriptionOptions;
-  public expirationTime: null;
-  private pushManager: PushManager;
-  public isVapid: boolean;
-
-  public static FCM_SUBSCRIPTION = {
-    endpoint: 'https://android.googleapis.com/gcm/send/e8sXizGsZTE:APA91bH8uJxQ-KAl_cXHZ_7nZhViU9iUezu3QEMcCGcMIYIFZmECrgA11xaxOOohVz5aTqujxE_lvRlWhpk3sO4zHpN-sYliRcFlTkfjTSsfmWIF0By163M6SZYRpX8B83HmEuAyKL84',
-    p256dh: 'BHxSHtYS0q3i0Tb3Ni6chC132ZDPd5uI4r-exy1KsevRqHJvOM5hNX-M83zgYjp-1kdirHv0Elhjw6Hivw1Be5M=',
-    auth: '4a3vf9MjR9CtPSHLHcsLzQ=='
-  };
-
-  public static VAPID_SUBSCRIPTION = {
-    endpoint: 'https://fcm.googleapis.com/fcm/send/c0NI73v1E0Y:APA91bEN7z2weTCpJmcS-MFyfbgjtmlAWuV5YaaNw625_Rq2-f0ZrVLdRPXKGm7B3uwfygicoCeEoWQxCKIxlL3RWG2xkHs6C8-H_cxq-4Z-isAiZ3ixo84-2HeXB9eUvkfNO_t1jd5s',
-    p256dh: 'BHxSHtYS0q3i0Tb3Ni6chC132ZDPd5uI4r-exy1KsevRqHJvOM5hNX-M83zgYjp-1kdirHv0Elhjw6Hivw1Be5M=',
-    auth: '4a3vf9MjR9CtPSHLHcsLzQ=='
-  };
 
   /**
-   * Don't call this. Use getAsVapidSubscription() or getAsFcmSubscription().
+   * An object containing containing the options used to create the subscription.
+   *
+   * If a GCM sender ID or VAPID applicationServerKey was used to subscribe, it will be present as
+   * `options.applicationServerKey`.
    */
-  constructor(pushManager: PushManager) {
+  public options: PushSubscriptionOptions;
+
+  /**
+   * A DOMHighResTimeStamp of the subscription expiration time associated with the push
+   * subscription, if there is one, or null otherwise.
+   */
+  public expirationTime?: number;
+
+  private pushManager: PushManager;
+  private p256dhArray: Uint8Array;
+  private authArray: Uint8Array;
+  private readonly ENDPOINT_LENGTH = 152;
+  private readonly ENDPOINT_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_:';
+  private readonly P256DH_BYTE_LENGTH = 65;
+  private readonly AUTH_BYTE_LENGTH = 16;
+
+  /**
+   * For internal use only. Generates random data for p256dh, auth, and endpoint on construction.
+   *
+   * @param pushManager: A reference to the PushManager is needed to set the subscription property
+   * to null when unsubscribe() is called on this instance.
+   *
+   * @param options: Options passed to PushManager.subscribe().
+   */
+  constructor(pushManager: PushManager, options: PushSubscriptionOptions) {
     this.pushManager = pushManager;
+    this.options = options;
+
+    if (!options.applicationServerKey) {
+      throw new Error("An applicationServerKey must be passed. If you're subscribing via GCM sender ID, " +
+        "that can be the applicationServerKey encoded as an ArrayBuffer.");
+    }
+
+    // Keep the options constant; this is what the user passed in to subscribe
+    if (options.applicationServerKey.byteLength >= 65) {
+      // We are subscribing via VAPID
+      const suffix = Random.getRandomString(this.ENDPOINT_LENGTH, this.ENDPOINT_CHARSET);
+      this.endpoint = `https://fcm.googleapis.com/fcm/send/${suffix}`;
+    } else {
+      // We are subscribing via legacy GCM sender ID
+      const suffix = Random.getRandomString(this.ENDPOINT_LENGTH, this.ENDPOINT_CHARSET);
+      this.endpoint = `https://android.googleapis.com/gcm/send/${suffix}`;
+    }
+
+    this.p256dhArray = Random.getRandomUint8Array(this.P256DH_BYTE_LENGTH);
+    this.authArray = Random.getRandomUint8Array(this.AUTH_BYTE_LENGTH);
   }
 
-  public static getAsVapidSubscription(pushManager: PushManager, applicationServerKey: ArrayBuffer) {
-    const subscription = new PushSubscription(pushManager);
-    subscription.isVapid = true;
-    subscription.options = PushSubscriptionOptions.getAsVapidSubscription(applicationServerKey);
-    subscription.endpoint = PushSubscription.VAPID_SUBSCRIPTION.endpoint;
-    return subscription;
-  }
-
-  public static getAsFcmSubscription(pushManager: PushManager, applicationServerKey: number) {
-    const subscription = new PushSubscription(pushManager);
-    subscription.isVapid = false;
-    subscription.options = PushSubscriptionOptions.getAsFcmSubscription(applicationServerKey);
-    subscription.endpoint = PushSubscription.FCM_SUBSCRIPTION.endpoint;
-    return subscription;
-  }
-
-  getKey(param): ArrayBuffer | SharedArrayBuffer {
-    const p256dh = this.isVapid ? PushSubscription.VAPID_SUBSCRIPTION.p256dh : PushSubscription.FCM_SUBSCRIPTION.p256dh;
-    const auth = this.isVapid ? PushSubscription.VAPID_SUBSCRIPTION.auth : PushSubscription.FCM_SUBSCRIPTION.auth;
-
+  /**
+   * Returns an ArrayBuffer which contains the client's public key, which can then be sent to a
+   * server and used in encrypting push message data.
+   */
+  getKey(param): ArrayBufferLike {
     switch (param) {
       case 'p256dh':
-        return base64ToUint8Array(p256dh).buffer;
+        return this.p256dhArray.buffer;
       case 'auth':
-        return base64ToUint8Array(auth).buffer;
+        return this.authArray.buffer;
       default:
         return null;
     }
   }
 
+  /**
+   * The toJSON() method of the PushSubscription interface is a standard serializer: it returns a
+   * JSON representation of the subscription properties, providing a useful shortcut.
+   */
   toJSON() {
     return {
       endpoint: this.endpoint,
@@ -72,8 +93,12 @@ export default class PushSubscription {
     };
   }
 
-  async unsubscribe() {
-    this.pushManager.subscription = null;
+  /**
+   * Starts the asynchronous process of unsubscribing from the push service, returning a Promise
+   * that resolves to a Boolean when the current subscription is successfully unregistered.
+   */
+  async unsubscribe(): Promise<boolean> {
+    this.pushManager.__unsubscribe();
     return true;
   }
 }

@@ -1,29 +1,48 @@
 import PushSubscription from './PushSubscription';
+import PushSubscriptionOptions from './PushSubscriptionOptions';
 
-// https://developer.mozilla.org/en-US/docs/Web/API/PushManager
+/**
+ * The PushManager interface of the Push API provides a way to receive notifications from
+ * third-party servers as well as request URLs for push notifications.
+ */
 export default class PushManager {
-  public subscription: PushSubscription;
-  public static GCM_SENDER_ID = 121212121212;
+  private subscription: PushSubscription;
 
   constructor() {
     this.subscription = null;
   }
 
-  async getSubscription(): Promise<PushSubscription> {
+  /**
+   * Retrieves an existing push subscription. It returns a Promise that resolves to a
+   * PushSubscription object containing details of an existing subscription. If no existing
+   * subscription exists, this resolves to a null value.
+   */
+  public async getSubscription(): Promise<PushSubscription> {
     return this.subscription;
   }
 
-  async permissionState(): Promise<NotificationPermission> {
+  /**
+   * Returns a Promise that resolves to the permission state of the current PushManager, which will
+   * be one of 'granted', 'denied', or 'prompt'.
+   */
+  public async permissionState(): Promise<NotificationPermission> {
     return 'granted';
   }
 
-  async subscribe(options: PushSubscriptionOptions): Promise<PushSubscription> {
-    if (options.applicationServerKey && options.applicationServerKey.byteLength >= 65) {
-      // A VAPID subscription
-      this.subscription = PushSubscription.getAsVapidSubscription(this, options.applicationServerKey);
-    } else {
-      this.subscription = PushSubscription.getAsFcmSubscription(this, PushManager.GCM_SENDER_ID);
-    }
+  /**
+   * Subscribes to a push service. It returns a Promise that resolves to a PushSubscription object
+   * containing details of a push subscription. A new push subscription is created if the current
+   * service worker does not have an existing subscription.
+   */
+  public async subscribe(options: PushSubscriptionOptions): Promise<PushSubscription> {
+    this.subscription = new PushSubscription(this, options);
     return this.subscription;
+  }
+
+  /**
+   * Only to be used internally from PushSubscription.unsubscribe().
+   */
+  public __unsubscribe() {
+    this.subscription = null;
   }
 }

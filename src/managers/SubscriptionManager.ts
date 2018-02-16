@@ -165,8 +165,15 @@ export class SubscriptionManager {
     );
   }
 
-  public async registerSubscriptionWithOneSignal(pushSubscription: RawPushSubscription): Promise<Subscription> {
-    let deviceRecord = PushDeviceRecord.createFromPushSubscription(this.config.appId, pushSubscription);
+  public async registerSubscriptionWithOneSignal(
+    pushSubscription: RawPushSubscription,
+    subscriptionState?: SubscriptionStateKind,
+  ): Promise<Subscription> {
+    const deviceRecord = PushDeviceRecord.createFromPushSubscription(
+      this.config.appId,
+      pushSubscription,
+      subscriptionState
+    );
 
     deviceRecord.appId = this.config.appId;
 
@@ -183,7 +190,8 @@ export class SubscriptionManager {
     let newDeviceId: Uuid;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       const { deviceId } = await Database.getSubscription();
-      if (pushSubscription.isNewSubscription()) {
+
+      if (!pushSubscription || pushSubscription.isNewSubscription()) {
         newDeviceId = await OneSignalApi.updateUserSession(deviceId, deviceRecord);
         log.info("Updated the subscriber's OneSignal session:", deviceRecord);
       } else {
@@ -205,16 +213,23 @@ export class SubscriptionManager {
       Event.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
+    debugger;
     // Get the existing subscription settings to prevent overriding opt out
     const subscription = await Database.getSubscription();
     subscription.deviceId = newDeviceId;
-    if (SubscriptionManager.isSafari()) {
-      subscription.subscriptionToken = pushSubscription.safariDeviceToken;
+    if (pushSubscription) {
+      if (SubscriptionManager.isSafari()) {
+        subscription.subscriptionToken = pushSubscription.safariDeviceToken;
+      } else {
+        subscription.subscriptionToken = pushSubscription.w3cEndpoint.toString();
+      }
     } else {
-      subscription.subscriptionToken = pushSubscription.w3cEndpoint.toString();
+      subscription.subscriptionToken = null;
     }
 
     await Database.setSubscription(subscription);
+
+  const subscription2 = await Database.getSubscription();
 
     return subscription;
   }
