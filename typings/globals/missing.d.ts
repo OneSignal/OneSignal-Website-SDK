@@ -90,3 +90,6 @@ declare function fetch(...args): Promise<any>;
 
 declare var Headers: any;
 declare var WorkerLocation: any;
+
+/* Typing issue */
+interface SharedArrayBuffer { };

@@ -15,11 +15,12 @@ import Context from '../../../src/models/Context';
 import { Uuid } from '../../../src/models/Uuid';
 import { AppConfig } from '../../../src/models/AppConfig';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import { base64ToUint8Array } from '../../../src/utils/Encoding';
+import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import { ServiceWorkerContainer } from '../../support/mocks/service-workers/ServiceWorkerContainer';
 import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
+import Random from "../../support/tester/Random";
 
 const VAPID_PUBLIC_KEY_1 = 'CAdXhdGDgXJfJccxabiFhmlyTyF17HrCsfyIj3XEhg2j-RmT4wXU7lHiBPqSKSotvtfejZlAaPywJ3E-3AxXQBj1';
 const VAPID_PUBLIC_KEY_2 =
@@ -51,15 +52,16 @@ test('mock push manager should not return an existing subscription for a clean r
 test('mock push manager should subscribe successfully', async t => {
   const registration: ServiceWorkerRegistration = await navigator.serviceWorker.getRegistration() as any;
 
-  const subscription = await registration.pushManager.subscribe({
+  const subscriptionOptions: PushSubscriptionOptions = {
     userVisibleOnly: true,
-    applicationServerKey: undefined
-  });
+    applicationServerKey: Random.getRandomUint8Array(64).buffer
+  };
+  const subscription = await registration.pushManager.subscribe(subscriptionOptions);
 
   t.true(subscription instanceof PushSubscription);
   t.is(typeof subscription.endpoint, typeof '');
   t.true(subscription.getKey instanceof Function);
-  t.true(subscription.options instanceof PushSubscriptionOptions);
+  t.deepEqual(subscription.options, subscriptionOptions);
   t.true(subscription.toJSON instanceof Function);
   t.true(subscription.unsubscribe instanceof Function);
 });
@@ -69,7 +71,7 @@ test('mock push manager should unsubscribe successfully', async t => {
 
   let subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: undefined
+    applicationServerKey: Random.getRandomUint8Array(64).buffer
   });
   await subscription.unsubscribe();
   subscription = await registration.pushManager.getSubscription();

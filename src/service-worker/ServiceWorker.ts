@@ -16,7 +16,7 @@ import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import { PushRegistration } from '../models/PushRegistration';
+import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -807,15 +807,24 @@ export class ServiceWorker {
     const context = new Context(appConfig);
 
     // Get our current device ID
-    let { deviceId } = await Database.getSubscription();
-    const deviceIdExists = !!(deviceId && deviceId.value);
-    if (!deviceIdExists && event.oldSubscription) {
-      // We don't have the device ID stored, but we can look it up from our old subscription
-      deviceId = await OneSignalApi.getUserIdFromSubscriptionIdentifier(
-        appId.value,
-        getDeviceTypeForBrowser(),
-        event.oldSubscription.endpoint
-      );
+    let deviceIdExists: boolean;
+    {
+      let { deviceId } = await Database.getSubscription();
+      deviceIdExists = !!(deviceId && deviceId.value);
+      if (!deviceIdExists && event.oldSubscription) {
+        // We don't have the device ID stored, but we can look it up from our old subscription
+        deviceId = new Uuid(await OneSignalApi.getUserIdFromSubscriptionIdentifier(
+          appId.value,
+          getDeviceTypeForBrowser(),
+          event.oldSubscription.endpoint
+        ));
+
+        // Store the device ID, so it can be looked up when subscribing
+        const subscription = await Database.getSubscription();
+        subscription.deviceId = deviceId;
+        await Database.setSubscription(subscription);
+      }
+      deviceIdExists = !!(deviceId && deviceId.value);
     }
 
     // Get our new push subscription
@@ -838,19 +847,30 @@ export class ServiceWorker {
     if (!deviceIdExists && !hasNewSubscription) {
       await Database.remove('Ids', 'userId');
       await Database.remove('Ids', 'registrationId');
+    } else {
+      /*
+        Determine subscription state we should set new record to.
+
+        If the permission is revoked, we should set the subscription state to permission revoked.
+       */
+      let subscriptionState: null | SubscriptionStateKind = null;
+      const pushPermission = await navigator.permissions.query({name:'push', userVisibleOnly:true});
+      if (pushPermission !== "granted") {
+        subscriptionState = SubscriptionStateKind.PermissionRevoked;
+      } else if (!rawPushSubscription) {
+        /*
+          If it's not a permission revoked issue, the subscription expired or was revoked by the
+          push server.
+         */
+        subscriptionState = SubscriptionStateKind.PushSubscriptionRevoked;
+      }
+
+      // rawPushSubscription may be null if no push subscription was retrieved
+      await context.subscriptionManager.registerSubscriptionWithOneSignal(
+        rawPushSubscription,
+        subscriptionState
+      );
     }
-
-    // rawPushSubscription may be null if no push subscription was retrieved; in this case, the user will be
-    // marked as not subscribed
-    await context.subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
-  }
-
-  /**
-   * Simulates a service worker event.
-   * @param eventName An event name like 'pushsubscriptionchange'.
-   */
-  static simulateEvent(eventName) {
-    (self as any).dispatchEvent(new ExtendableEvent(eventName));
   }
 
   /**

@@ -50,7 +50,7 @@ export default class ServiceWorkerRegistration {
 
   async unregister() {
     const container: ServiceWorkerContainer = navigator.serviceWorker as any;
-    container._serviceWorkerRegistration = null;
+    container.serviceWorkerRegistration = null;
     this.active = null;
   }
 

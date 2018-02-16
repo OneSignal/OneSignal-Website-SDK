@@ -1,61 +1,88 @@
 import NotImplementedError from '../../../../src/errors/NotImplementedError';
 import ServiceWorker from './ServiceWorker';
 import ServiceWorkerRegistration from './models/ServiceWorkerRegistration';
+import { EventHandler } from "../../../../src/libraries/Emitter";
+import ExtendableEvent from "./models/ExtendableEvent";
 
 export class ServiceWorkerContainer implements EventTarget {
-  public _serviceWorkerRegistration: ServiceWorkerRegistration;
-  private _resolveReadyPromise: Function;
-  private _readyPromise: Promise<ServiceWorkerRegistration>;
-  private _serviceWorker: ServiceWorker;
+  private resolveReadyPromise: Function;
+  private readyPromise: Promise<ServiceWorkerRegistration>;
+  private serviceWorker: ServiceWorker;
+  private listeners: Map<string, EventHandler[]>;
 
-  controller: ServiceWorker;
-
-  get ready(): Promise<ServiceWorkerRegistration> {
-    return this._readyPromise;
-  }
+  public controller: ServiceWorker;
+  public serviceWorkerRegistration: ServiceWorkerRegistration;
 
   constructor() {
-    this._serviceWorkerRegistration = null;
-    this._readyPromise = new Promise(resolve => (this._resolveReadyPromise = resolve));
+    this.serviceWorkerRegistration = null;
+    this.readyPromise = new Promise(resolve => (this.resolveReadyPromise = resolve));
+    this.listeners = new Map();
     this.controller = null;
   }
 
-  async register(scriptURL: string, options?: RegistrationOptions): Promise<ServiceWorkerRegistration> {
+  public get ready(): Promise<ServiceWorkerRegistration> {
+    return this.readyPromise;
+  }
+
+  public async register(scriptURL: string, options?: RegistrationOptions): Promise<ServiceWorkerRegistration> {
     if (scriptURL.startsWith('/')) {
       const fakeScriptUrl = new URL(window.location.toString());
       scriptURL = fakeScriptUrl.origin + scriptURL;
     }
-    this._serviceWorkerRegistration = new ServiceWorkerRegistration();
-    this._serviceWorker = new ServiceWorker();
-    (this._serviceWorker as any).scriptURL = scriptURL;
-    (this._serviceWorker as any).state = 'activated';
-    this._serviceWorkerRegistration.active = this._serviceWorker;
-    this._resolveReadyPromise(this._serviceWorkerRegistration);
-    this.controller = this._serviceWorker;
-    return await this._serviceWorkerRegistration;
+    this.serviceWorkerRegistration = new ServiceWorkerRegistration();
+    this.serviceWorker = new ServiceWorker();
+    (this.serviceWorker as any).scriptURL = scriptURL;
+    (this.serviceWorker as any).state = 'activated';
+    this.serviceWorkerRegistration.active = this.serviceWorker;
+    this.resolveReadyPromise(this.serviceWorkerRegistration);
+    this.controller = this.serviceWorker;
+    return await this.serviceWorkerRegistration;
   }
 
-  async getRegistration(clientURL: string = ''): Promise<ServiceWorkerRegistration> {
-    return this._serviceWorkerRegistration;
+  public async getRegistration(clientURL: string = ''): Promise<ServiceWorkerRegistration> {
+    return this.serviceWorkerRegistration;
   }
 
-  async getRegistrations(): Promise<ServiceWorkerRegistration[]> {
-    if (this._serviceWorkerRegistration) {
-      return [this._serviceWorkerRegistration];
+  public async getRegistrations(): Promise<ServiceWorkerRegistration[]> {
+    if (this.serviceWorkerRegistration) {
+      return [this.serviceWorkerRegistration];
     } else {
       return [];
     }
   }
 
-  addEventListener = () => {
-    throw new NotImplementedError();
-  };
-  removeEventListener = () => {
-    throw new NotImplementedError();
-  };
-  dispatchEvent = () => {
-    throw new NotImplementedError();
-  };
+  public addEventListener(eventName: string, callback: EventHandler) {
+    if (this.listeners.has(eventName)) {
+      const handlers = this.listeners.get(eventName);
+      handlers.push(callback);
+      this.listeners.set(eventName, handlers);
+    } else {
+      this.listeners.set(eventName, [callback]);
+    }
+  }
+
+  public removeEventListener(eventName: string, callback: EventHandler) {
+    if (this.listeners.has(eventName)) {
+      const handlers = this.listeners.get(eventName);
+      const index = handlers.indexOf(callback);
+      if (index > -1) {
+        handlers.splice(index, 1);
+        this.listeners.set(eventName, handlers);
+      }
+    }
+  }
+
+  public dispatchEvent(event: Event): boolean {
+    const handlers = this.listeners.get(event.type);
+    if (handlers) {
+      for (const handler of handlers) {
+        handler(event);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
   // EventHandler oncontrollerchange;
   // EventHandler onmessage; // event.source of message events is ServiceWorker object
   // EventHandler onmessageerror;
