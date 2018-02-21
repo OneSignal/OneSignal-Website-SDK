@@ -56,10 +56,13 @@ import {
   prepareEmailForHashing,
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
-import { PushRegistration } from './models/PushRegistration';
+import { DeviceRecord } from './models/DeviceRecord';
 import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
 import ConfigManager from './managers/ConfigManager';
 import TimedLocalStorage from './modules/TimedLocalStorage';
+import { EmailProfile } from './models/EmailProfile';
+import TimeoutError from './errors/TimeoutError';
+import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 
 
 export default class OneSignal {
@@ -118,6 +121,112 @@ export default class OneSignal {
     } else {
       throw result;
     }
+  }
+
+  /**
+   * @PublicApi
+   */
+  static async setEmail(email: string, options?: SetEmailOptions): Promise<void> {
+    if (!email)
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
+    if (!isValidEmail(email))
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
+    // emailAuthHash is expected to be a 64 character SHA-256 hex hash
+    if (options && options.emailAuthHash && options.emailAuthHash.length !== 64) {
+      throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
+    }
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('setEmail', email, options);
+
+    const appConfig = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    const existingEmailProfile = await Database.getEmailProfile();
+
+    if (appConfig.emailAuthRequired && !(options && options.emailAuthHash)) {
+      throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Empty);
+    }
+
+    const newEmailProfile = new EmailProfile();
+    newEmailProfile.emailId = existingEmailProfile.emailId;
+    newEmailProfile.emailAddress = email;
+    if (options && options.emailAuthHash) {
+      newEmailProfile.emailAuthHash = options.emailAuthHash
+    }
+
+    const isExistingEmailSaved = existingEmailProfile.emailId && existingEmailProfile.emailId.value;
+    if (isExistingEmailSaved && appConfig.emailAuthRequired) {
+      // If we already have a saved email player ID, make a PUT call to update the existing email record
+      newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
+        appConfig,
+        newEmailProfile,
+        deviceId
+      );
+    } else {
+      // Otherwise, make a POST call to create a new email record
+      newEmailProfile.emailId = await OneSignalApi.createEmailRecord(
+        appConfig,
+        newEmailProfile,
+        deviceId
+      );
+    }
+
+    const isExistingPushRecordSaved = deviceId && deviceId.value;
+    if (
+      /* If we are subscribed to web push */
+      isExistingPushRecordSaved &&
+      (
+        /* And if we previously saved an email ID and it's different from the new returned ID */
+        (
+          !isExistingEmailSaved ||
+          existingEmailProfile.emailId.value !== newEmailProfile.emailId.value
+        ) ||
+        /* Or if we previously saved an email and the email changed */
+        (
+          !existingEmailProfile.emailAddress ||
+          newEmailProfile.emailAddress !== existingEmailProfile.emailAddress
+        )
+      )
+    ) {
+      // Then update the push device record with a reference to the new email ID and email address
+      await OneSignalApi.updatePlayer(
+        appConfig.appId,
+        deviceId,
+        {
+          parent_player_id: newEmailProfile.emailId.value,
+          email: newEmailProfile.emailAddress
+        }
+      );
+    }
+
+    await Database.setEmailProfile(newEmailProfile);
+  }
+
+  /**
+   * @PublicApi
+   */
+  static async logoutEmail() {
+    await awaitOneSignalInitAndSupported();
+
+    const appConfig = await Database.getAppConfig();
+    const emailProfile = await Database.getEmailProfile();
+    const { deviceId } = await Database.getSubscription();
+
+    if (!emailProfile.emailId || !emailProfile.emailId.value) {
+      log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
+      return;
+    }
+
+    if (!deviceId || !deviceId.value) {
+      log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+      return;
+    }
+
+    if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
+      log.warn("Failed to logout email.");
+      return;
+    }
+
+    await Database.setEmailProfile(new EmailProfile());
   }
 
   /**
@@ -430,6 +539,15 @@ export default class OneSignal {
         tags[key] = "false";
     });
     const { appId } = await Database.getAppConfig();
+
+    const emailProfile = await Database.getEmailProfile();
+    if (emailProfile.emailId && emailProfile.emailId.value) {
+      await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
+        tags: tags,
+        email_auth_hash: emailProfile.emailAuthHash,
+      });
+    }
+
     var { deviceId } = await Database.getSubscription();
     if (!deviceId || !deviceId.value) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
@@ -608,6 +726,20 @@ export default class OneSignal {
   }
 
   /**
+   * Returns a promise that resolves to the stored OneSignal email ID if one is set; otherwise null.
+   * @param callback A function accepting one parameter for the OneSignal email ID.
+   * @PublicApi
+   */
+  static async getEmailId(callback?: Action<string>): Promise<string> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('getEmailId', callback);
+    const emailProfile = await Database.getEmailProfile();
+    const emailId = emailProfile.emailId;
+    executeCallback(callback, emailId.value);
+    return emailId.value;
+  }
+
+  /**
    * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
    * @param callback A function accepting one parameter for the OneSignal user ID.
    * @PublicApi
@@ -759,7 +891,8 @@ export default class OneSignal {
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
   static crypto = Crypto;
-  static PushRegistration = PushRegistration;
+  static DeviceRecord = DeviceRecord;
+  static EmailDeviceRecord = EmailDeviceRecord;
 
   static notificationPermission = NotificationPermission;
 

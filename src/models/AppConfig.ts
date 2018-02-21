@@ -8,14 +8,17 @@ export interface AppConfig {
    * used since it will always be identical to the provided app ID.
    */
   appId: Uuid;
+
   /**
    * The subdomain chosen on the dashboard for non-HTTPS apps.
    */
   subdomain: string;
+
   /**
    * The allowed origin this web push config is allowed to run on.
    */
   origin: string;
+
   /**
    * Describes whether the subdomain HTTP users subscribe to should belong to
    * the legacy domain onesignal.com, or the newer domain os.tc.
@@ -29,16 +32,23 @@ export interface AppConfig {
   };
 
   safariWebId?: string;
+
   /**
    * Chrome and Chrome-like browsers including Opera and Yandex use VAPID for
    * authentication, and so each app uses a uniquely generated key.
    */
   vapidPublicKey?: string;
+
   /**
    * Firefox uses VAPID for application identification instead of
    * authentication, and so all apps share an identification key.
    */
   onesignalVapidPublicKey?: string;
+
+  /**
+   * Describes whether this app's email records require authentication.
+   */
+  emailAuthRequired?: boolean;
   userConfig?: AppUserConfig;
 }
 
@@ -50,6 +60,7 @@ export function serializeAppConfig(config: AppConfig): object {
     cookieSyncEnabled: config.cookieSyncEnabled,
     safariWebId: config.safariWebId,
     vapidPublicKey: config.vapidPublicKey,
+    emailAuthRequired: config.emailAuthRequired,
     userConfig: config.userConfig
   };
 }
@@ -62,6 +73,7 @@ export function deserializeAppConfig(bundle: any): AppConfig {
     cookieSyncEnabled: bundle.cookieSyncEnabled,
     safariWebId: bundle.safariWebId,
     vapidPublicKey: bundle.vapidPublicKey,
+    emailAuthRequired: bundle.emailAuthRequired,
     userConfig: bundle.userConfig,
   } as AppConfig;
 }
@@ -301,7 +313,10 @@ export interface ServerAppConfig {
     };
     restrict_origin: {
       enable: boolean;
-    }
+    };
+    email: {
+      require_auth: boolean;
+    };
   };
   config: {
     /**

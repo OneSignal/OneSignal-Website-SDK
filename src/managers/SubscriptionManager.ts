@@ -14,7 +14,7 @@ import MainHelper from '../helpers/MainHelper';
 import Context from '../models/Context';
 import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
 import { NotificationPermission } from '../models/NotificationPermission';
-import { PushRegistration } from '../models/PushRegistration';
+import { DeviceRecord } from '../models/DeviceRecord';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { Uuid } from '../models/Uuid';
@@ -26,6 +26,7 @@ import { Subscription } from '../models/Subscription';
 import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
 import NotImplementedError from '../errors/NotImplementedError';
 import { base64ToUint8Array } from '../utils/Encoding';
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -143,29 +144,49 @@ export class SubscriptionManager {
     return new Promise(resolve => window.Notification.requestPermission(resolve));
   }
 
-  public async registerSubscriptionWithOneSignal(pushSubscription: RawPushSubscription): Promise<Subscription> {
-    let pushRegistration = new PushRegistration();
-
-    pushRegistration.appId = this.config.appId;
-
-    if (this.isSafari()) {
-      pushRegistration.deliveryPlatform = DeliveryPlatformKind.Safari;
-    } else if (Browser.firefox) {
-      pushRegistration.deliveryPlatform = DeliveryPlatformKind.Firefox;
-    } else {
-      pushRegistration.deliveryPlatform = DeliveryPlatformKind.ChromeLike;
+  /**
+   * Called after registering a subscription with OneSignal to associate this subscription with an
+   * email record if one exists.
+   */
+  public async associateSubscriptionWithEmail(newDeviceId: Uuid) {
+    const emailProfile = await Database.getEmailProfile();
+    if (!emailProfile.emailId || !emailProfile.emailId.value) {
+      return;
     }
 
-    pushRegistration.subscriptionState = SubscriptionStateKind.Subscribed;
+    // Update the push device record with a reference to the new email ID and email address
+    await OneSignalApi.updatePlayer(
+      this.config.appId,
+      newDeviceId,
+      {
+        parent_player_id: emailProfile.emailId.value,
+        email: emailProfile.emailAddress
+      }
+    );
+  }
+
+  public async registerSubscriptionWithOneSignal(pushSubscription: RawPushSubscription): Promise<Subscription> {
     pushSubscription = RawPushSubscription.deserialize(pushSubscription);
-    pushRegistration.subscription = pushSubscription;
+    let deviceRecord = new PushDeviceRecord(pushSubscription);
+
+    deviceRecord.appId = this.config.appId;
+
+    if (this.isSafari()) {
+      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Safari;
+    } else if (Browser.firefox) {
+      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Firefox;
+    } else {
+      deviceRecord.deliveryPlatform = DeliveryPlatformKind.ChromeLike;
+    }
+
+    deviceRecord.subscriptionState = SubscriptionStateKind.Subscribed;
 
     let newDeviceId: Uuid;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       const { deviceId } = await Database.getSubscription();
       if (pushSubscription.isNewSubscription()) {
-        newDeviceId = await OneSignalApi.updateUserSession(deviceId, pushRegistration);
-        log.info("Updated the subscriber's OneSignal session:", pushRegistration);
+        newDeviceId = await OneSignalApi.updateUserSession(deviceId, deviceRecord);
+        log.info("Updated the subscriber's OneSignal session:", deviceRecord);
       } else {
         // The subscription hasn't changed; don't register with OneSignal and reuse the existing device ID
         newDeviceId = deviceId;
@@ -174,10 +195,13 @@ export class SubscriptionManager {
         );
       }
     } else {
-      const id = await OneSignalApi.createUser(pushRegistration);
+      const id = await OneSignalApi.createUser(deviceRecord);
       newDeviceId = id;
-      log.info("Subscribed to web push and registered with OneSignal:", pushRegistration);
+      log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
     }
+
+    await this.associateSubscriptionWithEmail(newDeviceId);
+
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       Event.trigger(OneSignal.EVENTS.REGISTERED);
     }

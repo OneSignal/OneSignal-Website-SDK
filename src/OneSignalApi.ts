@@ -5,11 +5,12 @@ import * as objectAssign from 'object-assign';
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
-import { PushRegistration } from './models/PushRegistration';
+import { DeviceRecord } from './models/DeviceRecord';
 import { Uuid } from './models/Uuid';
 import { contains, trimUndefined } from './utils';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import { EmailProfile } from './models/EmailProfile';
 
 
 export default class OneSignalApi {
@@ -162,8 +163,8 @@ export default class OneSignalApi {
     }
   }
 
-  static async createUser(pushRegistration: PushRegistration): Promise<Uuid> {
-    const response = await OneSignalApi.post(`players`, pushRegistration.serialize());
+  static async createUser(deviceRecord: DeviceRecord): Promise<Uuid> {
+    const response = await OneSignalApi.post(`players`, deviceRecord.serialize());
     if (response && response.success) {
       return new Uuid(response.id);
     } else {
@@ -171,9 +172,62 @@ export default class OneSignalApi {
     }
   }
 
-  static async updateUserSession(userId: Uuid, pushRegistration: PushRegistration): Promise<Uuid> {
+  static async createEmailRecord(
+    appConfig: AppConfig,
+    emailProfile: EmailProfile,
+    pushId?: Uuid
+  ): Promise<Uuid> {
+    const response = await OneSignalApi.post(`players`, {
+      app_id: appConfig.appId.value,
+      device_type: 11,
+      identifier: emailProfile.emailAddress,
+      device_player_id: (pushId && pushId.value) ? pushId.value : undefined,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
+    });
+    if (response && response.success) {
+      return new Uuid(response.id);
+    } else {
+      return null;
+    }
+  }
+
+  static async updateEmailRecord(
+    appConfig: AppConfig,
+    emailProfile: EmailProfile,
+    deviceId?: Uuid
+  ): Promise<Uuid> {
+    const response = await OneSignalApi.put(`players/${emailProfile.emailId.value}`, {
+      app_id: appConfig.appId.value,
+      identifier: emailProfile.emailAddress,
+      device_player_id: (deviceId && deviceId.value) ? deviceId.value : undefined,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
+    });
+    if (response && response.success) {
+      return new Uuid(response.id);
+    } else {
+      return null;
+    }
+  }
+
+  static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: Uuid): Promise<boolean> {
+    const response = await OneSignalApi.post(`players/${deviceId.value}/email_logout`, {
+      app_id: appConfig.appId.value,
+      parent_player_id: emailProfile.emailId.value,
+      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
+    });
+    if (response && response.success) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static async updateUserSession(
+    userId: Uuid,
+    deviceRecord: DeviceRecord,
+  ): Promise<Uuid> {
     try {
-      const response = await OneSignalApi.post(`players/${userId.value}/on_session`, pushRegistration.serialize());
+      const response = await OneSignalApi.post(`players/${userId.value}/on_session`, deviceRecord.serialize());
       if (response.id) {
         // A new user ID can be returned
         return new Uuid(response.id);

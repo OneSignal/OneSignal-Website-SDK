@@ -287,4 +287,3 @@ test("subscribeFcmVapidOrLegacyKey() unsubscribes if existing subscription is pr
     subscribeSpy.restore();
   }
 });
-

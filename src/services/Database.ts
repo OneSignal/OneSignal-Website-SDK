@@ -12,6 +12,7 @@ import { Uuid } from '../models/Uuid';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import IndexedDb from './IndexedDb';
 import * as Browser from 'bowser';
+import { EmailProfile } from '../models/EmailProfile';
 
 enum DatabaseEventName {
   SET
@@ -149,7 +150,8 @@ export default class Database {
     const appIdStr: string = await this.get<string>('Ids', 'appId');
     config.appId = new Uuid(appIdStr);
     config.subdomain = await this.get<string>('Options', 'subdomain');
-    config.vapidPublicKey = await Database.get<string>('Options', 'vapidPublicKey');
+    config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
+    config.emailAuthRequired = await this.get<boolean>('Options', 'emailAuthRequired');
     return config;
   }
 
@@ -158,10 +160,14 @@ export default class Database {
       await this.put('Ids', {type: 'appId', id: appConfig.appId.value})
     if (appConfig.subdomain)
       await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})
-    if (appConfig.httpUseOneSignalCom)
+    if (appConfig.httpUseOneSignalCom === true)
       await this.put('Options', { key: 'httpUseOneSignalCom', value: true })
-    else
+    else if (appConfig.httpUseOneSignalCom === false)
       await this.put('Options', {key: 'httpUseOneSignalCom', value: false })
+    if (appConfig.emailAuthRequired === true)
+      await this.put('Options', { key: 'emailAuthRequired', value: true })
+    else if (appConfig.emailAuthRequired === false)
+      await this.put('Options', {key: 'emailAuthRequired', value: false })
     if (appConfig.vapidPublicKey)
       await this.put('Options', {key: 'vapidPublicKey', value: appConfig.vapidPublicKey})
   }
@@ -255,6 +261,21 @@ export default class Database {
     }
   }
 
+  async getEmailProfile(): Promise<EmailProfile> {
+    const profileJson = await this.get<string>('Ids', 'emailProfile');
+    if (profileJson) {
+      return EmailProfile.deserialize(profileJson);
+    } else {
+      return new EmailProfile();
+    }
+  }
+
+  async setEmailProfile(emailProfile: EmailProfile): Promise<void> {
+    if (emailProfile) {
+      await this.put('Ids', { type: 'emailProfile', id: emailProfile.serialize() });
+    }
+  }
+
   /**
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
@@ -282,6 +303,14 @@ export default class Database {
   static async on(...args: any[]) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.emitter.on.apply(Database.databaseInstance.emitter, args);
+  }
+  static async setEmailProfile(emailProfile: EmailProfile) {
+    Database.ensureSingletonInstance();
+    return Database.databaseInstance.setEmailProfile.call(Database.databaseInstance, emailProfile);
+  }
+  static async getEmailProfile(): Promise<EmailProfile> {
+    Database.ensureSingletonInstance();
+    return Database.databaseInstance.getEmailProfile.call(Database.databaseInstance);
   }
   static async setSubscription(subscription: Subscription) {
     Database.ensureSingletonInstance();
