@@ -135,7 +135,8 @@ export class ServiceWorker {
       const appConfig = deserializeAppConfig(appConfigBundle);
       log.debug('[Service Worker] Received subscribe message.');
       const context = new Context(appConfig);
-      const subscription = await context.subscriptionManager.subscribe();
+      const rawSubscription = await context.subscriptionManager.subscribe();
+      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (appConfigBundle: any) => {
@@ -157,7 +158,8 @@ export class ServiceWorker {
         appId: appId.value
       });
       const context = new Context(appConfig);
-      const subscription = await context.subscriptionManager.subscribe();
+      const rawSubscription = await context.subscriptionManager.subscribe();
+      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
@@ -837,7 +839,7 @@ export class ServiceWorker {
     } else {
       // Otherwise set our push registration by resubscribing
       try {
-        rawPushSubscription = await context.subscriptionManager.subscribeFcmFromWorker();
+        rawPushSubscription = await context.subscriptionManager.subscribe();
       } catch (e) {
         // Let rawPushSubscription be null
       }
