@@ -37,6 +37,7 @@ test(`dispatching a mock pushsubscriptionchange event is received`, async t => {
 
 async function testCase(
   t: GenericTestContext<AvaContext<any>>,
+  appId: Uuid,
   /*
     We have an existing stored device ID, and this record is updated with the new push endpoint.
    */
@@ -75,12 +76,6 @@ async function testCase(
       .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
       .throws('some-error');
   }
-
-  const appId = Uuid.generate();
-  await TestEnvironment.initializeForServiceWorker({
-    url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
-  });
-  setBrowser(BrowserUserAgent.ChromeMacSupported);
 
   nock('https://onesignal.com')
     .get(`/api/v1/sync/${appId.value}/web`)
@@ -151,6 +146,12 @@ async function testCase(
 }
 
 test(`called with an old and new subscription successfully updates the subscription`, async t => {
+  const appId = Uuid.generate();
+  await TestEnvironment.initializeForServiceWorker({
+    url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+  });
+  setBrowser(BrowserUserAgent.ChromeMacSupported);
+
   const existingDeviceId = Uuid.generate();
   const oldSubscription = await new PushManager().subscribe({
     userVisibleOnly: true,
@@ -163,6 +164,7 @@ test(`called with an old and new subscription successfully updates the subscript
 
   await testCase(
     t,
+    appId,
     existingDeviceId,
     null,
     oldSubscription,
@@ -184,6 +186,12 @@ test(`called with an old and new subscription successfully updates the subscript
 });
 
 test(`without an existing device ID, lookup existing device ID, updates the looked-up record`, async t => {
+  const appId = Uuid.generate();
+  await TestEnvironment.initializeForServiceWorker({
+    url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+  });
+  setBrowser(BrowserUserAgent.ChromeMacSupported);
+
   const idReturnedByLookupCall = Uuid.generate();
   const oldSubscription = await new PushManager().subscribe({
     userVisibleOnly: true,
@@ -196,6 +204,7 @@ test(`without an existing device ID, lookup existing device ID, updates the look
 
   await testCase(
     t,
+    appId,
     null,
     idReturnedByLookupCall,
     oldSubscription,
@@ -220,8 +229,15 @@ test(`without an existing device ID, lookup existing device ID, updates the look
 test(
   `called with an old and without a new subscription, custom resubscription succeeds and updates record endpoint`,
   async t => {
+    const appId = Uuid.generate();
+    await TestEnvironment.initializeForServiceWorker({
+      url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+    });
+    setBrowser(BrowserUserAgent.ChromeMacSupported);
+
     const existingDeviceId = Uuid.generate();
-    const oldSubscription = await new PushManager().subscribe({
+    // This subscription should persist for our mock PushManager
+    const oldSubscription = await self.registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: Random.getRandomUint8Array(65).buffer
     });
@@ -230,8 +246,25 @@ test(
       applicationServerKey: Random.getRandomUint8Array(65).buffer
     });
 
+    // Overwrites behavior that returns existing subscription if one exists, change this after
+    // resolving resubscription behavior
+    const pushManagerSubscribe = sinon
+      .stub(PushManager.prototype, 'subscribe')
+      .callsFake(async options => {
+        const subscription = await self.registration.pushManager.getSubscription();
+        if (!subscription) {
+          return newSubscriptionByReregistration;
+        } else {
+          return oldSubscription;
+        }
+      });
+
+    console.log("Old Subscription Endpoint:", oldSubscription.endpoint);
+    console.log("New Subscription Endpoint:", newSubscriptionByReregistration.endpoint);
+
     await testCase(
       t,
+      appId,
       existingDeviceId,
       null,
       oldSubscription,
@@ -246,13 +279,21 @@ test(
 
     const subscription = await Database.getSubscription();
     t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
-    t.notDeepEqual(subscription.subscriptionToken, newSubscriptionByReregistration.endpoint);
+    t.deepEqual(subscription.subscriptionToken, newSubscriptionByReregistration.endpoint);
+
+    pushManagerSubscribe.restore();
 });
 
 test(
   `called with an existing device ID, with old and without new subscription, custom resubscription fails ` +
   `and updates existing device record to clear subscription`,
   async t => {
+    const appId = Uuid.generate();
+    await TestEnvironment.initializeForServiceWorker({
+      url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+    });
+    setBrowser(BrowserUserAgent.ChromeMacSupported);
+
     const existingDeviceId = Uuid.generate();
     const oldSubscription = await new PushManager().subscribe({
       userVisibleOnly: true,
@@ -261,6 +302,7 @@ test(
 
     await testCase(
       t,
+      appId,
       existingDeviceId,
       null,
       oldSubscription,
@@ -282,8 +324,15 @@ test(
   `called without an existing device ID, without old and new subscription, custom resubscription fails ` +
   `and local data is cleared`,
   async t => {
+    const appId = Uuid.generate();
+    await TestEnvironment.initializeForServiceWorker({
+      url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+    });
+    setBrowser(BrowserUserAgent.ChromeMacSupported);
+
     await testCase(
       t,
+      appId,
       null,
       null,
       null,

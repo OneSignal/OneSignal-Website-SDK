@@ -35,7 +35,10 @@ export default class PushManager {
    * service worker does not have an existing subscription.
    */
   public async subscribe(options: PushSubscriptionOptions): Promise<PushSubscription> {
-    this.subscription = new PushSubscription(this, options);
+    console.log("Called PushManager.subscribe(), existing subscription:", this.subscription ? this.subscription.endpoint : null);
+    if (!this.subscription) {
+      this.subscription = new PushSubscription(this, options);
+    }
     return this.subscription;
   }
 
