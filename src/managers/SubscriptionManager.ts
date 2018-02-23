@@ -27,6 +27,7 @@ import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
 import NotImplementedError from '../errors/NotImplementedError';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -54,7 +55,15 @@ export class SubscriptionManager {
     return Browser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
   }
 
-  public async subscribe(): Promise<Subscription> {
+  /**
+   * Subscribes for a web push subscription.
+   *
+   * This method is aware of different subscription environments like subscribing from a webpage,
+   * service worker, or OneSignal HTTP popup and will select the correct method. This is intended to
+   * be the single public API for obtaining a raw web push subscription (i.e. what the browser
+   * returns from a successful subscription).
+   */
+  public async subscribe(): Promise<RawPushSubscription> {
     const env = SdkEnvironment.getWindowEnv();
 
     switch (env) {
@@ -96,15 +105,93 @@ export class SubscriptionManager {
         break;
     }
 
-    const subscription = await this.registerSubscriptionWithOneSignal(rawPushSubscription);
+    return rawPushSubscription;
+  }
+
+  /**
+   * Creates a device record from the provided raw push subscription and forwards this device record
+   * to OneSignal to create or update the device ID.
+   *
+   * @param rawPushSubscription The raw push subscription obtained from calling subscribe(). This
+   * can be null, in which case OneSignal's device record is set to unsubscribed.
+   *
+   * @param subscriptionState Describes whether the device record is subscribed, unsubscribed, or in
+   * another state. By default, this is set from the availability of rawPushSubscription (exists:
+   * Subscribed, null: Unsubscribed). Other use cases may result in creation of a device record that
+   * warrants a special subscription state. For example, a device ID can be retrieved by providing
+   * an identifier, and a new device record will be created if the identifier didn't exist. These
+   * records are marked with a special subscription state for tracking purposes.
+   */
+  public async registerSubscription(
+    pushSubscription: RawPushSubscription,
+    subscriptionState?: SubscriptionStateKind,
+  ): Promise<Subscription> {
+    const deviceRecord = PushDeviceRecord.createFromPushSubscription(
+      this.config.appId,
+      pushSubscription,
+      subscriptionState
+    );
+
+    deviceRecord.appId = this.config.appId;
+
+    if (SubscriptionManager.isSafari()) {
+      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Safari;
+    } else if (Browser.firefox) {
+      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Firefox;
+    } else {
+      deviceRecord.deliveryPlatform = DeliveryPlatformKind.ChromeLike;
+    }
+
+    deviceRecord.subscriptionState = SubscriptionStateKind.Subscribed;
+
+    let newDeviceId: Uuid;
+    if (await this.isAlreadyRegisteredWithOneSignal()) {
+      const { deviceId } = await Database.getSubscription();
+
+      if (!pushSubscription || pushSubscription.isNewSubscription()) {
+        newDeviceId = await OneSignalApi.updateUserSession(deviceId, deviceRecord);
+        log.info("Updated the subscriber's OneSignal session:", deviceRecord);
+      } else {
+        // The subscription hasn't changed; don't register with OneSignal and reuse the existing device ID
+        newDeviceId = deviceId;
+        log.debug(
+          'The existing push subscription was resubscribed, but not registering with OneSignal because the ' +
+          'new subscription is identical.'
+        );
+      }
+    } else {
+      const id = await OneSignalApi.createUser(deviceRecord);
+      newDeviceId = id;
+      log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
+    }
+
+    await this.associateSubscriptionWithEmail(newDeviceId);
+
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+      Event.trigger(OneSignal.EVENTS.REGISTERED);
+    }
+
+    // Get the existing subscription settings to prevent overriding opt out
+    const subscription = await Database.getSubscription();
+    subscription.deviceId = newDeviceId;
+    if (pushSubscription) {
+      if (SubscriptionManager.isSafari()) {
+        subscription.subscriptionToken = pushSubscription.safariDeviceToken;
+      } else {
+        subscription.subscriptionToken = pushSubscription.w3cEndpoint.toString();
+      }
+    } else {
+      subscription.subscriptionToken = null;
+    }
+
+    await Database.setSubscription(subscription);
+
+    const subscription2 = await Database.getSubscription();
+
     if (typeof OneSignal !== "undefined") {
       OneSignal._sessionInitAlreadyRunning = false;
     }
     return subscription;
-  }
-
-  public async subscribePartially(): Promise<RawPushSubscription> {
-    return await this.subscribeFcmFromPage();
   }
 
   /**
@@ -163,75 +250,6 @@ export class SubscriptionManager {
         email: emailProfile.emailAddress
       }
     );
-  }
-
-  public async registerSubscriptionWithOneSignal(
-    pushSubscription: RawPushSubscription,
-    subscriptionState?: SubscriptionStateKind,
-  ): Promise<Subscription> {
-    const deviceRecord = PushDeviceRecord.createFromPushSubscription(
-      this.config.appId,
-      pushSubscription,
-      subscriptionState
-    );
-
-    deviceRecord.appId = this.config.appId;
-
-    if (SubscriptionManager.isSafari()) {
-      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Safari;
-    } else if (Browser.firefox) {
-      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Firefox;
-    } else {
-      deviceRecord.deliveryPlatform = DeliveryPlatformKind.ChromeLike;
-    }
-
-    deviceRecord.subscriptionState = SubscriptionStateKind.Subscribed;
-
-    let newDeviceId: Uuid;
-    if (await this.isAlreadyRegisteredWithOneSignal()) {
-      const { deviceId } = await Database.getSubscription();
-
-      if (!pushSubscription || pushSubscription.isNewSubscription()) {
-        newDeviceId = await OneSignalApi.updateUserSession(deviceId, deviceRecord);
-        log.info("Updated the subscriber's OneSignal session:", deviceRecord);
-      } else {
-        // The subscription hasn't changed; don't register with OneSignal and reuse the existing device ID
-        newDeviceId = deviceId;
-        log.debug(
-          'The existing push subscription was resubscribed, but not registering with OneSignal because the new subscription is identical.'
-        );
-      }
-    } else {
-      const id = await OneSignalApi.createUser(deviceRecord);
-      newDeviceId = id;
-      log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
-    }
-
-    await this.associateSubscriptionWithEmail(newDeviceId);
-
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-      Event.trigger(OneSignal.EVENTS.REGISTERED);
-    }
-
-    debugger;
-    // Get the existing subscription settings to prevent overriding opt out
-    const subscription = await Database.getSubscription();
-    subscription.deviceId = newDeviceId;
-    if (pushSubscription) {
-      if (SubscriptionManager.isSafari()) {
-        subscription.subscriptionToken = pushSubscription.safariDeviceToken;
-      } else {
-        subscription.subscriptionToken = pushSubscription.w3cEndpoint.toString();
-      }
-    } else {
-      subscription.subscriptionToken = null;
-    }
-
-    await Database.setSubscription(subscription);
-
-  const subscription2 = await Database.getSubscription();
-
-    return subscription;
   }
 
   private async isAlreadyRegisteredWithOneSignal() {
@@ -417,25 +435,26 @@ export class SubscriptionManager {
   }
 
   /**
-   * Creates a new push subscription or resubscribes an existing push subscription.
+   * Uses the browser's PushManager interface to actually subscribe for a web push subscription.
    *
-   * In cases where details of the existing push subscription can't be found,
-   * the user is first unsubscribed.
+   * @param pushManager An instance of the browser's push manager, either from the page or from the
+   * service worker.
    *
-   * Given an existing legacy GCM subscription, this function does not try to
-   * migrate the subscription to VAPID; this isn't possible unless the user is
-   * first unsubscribed, and unsubscribing frequently can be a little risky.
+   * @param subscriptionStrategy Given an existing push subscription, describes whether the existing
+   * push subscription is resubscribed as-is leaving it unchanged, or unsubscribed to make room for
+   * a new push subscription.
    */
   public async subscribeFcmVapidOrLegacyKey(
-    workerRegistration: ServiceWorkerRegistration
+    pushManager: PushManager,
+    subscriptionStrategy: SubscriptionStrategyKind
   ): Promise<RawPushSubscription> {
     /*
-      Always try subscribing using VAPID (except for cases where the user is
-      already subscribed, handled below). If a browser doesn't support VAPID,
-      our extra options will be safely ignored, and a non-VAPID subscription
-      will be automatically returned.
+      Always try subscribing using VAPID by providing an applicationServerKey, except for cases
+      where the user is already subscribed, handled below. If browser doesn't support VAPID's
+      applicationServerKey property, our extra options will be safely ignored, and a non-VAPID
+      subscription will be automatically returned.
      */
-    let options = {
+    let subscriptionOptions = {
       userVisibleOnly: true,
       applicationServerKey: this.getVapidKeyForBrowser() ? this.getVapidKeyForBrowser() : undefined
     };
@@ -448,48 +467,64 @@ export class SubscriptionManager {
       If so, and if we're on Chrome 54+, we can use its details to resubscribe
       without any extra info needed.
      */
-    const existingPushSubscription = await workerRegistration.pushManager.getSubscription();
+    const existingPushSubscription = await pushManager.getSubscription();
 
-    if (existingPushSubscription && existingPushSubscription.options) {
-      log.debug('[Subscription Manager] An existing push subscription exists and options is not null. Using existing options to resubscribe.');
-      /*
-        Hopefully we're on Chrome 54+, so we can use PushSubscriptionOptions to
-        get the exact applicationServerKey to use, without needing to assume a
-        manifest.json exists or passing in our VAPID key and dealing with
-        potential mismatched sender ID issues.
-      */
+    /* Depending on the subscription strategy, handle existing subscription in various ways */
+    switch (subscriptionStrategy) {
+      case SubscriptionStrategyKind.ResubscribeExisting:
+        /* Use the existing push subscription's PushSubscriptionOptions if it exists to resubscribe
+        an identical unchanged subscription, or unsubscribe this existing push subscription if
+        PushSubscriptionOptions is null. */
 
-      /*
-        Overwrite our subscription options to use the exact same subscription
-        options we used to subscribe in the first place. The previous
-        always-use-VAPID assignment is overriden by this assignment.
-       */
-      options = existingPushSubscription.options;
-    } else if (existingPushSubscription && !existingPushSubscription.options) {
-      log.debug('[Subscription Manager] An existing push subscription exists and options is null. Unsubscribing from push first now.');
-      /*
-        There isn't a great solution if PushSubscriptionOptions (supported on
-        Chrome 54+) aren't supported.
+        if (existingPushSubscription && existingPushSubscription.options) {
+          log.debug('[Subscription Manager] An existing push subscription exists and options is not null. ' +
+            'Using existing options to resubscribe.');
+          /*
+            Hopefully we're on Chrome 54+, so we can use PushSubscriptionOptions to get the exact
+            applicationServerKey to use, without needing to assume a manifest.json exists or passing
+            in our VAPID key and dealing with potential mismatched sender ID issues.
+          */
 
-        We want to subscribe the user, but we don't know whether the user was
-        subscribed via GCM's manifest.json or FCM's VAPID.
+          /*
+            Overwrite our subscription options to use the exact same subscription options we used to
+            subscribe in the first place. The previous always-use-VAPID assignment is overriden by
+            this assignment.
+          */
+          subscriptionOptions = existingPushSubscription.options;
+        } else if (existingPushSubscription && !existingPushSubscription.options) {
+          log.debug('[Subscription Manager] An existing push subscription exists and options is null. ' +
+            'Unsubscribing from push first now.');
+          /*
+            There isn't a great solution if PushSubscriptionOptions (supported on Chrome 54+) isn't
+            supported.
 
-        This bug
-        (https://bugs.chromium.org/p/chromium/issues/detail?id=692577) shows
-        that a mismatched sender ID error is possible if you subscribe via
-        FCM's VAPID while the user was originally subscribed via GCM's
-        manifest.json (fails silently).
+            We want to subscribe the user, but we don't know whether the user was subscribed via
+            GCM's manifest.json or FCM's VAPID.
 
-        Because of this, we should unsubscribe the user from push first and
-        then resubscribe them.
-      */
-      await existingPushSubscription.unsubscribe();
+            This bug (https://bugs.chromium.org/p/chromium/issues/detail?id=692577) shows that a
+            mismatched sender ID error is possible if you subscribe via FCM's VAPID while the user
+            was originally subscribed via GCM's manifest.json (fails silently).
+
+            Because of this, we should unsubscribe the user from push first and then resubscribe
+            them.
+          */
+          await existingPushSubscription.unsubscribe();
+        }
+        break;
+      case SubscriptionStrategyKind.SubscribeNew:
+        /* Since we want a new subscription every time with this strategy, just unsubscribe. */
+        if (existingPushSubscription) {
+          log.debug('[Subscription Manager] Unsubscribing existing push subscription.');
+          await existingPushSubscription.unsubscribe();
+        }
+        break;
     }
-    log.debug('[Subscription Manager] Subscribing to web push with these options:', options);
 
     // Actually subscribe the user to push
-    newPushSubscription = await workerRegistration.pushManager.subscribe(options);
+    log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
+    newPushSubscription = await pushManager.subscribe(subscriptionOptions);
 
+    // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails = RawPushSubscription.setFromW3cSubscription(newPushSubscription);
     if (existingPushSubscription) {
       pushSubscriptionDetails.existingW3cPushSubscription =

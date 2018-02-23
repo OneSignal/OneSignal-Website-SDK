@@ -190,7 +190,7 @@ export default class SubscriptionPopupHost implements Disposable {
     this.messenger.stopPostMessageReceive();
 
     const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
-    const subscription = await subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
+    const subscription = await subscriptionManager.registerSubscription(rawPushSubscription);
 
     EventHelper.checkAndTriggerSubscriptionChanged();
     MainHelper.checkAndTriggerNotificationPermissionChanged();

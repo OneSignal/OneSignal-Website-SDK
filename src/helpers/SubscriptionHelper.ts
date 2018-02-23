@@ -50,7 +50,8 @@ export default class SubscriptionHelper {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {
-          subscription = await context.subscriptionManager.subscribe();
+          const rawSubscription = await context.subscriptionManager.subscribe();
+          subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
           EventHelper.triggerNotificationPermissionChanged();
           EventHelper.checkAndTriggerSubscriptionChanged();
@@ -71,7 +72,7 @@ export default class SubscriptionHelper {
 
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
-          rawSubscription = await context.subscriptionManager.subscribePartially();
+          rawSubscription = await context.subscriptionManager.subscribe();
 
           // Update the permission to granted
           await context.permissionManager.updateStoredPermission();
