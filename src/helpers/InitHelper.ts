@@ -36,20 +36,15 @@ import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 declare var OneSignal: any;
 
 export default class InitHelper {
-  static storeInitialValues() {
-    return Promise.all([
-      OneSignal.isPushNotificationsEnabled(),
-      OneSignal.getNotificationPermission(),
-      OneSignal.isOptedOut()
-    ]).then(([isPushEnabled, notificationPermission, isOptedOut]) => {
-      LimitStore.put('subscription.optedOut', isOptedOut);
-      return Promise.all([
-        Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled }),
-        Database.put('Options', {
-          key: 'notificationPermission',
-          value: notificationPermission
-        })
-      ]);
+  static async storeInitialValues() {
+    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const notificationPermission = await OneSignal.getNotificationPermission();
+    const isOptedOut = await OneSignal.isOptedOut();
+    LimitStore.put('subscription.optedOut', isOptedOut);
+    await Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled }),
+    await Database.put('Options', {
+      key: 'notificationPermission',
+      value: notificationPermission
     });
   }
 
@@ -60,15 +55,14 @@ export default class InitHelper {
    * @private
    */
   static async onSdkInitialized() {
+    const context: Context = OneSignal.context;
+
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites, since the iframe is needed for communication
-    InitHelper.storeInitialValues();
-    InitHelper.installNativePromptPermissionChangedHook();
-
-    const context: Context = OneSignal.context;
-
-    if (await OneSignal.getNotificationPermission() === NotificationPermission.Granted) {
+    await InitHelper.storeInitialValues();
+    await InitHelper.installNativePromptPermissionChangedHook();
+    if (await context.permissionManager.getNotificationPermission(context.appConfig.safariWebId) === NotificationPermission.Granted) {
       /*
         If the user has already granted permission, the user has previously
         already subscribed. Don't show welcome notifications if the user is
@@ -82,47 +76,30 @@ export default class InitHelper {
       window.location.protocol === 'https:' &&
       !await SubscriptionHelper.hasInsecureParentOrigin()
     ) {
-      navigator.serviceWorker
-        .getRegistration()
-        .then(registration => {
-          if (registration && registration.active) {
-            MainHelper.establishServiceWorkerChannel();
-          }
-        })
-        .catch(e => {
-          if (e.code === 9) {
-            // Only secure origins are allowed
-            if (
-              location.protocol === 'http:' ||
-              SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame
-            ) {
-              // This site is an HTTP site with an <iframe>
-              // We can no longer register service workers since Chrome 42
-              log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
-            }
-          } else {
-            log.error(`Error getting Service Worker registration on ${location.href}:`, e);
-          }
-        });
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration && registration.active) {
+          MainHelper.establishServiceWorkerChannel();
+        }
+      } catch (e) { }
     }
 
-    MainHelper.showNotifyButton();
+    await MainHelper.showNotifyButton();
 
     if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {
-      OneSignal.isPushNotificationsEnabled(enabled => {
-        if (enabled) {
-          /*  The user is on Safari and *specifically* set autoRegister to false.
-           The normal case for a user on Safari is to not set anything related to autoRegister.
-           With autoRegister false, we don't automatically show the permission prompt on Safari.
-           However, if push notifications are already enabled, we're actually going to make the same
-           subscribe call and register the device token, because this will return the same device
-           token and allow us to update the user's session count and last active.
-           For sites that omit autoRegister, autoRegister is assumed to be true. For Safari, the session count
-           and last active is updated from this registration call.
-           */
-          InitHelper.sessionInit({ __sdkCall: true });
-        }
-      });
+      const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+      if (isPushEnabled) {
+        /*  The user is on Safari and *specifically* set autoRegister to false.
+          The normal case for a user on Safari is to not set anything related to autoRegister.
+          With autoRegister false, we don't automatically show the permission prompt on Safari.
+          However, if push notifications are already enabled, we're actually going to make the same
+          subscribe call and register the device token, because this will return the same device
+          token and allow us to update the user's session count and last active.
+          For sites that omit autoRegister, autoRegister is assumed to be true. For Safari, the session count
+          and last active is updated from this registration call.
+          */
+        InitHelper.sessionInit({ __sdkCall: true });
+      }
     }
 
     if (SubscriptionHelper.isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
@@ -137,16 +114,15 @@ export default class InitHelper {
       if (isPushEnabled) {
         const context: Context = OneSignal.context;
         const { deviceId } = await Database.getSubscription();
-        OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
+        await OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
       }
     }
 
-    InitHelper.updateEmailSessionCount();
+    await InitHelper.updateEmailSessionCount();
+    context.cookieSyncer.install();
+    await InitHelper.showPromptsFromWebConfigEditor();
 
-    OneSignal.context.cookieSyncer.install();
-
-    InitHelper.showPromptsFromWebConfigEditor();
-    context.metricsManager.reportPageView();
+    Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
   }
 
   public static async updateEmailSessionCount() {
@@ -174,16 +150,15 @@ export default class InitHelper {
     }
   }
 
-  static installNativePromptPermissionChangedHook() {
+  static async installNativePromptPermissionChangedHook() {
     if (navigator.permissions && !(Browser.firefox && Number(Browser.version) <= 45)) {
       OneSignal._usingNativePermissionHook = true;
-      // If the browser natively supports hooking the subscription prompt permission change event
-      //     use it instead of our SDK method
-      navigator.permissions.query({ name: 'notifications' }).then(function(permissionStatus) {
-        permissionStatus.onchange = function() {
-          EventHelper.triggerNotificationPermissionChanged();
-        };
-      });
+      // If the browser natively supports hooking the subscription prompt permission change event,
+      // use it instead of our SDK method
+      const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+      permissionStatus.onchange = function() {
+        EventHelper.triggerNotificationPermissionChanged();
+      };
     }
   }
 

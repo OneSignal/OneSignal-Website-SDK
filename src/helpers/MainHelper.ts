@@ -100,7 +100,7 @@ export default class MainHelper {
     });
   }
 
-  static showNotifyButton() {
+  static async showNotifyButton() {
     if (Environment.isBrowser() && !OneSignal.notifyButton) {
       OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
       if (OneSignal.config.userConfig.bell) {
@@ -111,14 +111,13 @@ export default class MainHelper {
 
       const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
-        Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate()).then(predicateValue => {
-          if (predicateValue !== false) {
-            OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
-            OneSignal.notifyButton.create();
-          } else {
-            log.debug('Notify button display predicate returned false so not showing the notify button.');
-          }
-        });
+        const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
+        if (predicateValue !== false) {
+          OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
+          OneSignal.notifyButton.create();
+        } else {
+          log.debug('Notify button display predicate returned false so not showing the notify button.');
+        }
       } else {
         OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
         OneSignal.notifyButton.create();
