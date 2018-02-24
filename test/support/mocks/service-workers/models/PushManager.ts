@@ -1,5 +1,6 @@
 import PushSubscription from './PushSubscription';
 import PushSubscriptionOptions from './PushSubscriptionOptions';
+import { arrayBufferToBase64 } from "../../../../../src/utils/Encoding";
 
 /**
  * The PushManager interface of the Push API provides a way to receive notifications from
@@ -35,7 +36,6 @@ export default class PushManager {
    * service worker does not have an existing subscription.
    */
   public async subscribe(options: PushSubscriptionOptions): Promise<PushSubscription> {
-    console.log("Called PushManager.subscribe(), existing subscription:", this.subscription ? this.subscription.endpoint : null);
     if (!this.subscription) {
       this.subscription = new PushSubscription(this, options);
     }
