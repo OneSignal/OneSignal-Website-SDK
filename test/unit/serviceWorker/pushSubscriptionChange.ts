@@ -246,8 +246,6 @@ test(
       applicationServerKey: Random.getRandomUint8Array(65).buffer
     });
 
-    // Overwrites behavior that returns existing subscription if one exists, change this after
-    // resolving resubscription behavior
     const pushManagerSubscribe = sinon
       .stub(PushManager.prototype, 'subscribe')
       .callsFake(async options => {
@@ -258,9 +256,6 @@ test(
           return oldSubscription;
         }
       });
-
-    console.log("Old Subscription Endpoint:", oldSubscription.endpoint);
-    console.log("New Subscription Endpoint:", newSubscriptionByReregistration.endpoint);
 
     await testCase(
       t,
