@@ -28,6 +28,8 @@ import NotImplementedError from '../errors/NotImplementedError';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import SubscriptionHelper from '../helpers/SubscriptionHelper';
+import { ServiceWorkerActiveState } from './ServiceWorkerManager';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -473,6 +475,9 @@ export class SubscriptionManager {
      */
     const existingPushSubscription = await pushManager.getSubscription();
 
+    /* Record the subscription created at timestamp only if this is a new subscription */
+    let shouldRecordSubscriptionCreatedAt = !existingPushSubscription;
+
     /* Depending on the subscription strategy, handle existing subscription in various ways */
     switch (subscriptionStrategy) {
       case SubscriptionStrategyKind.ResubscribeExisting:
@@ -495,6 +500,9 @@ export class SubscriptionManager {
             this assignment.
           */
           subscriptionOptions = existingPushSubscription.options;
+
+          /* If we're not subscribing a new subscription, don't overwrite the created at timestamp */
+          shouldRecordSubscriptionCreatedAt = false;
         } else if (existingPushSubscription && !existingPushSubscription.options) {
           log.debug('[Subscription Manager] An existing push subscription exists and options is null. ' +
             'Unsubscribing from push first now.');
@@ -513,6 +521,9 @@ export class SubscriptionManager {
             them.
           */
           await existingPushSubscription.unsubscribe();
+
+          /* We're unsubscribing, so we want to store the created at timestamp */
+          shouldRecordSubscriptionCreatedAt = false;
         }
         break;
       case SubscriptionStrategyKind.SubscribeNew:
@@ -528,6 +539,12 @@ export class SubscriptionManager {
     log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     newPushSubscription = await pushManager.subscribe(subscriptionOptions);
 
+    if (shouldRecordSubscriptionCreatedAt) {
+      const bundle = await Database.getSubscription();
+      bundle.createdAt = new Date().getUTCDate();
+      await Database.setSubscription(bundle);
+    }
+
     // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails = RawPushSubscription.setFromW3cSubscription(newPushSubscription);
     if (existingPushSubscription) {
@@ -535,5 +552,58 @@ export class SubscriptionManager {
         RawPushSubscription.setFromW3cSubscription(existingPushSubscription);
     }
     return pushSubscriptionDetails;
+  }
+
+  public async isSubscriptionExpiring(): Promise<boolean> {
+    const env = SdkEnvironment.getWindowEnv();
+
+    /* This is currently only designed for top-level frames on webpages, not for service workers and
+    not for child iframes. */
+    if (env !== WindowEnvironmentKind.Host) {
+      return false;
+    }
+
+    /* If we're not on an HTTPS page, abort. Insecure environments can't access the push
+    subscription to check. */
+    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      return false;
+    }
+
+    const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
+    if (!(
+      serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
+      serviceWorkerState === ServiceWorkerActiveState.WorkerB)) {
+        /* If the service worker isn't activated, there's no subscription to look for */
+        return false;
+    }
+
+    const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+    if (!serviceWorkerRegistration) {
+      /* One final sanity check */
+      return false;
+    }
+
+    const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
+    if (!pushSubscription) {
+      /* Not subscribed to web push */
+      return false;
+    }
+
+    let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
+
+    if (!subscriptionCreatedAt) {
+      /* If we don't have a record of when the subscription was created, set it into the future to
+      obtain a new subscription */
+      const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
+      subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
+    }
+    const creationExpiryTimestampMidpoint =
+      subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
+
+    return pushSubscription.expirationTime && (
+      /* The expiration time (in UTC) is past the current time (also in UTC) */
+      pushSubscription.expirationTime >= new Date().getTime() ||
+      new Date().getTime() >= creationExpiryTimestampMidpoint
+    );
   }
 }
