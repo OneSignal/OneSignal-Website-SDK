@@ -982,7 +982,11 @@ export default class OneSignal {
      * loaded.
      * Before this event, IndexedDB access is not possible for HTTP sites.
      */
-    SDK_INITIALIZED: 'initialize',
+    SDK_INITIALIZED: 'initializeInternal',
+    /**
+     * Occurs after the SDK finishes its final internal initialization. The final initialization event.
+     */
+    SDK_INITIALIZED_PUBLIC: 'initialize',
     /**
      * Occurs after the user subscribes to push notifications and a new user entry is created on OneSignal's server,
      * and also occurs when the user begins a new site session and the last_session and last_active is updated on
