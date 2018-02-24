@@ -22,6 +22,8 @@ import PushSubscriptionOptions from '../../support/mocks/service-workers/models/
 import * as Browser from 'bowser';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
+import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
+import { RawPushSubscription } from "../../../src/models/RawPushSubscription";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -40,20 +42,13 @@ async function testCase(
    */
   t: GenericTestContext<AvaContext<any>>,
   browser: BrowserUserAgent,
-  vapidPublicKeyOption: "generate" | undefined,
-  onesignalVapidPublicKeyOption: "generate" | undefined,
+  vapidPublicKey: string,
+  sharedVapidPublicKey: string,
+  subscriptionStrategy: SubscriptionStrategyKind,
+  onBeforeSubscriptionManagerSubscribe:
+    (pushManager: PushManager, subscriptionManager: SubscriptionManager) => Promise<void>,
+  onPushManagerSubscribed: (pushManager: PushManager, spy: sinon.SinonSpy) => Promise<void>,
 ) {
-
-  let vapidPublicKey: string;
-  let onesignalVapidPublicKey: string;
-
-  // Generate our vapid keys randomly
-  if (vapidPublicKeyOption === "generate") {
-    vapidPublicKey = arrayBufferToBase64(Random.getRandomUint8Array(64).buffer);
-  }
-  if (onesignalVapidPublicKeyOption === "generate") {
-    onesignalVapidPublicKey = arrayBufferToBase64(Random.getRandomUint8Array(64).buffer);
-  }
 
   // Set the user agent, which determines which vapid key we use
   setBrowser(browser);
@@ -63,193 +58,170 @@ async function testCase(
     safariWebId: null,
     appId: Uuid.generate(),
     vapidPublicKey: vapidPublicKey,
-    onesignalVapidPublicKey: onesignalVapidPublicKey
+    onesignalVapidPublicKey: sharedVapidPublicKey
   });
 
   // Register a mock service worker to access push subscription
   await navigator.serviceWorker.register('/worker.js');
-  const registration = await navigator.serviceWorker.getRegistration();
+  const registration: ServiceWorkerRegistration = await navigator.serviceWorker.getRegistration();
 
   // There should be no existing subscription
   const existingSubscription = await registration.pushManager.getSubscription();
   t.is(existingSubscription, null);
 
-  // Prepare to subscribe for push, hook the call to spy on params
-  const spy = sinon.spy(registration.pushManager, 'subscribe');
+  if (onBeforeSubscriptionManagerSubscribe) {
+    await onBeforeSubscriptionManagerSubscribe(registration.pushManager, manager);
+  }
 
-  // Create our subscription options, which we'll verify later
-  let options: PushSubscriptionOptions = {
-    userVisibleOnly: true,
-    applicationServerKey: base64ToUint8Array(vapidPublicKey).buffer
-  };
+  // Prepare to subscribe for push, hook the call to spy on params
+  const spy = sinon.spy(PushManager.prototype, 'subscribe');
 
   // Subscribe for push
-  await manager.subscribeFcmVapidOrLegacyKey(registration);
+  await manager.subscribeFcmVapidOrLegacyKey(registration.pushManager as any, subscriptionStrategy);
 
-  // Verify the actual mock subscription call went through with our expected options
-  t.true(spy.getCall(0).calledWithExactly(options));
+  // Allow each test to verify mock parameters independently
+  if (onPushManagerSubscribed) {
+    await onPushManagerSubscribed(registration.pushManager, spy);
+  }
+
+  // Restore original mocked method
   spy.restore();
 }
 
-test('subscribeFcmVapidOrLegacyKey() subscribes using unique VAPID for a non-Firefox new user', async t => {
+function generateVapidKeys() {
+  return {
+    uniquePublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
+    sharedPublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer)
+  };
+}
+
+test('uses per-app VAPID public key for Chrome', async t => {
+  const vapidKeys = generateVapidKeys();
   await testCase(
     t,
     BrowserUserAgent.ChromeMacSupported,
-    "generate",
-    "generate"
+    vapidKeys.uniquePublic,
+    vapidKeys.sharedPublic,
+    SubscriptionStrategyKind.ResubscribeExisting,
+    null,
+    async (pushManager, pushManagerSubscribeSpy) => {
+      const expectedSubscriptionOptions: PushSubscriptionOptions = {
+        userVisibleOnly: true,
+        // Verify using unique per-app VAPID key
+        applicationServerKey: base64ToUint8Array(vapidKeys.uniquePublic).buffer
+      };
+
+      t.true(pushManagerSubscribeSpy.getCall(0).calledWithExactly(expectedSubscriptionOptions));
+    }
   );
 });
 
-test('subscribeFcmVapidOrLegacyKey() subscribes using globally shared VAPID key for a new Firefox user', async t => {
+test('uses globally shared VAPID public key for Firefox', async t => {
+  const vapidKeys = generateVapidKeys();
   await testCase(
     t,
-    BrowserUserAgent.FirefoxMacSupported,
-    "generate",
-    "generate"
+    BrowserUserAgent.ChromeMacSupported,
+    vapidKeys.uniquePublic,
+    vapidKeys.sharedPublic,
+    SubscriptionStrategyKind.ResubscribeExisting,
+    null,
+    async (pushManager, pushManagerSubscribeSpy) => {
+      const expectedSubscriptionOptions: PushSubscriptionOptions = {
+        userVisibleOnly: true,
+        // Verify using shared VAPID key
+        applicationServerKey: base64ToUint8Array(vapidKeys.sharedPublic).buffer
+      };
+
+      t.true(pushManagerSubscribeSpy.getCall(0).calledWithExactly(expectedSubscriptionOptions));
+    }
   );
 });
 
-test("subscribeFcmVapidOrLegacyKey() subscribes using last known subscription options if options are available", async t => {
-  const VAPID_KEYS = [
-    arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
-    arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
-    arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
-    arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
-  ];
+test('resubscribe-existing strategy uses existing subscription options', async t => {
+  const initialVapidKeys = generateVapidKeys();
+  const subsequentVapidKeys = generateVapidKeys();
 
-  let firstSubscription: PushSubscription;
-  let firstSubscriptionOptions: any;
-  {
-    const manager = new SubscriptionManager(t.context.sdkContext, {
-      safariWebId: null,
-      appId: Uuid.generate(),
-      vapidPublicKey: VAPID_KEYS[0],
-      onesignalVapidPublicKey: VAPID_KEYS[1]
-    });
+  const initialSubscriptionOptions: PushSubscriptionOptions = {
+    userVisibleOnly: true,
+    applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+  };
 
-    await navigator.serviceWorker.register('/worker.js');
-    const registration = await navigator.serviceWorker.getRegistration();
-    const existingSubscription = await registration.pushManager.getSubscription();
-    t.is(existingSubscription, null);
-
-    const spy = sinon.spy(registration.pushManager, 'subscribe');
-
-    firstSubscriptionOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: <ArrayBuffer>base64ToUint8Array(VAPID_KEYS[0]).buffer
-    };
-
-    await manager.subscribeFcmVapidOrLegacyKey(registration);
-
-    firstSubscription = await registration.pushManager.getSubscription() as any;
-
-    t.true(spy.getCall(0).calledWithExactly(firstSubscriptionOptions));
-
-    const actualApplicationServerKey = (await registration.pushManager.getSubscription()).options.applicationServerKey;
-    t.deepEqual(actualApplicationServerKey, base64ToUint8Array(VAPID_KEYS[0]).buffer);
-    spy.restore();
-  }
-
-  // Subscription #2
-  {
-    const manager = new SubscriptionManager(t.context.sdkContext, {
-      safariWebId: null,
-      appId: Uuid.generate(),
-      vapidPublicKey: VAPID_KEYS[2],
-      onesignalVapidPublicKey: VAPID_KEYS[3]
-    });
-
-    const registration = await navigator.serviceWorker.getRegistration();
-    const previousSubscription: PushSubscription = await registration.pushManager.getSubscription() as any;
-    t.deepEqual(previousSubscription, firstSubscription);
-
-    const spy = sinon.spy(registration.pushManager, 'subscribe');
-
-    let options = {
-      userVisibleOnly: true,
-      applicationServerKey: <ArrayBuffer>base64ToUint8Array(VAPID_KEYS[2]).buffer
-    };
-
-    await manager.subscribeFcmVapidOrLegacyKey(registration);
-
-    // Should be called with the first subscription's options, not the second
-    t.true(spy.getCall(0).calledWithExactly(firstSubscriptionOptions));
-
-    const actualApplicationServerKey = (await registration.pushManager.getSubscription()).options.applicationServerKey;
-    // Should be VAPID key from first subscription, not second
-    t.deepEqual(actualApplicationServerKey, base64ToUint8Array(VAPID_KEYS[0]).buffer);
-    spy.restore();
-  }
+  await testCase(
+    t,
+    BrowserUserAgent.ChromeMacSupported,
+    subsequentVapidKeys.uniquePublic,
+    subsequentVapidKeys.sharedPublic,
+    SubscriptionStrategyKind.ResubscribeExisting,
+    async (pushManager, subscriptionManager) => {
+      // Create an initial subscription, so subsequent subscription attempts re-use this initial
+      // subscription's options
+      await pushManager.subscribe(initialSubscriptionOptions);
+    },
+    async (pushManager, pushManagerSubscribeSpy) => {
+      // The subscription options used should be identical to our initial subscription's options
+      const calledSubscriptionOptions = pushManagerSubscribeSpy.getCall(0).args[0];
+      t.deepEqual(calledSubscriptionOptions, initialSubscriptionOptions);
+    }
+  );
 });
 
-// test("subscribeFcmVapidOrLegacyKey() unsubscribes if existing subscription is present without existing subscription options", async t => {
-//   let firstSubscription: PushSubscription;
-//   let firstSubscriptionOptions: any;
-//   {
-//     const manager = new SubscriptionManager(t.context.sdkContext, {
-//       safariWebId: null,
-//       appId: Uuid.generate(),
-//       vapidPublicKey: VAPID_PUBLIC_KEY_1,
-//       onesignalVapidPublicKey: VAPID_PUBLIC_KEY_2
-//     });
+test(
+  "resubscribe existing strategy unsubscribes and creates new subscription if existing subscription options are null",
+  async t => {
+    const initialVapidKeys = generateVapidKeys();
+    const subsequentVapidKeys = generateVapidKeys();
 
-//     await navigator.serviceWorker.register('/worker.js');
-//     const registration = await navigator.serviceWorker.getRegistration();
-//     const existingSubscription = await registration.pushManager.getSubscription();
-//     t.is(existingSubscription, null);
+    const initialSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+    };
+    const subsequentSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(subsequentVapidKeys.uniquePublic).buffer,
+    };
 
-//     const spy = sinon.spy(registration.pushManager, 'subscribe');
+    let unsubscribeSpy: sinon.SinonSpy;
 
-//     firstSubscriptionOptions = {
-//       userVisibleOnly: true,
-//       applicationServerKey: <ArrayBuffer>base64ToUint8Array(VAPID_PUBLIC_KEY_1).buffer
-//     };
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      subsequentVapidKeys.uniquePublic,
+      subsequentVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.ResubscribeExisting,
+      async (pushManager, subscriptionManager) => {
+        // Create an initial subscription, so subsequent subscriptions attempt to re-use this initial
+        // subscription's options
+        await pushManager.subscribe(initialSubscriptionOptions);
 
-//     await manager.subscribeFcmVapidOrLegacyKey(registration);
+        // But set the subscription's options to be null
+        const subscription = await pushManager.getSubscription();
+        subscription.options = null;
 
-//     firstSubscription = await registration.pushManager.getSubscription() as any;
+        // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
+        unsubscribeSpy = sinon.spy(PushSubscription.prototype, 'unsubscribe');
+      },
+      async (pushManager, pushManagerSubscribeSpy) => {
+        // The subscription options used should be our subsequent subscription's options
+        const calledSubscriptionOptions = pushManagerSubscribeSpy.getCall(0).args[0];
+        t.deepEqual(calledSubscriptionOptions, subsequentSubscriptionOptions);
 
-//     t.true(spy.getCall(0).calledWithExactly(firstSubscriptionOptions));
+        // Unsubscribe should have been called
+        t.true(unsubscribeSpy.calledOnce);
+      }
+    );
 
-//     const actualApplicationServerKey = (await registration.pushManager.getSubscription()).options.applicationServerKey;
-//     t.deepEqual(actualApplicationServerKey, base64ToUint8Array(VAPID_PUBLIC_KEY_1).buffer);
-//     spy.restore();
-//   }
+    unsubscribeSpy.restore();
+  }
+);
 
-//   // Subscription #2
-//   {
-//     const manager = new SubscriptionManager(t.context.sdkContext, {
-//       safariWebId: null,
-//       appId: Uuid.generate(),
-//       vapidPublicKey: VAPID_PUBLIC_KEY_3,
-//       onesignalVapidPublicKey: VAPID_PUBLIC_KEY_4
-//     });
+test(
+  "subscribe new strategy creates new subscription",
+  async t => {
+  }
+);
 
-//     const registration = await navigator.serviceWorker.getRegistration();
-//     const previousSubscription: PushSubscription = await registration.pushManager.getSubscription() as any;
-//     t.deepEqual(previousSubscription, firstSubscription);
-
-//     const unsubscribeSpy = sinon.spy(PushSubscription.prototype, 'unsubscribe');
-//     const subscribeSpy = sinon.spy(registration.pushManager, 'subscribe');
-//     // Delete the push subscription options
-//     previousSubscription.options = undefined;
-
-//     let options = {
-//       userVisibleOnly: true,
-//       applicationServerKey: <ArrayBuffer>base64ToUint8Array(VAPID_PUBLIC_KEY_3).buffer
-//     };
-
-//     await manager.subscribeFcmVapidOrLegacyKey(registration);
-
-//     // Should be called with the second subscription's options, not the first
-//     t.true(unsubscribeSpy.calledOnce);
-//     t.true(subscribeSpy.getCall(0).calledWithExactly(options));
-
-//     const actualApplicationServerKey = (await registration.pushManager.getSubscription()).options.applicationServerKey;
-//     // Should be VAPID key from second subscription, not first
-//     t.deepEqual(actualApplicationServerKey, base64ToUint8Array(VAPID_PUBLIC_KEY_3).buffer);
-//     unsubscribeSpy.restore();
-//     subscribeSpy.restore();
-//   }
-// });
-
+test(
+  "subscribe new strategy unsubscribes existing subscription to create new subscription",
+  async t => {
+  }
+);

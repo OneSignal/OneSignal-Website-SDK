@@ -63,7 +63,7 @@ export class SubscriptionManager {
    * be the single public API for obtaining a raw web push subscription (i.e. what the browser
    * returns from a successful subscription).
    */
-  public async subscribe(): Promise<RawPushSubscription> {
+  public async subscribe(subscriptionStrategy: SubscriptionStrategyKind): Promise<RawPushSubscription> {
     const env = SdkEnvironment.getWindowEnv();
 
     switch (env) {
@@ -79,7 +79,7 @@ export class SubscriptionManager {
 
     switch (env) {
       case WindowEnvironmentKind.ServiceWorker:
-        rawPushSubscription = await this.subscribeFcmFromWorker();
+        rawPushSubscription = await this.subscribeFcmFromWorker(subscriptionStrategy);
         break;
       case WindowEnvironmentKind.Host:
         /*
@@ -100,7 +100,7 @@ export class SubscriptionManager {
         if (SubscriptionManager.isSafari()) {
           rawPushSubscription = await this.subscribeSafari();
         } else {
-          rawPushSubscription = await this.subscribeFcmFromPage();
+          rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
         }
         break;
     }
@@ -312,7 +312,9 @@ export class SubscriptionManager {
     return pushSubscriptionDetails;
   }
 
-  private async subscribeFcmFromPage(): Promise<RawPushSubscription> {
+  private async subscribeFcmFromPage(
+    subscriptionStrategy: SubscriptionStrategyKind
+  ): Promise<RawPushSubscription> {
     /*
       Before installing the service worker, request notification permissions. If
       the visitor doesn't grant permissions, this saves bandwidth bleeding from
@@ -365,10 +367,12 @@ export class SubscriptionManager {
     const workerRegistration = await navigator.serviceWorker.ready;
     log.debug('Service worker is ready to continue subscribing.');
 
-    return await this.subscribeFcmVapidOrLegacyKey(workerRegistration);
+    return await this.subscribeFcmVapidOrLegacyKey(workerRegistration.pushManager, subscriptionStrategy);
   }
 
-  public async subscribeFcmFromWorker(): Promise<RawPushSubscription> {
+  public async subscribeFcmFromWorker(
+    subscriptionStrategy: SubscriptionStrategyKind
+  ): Promise<RawPushSubscription> {
     /*
       We're running inside of the service worker.
 
@@ -401,7 +405,7 @@ export class SubscriptionManager {
       throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Default);
     }
 
-    return await this.subscribeFcmVapidOrLegacyKey(self.registration);
+    return await this.subscribeFcmVapidOrLegacyKey(self.registration.pushManager, subscriptionStrategy);
   }
 
   /**

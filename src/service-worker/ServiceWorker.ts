@@ -17,6 +17,7 @@ import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -135,7 +136,7 @@ export class ServiceWorker {
       const appConfig = deserializeAppConfig(appConfigBundle);
       log.debug('[Service Worker] Received subscribe message.');
       const context = new Context(appConfig);
-      const rawSubscription = await context.subscriptionManager.subscribe();
+      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
     });
@@ -158,7 +159,7 @@ export class ServiceWorker {
         appId: appId.value
       });
       const context = new Context(appConfig);
-      const rawSubscription = await context.subscriptionManager.subscribe();
+      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
     });
@@ -839,7 +840,7 @@ export class ServiceWorker {
     } else {
       // Otherwise set our push registration by resubscribing
       try {
-        rawPushSubscription = await context.subscriptionManager.subscribe();
+        rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
       } catch (e) {
         // Let rawPushSubscription be null
       }
@@ -868,7 +869,7 @@ export class ServiceWorker {
       }
 
       // rawPushSubscription may be null if no push subscription was retrieved
-      await context.subscriptionManager.registerSubscriptionWithOneSignal(
+      await context.subscriptionManager.registerSubscription(
         rawPushSubscription,
         subscriptionState
       );

@@ -19,6 +19,7 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import Database from '../services/Database';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 
 export default class SubscriptionHelper {
   static async registerForPush(): Promise<Subscription> {
@@ -50,7 +51,9 @@ export default class SubscriptionHelper {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {
-          const rawSubscription = await context.subscriptionManager.subscribe();
+          const rawSubscription = await context.subscriptionManager.subscribe(
+            SubscriptionStrategyKind.ResubscribeExisting
+          );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
           EventHelper.triggerNotificationPermissionChanged();
@@ -72,7 +75,7 @@ export default class SubscriptionHelper {
 
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
-          rawSubscription = await context.subscriptionManager.subscribe();
+          rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
 
           // Update the permission to granted
           await context.permissionManager.updateStoredPermission();
