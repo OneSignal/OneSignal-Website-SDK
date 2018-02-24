@@ -63,7 +63,7 @@ async function testCase(
 
   // Register a mock service worker to access push subscription
   await navigator.serviceWorker.register('/worker.js');
-  const registration: ServiceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+  const registration: any = await navigator.serviceWorker.getRegistration();
 
   // There should be no existing subscription
   const existingSubscription = await registration.pushManager.getSubscription();
@@ -217,11 +217,78 @@ test(
 test(
   "subscribe new strategy creates new subscription",
   async t => {
+    const initialVapidKeys = generateVapidKeys();
+    const subsequentVapidKeys = generateVapidKeys();
+
+    const initialSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+    };
+    const subsequentSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(subsequentVapidKeys.uniquePublic).buffer,
+    };
+    let initialSubscription: PushSubscription;
+
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      subsequentVapidKeys.uniquePublic,
+      subsequentVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.SubscribeNew,
+      async (pushManager, subscriptionManager) => {
+        // Create an initial subscription, check that our subsequent subscription is NOT the same
+        initialSubscription = await pushManager.subscribe(initialSubscriptionOptions);
+      },
+      async (pushManager, pushManagerSubscribeSpy) => {
+        // The subscription options used should be our subsequent subscription's options
+        const calledSubscriptionOptions = pushManagerSubscribeSpy.getCall(0).args[0];
+        t.deepEqual(calledSubscriptionOptions, subsequentSubscriptionOptions);
+
+        const subsequentSubscription = await pushManager.getSubscription();
+        t.notDeepEqual(initialSubscription, subsequentSubscription)
+      }
+    );
   }
 );
 
 test(
   "subscribe new strategy unsubscribes existing subscription to create new subscription",
   async t => {
+    const initialVapidKeys = generateVapidKeys();
+    const subsequentVapidKeys = generateVapidKeys();
+
+    const initialSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+    };
+    const subsequentSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(subsequentVapidKeys.uniquePublic).buffer,
+    };
+
+    let unsubscribeSpy: sinon.SinonSpy;
+
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      subsequentVapidKeys.uniquePublic,
+      subsequentVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.SubscribeNew,
+      async (pushManager, subscriptionManager) => {
+        // Create an initial subscription, so subsequent subscriptions attempt to re-use this initial
+        // subscription's options
+        await pushManager.subscribe(initialSubscriptionOptions);
+
+        // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
+        unsubscribeSpy = sinon.spy(PushSubscription.prototype, 'unsubscribe');
+      },
+      async (pushManager, pushManagerSubscribeSpy) => {
+        // Unsubscribe should have been called
+        t.true(unsubscribeSpy.calledOnce);
+      }
+    );
+
+    unsubscribeSpy.restore();
   }
 );
