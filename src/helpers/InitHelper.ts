@@ -32,6 +32,7 @@ import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedErr
 import { PageViewMetricEngagement } from '../managers/MetricsManager';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 
 declare var OneSignal: any;
 
@@ -82,6 +83,12 @@ export default class InitHelper {
           MainHelper.establishServiceWorkerChannel();
         }
       } catch (e) { }
+    }
+
+    const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
+    if (isSubscriptionExpiring) {
+      const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+      await context.subscriptionManager.registerSubscription(rawPushSubscription);
     }
 
     await MainHelper.showNotifyButton();
