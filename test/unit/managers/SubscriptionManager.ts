@@ -25,6 +25,7 @@ import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from "../../../src/models/RawPushSubscription";
 import * as timemachine from 'timemachine';
+import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -497,5 +498,83 @@ test(
   }
 );
 
+test(
+  "for HTTP, the subscription expiration time should be recorded",
+  async t => {
+    const initialVapidKeys = generateVapidKeys();
+    const expirationTime = 1519675981599;
+
+    const initialSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+    };
+
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      initialVapidKeys.uniquePublic,
+      initialVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.SubscribeNew,
+      async (pushManager, subscriptionManager) => {
+        PushSubscription.prototype.expirationTime = expirationTime;
+      },
+      async (pushManager, pushManagerSubscribeSpy) => {
+        const subscription = await Database.getSubscription();
+
+        t.deepEqual(subscription.expirationTime, expirationTime);
+      }
+    );
+  }
+);
+
+test(
+  "for HTTP, a subscription expiring in 30 days only expires after 30 days and not before",
+  async t => {
+    const initialVapidKeys = generateVapidKeys();
+    const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
+    const subscriptionCreationTime = 1;
+    const subscriptionExpirationTime = subscriptionCreationTime + THIRTY_DAYS_MS;
+    const newTimeAfterMidpoint = subscriptionCreationTime + (THIRTY_DAYS_MS/2) + 10;
+
+    const initialSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+    };
+
+    // Mock an HTTP environment
+    const stub = sinon.stub(SubscriptionHelper, "isUsingSubscriptionWorkaround").returns(true);
+
+    // Set the initial datetime, which is used internally for the subscription created at
+    timemachine.config({
+      timestamp: subscriptionCreationTime
+    });
+
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      initialVapidKeys.uniquePublic,
+      initialVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.SubscribeNew,
+      async (pushManager, subscriptionManager) => {
+        PushSubscription.prototype.expirationTime = subscriptionExpirationTime;
+      },
+      async (pushManager, pushManagerSubscribeSpy, subscriptionManager) => {
+        // Unlike HTTPS, which would expire slightly after midpoint, HTTP should not
+        timemachine.config({
+          timestamp: newTimeAfterMidpoint
+        });
+        t.false(await subscriptionManager.isSubscriptionExpiring());
+
+        // But it should expire at the actual expiration time
+        timemachine.config({
+          timestamp: subscriptionExpirationTime
+        });
+        t.true(await subscriptionManager.isSubscriptionExpiring());
+
+        stub.restore();
+      }
+    );
+  }
+);
 
 

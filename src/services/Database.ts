@@ -236,6 +236,7 @@ export default class Database {
     // For backwards compatibility, we need to read from this if the above is not found
     const dbNotOptedOut = await this.get<boolean>('Options', 'subscription');
     const createdAt = await this.get<number>('Options', 'subscriptionCreatedAt');
+    const expirationTime = await this.get<number>('Options', 'subscriptionExpirationTime');
 
     if (dbOptedOut != null) {
       subscription.optedOut = dbOptedOut;
@@ -247,6 +248,7 @@ export default class Database {
       }
     }
     subscription.createdAt = createdAt;
+    subscription.expirationTime = expirationTime;
 
     return subscription;
   }
@@ -264,6 +266,9 @@ export default class Database {
     }
     if (subscription.createdAt != null) {
       await this.put('Options', { key: 'subscriptionCreatedAt', value: subscription.createdAt});
+    }
+    if (subscription.expirationTime != null) {
+      await this.put('Options', { key: 'subscriptionExpirationTime', value: subscription.expirationTime});
     }
   }
 

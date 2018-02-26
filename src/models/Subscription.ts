@@ -20,6 +20,11 @@ export class Subscription implements Serializable {
    * subscription is merely refreshed, only when a subscription is created anew.
    */
   createdAt: number;
+  /**
+   * For HTTP sites only. This property is stored on the native PushSubscription object, but it's inaccessible
+   * in cross-origin frames.
+   */
+  expirationTime: number;
 
   serialize() {
     return {
@@ -27,6 +32,7 @@ export class Subscription implements Serializable {
       subscriptionToken: this.subscriptionToken,
       optedOut: this.optedOut,
       createdAt: this.createdAt,
+      expirationTime: this.expirationTime,
     }
   }
 
@@ -36,6 +42,7 @@ export class Subscription implements Serializable {
     subscription.subscriptionToken = bundle.subscriptionToken;
     subscription.optedOut = bundle.optedOut;
     subscription.createdAt = bundle.createdAt;
+    subscription.expirationTime = bundle.expirationTime;
     return subscription;
   }
 }

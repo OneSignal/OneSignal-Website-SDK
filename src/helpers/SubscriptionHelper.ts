@@ -63,6 +63,8 @@ export default class SubscriptionHelper {
         }
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionPopup:
+        console.warn("I am subscribing in Edge.");
+        debugger;
         /*
           This is the code for the HTTP popup.
          */
