@@ -49,6 +49,22 @@ export default class InitHelper {
     });
   }
 
+  /** Entry method for any environment that sets expiring subscriptions. */
+  private static async processExpiringSubscriptions() {
+    const context: Context = OneSignal.context;
+    const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
+    if (isSubscriptionExpiring) {
+      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+        // Remove a value checked by isPushNotificationsEnabled to simulate unsubscribing
+        await Database.remove("Ids", "registrationId");
+      } else {
+        // Resubscribe for HTTPS
+        const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+        await context.subscriptionManager.registerSubscription(rawPushSubscription);
+      }
+    }
+  }
+
   /**
    * This event occurs after init.
    * For HTTPS sites, this event is called after init.
@@ -85,12 +101,7 @@ export default class InitHelper {
       } catch (e) { }
     }
 
-    const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
-    if (isSubscriptionExpiring) {
-      const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
-      await context.subscriptionManager.registerSubscription(rawPushSubscription);
-    }
-
+    await InitHelper.processExpiringSubscriptions();
     await MainHelper.showNotifyButton();
 
     if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {

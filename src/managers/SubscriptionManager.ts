@@ -71,8 +71,6 @@ export class SubscriptionManager {
     switch (env) {
       case WindowEnvironmentKind.CustomIframe:
       case WindowEnvironmentKind.Unknown:
-      case WindowEnvironmentKind.OneSignalSubscriptionModal:
-      case WindowEnvironmentKind.OneSignalSubscriptionPopup:
       case WindowEnvironmentKind.OneSignalProxyFrame:
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
@@ -84,6 +82,8 @@ export class SubscriptionManager {
         rawPushSubscription = await this.subscribeFcmFromWorker(subscriptionStrategy);
         break;
       case WindowEnvironmentKind.Host:
+      case WindowEnvironmentKind.OneSignalSubscriptionModal:
+      case WindowEnvironmentKind.OneSignalSubscriptionPopup:
         /*
           Check our notification permission before subscribing.
 
@@ -532,6 +532,9 @@ export class SubscriptionManager {
           log.debug('[Subscription Manager] Unsubscribing existing push subscription.');
           await existingPushSubscription.unsubscribe();
         }
+
+        // Always record the subscription if we're resubscribing
+        shouldRecordSubscriptionCreatedAt = true;
         break;
     }
 
@@ -542,6 +545,7 @@ export class SubscriptionManager {
     if (shouldRecordSubscriptionCreatedAt) {
       const bundle = await Database.getSubscription();
       bundle.createdAt = new Date().getTime();
+      bundle.expirationTime = newPushSubscription.expirationTime;
       await Database.setSubscription(bundle);
     }
 
@@ -563,10 +567,19 @@ export class SubscriptionManager {
       return false;
     }
 
-    /* If we're not on an HTTPS page, abort. Insecure environments can't access the push
-    subscription to check. */
+    /* If we're not on an HTTPS page, check the stored expiration since we can't access the actual
+    push subscription from within a frame. */
     if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-      return false;
+      const { expirationTime } = await Database.getSubscription();
+      if (!expirationTime) {
+        /* If an existing subscription does not have a stored expiration time, do not
+         treat it as expired. The subscription may have been created before this feature was added,
+         or the browser may not assign any expiration time. */
+        return false;
+      }
+
+      /* The current time (in UTC) is past the expiration time (also in UTC) */
+      return new Date().getTime() >= expirationTime;
     }
 
     const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
@@ -602,11 +615,12 @@ export class SubscriptionManager {
       const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
       subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
     }
+
     const midpointExpirationTime =
       subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
 
     return pushSubscription.expirationTime && (
-      /* The expiration time (in UTC) is past the current time (also in UTC) */
+      /* The current time (in UTC) is past the expiration time (also in UTC) */
       new Date().getTime() >= pushSubscription.expirationTime ||
       new Date().getTime() >= midpointExpirationTime
     );
