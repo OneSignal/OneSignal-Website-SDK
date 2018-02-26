@@ -541,7 +541,7 @@ export class SubscriptionManager {
 
     if (shouldRecordSubscriptionCreatedAt) {
       const bundle = await Database.getSubscription();
-      bundle.createdAt = new Date().getUTCDate();
+      bundle.createdAt = new Date().getTime();
       await Database.setSubscription(bundle);
     }
 
@@ -589,21 +589,26 @@ export class SubscriptionManager {
       return false;
     }
 
+    if (!pushSubscription.expirationTime) {
+      /* No push subscription expiration time */
+      return false;
+    }
+
     let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
 
     if (!subscriptionCreatedAt) {
       /* If we don't have a record of when the subscription was created, set it into the future to
-      obtain a new subscription */
+      guarantee expiration and obtain a new subscription */
       const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
       subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
     }
-    const creationExpiryTimestampMidpoint =
+    const midpointExpirationTime =
       subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
 
     return pushSubscription.expirationTime && (
       /* The expiration time (in UTC) is past the current time (also in UTC) */
-      pushSubscription.expirationTime >= new Date().getTime() ||
-      new Date().getTime() >= creationExpiryTimestampMidpoint
+      new Date().getTime() >= pushSubscription.expirationTime ||
+      new Date().getTime() >= midpointExpirationTime
     );
   }
 }
