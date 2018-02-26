@@ -235,6 +235,7 @@ export default class Database {
     const dbOptedOut = await this.get<boolean>('Options', 'optedOut');
     // For backwards compatibility, we need to read from this if the above is not found
     const dbNotOptedOut = await this.get<boolean>('Options', 'subscription');
+    const createdAt = await this.get<number>('Options', 'subscriptionCreatedAt');
 
     if (dbOptedOut != null) {
       subscription.optedOut = dbOptedOut;
@@ -245,6 +246,7 @@ export default class Database {
         subscription.optedOut = !dbNotOptedOut;
       }
     }
+    subscription.createdAt = createdAt;
 
     return subscription;
   }
@@ -259,6 +261,9 @@ export default class Database {
     }
     if (subscription.optedOut != null) { // Checks if null or undefined, allows false
       await this.put('Options', { key: 'optedOut', value: subscription.optedOut });
+    }
+    if (subscription.createdAt != null) {
+      await this.put('Options', { key: 'subscriptionCreatedAt', value: subscription.createdAt});
     }
   }
 

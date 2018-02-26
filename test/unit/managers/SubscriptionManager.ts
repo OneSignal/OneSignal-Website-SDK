@@ -24,6 +24,7 @@ import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from "../../../src/models/RawPushSubscription";
+import * as timemachine from 'timemachine';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -47,7 +48,11 @@ async function testCase(
   subscriptionStrategy: SubscriptionStrategyKind,
   onBeforeSubscriptionManagerSubscribe:
     (pushManager: PushManager, subscriptionManager: SubscriptionManager) => Promise<void>,
-  onPushManagerSubscribed: (pushManager: PushManager, spy: sinon.SinonSpy) => Promise<void>,
+  onPushManagerSubscribed: (
+    pushManager: PushManager,
+    spy: sinon.SinonSpy,
+    subscriptionManager: SubscriptionManager
+  ) => Promise<void>,
 ) {
 
   // Set the user agent, which determines which vapid key we use
@@ -81,7 +86,7 @@ async function testCase(
 
   // Allow each test to verify mock parameters independently
   if (onPushManagerSubscribed) {
-    await onPushManagerSubscribed(registration.pushManager, spy);
+    await onPushManagerSubscribed(registration.pushManager, spy, manager);
   }
 
   // Restore original mocked method
@@ -292,3 +297,205 @@ test(
     unsubscribeSpy.restore();
   }
 );
+
+test(
+  "subscribing records created at date in UTC",
+  async t => {
+    const initialVapidKeys = generateVapidKeys();
+    const dateString = "February 26, 2018 10:04:24 UTC";
+
+    // Set the initial datetime
+    timemachine.config({
+      timestamp: dateString
+    });
+
+    const initialSubscriptionOptions: PushSubscriptionOptions = {
+      userVisibleOnly: true,
+      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+    };
+
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      initialVapidKeys.uniquePublic,
+      initialVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.SubscribeNew,
+      null,
+      async (pushManager, pushManagerSubscribeSpy) => {
+        // After our subscription, check the subscription creation date was recorded
+        const subscription = await Database.getSubscription();
+
+        // timemachine must be reset to use native Date parse API
+        timemachine.reset();
+
+        t.deepEqual(subscription.createdAt, Date.parse(dateString));
+      }
+    );
+  }
+);
+
+async function expirationTestCase(
+  /**
+   * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
+   * global onesignalVapidPublicKey.
+   */
+  t: GenericTestContext<AvaContext<any>>,
+  subscriptionCreationTime: number,
+  subscriptionExpirationTime: number,
+  expirationCheckTime: number,
+  skipCreationDateSet: boolean,
+) {
+
+  const initialVapidKeys = generateVapidKeys();
+
+  // Force service worker active state dependency so test can run
+  const stub = sinon.stub(ServiceWorkerManager.prototype, "getActiveState").resolves(ServiceWorkerActiveState.WorkerA);
+
+  const newTimeBeforeMidpoint = expirationCheckTime;
+
+  // Set the initial datetime, which is used internally for the subscription created at
+  timemachine.config({
+    timestamp: subscriptionCreationTime
+  });
+
+  const initialSubscriptionOptions: PushSubscriptionOptions = {
+    userVisibleOnly: true,
+    applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+  };
+
+  await testCase(
+    t,
+    BrowserUserAgent.ChromeMacSupported,
+    initialVapidKeys.uniquePublic,
+    initialVapidKeys.sharedPublic,
+    SubscriptionStrategyKind.SubscribeNew,
+    async (pushManager, subscriptionManager) => {
+      // Set every subscription's expiration time to 30 days plus
+      PushSubscription.prototype.expirationTime = subscriptionExpirationTime;
+    },
+    async (pushManager, pushManagerSubscribeSpy, subscriptionManager) => {
+      const context: Context = t.context;
+
+      if (skipCreationDateSet) {
+        // Unset directly
+        await Database.put("Options", { key: "subscriptionCreatedAt", value: null });
+      }
+
+      timemachine.config({
+        timestamp: expirationCheckTime
+      });
+
+      const isExpiring = await subscriptionManager.isSubscriptionExpiring();
+
+      if (subscriptionExpirationTime) {
+        const midpointExpirationTime =
+          subscriptionCreationTime + (subscriptionExpirationTime - subscriptionCreationTime) / 2;
+        if (expirationCheckTime >= midpointExpirationTime) {
+          t.true(isExpiring);
+        } else {
+          t.false(isExpiring);
+        }
+      } else {
+        return t.false(isExpiring);
+      }
+
+      timemachine.reset();
+      stub.restore();
+    }
+  );
+}
+
+test(
+  "a subscription expiring in 30 days is not refreshed before the midpoint",
+  async t => {
+    const dateString = "February 26, 2018 10:04:24 UTC";
+    const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
+    const subscriptionCreationTime = Date.parse(dateString);
+    const subscriptionExpirationTime = subscriptionCreationTime + THIRTY_DAYS_MS;
+    const newTimeBeforeMidpoint = subscriptionCreationTime + (THIRTY_DAYS_MS/2) - 10;
+
+    await expirationTestCase(
+      t,
+      subscriptionCreationTime,
+      subscriptionExpirationTime,
+      newTimeBeforeMidpoint,
+      false
+    );
+  }
+);
+
+test(
+  "a subscription expiring in 30 days is refreshed at the midpoint",
+  async t => {
+    const dateString = "February 26, 2018 10:04:24 UTC";
+    const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
+    const subscriptionCreationTime = Date.parse(dateString);
+    const subscriptionExpirationTime = Date.parse(dateString) + THIRTY_DAYS_MS;
+    const newTimeAfterMidpoint = Date.parse(dateString) + (THIRTY_DAYS_MS/2);
+
+    await expirationTestCase(
+      t,
+      subscriptionCreationTime,
+      subscriptionExpirationTime,
+      newTimeAfterMidpoint,
+      false
+    );
+  }
+);
+
+test(
+  "a subscription expiring in 30 days is refreshed after the midpoint",
+  async t => {
+    const dateString = "February 26, 2018 10:04:24 UTC";
+    const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
+    const subscriptionCreationTime = Date.parse(dateString);
+    const subscriptionExpirationTime = Date.parse(dateString) + THIRTY_DAYS_MS;
+    const newTimeAfterMidpoint = Date.parse(dateString) + (THIRTY_DAYS_MS/2) + (THIRTY_DAYS_MS/2);
+
+    await expirationTestCase(
+      t,
+      subscriptionCreationTime,
+      subscriptionExpirationTime,
+      newTimeAfterMidpoint,
+      false
+    );
+  }
+);
+
+test(
+  "a subscription without a recorded creation date is always considered expired",
+  async t => {
+    const dateString = "February 26, 2018 10:04:24 UTC";
+    const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
+    const subscriptionCreationTime = Date.parse(dateString);
+    const subscriptionExpirationTime = Date.parse(dateString) + THIRTY_DAYS_MS;
+
+    await expirationTestCase(
+      t,
+      subscriptionCreationTime,
+      subscriptionExpirationTime,
+      subscriptionCreationTime,
+      true
+    );
+  }
+);
+
+test(
+  "a subscription without an expiration time is never considered expired",
+  async t => {
+    const dateString = "February 26, 2018 10:04:24 UTC";
+    const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
+    const subscriptionCreationTime = Date.parse(dateString);
+
+    await expirationTestCase(
+      t,
+      subscriptionCreationTime,
+      null,
+      subscriptionCreationTime,
+      false
+    );
+  }
+);
+
+
+
