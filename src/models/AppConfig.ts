@@ -78,7 +78,7 @@ export function deserializeAppConfig(bundle: any): AppConfig {
   } as AppConfig;
 }
 
-export enum IntegrationKind {
+export enum ConfigIntegrationKind {
   TypicalSite = 'typical',
   WordPress = 'wordpress',
   Shopify = 'shopify',
@@ -118,7 +118,7 @@ export interface WebConfig {
     notificationDisplayedHook: string;
   };
   integration: {
-    kind: IntegrationKind;
+    kind: ConfigIntegrationKind;
   };
   serviceWorker: {
     path: string;
@@ -340,7 +340,7 @@ export interface ServerAppConfig {
       notificationDisplayedHook: string;
     };
     integration: {
-      kind: IntegrationKind;
+      kind: ConfigIntegrationKind;
     };
     serviceWorker: {
       path: string;
