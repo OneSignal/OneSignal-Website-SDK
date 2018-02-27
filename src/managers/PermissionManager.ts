@@ -156,7 +156,7 @@ export default class PermissionManager {
             permission === NotificationPermission.Denied &&
             (
               this.isCurrentFrameContextCrossOrigin() ||
-              await SubscriptionHelper.hasInsecureParentOrigin() ||
+              await SubscriptionHelper.isFrameContextInsecure() ||
               SubscriptionHelper.isUsingSubscriptionWorkaround() ||
               SubscriptionHelper.isInsecureOrigin()
             )

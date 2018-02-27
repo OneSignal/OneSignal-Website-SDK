@@ -52,6 +52,15 @@ export default class InitHelper {
   /** Entry method for any environment that sets expiring subscriptions. */
   private static async processExpiringSubscriptions() {
     const context: Context = OneSignal.context;
+
+    const env = SdkEnvironment.getWindowEnv();
+    if (env !== WindowEnvironmentKind.Host) {
+      /*
+        This may run okay on a child frame, but for now it's designed to only run on the top frame.
+       */
+      return;
+    }
+
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
     if (isSubscriptionExpiring) {
       if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
@@ -91,7 +100,7 @@ export default class InitHelper {
     if (
       navigator.serviceWorker &&
       window.location.protocol === 'https:' &&
-      !await SubscriptionHelper.hasInsecureParentOrigin()
+      !await SubscriptionHelper.isFrameContextInsecure()
     ) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();

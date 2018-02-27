@@ -628,7 +628,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('isPushNotificationsEnabled', callback);
 
-    const hasInsecureParentOrigin = await SubscriptionHelper.hasInsecureParentOrigin();
+    const hasInsecureParentOrigin = await SubscriptionHelper.isFrameContextInsecure();
     const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
     const notificationPermission = await OneSignal.getNotificationPermission();
 
