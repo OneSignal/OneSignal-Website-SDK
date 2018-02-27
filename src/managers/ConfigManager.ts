@@ -1,4 +1,4 @@
-import { AppUserConfig, AppConfig, IntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, ServerAppConfig } from '../models/AppConfig';
+import { AppUserConfig, AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, ServerAppConfig } from '../models/AppConfig';
 import OneSignalApi from '../OneSignalApi';
 import { Uuid } from '../models/Uuid';
 import InitHelper from '../helpers/InitHelper';
@@ -75,10 +75,10 @@ export default class ConfigManager {
     }
   }
 
-  private getIntegrationCapabilities(integration: IntegrationKind): IntegrationCapabilities {
+  private getIntegrationCapabilities(integration: ConfigIntegrationKind): IntegrationCapabilities {
     switch (integration) {
-      case IntegrationKind.Custom:
-      case IntegrationKind.WordPress:
+      case ConfigIntegrationKind.Custom:
+      case ConfigIntegrationKind.WordPress:
         return {
           configuration: IntegrationConfigurationKind.JavaScript,
         };
@@ -94,10 +94,10 @@ export default class ConfigManager {
    * a final web SDK-specific configuration.
    */
   public getMergedConfig(userConfig: AppUserConfig, serverConfig: ServerAppConfig): AppConfig {
-    const integrationKind = this.getIntegrationKind(serverConfig);
+    const configIntegrationKind = this.getConfigIntegrationKind(serverConfig);
     return {
       appId: new Uuid(serverConfig.app_id),
-      subdomain: this.getSubdomainForIntegrationKind(integrationKind, userConfig, serverConfig),
+      subdomain: this.getSubdomainForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
       origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       cookieSyncEnabled: serverConfig.features.cookie_sync.enable,
@@ -110,24 +110,24 @@ export default class ConfigManager {
       vapidPublicKey: serverConfig.config.vapid_public_key,
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
-      userConfig: this.getUserConfigForIntegrationKind(integrationKind, userConfig, serverConfig),
+      userConfig: this.getUserConfigForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
     };
   }
 
-  private getIntegrationKind(serverConfig: ServerAppConfig): IntegrationKind {
+  private getConfigIntegrationKind(serverConfig: ServerAppConfig): ConfigIntegrationKind {
     if (serverConfig.config.integration) {
       return serverConfig.config.integration.kind;
     } else {
-      return IntegrationKind.Custom;
+      return ConfigIntegrationKind.Custom;
     }
   }
 
-  private getUserConfigForIntegrationKind(
-    integrationKind: IntegrationKind,
+  private getUserConfigForConfigIntegrationKind(
+    configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig
   ): AppUserConfig {
-    const integrationCapabilities = this.getIntegrationCapabilities(integrationKind);
+    const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
        /*
@@ -243,12 +243,12 @@ export default class ConfigManager {
   /**
    * Describes how to merge a dashboard-set subdomain with a/lack of user-supplied subdomain.
    */
-  private getSubdomainForIntegrationKind(
-    integrationKind: IntegrationKind,
+  private getSubdomainForConfigIntegrationKind(
+    configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig
   ): string {
-    const integrationCapabilities = this.getIntegrationCapabilities(integrationKind);
+    const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
     let userValue = userConfig.subdomainName;
     let serverValue = '';
 

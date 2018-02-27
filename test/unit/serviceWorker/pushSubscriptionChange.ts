@@ -5,7 +5,7 @@ import { setUserAgent, setBrowser } from '../../support/tester/browser';
 import { BrowserUserAgent, TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import { Uuid } from '../../../src/models/Uuid';
 import Database from '../../../src/services/Database';
-import { AppConfig, IntegrationKind } from '../../../src/models/AppConfig';
+import { AppConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { PushSubscriptionChangeEvent } from "../../support/mocks/service-workers/models/PushSubscriptionChangeEvent";
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import ServiceWorkerGlobalScope from '../../support/mocks/service-workers/ServiceWorkerGlobalScope';
@@ -80,7 +80,7 @@ async function testCase(
   nock('https://onesignal.com')
     .get(`/api/v1/sync/${appId.value}/web`)
     .reply(200, (uri, requestBody) => {
-      return TestEnvironment.getFakeServerAppConfig(IntegrationKind.Custom)
+      return TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
     });
 
   if (existingDeviceId && existingDeviceId.value) {
