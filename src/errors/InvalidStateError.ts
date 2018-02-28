@@ -8,7 +8,8 @@ export enum InvalidStateReason {
   PushPermissionAlreadyGranted,
   UnsupportedEnvironment,
   MissingDomElement,
-  ServiceWorkerNotActivated
+  ServiceWorkerNotActivated,
+  NoProxyFrame,
 }
 
 export class InvalidStateError extends OneSignalError {
@@ -36,6 +37,9 @@ export class InvalidStateError extends OneSignalError {
         break;
       case InvalidStateReason.ServiceWorkerNotActivated:
         super(`The service worker must be activated first.`);
+        break;
+      case InvalidStateReason.NoProxyFrame:
+        super(`No proxy frame.`);
         break;
     }
     this.description = InvalidStateReason[reason];

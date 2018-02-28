@@ -35,6 +35,7 @@ import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
+import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 
 declare var OneSignal: any;
 
@@ -52,31 +53,42 @@ export default class InitHelper {
   }
 
   /** Entry method for any environment that sets expiring subscriptions. */
-  private static async processExpiringSubscriptions() {
+  public static async processExpiringSubscriptions() {
     const context: Context = OneSignal.context;
 
+    log.debug("Checking subscription expiration...");
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
     if (!isSubscriptionExpiring) {
+      log.debug("Subscription is not considered expired.");
       return;
     }
 
     const integrationKind = await SdkEnvironment.getIntegration();
+    const windowEnv = await SdkEnvironment.getWindowEnv();
+
+    log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
     switch (integrationKind) {
       case IntegrationKind.Secure:
       case IntegrationKind.SecureProxy:
-        /*
-          Resubscribe via the service worker.
+        if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
+          /*
+            Resubscribe via the service worker.
 
-          For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
-          used to not be able to subscribe for push within secure child frames. The common supported
-          and safe way is to resubscribe via the service worker.
-         */
-        await new Promise<Subscription>(resolve => {
-          context.workerMessenger.once(WorkerMessengerCommand.Subscribe, subscription => {
-            resolve(Subscription.deserialize(subscription));
+            For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
+            used to not be able to subscribe for push within secure child frames. The common supported
+            and safe way is to resubscribe via the service worker.
+           */
+          const newSubscription = await new Promise<Subscription>(resolve => {
+            context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
+              resolve(Subscription.deserialize(subscription));
+            });
+            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, serializeAppConfig(context.appConfig));
           });
-          context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, serializeAppConfig(context.appConfig));
-        });
+          log.debug("Finished registering brand new subscription:", newSubscription);
+        } else {
+          const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
+          await proxyFrame.runCommand(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS);
+        }
         break;
       case IntegrationKind.InsecureProxy:
         /*
@@ -84,6 +96,7 @@ export default class InitHelper {
           isPushNotificationsEnabled to simulate unsubscribing.
          */
         await Database.remove("Ids", "registrationId");
+        log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
         break;
     }
   }

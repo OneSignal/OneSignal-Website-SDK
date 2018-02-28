@@ -6,6 +6,8 @@ import EventHelper from '../../helpers/EventHelper';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import { timeoutPromise } from '../../utils';
+import Context from '../../models/Context';
+import { ServiceWorkerActiveState } from "../../managers/ServiceWorkerManager";
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -154,7 +156,10 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   onServiceWorkerCommandRedirect(message: MessengerMessageEvent) {
-    window.location.href = (message.data as any);
+    const url = (message.data as any);
+    if (url && url.startsWith("http")) {
+      window.location.href = url;
+    }
     return false;
   }
 
@@ -180,6 +185,23 @@ export default class ProxyFrameHost implements Disposable {
         resolve();
       });
     });
+  }
+
+  getProxyServiceWorkerActiveState() {
+    return new Promise<ServiceWorkerActiveState>((resolve, reject) => {
+      this.message(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, null, reply => {
+        resolve(reply.data);
+      });
+    });
+  }
+
+  async runCommand<T>(command: string): Promise<T> {
+    const result = await new Promise<T>((resolve, reject) => {
+      this.message(command, null, reply => {
+        resolve(reply.data);
+      });
+    });
+    return result;
   }
 
   /**

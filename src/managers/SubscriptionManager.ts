@@ -31,6 +31,7 @@ import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import { ServiceWorkerActiveState } from './ServiceWorkerManager';
 import { IntegrationKind } from '../models/IntegrationKind';
+import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -129,6 +130,11 @@ export class SubscriptionManager {
     pushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,
   ): Promise<Subscription> {
+    /* This may be called after the RawPushSubscription has been serialized across a postMessage
+    frame. This means it will only have object properties and none of the functions. We have to
+    recreate the RawPushSubscription. */
+    pushSubscription = RawPushSubscription.deserialize(pushSubscription);
+
     const deviceRecord = PushDeviceRecord.createFromPushSubscription(
       this.config.appId,
       pushSubscription,
@@ -561,47 +567,24 @@ export class SubscriptionManager {
 
   public async isSubscriptionExpiring(): Promise<boolean> {
     const integrationKind = await SdkEnvironment.getIntegration();
+    const windowEnv = await SdkEnvironment.getWindowEnv();
 
     switch (integrationKind) {
       case IntegrationKind.Secure:
+        return await this.isSubscriptionExpiringForSecureIntegration();
       case IntegrationKind.SecureProxy:
-        const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
-        if (!(
-          serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
-          serviceWorkerState === ServiceWorkerActiveState.WorkerB)) {
-            /* If the service worker isn't activated, there's no subscription to look for */
-            return false;
+        if (windowEnv === WindowEnvironmentKind.Host) {
+          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
+          if (!proxyFrameHost) {
+            throw new InvalidStateError(InvalidStateReason.NoProxyFrame);
+          } else {
+            return await proxyFrameHost.runCommand<boolean>(
+              OneSignal.POSTMAM_COMMANDS.SUBSCRIPTION_EXPIRATION_STATE
+            );
+          }
+        } else {
+          return await this.isSubscriptionExpiringForSecureIntegration();
         }
-        const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
-
-        const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
-        if (!pushSubscription) {
-          /* Not subscribed to web push */
-          return false;
-        }
-
-        if (!pushSubscription.expirationTime) {
-          /* No push subscription expiration time */
-          return false;
-        }
-
-        let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
-
-        if (!subscriptionCreatedAt) {
-          /* If we don't have a record of when the subscription was created, set it into the future to
-          guarantee expiration and obtain a new subscription */
-          const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
-          subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
-        }
-
-        const midpointExpirationTime =
-          subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
-
-        return pushSubscription.expirationTime && (
-          /* The current time (in UTC) is past the expiration time (also in UTC) */
-          new Date().getTime() >= pushSubscription.expirationTime ||
-          new Date().getTime() >= midpointExpirationTime
-        );
       case IntegrationKind.InsecureProxy:
         /* If we're in an insecure frame context, check the stored expiration since we can't access
         the actual push subscription. */
@@ -616,5 +599,54 @@ export class SubscriptionManager {
         /* The current time (in UTC) is past the expiration time (also in UTC) */
         return new Date().getTime() >= expirationTime;
     }
+  }
+
+  private async isSubscriptionExpiringForSecureIntegration() {
+    const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
+    if (!(
+      serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
+      serviceWorkerState === ServiceWorkerActiveState.WorkerB)) {
+        /* If the service worker isn't activated, there's no subscription to look for */
+        return false;
+    }
+    const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+
+    const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
+    if (!pushSubscription) {
+      /* Not subscribed to web push */
+      return false;
+    }
+
+    /* TODO: REMOVE ME, JUST FOR TESTING */
+    const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
+    Object.defineProperty(pushSubscription, 'expirationTime', {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: new Date().getTime() - THIRTY_DAYS
+    });
+
+    if (!pushSubscription.expirationTime) {
+      /* No push subscription expiration time */
+      return false;
+    }
+
+    let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
+
+    if (!subscriptionCreatedAt) {
+      /* If we don't have a record of when the subscription was created, set it into the future to
+      guarantee expiration and obtain a new subscription */
+      const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
+      subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
+    }
+
+    const midpointExpirationTime =
+      subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
+
+    return pushSubscription.expirationTime && (
+      /* The current time (in UTC) is past the expiration time (also in UTC) */
+      new Date().getTime() >= pushSubscription.expirationTime ||
+      new Date().getTime() >= midpointExpirationTime
+    );
   }
 }
