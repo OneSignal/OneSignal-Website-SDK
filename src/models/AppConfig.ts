@@ -1,6 +1,7 @@
 import { Uuid } from './Uuid';
 import { Serializable } from './Serializable';
 import { SlidedownPermissionMessageOptions } from '../popover/Popover';
+import * as objectAssign from 'object-assign';
 
 export interface AppConfig {
   /**
@@ -53,29 +54,15 @@ export interface AppConfig {
 }
 
 export function serializeAppConfig(config: AppConfig): object {
-  return {
-    appId: config.appId.serialize(),
-    subdomain: config.subdomain,
-    httpUseOneSignalCom: config.httpUseOneSignalCom,
-    cookieSyncEnabled: config.cookieSyncEnabled,
-    safariWebId: config.safariWebId,
-    vapidPublicKey: config.vapidPublicKey,
-    emailAuthRequired: config.emailAuthRequired,
-    userConfig: config.userConfig
-  };
+  return objectAssign({}, config, {
+    appId: config.appId.serialize()
+  });
 }
 
 export function deserializeAppConfig(bundle: any): AppConfig {
-  return {
+  return objectAssign({}, bundle, {
     appId: Uuid.deserialize(bundle.appId),
-    subdomain: bundle.subdomain,
-    httpUseOneSignalCom: bundle.httpUseOneSignalCom,
-    cookieSyncEnabled: bundle.cookieSyncEnabled,
-    safariWebId: bundle.safariWebId,
-    vapidPublicKey: bundle.vapidPublicKey,
-    emailAuthRequired: bundle.emailAuthRequired,
-    userConfig: bundle.userConfig,
-  } as AppConfig;
+  });
 }
 
 export enum ConfigIntegrationKind {

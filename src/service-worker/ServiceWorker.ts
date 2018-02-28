@@ -146,7 +146,7 @@ export class ServiceWorker {
       const context = new Context(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
-      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
+      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.SubscribeNew, subscription.serialize());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (appConfigBundle: any) => {
       log.debug('[Service Worker] Received AMP subscription state message.');

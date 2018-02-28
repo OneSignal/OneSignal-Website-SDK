@@ -938,7 +938,11 @@ export default class OneSignal {
     MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',
     IS_SUBSCRIBED: 'postmam.isSubscribed',
     UNSUBSCRIBE_PROXY_FRAME: 'postman.unsubscribeProxyFrame',
-    GET_EVENT_LISTENER_COUNT: 'postmam.getEventListenerCount'
+    GET_EVENT_LISTENER_COUNT: 'postmam.getEventListenerCount',
+    SERVICE_WORKER_STATE: 'postmam.serviceWorkerState',
+    GET_WORKER_VERSION: 'postmam.getWorkerVersion',
+    SUBSCRIPTION_EXPIRATION_STATE: 'postmam.subscriptionExpirationState',
+    PROCESS_EXPIRING_SUBSCRIPTIONS: 'postmam.processExpiringSubscriptions',
   };
 
   static EVENTS = {
