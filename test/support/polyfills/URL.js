@@ -464,6 +464,9 @@
   // Does not process domain names or IP addresses.
   // Does not handle encoding for the query parameter.
   function jURL(url, base /* , encoding */) {
+    if (typeof url !== "string") {
+      url = url.href;
+    }
     if (base !== undefined && !(base instanceof jURL))
       base = new jURL(String(base));
 
