@@ -12,6 +12,7 @@ import Environment from '../Environment';
 export enum WorkerMessengerCommand {
   WorkerVersion = "GetWorkerVersion",
   Subscribe = "Subscribe",
+  SubscribeNew = "SubscribeNew",
   AmpSubscriptionState = "amp-web-push-subscription-state",
   AmpSubscribe = "amp-web-push-subscribe",
   AmpUnsubscribe = "amp-web-push-unsubscribe",
