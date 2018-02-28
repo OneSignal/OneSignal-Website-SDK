@@ -30,6 +30,7 @@ import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import { ServiceWorkerActiveState } from './ServiceWorkerManager';
+import { IntegrationKind } from '../models/IntegrationKind';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -559,70 +560,61 @@ export class SubscriptionManager {
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
-    const env = SdkEnvironment.getWindowEnv();
+    const integrationKind = await SdkEnvironment.getIntegration();
 
-    /* This is currently only designed for top-level frames on webpages, not for service workers and
-    not for child iframes. */
-    if (env !== WindowEnvironmentKind.Host) {
-      return false;
+    switch (integrationKind) {
+      case IntegrationKind.Secure:
+      case IntegrationKind.SecureProxy:
+        const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
+        if (!(
+          serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
+          serviceWorkerState === ServiceWorkerActiveState.WorkerB)) {
+            /* If the service worker isn't activated, there's no subscription to look for */
+            return false;
+        }
+        const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+
+        const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
+        if (!pushSubscription) {
+          /* Not subscribed to web push */
+          return false;
+        }
+
+        if (!pushSubscription.expirationTime) {
+          /* No push subscription expiration time */
+          return false;
+        }
+
+        let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
+
+        if (!subscriptionCreatedAt) {
+          /* If we don't have a record of when the subscription was created, set it into the future to
+          guarantee expiration and obtain a new subscription */
+          const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
+          subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
+        }
+
+        const midpointExpirationTime =
+          subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
+
+        return pushSubscription.expirationTime && (
+          /* The current time (in UTC) is past the expiration time (also in UTC) */
+          new Date().getTime() >= pushSubscription.expirationTime ||
+          new Date().getTime() >= midpointExpirationTime
+        );
+      case IntegrationKind.InsecureProxy:
+        /* If we're in an insecure frame context, check the stored expiration since we can't access
+        the actual push subscription. */
+        const { expirationTime } = await Database.getSubscription();
+        if (!expirationTime) {
+          /* If an existing subscription does not have a stored expiration time, do not
+          treat it as expired. The subscription may have been created before this feature was added,
+          or the browser may not assign any expiration time. */
+          return false;
+        }
+
+        /* The current time (in UTC) is past the expiration time (also in UTC) */
+        return new Date().getTime() >= expirationTime;
     }
-
-    /* If we're not on an HTTPS page, check the stored expiration since we can't access the actual
-    push subscription from within a frame. */
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-      const { expirationTime } = await Database.getSubscription();
-      if (!expirationTime) {
-        /* If an existing subscription does not have a stored expiration time, do not
-         treat it as expired. The subscription may have been created before this feature was added,
-         or the browser may not assign any expiration time. */
-        return false;
-      }
-
-      /* The current time (in UTC) is past the expiration time (also in UTC) */
-      return new Date().getTime() >= expirationTime;
-    }
-
-    const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
-    if (!(
-      serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
-      serviceWorkerState === ServiceWorkerActiveState.WorkerB)) {
-        /* If the service worker isn't activated, there's no subscription to look for */
-        return false;
-    }
-
-    const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
-    if (!serviceWorkerRegistration) {
-      /* One final sanity check */
-      return false;
-    }
-
-    const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
-    if (!pushSubscription) {
-      /* Not subscribed to web push */
-      return false;
-    }
-
-    if (!pushSubscription.expirationTime) {
-      /* No push subscription expiration time */
-      return false;
-    }
-
-    let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
-
-    if (!subscriptionCreatedAt) {
-      /* If we don't have a record of when the subscription was created, set it into the future to
-      guarantee expiration and obtain a new subscription */
-      const ONE_YEAR = 1000 * 60 * 60 * 24 * 365;
-      subscriptionCreatedAt = new Date().getTime() + ONE_YEAR;
-    }
-
-    const midpointExpirationTime =
-      subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
-
-    return pushSubscription.expirationTime && (
-      /* The current time (in UTC) is past the expiration time (also in UTC) */
-      new Date().getTime() >= pushSubscription.expirationTime ||
-      new Date().getTime() >= midpointExpirationTime
-    );
   }
 }

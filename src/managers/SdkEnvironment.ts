@@ -3,8 +3,9 @@ import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import NotImplementedError from '../errors/NotImplementedError';
-import { FrameTreeContext } from '../models/FrameSecurityKind';
 import SubscriptionHelper from "../helpers/SubscriptionHelper";
+import { IntegrationKind } from "../models/IntegrationKind";
+import Context from "../models/Context";
 
 export default class SdkEnvironment {
   /**
@@ -49,9 +50,14 @@ export default class SdkEnvironment {
    *
    * @param usingProxyOrigin Using a subdomain of os.tc or onesignal.com for subscribing to push.
    */
-  static async getIntegration(usingProxyOrigin: boolean) {
+  static async getIntegration(usingProxyOrigin?: boolean): Promise<IntegrationKind> {
     const isTopFrame = (window === window.top);
     const isHttpsProtocol = window.location.protocol === "https:";
+    const context: Context = OneSignal.context;
+
+    if (context) {
+      usingProxyOrigin = !!context.appConfig.subdomain;
+    }
 
     /*
       Executing from the top frame, we can easily determine whether we're HTTPS or HTTP.
@@ -64,23 +70,23 @@ export default class SdkEnvironment {
     if (isTopFrame) {
       if (isHttpsProtocol) {
         return usingProxyOrigin ?
-          FrameTreeContext.SecureProxy :
-          FrameTreeContext.Secure;
+          IntegrationKind.SecureProxy :
+          IntegrationKind.Secure;
       } else {
         /* The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw
         an initialization error stating a proxy origin is required for HTTP sites. */
-        return FrameTreeContext.InsecureProxy;
+        return IntegrationKind.InsecureProxy;
       }
     } else {
       if (isHttpsProtocol) {
         /* Check whether any parent frames are insecure */
         const isFrameContextInsecure = await SubscriptionHelper.isFrameContextInsecure();
         if (isFrameContextInsecure) {
-          return FrameTreeContext.InsecureProxy;
+          return IntegrationKind.InsecureProxy;
         } else {
           return usingProxyOrigin ?
-            FrameTreeContext.SecureProxy :
-            FrameTreeContext.Secure;
+          IntegrationKind.SecureProxy :
+          IntegrationKind.Secure;
         }
       } else {
         /*
@@ -88,7 +94,7 @@ export default class SdkEnvironment {
 
         The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw an
         initialization error stating a proxy origin is required for HTTP sites. */
-        return FrameTreeContext.InsecureProxy;
+        return IntegrationKind.InsecureProxy;
       }
     }
   }
