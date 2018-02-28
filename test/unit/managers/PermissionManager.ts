@@ -125,12 +125,12 @@ test('should not detect an ambiguous permission environment', async t => {
   const isCurrentFrameContextCrossOriginStub = sinon
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
     .returns(false);
-  const hasInsecureParentOriginStub = sinon
-    .stub(SubscriptionHelper, 'hasInsecureParentOrigin')
+  const isFrameContextInsecureStub = sinon
+    .stub(SubscriptionHelper, 'isFrameContextInsecure')
     .resolves(false);
   t.false(await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied));
   isCurrentFrameContextCrossOriginStub.restore();
-  hasInsecureParentOriginStub.restore();
+  isFrameContextInsecureStub.restore();
 });
 
 test('should use browser reported permission value in non-ambiguous environment for getNotificationPermission', async t => {
@@ -142,12 +142,12 @@ test('should use browser reported permission value in non-ambiguous environment 
   const isCurrentFrameContextCrossOriginStub = sinon
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
     .returns(false);
-  const hasInsecureParentOriginStub = sinon
-    .stub(SubscriptionHelper, 'hasInsecureParentOrigin')
+  const isFrameContextInsecureStub = sinon
+    .stub(SubscriptionHelper, 'isFrameContextInsecure')
     .resolves(false);
   t.deepEqual(await permissionManager.getNotificationPermission(null), NotificationPermission.Denied);
   isCurrentFrameContextCrossOriginStub.restore();
-  hasInsecureParentOriginStub.restore();
+  isFrameContextInsecureStub.restore();
 });
 
 test('should detect an ambiguous permission environment', async t => {
@@ -158,23 +158,23 @@ test('should detect an ambiguous permission environment', async t => {
   const isCurrentFrameContextCrossOriginStub = sinon
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
     .returns(true);
-  const hasInsecureParentOriginStub = sinon
-    .stub(SubscriptionHelper, 'hasInsecureParentOrigin')
+  const isFrameContextInsecureStub = sinon
+    .stub(SubscriptionHelper, 'isFrameContextInsecure')
     .resolves(false);
   t.true(await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied));
   isCurrentFrameContextCrossOriginStub.restore();
-  hasInsecureParentOriginStub.restore();
+  isFrameContextInsecureStub.restore();
 
   // Reverse false/true
   {
     const isCurrentFrameContextCrossOriginStub = sinon
       .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
       .returns(false);
-    const hasInsecureParentOriginStub = sinon
-      .stub(SubscriptionHelper, 'hasInsecureParentOrigin')
+    const isFrameContextInsecureStub = sinon
+      .stub(SubscriptionHelper, 'isFrameContextInsecure')
       .resolves(true);
     t.true(await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied));
     isCurrentFrameContextCrossOriginStub.restore();
-    hasInsecureParentOriginStub.restore();
+    isFrameContextInsecureStub.restore();
   }
 });

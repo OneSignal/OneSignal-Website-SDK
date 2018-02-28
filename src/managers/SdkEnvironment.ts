@@ -53,10 +53,16 @@ export default class SdkEnvironment {
   static async getIntegration(usingProxyOrigin?: boolean): Promise<IntegrationKind> {
     const isTopFrame = (window === window.top);
     const isHttpsProtocol = window.location.protocol === "https:";
-    const context: Context = OneSignal.context;
 
-    if (context) {
-      usingProxyOrigin = !!context.appConfig.subdomain;
+    // For convenience, try to look up usingProxyOrigin instead of requiring it to be passed in
+    if (typeof usingProxyOrigin === "undefined") {
+      if (typeof OneSignal !== "undefined") {
+        const context: Context = OneSignal.context;
+
+        if (context) {
+          usingProxyOrigin = !!context.appConfig.subdomain;
+        }
+      } else throw new InvalidArgumentError("usingProxyOrigin", InvalidArgumentReason.Empty);
     }
 
     /*

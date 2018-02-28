@@ -9,7 +9,7 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig, AppUserConfig } from '../models/AppConfig';
+import { AppConfig, AppUserConfig, serializeAppConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
@@ -25,7 +25,7 @@ import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import Path from '../models/Path';
 import Context from '../models/Context';
-import { WorkerMessenger } from '../libraries/WorkerMessenger';
+import { WorkerMessenger, WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { DeviceRecord } from '../models/DeviceRecord';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
@@ -34,6 +34,7 @@ import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
+import { Subscription } from "../models/Subscription";
 
 declare var OneSignal: any;
 
@@ -70,8 +71,12 @@ export default class InitHelper {
           used to not be able to subscribe for push within secure child frames. The common supported
           and safe way is to resubscribe via the service worker.
          */
-        const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
-        await context.subscriptionManager.registerSubscription(rawPushSubscription);
+        await new Promise<Subscription>(resolve => {
+          context.workerMessenger.once(WorkerMessengerCommand.Subscribe, subscription => {
+            resolve(Subscription.deserialize(subscription));
+          });
+          context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, serializeAppConfig(context.appConfig));
+        });
         break;
       case IntegrationKind.InsecureProxy:
         /*
