@@ -16,6 +16,15 @@ import { Uuid } from '../../../src/models/Uuid';
 import { AppConfig } from '../../../src/models/AppConfig';
 import OneSignal from '../../../src/OneSignal';
 
+test.beforeEach(async t => {
+  const appConfig = TestEnvironment.getFakeAppConfig();
+  appConfig.appId = Uuid.generate();
+  t.context.sdkContext = new Context(appConfig);
+  (global as any).OneSignal = {
+    context: t.context.sdkContext
+  };
+});
+
 test('getActiveState() detects no installed worker', async t => {
   await TestEnvironment.stubDomEnvironment();
 

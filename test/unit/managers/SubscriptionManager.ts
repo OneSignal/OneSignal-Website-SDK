@@ -37,6 +37,7 @@ test.beforeEach(async t => {
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Uuid.generate();
   t.context.sdkContext = new Context(appConfig);
+  timemachine.reset();
 });
 
 async function testCase(

@@ -112,6 +112,9 @@ export class RawPushSubscription implements Serializable {
 
   public static deserialize(bundle: any): RawPushSubscription {
     const subscription = new RawPushSubscription();
+    if (!bundle) {
+      return subscription;
+    }
     try {
       subscription.w3cEndpoint = new URL(bundle.w3cEndpoint);
     } catch (e) {

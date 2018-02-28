@@ -130,10 +130,17 @@ export class SubscriptionManager {
     pushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,
   ): Promise<Subscription> {
-    /* This may be called after the RawPushSubscription has been serialized across a postMessage
-    frame. This means it will only have object properties and none of the functions. We have to
-    recreate the RawPushSubscription. */
-    pushSubscription = RawPushSubscription.deserialize(pushSubscription);
+    /*
+      This may be called after the RawPushSubscription has been serialized across a postMessage
+      frame. This means it will only have object properties and none of the functions. We have to
+      recreate the RawPushSubscription.
+
+      Keep in mind pushSubscription can be null in cases where resubscription isn't possible
+      (blocked permission).
+    */
+    if (pushSubscription) {
+      pushSubscription = RawPushSubscription.deserialize(pushSubscription);
+    }
 
     const deviceRecord = PushDeviceRecord.createFromPushSubscription(
       this.config.appId,
@@ -618,13 +625,13 @@ export class SubscriptionManager {
     }
 
     /* TODO: REMOVE ME, JUST FOR TESTING */
-    const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
-    Object.defineProperty(pushSubscription, 'expirationTime', {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: new Date().getTime() - THIRTY_DAYS
-    });
+    // const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
+    // Object.defineProperty(pushSubscription, 'expirationTime', {
+    //   enumerable: true,
+    //   configurable: true,
+    //   writable: true,
+    //   value: new Date().getTime() - THIRTY_DAYS
+    // });
 
     if (!pushSubscription.expirationTime) {
       /* No push subscription expiration time */
