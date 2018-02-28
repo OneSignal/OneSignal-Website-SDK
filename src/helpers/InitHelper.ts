@@ -33,6 +33,7 @@ import { PageViewMetricEngagement } from '../managers/MetricsManager';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import { IntegrationKind } from '../models/IntegrationKind';
 
 declare var OneSignal: any;
 
@@ -53,24 +54,32 @@ export default class InitHelper {
   private static async processExpiringSubscriptions() {
     const context: Context = OneSignal.context;
 
-    const env = SdkEnvironment.getWindowEnv();
-    if (env !== WindowEnvironmentKind.Host) {
-      /*
-        This may run okay on a child frame, but for now it's designed to only run on the top frame.
-       */
+    const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
+    if (!isSubscriptionExpiring) {
       return;
     }
 
-    const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
-    if (isSubscriptionExpiring) {
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        // Remove a value checked by isPushNotificationsEnabled to simulate unsubscribing
-        await Database.remove("Ids", "registrationId");
-      } else {
-        // Resubscribe for HTTPS
+    const integrationKind = await SdkEnvironment.getIntegration();
+    switch (integrationKind) {
+      case IntegrationKind.Secure:
+      case IntegrationKind.SecureProxy:
+        /*
+          Resubscribe via the service worker.
+
+          For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
+          used to not be able to subscribe for push within secure child frames. The common supported
+          and safe way is to resubscribe via the service worker.
+         */
         const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
         await context.subscriptionManager.registerSubscription(rawPushSubscription);
-      }
+        break;
+      case IntegrationKind.InsecureProxy:
+        /*
+          We can't really do anything here except remove a value checked by
+          isPushNotificationsEnabled to simulate unsubscribing.
+         */
+        await Database.remove("Ids", "registrationId");
+        break;
     }
   }
 
