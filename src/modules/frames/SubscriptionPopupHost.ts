@@ -193,13 +193,8 @@ export default class SubscriptionPopupHost implements Disposable {
     const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
     const subscription = await subscriptionManager.registerSubscription(rawPushSubscription);
 
-    /* Only do this for HTTP sites w/ suddomain, not HTTPS sites w/ subdomain, otherwise two
-    subscriptionChange events will occur */
-    const integration = await SdkEnvironment.getIntegration();
-    if (integration === IntegrationKind.InsecureProxy) {
-      EventHelper.checkAndTriggerSubscriptionChanged();
-    }
-    MainHelper.checkAndTriggerNotificationPermissionChanged();
+    await EventHelper.checkAndTriggerSubscriptionChanged();
+    await MainHelper.checkAndTriggerNotificationPermissionChanged();
   }
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {

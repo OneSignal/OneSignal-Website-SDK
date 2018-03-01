@@ -84,20 +84,16 @@ export default class MainHelper {
     return sessionStorage.getItem('ONESIGNAL_HTTP_PROMPT_SHOWN') == 'true';
   }
 
-  static checkAndTriggerNotificationPermissionChanged() {
-    Promise.all([
-      Database.get('Options', 'notificationPermission'),
-      OneSignal.getNotificationPermission()
-    ]).then(([previousPermission, currentPermission]) => {
-      if (previousPermission !== currentPermission) {
-        EventHelper.triggerNotificationPermissionChanged().then(() =>
-          Database.put('Options', {
-            key: 'notificationPermission',
-            value: currentPermission
-          })
-        );
-      }
-    });
+  static async checkAndTriggerNotificationPermissionChanged() {
+    const previousPermission = await Database.get('Options', 'notificationPermission');
+    const currentPermission = await OneSignal.getNotificationPermission();
+    if (previousPermission !== currentPermission) {
+      await EventHelper.triggerNotificationPermissionChanged();
+      await Database.put('Options', {
+        key: 'notificationPermission',
+        value: currentPermission
+      });
+    }
   }
 
   static async showNotifyButton() {

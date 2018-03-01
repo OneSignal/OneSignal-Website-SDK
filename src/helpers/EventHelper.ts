@@ -105,27 +105,23 @@ export default class EventHelper {
     }
   }
 
-  static triggerNotificationPermissionChanged(updateIfIdentical = false) {
+  static async triggerNotificationPermissionChanged(updateIfIdentical = false) {
     let newPermission, isUpdating;
-    return Promise.all([OneSignal.getNotificationPermission(), Database.get('Options', 'notificationPermission')])
-      .then(([currentPermission, previousPermission]) => {
-        newPermission = currentPermission;
-        isUpdating = currentPermission !== previousPermission || updateIfIdentical;
+    const currentPermission = await OneSignal.getNotificationPermission();
+    const previousPermission = await Database.get('Options', 'notificationPermission');
 
-        if (isUpdating) {
-          return Database.put('Options', {
-            key: 'notificationPermission',
-            value: currentPermission
-          });
-        } else return null;
-      })
-      .then(() => {
-        if (isUpdating) {
-          Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-            to: newPermission
-          });
-        }
+    newPermission = currentPermission;
+    isUpdating = currentPermission !== previousPermission || updateIfIdentical;
+
+    if (isUpdating) {
+      await Database.put('Options', {
+        key: 'notificationPermission',
+        value: currentPermission
       });
+      Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
+        to: newPermission
+      });
+    }
   }
 
   static triggerSubscriptionChanged(to) {
