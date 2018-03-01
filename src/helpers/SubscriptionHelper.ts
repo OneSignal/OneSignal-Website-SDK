@@ -75,7 +75,7 @@ export default class SubscriptionHelper {
 
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
-          rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
+          rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
 
           // Update the permission to granted
           await context.permissionManager.updateStoredPermission();
