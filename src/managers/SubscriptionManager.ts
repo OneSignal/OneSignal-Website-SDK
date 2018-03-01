@@ -202,8 +202,6 @@ export class SubscriptionManager {
 
     await Database.setSubscription(subscription);
 
-    const subscription2 = await Database.getSubscription();
-
     if (typeof OneSignal !== "undefined") {
       OneSignal._sessionInitAlreadyRunning = false;
     }
@@ -624,15 +622,6 @@ export class SubscriptionManager {
       return false;
     }
 
-    /* TODO: REMOVE ME, JUST FOR TESTING */
-    // const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
-    // Object.defineProperty(pushSubscription, 'expirationTime', {
-    //   enumerable: true,
-    //   configurable: true,
-    //   writable: true,
-    //   value: new Date().getTime() - THIRTY_DAYS
-    // });
-
     if (!pushSubscription.expirationTime) {
       /* No push subscription expiration time */
       return false;
@@ -687,9 +676,10 @@ export class SubscriptionManager {
               default:
                 /* Re-run this command in the proxy frame */
                 const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
-                return await proxyFrameHost.runCommand<PushSubscriptionState>(
+                const pushSubscriptionState = await proxyFrameHost.runCommand<PushSubscriptionState>(
                   OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE
                 );
+                return pushSubscriptionState;
             }
           case IntegrationKind.InsecureProxy:
             return await this.getSubscriptionStateForInsecure();
@@ -721,7 +711,7 @@ export class SubscriptionManager {
 
     const isPushEnabled = !!(
       pushSubscription &&
-      deviceId &&
+      deviceId && deviceId.value &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
     );
@@ -739,7 +729,7 @@ export class SubscriptionManager {
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
 
     const isPushEnabled = !!(
-      deviceId &&
+      deviceId && deviceId.value &&
       subscriptionToken &&
       notificationPermission === NotificationPermission.Granted
     );
