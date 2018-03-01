@@ -68,16 +68,19 @@ export default class InitHelper {
 
     log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
     switch (integrationKind) {
+      /*
+        Resubscribe via the service worker.
+
+        For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
+        used to not be able to subscribe for push within secure child frames. The common supported
+        and safe way is to resubscribe via the service worker.
+       */
       case IntegrationKind.Secure:
+        const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+        await context.subscriptionManager.registerSubscription(rawPushSubscription);
+        break;
       case IntegrationKind.SecureProxy:
         if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
-          /*
-            Resubscribe via the service worker.
-
-            For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
-            used to not be able to subscribe for push within secure child frames. The common supported
-            and safe way is to resubscribe via the service worker.
-           */
           const newSubscription = await new Promise<Subscription>(resolve => {
             context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
               resolve(Subscription.deserialize(subscription));

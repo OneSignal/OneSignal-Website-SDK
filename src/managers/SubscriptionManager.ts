@@ -656,4 +656,97 @@ export class SubscriptionManager {
       new Date().getTime() >= midpointExpirationTime
     );
   }
+
+  /**
+   * Returns an object describing the user's actual push subscription state and opt-out status.
+   */
+  public async getSubscriptionState(): Promise<PushSubscriptionState> {
+    const windowEnv = SdkEnvironment.getWindowEnv();
+
+    switch (windowEnv) {
+      case WindowEnvironmentKind.ServiceWorker:
+        const pushSubscription = await self.registration.pushManager.getSubscription();
+        const { optedOut } = await Database.getSubscription();
+        return {
+          subscribed: !!pushSubscription,
+          optedOut: optedOut
+        };
+      default:
+        /* Regular browser window environments */
+        const integration = await SdkEnvironment.getIntegration();
+
+        switch (integration) {
+          case IntegrationKind.Secure:
+            return this.getSubscriptionStateForSecure();
+          case IntegrationKind.SecureProxy:
+            switch (windowEnv) {
+              case WindowEnvironmentKind.OneSignalProxyFrame:
+              case WindowEnvironmentKind.OneSignalSubscriptionPopup:
+              case WindowEnvironmentKind.OneSignalSubscriptionModal:
+                return this.getSubscriptionStateForSecure();
+              default:
+                /* Re-run this command in the proxy frame */
+                const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
+                return await proxyFrameHost.runCommand<PushSubscriptionState>(
+                  OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE
+                );
+            }
+          case IntegrationKind.InsecureProxy:
+            return await this.getSubscriptionStateForInsecure();
+          default:
+            throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
+        }
+    }
+  }
+
+  private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
+    const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
+    const workerState = await this.context.serviceWorkerManager.getActiveState();
+    const workerRegistration = await navigator.serviceWorker.getRegistration();
+    const notificationPermission =
+      await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
+    const isWorkerActive = (
+      workerState === ServiceWorkerActiveState.WorkerA ||
+      workerState === ServiceWorkerActiveState.WorkerB
+    );
+
+    if (!workerRegistration) {
+      /* You can't be subscribed without a service worker registration */
+      return {
+        subscribed: false,
+        optedOut: optedOut,
+      };
+    }
+    const pushSubscription = await workerRegistration.pushManager.getSubscription();
+
+    const isPushEnabled = !!(
+      pushSubscription &&
+      deviceId &&
+      notificationPermission === NotificationPermission.Granted &&
+      isWorkerActive
+    );
+
+    return {
+      subscribed: isPushEnabled,
+      optedOut: optedOut,
+    };
+  }
+
+  private async getSubscriptionStateForInsecure(): Promise<PushSubscriptionState> {
+    /* For HTTP, we need to rely on stored values; we never have access to the actual data */
+    const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
+    const notificationPermission =
+      await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
+
+    const isPushEnabled = !!(
+      deviceId &&
+      subscriptionToken &&
+      notificationPermission === NotificationPermission.Granted
+    );
+
+    return {
+      subscribed: isPushEnabled,
+      optedOut: optedOut,
+    };
+  }
 }
