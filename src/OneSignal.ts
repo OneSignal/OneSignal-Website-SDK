@@ -627,49 +627,11 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('isPushNotificationsEnabled', callback);
 
-    const hasInsecureParentOrigin = await SubscriptionHelper.isFrameContextInsecure();
-    const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
-    const notificationPermission = await OneSignal.getNotificationPermission();
+    const context: Context = OneSignal.context;
+    const subscriptionState = await context.subscriptionManager.getSubscriptionState();
 
-    let isPushEnabled = false;
-
-    if (Environment.supportsServiceWorkers() &&
-        !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
-        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.OneSignalProxyFrame &&
-        !hasInsecureParentOrigin) {
-
-      const serviceWorkerActiveState = await OneSignal.context.serviceWorkerManager.getActiveState();
-      const serviceWorkerActive = (serviceWorkerActiveState === ServiceWorkerActiveState.WorkerA) ||
-        (serviceWorkerActiveState === ServiceWorkerActiveState.WorkerB);
-
-      isPushEnabled = !!(deviceId &&
-                      subscriptionToken &&
-                      notificationPermission === NotificationPermission.Granted &&
-                      !optedOut &&
-                      serviceWorkerActive)
-
-      const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
-      if (serviceWorkerRegistration) {
-        const actualSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
-        /**
-         * Check the actual subscription, and not just the stored cached subscription, to ensure the user is still really subscribed.
-         * Users typically test resubscribing by clearing their site permissions, which doesn't remove the stored subscription token
-         * in IndexedDb we get from Google. Clearing their site permission will unsubscribe them though, so this method should reflect
-         * that by checking the real state.
-         */
-        if (!actualSubscription) {
-          isPushEnabled = false;
-        }
-      }
-    } else {
-      isPushEnabled = !!(deviceId &&
-                         subscriptionToken &&
-                         notificationPermission === NotificationPermission.Granted &&
-                         !optedOut)
-    }
-
-    executeCallback(callback, isPushEnabled);
-    return isPushEnabled;
+    executeCallback(callback, subscriptionState.subscribed);
+    return subscriptionState.subscribed;
   }
 
   /**
@@ -942,6 +904,7 @@ export default class OneSignal {
     GET_WORKER_VERSION: 'postmam.getWorkerVersion',
     SUBSCRIPTION_EXPIRATION_STATE: 'postmam.subscriptionExpirationState',
     PROCESS_EXPIRING_SUBSCRIPTIONS: 'postmam.processExpiringSubscriptions',
+    GET_SUBSCRIPTION_STATE: 'postmam.getSubscriptionState',
   };
 
   static EVENTS = {

@@ -62,6 +62,8 @@ export default class ProxyFrame extends RemoteFrame {
       this.onSubscriptionExpirationState.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS,
       this.onProcessExpiringSubscriptions.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
+      this.onGetSubscriptionState.bind(this));
     this.messenger.listen();
   }
 
@@ -232,6 +234,13 @@ export default class ProxyFrame extends RemoteFrame {
     const context: Context = OneSignal.context;
     const result = await InitHelper.processExpiringSubscriptions();
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
+    return false;
+  }
+
+  async onGetSubscriptionState(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const result = await context.subscriptionManager.getSubscriptionState();
+    message.reply(result);
     return false;
   }
 }
