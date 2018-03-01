@@ -12,6 +12,7 @@ import { RawPushSubscription } from '../../models/RawPushSubscription';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
 import Database from '../../services/Database';
 import Context from '../../models/Context';
+import { IntegrationKind } from '../../models/IntegrationKind';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -192,7 +193,12 @@ export default class SubscriptionPopupHost implements Disposable {
     const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
     const subscription = await subscriptionManager.registerSubscription(rawPushSubscription);
 
-    EventHelper.checkAndTriggerSubscriptionChanged();
+    /* Only do this for HTTP sites w/ suddomain, not HTTPS sites w/ subdomain, otherwise two
+    subscriptionChange events will occur */
+    const integration = await SdkEnvironment.getIntegration();
+    if (integration === IntegrationKind.InsecureProxy) {
+      EventHelper.checkAndTriggerSubscriptionChanged();
+    }
     MainHelper.checkAndTriggerNotificationPermissionChanged();
   }
 
