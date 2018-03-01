@@ -269,6 +269,8 @@ export default class Database {
     }
     if (subscription.expirationTime != null) {
       await this.put('Options', { key: 'subscriptionExpirationTime', value: subscription.expirationTime});
+    } else {
+      await this.remove('Options', 'subscriptionExpirationTime');
     }
   }
 
