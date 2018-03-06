@@ -10,7 +10,7 @@ import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
 import Context from '../models/Context';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
-import { contains, getConsoleStyle, getDeviceTypeForBrowser, isValidUuid, trimUndefined } from '../utils';
+import { contains, getConsoleStyle, isValidUuid, trimUndefined } from '../utils';
 import { Uuid } from '../models/Uuid';
 import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
@@ -18,6 +18,7 @@ import ConfigManager from '../managers/ConfigManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -826,7 +827,7 @@ export class ServiceWorker {
         // We don't have the device ID stored, but we can look it up from our old subscription
         deviceId = new Uuid(await OneSignalApi.getUserIdFromSubscriptionIdentifier(
           appId.value,
-          getDeviceTypeForBrowser(),
+          PushDeviceRecord.prototype.getDeliveryPlatform(),
           event.oldSubscription.endpoint
         ));
 
@@ -984,7 +985,7 @@ export class ServiceWorker {
                     self.registration.pushManager.getSubscription().then(subscription => subscription.endpoint)
                   ])
                 .then(([appId, identifier]) => {
-                  let deviceType = getDeviceTypeForBrowser();
+                  let deviceType = PushDeviceRecord.prototype.getDeliveryPlatform();
                   // Get the user ID from OneSignal
                   return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId.toString(), deviceType, identifier).then(recoveredUserId => {
                     if (recoveredUserId) {

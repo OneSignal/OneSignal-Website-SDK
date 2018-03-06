@@ -150,14 +150,6 @@ export class SubscriptionManager {
 
     deviceRecord.appId = this.config.appId;
 
-    if (SubscriptionManager.isSafari()) {
-      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Safari;
-    } else if (Browser.firefox) {
-      deviceRecord.deliveryPlatform = DeliveryPlatformKind.Firefox;
-    } else {
-      deviceRecord.deliveryPlatform = DeliveryPlatformKind.ChromeLike;
-    }
-
     deviceRecord.subscriptionState = SubscriptionStateKind.Subscribed;
 
     let newDeviceId: Uuid;

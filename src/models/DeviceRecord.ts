@@ -8,6 +8,7 @@ import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 import { Uuid } from './Uuid';
+import { redetectBrowserUserAgent } from "../utils";
 
 
 /**
@@ -116,10 +117,15 @@ export abstract class DeviceRecord implements Serializable {
   }
 
   getDeliveryPlatform(): DeliveryPlatformKind {
+    // For testing purposes, allows changing the browser user agent
+    const browser = redetectBrowserUserAgent();
+
     if (this.isSafari()) {
       return DeliveryPlatformKind.Safari;
     } else if (Browser.firefox) {
       return DeliveryPlatformKind.Firefox;
+    } else if (Browser.msedge) {
+      return DeliveryPlatformKind.Edge;
     } else {
       return DeliveryPlatformKind.ChromeLike;
     }

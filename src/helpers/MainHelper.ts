@@ -17,7 +17,6 @@ import {
   capitalize,
   contains,
   getConsoleStyle,
-  getDeviceTypeForBrowser
 } from '../utils';
 import EventHelper from './EventHelper';
 import SubscriptionHelper from './SubscriptionHelper';
