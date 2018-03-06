@@ -20,7 +20,8 @@ abstract class MetricEngagement {
 }
 
 export enum ApiUsageMetricKind {
-  HttpPermissionRequest = 'HttpPermissionRequest'
+  HttpPermissionRequest = 'HttpPermissionRequest',
+  SyncHashedEmail = 'SyncHashedEmail'
 }
 
 export class ApiUsageMetricEvent extends MetricEvent {

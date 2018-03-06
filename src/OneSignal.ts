@@ -100,6 +100,7 @@ export default class OneSignal {
    * @PublicApi
    */
   static async syncHashedEmail(email) {
+    log.error(new DeprecatedApiError(DeprecatedApiReason.SyncHashedEmail));
     if (!email)
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     let sanitizedEmail = prepareEmailForHashing(email);
