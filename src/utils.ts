@@ -229,30 +229,12 @@ export function hasCssClass(targetSelectorOrElement, cssClass) {
 
 var DEVICE_TYPES = {
   CHROME: 5,
-      SAFARI: 7,
-      FIREFOX: 8,
-      UNKNOWN: -99
+  SAFARI: 7,
+  FIREFOX: 8,
+  EDGE: 12,
+  UNKNOWN: -99
 };
 
-export function getDeviceTypeForBrowser() {
-  const browser = redetectBrowserUserAgent();
-
-  if (browser.chrome ||
-    (<any>Browser).yandexbrowser ||
-    browser.opera ||
-    (browser as any).vivaldi ||
-    (browser as any).samsungBrowser ||
-    (<any>browser).chromium) {
-    return DEVICE_TYPES.CHROME;
-  } else if (browser.firefox) {
-    return DEVICE_TYPES.FIREFOX;
-  } else if (browser.safari) {
-    return DEVICE_TYPES.SAFARI;
-  } else {
-    log.error(`OneSignal: Unable to associate device type for browser ${browser.name} ${browser.version}`);
-    return DEVICE_TYPES.UNKNOWN;
-  }
-}
 export function getConsoleStyle(style) {
   if (style == 'code') {
     return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;
