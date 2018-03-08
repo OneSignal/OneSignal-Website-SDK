@@ -738,9 +738,6 @@ export class ServiceWorker {
                 log.debug('Not navigating because link is special.')
               }
             } catch (e) {
-              console.error("Failed to navigate.");
-              console.error("Failed to navigate because:", e);
-              console.error("Failed to navigate to " + launchUrl + " because:", e);
               log.error("Failed to navigate:", client, launchUrl, e);
             }
           } else {
