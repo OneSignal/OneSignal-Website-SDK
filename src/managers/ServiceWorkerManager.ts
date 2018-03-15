@@ -11,7 +11,6 @@ import { encodeHashAsUriComponent, timeoutPromise } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
 import MainHelper from '../helpers/MainHelper';
-import { serializeAppConfig } from '../models/AppConfig';
 import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import NotImplementedError from '../errors/NotImplementedError';
@@ -249,7 +248,7 @@ export class ServiceWorkerManager {
       this.context.workerMessenger.once(WorkerMessengerCommand.Subscribe, subscription => {
         resolve(Subscription.deserialize(subscription));
       });
-      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, serializeAppConfig(this.context.appConfig));
+      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, this.context.appConfig);
     });
   }
 

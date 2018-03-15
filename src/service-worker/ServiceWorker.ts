@@ -12,7 +12,7 @@ import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { contains, getConsoleStyle, isValidUuid, trimUndefined } from '../utils';
 
-import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
+import { AppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
@@ -134,7 +134,7 @@ export class ServiceWorker {
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.WorkerVersion, Environment.version());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.Subscribe, async (appConfigBundle: any) => {
-      const appConfig = deserializeAppConfig(appConfigBundle);
+      const appConfig = appConfigBundle;
       log.debug('[Service Worker] Received subscribe message.');
       const context = new Context(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
@@ -142,7 +142,7 @@ export class ServiceWorker {
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SubscribeNew, async (appConfigBundle: any) => {
-      const appConfig = deserializeAppConfig(appConfigBundle);
+      const appConfig = appConfigBundle;
       log.debug('[Service Worker] Received subscribe new message.');
       const context = new Context(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);

@@ -9,7 +9,7 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig, AppUserConfig, serializeAppConfig } from '../models/AppConfig';
+import { AppConfig, AppUserConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
@@ -84,7 +84,7 @@ export default class InitHelper {
             context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
               resolve(Subscription.deserialize(subscription));
             });
-            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, serializeAppConfig(context.appConfig));
+            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
           });
           log.debug("Finished registering brand new subscription:", newSubscription);
         } else {
