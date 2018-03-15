@@ -92,6 +92,35 @@ export default class OneSignal {
   }
 
   /**
+   * Hashes the provided email and uploads to OneSignal.
+   * @remarks The email is voluntarily provided.
+   * @PublicApi
+   */
+  static async syncHashedEmail(email) {
+    if (!email)
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
+    let sanitizedEmail = prepareEmailForHashing(email);
+    if (!isValidEmail(sanitizedEmail))
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
+    await awaitOneSignalInitAndSupported();
+    logMethodCall('syncHashedEmail', email);
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    if (!deviceId || !deviceId)
+      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
+    const result = await OneSignalApi.updatePlayer(appId, deviceId, {
+      em_m: Crypto.md5(sanitizedEmail),
+      em_s: Crypto.sha1(sanitizedEmail),
+      em_s256: Crypto.sha256(sanitizedEmail)
+    });
+    if (result && result.success) {
+      return true;
+    } else {
+      throw result;
+    }
+  }
+
+  /**
    * @PublicApi
    */
   static async setEmail(email: string, options?: SetEmailOptions): Promise<void> {

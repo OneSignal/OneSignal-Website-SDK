@@ -2,8 +2,8 @@ import * as log from 'loglevel';
 import * as objectAssign from 'object-assign';
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
+
 import { contains, getRandomUuid } from './utils';
-import Emitter from './libraries/Emitter';
 
 /**
  * Establishes a cross-domain MessageChannel between the current browsing context (this page) and another (an iFrame, popup, or parent page).

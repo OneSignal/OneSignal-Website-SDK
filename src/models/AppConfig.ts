@@ -52,6 +52,14 @@ export interface AppConfig {
   userConfig?: AppUserConfig;
 }
 
+export function serializeAppConfig(config: AppConfig): object {
+  return objectAssign({}, config);
+}
+
+export function deserializeAppConfig(bundle: any): AppConfig {
+  return objectAssign({}, bundle);
+}
+
 export enum ConfigIntegrationKind {
   TypicalSite = 'typical',
   WordPress = 'wordpress',
