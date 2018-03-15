@@ -4,13 +4,14 @@ import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnv
 import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
 import MainHelper from '../../../src/helpers/MainHelper';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
-import { Uuid } from '../../../src/models/Uuid';
+
 import Context from '../../../src/models/Context';
 import { SessionManager } from '../../../src/managers/SessionManager';
+import Random from '../../support/tester/Random';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -18,7 +19,7 @@ test.beforeEach(async t => {
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 });
 
@@ -42,7 +43,7 @@ test('should subscribe user on subsequent page views if the user is not subscrib
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   const isPushEnabledStub = sinon.stub(OneSignal, 'isPushNotificationsEnabled').resolves(false);
@@ -64,7 +65,7 @@ test('should resubscribe an already subscribed user on first page view', async t
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   const isPushEnabledStub = sinon.stub(OneSignal, 'isPushNotificationsEnabled').resolves(true);

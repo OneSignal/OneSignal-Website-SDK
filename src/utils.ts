@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
+import bowser, { IBowser } from 'bowser';
+
 
 import Environment from './Environment';
 import TimeoutError from './errors/TimeoutError';
@@ -7,6 +7,8 @@ import SubscriptionHelper from './helpers/SubscriptionHelper';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Database from './services/Database';
+import Log from './libraries/Log';
+import Event from './Event';
 
 
 export function isArray(variable) {
@@ -29,15 +31,15 @@ export function decodeHtmlEntities(text) {
   }
 }
 
-export function redetectBrowserUserAgent(): Browser.IBowser  {
+export function redetectBrowserUserAgent(): IBowser  {
     /*
    TODO: Make this a little neater
    During testing, the browser object may be initialized before the userAgent is injected
   */
-  if (Browser.name === '' && Browser.version === '') {
-    var browser = Browser._detect(navigator.userAgent);
+  if (bowser.name === '' && bowser.version === '') {
+    var browser = bowser._detect(navigator.userAgent);
   } else {
-    var browser = Browser;
+    var browser = bowser;
   }
   return browser;
 }
@@ -117,10 +119,10 @@ export function isPushNotificationsSupported() {
 }
 
 export function isChromeLikeBrowser() {
-  return Browser.chrome ||
-         (Browser as any).chromium ||
-         (Browser as any).opera ||
-         (Browser as any).yandexbrowser;
+  return bowser.chrome ||
+    (bowser as any).chromium ||
+    (bowser as any).opera ||
+    (bowser as any).yandexbrowser;
 }
 
 export function removeDomElement(selector) {
@@ -129,6 +131,14 @@ export function removeDomElement(selector) {
     for (let i = 0; i < els.length; i++)
       els[i].parentNode.removeChild(els[i]);
   }
+}
+
+export function isLocalhostAllowedAsSecureOrigin() {
+  return (
+    OneSignal.config &&
+    OneSignal.config.userConfig &&
+    OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
+  );
 }
 
 /**
@@ -143,6 +153,69 @@ export function awaitOneSignalInitAndSupported() {
       resolve();
     }
   });
+}
+
+  /**
+   * Returns true if web push subscription occurs on a subdomain of OneSignal.
+   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
+   * @remarks
+   *   This method returns true if:
+   *     - The browser is not Safari
+   *         - Safari uses a different method of subscription and does not require our workaround
+   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
+   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
+   *        - The protocol of the current webpage is http:
+   *   Exceptions are:
+   *     - Safe hostnames like localhost and 127.0.0.1
+   *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
+   *        - We are already in popup or iFrame mode, or this is called from the service worker
+   */
+  export function isUsingSubscriptionWorkaround() {
+    if (!OneSignal.config) {
+      throw new Error(
+        `(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
+      );
+    }
+    if (bowser.safari) {
+      return false;
+    }
+
+    if (
+      (isLocalhostAllowedAsSecureOrigin() && location.hostname === 'localhost') ||
+      (location.hostname as any) === '127.0.0.1'
+    ) {
+      return false;
+    }
+
+    return (
+      (
+        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host ||
+        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe
+      ) &&
+      (
+        !!OneSignal.config.subdomain ||
+        location.protocol === 'http:'
+      )
+    );
+  }
+
+export async function triggerNotificationPermissionChanged(updateIfIdentical = false) {
+  let newPermission, isUpdating;
+  const currentPermission = await OneSignal.getNotificationPermission();
+  const previousPermission = await Database.get('Options', 'notificationPermission');
+
+  newPermission = currentPermission;
+  isUpdating = currentPermission !== previousPermission || updateIfIdentical;
+
+  if (isUpdating) {
+    await Database.put('Options', {
+      key: 'notificationPermission',
+      value: currentPermission
+    });
+    Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
+      to: newPermission
+    });
+  }
 }
 
 /**
@@ -167,7 +240,7 @@ export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
 }
 
 export function logMethodCall(methodName: string, ...args) {
-  return log.debug(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
+  return Log.debug(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
 }
 
 export function isValidEmail(email) {
@@ -311,6 +384,25 @@ export function trimUndefined(object) {
   return object;
 }
 
+export function getRandomUuid(): string {
+  let uuidStr = '';
+  const crypto = typeof window === 'undefined' ? (global as any).crypto : window.crypto || (<any>window).msCrypto;
+  if (crypto) {
+    uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = (crypto.getRandomValues(new Uint8Array(1))[0] % 16) | 0,
+        v = c == 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  } else {
+    uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = (Math.random() * 16) | 0,
+        v = c == 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+  return uuidStr;
+}
+
 /**
  * Returns true if the UUID is a string of 36 characters;
  * @param uuid
@@ -335,7 +427,7 @@ export function getUrlQueryParam(name) {
  * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.
  */
 export function wipeIndexedDb() {
-  log.warn('OneSignal: Wiping IndexedDB data.');
+  Log.warn('OneSignal: Wiping IndexedDB data.');
   return Promise.all([
     Database.remove('Ids'),
     Database.remove('NotificationOpened'),
@@ -355,7 +447,7 @@ export function capitalize(text): string {
  * Unsubscribe from push notifications without removing the active service worker.
  */
 export function unsubscribeFromPush() {
-  log.warn('OneSignal: Unsubscribing from push.');
+  Log.warn('OneSignal: Unsubscribing from push.');
   if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
     return (<any>self).registration.pushManager.getSubscription()
                        .then(subscription => {
@@ -364,11 +456,11 @@ export function unsubscribeFromPush() {
                          } else throw new Error('Cannot unsubscribe because not subscribed.');
                        });
   } else {
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+    if (isUsingSubscriptionWorkaround()) {
       return new Promise((resolve, reject) => {
-        log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
+        Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
-          log.debug("Unsubscribe from push succesfully remotely executed.");
+          Log.debug("Unsubscribe from push succesfully remotely executed.");
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
@@ -399,7 +491,7 @@ export function unsubscribeFromPush() {
  * Unregisters the active service worker.
  */
 export function wipeServiceWorker() {
-  log.warn('OneSignal: Unregistering service worker.');
+  Log.warn('OneSignal: Unregistering service worker.');
   if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
     return Promise.resolve();
   }
@@ -437,10 +529,10 @@ export function substringAfter(string, search) {
 
 export function once(targetSelectorOrElement, event, task, manualDestroy=false) {
   if (!event) {
-    log.error('Cannot call on() with no event: ', event);
+    Log.error('Cannot call on() with no event: ', event);
   }
   if (!task) {
-    log.error('Cannot call on() with no task: ', task)
+    Log.error('Cannot call on() with no task: ', task)
   }
   if (typeof targetSelectorOrElement === 'string') {
     let els = document.querySelectorAll(targetSelectorOrElement);

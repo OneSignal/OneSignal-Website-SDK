@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import TimedLocalStorage from '../../../src/modules/TimedLocalStorage';
-import * as timemachine from "timemachine";
+import timemachine from "timemachine";
 
 
 test("should not throw and return null if LocalStorage is not supported", async t => {

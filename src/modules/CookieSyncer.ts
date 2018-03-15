@@ -1,8 +1,8 @@
-import * as log from 'loglevel';
+
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
+import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
-
 
 export default class CookieSyncer {
   private isFeatureEnabled: boolean;
@@ -17,12 +17,18 @@ export default class CookieSyncer {
     const defaultId = "os!os";
 
     try {
-      const appId = this.context.appConfig.appId.value;
+      const appId = this.context.appConfig.appId;
       const truncatedAppId = appId.replace(/-/g, '').substr(0, 15).toLowerCase();
       return `os!${truncatedAppId}`;
     } catch (e) {
       return defaultId;
     }
+  }
+
+  static get SDK_URL(): URL {
+    const url = new URL("https://cdn.tynt.com/afx.js");
+    url.protocol = window.location.protocol;
+    return url;
   }
 
   getFrameOrigin(): URL {
@@ -35,6 +41,10 @@ export default class CookieSyncer {
   }
 
   install() {
+    if (!this.isFeatureEnabled) {
+      Log.debug('Cookie sync feature is disabled.');
+      return;
+    }
     if (window.top !== window) {
       /* Only process for top frames */
       return;
@@ -67,6 +77,7 @@ export default class CookieSyncer {
     iframe.onload = loadPromise.resolver;
     iframe.onerror = loadPromise.rejector;
 
-    return loadPromise.promise;
+    this.context.dynamicResourceLoader.loadIfNew(ResourceType.Script, CookieSyncer.SDK_URL);
+    Log.debug('Enabled cookie sync feature.');
   }
 }

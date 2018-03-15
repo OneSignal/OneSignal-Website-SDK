@@ -1,6 +1,6 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+import bowser from 'bowser';
+
+
 
 import AlreadySubscribedError from '../errors/AlreadySubscribedError';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
@@ -9,17 +9,16 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig, AppUserConfig, serializeAppConfig } from '../models/AppConfig';
+import { AppConfig, AppUserConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
-import { getConsoleStyle, once } from '../utils';
+import { getConsoleStyle, once, isUsingSubscriptionWorkaround, triggerNotificationPermissionChanged } from '../utils';
 import EventHelper from './EventHelper';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import OneSignalApi from '../OneSignalApi';
-import { Uuid } from '../models/Uuid';
 import CookieSyncer from '../modules/CookieSyncer';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
@@ -36,6 +35,9 @@ import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
+import Log from '../libraries/Log';
+import Environment from '../Environment';
+import Bell from '../bell/Bell';
 
 declare var OneSignal: any;
 
@@ -56,17 +58,17 @@ export default class InitHelper {
   public static async processExpiringSubscriptions() {
     const context: Context = OneSignal.context;
 
-    log.debug("Checking subscription expiration...");
+    Log.debug("Checking subscription expiration...");
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
     if (!isSubscriptionExpiring) {
-      log.debug("Subscription is not considered expired.");
+      Log.debug("Subscription is not considered expired.");
       return;
     }
 
     const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = await SdkEnvironment.getWindowEnv();
+    const windowEnv = SdkEnvironment.getWindowEnv();
 
-    log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
+    Log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
     switch (integrationKind) {
       /*
         Resubscribe via the service worker.
@@ -85,9 +87,9 @@ export default class InitHelper {
             context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
               resolve(Subscription.deserialize(subscription));
             });
-            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, serializeAppConfig(context.appConfig));
+            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
           });
-          log.debug("Finished registering brand new subscription:", newSubscription);
+          Log.debug("Finished registering brand new subscription:", newSubscription);
         } else {
           const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
           await proxyFrame.runCommand(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS);
@@ -99,7 +101,7 @@ export default class InitHelper {
           isPushNotificationsEnabled to simulate unsubscribing.
          */
         await Database.remove("Ids", "registrationId");
-        log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
+        Log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
         break;
     }
   }
@@ -130,20 +132,20 @@ export default class InitHelper {
     if (
       navigator.serviceWorker &&
       window.location.protocol === 'https:' &&
-      !await SubscriptionHelper.isFrameContextInsecure()
+      !await SdkEnvironment.isFrameContextInsecure()
     ) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration && registration.active) {
-          MainHelper.establishServiceWorkerChannel();
+          context.serviceWorkerManager.establishServiceWorkerChannel();
         }
       } catch (e) { }
     }
 
     await InitHelper.processExpiringSubscriptions();
-    await MainHelper.showNotifyButton();
+    await InitHelper.showNotifyButton();
 
-    if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {
+    if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
       if (isPushEnabled) {
         /*  The user is on Safari and *specifically* set autoRegister to false.
@@ -159,14 +161,14 @@ export default class InitHelper {
       }
     }
 
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
+    if (isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
       /*
        The user is on an HTTP site and they accessed this site by opening a new window or tab (starting a new
        session). This means we should increment their session_count and last_active by calling
        registerWithOneSignal(). Without this call, the user's session and last_active is not updated. We only
        do this if the user is actually registered with OneSignal though.
        */
-      log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Updating session info for HTTP site.`);
+      Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Updating session info for HTTP site.`);
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
       if (isPushEnabled) {
         const context: Context = OneSignal.context;
@@ -182,12 +184,43 @@ export default class InitHelper {
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
   }
 
+  private static async showNotifyButton() {
+    if (Environment.isBrowser() && !OneSignal.notifyButton) {
+      OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
+      if (OneSignal.config.userConfig.bell) {
+        // If both bell and notifyButton, notifyButton's options take precedence
+        OneSignal.config.userConfig.bell = {
+          ...OneSignal.config.userConfig.bell,
+          ...OneSignal.config.userConfig.notifyButton
+        };
+        OneSignal.config.userConfig.notifyButton = {
+          ...OneSignal.config.userConfig.notifyButton,
+          ...OneSignal.config.userConfig.bell
+        };
+      }
+
+      const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
+      if (displayPredicate && typeof displayPredicate === 'function') {
+        const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
+        if (predicateValue !== false) {
+          OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
+          OneSignal.notifyButton.create();
+        } else {
+          Log.debug('Notify button display predicate returned false so not showing the notify button.');
+        }
+      } else {
+        OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
+        OneSignal.notifyButton.create();
+      }
+    }
+  }
+
   public static async updateEmailSessionCount() {
     const context: Context = OneSignal.context;
     /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
-      if (emailProfile.emailId && emailProfile.emailId.value) {
+      if (emailProfile.emailId && emailProfile.emailId) {
         OneSignalApi.updateUserSession(
           emailProfile.emailId,
           new EmailDeviceRecord(null, emailProfile.emailAuthHash)
@@ -208,13 +241,13 @@ export default class InitHelper {
   }
 
   static async installNativePromptPermissionChangedHook() {
-    if (navigator.permissions && !(Browser.firefox && Number(Browser.version) <= 45)) {
+    if (navigator.permissions && !(bowser.firefox && Number(bowser.version) <= 45)) {
       OneSignal._usingNativePermissionHook = true;
       // If the browser natively supports hooking the subscription prompt permission change event,
       // use it instead of our SDK method
       const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
       permissionStatus.onchange = function() {
-        EventHelper.triggerNotificationPermissionChanged();
+        triggerNotificationPermissionChanged();
       };
     }
   }
@@ -270,7 +303,7 @@ export default class InitHelper {
   }
 
   static async internalInit() {
-    log.debug('Called %cinternalInit()', getConsoleStyle('code'));
+    Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
 
     const context: Context = OneSignal.context;
 
@@ -282,7 +315,7 @@ export default class InitHelper {
     // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
     if (
       sessionStorage.getItem('ONE_SIGNAL_SESSION') &&
-      !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+      !isUsingSubscriptionWorkaround() &&
       (window.Notification.permission == 'denied' ||
         sessionStorage.getItem('ONE_SIGNAL_NOTIFICATION_PERMISSION') == window.Notification.permission)
     ) {
@@ -292,23 +325,23 @@ export default class InitHelper {
 
     sessionStorage.setItem('ONE_SIGNAL_NOTIFICATION_PERMISSION', window.Notification.permission);
 
-    if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {
-      log.debug('On Safari and autoregister is false, skipping sessionInit().');
+    if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
+      Log.debug('On Safari and autoregister is false, skipping sessionInit().');
       // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
       // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
-      if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (!isUsingSubscriptionWorkaround()) {
         Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       }
       return;
     }
 
     if (OneSignal.config.userConfig.autoRegister === false && !OneSignal.config.subdomain) {
-      log.debug('Skipping internal init. Not auto-registering and no subdomain.');
+      Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
       /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
       Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-      if (isPushEnabled && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        log.info(
+      if (isPushEnabled && !isUsingSubscriptionWorkaround()) {
+        Log.info(
           'Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.'
         );
         // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
@@ -338,10 +371,10 @@ export default class InitHelper {
   // overridingPageTitle: Only for the HTTP Iframe, pass the page title in from the top frame
   static async initSaveState(overridingPageTitle: string) {
     const appId = await MainHelper.getAppId();
-    await Database.put('Ids', { type: 'appId', id: appId.value });
+    await Database.put('Ids', { type: 'appId', id: appId });
     const initialPageTitle = overridingPageTitle || document.title || 'Notification';
     await Database.put('Options', { key: 'pageTitle', value: initialPageTitle });
-    log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
+    Log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
     const config: AppConfig = OneSignal.config;
     await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
   }
@@ -349,9 +382,9 @@ export default class InitHelper {
   static sessionInit(options) {
     const appConfig: AppConfig = OneSignal.context.appConfig;
 
-    log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
+    Log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
     if (OneSignal._sessionInitAlreadyRunning) {
-      log.debug('Returning from sessionInit because it has already been called.');
+      Log.debug('Returning from sessionInit because it has already been called.');
       return;
     } else {
       OneSignal._sessionInitAlreadyRunning = true;
@@ -363,17 +396,17 @@ export default class InitHelper {
        */
       OneSignal.subscriptionModalHost = new SubscriptionModalHost(appConfig.appId, options);
       OneSignal.subscriptionModalHost.load();
-    } else if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+    } else if (!isUsingSubscriptionWorkaround()) {
       /*
         Show HTTPS modal prompt.
        */
       if (options.__sdkCall && MainHelper.wasHttpsNativePromptDismissed()) {
-        log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
+        Log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
         OneSignal._sessionInitAlreadyRunning = false;
       } else {
         /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
         prevent the popup from opening. */
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+        if (isUsingSubscriptionWorkaround()) {
           SubscriptionHelper.registerForPush();
         } else {
           OneSignal.isOptedOut().then(isOptedOut => {
@@ -388,9 +421,9 @@ export default class InitHelper {
                   !options ||
                   options && !options.fromRegisterFor
                 ) &&
-                Browser.chrome &&
-                Number(Browser.version) >= 63 &&
-                (Browser.tablet || Browser.mobile)
+                bowser.chrome &&
+                Number(bowser.version) >= 63 &&
+                (bowser.tablet || bowser.mobile)
                 ) {
                 OneSignal.showHttpPrompt();
               } else {
@@ -404,10 +437,10 @@ export default class InitHelper {
       }
     } else {
       if (OneSignal.config.userConfig.autoRegister !== true) {
-        log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
+        Log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
       }
       if (MainHelper.isHttpPromptAlreadyShown()) {
-        log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
+        Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
       }
       if (OneSignal.config.userConfig.autoRegister === true && !MainHelper.isHttpPromptAlreadyShown()) {
         OneSignal.showHttpPrompt().catch(e => {
@@ -418,9 +451,9 @@ export default class InitHelper {
             e instanceof AlreadySubscribedError ||
             e instanceof PushPermissionNotGrantedError
           ) {
-            log.debug('[Prompt Not Showing]', e);
+            Log.debug('[Prompt Not Showing]', e);
             // Another prompt is being shown, that's okay
-          } else log.info(e);
+          } else Log.info(e);
         });
       }
       OneSignal._sessionInitAlreadyRunning = false;
@@ -431,13 +464,13 @@ export default class InitHelper {
 
   static async ponyfillSafariFetch() {
     // If Safari - add 'fetch' pollyfill if it isn't already added.
-    if (Browser.safari && typeof window.fetch == 'undefined') {
-      log.debug('Loading fetch polyfill for Safari..');
+    if (bowser.safari && typeof window.fetch == 'undefined') {
+      Log.debug('Loading fetch polyfill for Safari..');
       try {
         await new DynamicResourceLoader().loadFetchPolyfill();
-        log.debug('Done loading fetch polyfill.');
+        Log.debug('Done loading fetch polyfill.');
       } catch (e) {
-        log.debug('Error loading fetch polyfill:', e);
+        Log.debug('Error loading fetch polyfill:', e);
       }
     }
   }

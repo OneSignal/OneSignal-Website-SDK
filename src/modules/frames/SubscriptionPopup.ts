@@ -1,9 +1,10 @@
-import * as log from 'loglevel';
+
 
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import RemoteFrame from './RemoteFrame';
+import Log from '../../libraries/Log';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -38,7 +39,7 @@ export default class SubscriptionPopup extends RemoteFrame {
   }
 
   onMessengerConnected(_: MessengerMessageEvent) {
-    log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) The host page is now ready to receive commands from the HTTP popup.`);
+    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) The host page is now ready to receive commands from the HTTP popup.`);
     this.finishInitialization();
   }
 }

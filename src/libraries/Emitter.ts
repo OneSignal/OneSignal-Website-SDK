@@ -80,9 +80,13 @@ export default class Emitter {
   /**
    * Removes all listeners from the collection for a specified event.
    */
-  public removeAllListeners(event: string): Emitter {
+  public removeAllListeners(event?: string): Emitter {
     try {
-      delete this._events[event];
+      if (event) {
+        delete this._events[event];
+      } else {
+        (this as any)._events = [];
+      }
     } catch(e) {};
 
     return this;

@@ -1,4 +1,4 @@
-import {Uuid} from "./Uuid";
+
 import { Serializable } from './Serializable';
 
 
@@ -6,7 +6,7 @@ export class Subscription implements Serializable {
   /**
    * The OneSignal player ID.
    */
-  deviceId: Uuid;
+  deviceId: string;
   /**
    * The GCM/FCM registration token, as a stringified URL, or the Safari device token.
    */
@@ -28,7 +28,7 @@ export class Subscription implements Serializable {
 
   serialize() {
     return {
-      deviceId: this.deviceId.serialize(),
+      deviceId: this.deviceId,
       subscriptionToken: this.subscriptionToken,
       optedOut: this.optedOut,
       createdAt: this.createdAt,
@@ -38,7 +38,7 @@ export class Subscription implements Serializable {
 
   static deserialize(bundle: any): Subscription {
     const subscription = new Subscription();
-    subscription.deviceId = Uuid.deserialize(bundle.deviceId);
+    subscription.deviceId = bundle.deviceId;
     subscription.subscriptionToken = bundle.subscriptionToken;
     subscription.optedOut = bundle.optedOut;
     subscription.createdAt = bundle.createdAt;

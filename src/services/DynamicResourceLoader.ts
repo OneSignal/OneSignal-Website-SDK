@@ -1,4 +1,4 @@
-import * as objectAssign from 'object-assign';
+
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
 import Environment from '../Environment';
@@ -32,7 +32,7 @@ export class DynamicResourceLoader {
 
   getCache(): DynamicResourceLoaderCache {
     // Cache is private; return a cloned copy just for testing
-    return objectAssign({}, this.cache);
+    return {...this.cache};
   }
 
   async loadSdkStylesheet(): Promise<ResourceLoadState> {

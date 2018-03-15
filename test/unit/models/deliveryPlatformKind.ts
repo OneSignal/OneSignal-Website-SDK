@@ -1,5 +1,4 @@
 import test from "ava";
-import Path from '../../../src/models/Path';
 import { DeliveryPlatformKind } from '../../../src/models/DeliveryPlatformKind';
 
 

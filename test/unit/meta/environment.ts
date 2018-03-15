@@ -2,6 +2,7 @@ import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
+import { isUsingSubscriptionWorkaround } from '../../../src/utils';
 
 
 test(`can simulate HTTPS site`, async t => {
@@ -9,7 +10,7 @@ test(`can simulate HTTPS site`, async t => {
     initOptions: { },
     httpOrHttps: HttpHttpsEnvironment.Https
   });
-  t.false(SubscriptionHelper.isUsingSubscriptionWorkaround());
+  t.false(isUsingSubscriptionWorkaround());
 });
 
 test(`can simulate HTTP site`, async t => {
@@ -18,5 +19,5 @@ test(`can simulate HTTP site`, async t => {
       subdomain: 'testSubdomain'
     }
   });
-  t.true(SubscriptionHelper.isUsingSubscriptionWorkaround());
+  t.true(isUsingSubscriptionWorkaround());
 });

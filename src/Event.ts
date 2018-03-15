@@ -1,9 +1,8 @@
-import * as log from 'loglevel';
-
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { capitalize, contains, getConsoleStyle } from './utils';
+import Log from './libraries/Log';
 
 
 const SILENT_EVENTS = [
@@ -71,9 +70,9 @@ export default class Event {
       }
 
       if (displayData || displayData === false) {
-        log.debug(`(${env}) » %c${eventName}:`, getConsoleStyle('event'), displayData);
+        Log.debug(`(${env}) » %c${eventName}:`, getConsoleStyle('event'), displayData);
       } else {
-        log.debug(`(${env}) » %c${eventName}`, getConsoleStyle('event'));
+        Log.debug(`(${env}) » %c${eventName}`, getConsoleStyle('event'));
       }
     }
 
@@ -98,7 +97,7 @@ export default class Event {
          SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
       var creator = opener || parent;
       if (!creator) {
-        log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
+        Log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
       } else {
         // But only if the event matches certain events
         if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {

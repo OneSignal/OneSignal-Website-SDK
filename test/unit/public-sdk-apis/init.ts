@@ -8,9 +8,10 @@ import Context from '../../../src/models/Context';
 import InitHelper from '../../../src/helpers/InitHelper';
 import { AppConfig } from '../../../src/models/AppConfig';
 import ConfigManager from '../../../src/managers/ConfigManager';
-import { Uuid } from '../../../src/models/Uuid';
-import * as nock from 'nock';
+
+import nock from 'nock';
 import { SessionManager } from "../../../src/managers/SessionManager";
+import Random from "../../support/tester/Random";
 
 test("correct degree of persistNotification setting should be stored", async t => {
   await TestEnvironment.initialize({
@@ -58,10 +59,10 @@ test("correct degree of persistNotification setting should be stored", async t =
 
 async function expectUserSessionCountUpdateRequest(
   t: TestContext,
-  pushDevicePlayerId: Uuid,
+  pushDevicePlayerId: string,
 ) {
   nock('https://onesignal.com')
-    .post(`/api/v1/players/${pushDevicePlayerId.value}/on_session`)
+    .post(`/api/v1/players/${pushDevicePlayerId}/on_session`)
     .reply(200, (uri, requestBody) => {
       // Not matching for anything yet, because no email-specific data is sent here
       // Just a whole bunch of params like timezone, os, sdk version..etc.
@@ -71,7 +72,7 @@ async function expectUserSessionCountUpdateRequest(
 
 test("email session should be updated on first page view", async t => {
   const testData = {
-    emailPlayerId: Uuid.generate()
+    emailPlayerId: Random.getRandomUuid()
   };
   await TestEnvironment.initialize();
 

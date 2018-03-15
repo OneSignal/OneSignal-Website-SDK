@@ -1,5 +1,5 @@
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+
+
 
 import { InvalidStateReason } from '../../errors/InvalidStateError';
 import Event from '../../Event';
@@ -14,6 +14,7 @@ import Database from '../../services/Database';
 import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
+import Log from '../../libraries/Log';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -72,18 +73,22 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   async onMessengerConnect(_: MessengerMessageEvent) {
-    log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin communication.`);
+    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin communication.`);
     this.finishInitialization();
     return false;
   }
 
   async onProxyFrameInitializing(message: MessengerMessageEvent) {
-    log.info(`(${SdkEnvironment.getWindowEnv().toString()}) The iFrame has just received initOptions from the host page!`);
+    Log.info(`(${SdkEnvironment.getWindowEnv().toString()}) The iFrame has just received initOptions from the host page!`);
 
-    OneSignal.config = objectAssign(message.data.hostInitOptions, OneSignal.config, {
+    OneSignal.config = {
+      ...message.data.hostInitOptions,
+      ...OneSignal.config,
+      ...{
       pageUrl: message.data.pageUrl,
       pageTitle: message.data.pageTitle
-    });
+      }
+    };
 
     InitHelper.installNativePromptPermissionChangedHook();
 
@@ -107,9 +112,10 @@ export default class ProxyFrame extends RemoteFrame {
 
     if (navigator.serviceWorker && window.location.protocol === 'https:') {
       try {
-        MainHelper.establishServiceWorkerChannel();
+        const context: Context = OneSignal.context;
+        context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) {
-        log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
+        Log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
       }
     }
 
@@ -166,17 +172,17 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   async onUnsubscribeFromPush(message: MessengerMessageEvent) {
-    log.debug('(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.');
+    Log.debug('(Reposted from iFrame -> Host) User unsubscribed but permission granted. Re-prompting the user for push.');
     try {
       await unsubscribeFromPush();
       message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     } catch (e) {
-      log.debug('Failed to unsubscribe from push remotely:', e);
+      Log.debug('Failed to unsubscribe from push remotely:', e);
     }
   }
 
   async onMarkPromptDismissed(message: MessengerMessageEvent) {
-    log.debug('(Reposted from iFrame -> Host) Marking prompt as dismissed.');
+    Log.debug('(Reposted from iFrame -> Host) Marking prompt as dismissed.');
     await TestHelper.markHttpsNativePromptDismissed();
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;

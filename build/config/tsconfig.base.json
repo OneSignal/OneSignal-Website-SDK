@@ -10,20 +10,32 @@
     "noImplicitThis": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "diagnostics": false,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
-    "module": "commonjs",
+    "module": "ES6",
+    "moduleResolution": "node",
     "noEmitHelpers": true,
     "pretty": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "outDir": "../ts-to-es6",
+    "rootDir": "../../",
+    "esModuleInterop": true,
     "types": [
       "node"
-    ]
+    ],
+    "lib": [
+      "es6",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "target": "ESNext",
+    "sourceRoot": "../..",
   }
 }

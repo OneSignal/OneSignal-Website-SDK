@@ -1,4 +1,4 @@
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 
 import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
@@ -7,7 +7,7 @@ import { DevicePlatformKind } from './DevicePlatformKind';
 import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { Uuid } from './Uuid';
+
 import { DeviceRecord } from './DeviceRecord';
 
 

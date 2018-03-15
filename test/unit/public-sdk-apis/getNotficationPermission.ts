@@ -4,8 +4,8 @@ import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from "../../../src/OneSignal";
 import { AppConfig } from '../../../src/models/AppConfig';
-import { Uuid } from '../../../src/models/Uuid';
 import Context from '../../../src/models/Context';
+import Random from "../../support/tester/Random";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -13,7 +13,7 @@ test.beforeEach(async t => {
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 });
 

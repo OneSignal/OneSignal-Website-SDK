@@ -1,4 +1,4 @@
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 
 import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
@@ -7,7 +7,7 @@ import { DevicePlatformKind } from './DevicePlatformKind';
 import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { Uuid } from './Uuid';
+
 import { DeviceRecord } from './DeviceRecord';
 
 
@@ -29,7 +29,7 @@ export class PushDeviceRecord extends DeviceRecord {
     const serializedBundle: any = super.serialize();
 
     if (this.subscription) {
-      serializedBundle.identifier = Browser.safari ?
+      serializedBundle.identifier = bowser.safari ?
         this.subscription.safariDeviceToken :
         this.subscription.w3cEndpoint.toString();
       serializedBundle.web_auth = this.subscription.w3cAuth;
@@ -40,7 +40,7 @@ export class PushDeviceRecord extends DeviceRecord {
   }
 
   static createFromPushSubscription(
-    appId: Uuid,
+    appId: string,
     rawPushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,
   ) {

@@ -1,10 +1,7 @@
 import { AppUserConfig, AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, ServerAppConfig } from '../models/AppConfig';
 import OneSignalApi from '../OneSignalApi';
-import { Uuid } from '../models/Uuid';
-import InitHelper from '../helpers/InitHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import * as objectAssign from 'object-assign';
-import Badge from '../bell/Badge';
+
 import { trimUndefined, contains } from '../utils';
 import SdkEnvironment from './SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -40,7 +37,7 @@ export default class ConfigManager {
    */
   public async getAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
     try {
-      const serverConfig = await OneSignalApi.downloadServerAppConfig(new Uuid(userConfig.appId));
+      const serverConfig = await OneSignalApi.downloadServerAppConfig(userConfig.appId);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       if (appConfig.restrictedOriginEnabled) {
         if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
@@ -96,7 +93,7 @@ export default class ConfigManager {
   public getMergedConfig(userConfig: AppUserConfig, serverConfig: ServerAppConfig): AppConfig {
     const configIntegrationKind = this.getConfigIntegrationKind(serverConfig);
     return {
-      appId: new Uuid(serverConfig.app_id),
+      appId: serverConfig.app_id,
       subdomain: this.getSubdomainForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
       origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
@@ -225,7 +222,9 @@ export default class ConfigManager {
         /*
           Ignores dashboard configuration and uses code-based configuration only.
         */
-        return objectAssign({}, userConfig, {
+        return {
+          ...userConfig,
+          ...{
           serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
             ? OneSignal.SERVICE_WORKER_PARAM
             : { scope: '/' },
@@ -236,7 +235,8 @@ export default class ConfigManager {
               ? OneSignal.SERVICE_WORKER_UPDATER_PATH
               : 'OneSignalSDUpdaterKWorker.js',
           path: !!userConfig.path ? userConfig.path : '/'
-        });
+          }
+        };
     }
   }
 

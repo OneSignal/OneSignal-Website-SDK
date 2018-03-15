@@ -1,7 +1,7 @@
-import * as log from 'loglevel';
 
 import Emitter from '../libraries/Emitter';
 import { contains } from '../utils';
+import Log from '../libraries/Log';
 
 export default class IndexedDb {
 
@@ -56,9 +56,9 @@ export default class IndexedDb {
     const error = (<any>event.target).error;
     if (contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
       contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
-      log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
+      Log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
     } else {
-      log.warn('OneSignal: Fatal error opening IndexedDb database:', error);
+      Log.warn('OneSignal: Fatal error opening IndexedDb database:', error);
     }
   }
 
@@ -68,7 +68,7 @@ export default class IndexedDb {
    * request, you can instead add a single error handler on the database object.
    */
   private onDatabaseError(event) {
-    log.debug('IndexedDb: Generic database error', event.target.errorCode);
+    Log.debug('IndexedDb: Generic database error', event.target.errorCode);
   }
 
   /**
@@ -76,7 +76,7 @@ export default class IndexedDb {
    * (that is, not closed) somewhere, even after the versionchange event was sent.
    */
   private onDatabaseOpenBlocked(): void {
-    log.debug('IndexedDb: Blocked event');
+    Log.debug('IndexedDb: Blocked event');
   }
 
   /**
@@ -88,7 +88,7 @@ export default class IndexedDb {
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase/onversionchange
    */
   private onDatabaseVersionChange(_: IDBVersionChangeEvent): void {
-    log.debug('IndexedDb: versionchange event');
+    Log.debug('IndexedDb: versionchange event');
   }
 
   /**
@@ -98,7 +98,7 @@ export default class IndexedDb {
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onupgradeneeded
    */
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
-    log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
+    Log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
     const db = (event.target as IDBOpenDBRequest).result;
     db.createObjectStore("Ids", {
       keyPath: "type"
@@ -168,11 +168,11 @@ export default class IndexedDb {
           resolve(key);
         };
         request.onerror = (e) => {
-          log.error('Database PUT Transaction Error:', e);
+          Log.error('Database PUT Transaction Error:', e);
           reject(e);
         };
       } catch (e) {
-        log.error('Database PUT Error:', e);
+        Log.error('Database PUT Error:', e);
         reject(e);
       }
     });
@@ -197,11 +197,11 @@ export default class IndexedDb {
           resolve(key);
         };
         request.onerror = (e) => {
-          log.error('Database REMOVE Transaction Error:', e);
+          Log.error('Database REMOVE Transaction Error:', e);
           reject(e);
         };
       } catch (e) {
-        log.error('Database REMOVE Error:', e);
+        Log.error('Database REMOVE Error:', e);
         reject(e);
       }
     });

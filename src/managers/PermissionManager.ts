@@ -1,10 +1,11 @@
-import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent } from '../utils';
+import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent, isUsingSubscriptionWorkaround } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
 import MainHelper from '../helpers/MainHelper';
+import SdkEnvironment from './SdkEnvironment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -73,11 +74,11 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   public async getReportedNotificationPermission(safariWebId: string) {
-    if (Browser.safari) {
+    if (bowser.safari) {
       return this.getSafariNotificationPermission(safariWebId);
     } else {
       // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-      const isUsingOneSignalSubdomain = await SubscriptionHelper.isUsingSubscriptionWorkaround();
+      const isUsingOneSignalSubdomain = isUsingSubscriptionWorkaround();
 
       if (isUsingOneSignalSubdomain) {
         /*
@@ -156,9 +157,9 @@ export default class PermissionManager {
             permission === NotificationPermission.Denied &&
             (
               this.isCurrentFrameContextCrossOrigin() ||
-              await SubscriptionHelper.isFrameContextInsecure() ||
-              SubscriptionHelper.isUsingSubscriptionWorkaround() ||
-              SubscriptionHelper.isInsecureOrigin()
+              await SdkEnvironment.isFrameContextInsecure() ||
+              isUsingSubscriptionWorkaround() ||
+              SdkEnvironment.isInsecureOrigin()
             )
            );
   }
