@@ -8,7 +8,7 @@ import * as sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig } from '../../../src/models/AppConfig';
-import { Uuid } from '../../../src/models/Uuid';
+
 import Context from '../../../src/models/Context';
 import ConfigManager from '../../../src/managers/ConfigManager';
 

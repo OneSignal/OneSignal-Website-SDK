@@ -7,7 +7,6 @@ import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { Uuid } from '../models/Uuid';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
@@ -122,10 +121,10 @@ export default class MainHelper {
 
   static async getNotificationIcons() {
     const appId = await MainHelper.getAppId();
-    if (!appId || !appId.value) {
+    if (!appId || !appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
-    var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId.value}/icon`;
+    var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
@@ -310,12 +309,12 @@ export default class MainHelper {
     });
   }
 
-  static async getAppId(): Promise<Uuid> {
+  static async getAppId(): Promise<string> {
     if (OneSignal.config.appId) {
       return Promise.resolve(OneSignal.config.appId);
     } else {
-      const uuid = await Database.get<string>('Ids', 'appId');
-      return new Uuid(uuid);
+      const appId = await Database.get<string>('Ids', 'appId');
+      return appId;
     }
   }
 }

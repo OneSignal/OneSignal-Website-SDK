@@ -12,7 +12,7 @@ import { beforeEach } from '../../support/tester/typify';
 import Database from '../../../src/services/Database';
 import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
-import { Uuid } from '../../../src/models/Uuid';
+
 import { AppConfig } from '../../../src/models/AppConfig';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
@@ -35,7 +35,7 @@ test.beforeEach(async t => {
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   t.context.sdkContext = new Context(appConfig);
   timemachine.reset();
 });
@@ -65,7 +65,7 @@ async function testCase(
   // Create our subscription manager, which is what we're testing
   const manager = new SubscriptionManager(t.context.sdkContext, {
     safariWebId: null,
-    appId: Uuid.generate(),
+    appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
     onesignalVapidPublicKey: sharedVapidPublicKey
   });

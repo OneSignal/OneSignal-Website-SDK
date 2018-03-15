@@ -1,15 +1,15 @@
 import "../../support/polyfills/polyfills";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { Uuid } from "../../../src/models/Uuid";
 import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/libraries/WorkerMessenger';
 import Context from '../../../src/models/Context';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import test, { TestContext } from "ava";
+import Random from "../../support/tester/Random";
 
 
 test('service worker should gracefully handle unexpected page messages', async t => {
   await TestEnvironment.initializeForServiceWorker({
-    url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Uuid.generate()}&c=3`)
+    url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`)
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -54,7 +54,7 @@ test(
   'service worker should accept AMP web push commands',
   async t => {
     await TestEnvironment.initializeForServiceWorker({
-      url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Uuid.generate()}&c=3`)
+      url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`)
     });
 
     const appConfig = TestEnvironment.getFakeAppConfig();

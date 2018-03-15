@@ -8,7 +8,7 @@ import * as sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
-import { Uuid } from '../../../src/models/Uuid';
+
 import Context from '../../../src/models/Context';
 import { SessionManager } from '../../../src/managers/SessionManager';
 import Postmam from '../../../src/Postmam';

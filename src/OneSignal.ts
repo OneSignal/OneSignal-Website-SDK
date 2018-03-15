@@ -32,7 +32,7 @@ import { Notification } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { PermissionPromptType } from './models/PermissionPromptType';
-import { Uuid } from './models/Uuid';
+
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
@@ -110,7 +110,7 @@ export default class OneSignal {
     logMethodCall('syncHashedEmail', email);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId.value)
+    if (!deviceId || !deviceId)
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     const result = await OneSignalApi.updatePlayer(appId, deviceId, {
       em_m: Crypto.md5(sanitizedEmail),
@@ -154,7 +154,7 @@ export default class OneSignal {
       newEmailProfile.emailAuthHash = options.emailAuthHash
     }
 
-    const isExistingEmailSaved = existingEmailProfile.emailId && existingEmailProfile.emailId.value;
+    const isExistingEmailSaved = existingEmailProfile.emailId && existingEmailProfile.emailId;
     if (isExistingEmailSaved && appConfig.emailAuthRequired) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
@@ -171,7 +171,7 @@ export default class OneSignal {
       );
     }
 
-    const isExistingPushRecordSaved = deviceId && deviceId.value;
+    const isExistingPushRecordSaved = deviceId && deviceId;
     if (
       /* If we are subscribed to web push */
       isExistingPushRecordSaved &&
@@ -179,7 +179,7 @@ export default class OneSignal {
         /* And if we previously saved an email ID and it's different from the new returned ID */
         (
           !isExistingEmailSaved ||
-          existingEmailProfile.emailId.value !== newEmailProfile.emailId.value
+          existingEmailProfile.emailId !== newEmailProfile.emailId
         ) ||
         /* Or if we previously saved an email and the email changed */
         (
@@ -193,7 +193,7 @@ export default class OneSignal {
         appConfig.appId,
         deviceId,
         {
-          parent_player_id: newEmailProfile.emailId.value,
+          parent_player_id: newEmailProfile.emailId,
           email: newEmailProfile.emailAddress
         }
       );
@@ -212,12 +212,12 @@ export default class OneSignal {
     const emailProfile = await Database.getEmailProfile();
     const { deviceId } = await Database.getSubscription();
 
-    if (!emailProfile.emailId || !emailProfile.emailId.value) {
+    if (!emailProfile.emailId || !emailProfile.emailId) {
       log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return;
     }
 
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId || !deviceId) {
       log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
@@ -504,7 +504,7 @@ export default class OneSignal {
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId || !deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
@@ -542,7 +542,7 @@ export default class OneSignal {
     const { appId } = await Database.getAppConfig();
 
     const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.emailId && emailProfile.emailId.value) {
+    if (emailProfile.emailId && emailProfile.emailId) {
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
         tags: tags,
         email_auth_hash: emailProfile.emailAuthHash,
@@ -550,7 +550,7 @@ export default class OneSignal {
     }
 
     var { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId || !deviceId) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
     // After the user subscribers, he will have a device ID, so get it again
@@ -612,7 +612,7 @@ export default class OneSignal {
     logMethodCall('getIdsAvailable', callback);
     const { deviceId, subscriptionToken } = await Database.getSubscription();
     const bundle = {
-      userId: deviceId.value,
+      userId: deviceId,
       registrationId: subscriptionToken
     };
     executeCallback(callback, bundle);
@@ -649,7 +649,7 @@ export default class OneSignal {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId || !deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
@@ -698,8 +698,8 @@ export default class OneSignal {
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
     const emailId = emailProfile.emailId;
-    executeCallback(callback, emailId.value);
-    return emailId.value;
+    executeCallback(callback, emailId);
+    return emailId;
   }
 
   /**
@@ -712,8 +712,8 @@ export default class OneSignal {
     logMethodCall('getUserId', callback);
     const subscription = await Database.getSubscription();
     const deviceId = subscription.deviceId;
-    executeCallback(callback, deviceId.value);
-    return deviceId.value;
+    executeCallback(callback, deviceId);
+    return deviceId;
   }
 
   /**

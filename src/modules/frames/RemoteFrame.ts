@@ -4,7 +4,6 @@ import * as objectAssign from 'object-assign';
 import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
-import { Uuid } from '../../models/Uuid';
 import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
@@ -40,7 +39,7 @@ export default class RemoteFrame implements Disposable {
     isModal: boolean;
   }) {
     this.options = {
-      appId: new Uuid(initOptions.appId),
+      appId: initOptions.appId,
       subdomain: initOptions.subdomainName,
       origin: initOptions.origin,
       metrics: {
@@ -73,7 +72,7 @@ export default class RemoteFrame implements Disposable {
     // Within this class, we can use them, but when we assign them to
     // OneSignal.config, assign the simple string versions
     const rasterizedOptions = objectAssign(this.options);
-    rasterizedOptions.appId = rasterizedOptions.appId.value;
+    rasterizedOptions.appId = rasterizedOptions.appId;
     /* This is necessary, otherwise the subdomain is lost after ConfigManager.getAppConfig */
     rasterizedOptions.subdomainName = rasterizedOptions.subdomain;
     rasterizedOptions.origin = rasterizedOptions.origin;

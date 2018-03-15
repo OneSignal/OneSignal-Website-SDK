@@ -12,13 +12,14 @@ import { beforeEach } from '../../support/tester/typify';
 import Database from '../../../src/services/Database';
 import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
-import { Uuid } from '../../../src/models/Uuid';
+
 import { AppConfig } from '../../../src/models/AppConfig';
 import OneSignal from '../../../src/OneSignal';
+import Random from '../../support/tester/Random';
 
 test.beforeEach(async t => {
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   t.context.sdkContext = new Context(appConfig);
   (global as any).OneSignal = {
     context: t.context.sdkContext
@@ -211,7 +212,7 @@ test('installWorker() installs worker A with the correct file name and query par
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   const context = new Context(appConfig);
   OneSignal.context = context;
 
@@ -226,7 +227,7 @@ test('installWorker() installs worker A with the correct file name and query par
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
-  t.true(navigator.serviceWorker.controller.scriptURL.endsWith(`/Worker-A.js?appId=${appConfig.appId.toString()}`));
+  t.true(navigator.serviceWorker.controller.scriptURL.endsWith(`/Worker-A.js?appId=${appConfig.appId}`));
 });
 
 test('installWorker() installs worker A when a third party service worker exists', async t => {
@@ -235,7 +236,7 @@ test('installWorker() installs worker A when a third party service worker exists
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   const context = new Context(appConfig);
 
   navigator.serviceWorker.register('/another-service-worker.js');
@@ -259,7 +260,7 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   const context = new Context(appConfig);
 
   const manager = new ServiceWorkerManager(context, {
@@ -276,13 +277,13 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
   const spy = sinon.spy(navigator.serviceWorker, 'register');
 
   await manager.installWorker();
-  t.true(spy.getCall(0).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId.toString()}`, { scope: '/' }));
-  t.true(spy.getCall(1).calledWithExactly(`/Worker-A.js?appId=${appConfig.appId.toString()}`, { scope: '/' }));
+  t.true(spy.getCall(0).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId}`, { scope: '/' }));
+  t.true(spy.getCall(1).calledWithExactly(`/Worker-A.js?appId=${appConfig.appId}`, { scope: '/' }));
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
   await manager.installWorker();
-  t.true(spy.getCall(2).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId.toString()}`, { scope: '/' }));
-  t.true(spy.getCall(3).calledWithExactly(`/Worker-A.js?appId=${appConfig.appId.toString()}`, { scope: '/' }));
+  t.true(spy.getCall(2).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId}`, { scope: '/' }));
+  t.true(spy.getCall(3).calledWithExactly(`/Worker-A.js?appId=${appConfig.appId}`, { scope: '/' }));
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
   t.is(spy.callCount, 4);

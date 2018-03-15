@@ -5,8 +5,8 @@ import * as EventEmitter from 'wolfy87-eventemitter';
 
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { Uuid } from './models/Uuid';
-import { contains } from './utils';
+
+import { contains, getRandomUuid } from './utils';
 
 
 
@@ -219,7 +219,7 @@ export default class Postmam {
       return;
     }
     const messageBundle = {
-      id: Uuid.generate().toString(),
+      id: getRandomUuid(),
       command: command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString()
@@ -242,7 +242,7 @@ export default class Postmam {
       return;
     }
     const messageBundle = {
-      id: Uuid.generate().toString(),
+      id: getRandomUuid(),
       command: command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString()

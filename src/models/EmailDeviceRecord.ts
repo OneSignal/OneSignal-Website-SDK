@@ -7,7 +7,7 @@ import { DevicePlatformKind } from './DevicePlatformKind';
 import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { Uuid } from './Uuid';
+
 import { DeviceRecord } from './DeviceRecord';
 
 

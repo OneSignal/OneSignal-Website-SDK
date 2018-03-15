@@ -8,9 +8,10 @@ import * as sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
-import { Uuid } from '../../../src/models/Uuid';
+
 import Context from '../../../src/models/Context';
 import { SessionManager } from '../../../src/managers/SessionManager';
+import Random from '../../support/tester/Random';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -18,7 +19,7 @@ test.beforeEach(async t => {
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 });
 

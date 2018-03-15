@@ -19,7 +19,6 @@ import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import OneSignalApi from '../OneSignalApi';
-import { Uuid } from '../models/Uuid';
 import CookieSyncer from '../modules/CookieSyncer';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
@@ -187,7 +186,7 @@ export default class InitHelper {
     /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
-      if (emailProfile.emailId && emailProfile.emailId.value) {
+      if (emailProfile.emailId && emailProfile.emailId) {
         OneSignalApi.updateUserSession(
           emailProfile.emailId,
           new EmailDeviceRecord(null, emailProfile.emailAuthHash)
@@ -338,7 +337,7 @@ export default class InitHelper {
   // overridingPageTitle: Only for the HTTP Iframe, pass the page title in from the top frame
   static async initSaveState(overridingPageTitle: string) {
     const appId = await MainHelper.getAppId();
-    await Database.put('Ids', { type: 'appId', id: appId.value });
+    await Database.put('Ids', { type: 'appId', id: appId });
     const initialPageTitle = overridingPageTitle || document.title || 'Notification';
     await Database.put('Options', { key: 'pageTitle', value: initialPageTitle });
     log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);

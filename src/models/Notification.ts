@@ -1,11 +1,11 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { trimUndefined } from '../utils';
 import { NotificationActionButton } from './NotificationActionButton';
-import { Uuid } from './Uuid';
+
 
 
 export class Notification {
-    public id?: Uuid;
+    public id?: string;
     public title?: string;
     public body?: string;
     public data?: any;

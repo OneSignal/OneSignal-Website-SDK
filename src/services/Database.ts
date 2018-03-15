@@ -8,7 +8,7 @@ import { ServiceWorkerState } from '../models/ServiceWorkerState';
 import { Subscription } from '../models/Subscription';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { Timestamp } from '../models/Timestamp';
-import { Uuid } from '../models/Uuid';
+
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import IndexedDb from './IndexedDb';
 import * as Browser from 'bowser';
@@ -148,7 +148,7 @@ export default class Database {
   async getAppConfig(): Promise<any> {
     const config: any = {};
     const appIdStr: string = await this.get<string>('Ids', 'appId');
-    config.appId = new Uuid(appIdStr);
+    config.appId = appIdStr;
     config.subdomain = await this.get<string>('Options', 'subdomain');
     config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
     config.emailAuthRequired = await this.get<boolean>('Options', 'emailAuthRequired');
@@ -156,8 +156,8 @@ export default class Database {
   }
 
   async setAppConfig(appConfig: AppConfig) {
-    if (appConfig.appId && appConfig.appId.value)
-      await this.put('Ids', {type: 'appId', id: appConfig.appId.value})
+    if (appConfig.appId && appConfig.appId)
+      await this.put('Ids', {type: 'appId', id: appConfig.appId})
     if (appConfig.subdomain)
       await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})
     if (appConfig.httpUseOneSignalCom === true)
@@ -227,8 +227,7 @@ export default class Database {
 
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
-    const deviceIdStr: string = await this.get<string>('Ids', 'userId');
-    subscription.deviceId = new Uuid(deviceIdStr);
+    subscription.deviceId = await this.get<string>('Ids', 'userId');
     subscription.subscriptionToken = await this.get<string>('Ids', 'registrationId');
 
     // The preferred database key to store our subscription
@@ -254,8 +253,8 @@ export default class Database {
   }
 
   async setSubscription(subscription: Subscription) {
-    if (subscription.deviceId && subscription.deviceId.value) {
-      await this.put('Ids', { type: 'userId', id: subscription.deviceId.value });
+    if (subscription.deviceId && subscription.deviceId) {
+      await this.put('Ids', { type: 'userId', id: subscription.deviceId });
     }
     if (typeof subscription.subscriptionToken !== "undefined") {
       // Allow null subscriptions to be set

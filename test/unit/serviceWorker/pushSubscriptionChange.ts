@@ -3,7 +3,7 @@ import test, { GenericTestContext, Context as AvaContext } from 'ava';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { setUserAgent, setBrowser } from '../../support/tester/browser';
 import { BrowserUserAgent, TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { Uuid } from '../../../src/models/Uuid';
+
 import Database from '../../../src/services/Database';
 import { AppConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { PushSubscriptionChangeEvent } from "../../support/mocks/service-workers/models/PushSubscriptionChangeEvent";
@@ -20,7 +20,7 @@ import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind
 declare var self: ServiceWorkerGlobalScope;
 
 test(`dispatching a mock pushsubscriptionchange event is received`, async t => {
-  const appId = Uuid.generate();
+  const appId = Random.getRandomUuid();
   await TestEnvironment.initializeForServiceWorker({
     url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
   });
@@ -37,18 +37,18 @@ test(`dispatching a mock pushsubscriptionchange event is received`, async t => {
 
 async function testCase(
   t: GenericTestContext<AvaContext<any>>,
-  appId: Uuid,
+  appId: string,
   /*
     We have an existing stored device ID, and this record is updated with the new push endpoint.
    */
-  existingDeviceId: Uuid,
+  existingDeviceId: string,
   /*
     Used with existingDeviceId: null.
 
     The user partially cleared his browser data and IndexedDb, but we can "get back" the old ID by
     supplying the previous push endpoint.
    */
-  idReturnedByLookupCall: Uuid,
+  idReturnedByLookupCall: string,
   oldSubscription: PushSubscription,
   newSubscription: PushSubscription,
   /*
@@ -78,21 +78,21 @@ async function testCase(
   }
 
   nock('https://onesignal.com')
-    .get(`/api/v1/sync/${appId.value}/web`)
+    .get(`/api/v1/sync/${appId}/web`)
     .reply(200, (uri, requestBody) => {
       return TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
     });
 
-  if (existingDeviceId && existingDeviceId.value) {
+  if (existingDeviceId && existingDeviceId) {
     nock('https://onesignal.com')
-      .post(`/api/v1/players/${existingDeviceId.value}/on_session`)
+      .post(`/api/v1/players/${existingDeviceId}/on_session`)
       .reply(200, (uri, requestBody) => {
         return {
           success: true
         }
       });
   } else {
-    if (idReturnedByLookupCall && idReturnedByLookupCall.value) {
+    if (idReturnedByLookupCall) {
       // Service worker will make a POST call to look up ID
       nock('https://onesignal.com')
         .post(`/api/v1/players`)
@@ -103,13 +103,13 @@ async function testCase(
           );
           return {
             success: true,
-            id: idReturnedByLookupCall.value
+            id: idReturnedByLookupCall
           }
         });
 
       // Service worker will make a POST call to register subscription
       nock('https://onesignal.com')
-        .post(`/api/v1/players/${idReturnedByLookupCall.value}/on_session`)
+        .post(`/api/v1/players/${idReturnedByLookupCall}/on_session`)
         .reply(200, (uri, requestBody) => {
           return {
             success: true
@@ -118,7 +118,7 @@ async function testCase(
     }
   }
 
-  if (existingDeviceId && existingDeviceId.value) {
+  if (existingDeviceId && existingDeviceId) {
     const subscription = await Database.getSubscription();
     subscription.deviceId = existingDeviceId;
     subscription.subscriptionToken = oldSubscription.endpoint;
@@ -146,13 +146,13 @@ async function testCase(
 }
 
 test(`called with an old and new subscription successfully updates the subscription`, async t => {
-  const appId = Uuid.generate();
+  const appId = Random.getRandomUuid();
   await TestEnvironment.initializeForServiceWorker({
     url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
   });
   setBrowser(BrowserUserAgent.ChromeMacSupported);
 
-  const existingDeviceId = Uuid.generate();
+  const existingDeviceId = Random.getRandomUuid();
   const oldSubscription = await new PushManager().subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
@@ -172,7 +172,7 @@ test(`called with an old and new subscription successfully updates the subscript
     null,
     async () => {
       const subscription = await Database.getSubscription();
-      t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
+      t.deepEqual(subscription.deviceId, existingDeviceId);
       t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
     }
   );
@@ -180,19 +180,19 @@ test(`called with an old and new subscription successfully updates the subscript
   const subscription = await Database.getSubscription();
 
   // The device record ID should stay the same
-  t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
+  t.deepEqual(subscription.deviceId, existingDeviceId);
   // The subscription endpoint should be the new endpoint
   t.deepEqual(subscription.subscriptionToken, newSubscription.endpoint);
 });
 
 test(`without an existing device ID, lookup existing device ID, updates the looked-up record`, async t => {
-  const appId = Uuid.generate();
+  const appId = Random.getRandomUuid();
   await TestEnvironment.initializeForServiceWorker({
     url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
   });
   setBrowser(BrowserUserAgent.ChromeMacSupported);
 
-  const idReturnedByLookupCall = Uuid.generate();
+  const idReturnedByLookupCall = Random.getRandomUuid();
   const oldSubscription = await new PushManager().subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
@@ -214,14 +214,14 @@ test(`without an existing device ID, lookup existing device ID, updates the look
       const subscription = await Database.getSubscription();
 
       // There should be no existing device ID, we'll look this up by push endpoint in the test
-      t.deepEqual(subscription.deviceId.value, null);
+      t.deepEqual(subscription.deviceId, null);
       // Don't check existence of old endpoint, it isn't used, pushsubscriptionchange provides the old endpoint
     }
   );
 
   const subscription = await Database.getSubscription();
   // We should now have a device ID
-  t.deepEqual(subscription.deviceId.value, idReturnedByLookupCall.value);
+  t.deepEqual(subscription.deviceId, idReturnedByLookupCall);
   // Our push endpoint should be the new updated one
   t.deepEqual(subscription.subscriptionToken, newSubscription.endpoint);
 });
@@ -229,13 +229,13 @@ test(`without an existing device ID, lookup existing device ID, updates the look
 test(
   `called with an old and without a new subscription, custom resubscription succeeds and updates record endpoint`,
   async t => {
-    const appId = Uuid.generate();
+    const appId = Random.getRandomUuid();
     await TestEnvironment.initializeForServiceWorker({
       url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
     });
     setBrowser(BrowserUserAgent.ChromeMacSupported);
 
-    const existingDeviceId = Uuid.generate();
+    const existingDeviceId = Random.getRandomUuid();
     // This subscription should persist for our mock PushManager
     const oldSubscription = await self.registration.pushManager.subscribe({
       userVisibleOnly: true,
@@ -267,13 +267,13 @@ test(
       newSubscriptionByReregistration,
       async () => {
         const subscription = await Database.getSubscription();
-        t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
+        t.deepEqual(subscription.deviceId, existingDeviceId);
         t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
       }
     );
 
     const subscription = await Database.getSubscription();
-    t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
+    t.deepEqual(subscription.deviceId, existingDeviceId);
     t.deepEqual(subscription.subscriptionToken, newSubscriptionByReregistration.endpoint);
 
     pushManagerSubscribe.restore();
@@ -283,13 +283,13 @@ test(
   `called with an existing device ID, with old and without new subscription, custom resubscription fails ` +
   `and updates existing device record to clear subscription`,
   async t => {
-    const appId = Uuid.generate();
+    const appId = Random.getRandomUuid();
     await TestEnvironment.initializeForServiceWorker({
       url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
     });
     setBrowser(BrowserUserAgent.ChromeMacSupported);
 
-    const existingDeviceId = Uuid.generate();
+    const existingDeviceId = Random.getRandomUuid();
     const oldSubscription = await new PushManager().subscribe({
       userVisibleOnly: true,
       applicationServerKey: Random.getRandomUint8Array(65).buffer
@@ -305,13 +305,13 @@ test(
       null,
       async () => {
         const subscription = await Database.getSubscription();
-        t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
+        t.deepEqual(subscription.deviceId, existingDeviceId);
         t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
       }
     );
 
     const subscription = await Database.getSubscription();
-    t.deepEqual(subscription.deviceId.value, existingDeviceId.value);
+    t.deepEqual(subscription.deviceId, existingDeviceId);
     t.deepEqual(subscription.subscriptionToken, null);
 });
 
@@ -319,7 +319,7 @@ test(
   `called without an existing device ID, without old and new subscription, custom resubscription fails ` +
   `and local data is cleared`,
   async t => {
-    const appId = Uuid.generate();
+    const appId = Random.getRandomUuid();
     await TestEnvironment.initializeForServiceWorker({
       url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
     });
@@ -335,12 +335,12 @@ test(
       null,
       async () => {
         const subscription = await Database.getSubscription();
-        t.deepEqual(subscription.deviceId.value, null);
+        t.deepEqual(subscription.deviceId, null);
         t.deepEqual(subscription.subscriptionToken, null);
       }
     );
 
     const subscription = await Database.getSubscription();
-    t.deepEqual(subscription.deviceId.value, null);
+    t.deepEqual(subscription.deviceId, null);
     t.deepEqual(subscription.subscriptionToken, null);
 });

@@ -7,7 +7,7 @@ import { DevicePlatformKind } from './DevicePlatformKind';
 import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { Uuid } from './Uuid';
+
 import { redetectBrowserUserAgent } from "../utils";
 
 
@@ -17,7 +17,7 @@ import { redetectBrowserUserAgent } from "../utils";
  * This is used when creating or modifying push and email records.
  */
 export abstract class DeviceRecord implements Serializable {
-  public appId: Uuid;
+  public appId: string;
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;
   public timezone: number;
@@ -151,7 +151,7 @@ export abstract class DeviceRecord implements Serializable {
     };
 
     if (this.appId) {
-      serializedBundle.app_id = this.appId.value;
+      serializedBundle.app_id = this.appId;
     }
 
     return serializedBundle;

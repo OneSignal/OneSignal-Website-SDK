@@ -5,16 +5,17 @@ import Macros from "../../support/tester/Macros";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
-import { Uuid } from '../../../src/models/Uuid';
+
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import * as nock from 'nock';
 import { AppConfig } from '../../../src/models/AppConfig';
 import { EmailProfile } from '../../../src/models/EmailProfile';
+import Random from "../../support/tester/Random";
 
 
 interface LogoutEmailTestData {
-  existingPushDeviceId: Uuid;
-  emailDeviceId: Uuid;
+  existingPushDeviceId: string;
+  emailDeviceId: string;
   emailAuthHash: string;
 }
 
@@ -50,7 +51,7 @@ async function logoutEmailTest(
     testData.existingPushDeviceId,
     testData.emailDeviceId,
     testData.emailAuthHash,
-    Uuid.generate(),
+    Random.getRandomUuid(),
   );
 
   await OneSignal.logoutEmail();
@@ -58,30 +59,30 @@ async function logoutEmailTest(
 
 async function expectEmailLogoutRequest(
   t: TestContext & Context<any>,
-  pushDevicePlayerId: Uuid,
-  emailId: Uuid,
+  pushDevicePlayerId: string,
+  emailId: string,
   emailAuthHash: string,
-  newUpdatedPlayerId: Uuid
+  newUpdatedPlayerId: string
 ) {
   nock('https://onesignal.com')
-    .post(`/api/v1/players/${pushDevicePlayerId ? pushDevicePlayerId.value : 'fake'}/email_logout`)
+    .post(`/api/v1/players/${pushDevicePlayerId ? pushDevicePlayerId : 'fake'}/email_logout`)
     .reply(200, (uri, requestBody) => {
       t.deepEqual(
         requestBody,
         JSON.stringify({
           app_id: null,
-          parent_player_id: emailId ? emailId.value : undefined,
+          parent_player_id: emailId ? emailId : undefined,
           email_auth_hash: emailAuthHash ? emailAuthHash : undefined
         })
       );
-      return { "success":true, "id": newUpdatedPlayerId.value };
+      return { "success":true, "id": newUpdatedPlayerId };
     });
 }
 
 test("logoutEmail returns if not subscribed to web push", async t => {
   const testData = {
     existingPushDeviceId: null,
-    emailDeviceId: Uuid.generate(),
+    emailDeviceId: Random.getRandomUuid(),
     emailAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
   }
 
@@ -95,8 +96,8 @@ test("logoutEmail returns if not subscribed to web push", async t => {
 
 test("logoutEmail calls POST email_logout and clears local data", async t => {
   const testData = {
-    existingPushDeviceId: Uuid.generate(),
-    emailDeviceId: Uuid.generate(),
+    existingPushDeviceId: Random.getRandomUuid(),
+    emailDeviceId: Random.getRandomUuid(),
     emailAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
   }
   await logoutEmailTest(t, testData);
@@ -104,9 +105,9 @@ test("logoutEmail calls POST email_logout and clears local data", async t => {
   // Confirm email details have been erased
   const { deviceId: finalPushDeviceId } = await Database.getSubscription();
   const finalEmailProfile = await Database.getEmailProfile();
-  t.deepEqual(finalPushDeviceId.value, testData.existingPushDeviceId ? testData.existingPushDeviceId.value : null);
+  t.deepEqual(finalPushDeviceId, testData.existingPushDeviceId ? testData.existingPushDeviceId : null);
   t.deepEqual(finalEmailProfile.emailAddress, undefined);
   t.deepEqual(finalEmailProfile.emailAuthHash, undefined);
-  t.deepEqual(finalEmailProfile.emailId.value, null);
+  t.deepEqual(finalEmailProfile.emailId, undefined);
 });
 

@@ -6,7 +6,6 @@ import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Context from '../models/Context';
 import Path from '../models/Path';
 import SdkEnvironment from './SdkEnvironment';
-import { Uuid } from '../models/Uuid';
 import { Subscription } from '../models/Subscription';
 import { encodeHashAsUriComponent, timeoutPromise } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
@@ -410,7 +409,7 @@ export class ServiceWorkerManager {
     }
 
     const installUrlQueryParams = {
-      appId: this.context.appConfig.appId.toString()
+      appId: this.context.appConfig.appId
     };
     fullWorkerPath = `${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
     log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);

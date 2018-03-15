@@ -11,7 +11,7 @@ import Context from '../models/Context';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { contains, getConsoleStyle, isValidUuid, trimUndefined } from '../utils';
-import { Uuid } from '../models/Uuid';
+
 import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
@@ -117,11 +117,11 @@ export class ServiceWorker {
     ServiceWorker.setupMessageListeners();
   }
 
-  static async getAppId(): Promise<Uuid> {
+  static async getAppId(): Promise<string> {
     if (self.location.search) {
       // Successful regex matches are at position 1
       const appId = self.location.search.match(/appId=([0-9a-z-]+)&?/i)[1];
-      return new Uuid(appId);
+      return appId;
     } else {
       const { appId } = await Database.getAppConfig();
       return appId;
@@ -165,7 +165,7 @@ export class ServiceWorker {
       log.debug('[Service Worker] Received AMP subscribe message.');
       const appId = await ServiceWorker.getAppId();
       const appConfig = await new ConfigManager().getAppConfig({
-        appId: appId.value
+        appId: appId
       });
       const context = new Context(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
@@ -176,7 +176,7 @@ export class ServiceWorker {
       log.debug('[Service Worker] Received AMP unsubscribe message.');
       const appId = await ServiceWorker.getAppId();
       const appConfig = await new ConfigManager().getAppConfig({
-        appId: appId.value
+        appId: appId
       });
       const context = new Context(appConfig);
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
@@ -417,7 +417,7 @@ export class ServiceWorker {
     notification.heading = notification.heading ? notification.heading : defaultTitle;
     notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
     var extra: any = {};
-    extra.tag = notification.tag || appId.toString();
+    extra.tag = notification.tag || appId;
     if (persistNotification === 'force') {
       extra.persistNotification = true;
     } else {
@@ -762,8 +762,8 @@ export class ServiceWorker {
     const { deviceId } = await Database.getSubscription();
     if (appId && deviceId) {
       await OneSignalApi.put('notifications/' + notification.id, {
-        app_id: appId.toString(),
-        player_id: deviceId.toString(),
+        app_id: appId,
+        player_id: deviceId,
         opened: true
       });
     }
@@ -802,12 +802,12 @@ export class ServiceWorker {
     log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
     const appId = await ServiceWorker.getAppId();
-    if (!appId || !appId.value) {
+    if (!appId || !appId) {
       // Without an app ID, we can't make any calls
       return;
     }
     const appConfig = await new ConfigManager().getAppConfig({
-      appId: appId.value
+      appId: appId
     });
     if (!appConfig) {
       // Without a valid app config (e.g. deleted app), we can't make any calls
@@ -819,21 +819,21 @@ export class ServiceWorker {
     let deviceIdExists: boolean;
     {
       let { deviceId } = await Database.getSubscription();
-      deviceIdExists = !!(deviceId && deviceId.value);
+      deviceIdExists = !!(deviceId && deviceId);
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription
-        deviceId = new Uuid(await OneSignalApi.getUserIdFromSubscriptionIdentifier(
-          appId.value,
+        deviceId = await OneSignalApi.getUserIdFromSubscriptionIdentifier(
+          appId,
           PushDeviceRecord.prototype.getDeliveryPlatform(),
           event.oldSubscription.endpoint
-        ));
+        );
 
         // Store the device ID, so it can be looked up when subscribing
         const subscription = await Database.getSubscription();
         subscription.deviceId = deviceId;
         await Database.setSubscription(subscription);
       }
-      deviceIdExists = !!(deviceId && deviceId.value);
+      deviceIdExists = !!(deviceId && deviceId);
     }
 
     // Get our new push subscription
@@ -984,7 +984,7 @@ export class ServiceWorker {
                 .then(([appId, identifier]) => {
                   let deviceType = PushDeviceRecord.prototype.getDeliveryPlatform();
                   // Get the user ID from OneSignal
-                  return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId.toString(), deviceType, identifier).then(recoveredUserId => {
+                  return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier).then(recoveredUserId => {
                     if (recoveredUserId) {
                       log.debug('Recovered OneSignal user ID:', recoveredUserId);
                       // We now have our OneSignal user ID again

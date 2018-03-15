@@ -17,7 +17,6 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import { DeviceRecord } from '../models/DeviceRecord';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { Uuid } from '../models/Uuid';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
@@ -35,7 +34,7 @@ import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
-  appId: Uuid;
+  appId: string;
   /**
    * The VAPID public key to use for Chrome-like browsers, including Opera and Yandex browser.
    */
@@ -152,7 +151,7 @@ export class SubscriptionManager {
 
     deviceRecord.subscriptionState = SubscriptionStateKind.Subscribed;
 
-    let newDeviceId: Uuid;
+    let newDeviceId: string;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       const { deviceId } = await Database.getSubscription();
 
@@ -241,9 +240,9 @@ export class SubscriptionManager {
    * Called after registering a subscription with OneSignal to associate this subscription with an
    * email record if one exists.
    */
-  public async associateSubscriptionWithEmail(newDeviceId: Uuid) {
+  public async associateSubscriptionWithEmail(newDeviceId: string) {
     const emailProfile = await Database.getEmailProfile();
-    if (!emailProfile.emailId || !emailProfile.emailId.value) {
+    if (!emailProfile.emailId || !emailProfile.emailId) {
       return;
     }
 
@@ -252,7 +251,7 @@ export class SubscriptionManager {
       this.config.appId,
       newDeviceId,
       {
-        parent_player_id: emailProfile.emailId.value,
+        parent_player_id: emailProfile.emailId,
         email: emailProfile.emailAddress
       }
     );
@@ -260,7 +259,7 @@ export class SubscriptionManager {
 
   private async isAlreadyRegisteredWithOneSignal() {
     const { deviceId } = await Database.getSubscription();
-    return !!deviceId.value;
+    return !!deviceId;
   }
 
   private subscribeSafariPromptPermission(): Promise<string | null> {
@@ -269,7 +268,7 @@ export class SubscriptionManager {
         `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
         this.config.safariWebId,
         {
-          app_id: this.config.appId.value
+          app_id: this.config.appId
         },
         response => {
           if ((response as any).deviceToken) {
@@ -717,7 +716,7 @@ export class SubscriptionManager {
 
     const isPushEnabled = !!(
       pushSubscription &&
-      deviceId && deviceId.value &&
+      deviceId && deviceId &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
     );
@@ -735,7 +734,7 @@ export class SubscriptionManager {
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
 
     const isPushEnabled = !!(
-      deviceId && deviceId.value &&
+      deviceId && deviceId &&
       subscriptionToken &&
       notificationPermission === NotificationPermission.Granted
     );
