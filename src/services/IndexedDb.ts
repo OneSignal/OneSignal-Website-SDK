@@ -1,5 +1,4 @@
 import * as log from 'loglevel';
-
 import Emitter from '../libraries/Emitter';
 import { contains } from '../utils';
 

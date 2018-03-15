@@ -1,9 +1,6 @@
 import * as Browser from 'bowser';
-import * as heir from 'heir';
 import * as log from 'loglevel';
 import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-
 import Environment from './Environment';
 import AlreadySubscribedError from './errors/AlreadySubscribedError';
 import { InvalidArgumentError, InvalidArgumentReason } from './errors/InvalidArgumentError';
@@ -63,6 +60,7 @@ import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
 import TimeoutError from './errors/TimeoutError';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
+import Emitter from './libraries/Emitter';
 
 
 export default class OneSignal {
@@ -826,6 +824,7 @@ export default class OneSignal {
   static subscriptionModalHost: SubscriptionModalHost;
   static proxyFrameHost: ProxyFrameHost;
   static proxyFrame: ProxyFrame;
+  static emitter: Emitter = new Emitter();
 
   /**
    * The additional path to the worker file.
@@ -982,10 +981,18 @@ export default class OneSignal {
     UNSUBSCRIBED: -2
   };
 
-  /** To appease TypeScript, EventEmitter later overrides this */
-  static on(..._) {}
-  static off(..._) {}
-  static once(..._) {}
+  static async on(...args: any[]) {
+    return OneSignal.emitter.on.apply(OneSignal.emitter, args);
+  }
+  static async off(...args: any[]) {
+    return OneSignal.emitter.off.apply(OneSignal.emitter, args);
+  }
+  static async once(...args: any[]) {
+    return OneSignal.emitter.once.apply(OneSignal.emitter, args);
+  }
+  static async emit(...args: any[]) {
+    return OneSignal.emitter.emit.apply(OneSignal.emitter, args);
+  }
 }
 
 Object.defineProperty(OneSignal, 'LOGGING', {
@@ -1005,8 +1012,6 @@ Object.defineProperty(OneSignal, 'LOGGING', {
   enumerable: true,
   configurable: true
 });
-
-heir.merge(OneSignal, new EventEmitter());
 
 
 if (OneSignal.LOGGING)

@@ -10,7 +10,6 @@
     "defined": "https://registry.npmjs.org/defined/-/defined-1.0.0.tgz",
     "es6-error": "^4.0.0",
     "express": "https://registry.npmjs.org/express/-/express-4.14.0.tgz",
-    "heir": "git://github.com/jasonpang/heir.git#754e476f7cc62b258a0b69deddd243fde41fd072",
     "jsdom": "^9.12.0",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "loglevel": "https://registry.npmjs.org/loglevel/-/loglevel-1.4.1.tgz",
@@ -23,8 +22,7 @@
     "tslib": "^1.7.1",
     "uuid": "^3.1.0",
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz",
-    "whatwg-fetch": "^2.0.3",
-    "wolfy87-eventemitter": "https://registry.npmjs.org/wolfy87-eventemitter/-/wolfy87-eventemitter-5.1.0.tgz"
+    "whatwg-fetch": "^2.0.3"
   },
   "scripts": {},
   "repository": {

@@ -1,14 +1,9 @@
-import * as heir from 'heir';
 import * as log from 'loglevel';
 import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
-
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
-
 import { contains, getRandomUuid } from './utils';
-
-
+import Emitter from './libraries/Emitter';
 
 /**
  * Establishes a cross-domain MessageChannel between the current browsing context (this page) and another (an iFrame, popup, or parent page).
@@ -23,6 +18,7 @@ export default class Postmam {
     return "onesignal.postmam.connected";
   }
 
+  public emitter: Emitter;
   public channel: MessageChannel;
   public messagePort: MessagePort;
   public isListening: boolean;
@@ -45,7 +41,7 @@ export default class Postmam {
     if (!sendToOrigin || !receiveFromOrigin) {
       throw new Error('Invalid origin. Must be set.');
     }
-    heir.merge(this, new EventEmitter());
+    this.emitter = new Emitter();
     this.channel = new MessageChannel();
     this.messagePort = null;
     this.isListening = false;
@@ -301,11 +297,13 @@ export default class Postmam {
             contains(otherAllowedOrigins, messageOrigin));
   }
 
-  on(..._) {
-    // Overriden by event emitter lib
+  async on(...args: any[]) {
+    return this.emitter.on.apply(this.emitter, args);
   }
-
-  once(..._) {
-    // Overriden by event emitter lib
+  async off(...args: any[]) {
+    return this.emitter.off.apply(this.emitter, args);
+  }
+  async once(...args: any[]) {
+    return this.emitter.once.apply(this.emitter, args);
   }
 }
