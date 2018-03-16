@@ -176,7 +176,7 @@ export default class InitHelper {
     }
 
     await InitHelper.updateEmailSessionCount();
-    context.cookieSyncer.install();
+    await context.cookieSyncer.install();
     await InitHelper.showPromptsFromWebConfigEditor();
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
