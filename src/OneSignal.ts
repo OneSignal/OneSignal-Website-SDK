@@ -42,7 +42,6 @@ import SubscriptionPopup from './modules/frames/SubscriptionPopup';
 import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
 import Popover from './popover/Popover';
-import Crypto from './services/Crypto';
 import Database from './services/Database';
 import { ResourceLoadState } from './services/DynamicResourceLoader';
 import IndexedDb from './services/IndexedDb';
@@ -92,36 +91,6 @@ export default class OneSignal {
     const appState = await Database.getAppState();
     appState.defaultNotificationTitle = title;
     await Database.setAppState(appState);
-  }
-
-  /**
-   * Hashes the provided email and uploads to OneSignal.
-   * @remarks The email is voluntarily provided.
-   * @PublicApi
-   */
-  static async syncHashedEmail(email) {
-    log.error(new DeprecatedApiError(DeprecatedApiReason.SyncHashedEmail));
-    if (!email)
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
-    let sanitizedEmail = prepareEmailForHashing(email);
-    if (!isValidEmail(sanitizedEmail))
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('syncHashedEmail', email);
-    const { appId } = await Database.getAppConfig();
-    const { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId.value)
-      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
-    const result = await OneSignalApi.updatePlayer(appId, deviceId, {
-      em_m: Crypto.md5(sanitizedEmail),
-      em_s: Crypto.sha1(sanitizedEmail),
-      em_s256: Crypto.sha256(sanitizedEmail)
-    });
-    if (result && result.success) {
-      return true;
-    } else {
-      throw result;
-    }
   }
 
   /**
@@ -853,7 +822,6 @@ export default class OneSignal {
   static __initAlreadyCalled = false;
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
-  static crypto = Crypto;
   static DeviceRecord = DeviceRecord;
   static EmailDeviceRecord = EmailDeviceRecord;
 
