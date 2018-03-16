@@ -6,9 +6,17 @@ import SdkEnvironment from './SdkEnvironment';
  * Creates method proxies for once-supported methods.
  */
 export default class LegacyManager {
+  static promiseStub() {
+    return {
+      then: LegacyManager.promiseStub,
+      catch: LegacyManager.promiseStub
+    }
+  }
+
   static ensureBackwardsCompatibility(oneSignal) {
     LegacyManager.environmentPolyfill(oneSignal);
     LegacyManager.postmams(oneSignal);
+    oneSignal.syncHashedEmail = LegacyManager.promiseStub;
   }
 
   static environmentPolyfill(oneSignal) {
