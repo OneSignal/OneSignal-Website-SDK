@@ -70,31 +70,6 @@ export default class Bell {
     }
   }
 
-  substituteText() {
-    // key: 'message.action.subscribing'
-    // value: 'Click <strong>{{prompt.native.grant}}</strong> to receive notifications'
-    for (var key in this.text) {
-      if (this.text.hasOwnProperty(key)) {
-        let value = this.text[key];
-        // browserName could be 'chrome' or 'firefox' or 'safari'
-        let browserName = Browser.name.toLowerCase();
-
-        // tKey: 'prompt.native.grant'  (from TEXT_SUBS)
-        // tValue: { chrome: 'Allow', firefox: 'Al... }
-        // zValue: 'Allow', if browserName === 'chrome'
-        for (var tKey in Bell.TEXT_SUBS) {
-          if (Bell.TEXT_SUBS.hasOwnProperty(tKey)) {
-            let tValue = Bell.TEXT_SUBS[tKey];
-            let zValue = tValue[browserName];
-            if (value && contains(value, '{{')) {
-              this.text[key] = value.replace(`{{${tKey}}}`, (zValue !== undefined ? zValue : tValue['default']));
-            }
-          }
-        }
-      }
-    }
-  }
-
   constructor({
     enable = false,
     size = 'medium',
@@ -180,7 +155,6 @@ export default class Bell {
     if (!this.text['dialog.blocked.message'])
       this.text['dialog.blocked.message'] = 'Follow these instructions to allow notifications:';
     this._launcher = launcher;
-    this.substituteText();
     this.state = Bell.STATES.UNINITIALIZED;
     this._ignoreSubscriptionState = false;
 
