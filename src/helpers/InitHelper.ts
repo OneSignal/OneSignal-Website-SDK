@@ -142,9 +142,7 @@ export default class InitHelper {
     }
 
     InitHelper.updateEmailSessionCount();
-
     OneSignal.context.cookieSyncer.install();
-
     InitHelper.showPromptsFromWebConfigEditor();
     context.metricsManager.reportPageView();
   }
