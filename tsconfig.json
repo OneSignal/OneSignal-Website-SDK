@@ -2,11 +2,10 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": [
-      "es5",
-      "es2015.promise",
-      "es2015.collection",
+      "es6",
       "dom",
-      "scripthost"
+      "dom.iterable",
+      "scripthost",
     ],
     "target": "es5",
     "sourceRoot": "",

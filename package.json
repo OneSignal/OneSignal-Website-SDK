@@ -98,6 +98,7 @@
     "openurl": "^1.1.1",
     "postcss-loader": "^2.0.6",
     "rimraf": "^2.6.1",
+    "rollup": "^0.57.1",
     "sass-loader": "^6.0.6",
     "sinon": "^2.4.1",
     "sleep": "^5.1.0",
