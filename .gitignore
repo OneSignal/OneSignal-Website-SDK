@@ -16,3 +16,6 @@ dist/Dev-OneSignalSDK.js.map
 
 coverage
 .nyc_output
+
+!build/scripts
+!build/config
