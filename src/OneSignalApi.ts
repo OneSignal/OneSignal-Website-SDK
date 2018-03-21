@@ -1,17 +1,14 @@
-import * as JSONP from 'jsonp';
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
-
+import JSONP from 'jsonp';
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
-
 import { contains, trimUndefined } from './utils';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { EmailProfile } from './models/EmailProfile';
 import { SubscriptionStateKind } from './models/SubscriptionStateKind';
+import Log from './libraries/Log';
 
 
 export default class OneSignalApi {
@@ -100,7 +97,7 @@ export default class OneSignalApi {
         return null;
       }
     }).catch(e => {
-      log.debug('Error getting user ID from subscription identifier:', e);
+      Log.debug('Error getting user ID from subscription identifier:', e);
       return null;
     });
   }
@@ -110,7 +107,7 @@ export default class OneSignalApi {
   }
 
   static updatePlayer(appId: string, playerId: string, options?: Object) {
-    return OneSignalApi.put(`players/${playerId}`, objectAssign({app_id: appId}, options));
+    return OneSignalApi.put(`players/${playerId}`, {app_id: appId, ...options});
   }
 
   static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {

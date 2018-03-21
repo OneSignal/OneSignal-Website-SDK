@@ -4,13 +4,13 @@ import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnv
 import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
 import MainHelper from '../../../src/helpers/MainHelper';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
 
 import Context from '../../../src/models/Context';
-import * as timemachine from "timemachine";
+import timemachine from "timemachine";
 import Random from '../../support/tester/Random';
 
 test.beforeEach(async t => {

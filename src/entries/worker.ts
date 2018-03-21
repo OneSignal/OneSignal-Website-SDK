@@ -1,1 +1,3 @@
-(self as any).OneSignal = require('./service-worker/ServiceWorker').default;
+import { ServiceWorker } from '../../src/service-worker/ServiceWorker';
+
+(self as any).OneSignal = ServiceWorker;

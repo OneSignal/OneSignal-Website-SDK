@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
+import bowser from 'bowser';
+
 
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
@@ -20,6 +20,7 @@ import Database from '../services/Database';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import Log from '../libraries/Log';
 
 export default class SubscriptionHelper {
   static async registerForPush(): Promise<Subscription> {
@@ -35,7 +36,7 @@ export default class SubscriptionHelper {
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
 
     if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
-      log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
+      Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
       return null;
     }
 
@@ -59,7 +60,7 @@ export default class SubscriptionHelper {
           EventHelper.triggerNotificationPermissionChanged();
           EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
-          log.info(e);
+          Log.info(e);
         }
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionPopup:
@@ -123,12 +124,12 @@ export default class SubscriptionHelper {
           },
           message => {
             if (message.data.progress === true) {
-              log.debug('Got message from host page that remote reg. is in progress, closing popup.');
+              Log.debug('Got message from host page that remote reg. is in progress, closing popup.');
               if (windowCreator) {
                 window.close();
               }
             } else {
-              log.debug('Got message from host page that remote reg. could not be finished.');
+              Log.debug('Got message from host page that remote reg. could not be finished.');
             }
           }
         );
@@ -168,7 +169,7 @@ export default class SubscriptionHelper {
         `(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
       );
     }
-    if (Browser.safari) {
+    if (bowser.safari) {
       return false;
     }
 

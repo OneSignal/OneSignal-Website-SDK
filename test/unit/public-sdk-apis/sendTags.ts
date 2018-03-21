@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test, { TestContext, Context } from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/OneSignal';
-import * as nock from 'nock';
+import nock from 'nock';
 import Database from '../../../src/services/Database';
 import { EmailProfile } from '../../../src/models/EmailProfile';
 

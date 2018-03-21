@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+
 
 import Event from '../Event';
 import LegacyManager from '../managers/LegacyManager';
@@ -9,6 +9,7 @@ import SubscriptionModal from '../modules/frames/SubscriptionModal';
 import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
 import { getConsoleStyle } from '../utils';
 import SubscriptionHelper from './SubscriptionHelper';
+import Log from '../libraries/Log';
 
 declare var OneSignal: any;
 
@@ -17,7 +18,7 @@ export default class HttpHelper {
 
   // Http only - Only called from iframe's init.js
   static async initHttp(options) {
-    log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
+    Log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.OneSignalProxyFrame:
@@ -67,7 +68,7 @@ export default class HttpHelper {
         Event.trigger('httpInitialize');
         break;
       default:
-        log.error("Unsupported HTTP initialization branch.");
+        Log.error("Unsupported HTTP initialization branch.");
         break;
     }
   }

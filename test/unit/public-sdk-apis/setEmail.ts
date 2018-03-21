@@ -7,7 +7,7 @@ import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
 
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
-import * as nock from 'nock';
+import nock from 'nock';
 import { AppConfig } from '../../../src/models/AppConfig';
 import { EmailProfile } from '../../../src/models/EmailProfile';
 import Random from "../../support/tester/Random";

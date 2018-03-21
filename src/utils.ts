@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
+import bowser, { IBowser } from 'bowser';
+
 
 import Environment from './Environment';
 import TimeoutError from './errors/TimeoutError';
@@ -7,6 +7,7 @@ import SubscriptionHelper from './helpers/SubscriptionHelper';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Database from './services/Database';
+import Log from './libraries/Log';
 
 
 export function isArray(variable) {
@@ -29,15 +30,15 @@ export function decodeHtmlEntities(text) {
   }
 }
 
-export function redetectBrowserUserAgent(): Browser.IBowser  {
+export function redetectBrowserUserAgent(): IBowser  {
     /*
    TODO: Make this a little neater
    During testing, the browser object may be initialized before the userAgent is injected
   */
-  if (Browser.name === '' && Browser.version === '') {
-    var browser = Browser._detect(navigator.userAgent);
+  if (bowser.name === '' && bowser.version === '') {
+    var browser = bowser._detect(navigator.userAgent);
   } else {
-    var browser = Browser;
+    var browser = bowser;
   }
   return browser;
 }
@@ -117,10 +118,10 @@ export function isPushNotificationsSupported() {
 }
 
 export function isChromeLikeBrowser() {
-  return Browser.chrome ||
-         (Browser as any).chromium ||
-         (Browser as any).opera ||
-         (Browser as any).yandexbrowser;
+  return bowser.chrome ||
+    (bowser as any).chromium ||
+    (bowser as any).opera ||
+    (bowser as any).yandexbrowser;
 }
 
 export function removeDomElement(selector) {
@@ -167,7 +168,7 @@ export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
 }
 
 export function logMethodCall(methodName: string, ...args) {
-  return log.debug(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
+  return Log.debug(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
 }
 
 export function isValidEmail(email) {
@@ -354,7 +355,7 @@ export function getUrlQueryParam(name) {
  * Wipe OneSignal-related IndexedDB data on the "correct" computed origin, but OneSignal must be initialized first to use.
  */
 export function wipeIndexedDb() {
-  log.warn('OneSignal: Wiping IndexedDB data.');
+  Log.warn('OneSignal: Wiping IndexedDB data.');
   return Promise.all([
     Database.remove('Ids'),
     Database.remove('NotificationOpened'),
@@ -374,7 +375,7 @@ export function capitalize(text): string {
  * Unsubscribe from push notifications without removing the active service worker.
  */
 export function unsubscribeFromPush() {
-  log.warn('OneSignal: Unsubscribing from push.');
+  Log.warn('OneSignal: Unsubscribing from push.');
   if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
     return (<any>self).registration.pushManager.getSubscription()
                        .then(subscription => {
@@ -385,9 +386,9 @@ export function unsubscribeFromPush() {
   } else {
     if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
       return new Promise((resolve, reject) => {
-        log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
+        Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
-          log.debug("Unsubscribe from push succesfully remotely executed.");
+          Log.debug("Unsubscribe from push succesfully remotely executed.");
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
@@ -418,7 +419,7 @@ export function unsubscribeFromPush() {
  * Unregisters the active service worker.
  */
 export function wipeServiceWorker() {
-  log.warn('OneSignal: Unregistering service worker.');
+  Log.warn('OneSignal: Unregistering service worker.');
   if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
     return Promise.resolve();
   }
@@ -456,10 +457,10 @@ export function substringAfter(string, search) {
 
 export function once(targetSelectorOrElement, event, task, manualDestroy=false) {
   if (!event) {
-    log.error('Cannot call on() with no event: ', event);
+    Log.error('Cannot call on() with no event: ', event);
   }
   if (!task) {
-    log.error('Cannot call on() with no task: ', task)
+    Log.error('Cannot call on() with no task: ', task)
   }
   if (typeof targetSelectorOrElement === 'string') {
     let els = document.querySelectorAll(targetSelectorOrElement);

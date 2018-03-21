@@ -1,4 +1,4 @@
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 

@@ -1,16 +1,17 @@
 import Environment from './Environment';
 import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from './utils';
-import * as log from 'loglevel';
+
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import Log from './libraries/Log';
 
 export function oneSignalSdkInit() {
   if (Environment.isBrowser()) {
     incrementSdkLoadCount();
     if (getSdkLoadCount() > 1) {
-      log.warn(`OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
+      Log.warn(`OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
         `SDK only once on your page.`);
-      log.debug(`OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
+      Log.debug(`OneSignal: Exiting from SDK initialization to prevent double-initialization errors. ` +
         `Occurred ${getSdkLoadCount()} times.`);
     } else {
       // We're running in the host page, iFrame of the host page, or popup window
@@ -21,7 +22,7 @@ export function oneSignalSdkInit() {
       if (isPushNotificationsSupported()) {
         (window as any).OneSignal = require('./OneSignal').default;
       } else {
-        log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
+        Log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
 
         (window as any).OneSignal = require('./OneSignalStub').default;
       }

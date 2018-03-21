@@ -1,4 +1,4 @@
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 
 import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';

@@ -1,8 +1,7 @@
-import * as log from 'loglevel';
+
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
-import SdkEnvironment from '../managers/SdkEnvironment';
-
+import Log from '../libraries/Log';
 
 export default class CookieSyncer {
   private isFeatureEnabled: boolean;
@@ -36,7 +35,7 @@ export default class CookieSyncer {
 
   install() {
     if (!this.isFeatureEnabled) {
-      log.debug('Cookie sync feature is disabled.');
+      Log.debug('Cookie sync feature is disabled.');
       return;
     }
     if (window.top !== window) {
@@ -65,6 +64,7 @@ export default class CookieSyncer {
     iframe.onload = loadPromise.resolver;
     iframe.onerror = loadPromise.rejector;
 
-    return loadPromise.promise;
+    this.context.dynamicResourceLoader.loadIfNew(ResourceType.Script, CookieSyncer.SDK_URL);
+    Log.debug('Enabled cookie sync feature.');
   }
 }

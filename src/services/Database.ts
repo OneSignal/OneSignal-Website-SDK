@@ -11,7 +11,7 @@ import { Timestamp } from '../models/Timestamp';
 
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import IndexedDb from './IndexedDb';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import { EmailProfile } from '../models/EmailProfile';
 
 enum DatabaseEventName {

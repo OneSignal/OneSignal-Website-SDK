@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+
 
 import Event from '../Event';
 import LimitStore from '../LimitStore';
@@ -8,6 +8,7 @@ import { decodeHtmlEntities, logMethodCall } from '../utils';
 import MainHelper from './MainHelper';
 import Context from "../models/Context";
 import SdkEnvironment from "../managers/SdkEnvironment";
+import Log from '../libraries/Log';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -29,7 +30,7 @@ export default class EventHelper {
       subscriptionState.subscribed !== lastKnownPushEnabled
     );
     if (!didStateChange) return;
-    log.info(
+    Log.info(
       `The user's subscription state changed from ` +
         `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
     );
@@ -45,7 +46,7 @@ export default class EventHelper {
 
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean) {
     if (OneSignal.__doNotShowWelcomeNotification) {
-      log.debug('Not showing welcome notification because user has previously subscribed.');
+      Log.debug('Not showing welcome notification because user has previously subscribed.');
       return;
     }
     if (isSubscribed === true) {
@@ -77,7 +78,7 @@ export default class EventHelper {
       message = decodeHtmlEntities(message);
 
       if (!welcome_notification_disabled) {
-        log.debug('Sending welcome notification.');
+        Log.debug('Sending welcome notification.');
         OneSignalApi.sendNotification(
           appId,
           [deviceId],
@@ -102,10 +103,10 @@ export default class EventHelper {
     if (displayPredicate && typeof displayPredicate === "function" && OneSignal.notifyButton) {
       const predicateResult = await displayPredicate();
       if (predicateResult !== false) {
-        log.debug('Showing notify button because display predicate returned true.');
+        Log.debug('Showing notify button because display predicate returned true.');
         OneSignal.notifyButton.launcher.show();
       } else {
-        log.debug('Hiding notify button because display predicate returned false.');
+        Log.debug('Hiding notify button because display predicate returned false.');
         OneSignal.notifyButton.launcher.hide();
       }
     }

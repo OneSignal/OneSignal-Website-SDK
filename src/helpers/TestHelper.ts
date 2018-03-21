@@ -1,9 +1,10 @@
-import * as log from 'loglevel';
+
 
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
 import SubscriptionHelper from './SubscriptionHelper';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
+import Log from '../libraries/Log';
 
 declare var OneSignal: any;
 
@@ -48,7 +49,7 @@ export default class TestHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the native notification prompt; reprompt after ${dismissDays} days.`);
+    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the native notification prompt; reprompt after ${dismissDays} days.`);
     await Database.put('Options', { key: 'promptDismissCount', value: dismissCount });
 
     const dismissMinutes = dismissDays * 24 * 60;

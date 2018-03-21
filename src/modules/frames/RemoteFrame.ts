@@ -1,5 +1,5 @@
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+
+
 
 import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
@@ -71,10 +71,10 @@ export default class RemoteFrame implements Disposable {
     // The rest of our SDK isn't refactored enough yet to accept typed objects
     // Within this class, we can use them, but when we assign them to
     // OneSignal.config, assign the simple string versions
-    const rasterizedOptions = objectAssign(this.options);
+    const rasterizedOptions = {...this.options};
     rasterizedOptions.appId = rasterizedOptions.appId;
     /* This is necessary, otherwise the subdomain is lost after ConfigManager.getAppConfig */
-    rasterizedOptions.subdomainName = rasterizedOptions.subdomain;
+    (rasterizedOptions as any).subdomainName = rasterizedOptions.subdomain;
     rasterizedOptions.origin = rasterizedOptions.origin;
     OneSignal.config = rasterizedOptions || {};
 

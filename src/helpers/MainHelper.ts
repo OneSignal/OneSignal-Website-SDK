@@ -1,6 +1,6 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+import bowser from 'bowser';
+
+
 
 import Bell from '../bell/Bell';
 import Environment from '../Environment';
@@ -26,6 +26,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidAr
 import { AppUserConfigPromptOptions } from '../models/AppConfig';
 import { SlidedownPermissionMessageOptions } from '../popover/Popover';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
+import Log from '../libraries/Log';
 
 export default class MainHelper {
   /**
@@ -43,7 +44,7 @@ export default class MainHelper {
       if (contains(url, 'gcm_sender_id')) {
         // Move the <manifest> to the first thing in <head>
         document.querySelector('head').insertBefore(manifest, document.querySelector('head').children[0]);
-        log.info('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
+        Log.info('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
       }
     }
   }
@@ -99,8 +100,14 @@ export default class MainHelper {
       OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
       if (OneSignal.config.userConfig.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
-        objectAssign(OneSignal.config.userConfig.bell, OneSignal.config.userConfig.notifyButton);
-        objectAssign(OneSignal.config.userConfig.notifyButton, OneSignal.config.userConfig.bell);
+        OneSignal.config.userConfig.bell = {
+          ...OneSignal.config.userConfig.bell,
+          ...OneSignal.config.userConfig.notifyButton
+        };
+        OneSignal.config.userConfig.notifyButton = {
+          ...OneSignal.config.userConfig.notifyButton,
+          ...OneSignal.config.userConfig.bell
+        };
       }
 
       const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
@@ -110,7 +117,7 @@ export default class MainHelper {
           OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
           OneSignal.notifyButton.create();
         } else {
-          log.debug('Notify button display predicate returned false so not showing the notify button.');
+          Log.debug('Notify button display predicate returned false so not showing the notify button.');
         }
       } else {
         OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
@@ -128,7 +135,7 @@ export default class MainHelper {
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
+      Log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
       throw new Error('Failed to get notification icons.');
     }
     return data;
@@ -139,7 +146,7 @@ export default class MainHelper {
     workerMessenger.off();
 
     workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, data => {
-      log.debug(location.origin, 'Received notification display event from service worker.');
+      Log.debug(location.origin, 'Received notification display event from service worker.');
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
 
@@ -180,7 +187,7 @@ export default class MainHelper {
                    addListenerForNotificationOpened() returns no results even
                    though a notification was just clicked.
         */
-        log.debug(
+        Log.debug(
           'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.'
         );
         /* For empty notifications without a URL, use the current document's URL */
@@ -196,7 +203,7 @@ export default class MainHelper {
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
-      log.debug(
+      Log.debug(
         `${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`
       );
       const proxyFrame: ProxyFrame = OneSignal.proxyFrame;

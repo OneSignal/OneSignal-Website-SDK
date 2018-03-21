@@ -12,8 +12,8 @@ import ServiceWorkerGlobalScope from '../../support/mocks/service-workers/Servic
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import { base64ToUint8Array } from "../../../src/utils/Encoding";
 import Random from "../../support/tester/Random";
-import * as nock from 'nock';
-import * as sinon from 'sinon';
+import nock from 'nock';
+import sinon from 'sinon';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 

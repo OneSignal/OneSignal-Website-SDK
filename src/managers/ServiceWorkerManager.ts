@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+
 
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
@@ -15,6 +15,7 @@ import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import NotImplementedError from '../errors/NotImplementedError';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
+import Log from '../libraries/Log';
 
 export enum ServiceWorkerActiveState {
   /**
@@ -263,28 +264,28 @@ export class ServiceWorkerManager {
     }
 
     const workerState = await this.getActiveState();
-    log.info(`[Service Worker Update] Checking service worker version...`);
+    Log.info(`[Service Worker Update] Checking service worker version...`);
     let workerVersion;
     try {
       workerVersion = await timeoutPromise(this.getWorkerVersion(), 2000);
     } catch (e) {
-      log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
+      Log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
       workerVersion = 1;
     }
 
     if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
       // Do not update 3rd party workers
-      log.debug(
+      Log.debug(
         `[Service Worker Update] Not updating service worker, current active worker state is ${workerState}.`
       );
       return;
     }
 
     if (workerVersion !== Environment.version()) {
-      log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
+      Log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
       this.installWorker();
     } else {
-      log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
+      Log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
     }
   }
 
@@ -411,8 +412,8 @@ export class ServiceWorkerManager {
       appId: this.context.appConfig.appId
     };
     fullWorkerPath = `${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
-    log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
+    Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
     await navigator.serviceWorker.register(fullWorkerPath, this.config.registrationOptions);
-    log.debug(`[Service Worker Installation] Service worker installed.`);
+    Log.debug(`[Service Worker Installation] Service worker installed.`);
   }
 }

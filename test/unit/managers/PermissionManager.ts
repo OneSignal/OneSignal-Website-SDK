@@ -4,7 +4,7 @@ import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../s
 import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
 import MainHelper from '../../../src/helpers/MainHelper';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
@@ -12,7 +12,7 @@ import { AppConfig } from '../../../src/models/AppConfig';
 import Context from '../../../src/models/Context';
 import { SessionManager } from '../../../src/managers/SessionManager';
 import { NotificationPermission } from '../../../src/models/NotificationPermission';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import { setUserAgent, setBrowser } from '../../support/tester/browser';
 import Random from '../../support/tester/Random';
 

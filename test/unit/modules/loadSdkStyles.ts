@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import Bell from "../../../src/bell/Bell";
 import MainHelper from "../../../src/helpers/MainHelper";
 import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";

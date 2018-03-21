@@ -2,8 +2,7 @@
 node_modules/
 bower_components/
 dist/
-build/javascript
-build/bundler
+build
 /config.json
 .vscode/
 

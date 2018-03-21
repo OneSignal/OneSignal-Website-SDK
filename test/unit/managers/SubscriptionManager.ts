@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 
 import test, { GenericTestContext, Context as AvaContext } from 'ava';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';
@@ -19,12 +19,12 @@ import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Enco
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from "../../../src/models/RawPushSubscription";
-import * as timemachine from 'timemachine';
+import timemachine from 'timemachine';
 import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';

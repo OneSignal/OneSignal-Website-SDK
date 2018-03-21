@@ -1,5 +1,4 @@
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+
 
 import Event from '../../Event';
 import EventHelper from '../../helpers/EventHelper';
@@ -13,6 +12,7 @@ import { SubscriptionManager } from '../../managers/SubscriptionManager';
 import Database from '../../services/Database';
 import Context from '../../models/Context';
 import { IntegrationKind } from '../../models/IntegrationKind';
+import Log from '../../libraries/Log';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -53,14 +53,17 @@ export default class SubscriptionPopupHost implements Disposable {
   load(): Promise<void> {
     // Instead of using URL query parameters, which are confusing and unsightly,
     // post the data invisible
-    let postData = objectAssign({}, MainHelper.getPromptOptionsPostHash(), {
-      promptType: 'popup',
-      parentHostname: encodeURIComponent(location.hostname)
-    });
+    let postData = {
+      ...MainHelper.getPromptOptionsPostHash(),
+      ...{
+        promptType: 'popup',
+        parentHostname: encodeURIComponent(location.hostname)
+      }
+    };
     if (this.options.autoAccept) {
       postData['autoAccept'] = true;
     }
-    log.info(`Opening a popup to ${this.url.toString()} with POST data:`, postData);
+    Log.info(`Opening a popup to ${this.url.toString()} with POST data:`, postData);
     this.popupWindow = this.openWindowViaPost(this.url.toString(), postData, null);
 
     this.establishCrossOriginMessaging();
@@ -144,7 +147,7 @@ export default class SubscriptionPopupHost implements Disposable {
   }
 
   async onBeginMessagePortCommunications(_: MessengerMessageEvent) {
-    log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin messaging with the popup window.`);
+    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Successfully established cross-origin messaging with the popup window.`);
     this.messenger.connect();
     return false;
   }
@@ -163,25 +166,25 @@ export default class SubscriptionPopupHost implements Disposable {
   }
 
   async onPopupClosing(_: MessengerMessageEvent) {
-    log.info('Popup window is closing, running cleanup events.');
+    Log.info('Popup window is closing, running cleanup events.');
     Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
     this.dispose();
   }
 
   async onSetSessionCount(message: MessengerMessageEvent) {
-    log.debug(SdkEnvironment.getWindowEnv().toString() + " Marking current session as a continuing browsing session.");
+    Log.debug(SdkEnvironment.getWindowEnv().toString() + " Marking current session as a continuing browsing session.");
     const { sessionCount }: { sessionCount: number } = message.data;
     const context: Context = OneSignal.context;
     context.sessionManager.setPageViewCount(sessionCount);
   }
 
   async onWindowTimeout(_: MessengerMessageEvent) {
-    log.debug(SdkEnvironment.getWindowEnv().toString() + " Popup window timed out and was closed.");
+    Log.debug(SdkEnvironment.getWindowEnv().toString() + " Popup window timed out and was closed.");
     Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
   }
 
   async onFinishingRegistrationRemotely(message: MessengerMessageEvent) {
-    log.debug(location.origin, SdkEnvironment.getWindowEnv().toString() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
+    Log.debug(location.origin, SdkEnvironment.getWindowEnv().toString() + " Finishing HTTP popup registration inside the iFrame, sent from popup.");
 
     message.reply({ progress: true });
 

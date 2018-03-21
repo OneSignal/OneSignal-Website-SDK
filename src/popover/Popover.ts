@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as objectAssign from 'object-assign';
+import bowser from 'bowser';
+
 
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
@@ -31,7 +31,7 @@ export default class Popover {
         if (!options) {
             (this.options as any) = {};
         } else {
-            this.options = objectAssign({}, options);
+            this.options = {...options};
         }
         if (!this.options['actionMessage'] || typeof this.options['actionMessage'] !== "string")
             this.options['actionMessage'] = "We'd like to show you notifications for the latest news and updates.";
@@ -69,7 +69,7 @@ export default class Popover {
             addDomElement(this.container, 'beforeend',
               `<div id="onesignal-popover-dialog" class="onesignal-popover-dialog">${dialogHtml}</div>`);
             // Animate it in depending on environment
-            addCssClass(this.container, Browser.mobile ? 'slide-up' : 'slide-down');
+            addCssClass(this.container, bowser.mobile ? 'slide-up' : 'slide-down');
             // Add click event handlers
             this.allowButton.addEventListener('click', this.onPopoverAllowed.bind(this));
             this.cancelButton.addEventListener('click', this.onPopoverCanceled.bind(this));
@@ -101,7 +101,7 @@ export default class Popover {
 
     getPlatformNotificationIcon() {
         if (this.notificationIcons) {
-            if (isChromeLikeBrowser() || Browser.firefox || Browser.msedge) {
+            if (isChromeLikeBrowser() || bowser.firefox || bowser.msedge) {
                 if (this.notificationIcons.chrome) {
                     return this.notificationIcons.chrome;
                 } else if (this.notificationIcons.firefox) {
@@ -110,7 +110,7 @@ export default class Popover {
                     return 'default-icon';
                 }
             }
-            else if (Browser.safari) {
+            else if (bowser.safari) {
                 if (this.notificationIcons.safari) {
                     return this.notificationIcons.safari;
                 } else if (this.notificationIcons.chrome) {

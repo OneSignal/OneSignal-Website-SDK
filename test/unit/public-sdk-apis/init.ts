@@ -9,7 +9,7 @@ import InitHelper from '../../../src/helpers/InitHelper';
 import { AppConfig } from '../../../src/models/AppConfig';
 import ConfigManager from '../../../src/managers/ConfigManager';
 
-import * as nock from 'nock';
+import nock from 'nock';
 import { SessionManager } from "../../../src/managers/SessionManager";
 import Random from "../../support/tester/Random";
 

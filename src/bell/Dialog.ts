@@ -1,4 +1,4 @@
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
@@ -26,10 +26,10 @@ export default class Dialog extends AnimatedElement {
 
   getPlatformNotificationIcon() {
     if (this.notificationIcons) {
-      if (isChromeLikeBrowser() || Browser.firefox || Browser.msedge) {
+      if (isChromeLikeBrowser() || bowser.firefox || bowser.msedge) {
         return this.notificationIcons.chrome || this.notificationIcons.safari;
       }
-      else if (Browser.safari) {
+      else if (bowser.safari) {
         return this.notificationIcons.safari || this.notificationIcons.chrome;
       }
     }
@@ -88,14 +88,14 @@ export default class Dialog extends AnimatedElement {
       }
       else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
-        if (Browser.chrome) {
-          if (!Browser.mobile && !Browser.tablet) {
+        if (bowser.chrome) {
+          if (!bowser.mobile && !bowser.tablet) {
             imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/chrome-unblock.jpg';
           }
         }
-        else if (Browser.firefox)
+        else if (bowser.firefox)
           imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/firefox-unblock.jpg';
-        else if (Browser.safari)
+        else if (bowser.safari)
           imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/safari-unblock.jpg';
 
         let instructionsHtml = '';
@@ -103,7 +103,7 @@ export default class Dialog extends AnimatedElement {
           instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
         }
 
-        if ((Browser.mobile || Browser.tablet) && Browser.chrome) {
+        if ((bowser.mobile || bowser.tablet) && bowser.chrome) {
           instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
         }
         contents = `<h1>${this.bell.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;

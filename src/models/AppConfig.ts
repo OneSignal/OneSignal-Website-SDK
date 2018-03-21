@@ -1,6 +1,6 @@
 import { Serializable } from './Serializable';
 import { SlidedownPermissionMessageOptions } from '../popover/Popover';
-import * as objectAssign from 'object-assign';
+
 
 export interface AppConfig {
   /**

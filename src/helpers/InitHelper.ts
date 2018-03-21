@@ -1,6 +1,6 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+import bowser from 'bowser';
+
+
 
 import AlreadySubscribedError from '../errors/AlreadySubscribedError';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
@@ -35,6 +35,7 @@ import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
+import Log from '../libraries/Log';
 
 declare var OneSignal: any;
 
@@ -55,17 +56,17 @@ export default class InitHelper {
   public static async processExpiringSubscriptions() {
     const context: Context = OneSignal.context;
 
-    log.debug("Checking subscription expiration...");
+    Log.debug("Checking subscription expiration...");
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
     if (!isSubscriptionExpiring) {
-      log.debug("Subscription is not considered expired.");
+      Log.debug("Subscription is not considered expired.");
       return;
     }
 
     const integrationKind = await SdkEnvironment.getIntegration();
     const windowEnv = await SdkEnvironment.getWindowEnv();
 
-    log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
+    Log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
     switch (integrationKind) {
       /*
         Resubscribe via the service worker.
@@ -86,7 +87,7 @@ export default class InitHelper {
             });
             context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
           });
-          log.debug("Finished registering brand new subscription:", newSubscription);
+          Log.debug("Finished registering brand new subscription:", newSubscription);
         } else {
           const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
           await proxyFrame.runCommand(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS);
@@ -98,7 +99,7 @@ export default class InitHelper {
           isPushNotificationsEnabled to simulate unsubscribing.
          */
         await Database.remove("Ids", "registrationId");
-        log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
+        Log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
         break;
     }
   }
@@ -142,7 +143,7 @@ export default class InitHelper {
     await InitHelper.processExpiringSubscriptions();
     await MainHelper.showNotifyButton();
 
-    if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {
+    if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
       if (isPushEnabled) {
         /*  The user is on Safari and *specifically* set autoRegister to false.
@@ -165,7 +166,7 @@ export default class InitHelper {
        registerWithOneSignal(). Without this call, the user's session and last_active is not updated. We only
        do this if the user is actually registered with OneSignal though.
        */
-      log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Updating session info for HTTP site.`);
+      Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Updating session info for HTTP site.`);
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
       if (isPushEnabled) {
         const context: Context = OneSignal.context;
@@ -207,7 +208,7 @@ export default class InitHelper {
   }
 
   static async installNativePromptPermissionChangedHook() {
-    if (navigator.permissions && !(Browser.firefox && Number(Browser.version) <= 45)) {
+    if (navigator.permissions && !(bowser.firefox && Number(bowser.version) <= 45)) {
       OneSignal._usingNativePermissionHook = true;
       // If the browser natively supports hooking the subscription prompt permission change event,
       // use it instead of our SDK method
@@ -269,7 +270,7 @@ export default class InitHelper {
   }
 
   static async internalInit() {
-    log.debug('Called %cinternalInit()', getConsoleStyle('code'));
+    Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
 
     const context: Context = OneSignal.context;
 
@@ -291,8 +292,8 @@ export default class InitHelper {
 
     sessionStorage.setItem('ONE_SIGNAL_NOTIFICATION_PERMISSION', window.Notification.permission);
 
-    if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {
-      log.debug('On Safari and autoregister is false, skipping sessionInit().');
+    if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
+      Log.debug('On Safari and autoregister is false, skipping sessionInit().');
       // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
       // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
       if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
@@ -302,12 +303,12 @@ export default class InitHelper {
     }
 
     if (OneSignal.config.userConfig.autoRegister === false && !OneSignal.config.subdomain) {
-      log.debug('Skipping internal init. Not auto-registering and no subdomain.');
+      Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
       /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
       Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
       if (isPushEnabled && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        log.info(
+        Log.info(
           'Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.'
         );
         // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
@@ -340,7 +341,7 @@ export default class InitHelper {
     await Database.put('Ids', { type: 'appId', id: appId });
     const initialPageTitle = overridingPageTitle || document.title || 'Notification';
     await Database.put('Options', { key: 'pageTitle', value: initialPageTitle });
-    log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
+    Log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
     const config: AppConfig = OneSignal.config;
     await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
   }
@@ -348,9 +349,9 @@ export default class InitHelper {
   static sessionInit(options) {
     const appConfig: AppConfig = OneSignal.context.appConfig;
 
-    log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
+    Log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
     if (OneSignal._sessionInitAlreadyRunning) {
-      log.debug('Returning from sessionInit because it has already been called.');
+      Log.debug('Returning from sessionInit because it has already been called.');
       return;
     } else {
       OneSignal._sessionInitAlreadyRunning = true;
@@ -367,7 +368,7 @@ export default class InitHelper {
         Show HTTPS modal prompt.
        */
       if (options.__sdkCall && MainHelper.wasHttpsNativePromptDismissed()) {
-        log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
+        Log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
         OneSignal._sessionInitAlreadyRunning = false;
       } else {
         /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
@@ -387,9 +388,9 @@ export default class InitHelper {
                   !options ||
                   options && !options.fromRegisterFor
                 ) &&
-                Browser.chrome &&
-                Number(Browser.version) >= 63 &&
-                (Browser.tablet || Browser.mobile)
+                bowser.chrome &&
+                Number(bowser.version) >= 63 &&
+                (bowser.tablet || bowser.mobile)
                 ) {
                 OneSignal.showHttpPrompt();
               } else {
@@ -403,10 +404,10 @@ export default class InitHelper {
       }
     } else {
       if (OneSignal.config.userConfig.autoRegister !== true) {
-        log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
+        Log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
       }
       if (MainHelper.isHttpPromptAlreadyShown()) {
-        log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
+        Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
       }
       if (OneSignal.config.userConfig.autoRegister === true && !MainHelper.isHttpPromptAlreadyShown()) {
         OneSignal.showHttpPrompt().catch(e => {
@@ -417,9 +418,9 @@ export default class InitHelper {
             e instanceof AlreadySubscribedError ||
             e instanceof PushPermissionNotGrantedError
           ) {
-            log.debug('[Prompt Not Showing]', e);
+            Log.debug('[Prompt Not Showing]', e);
             // Another prompt is being shown, that's okay
-          } else log.info(e);
+          } else Log.info(e);
         });
       }
       OneSignal._sessionInitAlreadyRunning = false;
@@ -430,13 +431,13 @@ export default class InitHelper {
 
   static async ponyfillSafariFetch() {
     // If Safari - add 'fetch' pollyfill if it isn't already added.
-    if (Browser.safari && typeof window.fetch == 'undefined') {
-      log.debug('Loading fetch polyfill for Safari..');
+    if (bowser.safari && typeof window.fetch == 'undefined') {
+      Log.debug('Loading fetch polyfill for Safari..');
       try {
         await new DynamicResourceLoader().loadFetchPolyfill();
-        log.debug('Done loading fetch polyfill.');
+        Log.debug('Done loading fetch polyfill.');
       } catch (e) {
-        log.debug('Error loading fetch polyfill:', e);
+        Log.debug('Error loading fetch polyfill:', e);
       }
     }
   }

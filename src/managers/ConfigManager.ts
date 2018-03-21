@@ -2,7 +2,7 @@ import { AppUserConfig, AppConfig, ConfigIntegrationKind, NotificationClickMatch
 import OneSignalApi from '../OneSignalApi';
 import InitHelper from '../helpers/InitHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import * as objectAssign from 'object-assign';
+
 import Badge from '../bell/Badge';
 import { trimUndefined, contains } from '../utils';
 import SdkEnvironment from './SdkEnvironment';
@@ -224,7 +224,9 @@ export default class ConfigManager {
         /*
           Ignores dashboard configuration and uses code-based configuration only.
         */
-        return objectAssign({}, userConfig, {
+        return {
+          ...userConfig,
+          ...{
           serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
             ? OneSignal.SERVICE_WORKER_PARAM
             : { scope: '/' },
@@ -235,7 +237,8 @@ export default class ConfigManager {
               ? OneSignal.SERVICE_WORKER_UPDATER_PATH
               : 'OneSignalSDUpdaterKWorker.js',
           path: !!userConfig.path ? userConfig.path : '/'
-        });
+          }
+        };
     }
   }
 

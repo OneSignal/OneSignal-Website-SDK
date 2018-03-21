@@ -1,4 +1,4 @@
-import * as ava from 'ava';
+import ava from 'ava';
 
 export function beforeEach<T>(getContext: () => Promise<T>): ava.RegisterContextual<T> {
     ava.test.beforeEach(async t => {

@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
+import bowser from 'bowser';
+
 
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
@@ -11,6 +11,7 @@ import Button from './Button';
 import Dialog from './Dialog';
 import Launcher from './Launcher';
 import Message from './Message';
+import Log from '../libraries/Log';
 
 var logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -341,7 +342,7 @@ export default class Bell {
 
     const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log.debug('Not showing notify button because styles failed to load.');
+      Log.debug('Not showing notify button because styles failed to load.');
       return;
     }
 
@@ -404,7 +405,7 @@ export default class Bell {
     this.setCustomColorsIfSpecified();
     this.patchSafariSvgFilterBug();
 
-    log.info('Showing the notify button.');
+    Log.info('Showing the notify button.');
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
       .then(() => OneSignal.getSubscription())
@@ -421,7 +422,7 @@ export default class Bell {
           notOptedOut &&
           doNotPrompt !== true && !isPushEnabled &&
           (OneSignal.config.userConfig.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {
-          log.debug('Not showing notify button because popover will be shown.');
+          Log.debug('Not showing notify button because popover will be shown.');
           return nothing();
         } else {
           return this.launcher.show();
@@ -441,7 +442,7 @@ export default class Bell {
   }
 
   patchSafariSvgFilterBug() {
-    if (!(Browser.safari && Number(Browser.version) >= 9.1)) {
+    if (!(bowser.safari && Number(bowser.version) >= 9.1)) {
       let bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
       let badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
       let dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
@@ -449,7 +450,7 @@ export default class Bell {
       this.badge.element.setAttribute('style', `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`);
       this.dialog.element.setAttribute('style', `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`);
     }
-    if (Browser.safari) {
+    if (bowser.safari) {
       this.badge.element.setAttribute('style', `display: none;`);
     }
   }

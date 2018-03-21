@@ -1,9 +1,11 @@
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
+
+
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 
 import { contains, getRandomUuid } from './utils';
+import Emitter from './libraries/Emitter';
+import Log from './libraries/Log';
 
 /**
  * Establishes a cross-domain MessageChannel between the current browsing context (this page) and another (an iFrame, popup, or parent page).
@@ -53,16 +55,16 @@ export default class Postmam {
    * Opens a message event listener to listen for a Postmam handshake from another browsing context. This listener is closed as soon as the connection is established.
    */
   listen() {
-    log.debug('(Postmam) Called listen().');
+    Log.debug('(Postmam) Called listen().');
     if (this.isListening) {
-      log.debug('(Postmam) Already listening for Postmam connections.');
+      Log.debug('(Postmam) Already listening for Postmam connections.');
       return;
     }
     if (!Environment.isBrowser()) {
       return;
     }
     this.isListening = true;
-    log.debug('(Postmam) Listening for Postmam connections.', this);
+    Log.debug('(Postmam) Listening for Postmam connections.', this);
     // One of the messages will contain our MessageChannel port
     window.addEventListener('message', this.onWindowMessagePostmanConnectReceived.bind(this));
   }
@@ -83,10 +85,10 @@ export default class Postmam {
   onWindowPostMessageReceived(e) {
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
-      // log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data);
+      // Log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data);
       return;
     }
-    //log.debug(`(Postmam) (onWindowPostMessageReceived) (${SdkEnvironment.getWindowEnv().toString()}):`, e);
+    //Log.debug(`(Postmam) (onWindowPostMessageReceived) (${SdkEnvironment.getWindowEnv().toString()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       (this as any).emit('connect');
@@ -99,11 +101,12 @@ export default class Postmam {
       data: messageData,
       source: messageSource
     };
-    let messageBundleWithReply = objectAssign({
-      reply: this.reply.bind(this, messageBundle)
-    }, messageBundle);
+    let messageBundleWithReply = {
+      reply: this.reply.bind(this, messageBundle),
+      ...messageBundle
+    };
     if (this.replies.hasOwnProperty(messageId)) {
-      log.info('(Postmam) This message is a reply.');
+      Log.info('(Postmam) This message is a reply.');
       let replyFn = this.replies[messageId].bind(window);
       let replyFnReturnValue = replyFn(messageBundleWithReply);
       if (replyFnReturnValue === false) {
@@ -115,29 +118,29 @@ export default class Postmam {
   }
 
   onWindowMessagePostmanConnectReceived(e) {
-    log.debug(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Window postmessage for Postman connect received:`, e);
+    Log.debug(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Window postmessage for Postman connect received:`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
-      // log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
+      // Log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
     var { handshake } = e.data;
     if (handshake !== Postmam.HANDSHAKE_MESSAGE) {
-      log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
+      Log.info('(Postmam) Got a postmam message, but not our expected handshake:', e.data);
       // This was not our expected handshake message
       return;
     } else {
-      log.info('(Postmam) Got our expected Postmam handshake message (and connecting...):', e.data);
+      Log.info('(Postmam) Got our expected Postmam handshake message (and connecting...):', e.data);
       // This was our expected handshake message
       // Remove our message handler so we don't get spammed with cross-domain messages
       window.removeEventListener('message', this.onWindowMessagePostmanConnectReceived);
       // Get the message port
       this.messagePort = e.ports[0];
       this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
-      log.info('(Postmam) Removed previous message event listener for handshakes, replaced with main message listener.');
+      Log.info('(Postmam) Removed previous message event listener for handshakes, replaced with main message listener.');
       this.messagePort.start();
       this.isConnected = true;
-      log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Connected.`);
+      Log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Connected.`);
       this.message(Postmam.CONNECTED_MESSAGE);
       (this as any).emit('connect');
     }
@@ -148,7 +151,7 @@ export default class Postmam {
    * @remarks Only call this if listen() is called on another page.
    */
   connect() {
-    log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Establishing a connection to ${this.sendToOrigin}.`);
+    Log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Establishing a connection to ${this.sendToOrigin}.`);
     this.messagePort = this.channel.port1;
     this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
     this.messagePort.start();
@@ -158,9 +161,9 @@ export default class Postmam {
   }
 
   onMessageReceived(e) {
-    //log.debug(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}):`, e.data);
+    //Log.debug(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}):`, e.data);
     if (!e.data) {
-      log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Received an empty Postmam message:`, e);
+      Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Received an empty Postmam message:`, e);
       return;
     }
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
@@ -175,9 +178,10 @@ export default class Postmam {
       data: messageData,
       source: messageSource
     };
-    let messageBundleWithReply = objectAssign({
-      reply: this.reply.bind(this, messageBundle)
-    }, messageBundle);
+    let messageBundleWithReply = {
+      reply: this.reply.bind(this, messageBundle),
+      ...messageBundle
+    };
     if (this.replies.hasOwnProperty(messageId)) {
       let replyFn = this.replies[messageId].bind(window);
       let replyFnReturnValue = replyFn(messageBundleWithReply);
@@ -211,7 +215,7 @@ export default class Postmam {
       throw new Error("(Postmam) Postmam command must not be empty.");
     }
     if (typeof data === 'function') {
-      log.debug('You passed a function to data, did you mean to pass null?');
+      Log.debug('You passed a function to data, did you mean to pass null?');
       return;
     }
     const messageBundle = {
@@ -234,7 +238,7 @@ export default class Postmam {
       throw new Error("(Postmam) Postmam command must not be empty.");
     }
     if (typeof data === 'function') {
-      log.debug('You passed a function to data, did you mean to pass null?')
+      Log.debug('You passed a function to data, did you mean to pass null?')
       return;
     }
     const messageBundle = {

@@ -56,7 +56,6 @@
   "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
   "devDependencies": {
     "@types/body-parser": "latest",
-    "@types/bowser": "^1.0.30",
     "@types/chai": "latest",
     "@types/core-js": "latest",
     "@types/cors": "latest",

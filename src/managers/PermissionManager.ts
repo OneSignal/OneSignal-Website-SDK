@@ -1,6 +1,6 @@
 import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
@@ -73,7 +73,7 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   public async getReportedNotificationPermission(safariWebId: string) {
-    if (Browser.safari) {
+    if (bowser.safari) {
       return this.getSafariNotificationPermission(safariWebId);
     } else {
       // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?

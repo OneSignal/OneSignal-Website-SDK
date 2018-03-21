@@ -2,14 +2,14 @@ import OneSignal from "../../../src/OneSignal";
 import Random from "../tester/Random";
 import Database from "../../../src/services/Database";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import * as jsdom from 'jsdom';
-import * as DOMStorage from 'dom-storage';
+import jsdom from 'jsdom';
+import DOMStorage from 'dom-storage';
 import fetch from 'node-fetch';
 import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { ServiceWorkerContainer } from '../mocks/service-workers/ServiceWorkerContainer';
 import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
-import * as objectAssign from 'object-assign';
+
 import IndexedDb from '../../../src/services/IndexedDb';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
@@ -204,7 +204,7 @@ export class TestEnvironment {
       }
     } as any : windowDef;
     jsdom.reconfigureWindow(windowDef, { top: topWindow });
-    objectAssign(global, windowDef);
+    global = {...global, ...windowDef};
     return jsdom;
   }
 

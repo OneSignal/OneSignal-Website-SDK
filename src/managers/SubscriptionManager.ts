@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
+import bowser from 'bowser';
+
 
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
@@ -31,6 +31,7 @@ import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import { ServiceWorkerActiveState } from './ServiceWorkerManager';
 import { IntegrationKind } from '../models/IntegrationKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
+import Log from '../libraries/Log';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -55,7 +56,7 @@ export class SubscriptionManager {
   }
 
   static isSafari(): boolean {
-    return Browser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
   }
 
   /**
@@ -157,11 +158,11 @@ export class SubscriptionManager {
 
       if (!pushSubscription || pushSubscription.isNewSubscription()) {
         newDeviceId = await OneSignalApi.updateUserSession(deviceId, deviceRecord);
-        log.info("Updated the subscriber's OneSignal session:", deviceRecord);
+        Log.info("Updated the subscriber's OneSignal session:", deviceRecord);
       } else {
         // The subscription hasn't changed; don't register with OneSignal and reuse the existing device ID
         newDeviceId = deviceId;
-        log.debug(
+        Log.debug(
           'The existing push subscription was resubscribed, but not registering with OneSignal because the ' +
           'new subscription is identical.'
         );
@@ -169,7 +170,7 @@ export class SubscriptionManager {
     } else {
       const id = await OneSignalApi.createUser(deviceRecord);
       newDeviceId = id;
-      log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
+      Log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
     }
 
     await this.associateSubscriptionWithEmail(newDeviceId);
@@ -351,12 +352,12 @@ export class SubscriptionManager {
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case NotificationPermission.Default:
-          log.debug('Exiting subscription and not registering worker because the permission was dismissed.');
+          Log.debug('Exiting subscription and not registering worker because the permission was dismissed.');
           OneSignal._sessionInitAlreadyRunning = false;
           OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Dismissed);
         case NotificationPermission.Denied:
-          log.debug('Exiting subscription and not registering worker because the permission was blocked.');
+          Log.debug('Exiting subscription and not registering worker because the permission was blocked.');
           OneSignal._sessionInitAlreadyRunning = false;
           OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
@@ -368,9 +369,9 @@ export class SubscriptionManager {
       await this.context.serviceWorkerManager.installWorker();
     }
 
-    log.debug('Waiting for the service worker to activate...');
+    Log.debug('Waiting for the service worker to activate...');
     const workerRegistration = await navigator.serviceWorker.ready;
-    log.debug('Service worker is ready to continue subscribing.');
+    Log.debug('Service worker is ready to continue subscribing.');
 
     return await this.subscribeFcmVapidOrLegacyKey(workerRegistration.pushManager, subscriptionStrategy);
   }
@@ -391,7 +392,7 @@ export class SubscriptionManager {
 
       Because of this, we're not able to check for this property on Firefox.
      */
-    if (!self.registration.active && !Browser.firefox) {
+    if (!self.registration.active && !bowser.firefox) {
       throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
       /*
         Or should we wait for the service worker to be ready?
@@ -422,7 +423,7 @@ export class SubscriptionManager {
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
-    if (Browser.firefox) {
+    if (bowser.firefox) {
       /*
         Firefox uses VAPID for application identification instead of
         authentication, and so all apps share an identification key.
@@ -489,7 +490,7 @@ export class SubscriptionManager {
         PushSubscriptionOptions is null. */
 
         if (existingPushSubscription && existingPushSubscription.options) {
-          log.debug('[Subscription Manager] An existing push subscription exists and options is not null. ' +
+          Log.debug('[Subscription Manager] An existing push subscription exists and options is not null. ' +
             'Using existing options to resubscribe.');
           /*
             Hopefully we're on Chrome 54+, so we can use PushSubscriptionOptions to get the exact
@@ -507,7 +508,7 @@ export class SubscriptionManager {
           /* If we're not subscribing a new subscription, don't overwrite the created at timestamp */
           shouldRecordSubscriptionCreatedAt = false;
         } else if (existingPushSubscription && !existingPushSubscription.options) {
-          log.debug('[Subscription Manager] An existing push subscription exists and options is null. ' +
+          Log.debug('[Subscription Manager] An existing push subscription exists and options is null. ' +
             'Unsubscribing from push first now.');
           /*
             There isn't a great solution if PushSubscriptionOptions (supported on Chrome 54+) isn't
@@ -532,7 +533,7 @@ export class SubscriptionManager {
       case SubscriptionStrategyKind.SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
-          log.debug('[Subscription Manager] Unsubscribing existing push subscription.');
+          Log.debug('[Subscription Manager] Unsubscribing existing push subscription.');
           await existingPushSubscription.unsubscribe();
         }
 
@@ -542,7 +543,7 @@ export class SubscriptionManager {
     }
 
     // Actually subscribe the user to push
-    log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
+    Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     newPushSubscription = await pushManager.subscribe(subscriptionOptions);
 
     if (shouldRecordSubscriptionCreatedAt) {

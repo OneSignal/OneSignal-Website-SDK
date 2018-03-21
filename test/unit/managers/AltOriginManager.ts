@@ -3,7 +3,7 @@ import test from "ava";
 import AltOriginManager from '../../../src/managers/AltOriginManager';
 import { AppConfig } from '../../../src/models/AppConfig';
 import { BuildEnvironmentKind } from '../../../src/models/BuildEnvironmentKind'
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import ProxyFrameHost from '../../../src/modules/frames/ProxyFrameHost';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 

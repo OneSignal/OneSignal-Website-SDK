@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 
 import test from 'ava';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';

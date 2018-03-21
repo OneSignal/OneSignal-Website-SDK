@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+
 
 import Environment from '../../Environment';
 import Event from '../../Event';
@@ -8,6 +8,7 @@ import Postmam from '../../Postmam';
 import { timeoutPromise } from '../../utils';
 import Context from '../../models/Context';
 import { ServiceWorkerActiveState } from "../../managers/ServiceWorkerManager";
+import Log from '../../libraries/Log';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -57,7 +58,7 @@ export default class ProxyFrameHost implements Disposable {
       multiple iFrames to the same origin, which can cause issues with
       cross-origin messaging.
     */
-    log.debug('Opening an iFrame to', this.url.toString());
+    Log.debug('Opening an iFrame to', this.url.toString());
     this.removeFrame();
 
     const iframe = document.createElement("iframe");
@@ -76,7 +77,7 @@ export default class ProxyFrameHost implements Disposable {
     // Display a timeout warning if frame doesn't load in time, but don't prevent it from loading if the network is just slow
     timeoutPromise(this.loadPromise.promise, ProxyFrameHost.LOAD_TIMEOUT_MS).catch(() => {
       if (window === window.top) {
-        log.warn(`OneSignal: Loading the required iFrame ${this.url.toString()} timed out. Check that the Site URL onesignal.com dashboard web config is ${location.origin}. Only the Site URL specified there is allowed to use load the iFrame.`);
+        Log.warn(`OneSignal: Loading the required iFrame ${this.url.toString()} timed out. Check that the Site URL onesignal.com dashboard web config is ${location.origin}. Only the Site URL specified there is allowed to use load the iFrame.`);
       }
     });
     return this.loadPromise.promise;
@@ -120,7 +121,7 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   async onMessengerConnect(_: MessengerMessageEvent) {
-    log.debug(`Successfully established cross-origin communication for iFrame at ${this.url.toString()}`);
+    Log.debug(`Successfully established cross-origin communication for iFrame at ${this.url.toString()}`);
 
     this.messenger.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
       hostInitOptions: JSON.parse(JSON.stringify(OneSignal.config)), // Removes functions and unmessageable objects
@@ -165,7 +166,7 @@ export default class ProxyFrameHost implements Disposable {
 
   onGetEventListenerCount(message: MessengerMessageEvent) {
     const eventName: string = message.data;
-    log.debug('(Reposted from iFrame -> Host) Getting event listener count for ', eventName);
+    Log.debug('(Reposted from iFrame -> Host) Getting event listener count for ', eventName);
     const listenerEventCount = OneSignal.getListeners(eventName).length;
     message.reply(listenerEventCount);
     return false;

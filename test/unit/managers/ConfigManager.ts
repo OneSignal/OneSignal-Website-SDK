@@ -4,7 +4,7 @@ import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnv
 import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
 import MainHelper from '../../../src/helpers/MainHelper';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig } from '../../../src/models/AppConfig';

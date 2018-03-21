@@ -10,7 +10,7 @@
     "noImplicitThis": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "diagnostics": false,
