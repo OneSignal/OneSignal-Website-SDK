@@ -1,5 +1,7 @@
 import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from '../utils';
 import Log from '../libraries/Log';
+import OneSignal from "../OneSignal";
+import OneSignalStub from "../OneSignal";
 
 
 export function oneSignalSdkInit() {
@@ -16,11 +18,11 @@ export function oneSignalSdkInit() {
       var predefinedOneSignalPushes = OneSignal;
 
     if (isPushNotificationsSupported()) {
-      (window as any).OneSignal = require('./OneSignal').default;
+      (window as any).OneSignal = OneSignal;
     } else {
       Log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
 
-      (window as any).OneSignal = require('./OneSignalStub').default;
+      (window as any).OneSignal = OneSignalStub;
     }
 
     if (predefinedOneSignalPushes)

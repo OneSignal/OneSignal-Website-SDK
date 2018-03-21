@@ -23,10 +23,11 @@ export default class Log {
     };
     for (const nativeMethod of Object.keys(methods)) {
       const nativeMethodExists = typeof console[nativeMethod] !== "undefined";
+      const methodToMapTo = methods[nativeMethod];
       if (nativeMethodExists) {
-        this[nativeMethod] = console[nativeMethod].bind(console);
+        this[methodToMapTo] = console[nativeMethod].bind(console);
       } else {
-        this[nativeMethod] = function() {};
+        this[methodToMapTo] = function() {};
       }
     }
   }
