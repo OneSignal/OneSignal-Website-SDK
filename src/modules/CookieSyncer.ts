@@ -1,6 +1,8 @@
 import * as log from 'loglevel';
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
+import SdkEnvironment from '../managers/SdkEnvironment';
+
 
 export default class CookieSyncer {
   private isFeatureEnabled: boolean;
@@ -23,10 +25,13 @@ export default class CookieSyncer {
     }
   }
 
-  static get SDK_URL(): URL {
-    const url = new URL("https://cdn.tynt.com/afx.js");
-    url.protocol = window.location.protocol;
-    return url;
+  getFrameOrigin(): URL {
+    const isUsingHttp = !!this.context.appConfig.subdomain;
+    if (isUsingHttp) {
+      return new URL(`https://${this.context.appConfig.subdomain}.os.tc`);
+    } else {
+      return new URL(SdkEnvironment.getOneSignalApiUrl().origin);
+    }
   }
 
   install() {
@@ -35,14 +40,31 @@ export default class CookieSyncer {
       return;
     }
     if (window.top !== window) {
-      /* This cookie integration can only be injected into the top frame, so that it's targeting the intended site. */
+      /* Only process for top frames */
       return;
     }
 
-    (window as any).Tynt = (window as any).Tynt || [];
-    (window as any).Tynt.push(this.PUBLISHER_ID);
+    const frameUrl = this.getFrameOrigin();
+    frameUrl.pathname = "/webPushAnalytics";
 
-    this.context.dynamicResourceLoader.loadIfNew(ResourceType.Script, CookieSyncer.SDK_URL);
-    log.debug('Enabled cookie sync feature.');
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = frameUrl.href;
+
+    const loadPromise = {
+      promise: undefined,
+      resolver: undefined,
+      rejector: undefined,
+    };
+    loadPromise.promise = new Promise((resolve, reject) => {
+        loadPromise.resolver = resolve;
+        loadPromise.rejector = reject;
+    });
+
+    document.body.appendChild(iframe);
+    iframe.onload = loadPromise.resolver;
+    iframe.onerror = loadPromise.rejector;
+
+    return loadPromise.promise;
   }
 }
