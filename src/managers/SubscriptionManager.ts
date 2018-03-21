@@ -683,6 +683,20 @@ export class SubscriptionManager {
 
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
     const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
+
+    if (SubscriptionManager.isSafari()) {
+      const subscriptionState: SafarPushSubscriptionState = window.safari.pushNotification.permission(this.config.safariWebId);
+      const isSubscribedToSafari = !!(subscriptionState.permission === "granted" &&
+        subscriptionState.deviceToken &&
+        deviceId && deviceId.value
+      );
+
+      return {
+        subscribed: isSubscribedToSafari,
+        optedOut: optedOut,
+      };
+    }
+
     const workerState = await this.context.serviceWorkerManager.getActiveState();
     const workerRegistration = await navigator.serviceWorker.getRegistration();
     const notificationPermission =
