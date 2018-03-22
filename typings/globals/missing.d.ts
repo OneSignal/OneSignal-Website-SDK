@@ -85,6 +85,7 @@ declare var $_DEV: string;
 declare var $_TEST: string;
 declare var $_STAGING: string;
 declare var $_IS_ES6: string;
+declare var __PROCESSED_WITH_ROLLUP__: boolean;
 
 declare function fetch(...args): Promise<any>;
 

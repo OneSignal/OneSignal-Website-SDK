@@ -104,8 +104,8 @@ const PRODUCTION_JS_PLUGINS = [
 const SHARED_JS_BUILD_OPTIONS = {
   output: {
     format: 'iife',
-    sourceMap: true,
   },
+  sourceMap: true,
   plugins: JS_PLUGINS,
   treeshake: {
     pureExternalModules: true,

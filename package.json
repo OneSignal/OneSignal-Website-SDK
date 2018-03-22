@@ -43,11 +43,14 @@
     "build:sources:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle:sources",
     "build:tests": "ENV=development yarn transpile:tests",
     "build": "yarn build:sources:dev",
+    "publish:dev": "ENV=development build/scripts/publish.sh",
     "publish": "yarn build:sources:prod",
     "test": "ava --verbose --color --watch"
   },
   "config": {
-    "sdkVersion": "150105"
+    "sdkVersion": "150105",
+    "onesignalPublicPath": "/Users/jpang/code/OneSignal/public",
+    "onesignalPublicSdksPath": "/Users/jpang/code/OneSignal/public/sdks"
   },
   "repository": {
     "type": "git",
