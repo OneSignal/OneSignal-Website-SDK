@@ -1,3 +1,5 @@
+import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
+
 export default class Log {
   static debug: Function;
   static trace: Function;
@@ -24,7 +26,9 @@ export default class Log {
     for (const nativeMethod of Object.keys(methods)) {
       const nativeMethodExists = typeof console[nativeMethod] !== "undefined";
       const methodToMapTo = methods[nativeMethod];
-      if (nativeMethodExists) {
+      const shouldMap = nativeMethodExists && typeof (__PROCESSED_WITH_ROLLUP__ as any) !== "undefined";
+
+      if (shouldMap) {
         this[methodToMapTo] = console[nativeMethod].bind(console);
       } else {
         this[methodToMapTo] = function() {};

@@ -28,6 +28,7 @@ const JS_PLUGINS = [
     __TEST__: !!process.env.TESTS,
     __STAGING__: process.env.ENV === 'staging',
     __VERSION__: process.env.npm_package_config_sdkVersion,
+    __PROCESSED_WITH_ROLLUP__: true,
     __SRC_STYLESHEETS_MD5_HASH__: "x",
   }),
   resolve(),

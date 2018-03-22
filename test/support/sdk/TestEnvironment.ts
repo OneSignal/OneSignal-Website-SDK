@@ -17,7 +17,6 @@ import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, Notificatio
 
 import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
 
-
 var global = new Function('return this')();
 
 export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
@@ -204,7 +203,7 @@ export class TestEnvironment {
       }
     } as any : windowDef;
     jsdom.reconfigureWindow(windowDef, { top: topWindow });
-    global = {...global, ...windowDef};
+    Object.assign(global, windowDef);
     return jsdom;
   }
 

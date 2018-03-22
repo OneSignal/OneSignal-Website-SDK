@@ -151,7 +151,9 @@ export default class SdkEnvironment {
    * This method is overriden when tests are run.
    */
   static getTestEnv(): TestEnvironmentKind {
-    return TestEnvironmentKind.None;
+    return typeof __TEST__ === "undefined" ?
+      TestEnvironmentKind.UnitTesting :
+      TestEnvironmentKind.None;
   }
 
   /**
