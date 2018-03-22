@@ -631,8 +631,8 @@ export default class OneSignal {
     const context: Context = OneSignal.context;
     const subscriptionState = await context.subscriptionManager.getSubscriptionState();
 
-    executeCallback(callback, subscriptionState.subscribed);
-    return subscriptionState.subscribed;
+    executeCallback(callback, subscriptionState.subscribed && !subscriptionState.optedOut);
+    return subscriptionState.subscribed && !subscriptionState.optedOut;
   }
 
   /**

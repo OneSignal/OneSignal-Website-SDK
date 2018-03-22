@@ -179,9 +179,9 @@ export class SubscriptionManager {
       Event.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
-    // Get the existing subscription settings to prevent overriding opt out
     const subscription = await Database.getSubscription();
     subscription.deviceId = newDeviceId;
+    subscription.optedOut = false;
     if (pushSubscription) {
       if (SubscriptionManager.isSafari()) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
