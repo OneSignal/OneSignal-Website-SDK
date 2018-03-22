@@ -38,11 +38,13 @@
     "transpile:tests": "$(yarn bin)/tsc --project build/config/tsconfig.tests.json",
     "bundle:sources": "TESTS=false $(yarn bin)/rollup --config build/config/rollup.config.js",
     "bundle:tests": "TESTS=true $(yarn bin)/rollup --config build/config/rollup.config.js",
-    "build:source:dev": "ENV=development yarn build:transpile && ENV=development yarn build:bundle",
-    "build:source:staging": "ENV=staging yarn build:transpile && ENV=staging yarn build:bundle",
-    "build:source:prod": "ENV=production yarn build:transpile && ENV=production yarn build:bundle",
-    "build:tests": "ENV=development yarn build:transpile && ENV=production yarn build:bundle",
-    "test": "ava --verbose --color --watch"
+    "build:sources:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle:sources",
+    "build:sources:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle:sources",
+    "build:sources:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle:sources",
+    "build:tests": "ENV=development yarn transpile:tests",
+    "build": "yarn build:sources:dev",
+    "publish": "yarn build:sources:prod",
+    "test": "yarn build:tests; ava --verbose --color --watch"
   },
   "config": {
     "sdkVersion": "150105"
