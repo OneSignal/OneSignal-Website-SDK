@@ -16,7 +16,7 @@
     "diagnostics": false,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
-    "module": "commonjs",
+    "module": "ES6",
     "noEmitHelpers": true,
     "pretty": true,
     "skipDefaultLibCheck": true,

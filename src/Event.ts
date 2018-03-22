@@ -1,5 +1,3 @@
-import { Logger } from 'loglevel';
-
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';

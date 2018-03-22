@@ -1,9 +1,8 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "170000",
+  "sdkVersion": "150105",
   "description": "Web push notifications from OneSignal.",
-  "main": "src/entry.ts",
   "dependencies": {
     "babel-cli": "^6.26.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
@@ -33,36 +32,27 @@
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz",
     "whatwg-fetch": "^2.0.3"
   },
-  "scripts": {},
+  "scripts": {
+    "clean": "rm -r build/ts-to-es6 && rm -r build/bundles",
+    "transpile:sources": "$(yarn bin)/tsc --project build/config/tsconfig.json",
+    "transpile:tests": "$(yarn bin)/tsc --project build/config/tsconfig.tests.json",
+    "bundle:sources": "TESTS=false $(yarn bin)/rollup --config build/config/rollup.config.js",
+    "bundle:tests": "TESTS=true $(yarn bin)/rollup --config build/config/rollup.config.js",
+    "build:source:dev": "ENV=development yarn build:transpile && ENV=development yarn build:bundle",
+    "build:source:staging": "ENV=staging yarn build:transpile && ENV=staging yarn build:bundle",
+    "build:source:prod": "ENV=production yarn build:transpile && ENV=production yarn build:bundle",
+    "build:tests": "ENV=development yarn build:transpile && ENV=production yarn build:bundle",
+    "test": "ava --verbose --color --watch"
+  },
+  "config": {
+    "sdkVersion": "150105"
+  },
   "repository": {
     "type": "git",
     "url": "github.com/one-signal/OneSignal-Website-SDK"
   },
-  "keywords": [
-    "push notification",
-    "push notifications",
-    "web push",
-    "web push notification",
-    "web push notifications",
-    "onesignal",
-    "pushwoosh",
-    "roost",
-    "goroost",
-    "parse",
-    "urbanairship",
-    "apns",
-    "gcm",
-    "mobile notifications",
-    "adm",
-    "mpns",
-    "wns"
-  ],
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
-  "bugs": {
-    "url": "https://github.com/one-signal/OneSignal-Website-SDK/issues"
-  },
-  "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
   "devDependencies": {
     "@types/body-parser": "latest",
     "@types/chai": "latest",
@@ -126,10 +116,10 @@
   },
   "ava": {
     "files": [
-      "build/javascript/test/unit/**/*.js"
+      "build/ts-to-es6/test/unit/**/*.js"
     ],
     "source": [
-      "build/javascript/src/**/*.js"
+      "build/ts-to-es6/src/**/*.js"
     ],
     "concurrency": 1,
     "serial": true,

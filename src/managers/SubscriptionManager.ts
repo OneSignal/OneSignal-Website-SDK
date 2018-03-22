@@ -688,7 +688,7 @@ export class SubscriptionManager {
       const subscriptionState: SafarPushSubscriptionState = window.safari.pushNotification.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(subscriptionState.permission === "granted" &&
         subscriptionState.deviceToken &&
-        deviceId && deviceId.value
+        deviceId
       );
 
       return {

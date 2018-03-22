@@ -7,16 +7,27 @@ import babel from 'rollup-plugin-babel';
 import uglify from 'rollup-plugin-uglify';
 import replace from 'rollup-plugin-replace';
 
-const BUILD_FOLDER = "javascript-es6";
-const env = process.env.ENV || "production";
-const tests = process.env.TESTS;
+setBuildEnvironment();
+
+function setBuildEnvironment() {
+  switch (process.env.ENV) {
+    case "development":
+    case "staging":
+    case "production":
+      break;
+    default:
+      process.env.ENV = "development";
+  }
+
+  console.log("Build Environment:", process.env.ENV);
+}
 
 const JS_PLUGINS = [
   replace({
-    __DEV__: env === 'development',
-    __TEST__: !!tests,
-    __STAGING__: env === 'staging',
-    __VERSION__: JSON.stringify(require('../../package.json').sdkVersion),
+    __DEV__: process.env.ENV === 'development',
+    __TEST__: !!process.env.TESTS,
+    __STAGING__: process.env.ENV === 'staging',
+    __VERSION__: process.env.npm_package_config_sdkVersion,
     __SRC_STYLESHEETS_MD5_HASH__: "x",
   }),
   resolve(),
@@ -28,15 +39,23 @@ const JS_PLUGINS = [
     presets: [
       [
         "es2015",
-        { "modules": false }
+        {
+          "modules": false
+        }
       ]
     ],
     plugins: [
-//          "external-helpers",
+      // "external-helpers",
       "transform-object-rest-spread",
     ],
     babelrc: false,
   }),
+  process.env.ENV === "production" ?
+    PRODUCTION_JS_PLUGINS :
+    []
+];
+
+const PRODUCTION_JS_PLUGINS = [
   nodent({
     promises: true,
     noRuntime: true
@@ -81,34 +100,39 @@ const JS_PLUGINS = [
   })
 ];
 
-// rollup.config.js (building more than one bundle)
-export default [
-  {
-    input: `build/${BUILD_FOLDER}/src/entries/worker.js`,
-    output: {
-      file: 'build/bundles/worker.js',
-      format: 'iife',
-      name: 'OneSignalWorker',
-      sourceMap: true,
-    },
-    plugins: JS_PLUGINS,
-    treeshake: {
-      pureExternalModules: true,
-      propertyReadSideEffects: false,
-    }
+const SHARED_JS_BUILD_OPTIONS = {
+  output: {
+    format: 'iife',
+    sourceMap: true,
   },
-  {
-    input: `build/${BUILD_FOLDER}/src/entries/sdk.js`,
-    output: {
-      file: 'build/bundles/sdk.js',
-      format: 'iife',
-      name: 'OneSignaldd',
-      sourceMap: true,
-    },
-    plugins: JS_PLUGINS,
-    treeshake: {
-      pureExternalModules: true,
-      propertyReadSideEffects: false,
-    }
+  plugins: JS_PLUGINS,
+  treeshake: {
+    pureExternalModules: true,
+    propertyReadSideEffects: false,
   }
+};
+
+const BUILD_TARGETS = [
+  /* Page SDK */
+  {
+    ...SHARED_JS_BUILD_OPTIONS,
+    input: `build/ts-to-es6/src/entries/sdk.js`,
+    output: {
+      ...SHARED_JS_BUILD_OPTIONS.output,
+      file: 'build/bundles/sdk.js',
+      name: 'OneSignal',
+    },
+  },
+  /* Service Worker */
+  {
+    ...SHARED_JS_BUILD_OPTIONS,
+    input: `build/ts-to-es6/src/entries/worker.js`,
+    output: {
+      ...SHARED_JS_BUILD_OPTIONS.output,
+      file: 'build/bundles/worker.js',
+      name: 'OneSignalWorker',
+    },
+  },
 ];
+
+export default BUILD_TARGETS;
