@@ -15,9 +15,9 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   static getBuildEnv(): BuildEnvironmentKind {
-    if (typeof __DEV__ !== undefined && __DEV__) {
+    if (typeof __DEV__ !== "undefined" && __DEV__) {
       return BuildEnvironmentKind.Development;
-    } else if (typeof __STAGING__ !== undefined && __STAGING__) {
+    } else if (typeof __STAGING__ !== "undefined" && __STAGING__) {
       return BuildEnvironmentKind.Staging;
     } else {
       return BuildEnvironmentKind.Production;
