@@ -11,7 +11,7 @@ import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { contains, getConsoleStyle, isValidUuid, trimUndefined } from '../utils';
 
-import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
+import { AppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';

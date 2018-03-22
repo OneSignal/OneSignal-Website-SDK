@@ -2,6 +2,7 @@
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
 import Log from '../libraries/Log';
+import SdkEnvironment from '../managers/SdkEnvironment';
 
 export default class CookieSyncer {
   private isFeatureEnabled: boolean;
@@ -22,6 +23,12 @@ export default class CookieSyncer {
     } catch (e) {
       return defaultId;
     }
+  }
+
+  static get SDK_URL(): URL {
+    const url = new URL("https://cdn.tynt.com/afx.js");
+    url.protocol = window.location.protocol;
+    return url;
   }
 
   getFrameOrigin(): URL {

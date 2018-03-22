@@ -54,16 +54,3 @@ test("should not run if we are not the top window", async t => {
   cookieSyncer.install();
   t.is((window as any).Tynt, undefined);
 });
-
-test("should set global tynt variable with publisher ID", async t => {
-  const context: Context = OneSignal.context;
-  const appId = context.appConfig.appId;
-
-  const truncatedAppId = appId.replace(/-/g, '').substr(0, 15).toLowerCase();
-
-  const cookieSyncer = new CookieSyncer(OneSignal.context, true);
-  cookieSyncer.install();
-  const iframe = document.querySelector("iframe");
-  t.is(iframe.getAttribute('src'), 'https://my-subdomain.os.tc/webPushAnalytics');
-  t.truthy(iframe);
-});
