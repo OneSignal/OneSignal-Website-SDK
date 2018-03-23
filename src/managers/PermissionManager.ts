@@ -1,4 +1,4 @@
-import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent } from '../utils';
+import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent, isUsingSubscriptionWorkaround } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
@@ -77,7 +77,7 @@ export default class PermissionManager {
       return this.getSafariNotificationPermission(safariWebId);
     } else {
       // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-      const isUsingOneSignalSubdomain = await SubscriptionHelper.isUsingSubscriptionWorkaround();
+      const isUsingOneSignalSubdomain = await isUsingSubscriptionWorkaround();
 
       if (isUsingOneSignalSubdomain) {
         /*
@@ -157,7 +157,7 @@ export default class PermissionManager {
             (
               this.isCurrentFrameContextCrossOrigin() ||
               await SubscriptionHelper.isFrameContextInsecure() ||
-              SubscriptionHelper.isUsingSubscriptionWorkaround() ||
+              isUsingSubscriptionWorkaround() ||
               SubscriptionHelper.isInsecureOrigin()
             )
            );

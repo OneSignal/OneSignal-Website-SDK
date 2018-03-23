@@ -1,4 +1,4 @@
-import {removeDomElement, addDomElement} from "../utils";
+import {removeDomElement, addDomElement, isUsingSubscriptionWorkaround} from "../utils";
 import Event from "../Event";
 import ActiveAnimatedElement from "./ActiveAnimatedElement";
 import Bell from "./Bell";
@@ -109,7 +109,7 @@ export default class Button extends ActiveAnimatedElement {
       });
     }
     else if (this.bell.blocked) {
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
         // Show the HTTP popup so users can re-allow notifications
         OneSignal.registerForPushNotifications();
       } else {

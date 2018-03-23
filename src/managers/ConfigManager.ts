@@ -1,9 +1,7 @@
 import { AppUserConfig, AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, ServerAppConfig } from '../models/AppConfig';
 import OneSignalApi from '../OneSignalApi';
-import InitHelper from '../helpers/InitHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 
-import Badge from '../bell/Badge';
 import { trimUndefined, contains } from '../utils';
 import SdkEnvironment from './SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';

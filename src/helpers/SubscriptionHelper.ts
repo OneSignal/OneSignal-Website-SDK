@@ -7,7 +7,7 @@ import TimeoutError from '../errors/TimeoutError';
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { getConsoleStyle, timeoutPromise } from '../utils';
+import { getConsoleStyle, timeoutPromise, triggerNotificationPermissionChanged } from '../utils';
 import EventHelper from './EventHelper';
 import MainHelper from './MainHelper';
 import TestHelper from './TestHelper';
@@ -57,7 +57,7 @@ export default class SubscriptionHelper {
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
-          EventHelper.triggerNotificationPermissionChanged();
+          triggerNotificationPermissionChanged();
           EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
           Log.info(e);
@@ -149,50 +149,6 @@ export default class SubscriptionHelper {
   }
 
   /**
-   * Returns true if web push subscription occurs on a subdomain of OneSignal.
-   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
-   * @remarks
-   *   This method returns true if:
-   *     - The browser is not Safari
-   *         - Safari uses a different method of subscription and does not require our workaround
-   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
-   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
-   *        - The protocol of the current webpage is http:
-   *   Exceptions are:
-   *     - Safe hostnames like localhost and 127.0.0.1
-   *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
-   *        - We are already in popup or iFrame mode, or this is called from the service worker
-   */
-  static isUsingSubscriptionWorkaround() {
-    if (!OneSignal.config) {
-      throw new Error(
-        `(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
-      );
-    }
-    if (bowser.safari) {
-      return false;
-    }
-
-    if (
-      (SubscriptionHelper.isLocalhostAllowedAsSecureOrigin() && location.hostname === 'localhost') ||
-      (location.hostname as any) === '127.0.0.1'
-    ) {
-      return false;
-    }
-
-    return (
-      (
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host ||
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe
-      ) &&
-      (
-        !!OneSignal.config.subdomain ||
-        location.protocol === 'http:'
-      )
-    );
-  }
-
-  /**
    * From a child frame, returns true if the current frame context is insecure.
    *
    * This is used to check if isPushNotificationsEnabled() should grab the service worker
@@ -221,13 +177,5 @@ export default class SubscriptionHelper {
 
   static isInsecureOrigin() {
     return window.location.protocol === "http:";
-  }
-
-  static isLocalhostAllowedAsSecureOrigin() {
-    return (
-      OneSignal.config &&
-      OneSignal.config.userConfig &&
-      OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
-    );
   }
 }

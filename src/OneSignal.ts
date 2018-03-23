@@ -50,6 +50,7 @@ import {
   isValidEmail,
   logMethodCall,
   prepareEmailForHashing,
+  isUsingSubscriptionWorkaround,
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { DeviceRecord } from './models/DeviceRecord';
@@ -250,7 +251,7 @@ export default class OneSignal {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
         OneSignal.appConfig = appConfig;
 
         /**
@@ -407,7 +408,7 @@ export default class OneSignal {
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
-      if (options && options.httpPermissionRequest && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (options && options.httpPermissionRequest && isUsingSubscriptionWorkaround()) {
         /*
           Do not throw an error because it may cause the parent event handler to
           throw and stop processing the rest of their code. Typically, for this
@@ -422,7 +423,7 @@ export default class OneSignal {
         Log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
         return;
       }
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
           /**
            * Users may be subscribed to either .onesignal.com or .os.tc. By this time
            * that they are subscribing to the popup, the Proxy Frame has already been

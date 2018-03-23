@@ -10,7 +10,6 @@ import SubscriptionError from '../errors/SubscriptionError';
 import { SubscriptionErrorReason } from '../errors/SubscriptionError';
 import Event from '../Event';
 import EventHelper from '../helpers/EventHelper';
-import MainHelper from '../helpers/MainHelper';
 import Context from '../models/Context';
 import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
 import { NotificationPermission } from '../models/NotificationPermission';
@@ -32,6 +31,7 @@ import { ServiceWorkerActiveState } from './ServiceWorkerManager';
 import { IntegrationKind } from '../models/IntegrationKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
+import { triggerNotificationPermissionChanged } from '../utils';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -309,7 +309,7 @@ export class SubscriptionManager {
       Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     }
     const deviceToken = await this.subscribeSafariPromptPermission();
-    EventHelper.triggerNotificationPermissionChanged();
+    triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
     } else {
@@ -347,7 +347,7 @@ export class SubscriptionManager {
         permissions isn't a change. We specifically broadcast "default" to "default" changes.
        */
       if (permission === NotificationPermission.Default) {
-        EventHelper.triggerNotificationPermissionChanged(true);
+        triggerNotificationPermissionChanged(true);
       }
       // If the user did not grant push permissions, throw and exit
       switch (permission) {

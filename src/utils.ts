@@ -8,6 +8,7 @@ import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Database from './services/Database';
 import Log from './libraries/Log';
+import Event from './Event';
 
 
 export function isArray(variable) {
@@ -132,6 +133,14 @@ export function removeDomElement(selector) {
   }
 }
 
+export function isLocalhostAllowedAsSecureOrigin() {
+  return (
+    OneSignal.config &&
+    OneSignal.config.userConfig &&
+    OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
+  );
+}
+
 /**
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
  * not supported, and wraps these tasks in a Promise.
@@ -144,6 +153,69 @@ export function awaitOneSignalInitAndSupported() {
       resolve();
     }
   });
+}
+
+  /**
+   * Returns true if web push subscription occurs on a subdomain of OneSignal.
+   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
+   * @remarks
+   *   This method returns true if:
+   *     - The browser is not Safari
+   *         - Safari uses a different method of subscription and does not require our workaround
+   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
+   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
+   *        - The protocol of the current webpage is http:
+   *   Exceptions are:
+   *     - Safe hostnames like localhost and 127.0.0.1
+   *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
+   *        - We are already in popup or iFrame mode, or this is called from the service worker
+   */
+  export function isUsingSubscriptionWorkaround() {
+    if (!OneSignal.config) {
+      throw new Error(
+        `(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
+      );
+    }
+    if (bowser.safari) {
+      return false;
+    }
+
+    if (
+      (isLocalhostAllowedAsSecureOrigin() && location.hostname === 'localhost') ||
+      (location.hostname as any) === '127.0.0.1'
+    ) {
+      return false;
+    }
+
+    return (
+      (
+        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host ||
+        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe
+      ) &&
+      (
+        !!OneSignal.config.subdomain ||
+        location.protocol === 'http:'
+      )
+    );
+  }
+
+export async function triggerNotificationPermissionChanged(updateIfIdentical = false) {
+  let newPermission, isUpdating;
+  const currentPermission = await OneSignal.getNotificationPermission();
+  const previousPermission = await Database.get('Options', 'notificationPermission');
+
+  newPermission = currentPermission;
+  isUpdating = currentPermission !== previousPermission || updateIfIdentical;
+
+  if (isUpdating) {
+    await Database.put('Options', {
+      key: 'notificationPermission',
+      value: currentPermission
+    });
+    Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
+      to: newPermission
+    });
+  }
 }
 
 /**
@@ -384,7 +456,7 @@ export function unsubscribeFromPush() {
                          } else throw new Error('Cannot unsubscribe because not subscribed.');
                        });
   } else {
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+    if (isUsingSubscriptionWorkaround()) {
       return new Promise((resolve, reject) => {
         Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {

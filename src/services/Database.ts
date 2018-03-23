@@ -1,4 +1,3 @@
-import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Emitter from '../libraries/Emitter';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { AppConfig } from '../models/AppConfig';
@@ -13,6 +12,7 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import IndexedDb from './IndexedDb';
 import bowser from 'bowser';
 import { EmailProfile } from '../models/EmailProfile';
+import { isUsingSubscriptionWorkaround } from '../utils';
 
 enum DatabaseEventName {
   SET
@@ -80,7 +80,7 @@ export default class Database {
   async get<T>(table: string, key?: string): Promise<T> {
     return await new Promise<T>(async (resolve) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-          SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+          isUsingSubscriptionWorkaround() &&
           SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
@@ -105,7 +105,7 @@ export default class Database {
   async put(table: string, keypath: any) {
     await new Promise(async (resolve, reject) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-        SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+        isUsingSubscriptionWorkaround() &&
         SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{table: table, keypath: keypath}], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
@@ -128,7 +128,7 @@ export default class Database {
    */
   remove(table: string, keypath?: string) {
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-      SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+      isUsingSubscriptionWorkaround() &&
       SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
       return new Promise((resolve, reject) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{ table: table, keypath: keypath }], reply => {

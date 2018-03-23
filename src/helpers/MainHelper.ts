@@ -16,6 +16,7 @@ import {
   capitalize,
   contains,
   getConsoleStyle,
+  triggerNotificationPermissionChanged,
 } from '../utils';
 import EventHelper from './EventHelper';
 import SubscriptionHelper from './SubscriptionHelper';
@@ -87,7 +88,7 @@ export default class MainHelper {
     const previousPermission = await Database.get('Options', 'notificationPermission');
     const currentPermission = await OneSignal.getNotificationPermission();
     if (previousPermission !== currentPermission) {
-      await EventHelper.triggerNotificationPermissionChanged();
+      await triggerNotificationPermissionChanged();
       await Database.put('Options', {
         key: 'notificationPermission',
         value: currentPermission

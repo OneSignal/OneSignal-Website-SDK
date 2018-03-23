@@ -5,7 +5,6 @@ import LimitStore from '../LimitStore';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { decodeHtmlEntities, logMethodCall } from '../utils';
-import MainHelper from './MainHelper';
 import Context from "../models/Context";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import Log from '../libraries/Log';
@@ -51,7 +50,7 @@ export default class EventHelper {
     }
     if (isSubscribed === true) {
       const { deviceId } = await Database.getSubscription();
-      const appId = await MainHelper.getAppId();
+      const { appId } = await Database.getAppConfig();
 
       let welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
       let welcome_notification_disabled =
@@ -109,25 +108,6 @@ export default class EventHelper {
         Log.debug('Hiding notify button because display predicate returned false.');
         OneSignal.notifyButton.launcher.hide();
       }
-    }
-  }
-
-  static async triggerNotificationPermissionChanged(updateIfIdentical = false) {
-    let newPermission, isUpdating;
-    const currentPermission = await OneSignal.getNotificationPermission();
-    const previousPermission = await Database.get('Options', 'notificationPermission');
-
-    newPermission = currentPermission;
-    isUpdating = currentPermission !== previousPermission || updateIfIdentical;
-
-    if (isUpdating) {
-      await Database.put('Options', {
-        key: 'notificationPermission',
-        value: currentPermission
-      });
-      Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-        to: newPermission
-      });
     }
   }
 

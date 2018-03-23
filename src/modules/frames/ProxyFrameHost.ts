@@ -5,7 +5,7 @@ import Event from '../../Event';
 import EventHelper from '../../helpers/EventHelper';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import { timeoutPromise } from '../../utils';
+import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
 import Context from '../../models/Context';
 import { ServiceWorkerActiveState } from "../../managers/ServiceWorkerManager";
 import Log from '../../libraries/Log';
@@ -147,7 +147,7 @@ export default class ProxyFrameHost implements Disposable {
 
   onRemoteNotificationPermissionChanged(message: MessengerMessageEvent) {
     let {forceUpdatePermission} = (message.data as any);
-    EventHelper.triggerNotificationPermissionChanged(forceUpdatePermission);
+    triggerNotificationPermissionChanged(forceUpdatePermission);
     return false;
   }
 

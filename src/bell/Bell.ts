@@ -5,7 +5,7 @@ import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
-import { addCssClass, addDomElement, contains, decodeHtmlEntities, delay, nothing, once, removeDomElement } from '../utils';
+import { addCssClass, addDomElement, contains, decodeHtmlEntities, delay, nothing, once, removeDomElement, isUsingSubscriptionWorkaround } from '../utils';
 import Badge from './Badge';
 import Button from './Button';
 import Dialog from './Dialog';
@@ -418,7 +418,7 @@ export default class Bell {
       })
       .then(() => delay(this.options.showLauncherAfter))
       .then(() => {
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+        if (isUsingSubscriptionWorkaround() &&
           notOptedOut &&
           doNotPrompt !== true && !isPushEnabled &&
           (OneSignal.config.userConfig.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {

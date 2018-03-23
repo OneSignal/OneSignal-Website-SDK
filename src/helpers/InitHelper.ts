@@ -13,7 +13,7 @@ import { AppConfig, AppUserConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
-import { getConsoleStyle, once } from '../utils';
+import { getConsoleStyle, once, isUsingSubscriptionWorkaround, triggerNotificationPermissionChanged } from '../utils';
 import EventHelper from './EventHelper';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
@@ -159,7 +159,7 @@ export default class InitHelper {
       }
     }
 
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
+    if (isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
       /*
        The user is on an HTTP site and they accessed this site by opening a new window or tab (starting a new
        session). This means we should increment their session_count and last_active by calling
@@ -214,7 +214,7 @@ export default class InitHelper {
       // use it instead of our SDK method
       const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
       permissionStatus.onchange = function() {
-        EventHelper.triggerNotificationPermissionChanged();
+        triggerNotificationPermissionChanged();
       };
     }
   }
@@ -282,7 +282,7 @@ export default class InitHelper {
     // HTTPS - Only register for push notifications once per session or if the user changes notification permission to Ask or Allow.
     if (
       sessionStorage.getItem('ONE_SIGNAL_SESSION') &&
-      !SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+      !isUsingSubscriptionWorkaround() &&
       (window.Notification.permission == 'denied' ||
         sessionStorage.getItem('ONE_SIGNAL_NOTIFICATION_PERMISSION') == window.Notification.permission)
     ) {
@@ -296,7 +296,7 @@ export default class InitHelper {
       Log.debug('On Safari and autoregister is false, skipping sessionInit().');
       // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
       // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
-      if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (!isUsingSubscriptionWorkaround()) {
         Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       }
       return;
@@ -307,7 +307,7 @@ export default class InitHelper {
       /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
       Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-      if (isPushEnabled && !SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isPushEnabled && !isUsingSubscriptionWorkaround()) {
         Log.info(
           'Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.'
         );
@@ -363,7 +363,7 @@ export default class InitHelper {
        */
       OneSignal.subscriptionModalHost = new SubscriptionModalHost(appConfig.appId, options);
       OneSignal.subscriptionModalHost.load();
-    } else if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+    } else if (!isUsingSubscriptionWorkaround()) {
       /*
         Show HTTPS modal prompt.
        */
@@ -373,7 +373,7 @@ export default class InitHelper {
       } else {
         /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
         prevent the popup from opening. */
-        if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+        if (isUsingSubscriptionWorkaround()) {
           SubscriptionHelper.registerForPush();
         } else {
           OneSignal.isOptedOut().then(isOptedOut => {

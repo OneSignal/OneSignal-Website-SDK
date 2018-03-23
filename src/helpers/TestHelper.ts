@@ -5,6 +5,7 @@ import Database from '../services/Database';
 import SubscriptionHelper from './SubscriptionHelper';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
+import { isUsingSubscriptionWorkaround } from '../utils';
 
 declare var OneSignal: any;
 
@@ -21,7 +22,7 @@ export default class TestHelper {
      * synchronous while IndexedDb access / PostMessage querying across origins are both
      * asynchronous.
      */
-    if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+    if (isUsingSubscriptionWorkaround()) {
       await new Promise((resolve, reject) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, {}, reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
@@ -39,7 +40,7 @@ export default class TestHelper {
     /**
      * This will be run twice for HTTP sites, since we share IndexedDb, so we don't run it for HTTP sites.
      */
-    if (!SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+    if (!isUsingSubscriptionWorkaround()) {
       dismissCount += 1;
     }
 

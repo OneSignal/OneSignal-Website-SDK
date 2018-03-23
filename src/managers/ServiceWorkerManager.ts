@@ -7,7 +7,7 @@ import Context from '../models/Context';
 import Path from '../models/Path';
 import SdkEnvironment from './SdkEnvironment';
 import { Subscription } from '../models/Subscription';
-import { encodeHashAsUriComponent, timeoutPromise } from '../utils';
+import { encodeHashAsUriComponent, timeoutPromise, isUsingSubscriptionWorkaround } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
 import MainHelper from '../helpers/MainHelper';
@@ -211,7 +211,7 @@ export class ServiceWorkerManager {
 
   public async getWorkerVersion(): Promise<number> {
     return new Promise<number>(async resolve => {
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
         const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
         if (!proxyFrameHost) {
           /* On init, this function may be called. Return a null state for now */
