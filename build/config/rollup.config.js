@@ -6,6 +6,7 @@ import nodent from 'rollup-plugin-nodent';
 import babel from 'rollup-plugin-babel';
 import uglify from 'rollup-plugin-uglify';
 import replace from 'rollup-plugin-replace';
+import analyze from 'rollup-analyzer-plugin'
 
 setBuildEnvironment();
 
@@ -20,6 +21,12 @@ function setBuildEnvironment() {
   }
 
   console.log("Build Environment:", process.env.ENV);
+}
+
+const ROLLUP_ANALYZE_OPTIONS = {
+  limit: 1000,
+  filter: [],
+  root: __dirname
 }
 
 const PRODUCTION_JS_PLUGINS = [
@@ -49,7 +56,8 @@ const PRODUCTION_JS_PLUGINS = [
     output: {
       comments: false
     }
-  })
+  }),
+  analyze(ROLLUP_ANALYZE_OPTIONS),
 ];
 
 const JS_PLUGINS = [
