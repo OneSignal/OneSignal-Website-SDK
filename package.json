@@ -44,7 +44,8 @@
     "build:tests": "ENV=development yarn transpile:tests",
     "build": "yarn build:sources:dev",
     "publish:dev": "ENV=development build/scripts/publish.sh",
-    "publish": "yarn build:sources:prod",
+    "publish:staging": "ENV=staging build/scripts/publish.sh",
+    "publish:prod": "ENV=production build/scripts/publish.sh",
     "test": "ava --verbose --color --watch"
   },
   "config": {

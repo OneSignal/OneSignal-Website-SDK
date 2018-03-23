@@ -22,6 +22,36 @@ function setBuildEnvironment() {
   console.log("Build Environment:", process.env.ENV);
 }
 
+const PRODUCTION_JS_PLUGINS = [
+  nodent({
+    promises: true,
+    noRuntime: true
+  }),
+  uglify({
+    sourceMap: true,
+    compress: {
+      drop_console: true,
+      drop_debugger: true,
+    },
+    mangle: {
+      reserved: [
+        'AlreadySubscribedError',
+        'InvalidArgumentError',
+        'InvalidStateError',
+        'NotSubscribedError',
+        'PermissionMessageDismissedError',
+        'PushNotSupportedError',
+        'PushPermissionNotGrantedError',
+        'SdkInitError',
+        'TimeoutError'
+      ]
+    },
+    output: {
+      comments: false
+    }
+  })
+];
+
 const JS_PLUGINS = [
   replace({
     __DEV__: process.env.ENV === 'development',
@@ -51,59 +81,16 @@ const JS_PLUGINS = [
     ],
     babelrc: false,
   }),
+].concat(
   process.env.ENV === "production" ?
     PRODUCTION_JS_PLUGINS :
     []
-];
-
-const PRODUCTION_JS_PLUGINS = [
-  nodent({
-    promises: true,
-    noRuntime: true
-  }),
-  uglify({
-    sourceMap: true,
-    compress: {
-      sequences: true,
-      properties: true,
-      dead_code: true,
-      conditionals: true,
-      comparisons: true,
-      evaluate: true,
-      booleans: true,
-      loops: true,
-      unused: true,
-      hoist_funs: true,
-      if_return: true,
-      join_vars: true,
-      collapse_vars: true,
-      drop_console: false,
-      drop_debugger: false,
-      warnings: false,
-      negate_iife: true
-    },
-    mangle: {
-      reserved: [
-        'AlreadySubscribedError',
-        'InvalidArgumentError',
-        'InvalidStateError',
-        'NotSubscribedError',
-        'PermissionMessageDismissedError',
-        'PushNotSupportedError',
-        'PushPermissionNotGrantedError',
-        'SdkInitError',
-        'TimeoutError'
-      ]
-    },
-    output: {
-      comments: false
-    }
-  })
-];
+);
 
 const SHARED_JS_BUILD_OPTIONS = {
   output: {
     format: 'iife',
+    sourceMap: true,
   },
   sourceMap: true,
   plugins: JS_PLUGINS,
