@@ -90,3 +90,20 @@ declare function fetch(...args): Promise<any>;
 
 declare var Headers: any;
 declare var WorkerLocation: any;
+
+/* Typing issue */
+interface SharedArrayBuffer { };
+
+interface PushSubscription {
+  /**
+   * A push subscription may have an associated subscription expiration time. When set, it must be
+   * the time, in milliseconds since 00:00:00 UTC on 1 January 1970, at which the subscription will
+   * be deactivated. The user agent should attempt to refresh the push subscription before the
+   * subscription expires.
+   *
+   * The expirationTime read-only property of the PushSubscription interface returns a
+   * DOMHighResTimeStamp of the subscription expiration time associated with the push subscription,
+   * if there is one, oor null otherwise.
+   */
+  expirationTime?: number;
+}

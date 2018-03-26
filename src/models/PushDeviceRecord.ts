@@ -39,5 +39,21 @@ export class PushDeviceRecord extends DeviceRecord {
     return serializedBundle;
   }
 
+  static createFromPushSubscription(
+    appId: Uuid,
+    rawPushSubscription: RawPushSubscription,
+    subscriptionState?: SubscriptionStateKind,
+  ) {
+    const pushRegistration = new PushDeviceRecord(rawPushSubscription);
+    pushRegistration.appId = appId;
+    pushRegistration.subscriptionState = rawPushSubscription ?
+      SubscriptionStateKind.Subscribed :
+      SubscriptionStateKind.NotSubscribed;
+    if (subscriptionState) {
+      pushRegistration.subscriptionState = subscriptionState;
+    }
+    return pushRegistration;
+  }
+
   deserialize(_: object): PushDeviceRecord { throw new NotImplementedError(); }
 }

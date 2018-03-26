@@ -11,6 +11,7 @@ import { contains, trimUndefined } from './utils';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { EmailProfile } from './models/EmailProfile';
+import { SubscriptionStateKind } from './models/SubscriptionStateKind';
 
 
 export default class OneSignalApi {
@@ -85,12 +86,13 @@ export default class OneSignalApi {
    * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
    * Used if the user clears his or her IndexedDB database and we need the user ID again.
    */
-  static getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier) {
+  static getUserIdFromSubscriptionIdentifier(appId: string, deviceType: number, identifier: string): Promise<string> {
     // Calling POST /players with an existing identifier returns us that player ID
     return OneSignalApi.post('players', {
       app_id: appId,
       device_type: deviceType,
-      identifier: identifier
+      identifier: identifier,
+      notification_types: SubscriptionStateKind.TemporaryWebRecord,
     }).then(response => {
       if (response && response.id) {
         return response.id;
@@ -237,7 +239,6 @@ export default class OneSignalApi {
     } catch (e) {
       if (e && Array.isArray(e.errors) && e.errors.length > 0 && contains(e.errors[0], 'app_id not found')) {
         throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
-
       } else throw e;
     }
   }

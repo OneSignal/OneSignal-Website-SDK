@@ -19,6 +19,7 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import Database from '../services/Database';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 
 export default class SubscriptionHelper {
   static async registerForPush(): Promise<Subscription> {
@@ -50,7 +51,10 @@ export default class SubscriptionHelper {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {
-          subscription = await context.subscriptionManager.subscribe();
+          const rawSubscription = await context.subscriptionManager.subscribe(
+            SubscriptionStrategyKind.ResubscribeExisting
+          );
+          subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
           EventHelper.triggerNotificationPermissionChanged();
           EventHelper.checkAndTriggerSubscriptionChanged();
@@ -71,7 +75,7 @@ export default class SubscriptionHelper {
 
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
-          rawSubscription = await context.subscriptionManager.subscribePartially();
+          rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
 
           // Update the permission to granted
           await context.permissionManager.updateStoredPermission();
@@ -188,14 +192,16 @@ export default class SubscriptionHelper {
   }
 
   /**
-   * Returns true if the current frame context is a child iFrame, and the parent
-   * is not HTTPS.
+   * From a child frame, returns true if the current frame context is insecure.
    *
-   * This is used to check if isPushNotificationsEnabled() should grab the
-   * service worker registration. In an HTTPS iframe of an HTTP page, getting
-   * the service worker registration would throw an error.
+   * This is used to check if isPushNotificationsEnabled() should grab the service worker
+   * registration. In an HTTPS iframe of an HTTP page, getting the service worker registration would
+   * throw an error.
+   *
+   * This method can trigger console warnings due to using ServiceWorkerContainer.getRegistration in
+   * an insecure frame.
    */
-  static async hasInsecureParentOrigin() {
+  static async isFrameContextInsecure() {
     // If we are the top frame, or service workers aren't available, don't run this check
     if (
       window === window.top ||

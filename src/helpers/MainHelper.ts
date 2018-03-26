@@ -17,7 +17,6 @@ import {
   capitalize,
   contains,
   getConsoleStyle,
-  getDeviceTypeForBrowser
 } from '../utils';
 import EventHelper from './EventHelper';
 import SubscriptionHelper from './SubscriptionHelper';
@@ -84,23 +83,19 @@ export default class MainHelper {
     return sessionStorage.getItem('ONESIGNAL_HTTP_PROMPT_SHOWN') == 'true';
   }
 
-  static checkAndTriggerNotificationPermissionChanged() {
-    Promise.all([
-      Database.get('Options', 'notificationPermission'),
-      OneSignal.getNotificationPermission()
-    ]).then(([previousPermission, currentPermission]) => {
-      if (previousPermission !== currentPermission) {
-        EventHelper.triggerNotificationPermissionChanged().then(() =>
-          Database.put('Options', {
-            key: 'notificationPermission',
-            value: currentPermission
-          })
-        );
-      }
-    });
+  static async checkAndTriggerNotificationPermissionChanged() {
+    const previousPermission = await Database.get('Options', 'notificationPermission');
+    const currentPermission = await OneSignal.getNotificationPermission();
+    if (previousPermission !== currentPermission) {
+      await EventHelper.triggerNotificationPermissionChanged();
+      await Database.put('Options', {
+        key: 'notificationPermission',
+        value: currentPermission
+      });
+    }
   }
 
-  static showNotifyButton() {
+  static async showNotifyButton() {
     if (Environment.isBrowser() && !OneSignal.notifyButton) {
       OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
       if (OneSignal.config.userConfig.bell) {
@@ -111,14 +106,13 @@ export default class MainHelper {
 
       const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
-        Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate()).then(predicateValue => {
-          if (predicateValue !== false) {
-            OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
-            OneSignal.notifyButton.create();
-          } else {
-            log.debug('Notify button display predicate returned false so not showing the notify button.');
-          }
-        });
+        const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
+        if (predicateValue !== false) {
+          OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
+          OneSignal.notifyButton.create();
+        } else {
+          log.debug('Notify button display predicate returned false so not showing the notify button.');
+        }
       } else {
         OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
         OneSignal.notifyButton.create();

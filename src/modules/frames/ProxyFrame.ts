@@ -47,7 +47,8 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger = new Postmam(window, this.options.origin, this.options.origin);
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.CONNECTED, this.onMessengerConnect.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, this.onProxyFrameInitializing.bind(this));
-    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION, this.onRemoteNotificationPermission.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
+      this.onRemoteNotificationPermission.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, this.onRemoteDatabaseGet.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, this.onRemoteDatabasePut.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, this.onRemoteDatabaseRemove.bind(this));
@@ -55,6 +56,14 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, this.onMarkPromptDismissed.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, this.onIsSubscribed.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, this.onUnsubscribeProxyFrame.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, this.onServiceWorkerState.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION, this.onWorkerVersion.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SUBSCRIPTION_EXPIRATION_STATE,
+      this.onSubscriptionExpirationState.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS,
+      this.onProcessExpiringSubscriptions.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
+      this.onGetSubscriptionState.bind(this));
     this.messenger.listen();
   }
 
@@ -197,6 +206,41 @@ export default class ProxyFrame extends RemoteFrame {
       await OneSignal.database.rebuild();
     }
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
+    return false;
+  }
+
+  async onServiceWorkerState(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const result = await context.serviceWorkerManager.getActiveState();
+    message.reply(result);
+    return false;
+  }
+
+  async onWorkerVersion(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const result = await context.serviceWorkerManager.getWorkerVersion();
+    message.reply(result);
+    return false;
+  }
+
+  async onSubscriptionExpirationState(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const result = await context.subscriptionManager.isSubscriptionExpiring();
+    message.reply(result);
+    return false;
+  }
+
+  async onProcessExpiringSubscriptions(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const result = await InitHelper.processExpiringSubscriptions();
+    message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
+    return false;
+  }
+
+  async onGetSubscriptionState(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const result = await context.subscriptionManager.getSubscriptionState();
+    message.reply(result);
     return false;
   }
 }

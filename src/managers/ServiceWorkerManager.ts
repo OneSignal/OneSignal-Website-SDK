@@ -13,6 +13,10 @@ import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
 import MainHelper from '../helpers/MainHelper';
 import { serializeAppConfig } from '../models/AppConfig';
+import { IntegrationKind } from '../models/IntegrationKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import NotImplementedError from '../errors/NotImplementedError';
+import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 
 export enum ServiceWorkerActiveState {
   /**
@@ -108,9 +112,34 @@ export class ServiceWorkerManager {
       no registration is active.
     */
 
-    // The worker messenger isn't available for HTTP workaround sites
-    if (typeof OneSignal !== 'undefined' && OneSignal.subscriptionHelper.isUsingSubscriptionWorkaround()) {
+    const integration = await SdkEnvironment.getIntegration();
+    if (integration === IntegrationKind.InsecureProxy) {
+      /* Service workers are not accessible on insecure origins */
       return ServiceWorkerActiveState.Indeterminate;
+    } else if (integration === IntegrationKind.SecureProxy) {
+      /* If the site setup is secure proxy, we're either on the top frame without access to the
+      registration, or the child proxy frame that does have access to the registration. */
+      const env = SdkEnvironment.getWindowEnv();
+      switch (env) {
+        case WindowEnvironmentKind.Host:
+        case WindowEnvironmentKind.CustomIframe:
+          /* Both these top-ish frames will need to ask the proxy frame to access the service worker
+          registration */
+          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
+          if (!proxyFrameHost) {
+            /* On init, this function may be called. Return a null state for now */
+            return ServiceWorkerActiveState.Indeterminate;
+          } else {
+            return await proxyFrameHost.runCommand<ServiceWorkerActiveState>(
+              OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE
+            );
+          }
+        case WindowEnvironmentKind.OneSignalSubscriptionPopup:
+          /* This is a top-level frame, so it can access the service worker registration */
+          break;
+        case WindowEnvironmentKind.OneSignalSubscriptionModal:
+          throw new NotImplementedError();
+      }
     }
 
     let workerRegistration: ServiceWorkerRegistration = null;
@@ -182,11 +211,17 @@ export class ServiceWorkerManager {
   }
 
   public async getWorkerVersion(): Promise<number> {
-    const workerState = await this.getActiveState();
-
     return new Promise<number>(async resolve => {
       if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
-        resolve(NaN);
+        const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
+        if (!proxyFrameHost) {
+          /* On init, this function may be called. Return a null state for now */
+          resolve(NaN);
+        } else {
+          const proxyWorkerVersion =
+            await proxyFrameHost.runCommand<number>(OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION);
+          resolve(proxyWorkerVersion);
+        }
       } else {
         this.context.workerMessenger.once(WorkerMessengerCommand.WorkerVersion, workerVersion => {
           resolve(workerVersion);

@@ -1,5 +1,8 @@
 export enum SubscriptionStateKind {
   Subscribed = 1,
   MutedByApi = -2,
-  MutedByUser = -3, // Does not exist yet
+  NotSubscribed = -10,
+  TemporaryWebRecord = -20,
+  PermissionRevoked = -21,
+  PushSubscriptionRevoked = -22,
 }

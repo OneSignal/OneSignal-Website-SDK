@@ -8,6 +8,7 @@ import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 import { Uuid } from './Uuid';
+import { redetectBrowserUserAgent } from "../utils";
 
 
 /**
@@ -39,6 +40,7 @@ export abstract class DeviceRecord implements Serializable {
     this.devicePlatform = this.getDevicePlatform();
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();
+    this.deliveryPlatform = this.getDeliveryPlatform();
     // Unimplemented properties are appId, deliveryPlatform, subscriptionState, and subscription
   }
 
@@ -53,6 +55,10 @@ export abstract class DeviceRecord implements Serializable {
     } else {
       return DevicePlatformKind.Desktop;
     }
+  }
+
+  isSafari(): boolean {
+    return Browser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
   }
 
   getBrowserOperatingSystem(): string {
@@ -110,6 +116,21 @@ export abstract class DeviceRecord implements Serializable {
     return "Unknown";
   }
 
+  getDeliveryPlatform(): DeliveryPlatformKind {
+    // For testing purposes, allows changing the browser user agent
+    const browser = redetectBrowserUserAgent();
+
+    if (this.isSafari()) {
+      return DeliveryPlatformKind.Safari;
+    } else if (Browser.firefox) {
+      return DeliveryPlatformKind.Firefox;
+    } else if (Browser.msedge) {
+      return DeliveryPlatformKind.Edge;
+    } else {
+      return DeliveryPlatformKind.ChromeLike;
+    }
+  }
+
   serialize() {
     const serializedBundle: any = {
       /* Old Parameters */
@@ -119,7 +140,7 @@ export abstract class DeviceRecord implements Serializable {
       device_os: this.browserVersion,
       sdk: this.sdkVersion,
       notification_types: this.subscriptionState,
-      /* New Paramters */
+      /* New Parameters */
       delivery_platform: this.deliveryPlatform,
       browser_name: this.browserName,
       browser_version: this.browserVersion,

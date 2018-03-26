@@ -12,6 +12,7 @@ import { RawPushSubscription } from '../../models/RawPushSubscription';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
 import Database from '../../services/Database';
 import Context from '../../models/Context';
+import { IntegrationKind } from '../../models/IntegrationKind';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -190,10 +191,10 @@ export default class SubscriptionPopupHost implements Disposable {
     this.messenger.stopPostMessageReceive();
 
     const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
-    const subscription = await subscriptionManager.registerSubscriptionWithOneSignal(rawPushSubscription);
+    const subscription = await subscriptionManager.registerSubscription(rawPushSubscription);
 
-    EventHelper.checkAndTriggerSubscriptionChanged();
-    MainHelper.checkAndTriggerNotificationPermissionChanged();
+    await EventHelper.checkAndTriggerSubscriptionChanged();
+    await MainHelper.checkAndTriggerNotificationPermissionChanged();
   }
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {

@@ -64,8 +64,12 @@ export function isPushNotificationsSupported() {
   if (browser.ios || (<any>browser).ipod || (<any>browser).iphone || (<any>browser).ipad)
     return false;
 
-  if (browser.msedge || browser.msie)
+  if (browser.msie)
     return false;
+
+    // Microsoft Edge
+  if (browser.msedge && Number(browser.version) >= 17.17063)
+    return true;
 
   // Facebook in-app browser
   if ((userAgent.indexOf("FBAN") > -1) || (userAgent.indexOf("FBAV") > -1)) {
@@ -225,28 +229,12 @@ export function hasCssClass(targetSelectorOrElement, cssClass) {
 
 var DEVICE_TYPES = {
   CHROME: 5,
-      SAFARI: 7,
-      FIREFOX: 8,
-      UNKNOWN: -99
+  SAFARI: 7,
+  FIREFOX: 8,
+  EDGE: 12,
+  UNKNOWN: -99
 };
 
-export function getDeviceTypeForBrowser() {
-  if (Browser.chrome ||
-    (<any>Browser).yandexbrowser ||
-    Browser.opera ||
-    (Browser as any).vivaldi ||
-    (Browser as any).samsungBrowser ||
-    (<any>Browser).chromium) {
-    return DEVICE_TYPES.CHROME;
-  } else if (Browser.firefox) {
-    return DEVICE_TYPES.FIREFOX;
-  } else if (Browser.safari) {
-    return DEVICE_TYPES.SAFARI;
-  } else {
-    log.error(`OneSignal: Unable to associate device type for browser ${Browser.name} ${Browser.version}`);
-    return DEVICE_TYPES.UNKNOWN;
-  }
-}
 export function getConsoleStyle(style) {
   if (style == 'code') {
     return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;

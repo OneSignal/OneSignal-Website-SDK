@@ -235,6 +235,8 @@ export default class Database {
     const dbOptedOut = await this.get<boolean>('Options', 'optedOut');
     // For backwards compatibility, we need to read from this if the above is not found
     const dbNotOptedOut = await this.get<boolean>('Options', 'subscription');
+    const createdAt = await this.get<number>('Options', 'subscriptionCreatedAt');
+    const expirationTime = await this.get<number>('Options', 'subscriptionExpirationTime');
 
     if (dbOptedOut != null) {
       subscription.optedOut = dbOptedOut;
@@ -245,6 +247,8 @@ export default class Database {
         subscription.optedOut = !dbNotOptedOut;
       }
     }
+    subscription.createdAt = createdAt;
+    subscription.expirationTime = expirationTime;
 
     return subscription;
   }
@@ -253,11 +257,20 @@ export default class Database {
     if (subscription.deviceId && subscription.deviceId.value) {
       await this.put('Ids', { type: 'userId', id: subscription.deviceId.value });
     }
-    if (subscription.subscriptionToken) {
+    if (typeof subscription.subscriptionToken !== "undefined") {
+      // Allow null subscriptions to be set
       await this.put('Ids', { type: 'registrationId', id: subscription.subscriptionToken });
     }
     if (subscription.optedOut != null) { // Checks if null or undefined, allows false
       await this.put('Options', { key: 'optedOut', value: subscription.optedOut });
+    }
+    if (subscription.createdAt != null) {
+      await this.put('Options', { key: 'subscriptionCreatedAt', value: subscription.createdAt});
+    }
+    if (subscription.expirationTime != null) {
+      await this.put('Options', { key: 'subscriptionExpirationTime', value: subscription.expirationTime});
+    } else {
+      await this.remove('Options', 'subscriptionExpirationTime');
     }
   }
 

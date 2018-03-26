@@ -9,7 +9,7 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig, AppUserConfig } from '../models/AppConfig';
+import { AppConfig, AppUserConfig, serializeAppConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
@@ -25,32 +25,83 @@ import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import Path from '../models/Path';
 import Context from '../models/Context';
-import { WorkerMessenger } from '../libraries/WorkerMessenger';
+import { WorkerMessenger, WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { DeviceRecord } from '../models/DeviceRecord';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PageViewMetricEngagement } from '../managers/MetricsManager';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import { IntegrationKind } from '../models/IntegrationKind';
+import { Subscription } from "../models/Subscription";
+import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 
 declare var OneSignal: any;
 
 export default class InitHelper {
-  static storeInitialValues() {
-    return Promise.all([
-      OneSignal.isPushNotificationsEnabled(),
-      OneSignal.getNotificationPermission(),
-      OneSignal.isOptedOut()
-    ]).then(([isPushEnabled, notificationPermission, isOptedOut]) => {
-      LimitStore.put('subscription.optedOut', isOptedOut);
-      return Promise.all([
-        Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled }),
-        Database.put('Options', {
-          key: 'notificationPermission',
-          value: notificationPermission
-        })
-      ]);
+  static async storeInitialValues() {
+    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const notificationPermission = await OneSignal.getNotificationPermission();
+    const isOptedOut = await OneSignal.isOptedOut();
+    LimitStore.put('subscription.optedOut', isOptedOut);
+    await Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled }),
+    await Database.put('Options', {
+      key: 'notificationPermission',
+      value: notificationPermission
     });
+  }
+
+  /** Entry method for any environment that sets expiring subscriptions. */
+  public static async processExpiringSubscriptions() {
+    const context: Context = OneSignal.context;
+
+    log.debug("Checking subscription expiration...");
+    const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
+    if (!isSubscriptionExpiring) {
+      log.debug("Subscription is not considered expired.");
+      return;
+    }
+
+    const integrationKind = await SdkEnvironment.getIntegration();
+    const windowEnv = await SdkEnvironment.getWindowEnv();
+
+    log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
+    switch (integrationKind) {
+      /*
+        Resubscribe via the service worker.
+
+        For Secure, we can definitely resubscribe via the current page, but for SecureProxy, we
+        used to not be able to subscribe for push within secure child frames. The common supported
+        and safe way is to resubscribe via the service worker.
+       */
+      case IntegrationKind.Secure:
+        const rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+        await context.subscriptionManager.registerSubscription(rawPushSubscription);
+        break;
+      case IntegrationKind.SecureProxy:
+        if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
+          const newSubscription = await new Promise<Subscription>(resolve => {
+            context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
+              resolve(Subscription.deserialize(subscription));
+            });
+            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, serializeAppConfig(context.appConfig));
+          });
+          log.debug("Finished registering brand new subscription:", newSubscription);
+        } else {
+          const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
+          await proxyFrame.runCommand(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS);
+        }
+        break;
+      case IntegrationKind.InsecureProxy:
+        /*
+          We can't really do anything here except remove a value checked by
+          isPushNotificationsEnabled to simulate unsubscribing.
+         */
+        await Database.remove("Ids", "registrationId");
+        log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
+        break;
+    }
   }
 
   /**
@@ -60,15 +111,14 @@ export default class InitHelper {
    * @private
    */
   static async onSdkInitialized() {
+    const context: Context = OneSignal.context;
+
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
     // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites, since the iframe is needed for communication
-    InitHelper.storeInitialValues();
-    InitHelper.installNativePromptPermissionChangedHook();
-
-    const context: Context = OneSignal.context;
-
-    if (await OneSignal.getNotificationPermission() === NotificationPermission.Granted) {
+    await InitHelper.storeInitialValues();
+    await InitHelper.installNativePromptPermissionChangedHook();
+    if (await context.permissionManager.getNotificationPermission(context.appConfig.safariWebId) === NotificationPermission.Granted) {
       /*
         If the user has already granted permission, the user has previously
         already subscribed. Don't show welcome notifications if the user is
@@ -80,49 +130,33 @@ export default class InitHelper {
     if (
       navigator.serviceWorker &&
       window.location.protocol === 'https:' &&
-      !await SubscriptionHelper.hasInsecureParentOrigin()
+      !await SubscriptionHelper.isFrameContextInsecure()
     ) {
-      navigator.serviceWorker
-        .getRegistration()
-        .then(registration => {
-          if (registration && registration.active) {
-            MainHelper.establishServiceWorkerChannel();
-          }
-        })
-        .catch(e => {
-          if (e.code === 9) {
-            // Only secure origins are allowed
-            if (
-              location.protocol === 'http:' ||
-              SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame
-            ) {
-              // This site is an HTTP site with an <iframe>
-              // We can no longer register service workers since Chrome 42
-              log.debug(`Expected error getting service worker registration on ${location.href}:`, e);
-            }
-          } else {
-            log.error(`Error getting Service Worker registration on ${location.href}:`, e);
-          }
-        });
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration && registration.active) {
+          MainHelper.establishServiceWorkerChannel();
+        }
+      } catch (e) { }
     }
 
-    MainHelper.showNotifyButton();
+    await InitHelper.processExpiringSubscriptions();
+    await MainHelper.showNotifyButton();
 
     if (Browser.safari && OneSignal.config.userConfig.autoRegister === false) {
-      OneSignal.isPushNotificationsEnabled(enabled => {
-        if (enabled) {
-          /*  The user is on Safari and *specifically* set autoRegister to false.
-           The normal case for a user on Safari is to not set anything related to autoRegister.
-           With autoRegister false, we don't automatically show the permission prompt on Safari.
-           However, if push notifications are already enabled, we're actually going to make the same
-           subscribe call and register the device token, because this will return the same device
-           token and allow us to update the user's session count and last active.
-           For sites that omit autoRegister, autoRegister is assumed to be true. For Safari, the session count
-           and last active is updated from this registration call.
-           */
-          InitHelper.sessionInit({ __sdkCall: true });
-        }
-      });
+      const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+      if (isPushEnabled) {
+        /*  The user is on Safari and *specifically* set autoRegister to false.
+          The normal case for a user on Safari is to not set anything related to autoRegister.
+          With autoRegister false, we don't automatically show the permission prompt on Safari.
+          However, if push notifications are already enabled, we're actually going to make the same
+          subscribe call and register the device token, because this will return the same device
+          token and allow us to update the user's session count and last active.
+          For sites that omit autoRegister, autoRegister is assumed to be true. For Safari, the session count
+          and last active is updated from this registration call.
+          */
+        InitHelper.sessionInit({ __sdkCall: true });
+      }
     }
 
     if (SubscriptionHelper.isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
@@ -137,14 +171,15 @@ export default class InitHelper {
       if (isPushEnabled) {
         const context: Context = OneSignal.context;
         const { deviceId } = await Database.getSubscription();
-        OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
+        await OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
       }
     }
 
-    InitHelper.updateEmailSessionCount();
-    OneSignal.context.cookieSyncer.install();
-    InitHelper.showPromptsFromWebConfigEditor();
-    context.metricsManager.reportPageView();
+    await InitHelper.updateEmailSessionCount();
+    context.cookieSyncer.install();
+    await InitHelper.showPromptsFromWebConfigEditor();
+
+    Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
   }
 
   public static async updateEmailSessionCount() {
@@ -172,16 +207,15 @@ export default class InitHelper {
     }
   }
 
-  static installNativePromptPermissionChangedHook() {
+  static async installNativePromptPermissionChangedHook() {
     if (navigator.permissions && !(Browser.firefox && Number(Browser.version) <= 45)) {
       OneSignal._usingNativePermissionHook = true;
-      // If the browser natively supports hooking the subscription prompt permission change event
-      //     use it instead of our SDK method
-      navigator.permissions.query({ name: 'notifications' }).then(function(permissionStatus) {
-        permissionStatus.onchange = function() {
-          EventHelper.triggerNotificationPermissionChanged();
-        };
-      });
+      // If the browser natively supports hooking the subscription prompt permission change event,
+      // use it instead of our SDK method
+      const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+      permissionStatus.onchange = function() {
+        EventHelper.triggerNotificationPermissionChanged();
+      };
     }
   }
 

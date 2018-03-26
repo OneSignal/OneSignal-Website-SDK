@@ -8,12 +8,14 @@ import fetch from 'node-fetch';
 import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { ServiceWorkerContainer } from '../mocks/service-workers/ServiceWorkerContainer';
+import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
 import * as objectAssign from 'object-assign';
 import IndexedDb from '../../../src/services/IndexedDb';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
-import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, IntegrationKind } from '../../../src/models/AppConfig';
+import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { Uuid } from '../../../src/models/Uuid';
+import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
 
 
 var global = new Function('return this')();
@@ -32,7 +34,9 @@ export enum BrowserUserAgent {
   iPad = "Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B334b Safari/531.21.10",
   iPhone = "Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25",
   iPod = "Mozilla/5.0 (iPod touch; CPU iPhone OS 7_0_3 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B511 Safari/9537.53",
-  Edge = "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10136",
+  EdgeUnsupported = "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10136",
+  EdgeUnsupported2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/17.17062",
+  EdgeSupported = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/17.17074",
   IE11 = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko",
   FirefoxMobileUnsupported = "Mozilla/5.0 (Android 4.4; Mobile; rv:47.0) Gecko/47.0 Firefox/47.0",
   FirefoxTabletUnsupported = "Mozilla/5.0 (Android 4.4; Mobile ; rv:47.0) Gecko/47.0 Firefox/47.0",
@@ -132,24 +136,23 @@ export class TestEnvironment {
     };
   }
 
-  static async stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerTestEnvironment> {
+  static stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerTestEnvironment> {
     if (!config)
       config = {};
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
     var serviceWorkerScope = new ServiceWorkerGlobalScope();
-    objectAssign(global, serviceWorkerScope);
-    global.skipWaiting = serviceWorkerScope.skipWaiting;
-    global.addEventListener = serviceWorkerScope.addEventListener;
-    global.trigger = serviceWorkerScope.trigger;
-    global.self = global;
     global.fetch = fetch;
     global.location = config.url ? config.url : new URL('https://localhost:3001/webpush/sandbox?https=1');
-    // global.OneSignal = new ServiceWorker({
-    //   databaseName: Random.getRandomString(6)
-    // });
-    // global.OneSignal.config = config.initOptions ? config.initOptions : {};
-    // global.OneSignal.initialized = true;
-    // global.OneSignal.getNotifications = () => global.self.registration.notifications;
+
+    // Install a fake service worker
+    const workerInstance = new MockServiceWorker();
+    workerInstance.scriptURL = "https://site.com";
+    workerInstance.state = "activated";
+    serviceWorkerScope.registration = new ServiceWorkerRegistration();
+    serviceWorkerScope.registration.active = workerInstance;
+
+    Object.assign(global, serviceWorkerScope);
+    global.self = global;
     return global;
   }
 
@@ -261,10 +264,10 @@ export class TestEnvironment {
     };
   }
 
-  static getFakeServerAppConfig(integrationKind: IntegrationKind): ServerAppConfig {
+  static getFakeServerAppConfig(configIntegrationKind: ConfigIntegrationKind, appId?: Uuid): ServerAppConfig {
     return {
       success: true,
-      app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      app_id: appId ? appId.value : '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       features: {
         restrict_origin: {
           enable: false,
@@ -355,7 +358,7 @@ export class TestEnvironment {
           notificationDisplayedHook: undefined
         },
         integration: {
-          kind: integrationKind
+          kind: configIntegrationKind
         },
         serviceWorker: {
           path: undefined,

@@ -10,11 +10,15 @@ import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
 import Context from '../models/Context';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
-import { contains, getConsoleStyle, getDeviceTypeForBrowser, isValidUuid, trimUndefined } from '../utils';
+import { contains, getConsoleStyle, isValidUuid, trimUndefined } from '../utils';
 import { Uuid } from '../models/Uuid';
 import { AppConfig, deserializeAppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import ConfigManager from '../managers/ConfigManager';
+import { RawPushSubscription } from '../models/RawPushSubscription';
+import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
+import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -90,7 +94,9 @@ export class ServiceWorker {
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
     self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
-    self.addEventListener('pushsubscriptionchange', ServiceWorker.onPushSubscriptionChange);
+    self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
+      event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
+    });
     /*
       According to
       https://w3c.github.io/ServiceWorker/#run-service-worker-algorithm:
@@ -131,8 +137,17 @@ export class ServiceWorker {
       const appConfig = deserializeAppConfig(appConfigBundle);
       log.debug('[Service Worker] Received subscribe message.');
       const context = new Context(appConfig);
-      const subscription = await context.subscriptionManager.subscribe();
+      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
+      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
+    });
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SubscribeNew, async (appConfigBundle: any) => {
+      const appConfig = deserializeAppConfig(appConfigBundle);
+      log.debug('[Service Worker] Received subscribe new message.');
+      const context = new Context(appConfig);
+      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
+      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.SubscribeNew, subscription.serialize());
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (appConfigBundle: any) => {
       log.debug('[Service Worker] Received AMP subscription state message.');
@@ -153,7 +168,8 @@ export class ServiceWorker {
         appId: appId.value
       });
       const context = new Context(appConfig);
-      const subscription = await context.subscriptionManager.subscribe();
+      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
+      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
@@ -722,9 +738,6 @@ export class ServiceWorker {
                 log.debug('Not navigating because link is special.')
               }
             } catch (e) {
-              console.error("Failed to navigate.");
-              console.error("Failed to navigate because:", e);
-              console.error("Failed to navigate to " + launchUrl + " because:", e);
               log.error("Failed to navigate:", client, launchUrl, e);
             }
           } else {
@@ -785,17 +798,88 @@ export class ServiceWorker {
     event.waitUntil(self.clients.claim());
   }
 
-  static onPushSubscriptionChange(event) {
-    // Subscription expired
+  static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
     log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
-  }
 
-  /**
-   * Simulates a service worker event.
-   * @param eventName An event name like 'pushsubscriptionchange'.
-   */
-  static simulateEvent(eventName) {
-    (self as any).dispatchEvent(new ExtendableEvent(eventName));
+    const appId = await ServiceWorker.getAppId();
+    if (!appId || !appId.value) {
+      // Without an app ID, we can't make any calls
+      return;
+    }
+    const appConfig = await new ConfigManager().getAppConfig({
+      appId: appId.value
+    });
+    if (!appConfig) {
+      // Without a valid app config (e.g. deleted app), we can't make any calls
+      return;
+    }
+    const context = new Context(appConfig);
+
+    // Get our current device ID
+    let deviceIdExists: boolean;
+    {
+      let { deviceId } = await Database.getSubscription();
+      deviceIdExists = !!(deviceId && deviceId.value);
+      if (!deviceIdExists && event.oldSubscription) {
+        // We don't have the device ID stored, but we can look it up from our old subscription
+        deviceId = new Uuid(await OneSignalApi.getUserIdFromSubscriptionIdentifier(
+          appId.value,
+          PushDeviceRecord.prototype.getDeliveryPlatform(),
+          event.oldSubscription.endpoint
+        ));
+
+        // Store the device ID, so it can be looked up when subscribing
+        const subscription = await Database.getSubscription();
+        subscription.deviceId = deviceId;
+        await Database.setSubscription(subscription);
+      }
+      deviceIdExists = !!(deviceId && deviceId.value);
+    }
+
+    // Get our new push subscription
+    let rawPushSubscription: RawPushSubscription;
+
+    // Set it initially by the provided new push subscription
+    const providedNewSubscription = event.newSubscription;
+    if (providedNewSubscription) {
+      rawPushSubscription = RawPushSubscription.setFromW3cSubscription(providedNewSubscription);
+    } else {
+      // Otherwise set our push registration by resubscribing
+      try {
+        rawPushSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+      } catch (e) {
+        // Let rawPushSubscription be null
+      }
+    }
+    const hasNewSubscription = !!rawPushSubscription;
+
+    if (!deviceIdExists && !hasNewSubscription) {
+      await Database.remove('Ids', 'userId');
+      await Database.remove('Ids', 'registrationId');
+    } else {
+      /*
+        Determine subscription state we should set new record to.
+
+        If the permission is revoked, we should set the subscription state to permission revoked.
+       */
+      let subscriptionState: null | SubscriptionStateKind = null;
+      const pushPermission = await navigator.permissions.query({name:'push', userVisibleOnly:true});
+      if (pushPermission !== "granted") {
+        subscriptionState = SubscriptionStateKind.PermissionRevoked;
+      } else if (!rawPushSubscription) {
+        /*
+          If it's not a permission revoked issue, the subscription expired or was revoked by the
+          push server.
+         */
+        subscriptionState = SubscriptionStateKind.PushSubscriptionRevoked;
+      }
+
+      // rawPushSubscription may be null if no push subscription was retrieved
+      await context.subscriptionManager.registerSubscription(
+        rawPushSubscription,
+        subscriptionState
+      );
+    }
   }
 
   /**
@@ -898,7 +982,7 @@ export class ServiceWorker {
                     self.registration.pushManager.getSubscription().then(subscription => subscription.endpoint)
                   ])
                 .then(([appId, identifier]) => {
-                  let deviceType = getDeviceTypeForBrowser();
+                  let deviceType = PushDeviceRecord.prototype.getDeliveryPlatform();
                   // Get the user ID from OneSignal
                   return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId.toString(), deviceType, identifier).then(recoveredUserId => {
                     if (recoveredUserId) {

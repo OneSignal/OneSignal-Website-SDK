@@ -7,3 +7,13 @@ declare module "OneSignal" {
 interface SetEmailOptions {
   emailAuthHash: string;
 }
+
+interface PushSubscriptionState {
+  subscribed: boolean;
+  optedOut: boolean;
+}
+
+interface SafarPushSubscriptionState {
+  deviceToken: string | null;
+  permission: "granted" | "denied" | "default";
+}

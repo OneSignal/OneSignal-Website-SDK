@@ -3,7 +3,7 @@ import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { Uuid } from "../../../src/models/Uuid";
 import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/libraries/WorkerMessenger';
 import Context from '../../../src/models/Context';
-import { IntegrationKind } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import test, { TestContext } from "ava";
 
 

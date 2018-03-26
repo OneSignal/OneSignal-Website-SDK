@@ -1,3 +1,4 @@
+import Environment from './Environment';
 
 export default class OneSignalStub {
 
@@ -25,6 +26,10 @@ export default class OneSignalStub {
       var functionName = item.shift();
       OneSignal[functionName].apply(null, item);
     }
+  }
+
+  static VERSION() {
+    return Environment.version();
   }
 }
 

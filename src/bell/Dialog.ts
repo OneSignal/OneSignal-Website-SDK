@@ -26,7 +26,7 @@ export default class Dialog extends AnimatedElement {
 
   getPlatformNotificationIcon() {
     if (this.notificationIcons) {
-      if (isChromeLikeBrowser() || Browser.firefox) {
+      if (isChromeLikeBrowser() || Browser.firefox || Browser.msedge) {
         return this.notificationIcons.chrome || this.notificationIcons.safari;
       }
       else if (Browser.safari) {

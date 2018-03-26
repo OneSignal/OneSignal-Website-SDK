@@ -1,4 +1,5 @@
 import { Serializable } from './Serializable';
+import { SubscriptionStateKind } from './SubscriptionStateKind';
 export class RawPushSubscription implements Serializable {
   /**
      * The GCM/FCM registration token, along with the full URL. Not used for Safari.
@@ -47,9 +48,11 @@ export class RawPushSubscription implements Serializable {
    *
    * @param pushSubscription A native browser W3C push subscription.
    */
-  public setFromW3cSubscription(pushSubscription: PushSubscription) {
+  public static setFromW3cSubscription(pushSubscription: PushSubscription): RawPushSubscription {
+    const rawPushSubscription = new RawPushSubscription();
+
     if (pushSubscription) {
-      this.w3cEndpoint = new URL(pushSubscription.endpoint);
+      rawPushSubscription.w3cEndpoint = new URL(pushSubscription.endpoint);
 
       // Retrieve p256dh and auth for encrypted web push protocol
       if (pushSubscription.getKey) {
@@ -70,15 +73,17 @@ export class RawPushSubscription implements Serializable {
         if (p256dh) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
           let p256dh_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh)));
-          this.w3cP256dh = p256dh_base64encoded;
+          rawPushSubscription.w3cP256dh = p256dh_base64encoded;
         }
         if (auth) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
           let auth_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(auth)));
-          this.w3cAuth = auth_base64encoded;
+          rawPushSubscription.w3cAuth = auth_base64encoded;
         }
       }
     }
+
+    return rawPushSubscription;
   }
 
   /**
@@ -107,6 +112,9 @@ export class RawPushSubscription implements Serializable {
 
   public static deserialize(bundle: any): RawPushSubscription {
     const subscription = new RawPushSubscription();
+    if (!bundle) {
+      return subscription;
+    }
     try {
       subscription.w3cEndpoint = new URL(bundle.w3cEndpoint);
     } catch (e) {

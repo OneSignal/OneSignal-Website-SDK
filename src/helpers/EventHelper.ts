@@ -6,6 +6,8 @@ import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { decodeHtmlEntities, logMethodCall } from '../utils';
 import MainHelper from './MainHelper';
+import Context from "../models/Context";
+import SdkEnvironment from "../managers/SdkEnvironment";
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -18,18 +20,22 @@ export default class EventHelper {
 
   static async checkAndTriggerSubscriptionChanged() {
     logMethodCall('checkAndTriggerSubscriptionChanged');
-    const pushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const context: Context = OneSignal.context;
+    const subscriptionState = await context.subscriptionManager.getSubscriptionState();
     const appState = await Database.getAppState();
     const { lastKnownPushEnabled } = appState;
-    const didStateChange = lastKnownPushEnabled === null || pushEnabled !== lastKnownPushEnabled;
+    const didStateChange = (
+      lastKnownPushEnabled === null ||
+      subscriptionState.subscribed !== lastKnownPushEnabled
+    );
     if (!didStateChange) return;
     log.info(
       `The user's subscription state changed from ` +
-        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${pushEnabled}`
+        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
     );
-    appState.lastKnownPushEnabled = pushEnabled;
+    appState.lastKnownPushEnabled = subscriptionState.subscribed;
     await Database.setAppState(appState);
-    EventHelper.triggerSubscriptionChanged(pushEnabled);
+    EventHelper.triggerSubscriptionChanged(subscriptionState.subscribed);
   }
 
   static async _onSubscriptionChanged(newSubscriptionState) {
@@ -105,27 +111,23 @@ export default class EventHelper {
     }
   }
 
-  static triggerNotificationPermissionChanged(updateIfIdentical = false) {
+  static async triggerNotificationPermissionChanged(updateIfIdentical = false) {
     let newPermission, isUpdating;
-    return Promise.all([OneSignal.getNotificationPermission(), Database.get('Options', 'notificationPermission')])
-      .then(([currentPermission, previousPermission]) => {
-        newPermission = currentPermission;
-        isUpdating = currentPermission !== previousPermission || updateIfIdentical;
+    const currentPermission = await OneSignal.getNotificationPermission();
+    const previousPermission = await Database.get('Options', 'notificationPermission');
 
-        if (isUpdating) {
-          return Database.put('Options', {
-            key: 'notificationPermission',
-            value: currentPermission
-          });
-        } else return null;
-      })
-      .then(() => {
-        if (isUpdating) {
-          Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-            to: newPermission
-          });
-        }
+    newPermission = currentPermission;
+    isUpdating = currentPermission !== previousPermission || updateIfIdentical;
+
+    if (isUpdating) {
+      await Database.put('Options', {
+        key: 'notificationPermission',
+        value: currentPermission
       });
+      Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
+        to: newPermission
+      });
+    }
   }
 
   static triggerSubscriptionChanged(to) {
