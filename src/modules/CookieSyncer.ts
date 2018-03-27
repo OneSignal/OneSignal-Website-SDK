@@ -35,17 +35,19 @@ export default class CookieSyncer {
   }
 
   install() {
-    if (!this.isFeatureEnabled) {
-      log.debug('Cookie sync feature is disabled.');
-      return;
-    }
     if (window.top !== window) {
       /* Only process for top frames */
       return;
     }
 
     const frameUrl = this.getFrameOrigin();
-    frameUrl.pathname = "/webPushAnalytics";
+
+    if (this.isFeatureEnabled) {
+      frameUrl.pathname = '/webPushAnalytics';
+      frameUrl.search = `sync=true&appId=${this.PUBLISHER_ID}`;
+    } else {
+      frameUrl.pathname = "/webPushAnalytics";
+    }
 
     const iframe = document.createElement("iframe");
     iframe.style.display = "none";
