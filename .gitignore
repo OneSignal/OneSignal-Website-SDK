@@ -2,7 +2,9 @@
 node_modules/
 bower_components/
 dist/
-build
+build/ts-to-es6
+build/bundles
+build/javascript
 /config.json
 .vscode/
 
@@ -15,6 +17,3 @@ dist/Dev-OneSignalSDK.js.map
 
 coverage
 .nyc_output
-
-!build/scripts
-!build/config

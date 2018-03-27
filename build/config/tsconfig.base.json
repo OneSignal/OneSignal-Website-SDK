@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "alwaysStrict": true,
+    "strictNullChecks": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "allowSyntheticDefaultImports": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "diagnostics": false,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "module": "ES6",
+    "moduleResolution": "node",
+    "noEmitHelpers": true,
+    "pretty": true,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "../ts-to-es6",
+    "rootDir": "../../",
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "es6",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "target": "ESNext",
+    "mapRoot": "build/ts-to-es6"
+  }
+}
