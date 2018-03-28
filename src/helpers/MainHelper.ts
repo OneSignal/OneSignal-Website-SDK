@@ -2,7 +2,6 @@ import bowser from 'bowser';
 
 
 
-import Bell from '../bell/Bell';
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
@@ -93,37 +92,6 @@ export default class MainHelper {
         key: 'notificationPermission',
         value: currentPermission
       });
-    }
-  }
-
-  static async showNotifyButton() {
-    if (Environment.isBrowser() && !OneSignal.notifyButton) {
-      OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
-      if (OneSignal.config.userConfig.bell) {
-        // If both bell and notifyButton, notifyButton's options take precedence
-        OneSignal.config.userConfig.bell = {
-          ...OneSignal.config.userConfig.bell,
-          ...OneSignal.config.userConfig.notifyButton
-        };
-        OneSignal.config.userConfig.notifyButton = {
-          ...OneSignal.config.userConfig.notifyButton,
-          ...OneSignal.config.userConfig.bell
-        };
-      }
-
-      const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
-      if (displayPredicate && typeof displayPredicate === 'function') {
-        const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
-        if (predicateValue !== false) {
-          OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
-          OneSignal.notifyButton.create();
-        } else {
-          Log.debug('Notify button display predicate returned false so not showing the notify button.');
-        }
-      } else {
-        OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
-        OneSignal.notifyButton.create();
-      }
     }
   }
 

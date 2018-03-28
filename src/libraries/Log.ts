@@ -26,7 +26,7 @@ export default class Log {
     for (const nativeMethod of Object.keys(methods)) {
       const nativeMethodExists = typeof console[nativeMethod] !== "undefined";
       const methodToMapTo = methods[nativeMethod];
-      const shouldMap = nativeMethodExists && typeof (__PROCESSED_WITH_ROLLUP__ as any) !== "undefined";
+      const shouldMap = nativeMethodExists;
 
       if (shouldMap) {
         this[methodToMapTo] = console[nativeMethod].bind(console);

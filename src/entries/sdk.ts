@@ -1,3 +1,4 @@
+"use runtime-nodent";
 import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from '../utils';
 import Log from '../libraries/Log';
 import OneSignal from "../OneSignal";

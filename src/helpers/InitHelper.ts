@@ -36,6 +36,8 @@ import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
+import Environment from '../Environment';
+import Bell from '../bell/Bell';
 
 declare var OneSignal: any;
 
@@ -141,7 +143,7 @@ export default class InitHelper {
     }
 
     await InitHelper.processExpiringSubscriptions();
-    await MainHelper.showNotifyButton();
+    await InitHelper.showNotifyButton();
 
     if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
@@ -180,6 +182,37 @@ export default class InitHelper {
     await InitHelper.showPromptsFromWebConfigEditor();
 
     Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  }
+
+  private static async showNotifyButton() {
+    if (Environment.isBrowser() && !OneSignal.notifyButton) {
+      OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
+      if (OneSignal.config.userConfig.bell) {
+        // If both bell and notifyButton, notifyButton's options take precedence
+        OneSignal.config.userConfig.bell = {
+          ...OneSignal.config.userConfig.bell,
+          ...OneSignal.config.userConfig.notifyButton
+        };
+        OneSignal.config.userConfig.notifyButton = {
+          ...OneSignal.config.userConfig.notifyButton,
+          ...OneSignal.config.userConfig.bell
+        };
+      }
+
+      const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
+      if (displayPredicate && typeof displayPredicate === 'function') {
+        const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
+        if (predicateValue !== false) {
+          OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
+          OneSignal.notifyButton.create();
+        } else {
+          Log.debug('Notify button display predicate returned false so not showing the notify button.');
+        }
+      } else {
+        OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
+        OneSignal.notifyButton.create();
+      }
+    }
   }
 
   public static async updateEmailSessionCount() {
