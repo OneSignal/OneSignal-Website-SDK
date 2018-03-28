@@ -147,35 +147,4 @@ export default class SubscriptionHelper {
 
     return subscription;
   }
-
-  /**
-   * From a child frame, returns true if the current frame context is insecure.
-   *
-   * This is used to check if isPushNotificationsEnabled() should grab the service worker
-   * registration. In an HTTPS iframe of an HTTP page, getting the service worker registration would
-   * throw an error.
-   *
-   * This method can trigger console warnings due to using ServiceWorkerContainer.getRegistration in
-   * an insecure frame.
-   */
-  static async isFrameContextInsecure() {
-    // If we are the top frame, or service workers aren't available, don't run this check
-    if (
-      window === window.top ||
-      !('serviceWorker' in navigator) ||
-      typeof navigator.serviceWorker.getRegistration === 'undefined'
-    ) {
-      return false;
-    }
-    try {
-      await navigator.serviceWorker.getRegistration();
-      return false;
-    } catch (e) {
-      return true;
-    }
-  }
-
-  static isInsecureOrigin() {
-    return window.location.protocol === "http:";
-  }
 }

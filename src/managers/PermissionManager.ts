@@ -5,6 +5,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidAr
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
 import MainHelper from '../helpers/MainHelper';
+import SdkEnvironment from './SdkEnvironment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -77,7 +78,7 @@ export default class PermissionManager {
       return this.getSafariNotificationPermission(safariWebId);
     } else {
       // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-      const isUsingOneSignalSubdomain = await isUsingSubscriptionWorkaround();
+      const isUsingOneSignalSubdomain = isUsingSubscriptionWorkaround();
 
       if (isUsingOneSignalSubdomain) {
         /*
@@ -156,9 +157,9 @@ export default class PermissionManager {
             permission === NotificationPermission.Denied &&
             (
               this.isCurrentFrameContextCrossOrigin() ||
-              await SubscriptionHelper.isFrameContextInsecure() ||
+              await SdkEnvironment.isFrameContextInsecure() ||
               isUsingSubscriptionWorkaround() ||
-              SubscriptionHelper.isInsecureOrigin()
+              SdkEnvironment.isInsecureOrigin()
             )
            );
   }

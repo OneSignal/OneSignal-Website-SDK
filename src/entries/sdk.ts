@@ -20,9 +20,11 @@ export function oneSignalSdkInit() {
 
     if (isPushNotificationsSupported()) {
       (window as any).OneSignal = OneSignal;
+      //exports = OneSignal;
     } else {
       Log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
       (window as any).OneSignal = OneSignalStub;
+      //exports = OneSignalStub;
     }
 
     if (predefinedOneSignalPushes)

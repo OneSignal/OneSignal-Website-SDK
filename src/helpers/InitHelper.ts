@@ -66,7 +66,7 @@ export default class InitHelper {
     }
 
     const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = await SdkEnvironment.getWindowEnv();
+    const windowEnv = SdkEnvironment.getWindowEnv();
 
     Log.debug("Subscription is considered expiring. Current Integration:", integrationKind);
     switch (integrationKind) {
@@ -132,7 +132,7 @@ export default class InitHelper {
     if (
       navigator.serviceWorker &&
       window.location.protocol === 'https:' &&
-      !await SubscriptionHelper.isFrameContextInsecure()
+      !await SdkEnvironment.isFrameContextInsecure()
     ) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();

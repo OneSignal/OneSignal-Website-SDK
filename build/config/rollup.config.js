@@ -31,32 +31,36 @@ const ROLLUP_ANALYZE_OPTIONS = {
 
 const PRODUCTION_JS_PLUGINS = [
   nodent({
-    promises: true,
-    noRuntime: true
-  }),
-  uglify({
     sourceMap: true,
-    compress: {
-      drop_console: true,
-      drop_debugger: true,
-    },
-    mangle: {
-      reserved: [
-        'AlreadySubscribedError',
-        'InvalidArgumentError',
-        'InvalidStateError',
-        'NotSubscribedError',
-        'PermissionMessageDismissedError',
-        'PushNotSupportedError',
-        'PushPermissionNotGrantedError',
-        'SdkInitError',
-        'TimeoutError'
-      ]
-    },
-    output: {
-      comments: false
-    }
+    promises: true,
+    generators: false,
+    noRuntime: false,
+    runtimePattern: "directive",
+    useRuntimeModule: false,
   }),
+  // uglify({
+  //   sourceMap: true,
+  //   compress: {
+  //     drop_console: true,
+  //     drop_debugger: true,
+  //   },
+  //   mangle: {
+  //     reserved: [
+  //       'AlreadySubscribedError',
+  //       'InvalidArgumentError',
+  //       'InvalidStateError',
+  //       'NotSubscribedError',
+  //       'PermissionMessageDismissedError',
+  //       'PushNotSupportedError',
+  //       'PushPermissionNotGrantedError',
+  //       'SdkInitError',
+  //       'TimeoutError'
+  //     ]
+  //   },
+  //   output: {
+  //     comments: false
+  //   }
+  // }),
   analyze(ROLLUP_ANALYZE_OPTIONS),
 ];
 

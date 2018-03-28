@@ -75,33 +75,33 @@ function generateWebpackConfig() {
     mode: process.env.ENV === "production" ? "production" : "development",
     optimization: {
        minimizer: [
-        new UglifyJsPlugin({
-          sourceMap: true,
-          uglifyOptions: {
-            sourceMap: true,
-            compress: {
-              drop_console: false,
-              drop_debugger: false,
-              warnings: false,
-            },
-            mangle: process.env.ENV === 'production' ? {
-              reserved: [
-                'AlreadySubscribedError',
-                'InvalidArgumentError',
-                'InvalidStateError',
-                'NotSubscribedError',
-                'PermissionMessageDismissedError',
-                'PushNotSupportedError',
-                'PushPermissionNotGrantedError',
-                'SdkInitError',
-                'TimeoutError'
-              ]
-            } : false,
-            output: {
-              comments: false
-            }
-          }
-        })
+        // new UglifyJsPlugin({
+        //   sourceMap: true,
+        //   uglifyOptions: {
+        //     sourceMap: true,
+        //     compress: {
+        //       drop_console: false,
+        //       drop_debugger: false,
+        //       warnings: false,
+        //     },
+        //     mangle: process.env.ENV === 'production' ? {
+        //       reserved: [
+        //         'AlreadySubscribedError',
+        //         'InvalidArgumentError',
+        //         'InvalidStateError',
+        //         'NotSubscribedError',
+        //         'PermissionMessageDismissedError',
+        //         'PushNotSupportedError',
+        //         'PushPermissionNotGrantedError',
+        //         'SdkInitError',
+        //         'TimeoutError'
+        //       ]
+        //     } : false,
+        //     output: {
+        //       comments: false
+        //     }
+        //   }
+        // })
       ]
     },
     module: {
@@ -132,13 +132,7 @@ function generateWebpackConfig() {
                       "env": {
                         "log": false
                       },
-                      // spec: true
-                      "compiler": {
-                        "promises": true,
-                        "generators": false
-                      },
-                      "runtimePattern": "directive",
-                      "useRuntimeModule": false
+                      spec: true
                     }
                   ],
                   "transform-object-rest-spread",

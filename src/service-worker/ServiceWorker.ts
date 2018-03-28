@@ -128,7 +128,7 @@ export class ServiceWorker {
     }
   }
 
-  static async setupMessageListeners() {
+  static setupMessageListeners() {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.WorkerVersion, _ => {
       Log.debug('[Service Worker] Received worker version message.');
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.WorkerVersion, Environment.version());

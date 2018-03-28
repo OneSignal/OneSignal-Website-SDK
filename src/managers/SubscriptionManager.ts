@@ -564,7 +564,7 @@ export class SubscriptionManager {
 
   public async isSubscriptionExpiring(): Promise<boolean> {
     const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = await SdkEnvironment.getWindowEnv();
+    const windowEnv = SdkEnvironment.getWindowEnv();
 
     switch (integrationKind) {
       case IntegrationKind.Secure:
