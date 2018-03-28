@@ -1,3 +1,7 @@
+const path = require('path');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 setBuildEnvironment();
 
 function setBuildEnvironment() {
@@ -17,7 +21,7 @@ function getWebpackPlugins(config) {
   const plugins = [
     new webpack.optimize.ModuleConcatenationPlugin(),
     new ExtractTextPlugin(config.get('build:stylesheetsBundleName')),
-    new webpack.DefinePlugin(await BundlerModule.getBuildDefines(config)),
+    new webpack.DefinePlugin(getBuildDefines(config)),
     new webpack.optimize.UglifyJsPlugin({
       sourceMap: true,
       compress: {
@@ -100,14 +104,15 @@ function generateWebpackConfig(config, plugins) {
   return {
     target: 'web',
     entry: {
-      'sdk.js': 'build/ts-to-es6/entries/sdk.js',
-      'worker.js': 'build/ts-to-es6/entries/worker.js',
-      'stylesheet.css': 'build/ts-to-es6/entries/stylesheet.css',
+      'sdk.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
+      'worker.js': path.resolve('build/ts-to-es6/src/entries/worker.js'),
+      //'stylesheet.css': path.resolve('build/ts-to-es6/src/entries/stylesheet.css'),
     },
     output: {
-      path: 'build/bundles',
+      path: path.resolve('build/bundles'),
       filename: '[name]'
     },
+    mode: process.env.ENV === "production" ? "production" : "development",
     module: {
       rules: [
         {
@@ -153,7 +158,7 @@ function generateWebpackConfig(config, plugins) {
   };
 }
 
-function getBuildDefines(config) {
+function getBuildDefines() {
   const env = config.get('env');
   var buildDefines = {
     __DEV__: process.env.ENV === 'development',
