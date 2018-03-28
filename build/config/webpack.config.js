@@ -75,33 +75,33 @@ function generateWebpackConfig() {
     mode: process.env.ENV === "production" ? "production" : "development",
     optimization: {
        minimizer: [
-        // new UglifyJsPlugin({
-        //   sourceMap: true,
-        //   uglifyOptions: {
-        //     sourceMap: true,
-        //     compress: {
-        //       drop_console: false,
-        //       drop_debugger: false,
-        //       warnings: false,
-        //     },
-        //     mangle: process.env.ENV === 'production' ? {
-        //       reserved: [
-        //         'AlreadySubscribedError',
-        //         'InvalidArgumentError',
-        //         'InvalidStateError',
-        //         'NotSubscribedError',
-        //         'PermissionMessageDismissedError',
-        //         'PushNotSupportedError',
-        //         'PushPermissionNotGrantedError',
-        //         'SdkInitError',
-        //         'TimeoutError'
-        //       ]
-        //     } : false,
-        //     output: {
-        //       comments: false
-        //     }
-        //   }
-        // })
+        new UglifyJsPlugin({
+          sourceMap: true,
+          uglifyOptions: {
+            sourceMap: true,
+            compress: {
+              drop_console: false,
+              drop_debugger: false,
+              warnings: false,
+            },
+            mangle: process.env.ENV === 'production' ? {
+              reserved: [
+                'AlreadySubscribedError',
+                'InvalidArgumentError',
+                'InvalidStateError',
+                'NotSubscribedError',
+                'PermissionMessageDismissedError',
+                'PushNotSupportedError',
+                'PushPermissionNotGrantedError',
+                'SdkInitError',
+                'TimeoutError'
+              ]
+            } : false,
+            output: {
+              comments: false
+            }
+          }
+        })
       ]
     },
     module: {
@@ -117,8 +117,7 @@ function generateWebpackConfig() {
                   ["es2015", { modules: false }]
                 ],
                 plugins: [
-                  "transform-object-rest-spread",
-                  "external-helpers"
+                  "transform-object-rest-spread"
                 ],
                 babelrc: false,
               }
