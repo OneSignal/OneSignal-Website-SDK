@@ -137,7 +137,7 @@ export default class InitHelper {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration && registration.active) {
-          MainHelper.establishServiceWorkerChannel();
+          context.serviceWorkerManager.establishServiceWorkerChannel();
         }
       } catch (e) { }
     }

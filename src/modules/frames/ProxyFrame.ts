@@ -112,7 +112,8 @@ export default class ProxyFrame extends RemoteFrame {
 
     if (navigator.serviceWorker && window.location.protocol === 'https:') {
       try {
-        MainHelper.establishServiceWorkerChannel();
+        const context: Context = OneSignal.context;
+        context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) {
         Log.error(`Error interacting with Service Worker inside an HTTP-hosted iFrame:`, e);
       }
