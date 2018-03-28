@@ -1,6 +1,8 @@
+const webpack = require('webpack');
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 setBuildEnvironment();
 
@@ -17,56 +19,14 @@ function setBuildEnvironment() {
   console.log("Build Environment:", process.env.ENV);
 }
 
-function getWebpackPlugins(config) {
+function getWebpackPlugins() {
   const plugins = [
     new webpack.optimize.ModuleConcatenationPlugin(),
-    new ExtractTextPlugin(config.get('build:stylesheetsBundleName')),
-    new webpack.DefinePlugin(getBuildDefines(config)),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        sequences: true,
-        properties: true,
-        dead_code: true,
-        conditionals: true,
-        comparisons: true,
-        evaluate: true,
-        booleans: true,
-        loops: true,
-        unused: true,
-        hoist_funs: true,
-        if_return: true,
-        join_vars: true,
-        cascade: true,
-        collapse_vars: true,
-        drop_console: false,
-        drop_debugger: false,
-        warnings: false,
-        negate_iife: true
-      },
-      mangle: {
-        enable: config.get('env') === 'production',
-        except: [
-          'AlreadySubscribedError',
-          'InvalidArgumentError',
-          'InvalidStateError',
-          'NotSubscribedError',
-          'PermissionMessageDismissedError',
-          'PushNotSupportedError',
-          'PushPermissionNotGrantedError',
-          'SdkInitError',
-          'TimeoutError'
-        ]
-      },
-      output: {
-        comments: false
-      }
-    })
+    new ExtractTextPlugin('OneSignalSDKStyles.css'),
+    new webpack.DefinePlugin(getBuildDefines()),
   ];
-  if (config.get('analyze')) {
-    const sizeAnalysisReportPath =
-      config.get('build:sizeAnalysisFilePath') ||
-      path.resolve(path.join(config.get('build:tempDirectory'), 'size-analysis.html'));
+  if (!!process.env.ANALYZE) {
+    const sizeAnalysisReportPath = path.resolve(path.join('build', 'size-analysis.html'));
     plugins.push(
       new BundleAnalyzerPlugin({
         // Can be `server`, `static` or `disabled`.
@@ -100,7 +60,7 @@ function getWebpackPlugins(config) {
   return plugins;
 }
 
-function generateWebpackConfig(config, plugins) {
+function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
@@ -113,13 +73,77 @@ function generateWebpackConfig(config, plugins) {
       filename: '[name]'
     },
     mode: process.env.ENV === "production" ? "production" : "development",
+    optimization: {
+      minimizer: [
+        new UglifyJsPlugin({
+          uglifyOptions: {
+            sourceMap: true,
+            compress: {
+              sequences: true,
+              properties: true,
+              dead_code: true,
+              conditionals: true,
+              comparisons: true,
+              evaluate: true,
+              booleans: true,
+              loops: true,
+              unused: true,
+              hoist_funs: true,
+              if_return: true,
+              join_vars: true,
+              cascade: true,
+              collapse_vars: true,
+              drop_console: false,
+              drop_debugger: false,
+              warnings: false,
+              negate_iife: true
+            },
+            mangle: {
+              enable: process.env.ENV === 'production',
+              except: [
+                'AlreadySubscribedError',
+                'InvalidArgumentError',
+                'InvalidStateError',
+                'NotSubscribedError',
+                'PermissionMessageDismissedError',
+                'PushNotSupportedError',
+                'PushPermissionNotGrantedError',
+                'SdkInitError',
+                'TimeoutError'
+              ]
+            },
+            output: {
+              comments: false
+            }
+          }
+        })
+      ]
+    },
     module: {
       rules: [
         {
           test: /\.js$/,
           include: ['build/ts-to-es6'],
           exclude: /(node_modules|bower_components)/,
-          use: 'val-loader'
+          use: {
+            loader: 'babel-loader',
+            options: {
+              exclude: 'node_modules/**',
+              presets: [
+                [
+                  "es2015",
+                  {
+                    "modules": false
+                  }
+                ]
+              ],
+              plugins: [
+                // "external-helpers",
+                "transform-object-rest-spread",
+              ],
+              babelrc: false,
+            }
+          }
         },
         {
           test: /\.scss$/,
@@ -154,12 +178,11 @@ function generateWebpackConfig(config, plugins) {
       ]
     },
     devtool: 'source-map',
-    plugins: plugins
+    plugins: getWebpackPlugins()
   };
 }
 
 function getBuildDefines() {
-  const env = config.get('env');
   var buildDefines = {
     __DEV__: process.env.ENV === 'development',
     __TEST__: !!process.env.TESTS,
@@ -168,7 +191,7 @@ function getBuildDefines() {
     __PROCESSED_WITH_ROLLUP__: true,
     __SRC_STYLESHEETS_MD5_HASH__: "x",
   };
-  if (env === 'production') {
+  if (process.env.ENV === 'production') {
     buildDefines['process.env.NODE_ENV'] = JSON.stringify('production');
   }
   return buildDefines;
