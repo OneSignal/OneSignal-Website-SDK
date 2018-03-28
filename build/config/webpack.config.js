@@ -74,33 +74,18 @@ function generateWebpackConfig() {
     },
     mode: process.env.ENV === "production" ? "production" : "development",
     optimization: {
-      minimizer: [
+       minimizer: [
         new UglifyJsPlugin({
+          sourceMap: true,
           uglifyOptions: {
             sourceMap: true,
             compress: {
-              sequences: true,
-              properties: true,
-              dead_code: true,
-              conditionals: true,
-              comparisons: true,
-              evaluate: true,
-              booleans: true,
-              loops: true,
-              unused: true,
-              hoist_funs: true,
-              if_return: true,
-              join_vars: true,
-              cascade: true,
-              collapse_vars: true,
               drop_console: false,
               drop_debugger: false,
               warnings: false,
-              negate_iife: true
             },
-            mangle: {
-              enable: process.env.ENV === 'production',
-              except: [
+            mangle: process.env.ENV === 'production' ? {
+              reserved: [
                 'AlreadySubscribedError',
                 'InvalidArgumentError',
                 'InvalidStateError',
@@ -111,7 +96,7 @@ function generateWebpackConfig() {
                 'SdkInitError',
                 'TimeoutError'
               ]
-            },
+            } : false,
             output: {
               comments: false
             }
@@ -123,18 +108,13 @@ function generateWebpackConfig() {
       rules: [
         {
           test: /\.js$/,
-          include: ['build/ts-to-es6'],
-          exclude: /(node_modules|bower_components)/,
+          exclude: /node_modules/,
           use: {
             loader: 'babel-loader',
             options: {
-              exclude: 'node_modules/**',
               presets: [
                 [
-                  "es2015",
-                  {
-                    "modules": false
-                  }
+                  "env"
                 ]
               ],
               plugins: [

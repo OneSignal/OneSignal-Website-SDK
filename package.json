@@ -1,7 +1,7 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "150105",
+  "sdkVersion": "150106",
   "description": "Web push notifications from OneSignal.",
   "dependencies": {
     "babel-cli": "^6.26.0",
@@ -54,7 +54,7 @@
     "test": "ava --verbose --color --watch"
   },
   "config": {
-    "sdkVersion": "150105",
+    "sdkVersion": "150106",
     "onesignalPublicPath": "/Users/jpang/code/OneSignal/public",
     "onesignalPublicSdksPath": "/Users/jpang/code/OneSignal/public/sdks"
   },
@@ -106,6 +106,7 @@
     "nock": "^9.1.6",
     "node-dir": "^0.1.16",
     "node-fetch": "^1.6.3",
+    "nodent-loader": "^1.2.6",
     "nyc": "^11.1.0",
     "openurl": "^1.1.1",
     "postcss-loader": "^2.0.6",
