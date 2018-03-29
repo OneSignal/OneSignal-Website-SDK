@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "diagnostics": false,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "module": "ES5",
+    "moduleResolution": "node",
+    "noEmitHelpers": true,
+    "pretty": true,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "../bundles",
+    "rootDir": "../../",
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "es6",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "target": "ES5",
+    "mapRoot": "build/ts-to-es6"
+  }
+}
+

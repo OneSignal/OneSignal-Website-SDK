@@ -3,6 +3,7 @@ const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const { CheckerPlugin } = require('awesome-typescript-loader');
 
 setBuildEnvironment();
 
@@ -21,6 +22,7 @@ function setBuildEnvironment() {
 
 function getWebpackPlugins() {
   const plugins = [
+    new CheckerPlugin(),
     new webpack.optimize.ModuleConcatenationPlugin(),
     new ExtractTextPlugin('OneSignalSDKStyles.css'),
     new webpack.DefinePlugin(getBuildDefines()),
@@ -76,33 +78,33 @@ function generateWebpackConfig() {
     mode: process.env.ENV === "production" ? "production" : "development",
     optimization: {
        minimizer: [
-        // new UglifyJsPlugin({
-        //   sourceMap: true,
-        //   uglifyOptions: {
-        //     sourceMap: true,
-        //     compress: {
-        //       drop_console: false,
-        //       drop_debugger: false,
-        //       warnings: false,
-        //     },
-        //     mangle: process.env.ENV === 'production' ? {
-        //       reserved: [
-        //         'AlreadySubscribedError',
-        //         'InvalidArgumentError',
-        //         'InvalidStateError',
-        //         'NotSubscribedError',
-        //         'PermissionMessageDismissedError',
-        //         'PushNotSupportedError',
-        //         'PushPermissionNotGrantedError',
-        //         'SdkInitError',
-        //         'TimeoutError'
-        //       ]
-        //     } : false,
-        //     output: {
-        //       comments: false
-        //     }
-        //   }
-        // })
+        new UglifyJsPlugin({
+          sourceMap: true,
+          uglifyOptions: {
+            sourceMap: true,
+            compress: {
+              drop_console: false,
+              drop_debugger: false,
+              warnings: false,
+            },
+            mangle: process.env.ENV === 'production' ? {
+              reserved: [
+                'AlreadySubscribedError',
+                'InvalidArgumentError',
+                'InvalidStateError',
+                'NotSubscribedError',
+                'PermissionMessageDismissedError',
+                'PushNotSupportedError',
+                'PushPermissionNotGrantedError',
+                'SdkInitError',
+                'TimeoutError'
+              ]
+            } : false,
+            output: {
+              comments: false
+            }
+          }
+        })
       ]
     },
     module: {
@@ -112,19 +114,31 @@ function generateWebpackConfig() {
           exclude: /node_modules/,
           use: [
             {
-              loader: 'babel-loader',
+              loader: 'awesome-typescript-loader',
               options: {
-                presets: [
-                  ["env"]
-                ],
-                plugins: [
-                  "transform-object-rest-spread"
-                ],
-                babelrc: false,
+                configFileName: "build/config/tsconfig.transform.json"
               }
             },
           ]
         },
+        // {
+        //   test: /\.js$/,
+        //   exclude: /node_modules/,
+        //   use: [
+        //     {
+        //       loader: 'babel-loader',
+        //       options: {
+        //         presets: [
+        //           ["env"]
+        //         ],
+        //         plugins: [
+        //           "transform-object-rest-spread"
+        //         ],
+        //         babelrc: false,
+        //       }
+        //     },
+        //   ]
+        // },
         {
           test: /\.scss$/,
           use: ExtractTextPlugin.extract({
