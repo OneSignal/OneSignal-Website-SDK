@@ -66,6 +66,7 @@ function generateWebpackConfig() {
     entry: {
       'sdk.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
       'worker.js': path.resolve('build/ts-to-es6/src/entries/worker.js'),
+      //'sdk.js': path.resolve('build/ts-to-es6/src/entries/test.js'),
       //'stylesheet.css': path.resolve('build/ts-to-es6/src/entries/stylesheet.css'),
     },
     output: {
@@ -114,28 +115,10 @@ function generateWebpackConfig() {
               loader: 'babel-loader',
               options: {
                 presets: [
-                  ["es2015", { modules: false }]
+                  ["env"]
                 ],
                 plugins: [
                   "transform-object-rest-spread"
-                ],
-                babelrc: false,
-              }
-            },
-            {
-              loader: 'babel-loader',
-              options: {
-                plugins: [
-                  [
-                    "fast-async",
-                    {
-                      "env": {
-                        "log": false
-                      },
-                      spec: true
-                    }
-                  ],
-                  "transform-object-rest-spread",
                 ],
                 babelrc: false,
               }

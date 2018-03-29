@@ -1,8 +1,6 @@
-"use runtime-nodent";
+import "regenerator-runtime/runtime";
 import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from '../utils';
 import Log from '../libraries/Log';
-import OneSignal from "../OneSignal";
-import OneSignalStub from "../OneSignalStub";
 
 
 export function oneSignalSdkInit() {
@@ -15,16 +13,15 @@ export function oneSignalSdkInit() {
   } else {
     // We're running in the host page, iFrame of the host page, or popup window
     // Load OneSignal's web SDK
-    if (typeof OneSignal !== "undefined")
+    if (typeof OneSignal !== "undefined") {
       var predefinedOneSignalPushes = OneSignal;
+    }
 
     if (isPushNotificationsSupported()) {
-      (window as any).OneSignal = OneSignal;
-      //exports = OneSignal;
+      (window as any).OneSignal = require('../OneSignal').default;
     } else {
       Log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
-      (window as any).OneSignal = OneSignalStub;
-      //exports = OneSignalStub;
+      (window as any).OneSignal = require('../OneSignalStub').default;
     }
 
     if (predefinedOneSignalPushes)
