@@ -1,4 +1,4 @@
-import "regenerator-runtime/runtime";
+"use runtime-nodent";
 import { getSdkLoadCount, incrementSdkLoadCount, isPushNotificationsSupported } from '../utils';
 import Log from '../libraries/Log';
 
