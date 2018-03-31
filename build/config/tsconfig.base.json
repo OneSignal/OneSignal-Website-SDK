@@ -25,6 +25,7 @@
     "sourceMap": true,
     "outDir": "../ts-to-es6",
     "rootDir": "../../",
+    "esModuleInterop": true,
     "types": [
       "node"
     ],
