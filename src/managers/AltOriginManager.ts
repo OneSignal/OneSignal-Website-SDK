@@ -66,11 +66,10 @@ export default class AltOriginManager {
       // they don't have duplicate subscriptions
       return null;
     }
-    var hostToCheck;
     if (SdkEnvironment.getBuildEnv() == BuildEnvironmentKind.Development) {
-      hostToCheck = '.localhost:3001';
+      var hostToCheck = '.localhost:3001';
     } else if (SdkEnvironment.getBuildEnv() == BuildEnvironmentKind.Production) {
-      hostToCheck = '.onesignal.com';
+      var hostToCheck = '.onesignal.com';
     }
     var oneSignalComProxyFrameHost: ProxyFrameHost = (subscribedProxyFrameHosts as any).find(proxyFrameHost => contains(proxyFrameHost.url.host, hostToCheck));
     if (!oneSignalComProxyFrameHost) {

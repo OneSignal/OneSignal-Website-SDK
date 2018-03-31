@@ -66,7 +66,6 @@
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
-    "fast-async": "^6.3.1",
     "@babel/core": "^7.0.0-beta.42",
     "@babel/preset-env": "^7.0.0-beta.42",
     "@types/body-parser": "latest",
@@ -101,6 +100,7 @@
     "exports-loader": "^0.6.4",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "fake-indexeddb": "github:OneSignal/fakeIndexedDB#onesignal",
+    "fast-async": "^6.3.1",
     "fs-extra": "^1.0.0",
     "humanize": "^0.0.9",
     "imports-loader": "^0.7.1",

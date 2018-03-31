@@ -114,37 +114,9 @@ function generateWebpackConfig() {
           exclude: /node_modules/,
           use: [
             {
-              loader: 'babel-loader',
+              loader: 'awesome-typescript-loader',
               options: {
-                presets: [
-                  ["es2015", { modules: false }]
-                ],
-                plugins: [
-                  "transform-object-rest-spread"
-                ],
-                babelrc: false,
-              }
-            },
-            {
-              loader: 'babel-loader',
-              options: {
-                plugins: [
-                  [
-                    "fast-async",
-                    {
-                      // spec: true
-                      compiler: {
-                        promises: true,
-                        generators: false,
-                        wrapAwait: true,
-                      },
-                      runtimePattern: "directive",
-                      useRuntimeModule: false
-                    }
-                  ],
-                  "transform-object-rest-spread",
-                ],
-                babelrc: false,
+                configFileName: "build/config/tsconfig.transform.json"
               }
             },
           ]
