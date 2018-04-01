@@ -168,7 +168,7 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onMarkPromptDismissed(message: MessengerMessageEvent) {
     log.debug('(Reposted from iFrame -> Host) Marking prompt as dismissed.');
-    TestHelper.markHttpsNativePromptDismissed();
+    await TestHelper.markHttpsNativePromptDismissed();
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }
