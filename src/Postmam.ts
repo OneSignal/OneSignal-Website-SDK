@@ -79,7 +79,7 @@ export default class Postmam {
 
   destroy() {
     this.stopPostMessageReceive();
-    (this as any).removeEvent();
+    this.emitter.removeAllListeners();
   }
 
   onWindowPostMessageReceived(e) {
@@ -91,7 +91,7 @@ export default class Postmam {
     //Log.debug(`(Postmam) (onWindowPostMessageReceived) (${SdkEnvironment.getWindowEnv().toString()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
-      (this as any).emit('connect');
+      this.emitter.emit('connect');
       this.isConnected = true;
       return;
     }
@@ -113,7 +113,7 @@ export default class Postmam {
         delete this.replies[messageId];
       }
     } else {
-      (this as any).emit(messageCommand, messageBundleWithReply);
+      this.emitter.emit(messageCommand, messageBundleWithReply);
     }
   }
 
@@ -142,7 +142,7 @@ export default class Postmam {
       this.isConnected = true;
       Log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Connected.`);
       this.message(Postmam.CONNECTED_MESSAGE);
-      (this as any).emit('connect');
+      this.emitter.emit('connect');
     }
   }
 
@@ -168,7 +168,7 @@ export default class Postmam {
     }
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
-      (this as any).emit('connect');
+      this.emitter.emit('connect');
       this.isConnected = true;
       return;
     }
@@ -189,7 +189,7 @@ export default class Postmam {
         delete this.replies[messageId];
       }
     } else {
-      (this as any).emit(messageCommand, messageBundleWithReply);
+      this.emitter.emit(messageCommand, messageBundleWithReply);
     }
   }
 
