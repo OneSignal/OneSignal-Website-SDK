@@ -1,7 +1,8 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { isPushNotificationsSupported, oneSignalSdkInit } from '../../../src/utils';
+import { isPushNotificationsSupported } from '../../../src/utils';
+import { oneSignalSdkInit } from '../../../src/utils/pageSdkInit';
 
 
 test.todo("should initialize a global instance in Service Worker environment");
