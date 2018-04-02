@@ -36,6 +36,6 @@
       "scripthost"
     ],
     "target": "ESNext",
-    "mapRoot": "build/ts-to-es6"
+    "sourceRoot": "../..",
   }
 }

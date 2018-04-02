@@ -15,6 +15,7 @@ import { NotificationPermission } from '../../../src/models/NotificationPermissi
 import bowser from 'bowser';
 import { setUserAgent, setBrowser } from '../../support/tester/browser';
 import Random from '../../support/tester/Random';
+import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -87,13 +88,13 @@ test('should interpret ambiguous browser permission correctly', async t => {
 test('should detect an insecure top-level frame', async t => {
   const permissionManager = OneSignal.context.permissionManager;
 
-  t.false(SubscriptionHelper.isInsecureOrigin());
+  t.false(SdkEnvironment.isInsecureOrigin());
 
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Http,
     initializeAsIframe: false
   });
-  t.true(SubscriptionHelper.isInsecureOrigin());
+  t.true(SdkEnvironment.isInsecureOrigin());
 });
 
 test('should detect a cross-origin frame-context', async t => {
@@ -127,7 +128,7 @@ test('should not detect an ambiguous permission environment', async t => {
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
     .returns(false);
   const isFrameContextInsecureStub = sinon
-    .stub(SubscriptionHelper, 'isFrameContextInsecure')
+    .stub(SdkEnvironment, 'isFrameContextInsecure')
     .resolves(false);
   t.false(await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied));
   isCurrentFrameContextCrossOriginStub.restore();
@@ -144,7 +145,7 @@ test('should use browser reported permission value in non-ambiguous environment 
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
     .returns(false);
   const isFrameContextInsecureStub = sinon
-    .stub(SubscriptionHelper, 'isFrameContextInsecure')
+    .stub(SdkEnvironment, 'isFrameContextInsecure')
     .resolves(false);
   t.deepEqual(await permissionManager.getNotificationPermission(null), NotificationPermission.Denied);
   isCurrentFrameContextCrossOriginStub.restore();
@@ -160,7 +161,7 @@ test('should detect an ambiguous permission environment', async t => {
     .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
     .returns(true);
   const isFrameContextInsecureStub = sinon
-    .stub(SubscriptionHelper, 'isFrameContextInsecure')
+    .stub(SdkEnvironment, 'isFrameContextInsecure')
     .resolves(false);
   t.true(await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied));
   isCurrentFrameContextCrossOriginStub.restore();
@@ -172,7 +173,7 @@ test('should detect an ambiguous permission environment', async t => {
       .stub(permissionManager, 'isCurrentFrameContextCrossOrigin')
       .returns(false);
     const isFrameContextInsecureStub = sinon
-      .stub(SubscriptionHelper, 'isFrameContextInsecure')
+      .stub(SdkEnvironment, 'isFrameContextInsecure')
       .resolves(true);
     t.true(await permissionManager.isPermissionEnvironmentAmbiguous(NotificationPermission.Denied));
     isCurrentFrameContextCrossOriginStub.restore();

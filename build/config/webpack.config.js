@@ -121,24 +121,6 @@ function generateWebpackConfig() {
             },
           ]
         },
-        // {
-        //   test: /\.js$/,
-        //   exclude: /node_modules/,
-        //   use: [
-        //     {
-        //       loader: 'babel-loader',
-        //       options: {
-        //         presets: [
-        //           ["env"]
-        //         ],
-        //         plugins: [
-        //           "transform-object-rest-spread"
-        //         ],
-        //         babelrc: false,
-        //       }
-        //     },
-        //   ]
-        // },
         {
           test: /\.scss$/,
           use: ExtractTextPlugin.extract({
@@ -182,7 +164,7 @@ function getBuildDefines() {
     __TEST__: !!process.env.TESTS,
     __STAGING__: process.env.ENV === 'staging',
     __VERSION__: process.env.npm_package_config_sdkVersion,
-    __PROCESSED_WITH_ROLLUP__: true,
+    __LOGGING__: process.env.ENV === "development",
     __SRC_STYLESHEETS_MD5_HASH__: "x",
   };
   if (process.env.ENV === 'production') {

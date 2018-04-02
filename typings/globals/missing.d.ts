@@ -55,8 +55,6 @@ interface ServiceWorkerGlobalScope {
   readonly location: Location;
 }
 
-type ServiceWorkerState = "installing" | "installed" | "activating" | "activated" | "redundant";
-
 interface TestContext {
   context: any;
 }
@@ -71,8 +69,6 @@ interface Element extends Node, GlobalEventHandlers, ElementTraversal, NodeSelec
 declare var OneSignal: any;
 
 declare var ExtendableEvent;
-declare var swivel;
-
 declare var __VERSION__: string;
 declare var __DEV__: string;
 declare var __TEST__: string;
@@ -80,20 +76,12 @@ declare var __STAGING__: string;
 declare var __IS_ES6__: string;
 declare var __SRC_STYLESHEETS_MD5_HASH__: string;
 
-declare var $_VERSION: string;
-declare var $_DEV: string;
-declare var $_TEST: string;
-declare var $_STAGING: string;
-declare var $_IS_ES6: string;
-declare var __PROCESSED_WITH_ROLLUP__: boolean;
+declare var __LOGGING__: boolean;
 
-declare function fetch(...args): Promise<any>;
-
-declare var Headers: any;
 declare var WorkerLocation: any;
 
 /* Typing issue */
-interface SharedArrayBuffer { };
+interface SharedArrayBuffer { }
 
 interface PushSubscription {
   /**
