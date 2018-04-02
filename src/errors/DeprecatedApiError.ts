@@ -1,5 +1,4 @@
 import OneSignalError from './OneSignalError';
-import OneSignal from '../OneSignal';
 import { ApiUsageMetricEvent, ApiUsageMetricKind } from '../managers/MetricsManager';
 
 export enum DeprecatedApiReason {

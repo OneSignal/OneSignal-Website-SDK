@@ -79,6 +79,7 @@ declare var __SRC_STYLESHEETS_MD5_HASH__: string;
 declare var __LOGGING__: boolean;
 
 declare var WorkerLocation: any;
+declare function fetch(...args): Promise<any>;
 
 /* Typing issue */
 interface SharedArrayBuffer { }

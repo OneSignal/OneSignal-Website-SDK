@@ -27,7 +27,7 @@ export function oneSignalSdkInit() {
     }
 
     if (isPushNotificationsSupported()) {
-      (window as any).OneSignal = require('../OneSignal').default;
+      (window as any).OneSignal = require('./OneSignal').default;
     } else {
       Log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
       (window as any).OneSignal = OneSignalStub;
