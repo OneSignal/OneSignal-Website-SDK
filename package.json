@@ -1,7 +1,6 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "150107",
   "description": "Web push notifications from OneSignal.",
   "dependencies": {
     "babel-cli": "^6.26.0",
