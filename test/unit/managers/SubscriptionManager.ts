@@ -23,7 +23,7 @@ import bowser from 'bowser';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
-import { RawPushSubscription } from "../../../src/models/RawPushSubscription";
+import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import timemachine from 'timemachine';
 import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
@@ -247,12 +247,12 @@ test('device ID is available after register event', async t => {
   const registerEventPromise = new Promise(resolve => {
     OneSignal.on('register', async () => {
       const subscription = await Database.getSubscription();
-      t.is(subscription.deviceId.value, randomPlayerId);
+      t.is(subscription.deviceId, randomPlayerId);
       resolve();
     });
   });
 
-  const stub = sinon.stub(OneSignalApi, "createUser").resolves(new Uuid(randomPlayerId));
+  const stub = sinon.stub(OneSignalApi, "createUser").resolves(randomPlayerId);
 
   await context.subscriptionManager.registerSubscription(rawPushSubscription);
   await registerEventPromise;
