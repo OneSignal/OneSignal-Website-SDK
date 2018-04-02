@@ -17,7 +17,7 @@ before_script:
   # --tests allows the SDK build tool to transpile tests, otherwise it ignores building tests for performance reasons
   # --noBundle avoids copying the web SDK files to the Rails project root, and avoids UglifyJS
   # --noWatch prevents the SDK build tool running as a daemon, so it can exit and Travis can proceed
-  - 'yarn build:tests && yarn:test'
+  - 'yarn build:tests && yarn test'
 script:
   - 'ava --verbose --color --watch=false'
 git:
