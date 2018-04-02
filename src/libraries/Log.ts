@@ -34,6 +34,8 @@ export default class Log {
     }
     try {
       window.localStorage.setItem("loglevel", level);
+      Log.proxyMethodsCreated = undefined;
+      Log.createProxyMethods();
     } catch (e) {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
       return;
@@ -41,10 +43,10 @@ export default class Log {
   }
 
   public static createProxyMethods() {
-    if (typeof this.proxyMethodsCreated !== "undefined") {
+    if (typeof Log.proxyMethodsCreated !== "undefined") {
       return;
     } else {
-      this.proxyMethodsCreated = true;
+      Log.proxyMethodsCreated = true;
     }
 
     const methods = {
@@ -60,13 +62,14 @@ export default class Log {
       const shouldMap = nativeMethodExists &&
         (
           (typeof __LOGGING__ !== "undefined" && __LOGGING__ === true) ||
-          (Log.shouldLog())
+          (Log.shouldLog()) ||
+          methodToMapTo === "error"
         );
 
       if (shouldMap) {
-        this[methodToMapTo] = console[nativeMethod].bind(console);
+        Log[methodToMapTo] = console[nativeMethod].bind(console);
       } else {
-        this[methodToMapTo] = function() {};
+        Log[methodToMapTo] = function() {};
       }
     }
   }
