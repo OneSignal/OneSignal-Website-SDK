@@ -40,7 +40,7 @@
     "transpile:tests": "$(yarn bin)/tsc --project build/config/tsconfig.tests.json",
     "bundle:sources": "TESTS=false $(yarn bin)/rollup --config build/config/rollup.config.js",
     "bundle:sources:webpack": "TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js",
-    "bundle:sources:webpack:analyze": "TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js --profile --json > stats.json",
+    "bundle:sources:webpack:analyze": "ENV=production TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js --profile --json > stats.json",
     "bundle:tests": "TESTS=true $(yarn bin)/rollup --config build/config/rollup.config.js",
     "build:sources:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle:sources",
     "build:sources:webpack:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle:sources:webpack",
