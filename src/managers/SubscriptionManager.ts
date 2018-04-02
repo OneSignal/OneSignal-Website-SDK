@@ -175,10 +175,6 @@ export class SubscriptionManager {
 
     await this.associateSubscriptionWithEmail(newDeviceId);
 
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-      Event.trigger(OneSignal.EVENTS.REGISTERED);
-    }
-
     const subscription = await Database.getSubscription();
     subscription.deviceId = newDeviceId;
     subscription.optedOut = false;
@@ -193,6 +189,10 @@ export class SubscriptionManager {
     }
 
     await Database.setSubscription(subscription);
+
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+      Event.trigger(OneSignal.EVENTS.REGISTERED);
+    }
 
     if (typeof OneSignal !== "undefined") {
       OneSignal._sessionInitAlreadyRunning = false;

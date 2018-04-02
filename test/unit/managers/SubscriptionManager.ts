@@ -28,6 +28,7 @@ import * as timemachine from 'timemachine';
 import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
+import OneSignalApi from '../../../src/OneSignalApi';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -222,6 +223,42 @@ test(
     unsubscribeSpy.restore();
   }
 );
+
+test('device ID is available after register event', async t => {
+  const vapidKeys = generateVapidKeys();
+
+  await testCase(
+    t,
+    BrowserUserAgent.ChromeMacSupported,
+    vapidKeys.uniquePublic,
+    vapidKeys.sharedPublic,
+    SubscriptionStrategyKind.SubscribeNew,
+    null,
+    null
+  );
+
+  const context: Context = await t.context.sdkContext;
+  const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+  const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
+  const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(pushSubscription);
+  const randomPlayerId = Random.getRandomUuid();
+  let wasRegisterEventFired = false;
+
+  const registerEventPromise = new Promise(resolve => {
+    OneSignal.on('register', async () => {
+      const subscription = await Database.getSubscription();
+      t.is(subscription.deviceId.value, randomPlayerId);
+      resolve();
+    });
+  });
+
+  const stub = sinon.stub(OneSignalApi, "createUser").resolves(new Uuid(randomPlayerId));
+
+  await context.subscriptionManager.registerSubscription(rawPushSubscription);
+  await registerEventPromise;
+
+  stub.restore();
+});
 
 test(
   "subscribe new strategy creates new subscription",
