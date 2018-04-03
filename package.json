@@ -1,74 +1,54 @@
 {
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
-  "sdkVersion": "150105",
   "description": "Web push notifications from OneSignal.",
-  "main": "src/entry.ts",
   "dependencies": {
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
-    "decamelize": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
-    "defined": "https://registry.npmjs.org/defined/-/defined-1.0.0.tgz",
-    "es6-error": "^4.0.0",
-    "express": "https://registry.npmjs.org/express/-/express-4.14.0.tgz",
-    "heir": "git://github.com/jasonpang/heir.git#754e476f7cc62b258a0b69deddd243fde41fd072",
     "jsdom": "^9.12.0",
     "jsonp": "github:OneSignal/jsonp#onesignal",
-    "loglevel": "https://registry.npmjs.org/loglevel/-/loglevel-1.4.1.tgz",
-    "morgan": "https://registry.npmjs.org/morgan/-/morgan-1.7.0.tgz",
     "node-sass": "^4.5.3",
     "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
-    "object-assign": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.0.tgz",
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
-    "tslib": "^1.7.1",
-    "uuid": "^3.1.0",
-    "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz",
-    "whatwg-fetch": "^2.0.3",
-    "wolfy87-eventemitter": "https://registry.npmjs.org/wolfy87-eventemitter/-/wolfy87-eventemitter-5.1.0.tgz"
+    "tslib": "^1.9.0",
+    "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
   },
-  "scripts": {},
+  "scripts": {
+    "clean": "rm -r build/ts-to-es6 && rm -r build/bundles",
+    "transpile:sources": "$(yarn bin)/tsc --project build/config/tsconfig.json",
+    "transpile:tests": "$(yarn bin)/tsc --project build/config/tsconfig.tests.json",
+    "bundle": "TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js",
+    "bundle:analyze": "ENV=production TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js --profile --json > stats.json",
+    "build:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle && ENV=development build/scripts/publish.sh",
+    "build:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle && ENV=staging build/scripts/publish.sh",
+    "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle && ENV=production build/scripts/publish.sh",
+    "test": "ENV=development yarn transpile:tests && ava --verbose --color --watch",
+    "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
+    "publish": "yarn clean && yarn build:prod && yarn "
+  },
+  "config": {
+    "sdkVersion": "150110",
+    "onesignalPublicPath": "/Users/jpang/code/OneSignal/public",
+    "onesignalPublicSdksPath": "/Users/jpang/code/OneSignal/public/sdks"
+  },
   "repository": {
     "type": "git",
     "url": "github.com/one-signal/OneSignal-Website-SDK"
   },
-  "keywords": [
-    "push notification",
-    "push notifications",
-    "web push",
-    "web push notification",
-    "web push notifications",
-    "onesignal",
-    "pushwoosh",
-    "roost",
-    "goroost",
-    "parse",
-    "urbanairship",
-    "apns",
-    "gcm",
-    "mobile notifications",
-    "adm",
-    "mpns",
-    "wns"
-  ],
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
-  "bugs": {
-    "url": "https://github.com/one-signal/OneSignal-Website-SDK/issues"
-  },
-  "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
   "devDependencies": {
     "@types/body-parser": "latest",
-    "@types/bowser": "^1.0.30",
     "@types/chai": "latest",
     "@types/core-js": "latest",
     "@types/cors": "latest",
     "@types/express": "latest",
     "@types/jsdom": "^2.0.30",
     "@types/loglevel": "latest",
-    "@types/mocha": "latest",
+    "@types/mocha": "^5.0.0",
     "@types/nconf": "latest",
     "@types/nock": "^9.1.2",
-    "@types/node": "latest",
+    "@types/node": "^9.6.0",
     "@types/object-assign": "^4.0.30",
     "@types/requirejs": "latest",
     "@types/sinon": "^2.3.3",
@@ -76,50 +56,35 @@
     "@types/validator": "latest",
     "@types/whatwg-fetch": "latest",
     "ava": "^0.21.0",
-    "babel-polyfill": "^6.22.0",
-    "babel-register": "^6.22.0",
-    "chalk": "^2.0.1",
-    "commander": "^2.9.0",
-    "copy-paste": "^1.3.0",
+    "awesome-typescript-loader": "^4.0.1",
     "css-loader": "^0.26.2",
     "dom-storage": "^2.0.2",
-    "exports-loader": "^0.6.4",
-    "extract-text-webpack-plugin": "^2.1.0",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "fake-indexeddb": "github:OneSignal/fakeIndexedDB#onesignal",
-    "fs-extra": "^1.0.0",
-    "humanize": "^0.0.9",
     "imports-loader": "^0.7.1",
-    "json5": "^0.5.1",
     "md5-file": "^3.2.2",
-    "microtime": "^2.1.2",
-    "nconf": "^0.8.4",
     "nock": "^9.1.6",
     "node-dir": "^0.1.16",
     "node-fetch": "^1.6.3",
     "nyc": "^11.1.0",
-    "openurl": "^1.1.1",
     "postcss-loader": "^2.0.6",
-    "rimraf": "^2.6.1",
     "sass-loader": "^6.0.6",
     "sinon": "^2.4.1",
-    "sleep": "^5.1.0",
-    "sorcery": "github:OneSignal/sorcery#onesignal",
-    "strip-ansi": "^3.0.1",
     "svgo": "^0.7.2",
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
     "typescript": "^2.7.1",
-    "webpack": "^3.4.1",
-    "webpack-bundle-analyzer": "^2.8.3",
-    "yargonaut": "^1.1.2",
-    "yargs": "^8.0.2"
+    "uglifyjs-webpack-plugin": "^1.2.4",
+    "webpack": "^4.3.0",
+    "webpack-bundle-analyzer": "^2.11.1",
+    "webpack-cli": "^2.0.13"
   },
   "ava": {
     "files": [
-      "build/javascript/test/unit/**/*.js"
+      "build/ts-to-es6/test/unit/**/*.js"
     ],
     "source": [
-      "build/javascript/src/**/*.js"
+      "build/ts-to-es6/src/**/*.js"
     ],
     "concurrency": 1,
     "serial": true,
@@ -134,7 +99,7 @@
       "text-summary"
     ],
     "include": [
-      "build/javascript/src/**/*.js"
+      "build/ts-to-es6/src/**/*.js"
     ]
   }
 }

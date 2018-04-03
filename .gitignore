@@ -1,8 +1,9 @@
 .idea/
 node_modules/
-bower_components/
 dist/
-build/
+build/ts-to-es6
+build/bundles
+build/size-analysis.html
 /config.json
 .vscode/
 
@@ -12,7 +13,6 @@ yarn-error.log
 dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map
 .vscode/
-build/
 
 coverage
 .nyc_output

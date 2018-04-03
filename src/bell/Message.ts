@@ -1,8 +1,9 @@
-import * as log from 'loglevel';
+
 
 import { decodeHtmlEntities, delay, getConsoleStyle, nothing } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
+import Log from '../libraries/Log';
 
 
 export default class Message extends AnimatedElement {
@@ -32,7 +33,7 @@ export default class Message extends AnimatedElement {
   }
 
   display(type, content, duration = 0) {
-    log.debug(`Calling %cdisplay(${type}, ${content}, ${duration}).`, getConsoleStyle('code'));
+    Log.debug(`Calling %cdisplay(${type}, ${content}, ${duration}).`, getConsoleStyle('code'));
     return (this.shown ? this.hide() : nothing())
       .then(() => {
         this.content = decodeHtmlEntities(content);

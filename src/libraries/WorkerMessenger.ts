@@ -4,9 +4,10 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { ServiceWorkerActiveState } from '../managers/ServiceWorkerManager';
 import Context from '../models/Context';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import * as log from 'loglevel';
+
 import { Serializable } from '../models/Serializable';
 import Environment from '../Environment';
+import Log from './Log';
 
 
 export enum WorkerMessengerCommand {
@@ -105,7 +106,7 @@ export class WorkerMessenger {
     } else {
       const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       for (let client of clients) {
-        log.debug(`[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${client.url}.`)
+        Log.debug(`[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${client.url}.`)
         client.postMessage({
           command: command,
           payload: payload
@@ -129,7 +130,7 @@ export class WorkerMessenger {
       if (!windowClient) {
         throw new InvalidArgumentError('windowClient', InvalidArgumentReason.Empty);
       } else {
-        log.debug(`[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${windowClient.url}.`)
+        Log.debug(`[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${windowClient.url}.`)
         windowClient.postMessage({
           command: command,
           payload: payload
@@ -137,10 +138,10 @@ export class WorkerMessenger {
       }
     } else {
       if (!(await this.isWorkerControllingPage())) {
-        log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", self.registration);
+        Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", self.registration);
       }
       await this.waitUntilWorkerControlsPage();
-      log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
+      Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
       navigator.serviceWorker.controller.postMessage({
         command: command,
         payload: payload
@@ -167,7 +168,7 @@ export class WorkerMessenger {
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
       self.addEventListener('message', this.onWorkerMessageReceivedFromPage.bind(this));
-      log.debug('[Worker Messenger] Service worker is now listening for messages.');
+      Log.debug('[Worker Messenger] Service worker is now listening for messages.');
     } else {
       this.listenForPage(listenIfPageUncontrolled);
     }
@@ -182,14 +183,14 @@ export class WorkerMessenger {
   private async listenForPage(listenIfPageUncontrolled?: boolean) {
     if (!listenIfPageUncontrolled) {
       if (!(await this.isWorkerControllingPage())) {
-        log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, self.registration);
+        Log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, self.registration);
       }
       await this.waitUntilWorkerControlsPage();
-      log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
+      Log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
     }
 
     navigator.serviceWorker.addEventListener('message', this.onPageMessageReceivedFromServiceWorker.bind(this));
-    log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
+    Log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
   }
 
   onWorkerMessageReceivedFromPage(event: ServiceWorkerMessageEvent) {
@@ -211,7 +212,7 @@ export class WorkerMessenger {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    log.debug(`[Worker Messenger] Service worker received message:`, event.data);
+    Log.debug(`[Worker Messenger] Service worker received message:`, event.data);
 
     for (let listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
@@ -247,7 +248,7 @@ export class WorkerMessenger {
     const listenersToRemove = [];
     const listenersToCall = [];
 
-    log.debug(`[Worker Messenger] Page received message:`, event.data);
+    Log.debug(`[Worker Messenger] Page received message:`, event.data);
 
     for (let listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {

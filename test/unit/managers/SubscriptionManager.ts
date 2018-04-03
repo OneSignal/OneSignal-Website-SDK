@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 
 import test, { GenericTestContext, Context as AvaContext } from 'ava';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';
@@ -12,19 +12,19 @@ import { beforeEach } from '../../support/tester/typify';
 import Database from '../../../src/services/Database';
 import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
-import { Uuid } from '../../../src/models/Uuid';
+
 import { AppConfig } from '../../../src/models/AppConfig';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
-import { RawPushSubscription } from "../../../src/models/RawPushSubscription";
-import * as timemachine from 'timemachine';
+import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
+import timemachine from 'timemachine';
 import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
@@ -36,7 +36,7 @@ test.beforeEach(async t => {
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   t.context.sdkContext = new Context(appConfig);
   timemachine.reset();
 });
@@ -66,7 +66,7 @@ async function testCase(
   // Create our subscription manager, which is what we're testing
   const manager = new SubscriptionManager(t.context.sdkContext, {
     safariWebId: null,
-    appId: Uuid.generate(),
+    appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
     onesignalVapidPublicKey: sharedVapidPublicKey
   });
@@ -247,12 +247,12 @@ test('device ID is available after register event', async t => {
   const registerEventPromise = new Promise(resolve => {
     OneSignal.on('register', async () => {
       const subscription = await Database.getSubscription();
-      t.is(subscription.deviceId.value, randomPlayerId);
+      t.is(subscription.deviceId, randomPlayerId);
       resolve();
     });
   });
 
-  const stub = sinon.stub(OneSignalApi, "createUser").resolves(new Uuid(randomPlayerId));
+  const stub = sinon.stub(OneSignalApi, "createUser").resolves(randomPlayerId);
 
   await context.subscriptionManager.registerSubscription(rawPushSubscription);
   await registerEventPromise;

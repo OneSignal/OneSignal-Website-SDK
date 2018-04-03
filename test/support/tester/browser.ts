@@ -1,5 +1,5 @@
 import { BrowserUserAgent } from "../sdk/TestEnvironment";
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 
 export function setUserAgent(userAgent: BrowserUserAgent) {
   Object.defineProperty((window as any).navigator, 'userAgent', {
@@ -11,5 +11,6 @@ export function setUserAgent(userAgent: BrowserUserAgent) {
 }
 
 export function setBrowser(userAgent: BrowserUserAgent) {
-  (global as any).Browser = (Browser as any)._detect(userAgent);
+  (global as any).bowser = (bowser as any)._detect(userAgent);
+  (global as any).Browser = (global as any).bowser;
 }

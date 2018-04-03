@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+import Log from '../libraries/Log';import * as log from 'loglevel';
 import Context from '../models/Context';
 import { ResourceType } from "../services/DynamicResourceLoader";
 import SdkEnvironment from '../managers/SdkEnvironment';
@@ -17,7 +17,7 @@ export default class CookieSyncer {
     const defaultId = "os!os";
 
     try {
-      const appId = this.context.appConfig.appId.value;
+      const appId = this.context.appConfig.appId;
       const truncatedAppId = appId.replace(/-/g, '').substr(0, 15).toLowerCase();
       return `os!${truncatedAppId}`;
     } catch (e) {

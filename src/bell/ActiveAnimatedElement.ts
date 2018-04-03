@@ -1,9 +1,7 @@
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
-
 import Event from '../Event';
 import { addCssClass, contains, once, removeCssClass } from '../utils';
 import AnimatedElement from './AnimatedElement';
+import Log from '../libraries/Log';
 
 
 export default class ActiveAnimatedElement extends AnimatedElement {
@@ -52,7 +50,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
+            Log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
@@ -68,7 +66,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         }
       }
       else {
-        log.debug(`Ending activate() transition (alternative).`);
+        Log.debug(`Ending activate() transition (alternative).`);
         this.activeState = 'active';
         Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
         return resolve(this);
@@ -96,7 +94,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
+            Log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&
@@ -152,12 +150,15 @@ export default class ActiveAnimatedElement extends AnimatedElement {
   }
 
   static get EVENTS() {
-    return objectAssign({}, AnimatedElement.EVENTS, {
+    return {
+      ...AnimatedElement.EVENTS,
+      ...{
       ACTIVATING: 'activeAnimatedElementActivating',
       ACTIVE: 'activeAnimatedElementActive',
       INACTIVATING: 'activeAnimatedElementInactivating',
       INACTIVE: 'activeAnimatedElementInactive',
-    });
+      }
+    };
   }
 
   /**

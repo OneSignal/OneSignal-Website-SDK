@@ -1,8 +1,5 @@
-import * as Browser from 'bowser';
-import * as heir from 'heir';
-import * as log from 'loglevel';
-import * as objectAssign from 'object-assign';
-import * as EventEmitter from 'wolfy87-eventemitter';
+import bowser from 'bowser';
+
 
 import Environment from './Environment';
 import AlreadySubscribedError from './errors/AlreadySubscribedError';
@@ -32,7 +29,7 @@ import { Notification } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { PermissionPromptType } from './models/PermissionPromptType';
-import { Uuid } from './models/Uuid';
+
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
@@ -53,6 +50,7 @@ import {
   isValidEmail,
   logMethodCall,
   prepareEmailForHashing,
+  isUsingSubscriptionWorkaround,
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { DeviceRecord } from './models/DeviceRecord';
@@ -62,6 +60,8 @@ import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
 import TimeoutError from './errors/TimeoutError';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
+import Emitter from './libraries/Emitter';
+import Log from './libraries/Log';
 
 
 export default class OneSignal {
@@ -123,7 +123,7 @@ export default class OneSignal {
       newEmailProfile.emailAuthHash = options.emailAuthHash
     }
 
-    const isExistingEmailSaved = existingEmailProfile.emailId && existingEmailProfile.emailId.value;
+    const isExistingEmailSaved = !!existingEmailProfile.emailId;
     if (isExistingEmailSaved && appConfig.emailAuthRequired) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
@@ -140,7 +140,7 @@ export default class OneSignal {
       );
     }
 
-    const isExistingPushRecordSaved = deviceId && deviceId.value;
+    const isExistingPushRecordSaved = deviceId;
     if (
       /* If we are subscribed to web push */
       isExistingPushRecordSaved &&
@@ -148,7 +148,7 @@ export default class OneSignal {
         /* And if we previously saved an email ID and it's different from the new returned ID */
         (
           !isExistingEmailSaved ||
-          existingEmailProfile.emailId.value !== newEmailProfile.emailId.value
+          existingEmailProfile.emailId !== newEmailProfile.emailId
         ) ||
         /* Or if we previously saved an email and the email changed */
         (
@@ -162,7 +162,7 @@ export default class OneSignal {
         appConfig.appId,
         deviceId,
         {
-          parent_player_id: newEmailProfile.emailId.value,
+          parent_player_id: newEmailProfile.emailId,
           email: newEmailProfile.emailAddress
         }
       );
@@ -181,18 +181,18 @@ export default class OneSignal {
     const emailProfile = await Database.getEmailProfile();
     const { deviceId } = await Database.getSubscription();
 
-    if (!emailProfile.emailId || !emailProfile.emailId.value) {
-      log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
+    if (!emailProfile.emailId) {
+      Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return;
     }
 
-    if (!deviceId || !deviceId.value) {
-      log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+    if (!deviceId) {
+      Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
 
     if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
-      log.warn("Failed to logout email.");
+      Log.warn("Failed to logout email.");
       return;
     }
 
@@ -223,18 +223,18 @@ export default class OneSignal {
     InitHelper.errorIfInitAlreadyCalled();
 
     const appConfig = await new ConfigManager().getAppConfig(options);
-    log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
+    Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
     OneSignal.context = new Context(appConfig);
     OneSignal.config = OneSignal.context.appConfig;
     OneSignal.context.workerMessenger.listen();
 
-    if (Browser.safari && !OneSignal.config.safariWebId) {
+    if (bowser.safari && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't
        * place conditional initialization checks.
        */
-      log.warn(new SdkInitError(SdkInitErrorKind.MissingSafariWebId));
+      Log.warn(new SdkInitError(SdkInitErrorKind.MissingSafariWebId));
       return;
     }
 
@@ -251,7 +251,7 @@ export default class OneSignal {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
         OneSignal.appConfig = appConfig;
 
         /**
@@ -294,7 +294,7 @@ export default class OneSignal {
       __init();
     }
     else {
-      log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
+      Log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
         ' initialization...');
       window.addEventListener('DOMContentLoaded', () => {
         __init();
@@ -312,9 +312,9 @@ export default class OneSignal {
    * @PublicApi
    */
   static async showHttpPermissionRequest(options?: {_sdkCall: boolean}): Promise<any> {
-    log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
+    Log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
 
-    OneSignal.showHttpPrompt().catch(e => log.info(e));
+    OneSignal.showHttpPrompt().catch(e => Log.info(e));
   }
 
   /**
@@ -344,11 +344,11 @@ export default class OneSignal {
     const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
 
     if (doNotPrompt && !options.force) {
-      log.info(new PermissionMessageDismissedError());
+      Log.info(new PermissionMessageDismissedError());
       return;
     }
     if (permission === NotificationPermission.Denied) {
-      log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
+      Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
       return;
     }
     if (isEnabled) {
@@ -362,12 +362,12 @@ export default class OneSignal {
 
     const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      log.debug('Not showing slidedown permission message because styles failed to load.');
+      Log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
     OneSignal.popover = new Popover(MainHelper.getSlidedownPermissionMessageOptions());
     OneSignal.popover.create();
-    log.debug('Showing the HTTP popover.');
+    Log.debug('Showing the HTTP popover.');
     if (OneSignal.notifyButton &&
       OneSignal.notifyButton.options.enable &&
       OneSignal.notifyButton.launcher.state !== 'hidden') {
@@ -388,13 +388,13 @@ export default class OneSignal {
     });
     OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
       OneSignal.popover.close();
-      log.debug("Setting flag to not show the popover to the user again.");
+      Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
       OneSignal._sessionInitAlreadyRunning = false;
       OneSignal.registerForPushNotifications({ autoAccept: true });
     });
     OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
-      log.debug("Setting flag to not show the popover to the user again.");
+      Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
       OneSignal._sessionInitAlreadyRunning = false;
     });
@@ -408,7 +408,7 @@ export default class OneSignal {
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
     function __registerForPushNotifications() {
-      if (options && options.httpPermissionRequest && SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (options && options.httpPermissionRequest && isUsingSubscriptionWorkaround()) {
         /*
           Do not throw an error because it may cause the parent event handler to
           throw and stop processing the rest of their code. Typically, for this
@@ -420,10 +420,10 @@ export default class OneSignal {
           using this API instead of the parameter-less version to register for
           push notifications.
          */
-        log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
+        Log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
         return;
       }
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
           /**
            * Users may be subscribed to either .onesignal.com or .os.tc. By this time
            * that they are subscribing to the popup, the Proxy Frame has already been
@@ -473,9 +473,9 @@ export default class OneSignal {
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+      Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
     }
     const { tags } = await OneSignalApi.getPlayer(appId, deviceId);
@@ -500,7 +500,7 @@ export default class OneSignal {
     logMethodCall('sendTags', tags, callback);
     if (!tags || Object.keys(tags).length === 0) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
+      Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
       return null;
     }
     // Our backend considers false as removing a tag, so convert false -> "false" to allow storing as a value
@@ -511,7 +511,7 @@ export default class OneSignal {
     const { appId } = await Database.getAppConfig();
 
     const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.emailId && emailProfile.emailId.value) {
+    if (emailProfile.emailId) {
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
         tags: tags,
         email_auth_hash: emailProfile.emailAuthHash,
@@ -519,7 +519,7 @@ export default class OneSignal {
     }
 
     var { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
     // After the user subscribers, he will have a device ID, so get it again
@@ -548,7 +548,7 @@ export default class OneSignal {
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Malformed);
     if (tags.length === 0) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
+      Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
     }
     const tagsToSend = {};
     for (let tag of tags) {
@@ -581,7 +581,7 @@ export default class OneSignal {
     logMethodCall('getIdsAvailable', callback);
     const { deviceId, subscriptionToken } = await Database.getSubscription();
     const bundle = {
-      userId: deviceId.value,
+      userId: deviceId,
       registrationId: subscriptionToken
     };
     executeCallback(callback, bundle);
@@ -618,9 +618,9 @@ export default class OneSignal {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId || !deviceId.value) {
+    if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+      Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
     subscription.optedOut = !newSubscription;
@@ -667,8 +667,8 @@ export default class OneSignal {
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
     const emailId = emailProfile.emailId;
-    executeCallback(callback, emailId.value);
-    return emailId.value;
+    executeCallback(callback, emailId);
+    return emailId;
   }
 
   /**
@@ -681,8 +681,8 @@ export default class OneSignal {
     logMethodCall('getUserId', callback);
     const subscription = await Database.getSubscription();
     const deviceId = subscription.deviceId;
-    executeCallback(callback, deviceId.value);
-    return deviceId.value;
+    executeCallback(callback, deviceId);
+    return deviceId;
   }
 
   /**
@@ -776,9 +776,9 @@ export default class OneSignal {
   static environment = Environment;
   static database = Database;
   static event = Event;
-  static browser = Browser;
+  static browser = bowser;
   static popover = null;
-  static log = log;
+  static log = Log;
   static api = OneSignalApi;
   static indexedDb = IndexedDb;
   static mainHelper = MainHelper;
@@ -787,7 +787,6 @@ export default class OneSignal {
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
   static testHelper = TestHelper;
-  static objectAssign = objectAssign;
   static appConfig = null;
   static subscriptionPopup: SubscriptionPopup;
   static subscriptionPopupHost: SubscriptionPopupHost;
@@ -795,6 +794,7 @@ export default class OneSignal {
   static subscriptionModalHost: SubscriptionModalHost;
   static proxyFrameHost: ProxyFrameHost;
   static proxyFrame: ProxyFrame;
+  static emitter: Emitter = new Emitter();
 
   /**
    * The additional path to the worker file.
@@ -950,41 +950,22 @@ export default class OneSignal {
     UNSUBSCRIBED: -2
   };
 
-  /** To appease TypeScript, EventEmitter later overrides this */
-  static on(..._) {}
-  static off(..._) {}
-  static once(..._) {}
-}
-
-Object.defineProperty(OneSignal, 'LOGGING', {
-  get: function() {
-    return OneSignal._LOGGING;
-  },
-  set: function(logLevel) {
-    if (logLevel) {
-      log.setDefaultLevel((<any>log).levels.TRACE);
-      OneSignal._LOGGING = true;
-    }
-    else {
-      log.setDefaultLevel((<any>log).levels.WARN);
-      OneSignal._LOGGING = false;
-    }
-  },
-  enumerable: true,
-  configurable: true
-});
-
-heir.merge(OneSignal, new EventEmitter());
-
-
-if (OneSignal.LOGGING)
-  log.setDefaultLevel((<any>log).levels.TRACE);
-else {
-  log.setDefaultLevel((<any>log).levels.WARN);
+  static async on(...args: any[]) {
+    return OneSignal.emitter.on.apply(OneSignal.emitter, args);
+  }
+  static async off(...args: any[]) {
+    return OneSignal.emitter.off.apply(OneSignal.emitter, args);
+  }
+  static async once(...args: any[]) {
+    return OneSignal.emitter.once.apply(OneSignal.emitter, args);
+  }
+  static async emit(...args: any[]) {
+    return OneSignal.emitter.emit.apply(OneSignal.emitter, args);
+  }
 }
 
 LegacyManager.ensureBackwardsCompatibility(OneSignal);
 
-log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
-log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
-log.debug(`Browser Environment: ${Browser.name} ${Browser.version}`);
+Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
+Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
+Log.debug(`Browser Environment: ${bowser.name} ${bowser.version}`);

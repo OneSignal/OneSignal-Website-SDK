@@ -1,4 +1,4 @@
-import * as objectAssign from 'object-assign';
+
 import { base64Encode } from '../utils/Encoding';
 import Environment from '../Environment';
 
@@ -34,9 +34,10 @@ export class ApiUsageMetricEvent extends MetricEvent {
   }
 
   getPropertiesAsJson() {
-    return objectAssign({}, {
+    return {
       api: this.apiName.toString(),
-    }, super.getPropertiesAsJson());
+      ...super.getPropertiesAsJson()
+    };
   }
 }
 
@@ -92,9 +93,10 @@ export default class MetricsManager {
 
     const queryParamsData = {
       event: event.getEventName(),
-      properties: objectAssign({}, {
+      properties: {
         token: this.mixpanelReportingToken,
-      }, event.getPropertiesAsJson())
+        ...event.getPropertiesAsJson()
+      }
     };
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
@@ -116,7 +118,7 @@ export default class MetricsManager {
       $token: this.mixpanelReportingToken,
       $distinct_id: engagement.getProfileName(),
     };
-    queryParamsData = objectAssign({}, queryParamsData, engagement.getOperationData());
+    queryParamsData = {...queryParamsData, ...engagement.getOperationData()};
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
     const requestOptions = {

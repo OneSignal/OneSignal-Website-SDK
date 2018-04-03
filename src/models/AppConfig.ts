@@ -1,14 +1,13 @@
-import { Uuid } from './Uuid';
 import { Serializable } from './Serializable';
 import { SlidedownPermissionMessageOptions } from '../popover/Popover';
-import * as objectAssign from 'object-assign';
+
 
 export interface AppConfig {
   /**
    * The OneSignal dashboard app ID. Although this value is provided, it isn't
    * used since it will always be identical to the provided app ID.
    */
-  appId: Uuid;
+  appId: string;
 
   /**
    * The subdomain chosen on the dashboard for non-HTTPS apps.
@@ -51,18 +50,6 @@ export interface AppConfig {
    */
   emailAuthRequired?: boolean;
   userConfig?: AppUserConfig;
-}
-
-export function serializeAppConfig(config: AppConfig): object {
-  return objectAssign({}, config, {
-    appId: config.appId.serialize()
-  });
-}
-
-export function deserializeAppConfig(bundle: any): AppConfig {
-  return objectAssign({}, bundle, {
-    appId: Uuid.deserialize(bundle.appId),
-  });
 }
 
 export enum ConfigIntegrationKind {

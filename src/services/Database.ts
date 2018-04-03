@@ -1,4 +1,3 @@
-import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Emitter from '../libraries/Emitter';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { AppConfig } from '../models/AppConfig';
@@ -8,11 +7,12 @@ import { ServiceWorkerState } from '../models/ServiceWorkerState';
 import { Subscription } from '../models/Subscription';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { Timestamp } from '../models/Timestamp';
-import { Uuid } from '../models/Uuid';
+
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import IndexedDb from './IndexedDb';
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 import { EmailProfile } from '../models/EmailProfile';
+import { isUsingSubscriptionWorkaround } from '../utils';
 
 enum DatabaseEventName {
   SET
@@ -80,7 +80,7 @@ export default class Database {
   async get<T>(table: string, key?: string): Promise<T> {
     return await new Promise<T>(async (resolve) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-          SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+          isUsingSubscriptionWorkaround() &&
           SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
@@ -105,7 +105,7 @@ export default class Database {
   async put(table: string, keypath: any) {
     await new Promise(async (resolve, reject) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-        SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+        isUsingSubscriptionWorkaround() &&
         SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{table: table, keypath: keypath}], reply => {
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
@@ -128,7 +128,7 @@ export default class Database {
    */
   remove(table: string, keypath?: string) {
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-      SubscriptionHelper.isUsingSubscriptionWorkaround() &&
+      isUsingSubscriptionWorkaround() &&
       SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
       return new Promise((resolve, reject) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{ table: table, keypath: keypath }], reply => {
@@ -148,7 +148,7 @@ export default class Database {
   async getAppConfig(): Promise<any> {
     const config: any = {};
     const appIdStr: string = await this.get<string>('Ids', 'appId');
-    config.appId = new Uuid(appIdStr);
+    config.appId = appIdStr;
     config.subdomain = await this.get<string>('Options', 'subdomain');
     config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
     config.emailAuthRequired = await this.get<boolean>('Options', 'emailAuthRequired');
@@ -156,8 +156,8 @@ export default class Database {
   }
 
   async setAppConfig(appConfig: AppConfig) {
-    if (appConfig.appId && appConfig.appId.value)
-      await this.put('Ids', {type: 'appId', id: appConfig.appId.value})
+    if (appConfig.appId)
+      await this.put('Ids', {type: 'appId', id: appConfig.appId})
     if (appConfig.subdomain)
       await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})
     if (appConfig.httpUseOneSignalCom === true)
@@ -227,8 +227,7 @@ export default class Database {
 
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
-    const deviceIdStr: string = await this.get<string>('Ids', 'userId');
-    subscription.deviceId = new Uuid(deviceIdStr);
+    subscription.deviceId = await this.get<string>('Ids', 'userId');
     subscription.subscriptionToken = await this.get<string>('Ids', 'registrationId');
 
     // The preferred database key to store our subscription
@@ -254,8 +253,8 @@ export default class Database {
   }
 
   async setSubscription(subscription: Subscription) {
-    if (subscription.deviceId && subscription.deviceId.value) {
-      await this.put('Ids', { type: 'userId', id: subscription.deviceId.value });
+    if (subscription.deviceId && subscription.deviceId) {
+      await this.put('Ids', { type: 'userId', id: subscription.deviceId });
     }
     if (typeof subscription.subscriptionToken !== "undefined") {
       // Allow null subscriptions to be set

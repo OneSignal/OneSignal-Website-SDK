@@ -1,5 +1,5 @@
-import * as Browser from 'bowser';
-import * as log from 'loglevel';
+import bowser from 'bowser';
+
 
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
@@ -7,7 +7,7 @@ import TimeoutError from '../errors/TimeoutError';
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { getConsoleStyle, timeoutPromise } from '../utils';
+import { getConsoleStyle, timeoutPromise, triggerNotificationPermissionChanged } from '../utils';
 import EventHelper from './EventHelper';
 import MainHelper from './MainHelper';
 import TestHelper from './TestHelper';
@@ -20,6 +20,7 @@ import Database from '../services/Database';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import Log from '../libraries/Log';
 
 export default class SubscriptionHelper {
   static async registerForPush(): Promise<Subscription> {
@@ -35,7 +36,7 @@ export default class SubscriptionHelper {
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
 
     if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
-      log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
+      Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
       return null;
     }
 
@@ -56,10 +57,10 @@ export default class SubscriptionHelper {
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
-          EventHelper.triggerNotificationPermissionChanged();
+          triggerNotificationPermissionChanged();
           EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
-          log.info(e);
+          Log.info(e);
         }
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionPopup:
@@ -123,12 +124,12 @@ export default class SubscriptionHelper {
           },
           message => {
             if (message.data.progress === true) {
-              log.debug('Got message from host page that remote reg. is in progress, closing popup.');
+              Log.debug('Got message from host page that remote reg. is in progress, closing popup.');
               if (windowCreator) {
                 window.close();
               }
             } else {
-              log.debug('Got message from host page that remote reg. could not be finished.');
+              Log.debug('Got message from host page that remote reg. could not be finished.');
             }
           }
         );
@@ -145,88 +146,5 @@ export default class SubscriptionHelper {
     }
 
     return subscription;
-  }
-
-  /**
-   * Returns true if web push subscription occurs on a subdomain of OneSignal.
-   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
-   * @remarks
-   *   This method returns true if:
-   *     - The browser is not Safari
-   *         - Safari uses a different method of subscription and does not require our workaround
-   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
-   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
-   *        - The protocol of the current webpage is http:
-   *   Exceptions are:
-   *     - Safe hostnames like localhost and 127.0.0.1
-   *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
-   *        - We are already in popup or iFrame mode, or this is called from the service worker
-   */
-  static isUsingSubscriptionWorkaround() {
-    if (!OneSignal.config) {
-      throw new Error(
-        `(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
-      );
-    }
-    if (Browser.safari) {
-      return false;
-    }
-
-    if (
-      (SubscriptionHelper.isLocalhostAllowedAsSecureOrigin() && location.hostname === 'localhost') ||
-      (location.hostname as any) === '127.0.0.1'
-    ) {
-      return false;
-    }
-
-    return (
-      (
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host ||
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe
-      ) &&
-      (
-        !!OneSignal.config.subdomain ||
-        location.protocol === 'http:'
-      )
-    );
-  }
-
-  /**
-   * From a child frame, returns true if the current frame context is insecure.
-   *
-   * This is used to check if isPushNotificationsEnabled() should grab the service worker
-   * registration. In an HTTPS iframe of an HTTP page, getting the service worker registration would
-   * throw an error.
-   *
-   * This method can trigger console warnings due to using ServiceWorkerContainer.getRegistration in
-   * an insecure frame.
-   */
-  static async isFrameContextInsecure() {
-    // If we are the top frame, or service workers aren't available, don't run this check
-    if (
-      window === window.top ||
-      !('serviceWorker' in navigator) ||
-      typeof navigator.serviceWorker.getRegistration === 'undefined'
-    ) {
-      return false;
-    }
-    try {
-      await navigator.serviceWorker.getRegistration();
-      return false;
-    } catch (e) {
-      return true;
-    }
-  }
-
-  static isInsecureOrigin() {
-    return window.location.protocol === "http:";
-  }
-
-  static isLocalhostAllowedAsSecureOrigin() {
-    return (
-      OneSignal.config &&
-      OneSignal.config.userConfig &&
-      OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
-    );
   }
 }

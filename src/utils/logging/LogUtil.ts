@@ -39,7 +39,7 @@ class LogUtil {
 
     /**
      * Example:
-     *   log.debug(...LogUtil.format('<COMPONENT NAME>', '<YOUR MESSAGE>', <ARG 1>, <ARG 2>, ...));
+     *   Log.debug(...LogUtil.format('<COMPONENT NAME>', '<YOUR MESSAGE>', <ARG 1>, <ARG 2>, ...));
      */
     static format(module, ...message) {
         return [

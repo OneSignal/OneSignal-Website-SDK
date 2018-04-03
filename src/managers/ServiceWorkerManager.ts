@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+
 
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
@@ -6,17 +6,18 @@ import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Context from '../models/Context';
 import Path from '../models/Path';
 import SdkEnvironment from './SdkEnvironment';
-import { Uuid } from '../models/Uuid';
 import { Subscription } from '../models/Subscription';
-import { encodeHashAsUriComponent, timeoutPromise } from '../utils';
+import { encodeHashAsUriComponent, timeoutPromise, isUsingSubscriptionWorkaround } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
 import MainHelper from '../helpers/MainHelper';
-import { serializeAppConfig } from '../models/AppConfig';
 import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import NotImplementedError from '../errors/NotImplementedError';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
+import Log from '../libraries/Log';
+import Event from '../Event';
+import ProxyFrame from '../modules/frames/ProxyFrame';
 
 export enum ServiceWorkerActiveState {
   /**
@@ -212,7 +213,7 @@ export class ServiceWorkerManager {
 
   public async getWorkerVersion(): Promise<number> {
     return new Promise<number>(async resolve => {
-      if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
+      if (isUsingSubscriptionWorkaround()) {
         const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
         if (!proxyFrameHost) {
           /* On init, this function may be called. Return a null state for now */
@@ -250,7 +251,7 @@ export class ServiceWorkerManager {
       this.context.workerMessenger.once(WorkerMessengerCommand.Subscribe, subscription => {
         resolve(Subscription.deserialize(subscription));
       });
-      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, serializeAppConfig(this.context.appConfig));
+      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, this.context.appConfig);
     });
   }
 
@@ -265,28 +266,28 @@ export class ServiceWorkerManager {
     }
 
     const workerState = await this.getActiveState();
-    log.info(`[Service Worker Update] Checking service worker version...`);
+    Log.info(`[Service Worker Update] Checking service worker version...`);
     let workerVersion;
     try {
       workerVersion = await timeoutPromise(this.getWorkerVersion(), 2000);
     } catch (e) {
-      log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
+      Log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
       workerVersion = 1;
     }
 
     if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
       // Do not update 3rd party workers
-      log.debug(
+      Log.debug(
         `[Service Worker Update] Not updating service worker, current active worker state is ${workerState}.`
       );
       return;
     }
 
     if (workerVersion !== Environment.version()) {
-      log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
+      Log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
       this.installWorker();
     } else {
-      log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
+      Log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
     }
   }
 
@@ -361,7 +362,83 @@ export class ServiceWorkerManager {
       await this.installAlternatingWorker();
     }
 
-    MainHelper.establishServiceWorkerChannel();
+    this.establishServiceWorkerChannel();
+  }
+
+  public establishServiceWorkerChannel() {
+    const workerMessenger = this.context.workerMessenger;
+    workerMessenger.off();
+
+    workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, data => {
+      Log.debug(location.origin, 'Received notification display event from service worker.');
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+    });
+
+    workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
+      let clickedListenerCallbackCount: number;
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
+        clickedListenerCallbackCount = await new Promise<number>(resolve => {
+          const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
+          if (proxyFrame) {
+            proxyFrame.messenger.message(
+              OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
+              OneSignal.EVENTS.NOTIFICATION_CLICKED,
+              reply => {
+                let callbackCount: number = reply.data;
+                resolve(callbackCount);
+              }
+            );
+          }
+        });
+      } else {
+        clickedListenerCallbackCount = OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length;
+      }
+      if (clickedListenerCallbackCount === 0) {
+        /*
+          A site's page can be open but not listening to the
+          notification.clicked event because it didn't call
+          addListenerForNotificationOpened(). In this case, if there are no
+          detected event listeners, we should save the event, instead of firing
+          it without anybody recieving it.
+
+          Or, since addListenerForNotificationOpened() only works once (you have
+          to call it again each time), maybe it was only called once and the
+          user isn't receiving the notification.clicked event for subsequent
+          notifications on the same browser tab.
+
+          Example: notificationClickHandlerMatch: 'origin', tab is clicked,
+                   event fires without anybody listening, calling
+                   addListenerForNotificationOpened() returns no results even
+                   though a notification was just clicked.
+        */
+        Log.debug(
+          'notification.clicked event received, but no event listeners; storing event in IndexedDb for later retrieval.'
+        );
+        /* For empty notifications without a URL, use the current document's URL */
+        let url = data.url;
+        if (!data.url) {
+          // Least likely to modify, since modifying this property changes the page's URL
+          url = location.href;
+        }
+        await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
+      } else {
+        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+      }
+    });
+
+    workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
+      Log.debug(
+        `${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`
+      );
+      const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
+      if (proxyFrame) {
+        proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
+      }
+    });
+
+    workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, data => {
+      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+    });
   }
 
   /**
@@ -410,11 +487,11 @@ export class ServiceWorkerManager {
     }
 
     const installUrlQueryParams = {
-      appId: this.context.appConfig.appId.toString()
+      appId: this.context.appConfig.appId
     };
     fullWorkerPath = `${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
-    log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
+    Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
     await navigator.serviceWorker.register(fullWorkerPath, this.config.registrationOptions);
-    log.debug(`[Service Worker Installation] Service worker installed.`);
+    Log.debug(`[Service Worker Installation] Service worker installed.`);
   }
 }

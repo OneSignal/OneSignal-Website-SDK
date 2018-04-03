@@ -1,8 +1,9 @@
-import * as log from 'loglevel';
+
 
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { addCssClass, contains, hasCssClass, nothing, once, removeCssClass } from '../utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
+import Log from '../libraries/Log';
 
 
 export default class Launcher extends ActiveAnimatedElement {
@@ -54,7 +55,7 @@ export default class Launcher extends ActiveAnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            log.debug(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
+            Log.debug(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event, destroyListenerFn) => {
             if (event.target === this.element &&

@@ -1,7 +1,8 @@
 
-import * as log from 'loglevel';
+
 import SdkEnvironment from './SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import Log from '../libraries/Log';
 
 export class SessionManager {
   private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
@@ -66,7 +67,7 @@ export class SessionManager {
 
     const newCount = this.getPageViewCount() + 1;
     this.setPageViewCount(newCount);
-    log.debug(`Incremented page view count to ${newCount}.`);
+    Log.debug(`Incremented page view count to ${newCount}.`);
     this.incrementedPageViewCount = true;
   }
 

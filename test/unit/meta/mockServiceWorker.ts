@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 
 import test from 'ava';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';
@@ -12,7 +12,7 @@ import { beforeEach } from '../../support/tester/typify';
 import Database from '../../../src/services/Database';
 import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
-import { Uuid } from '../../../src/models/Uuid';
+
 import { AppConfig } from '../../../src/models/AppConfig';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array } from '../../../src/utils/Encoding';

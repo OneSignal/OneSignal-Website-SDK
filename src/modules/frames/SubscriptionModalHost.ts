@@ -1,12 +1,12 @@
-import * as log from 'loglevel';
+
 
 import Event from '../../Event';
 import MainHelper from '../../helpers/MainHelper';
 import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
-import { Uuid } from '../../models/Uuid';
 import Postmam from '../../Postmam';
+import Log from '../../libraries/Log';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -15,12 +15,12 @@ import Postmam from '../../Postmam';
  */
 export default class SubscriptionModalHost implements Disposable {
   private messenger: Postmam;
-  private appId: Uuid;
+  private appId: string;
   private modal: HTMLIFrameElement;
   private url: URL;
   private registrationOptions: any;
 
-  constructor(appId: Uuid, registrationOptions: any) {
+  constructor(appId: string, registrationOptions: any) {
     this.appId = appId;
     this.registrationOptions = registrationOptions;
   }
@@ -41,8 +41,8 @@ export default class SubscriptionModalHost implements Disposable {
     const notificationPermission = await OneSignal.getNotificationPermission();
     this.url = SdkEnvironment.getOneSignalApiUrl();
     this.url.pathname = 'webPushModal';
-    this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId.value}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
-    log.info(`Loading iFrame for HTTPS subscription modal at ${this.url.toString()}`);
+    this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
+    Log.info(`Loading iFrame for HTTPS subscription modal at ${this.url.toString()}`);
 
     this.modal = this.createHiddenSubscriptionDomModal(this.url.toString());
 
@@ -101,24 +101,24 @@ export default class SubscriptionModalHost implements Disposable {
   }
 
   async onModalAccepted(_: MessengerMessageEvent) {
-    log.debug('User accepted the HTTPS modal prompt.', location.origin);
+    Log.debug('User accepted the HTTPS modal prompt.', location.origin);
     OneSignal._sessionInitAlreadyRunning = false;
     this.dispose();
     MainHelper.triggerCustomPromptClicked('granted');
-    log.debug('Calling setSubscription(true)');
+    Log.debug('Calling setSubscription(true)');
     await SubscriptionHelper.registerForPush();
     await OneSignal.setSubscription(true);
   }
 
   onModalRejected(_: MessengerMessageEvent) {
-    log.debug('User rejected the HTTPS modal prompt.');
+    Log.debug('User rejected the HTTPS modal prompt.');
     OneSignal._sessionInitAlreadyRunning = false;
     this.dispose();
     MainHelper.triggerCustomPromptClicked('denied');
   }
 
   onModalClosing(_: MessengerMessageEvent) {
-    log.info('Detected modal is closing.');
+    Log.info('Detected modal is closing.');
     this.dispose();
   }
 

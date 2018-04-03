@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';

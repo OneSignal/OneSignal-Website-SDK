@@ -1,4 +1,4 @@
-import * as Browser from 'bowser';
+import bowser from 'bowser';
 
 import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
@@ -7,7 +7,7 @@ import { DevicePlatformKind } from './DevicePlatformKind';
 import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { Uuid } from './Uuid';
+
 import { redetectBrowserUserAgent } from "../utils";
 
 
@@ -17,7 +17,7 @@ import { redetectBrowserUserAgent } from "../utils";
  * This is used when creating or modifying push and email records.
  */
 export abstract class DeviceRecord implements Serializable {
-  public appId: Uuid;
+  public appId: string;
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;
   public timezone: number;
@@ -33,10 +33,10 @@ export abstract class DeviceRecord implements Serializable {
   constructor() {
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
-    this.browserName = Browser.name;
-    this.browserVersion = parseInt(String(Browser.version)) !== NaN ? parseInt(String(Browser.version)) : -1;
+    this.browserName = bowser.name;
+    this.browserVersion = parseInt(String(bowser.version)) !== NaN ? parseInt(String(bowser.version)) : -1;
     this.operatingSystem = this.getBrowserOperatingSystem();
-    this.operatingSystemVersion = String(Browser.osversion);
+    this.operatingSystemVersion = String(bowser.osversion);
     this.devicePlatform = this.getDevicePlatform();
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();
@@ -45,8 +45,8 @@ export abstract class DeviceRecord implements Serializable {
   }
 
   getDevicePlatform(): DevicePlatformKind {
-    const isMobile = Browser.mobile;
-    const isTablet = Browser.tablet;
+    const isMobile = bowser.mobile;
+    const isTablet = bowser.tablet;
 
     if (isMobile) {
       return DevicePlatformKind.Mobile;
@@ -58,7 +58,7 @@ export abstract class DeviceRecord implements Serializable {
   }
 
   isSafari(): boolean {
-    return Browser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
   }
 
   getBrowserOperatingSystem(): string {
@@ -77,40 +77,40 @@ export abstract class DeviceRecord implements Serializable {
       tizen
       sailfish
     */
-    if (Browser.mac) {
+    if (bowser.mac) {
       return "Mac OS X";
     }
-    if (Browser.windows) {
+    if (bowser.windows) {
       return "Microsoft Windows";
     }
-    if (Browser.windowsphone) {
+    if (bowser.windowsphone) {
       return "Microsoft Windows Phone";
     }
-    if (Browser.linux) {
+    if (bowser.linux) {
       return "Linux";
     }
-    if (Browser.chromeos) {
+    if (bowser.chromeos) {
       return "Google Chrome OS";
     }
-    if (Browser.android) {
+    if (bowser.android) {
       return "Google Android";
     }
-    if (Browser.ios) {
+    if (bowser.ios) {
       return "Apple iOS";
     }
-    if (Browser.blackberry) {
+    if (bowser.blackberry) {
       return "Blackberry";
     }
-    if (Browser.firefoxos) {
+    if (bowser.firefoxos) {
       return "Mozilla Firefox OS";
     }
-    if (Browser.webos) {
+    if (bowser.webos) {
       return "WebOS";
     }
-    if (Browser.tizen) {
+    if (bowser.tizen) {
       return "Tizen";
     }
-    if (Browser.sailfish) {
+    if (bowser.sailfish) {
       return "Sailfish OS";
     }
     return "Unknown";
@@ -122,9 +122,9 @@ export abstract class DeviceRecord implements Serializable {
 
     if (this.isSafari()) {
       return DeliveryPlatformKind.Safari;
-    } else if (Browser.firefox) {
+    } else if (browser.firefox) {
       return DeliveryPlatformKind.Firefox;
-    } else if (Browser.msedge) {
+    } else if (browser.msedge) {
       return DeliveryPlatformKind.Edge;
     } else {
       return DeliveryPlatformKind.ChromeLike;
@@ -151,7 +151,7 @@ export abstract class DeviceRecord implements Serializable {
     };
 
     if (this.appId) {
-      serializedBundle.app_id = this.appId.value;
+      serializedBundle.app_id = this.appId;
     }
 
     return serializedBundle;

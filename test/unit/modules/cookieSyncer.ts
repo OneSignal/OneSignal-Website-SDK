@@ -3,8 +3,8 @@ import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
-import { Uuid } from '../../../src/models/Uuid';
 import Context from '../../../src/models/Context';
+import Random from "../../support/tester/Random";
 
 test("should load https://onesignal.com/webPushAnalytics as HTTPS if cookie sync not enabled", async t => {
   await TestEnvironment.initialize({
@@ -12,7 +12,7 @@ test("should load https://onesignal.com/webPushAnalytics as HTTPS if cookie sync
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   const cookieSyncer = new CookieSyncer(OneSignal.context, false);
@@ -29,7 +29,7 @@ test("should load https://subdomain.os.tc/webPushAnalytics as HTTP if cookie syn
 
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.subdomain = "my-subdomain";
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   const cookieSyncer = new CookieSyncer(OneSignal.context, false);
@@ -46,13 +46,13 @@ async t => {
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   const cookieSyncer = new CookieSyncer(OneSignal.context, true);
   cookieSyncer.install();
   const iframe = document.querySelector("iframe");
-  const sanitizedAppId = appConfig.appId.value.replace(/-/g, '').substr(0, 15);
+  const sanitizedAppId = appConfig.appId.replace(/-/g, '').substr(0, 15);
   t.is(iframe.getAttribute('src'), `https://onesignal.com/webPushAnalytics?sync=true&appId=os!${sanitizedAppId}`);
   t.truthy(iframe);
 });
@@ -65,13 +65,13 @@ async t => {
 
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.subdomain = "my-subdomain";
-  appConfig.appId = Uuid.generate();
+  appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   const cookieSyncer = new CookieSyncer(OneSignal.context, true);
   cookieSyncer.install();
   const iframe = document.querySelector("iframe");
-  const sanitizedAppId = appConfig.appId.value.replace(/-/g, '').substr(0, 15);
+  const sanitizedAppId = appConfig.appId.replace(/-/g, '').substr(0, 15);
   t.is(iframe.getAttribute('src'), `https://my-subdomain.os.tc/webPushAnalytics?sync=true&appId=os!${sanitizedAppId}`);
   t.truthy(iframe);
 });
