@@ -243,7 +243,7 @@ export class SubscriptionManager {
    */
   public async associateSubscriptionWithEmail(newDeviceId: string) {
     const emailProfile = await Database.getEmailProfile();
-    if (!emailProfile.emailId || !emailProfile.emailId) {
+    if (!emailProfile.emailId) {
       return;
     }
 

@@ -220,7 +220,7 @@ export default class InitHelper {
     /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
-      if (emailProfile.emailId && emailProfile.emailId) {
+      if (emailProfile.emailId) {
         OneSignalApi.updateUserSession(
           emailProfile.emailId,
           new EmailDeviceRecord(null, emailProfile.emailAuthHash)

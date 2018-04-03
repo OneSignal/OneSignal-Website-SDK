@@ -180,7 +180,7 @@ export default class OneSignalApi {
       app_id: appConfig.appId,
       device_type: 11,
       identifier: emailProfile.emailAddress,
-      device_player_id: (pushId && pushId) ? pushId : undefined,
+      device_player_id: pushId ? pushId : undefined,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
     });
     if (response && response.success) {

@@ -97,7 +97,7 @@ export default class MainHelper {
 
   static async getNotificationIcons() {
     const appId = await MainHelper.getAppId();
-    if (!appId || !appId) {
+    if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
     var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;

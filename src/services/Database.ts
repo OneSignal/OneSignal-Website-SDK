@@ -156,7 +156,7 @@ export default class Database {
   }
 
   async setAppConfig(appConfig: AppConfig) {
-    if (appConfig.appId && appConfig.appId)
+    if (appConfig.appId)
       await this.put('Ids', {type: 'appId', id: appConfig.appId})
     if (appConfig.subdomain)
       await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})

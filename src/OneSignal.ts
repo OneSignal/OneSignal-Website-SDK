@@ -123,7 +123,7 @@ export default class OneSignal {
       newEmailProfile.emailAuthHash = options.emailAuthHash
     }
 
-    const isExistingEmailSaved = existingEmailProfile.emailId && existingEmailProfile.emailId;
+    const isExistingEmailSaved = !!existingEmailProfile.emailId;
     if (isExistingEmailSaved && appConfig.emailAuthRequired) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
@@ -181,12 +181,12 @@ export default class OneSignal {
     const emailProfile = await Database.getEmailProfile();
     const { deviceId } = await Database.getSubscription();
 
-    if (!emailProfile.emailId || !emailProfile.emailId) {
+    if (!emailProfile.emailId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return;
     }
 
-    if (!deviceId || !deviceId) {
+    if (!deviceId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
@@ -473,7 +473,7 @@ export default class OneSignal {
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId) {
+    if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
@@ -511,7 +511,7 @@ export default class OneSignal {
     const { appId } = await Database.getAppConfig();
 
     const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.emailId && emailProfile.emailId) {
+    if (emailProfile.emailId) {
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
         tags: tags,
         email_auth_hash: emailProfile.emailAuthHash,
@@ -519,7 +519,7 @@ export default class OneSignal {
     }
 
     var { deviceId } = await Database.getSubscription();
-    if (!deviceId || !deviceId) {
+    if (!deviceId) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
     // After the user subscribers, he will have a device ID, so get it again
@@ -618,7 +618,7 @@ export default class OneSignal {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId || !deviceId) {
+    if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;

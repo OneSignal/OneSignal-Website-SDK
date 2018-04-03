@@ -802,7 +802,7 @@ export class ServiceWorker {
     Log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
 
     const appId = await ServiceWorker.getAppId();
-    if (!appId || !appId) {
+    if (!appId) {
       // Without an app ID, we can't make any calls
       return;
     }
