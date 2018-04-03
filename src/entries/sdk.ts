@@ -1,7 +1,6 @@
 /**
  * Pages and older service workers will include this entry point, which is the full SDK.
  */
-import "regenerator-runtime/runtime";
 import { oneSignalSdkInit } from '../utils/pageSdkInit';
 import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
