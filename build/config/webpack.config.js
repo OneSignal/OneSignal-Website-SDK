@@ -4,6 +4,9 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const { CheckerPlugin } = require('awesome-typescript-loader');
+const dir = require('node-dir');
+const md5file = require('md5-file');
+const crypto = require('crypto');
 
 setBuildEnvironment();
 
@@ -20,12 +23,12 @@ function setBuildEnvironment() {
   console.log("Build Environment:", process.env.ENV);
 }
 
-function getWebpackPlugins() {
+async function getWebpackPlugins() {
   const plugins = [
     new CheckerPlugin(),
     new webpack.optimize.ModuleConcatenationPlugin(),
-    new ExtractTextPlugin('OneSignalSDKStyles.css'),
-    new webpack.DefinePlugin(getBuildDefines()),
+    new ExtractTextPlugin('stylesheet.css'),
+    new webpack.DefinePlugin(await getBuildDefines()),
   ];
   if (!!process.env.ANALYZE) {
     const sizeAnalysisReportPath = path.resolve(path.join('build', 'size-analysis.html'));
@@ -62,14 +65,13 @@ function getWebpackPlugins() {
   return plugins;
 }
 
-function generateWebpackConfig() {
+async function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
       'sdk.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
       'worker.js': path.resolve('build/ts-to-es6/src/entries/worker.js'),
-      //'sdk.js': path.resolve('build/ts-to-es6/src/entries/test.js'),
-      //'stylesheet.css': path.resolve('build/ts-to-es6/src/entries/stylesheet.css'),
+      'stylesheet.css': path.resolve('src/entries/stylesheet.scss'),
     },
     output: {
       path: path.resolve('build/bundles'),
@@ -154,18 +156,52 @@ function generateWebpackConfig() {
       ]
     },
     devtool: 'source-map',
-    plugins: getWebpackPlugins()
+    plugins: await getWebpackPlugins()
   };
 }
 
-function getBuildDefines() {
+async function getStylesheetsHash() {
+  const styleSheetsPath = 'src/stylesheets';
+
+  return await new Promise((resolve, reject) => {
+    dir.files(styleSheetsPath, async (err, files) => {
+      if (err) throw err;
+      const filteredFiles = files.filter(filePath => {
+        console.log("CSS Stylesheet:", filePath);
+        const fileName = path.basename(filePath);
+        if (fileName.endsWith('.scss')) {
+          // Only hash SCSS source files
+          return true;
+        }
+      });
+      if (filteredFiles.length === 0) {
+        reject(
+          `No .scss files were found in ${styleSheetsPath}, but SCSS files were expected. SCSS stylesheets in this directory are MD5 hashed and added as a build-time variable so loading the stylesheet from the global CDN always loads the correct version.`
+        );
+      }
+      let hashes = [];
+      for (let styleSheetPath of filteredFiles) {
+        const hash = md5file.sync(styleSheetPath);
+        hashes.push(hash);
+      }
+      // Strangely enough, the order is inconsistent so we have to sort the hashes
+      hashes = hashes.sort();
+      const joinedHashesStr = hashes.join('-');
+      const combinedHash = crypto.createHash('md5').update(joinedHashesStr).digest("hex");
+      console.log(`MD5 hash of SCSS source files in ${styleSheetsPath} is ${combinedHash}.`);
+      resolve(combinedHash);
+    });
+  });
+}
+
+async function getBuildDefines() {
   var buildDefines = {
     __DEV__: process.env.ENV === 'development',
     __TEST__: !!process.env.TESTS,
     __STAGING__: process.env.ENV === 'staging',
     __VERSION__: process.env.npm_package_config_sdkVersion,
     __LOGGING__: process.env.ENV === "development",
-    __SRC_STYLESHEETS_MD5_HASH__: "x",
+    __SRC_STYLESHEETS_MD5_HASH__: JSON.stringify(await getStylesheetsHash()),
   };
   if (process.env.ENV === 'production') {
     buildDefines['process.env.NODE_ENV'] = JSON.stringify('production');

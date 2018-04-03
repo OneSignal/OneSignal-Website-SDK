@@ -38,8 +38,8 @@ cp build/bundles/worker.js.map $ONESIGNAL_PUBLIC_PATH/$PREFIX"OneSignalSDKWorker
 #*                            OneSignal/public/OneSignalSDKUpdaterWorker.js.map
 cp build/bundles/worker.js.map $ONESIGNAL_PUBLIC_PATH/$PREFIX"OneSignalSDKUpdaterWorker.js.map"
 
-# Copy: ./styles.css  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css
-# Copy: ./styles.css.map  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css.map
-cp build/bundles/styles.css $ONESIGNAL_PUBLIC_SDKS_PATH/$PREFIX"OneSignalSDKStyles.css"
-cp build/bundles/styles.css.map $ONESIGNAL_PUBLIC_SDKS_PATH/$PREFIX"OneSignalSDKStyles.css.map"
+# Copy: ./stylesheet.css  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css
+# Copy: ./stylesheet.css.map  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css.map
+cp build/bundles/stylesheet.css $ONESIGNAL_PUBLIC_SDKS_PATH/$PREFIX"OneSignalSDKStyles.css"
+cp build/bundles/stylesheet.css.map $ONESIGNAL_PUBLIC_SDKS_PATH/$PREFIX"OneSignalSDKStyles.css.map"
 
