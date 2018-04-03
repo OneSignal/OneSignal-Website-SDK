@@ -10,13 +10,6 @@ cache:
   directories:
     - node_modules
 before_script:
-  # The SDK build tool relies on a config.json in the project root
-  # It contains various path configs to tell where the build tool to copy or read files
-  - 'cp config.json.example config.json'
-
-  # --tests allows the SDK build tool to transpile tests, otherwise it ignores building tests for performance reasons
-  # --noBundle avoids copying the web SDK files to the Rails project root, and avoids UglifyJS
-  # --noWatch prevents the SDK build tool running as a daemon, so it can exit and Travis can proceed
   - 'yarn build:tests'
 script:
   - 'ava --verbose --color --watch=false'
