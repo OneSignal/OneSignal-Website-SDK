@@ -35,7 +35,7 @@ cp build/bundles/worker.js.map $ONESIGNAL_PUBLIC_SDKS_PATH/$PREFIX"OneSignalSDKW
 cp build/bundles/worker.js.map $ONESIGNAL_PUBLIC_PATH/$PREFIX"OneSignalSDKWorker.js.map"
 
 # Copy: ./worker.js.map  ==>  (none in SDKs folder)
-#*                            OneSignal/public/OneSignalSDKUpdaterWorker.js.map
+#                             OneSignal/public/OneSignalSDKUpdaterWorker.js.map
 cp build/bundles/worker.js.map $ONESIGNAL_PUBLIC_PATH/$PREFIX"OneSignalSDKUpdaterWorker.js.map"
 
 # Copy: ./stylesheet.css  ==>  OneSignal/public/sdks/OneSignalSDKStyles.css
