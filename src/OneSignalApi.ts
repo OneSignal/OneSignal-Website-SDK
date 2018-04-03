@@ -198,7 +198,7 @@ export default class OneSignalApi {
     const response = await OneSignalApi.put(`players/${emailProfile.emailId}`, {
       app_id: appConfig.appId,
       identifier: emailProfile.emailAddress,
-      device_player_id: (deviceId && deviceId) ? deviceId : undefined,
+      device_player_id: deviceId ? deviceId : undefined,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
     });
     if (response && response.success) {

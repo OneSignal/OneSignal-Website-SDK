@@ -140,7 +140,7 @@ export default class OneSignal {
       );
     }
 
-    const isExistingPushRecordSaved = deviceId && deviceId;
+    const isExistingPushRecordSaved = deviceId;
     if (
       /* If we are subscribed to web push */
       isExistingPushRecordSaved &&

@@ -819,7 +819,7 @@ export class ServiceWorker {
     let deviceIdExists: boolean;
     {
       let { deviceId } = await Database.getSubscription();
-      deviceIdExists = !!(deviceId && deviceId);
+      deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription
         deviceId = await OneSignalApi.getUserIdFromSubscriptionIdentifier(
@@ -833,7 +833,7 @@ export class ServiceWorker {
         subscription.deviceId = deviceId;
         await Database.setSubscription(subscription);
       }
-      deviceIdExists = !!(deviceId && deviceId);
+      deviceIdExists = !!deviceId;
     }
 
     // Get our new push subscription

@@ -717,7 +717,7 @@ export class SubscriptionManager {
 
     const isPushEnabled = !!(
       pushSubscription &&
-      deviceId && deviceId &&
+      deviceId &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
     );
@@ -735,7 +735,7 @@ export class SubscriptionManager {
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
 
     const isPushEnabled = !!(
-      deviceId && deviceId &&
+      deviceId &&
       subscriptionToken &&
       notificationPermission === NotificationPermission.Granted
     );
