@@ -9,10 +9,8 @@ cache:
   yarn: true
   directories:
     - node_modules
-before_script:
-  - 'yarn build:tests'
 script:
-  - 'ava --verbose --color --watch=false'
+  - 'yarn run test:noWatch'
 git:
   depth: 5
 env:
