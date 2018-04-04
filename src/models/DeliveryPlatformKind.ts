@@ -3,4 +3,5 @@ export enum DeliveryPlatformKind {
   Safari = 7,
   Firefox = 8,
   Edge = 12,
+  Email = 11,
 }

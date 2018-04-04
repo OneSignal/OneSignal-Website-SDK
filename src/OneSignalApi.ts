@@ -9,6 +9,7 @@ import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { EmailProfile } from './models/EmailProfile';
 import { SubscriptionStateKind } from './models/SubscriptionStateKind';
 import Log from './libraries/Log';
+import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 
 
 export default class OneSignalApi {
@@ -174,15 +175,12 @@ export default class OneSignalApi {
   static async createEmailRecord(
     appConfig: AppConfig,
     emailProfile: EmailProfile,
-    pushId?: string
+    pushDeviceRecordId?: string
   ): Promise<string> {
-    const response = await OneSignalApi.post(`players`, {
-      app_id: appConfig.appId,
-      device_type: 11,
-      identifier: emailProfile.emailAddress,
-      device_player_id: pushId ? pushId : undefined,
-      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
-    });
+    const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
+    emailRecord.appId = appConfig.appId;
+    emailRecord.pushDeviceRecordId = pushDeviceRecordId;
+    const response = await OneSignalApi.post(`players`, emailRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {
@@ -193,14 +191,12 @@ export default class OneSignalApi {
   static async updateEmailRecord(
     appConfig: AppConfig,
     emailProfile: EmailProfile,
-    deviceId?: string
+    pushDeviceRecordId?: string
   ): Promise<string> {
-    const response = await OneSignalApi.put(`players/${emailProfile.emailId}`, {
-      app_id: appConfig.appId,
-      identifier: emailProfile.emailAddress,
-      device_player_id: deviceId ? deviceId : undefined,
-      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
-    });
+    const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
+    emailRecord.appId = appConfig.appId;
+    emailRecord.pushDeviceRecordId = pushDeviceRecordId;
+    const response = await OneSignalApi.put(`players/${emailProfile.emailId}`, emailRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {

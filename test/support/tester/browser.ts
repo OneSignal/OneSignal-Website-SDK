@@ -8,6 +8,12 @@ export function setUserAgent(userAgent: BrowserUserAgent) {
       enumerable: true,
       writable: true
   });
+  Object.defineProperty((window as any).navigator, 'platform', {
+      value: "MacIntel",
+      configurable: true,
+      enumerable: true,
+      writable: true
+  });
 }
 
 export function setBrowser(userAgent: BrowserUserAgent) {

@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test, { TestContext, Context } from "ava";
 import Database from "../../../src/services/Database";
 import Macros from "../../support/tester/Macros";
-import {TestEnvironment} from "../../support/sdk/TestEnvironment";
+import {TestEnvironment, BrowserUserAgent} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
 
@@ -11,6 +11,8 @@ import nock from 'nock';
 import { AppConfig } from '../../../src/models/AppConfig';
 import { EmailProfile } from '../../../src/models/EmailProfile';
 import Random from "../../support/tester/Random";
+import Environment from '../../../src/Environment';
+import { setUserAgent } from "../../support/tester/browser";
 
 test("setEmail should reject an empty or invalid emails", async t => {
     await TestEnvironment.initialize();
@@ -77,19 +79,38 @@ async function expectEmailRecordCreationRequest(
   emailAuthHash: string,
   newCreatedEmailId: string
 ) {
+  console.log("Navigator:", navigator);
+  console.log("window.Navigator:", window.navigator);
   nock('https://onesignal.com')
     .post(`/api/v1/players`)
     .reply(200, (uri, requestBody) => {
-      t.deepEqual(
-        requestBody,
-        JSON.stringify({
-          app_id: null,
-          device_type: 11,
-          identifier: emailAddress,
-          device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
-          email_auth_hash: emailAuthHash ? emailAuthHash : undefined
-        })
-      );
+      const sameValues = {
+        app_id: undefined,
+        identifier: emailAddress,
+        device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
+        email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+      };
+      const anyValues = [
+        "device_type",
+        "language",
+        "timezone",
+        "device_os",
+        "sdk",
+        "delivery_platform",
+        "browser_name",
+        "browser_version",
+        "operating_system",
+        "operating_system_version",
+        "device_platform",
+        "device_model",
+      ];
+      const parsedRequestBody = JSON.parse(requestBody);
+      for (const sameValueKey of Object.keys(sameValues)) {
+        t.deepEqual(parsedRequestBody[sameValueKey], sameValues[sameValueKey]);
+      }
+      for (const anyValueKey of anyValues) {
+        t.not(parsedRequestBody[anyValueKey], undefined);
+      }
       return { "success":true, "id": newCreatedEmailId };
     });
 }
@@ -105,15 +126,33 @@ async function expectEmailRecordUpdateRequest(
   nock('https://onesignal.com')
     .put(`/api/v1/players/${emailId}`)
     .reply(200, (uri, requestBody) => {
-      t.deepEqual(
-        requestBody,
-        JSON.stringify({
-          app_id: null,
-          identifier: emailAddress,
-          device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
-          email_auth_hash: emailAuthHash ? emailAuthHash : undefined
-        })
-      );
+      const sameValues = {
+        app_id: undefined,
+        identifier: emailAddress,
+        device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
+        email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+      };
+      const anyValues = [
+        "device_type",
+        "language",
+        "timezone",
+        "device_os",
+        "sdk",
+        "delivery_platform",
+        "browser_name",
+        "browser_version",
+        "operating_system",
+        "operating_system_version",
+        "device_platform",
+        "device_model",
+      ];
+      const parsedRequestBody = JSON.parse(requestBody);
+      for (const sameValueKey of Object.keys(sameValues)) {
+        t.deepEqual(parsedRequestBody[sameValueKey], sameValues[sameValueKey]);
+      }
+      for (const anyValueKey of anyValues) {
+        t.not(parsedRequestBody[anyValueKey], undefined);
+      }
       return { "success":true, "id": newUpdatedEmailId };
     });
 }
@@ -155,6 +194,7 @@ async function setEmailTest(
   testData: SetEmailTestData
 ) {
   await TestEnvironment.initialize();
+  setUserAgent(BrowserUserAgent.FirefoxMacSupported);
 
   if (testData.existingEmailAddress) {
     const emailProfile = await Database.getEmailProfile();
