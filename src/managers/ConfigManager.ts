@@ -37,6 +37,9 @@ export default class ConfigManager {
    */
   public async getAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
     try {
+      if (!userConfig || !userConfig.appId) {
+        throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
+      }
       const serverConfig = await OneSignalApi.downloadServerAppConfig(userConfig.appId);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       if (appConfig.restrictedOriginEnabled) {
