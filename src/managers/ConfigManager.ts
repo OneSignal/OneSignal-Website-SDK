@@ -199,7 +199,7 @@ export default class ConfigManager {
               'tip.state.unsubscribed': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
               'tip.state.subscribed': serverConfig.config.staticPrompts.bell.tooltip.subscribed,
               'tip.state.blocked': serverConfig.config.staticPrompts.bell.tooltip.blocked,
-              'message.prenotify': "Click to subscribe to notifications",
+              'message.prenotify': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
               'message.action.subscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
               'message.action.resubscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
               'message.action.unsubscribed': serverConfig.config.staticPrompts.bell.message.unsubscribing,
