@@ -6,6 +6,7 @@ import NotImplementedError from '../errors/NotImplementedError';
 import SubscriptionHelper from "../helpers/SubscriptionHelper";
 import { IntegrationKind } from "../models/IntegrationKind";
 import Context from "../models/Context";
+import bowser from 'bowser';
 
 export default class SdkEnvironment {
   /**
@@ -51,6 +52,11 @@ export default class SdkEnvironment {
    * @param usingProxyOrigin Using a subdomain of os.tc or onesignal.com for subscribing to push.
    */
   static async getIntegration(usingProxyOrigin?: boolean): Promise<IntegrationKind> {
+    if (bowser.safari) {
+      /* HTTP doesn't apply to Safari sites */
+      return IntegrationKind.Secure;
+    }
+
     const isTopFrame = (window === window.top);
     const isHttpsProtocol = window.location.protocol === "https:";
 

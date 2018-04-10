@@ -56,7 +56,7 @@ export class SubscriptionManager {
   }
 
   static isSafari(): boolean {
-    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+    return bowser.safari;
   }
 
   /**
@@ -642,6 +642,11 @@ export class SubscriptionManager {
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
+    /* Safari should always return Secure because HTTP doesn't apply on Safari */
+    if (SubscriptionManager.isSafari()) {
+      return this.getSubscriptionStateForSecure();
+    }
+
     const windowEnv = SdkEnvironment.getWindowEnv();
 
     switch (windowEnv) {
