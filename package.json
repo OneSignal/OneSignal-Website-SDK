@@ -27,7 +27,7 @@
     "publish": "yarn clean && yarn build:prod && yarn "
   },
   "config": {
-    "sdkVersion": "150120",
+    "sdkVersion": "150125",
     "onesignalPublicPath": "/Users/jpang/code/OneSignal/public",
     "onesignalPublicSdksPath": "/Users/jpang/code/OneSignal/public/sdks"
   },
