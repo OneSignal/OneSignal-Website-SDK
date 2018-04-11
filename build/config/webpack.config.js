@@ -27,7 +27,7 @@ async function getWebpackPlugins() {
   const plugins = [
     new CheckerPlugin(),
     new webpack.optimize.ModuleConcatenationPlugin(),
-    new ExtractTextPlugin('stylesheet.css'),
+    new ExtractTextPlugin('OneSignalSDKStyles.css'),
     new webpack.DefinePlugin(await getBuildDefines()),
   ];
   if (!!process.env.ANALYZE) {
