@@ -28,8 +28,8 @@
   },
   "config": {
     "sdkVersion": "150125",
-    "onesignalPublicPath": "/Users/jpang/code/OneSignal/public",
-    "onesignalPublicSdksPath": "/Users/jpang/code/OneSignal/public/sdks"
+    "onesignalPublicPath": "../OneSignal/public",
+    "onesignalPublicSdksPath": "../OneSignal/public/sdks"
   },
   "repository": {
     "type": "git",
