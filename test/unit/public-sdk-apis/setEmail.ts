@@ -79,8 +79,6 @@ async function expectEmailRecordCreationRequest(
   emailAuthHash: string,
   newCreatedEmailId: string
 ) {
-  console.log("Navigator:", navigator);
-  console.log("window.Navigator:", window.navigator);
   nock('https://onesignal.com')
     .post(`/api/v1/players`)
     .reply(200, (uri, requestBody) => {
@@ -300,6 +298,20 @@ test("No push subscription, no email, first setEmail call", async t => {
     newEmailId: Random.getRandomUuid()
   };
   await setEmailTest(t, testData);
+});
+
+test("No push subscription, no email, first setEmail call, test email id return", async t => {
+  await TestEnvironment.initialize();
+  const fakeUuid = Random.getRandomUuid();
+  expectEmailRecordCreationRequest(
+    t,
+    "example@domain.com",
+    null,
+    null,
+    fakeUuid
+  );
+  setUserAgent(BrowserUserAgent.FirefoxMacSupported);
+  t.is(await OneSignal.setEmail("example@domain.com"), fakeUuid);
 });
 
 test("No push subscription, existing identical email, refreshing setEmail call", async t => {

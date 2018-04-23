@@ -96,7 +96,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async setEmail(email: string, options?: SetEmailOptions): Promise<void> {
+  static async setEmail(email: string, options?: SetEmailOptions): Promise<string> {
     if (!email)
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     if (!isValidEmail(email))
@@ -169,6 +169,7 @@ export default class OneSignal {
     }
 
     await Database.setEmailProfile(newEmailProfile);
+    return newEmailProfile.emailId;
   }
 
   /**
