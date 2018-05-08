@@ -390,9 +390,9 @@ export class ServiceWorkerManager {
             );
           }
         });
-      } else {
-        clickedListenerCallbackCount = OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length;
       }
+      else
+        clickedListenerCallbackCount = OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length;
       if (clickedListenerCallbackCount === 0) {
         /*
           A site's page can be open but not listening to the
@@ -421,9 +421,9 @@ export class ServiceWorkerManager {
           url = location.href;
         }
         await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
-      } else {
-        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
       }
+      else
+        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {

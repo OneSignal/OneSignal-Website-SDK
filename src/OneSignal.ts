@@ -963,6 +963,10 @@ export default class OneSignal {
   static async emit(...args: any[]) {
     return OneSignal.emitter.emit.apply(OneSignal.emitter, args);
   }
+  static async getListeners(...args: any[]) {
+    const listeners = OneSignal.emitter.listeners.apply(OneSignal.emitter, args);
+    return listeners || [];
+  }
 }
 
 LegacyManager.ensureBackwardsCompatibility(OneSignal);
