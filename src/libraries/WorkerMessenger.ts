@@ -89,9 +89,10 @@ export class WorkerMessenger {
   private replies: WorkerMessengerReplyBuffer;
   private debug: boolean;
 
-  constructor(context: Context) {
+  constructor(context: Context,
+              replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer()) {
     this.context = context;
-    this.replies = new WorkerMessengerReplyBuffer();
+    this.replies = replies;
     this.debug = true;
   }
 
