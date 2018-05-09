@@ -8,8 +8,8 @@ export type OnceEventHandler = {
   listener: EventHandler
 };
 
- interface ListenerMap {
-    [index: string]: (EventHandler | OnceEventHandler)[];
+interface ListenerMap {
+  [index: string]: (EventHandler | OnceEventHandler)[];
 }
 
 /**
@@ -100,7 +100,7 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public listeners(event: string): (EventHandler | OnceEventHandler)[] {
+  public listeners(event: string): (EventHandler | OnceEventHandler)[] | undefined {
     try {
       return this._events[event];
     } catch (e) {
