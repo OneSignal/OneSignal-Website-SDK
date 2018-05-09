@@ -245,7 +245,7 @@ test('device ID is available after register event', async t => {
   let wasRegisterEventFired = false;
 
   const registerEventPromise = new Promise(resolve => {
-    OneSignal.on('register', async () => {
+    OneSignal.emitter.on('register', async () => {
       const subscription = await Database.getSubscription();
       t.is(subscription.deviceId, randomPlayerId);
       resolve();

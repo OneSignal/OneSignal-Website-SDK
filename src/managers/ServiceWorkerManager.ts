@@ -392,14 +392,15 @@ export class ServiceWorkerManager {
         });
       }
       else
-        clickedListenerCallbackCount = OneSignal.getListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED).length;
+        clickedListenerCallbackCount = OneSignal.emitter.numberOfListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED);
+
       if (clickedListenerCallbackCount === 0) {
         /*
           A site's page can be open but not listening to the
           notification.clicked event because it didn't call
           addListenerForNotificationOpened(). In this case, if there are no
           detected event listeners, we should save the event, instead of firing
-          it without anybody recieving it.
+          it without anybody receiving it.
 
           Or, since addListenerForNotificationOpened() only works once (you have
           to call it again each time), maybe it was only called once and the

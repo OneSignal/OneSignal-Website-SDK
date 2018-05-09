@@ -84,7 +84,7 @@ export default class Event {
         else
           OneSignal.initialized = true;
       }
-      OneSignal.emit(eventName, data);
+      OneSignal.emitter.emit(eventName, data);
     }
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       let legacyEventName = LEGACY_EVENT_MAP[eventName];

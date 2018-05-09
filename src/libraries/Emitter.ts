@@ -25,7 +25,7 @@ export default class Emitter {
 
   constructor() {
     this._events = {};
-  };
+  }
 
   /**
    * Adds a listener to the collection for a specified event.
@@ -33,15 +33,15 @@ export default class Emitter {
   public on(event: string, listener: EventHandler): Emitter {
     this._events[event] = this._events[event] || [];
     this._events[event].push(listener);
-    return (this as any);
-  };
+    return this;
+  }
 
   /**
    * Adds a one time listener to the collection for a specified event. It will
    * execute only once.
    */
   public once(event: string, listener: EventHandler): Emitter {
-    let that = this;
+    const that = this;
 
     function fn(this: Function) {
       that.off(event, fn);
@@ -49,17 +49,16 @@ export default class Emitter {
     }
 
     (fn as any).listener = listener;
-
     this.on(event, fn);
 
     return this;
-  };
+  }
 
   /**
    * Removes a listener from the collection for a specified event.
    */
   public off(event: string, listener: EventHandler): Emitter {
-    let listeners = this._events[event];
+    const listeners = this._events[event];
 
     if (listeners !== undefined) {
       for (let j = 0; j < listeners.length; j += 1) {
@@ -69,28 +68,27 @@ export default class Emitter {
         }
       }
 
-      if (listeners.length === 0) {
+      if (listeners.length === 0)
         this.removeAllListeners(event);
-      }
     }
 
     return this;
-  };
+  }
 
   /**
    * Removes all listeners from the collection for a specified event.
    */
   public removeAllListeners(event?: string): Emitter {
     try {
-      if (event) {
+      if (event)
         delete this._events[event];
-      } else {
-        (this as any)._events = [];
-      }
-    } catch(e) {};
+      else
+        this._events = {};
+
+    } catch(e) {}
 
     return this;
-  };
+  }
 
   /**
    * Returns all listeners from the collection for a specified event.
@@ -107,27 +105,43 @@ export default class Emitter {
       return this._events[event];
     } catch (e) {
       return undefined;
-    };
-  };
+    }
+  }
+
+  /**
+   * Returns number of listeners from the collection for a specified event.
+   * @public
+   * @function
+   * @name Emitter#numberOfListeners
+   * @param {String} event - Event name.
+   * @returns {number}
+   * @example
+   * me.numberOfListeners('ready');
+   */
+  public numberOfListeners(event: string): number {
+    const listeners = this.listeners(event);
+    if (listeners)
+      return listeners.length;
+    return 0;
+  }
 
   /**
    * Execute each item in the listener collection in order with the specified
    * data.
    */
-  public emit(..._: any[]) {
-    let args = [].slice.call(arguments, 0); // converted to array
-    let event = args.shift();
+  public emit(..._: any[]): Emitter {
+    const args = [].slice.call(arguments, 0); // converted to array
+    const event = args.shift();
     let listeners = this._events[event];
 
     if (listeners !== undefined) {
       listeners = listeners.slice(0);
-      let len = listeners.length;
-      for (let i = 0; i < len; i += 1) {
+      const len = listeners.length;
+      for (let i = 0; i < len; i += 1)
         (listeners[i] as Function).apply(this, args);
-      }
     }
 
     return this;
-  };
+  }
 
 }

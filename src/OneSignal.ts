@@ -60,7 +60,7 @@ import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
 import TimeoutError from './errors/TimeoutError';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
-import Emitter from './libraries/Emitter';
+import Emitter, {EventHandler, OnceEventHandler} from './libraries/Emitter';
 import Log from './libraries/Log';
 
 
@@ -247,9 +247,9 @@ export default class OneSignal {
 
       MainHelper.fixWordpressManifestIfMisplaced();
 
-      OneSignal.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
-      OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
-      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
+      OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
+      OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
+      OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
       if (isUsingSubscriptionWorkaround()) {
         OneSignal.appConfig = appConfig;
@@ -376,24 +376,24 @@ export default class OneSignal {
           OneSignal.notifyButton.launcher.hide();
         });
     }
-    OneSignal.once(Popover.EVENTS.SHOWN, () => {
+    OneSignal.emitter.once(Popover.EVENTS.SHOWN, () => {
       OneSignal.__isPopoverShowing = true;
     });
-    OneSignal.once(Popover.EVENTS.CLOSED, () => {
+    OneSignal.emitter.once(Popover.EVENTS.CLOSED, () => {
       OneSignal.__isPopoverShowing = false;
       if (OneSignal.notifyButton &&
         OneSignal.notifyButton.options.enable) {
         OneSignal.notifyButton.launcher.show();
       }
     });
-    OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
+    OneSignal.emitter.once(Popover.EVENTS.ALLOW_CLICK, () => {
       OneSignal.popover.close();
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
       OneSignal._sessionInitAlreadyRunning = false;
       OneSignal.registerForPushNotifications({ autoAccept: true });
     });
-    OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
+    OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
       OneSignal._sessionInitAlreadyRunning = false;
@@ -442,7 +442,7 @@ export default class OneSignal {
     }
 
     if (!OneSignal.initialized) {
-      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
+      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
     } else {
       return __registerForPushNotifications();
     }
@@ -566,7 +566,7 @@ export default class OneSignal {
   static async addListenerForNotificationOpened(callback?: Action<Notification>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
-    OneSignal.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
+    OneSignal.emitter.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
       executeCallback(callback, notification);
     });
     EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl || OneSignal.config.userConfig.pageUrl);
@@ -944,28 +944,6 @@ export default class OneSignal {
     TEST_WOULD_DISPLAY: 'testWouldDisplay',
     POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
   };
-
-  static NOTIFICATION_TYPES = {
-    SUBSCRIBED: 1,
-    UNSUBSCRIBED: -2
-  };
-
-  static async on(...args: any[]) {
-    return OneSignal.emitter.on.apply(OneSignal.emitter, args);
-  }
-  static async off(...args: any[]) {
-    return OneSignal.emitter.off.apply(OneSignal.emitter, args);
-  }
-  static async once(...args: any[]) {
-    return OneSignal.emitter.once.apply(OneSignal.emitter, args);
-  }
-  static async emit(...args: any[]) {
-    return OneSignal.emitter.emit.apply(OneSignal.emitter, args);
-  }
-  static async getListeners(...args: any[]) {
-    const listeners = OneSignal.emitter.listeners.apply(OneSignal.emitter, args);
-    return listeners || [];
-  }
 }
 
 LegacyManager.ensureBackwardsCompatibility(OneSignal);

@@ -35,10 +35,10 @@ export interface WorkerMessengerReplyBufferRecord {
 
 export class WorkerMessengerReplyBuffer {
 
-  private replies: object;
+  private replies: Map<string, object[]>;
 
   constructor() {
-    this.replies = {};
+    this.replies = new Map<string, object[]>();
   }
 
   public addListener(command: WorkerMessengerCommand, callback: Function, onceListenerOnly: boolean) {
@@ -47,14 +47,13 @@ export class WorkerMessengerReplyBuffer {
       onceListenerOnly: onceListenerOnly
     };
 
-    if (this.findListenersForMessage(command).length > 0) {
+    if (this.findListenersForMessage(command).length > 0)
       this.replies[command.toString()].push(record);
-    } else {
+    else
       this.replies[command.toString()] = [record];
-    }
   }
 
-  public findListenersForMessage(command: WorkerMessengerCommand): any {
+  public findListenersForMessage(command: WorkerMessengerCommand): any[] {
     return this.replies[command.toString()] || [];
   }
 
@@ -63,7 +62,7 @@ export class WorkerMessengerReplyBuffer {
   }
 
   public deleteAllListenerRecords() {
-    this.replies = {};
+    this.replies = new Map<string, object[]>();
   }
 
   public deleteListenerRecord(command: WorkerMessengerCommand, targetRecord: any) {

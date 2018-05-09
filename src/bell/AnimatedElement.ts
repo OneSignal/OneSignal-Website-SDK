@@ -2,8 +2,7 @@ import { addCssClass, removeCssClass, contains, once } from '../utils';
 
 import Event from '../Event'
 import Log from '../libraries/Log';
-
-
+import OneSignal from '../OneSignal';
 
 export default class AnimatedElement {
 
@@ -106,11 +105,11 @@ export default class AnimatedElement {
     if (this.state === 'shown')
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      OneSignal.once(AnimatedElement.EVENTS.SHOWN, (event) => {
+      OneSignal.emitter.once(AnimatedElement.EVENTS.SHOWN, (event) => {
         if (event === this) {
           return resolve(this);
         }
-      }, true);
+      });
     });
   }
 
@@ -122,11 +121,11 @@ export default class AnimatedElement {
     if (this.state === 'hidden')
       return Promise.resolve(this);
     else return new Promise((resolve) => {
-      OneSignal.once(AnimatedElement.EVENTS.HIDDEN, (event) => {
+      OneSignal.emitter.once(AnimatedElement.EVENTS.HIDDEN, (event) => {
         if (event === this) {
           return resolve(this);
         }
-      }, true);
+      });
     });
   }
 
