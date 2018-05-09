@@ -1,3 +1,8 @@
 {
-  "extends": "./build/config/tsconfig.json"
+  "extends": "./build/config/tsconfig.json",
+  // Options here only apply to IDE, build compile options defined in the build tsconfig.json above.
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "noImplicitAny": true
+  }
 }
