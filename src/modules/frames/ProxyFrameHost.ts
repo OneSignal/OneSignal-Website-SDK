@@ -167,8 +167,7 @@ export default class ProxyFrameHost implements Disposable {
   onGetEventListenerCount(message: MessengerMessageEvent) {
     const eventName: string = message.data;
     Log.debug('(Reposted from iFrame -> Host) Getting event listener count for ', eventName);
-    const listenerEventCount = OneSignal.getListeners(eventName).length;
-    message.reply(listenerEventCount);
+    message.reply(OneSignal.emitter.numberOfListeners(eventName));
     return false;
   }
 

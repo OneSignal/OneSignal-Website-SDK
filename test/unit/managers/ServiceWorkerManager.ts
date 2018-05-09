@@ -8,12 +8,8 @@ import Path from '../../../src/models/Path';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
-import { beforeEach } from '../../support/tester/typify';
-import Database from '../../../src/services/Database';
-import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
 
-import { AppConfig } from '../../../src/models/AppConfig';
 import OneSignal from '../../../src/OneSignal';
 import Random from '../../support/tester/Random';
 import {
@@ -35,13 +31,13 @@ class LocalHelpers {
   }
 };
 
-test.beforeEach(async t => {
+test.beforeEach(function() {
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();
-  t.context.sdkContext = new Context(appConfig);
-  (global as any).OneSignal = {
-    context: t.context.sdkContext
-  };
+  OneSignal.context = new Context(appConfig);
+
+  // global assign required for TestEnvironment.stubDomEnvironment()
+  (global as any).OneSignal = { context: OneSignal.context };
 });
 
 test('getActiveState() detects no installed worker', async t => {
@@ -159,35 +155,32 @@ test('notification clicked - While page is opened in background', async t => {
   });
   await TestEnvironment.stubDomEnvironment();
 
-  const mockWorkerRegistration = new ServiceWorkerRegistration();
   const mockInstallingWorker = new ServiceWorker();
   mockInstallingWorker.state = 'activated';
   mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
+  const mockWorkerRegistration = new ServiceWorkerRegistration();
   mockWorkerRegistration.active = mockInstallingWorker;
 
   const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
   const controllerStub = sinon.stub(navigator.serviceWorker, 'controller').resolves(null);
 
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
-  const context = new Context(appConfig);
-  OneSignal.context = context;
-
   const manager = LocalHelpers.getServiceWorkerManager();
 
   const workerMessageReplyBuffer = new WorkerMessengerReplyBuffer();
-  context.workerMessenger = new WorkerMessenger(context, workerMessageReplyBuffer);
+  OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
   const triggerStub = sinon.stub(Event, 'trigger', function(event) {
-      if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
-        t.pass();
+    if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
+      t.pass();
   });
 
+  // Add addListenerForNotificationOpened so service worker fires event instead of storing it
+  await OneSignal.addListenerForNotificationOpened(function () {});
   manager.establishServiceWorkerChannel();
 
   const listeners = workerMessageReplyBuffer.findListenersForMessage(WorkerMessengerCommand.NotificationClicked);
   for (let listenerRecord of listeners)
-    listenerRecord.callback.apply(null, ["test"]);
+    listenerRecord.callback.apply(null, ['test']);
 
   getRegistrationStub.restore();
   controllerStub.restore();
@@ -215,27 +208,20 @@ test('installWorker() installs worker A with the correct file name and query par
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
-  const context = new Context(appConfig);
-  OneSignal.context = context;
-
   const manager = LocalHelpers.getServiceWorkerManager();
 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
-  t.true(navigator.serviceWorker.controller.scriptURL.endsWith(`/Worker-A.js?appId=${appConfig.appId}`));
+  t.true(navigator.serviceWorker.controller.scriptURL.endsWith(
+    `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
+  );
 });
 
 test('installWorker() installs worker A when a third party service worker exists', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
-
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
-  const context = new Context(appConfig);
 
   navigator.serviceWorker.register('/another-service-worker.js');
 
@@ -251,9 +237,7 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
-  const context = new Context(appConfig);
+  const context = OneSignal.context;
 
   const manager = new ServiceWorkerManager(context, {
     workerAPath: new Path('/Worker-A.js'),
@@ -267,6 +251,8 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
   const spy = sinon.spy(navigator.serviceWorker, 'register');
+
+  const appConfig = OneSignal.context.appConfig;
 
   await manager.installWorker();
   t.true(spy.getCall(0).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId}`, { scope: '/' }));

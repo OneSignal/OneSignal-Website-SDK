@@ -3,7 +3,6 @@ import bowser, { IBowser } from 'bowser';
 
 import Environment from './Environment';
 import TimeoutError from './errors/TimeoutError';
-import SubscriptionHelper from './helpers/SubscriptionHelper';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Database from './services/Database';
@@ -148,7 +147,7 @@ export function isLocalhostAllowedAsSecureOrigin() {
 export function awaitOneSignalInitAndSupported() {
   return new Promise(resolve => {
     if (!OneSignal.initialized) {
-      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
+      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     } else {
       resolve();
     }
@@ -574,7 +573,7 @@ export function getSdkLoadCount() {
 
 export async function awaitSdkEvent(eventName: string, predicate?: Action<any>) {
   return await new Promise(resolve => {
-    OneSignal.once(eventName, event => {
+    OneSignal.emitter.once(eventName, event => {
       if (predicate) {
         const predicateResult = predicate(event);
         if (predicateResult)
