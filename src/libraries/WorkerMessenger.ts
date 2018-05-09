@@ -24,36 +24,34 @@ export enum WorkerMessengerCommand {
 }
 
 export interface WorkerMessengerMessage {
-  command: WorkerMessengerCommand,
-  payload: WorkerMessengerPayload
+  command: WorkerMessengerCommand;
+  payload: WorkerMessengerPayload;
 }
 
 export interface WorkerMessengerReplyBufferRecord {
-  callback: Function,
-  onceListenerOnly: boolean
+  callback: Function;
+  onceListenerOnly: boolean;
 }
 
 export class WorkerMessengerReplyBuffer {
 
-  private replies: Map<string, object[]>;
+  private replies: { [index: string]: WorkerMessengerReplyBufferRecord[] | null };
 
   constructor() {
-    this.replies = new Map<string, object[]>();
+    this.replies = {};
   }
 
   public addListener(command: WorkerMessengerCommand, callback: Function, onceListenerOnly: boolean) {
-    const record = {
-      callback: callback,
-      onceListenerOnly: onceListenerOnly
-    };
+    const record: WorkerMessengerReplyBufferRecord = {callback, onceListenerOnly};
 
-    if (this.findListenersForMessage(command).length > 0)
-      this.replies[command.toString()].push(record);
+    const replies = this.replies[command.toString()];
+    if (replies)
+      replies.push(record);
     else
       this.replies[command.toString()] = [record];
   }
 
-  public findListenersForMessage(command: WorkerMessengerCommand): any[] {
+  public findListenersForMessage(command: WorkerMessengerCommand): WorkerMessengerReplyBufferRecord[] {
     return this.replies[command.toString()] || [];
   }
 
@@ -62,11 +60,14 @@ export class WorkerMessengerReplyBuffer {
   }
 
   public deleteAllListenerRecords() {
-    this.replies = new Map<string, object[]>();
+    this.replies = {};
   }
 
-  public deleteListenerRecord(command: WorkerMessengerCommand, targetRecord: any) {
+  public deleteListenerRecord(command: WorkerMessengerCommand, targetRecord: object) {
     const listenersForCommand = this.replies[command.toString()];
+    if (listenersForCommand == null)
+      return;
+
     for (let listenerRecordIndex = listenersForCommand.length - 1; listenerRecordIndex >= 0; listenerRecordIndex--) {
       const listenerRecord = listenersForCommand[listenerRecordIndex];
       if (listenerRecord === targetRecord) {
