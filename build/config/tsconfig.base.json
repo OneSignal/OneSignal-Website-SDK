@@ -24,7 +24,9 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "outDir": "../ts-to-es6",
-    "rootDir": "../../",
+    "sourceRoot": "../..",
+    "rootDir": "../..",
+    "baseUrl": "../..",
     "esModuleInterop": true,
     "types": [
       "node"
@@ -35,7 +37,6 @@
       "dom.iterable",
       "scripthost"
     ],
-    "target": "ESNext",
-    "sourceRoot": "../.."
+    "target": "ESNext"
   }
 }

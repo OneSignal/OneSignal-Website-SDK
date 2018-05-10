@@ -13,7 +13,9 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "outDir": "../bundles",
-    "rootDir": "../../",
+    "sourceRoot": "../..",
+    "rootDir": "../..",
+    "baseUrl": "./",
     "esModuleInterop": true,
     "types": [
       "node"
