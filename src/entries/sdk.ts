@@ -1,9 +1,9 @@
 /**
  * Pages and older service workers will include this entry point, which is the full SDK.
  */
-import { oneSignalSdkInit } from '../utils/pageSdkInit';
-import SdkEnvironment from "../managers/SdkEnvironment";
-import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
+import { oneSignalSdkInit } from 'src/utils/pageSdkInit';
+import { WindowEnvironmentKind } from 'src/models/WindowEnvironmentKind';
+import SdkEnvironment from 'src/managers/SdkEnvironment';
 
 const windowEnv = SdkEnvironment.getWindowEnv();
 if (windowEnv === WindowEnvironmentKind.ServiceWorker) {
