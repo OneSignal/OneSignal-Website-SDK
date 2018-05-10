@@ -12,6 +12,7 @@
     "noUnusedParameters": true,
     "strictPropertyInitialization": true,
     "strictFunctionTypes": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "src"
   }
 }

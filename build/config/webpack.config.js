@@ -152,6 +152,7 @@ async function generateWebpackConfig() {
       extensions: ['.js', '.ts'],
       modules: [
         'build/ts-to-es6',
+        'build/ts-to-es6/src',
         'node_modules'
       ]
     },
