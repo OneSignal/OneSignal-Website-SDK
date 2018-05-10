@@ -3,6 +3,15 @@
   // Options here only apply to IDE, build compile options defined in the build tsconfig.json above.
   "compilerOptions": {
     "strictNullChecks": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "noEmitHelpers": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strictPropertyInitialization": true,
+    "strictFunctionTypes": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
