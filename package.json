@@ -11,7 +11,8 @@
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
     "tslib": "^1.9.0",
-    "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
+    "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz",
+    "webpack-closure-compiler": "^2.1.6"
   },
   "scripts": {
     "clean": "rm -r build/ts-to-es6 && rm -r build/bundles",
@@ -73,9 +74,11 @@
     "svgo": "^0.7.2",
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
+    "tslint": "^5.10.0",
+    "tslint-eslint-rules": "^5.2.0",
     "typescript": "^2.7.1",
-    "uglifyjs-webpack-plugin": "^1.2.4",
-    "webpack": "^4.3.0",
+    "uglifyjs-webpack-plugin": "^1.2.5",
+    "webpack": "^4.8.1",
     "webpack-bundle-analyzer": "^2.11.1",
     "webpack-cli": "^2.0.13"
   },

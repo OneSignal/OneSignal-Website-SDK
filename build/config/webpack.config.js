@@ -3,6 +3,7 @@ const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const ClosureCompilerPlugin = require('webpack-closure-compiler');
 const { CheckerPlugin } = require('awesome-typescript-loader');
 const dir = require('node-dir');
 const md5file = require('md5-file');
@@ -29,6 +30,14 @@ async function getWebpackPlugins() {
     new webpack.optimize.ModuleConcatenationPlugin(),
     new ExtractTextPlugin('OneSignalSDKStyles.css'),
     new webpack.DefinePlugin(await getBuildDefines()),
+    new ClosureCompilerPlugin({
+      compiler: {
+        language_in: 'ECMASCRIPT6',
+        language_out: 'ECMASCRIPT5',
+        compilation_level: 'ADVANCED'
+      },
+      concurrency: 3,
+    })
   ];
   if (!!process.env.ANALYZE) {
     const sizeAnalysisReportPath = path.resolve(path.join('build', 'size-analysis.html'));
@@ -78,37 +87,37 @@ async function generateWebpackConfig() {
       filename: '[name]'
     },
     mode: process.env.ENV === "production" ? "production" : "development",
-    optimization: {
-       minimizer: [
-        new UglifyJsPlugin({
-          sourceMap: true,
-          uglifyOptions: {
-            sourceMap: true,
-            compress: {
-              drop_console: false,
-              drop_debugger: false,
-              warnings: false,
-            },
-            mangle: process.env.ENV === 'production' ? {
-              reserved: [
-                'AlreadySubscribedError',
-                'InvalidArgumentError',
-                'InvalidStateError',
-                'NotSubscribedError',
-                'PermissionMessageDismissedError',
-                'PushNotSupportedError',
-                'PushPermissionNotGrantedError',
-                'SdkInitError',
-                'TimeoutError'
-              ]
-            } : false,
-            output: {
-              comments: false
-            }
-          }
-        })
-      ]
-    },
+    // optimization: {
+    //    minimizer: [
+    //     new UglifyJsPlugin({
+    //       sourceMap: true,
+    //       uglifyOptions: {
+    //         sourceMap: true,
+    //         compress: {
+    //           drop_console: false,
+    //           warnings: false,
+    //           passes: 5
+    //         },
+    //         mangle: process.env.ENV === 'production' ? {
+    //           reserved: [
+    //             'AlreadySubscribedError',
+    //             'InvalidArgumentError',
+    //             'InvalidStateError',
+    //             'NotSubscribedError',
+    //             'PermissionMessageDismissedError',
+    //             'PushNotSupportedError',
+    //             'PushPermissionNotGrantedError',
+    //             'SdkInitError',
+    //             'TimeoutError'
+    //           ]
+    //         } : false,
+    //         output: {
+    //           comments: false
+    //         }
+    //       }
+    //     })
+    //   ]
+    // },
     module: {
       rules: [
         {
