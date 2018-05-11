@@ -62,6 +62,7 @@ import TimeoutError from './errors/TimeoutError';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 import Emitter, {EventHandler, OnceEventHandler} from './libraries/Emitter';
 import Log from './libraries/Log';
+import OneSignalError from "./errors/OneSignalError";
 
 
 export default class OneSignal {
@@ -741,16 +742,34 @@ export default class OneSignal {
   }
 
   /**
-   * Used to load OneSignal asynchronously from a webpage.
-   * @InternalApi
+   * Used to load OneSignal asynchronously from a webpage
+   * Allows asynchronous function queuing while the SDK loads in the browser with <script src="..." async/>
+   * @PublicApi
+   * @param item - Ether a function or an arry with a OneSignal function name followed by it's parameters
+   * @Example
+   *  OneSignal.push(["functionName", param1, param2]);
+   *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
    */
-  static push(item) {
+  static push(item: Function | object[]) {
     if (typeof(item) == "function")
       item();
-    else {
-      var functionName = item.shift();
-      OneSignal[functionName].apply(null, item);
+    else if (Array.isArray(item)) {
+      if (item.length == 0)
+        throw new OneSignalError("Empty array is not valid!");
+
+      const functionName = item.shift();
+      if (functionName == null || typeof(functionName) == "undefined")
+        throw new OneSignalError("First element in array must be the OneSignal function name");
+
+      const oneSignalFunction = (OneSignal as any)[functionName.toString()] as Function | undefined;
+      if (typeof(oneSignalFunction) != "function")
+        throw new OneSignalError(`No OneSignal function with the name '${functionName}'`);
+      oneSignalFunction.apply(null, item);
     }
+    else
+      throw new OneSignalError("Only accepts function and Array types!");
+  }
+
   /**
    * Used to subscribe to OneSignal events such as "subscriptionChange"
    * Fires each time the event occurs
