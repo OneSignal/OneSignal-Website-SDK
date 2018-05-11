@@ -751,6 +751,26 @@ export default class OneSignal {
       var functionName = item.shift();
       OneSignal[functionName].apply(null, item);
     }
+  /**
+   * Used to subscribe to OneSignal events such as "subscriptionChange"
+   * Fires each time the event occurs
+   * @param event - Event name to subscribe to
+   * @param listener - Listener to fire when event happens
+   * @PublicApi
+   */
+  static on(event: string, listener: EventHandler): Emitter {
+    return this.emitter.on(event, listener);
+  }
+
+  /**
+   * Used to subscribe to OneSignal events such as "subscriptionChange"
+   * Fires only once
+   * @param event - Event name to subscribe to
+   * @param listener - Listener to fire when event happens
+   * @PublicApi
+   */
+  static once(event: string, listener: EventHandler): Emitter {
+    return this.emitter.once(event, listener);
   }
 
   static __doNotShowWelcomeNotification: boolean;
