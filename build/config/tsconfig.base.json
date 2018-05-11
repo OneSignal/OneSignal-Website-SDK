@@ -26,8 +26,8 @@
     "outDir": "../ts-to-es6",
     "sourceRoot": "../..",
     "rootDir": "../..",
-    "baseUrl": "../../src",
     "esModuleInterop": true,
+    "baseUrl": "../..",
     "types": [
       "node"
     ],

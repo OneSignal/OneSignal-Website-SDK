@@ -1,4 +1,5 @@
 {
+  // This file is used when runing yarn run build:*
   "compilerOptions": {
     "allowJs": true,
     "checkJs": false,
@@ -15,7 +16,7 @@
     "outDir": "../bundles",
     "sourceRoot": "../..",
     "rootDir": "../..",
-    "baseUrl": "src",
+    "baseUrl": "./",
     "esModuleInterop": true,
     "types": [
       "node"

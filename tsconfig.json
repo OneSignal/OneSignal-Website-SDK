@@ -13,6 +13,11 @@
     "strictPropertyInitialization": true,
     "strictFunctionTypes": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "src"
-  }
+    "baseUrl": "."
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "typings/**/*"
+  ]
 }
