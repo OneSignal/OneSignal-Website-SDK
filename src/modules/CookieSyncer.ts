@@ -34,11 +34,10 @@ export default class CookieSyncer {
     }
   }
 
-  install() {
-    if (window.top !== window) {
-      /* Only process for top frames */
+  async install() {
+    // Only process for top frames */
+    if (window.top !== window)
       return;
-    }
 
     const frameUrl = this.getFrameOrigin();
 

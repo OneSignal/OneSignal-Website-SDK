@@ -161,13 +161,15 @@ export class ServiceWorkerManager {
         only say we're active if the service worker directly controls this page.
        */
       return ServiceWorkerActiveState.None;
-    } else if (workerRegistration.installing) {
+    }
+    else if (workerRegistration.installing) {
       /*
         Workers that are installing block for a while, since we can't use them until they're done
         installing.
        */
       return ServiceWorkerActiveState.Installing;
-    } else if (!workerRegistration.active) {
+    }
+    else if (!workerRegistration.active) {
       /*
         Workers that are waiting won't be our service workers, since we use clients.claim() and
         skipWaiting() to bypass the install and waiting stages.
@@ -183,13 +185,13 @@ export class ServiceWorkerManager {
 
       Check the filename to see if it belongs to our A / B worker.
     */
-    if (new Path(workerScriptPath).getFileName() == this.config.workerAPath.getFileName()) {
+
+    if (new Path(workerScriptPath).getFileName() == this.config.workerAPath.getFileName())
       workerState = ServiceWorkerActiveState.WorkerA;
-    } else if (new Path(workerScriptPath).getFileName() == this.config.workerBPath.getFileName()) {
+    else if (new Path(workerScriptPath).getFileName() == this.config.workerBPath.getFileName())
       workerState = ServiceWorkerActiveState.WorkerB;
-    } else {
+    else
       workerState = ServiceWorkerActiveState.ThirdParty;
-    }
 
     /*
       Our service worker registration can be both active and in the controlling scope of the current
@@ -204,11 +206,9 @@ export class ServiceWorkerManager {
     if (!navigator.serviceWorker.controller && (
       workerState === ServiceWorkerActiveState.WorkerA ||
       workerState === ServiceWorkerActiveState.WorkerB
-    )) {
+    ))
       return ServiceWorkerActiveState.Bypassed;
-    } else {
-      return workerState;
-    }
+    return workerState;
   }
 
   public async getWorkerVersion(): Promise<number> {
@@ -285,7 +285,7 @@ export class ServiceWorkerManager {
 
     if (workerVersion !== Environment.version()) {
       Log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
-      this.installWorker();
+      await this.installWorker();
     } else {
       Log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
     }
@@ -362,10 +362,10 @@ export class ServiceWorkerManager {
       await this.installAlternatingWorker();
     }
 
-    this.establishServiceWorkerChannel();
+    await this.establishServiceWorkerChannel();
   }
 
-  public establishServiceWorkerChannel() {
+  public async establishServiceWorkerChannel() {
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 

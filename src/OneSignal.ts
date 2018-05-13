@@ -66,7 +66,6 @@ import OneSignalError from "./errors/OneSignalError";
 
 
 export default class OneSignal {
-
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
@@ -218,17 +217,12 @@ export default class OneSignal {
    * Initializes the SDK, called by the developer.
    * @PublicApi
    */
-  static async init(options) {
+  static async init(options: object) {
     logMethodCall('init');
 
-    InitHelper.ponyfillSafariFetch();
+    await InitHelper.ponyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
-
-    const appConfig = await new ConfigManager().getAppConfig(options);
-    Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
-    OneSignal.context = new Context(appConfig);
-    OneSignal.config = OneSignal.context.appConfig;
-    OneSignal.context.workerMessenger.listen();
+    await InitHelper.initializeConfig(options);
 
     if (bowser.safari && !OneSignal.config.safariWebId) {
       /**
@@ -240,12 +234,27 @@ export default class OneSignal {
       return;
     }
 
-    async function __init() {
-      if (OneSignal.__initAlreadyCalled) {
+    if (OneSignal.config.userConfig.requiresUserPrivacyConsent) {
+      const providedConsent = await Database.getProvideUserConsent();
+      if (!providedConsent) {
+        OneSignal.pendingInit = true;
         return;
-      } else {
-        OneSignal.__initAlreadyCalled = true;
       }
+    }
+
+    await OneSignal.delayedInit();
+  }
+
+  private static async delayedInit() {
+    OneSignal.pendingInit = false;
+    // Ignore Promise as doesn't return until the service worker becomes active.
+    OneSignal.context.workerMessenger.listen();
+
+    async function __init() {
+      if (OneSignal.__initAlreadyCalled)
+        return;
+      else
+        OneSignal.__initAlreadyCalled = true;
 
       MainHelper.fixWordpressManifestIfMisplaced();
 
@@ -254,7 +263,7 @@ export default class OneSignal {
       OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
       if (isUsingSubscriptionWorkaround()) {
-        OneSignal.appConfig = appConfig;
+        OneSignal.appConfig = OneSignal.config;
 
         /**
          * The user may have forgot to choose a subdomain in his web app setup.
@@ -264,49 +273,54 @@ export default class OneSignal {
          * perfectly, while causing errors and preventing web push from working
          * on the HTTP site.
          */
-        if (!appConfig.subdomain) {
+        if (!OneSignal.appConfig.subdomain)
           throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
-        }
         /**
          * The iFrame may never load (e.g. OneSignal might be down), in which
          * case the rest of the SDK's initialization will be blocked. This is a
          * good thing! We don't want to access IndexedDb before we know which
          * origin to store data on.
          */
-        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(appConfig);
+        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(OneSignal.appConfig);
       }
 
       window.addEventListener('focus', () => {
-        // Checks if permission changed everytime a user focuses on the page, since a user has to click out of and back on the page to check permissions
+        // Checks if permission changed every time a user focuses on the page,
+        //     since a user has to click out of and back on the page to check permissions
         MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
 
-      InitHelper.initSaveState(document.title)
-        .then(() => InitHelper.saveInitOptions())
-        .then(() => {
-          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe) {
-            Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          } else {
-            InitHelper.internalInit();
-          }
+      await InitHelper.initSaveState(document.title)
+        .then(async() => await InitHelper.saveInitOptions())
+        .then(async() => {
+          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
+            await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+          else
+            await InitHelper.internalInit();
         });
     }
 
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      __init();
-    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive')
+      await __init();
     else {
       Log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
         ' initialization...');
-      window.addEventListener('DOMContentLoaded', () => {
-        __init();
-      });
+      window.addEventListener('DOMContentLoaded', () => { __init(); });
       document.onreadystatechange = () => {
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        if (document.readyState === 'complete' || document.readyState === 'interactive')
           __init();
-        }
       };
     }
+  }
+
+  /**
+   * Call after use accepts your user consent agreement
+   * @PublicApi
+   */
+  static async provideUserConsent(consent: boolean) {
+    await Database.setProvideUserConsent(consent);
+    if (consent && OneSignal.pendingInit)
+      await OneSignal.delayedInit();
   }
 
   /**
@@ -324,25 +338,28 @@ export default class OneSignal {
    * @PublicApi
    */
   static async showHttpPrompt(options?) {
-    if (!options) {
+    if (!options)
       options = {};
-    }
 
     await awaitOneSignalInitAndSupported();
+    await OneSignal.privateShowHttpPrompt(options);
+  }
+
+  static async privateShowHttpPrompt(options?) {
     /*
-     Only show the HTTP popover if:
-     - Notifications aren't already enabled
-     - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
-     */
+    Only show the HTTP popover if:
+    - Notifications aren't already enabled
+    - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
+    */
     if (OneSignal.__isPopoverShowing) {
       throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
         permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
       });
     }
 
-    const permission = await OneSignal.getNotificationPermission();
-    const isEnabled = await OneSignal.isPushNotificationsEnabled();
-    const notOptedOut = await OneSignal.getSubscription();
+    const permission = await OneSignal.privateGetNotificationPermission();
+    const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const notOptedOut = await OneSignal.privateGetSubscription();
     const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
 
     if (doNotPrompt && !options.force) {
@@ -368,7 +385,7 @@ export default class OneSignal {
       return;
     }
     OneSignal.popover = new Popover(MainHelper.getSlidedownPermissionMessageOptions());
-    OneSignal.popover.create();
+    await OneSignal.popover.create();
     Log.debug('Showing the HTTP popover.');
     if (OneSignal.notifyButton &&
       OneSignal.notifyButton.options.enable &&
@@ -401,6 +418,7 @@ export default class OneSignal {
       OneSignal._sessionInitAlreadyRunning = false;
     });
   }
+
 
   /**
    * Prompts the user to subscribe.
@@ -451,18 +469,24 @@ export default class OneSignal {
   }
 
   /**
-   * Returns a promise that resolves to the browser's current notification permission as 'default', 'granted', or 'denied'.
-   * @param callback A callback function that will be called when the browser's current notification permission has been obtained, with one of 'default', 'granted', or 'denied'.
+   * Returns a promise that resolves to the browser's current notification permission as
+   *    'default', 'granted', or 'denied'.
+   * @param callback A callback function that will be called when the browser's current notification permission
+   *           has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  public static async getNotificationPermission(onComplete?): Promise<NotificationPermission> {
+  public static async getNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
     await awaitOneSignalInitAndSupported();
+    return OneSignal.privateGetNotificationPermission(onComplete);
+  }
 
-    const permission = await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.config.safariWebId);
+  static async privateGetNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
+    const permission = await OneSignal.context.permissionManager.getNotificationPermission(
+        OneSignal.config!.safariWebId
+      );
 
-    if (onComplete) {
+    if (onComplete)
       onComplete(permission);
-    }
 
     return permission;
   }
@@ -597,6 +621,10 @@ export default class OneSignal {
    */
   static async isPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
+    return OneSignal.privateIsPushNotificationsEnabled(callback);
+  }
+
+  static async privateIsPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('isPushNotificationsEnabled', callback);
 
     const context: Context = OneSignal.context;
@@ -639,6 +667,10 @@ export default class OneSignal {
    */
   static async isOptedOut(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
+    return OneSignal.internalIsOptedOut(callback);
+  }
+
+  private static async internalIsOptedOut(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('isOptedOut', callback);
     const { optedOut } = await Database.getSubscription();
     executeCallback(callback, optedOut);
@@ -709,6 +741,10 @@ export default class OneSignal {
    */
   static async getSubscription(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
+    return await OneSignal.privateGetSubscription(callback);
+  }
+
+  static async privateGetSubscription(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('getSubscription', callback);
     const subscription = await Database.getSubscription();
     const subscriptionStatus = !subscription.optedOut;
@@ -750,7 +786,7 @@ export default class OneSignal {
    *  OneSignal.push(["functionName", param1, param2]);
    *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
    */
-  static push(item: Function | object[]) {
+  static push(item: Function | any[]) {
     if (typeof(item) == "function")
       item();
     else if (Array.isArray(item)) {
@@ -799,7 +835,7 @@ export default class OneSignal {
   static _notificationOpenedCallbacks = [];
   static _idsAvailable_callback = [];
   static _defaultLaunchURL = null;
-  static config = null;
+  static config: AppConfig | null = null;
   static __isPopoverShowing = false;
   static _sessionInitAlreadyRunning = false;
   static _isNotificationEnabledCallback = [];
@@ -827,7 +863,9 @@ export default class OneSignal {
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
   static testHelper = TestHelper;
-  static appConfig = null;
+  static appConfig: AppConfig | null = null;
+  private static pendingInit: boolean;
+
   static subscriptionPopup: SubscriptionPopup;
   static subscriptionPopupHost: SubscriptionPopupHost;
   static subscriptionModal: SubscriptionModal;

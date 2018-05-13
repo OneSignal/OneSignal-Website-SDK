@@ -18,6 +18,8 @@ enum DatabaseEventName {
   SET
 }
 
+type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened";
+
 export default class Database {
 
   public emitter: Emitter;
@@ -35,38 +37,34 @@ export default class Database {
     this.database = new IndexedDb(this.databaseName);
   }
 
-  static applyDbResultFilter(table: string, key: string, result) {
+  static applyDbResultFilter(table: OneSignalDbTable, key: string, result) {
     switch (table) {
       case 'Options':
-        if (result && key) {
+        if (result && key)
           return result.value;
-        } else if (result && !key) {
+        else if (result && !key)
           return result;
-        } else {
+        else
           return null;
-        }
       case 'Ids':
-        if (result && key) {
+        if (result && key)
           return result.id;
-        } else if (result && !key) {
+        else if (result && !key)
           return result;
-        } else {
+        else
           return null;
-        }
       case 'NotificationOpened':
-        if (result && key) {
+        if (result && key)
           return {data: result.data, timestamp: result.timestamp};
-        } else if (result && !key) {
+        else if (result && !key)
           return result;
-        } else {
+        else
           return null;
-        }
       default:
-        if (result) {
+        if (result)
           return result;
-        } else {
+        else
           return null;
-        }
     }
   }
 
@@ -77,7 +75,7 @@ export default class Database {
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
-  async get<T>(table: string, key?: string): Promise<T> {
+  async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     return await new Promise<T>(async (resolve) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
           isUsingSubscriptionWorkaround() &&
@@ -102,7 +100,7 @@ export default class Database {
    * @param table
    * @param keypath
    */
-  async put(table: string, keypath: any) {
+  async put(table: OneSignalDbTable, keypath: any) {
     await new Promise(async (resolve, reject) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         isUsingSubscriptionWorkaround() &&
@@ -126,7 +124,7 @@ export default class Database {
    * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
-  remove(table: string, keypath?: string) {
+  remove(table: OneSignalDbTable, keypath?: string) {
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       isUsingSubscriptionWorkaround() &&
       SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
@@ -288,6 +286,14 @@ export default class Database {
     }
   }
 
+  async setProvideUserConsent(consent: boolean) {
+    await this.put('Options', { key: 'userConsent', value: consent });
+  }
+
+  async getProvideUserConsent(): Promise<boolean> {
+    return await this.get<boolean>('Options', 'userConsent');
+  }
+
   /**
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
@@ -312,10 +318,12 @@ export default class Database {
   }
   /* End Temp Database Proxy */
 
+  // START: Static mappings to instance methods
   static async on(...args: any[]) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.emitter.on.apply(Database.databaseInstance.emitter, args);
   }
+
   static async setEmailProfile(emailProfile: EmailProfile) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.setEmailProfile.call(Database.databaseInstance, emailProfile);
@@ -324,6 +332,7 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.getEmailProfile.call(Database.databaseInstance);
   }
+
   static async setSubscription(subscription: Subscription) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.setSubscription.call(Database.databaseInstance, subscription);
@@ -332,6 +341,16 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.getSubscription.call(Database.databaseInstance);
   }
+
+  static async setProvideUserConsent(consent: boolean) {
+    Database.ensureSingletonInstance();
+    return Database.databaseInstance.setProvideUserConsent.call(Database.databaseInstance, consent);
+  }
+  static async getProvideUserConsent(): Promise<boolean> {
+    Database.ensureSingletonInstance();
+    return Database.databaseInstance.getProvideUserConsent.call(Database.databaseInstance);
+  }
+
   static async setServiceWorkerState(workerState: ServiceWorkerState) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.setServiceWorkerState.call(Database.databaseInstance, workerState);
@@ -340,6 +359,7 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.getServiceWorkerState.call(Database.databaseInstance);
   }
+
   static async setAppState(appState: AppState) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.setAppState.call(Database.databaseInstance, appState);
@@ -348,6 +368,7 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.getAppState.call(Database.databaseInstance);
   }
+
   static async setAppConfig(appConfig: AppConfig) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.setAppConfig.call(Database.databaseInstance, appConfig);
@@ -356,6 +377,7 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.getAppConfig.call(Database.databaseInstance);
   }
+
   static async remove(table: string, keypath?: string) {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.remove.call(Database.databaseInstance, table, keypath);
@@ -368,4 +390,5 @@ export default class Database {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.get.call(Database.databaseInstance, table, key);
   }
+  // END: Static mappings to instance methods
 }

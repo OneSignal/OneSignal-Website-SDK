@@ -97,15 +97,13 @@ export class SubscriptionManager {
           Subscribing is only possible on the top-level frame, so there's no permission ambiguity
           here.
         */
-        if ((await OneSignal.getNotificationPermission()) === NotificationPermission.Denied) {
+        if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
-        }
 
-        if (SubscriptionManager.isSafari()) {
+        if (SubscriptionManager.isSafari())
           rawPushSubscription = await this.subscribeSafari();
-        } else {
+        else
           rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
-        }
         break;
     }
 
@@ -205,8 +203,8 @@ export class SubscriptionManager {
    * before installing the service worker to prevent non-subscribers from
    * querying our server for an updated service worker every 24 hours.
    */
-  private async requestPresubscribeNotificationPermission(): Promise<NotificationPermission> {
-    return SubscriptionManager.requestNotificationPermission();
+  private static async requestPresubscribeNotificationPermission(): Promise<NotificationPermission> {
+    return await SubscriptionManager.requestNotificationPermission();
   }
 
   public async unsubscribe(strategy: UnsubscriptionStrategy) {
@@ -232,6 +230,8 @@ export class SubscriptionManager {
   /**
    * Calls Notification.requestPermission(), but returns a Promise instead of
    * accepting a callback like the actual Notification.requestPermission();
+   *
+   * window.Notification.requestPermission: The callback was deprecated since Gecko 46 in favor of a Promise
    */
   public static requestNotificationPermission(): Promise<NotificationPermission> {
     return new Promise(resolve => window.Notification.requestPermission(resolve));
@@ -335,8 +335,8 @@ export class SubscriptionManager {
       SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       window.Notification.permission === NotificationPermission.Default
     ) {
-      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-      const permission = await this.requestPresubscribeNotificationPermission();
+      await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      const permission = await SubscriptionManager.requestPresubscribeNotificationPermission();
 
       /*
         Notification permission changes are already broadcast by the page's
@@ -346,9 +346,9 @@ export class SubscriptionManager {
         prompt, because going from "default" permissions to "default"
         permissions isn't a change. We specifically broadcast "default" to "default" changes.
        */
-      if (permission === NotificationPermission.Default) {
-        triggerNotificationPermissionChanged(true);
-      }
+      if (permission === NotificationPermission.Default)
+        await triggerNotificationPermissionChanged(true);
+
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
         case NotificationPermission.Default:
@@ -365,9 +365,8 @@ export class SubscriptionManager {
     }
 
     /* Now that permissions have been granted, install the service worker */
-    if (await this.context.serviceWorkerManager.shouldInstallWorker()) {
+    if (await this.context.serviceWorkerManager.shouldInstallWorker())
       await this.context.serviceWorkerManager.installWorker();
-    }
 
     Log.debug('Waiting for the service worker to activate...');
     const workerRegistration = await navigator.serviceWorker.ready;
@@ -609,15 +608,13 @@ export class SubscriptionManager {
     const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
 
     const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
-    if (!pushSubscription) {
-      /* Not subscribed to web push */
+    // Not subscribed to web push
+    if (!pushSubscription)
       return false;
-    }
 
-    if (!pushSubscription.expirationTime) {
-      /* No push subscription expiration time */
+    // No push subscription expiration time
+    if (!pushSubscription.expirationTime)
       return false;
-    }
 
     let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
 

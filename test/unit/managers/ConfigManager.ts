@@ -28,9 +28,8 @@ test('can customize initialization options', async t => {
     fakeServerConfig
   );
 
-  for (const userConfigKey in Object.keys(fakeUserConfig)) {
+  for (const userConfigKey in Object.keys(fakeUserConfig))
     t.deepEqual(fakeMergedConfig.userConfig[userConfigKey], fakeUserConfig[userConfigKey]);
-  }
 });
 
 test('should use server-provided subdomain if enabled', async t => {

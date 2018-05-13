@@ -40,14 +40,12 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission
    * state on Safari.
    */
-  public async getNotificationPermission(safariWebId: string) {
+  public async getNotificationPermission(safariWebId?: string) {
     const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
+    if (await this.isPermissionEnvironmentAmbiguous(reportedPermission))
+      return await this.getInterpretedAmbiguousPermission(reportedPermission);
 
-    if (await this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
-      return this.getInterpretedAmbiguousPermission(reportedPermission);
-    } else {
-      return reportedPermission;
-    }
+    return reportedPermission;
   }
 
   /**
@@ -73,7 +71,7 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  public async getReportedNotificationPermission(safariWebId: string) {
+  public async getReportedNotificationPermission(safariWebId?: string) {
     if (bowser.safari) {
       return this.getSafariNotificationPermission(safariWebId);
     } else {
@@ -99,7 +97,7 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  private getSafariNotificationPermission(safariWebId: string): NotificationPermission {
+  private getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
     if (safariWebId) {
       return window.safari.pushNotification.permission(safariWebId).permission as NotificationPermission;
     } else {

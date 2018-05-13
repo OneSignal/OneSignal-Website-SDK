@@ -169,7 +169,7 @@ test('notification clicked - While page is opened in background', async t => {
   const workerMessageReplyBuffer = new WorkerMessengerReplyBuffer();
   OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
-  const triggerStub = sinon.stub(Event, 'trigger', function(event) {
+  const triggerStub = sinon.stub(Event, 'trigger', function(event: string) {
     if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
       t.pass();
   });
@@ -179,7 +179,7 @@ test('notification clicked - While page is opened in background', async t => {
   manager.establishServiceWorkerChannel();
 
   const listeners = workerMessageReplyBuffer.findListenersForMessage(WorkerMessengerCommand.NotificationClicked);
-  for (let listenerRecord of listeners)
+  for (const listenerRecord of listeners)
     listenerRecord.callback.apply(null, ['test']);
 
   getRegistrationStub.restore();

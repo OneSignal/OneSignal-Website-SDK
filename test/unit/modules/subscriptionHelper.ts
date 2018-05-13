@@ -24,7 +24,7 @@ test.beforeEach(async t => {
 });
 
 test('should not resubscribe user on subsequent page views if the user is already subscribed', async t => {
-  const isPushEnabledStub = sinon.stub(OneSignal, 'isPushNotificationsEnabled').resolves(true);
+  const isPushEnabledStub = sinon.stub(OneSignal, 'privateIsPushNotificationsEnabled').resolves(true);
   const getSessionCountStub = sinon.stub(SessionManager.prototype, 'getPageViewCount').returns(2);
   const subscribeSpy = sinon.spy(SubscriptionManager.prototype, 'subscribe');
 
