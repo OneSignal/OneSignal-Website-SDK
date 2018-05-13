@@ -10,12 +10,15 @@ import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { ServiceWorkerContainer } from '../mocks/service-workers/ServiceWorkerContainer';
 import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
 
-import IndexedDb from '../../../src/services/IndexedDb';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
 import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
 
 import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
+import PushManager from "../mocks/service-workers/models/PushManager";
+import PushSubscription from "../mocks/service-workers/models/PushSubscription";
+import Context from "../../../src/models/Context";
+import {SessionManager} from "../../../src/managers/SessionManager";
 
 var global = new Function('return this')();
 
@@ -73,13 +76,14 @@ export enum BrowserUserAgent {
 }
 
 export interface TestEnvironmentConfig {
-  environment?: string,
-  initOptions?: any,
-  httpOrHttps?: HttpHttpsEnvironment,
-  permission?: NotificationPermission,
-  userAgent?: BrowserUserAgent,
-  url?: URL,
-  initializeAsIframe?: boolean
+  environment?: string;
+  initOptions?: any;
+  httpOrHttps?: HttpHttpsEnvironment;
+  permission?: NotificationPermission;
+  pushIdentifier?: string;
+  userAgent?: BrowserUserAgent;
+  url?: URL;
+  initializeAsIframe?: boolean;
 }
 
 /**
@@ -211,7 +215,10 @@ export class TestEnvironment {
     global.window.Notification = global.Notification = {
       permission: config.permission ? config.permission: NotificationPermission.Default,
       maxActions: 2,
-      requestPermission: function() { }
+      requestPermission: function(callback: Function) {
+        console.log("stubNotification");
+        callback(config.pushIdentifier);
+      }
     };
   }
 
@@ -242,6 +249,28 @@ export class TestEnvironment {
     TestEnvironment.stubNotifyButtonTransitionEvents();
     TestEnvironment.stubNotification(config);
     return global.OneSignal;
+  }
+
+  // This allows detailed error printing of test that fails due to missing network mock or other reasons.
+  static addUnhandledRejectionHandler() {
+    process.on('unhandledRejection', (error: object) => {
+      console.log("error", error);
+    });
+  }
+
+  static async getFakePushSubscription(): Promise<PushSubscription> {
+    return await new PushManager().subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: Random.getRandomUint8Array(65).buffer
+    });
+  }
+
+  static mockInternalOneSignal() {
+    const sessionManager = new SessionManager();
+    const appConfig = TestEnvironment.getFakeAppConfig();
+    OneSignal.context = new Context(appConfig);
+    OneSignal.config = appConfig;
+    OneSignal.context.sessionManager = sessionManager;
   }
 
   static getFakeAppConfig(): AppConfig {

@@ -144,13 +144,12 @@ export function isLocalhostAllowedAsSecureOrigin() {
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
  * not supported, and wraps these tasks in a Promise.
  */
-export function awaitOneSignalInitAndSupported() {
+export async function awaitOneSignalInitAndSupported(): Promise<object> {
   return new Promise(resolve => {
-    if (!OneSignal.initialized) {
+    if (!OneSignal.initialized)
       OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
-    } else {
+    else
       resolve();
-    }
   });
 }
 
@@ -200,7 +199,7 @@ export function awaitOneSignalInitAndSupported() {
 
 export async function triggerNotificationPermissionChanged(updateIfIdentical = false) {
   let newPermission, isUpdating;
-  const currentPermission = await OneSignal.getNotificationPermission();
+  const currentPermission = await OneSignal.privateGetNotificationPermission();
   const previousPermission = await Database.get('Options', 'notificationPermission');
 
   newPermission = currentPermission;

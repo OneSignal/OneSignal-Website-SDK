@@ -1,4 +1,3 @@
-import { Serializable } from './Serializable';
 import { SlidedownPermissionMessageOptions } from '../popover/Popover';
 
 
@@ -50,6 +49,8 @@ export interface AppConfig {
    */
   emailAuthRequired?: boolean;
   userConfig?: AppUserConfig;
+  // TODO: Cleanup: pageUrl is also on AppUserConfig
+  pageUrl?: string;
 }
 
 export enum ConfigIntegrationKind {
@@ -138,6 +139,8 @@ export interface AppUserConfig {
   notificationClickHandlerMatch?: NotificationClickMatchBehavior;
   notificationClickHandlerAction?: NotificationClickActionBehavior;
   allowLocalhostAsSecureOrigin?: boolean;
+  requiresUserPrivacyConsent?: boolean;
+  pageUrl?: string;
 }
 
 export interface FullscreenPermissionMessageOptions {

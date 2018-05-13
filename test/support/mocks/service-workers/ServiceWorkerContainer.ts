@@ -1,8 +1,6 @@
-import NotImplementedError from '../../../../src/errors/NotImplementedError';
 import ServiceWorker from './ServiceWorker';
 import ServiceWorkerRegistration from './models/ServiceWorkerRegistration';
 import { EventHandler } from "../../../../src/libraries/Emitter";
-import ExtendableEvent from "./models/ExtendableEvent";
 
 export class ServiceWorkerContainer implements EventTarget {
   private resolveReadyPromise: Function;
@@ -39,16 +37,14 @@ export class ServiceWorkerContainer implements EventTarget {
     return await this.serviceWorkerRegistration;
   }
 
-  public async getRegistration(clientURL: string = ''): Promise<ServiceWorkerRegistration> {
+  public async getRegistration(_clientURL: string = ''): Promise<ServiceWorkerRegistration> {
     return this.serviceWorkerRegistration;
   }
 
   public async getRegistrations(): Promise<ServiceWorkerRegistration[]> {
-    if (this.serviceWorkerRegistration) {
+    if (this.serviceWorkerRegistration)
       return [this.serviceWorkerRegistration];
-    } else {
-      return [];
-    }
+    return [];
   }
 
   public addEventListener(eventName: string, callback: EventHandler) {
@@ -56,9 +52,9 @@ export class ServiceWorkerContainer implements EventTarget {
       const handlers = this.listeners.get(eventName);
       handlers.push(callback);
       this.listeners.set(eventName, handlers);
-    } else {
-      this.listeners.set(eventName, [callback]);
     }
+    else
+      this.listeners.set(eventName, [callback]);
   }
 
   public removeEventListener(eventName: string, callback: EventHandler) {
@@ -75,13 +71,11 @@ export class ServiceWorkerContainer implements EventTarget {
   public dispatchEvent(event: Event): boolean {
     const handlers = this.listeners.get(event.type);
     if (handlers) {
-      for (const handler of handlers) {
+      for (const handler of handlers)
         handler(event);
-      }
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
   // EventHandler oncontrollerchange;
   // EventHandler onmessage; // event.source of message events is ServiceWorker object

@@ -1,23 +1,13 @@
-import bowser from 'bowser';
-
-
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
-import TimeoutError from '../errors/TimeoutError';
-import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { getConsoleStyle, timeoutPromise, triggerNotificationPermissionChanged } from '../utils';
+import { triggerNotificationPermissionChanged } from '../utils';
 import EventHelper from './EventHelper';
-import MainHelper from './MainHelper';
-import TestHelper from './TestHelper';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Context from '../models/Context';
-import { ServiceWorkerActiveState } from '../managers/ServiceWorkerManager';
 import { Subscription } from '../models/Subscription';
 import { NotificationPermission } from '../models/NotificationPermission';
-import Database from '../services/Database';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import Log from '../libraries/Log';
@@ -33,7 +23,7 @@ export default class SubscriptionHelper {
       session count incremented on each page refresh. However, if the user is
       not subscribed, subscribe.
     */
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
 
     if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
       Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
@@ -41,11 +31,10 @@ export default class SubscriptionHelper {
     }
 
     if (typeof OneSignal !== "undefined") {
-      if (OneSignal._isRegisteringForPush) {
+      if (OneSignal._isRegisteringForPush)
         return null;
-      } else {
+      else
         OneSignal._isRegisteringForPush = true;
-      }
     }
 
     switch (SdkEnvironment.getWindowEnv()) {
@@ -57,8 +46,8 @@ export default class SubscriptionHelper {
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
-          triggerNotificationPermissionChanged();
-          EventHelper.checkAndTriggerSubscriptionChanged();
+          await triggerNotificationPermissionChanged();
+          await EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
           Log.info(e);
         }
@@ -135,15 +124,13 @@ export default class SubscriptionHelper {
         );
         break;
       default:
-        if (typeof OneSignal !== "undefined") {
+        if (typeof OneSignal !== "undefined")
           OneSignal._isRegisteringForPush = false;
-        }
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
 
-    if (typeof OneSignal !== "undefined") {
+    if (typeof OneSignal !== "undefined")
       OneSignal._isRegisteringForPush = false;
-    }
 
     return subscription;
   }

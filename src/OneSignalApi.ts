@@ -134,42 +134,35 @@ export default class OneSignalApi {
     return OneSignalApi.post('notifications', params);
   }
 
+  static jsonpLib(url: string, fn: Function) {
+    JSONP(url, null, fn);
+  }
+
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
-    try {
-      const serverConfig = await new Promise<ServerAppConfig>((resolve, reject) => {
-        if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-          /**
-           * Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
-           */
-          JSONP(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`, null, (err, data) => {
-            if (err) {
-              reject(err);
-            } else {
-              if (data.success) {
-                resolve(data);
-              } else {
-                // For JSONP, we return a 200 even for errors, there's a success: false param
-                reject(data);
-              }
-            }
-          });
-        } else {
-          resolve(OneSignalApi.get(`sync/${appId}/web`, null));
-        }
-      });
-      return serverConfig;
-    } catch (e) {
-      throw e;
-    }
+    return await new Promise<ServerAppConfig>((resolve, reject) => {
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+        // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
+        OneSignalApi.jsonpLib(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,(err, data) => {
+          if (err)
+            reject(err);
+          else {
+            if (data.success)
+              resolve(data);
+            else // For JSONP, we return a 200 even for errors, there's a success: false param
+              reject(data);
+          }
+        });
+      }
+      else
+        resolve(OneSignalApi.get(`sync/${appId}/web`, null));
+    });
   }
 
   static async createUser(deviceRecord: DeviceRecord): Promise<string> {
     const response = await OneSignalApi.post(`players`, deviceRecord.serialize());
-    if (response && response.success) {
+    if (response && response.success)
       return response.id;
-    } else {
-      return null;
-    }
+    return null;
   }
 
   static async createEmailRecord(

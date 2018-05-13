@@ -160,19 +160,18 @@ export class WorkerMessenger {
    * parameter is set to true on HTTPS iframes expecting service worker messages
    * that live under an HTTP page.
    */
-  public listen(listenIfPageUncontrolled?: boolean) {
-    if (!Environment.supportsServiceWorkers()) {
+  public async listen(listenIfPageUncontrolled?: boolean) {
+    if (!Environment.supportsServiceWorkers())
       return;
-    }
 
     const env = SdkEnvironment.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
       self.addEventListener('message', this.onWorkerMessageReceivedFromPage.bind(this));
       Log.debug('[Worker Messenger] Service worker is now listening for messages.');
-    } else {
-      this.listenForPage(listenIfPageUncontrolled);
     }
+    else
+      await this.listenForPage(listenIfPageUncontrolled);
   }
 
   /**
@@ -313,9 +312,9 @@ export class WorkerMessenger {
   async isWorkerControllingPage(): Promise<boolean> {
     const env = SdkEnvironment.getWindowEnv();
 
-    if (env === WindowEnvironmentKind.ServiceWorker) {
+    if (env === WindowEnvironmentKind.ServiceWorker)
       return !!self.registration.active;
-    } else {
+    else {
       const workerState = await this.context.serviceWorkerManager.getActiveState();
       return workerState === ServiceWorkerActiveState.WorkerA ||
         workerState === ServiceWorkerActiveState.WorkerB;
@@ -329,22 +328,21 @@ export class WorkerMessenger {
    */
   async waitUntilWorkerControlsPage() {
     return new Promise<void>(async resolve => {
-      if (await this.isWorkerControllingPage()) {
+      if (await this.isWorkerControllingPage())
         resolve();
-      } else {
+      else {
         const env = SdkEnvironment.getWindowEnv();
 
         if (env === WindowEnvironmentKind.ServiceWorker) {
           self.addEventListener('activate', async e => {
-            if (await this.isWorkerControllingPage()) {
+            if (await this.isWorkerControllingPage())
               resolve();
-            }
           });
-        } else {
+        }
+        else {
           navigator.serviceWorker.addEventListener('controllerchange', async e => {
-            if (await this.isWorkerControllingPage()) {
+            if (await this.isWorkerControllingPage())
               resolve();
-            }
           });
         }
       }

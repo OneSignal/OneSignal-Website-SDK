@@ -2,15 +2,9 @@ import { AppUserConfig, AppConfig, ConfigIntegrationKind, NotificationClickMatch
 import OneSignalApi from '../OneSignalApi';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 
-import { trimUndefined, contains } from '../utils';
 import SdkEnvironment from './SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-
-enum ObjectType {
-  Boolean,
-  Text,
-  Number
-}
+import {WindowEnvironmentKind} from "../models/WindowEnvironmentKind";
+import {contains} from "../utils";
 
 export enum IntegrationConfigurationKind {
   /**
@@ -37,37 +31,41 @@ export default class ConfigManager {
    */
   public async getAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
     try {
-      if (!userConfig || !userConfig.appId) {
+      if (!userConfig || !userConfig.appId)
         throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
-      }
+
       const serverConfig = await OneSignalApi.downloadServerAppConfig(userConfig.appId);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
-      if (appConfig.restrictedOriginEnabled) {
-        if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-          if (window.top === window &&
-            !contains(window.location.hostname, ".os.tc") &&
-            !contains(window.location.hostname, ".onesignal.com") &&
-            !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
-            throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-              siteUrl: appConfig.origin
-            });
-          }
-        }
-      }
+      ConfigManager.checkRestrictedOrigin(appConfig);
       return appConfig;
-    } catch (e) {
+    }
+    catch (e) {
       if (e) {
-        if (e.code === 1) {
+        if (e.code === 1)
           throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
-        } else if (e.code === 2) {
+        else if (e.code === 2)
           throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
-        }
       }
       throw e;
     }
   }
 
-  private doesCurrentOriginMatchConfigOrigin(configOrigin) {
+  private static checkRestrictedOrigin(appConfig: AppConfig) {
+    if (appConfig.restrictedOriginEnabled) {
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+        if (window.top === window &&
+          !contains(window.location.hostname, ".os.tc") &&
+          !contains(window.location.hostname, ".onesignal.com") &&
+          !ConfigManager.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
+          throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
+            siteUrl: appConfig.origin
+          });
+        }
+      }
+    }
+  }
+
+  private static doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
     try {
       return location.origin === new URL(configOrigin).origin;
     } catch (e) {
@@ -79,13 +77,9 @@ export default class ConfigManager {
     switch (integration) {
       case ConfigIntegrationKind.Custom:
       case ConfigIntegrationKind.WordPress:
-        return {
-          configuration: IntegrationConfigurationKind.JavaScript,
-        };
+        return {configuration: IntegrationConfigurationKind.JavaScript};
       default:
-        return {
-          configuration: IntegrationConfigurationKind.Dashboard,
-        };
+        return {configuration: IntegrationConfigurationKind.Dashboard};
     }
   }
 
@@ -115,11 +109,9 @@ export default class ConfigManager {
   }
 
   private getConfigIntegrationKind(serverConfig: ServerAppConfig): ConfigIntegrationKind {
-    if (serverConfig.config.integration) {
+    if (serverConfig.config.integration)
       return serverConfig.config.integration.kind;
-    } else {
-      return ConfigIntegrationKind.Custom;
-    }
+    return ConfigIntegrationKind.Custom;
   }
 
   private getUserConfigForConfigIntegrationKind(
@@ -219,7 +211,8 @@ export default class ConfigManager {
           },
           notificationClickHandlerMatch: serverConfig.config.notificationBehavior.click.match,
           notificationClickHandlerAction: serverConfig.config.notificationBehavior.click.action,
-          allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin
+          allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin,
+          requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent
         };
       case IntegrationConfigurationKind.JavaScript:
         /*

@@ -41,9 +41,9 @@ export default class ServiceWorkerGlobalScope implements EventTarget {
         const handlers = this.listeners.get(eventName);
         handlers.push(callback);
         this.listeners.set(eventName, handlers);
-      } else {
-        this.listeners.set(eventName, [callback]);
       }
+      else
+        this.listeners.set(eventName, [callback]);
     };
     this.removeEventListener = function(eventName: string, callback: EventHandler) {
       if (this.listeners.has(eventName)) {

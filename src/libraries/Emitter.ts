@@ -126,11 +126,11 @@ export default class Emitter {
   }
 
   /**
-   * Execute each item in the listener collection in order with the specified
-   * data.
+   * Execute each item in the listener collection in order with the specified data.
+   * @param event - String of the event name
+   * @param args - Variable number of args to pass to the functions subscribe to the event
    */
-  public emit(..._: any[]): Emitter {
-    const args = [].slice.call(arguments, 0); // converted to array
+  public async emit(...args: any[]): Promise<Emitter> {
     const event = args.shift();
     let listeners = this._events[event];
 
@@ -138,7 +138,7 @@ export default class Emitter {
       listeners = listeners.slice(0);
       const len = listeners.length;
       for (let i = 0; i < len; i += 1)
-        (listeners[i] as Function).apply(this, args);
+        await (listeners[i] as Function).apply(this, args);
     }
 
     return this;
