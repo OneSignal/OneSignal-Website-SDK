@@ -100,7 +100,7 @@ export default class Database {
    * @param table
    * @param keypath
    */
-  async put(table: OneSignalDbTable, keypath: any) {
+  async put(table: OneSignalDbTable, keypath: any): Promise<void> {
     await new Promise(async (resolve, reject) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         isUsingSubscriptionWorkaround() &&
@@ -286,7 +286,7 @@ export default class Database {
     }
   }
 
-  async setProvideUserConsent(consent: boolean) {
+  async setProvideUserConsent(consent: boolean): Promise<void> {
     await this.put('Options', { key: 'userConsent', value: consent });
   }
 
@@ -342,7 +342,7 @@ export default class Database {
     return Database.databaseInstance.getSubscription.call(Database.databaseInstance);
   }
 
-  static async setProvideUserConsent(consent: boolean) {
+  static async setProvideUserConsent(consent: boolean): Promise<void> {
     Database.ensureSingletonInstance();
     return Database.databaseInstance.setProvideUserConsent.call(Database.databaseInstance, consent);
   }

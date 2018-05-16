@@ -139,11 +139,8 @@ async function expectPushRecordCreationRequest(t: TestContext) {
         "identifier"
       ];
       const parsedRequestBody = JSON.parse(requestBody);
-      // for (const sameValueKey of Object.keys(sameValues))
-      //   t.deepEqual(parsedRequestBody[sameValueKey], sameValues[sameValueKey]);
       for (const anyValueKey of anyValues)
         t.not(parsedRequestBody[anyValueKey], undefined);
-      // return { success: true, id: playerId };
       return {};
     });
 }

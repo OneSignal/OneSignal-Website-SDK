@@ -24,10 +24,10 @@ export interface AppConfig {
    */
   httpUseOneSignalCom?: boolean;
   cookieSyncEnabled?: boolean;
-  restrictedOriginEnabled?: boolean;
+  restrictedOriginEnabled?: boolean | null;
   metrics: {
     enable: boolean;
-    mixpanelReportingToken: string;
+    mixpanelReportingToken: string | null;
   };
 
   safariWebId?: string;
@@ -48,7 +48,7 @@ export interface AppConfig {
    * Describes whether this app's email records require authentication.
    */
   emailAuthRequired?: boolean;
-  userConfig?: AppUserConfig;
+  userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
 }
