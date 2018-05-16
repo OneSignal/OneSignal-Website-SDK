@@ -120,7 +120,7 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  private getOneSignalSubdomainNotificationPermission(safariWebId: string): Promise<NotificationPermission> {
+  private getOneSignalSubdomainNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
     return new Promise<NotificationPermission>(resolve => {
       OneSignal.proxyFrameHost.message(
         OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,

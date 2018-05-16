@@ -23,7 +23,7 @@ import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { ServiceWorkerActiveState, ServiceWorkerManager } from './managers/ServiceWorkerManager';
 import { SubscriptionManager } from './managers/SubscriptionManager';
-import { AppConfig } from './models/AppConfig';
+import {AppConfig, AppUserConfig} from './models/AppConfig';
 import Context from './models/Context';
 import { Notification } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
@@ -217,7 +217,7 @@ export default class OneSignal {
    * Initializes the SDK, called by the developer.
    * @PublicApi
    */
-  static async init(options: object) {
+  static async init(options: AppUserConfig) {
     logMethodCall('init');
 
     await InitHelper.ponyfillSafariFetch();
@@ -245,7 +245,7 @@ export default class OneSignal {
     await OneSignal.delayedInit();
   }
 
-  private static async delayedInit() {
+  private static async delayedInit(): Promise<void> {
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();
@@ -290,14 +290,12 @@ export default class OneSignal {
         MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
 
-      await InitHelper.initSaveState(document.title)
-        .then(async() => await InitHelper.saveInitOptions())
-        .then(async() => {
-          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
-            await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-          else
-            await InitHelper.internalInit();
-        });
+      await InitHelper.initSaveState(document.title);
+      await InitHelper.saveInitOptions();
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
+        await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+      else
+        await InitHelper.internalInit();
     }
 
     if (document.readyState === 'complete' || document.readyState === 'interactive')
@@ -317,7 +315,7 @@ export default class OneSignal {
    * Call after use accepts your user consent agreement
    * @PublicApi
    */
-  static async provideUserConsent(consent: boolean) {
+  static async provideUserConsent(consent: boolean): Promise<void> {
     await Database.setProvideUserConsent(consent);
     if (consent && OneSignal.pendingInit)
       await OneSignal.delayedInit();

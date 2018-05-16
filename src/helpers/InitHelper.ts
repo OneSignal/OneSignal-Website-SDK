@@ -482,7 +482,7 @@ export default class InitHelper {
     OneSignal._initCalled = true;
   }
 
-  static async initializeConfig(options: object) {
+  static async initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
