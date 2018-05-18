@@ -427,7 +427,7 @@ export default class InitHelper {
               Number(bowser.version) >= 63 &&
               (bowser.tablet || bowser.mobile)
               )
-              await OneSignal.showHttpPrompt();
+              await OneSignal.privateShowHttpPrompt();
             else
               await SubscriptionHelper.registerForPush();
           }
@@ -437,14 +437,13 @@ export default class InitHelper {
       }
     }
     else {
-      if (OneSignal.config.userConfig.autoRegister !== true) {
+      if (OneSignal.config.userConfig.autoRegister !== true)
         Log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
-      }
-      if (MainHelper.isHttpPromptAlreadyShown()) {
+      if (MainHelper.isHttpPromptAlreadyShown())
         Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
-      }
+
       if (OneSignal.config.userConfig.autoRegister === true && !MainHelper.isHttpPromptAlreadyShown()) {
-        await OneSignal.showHttpPrompt().catch(e => {
+        await OneSignal.privateShowHttpPrompt().catch(e => {
           if (
             (e instanceof InvalidStateError &&
               (e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
@@ -454,7 +453,9 @@ export default class InitHelper {
           ) {
             Log.debug('[Prompt Not Showing]', e);
             // Another prompt is being shown, that's okay
-          } else Log.info(e);
+          }
+          else
+            Log.info(e);
         });
       }
       OneSignal._sessionInitAlreadyRunning = false;

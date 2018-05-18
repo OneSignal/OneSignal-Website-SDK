@@ -368,12 +368,11 @@ export default class OneSignal {
       Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
       return;
     }
-    if (isEnabled) {
+
+    if (isEnabled)
       throw new AlreadySubscribedError();
-    }
-    if (!notOptedOut) {
+    if (!notOptedOut)
       throw new NotSubscribedError(NotSubscribedReason.OptedOut);
-    }
 
     MainHelper.markHttpPopoverShown();
 
@@ -451,7 +450,8 @@ export default class OneSignal {
            */
         OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
         OneSignal.subscriptionPopupHost.load();
-      } else {
+      }
+      else {
         if (!options)
           options = {};
         options.fromRegisterFor = true;
@@ -459,11 +459,10 @@ export default class OneSignal {
       }
     }
 
-    if (!OneSignal.initialized) {
+    if (!OneSignal.initialized)
       OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
-    } else {
+    else
       return __registerForPushNotifications();
-    }
   }
 
   /**

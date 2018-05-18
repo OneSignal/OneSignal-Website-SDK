@@ -11,7 +11,6 @@ import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import {
-  awaitOneSignalInitAndSupported,
   capitalize,
   contains,
   getConsoleStyle,

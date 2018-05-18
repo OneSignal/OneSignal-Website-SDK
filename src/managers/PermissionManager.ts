@@ -1,4 +1,4 @@
-import { awaitOneSignalInitAndSupported, redetectBrowserUserAgent, isUsingSubscriptionWorkaround } from '../utils';
+import { redetectBrowserUserAgent, isUsingSubscriptionWorkaround } from '../utils';
 import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
@@ -44,7 +44,6 @@ export default class PermissionManager {
     const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
     if (await this.isPermissionEnvironmentAmbiguous(reportedPermission))
       return await this.getInterpretedAmbiguousPermission(reportedPermission);
-
     return reportedPermission;
   }
 
@@ -71,25 +70,15 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  public async getReportedNotificationPermission(safariWebId?: string) {
-    if (bowser.safari) {
-      return this.getSafariNotificationPermission(safariWebId);
-    } else {
-      // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-      const isUsingOneSignalSubdomain = isUsingSubscriptionWorkaround();
+  public async getReportedNotificationPermission(safariWebId?: string): Promise<NotificationPermission>{
+    if (bowser.safari)
+      return PermissionManager.getSafariNotificationPermission(safariWebId);
 
-      if (isUsingOneSignalSubdomain) {
-        /*
-          Our target permission for HTTP sites lives on the subdomain.os.tc origin. To ask the iframe
-          for its notification permission state, it must first be loaded.
-         */
-        await awaitOneSignalInitAndSupported();
-
-        return this.getOneSignalSubdomainNotificationPermission(safariWebId);
-      } else {
-        return this.getW3cNotificationPermission();
-      }
-    }
+    // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
+    if (isUsingSubscriptionWorkaround())
+      return await this.getOneSignalSubdomainNotificationPermission(safariWebId);
+    else
+      return this.getW3cNotificationPermission();
   }
 
   /**
@@ -97,12 +86,10 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  private getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
-    if (safariWebId) {
+  private static getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
+    if (safariWebId)
       return window.safari.pushNotification.permission(safariWebId).permission as NotificationPermission;
-    } else {
-      throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
-    }
+    throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
   }
 
   /**
@@ -120,7 +107,7 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  private getOneSignalSubdomainNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
+  private async getOneSignalSubdomainNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
     return new Promise<NotificationPermission>(resolve => {
       OneSignal.proxyFrameHost.message(
         OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
