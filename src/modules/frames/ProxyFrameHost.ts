@@ -84,13 +84,12 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   removeFrame() {
-    // Unit tests may not have access to document
-    if (Environment.isBrowser()) {
-      const existingInstance = document.querySelector(`iFrame[src='${this.url.toString()}'`);
-      if (existingInstance) {
-        existingInstance.remove();
-      }
-    }
+    if (!Environment.isBrowser())
+      return;
+
+    const existingInstance = document.querySelector(`iframe[src='${this.url.toString()}']`);
+    if (existingInstance)
+      existingInstance.remove();
   }
 
   onFrameLoad(_: UIEvent): void {

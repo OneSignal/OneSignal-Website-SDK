@@ -256,6 +256,10 @@ export class TestEnvironment {
     process.on('unhandledRejection', (error: object) => {
       console.log("error", error);
     });
+
+    process.on('uncaughtException', (error: object) => {
+      console.log("error", error);
+    });
   }
 
   static async getFakePushSubscription(): Promise<PushSubscription> {
