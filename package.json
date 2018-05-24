@@ -2,6 +2,9 @@
   "name": "onesignal-web-sdk",
   "version": "1.2.0",
   "description": "Web push notifications from OneSignal.",
+  "engines": {
+    "node": "~10.1.0"
+  },
   "dependencies": {
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "jsdom": "^9.12.0",
@@ -19,17 +22,16 @@
     "transpile:tests": "$(yarn bin)/tsc --project build/config/tsconfig.tests.json",
     "bundle": "TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js",
     "bundle:analyze": "ANALYZE=true ENV=production TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js --profile --json > stats.json",
-    "build:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle && ENV=development build/scripts/publish.sh",
-    "build:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle && ENV=staging build/scripts/publish.sh",
-    "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle && ENV=production build/scripts/publish.sh",
+    "build:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle",
+    "build:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle",
+    "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle",
     "test": "ENV=development yarn transpile:tests && ava --verbose --color --watch",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
     "publish": "yarn clean && yarn build:prod && yarn "
   },
   "config": {
-    "sdkVersion": "150200",
-    "onesignalPublicPath": "../OneSignal/public",
-    "onesignalPublicSdksPath": "../OneSignal/public/sdks"
+    "onesignalPublicPath": "./build/bundles",
+    "onesignalPublicSdksPath": "./build/bundles"
   },
   "repository": {
     "type": "git",
