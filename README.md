@@ -5,7 +5,8 @@
 * get AppId from indexedDB instead of the qureyparams [PR](https://github.com/Marfeel/OneSignal-Website-SDK/pull/3)
 
 ## checks
-in chrome dev tools
+in chrome dev tools (remember that Push notifications do not work in incognito)
+
 ```js
 OneSignal.VERSION
 // it should return 150200 (defined in package.json)
