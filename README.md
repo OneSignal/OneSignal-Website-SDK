@@ -1,5 +1,14 @@
 # OneSignal Web Push SDK (mrf version)
 
+generate bundle
+```sh
+# generate the bundle
+npm run build:prod
+
+# move it to XP
+cp ./build/bundles/OneSignalSDK.js $MARFEELXP_HOME/Tenants/vhosts/marfeel/resources/pushNotifications/OneSignalSDK.js
+```
+
 ## changelog
 * update package.json and return always the sdk version specified in the package.json config [PR](https://github.com/Marfeel/OneSignal-Website-SDK/pull/1)
 * get AppId from indexedDB instead of the qureyparams [PR](https://github.com/Marfeel/OneSignal-Website-SDK/pull/3)
