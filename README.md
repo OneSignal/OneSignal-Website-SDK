@@ -1,5 +1,8 @@
 # OneSignal Web Push SDK (mrf version)
 
+branch from the **marfeel** branch, and merge into it.
+this branch will be rebased
+
 generate bundle
 ```sh
 # generate the bundle
