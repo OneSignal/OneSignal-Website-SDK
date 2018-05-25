@@ -118,9 +118,11 @@ export class ServiceWorker {
   }
 
   static async getAppId(): Promise<string> {
-    if (self.location.search) {
+    const appIdParam = self.location.search && self.location.search.match(/appId=([0-9a-z-]+)&?/i);
+
+    if (appIdParam) {
       // Successful regex matches are at position 1
-      const appId = self.location.search.match(/appId=([0-9a-z-]+)&?/i)[1];
+      const appId = appIdParam[1];
       return appId;
     } else {
       const { appId } = await Database.getAppConfig();
