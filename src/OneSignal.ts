@@ -1,6 +1,5 @@
 import * as Browser from 'bowser';
 import * as heir from 'heir';
-import * as Cookie from 'js-cookie';
 import * as log from 'loglevel';
 import * as objectAssign from 'object-assign';
 import * as EventEmitter from 'wolfy87-eventemitter';
@@ -60,6 +59,7 @@ import { ValidatorUtils } from './utils/ValidatorUtils';
 import { PushRegistration } from './models/PushRegistration';
 import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
 import ConfigManager from './managers/ConfigManager';
+import TimedLocalStorage from './modules/TimedLocalStorage';
 
 
 export default class OneSignal {
@@ -705,7 +705,7 @@ export default class OneSignal {
   static _windowHeight = 568;
   static _isNewVisitor = false;
   static _channel = null;
-  static cookie = Cookie;
+  static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
   static notifyButton = null;
   static store = LimitStore;

@@ -1,36 +1,24 @@
-import * as Cookie from 'js-cookie';
 import * as log from 'loglevel';
 
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
 import SubscriptionHelper from './SubscriptionHelper';
+import TimedLocalStorage from '../modules/TimedLocalStorage';
 
 declare var OneSignal: any;
 
 export default class TestHelper {
   /**
-   * Just for debugging purposes, removes the coookie from hiding the native prompt.
-   * @returns {*}
+   * Creates an expiring local storage entry to note that the user does not want to be disturbed.
    */
-  static unmarkHttpsNativePromptDismissed() {
-    if (Cookie.remove('onesignal-notification-prompt')) {
-      log.debug('OneSignal: Removed the native notification prompt dismissed cookie.')
-    } else {
-      log.debug('OneSignal: Cookie not marked.');
-    }
-  }
-
-  /**
-   * Creates a session cookie to note that the user does not want to be disturbed.
-   */
-
   static async markHttpsNativePromptDismissed() {
     /**
-     * Note: The cookie must be stored both on subdomain.onesignal.com and the main site.
+     * Note: LocalStorage is set both on subdomain.onesignal.com and the main site.
      *
-     * When checking whether the prompt was previously dismissed, certain code cannot be asynchronous otherwise the browser
-     * treats it like a blocked popup, so Cookies are synchronous while IndexedDb access / PostMessage querying across origins are
-     * both asynchronous.
+     * When checking whether the prompt was previously dismissed, certain code cannot be
+     * asynchronous otherwise the browser treats it like a blocked popup, so LocalStorage is
+     * synchronous while IndexedDb access / PostMessage querying across origins are both
+     * asynchronous.
      */
     if (SubscriptionHelper.isUsingSubscriptionWorkaround()) {
       await new Promise((resolve, reject) => {
@@ -62,9 +50,8 @@ export default class TestHelper {
     }
     log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the native notification prompt; reprompt after ${dismissDays} days.`);
     await Database.put('Options', { key: 'promptDismissCount', value: dismissCount });
-    return Cookie.set('onesignal-notification-prompt', 'dismissed', {
-      // In 8 hours, or 1/3 of the day
-      expires: dismissDays
-    });
+
+    const dismissMinutes = dismissDays * 24 * 60;
+    return TimedLocalStorage.setItem('onesignal-notification-prompt', 'dismissed', dismissMinutes);
   }
 }

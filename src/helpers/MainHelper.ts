@@ -1,5 +1,4 @@
 import * as Browser from 'bowser';
-import * as Cookie from 'js-cookie';
 import * as log from 'loglevel';
 import * as objectAssign from 'object-assign';
 
@@ -28,6 +27,7 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { AppUserConfigPromptOptions } from '../models/AppConfig';
 import { SlidedownPermissionMessageOptions } from '../popover/Popover';
+import TimedLocalStorage from '../modules/TimedLocalStorage';
 
 export default class MainHelper {
   /**
@@ -63,10 +63,10 @@ export default class MainHelper {
   }
 
   /**
-   * Returns true if a session cookie exists for noting the user dismissed the native prompt.
+   * Returns true if a LocalStorage entry exists for noting the user dismissed the native prompt.
    */
   static wasHttpsNativePromptDismissed() {
-    return Cookie.get('onesignal-notification-prompt') === 'dismissed';
+    return TimedLocalStorage.getItem('onesignal-notification-prompt') === 'dismissed';
   }
 
   /**
