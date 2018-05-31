@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.4'
 services:
   onesignal-web-sdk-dev:
       image: onesignal/web-sdk-dev
@@ -12,3 +12,4 @@ services:
 # If you need to remove these volumes for some reason, run `docker-compose down -v`
 volumes:
   sdk-build:
+    name: web-sdk_build
