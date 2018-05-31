@@ -27,9 +27,7 @@
     "publish": "yarn clean && yarn build:prod && yarn "
   },
   "config": {
-    "sdkVersion": "150200",
-    "onesignalPublicPath": "../OneSignal/public",
-    "onesignalPublicSdksPath": "../OneSignal/public/sdks"
+    "sdkVersion": "150200"
   },
   "repository": {
     "type": "git",

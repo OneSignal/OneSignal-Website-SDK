@@ -36,10 +36,10 @@ export class DynamicResourceLoader {
   }
 
   async loadSdkStylesheet(): Promise<ResourceLoadState> {
-    const originForEnv = SdkEnvironment.getOneSignalApiUrl().origin;
+    const pathForEnv = SdkEnvironment.getOneSignalResourceUrlPath();
     return await this.loadIfNew(
       ResourceType.Stylesheet,
-      new URL(`${originForEnv}/sdks/OneSignalSDKStyles.css?v=${Environment.getSdkStylesVersionHash()}`)
+      new URL(`${pathForEnv}/OneSignalSDKStyles.css?v=${Environment.getSdkStylesVersionHash()}`)
     );
   }
 

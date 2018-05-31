@@ -203,7 +203,7 @@ export default class SdkEnvironment {
   static getBuildEnvPrefix(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
     switch (buildEnv) {
       case BuildEnvironmentKind.Development:
-        return 'Dev-';
+        return 'sdks/web-sdk/';
       case BuildEnvironmentKind.Staging:
         return 'Staging-';
       case BuildEnvironmentKind.Production:
@@ -228,5 +228,24 @@ export default class SdkEnvironment {
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
+  }
+
+  static getOneSignalResourceUrlPath(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
+    const origin = SdkEnvironment.getOneSignalApiUrl(buildEnv).origin;
+    let path: string;
+
+    switch (buildEnv) {
+      case BuildEnvironmentKind.Development:
+        path = '/sdks/web-sdk';
+        break;
+      case BuildEnvironmentKind.Staging:
+      case BuildEnvironmentKind.Production:
+        path = '/sdks';
+        break;
+      default:
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
+    }
+
+    return new URL(origin + path)
   }
 }
