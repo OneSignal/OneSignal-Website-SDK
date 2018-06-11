@@ -25,7 +25,7 @@ export class InvalidStateError extends OneSignalError {
         break;
       case InvalidStateReason.RedundantPermissionMessage:
         let extraInfo = '';
-        if (extra.permissionPromptType)
+        if (extra && extra.permissionPromptType)
           extraInfo = `(${PermissionPromptType[extra.permissionPromptType]})`;
         super(`Another permission message ${extraInfo} is being displayed.`);
         break;
@@ -44,5 +44,12 @@ export class InvalidStateError extends OneSignalError {
     }
     this.description = InvalidStateReason[reason];
     this.reason = reason;
+
+    /**
+     * Important! Required to make sure the correct error type is detected during instanceof checks.
+     * Same applies to all derived classes.
+     * https://github.com/Microsoft/TypeScript-wiki/blob/master/Breaking-Changes.md#extending-built-ins-like-error-array-and-map-may-no-longer-work
+     */
+    Object.setPrototypeOf(this, InvalidStateError.prototype);
   }
 }

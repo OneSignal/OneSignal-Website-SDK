@@ -32,6 +32,7 @@ import { IntegrationKind } from '../models/IntegrationKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import { triggerNotificationPermissionChanged } from '../utils';
+import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
 
 export interface SubscriptionManagerConfig {
   safariWebId: string;
@@ -45,6 +46,10 @@ export interface SubscriptionManagerConfig {
    */
   onesignalVapidPublicKey: string;
 }
+
+export type SubscriptionStateServiceWorkerNotIntalled = 
+  SubscriptionStateKind.ServiceWorkerStatus403 | 
+  SubscriptionStateKind.ServiceWorkerStatus404;
 
 export class SubscriptionManager {
   private context: Context;
@@ -148,8 +153,6 @@ export class SubscriptionManager {
 
     deviceRecord.appId = this.config.appId;
 
-    deviceRecord.subscriptionState = SubscriptionStateKind.Subscribed;
-
     let newDeviceId: string;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       const { deviceId } = await Database.getSubscription();
@@ -180,7 +183,7 @@ export class SubscriptionManager {
       if (SubscriptionManager.isSafari()) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
-        subscription.subscriptionToken = pushSubscription.w3cEndpoint.toString();
+        subscription.subscriptionToken = pushSubscription.w3cEndpoint ? pushSubscription.w3cEndpoint.toString() : null;
       }
     } else {
       subscription.subscriptionToken = null;
@@ -365,8 +368,25 @@ export class SubscriptionManager {
     }
 
     /* Now that permissions have been granted, install the service worker */
-    if (await this.context.serviceWorkerManager.shouldInstallWorker())
-      await this.context.serviceWorkerManager.installWorker();
+    if (await this.context.serviceWorkerManager.shouldInstallWorker()) {
+        try {
+          await this.context.serviceWorkerManager.installWorker();
+        } catch(err) {
+          if (err instanceof ServiceWorkerRegistrationError) {
+            if (err.status === 403) {
+              await this.context.subscriptionManager.registerFailedSubscription(
+                SubscriptionStateKind.ServiceWorkerStatus403, 
+                this.context);
+            } else if (err.status === 404) {
+              await this.context.subscriptionManager.registerFailedSubscription(
+                SubscriptionStateKind.ServiceWorkerStatus404,
+                this.context);
+            } 
+          } 
+          throw err;
+        }
+    }
+      
 
     Log.debug('Waiting for the service worker to activate...');
     const workerRegistration = await navigator.serviceWorker.ready;
@@ -746,5 +766,19 @@ export class SubscriptionManager {
       subscribed: isPushEnabled,
       optedOut: optedOut,
     };
+  }
+
+  /**
+   * Broadcasting to the server the fact user tried to subscribe but there was an error during service worker registration.
+   * Do it only once for the first page view.
+   * @param subscriptionState Describes what went wrong with the service worker installation.
+   */
+  public async registerFailedSubscription(
+    subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
+    context: Context) {
+    if (context.sessionManager.isFirstPageView()) {
+      context.subscriptionManager.registerSubscription(new RawPushSubscription(), subscriptionState);
+      context.sessionManager.incrementPageViewCount();
+    }
   }
 }
