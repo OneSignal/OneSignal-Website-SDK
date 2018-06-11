@@ -5,4 +5,6 @@ export enum SubscriptionStateKind {
   TemporaryWebRecord = -20,
   PermissionRevoked = -21,
   PushSubscriptionRevoked = -22,
+  ServiceWorkerStatus403 = -23,
+  ServiceWorkerStatus404 = -24
 }
