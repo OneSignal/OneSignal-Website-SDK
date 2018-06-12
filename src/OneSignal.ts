@@ -336,14 +336,14 @@ export default class OneSignal {
    * @PublicApi
    */
   static async showHttpPrompt(options?) {
-    if (!options)
-      options = {};
-
     await awaitOneSignalInitAndSupported();
     await OneSignal.privateShowHttpPrompt(options);
   }
 
   static async privateShowHttpPrompt(options?) {
+    if (!options)
+      options = {};
+
     /*
     Only show the HTTP popover if:
     - Notifications aren't already enabled
@@ -355,22 +355,24 @@ export default class OneSignal {
       });
     }
 
-    const permission = await OneSignal.privateGetNotificationPermission();
-    const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    const notOptedOut = await OneSignal.privateGetSubscription();
     const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
 
     if (doNotPrompt && !options.force) {
       Log.info(new PermissionMessageDismissedError());
       return;
     }
+
+    const permission = await OneSignal.privateGetNotificationPermission();
     if (permission === NotificationPermission.Denied) {
       Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
       return;
     }
 
+    const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     if (isEnabled)
       throw new AlreadySubscribedError();
+
+    const notOptedOut = await OneSignal.privateGetSubscription();
     if (!notOptedOut)
       throw new NotSubscribedError(NotSubscribedReason.OptedOut);
 
