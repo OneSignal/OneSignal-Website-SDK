@@ -203,7 +203,7 @@ export default class SdkEnvironment {
   static getBuildEnvPrefix(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
     switch (buildEnv) {
       case BuildEnvironmentKind.Development:
-        return 'sdks/web-sdk/';
+        return 'Dev-';
       case BuildEnvironmentKind.Staging:
         return 'Staging-';
       case BuildEnvironmentKind.Production:
@@ -236,8 +236,6 @@ export default class SdkEnvironment {
 
     switch (buildEnv) {
       case BuildEnvironmentKind.Development:
-        path = '/sdks/web-sdk';
-        break;
       case BuildEnvironmentKind.Staging:
       case BuildEnvironmentKind.Production:
         path = '/sdks';
