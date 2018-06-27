@@ -1,14 +1,16 @@
 import '../../support/polyfills/polyfills';
 
 import test from 'ava';
-import sinon from 'sinon';
-
+import sinon, { SinonSandbox } from 'sinon';
+import nock from "nock";
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import Context from '../../../src/models/Context';
+import SdkEnvironment from "../../../src/managers/SdkEnvironment";
+import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind"
 
 import OneSignal from '../../../src/OneSignal';
 import Random from '../../support/tester/Random';
@@ -18,6 +20,8 @@ import {
   WorkerMessengerReplyBuffer
 } from "../../../src/libraries/WorkerMessenger";
 import Event from "../../../src/Event";
+import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
+import Utils from "../../../src/utils/Utils";
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -31,13 +35,22 @@ class LocalHelpers {
   }
 };
 
+// manually create and restore the sandbox
+let sandbox: SinonSandbox;
+
 test.beforeEach(function() {
+  sandbox = sinon.sandbox.create();
+
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
 
   // global assign required for TestEnvironment.stubDomEnvironment()
   (global as any).OneSignal = { context: OneSignal.context };
+});
+
+test.afterEach(function () {
+  sandbox.restore();
 });
 
 test('getActiveState() detects no installed worker', async t => {
@@ -96,7 +109,7 @@ test('getActiveState() detects an installing worker (not active)', async t => {
   mockInstallingWorker.state = 'installing';
   mockWorkerRegistration.installing = mockInstallingWorker;
 
-  const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Installing);
   getRegistrationStub.restore();
@@ -120,8 +133,8 @@ test('getActiveState() detects a page loaded by hard-refresh with our service wo
   mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
   mockWorkerRegistration.active = mockInstallingWorker;
 
-  const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
-  const controllerStub = sinon.stub(navigator.serviceWorker, 'controller').resolves(null);
+  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  const controllerStub = sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Bypassed);
   getRegistrationStub.restore();
@@ -137,8 +150,8 @@ test('getActiveState() detects an activated third-party service worker not contr
   mockInstallingWorker.scriptURL = 'https://site.com/another-worker.js';
   mockWorkerRegistration.active = mockInstallingWorker;
 
-  const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
-  const controllerStub = sinon.stub(navigator.serviceWorker, 'controller').resolves(null);
+  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  const controllerStub = sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
   getRegistrationStub.restore();
@@ -161,15 +174,15 @@ test('notification clicked - While page is opened in background', async t => {
   const mockWorkerRegistration = new ServiceWorkerRegistration();
   mockWorkerRegistration.active = mockInstallingWorker;
 
-  const getRegistrationStub = sinon.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
-  const controllerStub = sinon.stub(navigator.serviceWorker, 'controller').resolves(null);
+  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  const controllerStub = sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
   const workerMessageReplyBuffer = new WorkerMessengerReplyBuffer();
   OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
-  const triggerStub = sinon.stub(Event, 'trigger', function(event: string) {
+  const triggerStub = sandbox.stub(Event, 'trigger', function(event: string) {
     if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
       t.pass();
   });
@@ -250,7 +263,7 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
-  const spy = sinon.spy(navigator.serviceWorker, 'register');
+  const spy = sandbox.spy(navigator.serviceWorker, 'register');
 
   const appConfig = OneSignal.context.appConfig;
 
@@ -266,4 +279,77 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
 
   t.is(spy.callCount, 4);
   spy.restore();
+});
+
+test("Service worker failed to install due to 404 on host page. Send notification to OneSignal api", async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+
+  const context = OneSignal.context;
+
+  const workerPath = "Worker-does-not-exist.js";
+  const manager = new ServiceWorkerManager(context, {
+    workerAPath: new Path(workerPath),
+    workerBPath: new Path(workerPath),
+    registrationOptions: {
+      scope: '/'
+    }
+  });
+  
+  const origin = "https://onesignal.com";
+  nock(origin)
+    .get(function(uri) {
+      return uri.indexOf(workerPath) !== -1;
+    })
+    .reply(404,  (uri, requestBody) => {
+      return {
+        status: 404,
+        statusText: "404 Not Found"
+      };
+  });
+
+  const workerRegistrationError = new Error("Registration failed");
+
+  sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
+  sandbox.stub(Utils, "getBaseUrl").returns(origin);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+  await t.throws(manager.installWorker(), ServiceWorkerRegistrationError);
+});
+
+test("Service worker failed to install in popup. No handling.", async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+
+  const context = OneSignal.context;
+
+  const workerPath = "Worker-does-not-exist.js";
+  const manager = new ServiceWorkerManager(context, {
+    workerAPath: new Path(workerPath),
+    workerBPath: new Path(workerPath),
+    registrationOptions: {
+      scope: '/'
+    }
+  });
+  
+  const origin = "https://onesignal.com";
+  nock(origin)
+    .get(function(uri) {
+      return uri.indexOf(workerPath) !== -1;
+    })
+    .reply(404,  (uri, requestBody) => {
+      return {
+        status: 404,
+        statusText: "404 Not Found"
+      };
+  });
+
+  const workerRegistrationError = new Error("Registration failed");
+
+  sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
+  sandbox.stub(location, "origin").returns(origin);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
+  const error = await t.throws(manager.installWorker(), Error);
+  t.is(error.message, workerRegistrationError.message);
 });

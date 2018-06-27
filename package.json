@@ -30,7 +30,7 @@
     "publish": "yarn clean && yarn build:prod && yarn "
   },
   "config": {
-    "sdkVersion": "150200",
+    "sdkVersion": "150300",
     "onesignalPublicPath": "./build/bundles",
     "onesignalPublicSdksPath": "./build/bundles"
   },

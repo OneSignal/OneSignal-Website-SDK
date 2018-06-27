@@ -8,8 +8,6 @@ export enum SubscriptionErrorReason {
 }
 
 export default class SubscriptionError extends OneSignalError {
-  reason: string;
-
   constructor(reason: SubscriptionErrorReason) {
     switch (reason) {
       case SubscriptionErrorReason.InvalidSafariSetup:
@@ -22,5 +20,12 @@ export default class SubscriptionError extends OneSignalError {
         super('The notification permission prompt was dismissed.');
         break;
     }
+
+    /**
+     * Important! Required to make sure the correct error type is detected during instanceof checks.
+     * Same applies to all derived classes.
+     * https://github.com/Microsoft/TypeScript-wiki/blob/master/Breaking-Changes.md#extending-built-ins-like-error-array-and-map-may-no-longer-work
+     */
+    Object.setPrototypeOf(this, SubscriptionError.prototype);
   }
 }

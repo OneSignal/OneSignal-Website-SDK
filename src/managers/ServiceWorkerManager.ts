@@ -1,5 +1,3 @@
-
-
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
@@ -18,6 +16,8 @@ import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import Event from '../Event';
 import ProxyFrame from '../modules/frames/ProxyFrame';
+import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError"
+import Utils from "../utils/Utils";
 
 export enum ServiceWorkerActiveState {
   /**
@@ -477,7 +477,34 @@ export class ServiceWorkerManager {
     };
     fullWorkerPath = `${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
     Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
-    await navigator.serviceWorker.register(fullWorkerPath, this.config.registrationOptions);
+    try {
+      await navigator.serviceWorker.register(fullWorkerPath, this.config.registrationOptions);
+    } catch (error) {
+      Log.error(`[Service Worker Installation] Installing service worker failed ${error}`)
+      /*
+        Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
+      */
+
+      /*
+        If we are inside the popup and service worker fails to register, it's not developer's fault.
+        No need to report it to the api then.
+       */
+      const env = SdkEnvironment.getWindowEnv();
+      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+        throw error;
+      }
+      /*
+        Node-fetch Request works only with absolute urls.
+        Building the absolute url for service worker file to make a request.
+      */
+      const baseUrl = Utils.getBaseUrl();
+      fullWorkerPath = `${baseUrl}${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
+      const response = await fetch(fullWorkerPath);
+      if (response.status === 403 || response.status === 404) {
+        throw new ServiceWorkerRegistrationError(response.status, response.statusText);
+      } 
+      throw error;
+    }
     Log.debug(`[Service Worker Installation] Service worker installed.`);
   }
 }

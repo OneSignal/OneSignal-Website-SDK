@@ -18,7 +18,7 @@ in chrome dev tools (remember that Push notifications do not work in incognito)
 
 ```js
 OneSignal.VERSION
-// it should return 150200 (defined in package.json)
+// it should return 150300 (defined in package.json)
 ```
 
 accept push notifications and send a push notification
