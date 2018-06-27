@@ -1,34 +1,32 @@
 import '../../support/polyfills/polyfills';
 
 import test, { GenericTestContext, Context as AvaContext } from 'ava';
-import sinon from 'sinon';
+import sinon, { SinonSandbox } from 'sinon';
+import timemachine from 'timemachine';
 
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
-import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
-import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
-import { beforeEach } from '../../support/tester/typify';
 import Database from '../../../src/services/Database';
-import IndexedDb from '../../../src/services/IndexedDb';
 import Context from '../../../src/models/Context';
-
-import { AppConfig } from '../../../src/models/AppConfig';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
-import bowser from 'bowser';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
-import timemachine from 'timemachine';
-import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
 import OneSignalApi from '../../../src/OneSignalApi';
+import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
+import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
+import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
+
+// manually create and restore the sandbox
+let sandbox: SinonSandbox;
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -39,6 +37,12 @@ test.beforeEach(async t => {
   appConfig.appId = Random.getRandomUuid();
   t.context.sdkContext = new Context(appConfig);
   timemachine.reset();
+
+  sandbox = sinon.sandbox.create();
+});
+
+test.afterEach(function () {
+  sandbox.restore();
 });
 
 async function testCase(
@@ -605,4 +609,102 @@ test(
   }
 );
 
+test(
+  "Service worker failed to install due to 403. Send a notification for the first user's session.", async t => {
+    const context: Context = await t.context.sdkContext;
+    const serviceWorkerManager = context.serviceWorkerManager;
+    const subscriptionManager = context.subscriptionManager; 
+    const sessionManager = context.sessionManager;
 
+    TestEnvironment.mockInternalOneSignal();
+
+    sandbox.stub(sessionManager, "isFirstPageView").returns(true);
+    const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
+    sandbox.stub(serviceWorkerManager, "installWorker").rejects(error403);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+
+    const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
+    const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
+
+    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    t.is(smSpyRegisterFailed.calledOnce, true);
+    t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus403);
+    t.is(smSpyRegister.calledOnce, true);
+  }
+);
+
+test(
+  "Service worker failed to install due to 403. Not the first user's session, do not send a notification.", async t => {
+    const context: Context = await t.context.sdkContext;
+    const serviceWorkerManager = context.serviceWorkerManager;
+    const subscriptionManager = context.subscriptionManager; 
+    const sessionManager = context.sessionManager;
+
+    TestEnvironment.mockInternalOneSignal();
+
+    sandbox.stub(sessionManager, "isFirstPageView").returns(false);
+    const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
+    sandbox.stub(serviceWorkerManager, "installWorker").throws(error403);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+
+    const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
+    const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
+
+    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    t.is(smSpyRegisterFailed.calledOnce, true);
+    t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus403);
+    t.is(smSpyRegister.calledOnce, false);
+  }
+);
+
+test(
+  "Service worker failed to install due to 404. Send a notification for the first user's session.", async t => {
+    const context: Context = await t.context.sdkContext;
+    const serviceWorkerManager = context.serviceWorkerManager;
+    const subscriptionManager = context.subscriptionManager; 
+    const sessionManager = context.sessionManager;
+
+    TestEnvironment.mockInternalOneSignal();
+
+    sandbox.stub(sessionManager, "isFirstPageView").returns(true);
+    const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
+    sandbox.stub(serviceWorkerManager, "installWorker").rejects(error404);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+
+    const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
+    const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
+
+    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    t.is(smSpyRegisterFailed.calledOnce, true);
+    t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus404);
+    t.is(smSpyRegister.calledOnce, true);
+  }
+);
+
+test(
+  "Service worker failed to install due to 404. Not the first user's session, do not send a notification.", async t => {
+    const context: Context = await t.context.sdkContext;
+    const serviceWorkerManager = context.serviceWorkerManager;
+    const subscriptionManager = context.subscriptionManager; 
+    const sessionManager = context.sessionManager;
+
+    TestEnvironment.mockInternalOneSignal();
+
+    sandbox.stub(sessionManager, "isFirstPageView").returns(false);
+    const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
+    sandbox.stub(serviceWorkerManager, "installWorker").throws(error404);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+
+    const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
+    const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
+
+    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    t.is(smSpyRegisterFailed.calledOnce, true);
+    t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus404);
+    t.is(smSpyRegister.calledOnce, false);
+  }
+);

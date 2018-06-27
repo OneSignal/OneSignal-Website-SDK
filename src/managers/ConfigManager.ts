@@ -4,7 +4,7 @@ import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 
 import SdkEnvironment from './SdkEnvironment';
 import {WindowEnvironmentKind} from "../models/WindowEnvironmentKind";
-import {contains} from "../utils";
+import {contains, isValidUuid} from "../utils";
 
 export enum IntegrationConfigurationKind {
   /**
@@ -31,7 +31,7 @@ export default class ConfigManager {
    */
   public async getAppConfig(userConfig: AppUserConfig): Promise<AppConfig> {
     try {
-      if (!userConfig || !userConfig.appId)
+      if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId))
         throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
 
       const serverConfig = await OneSignalApi.downloadServerAppConfig(userConfig.appId);

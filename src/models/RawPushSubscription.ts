@@ -32,14 +32,23 @@ export class RawPushSubscription implements Serializable {
    */
   public isNewSubscription(): boolean {
     if (this.existingW3cPushSubscription) {
-      return this.existingW3cPushSubscription.w3cEndpoint.toString() !== this.w3cEndpoint.toString() ||
-        this.existingW3cPushSubscription.w3cP256dh !== this.w3cP256dh ||
-        this.existingW3cPushSubscription.w3cAuth !== this.w3cAuth;
+      if (!!this.existingW3cPushSubscription.w3cEndpoint !== !!this.w3cEndpoint) {
+        return false;
+      }
+      if (!!this.existingW3cPushSubscription.w3cEndpoint && !!this.w3cEndpoint && 
+        this.existingW3cPushSubscription.w3cEndpoint.toString() !== this.w3cEndpoint.toString()) {
+          return false;
+      }
+      if (this.existingW3cPushSubscription.w3cP256dh !== this.w3cP256dh) {
+        return false;
+      }
+      if (this.existingW3cPushSubscription.w3cAuth !== this.w3cAuth) {
+        return false;
+      }
     } else if (this.existingSafariDeviceToken) {
       return this.existingSafariDeviceToken !== this.safariDeviceToken;
-    } else {
-      return true;
     }
+    return true;
   }
 
   /**
@@ -99,7 +108,7 @@ export class RawPushSubscription implements Serializable {
   public serialize() {
     const serializedBundle: any = {
       /* Old Parameters */
-      w3cEndpoint: this.w3cEndpoint.toString(),
+      w3cEndpoint: this.w3cEndpoint ? this.w3cEndpoint.toString() : null,
       w3cP256dh: this.w3cP256dh,
       w3cAuth: this.w3cAuth,
       safariDeviceToken: this.safariDeviceToken,

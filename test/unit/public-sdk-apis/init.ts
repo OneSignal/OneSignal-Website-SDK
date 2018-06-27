@@ -14,6 +14,7 @@ import Random from "../../support/tester/Random";
 import OneSignalApi from "../../../src/OneSignalApi";
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
 import AltOriginManager from "../../../src/managers/AltOriginManager";
+import { SdkInitError } from "../../../src/errors/SdkInitError";
 
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
@@ -153,7 +154,6 @@ test("email session should be updated on first page view", async t => {
   await InitHelper.updateEmailSessionCount();
 });
 
-
 async function expectPushRecordCreationRequest(t: TestContext) {
   nock('https://onesignal.com')
     .post(`/api/v1/players`)
@@ -222,7 +222,6 @@ test("Test OneSignal.init, Basic HTTP", async t => {
   await expectPushRecordCreationRequest(t);
 });
 
-
 test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
   mockIframeMessaging();
   sinonSandbox.stub(OneSignalApi, "get").resolves({});
@@ -251,7 +250,6 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
 
   await expectPushRecordCreationRequest(t);
 });
-
 
 test("Test OneSignal.init, Basic HTTPS", async t => {
   const testConfig = {
@@ -352,4 +350,21 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
 
   delayInit = false;
   await OneSignal.provideUserConsent(true);
+});
+
+test("Test OneSignal.init, No app id or wrong format of app id", async t => {
+  const testConfig = {
+    initOptions: {},
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+  };
+  await TestEnvironment.initialize(testConfig);
+  OneSignal.initialized = false;
+
+  sinonSandbox.stub(document, "visibilityState").value("visible");
+  sinonSandbox.stub(InitHelper, "errorIfInitAlreadyCalled").returns(false);
+  
+  await t.throws(OneSignal.init({}), SdkInitError);
+  await t.throws(OneSignal.init({ appId: "" }), SdkInitError);
+  await t.throws(OneSignal.init({ appId: "wrong-format" }), SdkInitError);
 });
