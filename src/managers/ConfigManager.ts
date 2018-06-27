@@ -1,7 +1,7 @@
-import { AppUserConfig, AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, ServerAppConfig } from '../models/AppConfig';
+import { AppUserConfig, AppConfig, ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from '../models/AppConfig';
 import OneSignalApi from '../OneSignalApi';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-
+import Log from '../libraries/Log';
 import SdkEnvironment from './SdkEnvironment';
 import {WindowEnvironmentKind} from "../models/WindowEnvironmentKind";
 import {contains, isValidUuid} from "../utils";
@@ -114,6 +114,44 @@ export default class ConfigManager {
     return ConfigIntegrationKind.Custom;
   }
 
+  private getCustomLinkConfig(serverConfig: ServerAppConfig): AppUserConfigCustomLinkOptions {
+    if (!serverConfig.config.staticPrompts.customlink) {
+      return {
+        enabled: false,
+        style: "button",
+        size: "medium",
+        unsubscribeEnabled: false,
+        text: {
+          explanation: "",
+          subscribe: "",
+          unsubscribe: "",
+        },
+        color: {
+          button: "",
+          text: "",
+        }
+      };
+    }
+
+    const customLink = serverConfig.config.staticPrompts.customlink;
+
+    return {
+      enabled: customLink.enabled,
+      style: customLink.style,
+      size: customLink.size,
+      unsubscribeEnabled: customLink.unsubscribeEnabled,
+      text: {
+        subscribe: customLink.text.subscribe,
+        unsubscribe: customLink.text.unsubscribe,
+        explanation: customLink.text.explanation,
+      },
+      color: {
+        button: customLink.color.button,
+        text: customLink.color.text,
+      }
+    }
+  }
+
   private getUserConfigForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
@@ -148,7 +186,8 @@ export default class ConfigManager {
               message: serverConfig.config.staticPrompts.fullscreen.message,
               caption: serverConfig.config.staticPrompts.fullscreen.caption,
               autoAcceptTitle: serverConfig.config.staticPrompts.fullscreen.autoAcceptTitle,
-            }
+            },
+            customLink: this.getCustomLinkConfig(serverConfig),
           },
           welcomeNotification: {
             disable: !serverConfig.config.welcomeNotification.enable,
@@ -161,7 +200,7 @@ export default class ConfigManager {
             displayPredicate: serverConfig.config.staticPrompts.bell.hideWhenSubscribed ?
               () => {
                 return OneSignal.isPushNotificationsEnabled()
-                  .then(isPushEnabled => {
+                  .then((isPushEnabled: boolean) => {
                       /* The user is subscribed, so we want to return "false" to hide the notify button */
                       return !isPushEnabled;
                   });
@@ -243,10 +282,10 @@ export default class ConfigManager {
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig
-  ): string {
+  ): string | undefined {
     const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
-    let userValue = userConfig.subdomainName;
-    let serverValue = '';
+    let userValue: string | undefined = userConfig.subdomainName;
+    let serverValue: string | undefined = '';
 
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
@@ -267,7 +306,7 @@ export default class ConfigManager {
   }
 
   private shouldUseServerConfigSubdomain(
-    userProvidedSubdomain: string,
+    userProvidedSubdomain: string | undefined,
     capabilities: IntegrationCapabilities
   ): boolean {
     switch (capabilities.configuration) {

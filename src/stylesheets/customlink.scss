@@ -1,0 +1,157 @@
+@import 'reset';
+
+$customlink-sizes: (
+  'small': 32px,
+  'medium': 48px,
+  'large': 64px,
+);
+
+$customlink-base-font-size: 15px;
+$customlink-base-padding-horizontal: 16px;
+$customlink-base-padding-vertical: 8px;
+
+.onesignal-customlink-subscribe {
+  display: inline-block;
+  transition: all 0.1s;
+  font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+
+  &.onesignal-reset {
+    display: inline-block;
+    transition: all 0.1s;
+    font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+  }
+  &.state-subscribed {
+    display: none;
+  }
+  &.button {
+    border-radius: 4px;
+    box-shadow: 1px 1px 1px grey;
+    cursor: pointer;
+    &:hover, &:focus, &:active {
+      text-decoration: none;
+      box-shadow: 2px 3px 4px grey;
+    }
+  }
+  &.link {
+    cursor: pointer;
+  }
+
+  @each $size-name, $size-amount in $customlink-sizes {
+    $button-font-size: $customlink-base-font-size;
+    $button-padding-horizontal: $customlink-base-padding-horizontal;
+    $button-padding-vertical: $customlink-base-padding-vertical;
+    @if $size-name == 'small' {
+      $button-font-size: $customlink-base-font-size - 2;
+      $button-padding-horizontal: $customlink-base-padding-horizontal - 4;
+      $button-padding-vertical: $customlink-base-padding-vertical - 4;
+    } @else if $size-name == 'medium' {
+      $button-font-size: $customlink-base-font-size;
+      $button-padding-horizontal: $customlink-base-padding-horizontal;
+      $button-padding-vertical: $customlink-base-padding-vertical;
+    } @else if $size-name == 'large' {
+      $button-font-size: $customlink-base-font-size + 3;
+      $button-padding-horizontal: $customlink-base-padding-horizontal + 4;
+      $button-padding-vertical: $customlink-base-padding-vertical + 4;
+    }
+
+    &.button.#{$size-name} {
+      font-size: #{$button-font-size};
+      padding: #{$button-padding-vertical} #{$button-padding-horizontal};
+    }
+    &.link.#{$size-name} {
+      font-size: #{$button-font-size};
+    }
+  }
+}
+
+.onesignal-customlink-unsubscribe {
+  display: inline-block;
+  transition: all 0.1s;
+  font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+
+  &.onesignal-reset {
+    display: inline-block;
+    transition: all 0.1s;
+    font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+  }
+  &.state-subscribed {
+    opacity: 0.2;
+      &:hover, &:focus, &:active {
+        opacity: 1;
+      }
+  }
+  &.state-unsubscribed {
+    display: none;
+  }
+  &.button {
+    border-radius: 4px;
+    box-shadow: 1px 1px 1px grey;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover, &:focus, &:active {
+      text-decoration: none;
+      box-shadow: 2px 3px 4px grey;
+    }
+  }
+  &.link {
+    cursor: pointer;
+  }
+
+  @each $size-name, $size-amount in $customlink-sizes {
+    $button-font-size: $customlink-base-font-size;
+    $button-padding-horizontal: $customlink-base-padding-horizontal;
+    $button-padding-vertical: $customlink-base-padding-vertical;
+    @if $size-name == 'small' {
+      $button-font-size: $customlink-base-font-size - 2;
+      $button-padding-horizontal: $customlink-base-padding-horizontal - 4;
+      $button-padding-vertical: $customlink-base-padding-vertical - 4;
+    } @else if $size-name == 'medium' {
+      $button-font-size: $customlink-base-font-size;
+      $button-padding-horizontal: $customlink-base-padding-horizontal;
+      $button-padding-vertical: $customlink-base-padding-vertical;
+    } @else if $size-name == 'large' {
+      $button-font-size: $customlink-base-font-size + 3;
+      $button-padding-horizontal: $customlink-base-padding-horizontal + 4;
+      $button-padding-vertical: $customlink-base-padding-vertical + 4;
+    }
+
+    &.button.#{$size-name} {
+      font-size: #{$button-font-size};
+      padding: #{$button-padding-vertical} #{$button-padding-horizontal};
+    }
+    &.link.#{$size-name} {
+      font-size: #{$button-font-size};
+    }
+  }
+}
+
+.onesignal-customlink-explanation {
+  color: rgba(0,0,0,0.64);
+  transition: all 0.1s;
+  font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+  margin-bottom: 12px;
+
+  &.onesignal-reset {
+    color: rgba(0,0,0,0.64);
+    transition: all 0.1s;
+    font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+    margin-bottom: 12px;
+  }
+
+  @each $size-name, $size-amount in $customlink-sizes {
+    $explanation-font-size: $customlink-base-font-size;
+
+    @if $size-name == 'small' {
+      $explanation-font-size: $customlink-base-font-size - 2;
+    } @else if $size-name == 'medium' {
+      $explanation-font-size: $customlink-base-font-size;
+    } @else if $size-name == 'large' {
+      $explanation-font-size: $customlink-base-font-size;
+    }
+
+    &.#{$size-name} {
+      font-size: #{$explanation-font-size};
+    }
+  }
+}

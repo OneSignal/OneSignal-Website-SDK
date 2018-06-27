@@ -11,7 +11,7 @@ export interface AppConfig {
   /**
    * The subdomain chosen on the dashboard for non-HTTPS apps.
    */
-  subdomain: string;
+  subdomain?: string;
 
   /**
    * The allowed origin this web push config is allowed to run on.
@@ -153,6 +153,22 @@ export interface FullscreenPermissionMessageOptions {
   caption: string;
 }
 
+export interface AppUserConfigCustomLinkOptions {
+  enabled: boolean;
+  style: "button" | "link";
+  size: "large" | "medium" | "small";
+  unsubscribeEnabled: boolean;
+  text: {
+    explanation: string;
+    subscribe: string;
+    unsubscribe: string;
+  }
+  color: {
+    button: string;
+    text: string;
+  }
+}
+
 export interface AppUserConfigPromptOptions {
   subscribeText?: string;
   showGraphic?: boolean;
@@ -169,6 +185,7 @@ export interface AppUserConfigPromptOptions {
   showCredit?: string;
   slidedown?: SlidedownPermissionMessageOptions;
   fullscreen?: FullscreenPermissionMessageOptions;
+  customLink?: AppUserConfigCustomLinkOptions;
 }
 
 export interface AppUserConfigWelcomeNotification {
@@ -180,7 +197,7 @@ export interface AppUserConfigWelcomeNotification {
 
 export interface AppUserConfigNotifyButton {
   enable: boolean;
-  displayPredicate: Function;
+  displayPredicate: Function | null;
   size: 'small' | 'medium' | 'large';
   position: 'bottom-left' | 'bottom-right';
   offset: { bottom: string; left: string; right: string };
@@ -276,6 +293,21 @@ export interface ServerAppConfigPrompt {
     autoAcceptTitle: string;
     customizeTextEnabled: boolean;
   };
+  customlink?: {
+    enabled: boolean;
+    style: "button" | "link";
+    size: "large" | "medium" | "small";
+    unsubscribeEnabled: boolean;
+    text: {
+      explanation: string;
+      subscribe: string;
+      unsubscribe: string;
+    }
+    color: {
+      button: string;
+      text: string;
+    }
+  }
 }
 
 export interface ServerAppConfig {

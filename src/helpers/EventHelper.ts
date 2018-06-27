@@ -6,8 +6,8 @@ import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { decodeHtmlEntities, logMethodCall } from '../utils';
 import Context from "../models/Context";
-import SdkEnvironment from "../managers/SdkEnvironment";
 import Log from '../libraries/Log';
+import { CustomLink } from "../CustomLink";
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -22,28 +22,30 @@ export default class EventHelper {
     logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: Context = OneSignal.context;
     const subscriptionState = await context.subscriptionManager.getSubscriptionState();
+    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
     const appState = await Database.getAppState();
     const { lastKnownPushEnabled } = appState;
     const didStateChange = (
       lastKnownPushEnabled === null ||
-      subscriptionState.subscribed !== lastKnownPushEnabled
+      isPushEnabled !== lastKnownPushEnabled
     );
     if (!didStateChange) return;
     Log.info(
       `The user's subscription state changed from ` +
         `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
     );
-    appState.lastKnownPushEnabled = subscriptionState.subscribed;
+    appState.lastKnownPushEnabled = isPushEnabled;
     await Database.setAppState(appState);
-    EventHelper.triggerSubscriptionChanged(subscriptionState.subscribed);
+    EventHelper.triggerSubscriptionChanged(isPushEnabled);
   }
 
-  static async _onSubscriptionChanged(newSubscriptionState) {
+  static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
     EventHelper.onSubscriptionChanged_showWelcomeNotification(newSubscriptionState);
-    EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate(newSubscriptionState);
+    EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
+    EventHelper.onSubscriptionChanged_updateCustomLink(newSubscriptionState);
   }
 
-  private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean) {
+  private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
     if (OneSignal.__doNotShowWelcomeNotification) {
       Log.debug('Not showing welcome notification because user has previously subscribed.');
       return;
@@ -97,7 +99,7 @@ export default class EventHelper {
     }
   }
 
-  private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate(isSubscribed: boolean) {
+  private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
     const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
     if (displayPredicate && typeof displayPredicate === "function" && OneSignal.notifyButton) {
       const predicateResult = await displayPredicate();
@@ -108,6 +110,12 @@ export default class EventHelper {
         Log.debug('Hiding notify button because display predicate returned false.');
         OneSignal.notifyButton.launcher.hide();
       }
+    }
+  }
+
+  private static async onSubscriptionChanged_updateCustomLink(isSubscribed: boolean | undefined) {
+    if (OneSignal.config.userConfig.promptOptions && OneSignal.config.userConfig.promptOptions.customLink) {
+      await CustomLink.initialize(OneSignal.config.userConfig.promptOptions.customLink, isSubscribed);
     }
   }
 

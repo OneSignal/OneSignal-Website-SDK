@@ -14,21 +14,14 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
 import { getConsoleStyle, once, isUsingSubscriptionWorkaround, triggerNotificationPermissionChanged } from '../utils';
-import EventHelper from './EventHelper';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import OneSignalApi from '../OneSignalApi';
-import CookieSyncer from '../modules/CookieSyncer';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
-import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import Path from '../models/Path';
 import Context from '../models/Context';
 import { WorkerMessenger, WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { DeviceRecord } from '../models/DeviceRecord';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import { PageViewMetricEngagement } from '../managers/MetricsManager';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
@@ -39,6 +32,7 @@ import Log from '../libraries/Log';
 import Environment from '../Environment';
 import Bell from '../bell/Bell';
 import ConfigManager from "../managers/ConfigManager";
+import { CustomLink } from '../CustomLink';
 
 declare var OneSignal: any;
 
@@ -198,7 +192,7 @@ export default class InitHelper {
         };
       }
 
-      const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
+     const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
         const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
         if (predicateValue !== false) {
@@ -236,6 +230,10 @@ export default class InitHelper {
       config.userConfig.promptOptions.slidedown.autoPrompt &&
       !(await OneSignal.internalIsOptedOut())) {
       await OneSignal.privateShowHttpPrompt();
+    }
+
+    if (config.userConfig.promptOptions && config.userConfig.promptOptions.customLink) {
+      await CustomLink.initialize(config.userConfig.promptOptions.customLink);
     }
   }
 
