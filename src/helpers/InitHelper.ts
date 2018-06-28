@@ -232,7 +232,7 @@ export default class InitHelper {
       await OneSignal.privateShowHttpPrompt();
     }
 
-    if (config.userConfig.promptOptions && config.userConfig.promptOptions.customLink) {
+    if (config.userConfig.promptOptions) {
       await CustomLink.initialize(config.userConfig.promptOptions.customLink);
     }
   }

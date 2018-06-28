@@ -114,7 +114,7 @@ export default class EventHelper {
   }
 
   private static async onSubscriptionChanged_updateCustomLink(isSubscribed: boolean | undefined) {
-    if (OneSignal.config.userConfig.promptOptions && OneSignal.config.userConfig.promptOptions.customLink) {
+    if (OneSignal.config.userConfig.promptOptions) {
       await CustomLink.initialize(OneSignal.config.userConfig.promptOptions.customLink, isSubscribed);
     }
   }

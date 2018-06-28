@@ -5,7 +5,11 @@ import OneSignal from "./OneSignal";
 import Log from "./libraries/Log";
 
 export class CustomLink {
-  public static async initialize(config: AppUserConfigCustomLinkOptions, isUserSubscribed?: boolean) {
+  public static async initialize(config: AppUserConfigCustomLinkOptions | undefined, isUserSubscribed?: boolean): Promise<void> {
+    if (!config || !config.enabled) {
+      return;
+    }
+
     Log.info("Inititalize CustomLink");
     const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
@@ -13,13 +17,16 @@ export class CustomLink {
         return;
     }
     
-    const isPushEnabled = (isUserSubscribed !== undefined) ? isUserSubscribed : await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = (isUserSubscribed === true || isUserSubscribed === false) ? 
+      isUserSubscribed : await OneSignal.isPushNotificationsEnabled();
 
-    const onClickAttribute = "data-click"; 
+    const onClickAttribute = "data-cl-click"; 
 
     const subscribeElements = document.querySelectorAll<HTMLElement>(".onesignal-customlink-subscribe");
     subscribeElements.forEach((subscribe: HTMLElement) => {
-      subscribe.textContent = config.text.subscribe;
+      if (config.text.subscribe) {
+        subscribe.textContent = config.text.subscribe;
+      }
       CustomLink.setResetClass(subscribe);
       CustomLink.setStateClass(subscribe, isPushEnabled);
       CustomLink.setStyleClass(subscribe, config.style);
@@ -29,12 +36,13 @@ export class CustomLink {
       const hasEvent = !!subscribe.getAttribute(onClickAttribute);
       if (!hasEvent) {
         subscribe.addEventListener("click", async () => {
-          Log.info("subscribe clicked");
+          Log.info("CustomLink: subscribe clicked");
           if (isUsingSubscriptionWorkaround()) {
             // Show the HTTP popup so users can re-allow notifications
             OneSignal.registerForPushNotifications();
           } else {
-            const subscriptionState: PushSubscriptionState = await OneSignal.context.subscriptionManager.getSubscriptionState();
+            const subscriptionState: PushSubscriptionState =
+              await OneSignal.context.subscriptionManager.getSubscriptionState();
             if (!subscriptionState.subscribed) {
               OneSignal.registerForPushNotifications();
               return;
@@ -44,13 +52,15 @@ export class CustomLink {
             }
           }
         });
-        subscribe.setAttribute("data-click", "1");
+        subscribe.setAttribute(onClickAttribute, "1");
       }
     });
 
     const unsubscribeElements = document.querySelectorAll<HTMLElement>(".onesignal-customlink-unsubscribe");
     unsubscribeElements.forEach((unsubscribe: HTMLElement) => {
-      unsubscribe.textContent = config.text.unsubscribe;
+      if (config.text.unsubscribe) {
+        unsubscribe.textContent = config.text.unsubscribe;
+      }
       CustomLink.setResetClass(unsubscribe);
       CustomLink.setStateClass(unsubscribe, isPushEnabled);
       CustomLink.setStyleClass(unsubscribe, config.style);
@@ -60,19 +70,21 @@ export class CustomLink {
       const hasEvent = !!unsubscribe.getAttribute(onClickAttribute);
       if (!hasEvent) {
         unsubscribe.addEventListener("click", async () => {
-          Log.info("unsubscribe clicked");
+          Log.info("CustomLink: unsubscribe clicked");
           const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
           if (isPushEnabled) {
             await OneSignal.setSubscription(false);
           }
         });
-        unsubscribe.setAttribute("data-click", "1");
+        unsubscribe.setAttribute(onClickAttribute, "1");
       }
     });
 
     const explanationElements = document.querySelectorAll<HTMLElement>(".onesignal-customlink-explanation");
     explanationElements.forEach((explanation: HTMLElement) => {
-      explanation.textContent = config.text.explanation;
+      if (config.text.explanation) {
+        explanation.textContent = config.text.explanation;
+      }
       CustomLink.setResetClass(explanation);
       CustomLink.setStateClass(explanation, isPushEnabled);
       CustomLink.setSizeClass(explanation, config.size);
@@ -81,10 +93,16 @@ export class CustomLink {
 
   private static setCustomColors(element: HTMLElement, config: AppUserConfigCustomLinkOptions) {
     if (config.style === "button") {
-      element.style.backgroundColor = config.color.button;
-      element.style.color = config.color.text;
+      if (config.color.button) {
+        element.style.backgroundColor = config.color.button;
+      }
+      if (config.color.text) {
+        element.style.color = config.color.text;
+      }
     } else if (config.style === "link") {
-      element.style.color = config.color.button;
+      if (config.color.button) {
+        element.style.color = config.color.button;
+      }
     }
   }
 

@@ -293,7 +293,7 @@ export interface ServerAppConfigPrompt {
     autoAcceptTitle: string;
     customizeTextEnabled: boolean;
   };
-  customlink?: {
+  customLink?: {
     enabled: boolean;
     style: "button" | "link";
     size: "large" | "medium" | "small";

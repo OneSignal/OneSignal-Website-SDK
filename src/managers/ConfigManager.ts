@@ -115,40 +115,44 @@ export default class ConfigManager {
   }
 
   private getCustomLinkConfig(serverConfig: ServerAppConfig): AppUserConfigCustomLinkOptions {
-    if (!serverConfig.config.staticPrompts.customlink) {
-      return {
-        enabled: false,
-        style: "button",
-        size: "medium",
-        unsubscribeEnabled: false,
-        text: {
-          explanation: "",
-          subscribe: "",
-          unsubscribe: "",
-        },
-        color: {
-          button: "",
-          text: "",
-        }
-      };
+    const initialState: AppUserConfigCustomLinkOptions = {
+      enabled: false,
+      style: "button",
+      size: "medium",
+      unsubscribeEnabled: false,
+      text: {
+        explanation: "",
+        subscribe: "",
+        unsubscribe: "",
+      },
+      color: {
+        button: "",
+        text: "",
+      }
+    }; 
+
+    if (!serverConfig || !serverConfig.config ||
+      !serverConfig.config.staticPrompts || !serverConfig.config.staticPrompts.customLink ||
+      !serverConfig.config.staticPrompts.customLink.enabled) {
+      return initialState;
     }
 
-    const customLink = serverConfig.config.staticPrompts.customlink;
+    const customLink = serverConfig.config.staticPrompts.customLink;
 
     return {
       enabled: customLink.enabled,
       style: customLink.style,
       size: customLink.size,
       unsubscribeEnabled: customLink.unsubscribeEnabled,
-      text: {
+      text: customLink.text ? {
         subscribe: customLink.text.subscribe,
         unsubscribe: customLink.text.unsubscribe,
         explanation: customLink.text.explanation,
-      },
-      color: {
+      } : initialState.text,
+      color: customLink.color ? {
         button: customLink.color.button,
         text: customLink.color.text,
-      }
+      } : initialState.color,
     }
   }
 
