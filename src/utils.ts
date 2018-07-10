@@ -255,9 +255,12 @@ export function addDomElement(targetSelectorOrElement, addOrder, elementHtml) {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
-export function clearDomElementChildren(targetSelectorOrElement) {
+export function clearDomElementChildren(targetSelectorOrElement: Element | string) {
   if (typeof targetSelectorOrElement === 'string') {
-    var element = document.querySelector(targetSelectorOrElement);
+    const element = document.querySelector(targetSelectorOrElement);
+    if (element === null) {
+      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+    }
     while (element.firstChild) {
       element.removeChild(element.firstChild);
     }
@@ -271,42 +274,65 @@ export function clearDomElementChildren(targetSelectorOrElement) {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
-export function addCssClass(targetSelectorOrElement, cssClass) {
-  if (typeof targetSelectorOrElement === 'string')
-    document.querySelector(targetSelectorOrElement).classList.add(cssClass);
-  else if (typeof targetSelectorOrElement === 'object')
+export function addCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
+  if (typeof targetSelectorOrElement === 'string') {
+    const element = document.querySelector(targetSelectorOrElement);
+    if (element === null) {
+      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+    }
+    element.classList.add(cssClass);
+  }
+  else if (typeof targetSelectorOrElement === 'object') {
     targetSelectorOrElement.classList.add(cssClass);
-  else
+  }
+  else {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  }
 }
 
-export function removeCssClass(targetSelectorOrElement, cssClass) {
-  if (typeof targetSelectorOrElement === 'string')
-    document.querySelector(targetSelectorOrElement).classList.remove(cssClass);
-  else if (typeof targetSelectorOrElement === 'object')
+export function removeCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
+  if (typeof targetSelectorOrElement === 'string') {
+    const element = document.querySelector(targetSelectorOrElement);
+    if (element === null) {
+      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+    }
+    element.classList.remove(cssClass);
+  }
+  else if (typeof targetSelectorOrElement === 'object') {
     targetSelectorOrElement.classList.remove(cssClass);
-  else
+  }
+  else {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  }
 }
 
-export function hasCssClass(targetSelectorOrElement, cssClass) {
-  if (typeof targetSelectorOrElement === 'string')
-    return document.querySelector(targetSelectorOrElement).classList.contains(cssClass);
-  else if (typeof targetSelectorOrElement === 'object')
+export function hasCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
+  if (typeof targetSelectorOrElement === 'string') {
+    const element = document.querySelector(targetSelectorOrElement);
+    if (element === null) {
+      throw new Error(`Cannot find element with selector "${targetSelectorOrElement}"`);
+    }
+    return element.classList.contains(cssClass);
+  }
+  else if (typeof targetSelectorOrElement === 'object') {
     return targetSelectorOrElement.classList.contains(cssClass);
-  else
+  }
+  else {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+  }
 }
 
-var DEVICE_TYPES = {
-  CHROME: 5,
-  SAFARI: 7,
-  FIREFOX: 8,
-  EDGE: 12,
-  UNKNOWN: -99
-};
+/**
+ * var DEVICE_TYPES = {
+ *  CHROME: 5,
+ *  SAFARI: 7,
+ *  FIREFOX: 8,
+ *  EDGE: 12,
+ *  UNKNOWN: -99
+ * };
+ */
 
-export function getConsoleStyle(style) {
+export function getConsoleStyle(style: string) {
   if (style == 'code') {
     return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;
   } else if (style == 'bold') {
@@ -329,7 +355,7 @@ export function getConsoleStyle(style) {
  * @param durationMs
  * @returns {Promise} Returns a promise that resolves when the timeout is complete.
  */
-export function delay(durationMs) {
+export function delay(durationMs: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, durationMs)
   });
@@ -406,11 +432,11 @@ export function getRandomUuid(): string {
  * @param uuid
  * @returns {*|boolean}
  */
-export function isValidUuid(uuid) {
+export function isValidUuid(uuid: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(uuid);
 }
 
-export function getUrlQueryParam(name) {
+export function getUrlQueryParam(name: string) {
   let url = window.location.href;
   url = url.toLowerCase(); // This is just to avoid case sensitiveness
   name = name.replace(/[\[\]]/g, "\\$&").toLowerCase();// This is just to avoid case sensitiveness for query parameter name
@@ -437,7 +463,7 @@ export function wipeIndexedDb() {
  * Capitalizes the first letter of the string.
  * @returns {string} The string with the first letter capitalized.
  */
-export function capitalize(text): string {
+export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -511,7 +537,7 @@ export function wipeServiceWorkerAndUnsubscribe() {
   ]);
 }
 
-export function wait(milliseconds) {
+export function wait(milliseconds: number) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
@@ -521,7 +547,7 @@ export function wait(milliseconds) {
  * @param search The text returned will be everything *after* search.
  * e.g. substringAfter('A white fox', 'white') => ' fox'
  */
-export function substringAfter(string, search) {
+export function substringAfter(string: string, search: string) {
   return string.substr(string.indexOf(search) + search.length);
 }
 
