@@ -1,10 +1,12 @@
-import { AppUserConfig, AppConfig, ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from '../models/AppConfig';
+import { 
+  AppUserConfig, AppConfig, AppUserConfigPromptOptions, ServerAppConfigPrompt,
+  ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from '../models/AppConfig';
 import OneSignalApi from '../OneSignalApi';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import Log from '../libraries/Log';
 import SdkEnvironment from './SdkEnvironment';
-import {WindowEnvironmentKind} from "../models/WindowEnvironmentKind";
-import {contains, isValidUuid} from "../utils";
+import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
+import { contains, isValidUuid } from "../utils";
+import Utils from "../utils/Utils";
 
 export enum IntegrationConfigurationKind {
   /**
@@ -132,28 +134,67 @@ export default class ConfigManager {
     }; 
 
     if (!serverConfig || !serverConfig.config ||
-      !serverConfig.config.staticPrompts || !serverConfig.config.staticPrompts.customLink ||
-      !serverConfig.config.staticPrompts.customLink.enabled) {
+      !serverConfig.config.staticPrompts || !serverConfig.config.staticPrompts.customlink ||
+      !serverConfig.config.staticPrompts.customlink.enabled) {
       return initialState;
     }
 
-    const customLink = serverConfig.config.staticPrompts.customLink;
+    const customlink = serverConfig.config.staticPrompts.customlink;
 
     return {
-      enabled: customLink.enabled,
-      style: customLink.style,
-      size: customLink.size,
-      unsubscribeEnabled: customLink.unsubscribeEnabled,
-      text: customLink.text ? {
-        subscribe: customLink.text.subscribe,
-        unsubscribe: customLink.text.unsubscribe,
-        explanation: customLink.text.explanation,
+      enabled: customlink.enabled,
+      style: customlink.style,
+      size: customlink.size,
+      unsubscribeEnabled: customlink.unsubscribeEnabled,
+      text: customlink.text ? {
+        subscribe: customlink.text.subscribe,
+        unsubscribe: customlink.text.unsubscribe,
+        explanation: customlink.text.explanation,
       } : initialState.text,
-      color: customLink.color ? {
-        button: customLink.color.button,
-        text: customLink.color.text,
+      color: customlink.color ? {
+        button: customlink.color.button,
+        text: customlink.color.text,
       } : initialState.color,
     }
+  }
+
+  private injectDefaultsIntoPromptOptions(promptOptions: AppUserConfigPromptOptions | undefined,
+    defaultsFromServer: ServerAppConfigPrompt): AppUserConfigPromptOptions | undefined {
+    if (!promptOptions) return promptOptions;
+
+    const customlinkUser = promptOptions.customlink || {
+      enabled: undefined,
+      style: undefined,
+      size: undefined,
+      unsubscribeEnabled: undefined,
+      text: undefined,
+      color: undefined,
+    };
+    const customlinkDefaults = defaultsFromServer.customlink;
+    return {
+      ...promptOptions,
+      customlink: {
+        enabled: Utils.getValueOrDefault(customlinkUser.enabled, customlinkDefaults.enabled),
+        style: Utils.getValueOrDefault(customlinkUser.style, customlinkDefaults.style),
+        size: Utils.getValueOrDefault(customlinkUser.size, customlinkDefaults.size),
+        unsubscribeEnabled: Utils.getValueOrDefault(customlinkUser.unsubscribeEnabled,
+          customlinkDefaults.unsubscribeEnabled),
+        text: {
+          subscribe: Utils.getValueOrDefault(customlinkUser.text ? customlinkUser.text.subscribe : undefined,
+            customlinkDefaults.text.subscribe),
+          unsubscribe: Utils.getValueOrDefault(customlinkUser.text ? customlinkUser.text.unsubscribe: undefined,
+            customlinkDefaults.text.unsubscribe),
+          explanation: Utils.getValueOrDefault(customlinkUser.text ? customlinkUser.text.explanation : undefined,
+            customlinkDefaults.text.explanation),
+        },
+        color: {
+          button: Utils.getValueOrDefault(customlinkUser.color ? customlinkUser.color.button : undefined,
+            customlinkDefaults.color.button),
+          text: Utils.getValueOrDefault(customlinkUser.color ? customlinkUser.color.text : undefined,
+            customlinkDefaults.color.text),
+        },
+      }
+    };
   }
 
   private getUserConfigForConfigIntegrationKind(
@@ -191,7 +232,7 @@ export default class ConfigManager {
               caption: serverConfig.config.staticPrompts.fullscreen.caption,
               autoAcceptTitle: serverConfig.config.staticPrompts.fullscreen.autoAcceptTitle,
             },
-            customLink: this.getCustomLinkConfig(serverConfig),
+            customlink: this.getCustomLinkConfig(serverConfig),
           },
           welcomeNotification: {
             disable: !serverConfig.config.welcomeNotification.enable,
@@ -260,9 +301,12 @@ export default class ConfigManager {
       case IntegrationConfigurationKind.JavaScript:
         /*
           Ignores dashboard configuration and uses code-based configuration only.
+          Except injecting some default values for prompts.
         */
         return {
           ...userConfig,
+          promptOptions:
+            this.injectDefaultsIntoPromptOptions(userConfig.promptOptions, serverConfig.config.staticPrompts),
           ...{
           serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
             ? OneSignal.SERVICE_WORKER_PARAM

@@ -1,18 +1,10 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import CookieSyncer from '../../../src/modules/CookieSyncer';
-import OneSignal from '../../../src/OneSignal';
-import MainHelper from '../../../src/helpers/MainHelper';
-import sinon from 'sinon';
-import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
-import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import { AppConfig, ConfigIntegrationKind, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig } from '../../../src/models/AppConfig';
-
-import Context from '../../../src/models/Context';
+import { ConfigIntegrationKind, AppUserConfigCustomLinkOptions } from '../../../src/models/AppConfig';
 import ConfigManager from '../../../src/managers/ConfigManager';
 
-test.beforeEach(async t => {
+test.beforeEach(async () => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
@@ -62,4 +54,86 @@ test('should not use server-provided subdomain if not enabled', async t => {
   );
 
   t.deepEqual(fakeMergedConfig.subdomain, undefined);
+});
+
+test('should initialize custom link config for typical setup', t => {
+  const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.TypicalSite);
+  const configManager = new ConfigManager();
+  const fakeMergedConfig = configManager.getMergedConfig(
+    fakeUserConfig,
+    fakeServerConfig
+  );
+
+  const customLinkConfig: AppUserConfigCustomLinkOptions = {
+    enabled: true,
+    style: "button",
+    size: "medium",
+    color: {
+      button: "#e54b4d",
+      text: "#ffffff",
+    },
+    text: {
+      subscribe: "Subscribe to push notifications",
+      unsubscribe: "Unsubscribe from push notifications",
+      explanation: "Get updates from all sorts of things that matter to you",
+    },
+    unsubscribeEnabled: true,
+  };
+  t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
+  if (fakeMergedConfig.userConfig.promptOptions) {
+    t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
+  }
+})
+
+test('should initialize custom link config for custom code setup with correct user config', t => {
+  const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  const configManager = new ConfigManager();
+  const fakeMergedConfig = configManager.getMergedConfig(
+    fakeUserConfig,
+    fakeServerConfig
+  );
+
+  const customLinkConfig: AppUserConfigCustomLinkOptions = fakeUserConfig.promptOptions.customlink;
+  t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
+  if (fakeMergedConfig.userConfig.promptOptions) {
+    t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
+  }
+});
+
+test('should initialize custom link config for custom code setup with incorrect user config', t => {
+    const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
+    if (fakeUserConfig.promptOptions) {
+      fakeUserConfig.promptOptions.customlink = {
+        enabled: true,
+      }
+    }
+    const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+
+    const configManager = new ConfigManager();
+    const fakeMergedConfig = configManager.getMergedConfig(
+      fakeUserConfig,
+      fakeServerConfig
+    );
+  
+    const customLinkConfig: AppUserConfigCustomLinkOptions = {
+      enabled: true,
+      style: "button",
+      size: "medium",
+      color: {
+        button: "#e54b4d",
+        text: "#ffffff"
+      },
+      text: {
+        subscribe: "Subscribe to push notifications",
+        unsubscribe: "Unsubscribe from push notifications",
+        explanation: ""
+      },
+      unsubscribeEnabled: true,
+    };
+    t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
+    if (fakeMergedConfig.userConfig.promptOptions) {
+      t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
+    }
 });

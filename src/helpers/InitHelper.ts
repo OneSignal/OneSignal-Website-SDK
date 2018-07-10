@@ -233,7 +233,7 @@ export default class InitHelper {
     }
 
     if (config.userConfig.promptOptions) {
-      await CustomLink.initialize(config.userConfig.promptOptions.customLink);
+      await CustomLink.initialize(config.userConfig.promptOptions.customlink);
     }
   }
 

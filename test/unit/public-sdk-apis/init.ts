@@ -208,7 +208,7 @@ test("Test OneSignal.init, Basic HTTP", async t => {
 
   sinonSandbox.stub(document, "visibilityState").value("visible");
 
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  const serverAppConfig =TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false);
   serverAppConfig.config.subdomain = "test";
   InitTestHelpers.stubJSONP(serverAppConfig);
 
@@ -236,7 +236,7 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
 
   sinonSandbox.stub(document, "visibilityState").value("visible");
 
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false);
   serverAppConfig.config.subdomain = "test";
   InitTestHelpers.stubJSONP(serverAppConfig);
 

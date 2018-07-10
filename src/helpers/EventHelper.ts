@@ -42,7 +42,7 @@ export default class EventHelper {
   static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
     EventHelper.onSubscriptionChanged_showWelcomeNotification(newSubscriptionState);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
-    EventHelper.onSubscriptionChanged_updateCustomLink(newSubscriptionState);
+    EventHelper.onSubscriptionChanged_updateCustomLink();
   }
 
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
@@ -113,9 +113,9 @@ export default class EventHelper {
     }
   }
 
-  private static async onSubscriptionChanged_updateCustomLink(isSubscribed: boolean | undefined) {
+  private static async onSubscriptionChanged_updateCustomLink() {
     if (OneSignal.config.userConfig.promptOptions) {
-      await CustomLink.initialize(OneSignal.config.userConfig.promptOptions.customLink, isSubscribed);
+      await CustomLink.initialize(OneSignal.config.userConfig.promptOptions.customlink);
     }
   }
 

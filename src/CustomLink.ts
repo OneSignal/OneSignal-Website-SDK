@@ -5,7 +5,7 @@ import OneSignal from "./OneSignal";
 import Log from "./libraries/Log";
 
 export class CustomLink {
-  public static async initialize(config: AppUserConfigCustomLinkOptions | undefined, isUserSubscribed?: boolean): Promise<void> {
+  public static async initialize(config: AppUserConfigCustomLinkOptions | undefined): Promise<void> {
     if (!config || !config.enabled) {
       return;
     }
@@ -17,16 +17,13 @@ export class CustomLink {
         return;
     }
     
-    const isPushEnabled = (isUserSubscribed === true || isUserSubscribed === false) ? 
-      isUserSubscribed : await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
 
     const onClickAttribute = "data-cl-click"; 
 
     const subscribeElements = document.querySelectorAll<HTMLElement>(".onesignal-customlink-subscribe");
     subscribeElements.forEach((subscribe: HTMLElement) => {
-      if (config.text.subscribe) {
-        subscribe.textContent = config.text.subscribe;
-      }
+      subscribe.textContent = config.text.subscribe;
       CustomLink.setResetClass(subscribe);
       CustomLink.setStateClass(subscribe, isPushEnabled);
       CustomLink.setStyleClass(subscribe, config.style);
@@ -93,16 +90,10 @@ export class CustomLink {
 
   private static setCustomColors(element: HTMLElement, config: AppUserConfigCustomLinkOptions) {
     if (config.style === "button") {
-      if (config.color.button) {
-        element.style.backgroundColor = config.color.button;
-      }
-      if (config.color.text) {
-        element.style.color = config.color.text;
-      }
+      element.style.backgroundColor = config.color.button;
+      element.style.color = config.color.text;
     } else if (config.style === "link") {
-      if (config.color.button) {
-        element.style.color = config.color.button;
-      }
+      element.style.color = config.color.text;
     }
   }
 
