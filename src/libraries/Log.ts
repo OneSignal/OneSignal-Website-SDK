@@ -10,11 +10,11 @@ export default class Log {
   private static proxyMethodsCreated: boolean;
 
   private static shouldLog(): boolean {
-    if (typeof window === "undefined" ||
-        typeof window.localStorage === "undefined") {
-      return false;
-    }
     try {
+      if (typeof window === "undefined" ||
+          typeof window.localStorage === "undefined") {
+        return false;
+      }
       const level = window.localStorage.getItem("loglevel");
       if (level && level.toLowerCase() === "trace") {
         return true;
