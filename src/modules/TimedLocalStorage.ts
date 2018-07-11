@@ -11,10 +11,10 @@ export default class TimedLocalStorage {
    * browser preferences set to prevent saving website data will disable LocalStorage.
    */
   public static isLocalStorageSupported(): boolean {
-    if (typeof localStorage === "undefined") {
-      return false;
-    }
     try {
+      if (typeof localStorage === "undefined") {
+        return false;
+      }
       localStorage.getItem("test");
       return true;
     } catch (e) {
