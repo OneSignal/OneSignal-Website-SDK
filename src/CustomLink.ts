@@ -5,10 +5,16 @@ import OneSignal from "./OneSignal";
 import Log from "./libraries/Log";
 
 export class CustomLink {
-  public static readonly onClickAttribute = "data-cl-click";
-  public static readonly subscribeSelector = ".onesignal-customlink-subscribe";
-  public static readonly unsubscribeSelector = ".onesignal-customlink-unsubscribe";
-  public static readonly explanationSelector = ".onesignal-customlink-explanation";
+  public static readonly initializedAttribute = "data-cl-initialized";
+
+  public static readonly containerClass = "onesignal-customlink-container";
+  public static readonly containerSelector = `.${CustomLink.containerClass}`;
+  public static readonly subscribeClass = "onesignal-customlink-subscribe";
+  public static readonly subscribeSelector = `.${CustomLink.subscribeClass}`;
+  public static readonly unsubscribeClass = "onesignal-customlink-unsubscribe";
+  public static readonly unsubscribeSelector = `.${CustomLink.unsubscribeClass}`;
+  public static readonly explanationClass = "onesignal-customlink-explanation";
+  public static readonly explanationSelector = `.${CustomLink.explanationClass}`;
   public static readonly resetClass = "onesignal-reset";
 
   public static async initialize(config: AppUserConfigCustomLinkOptions | undefined): Promise<void> {
@@ -23,6 +29,13 @@ export class CustomLink {
         return;
     }
     
+    const containerElements = document.querySelectorAll<HTMLElement>(CustomLink.containerSelector);
+    containerElements.forEach((element: HTMLElement) => {
+      if (!element.hasAttribute(CustomLink.initializedAttribute)) {
+        CustomLink.injectMarkup(element, config);
+      }
+    });
+
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
 
     const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
@@ -36,6 +49,37 @@ export class CustomLink {
     const explanationElements = document.querySelectorAll<HTMLElement>(CustomLink.explanationSelector);
     explanationElements.forEach((element: HTMLElement) => 
       CustomLink.initExplanationElement(element, config, isPushEnabled));
+  }
+
+  private static injectMarkup(container: HTMLElement,
+    config: AppUserConfigCustomLinkOptions,): void {
+    if (!config.text) {
+      Log.error("CustomLink: required property 'text' is missing in the config");
+      return;
+    }
+
+    // Clearing out the contents of the container first
+    container.innerHTML = '';
+
+    if (config.text.explanation) {
+      const explanation = document.createElement("p");
+      addCssClass(explanation, CustomLink.explanationClass);
+      container.appendChild(explanation);
+    }
+
+    if (config.text.subscribe) {
+      const subscribe = document.createElement("button");
+      addCssClass(subscribe, CustomLink.subscribeClass);
+      container.appendChild(subscribe);
+    }
+
+    if (config.unsubscribeEnabled && config.text.unsubscribe) {
+      const unsubscribe = document.createElement("button");
+      addCssClass(unsubscribe, CustomLink.unsubscribeClass);
+      container.appendChild(unsubscribe);
+    }
+
+    container.setAttribute(CustomLink.initializedAttribute, "1");
   }
 
   private static initSubscribeElement(element: HTMLElement,
@@ -55,7 +99,7 @@ export class CustomLink {
     CustomLink.setSizeClass(element, config);
     CustomLink.setCustomColors(element, config);
 
-    const hasEvent = !!element.getAttribute(CustomLink.onClickAttribute);
+    const hasEvent = !!element.getAttribute(CustomLink.initializedAttribute);
     if (!hasEvent) {
       element.addEventListener("click", async () => {
         Log.info("CustomLink: subscribe clicked");
@@ -74,7 +118,7 @@ export class CustomLink {
           }
         }
       });
-      element.setAttribute(CustomLink.onClickAttribute, "1");
+      element.setAttribute(CustomLink.initializedAttribute, "1");
     }
   }
 
@@ -89,7 +133,7 @@ export class CustomLink {
       CustomLink.setSizeClass(element, config);
       CustomLink.setCustomColors(element, config);
 
-      const hasEvent = !!element.getAttribute(CustomLink.onClickAttribute);
+      const hasEvent = !!element.getAttribute(CustomLink.initializedAttribute);
       if (!hasEvent) {
         element.addEventListener("click", async () => {
           Log.info("CustomLink: unsubscribe clicked");
@@ -98,7 +142,7 @@ export class CustomLink {
             await OneSignal.setSubscription(false);
           }
         });
-        element.setAttribute(CustomLink.onClickAttribute, "1");
+        element.setAttribute(CustomLink.initializedAttribute, "1");
       }
   }
 

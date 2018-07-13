@@ -12,13 +12,15 @@ import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
 
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
-import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
-
+import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior,
+  NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind }
+  from '../../../src/models/AppConfig';
 import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
 import PushManager from "../mocks/service-workers/models/PushManager";
 import PushSubscription from "../mocks/service-workers/models/PushSubscription";
 import Context from "../../../src/models/Context";
-import {SessionManager} from "../../../src/managers/SessionManager";
+import { SessionManager } from "../../../src/managers/SessionManager";
+import CustomLink from "../../../src/CustomLink";
 
 var global = new Function('return this')();
 
@@ -84,6 +86,7 @@ export interface TestEnvironmentConfig {
   userAgent?: BrowserUserAgent;
   url?: URL;
   initializeAsIframe?: boolean;
+  addPrompts?: boolean;
 }
 
 /**
@@ -162,17 +165,28 @@ export class TestEnvironment {
   static async stubDomEnvironment(config?: TestEnvironmentConfig) {
     if (!config)
       config = {};
+    let url: string | undefined = undefined;
     if (config.httpOrHttps == HttpHttpsEnvironment.Http) {
-      var url = 'http://localhost:3000/webpush/sandbox?http=1';
+      url = 'http://localhost:3000/webpush/sandbox?http=1';
     } else {
-      var url = 'https://localhost:3001/webpush/sandbox?https=1';
+      url = 'https://localhost:3001/webpush/sandbox?https=1';
     }
     if (config.url) {
-      var url = config.url.toString();
+      url = config.url.toString();
     }
+
+    let html = '<!doctype html><html><head></head><body></body></html>';
+    if (config.addPrompts) {
+      html = `<!doctype html><html><head>\
+      <div class="${CustomLink.containerClass}"></div>\
+      <div class="${CustomLink.containerClass}"></div>\
+      <button class="${CustomLink.subscribeClass}"></button>\
+      </head><body></body></html>`;
+    }
+
     var windowDef = await new Promise<Window>((resolve, reject) => {
       (jsdom as any).env({
-        html: '<!doctype html><html><head></head><body></body></html>',
+        html: html,
         url: url,
         userAgent: config && config.userAgent ? config.userAgent : BrowserUserAgent.Default,
         features: {

@@ -13,17 +13,20 @@ $customlink-base-padding-vertical: 8px;
 .onesignal-customlink-subscribe {
   display: inline-block;
   transition: all 0.1s;
-  font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+  font-family: "Open Sans", Arial, Helvetica, sans-serif;
 
   &.onesignal-reset {
     display: inline-block;
     transition: all 0.1s;
-    font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
+    font-family: "Open Sans", Arial, Helvetica, sans-serif;
   }
   &.state-subscribed {
     display: none;
   }
   &.button {
+    text-transform: uppercase;
+    touch-action: manipulation;
+    font-weight: 600;
     border-radius: 4px;
     box-shadow: 1px 1px 1px grey;
     cursor: pointer;
@@ -73,12 +76,6 @@ $customlink-base-padding-vertical: 8px;
     display: inline-block;
     transition: all 0.1s;
     font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
-  }
-  &.state-subscribed {
-    opacity: 0.2;
-      &:hover, &:focus, &:active {
-        opacity: 1;
-      }
   }
   &.state-unsubscribed {
     display: none;
