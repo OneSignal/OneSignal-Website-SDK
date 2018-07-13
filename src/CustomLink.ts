@@ -1,4 +1,4 @@
-import { hasCssClass, addCssClass, removeCssClass, isUsingSubscriptionWorkaround } from "./utils";
+import { hasCssClass, addCssClass, removeCssClass } from "./utils";
 import { AppUserConfigCustomLinkOptions } from "./models/AppConfig";
 import { ResourceLoadState } from "./services/DynamicResourceLoader";
 import OneSignal from "./OneSignal";
@@ -8,8 +8,6 @@ import Utils from "./utils/Utils";
 export class CustomLink {
   public static readonly initializedAttribute = "data-cl-initialized";
   public static readonly subscriptionStateAttribute = "data-cl-state";
-  public static readonly subscribeTextAttribute = "data-cl-subtext";
-  public static readonly unsubscribeTextAttribute = "data-cl-unsubtext";
 
   public static readonly containerClass = "onesignal-customlink-container";
   public static readonly containerSelector = `.${CustomLink.containerClass}`;
@@ -76,36 +74,28 @@ export class CustomLink {
 
   private static initSubscribeElement(element: HTMLElement,
     config: AppUserConfigCustomLinkOptions, isPushEnabled: boolean): void {
+    if (config.text && config.text.subscribe) {
+      if (!isPushEnabled) {
+        element.textContent = config.text.subscribe;
+      }
+    }
+
+    if (config.text && config.text.unsubscribe) {
+      if (isPushEnabled) {
+        element.textContent = config.text.unsubscribe;
+      }
+    }
+    CustomLink.setResetClass(element);
+    CustomLink.setStateClass(element, isPushEnabled);
+    CustomLink.setStyleClass(element, config);
+    CustomLink.setSizeClass(element, config);
+    CustomLink.setCustomColors(element, config);
+
+    if (config.unsubscribeEnabled !== true) {
+      addCssClass(element, "hide");
+    }
+    element.setAttribute(CustomLink.subscriptionStateAttribute, isPushEnabled.toString());
     if (!CustomLink.isInitialized(element)) {
-      // create virtual element to make any text content safe
-      const virtualButton = document.createElement('button');
-
-      if (config.text && config.text.subscribe) {
-        if (!isPushEnabled) {
-          element.textContent = config.text.subscribe;
-        }
-        virtualButton.textContent = config.text.subscribe;
-        element.setAttribute(CustomLink.subscribeTextAttribute, virtualButton.textContent);
-      }
-
-      if (config.text && config.text.unsubscribe) {
-        if (isPushEnabled) {
-          element.textContent = config.text.unsubscribe;
-        }
-        virtualButton.textContent = config.text.unsubscribe;
-        element.setAttribute(CustomLink.unsubscribeTextAttribute, virtualButton.textContent);
-      }
-      CustomLink.setResetClass(element);
-      CustomLink.setStateClass(element, isPushEnabled);
-      CustomLink.setStyleClass(element, config);
-      CustomLink.setSizeClass(element, config);
-      CustomLink.setCustomColors(element, config);
-
-      if (config.unsubscribeEnabled !== true) {
-        addCssClass(element, "hide");
-      }
-      element.setAttribute(CustomLink.subscriptionStateAttribute, isPushEnabled.toString());
-
       element.addEventListener("click", async () => {
         Log.info("CustomLink: subscribe clicked");
         CustomLink.handleClick(element);
@@ -121,14 +111,6 @@ export class CustomLink {
       const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
       if (isPushEnabled) {
         await OneSignal.setSubscription(false);
-        element.setAttribute(CustomLink.subscriptionStateAttribute, "false");
-        element.textContent = element.getAttribute(CustomLink.subscribeTextAttribute);
-        CustomLink.setStateClass(element, false);
-
-        const explanationElement: Element | null = element.previousElementSibling;
-        if (explanationElement && hasCssClass(explanationElement, CustomLink.explanationClass)) {
-          CustomLink.setStateClass(explanationElement, false);
-        }
       }
     } else {
       if (Utils.isUsingSubscriptionWorkaround()) {
@@ -139,34 +121,25 @@ export class CustomLink {
           await OneSignal.context.subscriptionManager.getSubscriptionState();
         if (!subscriptionState.subscribed) {
           OneSignal.registerForPushNotifications();
-        } else if (subscriptionState.optedOut) {
+          return;
+        }
+        if (subscriptionState.optedOut) {
           OneSignal.setSubscription(true);
         }
-      }
-      element.setAttribute(CustomLink.subscriptionStateAttribute, "true");
-      element.textContent = element.getAttribute(CustomLink.unsubscribeTextAttribute);
-      CustomLink.setStateClass(element, true);
-
-      const explanationElement: Element | null = element.previousElementSibling;
-      if (explanationElement && hasCssClass(explanationElement, CustomLink.explanationClass)) {
-        CustomLink.setStateClass(explanationElement, true);
       }
     }
   }
 
   private static initExplanationElement(element: HTMLElement,
     config: AppUserConfigCustomLinkOptions, isPushEnabled: boolean): void {
-    if (!CustomLink.isInitialized(element)) {
-      if (config.text && config.text.explanation) {
-        element.textContent = config.text.explanation;
-      }
-      CustomLink.setResetClass(element);
-      CustomLink.setStateClass(element, isPushEnabled);
-      CustomLink.setSizeClass(element, config);
-      if (config.unsubscribeEnabled !== true) {
-        addCssClass(element, "hide");
-      }
-      CustomLink.markAsInitialized(element);
+    if (config.text && config.text.explanation) {
+      element.textContent = config.text.explanation;
+    }
+    CustomLink.setResetClass(element);
+    CustomLink.setStateClass(element, isPushEnabled);
+    CustomLink.setSizeClass(element, config);
+    if (config.unsubscribeEnabled !== true) {
+      addCssClass(element, "hide");
     }
   }
 

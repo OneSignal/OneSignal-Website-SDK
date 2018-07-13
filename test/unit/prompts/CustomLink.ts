@@ -111,10 +111,8 @@ test('customlink: subscribe: intitialized, push enabled', async t => {
   subscribeElements.forEach((el: HTMLElement) => {
     t.is(hasCssClass(el, CustomLink.subscribeClass), true);
     t.is(hasCssClass(el, CustomLink.resetClass), true);
-    t.is(hasCssClass(el, config.size), true);
+    t.is(hasCssClass(el, config.size.toString()), true);
     t.is(el.getAttribute(CustomLink.initializedAttribute), "true");
-    t.is(el.getAttribute(CustomLink.subscribeTextAttribute), config.text.subscribe);
-    t.is(el.getAttribute(CustomLink.unsubscribeTextAttribute), config.text.unsubscribe);
     t.is(el.getAttribute(CustomLink.subscriptionStateAttribute), "true");
   });
 });
@@ -127,10 +125,8 @@ test('customlink: subscribe: intitialized, push disabled', async t => {
   subscribeElements.forEach((el: HTMLElement) => {
     t.is(hasCssClass(el, CustomLink.subscribeClass), true);
     t.is(hasCssClass(el, CustomLink.resetClass), true);
-    t.is(hasCssClass(el, config.size), true);
+    t.is(hasCssClass(el, config.size.toString()), true);
     t.is(el.getAttribute(CustomLink.initializedAttribute), "true");
-    t.is(el.getAttribute(CustomLink.subscribeTextAttribute), config.text.subscribe);
-    t.is(el.getAttribute(CustomLink.unsubscribeTextAttribute), config.text.unsubscribe);
     t.is(el.getAttribute(CustomLink.subscriptionStateAttribute), "false");
   });
 });
@@ -204,7 +200,7 @@ test('customlink: reinitialize', async t => {
 
 test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
   sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
-  sandbox.stub(OneSignal, 'setSubscription').resolves();
+  const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(false);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
     subscribed: true,
@@ -218,23 +214,17 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
   t.not(explanationElement, null);
 
   if (subscribeElement && explanationElement) {
-    t.is(subscribeElement.textContent, config.text.unsubscribe);
-    t.is(hasCssClass(subscribeElement, stateSubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateSubscribedClass), true);
     t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "true");
-
     await CustomLink.handleClick(subscribeElement);
-
-    t.is(subscribeElement.textContent, config.text.subscribe);
-    t.is(hasCssClass(subscribeElement, stateUnsubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateUnsubscribedClass), true);
-    t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "false");
+    t.is(subscriptionSpy.calledOnce, true);
+    t.is(subscriptionSpy.getCall(0).args.length, 1);
+    t.is(subscriptionSpy.getCall(0).args[0], false);
   }
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted out', async t => {
   sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
-  sandbox.stub(OneSignal, 'setSubscription').resolves();
+  const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
   sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(false);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
@@ -249,24 +239,20 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
   t.not(explanationElement, null);
 
   if (subscribeElement && explanationElement) {
-    t.is(subscribeElement.textContent, config.text.subscribe);
-    t.is(hasCssClass(subscribeElement, stateUnsubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateUnsubscribedClass), true);
     t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "false");
 
     await CustomLink.handleClick(subscribeElement);
 
-    t.is(subscribeElement.textContent, config.text.unsubscribe);
-    t.is(hasCssClass(subscribeElement, stateSubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateSubscribedClass), true);
-    t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "true");
+    t.is(subscriptionSpy.calledOnce, true);
+    t.is(subscriptionSpy.getCall(0).args.length, 1);
+    t.is(subscriptionSpy.getCall(0).args[0], true);
   }
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never subscribed.', async t => {
   sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
-  sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
+  const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(false);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
     subscribed: false,
@@ -280,24 +266,16 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
   t.not(explanationElement, null);
 
   if (subscribeElement && explanationElement) {
-    t.is(subscribeElement.textContent, config.text.subscribe);
-    t.is(hasCssClass(subscribeElement, stateUnsubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateUnsubscribedClass), true);
     t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "false");
-
     await CustomLink.handleClick(subscribeElement);
-
-    t.is(subscribeElement.textContent, config.text.unsubscribe);
-    t.is(hasCssClass(subscribeElement, stateSubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateSubscribedClass), true);
-    t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "true");
+    t.is(registerSpy.calledOnce, true);
   }
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. http.', async t => {
   sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
-  sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
+  const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(true);
 
   await CustomLink.initialize(config);
@@ -307,16 +285,8 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. http.', async 
   t.not(explanationElement, null);
 
   if (subscribeElement && explanationElement) {
-    t.is(subscribeElement.textContent, config.text.subscribe);
-    t.is(hasCssClass(subscribeElement, stateUnsubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateUnsubscribedClass), true);
     t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "false");
-
     await CustomLink.handleClick(subscribeElement);
-
-    t.is(subscribeElement.textContent, config.text.unsubscribe);
-    t.is(hasCssClass(subscribeElement, stateSubscribedClass), true);
-    t.is(hasCssClass(explanationElement, stateSubscribedClass), true);
-    t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "true");
+    t.is(registerSpy.calledOnce, true);
   }
 });

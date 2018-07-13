@@ -36,6 +36,7 @@ $customlink-base-padding-vertical: 8px;
     }
     &.state-subscribed {
       text-transform: none;
+      font-weight: 400;
     }
   }
   &.link {
@@ -44,6 +45,10 @@ $customlink-base-padding-vertical: 8px;
     font-weight: 600;
     &.state-subscribed {
       text-transform: none;
+      font-weight: 400;
+    }
+    &:hover, &:focus, &:active {
+      text-decoration: underline;
     }
   }
 
