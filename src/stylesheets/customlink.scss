@@ -20,7 +20,7 @@ $customlink-base-padding-vertical: 8px;
     transition: all 0.1s;
     font-family: "Open Sans", Arial, Helvetica, sans-serif;
   }
-  &.state-subscribed {
+  &.state-subscribed.hide {
     display: none;
   }
   &.button {
@@ -34,65 +34,17 @@ $customlink-base-padding-vertical: 8px;
       text-decoration: none;
       box-shadow: 2px 3px 4px grey;
     }
-  }
-  &.link {
-    cursor: pointer;
-  }
-
-  @each $size-name, $size-amount in $customlink-sizes {
-    $button-font-size: $customlink-base-font-size;
-    $button-padding-horizontal: $customlink-base-padding-horizontal;
-    $button-padding-vertical: $customlink-base-padding-vertical;
-    @if $size-name == 'small' {
-      $button-font-size: $customlink-base-font-size - 2;
-      $button-padding-horizontal: $customlink-base-padding-horizontal - 4;
-      $button-padding-vertical: $customlink-base-padding-vertical - 4;
-    } @else if $size-name == 'medium' {
-      $button-font-size: $customlink-base-font-size;
-      $button-padding-horizontal: $customlink-base-padding-horizontal;
-      $button-padding-vertical: $customlink-base-padding-vertical;
-    } @else if $size-name == 'large' {
-      $button-font-size: $customlink-base-font-size + 3;
-      $button-padding-horizontal: $customlink-base-padding-horizontal + 4;
-      $button-padding-vertical: $customlink-base-padding-vertical + 4;
-    }
-
-    &.button.#{$size-name} {
-      font-size: #{$button-font-size};
-      padding: #{$button-padding-vertical} #{$button-padding-horizontal};
-    }
-    &.link.#{$size-name} {
-      font-size: #{$button-font-size};
-    }
-  }
-}
-
-.onesignal-customlink-unsubscribe {
-  display: inline-block;
-  transition: all 0.1s;
-  font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
-
-  &.onesignal-reset {
-    display: inline-block;
-    transition: all 0.1s;
-    font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
-  }
-  &.state-unsubscribed {
-    display: none;
-  }
-  &.button {
-    border-radius: 4px;
-    box-shadow: 1px 1px 1px grey;
-    text-decoration: none;
-    cursor: pointer;
-
-    &:hover, &:focus, &:active {
-      text-decoration: none;
-      box-shadow: 2px 3px 4px grey;
+    &.state-subscribed {
+      text-transform: none;
     }
   }
   &.link {
     cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 600;
+    &.state-subscribed {
+      text-transform: none;
+    }
   }
 
   @each $size-name, $size-amount in $customlink-sizes {
@@ -134,6 +86,10 @@ $customlink-base-padding-vertical: 8px;
     transition: all 0.1s;
     font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
     margin-bottom: 12px;
+  }
+
+  &.state-subscribed.hide {
+    display: none;
   }
 
   @each $size-name, $size-amount in $customlink-sizes {
