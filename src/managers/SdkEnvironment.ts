@@ -246,4 +246,19 @@ export default class SdkEnvironment {
 
     return new URL(origin + path)
   }
+
+  static getOneSignalCssFileName(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()): string {
+    const baseFileName = "OneSignalSDKStyles.css";
+
+    switch (buildEnv) {
+      case BuildEnvironmentKind.Development:
+        return `Dev-${baseFileName}`;
+      case BuildEnvironmentKind.Staging:
+        return `Staging-${baseFileName}`;
+      case BuildEnvironmentKind.Production:
+        return baseFileName;
+      default:
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
+    }
+  }
 }

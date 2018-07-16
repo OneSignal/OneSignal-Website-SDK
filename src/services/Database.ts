@@ -27,7 +27,7 @@ export default class Database {
 
   /* Temp Database Proxy */
   public static databaseInstanceName: string;
-  public static databaseInstance: Database;
+  public static databaseInstance: Database | null;
   /* End Temp Database Proxy */
 
   public static EVENTS = DatabaseEventName;

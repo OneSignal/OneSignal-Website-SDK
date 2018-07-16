@@ -3,8 +3,8 @@ import Random from "../tester/Random";
 import Database from "../../../src/services/Database";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import jsdom from 'jsdom';
-import DOMStorage from 'dom-storage';
-import fetch from 'node-fetch';
+import DOMStorage from "dom-storage";
+import fetch from "node-fetch";
 import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
 import { ServiceWorkerContainer } from '../mocks/service-workers/ServiceWorkerContainer';
@@ -12,13 +12,15 @@ import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
 
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
-import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior, NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
-
+import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior,
+  NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind }
+  from '../../../src/models/AppConfig';
 import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
 import PushManager from "../mocks/service-workers/models/PushManager";
 import PushSubscription from "../mocks/service-workers/models/PushSubscription";
 import Context from "../../../src/models/Context";
-import {SessionManager} from "../../../src/managers/SessionManager";
+import { SessionManager } from "../../../src/managers/SessionManager";
+import CustomLink from "../../../src/CustomLink";
 
 var global = new Function('return this')();
 
@@ -84,6 +86,7 @@ export interface TestEnvironmentConfig {
   userAgent?: BrowserUserAgent;
   url?: URL;
   initializeAsIframe?: boolean;
+  addPrompts?: boolean;
 }
 
 /**
@@ -94,7 +97,7 @@ export class TestEnvironment {
   /**
    * Intercepts requests to our virtual DOM to return fake responses.
    */
-  static onVirtualDomResourceRequested(resource, callback) {
+  static onVirtualDomResourceRequested(resource, callback: Function) {
     const pathname = resource.url.pathname;
     if (pathname.startsWith('https://test.node/scripts/')) {
       if (pathname.startsWith('https://test.node/scripts/delayed')) {
@@ -125,7 +128,7 @@ export class TestEnvironment {
     }
   }
 
-  static onVirtualDomDelayedResourceRequested(resource, callback) {
+  static onVirtualDomDelayedResourceRequested(resource, callback: Function) {
     const pathname = resource.url.pathname;
     var delay = pathname.match(/\d+/) || 1000;
     // Simulate a delayed request
@@ -162,19 +165,30 @@ export class TestEnvironment {
   static async stubDomEnvironment(config?: TestEnvironmentConfig) {
     if (!config)
       config = {};
+    let url: string | undefined = undefined;
     if (config.httpOrHttps == HttpHttpsEnvironment.Http) {
-      var url = 'http://localhost:3000/webpush/sandbox?http=1';
+      url = 'http://localhost:3000/webpush/sandbox?http=1';
     } else {
-      var url = 'https://localhost:3001/webpush/sandbox?https=1';
+      url = 'https://localhost:3001/webpush/sandbox?https=1';
     }
     if (config.url) {
-      var url = config.url.toString();
+      url = config.url.toString();
     }
+
+    let html = '<!doctype html><html><head></head><body></body></html>';
+    if (config.addPrompts) {
+      html = `<!doctype html><html><head>\
+      <div class="${CustomLink.containerClass}"></div>\
+      <div class="${CustomLink.containerClass}"></div>\
+      <button class="${CustomLink.subscribeClass}"></button>\
+      </head><body></body></html>`;
+    }
+
     var windowDef = await new Promise<Window>((resolve, reject) => {
       (jsdom as any).env({
-        html: '<!doctype html><html><head></head><body></body></html>',
+        html: html,
         url: url,
-        userAgent: config.userAgent ? config.userAgent : BrowserUserAgent.Default,
+        userAgent: config && config.userAgent ? config.userAgent : BrowserUserAgent.Default,
         features: {
           FetchExternalResources: ["script", "frame", "iframe", "link", "img"],
           ProcessExternalResources: ['script']
@@ -296,10 +310,159 @@ export class TestEnvironment {
     };
   }
 
-  static getFakeServerAppConfig(configIntegrationKind: ConfigIntegrationKind, appId?: string): ServerAppConfig {
+  static getFakeServerAppConfig(configIntegrationKind: ConfigIntegrationKind, isHttps: boolean = true): ServerAppConfig {
+    if (configIntegrationKind === ConfigIntegrationKind.Custom) {
+      const customConfigHttps: ServerAppConfig = {
+        success: true,
+        app_id: "3d9dbff9-3956-49b3-9521-b0d755b350e5",
+        features: {
+          restrict_origin: {
+            enable: true
+          },
+          cookie_sync: {
+            enable: false
+          },
+          metrics: {
+            enable: true,
+            mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673"
+          }
+        },
+        config: {
+          siteInfo: {
+            name: "localhost https",
+            origin: "https://localhost:3001",
+            proxyOrigin: undefined,
+            defaultIconUrl: null,
+            proxyOriginEnabled: true
+          },
+          integration: {
+            kind: ConfigIntegrationKind.Custom
+          },
+          staticPrompts: {
+            bell: {
+              enabled: false,
+              size: "large",
+              color: {
+                main: "red",
+                accent: "white"
+              },
+              dialog: {
+                main: {
+                  title: "Manage Notifications",
+                  subscribeButton: "Subscribe",
+                  unsubscribeButton: "Unsubscribe"
+                },
+                blocked: {
+                  title: "Unblock Notifications",
+                  message: "Click here to learn how to unblock notifications."
+                }
+              },
+                offset: {
+                  left: 0,
+                    right: 0,
+                    bottom: 0
+                },
+                message: {
+                    subscribing: "Thanks for subscribing!",
+                    unsubscribing: "You won't receive notifications again"
+                },
+                tooltip: {
+                    blocked: "You've blocked notifications",
+                    subscribed: "You're subscribed to notifications",
+                    unsubscribed: "Subscribe to notifications"
+                },
+                location: "bottom-right",
+                hideWhenSubscribed: false,
+                customizeTextEnabled: true
+            },
+            slidedown: {
+                enabled: false,
+                acceptButton: "Allow",
+                cancelButton: "No Thanks",
+                actionMessage: "We'd like to send you notifications for the latest news and updates.",
+                customizeTextEnabled: true
+            },
+            fullscreen: {
+                enabled: false,
+                title: "example.com",
+                caption: "You can unsubscribe anytime",
+                message: "This is an example notification message.",
+                acceptButton: "Continue",
+                cancelButton: "No Thanks",
+                actionMessage: "We'd like to send you notifications for the latest news and updates.",
+                autoAcceptTitle: "Click Allow",
+                customizeTextEnabled: true
+            },
+            customlink: {
+              enabled: false,
+              style: "button",
+              size: "medium",
+              color: {
+                button: "#e54b4d",
+                text: "#ffffff"
+              },
+              text: {
+                subscribe: "Subscribe to push notifications",
+                unsubscribe: "Unsubscribe from push notifications",
+                explanation: ""
+              },
+              unsubscribeEnabled: true
+            },
+          },
+          webhooks: {
+            enable: false
+          },
+          serviceWorker: {
+            customizationEnabled: false,
+            path: "/",
+            workerName: "OneSignalSDKWorker.js",
+            registrationScope: "/",
+            updaterWorkerName: "OneSignalSDKUpdaterWorker.js"
+          },
+          welcomeNotification: {
+            enable: true,
+            url: "https://localhost:3001/?_osp=do_not_open",
+            title: "localhost https",
+            message: "Thanks for subscribing!",
+            urlEnabled: false
+          },
+          vapid_public_key: "BDPplk0FjgsEPIG7Gi2-zbjpBGgM_RJ4c99tWbNvxv7VSKIUV1KA7UUaRsTuBpcTEuaPMjvz_kd8rZuQcgMepng",
+          onesignal_vapid_public_key: "BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0",
+          origin: "https://localhost:3001",
+          subdomain: undefined,
+        },
+        "generated_at": 1531177265
+      };
+      if (isHttps) {
+        return customConfigHttps;
+      }
+      return {
+        ...customConfigHttps,
+        config: {
+          ...customConfigHttps.config,
+          subdomain: "helloworld123",
+          origin: "http://localhost:3000",
+          siteInfo: {
+            name: "localhost http",
+            origin: "http://localhost:3000",
+            proxyOrigin: "helloworld123",
+            defaultIconUrl: null,
+            proxyOriginEnabled: true
+          },
+          welcomeNotification: {
+            enable: true,
+            url: "http://localhost:3000/?_osp=do_not_open",
+            title: "localhost http",
+            message: "Thanks for subscribing!",
+            urlEnabled: false
+          },
+        }
+      }
+    }
+
     return {
       success: true,
-      app_id: appId ? appId : '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       features: {
         restrict_origin: {
           enable: false,
@@ -374,6 +537,21 @@ export class TestEnvironment {
             autoAcceptTitle: "Click Allow",
             customizeTextEnabled: true,
           },
+          customlink: {
+            enabled: true,
+            style: "button",
+            size: "medium",
+            color: {
+              button: "#e54b4d",
+              text: "#ffffff",
+            },
+            text: {
+              subscribe: "Subscribe to push notifications",
+              unsubscribe: "Unsubscribe from push notifications",
+              explanation: "Get updates from all sorts of things that matter to you",
+            },
+            unsubscribeEnabled: true,
+          }
         },
         siteInfo: {
           name: 'My Website',
@@ -387,7 +565,7 @@ export class TestEnvironment {
           corsEnable: false,
           notificationClickedHook: undefined,
           notificationDismissedHook: undefined,
-          notificationDisplayedHook: undefined
+          notificationDisplayedHook: undefined,
         },
         integration: {
           kind: configIntegrationKind
@@ -450,7 +628,22 @@ export class TestEnvironment {
           title: 'fullscreen notification title',
           message: 'fullscreen notification message',
           caption: 'fullscreen notification caption'
-        }
+        }, 
+        customlink: {
+          enabled: false,
+          style: "link",
+          size: "small",
+          color: {
+            button: "#000000",
+            text: "#ffffff",
+          },
+          text: {
+            subscribe: "Let's do it",
+            unsubscribe: "I don't want it anymore",
+            explanation: "Wanna stay in touch?",
+          },
+          unsubscribeEnabled: true,
+        },
       },
       welcomeNotification: {
         disable: false,

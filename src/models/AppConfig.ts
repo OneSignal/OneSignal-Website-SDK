@@ -11,7 +11,7 @@ export interface AppConfig {
   /**
    * The subdomain chosen on the dashboard for non-HTTPS apps.
    */
-  subdomain: string;
+  subdomain?: string;
 
   /**
    * The allowed origin this web push config is allowed to run on.
@@ -77,53 +77,8 @@ export enum NotificationClickActionBehavior {
   Focus = 'focus'
 }
 
-export interface WebConfig {
-  siteInfo: {
-    name: string;
-    origin: string;
-    proxyOrigin: string | null;
-    defaultIconUrl: string | null;
-    proxyOriginEnabled: boolean;
-  };
-  webhooks: {
-    enable: boolean;
-    corsEnable: false;
-    notificationClickedHook: string;
-    notificationDismissedHook: string;
-    notificationDisplayedHook: string;
-  };
-  integration: {
-    kind: ConfigIntegrationKind;
-  };
-  serviceWorker: {
-    path: string;
-    workerName: string;
-    updaterWorkerName: string;
-    registrationScope: string;
-    customizationEnabled: boolean;
-  };
-  setupBehavior: {
-    allowLocalhostAsSecureOrigin: boolean;
-  };
-  welcomeNotification: {
-    url: string;
-    title: string;
-    enable: boolean;
-    message: string;
-    urlEnabled: boolean;
-  };
-  notificationBehavior: {
-    click: {
-      match: NotificationClickMatchBehavior;
-      action: NotificationClickActionBehavior;
-    };
-    display: {
-      persist: boolean;
-    };
-  };
-}
-
 export interface AppUserConfig {
+  [key: string]: any;
   appId?: string;
   autoRegister?: boolean;
   path?: string;
@@ -153,6 +108,25 @@ export interface FullscreenPermissionMessageOptions {
   caption: string;
 }
 
+type CustomLinkStyle = "button" | "link";
+type CustomLinkSize = "large" | "medium" | "small";
+
+export interface AppUserConfigCustomLinkOptions {
+  enabled: boolean;
+  style?: CustomLinkStyle;
+  size?: CustomLinkSize;
+  unsubscribeEnabled?: boolean;
+  text?: {
+    explanation?: string;
+    subscribe?: string;
+    unsubscribe?: string;
+  }
+  color?: {
+    button?: string;
+    text?: string;
+  }
+}
+
 export interface AppUserConfigPromptOptions {
   subscribeText?: string;
   showGraphic?: boolean;
@@ -169,18 +143,19 @@ export interface AppUserConfigPromptOptions {
   showCredit?: string;
   slidedown?: SlidedownPermissionMessageOptions;
   fullscreen?: FullscreenPermissionMessageOptions;
+  customlink?: AppUserConfigCustomLinkOptions;
 }
 
 export interface AppUserConfigWelcomeNotification {
   disable: boolean;
-  title: string;
-  message: string;
-  url: string;
+  title: string | undefined;
+  message: string | undefined;
+  url: string | undefined;
 }
 
 export interface AppUserConfigNotifyButton {
   enable: boolean;
-  displayPredicate: Function;
+  displayPredicate: Function | null | undefined;
   size: 'small' | 'medium' | 'large';
   position: 'bottom-left' | 'bottom-right';
   offset: { bottom: string; left: string; right: string };
@@ -215,10 +190,10 @@ export interface AppUserConfigNotifyButton {
 }
 
 export interface AppUserConfigWebhooks {
-  cors: boolean;
-  'notification.displayed': string;
-  'notification.clicked': string;
-  'notification.dismissed': string;
+  cors: boolean | undefined;
+  'notification.displayed': string | undefined;
+  'notification.clicked': string | undefined;
+  'notification.dismissed': string | undefined;
 }
 
 export interface ServerAppConfigPrompt {
@@ -276,6 +251,21 @@ export interface ServerAppConfigPrompt {
     autoAcceptTitle: string;
     customizeTextEnabled: boolean;
   };
+  customlink: {
+    enabled: boolean;
+    style: CustomLinkStyle;
+    size: CustomLinkSize;
+    unsubscribeEnabled: boolean;
+    text: {
+      explanation: string;
+      subscribe: string;
+      unsubscribe: string;
+    }
+    color: {
+      button: string;
+      text: string;
+    }
+  }
 }
 
 export interface ServerAppConfig {
@@ -292,7 +282,7 @@ export interface ServerAppConfig {
     restrict_origin: {
       enable: boolean;
     };
-    email: {
+    email?: {
       require_auth: boolean;
     };
   };
@@ -305,38 +295,38 @@ export interface ServerAppConfig {
     siteInfo: {
       name: string;
       origin: string;
-      proxyOrigin: string;
-      defaultIconUrl: string;
+      proxyOrigin: string | undefined;
+      defaultIconUrl: string | null;
       proxyOriginEnabled: boolean;
     };
     webhooks: {
       enable: boolean;
-      corsEnable: boolean;
-      notificationClickedHook: string;
-      notificationDismissedHook: string;
-      notificationDisplayedHook: string;
+      corsEnable?: boolean;
+      notificationClickedHook?: string;
+      notificationDismissedHook?: string;
+      notificationDisplayedHook?: string;
     };
     integration: {
       kind: ConfigIntegrationKind;
     };
     serviceWorker: {
-      path: string;
-      workerName: string;
-      registrationScope: string;
-      updaterWorkerName: string;
+      path?: string;
+      workerName?: string;
+      registrationScope?: string;
+      updaterWorkerName?: string;
       customizationEnabled: boolean;
     };
-    setupBehavior: {
+    setupBehavior?: {
       allowLocalhostAsSecureOrigin: false;
     };
     welcomeNotification: {
-      url: string;
-      title: string;
+      url: string | undefined;
+      title: string | undefined;
       enable: boolean;
-      message: string;
-      urlEnabled: boolean;
+      message: string | undefined;
+      urlEnabled: boolean| undefined;
     };
-    notificationBehavior: {
+    notificationBehavior?: {
       click: {
         match: NotificationClickMatchBehavior;
         action: NotificationClickActionBehavior;
@@ -347,9 +337,9 @@ export interface ServerAppConfig {
     };
     vapid_public_key: string;
     onesignal_vapid_public_key: string;
-    http_use_onesignal_com: boolean;
-    safari_web_id: string;
-    subdomain: string;
+    http_use_onesignal_com?: boolean;
+    safari_web_id?: string;
+    subdomain: string| undefined;
   };
 
   generated_at: number;
