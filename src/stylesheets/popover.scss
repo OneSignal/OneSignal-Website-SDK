@@ -193,15 +193,15 @@ $border-radius: 2px;
 
       &.primary {
         box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
-        background: #4285F4 !important;
+        background: #1165f1 !important;
         color: white !important;
 
         &:hover {
-          background: darken(#4285F4, 7.5%);
+          background: darken(#1165f1, 7.5%);
         }
 
         &:active {
-          background: darken(#4285F4, 15%);
+          background: darken(#1165f1, 15%);
         }
       }
 
@@ -212,14 +212,14 @@ $border-radius: 2px;
           We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
           Some sites set their own !important tag for text and we don't want that to be able to override ours.
          */
-        color: #4285F4 !important;
+        color: #1165f1 !important;
 
         &:hover {
-          color: darken(#4285F4, 12.5%);
+          color: darken(#1165f1, 12.5%);
         }
 
         &:active {
-          color: darken(#4285F4, 30.5%);
+          color: darken(#1165f1, 30.5%);
         }
       }
     }
