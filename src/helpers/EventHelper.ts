@@ -2,6 +2,7 @@
 
 import Event from '../Event';
 import LimitStore from '../LimitStore';
+import OneSignal from '../OneSignal';
 import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
 import { decodeHtmlEntities, logMethodCall } from '../utils';
@@ -22,7 +23,7 @@ export default class EventHelper {
     logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: Context = OneSignal.context;
     const subscriptionState = await context.subscriptionManager.getSubscriptionState();
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     const appState = await Database.getAppState();
     const { lastKnownPushEnabled } = appState;
     const didStateChange = (
