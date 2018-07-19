@@ -36,7 +36,7 @@ export class CustomLink {
       }
     });
 
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
 
     const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
     subscribeElements.forEach((element: HTMLElement) =>
@@ -108,7 +108,7 @@ export class CustomLink {
   public static async handleClick(element: HTMLElement): Promise<void> {
     const state:boolean = element.getAttribute(CustomLink.subscriptionStateAttribute) === "true";
     if (state) {
-      const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+      const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
       if (isPushEnabled) {
         await OneSignal.setSubscription(false);
       }
