@@ -56,7 +56,7 @@ test('customlink: container: not render if disabled', async t => {
 });
 
 test('customlink: container: render if enabled, explanation present', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   await CustomLink.initialize(config);
 
   const containerElements = document.querySelectorAll<HTMLElement>(CustomLink.containerSelector);
@@ -69,7 +69,7 @@ test('customlink: container: render if enabled, explanation present', async t =>
 });
 
 test('customlink: container: render if enabled, no explanation', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   config.text.explanation = "";
   await CustomLink.initialize(config);
 
@@ -82,7 +82,7 @@ test('customlink: container: render if enabled, no explanation', async t => {
 });
 
 test('customlink: push enabled text and state', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   await CustomLink.initialize(config);
 
   const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
@@ -93,7 +93,7 @@ test('customlink: push enabled text and state', async t => {
 });
 
 test('customlink: push disabled text and state', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   await CustomLink.initialize(config);
 
   const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
@@ -104,7 +104,7 @@ test('customlink: push disabled text and state', async t => {
 });
 
 test('customlink: subscribe: intitialized, push enabled', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   await CustomLink.initialize(config);
 
   const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
@@ -118,7 +118,7 @@ test('customlink: subscribe: intitialized, push enabled', async t => {
 });
 
 test('customlink: subscribe: intitialized, push disabled', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   await CustomLink.initialize(config);
 
   const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
@@ -132,7 +132,7 @@ test('customlink: subscribe: intitialized, push disabled', async t => {
 });
 
 test('customlink: subscribe: unsubscribe disabled', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   config.unsubscribeEnabled = false;
   await CustomLink.initialize(config);
 
@@ -148,7 +148,7 @@ test('customlink: subscribe: unsubscribe disabled', async t => {
 });
 
 test('customlink: subscribe: unsubscribe enabled', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   await CustomLink.initialize(config);
 
   const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
@@ -163,7 +163,7 @@ test('customlink: subscribe: unsubscribe enabled', async t => {
 });
 
 test('customlink: subscribe: button', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   config.style = "button";
   await CustomLink.initialize(config);
 
@@ -177,7 +177,7 @@ test('customlink: subscribe: button', async t => {
 });
 
 test('customlink: subscribe: link', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   config.style = "link";
   await CustomLink.initialize(config);
 
@@ -191,7 +191,7 @@ test('customlink: subscribe: link', async t => {
 });
 
 test('customlink: reinitialize', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   await CustomLink.initialize(config);
   await CustomLink.initialize(config);
   const containerElements = document.querySelectorAll<HTMLElement>(CustomLink.containerSelector);
@@ -199,7 +199,7 @@ test('customlink: reinitialize', async t => {
 });
 
 test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(true);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(true);
   const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(false);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
@@ -223,7 +223,7 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted out', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
   sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(false);
@@ -250,7 +250,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never subscribed.', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
   const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(false);
@@ -273,7 +273,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. http.', async t => {
-  sandbox.stub(OneSignal, 'isPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
   const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(Utils, 'isUsingSubscriptionWorkaround').returns(true);

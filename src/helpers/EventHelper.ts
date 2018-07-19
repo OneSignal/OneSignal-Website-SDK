@@ -101,7 +101,10 @@ export default class EventHelper {
   }
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
-    const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
+    if (!OneSignal.config.userConfig.notifyButton)
+      return;
+
+    const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
     if (displayPredicate && typeof displayPredicate === "function" && OneSignal.notifyButton) {
       const predicateResult = await displayPredicate();
       if (predicateResult !== false) {
