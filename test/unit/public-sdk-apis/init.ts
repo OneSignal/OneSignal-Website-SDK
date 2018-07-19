@@ -15,6 +15,9 @@ import OneSignalApi from "../../../src/OneSignalApi";
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
 import AltOriginManager from "../../../src/managers/AltOriginManager";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
+import {NotificationPermission} from "../../../src/models/NotificationPermission";
+import {WindowEnvironmentKind} from "../../../src/models/WindowEnvironmentKind";
+import SdkEnvironment from "../../../src/managers/SdkEnvironment";
 
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
@@ -62,6 +65,17 @@ class InitTestHelpers {
     sinonSandbox.stub(OneSignalApi, "jsonpLib", function (_url: string, callback: Function) {
       callback(null, serverAppConfig);
     });
+  }
+
+  static mockBasicInitEnv(configIntegrationKind: ConfigIntegrationKind) {
+    OneSignal.initialized = false;
+
+    sinonSandbox.stub(document, "visibilityState").value("visible");
+
+    const serverAppConfig = TestEnvironment.getFakeServerAppConfig(configIntegrationKind);
+    InitTestHelpers.stubJSONP(serverAppConfig);
+
+    sinonSandbox.stub(OneSignalApi, "get").resolves({});
   }
 }
 
@@ -157,7 +171,7 @@ test("email session should be updated on first page view", async t => {
 async function expectPushRecordCreationRequest(t: TestContext) {
   nock('https://onesignal.com')
     .post(`/api/v1/players`)
-    .reply(400, (_uri: string, requestBody: string) => {
+    .reply(200, (_uri: string, requestBody: string) => {
       const anyValues = [
         "device_type",
         "language",
@@ -176,7 +190,7 @@ async function expectPushRecordCreationRequest(t: TestContext) {
       const parsedRequestBody = JSON.parse(requestBody);
       for (const anyValueKey of anyValues)
         t.not(parsedRequestBody[anyValueKey], undefined);
-      return {};
+      return {id: "123"};
     });
 }
 
@@ -251,6 +265,7 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
   await expectPushRecordCreationRequest(t);
 });
 
+
 test("Test OneSignal.init, Basic HTTPS", async t => {
   const testConfig = {
     initOptions: {},
@@ -258,23 +273,41 @@ test("Test OneSignal.init, Basic HTTPS", async t => {
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
   };
   await TestEnvironment.initialize(testConfig);
-  OneSignal.initialized = false;
 
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  InitTestHelpers.stubJSONP(serverAppConfig);
-
-  sinonSandbox.stub(OneSignalApi, "get").resolves({});
+  InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
 
   TestEnvironment.mockInternalOneSignal();
 
   // AssertInitSDK.ensureInitEventFires(t);
   await OneSignal.init({
-    appId: Random.getRandomUuid()
+    appId: Random.getRandomUuid(),
+    autoRegister: true
   });
 
   await expectPushRecordCreationRequest(t);
+  t.pass();
+});
+
+test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed accept", async t => {
+  const testConfig = {
+    initOptions: {},
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    pushIdentifier: 'granted'
+  };
+  await TestEnvironment.initialize(testConfig);
+
+  InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
+
+  TestEnvironment.mockInternalOneSignal();
+
+  expectPushRecordCreationRequest(t);
+  await OneSignal.init({
+    appId: Random.getRandomUuid(),
+    autoRegister: true
+  });
+
+  // Check checkAndTriggerSubscriptionChanged if we get a 'Promise returned by test never resolved' Error
+  await OneSignal.isPushNotificationsEnabled();
   t.pass();
 });
 
@@ -285,14 +318,8 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
   };
   await TestEnvironment.initialize(testConfig);
-  OneSignal.initialized = false;
 
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  InitTestHelpers.stubJSONP(serverAppConfig);
-
-  sinonSandbox.stub(OneSignalApi, "get").resolves({});
+  InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
 
   let delayInit = true;
   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function() {
@@ -322,14 +349,8 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
   };
   await TestEnvironment.initialize(testConfig);
-  OneSignal.initialized = false;
 
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.TypicalSite);
-  InitTestHelpers.stubJSONP(serverAppConfig);
-
-  sinonSandbox.stub(OneSignalApi, "get").resolves({});
+  InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.TypicalSite);
 
   let delayInit = true;
   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function() {

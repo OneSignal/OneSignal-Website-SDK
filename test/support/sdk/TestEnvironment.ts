@@ -212,6 +212,7 @@ export class TestEnvironment {
     const { TextEncoder, TextDecoder } = require('text-encoding');
     (windowDef as any).TextEncoder = TextEncoder;
     (windowDef as any).TextDecoder = TextDecoder;
+    TestEnvironment.addCustomEventPolyfill(windowDef);
 
     let topWindow = config.initializeAsIframe ? {
       location: {
@@ -225,12 +226,23 @@ export class TestEnvironment {
     return jsdom;
   }
 
+  static addCustomEventPolyfill(windowDef: any) {
+    function CustomEvent(event, params) {
+      params = params || { bubbles: false, cancelable: false, detail: undefined };
+      const evt = document.createEvent( 'CustomEvent' );
+      evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+      return evt;
+    }
+    CustomEvent.prototype = windowDef.Event.prototype;
+    global.CustomEvent = CustomEvent;
+  }
+
   static stubNotification(config: TestEnvironmentConfig) {
     global.window.Notification = global.Notification = {
       permission: config.permission ? config.permission: NotificationPermission.Default,
       maxActions: 2,
       requestPermission: function(callback: Function) {
-        console.log("stubNotification");
+        console.log("stubNotification", config.pushIdentifier);
         callback(config.pushIdentifier);
       }
     };
