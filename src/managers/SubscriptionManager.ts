@@ -1,7 +1,4 @@
 import bowser from 'bowser';
-
-
-import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
@@ -9,11 +6,8 @@ import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import SubscriptionError from '../errors/SubscriptionError';
 import { SubscriptionErrorReason } from '../errors/SubscriptionError';
 import Event from '../Event';
-import EventHelper from '../helpers/EventHelper';
 import Context from '../models/Context';
-import { DeliveryPlatformKind } from '../models/DeliveryPlatformKind';
 import { NotificationPermission } from '../models/NotificationPermission';
-import { DeviceRecord } from '../models/DeviceRecord';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -26,7 +20,6 @@ import NotImplementedError from '../errors/NotImplementedError';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
-import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import { ServiceWorkerActiveState } from './ServiceWorkerManager';
 import { IntegrationKind } from '../models/IntegrationKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
@@ -626,6 +619,13 @@ export class SubscriptionManager {
         return false;
     }
     const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+   
+    if (!serviceWorkerRegistration || !serviceWorkerRegistration.pushManager) {
+      /* It's possible to get here in Safari 11.1+ version 
+       * since they released support for service workers but not push api. 
+       */
+      return false;
+    }
 
     const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
     // Not subscribed to web push
