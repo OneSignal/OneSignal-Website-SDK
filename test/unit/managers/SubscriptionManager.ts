@@ -275,10 +275,10 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
   };
   await TestEnvironment.mockInternalOneSignal();
   
-  sinon.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
-  sinon.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
-  sinon.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
-  sinon.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.WorkerA);
+  sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
+  sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
+  sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.WorkerA);
 
   t.is(await OneSignal.context.subscriptionManager.isSubscriptionExpiring(), false);
 });
