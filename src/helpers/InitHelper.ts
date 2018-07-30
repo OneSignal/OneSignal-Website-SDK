@@ -133,7 +133,9 @@ export default class InitHelper {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration && registration.active)
           await context.serviceWorkerManager.establishServiceWorkerChannel();
-      } catch (e) { }
+      } catch (e) { 
+        Log.error(e);
+      }
     }
 
     await InitHelper.processExpiringSubscriptions();

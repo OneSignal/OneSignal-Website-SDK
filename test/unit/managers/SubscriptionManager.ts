@@ -20,6 +20,7 @@ import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrate
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
+import OneSignal from '../../../src/OneSignal';
 import OneSignalApi from '../../../src/OneSignalApi';
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
@@ -262,6 +263,24 @@ test('device ID is available after register event', async t => {
   await registerEventPromise;
 
   stub.restore();
+});
+
+test('safari 11.1+ with service worker but not pushManager', async t => {
+  const serviceWorkerRegistration = {
+    active: true,
+    scope: "/",
+    installing: null,
+    waiting: null,
+    pushManager: null,
+  };
+  await TestEnvironment.mockInternalOneSignal();
+  
+  sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
+  sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
+  sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.WorkerA);
+
+  t.is(await OneSignal.context.subscriptionManager.isSubscriptionExpiring(), false);
 });
 
 test(
