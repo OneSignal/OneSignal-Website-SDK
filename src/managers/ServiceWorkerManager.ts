@@ -88,12 +88,13 @@ export class ServiceWorkerManager {
     this.config = config;
   }
 
-  static async getRegistration(): Promise<ServiceWorkerRegistration | null> {
+  public static async getRegistration(): Promise<ServiceWorkerRegistration | null> {
     try {
       // location.origin is used for <base> tag compatibility when it is set to a different origin
       return navigator.serviceWorker.getRegistration(location.origin);
     } catch (e) {
       // This could be null in an HTTP context or error if the user doesn't accept cookies
+      Log.warn("[Service Worker Status] Error Checking service worker registration");
       return null;
     }
   }

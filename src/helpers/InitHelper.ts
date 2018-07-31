@@ -33,7 +33,7 @@ import Environment from '../Environment';
 import Bell from '../bell/Bell';
 import ConfigManager from "../managers/ConfigManager";
 import { CustomLink } from '../CustomLink';
-import {ServiceWorkerManager} from "../managers/ServiceWorkerManager";
+import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 
 declare var OneSignal: any;
 
