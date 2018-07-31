@@ -78,7 +78,7 @@ async function testCase(
 
   // Register a mock service worker to access push subscription
   await navigator.serviceWorker.register('/worker.js');
-  const registration: any = await navigator.serviceWorker.getRegistration();
+  const registration: any = await ServiceWorkerManager.getRegistration();
 
   // There should be no existing subscription
   const existingSubscription = await registration.pushManager.getSubscription();
@@ -243,11 +243,10 @@ test('device ID is available after register event', async t => {
   );
 
   const context: Context = await t.context.sdkContext;
-  const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
+  const serviceWorkerRegistration = await ServiceWorkerManager.getRegistration();
   const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
   const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(pushSubscription);
   const randomPlayerId = Random.getRandomUuid();
-  let wasRegisterEventFired = false;
 
   const registerEventPromise = new Promise(resolve => {
     OneSignal.emitter.on('register', async () => {

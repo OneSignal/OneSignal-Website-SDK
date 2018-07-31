@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 
 import test from 'ava';
-import sinon, { SinonSandbox } from 'sinon';
+import sinon, {SinonSandbox, SinonStub} from 'sinon';
 import nock from "nock";
 import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
 import Path from '../../../src/models/Path';
@@ -37,9 +37,13 @@ class LocalHelpers {
 
 // manually create and restore the sandbox
 let sandbox: SinonSandbox;
+let getRegistrationStub: SinonStub;
 
-test.beforeEach(function() {
+test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
+
+  await TestEnvironment.stubDomEnvironment();
+  getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').callThrough();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();
@@ -50,41 +54,33 @@ test.beforeEach(function() {
 });
 
 test.afterEach(function () {
+  if (getRegistrationStub.callCount > 0)
+    sandbox.assert.alwaysCalledWith(getRegistrationStub, sinon.match.string);
   sandbox.restore();
 });
 
 test('getActiveState() detects no installed worker', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
   const manager = LocalHelpers.getServiceWorkerManager();
 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
 });
 
 test('getActiveState() detects worker A, case sensitive', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
-  navigator.serviceWorker.register('/Worker-A.js');
+  await navigator.serviceWorker.register('/Worker-A.js');
 
   const manager = LocalHelpers.getServiceWorkerManager();
-
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 });
 
 test('getActiveState() detects worker B, case sensitive', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
-  navigator.serviceWorker.register('/Worker-B.js');
+  await navigator.serviceWorker.register('/Worker-B.js');
 
   const manager = LocalHelpers.getServiceWorkerManager();
-
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerB);
 });
 
 test('getActiveState() detects worker A, even when worker filename uses query parameters', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
-  navigator.serviceWorker.register('/Worker-A.js?appId=12345');
+  await navigator.serviceWorker.register('/Worker-A.js?appId=12345');
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
@@ -92,70 +88,54 @@ test('getActiveState() detects worker A, even when worker filename uses query pa
 });
 
 test('getActiveState() detects worker B, even when worker filename uses query parameters', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
-  navigator.serviceWorker.register('/Worker-B.js?appId=12345');
+  await navigator.serviceWorker.register('/Worker-B.js?appId=12345');
 
   const manager = LocalHelpers.getServiceWorkerManager();
-
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerB);
 });
 
 test('getActiveState() detects an installing worker (not active)', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
   const mockWorkerRegistration = new ServiceWorkerRegistration();
   const mockInstallingWorker = new ServiceWorker();
   mockInstallingWorker.state = 'installing';
   mockWorkerRegistration.installing = mockInstallingWorker;
 
-  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
+  getRegistrationStub.resolves(mockWorkerRegistration);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Installing);
-  getRegistrationStub.restore();
 });
-test('getActiveState() detects a 3rd party worker, a worker that is activated but has an unrecognized script URL', async t => {
-  await TestEnvironment.stubDomEnvironment();
 
-  navigator.serviceWorker.register('/Worker-C.js');
+test('getActiveState() detects a 3rd party worker, a worker that is activated but has an unrecognized script URL', async t => {
+  await navigator.serviceWorker.register('/Worker-C.js');
 
   const manager = LocalHelpers.getServiceWorkerManager();
-
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
 });
 
 test('getActiveState() detects a page loaded by hard-refresh with our service worker as bypassed', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
   const mockWorkerRegistration = new ServiceWorkerRegistration();
   const mockInstallingWorker = new ServiceWorker();
   mockInstallingWorker.state = 'activated';
   mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
   mockWorkerRegistration.active = mockInstallingWorker;
 
-  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
-  const controllerStub = sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
+  getRegistrationStub.resolves(mockWorkerRegistration);
+  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Bypassed);
-  getRegistrationStub.restore();
-  controllerStub.restore();
 });
 
 test('getActiveState() detects an activated third-party service worker not controlling the page as third-party and not bypassed', async t => {
-  await TestEnvironment.stubDomEnvironment();
-
   const mockWorkerRegistration = new ServiceWorkerRegistration();
   const mockInstallingWorker = new ServiceWorker();
   mockInstallingWorker.state = 'activated';
   mockInstallingWorker.scriptURL = 'https://site.com/another-worker.js';
   mockWorkerRegistration.active = mockInstallingWorker;
 
-  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
-  const controllerStub = sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
+  getRegistrationStub.resolves(mockWorkerRegistration);
+  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
-  getRegistrationStub.restore();
-  controllerStub.restore();
 });
 
 
@@ -166,7 +146,6 @@ test('notification clicked - While page is opened in background', async t => {
       pageUrl: "https://localhost:3001/"
     }
   });
-  await TestEnvironment.stubDomEnvironment();
 
   const mockInstallingWorker = new ServiceWorker();
   mockInstallingWorker.state = 'activated';
@@ -174,15 +153,14 @@ test('notification clicked - While page is opened in background', async t => {
   const mockWorkerRegistration = new ServiceWorkerRegistration();
   mockWorkerRegistration.active = mockInstallingWorker;
 
-  const getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').resolves(mockWorkerRegistration);
-  const controllerStub = sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
+  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
   const workerMessageReplyBuffer = new WorkerMessengerReplyBuffer();
   OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
-  const triggerStub = sandbox.stub(Event, 'trigger', function(event: string) {
+  sandbox.stub(Event, 'trigger', function(event: string) {
     if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
       t.pass();
   });
@@ -194,10 +172,6 @@ test('notification clicked - While page is opened in background', async t => {
   const listeners = workerMessageReplyBuffer.findListenersForMessage(WorkerMessengerCommand.NotificationClicked);
   for (const listenerRecord of listeners)
     listenerRecord.callback.apply(null, ['test']);
-
-  getRegistrationStub.restore();
-  controllerStub.restore();
-  triggerStub.restore();
 });
 
 
@@ -236,7 +210,7 @@ test('installWorker() installs worker A when a third party service worker exists
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  navigator.serviceWorker.register('/another-service-worker.js');
+  await navigator.serviceWorker.register('/another-service-worker.js');
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
@@ -268,13 +242,18 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
   const appConfig = OneSignal.context.appConfig;
 
   await manager.installWorker();
-  t.true(spy.getCall(0).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId}`, { scope: '/' }));
-  t.true(spy.getCall(1).calledWithExactly(`/Worker-A.js?appId=${appConfig.appId}`, { scope: '/' }));
+
+  const registerOptions =  { scope: `${location.origin}/` };
+  const serviceWorkerAPath = `${location.origin}/Worker-A.js?appId=${appConfig.appId}`;
+  const serviceWorkerBPath = `${location.origin}/Worker-B.js?appId=${appConfig.appId}`;
+
+  t.true(spy.getCall(0).calledWithExactly(serviceWorkerBPath, registerOptions));
+  t.true(spy.getCall(1).calledWithExactly(serviceWorkerAPath, registerOptions));
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
   await manager.installWorker();
-  t.true(spy.getCall(2).calledWithExactly(`/Worker-B.js?appId=${appConfig.appId}`, { scope: '/' }));
-  t.true(spy.getCall(3).calledWithExactly(`/Worker-A.js?appId=${appConfig.appId}`, { scope: '/' }));
+  t.true(spy.getCall(2).calledWithExactly(serviceWorkerBPath, registerOptions));
+  t.true(spy.getCall(3).calledWithExactly(serviceWorkerAPath, registerOptions));
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
   t.is(spy.callCount, 4);

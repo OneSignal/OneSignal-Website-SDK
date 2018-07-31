@@ -76,7 +76,7 @@ test('API URL should be valid', async t => {
 function mockParentFrame(https: boolean): sinon.SinonStub {
   let stub: sinon.SinonStub;
   if (https) {
-    stub = sinon.stub(navigator.serviceWorker, "getRegistration").resolves(null);
+    stub = sinon.stub(navigator.serviceWorker, "getRegistration").resolves({});
   } else {
     // HTTP sites can't use ServiceWorkerContainer.getRegistration()
     stub = sinon.stub(navigator.serviceWorker, "getRegistration").throws("SecurityError");
