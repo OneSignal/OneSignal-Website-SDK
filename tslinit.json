@@ -17,6 +17,8 @@
     // Not enforcing curlt until "multi-or-nest" is supported
     //    - https://github.com/buzinas/tslint-eslint-rules/issues/205
     //"curly": [true, "multi-or-nest"], // eslint has a 'multi-or-nest' option but does not seem to work here
-    "curly": [false]
+    "curly": [false],
+
+    "object-curly-spacing": [true, "always"]
   }
 }
