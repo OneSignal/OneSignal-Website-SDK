@@ -7,6 +7,7 @@ import SubscriptionHelper from "../helpers/SubscriptionHelper";
 import { IntegrationKind } from "../models/IntegrationKind";
 import Context from "../models/Context";
 import bowser from 'bowser';
+import {ServiceWorkerManager} from "./ServiceWorkerManager";
 
 export default class SdkEnvironment {
   /**
@@ -130,12 +131,10 @@ export default class SdkEnvironment {
     ) {
       return false;
     }
-    try {
-      await navigator.serviceWorker.getRegistration();
-      return false;
-    } catch (e) {
-      return true;
-    }
+
+    // Will be null if there was an issue retrieving a status
+    const registrationResult = await ServiceWorkerManager.getRegistration();
+    return registrationResult === null;
   }
 
   static isInsecureOrigin() {

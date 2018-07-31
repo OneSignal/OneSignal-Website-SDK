@@ -20,7 +20,7 @@ import NotImplementedError from '../errors/NotImplementedError';
 import { base64ToUint8Array } from '../utils/Encoding';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
-import { ServiceWorkerActiveState } from './ServiceWorkerManager';
+import { ServiceWorkerActiveState, ServiceWorkerManager} from './ServiceWorkerManager';
 import { IntegrationKind } from '../models/IntegrationKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
@@ -618,14 +618,15 @@ export class SubscriptionManager {
         /* If the service worker isn't activated, there's no subscription to look for */
         return false;
     }
-    const serviceWorkerRegistration = await navigator.serviceWorker.getRegistration();
-   
-    if (!serviceWorkerRegistration || !serviceWorkerRegistration.pushManager) {
-      /* It's possible to get here in Safari 11.1+ version 
-       * since they released support for service workers but not push api. 
-       */
+
+    const serviceWorkerRegistration = await ServiceWorkerManager.getRegistration();
+    if (!serviceWorkerRegistration)
       return false;
-    }
+
+    // It's possible to get here in Safari 11.1+ version
+    //   since they released support for service workers but not push api.
+    if (!serviceWorkerRegistration.pushManager)
+      return false;
 
     const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
     // Not subscribed to web push
@@ -720,7 +721,7 @@ export class SubscriptionManager {
     }
 
     const workerState = await this.context.serviceWorkerManager.getActiveState();
-    const workerRegistration = await navigator.serviceWorker.getRegistration();
+    const workerRegistration = await ServiceWorkerManager.getRegistration();
     const notificationPermission =
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
     const isWorkerActive = (

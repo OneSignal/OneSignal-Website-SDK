@@ -88,6 +88,16 @@ export class ServiceWorkerManager {
     this.config = config;
   }
 
+  static async getRegistration(): Promise<ServiceWorkerRegistration | null> {
+    try {
+      // location.origin is used for <base> tag compatibility when it is set to a different origin
+      return navigator.serviceWorker.getRegistration(location.origin);
+    } catch (e) {
+      // This could be null in an HTTP context or error if the user doesn't accept cookies
+      return null;
+    }
+  }
+
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
     /*
       Note: This method can only be called on a secure origin. On an insecure
@@ -143,12 +153,7 @@ export class ServiceWorkerManager {
       }
     }
 
-    let workerRegistration: ServiceWorkerRegistration = null;
-    try {
-      workerRegistration = await navigator.serviceWorker.getRegistration();
-    } catch (e) {
-      /* This could be null in an HTTP context or error if the user doesn't accept cookies */
-    }
+    const workerRegistration = await ServiceWorkerManager.getRegistration();
     if (!workerRegistration) {
       /*
         A site may have a service worker nested at /folder1/folder2/folder3, while the user is
@@ -459,8 +464,9 @@ export class ServiceWorkerManager {
          Unregistering unsubscribes the existing push subscription and allows us
          to register a new push subscription. This takes care of possible previous mismatched sender IDs
        */
-      const workerRegistration = await navigator.serviceWorker.getRegistration();
-      await workerRegistration.unregister();
+      const workerRegistration = await ServiceWorkerManager.getRegistration();
+      if (workerRegistration)
+        await workerRegistration.unregister();
     }
 
     let workerDirectory, workerFileName, fullWorkerPath;
@@ -478,7 +484,7 @@ export class ServiceWorkerManager {
       workerFileName = this.config.workerAPath.getFileName();
     } else if (workerState === ServiceWorkerActiveState.Bypassed) {
       /*
-        If the page is hard refreshed bypassing the cache, no service worker
+        if the page is hard refreshed bypassing the cache, no service worker
         will control the page.
 
         It doesn't matter if we try to reinstall an existing worker; still no
@@ -487,37 +493,28 @@ export class ServiceWorkerManager {
       throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
 
-    const installUrlQueryParams = {
+    const installUrlQueryParams = encodeHashAsUriComponent({
       appId: this.context.appConfig.appId
-    };
-    fullWorkerPath = `${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
+    });
+    fullWorkerPath = `${Utils.getBaseUrl()}${workerDirectory}/${workerFileName}?${installUrlQueryParams}`;
     Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
     try {
-      await navigator.serviceWorker.register(fullWorkerPath, this.config.registrationOptions);
+      const registerScope = `${Utils.getBaseUrl()}${this.config.registrationOptions.scope}`;
+      await navigator.serviceWorker.register(fullWorkerPath, {scope: registerScope});
     } catch (error) {
-      Log.error(`[Service Worker Installation] Installing service worker failed ${error}`)
-      /*
-        Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
-      */
+      Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);
+      // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
 
-      /*
-        If we are inside the popup and service worker fails to register, it's not developer's fault.
-        No need to report it to the api then.
-       */
+      // If we are inside the popup and service worker fails to register, it's not developer's fault.
+      // No need to report it to the api then.
       const env = SdkEnvironment.getWindowEnv();
-      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup)
         throw error;
-      }
-      /*
-        Node-fetch Request works only with absolute urls.
-        Building the absolute url for service worker file to make a request.
-      */
-      const baseUrl = Utils.getBaseUrl();
-      fullWorkerPath = `${baseUrl}${workerDirectory}/${workerFileName}?${encodeHashAsUriComponent(installUrlQueryParams)}`;
+
       const response = await fetch(fullWorkerPath);
-      if (response.status === 403 || response.status === 404) {
+      if (response.status === 403 || response.status === 404)
         throw new ServiceWorkerRegistrationError(response.status, response.statusText);
-      } 
+
       throw error;
     }
     Log.debug(`[Service Worker Installation] Service worker installed.`);

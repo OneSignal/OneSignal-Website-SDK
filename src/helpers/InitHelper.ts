@@ -33,6 +33,7 @@ import Environment from '../Environment';
 import Bell from '../bell/Bell';
 import ConfigManager from "../managers/ConfigManager";
 import { CustomLink } from '../CustomLink';
+import {ServiceWorkerManager} from "../managers/ServiceWorkerManager";
 
 declare var OneSignal: any;
 
@@ -130,7 +131,7 @@ export default class InitHelper {
       !await SdkEnvironment.isFrameContextInsecure()
     ) {
       try {
-        const registration = await navigator.serviceWorker.getRegistration();
+        const registration = await ServiceWorkerManager.getRegistration();
         if (registration && registration.active)
           await context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) { 
