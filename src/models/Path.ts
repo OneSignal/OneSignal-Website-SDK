@@ -9,12 +9,11 @@ import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidAr
 export default class Path {
   private static QUERY_STRING = '?';
 
-  private path: string;
+  private readonly path: string;
 
   constructor(path: string) {
-    if (!path) {
+    if (!path)
       throw new InvalidArgumentError('path', InvalidArgumentReason.Empty);
-    }
     this.path = path.trim();
   }
 
