@@ -28,9 +28,7 @@ class LocalHelpers {
     return new ServiceWorkerManager(OneSignal.context, {
       workerAPath: new Path('/Worker-A.js'),
       workerBPath: new Path('/Worker-B.js'),
-      registrationOptions: {
-        scope: '/'
-      }
+      registrationOptions: { scope: '/' }
     });
   }
 };
@@ -224,14 +222,10 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const context = OneSignal.context;
-
-  const manager = new ServiceWorkerManager(context, {
+  const manager = new ServiceWorkerManager(OneSignal.context, {
     workerAPath: new Path('/Worker-A.js'),
     workerBPath: new Path('/Worker-B.js'),
-    registrationOptions: {
-      scope: '/'
-    }
+    registrationOptions: { scope: '/' }
   });
 
   await manager.installWorker();
@@ -257,7 +251,27 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
   t.is(spy.callCount, 4);
-  spy.restore();
+});
+
+test('Server worker register URL correct when service worker path is a absolute URL', async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+
+  const manager = new ServiceWorkerManager(OneSignal.context, {
+    workerAPath: new Path(`${location.origin}/Worker-A.js`),
+    workerBPath: new Path(`${location.origin}/Worker-B.js`),
+    registrationOptions: { scope: '/' }
+  });
+
+  const serviceWorkerStub = sandbox.spy(navigator.serviceWorker, 'register');
+  await manager.installWorker();
+
+  sandbox.assert.alwaysCalledWithExactly(serviceWorkerStub,
+    `${location.origin}/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`,
+    { scope: `${location.origin}/` }
+  );
+  t.pass();
 });
 
 test("Service worker failed to install due to 404 on host page. Send notification to OneSignal api", async t => {

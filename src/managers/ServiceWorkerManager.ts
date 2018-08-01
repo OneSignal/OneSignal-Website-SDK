@@ -448,6 +448,32 @@ export class ServiceWorkerManager {
     });
   }
 
+  private static getServiceWorkerHref(
+    workerState: ServiceWorkerActiveState,
+    config: ServiceWorkerManagerConfig): string {
+    let workerFullPath = "";
+
+    // Determine which worker to install
+    if (workerState === ServiceWorkerActiveState.WorkerA)
+      workerFullPath = config.workerBPath.getFullPath();
+    else if (workerState === ServiceWorkerActiveState.WorkerB ||
+      workerState === ServiceWorkerActiveState.ThirdParty ||
+      workerState === ServiceWorkerActiveState.None)
+      workerFullPath = config.workerAPath.getFullPath();
+    else if (workerState === ServiceWorkerActiveState.Bypassed) {
+      /*
+        if the page is hard refreshed bypassing the cache, no service worker
+        will control the page.
+
+        It doesn't matter if we try to reinstall an existing worker; still no
+        service worker will control the page after installation.
+       */
+      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
+    }
+
+    return new URL(workerFullPath, Utils.getBaseUrl()).href;
+  }
+
   /**
    * Installs the OneSignal service worker.
    *
@@ -470,38 +496,18 @@ export class ServiceWorkerManager {
         await workerRegistration.unregister();
     }
 
-    let workerDirectory, workerFileName, fullWorkerPath;
-
-    // Determine which worker to install
-    if (
-      workerState === ServiceWorkerActiveState.WorkerA
-    ) {
-      workerDirectory = this.config.workerBPath.getPathWithoutFileName();
-      workerFileName = this.config.workerBPath.getFileName();
-    } else if (workerState === ServiceWorkerActiveState.WorkerB ||
-      workerState === ServiceWorkerActiveState.ThirdParty ||
-      workerState === ServiceWorkerActiveState.None) {
-      workerDirectory = this.config.workerAPath.getPathWithoutFileName();
-      workerFileName = this.config.workerAPath.getFileName();
-    } else if (workerState === ServiceWorkerActiveState.Bypassed) {
-      /*
-        if the page is hard refreshed bypassing the cache, no service worker
-        will control the page.
-
-        It doesn't matter if we try to reinstall an existing worker; still no
-        service worker will control the page after installation.
-       */
-      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
-
+    const workerFullPath = ServiceWorkerManager.getServiceWorkerHref(workerState, this.config);
     const installUrlQueryParams = encodeHashAsUriComponent({
       appId: this.context.appConfig.appId
     });
-    fullWorkerPath = `${Utils.getBaseUrl()}${workerDirectory}/${workerFileName}?${installUrlQueryParams}`;
+    const fullWorkerPath = `${workerFullPath}?${installUrlQueryParams}`;
+
     Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
     try {
-      const registerScope = `${Utils.getBaseUrl()}${this.config.registrationOptions.scope}`;
-      await navigator.serviceWorker.register(fullWorkerPath, {scope: registerScope});
+      await navigator.serviceWorker.register(
+        fullWorkerPath,
+        { scope: `${Utils.getBaseUrl()}${this.config.registrationOptions.scope}` }
+      );
     } catch (error) {
       Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);
       // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
