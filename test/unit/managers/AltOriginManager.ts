@@ -20,7 +20,7 @@ test(`should get correct canonical subscription URL`, async t => {
 
   const stagingUrlsOsTcDomain = AltOriginManager.getCanonicalSubscriptionUrls(config, BuildEnvironmentKind.Staging);
   t.is(stagingUrlsOsTcDomain.length, 2);
-  t.is(stagingUrlsOsTcDomain[0].host, new URL('https://test.onesignal-staging.pw').host);
+  t.is(stagingUrlsOsTcDomain[0].host, new URL('https://test.staging-01.onesignal.com').host);
   t.is(stagingUrlsOsTcDomain[1].host, new URL('https://test.os.tc').host);
 
   const prodUrlsOsTcDomain = AltOriginManager.getCanonicalSubscriptionUrls(config, BuildEnvironmentKind.Production);
