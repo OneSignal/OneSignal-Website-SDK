@@ -53,7 +53,7 @@ test.beforeEach(async function() {
 
 test.afterEach(function () {
   if (getRegistrationStub.callCount > 0)
-    sandbox.assert.alwaysCalledWith(getRegistrationStub, sinon.match.string);
+    sandbox.assert.alwaysCalledWithExactly(getRegistrationStub, location.href);
   sandbox.restore();
 });
 
