@@ -221,7 +221,7 @@ export default class SdkEnvironment {
       case BuildEnvironmentKind.Development:
         return new URL('https://localhost:3001/api/v1');
       case BuildEnvironmentKind.Staging:
-        return new URL('https://onesignal-staging.pw/api/v1');
+        return new URL('https://staging-01.onesignal.com/api/v1');
       case BuildEnvironmentKind.Production:
         return new URL('https://onesignal.com/api/v1');
       default:
