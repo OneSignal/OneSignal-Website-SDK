@@ -346,3 +346,14 @@ test("Service worker failed to install in popup. No handling.", async t => {
   const error = await t.throws(manager.installWorker(), Error);
   t.is(error.message, workerRegistrationError.message);
 });
+
+test('ServiceWorkerManager.getRegistration() handles throws by returning null', async t => {
+  getRegistrationStub.restore();
+  getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration');
+
+  getRegistrationStub.returns(new Promise(() => {
+    throw new Error("HTTP NOT SUPPORTED");
+  }));
+  const result = await ServiceWorkerManager.getRegistration();
+  t.is(result, null);
+});

@@ -81,7 +81,7 @@ export interface ServiceWorkerManagerConfig {
 export class ServiceWorkerManager {
 
   private context: Context;
-  private config: ServiceWorkerManagerConfig;
+  private readonly config: ServiceWorkerManagerConfig;
 
   constructor(context: Context, config: ServiceWorkerManagerConfig) {
     this.context = context;
@@ -95,7 +95,7 @@ export class ServiceWorkerManager {
       return await navigator.serviceWorker.getRegistration(location.href);
     } catch (e) {
       // This could be null in an HTTP context or error if the user doesn't accept cookies
-      Log.warn("[Service Worker Status] Error Checking service worker registration");
+      Log.warn("[Service Worker Status] Error Checking service worker registration", location.href, e);
       return null;
     }
   }
