@@ -92,7 +92,7 @@ export class ServiceWorkerManager {
   public static async getRegistration(): Promise<ServiceWorkerRegistration | null> {
     try {
       // location.href is used for <base> tag compatibility when it is set to a different origin
-      return navigator.serviceWorker.getRegistration(location.href);
+      return await navigator.serviceWorker.getRegistration(location.href);
     } catch (e) {
       // This could be null in an HTTP context or error if the user doesn't accept cookies
       Log.warn("[Service Worker Status] Error Checking service worker registration");
