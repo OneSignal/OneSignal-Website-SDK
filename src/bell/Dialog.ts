@@ -89,17 +89,19 @@ export default class Dialog extends AnimatedElement {
       else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
         if (bowser.chrome) {
-          if (!bowser.mobile && !bowser.tablet) {
-            imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/chrome-unblock.jpg';
-          }
+          if (!bowser.mobile && !bowser.tablet)
+            imageUrl = '/bell/chrome-unblock.jpg';
         }
         else if (bowser.firefox)
-          imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/firefox-unblock.jpg';
+          imageUrl = '/bell/firefox-unblock.jpg';
         else if (bowser.safari)
-          imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + '/bell/safari-unblock.jpg';
+          imageUrl = '/bell/safari-unblock.jpg';
+        else if (bowser.msedge)
+          imageUrl = '/bell/edge-unblock.png';
 
         let instructionsHtml = '';
         if (imageUrl) {
+          imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + imageUrl;
           instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
         }
 
