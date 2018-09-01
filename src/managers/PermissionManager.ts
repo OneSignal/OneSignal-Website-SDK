@@ -1,10 +1,8 @@
 import { redetectBrowserUserAgent, isUsingSubscriptionWorkaround } from '../utils';
-import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
-import MainHelper from '../helpers/MainHelper';
 import SdkEnvironment from './SdkEnvironment';
 
 /**
@@ -40,7 +38,7 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission
    * state on Safari.
    */
-  public async getNotificationPermission(safariWebId?: string) {
+  public async getNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
     const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
     if (await this.isPermissionEnvironmentAmbiguous(reportedPermission))
       return await this.getInterpretedAmbiguousPermission(reportedPermission);

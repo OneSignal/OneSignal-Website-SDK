@@ -15,5 +15,5 @@ interface PushSubscriptionState {
 
 interface SafarPushSubscriptionState {
   deviceToken: string | null;
-  permission: "granted" | "denied" | "default";
+  permission: NotificationPermission;
 }

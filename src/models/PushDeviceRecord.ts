@@ -15,12 +15,12 @@ import { DeviceRecord } from './DeviceRecord';
  * Describes a push notification device record.
  */
 export class PushDeviceRecord extends DeviceRecord {
-  public subscription: RawPushSubscription;
+  public subscription: RawPushSubscription | undefined;
 
   /**
    * @param subscription Omitting this parameter does not void the record's identifier.
    */
-  constructor(subscription: RawPushSubscription) {
+  constructor(subscription?: RawPushSubscription) {
     super();
     this.subscription = subscription;
   }
@@ -39,7 +39,7 @@ export class PushDeviceRecord extends DeviceRecord {
     return serializedBundle;
   }
 
-  static createFromPushSubscription(
+  public static createFromPushSubscription(
     appId: string,
     rawPushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,

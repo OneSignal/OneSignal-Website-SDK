@@ -1,4 +1,5 @@
 export enum SubscriptionStateKind {
+  Default = 0,
   Subscribed = 1,
   MutedByApi = -2,
   NotSubscribed = -10,
