@@ -13,7 +13,7 @@ import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import Log from '../libraries/Log';
 
 export default class SubscriptionHelper {
-  static async registerForPush(): Promise<Subscription> {
+  static async registerForPush(): Promise<Subscription | null> {
     let subscription: Subscription;
     const context: Context = OneSignal.context;
 
@@ -111,7 +111,7 @@ export default class SubscriptionHelper {
           {
             rawPushSubscription: rawSubscription.serialize()
           },
-          message => {
+          (message: any) => {
             if (message.data.progress === true) {
               Log.debug('Got message from host page that remote reg. is in progress, closing popup.');
               if (windowCreator) {

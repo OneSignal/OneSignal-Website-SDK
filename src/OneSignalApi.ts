@@ -1,5 +1,4 @@
 import JSONP from 'jsonp';
-import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
@@ -7,108 +6,16 @@ import { contains, trimUndefined } from './utils';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { EmailProfile } from './models/EmailProfile';
-import { SubscriptionStateKind } from './models/SubscriptionStateKind';
-import Log from './libraries/Log';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
-
+import OneSignalApiBase from "./OneSignalApiBase";
 
 export default class OneSignalApi {
-
-  static get(action, data?, headers?) {
-    return OneSignalApi.call('GET', action, data, headers);
-  }
-
-  static post(action, data?, headers?) {
-    return OneSignalApi.call('POST', action, data, headers);
-  }
-
-  static put(action, data?, headers?) {
-    return OneSignalApi.call('PUT', action, data, headers);
-  }
-
-  static delete(action, data?, headers?) {
-    return OneSignalApi.call('DELETE', action, data, headers);
-  }
-
-  static call(method, action, data, headers) {
-    let callHeaders: any = new Headers();
-    callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
-    callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
-    if (headers) {
-      for (let key of Object.keys(headers)) {
-        callHeaders.append(key, headers[key]);
-      }
-    }
-
-    let contents = {
-      method: method || 'NO_METHOD_SPECIFIED',
-      headers: callHeaders,
-      cache: 'no-cache'
-    };
-    if (data)
-      (contents as any).body = JSON.stringify(data);
-
-    var status;
-    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
-        .then(response => {
-          status = response.status;
-          return response.json();
-        })
-        .then(json => {
-          if (status >= 200 && status < 300)
-            return json;
-          else {
-            let error = OneSignalApi.identifyError(json);
-            if (error === 'no-user-id-error') {
-              // TODO: This returns undefined
-            } else {
-              return Promise.reject(json);
-            }
-          }
-        });
-  }
-
-  static identifyError(error) {
-    if (!error || !error.errors) {
-      return 'no-error';
-    }
-    let errors = error.errors;
-    if (contains(errors, 'No user with this id found') ||
-        contains(errors, 'Could not find app_id for given player id.')) {
-      return 'no-user-id-error';
-    }
-    return 'unknown-error';
-  }
-
-  /**
-   * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
-   * Used if the user clears his or her IndexedDB database and we need the user ID again.
-   */
-  static getUserIdFromSubscriptionIdentifier(appId: string, deviceType: number, identifier: string): Promise<string> {
-    // Calling POST /players with an existing identifier returns us that player ID
-    return OneSignalApi.post('players', {
-      app_id: appId,
-      device_type: deviceType,
-      identifier: identifier,
-      notification_types: SubscriptionStateKind.TemporaryWebRecord,
-    }).then(response => {
-      if (response && response.id) {
-        return response.id;
-      } else {
-        return null;
-      }
-    }).catch(e => {
-      Log.debug('Error getting user ID from subscription identifier:', e);
-      return null;
-    });
-  }
-
-  static getPlayer(appId, playerId) {
-    return OneSignalApi.get(`players/${playerId}?app_id=${appId}`);
+  static getPlayer(appId: string, playerId: string) {
+    return OneSignalApiBase.get(`players/${playerId}?app_id=${appId}`);
   }
 
   static updatePlayer(appId: string, playerId: string, options?: Object) {
-    return OneSignalApi.put(`players/${playerId}`, {app_id: appId, ...options});
+    return OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
   }
 
   static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {
@@ -131,7 +38,7 @@ export default class OneSignalApi {
       (params as any).firefox_icon = icon;
     }
     trimUndefined(params);
-    return OneSignalApi.post('notifications', params);
+    return OneSignalApiBase.post('notifications', params);
   }
 
   static jsonpLib(url: string, fn: Function) {
@@ -154,12 +61,12 @@ export default class OneSignalApi {
         });
       }
       else
-        resolve(OneSignalApi.get(`sync/${appId}/web`, null));
+        resolve(OneSignalApiBase.get(`sync/${appId}/web`, null));
     });
   }
 
   static async createUser(deviceRecord: DeviceRecord): Promise<string> {
-    const response = await OneSignalApi.post(`players`, deviceRecord.serialize());
+    const response = await OneSignalApiBase.post(`players`, deviceRecord.serialize());
     if (response && response.success)
       return response.id;
     return null;
@@ -173,7 +80,7 @@ export default class OneSignalApi {
     const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
     emailRecord.appId = appConfig.appId;
     emailRecord.pushDeviceRecordId = pushDeviceRecordId;
-    const response = await OneSignalApi.post(`players`, emailRecord.serialize());
+    const response = await OneSignalApiBase.post(`players`, emailRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {
@@ -189,7 +96,7 @@ export default class OneSignalApi {
     const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
     emailRecord.appId = appConfig.appId;
     emailRecord.pushDeviceRecordId = pushDeviceRecordId;
-    const response = await OneSignalApi.put(`players/${emailProfile.emailId}`, emailRecord.serialize());
+    const response = await OneSignalApiBase.put(`players/${emailProfile.emailId}`, emailRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {
@@ -198,7 +105,7 @@ export default class OneSignalApi {
   }
 
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {
-    const response = await OneSignalApi.post(`players/${deviceId}/email_logout`, {
+    const response = await OneSignalApiBase.post(`players/${deviceId}/email_logout`, {
       app_id: appConfig.appId,
       parent_player_id: emailProfile.emailId,
       email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
@@ -215,7 +122,7 @@ export default class OneSignalApi {
     deviceRecord: DeviceRecord,
   ): Promise<string> {
     try {
-      const response = await OneSignalApi.post(`players/${userId}/on_session`, deviceRecord.serialize());
+      const response = await OneSignalApiBase.post(`players/${userId}/on_session`, deviceRecord.serialize());
       if (response.id) {
         // A new user ID can be returned
         return response.id;

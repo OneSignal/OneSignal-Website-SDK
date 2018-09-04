@@ -10,7 +10,6 @@ import { Timestamp } from '../models/Timestamp';
 
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import IndexedDb from './IndexedDb';
-import bowser from 'bowser';
 import { EmailProfile } from '../models/EmailProfile';
 import { isUsingSubscriptionWorkaround } from '../utils';
 

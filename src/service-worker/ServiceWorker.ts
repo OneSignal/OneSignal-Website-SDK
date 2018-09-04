@@ -1,24 +1,21 @@
-import bowser from 'bowser';
+import bowser from "bowser";
 
+import Environment from "../Environment";
+import { WorkerMessenger, WorkerMessengerCommand } from "../libraries/WorkerMessenger";
+import SdkEnvironment from "../managers/SdkEnvironment";
+import Context from "../models/Context";
+import OneSignalApiBase from "../OneSignalApiBase";
+import OneSignalApiSW from "../OneSignalApiSW";
+import Database from "../services/Database";
+import { contains, getConsoleStyle, isValidUuid, trimUndefined } from "../utils";
 
-import Environment from '../Environment';
-import { WorkerMessenger, WorkerMessengerCommand } from '../libraries/WorkerMessenger';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
-import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
-import Context from '../models/Context';
-import OneSignalApi from '../OneSignalApi';
-import Database from '../services/Database';
-import { contains, getConsoleStyle, isValidUuid, trimUndefined } from '../utils';
-
-import { AppConfig } from '../models/AppConfig';
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
-import ConfigManager from '../managers/ConfigManager';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
+import { RawPushSubscription } from "../models/RawPushSubscription";
+import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import Log from '../libraries/Log';
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import Log from "../libraries/Log";
+import { ConfigHelper } from "../helpers/ConfigHelper";
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -33,7 +30,7 @@ declare var self: ServiceWorkerGlobalScope;
  * worker is registered to the iFrame pointing to subdomain.onesignal.com.
  */
 export class ServiceWorker {
-  static UNSUBSCRIBED_FROM_NOTIFICATIONS;
+  static UNSUBSCRIBED_FROM_NOTIFICATIONS: boolean | undefined;
 
   /**
    * An incrementing integer defined in package.json. Value doesn't matter as long as it's different from the
@@ -164,9 +161,7 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, async () => {
       Log.debug('[Service Worker] Received AMP subscribe message.');
       const appId = await ServiceWorker.getAppId();
-      const appConfig = await new ConfigManager().getAppConfig({
-        appId: appId
-      });
+      const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
       const context = new Context(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
@@ -175,9 +170,7 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
       Log.debug('[Service Worker] Received AMP unsubscribe message.');
       const appId = await ServiceWorker.getAppId();
-      const appConfig = await new ConfigManager().getAppConfig({
-        appId: appId
-      });
+      const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
       const context = new Context(appConfig);
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
@@ -761,7 +754,7 @@ export class ServiceWorker {
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
     if (appId && deviceId) {
-      await OneSignalApi.put('notifications/' + notification.id, {
+      await OneSignalApiBase.put('notifications/' + notification.id, {
         app_id: appId,
         player_id: deviceId,
         opened: true
@@ -806,9 +799,7 @@ export class ServiceWorker {
       // Without an app ID, we can't make any calls
       return;
     }
-    const appConfig = await new ConfigManager().getAppConfig({
-      appId: appId
-    });
+    const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
     if (!appConfig) {
       // Without a valid app config (e.g. deleted app), we can't make any calls
       return;
@@ -822,7 +813,7 @@ export class ServiceWorker {
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription
-        deviceId = await OneSignalApi.getUserIdFromSubscriptionIdentifier(
+        deviceId = await OneSignalApiSW.getUserIdFromSubscriptionIdentifier(
           appId,
           PushDeviceRecord.prototype.getDeliveryPlatform(),
           event.oldSubscription.endpoint
@@ -973,7 +964,7 @@ export class ServiceWorker {
         .then(userId => {
           if (userId) {
             Log.debug(`Legacy push signal received, retrieving contents from players/${userId}/chromeweb_notification`);
-            return OneSignalApi.get(`players/${userId}/chromeweb_notification`);
+            return OneSignalApiBase.get(`players/${userId}/chromeweb_notification`);
           }
           else {
             Log.debug('Tried to get notification contents, but IndexedDB is missing user ID info.');
@@ -984,7 +975,7 @@ export class ServiceWorker {
                 .then(([appId, identifier]) => {
                   let deviceType = PushDeviceRecord.prototype.getDeliveryPlatform();
                   // Get the user ID from OneSignal
-                  return OneSignalApi.getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier).then(recoveredUserId => {
+                  return OneSignalApiSW.getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier).then(recoveredUserId => {
                     if (recoveredUserId) {
                       Log.debug('Recovered OneSignal user ID:', recoveredUserId);
                       // We now have our OneSignal user ID again
@@ -997,7 +988,7 @@ export class ServiceWorker {
                       ]).then(() => {
                         // Try getting the notification again
                         Log.debug('Attempting to retrieve the notification again now with a recovered user ID.');
-                        return OneSignalApi.get(`players/${recoveredUserId}/chromeweb_notification`);
+                        return OneSignalApiBase.get(`players/${recoveredUserId}/chromeweb_notification`);
                       });
                     } else {
                       return Promise.reject('Recovered user ID was null. Unsubscribing from push notifications.');
@@ -1021,7 +1012,7 @@ export class ServiceWorker {
         .then((response: any) => {
           // The response is an array literal -- response.json() has been called by apiCall()
           // The result looks like this:
-          // OneSignalApi.get('players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification').then(function(response) { Log.debug(response); });
+          // OneSignalApiBase.get('players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification').then(function(response) { Log.debug(response); });
           // ["{"custom":{"i":"6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"},"icon":"https://onesignal.com/images/notification_logo.png","alert":"asd","title":"ss"}"]
           // ^ Notice this is an array literal with JSON data inside
           for (var i = 0; i < response.length; i++) {
