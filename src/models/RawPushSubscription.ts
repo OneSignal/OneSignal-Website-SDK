@@ -1,30 +1,30 @@
 import { Serializable } from './Serializable';
-import { SubscriptionStateKind } from './SubscriptionStateKind';
+
 export class RawPushSubscription implements Serializable {
   /**
      * The GCM/FCM registration token, along with the full URL. Not used for Safari.
      */
-  w3cEndpoint: URL;
-  w3cP256dh: string;
-  w3cAuth: string;
+  w3cEndpoint: URL | undefined;
+  w3cP256dh: string | undefined;
+  w3cAuth: string | undefined;
   /**
      * A Safari-only push subscription device token. Not used for Chrome/Firefox.
      */
-  safariDeviceToken: string;
+  safariDeviceToken: string | undefined;
   /**
    * A full RawPushSubscription object of the existing W3C subscription, if any.
    *
    * This is used to determine whether the subscription changed, so we know
    * whether to contact OneSignal to update the subscription.
    */
-  existingW3cPushSubscription: RawPushSubscription;
+  existingW3cPushSubscription: RawPushSubscription | undefined;
   /**
    * The existing Safari subscription device token, if it exists.
    *
    * This is used to determine whether the subscription changed, so we know
    * whether to contact OneSignal to update the subscription.
    */
-  existingSafariDeviceToken: string;
+  existingSafariDeviceToken: string | undefined;
 
   /**
    * Returns true if an existing recorded W3C or Safari subscription is
@@ -33,18 +33,19 @@ export class RawPushSubscription implements Serializable {
   public isNewSubscription(): boolean {
     if (this.existingW3cPushSubscription) {
       if (!!this.existingW3cPushSubscription.w3cEndpoint !== !!this.w3cEndpoint) {
-        return false;
+        return true;
       }
       if (!!this.existingW3cPushSubscription.w3cEndpoint && !!this.w3cEndpoint && 
         this.existingW3cPushSubscription.w3cEndpoint.toString() !== this.w3cEndpoint.toString()) {
-          return false;
+          return true;
       }
       if (this.existingW3cPushSubscription.w3cP256dh !== this.w3cP256dh) {
-        return false;
+        return true;
       }
       if (this.existingW3cPushSubscription.w3cAuth !== this.w3cAuth) {
-        return false;
+        return true;
       }
+      return false;
     } else if (this.existingSafariDeviceToken) {
       return this.existingSafariDeviceToken !== this.safariDeviceToken;
     }
@@ -119,6 +120,8 @@ export class RawPushSubscription implements Serializable {
     return serializedBundle;
   }
 
+  // TODO: had a hard to debug bug here due to "any" type bypassing typescript validation.
+  // Check the usage and maybe change with strict type
   public static deserialize(bundle: any): RawPushSubscription {
     const subscription = new RawPushSubscription();
     if (!bundle) {
@@ -131,9 +134,12 @@ export class RawPushSubscription implements Serializable {
     }
     subscription.w3cP256dh = bundle.w3cP256dh;
     subscription.w3cAuth = bundle.w3cAuth;
-    subscription.existingW3cPushSubscription = bundle.existingPushSubscription
-      ? RawPushSubscription.deserialize(bundle.existingPushSubscription)
-      : null;
+    subscription.existingW3cPushSubscription = undefined;
+    if (bundle.existingW3cPushSubscription) {
+      subscription.existingW3cPushSubscription = RawPushSubscription.deserialize(bundle.existingW3cPushSubscription);
+    } else if (bundle.existingPushSubscription) {
+      subscription.existingW3cPushSubscription = RawPushSubscription.deserialize(bundle.existingPushSubscription);
+    }
     subscription.safariDeviceToken = bundle.safariDeviceToken;
     subscription.existingSafariDeviceToken = bundle.existingSafariDeviceToken;
     return subscription;

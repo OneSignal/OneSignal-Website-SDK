@@ -148,9 +148,13 @@ export class SubscriptionManager {
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       const { deviceId } = await Database.getSubscription();
 
-      await OneSignalApi.updatePlayer(this.context.appConfig.appId, deviceId, {
-        notification_types: SubscriptionStateKind.Subscribed,
-      });
+      if (!pushSubscription || pushSubscription.isNewSubscription()) {
+        // send update player only for new subscriptions
+        // for existing players on_session will send the update instead
+        await OneSignalApi.updatePlayer(this.context.appConfig.appId, deviceId, {
+          notification_types: SubscriptionStateKind.Subscribed,
+        });
+      }
     } else {      
       const id = await OneSignalApi.createUser(deviceRecord);
       newDeviceId = id;

@@ -137,6 +137,7 @@ export default class InitHelper {
       }
     }
 
+    // TODO: possibly wrap into Promise.all for parallel execution
     await InitHelper.processExpiringSubscriptions();
     await InitHelper.showNotifyButton();
     await InitHelper.showPromptsFromWebConfigEditor();
@@ -148,21 +149,27 @@ export default class InitHelper {
   }
 
   public static async sendOnSessionUpdate(): Promise<void> {
-    const context: Context = OneSignal.context;
     // If user has been subscribed before, send the on_session update to our backend on the first page view.
-    if (context.sessionManager.isFirstPageView()) {
-      const existingUser = await context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-      if (existingUser) {
-        const { deviceId } = await Database.getSubscription();
-        const notificationType = await MainHelper.getCurrentNotificationType();
-        const pushDeviceRecord = new PushDeviceRecord();
-        pushDeviceRecord.subscriptionState = notificationType;
-        try {
-          await OneSignalApi.updateUserSession(deviceId, pushDeviceRecord);
-        } catch(e) {
-          Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
-        }
-      }
+
+    const context: Context = OneSignal.context;
+    if (!context.sessionManager.isFirstPageView()) {
+      return;
+    }
+
+    const existingUser = await context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (!existingUser) {
+      return;
+    }
+
+    const { deviceId } = await Database.getSubscription();
+    const notificationType = await MainHelper.getCurrentNotificationType();
+    const pushDeviceRecord = new PushDeviceRecord();
+    pushDeviceRecord.subscriptionState = notificationType;
+    try {
+      // Checked for presence of deviceId in isAlreadyRegisteredWithOneSignal()
+      await OneSignalApi.updateUserSession(deviceId, pushDeviceRecord);
+    } catch(e) {
+      Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
   }
 
@@ -297,21 +304,6 @@ export default class InitHelper {
     await context.serviceWorkerManager.updateWorker();
 
     context.sessionManager.incrementPageViewCount();
-
-    // HTTPS - Only register for push notifications once per session
-    //   Or if the user changes notification permission to Ask or Allow.
-    // TODO: Is it for backwards compatibility? There are no other uses of 'ONE_SIGNAL_SESSION' in the codebase.
-    if (
-      sessionStorage.getItem('ONE_SIGNAL_SESSION') &&
-      !isUsingSubscriptionWorkaround() &&
-      (window.Notification.permission == 'denied' ||
-        sessionStorage.getItem('ONE_SIGNAL_NOTIFICATION_PERMISSION') == window.Notification.permission)
-    ) {
-      Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      return;
-    }
-
-    sessionStorage.setItem('ONE_SIGNAL_NOTIFICATION_PERMISSION', window.Notification.permission);
 
     if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
       Log.debug('On Safari and autoregister is false, skipping sessionInit().');
