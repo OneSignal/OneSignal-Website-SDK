@@ -33,6 +33,45 @@ test.afterEach(function (_t: TestContext) {
 /**
  * on_session
  */
+test("doesn't send on_session if enable flag not set for https", async t => {
+  OneSignal.context.appConfig.enableOnSession = false;
+  const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");
+  await InitHelper.sendOnSessionUpdate();
+  t.is(apiSpy.notCalled, true);
+});
+
+test("doesn't send on_session if enable flag not set for http and not subscribed", async t => {
+  sinonSandbox.restore();
+  sinonSandbox = sinon.sandbox.create();
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Http
+  });
+
+  // Required for sessionContext, not async
+  TestEnvironment.mockInternalOneSignal();
+
+  OneSignal.context.appConfig.enableOnSession = false;
+  sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.MutedByApi);
+
+  const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");
+  await InitHelper.sendOnSessionUpdate();
+  t.is(apiSpy.notCalled, true);
+});
+
+test("send on_session if enable flag not set for http and subscribed", async t => {
+  sinonSandbox.restore();
+  sinonSandbox = sinon.sandbox.create();
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Http
+  });
+
+  // Required for sessionContext, not async
+  TestEnvironment.mockInternalOneSignal();
+
+  OneSignal.context.appConfig.enableOnSession = false;
+  await testUpdateSessionForSuscriptionState(t, SubscriptionStateKind.Subscribed);
+});
+
 test("doesn't send on_session if not first page view", async t => {
   sinonSandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(false);
   const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");

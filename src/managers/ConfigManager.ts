@@ -107,6 +107,7 @@ export default class ConfigManager {
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: this.getUserConfigForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
+      enableOnSession: serverConfig.features.enable_on_session || false,
     };
   }
 

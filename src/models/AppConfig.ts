@@ -29,6 +29,7 @@ export interface AppConfig {
     enable: boolean;
     mixpanelReportingToken: string | null;
   };
+  enableOnSession?: boolean;
 
   safariWebId?: string;
 
@@ -285,6 +286,7 @@ export interface ServerAppConfig {
     email?: {
       require_auth: boolean;
     };
+    enable_on_session?: boolean;
   };
   config: {
     /**

@@ -32,6 +32,8 @@ import Bell from '../bell/Bell';
 import ConfigManager from "../managers/ConfigManager";
 import { CustomLink } from '../CustomLink';
 import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
+import Utils from "../utils/Utils";
+import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 
 declare var OneSignal: any;
 
@@ -152,6 +154,13 @@ export default class InitHelper {
     // If user has been subscribed before, send the on_session update to our backend on the first page view.
 
     const context: Context = OneSignal.context;
+
+    // TODO: Remove after finished testing.
+    // Safeguarded by flag for initial testing. Sent as a part of server config.
+    if (!context.appConfig.enableOnSession && !Utils.isUsingSubscriptionWorkaround()) {
+      return;
+    }
+
     if (!context.sessionManager.isFirstPageView()) {
       return;
     }
@@ -161,11 +170,17 @@ export default class InitHelper {
       return;
     }
 
-    const { deviceId } = await Database.getSubscription();
     const notificationType = await MainHelper.getCurrentNotificationType();
+
+    // TODO: Remove after finished testing.
+    // Previously the update was sent for HTTP sites only every time untli user is subscribed.
+    if (Utils.isUsingSubscriptionWorkaround() && notificationType !== SubscriptionStateKind.Subscribed) {
+      return;
+    }
     const pushDeviceRecord = new PushDeviceRecord();
     pushDeviceRecord.subscriptionState = notificationType;
     try {
+      const { deviceId } = await Database.getSubscription();
       // Checked for presence of deviceId in isAlreadyRegisteredWithOneSignal()
       await OneSignalApi.updateUserSession(deviceId, pushDeviceRecord);
     } catch(e) {
