@@ -27,7 +27,7 @@
     "publish": "yarn clean && yarn build:prod && yarn "
   },
   "config": {
-    "sdkVersion": "150402"
+    "sdkVersion": "150403"
   },
   "repository": {
     "type": "git",
