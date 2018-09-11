@@ -5,11 +5,11 @@ import { isPushNotificationsSupported } from "../../../src/utils";
 import { setUserAgent } from '../../support/tester/browser';
 
 
-function shouldSupport(t, userAgent: BrowserUserAgent) {
+function shouldSupport(t: any, userAgent: BrowserUserAgent) {
   setUserAgent(userAgent);
   t.true(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be supported`)
 }
-function shouldNotSupport(t, userAgent: BrowserUserAgent) {
+function shouldNotSupport(t: any, userAgent: BrowserUserAgent) {
   setUserAgent(userAgent);
   t.false(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be unsupported`)
 }
@@ -95,9 +95,27 @@ test('should not support environments without service workers (except Safari)', 
     writable: true,
     value: undefined
   });
+
   setUserAgent(BrowserUserAgent.ChromeMacSupported);
   t.false(isPushNotificationsSupported(), `Expected push to be unsupported if service workers don't exist in a non-Safari browser`);
 
   setUserAgent(BrowserUserAgent.SafariSupportedMac);
   t.true(isPushNotificationsSupported(), `Expected push to be supported if service workers don't exist in Safari`)
+});
+
+test('should support Chrome 69+ on http', async t => {
+  (global as any).BrowserUserAgent = BrowserUserAgent;
+  await TestEnvironment.stubDomEnvironment({
+    httpOrHttps: HttpHttpsEnvironment.Http
+  });
+  // Remove serviceWorker from navigator for testing
+  Object.defineProperty(navigator, 'serviceWorker', {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: undefined
+  });
+
+  setUserAgent(BrowserUserAgent.ChromeMacSupported69);
+  t.true(isPushNotificationsSupported(), `Expected push to be supported in Chrome 69 on http`);
 });

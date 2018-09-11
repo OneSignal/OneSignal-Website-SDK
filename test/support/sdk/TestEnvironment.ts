@@ -56,6 +56,7 @@ export enum BrowserUserAgent {
   ChromeAndroidSupported = "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/42 Mobile Safari/535.19",
   ChromeWindowsSupported = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2228.0 Safari/537.36",
   ChromeMacSupported = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.1636.0 Safari/537.36",
+  ChromeMacSupported69 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36",
   ChromeLinuxSupported = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.1636.0 Safari/537.36",
   ChromeTabletSupported = "Mozilla/5.0 (Linux; Android 4.3; Nexus 10 Build/JWR66Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.1547.72 Safari/537.36",
   ChromeAndroidUnsupported = "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/41 Mobile Safari/535.19",
@@ -166,10 +167,13 @@ export class TestEnvironment {
     if (!config)
       config = {};
     let url: string | undefined = undefined;
+    let isSecureContext: boolean | undefined = undefined;
     if (config.httpOrHttps == HttpHttpsEnvironment.Http) {
       url = 'http://localhost:3000/webpush/sandbox?http=1';
+      isSecureContext = false;
     } else {
       url = 'https://localhost:3001/webpush/sandbox?https=1';
+      isSecureContext = true;
     }
     if (config.url) {
       url = config.url.toString();
@@ -212,6 +216,7 @@ export class TestEnvironment {
     const { TextEncoder, TextDecoder } = require('text-encoding');
     (windowDef as any).TextEncoder = TextEncoder;
     (windowDef as any).TextDecoder = TextDecoder;
+    (windowDef as any).isSecureContext = isSecureContext;
     TestEnvironment.addCustomEventPolyfill(windowDef);
 
     let topWindow = config.initializeAsIframe ? {
