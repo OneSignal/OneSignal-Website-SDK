@@ -55,6 +55,13 @@ export function isPushNotificationsSupported() {
   const browser = redetectBrowserUserAgent();
   let userAgent = navigator.userAgent || '';
 
+  // Chrome 69+ returns undefined for serviceWorker in insecure context but our workaround will work.
+  // Returning true.
+  if ((browser.chrome || (<any>browser).chromium) &&
+    window.isSecureContext === false && typeof navigator.serviceWorker === "undefined") {
+    return true;
+  }
+
   if (!browser.safari && typeof navigator.serviceWorker === "undefined") {
     /**
      * Browsers like Firefox Extended Support Release don't support service workers
