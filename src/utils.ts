@@ -185,10 +185,8 @@ export async function awaitOneSignalInitAndSupported(): Promise<object> {
       return false;
     }
 
-    if (
-      (isLocalhostAllowedAsSecureOrigin() && location.hostname === 'localhost') ||
-      (location.hostname as any) === '127.0.0.1'
-    ) {
+    if (isLocalhostAllowedAsSecureOrigin() &&
+      (location.hostname === 'localhost' ||location.hostname === '127.0.0.1')) {
       return false;
     }
 

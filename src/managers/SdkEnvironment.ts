@@ -2,12 +2,11 @@ import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import NotImplementedError from '../errors/NotImplementedError';
-import SubscriptionHelper from "../helpers/SubscriptionHelper";
 import { IntegrationKind } from "../models/IntegrationKind";
 import Context from "../models/Context";
 import bowser from 'bowser';
 import { ServiceWorkerManager } from "./ServiceWorkerManager";
+import { isLocalhostAllowedAsSecureOrigin } from "../utils";
 
 export default class SdkEnvironment {
   /**
@@ -86,6 +85,12 @@ export default class SdkEnvironment {
           IntegrationKind.SecureProxy :
           IntegrationKind.Secure;
       } else {
+        // If localhost and allowLocalhostAsSecureOrigin, it's still considered secure
+        if (isLocalhostAllowedAsSecureOrigin() &&
+          (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+          return IntegrationKind.Secure;
+        }
+        
         /* The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw
         an initialization error stating a proxy origin is required for HTTP sites. */
         return IntegrationKind.InsecureProxy;

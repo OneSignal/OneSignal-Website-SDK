@@ -89,7 +89,7 @@ export class ServiceWorkerManager {
   }
 
   // Gets details on the service-worker (if any) that controls the current page
-  public static async getRegistration(): Promise<ServiceWorkerRegistration | null> {
+  public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
     try {
       // location.href is used for <base> tag compatibility when it is set to a different origin
       return await navigator.serviceWorker.getRegistration(location.href);
