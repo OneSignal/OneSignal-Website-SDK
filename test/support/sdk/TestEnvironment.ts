@@ -192,7 +192,6 @@ export class TestEnvironment {
       (jsdom as any).env({
         html: html,
         url: url,
-        isSecureContext: isSecureContext,
         userAgent: config && config.userAgent ? config.userAgent : BrowserUserAgent.Default,
         features: {
           FetchExternalResources: ["script", "frame", "iframe", "link", "img"],
