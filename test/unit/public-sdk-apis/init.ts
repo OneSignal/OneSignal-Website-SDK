@@ -15,9 +15,6 @@ import OneSignalApi from "../../../src/OneSignalApi";
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
 import AltOriginManager from "../../../src/managers/AltOriginManager";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
-import {NotificationPermission} from "../../../src/models/NotificationPermission";
-import {WindowEnvironmentKind} from "../../../src/models/WindowEnvironmentKind";
-import SdkEnvironment from "../../../src/managers/SdkEnvironment";
 
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires

@@ -320,6 +320,7 @@ export class TestEnvironment {
         enable: true,
         mixpanelReportingToken: 'mixpanel-token'
       },
+      enableOnSession: true,
       safariWebId: undefined,
       vapidPublicKey: 'ImZRmh5eOX2onbZDIrSuC6ym6nyMRQ03OwxYQWYgejhN30Zs9VKKuKydxdppZiDlGLvuN3dGuFb66tD2wO1pm9e',
       onesignalVapidPublicKey: '3y84Zfh6QXKVidhc0RvBciX5DUEznaaiJY5aoB05TWvfvKn2duHcrm1mMyIboDLGc5jC8I5YncqDz2ERRn6QnZ5',

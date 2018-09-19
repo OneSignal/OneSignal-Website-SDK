@@ -144,24 +144,18 @@ export class SubscriptionManager {
       subscriptionState
     );
 
-    deviceRecord.appId = this.config.appId;
-
-    let newDeviceId: string;
+    let newDeviceId: string | undefined = undefined;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
       const { deviceId } = await Database.getSubscription();
 
       if (!pushSubscription || pushSubscription.isNewSubscription()) {
-        newDeviceId = await OneSignalApi.updateUserSession(deviceId, deviceRecord);
-        Log.info("Updated the subscriber's OneSignal session:", deviceRecord);
-      } else {
-        // The subscription hasn't changed; don't register with OneSignal and reuse the existing device ID
-        newDeviceId = deviceId;
-        Log.debug(
-          'The existing push subscription was resubscribed, but not registering with OneSignal because the ' +
-          'new subscription is identical.'
-        );
+        // send update player only for new subscriptions
+        // for existing players on_session will send the update instead
+        await OneSignalApi.updatePlayer(this.context.appConfig.appId, deviceId, {
+          notification_types: SubscriptionStateKind.Subscribed,
+        });
       }
-    } else {
+    } else {      
       const id = await OneSignalApi.createUser(deviceRecord);
       newDeviceId = id;
       Log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
@@ -254,7 +248,7 @@ export class SubscriptionManager {
     );
   }
 
-  private async isAlreadyRegisteredWithOneSignal() {
+  public async isAlreadyRegisteredWithOneSignal() {
     const { deviceId } = await Database.getSubscription();
     return !!deviceId;
   }
@@ -610,7 +604,7 @@ export class SubscriptionManager {
     }
   }
 
-  private async isSubscriptionExpiringForSecureIntegration() {
+  private async isSubscriptionExpiringForSecureIntegration(): Promise<boolean> {
     const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
     if (!(
       serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
@@ -649,7 +643,7 @@ export class SubscriptionManager {
     const midpointExpirationTime =
       subscriptionCreatedAt + ((pushSubscription.expirationTime - subscriptionCreatedAt) / 2);
 
-    return pushSubscription.expirationTime && (
+    return !!pushSubscription.expirationTime && (
       /* The current time (in UTC) is past the expiration time (also in UTC) */
       new Date().getTime() >= pushSubscription.expirationTime ||
       new Date().getTime() >= midpointExpirationTime

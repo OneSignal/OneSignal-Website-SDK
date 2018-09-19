@@ -6,25 +6,25 @@ export class Subscription implements Serializable {
   /**
    * The OneSignal player ID.
    */
-  deviceId: string;
+  deviceId: string | undefined;
   /**
    * The GCM/FCM registration token, as a stringified URL, or the Safari device token.
    */
-  subscriptionToken: string;
+  subscriptionToken: string | null | undefined;
   /**
    * Whether the user is opted out of notifications, set by setSubscription().
    */
-  optedOut: boolean;
+  optedOut: boolean | undefined;
   /**
    * A UTC timestamp of when this subscription was created. This value is not modified when a
    * subscription is merely refreshed, only when a subscription is created anew.
    */
-  createdAt: number;
+  createdAt: number | undefined;
   /**
    * For HTTP sites only. This property is stored on the native PushSubscription object, but it's inaccessible
    * in cross-origin frames.
    */
-  expirationTime: number;
+  expirationTime: number | null | undefined;
 
   serialize() {
     return {

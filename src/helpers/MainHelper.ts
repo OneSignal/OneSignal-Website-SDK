@@ -1,31 +1,18 @@
-import bowser from 'bowser';
-
-
-
-import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import OneSignalApi from '../OneSignalApi';
 import Database from '../services/Database';
-import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import {
-  capitalize,
   contains,
   getConsoleStyle,
   triggerNotificationPermissionChanged,
 } from '../utils';
-import EventHelper from './EventHelper';
-import SubscriptionHelper from './SubscriptionHelper';
-import { WorkerMessengerCommand, WorkerMessenger } from '../libraries/WorkerMessenger';
-import ProxyFrame from '../modules/frames/ProxyFrame';
-import { NotificationPermission } from '../models/NotificationPermission';
-import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { AppUserConfigPromptOptions } from '../models/AppConfig';
-import { SlidedownPermissionMessageOptions } from '../popover/Popover';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
+import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
+import Utils from "../utils/Utils";
+import { NotificationPermission } from "../models/NotificationPermission";
 
 export default class MainHelper {
   /**
@@ -48,15 +35,41 @@ export default class MainHelper {
     }
   }
 
+  public static async getCurrentNotificationType(): Promise<SubscriptionStateKind> {
+    const currentPermission: NotificationPermission =
+      await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.context.appConfig.safariWebId);
+    
+    if (currentPermission === NotificationPermission.Default) {
+      return SubscriptionStateKind.Default;
+    }
+
+    if (currentPermission === NotificationPermission.Denied) {
+      // Due to this issue https://github.com/OneSignal/OneSignal-Website-SDK/issues/289 we cannot reliably detect
+      // "default" permission in HTTP context. Browser reports denied for both "default" and "denied" statuses.
+      // Returning SubscriptionStateKind.Default for this case.
+      return (Utils.isUsingSubscriptionWorkaround()) ?
+        SubscriptionStateKind.Default :
+        SubscriptionStateKind.NotSubscribed;
+    }
+
+    const existingUser = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (currentPermission === NotificationPermission.Granted && existingUser) {
+      const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+      return  isPushEnabled ? SubscriptionStateKind.Subscribed : SubscriptionStateKind.MutedByApi;
+    }
+
+    return SubscriptionStateKind.Default;
+  }
+
   /**
    * If the user has manually opted out of notifications (OneSignal.setSubscription), returns -2; otherwise returns 1.
    * @param isOptedIn The result of OneSignal.getSubscription().
    */
   static getNotificationTypeFromOptIn(isOptedIn) {
     if (isOptedIn == true || isOptedIn == null) {
-      return 1;
+      return SubscriptionStateKind.Subscribed;
     } else {
-      return -2;
+      return SubscriptionStateKind.MutedByApi;
     }
   }
 

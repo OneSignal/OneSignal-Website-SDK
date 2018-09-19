@@ -1,7 +1,5 @@
 import bowser from 'bowser';
 
-
-
 import AlreadySubscribedError from '../errors/AlreadySubscribedError';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import PermissionMessageDismissedError from '../errors/PermissionMessageDismissedError';
@@ -19,7 +17,7 @@ import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import OneSignalApi from '../OneSignalApi';
 import Context from '../models/Context';
-import { WorkerMessenger, WorkerMessengerCommand } from '../libraries/WorkerMessenger';
+import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
@@ -34,6 +32,8 @@ import Bell from '../bell/Bell';
 import ConfigManager from "../managers/ConfigManager";
 import { CustomLink } from '../CustomLink';
 import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
+import Utils from "../utils/Utils";
+import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 
 declare var OneSignal: any;
 
@@ -139,45 +139,53 @@ export default class InitHelper {
       }
     }
 
+    // TODO: possibly wrap into Promise.all for parallel execution
     await InitHelper.processExpiringSubscriptions();
     await InitHelper.showNotifyButton();
-
-    if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
-      const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-      if (isPushEnabled) {
-        /*  The user is on Safari and *specifically* set autoRegister to false.
-          The normal case for a user on Safari is to not set anything related to autoRegister.
-          With autoRegister false, we don't automatically show the permission prompt on Safari.
-          However, if push notifications are already enabled, we're actually going to make the same
-          subscribe call and register the device token, because this will return the same device
-          token and allow us to update the user's session count and last active.
-          For sites that omit autoRegister, autoRegister is assumed to be true. For Safari, the session count
-          and last active is updated from this registration call.
-          */
-        await InitHelper.sessionInit({ __sdkCall: true });
-      }
-    }
-
-    if (isUsingSubscriptionWorkaround() && context.sessionManager.isFirstPageView()) {
-      /*
-       The user is on an HTTP site and they accessed this site by opening a new window or tab (starting a new
-       session). This means we should increment their session_count and last_active by calling
-       registerWithOneSignal(). Without this call, the user's session and last_active is not updated. We only
-       do this if the user is actually registered with OneSignal though.
-       */
-      Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Updating session info for HTTP site.`);
-      const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-      if (isPushEnabled) {
-        const { deviceId } = await Database.getSubscription();
-        await OneSignalApi.updateUserSession(deviceId, new PushDeviceRecord(null));
-      }
-    }
-
+    await InitHelper.showPromptsFromWebConfigEditor();
+    await InitHelper.sendOnSessionUpdate();
     await InitHelper.updateEmailSessionCount();
     await context.cookieSyncer.install();
-    await InitHelper.showPromptsFromWebConfigEditor();
 
     await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  }
+
+  public static async sendOnSessionUpdate(): Promise<void> {
+    // If user has been subscribed before, send the on_session update to our backend on the first page view.
+
+    const context: Context = OneSignal.context;
+
+    // TODO: Remove after finished testing.
+    // Safeguarded by flag for initial testing. Sent as a part of server config.
+    if (!context.appConfig.enableOnSession && !Utils.isUsingSubscriptionWorkaround()) {
+      return;
+    }
+
+    if (!context.sessionManager.isFirstPageView()) {
+      return;
+    }
+
+    const existingUser = await context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (!existingUser) {
+      return;
+    }
+
+    const notificationType = await MainHelper.getCurrentNotificationType();
+
+    // TODO: Remove after finished testing.
+    // Previously the update was sent for HTTP sites only every time untli user is subscribed.
+    if (Utils.isUsingSubscriptionWorkaround() && notificationType !== SubscriptionStateKind.Subscribed) {
+      return;
+    }
+    const pushDeviceRecord = new PushDeviceRecord();
+    pushDeviceRecord.subscriptionState = notificationType;
+    try {
+      const { deviceId } = await Database.getSubscription();
+      // Checked for presence of deviceId in isAlreadyRegisteredWithOneSignal()
+      await OneSignalApi.updateUserSession(deviceId, pushDeviceRecord);
+    } catch(e) {
+      Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
+    }
   }
 
   private static async showNotifyButton() {
@@ -253,7 +261,7 @@ export default class InitHelper {
   }
 
   static async saveInitOptions() {
-    let opPromises = [];
+    let opPromises: Promise<any>[] = [];
     if (OneSignal.config.userConfig.persistNotification === false) {
       opPromises.push(Database.put('Options', { key: 'persistNotification', value: false }));
     } else {
@@ -312,26 +320,11 @@ export default class InitHelper {
 
     context.sessionManager.incrementPageViewCount();
 
-    // HTTPS - Only register for push notifications once per session
-    //   Or if the user changes notification permission to Ask or Allow.
-    if (
-      sessionStorage.getItem('ONE_SIGNAL_SESSION') &&
-      !isUsingSubscriptionWorkaround() &&
-      (window.Notification.permission == 'denied' ||
-        sessionStorage.getItem('ONE_SIGNAL_NOTIFICATION_PERMISSION') == window.Notification.permission)
-    ) {
-      Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      return;
-    }
-
-    sessionStorage.setItem('ONE_SIGNAL_NOTIFICATION_PERMISSION', window.Notification.permission);
-
     if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
       Log.debug('On Safari and autoregister is false, skipping sessionInit().');
       // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
       // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
-      if (!isUsingSubscriptionWorkaround())
-        Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+      Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       return;
     }
 
