@@ -1,18 +1,15 @@
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
-import SdkEnvironment from '../managers/SdkEnvironment';
+import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
 import Database from '../services/Database';
-import {
-  contains,
-  getConsoleStyle,
-  triggerNotificationPermissionChanged,
-} from '../utils';
 import { AppUserConfigPromptOptions } from '../models/AppConfig';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import Utils from "../utils/Utils";
 import { NotificationPermission } from "../models/NotificationPermission";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
+import { PermissionUtils } from "../utils/PermissionUtils";
+import { Utils } from "../utils/Utils";
 
 export default class MainHelper {
   /**
@@ -27,9 +24,10 @@ export default class MainHelper {
     for (let i = 0; i < manifests.length; i++) {
       let manifest = manifests[i];
       let url = (manifest as any).href;
-      if (contains(url, 'gcm_sender_id')) {
+      if (Utils.contains(url, 'gcm_sender_id')) {
         // Move the <manifest> to the first thing in <head>
-        document.querySelector('head').insertBefore(manifest, document.querySelector('head').children[0]);
+        const head = document.querySelector('head');
+        head.insertBefore(manifest, head.children[0]);
         Log.info('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
       }
     }
@@ -47,7 +45,7 @@ export default class MainHelper {
       // Due to this issue https://github.com/OneSignal/OneSignal-Website-SDK/issues/289 we cannot reliably detect
       // "default" permission in HTTP context. Browser reports denied for both "default" and "denied" statuses.
       // Returning SubscriptionStateKind.Default for this case.
-      return (Utils.isUsingSubscriptionWorkaround()) ?
+      return (OneSignalUtils.isUsingSubscriptionWorkaround()) ?
         SubscriptionStateKind.Default :
         SubscriptionStateKind.NotSubscribed;
     }
@@ -65,7 +63,7 @@ export default class MainHelper {
    * If the user has manually opted out of notifications (OneSignal.setSubscription), returns -2; otherwise returns 1.
    * @param isOptedIn The result of OneSignal.getSubscription().
    */
-  static getNotificationTypeFromOptIn(isOptedIn) {
+  static getNotificationTypeFromOptIn(isOptedIn: boolean | null) {
     if (isOptedIn == true || isOptedIn == null) {
       return SubscriptionStateKind.Subscribed;
     } else {
@@ -99,7 +97,7 @@ export default class MainHelper {
     const previousPermission = await Database.get('Options', 'notificationPermission');
     const currentPermission = await OneSignal.getNotificationPermission();
     if (previousPermission !== currentPermission) {
-      await triggerNotificationPermissionChanged();
+      await PermissionUtils.triggerNotificationPermissionChanged();
       await Database.put('Options', {
         key: 'notificationPermission',
         value: currentPermission
@@ -112,11 +110,11 @@ export default class MainHelper {
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
-    var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
+    var url = `${SdkEnvironmentHelper.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
-      Log.error(`API call %c${url}`, getConsoleStyle('code'), 'failed with:', data.errors);
+      Log.error(`API call %c${url}`, Utils.getConsoleStyle('code'), 'failed with:', data.errors);
       throw new Error('Failed to get notification icons.');
     }
     return data;

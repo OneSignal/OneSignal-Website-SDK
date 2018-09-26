@@ -2,12 +2,11 @@ import bowser from "bowser";
 
 import Environment from "../Environment";
 import { WorkerMessenger, WorkerMessengerCommand } from "../libraries/WorkerMessenger";
-import SdkEnvironment from "../managers/SdkEnvironment";
-import Context from "../models/Context";
+import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import ContextSW from "../models/ContextSW";
 import OneSignalApiBase from "../OneSignalApiBase";
 import OneSignalApiSW from "../OneSignalApiSW";
 import Database from "../services/Database";
-import { contains, getConsoleStyle, isValidUuid, trimUndefined } from "../utils";
 
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import { RawPushSubscription } from "../models/RawPushSubscription";
@@ -16,6 +15,8 @@ import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
+import { Utils } from "../utils/Utils";
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
@@ -56,10 +57,6 @@ export class ServiceWorker {
    */
   static get database() {
     return Database;
-  }
-
-  static get sdkEnvironment() {
-    return SdkEnvironment;
   }
 
   /**
@@ -116,13 +113,15 @@ export class ServiceWorker {
 
   static async getAppId(): Promise<string> {
     if (self.location.search) {
+      const match = self.location.search.match(/appId=([0-9a-z-]+)&?/i);
       // Successful regex matches are at position 1
-      const appId = self.location.search.match(/appId=([0-9a-z-]+)&?/i)[1];
-      return appId;
-    } else {
-      const { appId } = await Database.getAppConfig();
-      return appId;
+      if (match && match.length > 1) {
+        const appId = match[1];
+        return appId;
+      }
     }
+    const { appId } = await Database.getAppConfig();
+    return appId;
   }
 
   static setupMessageListeners() {
@@ -133,7 +132,7 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.Subscribe, async (appConfigBundle: any) => {
       const appConfig = appConfigBundle;
       Log.debug('[Service Worker] Received subscribe message.');
-      const context = new Context(appConfig);
+      const context = new ContextSW(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
@@ -141,12 +140,12 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SubscribeNew, async (appConfigBundle: any) => {
       const appConfig = appConfigBundle;
       Log.debug('[Service Worker] Received subscribe new message.');
-      const context = new Context(appConfig);
+      const context = new ContextSW(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.SubscribeNew, subscription.serialize());
     });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (appConfigBundle: any) => {
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (_appConfigBundle: any) => {
       Log.debug('[Service Worker] Received AMP subscription state message.');
       const pushSubscription = await self.registration.pushManager.getSubscription();
       if (!pushSubscription) {
@@ -162,7 +161,7 @@ export class ServiceWorker {
       Log.debug('[Service Worker] Received AMP subscribe message.');
       const appId = await ServiceWorker.getAppId();
       const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
-      const context = new Context(appConfig);
+      const context = new ContextSW(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
@@ -171,7 +170,7 @@ export class ServiceWorker {
       Log.debug('[Service Worker] Received AMP unsubscribe message.');
       const appId = await ServiceWorker.getAppId();
       const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
-      const context = new Context(appConfig);
+      const context = new ContextSW(appConfig);
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
     });
@@ -183,7 +182,7 @@ export class ServiceWorker {
    * notifications.
    */
   static onPushReceived(event) {
-    Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
@@ -270,7 +269,7 @@ export class ServiceWorker {
           'Content-Type': 'application/json'
         };
       }
-      Log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`, getConsoleStyle('code'), ':', postData);
+      Log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`, Utils.getConsoleStyle('code'), ':', postData);
       return await fetch(webhookTargetUrl, fetchOptions);
     }
   }
@@ -291,8 +290,8 @@ export class ServiceWorker {
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-        if (!contains(client.url, SdkEnvironment.getOneSignalApiUrl().host) &&
-            !contains(client.url, '.os.tc')) {
+        if (!Utils.contains(client.url, SdkEnvironmentHelper.getOneSignalApiUrl().host) &&
+            !Utils.contains(client.url, '.os.tc')) {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
@@ -336,7 +335,7 @@ export class ServiceWorker {
                                   });
       }
     }
-    return trimUndefined(notification);
+    return Utils.trimUndefined(notification);
   }
 
   /**
@@ -396,7 +395,7 @@ export class ServiceWorker {
    * @param notification A structured notification object.
    */
   static async displayNotification(notification, overrides?) {
-    Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, getConsoleStyle('code'), notification);
+    Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
     const defaultTitle = await ServiceWorker._getTitle();
@@ -570,7 +569,7 @@ export class ServiceWorker {
   static shouldOpenNotificationUrl(url) {
     return (url !== 'javascript:void(0);' &&
             url !== 'do_not_open' &&
-            !contains(url, '_osp=do_not_open'));
+            !Utils.contains(url, '_osp=do_not_open'));
   }
 
   /**
@@ -578,7 +577,7 @@ export class ServiceWorker {
    * Supported on: Chrome 50+ only
    */
   static onNotificationClosed(event) {
-    Log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    Log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
     let notification = event.notification.data;
 
     ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => Log.error(e))
@@ -626,7 +625,7 @@ export class ServiceWorker {
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
   static async onNotificationClicked(event) {
-    Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
@@ -787,12 +786,12 @@ export class ServiceWorker {
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
-    Log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
+    Log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironmentHelper.getWindowEnv().toString()} environment).`, Utils.getConsoleStyle('bold'));
     event.waitUntil(self.clients.claim());
   }
 
   static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
-    Log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    Log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     const appId = await ServiceWorker.getAppId();
     if (!appId) {
@@ -804,7 +803,7 @@ export class ServiceWorker {
       // Without a valid app config (e.g. deleted app), we can't make any calls
       return;
     }
-    const context = new Context(appConfig);
+    const context = new ContextSW(appConfig);
 
     // Get our current device ID
     let deviceIdExists: boolean;
@@ -928,7 +927,7 @@ export class ServiceWorker {
       if (payload &&
           payload.custom &&
           payload.custom.i &&
-          isValidUuid(payload.custom.i)) {
+          OneSignalUtils.isValidUuid(payload.custom.i)) {
         return true;
       } else {
         Log.debug('isValidPushPayload: Valid JSON but missing notification UUID:', payload);
@@ -1020,7 +1019,7 @@ export class ServiceWorker {
           }
           if (notifications.length == 0) {
             Log.warn('OneSignal Worker: Received a GCM push signal, but there were no messages to retrieve. Are you' +
-                ' using the wrong API URL?', SdkEnvironment.getOneSignalApiUrl().toString());
+                ' using the wrong API URL?', SdkEnvironmentHelper.getOneSignalApiUrl().toString());
           }
           resolve(notifications);
         });

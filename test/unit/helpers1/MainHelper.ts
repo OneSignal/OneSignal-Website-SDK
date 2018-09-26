@@ -6,7 +6,7 @@ import OneSignal from "../../../src/OneSignal";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { Utils } from '../../../src/utils/Utils';
+import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
 
 let sinonSandbox: SinonSandbox;
 
@@ -34,7 +34,7 @@ test("getCurrentNotificationType for default permission", async t => {
 test("getCurrentNotificationType for denied permission in HTTP context", async t => {
   sinonSandbox.stub(OneSignal.context.permissionManager, "getNotificationPermission")
     .resolves(NotificationPermission.Denied);
-  sinonSandbox.stub(Utils, "isUsingSubscriptionWorkaround").returns(true);
+  sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").returns(true);
 
   t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.Default);
 });
@@ -42,7 +42,7 @@ test("getCurrentNotificationType for denied permission in HTTP context", async t
 test("getCurrentNotificationType for denied permission in HTTPS context", async t => {
   sinonSandbox.stub(OneSignal.context.permissionManager, "getNotificationPermission")
     .resolves(NotificationPermission.Denied);
-  sinonSandbox.stub(Utils, "isUsingSubscriptionWorkaround").returns(false);
+  sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").returns(false);
 
   t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.NotSubscribed);
 });

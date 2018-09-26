@@ -3,7 +3,7 @@ import { AppUserConfigCustomLinkOptions } from "./models/AppConfig";
 import { ResourceLoadState } from "./services/DynamicResourceLoader";
 import OneSignal from "./OneSignal";
 import Log from "./libraries/Log";
-import Utils from "./utils/Utils";
+import OneSignalUtils from "./utils/OneSignalUtils";
 
 export class CustomLink {
   public static readonly initializedAttribute = "data-cl-initialized";
@@ -113,7 +113,7 @@ export class CustomLink {
         await OneSignal.setSubscription(false);
       }
     } else {
-      if (Utils.isUsingSubscriptionWorkaround()) {
+      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         // Show the HTTP popup so users can re-allow notifications
         OneSignal.registerForPushNotifications();
       } else {

@@ -1,34 +1,39 @@
-import bowser from 'bowser';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import SubscriptionError from '../errors/SubscriptionError';
-import { SubscriptionErrorReason } from '../errors/SubscriptionError';
-import Event from '../Event';
-import Context from '../models/Context';
-import { NotificationPermission } from '../models/NotificationPermission';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import OneSignalApi from '../OneSignalApi';
-import Database from '../services/Database';
-import SdkEnvironment from './SdkEnvironment';
-import { Subscription } from '../models/Subscription';
-import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
-import NotImplementedError from '../errors/NotImplementedError';
-import { base64ToUint8Array } from '../utils/Encoding';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import bowser from "bowser";
+
+import Database from "../services/Database";
+import OneSignalApiShared from "../OneSignalApiShared";
+import { ServiceWorkerManager } from "./ServiceWorkerManager";
+import Environment from "../Environment";
+import Event from "../Event";
+import Log from "../libraries/Log";
+import { ServiceWorkerActiveState } from "../helpers/ServiceWorkerHelper";
+import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+
+import ProxyFrameHost from "../modules/frames/ProxyFrameHost";
+import { NotificationPermission } from "../models/NotificationPermission";
+import { RawPushSubscription } from "../models/RawPushSubscription";
+import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
+import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
+import { Subscription } from "../models/Subscription";
+import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
-import { ServiceWorkerActiveState, ServiceWorkerManager} from './ServiceWorkerManager';
-import { IntegrationKind } from '../models/IntegrationKind';
-import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
-import Log from '../libraries/Log';
-import { triggerNotificationPermissionChanged } from '../utils';
-import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
+import { IntegrationKind } from "../models/IntegrationKind";
+import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
+import PushPermissionNotGrantedError from "../errors/PushPermissionNotGrantedError";
+import { PushPermissionNotGrantedErrorReason } from "../errors/PushPermissionNotGrantedError";
+import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
+import SubscriptionError from "../errors/SubscriptionError";
+import { SubscriptionErrorReason } from "../errors/SubscriptionError";
+import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError";
+import NotImplementedError from "../errors/NotImplementedError";
+
+import { PermissionUtils } from "../utils/PermissionUtils";
+import { base64ToUint8Array } from "../utils/Encoding";
+import { ContextSWInterface } from '../models/ContextSW';
 
 export interface SubscriptionManagerConfig {
-  safariWebId: string;
+  safariWebId?: string;
   appId: string;
   /**
    * The VAPID public key to use for Chrome-like browsers, including Opera and Yandex browser.
@@ -45,16 +50,16 @@ export type SubscriptionStateServiceWorkerNotIntalled =
   SubscriptionStateKind.ServiceWorkerStatus404;
 
 export class SubscriptionManager {
-  private context: Context;
+  private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
 
-  constructor(context: Context, config: SubscriptionManagerConfig) {
+  constructor(context: ContextSWInterface, config: SubscriptionManagerConfig) {
     this.context = context;
     this.config = config;
   }
 
   static isSafari(): boolean {
-    return bowser.safari;
+    return Environment.isSafari();
   }
 
   /**
@@ -66,7 +71,7 @@ export class SubscriptionManager {
    * returns from a successful subscription).
    */
   public async subscribe(subscriptionStrategy: SubscriptionStrategyKind): Promise<RawPushSubscription> {
-    const env = SdkEnvironment.getWindowEnv();
+    const env = SdkEnvironmentHelper.getWindowEnv();
 
     switch (env) {
       case WindowEnvironmentKind.CustomIframe:
@@ -103,6 +108,8 @@ export class SubscriptionManager {
         else
           rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
         break;
+      default:
+        throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
 
     return rawPushSubscription;
@@ -151,16 +158,17 @@ export class SubscriptionManager {
       if (!pushSubscription || pushSubscription.isNewSubscription()) {
         // send update player only for new subscriptions
         // for existing players on_session will send the update instead
-        await OneSignalApi.updatePlayer(this.context.appConfig.appId, deviceId, {
+        await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
           notification_types: SubscriptionStateKind.Subscribed,
         });
       }
     } else {      
-      const id = await OneSignalApi.createUser(deviceRecord);
+      const id = await OneSignalApiShared.createUser(deviceRecord);
       newDeviceId = id;
       Log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
     }
 
+    // TODO Iryna should it be moved into previous else clause?
     await this.associateSubscriptionWithEmail(newDeviceId);
 
     const subscription = await Database.getSubscription();
@@ -178,7 +186,7 @@ export class SubscriptionManager {
 
     await Database.setSubscription(subscription);
 
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+    if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       Event.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
@@ -201,10 +209,10 @@ export class SubscriptionManager {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw new NotImplementedError();
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
+      if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
         const { deviceId } = await Database.getSubscription();
 
-        await OneSignalApi.updatePlayer(this.context.appConfig.appId, deviceId, {
+        await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
           notification_types: SubscriptionStateKind.MutedByApi
         });
 
@@ -238,7 +246,7 @@ export class SubscriptionManager {
     }
 
     // Update the push device record with a reference to the new email ID and email address
-    await OneSignalApi.updatePlayer(
+    await OneSignalApiShared.updatePlayer(
       this.config.appId,
       newDeviceId,
       {
@@ -256,7 +264,7 @@ export class SubscriptionManager {
   private subscribeSafariPromptPermission(): Promise<string | null> {
     return new Promise<string>(resolve => {
       window.safari.pushNotification.requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
+        `${SdkEnvironmentHelper.getOneSignalApiUrl().toString()}/safari`,
         this.config.safariWebId,
         {
           app_id: this.config.appId
@@ -299,7 +307,7 @@ export class SubscriptionManager {
       Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     }
     const deviceToken = await this.subscribeSafariPromptPermission();
-    triggerNotificationPermissionChanged();
+    PermissionUtils.triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
     } else {
@@ -322,7 +330,7 @@ export class SubscriptionManager {
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       window.Notification.permission === NotificationPermission.Default
     ) {
       await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
@@ -337,7 +345,7 @@ export class SubscriptionManager {
         permissions isn't a change. We specifically broadcast "default" to "default" changes.
        */
       if (permission === NotificationPermission.Default)
-        await triggerNotificationPermissionChanged(true);
+        await PermissionUtils.triggerNotificationPermissionChanged(true);
 
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
@@ -569,8 +577,8 @@ export class SubscriptionManager {
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
-    const integrationKind = await SdkEnvironment.getIntegration();
-    const windowEnv = SdkEnvironment.getWindowEnv();
+    const integrationKind = await SdkEnvironmentHelper.getIntegration();
+    const windowEnv = SdkEnvironmentHelper.getWindowEnv();
 
     switch (integrationKind) {
       case IntegrationKind.Secure:
@@ -659,7 +667,7 @@ export class SubscriptionManager {
       return this.getSubscriptionStateForSecure();
     }
 
-    const windowEnv = SdkEnvironment.getWindowEnv();
+    const windowEnv = SdkEnvironmentHelper.getWindowEnv();
 
     switch (windowEnv) {
       case WindowEnvironmentKind.ServiceWorker:
@@ -667,11 +675,11 @@ export class SubscriptionManager {
         const { optedOut } = await Database.getSubscription();
         return {
           subscribed: !!pushSubscription,
-          optedOut: optedOut
+          optedOut: !!optedOut
         };
       default:
         /* Regular browser window environments */
-        const integration = await SdkEnvironment.getIntegration();
+        const integration = await SdkEnvironmentHelper.getIntegration();
 
         switch (integration) {
           case IntegrationKind.Secure:
@@ -699,7 +707,7 @@ export class SubscriptionManager {
   }
 
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
-    const { deviceId, subscriptionToken, optedOut } = await Database.getSubscription();
+    const { deviceId, optedOut } = await Database.getSubscription();
 
     if (SubscriptionManager.isSafari()) {
       const subscriptionState: SafarPushSubscriptionState = window.safari.pushNotification.permission(this.config.safariWebId);
@@ -710,7 +718,7 @@ export class SubscriptionManager {
 
       return {
         subscribed: isSubscribedToSafari,
-        optedOut: optedOut,
+        optedOut: !!optedOut,
       };
     }
 
@@ -727,7 +735,7 @@ export class SubscriptionManager {
       /* You can't be subscribed without a service worker registration */
       return {
         subscribed: false,
-        optedOut: optedOut,
+        optedOut: !!optedOut,
       };
     }
     const pushSubscription = await workerRegistration.pushManager.getSubscription();
@@ -741,7 +749,7 @@ export class SubscriptionManager {
 
     return {
       subscribed: isPushEnabled,
-      optedOut: optedOut,
+      optedOut: !!optedOut,
     };
   }
 
@@ -759,7 +767,7 @@ export class SubscriptionManager {
 
     return {
       subscribed: isPushEnabled,
-      optedOut: optedOut,
+      optedOut: !!optedOut,
     };
   }
 
@@ -770,7 +778,7 @@ export class SubscriptionManager {
    */
   public async registerFailedSubscription(
     subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
-    context: Context) {
+    context: ContextSWInterface) {
     if (context.sessionManager.isFirstPageView()) {
       context.subscriptionManager.registerSubscription(new RawPushSubscription(), subscriptionState);
       context.sessionManager.incrementPageViewCount();

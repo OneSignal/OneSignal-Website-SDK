@@ -1,29 +1,33 @@
-import SdkEnvironment from './managers/SdkEnvironment';
+import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import bowser from 'bowser';
 
 export default class Environment {
-
   /**
    * True if not in a service worker environment.
    */
-  static isBrowser() {
+  public static isBrowser() {
     return typeof window !== 'undefined';
   }
 
-  static version() {
+  public static isSafari(): boolean {
+    return Environment.isBrowser() && bowser.safari;
+  }
+
+  public static version() {
     return (typeof __VERSION__ === "undefined" ? 1 : Number(__VERSION__));
   }
 
-  static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
+  public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
     return ['tw', 'hant']
   }
 
-  static get SIMPLIFIED_CHINESE_LANGUAGE_TAG() {
+  public static get SIMPLIFIED_CHINESE_LANGUAGE_TAG() {
     return ['cn', 'hans']
   }
 
   /* Specifications: https://tools.ietf.org/html/bcp47 */
-  static getLanguage() {
+  public static getLanguage() {
     let languageTag = navigator.language;
     if (languageTag) {
       languageTag = languageTag.toLowerCase();
@@ -51,8 +55,8 @@ export default class Environment {
     }
   }
 
-  static supportsServiceWorkers() {
-    const env = SdkEnvironment.getWindowEnv();
+  public static supportsServiceWorkers() {
+    const env = SdkEnvironmentHelper.getWindowEnv();
 
     switch (env) {
       case WindowEnvironmentKind.ServiceWorker:
@@ -67,7 +71,7 @@ export default class Environment {
     Returns the MD5 hash of all stylesheets within the src/stylesheets
     directory.
    */
-  static getSdkStylesVersionHash() {
+  public static getSdkStylesVersionHash() {
     return (typeof __SRC_STYLESHEETS_MD5_HASH__ === "undefined" ? '1' : __SRC_STYLESHEETS_MD5_HASH__);
   }
 }

@@ -1,8 +1,6 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import { trimUndefined } from '../utils';
 import { NotificationActionButton } from './NotificationActionButton';
-
-
+import Utils from "../utils/Utils";
 
 export class Notification {
     public id?: string;
@@ -19,16 +17,18 @@ export class Notification {
 
     constructor(title: string, options?: Notification) {
       this.title = title;
-      this.id = options.id;
-      this.body = options.body;
-      this.data = options.data;
-      this.url = options.url;
-      this.icon = options.icon;
-      this.image = options.image;
-      this.tag = options.tag
-      this.requireInteraction = options.requireInteraction;
-      this.renotify = options.renotify;
-      this.actions = options.actions;
+      if (options) {
+        this.id = options.id;
+        this.body = options.body;
+        this.data = options.data;
+        this.url = options.url;
+        this.icon = options.icon;
+        this.image = options.image;
+        this.tag = options.tag
+        this.requireInteraction = options.requireInteraction;
+        this.renotify = options.renotify;
+        this.actions = options.actions;
+      }
     }
 
     static createMock({
@@ -72,6 +72,6 @@ export class Notification {
                 });
             }
         }
-        return trimUndefined(notification);
+        return Utils.trimUndefined(notification);
     }
 }

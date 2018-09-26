@@ -1,8 +1,8 @@
 import Environment from './Environment';
-import SdkEnvironment from './managers/SdkEnvironment';
+import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
-import { capitalize, contains, getConsoleStyle } from './utils';
 import Log from './libraries/Log';
+import Utils from "./utils/Utils";
 
 
 const SILENT_EVENTS = [
@@ -60,19 +60,18 @@ export default class Event {
    * @param data Any JavaScript variable to be passed with the event.
    * @param remoteTriggerEnv If this method is being called in a different environment (e.g. was triggered in iFrame but now retriggered on main host), this is the string of the original environment for logging purposes.
    */
-  static async trigger(eventName, data?, remoteTriggerEnv=null) {
-    if (!contains(SILENT_EVENTS, eventName)) {
+  static async trigger(eventName: string, data?: any, remoteTriggerEnv: string | null = null) {
+    if (!Utils.contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
+      var env = Utils.capitalize(SdkEnvironmentHelper.getWindowEnv().toString());
       if (remoteTriggerEnv) {
-        var env = `${capitalize(SdkEnvironment.getWindowEnv().toString())} ⬸ ${capitalize(remoteTriggerEnv)}`;
-      } else {
-        var env = capitalize(SdkEnvironment.getWindowEnv().toString());
+        var env = `${env} ⬸ ${Utils.capitalize(remoteTriggerEnv)}`;
       }
 
       if (displayData || displayData === false) {
-        Log.debug(`(${env}) » %c${eventName}:`, getConsoleStyle('event'), displayData);
+        Log.debug(`(${env}) » %c${eventName}:`, Utils.getConsoleStyle('event'), displayData);
       } else {
-        Log.debug(`(${env}) » %c${eventName}`, getConsoleStyle('event'));
+        Log.debug(`(${env}) » %c${eventName}`, Utils.getConsoleStyle('event'));
       }
     }
 
@@ -93,16 +92,17 @@ export default class Event {
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
     if (Environment.isBrowser() &&
-        (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
-         SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
+        (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
+          SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
       var creator = opener || parent;
       if (!creator) {
         Log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
       } else {
         // But only if the event matches certain events
-        if (contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
-            OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName: eventName, eventData: data});
+        if (Utils.contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
+          if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+            OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
+              {eventName: eventName, eventData: data});
           } else {
             OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);
           }
@@ -117,7 +117,7 @@ export default class Event {
    * @param data Any JavaScript variable to be passed with the event.
    * @private
    */
-  static _triggerLegacy(eventName, data) {
+  static _triggerLegacy(eventName: string, data: any) {
     const event = new CustomEvent(eventName, {
       bubbles: true, cancelable: true, detail: data
     });

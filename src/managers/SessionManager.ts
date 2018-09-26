@@ -1,12 +1,12 @@
 
 
-import SdkEnvironment from './SdkEnvironment';
+import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
 
 export class SessionManager {
   private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
-  private incrementedPageViewCount: boolean;
+  private incrementedPageViewCount: boolean = false;
 
   getPageViewCount(): number {
     try {
@@ -16,7 +16,7 @@ export class SessionManager {
         third-party cookies on some browsers.
        */
       const pageViewCountStr = sessionStorage.getItem(SessionManager.SESSION_STORAGE_KEY_NAME);
-      const pageViewCount = parseInt(pageViewCountStr);
+      const pageViewCount = pageViewCountStr ? parseInt(pageViewCountStr) : 0;
       if (isNaN(pageViewCount)) {
         return 0;
       } else {
@@ -35,7 +35,7 @@ export class SessionManager {
     try {
       sessionStorage.setItem(SessionManager.SESSION_STORAGE_KEY_NAME, sessionCount.toString());
 
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+      if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
         // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
         // main page
         if (OneSignal.subscriptionPopup) {

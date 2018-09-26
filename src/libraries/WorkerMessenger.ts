@@ -1,13 +1,12 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { ServiceWorkerActiveState } from '../managers/ServiceWorkerManager';
-import Context from '../models/Context';
+import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import { Serializable } from '../models/Serializable';
 import Environment from '../Environment';
 import Log from './Log';
+import { ContextSWInterface } from '../models/ContextSW';
 
 
 export enum WorkerMessengerCommand {
@@ -85,22 +84,20 @@ export type WorkerMessengerPayload = Serializable | number | string | object | b
  */
 export class WorkerMessenger {
 
-  private context: Context;
+  private context: ContextSWInterface;
   private replies: WorkerMessengerReplyBuffer;
-  private debug: boolean;
 
-  constructor(context: Context,
+  constructor(context: ContextSWInterface,
               replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer()) {
     this.context = context;
     this.replies = replies;
-    this.debug = true;
   }
 
   /**
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async broadcast(command: WorkerMessengerCommand, payload: WorkerMessengerPayload) {
-    const env = SdkEnvironment.getWindowEnv();
+    const env = SdkEnvironmentHelper.getWindowEnv();
 
     if (env !== WindowEnvironmentKind.ServiceWorker) {
       return;
@@ -125,7 +122,7 @@ export class WorkerMessenger {
       message.
    */
   async unicast(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload, windowClient?: WindowClient) {
-    const env = SdkEnvironment.getWindowEnv();
+    const env = SdkEnvironmentHelper.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
       if (!windowClient) {
@@ -164,7 +161,7 @@ export class WorkerMessenger {
     if (!Environment.supportsServiceWorkers())
       return;
 
-    const env = SdkEnvironment.getWindowEnv();
+    const env = SdkEnvironmentHelper.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
       self.addEventListener('message', this.onWorkerMessageReceivedFromPage.bind(this));
@@ -310,7 +307,7 @@ export class WorkerMessenger {
     activated.
    */
   async isWorkerControllingPage(): Promise<boolean> {
-    const env = SdkEnvironment.getWindowEnv();
+    const env = SdkEnvironmentHelper.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker)
       return !!self.registration.active;
@@ -331,7 +328,7 @@ export class WorkerMessenger {
       if (await this.isWorkerControllingPage())
         resolve();
       else {
-        const env = SdkEnvironment.getWindowEnv();
+        const env = SdkEnvironmentHelper.getWindowEnv();
 
         if (env === WindowEnvironmentKind.ServiceWorker) {
           self.addEventListener('activate', async e => {

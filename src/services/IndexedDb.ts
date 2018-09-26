@@ -1,7 +1,7 @@
 
 import Emitter from '../libraries/Emitter';
-import { contains } from '../utils';
 import Log from '../libraries/Log';
+import Utils from "../utils/Utils";
 
 export default class IndexedDb {
 
@@ -54,8 +54,8 @@ export default class IndexedDb {
      */
     event.preventDefault();
     const error = (<any>event.target).error;
-    if (contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
-      contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
+    if (Utils.contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
+      Utils.contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
       Log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
     } else {
       Log.warn('OneSignal: Fatal error opening IndexedDb database:', error);

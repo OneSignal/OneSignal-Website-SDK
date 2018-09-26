@@ -1,46 +1,26 @@
 import bowser, { IBowser } from 'bowser';
 
-
-import Environment from './Environment';
 import TimeoutError from './errors/TimeoutError';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Database from './services/Database';
 import Log from './libraries/Log';
-import Event from './Event';
+import { OneSignalUtils } from './utils/OneSignalUtils';
+import { PermissionUtils } from './utils/PermissionUtils';
+import { BrowserUtils } from './utils/BrowserUtils';
+import { Utils } from "./utils/Utils";
 
 
-export function isArray(variable) {
-  return Object.prototype.toString.call( variable ) === '[object Array]';
+export function isArray(variable: any) {
+  return Object.prototype.toString.call(variable) === '[object Array]';
 }
 
-var decodeTextArea = null;
-export function decodeHtmlEntities(text) {
-  if (Environment.isBrowser()) {
-    if (!decodeTextArea) {
-      decodeTextArea = document.createElement("textarea");
-    }
-  }
-  if (decodeTextArea) {
-    decodeTextArea.innerHTML = text;
-    return decodeTextArea.value;
-  } else {
-    // Not running in a browser environment, text cannot be decoded
-    return text;
-  }
+export function decodeHtmlEntities(text: string) {
+  return BrowserUtils.decodeHtmlEntities(text);
 }
 
-export function redetectBrowserUserAgent(): IBowser  {
-    /*
-   TODO: Make this a little neater
-   During testing, the browser object may be initialized before the userAgent is injected
-  */
-  if (bowser.name === '' && bowser.version === '') {
-    var browser = bowser._detect(navigator.userAgent);
-  } else {
-    var browser = bowser;
-  }
-  return browser;
+export function redetectBrowserUserAgent(): IBowser {
+  return OneSignalUtils.redetectBrowserUserAgent();
 }
 
 export function isPushNotificationsSupported() {
@@ -140,11 +120,7 @@ export function removeDomElement(selector) {
 }
 
 export function isLocalhostAllowedAsSecureOrigin() {
-  return (
-    OneSignal.config &&
-    OneSignal.config.userConfig &&
-    OneSignal.config.userConfig.allowLocalhostAsSecureOrigin === true
-  );
+  return OneSignalUtils.isLocalhostAllowedAsSecureOrigin();
 }
 
 /**
@@ -160,80 +136,35 @@ export async function awaitOneSignalInitAndSupported(): Promise<object> {
   });
 }
 
-  /**
-   * Returns true if web push subscription occurs on a subdomain of OneSignal.
-   * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
-   * @remarks
-   *   This method returns true if:
-   *     - The browser is not Safari
-   *         - Safari uses a different method of subscription and does not require our workaround
-   *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
-   *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
-   *        - The protocol of the current webpage is http:
-   *   Exceptions are:
-   *     - Safe hostnames like localhost and 127.0.0.1
-   *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
-   *        - We are already in popup or iFrame mode, or this is called from the service worker
-   */
-  export function isUsingSubscriptionWorkaround() {
-    if (!OneSignal.config) {
-      throw new Error(
-        `(${SdkEnvironment.getWindowEnv().toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
-      );
-    }
-    if (bowser.safari) {
-      return false;
-    }
-
-    if (isLocalhostAllowedAsSecureOrigin() &&
-      (location.hostname === 'localhost' ||location.hostname === '127.0.0.1')) {
-      return false;
-    }
-
-    return (
-      (
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host ||
-        SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe
-      ) &&
-      (
-        !!OneSignal.config.subdomain ||
-        location.protocol === 'http:'
-      )
-    );
-  }
+/**
+ * Returns true if web push subscription occurs on a subdomain of OneSignal.
+ * If true, our main IndexedDB is stored on the subdomain of onesignal.com, and not the user's site.
+ * @remarks
+ *   This method returns true if:
+ *     - The browser is not Safari
+ *         - Safari uses a different method of subscription and does not require our workaround
+ *     - The init parameters contain a subdomain (even if the protocol is HTTPS)
+ *         - HTTPS users using our subdomain workaround still have the main IndexedDB stored on our subdomain
+ *        - The protocol of the current webpage is http:
+ *   Exceptions are:
+ *     - Safe hostnames like localhost and 127.0.0.1
+ *          - Because we don't want users to get the wrong idea when testing on localhost that direct permission is supported on HTTP, we'll ignore these exceptions. HTTPS will always be required for direct permission
+ *        - We are already in popup or iFrame mode, or this is called from the service worker
+ */
+export function isUsingSubscriptionWorkaround() {
+  return OneSignalUtils.isUsingSubscriptionWorkaround();
+}
 
 export async function triggerNotificationPermissionChanged(updateIfIdentical = false) {
-  let newPermission, isUpdating;
-  const currentPermission = await OneSignal.privateGetNotificationPermission();
-  const previousPermission = await Database.get('Options', 'notificationPermission');
-
-  newPermission = currentPermission;
-  isUpdating = currentPermission !== previousPermission || updateIfIdentical;
-
-  if (isUpdating) {
-    await Database.put('Options', {
-      key: 'notificationPermission',
-      value: currentPermission
-    });
-    Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-      to: newPermission
-    });
-  }
+  return PermissionUtils.triggerNotificationPermissionChanged(updateIfIdentical);
 }
 
 /**
  * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
  * Helps when logging method calls.
  */
-export function stringify(obj) {
-  return JSON.stringify(obj, (_, value) => {
-    if (typeof value === 'function') {
-      return "[Function]";
-    }
-    else {
-      return value;
-    }
-  }, 4);
+export function stringify(obj: any) {
+  return Utils.stringify(obj);
 }
 
 export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
@@ -242,11 +173,11 @@ export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
   }
 }
 
-export function logMethodCall(methodName: string, ...args) {
-  return Log.debug(`Called %c${methodName}(${args.map(stringify).join(', ')})`, getConsoleStyle('code'), '.');
+export function logMethodCall(methodName: string, ...args: any[]) {
+  return OneSignalUtils.logMethodCall(methodName, ...args);
 }
 
-export function isValidEmail(email) {
+export function isValidEmail(email: string | undefined | null) {
   return !!email &&
          !!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/)
 }
@@ -338,21 +269,7 @@ export function hasCssClass(targetSelectorOrElement: Element | string, cssClass:
  */
 
 export function getConsoleStyle(style: string) {
-  if (style == 'code') {
-    return `padding: 0 1px 1px 5px;border: 1px solid #ddd;border-radius: 3px;font-family: Monaco,"DejaVu Sans Mono","Courier New",monospace;color: #444;`;
-  } else if (style == 'bold') {
-    return `font-weight: 600;color: rgb(51, 51, 51);`;
-  } else if (style == 'alert') {
-    return `font-weight: 600;color: red;`;
-  } else if (style == 'event') {
-    return `color: green;`;
-  } else if (style == 'postmessage') {
-    return `color: orange;`;
-  } else if (style == 'serviceworkermessage') {
-    return `color: purple;`;
-  } else {
-    return '';
-  }
+  return Utils.getConsoleStyle(style);
 }
 
 /**
@@ -371,12 +288,7 @@ export function nothing(): Promise<any> {
 }
 
 export function timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<TimeoutError | any> {
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => {
-      reject(new TimeoutError())
-    }, milliseconds);
-  });
-  return Promise.race([promise, timeoutPromise]);
+  return Utils.timeoutPromise(promise, milliseconds);
 }
 
 export function when(condition, promiseIfTrue, promiseIfFalse) {
@@ -390,10 +302,8 @@ export function when(condition, promiseIfTrue, promiseIfFalse) {
 /**
  * Returns true if match is in string; otherwise, returns false.
  */
-export function contains(indexOfAble, match) {
-  if (!indexOfAble)
-    return false;
-  return indexOfAble.indexOf(match) !== -1;
+export function contains(indexOfAble: any, match: string) {
+  return Utils.contains(indexOfAble, match);
 }
 
 /**
@@ -402,34 +312,12 @@ export function contains(indexOfAble, match) {
  * Only affects keys that the object directly contains (i.e. not those inherited via the object's prototype).
  * @param object
  */
-export function trimUndefined(object) {
-  for (var property in object) {
-    if (object.hasOwnProperty(property)) {
-      if (object[property] === undefined) {
-        delete object[property];
-      }
-    }
-  }
-  return object;
+export function trimUndefined(object: any) {
+  return Utils.trimUndefined(object);
 }
 
 export function getRandomUuid(): string {
-  let uuidStr = '';
-  const crypto = typeof window === 'undefined' ? (global as any).crypto : window.crypto || (<any>window).msCrypto;
-  if (crypto) {
-    uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = (crypto.getRandomValues(new Uint8Array(1))[0] % 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  } else {
-    uuidStr = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
-  return uuidStr;
+  return OneSignalUtils.getRandomUuid();
 }
 
 /**
@@ -438,7 +326,7 @@ export function getRandomUuid(): string {
  * @returns {*|boolean}
  */
 export function isValidUuid(uuid: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(uuid);
+  return OneSignalUtils.isValidUuid(uuid);
 }
 
 export function getUrlQueryParam(name: string) {
@@ -469,7 +357,7 @@ export function wipeIndexedDb() {
  * @returns {string} The string with the first letter capitalized.
  */
 export function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return Utils.capitalize(text);
 }
 
 /**
@@ -628,12 +516,6 @@ export function prepareEmailForHashing(email: string): string {
   return email.replace(/\s/g, '').toLowerCase();
 }
 
-export function encodeHashAsUriComponent(hash: object): string {
-  let uriComponent = '';
-  const keys = Object.keys(hash);
-  for (var key of keys) {
-    const value = hash[key];
-    uriComponent += `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
-  }
-  return uriComponent;
+export function encodeHashAsUriComponent(hash: any): string {
+  return Utils.encodeHashAsUriComponent(hash);
 }

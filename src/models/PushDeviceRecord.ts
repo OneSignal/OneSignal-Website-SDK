@@ -1,13 +1,8 @@
 import bowser from 'bowser';
 
-import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { DevicePlatformKind } from './DevicePlatformKind';
 import { RawPushSubscription } from './RawPushSubscription';
-import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-
 import { DeviceRecord } from './DeviceRecord';
 
 

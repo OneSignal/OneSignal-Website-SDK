@@ -1,5 +1,6 @@
-import {Notification} from "./Notification";
-import {Timestamp} from "./Timestamp";
+import { Notification } from "./Notification";
+import { Timestamp } from "./Timestamp";
+
 class AppState {
     defaultNotificationUrl: string;
     defaultNotificationTitle: string;

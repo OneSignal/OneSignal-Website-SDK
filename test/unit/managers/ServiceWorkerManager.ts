@@ -3,13 +3,14 @@ import '../../support/polyfills/polyfills';
 import test from 'ava';
 import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from "nock";
-import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
+import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
+import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import Path from '../../../src/models/Path';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import Context from '../../../src/models/Context';
-import SdkEnvironment from "../../../src/managers/SdkEnvironment";
+import SdkEnvironmentHelper from "../../../src/helpers/SdkEnvironmentHelper";
 import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind"
 
 import OneSignal from '../../../src/OneSignal';
@@ -21,7 +22,7 @@ import {
 } from "../../../src/libraries/WorkerMessenger";
 import Event from "../../../src/Event";
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
-import Utils from "../../../src/utils/Utils";
+import OneSignalUtils from "../../../src/utils/OneSignalUtils";
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -305,8 +306,8 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
   const workerRegistrationError = new Error("Registration failed");
 
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
-  sandbox.stub(Utils, "getBaseUrl").returns(origin);
-  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+  sandbox.stub(OneSignalUtils, "getBaseUrl").returns(origin);
+  sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
   await t.throws(manager.installWorker(), ServiceWorkerRegistrationError);
 });
 
@@ -342,7 +343,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
 
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
   sandbox.stub(location, "origin").returns(origin);
-  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
+  sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
   const error = await t.throws(manager.installWorker(), Error);
   t.is(error.message, workerRegistrationError.message);
 });

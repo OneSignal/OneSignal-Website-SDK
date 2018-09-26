@@ -21,8 +21,6 @@ import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { ServiceWorkerActiveState, ServiceWorkerManager } from './managers/ServiceWorkerManager';
-import { SubscriptionManager } from './managers/SubscriptionManager';
 import {AppConfig, AppUserConfig} from './models/AppConfig';
 import Context from './models/Context';
 import { Notification } from './models/Notification';
@@ -213,6 +211,14 @@ export default class OneSignal {
     return true;
   }
 
+  static async initializeConfig(options: AppUserConfig) {
+    const appConfig = await new ConfigManager().getAppConfig(options);
+    Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
+
+    OneSignal.context = new Context(appConfig);
+    OneSignal.config = OneSignal.context.appConfig;
+  }
+
   /**
    * Initializes the SDK, called by the developer.
    * @PublicApi
@@ -222,7 +228,7 @@ export default class OneSignal {
 
     await InitHelper.ponyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
-    await InitHelper.initializeConfig(options);
+    await OneSignal.initializeConfig(options);
 
     if (bowser.safari && !OneSignal.config.safariWebId) {
       /**

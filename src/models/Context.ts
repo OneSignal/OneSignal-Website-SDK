@@ -1,6 +1,6 @@
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
+import { SubscriptionManager, SubscriptionManagerConfig } from '../managers/SubscriptionManager';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import CookieSyncer from '../modules/CookieSyncer';
 import { AppConfig } from './AppConfig';
@@ -9,10 +9,15 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { SessionManager } from '../managers/SessionManager';
 import PermissionManager from '../managers/PermissionManager';
 import MetricsManager from '../managers/MetricsManager';
+import { ContextSWInterface } from "./ContextSW";
 
+export interface ContextInterface extends ContextSWInterface {
+  dynamicResourceLoader: DynamicResourceLoader;
+  cookieSyncer: CookieSyncer;
+  metricsManager: MetricsManager;
+}
 
-export default class Context {
-
+export default class Context implements ContextInterface {
   public appConfig: AppConfig;
   public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManager;
@@ -28,12 +33,13 @@ export default class Context {
 
     this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
 
-    this.subscriptionManager = new SubscriptionManager(this, {
+    const subscriptionManagerConfig: SubscriptionManagerConfig = {
       safariWebId: appConfig.safariWebId,
       appId: appConfig.appId,
       vapidPublicKey: appConfig.vapidPublicKey,
       onesignalVapidPublicKey: appConfig.onesignalVapidPublicKey,
-    });
+    };
+    this.subscriptionManager = new SubscriptionManager(this, subscriptionManagerConfig);
 
     const serviceWorkerManagerConfig = {
       workerAPath: new Path('/' + SdkEnvironment.getBuildEnvPrefix() + 'OneSignalSDKWorker.js'),

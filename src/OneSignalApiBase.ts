@@ -1,6 +1,6 @@
 import Environment from './Environment';
-import SdkEnvironment from './managers/SdkEnvironment';
-import { contains } from "./utils";
+import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
+import { Utils } from "./utils/Utils";
 
 type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE";
@@ -41,7 +41,7 @@ export class OneSignalApiBase {
       (contents as any).body = JSON.stringify(data);
 
     let status: number;
-    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
+    return fetch(SdkEnvironmentHelper.getOneSignalApiUrl().toString() + '/' + action, contents)
         .then(response => {
           status = response.status;
           return response.json();
@@ -65,8 +65,8 @@ export class OneSignalApiBase {
       return 'no-error';
     }
     let errors = error.errors;
-    if (contains(errors, 'No user with this id found') ||
-        contains(errors, 'Could not find app_id for given player id.')) {
+    if (Utils.contains(errors, 'No user with this id found') ||
+        Utils.contains(errors, 'Could not find app_id for given player id.')) {
       return 'no-user-id-error';
     }
     return 'unknown-error';

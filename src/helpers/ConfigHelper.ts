@@ -1,10 +1,10 @@
 import { 
   AppUserConfig, AppConfig, AppUserConfigPromptOptions, ServerAppConfigPrompt,
   ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from "../models/AppConfig";
-import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
-import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
-import { contains, isValidUuid } from "../utils";
+import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
+import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../utils/Utils";
 
 export enum IntegrationConfigurationKind {
@@ -26,7 +26,7 @@ export class ConfigHelper {
   public static async getAppConfig(userConfig: AppUserConfig,
     downloadServerAppConfig: (appId: string) => Promise<ServerAppConfig>): Promise<AppConfig> {
     try {
-      if (!userConfig || !userConfig.appId || !isValidUuid(userConfig.appId))
+      if (!userConfig || !userConfig.appId || !OneSignalUtils.isValidUuid(userConfig.appId))
         throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
   
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
@@ -47,10 +47,10 @@ export class ConfigHelper {
 
   public static checkRestrictedOrigin(appConfig: AppConfig) {
     if (appConfig.restrictedOriginEnabled) {
-      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+      if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
         if (window.top === window &&
-          !contains(window.location.hostname, ".os.tc") &&
-          !contains(window.location.hostname, ".onesignal.com") &&
+          !Utils.contains(window.location.hostname, ".os.tc") &&
+          !Utils.contains(window.location.hostname, ".onesignal.com") &&
           !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
           throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
             siteUrl: appConfig.origin

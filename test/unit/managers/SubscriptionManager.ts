@@ -4,8 +4,8 @@ import test, { GenericTestContext, Context as AvaContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import timemachine from 'timemachine';
 
-import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
-import Path from '../../../src/models/Path';
+import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
+import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/services/Database';
 import Context from '../../../src/models/Context';
@@ -18,13 +18,13 @@ import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
-import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
 import OneSignal from '../../../src/OneSignal';
-import OneSignalApi from '../../../src/OneSignalApi';
+import OneSignalApiShared from '../../../src/OneSignalApiShared';
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
+import SdkEnvironmentHelper from '../../../src/helpers/SdkEnvironmentHelper';
 
 // manually create and restore the sandbox
 let sandbox: SinonSandbox;
@@ -256,7 +256,7 @@ test('device ID is available after register event', async t => {
     });
   });
 
-  const stub = sinon.stub(OneSignalApi, "createUser").resolves(randomPlayerId);
+  const stub = sinon.stub(OneSignalApiShared, "createUser").resolves(randomPlayerId);
 
   await context.subscriptionManager.registerSubscription(rawPushSubscription);
   await registerEventPromise;
@@ -274,8 +274,8 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
   };
   await TestEnvironment.mockInternalOneSignal();
   
-  sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
-  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
+  sandbox.stub(SdkEnvironmentHelper, "getIntegration").returns(IntegrationKind.Secure);
+  sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
   sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.WorkerA);
 
@@ -414,7 +414,7 @@ async function expirationTestCase(
 
   // Force service worker active state dependency so test can run
   const stub = sinon.stub(ServiceWorkerManager.prototype, "getActiveState").resolves(ServiceWorkerActiveState.WorkerA);
-  const integrationStub = sinon.stub(SdkEnvironment, "getIntegration").resolves(env);
+  const integrationStub = sinon.stub(SdkEnvironmentHelper, "getIntegration").resolves(env);
 
   const newTimeBeforeMidpoint = expirationCheckTime;
 
@@ -639,7 +639,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(true);
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error403);
-    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
@@ -664,7 +664,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(false);
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error403);
-    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
@@ -689,7 +689,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(true);
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error404);
-    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
@@ -714,7 +714,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(false);
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error404);
-    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");

@@ -1,13 +1,9 @@
-
-
 import Environment from '../../Environment';
 import Event from '../../Event';
-import EventHelper from '../../helpers/EventHelper';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
-import Context from '../../models/Context';
-import { ServiceWorkerActiveState } from "../../managers/ServiceWorkerManager";
+import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
 
 /**

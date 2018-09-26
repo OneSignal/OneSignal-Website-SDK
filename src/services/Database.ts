@@ -1,20 +1,27 @@
-import Emitter from '../libraries/Emitter';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig } from '../models/AppConfig';
-import { AppState } from '../models/AppState';
-import { Notification } from '../models/Notification';
-import { ServiceWorkerState } from '../models/ServiceWorkerState';
-import { Subscription } from '../models/Subscription';
-import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
-import { Timestamp } from '../models/Timestamp';
+import Emitter from "../libraries/Emitter";
+import IndexedDb from "./IndexedDb";
 
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import IndexedDb from './IndexedDb';
-import { EmailProfile } from '../models/EmailProfile';
-import { isUsingSubscriptionWorkaround } from '../utils';
+import { AppConfig } from "../models/AppConfig";
+import { AppState } from "../models/AppState";
+import { Notification } from "../models/Notification";
+import { ServiceWorkerState } from "../models/ServiceWorkerState";
+import { Subscription } from "../models/Subscription";
+import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
+import { Timestamp } from "../models/Timestamp";
+import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
+import { EmailProfile } from "../models/EmailProfile";
+import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import OneSignalUtils from "../utils/OneSignalUtils";
 
 enum DatabaseEventName {
   SET
+}
+
+interface DatabaseResult {
+  id: any;
+  value: any;
+  data: any;
+  timestamp: any;
 }
 
 type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened";
@@ -26,7 +33,7 @@ export default class Database {
 
   /* Temp Database Proxy */
   public static databaseInstanceName: string;
-  public static databaseInstance: Database | null;
+  private static databaseInstance: Database | null;
   /* End Temp Database Proxy */
 
   public static EVENTS = DatabaseEventName;
@@ -36,23 +43,40 @@ export default class Database {
     this.database = new IndexedDb(this.databaseName);
   }
 
-  static applyDbResultFilter(table: OneSignalDbTable, key: string, result) {
+  public static resetInstance(): void {
+    if (Database.databaseInstance) {
+      Database.databaseInstance = null;
+    }
+  }
+
+  public static get singletonInstance(): Database {
+    if (!Database.databaseInstanceName) {
+      Database.databaseInstanceName = "ONE_SIGNAL_SDK_DB";
+    }
+    if (!Database.databaseInstance) {
+      Database.databaseInstance = new Database(Database.databaseInstanceName);
+    }
+
+    return Database.databaseInstance;
+  }
+
+  static applyDbResultFilter(table: OneSignalDbTable, key?: string, result?: DatabaseResult) {
     switch (table) {
-      case 'Options':
+      case "Options":
         if (result && key)
           return result.value;
         else if (result && !key)
           return result;
         else
           return null;
-      case 'Ids':
+      case "Ids":
         if (result && key)
           return result.id;
         else if (result && !key)
           return result;
         else
           return null;
-      case 'NotificationOpened':
+      case "NotificationOpened":
         if (result && key)
           return {data: result.data, timestamp: result.timestamp};
         else if (result && !key)
@@ -76,13 +100,13 @@ export default class Database {
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     return await new Promise<T>(async (resolve) => {
-      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-          isUsingSubscriptionWorkaround() &&
-          SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+      if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+          OneSignalUtils.isUsingSubscriptionWorkaround() &&
+          SdkEnvironmentHelper.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
-        }], reply => {
+        }], (reply: any) => {
           let result = reply.data[0];
           resolve(result);
         });
@@ -101,16 +125,20 @@ export default class Database {
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
     await new Promise(async (resolve, reject) => {
-      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-        isUsingSubscriptionWorkaround() &&
-        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, [{table: table, keypath: keypath}], reply => {
-          if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-            resolve();
-          } else {
-            reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}), but did not get success response.`);
+      if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+        OneSignalUtils.isUsingSubscriptionWorkaround() &&
+        SdkEnvironmentHelper.getTestEnv() === TestEnvironmentKind.None) {
+        OneSignal.proxyFrameHost.message(
+          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, 
+          [{table: table, keypath: keypath}], 
+          (reply: any) => {
+            if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
+              resolve();
+            } else {
+              reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}), but did not get success response.`);
+            }
           }
-        });
+        );
       } else {
         await this.database.put(table, keypath);
         resolve();
@@ -124,17 +152,21 @@ export default class Database {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   remove(table: OneSignalDbTable, keypath?: string) {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-      isUsingSubscriptionWorkaround() &&
-      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+    if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      OneSignalUtils.isUsingSubscriptionWorkaround() &&
+      SdkEnvironmentHelper.getTestEnv() === TestEnvironmentKind.None) {
       return new Promise((resolve, reject) => {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, [{ table: table, keypath: keypath }], reply => {
-          if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-            resolve();
-          } else {
-            reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}), but did not get success response.`);
+        OneSignal.proxyFrameHost.message(
+          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,
+          [{ table: table, keypath: keypath }],
+          (reply: any) => {
+            if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
+              resolve();
+            } else {
+              reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}), but did not get success response.`);
+            }
           }
-        });
+        );
       });
     }
     else {
@@ -144,53 +176,53 @@ export default class Database {
 
   async getAppConfig(): Promise<any> {
     const config: any = {};
-    const appIdStr: string = await this.get<string>('Ids', 'appId');
+    const appIdStr: string = await this.get<string>("Ids", "appId");
     config.appId = appIdStr;
-    config.subdomain = await this.get<string>('Options', 'subdomain');
-    config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
-    config.emailAuthRequired = await this.get<boolean>('Options', 'emailAuthRequired');
+    config.subdomain = await this.get<string>("Options", "subdomain");
+    config.vapidPublicKey = await this.get<string>("Options", "vapidPublicKey");
+    config.emailAuthRequired = await this.get<boolean>("Options", "emailAuthRequired");
     return config;
   }
 
   async setAppConfig(appConfig: AppConfig) {
     if (appConfig.appId)
-      await this.put('Ids', {type: 'appId', id: appConfig.appId})
+      await this.put("Ids", {type: "appId", id: appConfig.appId})
     if (appConfig.subdomain)
-      await this.put('Options', {key: 'subdomain', value: appConfig.subdomain})
+      await this.put("Options", {key: "subdomain", value: appConfig.subdomain})
     if (appConfig.httpUseOneSignalCom === true)
-      await this.put('Options', { key: 'httpUseOneSignalCom', value: true })
+      await this.put("Options", { key: "httpUseOneSignalCom", value: true })
     else if (appConfig.httpUseOneSignalCom === false)
-      await this.put('Options', {key: 'httpUseOneSignalCom', value: false })
+      await this.put("Options", {key: "httpUseOneSignalCom", value: false })
     if (appConfig.emailAuthRequired === true)
-      await this.put('Options', { key: 'emailAuthRequired', value: true })
+      await this.put("Options", { key: "emailAuthRequired", value: true })
     else if (appConfig.emailAuthRequired === false)
-      await this.put('Options', {key: 'emailAuthRequired', value: false })
+      await this.put("Options", {key: "emailAuthRequired", value: false })
     if (appConfig.vapidPublicKey)
-      await this.put('Options', {key: 'vapidPublicKey', value: appConfig.vapidPublicKey})
+      await this.put("Options", {key: "vapidPublicKey", value: appConfig.vapidPublicKey})
   }
 
   async getAppState(): Promise<AppState> {
     const state = new AppState();
-    state.defaultNotificationUrl = await this.get<string>('Options', 'defaultUrl');
-    state.defaultNotificationTitle = await this.get<string>('Options', 'defaultTitle');
-    state.lastKnownPushEnabled = await this.get<boolean>('Options', 'isPushEnabled');
-    state.clickedNotifications = await this.get<Map<URL, [Notification, Timestamp]>>('NotificationOpened');
+    state.defaultNotificationUrl = await this.get<string>("Options", "defaultUrl");
+    state.defaultNotificationTitle = await this.get<string>("Options", "defaultTitle");
+    state.lastKnownPushEnabled = await this.get<boolean>("Options", "isPushEnabled");
+    state.clickedNotifications = await this.get<Map<URL, [Notification, Timestamp]>>("NotificationOpened");
     return state;
   }
 
   async setAppState(appState: AppState) {
     if (appState.defaultNotificationUrl)
       await this.put("Options", {key: "defaultUrl", value: appState.defaultNotificationUrl});
-    if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === '')
+    if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
       await this.put("Options", {key: "defaultTitle", value: appState.defaultNotificationTitle});
     if (appState.lastKnownPushEnabled != null)
-      await this.put('Options', {key: 'isPushEnabled', value: appState.lastKnownPushEnabled});
+      await this.put("Options", {key: "isPushEnabled", value: appState.lastKnownPushEnabled});
     if (appState.clickedNotifications) {
       const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
       for (let url of clickedNotificationUrls) {
         const notificationDetails = appState.clickedNotifications[url];
         if (notificationDetails) {
-          await this.put('NotificationOpened', {
+          await this.put("NotificationOpened", {
             url: url,
             data: (notificationDetails as any).data,
             timestamp: (notificationDetails as any).timestamp
@@ -199,7 +231,7 @@ export default class Database {
           // If we get an object like:
           // { "http://site.com/page": null}
           // It means we need to remove that entry
-          await this.remove('NotificationOpened', url);
+          await this.remove("NotificationOpened", url);
         }
       }
     }
@@ -207,32 +239,32 @@ export default class Database {
 
   async getServiceWorkerState(): Promise<ServiceWorkerState> {
     const state = new ServiceWorkerState();
-    state.workerVersion = await this.get<number>('Ids', 'WORKER1_ONE_SIGNAL_SW_VERSION');
-    state.updaterWorkerVersion = await this.get<number>('Ids', 'WORKER2_ONE_SIGNAL_SW_VERSION');
-    state.backupNotification = await this.get<Notification>('Ids', 'backupNotification');
+    state.workerVersion = await this.get<number>("Ids", "WORKER1_ONE_SIGNAL_SW_VERSION");
+    state.updaterWorkerVersion = await this.get<number>("Ids", "WORKER2_ONE_SIGNAL_SW_VERSION");
+    state.backupNotification = await this.get<Notification>("Ids", "backupNotification");
     return state;
   }
 
    async setServiceWorkerState(state: ServiceWorkerState) {
     if (state.workerVersion)
-      await this.put('Ids', {type: 'WORKER1_ONE_SIGNAL_SW_VERSION', id: state.workerVersion});
+      await this.put("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion});
     if (state.updaterWorkerVersion)
-      await this.put('Ids', {type: 'WORKER2_ONE_SIGNAL_SW_VERSION', id: state.updaterWorkerVersion});
+      await this.put("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: state.updaterWorkerVersion});
     if (state.backupNotification)
-      await this.put('Ids', {type: 'backupNotification', id: state.backupNotification});
+      await this.put("Ids", {type: "backupNotification", id: state.backupNotification});
   }
 
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
-    subscription.deviceId = await this.get<string>('Ids', 'userId');
-    subscription.subscriptionToken = await this.get<string>('Ids', 'registrationId');
+    subscription.deviceId = await this.get<string>("Ids", "userId");
+    subscription.subscriptionToken = await this.get<string>("Ids", "registrationId");
 
     // The preferred database key to store our subscription
-    const dbOptedOut = await this.get<boolean>('Options', 'optedOut');
+    const dbOptedOut = await this.get<boolean>("Options", "optedOut");
     // For backwards compatibility, we need to read from this if the above is not found
-    const dbNotOptedOut = await this.get<boolean>('Options', 'subscription');
-    const createdAt = await this.get<number>('Options', 'subscriptionCreatedAt');
-    const expirationTime = await this.get<number>('Options', 'subscriptionExpirationTime');
+    const dbNotOptedOut = await this.get<boolean>("Options", "subscription");
+    const createdAt = await this.get<number>("Options", "subscriptionCreatedAt");
+    const expirationTime = await this.get<number>("Options", "subscriptionExpirationTime");
 
     if (dbOptedOut != null) {
       subscription.optedOut = dbOptedOut;
@@ -251,27 +283,27 @@ export default class Database {
 
   async setSubscription(subscription: Subscription) {
     if (subscription.deviceId && subscription.deviceId) {
-      await this.put('Ids', { type: 'userId', id: subscription.deviceId });
+      await this.put("Ids", { type: "userId", id: subscription.deviceId });
     }
     if (typeof subscription.subscriptionToken !== "undefined") {
       // Allow null subscriptions to be set
-      await this.put('Ids', { type: 'registrationId', id: subscription.subscriptionToken });
+      await this.put("Ids", { type: "registrationId", id: subscription.subscriptionToken });
     }
     if (subscription.optedOut != null) { // Checks if null or undefined, allows false
-      await this.put('Options', { key: 'optedOut', value: subscription.optedOut });
+      await this.put("Options", { key: "optedOut", value: subscription.optedOut });
     }
     if (subscription.createdAt != null) {
-      await this.put('Options', { key: 'subscriptionCreatedAt', value: subscription.createdAt});
+      await this.put("Options", { key: "subscriptionCreatedAt", value: subscription.createdAt});
     }
     if (subscription.expirationTime != null) {
-      await this.put('Options', { key: 'subscriptionExpirationTime', value: subscription.expirationTime});
+      await this.put("Options", { key: "subscriptionExpirationTime", value: subscription.expirationTime});
     } else {
-      await this.remove('Options', 'subscriptionExpirationTime');
+      await this.remove("Options", "subscriptionExpirationTime");
     }
   }
 
   async getEmailProfile(): Promise<EmailProfile> {
-    const profileJson = await this.get<string>('Ids', 'emailProfile');
+    const profileJson = await this.get<string>("Ids", "emailProfile");
     if (profileJson) {
       return EmailProfile.deserialize(profileJson);
     } else {
@@ -281,16 +313,16 @@ export default class Database {
 
   async setEmailProfile(emailProfile: EmailProfile): Promise<void> {
     if (emailProfile) {
-      await this.put('Ids', { type: 'emailProfile', id: emailProfile.serialize() });
+      await this.put("Ids", { type: "emailProfile", id: emailProfile.serialize() });
     }
   }
 
   async setProvideUserConsent(consent: boolean): Promise<void> {
-    await this.put('Options', { key: 'userConsent', value: consent });
+    await this.put("Options", { key: "userConsent", value: consent });
   }
 
   async getProvideUserConsent(): Promise<boolean> {
-    return await this.get<boolean>('Options', 'userConsent');
+    return await this.get<boolean>("Options", "userConsent");
   }
 
   /**
@@ -298,96 +330,68 @@ export default class Database {
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
    */
   static async rebuild() {
-    Database.ensureSingletonInstance();
     return Promise.all([
-      Database.databaseInstance.remove('Ids'),
-      Database.databaseInstance.remove('NotificationOpened'),
-      Database.databaseInstance.remove('Options'),
+      Database.singletonInstance.remove("Ids"),
+      Database.singletonInstance.remove("NotificationOpened"),
+      Database.singletonInstance.remove("Options"),
     ]);
   }
 
-  /* Temp Database Proxy */
-  static ensureSingletonInstance() {
-    if (!Database.databaseInstanceName) {
-      Database.databaseInstanceName = "ONE_SIGNAL_SDK_DB";
-    }
-    if (!Database.databaseInstance) {
-      Database.databaseInstance = new Database(Database.databaseInstanceName);
-    }
-  }
-  /* End Temp Database Proxy */
-
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.emitter.on.apply(Database.databaseInstance.emitter, args);
+    return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
   }
 
   static async setEmailProfile(emailProfile: EmailProfile) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.setEmailProfile.call(Database.databaseInstance, emailProfile);
+    return Database.singletonInstance.setEmailProfile.call(Database.singletonInstance, emailProfile);
   }
   static async getEmailProfile(): Promise<EmailProfile> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.getEmailProfile.call(Database.databaseInstance);
+    return Database.singletonInstance.getEmailProfile.call(Database.singletonInstance);
   }
 
   static async setSubscription(subscription: Subscription) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.setSubscription.call(Database.databaseInstance, subscription);
+    return Database.singletonInstance.setSubscription.call(Database.singletonInstance, subscription);
   }
   static async getSubscription(): Promise<Subscription> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.getSubscription.call(Database.databaseInstance);
+    return Database.singletonInstance.getSubscription.call(Database.singletonInstance);
   }
 
   static async setProvideUserConsent(consent: boolean): Promise<void> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.setProvideUserConsent.call(Database.databaseInstance, consent);
+    return Database.singletonInstance.setProvideUserConsent.call(Database.singletonInstance, consent);
   }
   static async getProvideUserConsent(): Promise<boolean> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.getProvideUserConsent.call(Database.databaseInstance);
+    return Database.singletonInstance.getProvideUserConsent.call(Database.singletonInstance);
   }
 
   static async setServiceWorkerState(workerState: ServiceWorkerState) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.setServiceWorkerState.call(Database.databaseInstance, workerState);
+    return Database.singletonInstance.setServiceWorkerState.call(Database.singletonInstance, workerState);
   }
   static async getServiceWorkerState(): Promise<ServiceWorkerState> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.getServiceWorkerState.call(Database.databaseInstance);
+    return Database.singletonInstance.getServiceWorkerState.call(Database.singletonInstance);
   }
 
   static async setAppState(appState: AppState) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.setAppState.call(Database.databaseInstance, appState);
+    return Database.singletonInstance.setAppState.call(Database.singletonInstance, appState);
   }
   static async getAppState(): Promise<AppState> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.getAppState.call(Database.databaseInstance);
+    return Database.singletonInstance.getAppState.call(Database.singletonInstance);
   }
 
   static async setAppConfig(appConfig: AppConfig) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.setAppConfig.call(Database.databaseInstance, appConfig);
+    return Database.singletonInstance.setAppConfig.call(Database.singletonInstance, appConfig);
   }
   static async getAppConfig(): Promise<AppConfig> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.getAppConfig.call(Database.databaseInstance);
+    return Database.singletonInstance.getAppConfig.call(Database.singletonInstance);
   }
 
   static async remove(table: string, keypath?: string) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.remove.call(Database.databaseInstance, table, keypath);
+    return Database.singletonInstance.remove.call(Database.singletonInstance, table, keypath);
   }
   static async put(table: string, keypath: any) {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.put.call(Database.databaseInstance, table, keypath);
+    return Database.singletonInstance.put.call(Database.singletonInstance, table, keypath);
   }
   static async get<T>(table: string, key?: string): Promise<T> {
-    Database.ensureSingletonInstance();
-    return Database.databaseInstance.get.call(Database.databaseInstance, table, key);
+    return Database.singletonInstance.get.call(Database.singletonInstance, table, key);
   }
   // END: Static mappings to instance methods
 }

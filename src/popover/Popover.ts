@@ -1,17 +1,9 @@
 import bowser from 'bowser';
 
-
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
 import { addCssClass, addDomElement, once, removeDomElement, isChromeLikeBrowser } from '../utils';
 import { AppUserConfigPromptOptions } from '../models/AppConfig';
-
-export interface SlidedownPermissionMessageOptions {
-  autoPrompt: boolean;
-  actionMessage: string;
-  acceptButtonText: string;
-  cancelButtonText: string;
-}
 
 export default class Popover {
 

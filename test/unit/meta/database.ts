@@ -1,11 +1,8 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
-import { setUserAgent } from '../../support/tester/browser';
-import { BrowserUserAgent, TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 
 import Database from '../../../src/services/Database';
-import { AppConfig } from '../../../src/models/AppConfig';
 import Random from '../../support/tester/Random';
 
 
@@ -19,7 +16,7 @@ test(`database should not be shared across service worker test environment initi
     const appConfig = TestEnvironment.getFakeAppConfig();
     appConfig.appId = Random.getRandomUuid();
     firstAppId = appConfig.appId;
-    firstDatabaseInstance = Database.databaseInstance;
+    firstDatabaseInstance = Database.singletonInstance;
     firstDatabaseInstanceName = Database.databaseInstanceName;
     await Database.setAppConfig(appConfig);
     const { appId } = await Database.getAppConfig();
@@ -32,7 +29,7 @@ test(`database should not be shared across service worker test environment initi
     appConfig.appId = Random.getRandomUuid();
     await Database.setAppConfig(appConfig);
     const { appId } = await Database.getAppConfig();
-    t.not(firstDatabaseInstance, Database.databaseInstance);
+    t.not(firstDatabaseInstance, Database.singletonInstance);
     t.not(firstDatabaseInstanceName, Database.databaseInstanceName);
     t.not(appId, firstAppId);
     t.is(appId, appConfig.appId);
@@ -49,7 +46,7 @@ test(`database should not be shared across DOM test environment initializations`
     const appConfig = TestEnvironment.getFakeAppConfig();
     appConfig.appId = Random.getRandomUuid();
     firstAppId = appConfig.appId;
-    firstDatabaseInstance = Database.databaseInstance;
+    firstDatabaseInstance = Database.singletonInstance;
     firstDatabaseInstanceName = Database.databaseInstanceName;
     await Database.setAppConfig(appConfig);
     const { appId } = await Database.getAppConfig();
@@ -62,7 +59,7 @@ test(`database should not be shared across DOM test environment initializations`
     appConfig.appId = Random.getRandomUuid();
     await Database.setAppConfig(appConfig);
     const { appId } = await Database.getAppConfig();
-    t.not(firstDatabaseInstance, Database.databaseInstance);
+    t.not(firstDatabaseInstance, Database.singletonInstance);
     t.not(firstDatabaseInstanceName, Database.databaseInstanceName);
     t.not(appId, firstAppId);
     t.is(appId, appConfig.appId);
