@@ -1,6 +1,6 @@
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import Event from '../Event';
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
 import { AppUserConfigPromptOptions } from '../models/AppConfig';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
@@ -110,7 +110,7 @@ export default class MainHelper {
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
-    var url = `${SdkEnvironmentHelper.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
+    var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {

@@ -1,6 +1,6 @@
 
 
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
 
@@ -35,7 +35,7 @@ export class SessionManager {
     try {
       sessionStorage.setItem(SessionManager.SESSION_STORAGE_KEY_NAME, sessionCount.toString());
 
-      if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
         // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
         // main page
         if (OneSignal.subscriptionPopup) {

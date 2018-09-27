@@ -2,7 +2,7 @@ import bowser from "bowser";
 
 import Environment from "../Environment";
 import { WorkerMessenger, WorkerMessengerCommand } from "../libraries/WorkerMessenger";
-import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
 import ContextSW from "../models/ContextSW";
 import OneSignalApiBase from "../OneSignalApiBase";
 import OneSignalApiSW from "../OneSignalApiSW";
@@ -290,7 +290,7 @@ export class ServiceWorker {
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-        if (!Utils.contains(client.url, SdkEnvironmentHelper.getOneSignalApiUrl().host) &&
+        if (!Utils.contains(client.url, SdkEnvironment.getOneSignalApiUrl().host) &&
             !Utils.contains(client.url, '.os.tc')) {
           continue;
         }
@@ -786,7 +786,7 @@ export class ServiceWorker {
    */
   static onServiceWorkerActivated(event) {
     // The old service worker is gone now
-    Log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironmentHelper.getWindowEnv().toString()} environment).`, Utils.getConsoleStyle('bold'));
+    Log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, Utils.getConsoleStyle('bold'));
     event.waitUntil(self.clients.claim());
   }
 
@@ -1019,7 +1019,7 @@ export class ServiceWorker {
           }
           if (notifications.length == 0) {
             Log.warn('OneSignal Worker: Received a GCM push signal, but there were no messages to retrieve. Are you' +
-                ' using the wrong API URL?', SdkEnvironmentHelper.getOneSignalApiUrl().toString());
+                ' using the wrong API URL?', SdkEnvironment.getOneSignalApiUrl().toString());
           }
           resolve(notifications);
         });

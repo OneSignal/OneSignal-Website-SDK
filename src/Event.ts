@@ -1,5 +1,5 @@
 import Environment from './Environment';
-import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
+import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Log from './libraries/Log';
 import Utils from "./utils/Utils";
@@ -63,7 +63,7 @@ export default class Event {
   static async trigger(eventName: string, data?: any, remoteTriggerEnv: string | null = null) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
-      var env = Utils.capitalize(SdkEnvironmentHelper.getWindowEnv().toString());
+      var env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
       if (remoteTriggerEnv) {
         var env = `${env} ⬸ ${Utils.capitalize(remoteTriggerEnv)}`;
       }
@@ -92,15 +92,15 @@ export default class Event {
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
     if (Environment.isBrowser() &&
-        (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
-          SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
+        (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
+          SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
       var creator = opener || parent;
       if (!creator) {
         Log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
       } else {
         // But only if the event matches certain events
         if (Utils.contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
-          if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
+          if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
             OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
               {eventName: eventName, eventData: data});
           } else {

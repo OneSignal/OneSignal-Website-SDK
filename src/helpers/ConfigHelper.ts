@@ -3,7 +3,7 @@ import {
   ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from "../models/AppConfig";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
-import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../utils/Utils";
 
@@ -47,7 +47,7 @@ export class ConfigHelper {
 
   public static checkRestrictedOrigin(appConfig: AppConfig) {
     if (appConfig.restrictedOriginEnabled) {
-      if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
         if (window.top === window &&
           !Utils.contains(window.location.hostname, ".os.tc") &&
           !Utils.contains(window.location.hostname, ".onesignal.com") &&

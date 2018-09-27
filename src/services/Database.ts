@@ -10,7 +10,7 @@ import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
 import { Timestamp } from "../models/Timestamp";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { EmailProfile } from "../models/EmailProfile";
-import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 
 enum DatabaseEventName {
@@ -100,9 +100,9 @@ export default class Database {
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     return await new Promise<T>(async (resolve) => {
-      if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
           OneSignalUtils.isUsingSubscriptionWorkaround() &&
-          SdkEnvironmentHelper.getTestEnv() === TestEnvironmentKind.None) {
+          SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
@@ -125,9 +125,9 @@ export default class Database {
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
     await new Promise(async (resolve, reject) => {
-      if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         OneSignalUtils.isUsingSubscriptionWorkaround() &&
-        SdkEnvironmentHelper.getTestEnv() === TestEnvironmentKind.None) {
+        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, 
           [{table: table, keypath: keypath}], 
@@ -152,9 +152,9 @@ export default class Database {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   remove(table: OneSignalDbTable, keypath?: string) {
-    if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       OneSignalUtils.isUsingSubscriptionWorkaround() &&
-      SdkEnvironmentHelper.getTestEnv() === TestEnvironmentKind.None) {
+      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
       return new Promise((resolve, reject) => {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,

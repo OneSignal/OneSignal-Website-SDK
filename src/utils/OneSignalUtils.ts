@@ -1,5 +1,5 @@
 import bowser, { IBowser } from "bowser";
-import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import Log from "../libraries/Log";
 import { Utils } from "./Utils";
@@ -33,7 +33,7 @@ export class OneSignalUtils {
    *        - We are already in popup or iFrame mode, or this is called from the service worker
    */
   public static isUsingSubscriptionWorkaround(): boolean {
-    const windowEnv = SdkEnvironmentHelper.getWindowEnv();
+    const windowEnv = SdkEnvironment.getWindowEnv();
 
     if (!OneSignal.config) {
       throw new Error(

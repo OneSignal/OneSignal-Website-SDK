@@ -3,7 +3,7 @@ import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -140,9 +140,9 @@ export default class PermissionManager {
             permission === NotificationPermission.Denied &&
             (
               this.isCurrentFrameContextCrossOrigin() ||
-              await SdkEnvironmentHelper.isFrameContextInsecure() ||
+              await SdkEnvironment.isFrameContextInsecure() ||
               OneSignalUtils.isUsingSubscriptionWorkaround() ||
-              SdkEnvironmentHelper.isInsecureOrigin()
+              SdkEnvironment.isInsecureOrigin()
             )
            );
   }

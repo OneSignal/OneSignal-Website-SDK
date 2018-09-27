@@ -1,5 +1,5 @@
 import Environment from './Environment';
-import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
+import SdkEnvironment from './managers/SdkEnvironment';
 import { Utils } from "./utils/Utils";
 
 type Headers = any[] & {[key: string]: any};
@@ -41,7 +41,7 @@ export class OneSignalApiBase {
       (contents as any).body = JSON.stringify(data);
 
     let status: number;
-    return fetch(SdkEnvironmentHelper.getOneSignalApiUrl().toString() + '/' + action, contents)
+    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
         .then(response => {
           status = response.status;
           return response.json();

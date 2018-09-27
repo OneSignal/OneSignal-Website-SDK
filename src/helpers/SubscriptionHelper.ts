@@ -9,7 +9,7 @@ import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
 
 export default class SubscriptionHelper {
@@ -37,7 +37,7 @@ export default class SubscriptionHelper {
         OneSignal._isRegisteringForPush = true;
     }
 
-    switch (SdkEnvironmentHelper.getWindowEnv()) {
+    switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {

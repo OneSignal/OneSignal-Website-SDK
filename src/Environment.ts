@@ -1,4 +1,4 @@
-import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
+import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import bowser from 'bowser';
 
@@ -56,7 +56,7 @@ export default class Environment {
   }
 
   public static supportsServiceWorkers() {
-    const env = SdkEnvironmentHelper.getWindowEnv();
+    const env = SdkEnvironment.getWindowEnv();
 
     switch (env) {
       case WindowEnvironmentKind.ServiceWorker:

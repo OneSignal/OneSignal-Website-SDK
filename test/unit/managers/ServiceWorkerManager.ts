@@ -10,7 +10,7 @@ import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnv
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import Context from '../../../src/models/Context';
-import SdkEnvironmentHelper from "../../../src/helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "../../../src/managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind"
 
 import OneSignal from '../../../src/OneSignal';
@@ -307,7 +307,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
 
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
   sandbox.stub(OneSignalUtils, "getBaseUrl").returns(origin);
-  sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
   await t.throws(manager.installWorker(), ServiceWorkerRegistrationError);
 });
 
@@ -343,7 +343,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
 
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
   sandbox.stub(location, "origin").returns(origin);
-  sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
   const error = await t.throws(manager.installWorker(), Error);
   t.is(error.message, workerRegistrationError.message);
 });

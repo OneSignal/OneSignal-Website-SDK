@@ -1,7 +1,7 @@
 
 
 import Environment from './Environment';
-import SdkEnvironmentHelper from './helpers/SdkEnvironmentHelper';
+import SdkEnvironment from './managers/SdkEnvironment';
 import Emitter from './libraries/Emitter';
 import Log from './libraries/Log';
 import { Utils } from "./utils/Utils";
@@ -88,7 +88,7 @@ export default class Postmam {
       // Log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data);
       return;
     }
-    //Log.debug(`(Postmam) (onWindowPostMessageReceived) (${SdkEnvironmentHelper.getWindowEnv().toString()}):`, e);
+    //Log.debug(`(Postmam) (onWindowPostMessageReceived) (${SdkEnvironment.getWindowEnv().toString()}):`, e);
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emitter.emit('connect');
@@ -118,7 +118,7 @@ export default class Postmam {
   }
 
   onWindowMessagePostmanConnectReceived(e) {
-    const env = SdkEnvironmentHelper.getWindowEnv().toString();
+    const env = SdkEnvironment.getWindowEnv().toString();
     Log.debug(`(Postmam) (${env}) Window postmessage for Postman connect received:`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
@@ -153,7 +153,7 @@ export default class Postmam {
    * @remarks Only call this if listen() is called on another page.
    */
   connect() {
-    Log.info(`(Postmam) (${SdkEnvironmentHelper.getWindowEnv().toString()}) Establishing a connection to ${this.sendToOrigin}.`);
+    Log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Establishing a connection to ${this.sendToOrigin}.`);
     this.messagePort = this.channel.port1;
     this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
     this.messagePort.start();
@@ -163,9 +163,9 @@ export default class Postmam {
   }
 
   onMessageReceived(e) {
-    //Log.debug(`(Postmam) (${SdkEnvironmentHelper.getWindowEnv().toString()}):`, e.data);
+    //Log.debug(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}):`, e.data);
     if (!e.data) {
-      Log.debug(`(${SdkEnvironmentHelper.getWindowEnv().toString()}) Received an empty Postmam message:`, e);
+      Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Received an empty Postmam message:`, e);
       return;
     }
     let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
@@ -200,7 +200,7 @@ export default class Postmam {
       id: originalMessageBundle.id,
       command: originalMessageBundle.command,
       data: data,
-      source: SdkEnvironmentHelper.getWindowEnv().toString(),
+      source: SdkEnvironment.getWindowEnv().toString(),
       isReply: true
     };
     if (typeof onReply === 'function') {
@@ -224,7 +224,7 @@ export default class Postmam {
       id: OneSignalUtils.getRandomUuid(),
       command: command,
       data: data,
-      source: SdkEnvironmentHelper.getWindowEnv().toString()
+      source: SdkEnvironment.getWindowEnv().toString()
     };
     if (typeof onReply === 'function') {
       this.replies[messageBundle.id] = onReply;
@@ -247,7 +247,7 @@ export default class Postmam {
       id: OneSignalUtils.getRandomUuid(),
       command: command,
       data: data,
-      source: SdkEnvironmentHelper.getWindowEnv().toString()
+      source: SdkEnvironment.getWindowEnv().toString()
     };
     if (typeof onReply === 'function') {
       this.replies[messageBundle.id] = onReply;
@@ -298,7 +298,7 @@ export default class Postmam {
             messageOrigin === `https://${subdomain || ''}.onesignal.com` ||
             messageOrigin === `https://${subdomain || ''}.os.tc` ||
             messageOrigin === `https://${subdomain || ''}.os.tc:3001` ||
-            (messageOrigin === SdkEnvironmentHelper.getOneSignalApiUrl().origin) ||
+            (messageOrigin === SdkEnvironment.getOneSignalApiUrl().origin) ||
             this.receiveFromOrigin === '*' ||
             Utils.contains(otherAllowedOrigins, messageOrigin));
   }

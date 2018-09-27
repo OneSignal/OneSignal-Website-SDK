@@ -24,7 +24,7 @@ import OneSignalApiShared from '../../../src/OneSignalApiShared';
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
-import SdkEnvironmentHelper from '../../../src/helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 
 // manually create and restore the sandbox
 let sandbox: SinonSandbox;
@@ -274,8 +274,8 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
   };
   await TestEnvironment.mockInternalOneSignal();
   
-  sandbox.stub(SdkEnvironmentHelper, "getIntegration").returns(IntegrationKind.Secure);
-  sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
+  sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
+  sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
   sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.WorkerA);
 
@@ -414,7 +414,7 @@ async function expirationTestCase(
 
   // Force service worker active state dependency so test can run
   const stub = sinon.stub(ServiceWorkerManager.prototype, "getActiveState").resolves(ServiceWorkerActiveState.WorkerA);
-  const integrationStub = sinon.stub(SdkEnvironmentHelper, "getIntegration").resolves(env);
+  const integrationStub = sinon.stub(SdkEnvironment, "getIntegration").resolves(env);
 
   const newTimeBeforeMidpoint = expirationCheckTime;
 
@@ -639,7 +639,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(true);
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error403);
-    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
@@ -664,7 +664,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(false);
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error403);
-    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
@@ -689,7 +689,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(true);
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error404);
-    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
@@ -714,7 +714,7 @@ test(
     sandbox.stub(sessionManager, "isFirstPageView").returns(false);
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error404);
-    sandbox.stub(SdkEnvironmentHelper, "getWindowEnv").returns(WindowEnvironmentKind.Host);
+    sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
     sandbox.stub(SubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");

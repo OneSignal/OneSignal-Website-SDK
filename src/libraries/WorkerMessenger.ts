@@ -1,5 +1,5 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
@@ -97,7 +97,7 @@ export class WorkerMessenger {
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async broadcast(command: WorkerMessengerCommand, payload: WorkerMessengerPayload) {
-    const env = SdkEnvironmentHelper.getWindowEnv();
+    const env = SdkEnvironment.getWindowEnv();
 
     if (env !== WindowEnvironmentKind.ServiceWorker) {
       return;
@@ -122,7 +122,7 @@ export class WorkerMessenger {
       message.
    */
   async unicast(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload, windowClient?: WindowClient) {
-    const env = SdkEnvironmentHelper.getWindowEnv();
+    const env = SdkEnvironment.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
       if (!windowClient) {
@@ -161,7 +161,7 @@ export class WorkerMessenger {
     if (!Environment.supportsServiceWorkers())
       return;
 
-    const env = SdkEnvironmentHelper.getWindowEnv();
+    const env = SdkEnvironment.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
       self.addEventListener('message', this.onWorkerMessageReceivedFromPage.bind(this));
@@ -307,7 +307,7 @@ export class WorkerMessenger {
     activated.
    */
   async isWorkerControllingPage(): Promise<boolean> {
-    const env = SdkEnvironmentHelper.getWindowEnv();
+    const env = SdkEnvironment.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker)
       return !!self.registration.active;
@@ -328,7 +328,7 @@ export class WorkerMessenger {
       if (await this.isWorkerControllingPage())
         resolve();
       else {
-        const env = SdkEnvironmentHelper.getWindowEnv();
+        const env = SdkEnvironment.getWindowEnv();
 
         if (env === WindowEnvironmentKind.ServiceWorker) {
           self.addEventListener('activate', async e => {

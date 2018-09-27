@@ -3,7 +3,7 @@ import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { AppConfig } from './AppConfig';
 import Path from './Path';
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { SessionManager } from '../managers/SessionManager';
 import PermissionManager from '../managers/PermissionManager';
 
@@ -35,7 +35,7 @@ export default class ContextSW implements ContextSWInterface {
       onesignalVapidPublicKey: appConfig.onesignalVapidPublicKey,
     });
 
-    const envPrefix = SdkEnvironmentHelper.getBuildEnvPrefix();
+    const envPrefix = SdkEnvironment.getBuildEnvPrefix();
     const serviceWorkerManagerConfig = {
       workerAPath: new Path(`/${envPrefix}OneSignalSDKWorker.js`),
       workerBPath: new Path(`/${envPrefix}OneSignalSDKUpdaterWorker.js`),
@@ -45,7 +45,7 @@ export default class ContextSW implements ContextSWInterface {
       if (appConfig.userConfig.path) {
         serviceWorkerManagerConfig.workerAPath =
           new Path(`${appConfig.userConfig.path}${envPrefix}${appConfig.userConfig.serviceWorkerPath}`);
-          // new Path((appConfig.userConfig.path) + SdkEnvironmentHelper.getBuildEnvPrefix() + appConfig.userConfig.serviceWorkerPath);
+          // new Path((appConfig.userConfig.path) + SdkEnvironment.getBuildEnvPrefix() + appConfig.userConfig.serviceWorkerPath);
         serviceWorkerManagerConfig.workerBPath =
           new Path(`${appConfig.userConfig.path}${envPrefix}${appConfig.userConfig.serviceWorkerUpdaterPath}`);
           // new Path((appConfig.userConfig.path) + SdkEnvironment.getBuildEnvPrefix() + appConfig.userConfig.serviceWorkerUpdaterPath);

@@ -2,7 +2,7 @@ import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
-import SdkEnvironmentHelper from '../helpers/SdkEnvironmentHelper';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { Subscription } from '../models/Subscription';
 import Database from '../services/Database';
 import { IntegrationKind } from '../models/IntegrationKind';
@@ -58,14 +58,14 @@ export class ServiceWorkerManager {
       no registration is active.
     */
 
-    const integration = await SdkEnvironmentHelper.getIntegration();
+    const integration = await SdkEnvironment.getIntegration();
     if (integration === IntegrationKind.InsecureProxy) {
       /* Service workers are not accessible on insecure origins */
       return ServiceWorkerActiveState.Indeterminate;
     } else if (integration === IntegrationKind.SecureProxy) {
       /* If the site setup is secure proxy, we're either on the top frame without access to the
       registration, or the child proxy frame that does have access to the registration. */
-      const env = SdkEnvironmentHelper.getWindowEnv();
+      const env = SdkEnvironment.getWindowEnv();
       switch (env) {
         case WindowEnvironmentKind.Host:
         case WindowEnvironmentKind.CustomIframe:
@@ -316,7 +316,7 @@ export class ServiceWorkerManager {
 
     workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
       let clickedListenerCallbackCount: number;
-      if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
         clickedListenerCallbackCount = await new Promise<number>(resolve => {
           const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
           if (proxyFrame) {
@@ -369,7 +369,7 @@ export class ServiceWorkerManager {
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
       Log.debug(
-        `${SdkEnvironmentHelper.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`
+        `${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`
       );
       const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
       if (proxyFrame) {
@@ -428,7 +428,7 @@ export class ServiceWorkerManager {
 
       // If we are inside the popup and service worker fails to register, it's not developer's fault.
       // No need to report it to the api then.
-      const env = SdkEnvironmentHelper.getWindowEnv();
+      const env = SdkEnvironment.getWindowEnv();
       if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup)
         throw error;
 

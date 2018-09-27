@@ -1,5 +1,5 @@
 import JSONP from 'jsonp';
-import SdkEnvironmentHelper from "./helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "./managers/SdkEnvironment";
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -25,10 +25,10 @@ export default class OneSignalApi {
   }
 
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
-    if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       return await new Promise<ServerAppConfig>((resolve, reject) => {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
-        OneSignalApi.jsonpLib(`${SdkEnvironmentHelper.getOneSignalApiUrl().toString()}/sync/${appId}/web`,(err, data) => {
+        OneSignalApi.jsonpLib(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,(err, data) => {
           if (err)
             reject(err);
           else {

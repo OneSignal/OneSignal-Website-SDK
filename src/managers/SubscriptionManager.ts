@@ -7,7 +7,7 @@ import Environment from "../Environment";
 import Event from "../Event";
 import Log from "../libraries/Log";
 import { ServiceWorkerActiveState } from "../helpers/ServiceWorkerHelper";
-import SdkEnvironmentHelper from "../helpers/SdkEnvironmentHelper";
+import SdkEnvironment from "../managers/SdkEnvironment";
 
 import ProxyFrameHost from "../modules/frames/ProxyFrameHost";
 import { NotificationPermission } from "../models/NotificationPermission";
@@ -71,7 +71,7 @@ export class SubscriptionManager {
    * returns from a successful subscription).
    */
   public async subscribe(subscriptionStrategy: SubscriptionStrategyKind): Promise<RawPushSubscription> {
-    const env = SdkEnvironmentHelper.getWindowEnv();
+    const env = SdkEnvironment.getWindowEnv();
 
     switch (env) {
       case WindowEnvironmentKind.CustomIframe:
@@ -186,7 +186,7 @@ export class SubscriptionManager {
 
     await Database.setSubscription(subscription);
 
-    if (SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       Event.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
@@ -209,7 +209,7 @@ export class SubscriptionManager {
     if (strategy === UnsubscriptionStrategy.DestroySubscription) {
       throw new NotImplementedError();
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
-      if (SdkEnvironmentHelper.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
         const { deviceId } = await Database.getSubscription();
 
         await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
@@ -264,7 +264,7 @@ export class SubscriptionManager {
   private subscribeSafariPromptPermission(): Promise<string | null> {
     return new Promise<string>(resolve => {
       window.safari.pushNotification.requestPermission(
-        `${SdkEnvironmentHelper.getOneSignalApiUrl().toString()}/safari`,
+        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
         this.config.safariWebId,
         {
           app_id: this.config.appId
@@ -330,7 +330,7 @@ export class SubscriptionManager {
       Trigger the permissionPromptDisplay event to the best of our knowledge.
     */
     if (
-      SdkEnvironmentHelper.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       window.Notification.permission === NotificationPermission.Default
     ) {
       await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
@@ -577,8 +577,8 @@ export class SubscriptionManager {
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
-    const integrationKind = await SdkEnvironmentHelper.getIntegration();
-    const windowEnv = SdkEnvironmentHelper.getWindowEnv();
+    const integrationKind = await SdkEnvironment.getIntegration();
+    const windowEnv = SdkEnvironment.getWindowEnv();
 
     switch (integrationKind) {
       case IntegrationKind.Secure:
@@ -667,7 +667,7 @@ export class SubscriptionManager {
       return this.getSubscriptionStateForSecure();
     }
 
-    const windowEnv = SdkEnvironmentHelper.getWindowEnv();
+    const windowEnv = SdkEnvironment.getWindowEnv();
 
     switch (windowEnv) {
       case WindowEnvironmentKind.ServiceWorker:
@@ -679,7 +679,7 @@ export class SubscriptionManager {
         };
       default:
         /* Regular browser window environments */
-        const integration = await SdkEnvironmentHelper.getIntegration();
+        const integration = await SdkEnvironment.getIntegration();
 
         switch (integration) {
           case IntegrationKind.Secure:
