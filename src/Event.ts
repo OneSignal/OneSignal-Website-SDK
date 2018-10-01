@@ -63,9 +63,9 @@ export default class Event {
   static async trigger(eventName: string, data?: any, remoteTriggerEnv: string | null = null) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
-      var env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
+      let env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
       if (remoteTriggerEnv) {
-        var env = `${env} ⬸ ${Utils.capitalize(remoteTriggerEnv)}`;
+        env = `${env} ⬸ ${Utils.capitalize(remoteTriggerEnv)}`;
       }
 
       if (displayData || displayData === false) {
@@ -94,7 +94,7 @@ export default class Event {
     if (Environment.isBrowser() &&
         (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
           SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
-      var creator = opener || parent;
+      const creator = opener || parent;
       if (!creator) {
         Log.error(`Could not send event '${eventName}' back to host page because no creator (opener or parent) found!`);
       } else {
