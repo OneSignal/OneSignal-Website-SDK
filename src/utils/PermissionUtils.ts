@@ -3,21 +3,15 @@ import Event from '../Event';
 
 export class PermissionUtils {
   public static async triggerNotificationPermissionChanged(updateIfIdentical = false) {
-    let newPermission, isUpdating;
-    const currentPermission = await OneSignal.privateGetNotificationPermission();
+    const newPermission = await OneSignal.privateGetNotificationPermission();
     const previousPermission = await Database.get('Options', 'notificationPermission');
 
-    newPermission = currentPermission;
-    isUpdating = currentPermission !== previousPermission || updateIfIdentical;
-
-    if (isUpdating) {
-      await Database.put('Options', {
-        key: 'notificationPermission',
-        value: currentPermission
-      });
-      Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, {
-        to: newPermission
-      });
+    const shouldBeUpdated = newPermission !== previousPermission || updateIfIdentical;
+    if (!shouldBeUpdated) {
+      return;
     }
+
+    await Database.put('Options', { key: 'notificationPermission', value: newPermission });
+    Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, { to: newPermission });
   }
 }
