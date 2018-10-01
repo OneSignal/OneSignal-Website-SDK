@@ -3,6 +3,7 @@ node_modules/
 dist/
 build/ts-to-es6
 build/bundles
+build/releases
 build/size-analysis.html
 /config.json
 .vscode/
