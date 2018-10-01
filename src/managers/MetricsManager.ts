@@ -71,9 +71,9 @@ export class PageViewMetricEngagement extends MetricEngagement {
 
 export default class MetricsManager {
   private isFeatureEnabled: boolean;
-  private mixpanelReportingToken: string;
+  private mixpanelReportingToken: string | undefined | null;
 
-  constructor(isFeatureEnabled: boolean, mixpanelReportingToken: string) {
+  constructor(isFeatureEnabled: boolean, mixpanelReportingToken?: string | null) {
     this.isFeatureEnabled = isFeatureEnabled;
     this.mixpanelReportingToken = mixpanelReportingToken;
   }
