@@ -148,7 +148,7 @@ async function generateWebpackConfig() {
             {
               loader: 'awesome-typescript-loader',
               options: {
-                configFileName: "build/config/tsconfig.transform.json"
+                configFileName: "build/config/tsconfig.es5.json"
               }
             },
           ]
