@@ -382,12 +382,6 @@ export class ServiceWorkerManager {
     });
   }
 
-  private static getServiceWorkerHref(
-    workerState: ServiceWorkerActiveState,
-    config: ServiceWorkerManagerConfig): string {
-    return ServiceWorkerHelper.getServiceWorkerHref(workerState, config);
-  }
-
   /**
    * Installs the OneSignal service worker.
    *
@@ -410,7 +404,7 @@ export class ServiceWorkerManager {
         await workerRegistration.unregister();
     }
 
-    const workerFullPath = ServiceWorkerManager.getServiceWorkerHref(workerState, this.config);
+    const workerFullPath = ServiceWorkerHelper.getServiceWorkerHref(workerState, this.config);
     const installUrlQueryParams = Utils.encodeHashAsUriComponent({
       appId: this.context.appConfig.appId
     });
