@@ -209,8 +209,8 @@ export default class PermissionManager {
   }
 
     public async updateStoredPermission() {
-      // TODO Iryna: why is safariId null here? Should it be OneSignal.config.safariWebId?
-      const permission = await this.getNotificationPermission(null);
+      // TODO verify if `OneSignal.config.safariWebId` should be passed as a parameter
+      const permission = await this.getNotificationPermission();
       return await this.setStoredPermission(permission);
     }
 }
