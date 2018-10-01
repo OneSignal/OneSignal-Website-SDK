@@ -44,9 +44,7 @@ export default class Database {
   }
 
   public static resetInstance(): void {
-    if (Database.databaseInstance) {
-      Database.databaseInstance = null;
-    }
+    Database.databaseInstance = null;
   }
 
   public static get singletonInstance(): Database {
