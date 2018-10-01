@@ -162,7 +162,7 @@ export class SubscriptionManager {
           notification_types: SubscriptionStateKind.Subscribed,
         });
       }
-    } else {      
+    } else {
       const id = await OneSignalApiShared.createUser(deviceRecord);
       newDeviceId = id;
       Log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
