@@ -12,6 +12,7 @@ import nock from 'nock';
 import { SessionManager } from "../../../src/managers/SessionManager";
 import Random from "../../support/tester/Random";
 import OneSignalApi from "../../../src/OneSignalApi";
+import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
 import AltOriginManager from "../../../src/managers/AltOriginManager";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
@@ -72,7 +73,7 @@ class InitTestHelpers {
     const serverAppConfig = TestEnvironment.getFakeServerAppConfig(configIntegrationKind);
     InitTestHelpers.stubJSONP(serverAppConfig);
 
-    sinonSandbox.stub(OneSignalApi, "get").resolves({});
+    sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
   }
 }
 
@@ -207,7 +208,7 @@ function mockIframeMessaging() {
 
 test("Test OneSignal.init, Basic HTTP", async t => {
   mockIframeMessaging();
-  sinonSandbox.stub(OneSignalApi, "get").resolves({});
+  sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
 
   const testConfig = {
     initOptions: { },
@@ -235,7 +236,7 @@ test("Test OneSignal.init, Basic HTTP", async t => {
 
 test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
   mockIframeMessaging();
-  sinonSandbox.stub(OneSignalApi, "get").resolves({});
+  sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
 
   const testConfig = {
     initOptions: { },

@@ -1,6 +1,4 @@
-import Log from '../libraries/Log';import * as log from 'loglevel';
 import Context from '../models/Context';
-import { ResourceType } from "../services/DynamicResourceLoader";
 import SdkEnvironment from '../managers/SdkEnvironment';
 
 
@@ -8,7 +6,7 @@ export default class CookieSyncer {
   private isFeatureEnabled: boolean;
   private context: Context;
 
-  constructor(context: Context, isFeatureEnabled: boolean) {
+  constructor(context: Context, isFeatureEnabled: boolean = false) {
     this.context = context;
     this.isFeatureEnabled = isFeatureEnabled;
   }

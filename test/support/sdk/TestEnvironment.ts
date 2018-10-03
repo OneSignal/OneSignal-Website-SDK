@@ -261,7 +261,7 @@ export class TestEnvironment {
 
   static async initializeForServiceWorker(config: TestEnvironmentConfig = {}) {
     // Erase and reset IndexedDb database name to something random
-    Database.databaseInstance = null;
+    Database.resetInstance();
     Database.databaseInstanceName = Random.getRandomString(10);
 
     return TestEnvironment.stubServiceWorkerEnvironment(config);
@@ -269,7 +269,7 @@ export class TestEnvironment {
 
   static async initialize(config: TestEnvironmentConfig = {}) {
     // Erase and reset IndexedDb database name to something random
-    Database.databaseInstance = null;
+    Database.resetInstance();
     Database.databaseInstanceName = Random.getRandomString(10);
 
     global.OneSignal = OneSignal;

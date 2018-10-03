@@ -1,14 +1,10 @@
 import Environment from '../Environment';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
-import Context from '../models/Context';
 import Path from '../models/Path';
-import SdkEnvironment from './SdkEnvironment';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { Subscription } from '../models/Subscription';
-import { encodeHashAsUriComponent, timeoutPromise, isUsingSubscriptionWorkaround } from '../utils';
-import SubscriptionHelper from '../helpers/SubscriptionHelper';
 import Database from '../services/Database';
-import MainHelper from '../helpers/MainHelper';
 import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import NotImplementedError from '../errors/NotImplementedError';
@@ -17,87 +13,24 @@ import Log from '../libraries/Log';
 import Event from '../Event';
 import ProxyFrame from '../modules/frames/ProxyFrame';
 import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError"
-import Utils from "../utils/Utils";
-
-export enum ServiceWorkerActiveState {
-  /**
-   * OneSignalSDKWorker.js, or the equivalent custom file name, is active.
-   */
-  WorkerA = 'Worker A (Main)',
-  /**
-   * OneSignalSDKUpdaterWorker.js, or the equivalent custom file name, is
-   * active.
-   *
-   * We no longer need to use this filename. We can update Worker A by appending
-   * a random query parameter to A.
-   */
-  WorkerB = 'Worker B (Updater)',
-  /**
-   * A service worker is active, but it is neither OneSignalSDKWorker.js nor
-   * OneSignalSDKUpdaterWorker.js (or the equivalent custom file names as
-   * provided by user config).
-   */
-  ThirdParty = '3rd Party',
-  /**
-   * A service worker is currently installing and we can't determine its final state yet. Wait until
-   * the service worker is finished installing by checking for a controllerchange property..
-   */
-  Installing = 'Installing',
-  /**
-   * No service worker is installed.
-   */
-  None = 'None',
-  /**
-   * A service worker is active but not controlling the page. This can occur if
-   * the page is hard-refreshed bypassing the cache, which also bypasses service
-   * workers.
-   */
-  Bypassed = 'Bypassed',
-  /**
-   * Service workers are not supported in this environment. This status is used
-   * on HTTP pages where it isn't possible to know whether a service worker is
-   * installed or not or in any of the other states.
-   */
-  Indeterminate = 'Indeterminate'
-}
-
-export interface ServiceWorkerManagerConfig {
-  /**
-   * The path and filename of the "main" worker (e.g. '/OneSignalSDKWorker.js');
-   */
-  workerAPath: Path;
-  /**
-   * The path and filename to the "alternate" worker, used to update an existing
-   * service worker. (e.g. '/OneSignalSDKUpdaterWorer.js')
-   */
-  workerBPath: Path;
-  /**
-   * Describes how much of the origin the service worker controls.
-   * This is currently always "/".
-   */
-  registrationOptions: { scope: string };
-}
+import OneSignalUtils from "../utils/OneSignalUtils";
+import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConfig }
+  from "../helpers/ServiceWorkerHelper";
+import { ContextSWInterface } from '../models/ContextSW';
+import { Utils } from "../utils/Utils";
 
 export class ServiceWorkerManager {
-
-  private context: Context;
+  private context: ContextSWInterface;
   private readonly config: ServiceWorkerManagerConfig;
 
-  constructor(context: Context, config: ServiceWorkerManagerConfig) {
+  constructor(context: ContextSWInterface, config: ServiceWorkerManagerConfig) {
     this.context = context;
     this.config = config;
   }
 
   // Gets details on the service-worker (if any) that controls the current page
   public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    try {
-      // location.href is used for <base> tag compatibility when it is set to a different origin
-      return await navigator.serviceWorker.getRegistration(location.href);
-    } catch (e) {
-      // This could be null in an HTTP context or error if the user doesn't accept cookies
-      Log.warn("[Service Worker Status] Error Checking service worker registration", location.href, e);
-      return null;
-    }
+    return await ServiceWorkerHelper.getRegistration();
   }
 
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
@@ -220,7 +153,7 @@ export class ServiceWorkerManager {
 
   public async getWorkerVersion(): Promise<number> {
     return new Promise<number>(async resolve => {
-      if (isUsingSubscriptionWorkaround()) {
+      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
         if (!proxyFrameHost) {
           /* On init, this function may be called. Return a null state for now */
@@ -276,7 +209,7 @@ export class ServiceWorkerManager {
     Log.info(`[Service Worker Update] Checking service worker version...`);
     let workerVersion;
     try {
-      workerVersion = await timeoutPromise(this.getWorkerVersion(), 2000);
+      workerVersion = await Utils.timeoutPromise(this.getWorkerVersion(), 2000);
     } catch (e) {
       Log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
       workerVersion = 1;
@@ -390,7 +323,7 @@ export class ServiceWorkerManager {
             proxyFrame.messenger.message(
               OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
               OneSignal.EVENTS.NOTIFICATION_CLICKED,
-              reply => {
+              (reply: any) => {
                 let callbackCount: number = reply.data;
                 resolve(callbackCount);
               }
@@ -449,32 +382,6 @@ export class ServiceWorkerManager {
     });
   }
 
-  private static getServiceWorkerHref(
-    workerState: ServiceWorkerActiveState,
-    config: ServiceWorkerManagerConfig): string {
-    let workerFullPath = "";
-
-    // Determine which worker to install
-    if (workerState === ServiceWorkerActiveState.WorkerA)
-      workerFullPath = config.workerBPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.WorkerB ||
-      workerState === ServiceWorkerActiveState.ThirdParty ||
-      workerState === ServiceWorkerActiveState.None)
-      workerFullPath = config.workerAPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.Bypassed) {
-      /*
-        if the page is hard refreshed bypassing the cache, no service worker
-        will control the page.
-
-        It doesn't matter if we try to reinstall an existing worker; still no
-        service worker will control the page after installation.
-       */
-      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
-
-    return new URL(workerFullPath, Utils.getBaseUrl()).href;
-  }
-
   /**
    * Installs the OneSignal service worker.
    *
@@ -497,8 +404,8 @@ export class ServiceWorkerManager {
         await workerRegistration.unregister();
     }
 
-    const workerFullPath = ServiceWorkerManager.getServiceWorkerHref(workerState, this.config);
-    const installUrlQueryParams = encodeHashAsUriComponent({
+    const workerFullPath = ServiceWorkerHelper.getServiceWorkerHref(workerState, this.config);
+    const installUrlQueryParams = Utils.encodeHashAsUriComponent({
       appId: this.context.appConfig.appId
     });
     const fullWorkerPath = `${workerFullPath}?${installUrlQueryParams}`;
@@ -507,7 +414,7 @@ export class ServiceWorkerManager {
     try {
       await navigator.serviceWorker.register(
         fullWorkerPath,
-        { scope: `${Utils.getBaseUrl()}${this.config.registrationOptions.scope}` }
+        { scope: `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}` }
       );
     } catch (error) {
       Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);

@@ -2,10 +2,10 @@
 
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
-
-import { contains, getRandomUuid } from './utils';
 import Emitter from './libraries/Emitter';
 import Log from './libraries/Log';
+import { Utils } from "./utils/Utils";
+import { OneSignalUtils } from "./utils/OneSignalUtils";
 
 /**
  * Establishes a cross-domain MessageChannel between the current browsing context (this page) and another (an iFrame, popup, or parent page).
@@ -118,7 +118,8 @@ export default class Postmam {
   }
 
   onWindowMessagePostmanConnectReceived(e) {
-    Log.debug(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Window postmessage for Postman connect received:`, e);
+    const env = SdkEnvironment.getWindowEnv().toString();
+    Log.debug(`(Postmam) (${env}) Window postmessage for Postman connect received:`, e);
     // Discard messages from unexpected origins; messages come frequently from other origins
     if (!this.isSafeOrigin(e.origin)) {
       // Log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
@@ -137,10 +138,11 @@ export default class Postmam {
       // Get the message port
       this.messagePort = e.ports[0];
       this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
-      Log.info('(Postmam) Removed previous message event listener for handshakes, replaced with main message listener.');
+      Log.info(
+        '(Postmam) Removed previous message event listener for handshakes, replaced with main message listener.');
       this.messagePort.start();
       this.isConnected = true;
-      Log.info(`(Postmam) (${SdkEnvironment.getWindowEnv().toString()}) Connected.`);
+      Log.info(`(Postmam) (${env}) Connected.`);
       this.message(Postmam.CONNECTED_MESSAGE);
       this.emitter.emit('connect');
     }
@@ -219,7 +221,7 @@ export default class Postmam {
       return;
     }
     const messageBundle = {
-      id: getRandomUuid(),
+      id: OneSignalUtils.getRandomUuid(),
       command: command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString()
@@ -242,7 +244,7 @@ export default class Postmam {
       return;
     }
     const messageBundle = {
-      id: getRandomUuid(),
+      id: OneSignalUtils.getRandomUuid(),
       command: command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString()
@@ -298,7 +300,7 @@ export default class Postmam {
             messageOrigin === `https://${subdomain || ''}.os.tc:3001` ||
             (messageOrigin === SdkEnvironment.getOneSignalApiUrl().origin) ||
             this.receiveFromOrigin === '*' ||
-            contains(otherAllowedOrigins, messageOrigin));
+            Utils.contains(otherAllowedOrigins, messageOrigin));
   }
 
   async on(...args: any[]) {

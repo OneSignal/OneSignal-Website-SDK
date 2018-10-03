@@ -7,7 +7,7 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig, AppUserConfig } from '../models/AppConfig';
+import { AppConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
@@ -15,8 +15,8 @@ import { getConsoleStyle, once, isUsingSubscriptionWorkaround, triggerNotificati
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import OneSignalApi from '../OneSignalApi';
-import Context from '../models/Context';
+import OneSignalApiShared from '../OneSignalApiShared';
+import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
@@ -29,10 +29,9 @@ import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import Environment from '../Environment';
 import Bell from '../bell/Bell';
-import ConfigManager from "../managers/ConfigManager";
 import { CustomLink } from '../CustomLink';
 import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
-import Utils from "../utils/Utils";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 
 declare var OneSignal: any;
@@ -52,7 +51,7 @@ export default class InitHelper {
 
   /** Entry method for any environment that sets expiring subscriptions. */
   public static async processExpiringSubscriptions() {
-    const context: Context = OneSignal.context;
+    const context: ContextInterface = OneSignal.context;
 
     Log.debug("Checking subscription expiration...");
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
@@ -110,7 +109,7 @@ export default class InitHelper {
    * @private
    */
   static async onSdkInitialized() {
-    const context: Context = OneSignal.context;
+    const context: ContextInterface = OneSignal.context;
 
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
@@ -153,11 +152,11 @@ export default class InitHelper {
   public static async sendOnSessionUpdate(): Promise<void> {
     // If user has been subscribed before, send the on_session update to our backend on the first page view.
 
-    const context: Context = OneSignal.context;
+    const context: ContextInterface = OneSignal.context;
 
     // TODO: Remove after finished testing.
     // Safeguarded by flag for initial testing. Sent as a part of server config.
-    if (!context.appConfig.enableOnSession && !Utils.isUsingSubscriptionWorkaround()) {
+    if (!context.appConfig.enableOnSession && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
       return;
     }
 
@@ -174,7 +173,7 @@ export default class InitHelper {
 
     // TODO: Remove after finished testing.
     // Previously the update was sent for HTTP sites only every time untli user is subscribed.
-    if (Utils.isUsingSubscriptionWorkaround() && notificationType !== SubscriptionStateKind.Subscribed) {
+    if (OneSignalUtils.isUsingSubscriptionWorkaround() && notificationType !== SubscriptionStateKind.Subscribed) {
       return;
     }
     const pushDeviceRecord = new PushDeviceRecord();
@@ -182,7 +181,7 @@ export default class InitHelper {
     try {
       const { deviceId } = await Database.getSubscription();
       // Checked for presence of deviceId in isAlreadyRegisteredWithOneSignal()
-      await OneSignalApi.updateUserSession(deviceId, pushDeviceRecord);
+      await OneSignalApiShared.updateUserSession(deviceId, pushDeviceRecord);
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
@@ -220,12 +219,12 @@ export default class InitHelper {
   }
 
   public static async updateEmailSessionCount() {
-    const context: Context = OneSignal.context;
+    const context: ContextInterface = OneSignal.context;
     /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
       if (emailProfile.emailId) {
-        await OneSignalApi.updateUserSession(
+        await OneSignalApiShared.updateUserSession(
           emailProfile.emailId,
           new EmailDeviceRecord(null, emailProfile.emailAuthHash)
         );
@@ -313,7 +312,7 @@ export default class InitHelper {
   static async internalInit() {
     Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
 
-    const context: Context = OneSignal.context;
+    const context: ContextInterface = OneSignal.context;
 
     // Always check for an updated service worker
     await context.serviceWorkerManager.updateWorker();
@@ -475,13 +474,5 @@ export default class InitHelper {
     if (OneSignal._initCalled)
       throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
     OneSignal._initCalled = true;
-  }
-
-  static async initializeConfig(options: AppUserConfig) {
-    const appConfig = await new ConfigManager().getAppConfig(options);
-    Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
-
-    OneSignal.context = new Context(appConfig);
-    OneSignal.config = OneSignal.context.appConfig;
   }
 }

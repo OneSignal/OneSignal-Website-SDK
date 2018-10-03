@@ -1,5 +1,3 @@
-import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
-
 export default class Log {
   static debug: Function;
   static trace: Function;

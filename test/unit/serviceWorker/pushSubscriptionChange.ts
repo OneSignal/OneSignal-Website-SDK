@@ -14,7 +14,7 @@ import PushManager from '../../support/mocks/service-workers/models/PushManager'
 import Random from "../../support/tester/Random";
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import OneSignalApi from '../../../src/OneSignalApi';
+import OneSignalApiSW from '../../../src/OneSignalApiSW';
 
 declare var self: ServiceWorkerGlobalScope;
 const appId = Random.getRandomUuid();
@@ -26,9 +26,9 @@ let sinonSandbox: SinonSandbox;
 
 test.beforeEach(async() => {
   sinonSandbox = sinon.sandbox.create();
-  sinonSandbox.stub(OneSignalApi, 'downloadServerAppConfig')
+  sinonSandbox.stub(OneSignalApiSW, 'downloadServerAppConfig')
     .resolves(TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom));
-  sinonSandbox.stub(OneSignalApi, 'updatePlayer').resolves();
+  sinonSandbox.stub(OneSignalApiSW, 'updatePlayer').resolves();
 
   oldSubscription = await new PushManager().subscribe({
     userVisibleOnly: true,
@@ -82,7 +82,7 @@ test(`called with an old and new subscription successfully updates the subscript
 
 test(`without an existing device ID, lookup existing device ID, updates the looked-up record`, async t => {
   const idReturnedByLookupCall = Random.getRandomUuid();
-  sinonSandbox.stub(OneSignalApi, 'getUserIdFromSubscriptionIdentifier').resolves(idReturnedByLookupCall);
+  sinonSandbox.stub(OneSignalApiSW, 'getUserIdFromSubscriptionIdentifier').resolves(idReturnedByLookupCall);
 
   // Before pushsubscriptionchange
   let subscription = await Database.getSubscription();

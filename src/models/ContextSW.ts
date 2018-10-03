@@ -1,31 +1,27 @@
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
-import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import CookieSyncer from '../modules/CookieSyncer';
 import { AppConfig } from './AppConfig';
 import { SessionManager } from '../managers/SessionManager';
 import PermissionManager from '../managers/PermissionManager';
-import MetricsManager from '../managers/MetricsManager';
-import { ContextSWInterface } from "./ContextSW";
 import ContextHelper from "../helpers/ContextHelper";
 
-export interface ContextInterface extends ContextSWInterface {
-  dynamicResourceLoader: DynamicResourceLoader;
-  cookieSyncer: CookieSyncer;
-  metricsManager: MetricsManager;
+export interface ContextSWInterface {
+  appConfig: AppConfig;
+  subscriptionManager: SubscriptionManager;
+  serviceWorkerManager: ServiceWorkerManager;
+  sessionManager: SessionManager;
+  permissionManager: PermissionManager;
+  workerMessenger: WorkerMessenger;
 }
 
-export default class Context implements ContextInterface {
+export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;
-  public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
-  public workerMessenger: WorkerMessenger;
-  public cookieSyncer: CookieSyncer;
   public sessionManager: SessionManager;
   public permissionManager: PermissionManager;
-  public metricsManager: MetricsManager;
+  public workerMessenger: WorkerMessenger;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -34,9 +30,5 @@ export default class Context implements ContextInterface {
     this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
-    
-    this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
-    this.dynamicResourceLoader = new DynamicResourceLoader();
-    this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
   }
 }

@@ -1,13 +1,12 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { ServiceWorkerActiveState } from '../managers/ServiceWorkerManager';
-import Context from '../models/Context';
+import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import { Serializable } from '../models/Serializable';
 import Environment from '../Environment';
 import Log from './Log';
+import { ContextSWInterface } from '../models/ContextSW';
 
 
 export enum WorkerMessengerCommand {
@@ -85,15 +84,13 @@ export type WorkerMessengerPayload = Serializable | number | string | object | b
  */
 export class WorkerMessenger {
 
-  private context: Context;
+  private context: ContextSWInterface;
   private replies: WorkerMessengerReplyBuffer;
-  private debug: boolean;
 
-  constructor(context: Context,
+  constructor(context: ContextSWInterface,
               replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer()) {
     this.context = context;
     this.replies = replies;
-    this.debug = true;
   }
 
   /**

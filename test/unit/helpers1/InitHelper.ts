@@ -3,7 +3,7 @@ import sinon, { SinonSandbox } from 'sinon';
 
 import InitHelper from "../../../src/helpers/InitHelper";
 import OneSignal from "../../../src/OneSignal";
-import OneSignalApi from "../../../src/OneSignalApi";
+import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import Database from "../../../src/services/Database";
 import MainHelper from "../../../src/helpers/MainHelper";
 import { Subscription } from "../../../src/models/Subscription";
@@ -35,7 +35,7 @@ test.afterEach(function (_t: TestContext) {
  */
 test("doesn't send on_session if enable flag not set for https", async t => {
   OneSignal.context.appConfig.enableOnSession = false;
-  const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");
+  const apiSpy = sinonSandbox.spy(OneSignalApiShared, "updateUserSession");
   await InitHelper.sendOnSessionUpdate();
   t.is(apiSpy.notCalled, true);
 });
@@ -53,7 +53,7 @@ test("doesn't send on_session if enable flag not set for http and not subscribed
   OneSignal.context.appConfig.enableOnSession = false;
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.MutedByApi);
 
-  const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");
+  const apiSpy = sinonSandbox.spy(OneSignalApiShared, "updateUserSession");
   await InitHelper.sendOnSessionUpdate();
   t.is(apiSpy.notCalled, true);
 });
@@ -74,7 +74,7 @@ test("send on_session if enable flag not set for http and subscribed", async t =
 
 test("doesn't send on_session if not first page view", async t => {
   sinonSandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(false);
-  const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");
+  const apiSpy = sinonSandbox.spy(OneSignalApiShared, "updateUserSession");
   await InitHelper.sendOnSessionUpdate();
   t.is(apiSpy.notCalled, true);
 });
@@ -83,7 +83,7 @@ test("doesn't send on_session if never registered before", async t => {
   sinonSandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(true);
   sinonSandbox.stub(Database, "getSubscription").returns({} as Subscription);
   
-  const apiSpy = sinonSandbox.spy(OneSignalApi, "updateUserSession");
+  const apiSpy = sinonSandbox.spy(OneSignalApiShared, "updateUserSession");
   await InitHelper.sendOnSessionUpdate();
   t.is(apiSpy.notCalled, true);
 });
@@ -109,7 +109,7 @@ test("safely recover from failed on_session call and log error", async t => {
   sinonSandbox.stub(Database, "getSubscription").returns({deviceId: testDeviceId} as Subscription);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
 
-  const apiSpy = sinonSandbox.stub(OneSignalApi, "updateUserSession").rejects(new Error("Network error"));
+  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "updateUserSession").rejects(new Error("Network error"));
   const logSpy = sinonSandbox.stub(Log, "error").resolves();
   await InitHelper.sendOnSessionUpdate();
   t.is(apiSpy.calledOnce, true);
@@ -123,7 +123,7 @@ const testUpdateSessionForSuscriptionState = async function(t: any, subscription
   sinonSandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(true);
   sinonSandbox.stub(Database, "getSubscription").returns({deviceId: testDeviceId} as Subscription);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(subscriptionState);
-  const apiSpy = sinonSandbox.stub(OneSignalApi, "updateUserSession").resolves(testDeviceId);
+  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "updateUserSession").resolves(testDeviceId);
   await InitHelper.sendOnSessionUpdate();
   t.is(apiSpy.calledOnce, true);
 

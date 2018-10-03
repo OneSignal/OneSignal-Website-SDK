@@ -4,8 +4,8 @@ import test, { GenericTestContext, Context as AvaContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import timemachine from 'timemachine';
 
-import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
-import Path from '../../../src/models/Path';
+import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
+import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/services/Database';
 import Context from '../../../src/models/Context';
@@ -18,13 +18,13 @@ import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
-import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
 import OneSignal from '../../../src/OneSignal';
-import OneSignalApi from '../../../src/OneSignalApi';
+import OneSignalApiShared from '../../../src/OneSignalApiShared';
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
+import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 
 // manually create and restore the sandbox
 let sandbox: SinonSandbox;
@@ -256,7 +256,7 @@ test('device ID is available after register event', async t => {
     });
   });
 
-  const stub = sinon.stub(OneSignalApi, "createUser").resolves(randomPlayerId);
+  const stub = sinon.stub(OneSignalApiShared, "createUser").resolves(randomPlayerId);
 
   await context.subscriptionManager.registerSubscription(rawPushSubscription);
   await registerEventPromise;

@@ -1,12 +1,12 @@
 
 
-import SdkEnvironment from './SdkEnvironment';
+import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
 
 export class SessionManager {
   private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
-  private incrementedPageViewCount: boolean;
+  private incrementedPageViewCount: boolean = false;
 
   getPageViewCount(): number {
     try {
@@ -16,7 +16,7 @@ export class SessionManager {
         third-party cookies on some browsers.
        */
       const pageViewCountStr = sessionStorage.getItem(SessionManager.SESSION_STORAGE_KEY_NAME);
-      const pageViewCount = parseInt(pageViewCountStr);
+      const pageViewCount = pageViewCountStr ? parseInt(pageViewCountStr) : 0;
       if (isNaN(pageViewCount)) {
         return 0;
       } else {

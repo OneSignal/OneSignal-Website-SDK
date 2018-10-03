@@ -1,5 +1,9 @@
-import { SlidedownPermissionMessageOptions } from '../popover/Popover';
-
+export interface SlidedownPermissionMessageOptions {
+  autoPrompt: boolean;
+  actionMessage: string;
+  acceptButtonText: string;
+  cancelButtonText: string;
+}
 
 export interface AppConfig {
   /**

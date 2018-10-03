@@ -1,27 +1,25 @@
-
-
 import Event from '../Event';
 import LimitStore from '../LimitStore';
-import OneSignal from '../OneSignal';
-import OneSignalApi from '../OneSignalApi';
+import OneSignalApiShared from '../OneSignalApiShared';
 import Database from '../services/Database';
-import { decodeHtmlEntities, logMethodCall } from '../utils';
-import Context from "../models/Context";
+import { ContextSWInterface } from "../models/ContextSW";
 import Log from '../libraries/Log';
 import { CustomLink } from "../CustomLink";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
+import { BrowserUtils } from "../utils/BrowserUtils";
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
     EventHelper.checkAndTriggerSubscriptionChanged();
   }
 
-  static async onInternalSubscriptionSet(optedOut) {
+  static async onInternalSubscriptionSet(optedOut: boolean) {
     LimitStore.put('subscription.optedOut', optedOut);
   }
 
   static async checkAndTriggerSubscriptionChanged() {
-    logMethodCall('checkAndTriggerSubscriptionChanged');
-    const context: Context = OneSignal.context;
+    OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
+    const context: ContextSWInterface = OneSignal.context;
     const subscriptionState = await context.subscriptionManager.getSubscriptionState();
     const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     const appState = await Database.getAppState();
@@ -76,12 +74,12 @@ export default class EventHelper {
         welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
           ? welcome_notification_opts['url']
           : unopenableWelcomeNotificationUrl;
-      title = decodeHtmlEntities(title);
-      message = decodeHtmlEntities(message);
+      title = BrowserUtils.decodeHtmlEntities(title);
+      message = BrowserUtils.decodeHtmlEntities(message);
 
       if (!welcome_notification_disabled) {
         Log.debug('Sending welcome notification.');
-        OneSignalApi.sendNotification(
+        OneSignalApiShared.sendNotification(
           appId,
           [deviceId],
           { en: title },

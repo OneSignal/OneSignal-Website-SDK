@@ -4,11 +4,9 @@ import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
 import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { DevicePlatformKind } from './DevicePlatformKind';
-import { RawPushSubscription } from './RawPushSubscription';
 import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-
-import { redetectBrowserUserAgent } from "../utils";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 
 
 /**
@@ -118,7 +116,7 @@ export abstract class DeviceRecord implements Serializable {
 
   getDeliveryPlatform(): DeliveryPlatformKind {
     // For testing purposes, allows changing the browser user agent
-    const browser = redetectBrowserUserAgent();
+    const browser = OneSignalUtils.redetectBrowserUserAgent();
 
     if (this.isSafari()) {
       return DeliveryPlatformKind.Safari;

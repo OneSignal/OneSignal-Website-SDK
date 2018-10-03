@@ -3,21 +3,9 @@ import '../../support/polyfills/polyfills';
 import test from 'ava';
 import sinon from 'sinon';
 
-import { ServiceWorkerManager, ServiceWorkerActiveState } from '../../../src/managers/ServiceWorkerManager';
-import Path from '../../../src/models/Path';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
-import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
-import { beforeEach } from '../../support/tester/typify';
-import Database from '../../../src/services/Database';
-import IndexedDb from '../../../src/services/IndexedDb';
-import Context from '../../../src/models/Context';
-
-import { AppConfig } from '../../../src/models/AppConfig';
-import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
-import { ServiceWorkerContainer } from '../../support/mocks/service-workers/ServiceWorkerContainer';
 import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import Random from "../../support/tester/Random";

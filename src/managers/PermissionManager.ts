@@ -1,9 +1,9 @@
-import { redetectBrowserUserAgent, isUsingSubscriptionWorkaround } from '../utils';
+import OneSignalUtils from '../utils/OneSignalUtils';
 import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
-import SdkEnvironment from './SdkEnvironment';
+import SdkEnvironment from '../managers/SdkEnvironment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -73,7 +73,7 @@ export default class PermissionManager {
       return PermissionManager.getSafariNotificationPermission(safariWebId);
 
     // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-    if (isUsingSubscriptionWorkaround())
+    if (OneSignalUtils.isUsingSubscriptionWorkaround())
       return await this.getOneSignalSubdomainNotificationPermission(safariWebId);
     else
       return this.getW3cNotificationPermission();
@@ -110,7 +110,7 @@ export default class PermissionManager {
       OneSignal.proxyFrameHost.message(
         OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
         { safariWebId: safariWebId },
-        reply => {
+        (reply: any) => {
           let remoteNotificationPermission = reply.data;
           resolve(remoteNotificationPermission);
         }
@@ -133,7 +133,7 @@ export default class PermissionManager {
    */
   public async isPermissionEnvironmentAmbiguous(permission: NotificationPermission): Promise<boolean> {
     // For testing purposes, allows changing the browser user agent
-    const browser = redetectBrowserUserAgent();
+    const browser = OneSignalUtils.redetectBrowserUserAgent();
 
     return (!browser.safari &&
             !browser.firefox &&
@@ -141,7 +141,7 @@ export default class PermissionManager {
             (
               this.isCurrentFrameContextCrossOrigin() ||
               await SdkEnvironment.isFrameContextInsecure() ||
-              isUsingSubscriptionWorkaround() ||
+              OneSignalUtils.isUsingSubscriptionWorkaround() ||
               SdkEnvironment.isInsecureOrigin()
             )
            );
@@ -209,7 +209,8 @@ export default class PermissionManager {
   }
 
     public async updateStoredPermission() {
-      const permission = await this.getNotificationPermission(null);
+      // TODO verify if `OneSignal.config.safariWebId` should be passed as a parameter
+      const permission = await this.getNotificationPermission();
       return await this.setStoredPermission(permission);
     }
 }

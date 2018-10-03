@@ -1,21 +1,21 @@
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { triggerNotificationPermissionChanged } from '../utils';
 import EventHelper from './EventHelper';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import Context from '../models/Context';
 import { Subscription } from '../models/Subscription';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import Log from '../libraries/Log';
+import { ContextSWInterface } from '../models/ContextSW';
+import SdkEnvironment from '../managers/SdkEnvironment';
+import { PermissionUtils } from "../utils/PermissionUtils";
 
 export default class SubscriptionHelper {
-  static async registerForPush(): Promise<Subscription> {
+  static async registerForPush(): Promise<Subscription | null> {
     let subscription: Subscription;
-    const context: Context = OneSignal.context;
+    const context: ContextSWInterface = OneSignal.context;
 
     /*
       Within the same page navigation (the same session), do not register for
@@ -46,7 +46,7 @@ export default class SubscriptionHelper {
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
           context.sessionManager.incrementPageViewCount();
-          await triggerNotificationPermissionChanged();
+          await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
           Log.info(e);
@@ -111,7 +111,7 @@ export default class SubscriptionHelper {
           {
             rawPushSubscription: rawSubscription.serialize()
           },
-          message => {
+          (message: any) => {
             if (message.data.progress === true) {
               Log.debug('Got message from host page that remote reg. is in progress, closing popup.');
               if (windowCreator) {
