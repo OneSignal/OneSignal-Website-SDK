@@ -6,6 +6,7 @@ import CustomLink from '../../../src/CustomLink';
 import OneSignalUtils from '../../../src/utils/OneSignalUtils';
 import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/utils';
+import MainHelper from "../../../src/helpers/MainHelper";
 
 let sandbox: SinonSandbox;
 let config: AppUserConfigCustomLinkOptions;
@@ -225,8 +226,9 @@ test('customlink: subscribe: clicked: subscribed -> unsubscribed', async t => {
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted out', async t => {
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
-  sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
+  sandbox.stub(MainHelper, 'wasHttpsNativePromptDismissed').returns(false);
+  sandbox.stub(OneSignal, 'internalIsOptedOut').returns(true);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
     subscribed: true,
     optedOut: true,

@@ -96,7 +96,7 @@ export class CustomLink {
     }
     element.setAttribute(CustomLink.subscriptionStateAttribute, isPushEnabled.toString());
     if (!CustomLink.isInitialized(element)) {
-      element.addEventListener("click", async () => {
+      element.addEventListener("click", () => {
         Log.info("CustomLink: subscribe clicked");
         CustomLink.handleClick(element);
       });
@@ -113,20 +113,7 @@ export class CustomLink {
         await OneSignal.setSubscription(false);
       }
     } else {
-      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        // Show the HTTP popup so users can re-allow notifications
-        OneSignal.registerForPushNotifications();
-      } else {
-        const subscriptionState: PushSubscriptionState =
-          await OneSignal.context.subscriptionManager.getSubscriptionState();
-        if (!subscriptionState.subscribed) {
-          OneSignal.registerForPushNotifications();
-          return;
-        }
-        if (subscriptionState.optedOut) {
-          OneSignal.setSubscription(true);
-        }
-      }
+      await OneSignal.registerForPushNotifications();
     }
   }
 

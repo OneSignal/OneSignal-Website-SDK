@@ -1,6 +1,5 @@
 import bowser from 'bowser';
 
-
 import Environment from './Environment';
 import AlreadySubscribedError from './errors/AlreadySubscribedError';
 import { InvalidArgumentError, InvalidArgumentReason } from './errors/InvalidArgumentError';
@@ -13,7 +12,7 @@ import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
 import Event from './Event';
 import EventHelper from './helpers/EventHelper';
 import HttpHelper from './helpers/HttpHelper';
-import InitHelper from './helpers/InitHelper';
+import InitHelper, { SessionInitOptions } from './helpers/InitHelper';
 import MainHelper from './helpers/MainHelper';
 import SubscriptionHelper from './helpers/SubscriptionHelper';
 import TestHelper from './helpers/TestHelper';
@@ -47,21 +46,18 @@ import {
   getConsoleStyle,
   isValidEmail,
   logMethodCall,
-  prepareEmailForHashing,
-  isUsingSubscriptionWorkaround,
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { DeviceRecord } from './models/DeviceRecord';
 import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
-import ConfigManager from './managers/ConfigManager';
 import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
-import TimeoutError from './errors/TimeoutError';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
-import Emitter, {EventHandler, OnceEventHandler} from './libraries/Emitter';
+import Emitter, { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
 import OneSignalError from "./errors/OneSignalError";
-
+import ConfigManager from "./managers/ConfigManager";
+import OneSignalUtils from "./utils/OneSignalUtils";
 
 export default class OneSignal {
   /**
@@ -226,7 +222,7 @@ export default class OneSignal {
   static async init(options: AppUserConfig) {
     logMethodCall('init');
 
-    await InitHelper.ponyfillSafariFetch();
+    await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal.initializeConfig(options);
 
@@ -268,7 +264,7 @@ export default class OneSignal {
       OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
-      if (isUsingSubscriptionWorkaround()) {
+      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         OneSignal.appConfig = OneSignal.config;
 
         /**
@@ -361,7 +357,7 @@ export default class OneSignal {
       });
     }
 
-    const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed();
+    const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
 
     if (doNotPrompt && !options.force) {
       Log.info(new PermissionMessageDismissedError());
@@ -389,7 +385,9 @@ export default class OneSignal {
       Log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-    OneSignal.popover = new Popover(MainHelper.getSlidedownPermissionMessageOptions());
+    const slideDownOptions = MainHelper.getSlidedownPermissionMessageOptions();
+
+    OneSignal.popover = new Popover(slideDownOptions);
     await OneSignal.popover.create();
     Log.debug('Showing the HTTP popover.');
     if (OneSignal.notifyButton &&
@@ -414,26 +412,23 @@ export default class OneSignal {
       OneSignal.popover.close();
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      OneSignal._sessionInitAlreadyRunning = false;
       OneSignal.registerForPushNotifications({ autoAccept: true });
     });
     OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      OneSignal._sessionInitAlreadyRunning = false;
     });
   }
-
 
   /**
    * Prompts the user to subscribe.
    * @PublicApi
    */
-  static registerForPushNotifications(options?: any) {
+  static async registerForPushNotifications(options?: any): Promise<void> {
     // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
     //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
-    function __registerForPushNotifications() {
-      if (options && options.httpPermissionRequest && isUsingSubscriptionWorkaround()) {
+    async function __registerForPushNotifications() {
+      if (options && options.httpPermissionRequest && OneSignalUtils.isUsingSubscriptionWorkaround()) {
         /*
           Do not throw an error because it may cause the parent event handler to
           throw and stop processing the rest of their code. Typically, for this
@@ -448,29 +443,26 @@ export default class OneSignal {
         Log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
         return;
       }
-      if (isUsingSubscriptionWorkaround()) {
-          /**
-           * Users may be subscribed to either .onesignal.com or .os.tc. By this time
-           * that they are subscribing to the popup, the Proxy Frame has already been
-           * loaded and the user's subscription status has been obtained. We can then
-           * use the Proxy Frame present now and check its URL to see whether the user
-           * is finally subscribed to .onesignal.com or .os.tc.
-           */
-        OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
-        OneSignal.subscriptionPopupHost.load();
-      }
-      else {
-        if (!options)
-          options = {};
-        options.fromRegisterFor = true;
-        InitHelper.sessionInit(options);
+      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
+        await InitHelper.loadSubscriptionPopup(options);
+      } else if (bowser.safari && Number(bowser.version) >= 12.1) {
+        await SubscriptionHelper.internalRegisterForPush(false);
+      } else {
+        const sessionOptions: SessionInitOptions = options || {};
+        sessionOptions.__fromRegister = true;
+        await InitHelper.sessionInit(sessionOptions);
       }
     }
 
-    if (!OneSignal.initialized)
-      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __registerForPushNotifications());
-    else
-      return __registerForPushNotifications();
+    if (!OneSignal.initialized) {
+      await new Promise((resolve, _reject) => {
+        OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
+          await __registerForPushNotifications();
+          return resolve(undefined);
+        });
+      })
+    } else
+      return await __registerForPushNotifications();
   }
 
   /**
@@ -858,7 +850,7 @@ export default class OneSignal {
   static database = Database;
   static event = Event;
   static browser = bowser;
-  static popover = null;
+  static popover: Popover | null = null;
   static log = Log;
   static api = OneSignalApi;
   static indexedDb = IndexedDb;

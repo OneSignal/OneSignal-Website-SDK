@@ -2,7 +2,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { AppUserConfigPromptOptions } from '../models/AppConfig';
+import { AppUserConfigPromptOptions, SlidedownPermissionMessageOptions } from '../models/AppConfig';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
@@ -120,20 +120,37 @@ export default class MainHelper {
     return data;
   }
 
-  static getSlidedownPermissionMessageOptions(): AppUserConfigPromptOptions | null {
+  public static getSlidedownPermissionMessageOptions():
+    SlidedownPermissionMessageOptions {
+    const defaultActionMessage = "We'd like to show you notifications for the latest news and updates.";
+    const defaultAcceptButtonText = "Allow";
+    const defaultCancelButtonText = "No Thanks";
+
     const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
     if (!promptOptions) {
-      return null;
+      return {
+        autoPrompt: false,
+        actionMessage: defaultActionMessage,
+        acceptButtonText: defaultAcceptButtonText,
+        cancelButtonText: defaultCancelButtonText,
+      } as SlidedownPermissionMessageOptions;
     }
-    if (promptOptions && !promptOptions.slidedown) {
-      return promptOptions;
+
+    if (!promptOptions.slidedown) {
+      return {
+        autoPrompt: false,
+        actionMessage: promptOptions.actionMessage || defaultActionMessage,
+        acceptButtonText: promptOptions.acceptButtonText || defaultAcceptButtonText,
+        cancelButtonText: promptOptions.cancelButtonText || defaultCancelButtonText,
+      } as SlidedownPermissionMessageOptions;
     }
 
     return {
-      actionMessage: promptOptions.slidedown.actionMessage,
-      acceptButtonText: promptOptions.slidedown.acceptButtonText,
-      cancelButtonText: promptOptions.slidedown.cancelButtonText,
-    };
+      autoPrompt: promptOptions.slidedown.autoPrompt,
+      actionMessage: promptOptions.slidedown.actionMessage || defaultActionMessage,
+      acceptButtonText: promptOptions.slidedown.acceptButtonText || defaultAcceptButtonText,
+      cancelButtonText: promptOptions.slidedown.cancelButtonText || defaultCancelButtonText,
+    } as SlidedownPermissionMessageOptions;
   }
 
   static getFullscreenPermissionMessageOptions(): AppUserConfigPromptOptions | null {
@@ -141,7 +158,7 @@ export default class MainHelper {
     if (!promptOptions) {
       return null;
     }
-    if (promptOptions && !promptOptions.fullscreen) {
+    if (!promptOptions.fullscreen) {
       return promptOptions;
     }
 

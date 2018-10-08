@@ -210,7 +210,7 @@ export class ConfigHelper {
               autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled,
               actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
               acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
-              cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton
+              cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,
             },
             fullscreen: {
               actionMessage: serverConfig.config.staticPrompts.fullscreen.actionMessage,
@@ -275,16 +275,20 @@ export class ConfigHelper {
               'dialog.blocked.message': serverConfig.config.staticPrompts.bell.dialog.blocked.message,
             }
           },
-          persistNotification: serverConfig.config.notificationBehavior.display.persist,
+          persistNotification: serverConfig.config.notificationBehavior ?
+            serverConfig.config.notificationBehavior.display.persist : undefined,
           webhooks: {
             cors: serverConfig.config.webhooks.corsEnable,
             'notification.displayed': serverConfig.config.webhooks.notificationDisplayedHook,
             'notification.clicked': serverConfig.config.webhooks.notificationClickedHook,
             'notification.dismissed': serverConfig.config.webhooks.notificationDismissedHook,
           },
-          notificationClickHandlerMatch: serverConfig.config.notificationBehavior.click.match,
-          notificationClickHandlerAction: serverConfig.config.notificationBehavior.click.action,
-          allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin,
+          notificationClickHandlerMatch: serverConfig.config.notificationBehavior ?
+            serverConfig.config.notificationBehavior.click.match : undefined,
+          notificationClickHandlerAction: serverConfig.config.notificationBehavior ?
+            serverConfig.config.notificationBehavior.click.action : undefined,
+          allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
+            serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
           requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent
         };
       case IntegrationConfigurationKind.JavaScript:
