@@ -97,10 +97,10 @@ export default class Database {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
-    return await new Promise<T>(async (resolve) => {
-      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-          OneSignalUtils.isUsingSubscriptionWorkaround() &&
-          SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+        OneSignalUtils.isUsingSubscriptionWorkaround() &&
+        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+      return await new Promise<T>(async (resolve) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
@@ -108,12 +108,12 @@ export default class Database {
           let result = reply.data[0];
           resolve(result);
         });
-      } else {
-        const result = await this.database.get(table, key);
-        let cleanResult = Database.applyDbResultFilter(table, key, result);
-        resolve(cleanResult);
-      }
-    });
+      });
+    } else {
+      const result = await this.database.get(table, key);
+      let cleanResult = Database.applyDbResultFilter(table, key, result);
+      return cleanResult;
+    }
   }
 
   /**
@@ -341,55 +341,63 @@ export default class Database {
   }
 
   static async setEmailProfile(emailProfile: EmailProfile) {
-    return Database.singletonInstance.setEmailProfile.call(Database.singletonInstance, emailProfile);
+    return await Database.singletonInstance.setEmailProfile(emailProfile);
   }
+
   static async getEmailProfile(): Promise<EmailProfile> {
-    return Database.singletonInstance.getEmailProfile.call(Database.singletonInstance);
+    return await Database.singletonInstance.getEmailProfile();
   }
 
   static async setSubscription(subscription: Subscription) {
-    return Database.singletonInstance.setSubscription.call(Database.singletonInstance, subscription);
+    return await Database.singletonInstance.setSubscription(subscription);
   }
+
   static async getSubscription(): Promise<Subscription> {
-    return Database.singletonInstance.getSubscription.call(Database.singletonInstance);
+    return await Database.singletonInstance.getSubscription();
   }
 
   static async setProvideUserConsent(consent: boolean): Promise<void> {
-    return Database.singletonInstance.setProvideUserConsent.call(Database.singletonInstance, consent);
+    return await Database.singletonInstance.setProvideUserConsent(consent);
   }
+
   static async getProvideUserConsent(): Promise<boolean> {
-    return Database.singletonInstance.getProvideUserConsent.call(Database.singletonInstance);
+    return await Database.singletonInstance.getProvideUserConsent();
   }
 
   static async setServiceWorkerState(workerState: ServiceWorkerState) {
-    return Database.singletonInstance.setServiceWorkerState.call(Database.singletonInstance, workerState);
+    return await Database.singletonInstance.setServiceWorkerState(workerState);
   }
+
   static async getServiceWorkerState(): Promise<ServiceWorkerState> {
-    return Database.singletonInstance.getServiceWorkerState.call(Database.singletonInstance);
+    return await Database.singletonInstance.getServiceWorkerState();
   }
 
   static async setAppState(appState: AppState) {
-    return Database.singletonInstance.setAppState.call(Database.singletonInstance, appState);
+    return await Database.singletonInstance.setAppState(appState);
   }
+
   static async getAppState(): Promise<AppState> {
-    return Database.singletonInstance.getAppState.call(Database.singletonInstance);
+    return await Database.singletonInstance.getAppState();
   }
 
   static async setAppConfig(appConfig: AppConfig) {
-    return Database.singletonInstance.setAppConfig.call(Database.singletonInstance, appConfig);
-  }
-  static async getAppConfig(): Promise<AppConfig> {
-    return Database.singletonInstance.getAppConfig.call(Database.singletonInstance);
+    return await Database.singletonInstance.setAppConfig(appConfig);
   }
 
-  static async remove(table: string, keypath?: string) {
-    return Database.singletonInstance.remove.call(Database.singletonInstance, table, keypath);
+  static async getAppConfig(): Promise<AppConfig> {
+    return await Database.singletonInstance.getAppConfig();
   }
-  static async put(table: string, keypath: any) {
-    return Database.singletonInstance.put.call(Database.singletonInstance, table, keypath);
+
+  static async remove(table: OneSignalDbTable, keypath?: string) {
+    return await Database.singletonInstance.remove(table, keypath);
   }
-  static async get<T>(table: string, key?: string): Promise<T> {
-    return Database.singletonInstance.get.call(Database.singletonInstance, table, key);
+
+  static async put(table: OneSignalDbTable, keypath: any) {
+    return await Database.singletonInstance.put(table, keypath);
   }
-  // END: Static mappings to instance methods
+
+  static async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
+    return await Database.singletonInstance.get<T>(table, key);
+  }
+    // END: Static mappings to instance methods
 }

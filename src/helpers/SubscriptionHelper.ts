@@ -13,9 +13,14 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
 
 export default class SubscriptionHelper {
-  static async registerForPush(): Promise<Subscription | null> {
-    let subscription: Subscription;
+  public static async registerForPush(): Promise<Subscription | null> {
+    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
+  }
+
+  public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {
     const context: ContextSWInterface = OneSignal.context;
+    let subscription: Subscription;
 
     /*
       Within the same page navigation (the same session), do not register for
@@ -23,8 +28,6 @@ export default class SubscriptionHelper {
       session count incremented on each page refresh. However, if the user is
       not subscribed, subscribe.
     */
-    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-
     if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
       Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
       return null;

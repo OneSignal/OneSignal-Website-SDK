@@ -33,8 +33,16 @@ import { CustomLink } from '../CustomLink';
 import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
+import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 
 declare var OneSignal: any;
+
+export interface SessionInitOptions {
+  modalPrompt?: boolean;
+  __fromRegister?: boolean;
+  __fromInit?: boolean;
+  autoAccept?: boolean;
+}
 
 export default class InitHelper {
   static async storeInitialValues() {
@@ -349,7 +357,7 @@ export default class InitHelper {
         (_, destroyEventListener) => {
           if (document.visibilityState === 'visible') {
             destroyEventListener();
-            InitHelper.sessionInit({ __sdkCall: true });
+            InitHelper.sessionInit({ __fromInit: true });
           }
         },
         true
@@ -357,7 +365,7 @@ export default class InitHelper {
       return;
     }
 
-    await InitHelper.sessionInit({ __sdkCall: true });
+    await InitHelper.sessionInit({ __fromInit: true });
   }
 
   // overridingPageTitle: Only for the HTTP Iframe, pass the page title in from the top frame
@@ -371,93 +379,101 @@ export default class InitHelper {
     await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
   }
 
-  static async sessionInit(options) {
-    const appConfig: AppConfig = OneSignal.context.appConfig;
+  private static async finishSessionInit(options: SessionInitOptions): Promise<void> {
+    OneSignal._sessionInitAlreadyRunning = false;
+    if (options.__fromInit) {
+      await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+    }
+  }
+
+  public static async sessionInit(options?: SessionInitOptions): Promise<void> {
+    if (!options) {
+      options = {} as SessionInitOptions;
+    }
 
     Log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
+
     if (OneSignal._sessionInitAlreadyRunning) {
       Log.debug('Returning from sessionInit because it has already been called.');
       return;
     }
-    else
-      OneSignal._sessionInitAlreadyRunning = true;
 
-    if (options.modalPrompt && options.fromRegisterFor) {
-      /*
-        Show the HTTPS fullscreen modal permission message.
-       */
-      OneSignal.subscriptionModalHost = new SubscriptionModalHost(appConfig.appId, options);
+    OneSignal._sessionInitAlreadyRunning = true;
+
+    const appId: string = OneSignal.context.appConfig.appId;
+    if (options.__fromRegister && options.modalPrompt) {
+      /* Show the HTTPS fullscreen modal permission message. */
+      OneSignal.subscriptionModalHost = new SubscriptionModalHost(appId, options);
       await OneSignal.subscriptionModalHost.load();
+      await InitHelper.finishSessionInit(options);
+      return;
     }
-    else if (!isUsingSubscriptionWorkaround()) {
+
+    if (!isUsingSubscriptionWorkaround()) {
       /*
         Show HTTPS modal prompt.
        */
-      if (options.__sdkCall && MainHelper.wasHttpsNativePromptDismissed()) {
+      if (options.__fromInit && MainHelper.wasHttpsNativePromptDismissed()) {
         Log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
-        OneSignal._sessionInitAlreadyRunning = false;
+        await InitHelper.finishSessionInit(options);
+        return;
       }
-      else {
-        /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
-        prevent the popup from opening. */
-        if (isUsingSubscriptionWorkaround())
-          await SubscriptionHelper.registerForPush();
-        else {
-          const isOptedOut = await OneSignal.internalIsOptedOut();
-          if (!isOptedOut) {
-           /*
-            * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-            * permanent blocks, we want to replace sites automatically showing the native browser request
-            * with a slide prompt first.
-            */
-            if (
-              (
-                !options ||
-                options && !options.fromRegisterFor
-              )
-              &&
-              bowser.chrome &&
-              Number(bowser.version) >= 63 &&
-              (bowser.tablet || bowser.mobile)
-              )
-              await OneSignal.privateShowHttpPrompt();
-            else
-              await SubscriptionHelper.registerForPush();
-          }
-          else
-            OneSignal._sessionInitAlreadyRunning = false;
+
+      /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
+      prevent the popup from opening. */
+      const isOptedOut = await OneSignal.internalIsOptedOut();
+      if (!isOptedOut) {
+        /*
+        * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+        * permanent blocks, we want to replace sites automatically showing the native browser request
+        * with a slide prompt first.
+        * Same for Safari 12.1+.
+        */
+        const showSlidedown = !options.__fromRegister && OneSignal.config.userConfig.autoRegister === true &&
+        (
+          (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          (bowser.safari && Number(bowser.version) >= 12.1)
+        );
+        if (showSlidedown) {
+          await InitHelper.finishSessionInit(options);
+          OneSignal.privateShowHttpPrompt();
         }
+        else {
+          await InitHelper.finishSessionInit(options);
+          await SubscriptionHelper.registerForPush();
+        }
+      } else {
+        await InitHelper.finishSessionInit(options);
+        OneSignal.setSubscription(true);
       }
-    }
-    else {
-      if (OneSignal.config.userConfig.autoRegister !== true)
-        Log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
-      if (MainHelper.isHttpPromptAlreadyShown())
-        Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
-
-      if (OneSignal.config.userConfig.autoRegister === true && !MainHelper.isHttpPromptAlreadyShown()) {
-        await OneSignal.privateShowHttpPrompt().catch(e => {
-          if (
-            (e instanceof InvalidStateError &&
-              (e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
-            e instanceof PermissionMessageDismissedError ||
-            e instanceof AlreadySubscribedError ||
-            e instanceof PushPermissionNotGrantedError
-          ) {
-            Log.debug('[Prompt Not Showing]', e);
-            // Another prompt is being shown, that's okay
-          }
-          else
-            Log.info(e);
-        });
-      }
-      OneSignal._sessionInitAlreadyRunning = false;
+      return;
     }
 
-    await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+    if (OneSignal.config.userConfig.autoRegister !== true)
+      Log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
+    if (MainHelper.isHttpPromptAlreadyShown())
+      Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
+
+    if (OneSignal.config.userConfig.autoRegister === true && !MainHelper.isHttpPromptAlreadyShown()) {
+      await OneSignal.privateShowHttpPrompt().catch((e: Error) => {
+        if (
+          (e instanceof InvalidStateError &&
+            (e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
+          e instanceof PermissionMessageDismissedError ||
+          e instanceof AlreadySubscribedError ||
+          e instanceof PushPermissionNotGrantedError
+        ) {
+          Log.debug('[Prompt Not Showing]', e);
+          // Another prompt is being shown, that's okay
+        }
+        else
+          Log.info(e);
+      });
+    }
+    await InitHelper.finishSessionInit(options);
   }
 
-  static async ponyfillSafariFetch() {
+  static async polyfillSafariFetch() {
     // If Safari - add 'fetch' pollyfill if it isn't already added.
     if (bowser.safari && typeof window.fetch == 'undefined') {
       Log.debug('Loading fetch polyfill for Safari..');
@@ -474,5 +490,17 @@ export default class InitHelper {
     if (OneSignal._initCalled)
       throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
     OneSignal._initCalled = true;
+  }
+
+  public static async loadSubscriptionPopup(options?: any) {
+    /**
+     * Users may be subscribed to either .onesignal.com or .os.tc. By this time
+     * that they are subscribing to the popup, the Proxy Frame has already been
+     * loaded and the user's subscription status has been obtained. We can then
+     * use the Proxy Frame present now and check its URL to see whether the user
+     * is finally subscribed to .onesignal.com or .os.tc.
+     */
+    OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
+    await OneSignal.subscriptionPopupHost.load();
   }
 }
