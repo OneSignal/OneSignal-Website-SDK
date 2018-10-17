@@ -66,9 +66,16 @@ test('getWindowEnv should get custom iFrame window environment', async t => {
   t.is(SdkEnvironment.getWindowEnv(), WindowEnvironmentKind.CustomIframe);
 });
 
-test('API URL should be valid', async t => {
+test('API URL should be valid for development environment', async t => {
   t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Development).toString(), 'https://localhost:3001/api/v1');
-  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Staging).toString(), 'https://staging-01.onesignal.com/api/v1');
+});
+
+test('API URL should be valid for staging environment', async t => {
+  const expectedUrl = `https://${window.location.host}/api/v1`;
+  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Staging).toString(), expectedUrl);
+});
+
+test('API URL should be valid for production environment', async t => {
   t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Production).toString(), 'https://onesignal.com/api/v1');
 });
 
