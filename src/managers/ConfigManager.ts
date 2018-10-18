@@ -19,23 +19,6 @@ export default class ConfigManager {
    * a final web SDK-specific configuration.
    */
   public getMergedConfig(userConfig: AppUserConfig, serverConfig: ServerAppConfig): AppConfig {
-    const configIntegrationKind = ConfigHelper.getConfigIntegrationKind(serverConfig);
-    return {
-      appId: serverConfig.app_id,
-      subdomain: ConfigHelper.getSubdomainForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
-      origin: serverConfig.config.origin,
-      httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
-      cookieSyncEnabled: serverConfig.features.cookie_sync.enable,
-      restrictedOriginEnabled: serverConfig.features.restrict_origin && serverConfig.features.restrict_origin.enable,
-      metrics: {
-        enable: serverConfig.features.metrics.enable,
-        mixpanelReportingToken: serverConfig.features.metrics.mixpanel_reporting_token
-      },
-      safariWebId: serverConfig.config.safari_web_id,
-      vapidPublicKey: serverConfig.config.vapid_public_key,
-      onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
-      emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
-      userConfig: ConfigHelper.getUserConfigForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
-    };
+    return ConfigHelper.getMergedConfig(userConfig, serverConfig);
   }
 }

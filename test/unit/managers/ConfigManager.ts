@@ -3,6 +3,7 @@ import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import { ConfigIntegrationKind, AppUserConfigCustomLinkOptions } from '../../../src/models/AppConfig';
 import ConfigManager from '../../../src/managers/ConfigManager';
+import { AppUserConfig, AppConfig, ServerAppConfig } from '../../../src/models/AppConfig';
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
@@ -136,4 +137,17 @@ test('should initialize custom link config for custom code setup with incorrect 
     if (fakeMergedConfig.userConfig.promptOptions) {
       t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
     }
+});
+
+test('should have enableOnSession flag', t => {
+  const fakeUserConfig: AppUserConfig = TestEnvironment.getFakeAppUserConfig();
+  const fakeServerConfig: ServerAppConfig =
+    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  const configManager = new ConfigManager();
+  const fakeMergedConfig: AppConfig = configManager.getMergedConfig(
+    fakeUserConfig,
+    fakeServerConfig
+  );
+
+  t.not(fakeMergedConfig.enableOnSession, undefined);
 });
