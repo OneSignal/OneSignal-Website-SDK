@@ -145,7 +145,7 @@ export class SubscriptionManager {
       pushSubscription = RawPushSubscription.deserialize(pushSubscription);
     }
 
-    const deviceRecord = PushDeviceRecord.createFromPushSubscription(
+    const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
       this.config.appId,
       pushSubscription,
       subscriptionState
@@ -156,10 +156,9 @@ export class SubscriptionManager {
       const { deviceId } = await Database.getSubscription();
 
       if (!pushSubscription || pushSubscription.isNewSubscription()) {
-        // send update player only for new subscriptions
-        // for existing players on_session will send the update instead
         await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
           notification_types: SubscriptionStateKind.Subscribed,
+          ...deviceRecord.serialize(),
         });
       }
     } else {
@@ -168,7 +167,6 @@ export class SubscriptionManager {
       Log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
     }
 
-    // TODO Iryna should it be moved into previous else clause?
     await this.associateSubscriptionWithEmail(newDeviceId);
 
     const subscription = await Database.getSubscription();
