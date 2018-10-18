@@ -815,6 +815,16 @@ export default class OneSignal {
   }
 
   /**
+   * Used to un-subscribe from OneSignal events such as "subscriptionChange"
+   * @param event - Event name to un-subscribe from
+   * @param listener - Event listener to remove from the collection for a specified event
+   * @PublicApi
+   */
+  static off(event: string, listener: EventHandler): Emitter {
+    return this.emitter.off(event, listener);
+  }
+
+  /**
    * Used to subscribe to OneSignal events such as "subscriptionChange"
    * Fires only once
    * @param event - Event name to subscribe to
