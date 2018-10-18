@@ -9,7 +9,7 @@ import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelp
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/services/Database';
 import Context from '../../../src/models/Context';
-import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
+import { SubscriptionManager, SubscriptionManagerConfig } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
 import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
@@ -25,6 +25,9 @@ import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorke
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
+import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
+import { Subscription } from "../../../src/models/Subscription";
+import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 
 // manually create and restore the sandbox
 let sandbox: SinonSandbox;
@@ -70,11 +73,11 @@ async function testCase(
 
   // Create our subscription manager, which is what we're testing
   const manager = new SubscriptionManager(t.context.sdkContext, {
-    safariWebId: null,
+    safariWebId: undefined,
     appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
     onesignalVapidPublicKey: sharedVapidPublicKey
-  });
+  } as SubscriptionManagerConfig);
 
   // Register a mock service worker to access push subscription
   await navigator.serviceWorker.register('/worker.js');
@@ -228,6 +231,81 @@ test(
     unsubscribeSpy.restore();
   }
 );
+
+test("registerSubscription with an existing subsription sends player update", async t => {
+  TestEnvironment.mockInternalOneSignal();
+
+  const subscriptionManager = OneSignal.context.subscriptionManager;
+  const deviceId = OneSignalUtils.getRandomUuid();
+  const pushSubscription = {
+    w3cAuth: "7QdgQYTjZIeiCuLgopqeww",
+    w3cP256dh: "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0",
+    w3cEndpoint: new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh"),
+  } as RawPushSubscription;
+  const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
+    OneSignal.config.appId,
+    pushSubscription
+  );
+  let updateData: any = {
+    notification_types: SubscriptionStateKind.Subscribed
+  }
+  updateData = Object.assign(updateData, deviceRecord.serialize());
+
+  sandbox.stub(Database, "getSubscription").resolves({ deviceId } as Subscription);
+  sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
+  sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+  sandbox.stub(Database, "setSubscription").resolves();
+
+  const playerUpdateSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
+  const playerCreateSpy = sandbox.stub(OneSignalApiShared, "createUser");
+
+  await subscriptionManager.registerSubscription(pushSubscription)
+
+  t.is(playerUpdateSpy.calledOnce, true);
+  t.is(playerCreateSpy.notCalled, true);
+  const args = playerUpdateSpy.getCall(0).args;
+  t.is(args.length, 3);
+  t.is(args[0], OneSignal.config.appId);
+  t.is(args[1], deviceId);
+  t.deepEqual(args[2], updateData);
+});
+
+test("registerSubscription without an existing subsription sends player create", async t => {
+  TestEnvironment.mockInternalOneSignal();
+
+  const subscriptionManager = OneSignal.context.subscriptionManager;
+  const deviceId = OneSignalUtils.getRandomUuid();
+  const pushSubscription = {
+    w3cAuth: "7QdgQYTjZIeiCuLgopqeww",
+    w3cP256dh: "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0",
+    w3cEndpoint: new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh"),
+  } as any;
+  const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
+    OneSignal.config.appId,
+    pushSubscription
+  );
+  let updateData: any = {
+    notification_types: SubscriptionStateKind.Subscribed
+  }
+  updateData = Object.assign(updateData, deviceRecord.serialize());
+
+  sandbox.stub(Database, "getSubscription").resolves({ } as Subscription);
+  sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
+  sandbox.stub(PushDeviceRecord, "createFromPushSubscription").returns(deviceRecord);
+  sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+  sandbox.stub(Database, "setSubscription").resolves();
+
+  const playerUpdateSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
+  const playerCreateSpy = sandbox.stub(OneSignalApiShared, "createUser");
+
+  await subscriptionManager.registerSubscription(pushSubscription)
+
+  t.is(playerUpdateSpy.notCalled, true);
+  t.is(playerCreateSpy.calledOnce, true);
+  const args = playerCreateSpy.getCall(0).args;
+  t.is(args.length, 1);
+  t.deepEqual(args[0], deviceRecord);
+});
 
 test('device ID is available after register event', async t => {
   const vapidKeys = generateVapidKeys();
