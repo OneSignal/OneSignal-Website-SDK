@@ -280,7 +280,7 @@ export default class Database {
   }
 
   async setSubscription(subscription: Subscription) {
-    if (subscription.deviceId && subscription.deviceId) {
+    if (subscription.deviceId) {
       await this.put("Ids", { type: "userId", id: subscription.deviceId });
     }
     if (typeof subscription.subscriptionToken !== "undefined") {

@@ -9,6 +9,7 @@ import PermissionManager from '../managers/PermissionManager';
 import MetricsManager from '../managers/MetricsManager';
 import { ContextSWInterface } from "./ContextSW";
 import ContextHelper from "../helpers/ContextHelper";
+import { UpdateManager } from "../managers/UpdateManager";
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -26,6 +27,7 @@ export default class Context implements ContextInterface {
   public sessionManager: SessionManager;
   public permissionManager: PermissionManager;
   public metricsManager: MetricsManager;
+  public updateManager: UpdateManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -34,6 +36,7 @@ export default class Context implements ContextInterface {
     this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
+    this.updateManager = new UpdateManager(this);
     
     this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
     this.dynamicResourceLoader = new DynamicResourceLoader();

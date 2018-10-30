@@ -38,7 +38,7 @@ export default class OneSignalApiShared {
     return OneSignalApiBase.post('notifications', params);
   }
 
-  static async createUser(deviceRecord: DeviceRecord): Promise<string> {
+  static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
     const response = await OneSignalApiBase.post(`players`, deviceRecord.serialize());
     if (response && response.success)
       return response.id;
@@ -49,7 +49,7 @@ export default class OneSignalApiShared {
     appConfig: AppConfig,
     emailProfile: EmailProfile,
     pushDeviceRecordId?: string
-  ): Promise<string> {
+  ): Promise<string | null> {
     const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
     emailRecord.appId = appConfig.appId;
     emailRecord.pushDeviceRecordId = pushDeviceRecordId;
@@ -65,7 +65,7 @@ export default class OneSignalApiShared {
     appConfig: AppConfig,
     emailProfile: EmailProfile,
     pushDeviceRecordId?: string
-  ): Promise<string> {
+  ): Promise<string | null> {
     const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
     emailRecord.appId = appConfig.appId;
     emailRecord.pushDeviceRecordId = pushDeviceRecordId;

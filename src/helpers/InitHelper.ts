@@ -20,7 +20,6 @@ import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
@@ -31,9 +30,8 @@ import Environment from '../Environment';
 import Bell from '../bell/Bell';
 import { CustomLink } from '../CustomLink';
 import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 
 declare var OneSignal: any;
 
@@ -146,53 +144,24 @@ export default class InitHelper {
       }
     }
 
-    // TODO: possibly wrap into Promise.all for parallel execution
     await InitHelper.processExpiringSubscriptions();
-    await InitHelper.showNotifyButton();
-    await InitHelper.showPromptsFromWebConfigEditor();
-    await InitHelper.sendOnSessionUpdate();
-    await InitHelper.updateEmailSessionCount();
-    await context.cookieSyncer.install();
+    if (OneSignal.config.userConfig.autoRegister === true && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      OneSignal.once("ON_SESSION", async () => {
+        OneSignal.context.updateManager.sendOnSessionUpdate();
+      });
+    } else {
+      OneSignal.context.updateManager.sendOnSessionUpdate();
+    }
+    // TODO: wrapped into Promise.all for parallel execution, seems to be working fine
+    await Promise.all([
+      InitHelper.showNotifyButton(),
+      InitHelper.showPromptsFromWebConfigEditor(),
+      InitHelper.updateEmailSessionCount(),
+      context.cookieSyncer.install(),
+    ]);
 
+    
     await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
-  }
-
-  public static async sendOnSessionUpdate(): Promise<void> {
-    // If user has been subscribed before, send the on_session update to our backend on the first page view.
-
-    const context: ContextInterface = OneSignal.context;
-
-    // TODO: Remove after finished testing.
-    // Safeguarded by flag for initial testing. Sent as a part of server config.
-    if (!context.appConfig.enableOnSession && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      return;
-    }
-
-    if (!context.sessionManager.isFirstPageView()) {
-      return;
-    }
-
-    const existingUser = await context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!existingUser) {
-      return;
-    }
-
-    const notificationType = await MainHelper.getCurrentNotificationType();
-
-    // TODO: Remove after finished testing.
-    // Previously the update was sent for HTTP sites only every time untli user is subscribed.
-    if (OneSignalUtils.isUsingSubscriptionWorkaround() && notificationType !== SubscriptionStateKind.Subscribed) {
-      return;
-    }
-    const pushDeviceRecord = new PushDeviceRecord();
-    pushDeviceRecord.subscriptionState = notificationType;
-    try {
-      const { deviceId } = await Database.getSubscription();
-      // Checked for presence of deviceId in isAlreadyRegisteredWithOneSignal()
-      await OneSignalApiShared.updateUserSession(deviceId, pushDeviceRecord);
-    } catch(e) {
-      Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
-    }
   }
 
   private static async showNotifyButton() {
@@ -338,7 +307,6 @@ export default class InitHelper {
     if (OneSignal.config.userConfig.autoRegister === false && !OneSignal.config.subdomain) {
       Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
       /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
-      await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
       if (isPushEnabled && !isUsingSubscriptionWorkaround()) {
         Log.info(
@@ -347,6 +315,7 @@ export default class InitHelper {
         // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
         await SubscriptionHelper.registerForPush();
       }
+      await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       return;
     }
 
@@ -442,10 +411,13 @@ export default class InitHelper {
           await InitHelper.finishSessionInit(options);
           await SubscriptionHelper.registerForPush();
         }
-      } else {
+      } else if (options.__fromRegister) {
         await InitHelper.finishSessionInit(options);
         OneSignal.setSubscription(true);
+      } else {
+        await InitHelper.finishSessionInit(options);
       }
+      Event.trigger("ON_SESSION");
       return;
     }
 
@@ -471,6 +443,7 @@ export default class InitHelper {
       });
     }
     await InitHelper.finishSessionInit(options);
+    Event.trigger("ON_SESSION");
   }
 
   static async polyfillSafariFetch() {
