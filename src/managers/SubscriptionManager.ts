@@ -727,12 +727,21 @@ export class SubscriptionManager {
         optedOut: !!optedOut,
       };
     }
-    // Removing due to inconsistent behavior between browsers
-    // Doesn't matter for re-subscribing, worker is present and active
-    // const pushSubscription = await workerRegistration.pushManager.getSubscription();
+
+    /* 
+     * Removing pushSubscription from this method due to inconsistent behavior between browsers.
+     * Doesn't matter for re-subscribing, worker is present and active.
+     * Previous implementation for reference:
+     * const pushSubscription = await workerRegistration.pushManager.getSubscription();
+     * const isPushEnabled = !!(
+     *   pushSubscription &&
+     *   deviceId &&
+     *   notificationPermission === NotificationPermission.Granted &&
+     *   isWorkerActive
+     * );
+     */
 
     const isPushEnabled = !!(
-      // pushSubscription &&
       deviceId &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive

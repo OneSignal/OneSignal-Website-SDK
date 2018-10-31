@@ -10,7 +10,7 @@ import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 
 // manually create and restore the sandbox
-const sandbox: SinonSandbox = sinon.sandbox.create();;
+const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({

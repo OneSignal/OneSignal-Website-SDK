@@ -200,7 +200,7 @@ export class ConfigHelper {
         */
         return {
           appId: serverConfig.app_id,
-          autoRegister: userConfig.autoRegister || false,
+          autoRegister: false,
           path: serverConfig.config.serviceWorker.path,
           serviceWorkerPath: serverConfig.config.serviceWorker.workerName,
           serviceWorkerUpdaterPath: serverConfig.config.serviceWorker.updaterWorkerName,
