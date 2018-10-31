@@ -72,6 +72,12 @@ export class UpdateManager {
     if (!deviceRecord) {
       deviceRecord = await this.createDeviceRecord();
     }
+
+    if (deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
+      OneSignal.config.enableOnSession !== true) {
+      return;
+    }
+
     try {
       await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
       this.onSessionSent = true;
