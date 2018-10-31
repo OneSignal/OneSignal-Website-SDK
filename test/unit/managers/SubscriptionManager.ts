@@ -20,7 +20,6 @@ import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrate
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
 import OneSignal from '../../../src/OneSignal';
-import OneSignalApiShared from '../../../src/OneSignalApiShared';
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
@@ -29,20 +28,15 @@ import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
 import { Subscription } from "../../../src/models/Subscription";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 
-// manually create and restore the sandbox
-let sandbox: SinonSandbox;
+const sandbox: SinonSandbox= sinon.sandbox.create();;
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
 
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
-  t.context.sdkContext = new Context(appConfig);
+  TestEnvironment.mockInternalOneSignal();
   timemachine.reset();
-
-  sandbox = sinon.sandbox.create();
 });
 
 test.afterEach(function () {
@@ -72,7 +66,7 @@ async function testCase(
   setBrowser(browser);
 
   // Create our subscription manager, which is what we're testing
-  const manager = new SubscriptionManager(t.context.sdkContext, {
+  const manager = new SubscriptionManager(OneSignal.context, {
     safariWebId: undefined,
     appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
@@ -92,7 +86,7 @@ async function testCase(
   }
 
   // Prepare to subscribe for push, hook the call to spy on params
-  const spy = sinon.spy(PushManager.prototype, 'subscribe');
+  const spy = sandbox.spy(PushManager.prototype, 'subscribe');
 
   // Subscribe for push
   await manager.subscribeFcmVapidOrLegacyKey(registration.pushManager as any, subscriptionStrategy);
@@ -206,7 +200,7 @@ test(
       subsequentVapidKeys.uniquePublic,
       subsequentVapidKeys.sharedPublic,
       SubscriptionStrategyKind.ResubscribeExisting,
-      async (pushManager, subscriptionManager) => {
+      async (pushManager, _subscriptionManager) => {
         // Create an initial subscription, so subsequent subscriptions attempt to re-use this initial
         // subscription's options
         await pushManager.subscribe(initialSubscriptionOptions);
@@ -216,7 +210,7 @@ test(
         subscription.options = null;
 
         // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
-        unsubscribeSpy = sinon.spy(PushSubscription.prototype, 'unsubscribe');
+        unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
       },
       async (pushManager, pushManagerSubscribeSpy) => {
         // The subscription options used should be our subsequent subscription's options
@@ -237,37 +231,31 @@ test("registerSubscription with an existing subsription sends player update", as
 
   const subscriptionManager = OneSignal.context.subscriptionManager;
   const deviceId = OneSignalUtils.getRandomUuid();
-  const pushSubscription = {
-    w3cAuth: "7QdgQYTjZIeiCuLgopqeww",
-    w3cP256dh: "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0",
-    w3cEndpoint: new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh"),
-  } as RawPushSubscription;
+  const pushSubscription: RawPushSubscription = new RawPushSubscription();
+  pushSubscription.w3cAuth = "7QdgQYTjZIeiCuLgopqeww";
+  pushSubscription.w3cP256dh = "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0";
+  pushSubscription.w3cEndpoint = new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh");
+
   const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
     OneSignal.config.appId,
-    pushSubscription
+    RawPushSubscription.deserialize(pushSubscription)
   );
-  let updateData: any = {
-    notification_types: SubscriptionStateKind.Subscribed
-  }
-  updateData = Object.assign(updateData, deviceRecord.serialize());
 
   sandbox.stub(Database, "getSubscription").resolves({ deviceId } as Subscription);
   sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
-  const playerUpdateSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
-  const playerCreateSpy = sandbox.stub(OneSignalApiShared, "createUser");
+  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerUpdate");
+  const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
 
   await subscriptionManager.registerSubscription(pushSubscription)
 
   t.is(playerUpdateSpy.calledOnce, true);
   t.is(playerCreateSpy.notCalled, true);
   const args = playerUpdateSpy.getCall(0).args;
-  t.is(args.length, 3);
-  t.is(args[0], OneSignal.config.appId);
-  t.is(args[1], deviceId);
-  t.deepEqual(args[2], updateData);
+  t.is(args.length, 1);
+  t.deepEqual(args[0], deviceRecord);
 });
 
 test("registerSubscription without an existing subsription sends player create", async t => {
@@ -295,8 +283,8 @@ test("registerSubscription without an existing subsription sends player create",
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
-  const playerUpdateSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
-  const playerCreateSpy = sandbox.stub(OneSignalApiShared, "createUser");
+  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerUpdate");
+  const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
 
   await subscriptionManager.registerSubscription(pushSubscription)
 
@@ -320,7 +308,6 @@ test('device ID is available after register event', async t => {
     null
   );
 
-  const context: Context = await t.context.sdkContext;
   const serviceWorkerRegistration = await ServiceWorkerManager.getRegistration();
   const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
   const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(pushSubscription);
@@ -334,12 +321,13 @@ test('device ID is available after register event', async t => {
     });
   });
 
-  const stub = sinon.stub(OneSignalApiShared, "createUser").resolves(randomPlayerId);
+  const playerUpdateStub = sandbox.stub(OneSignal.context.updateManager, "sendPlayerUpdate").resolves();
+  const playerCreateStub = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate").resolves(randomPlayerId);
 
-  await context.subscriptionManager.registerSubscription(rawPushSubscription);
+  await OneSignal.context.subscriptionManager.registerSubscription(rawPushSubscription);
+  t.is(playerUpdateStub.calledOnce, false);
+  t.is(playerCreateStub.calledOnce, true);
   await registerEventPromise;
-
-  stub.restore();
 });
 
 test('safari 11.1+ with service worker but not pushManager', async t => {
@@ -427,15 +415,13 @@ test(
         await pushManager.subscribe(initialSubscriptionOptions);
 
         // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
-        unsubscribeSpy = sinon.spy(PushSubscription.prototype, 'unsubscribe');
+        unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
       },
       async (pushManager, pushManagerSubscribeSpy) => {
         // Unsubscribe should have been called
         t.true(unsubscribeSpy.calledOnce);
       }
     );
-
-    unsubscribeSpy.restore();
   }
 );
 
@@ -491,8 +477,9 @@ async function expirationTestCase(
   const initialVapidKeys = generateVapidKeys();
 
   // Force service worker active state dependency so test can run
-  const stub = sinon.stub(ServiceWorkerManager.prototype, "getActiveState").resolves(ServiceWorkerActiveState.WorkerA);
-  const integrationStub = sinon.stub(SdkEnvironment, "getIntegration").resolves(env);
+  const stub = sandbox.stub(ServiceWorkerManager.prototype, "getActiveState")
+    .resolves(ServiceWorkerActiveState.WorkerA);
+  const integrationStub = sandbox.stub(SdkEnvironment, "getIntegration").resolves(env);
 
   const newTimeBeforeMidpoint = expirationCheckTime;
 
@@ -512,13 +499,11 @@ async function expirationTestCase(
     initialVapidKeys.uniquePublic,
     initialVapidKeys.sharedPublic,
     SubscriptionStrategyKind.SubscribeNew,
-    async (pushManager, subscriptionManager) => {
+    async (_pushManager, _subscriptionManager) => {
       // Set every subscription's expiration time to 30 days plus
       PushSubscription.prototype.expirationTime = subscriptionExpirationTime;
     },
-    async (pushManager, pushManagerSubscribeSpy, subscriptionManager) => {
-      const context: Context = t.context;
-
+    async (_pushManager, _pushManagerSubscribeSpy, subscriptionManager) => {
       if (skipCreationDateSet) {
         // Unset directly
         await Database.put("Options", { key: "subscriptionCreatedAt", value: null });
@@ -676,10 +661,10 @@ test(
       initialVapidKeys.uniquePublic,
       initialVapidKeys.sharedPublic,
       SubscriptionStrategyKind.SubscribeNew,
-      async (pushManager, subscriptionManager) => {
+      async (_pushManager, _subscriptionManager) => {
         PushSubscription.prototype.expirationTime = expirationTime;
       },
-      async (pushManager, pushManagerSubscribeSpy) => {
+      async (_pushManager, _pushManagerSubscribeSpy) => {
         const subscription = await Database.getSubscription();
 
         t.deepEqual(subscription.expirationTime, expirationTime);
@@ -707,7 +692,7 @@ test(
 
 test(
   "Service worker failed to install due to 403. Send a notification for the first user's session.", async t => {
-    const context: Context = await t.context.sdkContext;
+    const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
     const sessionManager = context.sessionManager;
@@ -732,7 +717,7 @@ test(
 
 test(
   "Service worker failed to install due to 403. Not the first user's session, do not send a notification.", async t => {
-    const context: Context = await t.context.sdkContext;
+    const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
     const sessionManager = context.sessionManager;
@@ -757,7 +742,7 @@ test(
 
 test(
   "Service worker failed to install due to 404. Send a notification for the first user's session.", async t => {
-    const context: Context = await t.context.sdkContext;
+    const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
     const sessionManager = context.sessionManager;
@@ -782,7 +767,7 @@ test(
 
 test(
   "Service worker failed to install due to 404. Not the first user's session, do not send a notification.", async t => {
-    const context: Context = await t.context.sdkContext;
+    const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
     const sessionManager = context.sessionManager;

@@ -302,11 +302,9 @@ export class TestEnvironment {
   }
 
   static mockInternalOneSignal() {
-    const sessionManager = new SessionManager();
     const appConfig = TestEnvironment.getFakeAppConfig();
     OneSignal.context = new Context(appConfig);
     OneSignal.config = appConfig;
-    OneSignal.context.sessionManager = sessionManager;
   }
 
   static getFakeAppConfig(): AppConfig {

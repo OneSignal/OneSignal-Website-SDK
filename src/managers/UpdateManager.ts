@@ -95,4 +95,8 @@ export class UpdateManager {
       return undefined;
     }
   }
+
+  public onSessionAlreadyCalled() {
+    return this.onSessionSent;
+  }
 }
