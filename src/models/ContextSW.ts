@@ -5,6 +5,7 @@ import { AppConfig } from './AppConfig';
 import { SessionManager } from '../managers/SessionManager';
 import PermissionManager from '../managers/PermissionManager';
 import ContextHelper from "../helpers/ContextHelper";
+import { UpdateManager } from "../managers/UpdateManager";
 
 export interface ContextSWInterface {
   appConfig: AppConfig;
@@ -13,6 +14,7 @@ export interface ContextSWInterface {
   sessionManager: SessionManager;
   permissionManager: PermissionManager;
   workerMessenger: WorkerMessenger;
+  updateManager: UpdateManager;
 }
 
 export default class ContextSW implements ContextSWInterface {
@@ -22,6 +24,7 @@ export default class ContextSW implements ContextSWInterface {
   public sessionManager: SessionManager;
   public permissionManager: PermissionManager;
   public workerMessenger: WorkerMessenger;
+  public updateManager: UpdateManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -30,5 +33,6 @@ export default class ContextSW implements ContextSWInterface {
     this.sessionManager = new SessionManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
+    this.updateManager = new UpdateManager(this);
   }
 }

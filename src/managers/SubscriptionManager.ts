@@ -153,21 +153,13 @@ export class SubscriptionManager {
 
     let newDeviceId: string | undefined = undefined;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
-      const { deviceId } = await Database.getSubscription();
-
-      if (!pushSubscription || pushSubscription.isNewSubscription()) {
-        await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-          notification_types: SubscriptionStateKind.Subscribed,
-          ...deviceRecord.serialize(),
-        });
-      }
+      await this.context.updateManager.sendPlayerUpdate(deviceRecord);
     } else {
-      const id = await OneSignalApiShared.createUser(deviceRecord);
-      newDeviceId = id;
-      Log.info("Subscribed to web push and registered with OneSignal:", deviceRecord);
+      newDeviceId = await this.context.updateManager.sendPlayerCreate(deviceRecord);
+      if (newDeviceId) {
+        await this.associateSubscriptionWithEmail(newDeviceId);
+      }
     }
-
-    await this.associateSubscriptionWithEmail(newDeviceId);
 
     const subscription = await Database.getSubscription();
     subscription.deviceId = newDeviceId;
@@ -181,7 +173,6 @@ export class SubscriptionManager {
     } else {
       subscription.subscriptionToken = null;
     }
-
     await Database.setSubscription(subscription);
 
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
@@ -736,10 +727,21 @@ export class SubscriptionManager {
         optedOut: !!optedOut,
       };
     }
-    const pushSubscription = await workerRegistration.pushManager.getSubscription();
+
+    /* 
+     * Removing pushSubscription from this method due to inconsistent behavior between browsers.
+     * Doesn't matter for re-subscribing, worker is present and active.
+     * Previous implementation for reference:
+     * const pushSubscription = await workerRegistration.pushManager.getSubscription();
+     * const isPushEnabled = !!(
+     *   pushSubscription &&
+     *   deviceId &&
+     *   notificationPermission === NotificationPermission.Granted &&
+     *   isWorkerActive
+     * );
+     */
 
     const isPushEnabled = !!(
-      pushSubscription &&
       deviceId &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
