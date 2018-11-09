@@ -8,6 +8,25 @@ import { Serializable } from './Serializable';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 
+export interface FlattenedDeviceRecord {
+  /* Old Parameters */
+  device_type: DeliveryPlatformKind;
+  language: string;
+  timezone: number;
+  device_os: number;
+  sdk: string;
+  notification_types: SubscriptionStateKind | undefined;
+
+  /* New Parameters */
+  delivery_platform: DeliveryPlatformKind;
+  browser_name: string;
+  browser_version: number;
+  operating_system: string;
+  operating_system_version: string;
+  device_platform: DevicePlatformKind;
+  device_model: string;
+  app_id?: string;
+}
 
 /**
  * Describes the fields of a OneSignal "player" device record.
@@ -15,7 +34,6 @@ import { OneSignalUtils } from "../utils/OneSignalUtils";
  * This is used when creating or modifying push and email records.
  */
 export abstract class DeviceRecord implements Serializable {
-  public appId: string;
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;
   public timezone: number;
@@ -26,9 +44,11 @@ export abstract class DeviceRecord implements Serializable {
   public devicePlatform: DevicePlatformKind;
   public deviceModel: string;
   public sdkVersion: string;
-  public subscriptionState: SubscriptionStateKind;
+  public appId: string | undefined;
+  public subscriptionState: SubscriptionStateKind | undefined;
 
   constructor() {
+    // this.appId = OneSignal.context.appConfig.appId;
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
     this.browserName = bowser.name;
@@ -129,8 +149,8 @@ export abstract class DeviceRecord implements Serializable {
     }
   }
 
-  serialize() {
-    const serializedBundle: any = {
+  serialize(): FlattenedDeviceRecord {
+    const serializedBundle: FlattenedDeviceRecord = {
       /* Old Parameters */
       device_type: this.deliveryPlatform,
       language: this.language,

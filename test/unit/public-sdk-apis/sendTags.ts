@@ -54,15 +54,15 @@ test.beforeEach(t => {
 async function expectPushRecordTagUpdateRequest(
   t: TestContext & Context<any>,
   pushDevicePlayerId: string,
-  emailAuthHash: string,
+  emailAuthHash: string | undefined,
 ) {
   nock('https://onesignal.com')
     .put(`/api/v1/players/${pushDevicePlayerId}`)
-    .reply(200, (uri, requestBody) => {
+    .reply(200, (_uri: string, requestBody: any) => {
       t.deepEqual(
         requestBody,
         JSON.stringify({
-          app_id: null,
+          app_id: OneSignal.context.appConfig.appId,
           tags: t.context.simpleTags,
           email_auth_hash: emailAuthHash ? emailAuthHash : undefined,
         })
@@ -73,6 +73,7 @@ async function expectPushRecordTagUpdateRequest(
 
 test("sendTags sends to email record and push record with email auth hash", async t => {
   await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
 
   const emailProfile = new EmailProfile();
   emailProfile.emailId = "dafb31e3-19a5-473c-b319-62082bd696fb";
@@ -82,7 +83,7 @@ test("sendTags sends to email record and push record with email auth hash", asyn
   const subscription = new Subscription();
   subscription.deviceId = "55b9bc29-5f07-48b9-b85d-7e6efe2396fb";
   await Database.setSubscription(subscription);
-
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
   await Database.setEmailProfile(emailProfile);
   expectPushRecordTagUpdateRequest(t, emailProfile.emailId, emailProfile.emailAuthHash);
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
@@ -91,6 +92,7 @@ test("sendTags sends to email record and push record with email auth hash", asyn
 
 test("sendTags sends to email record and push record without email auth hash", async t => {
   await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
 
   const emailProfile = new EmailProfile();
   emailProfile.emailId = "dafb31e3-19a5-473c-b319-62082bd696fb";
@@ -99,7 +101,7 @@ test("sendTags sends to email record and push record without email auth hash", a
   const subscription = new Subscription();
   subscription.deviceId = "55b9bc29-5f07-48b9-b85d-7e6efe2396fb";
   await Database.setSubscription(subscription);
-
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
   await Database.setEmailProfile(emailProfile);
   expectPushRecordTagUpdateRequest(t, emailProfile.emailId, emailProfile.emailAuthHash);
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
@@ -108,11 +110,12 @@ test("sendTags sends to email record and push record without email auth hash", a
 
 test("sendTags sends to push record only without email", async t => {
   await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
 
   const subscription = new Subscription();
   subscription.deviceId = "55b9bc29-5f07-48b9-b85d-7e6efe2396fb";
   await Database.setSubscription(subscription);
-
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
   // Without this, emailProfile.emailId is undefined, but in real scenarios it is null
   await Database.setEmailProfile(new EmailProfile());
 

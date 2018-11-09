@@ -159,7 +159,7 @@ test('notification clicked - While page is opened in background', async t => {
   const workerMessageReplyBuffer = new WorkerMessengerReplyBuffer();
   OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
-  sandbox.stub(Event, 'trigger', function(event: string) {
+  sandbox.stub(Event, 'trigger').callsFake(function(event: string) {
     if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
       t.pass();
   });
@@ -199,9 +199,12 @@ test('installWorker() installs worker A with the correct file name and query par
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
-  t.true(navigator.serviceWorker.controller.scriptURL.endsWith(
-    `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
-  );
+  t.not(navigator.serviceWorker.controller, null);
+  if (navigator.serviceWorker.controller !== null) {
+    t.true(navigator.serviceWorker.controller.scriptURL.endsWith(
+      `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
+    );
+  }
 });
 
 test('installWorker() installs worker A when a third party service worker exists', async t => {
@@ -296,7 +299,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
     .get(function(uri) {
       return uri.indexOf(workerPath) !== -1;
     })
-    .reply(404,  (uri, requestBody) => {
+    .reply(404,  (_uri: string, _requestBody: any) => {
       return {
         status: 404,
         statusText: "404 Not Found"
@@ -332,7 +335,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
     .get(function(uri) {
       return uri.indexOf(workerPath) !== -1;
     })
-    .reply(404,  (uri, requestBody) => {
+    .reply(404,  (_uri: string, _requestBody: any) => {
       return {
         status: 404,
         statusText: "404 Not Found"
