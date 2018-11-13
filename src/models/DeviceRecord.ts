@@ -25,6 +25,7 @@ export interface FlattenedDeviceRecord {
   operating_system_version: string;
   device_platform: DevicePlatformKind;
   device_model: string;
+  // TODO: Make it a required parameter
   app_id?: string;
 }
 
@@ -48,6 +49,7 @@ export abstract class DeviceRecord implements Serializable {
   public subscriptionState: SubscriptionStateKind | undefined;
 
   constructor() {
+    // TODO: Possible implementation for appId initialization
     // this.appId = OneSignal.context.appConfig.appId;
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
@@ -59,7 +61,7 @@ export abstract class DeviceRecord implements Serializable {
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();
     this.deliveryPlatform = this.getDeliveryPlatform();
-    // Unimplemented properties are appId, deliveryPlatform, subscriptionState, and subscription
+    // Unimplemented properties are appId, subscriptionState, and subscription
   }
 
   getDevicePlatform(): DevicePlatformKind {
