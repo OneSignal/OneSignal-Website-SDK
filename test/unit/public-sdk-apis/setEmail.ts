@@ -1,37 +1,37 @@
 import "../../support/polyfills/polyfills";
 import test, { TestContext, Context } from "ava";
 import Database from "../../../src/services/Database";
-import Macros from "../../support/tester/Macros";
 import {TestEnvironment, BrowserUserAgent} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
-import { Subscription } from '../../../src/models/Subscription';
 
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import nock from 'nock';
-import { AppConfig } from '../../../src/models/AppConfig';
-import { EmailProfile } from '../../../src/models/EmailProfile';
 import Random from "../../support/tester/Random";
-import Environment from '../../../src/Environment';
 import { setUserAgent } from "../../support/tester/browser";
 
+test.beforeEach(async _t => {
+  await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
+})
+
 test("setEmail should reject an empty or invalid emails", async t => {
-    await TestEnvironment.initialize();
   try {
-    await OneSignal.setEmail(undefined);
+    await OneSignal.setEmail(undefined as any);
     t.fail('expected exception not caught');
   } catch (e) {
     t.truthy(e instanceof InvalidArgumentError);
   }
 
   try {
-    await OneSignal.setEmail(null);
+    await OneSignal.setEmail(null as any);
     t.fail('expected exception not caught');
   } catch (e) {
     t.truthy(e instanceof InvalidArgumentError);
   }
 
   try {
-    await OneSignal.setEmail(null);
+    await OneSignal.setEmail(null as any);
     t.fail('expected exception not caught');
   } catch (e) {
     t.truthy(e instanceof InvalidArgumentError);
@@ -46,7 +46,6 @@ test("setEmail should reject an empty or invalid emails", async t => {
 });
 
 test("setEmail should not accept an email auth SHA-256 hex hash not 64 characters long", async t => {
-  await TestEnvironment.initialize();
   try {
     await OneSignal.setEmail("test@example.com", {
       emailAuthHash: "12345"
@@ -75,15 +74,15 @@ test("setEmail should not accept an email auth SHA-256 hex hash not 64 character
 async function expectEmailRecordCreationRequest(
   t: TestContext & Context<any>,
   emailAddress: string,
-  pushDevicePlayerId: string,
-  emailAuthHash: string,
+  pushDevicePlayerId: string | null,
+  emailAuthHash: string | undefined | null,
   newCreatedEmailId: string
 ) {
   nock('https://onesignal.com')
     .post(`/api/v1/players`)
-    .reply(200, (uri, requestBody) => {
-      const sameValues = {
-        app_id: undefined,
+    .reply(200, (_uri: string, requestBody: any) => {
+      const sameValues: {[key: string]: string | undefined } = {
+        app_id: OneSignal.context.appConfig.appId,
         identifier: emailAddress,
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
         email_auth_hash: emailAuthHash ? emailAuthHash : undefined
@@ -115,17 +114,17 @@ async function expectEmailRecordCreationRequest(
 
 async function expectEmailRecordUpdateRequest(
   t: TestContext & Context<any>,
-  emailId: string,
+  emailId: string | null,
   emailAddress: string,
-  pushDevicePlayerId: string,
-  emailAuthHash: string,
+  pushDevicePlayerId: string | null,
+  emailAuthHash: string | undefined,
   newUpdatedEmailId: string
 ) {
   nock('https://onesignal.com')
     .put(`/api/v1/players/${emailId}`)
-    .reply(200, (uri, requestBody) => {
-      const sameValues = {
-        app_id: undefined,
+    .reply(200, (_uri: string, requestBody: any) => {
+      const sameValues: {[key: string]: string | undefined } = {
+        app_id: OneSignal.context.appConfig.appId,
         identifier: emailAddress,
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
         email_auth_hash: emailAuthHash ? emailAuthHash : undefined
@@ -164,11 +163,11 @@ async function expectPushRecordUpdateRequest(
 ) {
   nock('https://onesignal.com')
     .put(`/api/v1/players/${pushDevicePlayerId}`)
-    .reply(200, (uri, requestBody) => {
+    .reply(200, (_uri: string, requestBody: any) => {
       t.deepEqual(
         requestBody,
         JSON.stringify({
-          app_id: null,
+          app_id: OneSignal.context.appConfig.appId,
           parent_player_id: newEmailId ? newEmailId : undefined,
           email: emailAddress,
         })
@@ -178,11 +177,11 @@ async function expectPushRecordUpdateRequest(
 }
 
 interface SetEmailTestData {
-  existingEmailAddress: string;
+  existingEmailAddress: string | null;
   newEmailAddress: string; /* Email address used for setEmail */
-  existingPushDeviceId: string;
-  emailAuthHash: string;
-  existingEmailId: string;
+  existingPushDeviceId: string | null;
+  emailAuthHash: string | undefined;
+  existingEmailId: string | null;
   requireEmailAuth: boolean;
   newEmailId: string; /* Returned by the create or update email record call */
 }
@@ -191,7 +190,6 @@ async function setEmailTest(
   t: TestContext & Context<any>,
   testData: SetEmailTestData
 ) {
-  await TestEnvironment.initialize();
   setUserAgent(BrowserUserAgent.FirefoxMacSupported);
 
   if (testData.existingEmailAddress) {
@@ -301,7 +299,6 @@ test("No push subscription, no email, first setEmail call", async t => {
 });
 
 test("No push subscription, no email, first setEmail call, test email id return", async t => {
-  await TestEnvironment.initialize();
   const fakeUuid = Random.getRandomUuid();
   expectEmailRecordCreationRequest(
     t,
@@ -411,7 +408,7 @@ test(
     };
 
     try {
-      await OneSignal.setEmail(null);
+      await OneSignal.setEmail(null as any);
       t.fail('expected exception not caught');
     } catch (e) {
       t.truthy(e instanceof InvalidArgumentError);

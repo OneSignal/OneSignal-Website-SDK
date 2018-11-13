@@ -27,6 +27,7 @@ export class UpdateManager {
 
   private async createDeviceRecord(): Promise<PushDeviceRecord> {
     const deviceRecord = new PushDeviceRecord();
+    deviceRecord.appId = this.context.appConfig.appId;
     deviceRecord.subscriptionState = await MainHelper.getCurrentNotificationType();
     return deviceRecord;
   }

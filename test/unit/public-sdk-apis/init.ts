@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test, { TestContext } from "ava";
-import sinon, {SinonSandbox} from 'sinon';
+import sinon, {SinonSandbox, SinonStub} from 'sinon';
 import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from "../../../src/OneSignal";
@@ -44,7 +44,7 @@ let sinonSandbox: SinonSandbox;
 
 test.beforeEach(function () {
   nock.disableNetConnect();
-  expectWebPushAnalytics();
+  mockWebPushAnalytics();
 
   sinonSandbox = sinon.sandbox.create();
 });
@@ -60,7 +60,7 @@ test.afterEach(function (_t: TestContext) {
 
 class InitTestHelpers {
   static stubJSONP(serverAppConfig: ServerAppConfig) {
-    sinonSandbox.stub(OneSignalApi, "jsonpLib", function (_url: string, callback: Function) {
+    sinonSandbox.stub(OneSignalApi, "jsonpLib").callsFake(function (_url: string, callback: Function) {
       callback(null, serverAppConfig);
     });
   }
@@ -121,17 +121,17 @@ test("correct degree of persistNotification setting should be stored", async t =
   }
 });
 
-async function expectUserSessionCountUpdateRequest(_t: TestContext, pushDevicePlayerId: string) {
+function mockUserSessionCountUpdateRequest(pushDevicePlayerId: string) {
   nock('https://onesignal.com')
     .post(`/api/v1/players/${pushDevicePlayerId}/on_session`)
-    .reply(200, (uri, requestBody) => {
+    .reply(200, (_uri: string, _requestBody: any) => {
       // Not matching for anything yet, because no email-specific data is sent here
       // Just a whole bunch of params like timezone, os, sdk version..etc.
       return { success: true };
     });
 }
 
-function expectWebPushAnalytics() {
+function mockWebPushAnalytics() {
   nock('https://onesignal.com')
     .get("/webPushAnalytics")
     .reply(200, (_uri: string, _requestBody: string) => {
@@ -160,36 +160,33 @@ test("email session should be updated on first page view", async t => {
   // Ensure this is true, that way email on_session gets run
   sessionManager.setPageViewCount(1);
   t.true(sessionManager.isFirstPageView());
-
-  await expectUserSessionCountUpdateRequest(t, testData.emailPlayerId);
-
+  mockUserSessionCountUpdateRequest(testData.emailPlayerId);
   await InitHelper.updateEmailSessionCount();
+  t.pass();
 });
 
-async function expectPushRecordCreationRequest(t: TestContext) {
-  nock('https://onesignal.com')
-    .post(`/api/v1/players`)
-    .reply(200, (_uri: string, requestBody: string) => {
-      const anyValues = [
-        "device_type",
-        "language",
-        "timezone",
-        "device_os",
-        "sdk",
-        "delivery_platform",
-        "browser_name",
-        "browser_version",
-        "operating_system",
-        "operating_system_version",
-        "device_platform",
-        "device_model",
-        "identifier"
-      ];
-      const parsedRequestBody = JSON.parse(requestBody);
-      for (const anyValueKey of anyValues)
-        t.not(parsedRequestBody[anyValueKey], undefined);
-      return {id: "123"};
-    });
+async function expectPushRecordCreationRequest(t: TestContext, createRequestPostStub: SinonStub) {
+  const anyValues = [
+    "device_type",
+    "language",
+    "timezone",
+    "device_os",
+    "sdk",
+    "delivery_platform",
+    "browser_name",
+    "browser_version",
+    "operating_system",
+    "operating_system_version",
+    "device_platform",
+    "device_model",
+    "identifier"
+  ];
+  t.true(createRequestPostStub.calledOnce);
+  t.not(createRequestPostStub.getCall(0), null);
+  const data: any = createRequestPostStub.getCall(0).args[1];
+  anyValues.forEach((valueKey) => {
+    t.not(data[valueKey], undefined);
+  });
 }
 
 // Mocks out any messages going to the *.os.tc iframe.
@@ -227,11 +224,12 @@ test("Test OneSignal.init, Basic HTTP", async t => {
   TestEnvironment.mockInternalOneSignal();
 
   AssertInitSDK.ensureInitEventFires(t);
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid()
   });
-
-  await expectPushRecordCreationRequest(t);
+  t.true(createPlayerPostStub.notCalled);
 });
 
 test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
@@ -255,12 +253,13 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
   TestEnvironment.mockInternalOneSignal();
 
   AssertInitSDK.ensureInitEventFires(t);
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
-
-  await expectPushRecordCreationRequest(t);
+  t.true(createPlayerPostStub.notCalled);
 });
 
 
@@ -275,15 +274,15 @@ test("Test OneSignal.init, Basic HTTPS", async t => {
   InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
 
   TestEnvironment.mockInternalOneSignal();
-
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
   // AssertInitSDK.ensureInitEventFires(t);
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
 
-  await expectPushRecordCreationRequest(t);
-  t.pass();
+  expectPushRecordCreationRequest(t, createPlayerPostStub);
 });
 
 test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed accept", async t => {
@@ -297,12 +296,13 @@ test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed a
   InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
 
   TestEnvironment.mockInternalOneSignal();
-
-  expectPushRecordCreationRequest(t);
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
+  expectPushRecordCreationRequest(t, createPlayerPostStub)
 
   // Check checkAndTriggerSubscriptionChanged if we get a 'Promise returned by test never resolved' Error
   await OneSignal.isPushNotificationsEnabled();
@@ -328,16 +328,16 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
   TestEnvironment.mockInternalOneSignal();
 
   AssertInitSDK.ensureInitEventFires(t);
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     requiresUserPrivacyConsent: true
   });
 
-  await expectPushRecordCreationRequest(t);
-
   delayInit = false;
   await OneSignal.provideUserConsent(true);
-  t.pass();
+  expectPushRecordCreationRequest(t, createPlayerPostStub);
 });
 
 test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async t => {

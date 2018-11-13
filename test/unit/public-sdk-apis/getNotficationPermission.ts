@@ -1,9 +1,7 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from "../../../src/OneSignal";
-import { AppConfig } from '../../../src/models/AppConfig';
 import Context from '../../../src/models/Context';
 import Random from "../../support/tester/Random";
 
@@ -28,7 +26,7 @@ test("getNotificationPermission when awaited should not return a Promise", async
 
 test.cb("getNotificationPermission callback should not return a Promise", t => {
   TestEnvironment.initialize().then(() => {
-    OneSignal.getNotificationPermission(permission => {
+    OneSignal.getNotificationPermission((permission: any) => {
       t.false(permission instanceof Promise);
       t.true(permission === "default" ||
         permission === "granted" ||

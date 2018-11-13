@@ -97,6 +97,18 @@ export class Utils {
     }
     return defaultValue;
   }
+
+  public static enforceAppId(appId: string | undefined | null): void {
+    if (!appId) {
+      throw new Error("App id cannot be empty");
+    }
+  }
+
+  public static enforcePlayerId(playerId: string | undefined | null): void {
+    if (!playerId) {
+      throw new Error("Player id cannot be empty");
+    }
+  }
 }
 
 export default Utils;

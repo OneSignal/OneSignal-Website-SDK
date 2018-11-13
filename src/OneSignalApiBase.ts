@@ -1,6 +1,7 @@
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { Utils } from "./utils/Utils";
+import { OneSignalApiError, OneSignalApiErrorKind } from './errors/OneSignalApiError';
 
 type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE";
@@ -22,7 +23,19 @@ export class OneSignalApiBase {
     return OneSignalApiBase.call('DELETE', action, data, headers);
   }
 
-  private static call(method: SupportedMethods, action: string, data: any, headers: Headers | undefined) {
+  private static call(method: SupportedMethods, action: string, data: any, headers: Headers | undefined): Promise<any> {
+    if (method === "GET") {
+      if (action.indexOf("players") > -1 && action.indexOf("app_id=") === -1) {
+        console.error("Calls to player api are not permitted without app_id");
+        return Promise.reject(new OneSignalApiError(OneSignalApiErrorKind.MissingAppId));
+      }
+    } else {
+      if (action.indexOf("players") > -1 && (!data || !data["app_id"])) {
+        console.error("Calls to player api are not permitted without app_id");
+        return Promise.reject(new OneSignalApiError(OneSignalApiErrorKind.MissingAppId));
+      }
+    }
+
     let callHeaders: any = new Headers();
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');

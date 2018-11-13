@@ -2,9 +2,11 @@ import { ServerAppConfig } from "./models/AppConfig";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
 import Log from "./libraries/Log";
+import { Utils } from "./utils/Utils";
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
+    Utils.enforceAppId(appId);
     return await new Promise<ServerAppConfig>((resolve, _reject) => {
       resolve(OneSignalApiBase.get(`sync/${appId}/web`, null));
     });
@@ -16,6 +18,7 @@ export class OneSignalApiSW {
    */
   static getUserIdFromSubscriptionIdentifier(appId: string, deviceType: number, identifier: string): Promise<string> {
     // Calling POST /players with an existing identifier returns us that player ID
+    Utils.enforceAppId(appId);
     return OneSignalApiBase.post("players", {
       app_id: appId,
       device_type: deviceType,
@@ -34,6 +37,8 @@ export class OneSignalApiSW {
   }
 
   static updatePlayer(appId: string, playerId: string, options?: Object) {
+    Utils.enforceAppId(appId);
+    Utils.enforcePlayerId(playerId);
     return OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
   }
 }

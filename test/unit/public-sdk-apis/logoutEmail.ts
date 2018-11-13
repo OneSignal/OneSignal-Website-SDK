@@ -1,20 +1,16 @@
 import "../../support/polyfills/polyfills";
 import test, { TestContext, Context } from "ava";
 import Database from '../../../src/services/Database';
-import Macros from "../../support/tester/Macros";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
 
-import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import nock from 'nock';
-import { AppConfig } from '../../../src/models/AppConfig';
-import { EmailProfile } from '../../../src/models/EmailProfile';
 import Random from "../../support/tester/Random";
 
 
 interface LogoutEmailTestData {
-  existingPushDeviceId: string;
+  existingPushDeviceId: string | null;
   emailDeviceId: string;
   emailAuthHash: string;
 }
@@ -24,6 +20,8 @@ async function logoutEmailTest(
   testData: LogoutEmailTestData
 ) {
   await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
 
   /* If an existing email device ID is set, create a fake one here */
   if (testData.emailDeviceId) {
@@ -59,18 +57,18 @@ async function logoutEmailTest(
 
 async function expectEmailLogoutRequest(
   t: TestContext & Context<any>,
-  pushDevicePlayerId: string,
+  pushDevicePlayerId: string | null,
   emailId: string,
   emailAuthHash: string,
   newUpdatedPlayerId: string
 ) {
   nock('https://onesignal.com')
     .post(`/api/v1/players/${pushDevicePlayerId ? pushDevicePlayerId : 'fake'}/email_logout`)
-    .reply(200, (uri, requestBody) => {
+    .reply(200, (_uri: string, requestBody: any) => {
       t.deepEqual(
         requestBody,
         JSON.stringify({
-          app_id: null,
+          app_id: OneSignal.context.appConfig.appId,
           parent_player_id: emailId ? emailId : undefined,
           email_auth_hash: emailAuthHash ? emailAuthHash : undefined
         })

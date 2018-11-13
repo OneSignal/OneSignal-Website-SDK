@@ -127,6 +127,23 @@ test("sendOnSessionUpdate triggers on_session for existing unsubscribed user if 
   t.is(onSessionSpy.called, false);
 });
 
+test("sendOnSessionUpdate includes appId at all times", async t => {
+  const deviceId = Random.getRandomUuid();
+  sandbox.stub(Database, "getSubscription").resolves({ deviceId });
+  
+  OneSignal.context.sessionManager.setPageViewCount(1);
+  OneSignal.context.updateManager = new UpdateManager(OneSignal.context);
+  t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), false);
+
+  const onSessionApiSpy = sandbox.stub(OneSignalApiShared, "updateUserSession").resolves();
+  await OneSignal.context.updateManager.sendOnSessionUpdate();
+  t.is(onSessionApiSpy.calledOnce, true);
+  t.is(onSessionApiSpy.getCall(0).args.length, 2);
+  t.is(onSessionApiSpy.getCall(0).args[0], deviceId);
+  t.not(OneSignal.context.appConfig.appId, undefined);
+  t.is(onSessionApiSpy.getCall(0).args[1].appId, OneSignal.context.appConfig.appId);
+});
+
 test("sendPlayerCreate returns user id", async t => {
   const onCreateSpy = sandbox.stub(OneSignalApiShared, "createUser").resolves(Random.getRandomUuid());
 
