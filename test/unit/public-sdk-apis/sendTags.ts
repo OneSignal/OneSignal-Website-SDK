@@ -5,7 +5,6 @@ import OneSignal from '../../../src/OneSignal';
 import nock from 'nock';
 import Database from '../../../src/services/Database';
 import { EmailProfile } from '../../../src/models/EmailProfile';
-
 import { Subscription } from '../../../src/models/Subscription';
 
 test.beforeEach(t => {

@@ -1,12 +1,8 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import Database from "../../../src/services/Database";
-import Macros from "../../support/tester/Macros";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
-
-
 
 test("getUserId should return the correct string", async t => {
   await TestEnvironment.initialize();
