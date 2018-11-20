@@ -630,11 +630,11 @@ export class ServiceWorker {
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
 
-    const notification = event.notification.data;
+    const notificationData = event.notification.data;
 
     // Chrome 48+: Get the action button that was clicked
     if (event.action)
-      notification.action = event.action;
+      notificationData.action = event.action;
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
@@ -649,14 +649,14 @@ export class ServiceWorker {
 
     const activeClients = await ServiceWorker.getActiveClients();
 
-    const launchUrl = await ServiceWorker.getNotificationUrlToOpen(notification);
+    const launchUrl = await ServiceWorker.getNotificationUrlToOpen(notificationData);
     const notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
     const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notification);
+    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationData);
 
     /*
      Check if we can focus on an existing tab instead of opening a new url.
@@ -669,6 +669,9 @@ export class ServiceWorker {
       let clientUrl = client.url;
       if ((client as any).isSubdomainIframe) {
         const lastKnownHostUrl = await Database.get<string>('Options', 'lastKnownHostUrl');
+        // TODO: clientUrl is being overwritten by defaultUrl and lastKnownHostUrl.
+        //       Should only use clientUrl if it is not null.
+        //       Also need to decide which to use over the other.
         clientUrl = lastKnownHostUrl;
         if (!lastKnownHostUrl) {
           clientUrl = await Database.get<string>('Options', 'defaultUrl');
@@ -691,7 +694,7 @@ export class ServiceWorker {
         if ((client['isSubdomainIframe'] && clientUrl === launchUrl) ||
             (!client['isSubdomainIframe'] && client.url === launchUrl) ||
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
-          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notification, client);
+          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notificationData, client);
             try {
               await client.focus();
             } catch (e) {
@@ -713,7 +716,7 @@ export class ServiceWorker {
             }
             if (notificationOpensLink) {
               Log.debug(`Redirecting HTTP site to ${launchUrl}.`);
-              await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+              await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
               ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.RedirectPage, launchUrl, client);
             } else {
               Log.debug('Not navigating because link is special.')
@@ -729,7 +732,7 @@ export class ServiceWorker {
             try {
               if (notificationOpensLink) {
                 Log.debug(`Redirecting HTTPS site to (${launchUrl}).`)
-                await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+                await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
                 await client.navigate(launchUrl);
               } else {
                 Log.debug('Not navigating because link is special.')
@@ -739,7 +742,7 @@ export class ServiceWorker {
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-            await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+            await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
             await ServiceWorker.openUrl(launchUrl);
           }
         }
@@ -749,7 +752,7 @@ export class ServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
-      await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
+      await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
       await ServiceWorker.openUrl(launchUrl);
     }
 
@@ -762,18 +765,30 @@ export class ServiceWorker {
    *    2. A website developer defined webhook URL, if set.
    */
   static async sendConvertedAPIRequests(
-    appId: string,
+    appId: string | undefined | null,
     deviceId: string | undefined,
-    notification: any): Promise<void> {
+    notificationData: any): Promise<void> {
 
-    const onesignalRest = OneSignalApiBase.put(`notifications/${notification.id}`, {
-      app_id: appId,
-      player_id: deviceId,
-      opened: true
-    });
+    if (!notificationData.id) {
+      console.error("No notification id, skipping networks calls to report open!");
+      return;
+    }
 
-    await ServiceWorker.executeWebhooks('notification.clicked', notification);
-    await onesignalRest;
+    let onesignalRestPromise: Promise<any> | undefined;
+
+    if (appId) {
+      onesignalRestPromise = OneSignalApiBase.put(`notifications/${notificationData.id}`, {
+        app_id: appId,
+        player_id: deviceId,
+        opened: true
+      });
+    }
+    else
+      console.error("No app Id, skipping OneSignal API call for notification open!");
+
+    await ServiceWorker.executeWebhooks('notification.clicked', notificationData);
+    if (onesignalRestPromise)
+      await onesignalRestPromise;
   }
 
   /**
