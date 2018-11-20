@@ -3,15 +3,15 @@ import '../../support/polyfills/polyfills';
 import test from 'ava';
 import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from "nock";
-import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
+import { ServiceWorkerManager} from '../../../src/managers/ServiceWorkerManager';
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import Path from '../../../src/models/Path';
-import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import { HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import Context from '../../../src/models/Context';
 import SdkEnvironment from "../../../src/managers/SdkEnvironment";
-import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind"
+import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind";
 
 import OneSignal from '../../../src/OneSignal';
 import Random from '../../support/tester/Random';
