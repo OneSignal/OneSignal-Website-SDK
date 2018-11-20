@@ -236,15 +236,15 @@ export class ServiceWorker {
    * @param notification A JSON object containing notification details the user consumes.
    * @returns {Promise}
    */
-  static async executeWebhooks(event, notification) {
-    const {deviceId} = await Database.getSubscription();
+  static async executeWebhooks(event: string, notification: any) {
+    const { deviceId } = await Database.getSubscription();
     const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
     const webhookTargetUrl = await Database.get('Options', `webhooks.${event}`);
 
     if (webhookTargetUrl) {
       // JSON.stringify() does not include undefined values
       // Our response will not contain those fields here which have undefined values
-      let postData = {
+      const postData = {
         event: event,
         id: notification.id,
         userId: deviceId,
@@ -256,7 +256,7 @@ export class ServiceWorker {
         icon: notification.icon,
         data: notification.data
       };
-      let fetchOptions: any = {
+      const fetchOptions: any = {
         method: 'post',
         mode: 'no-cors',
         body: JSON.stringify(postData),
@@ -624,7 +624,7 @@ export class ServiceWorker {
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
-  static async onNotificationClicked(event) {
+  static async onNotificationClicked(event: NotificationEventInit) {
     Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     // Close the notification first here, before we do anything that might fail
@@ -665,7 +665,7 @@ export class ServiceWorker {
      be focused instead of an identical new tab being created.
      */
     let doNotOpenLink = false;
-    for (let client of activeClients) {
+    for (const client of activeClients) {
       let clientUrl = client.url;
       if ((client as any).isSubdomainIframe) {
         const lastKnownHostUrl = await Database.get<string>('Options', 'lastKnownHostUrl');
@@ -684,8 +684,7 @@ export class ServiceWorker {
       try {
         // Check if the launchUrl is valid; it can be null
         launchOrigin = new URL(launchUrl).origin;
-      } catch (e) {
-      }
+      } catch (e) {}
 
       if ((notificationClickHandlerMatch === 'exact' && clientUrl === launchUrl) ||
         (notificationClickHandlerMatch === 'origin' && clientOrigin === launchOrigin)) {
@@ -739,9 +738,7 @@ export class ServiceWorker {
               Log.error("Failed to navigate:", client, launchUrl, e);
             }
           } else {
-            /*
-            If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-             */
+            // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
             await Database.put("NotificationOpened", { url: launchUrl, data: notification, timestamp: Date.now() });
             await ServiceWorker.openUrl(launchUrl);
           }
@@ -783,7 +780,7 @@ export class ServiceWorker {
    * Attempts to open the given url in a new browser tab. Called when a notification is clicked.
    * @param url May not be well-formed.
    */
-  static async openUrl(url): Promise<WindowClient> {
+  static async openUrl(url: string): Promise<WindowClient | undefined> {
     Log.debug('Opening notification URL:', url);
     try {
       return await self.clients.openWindow(url);
