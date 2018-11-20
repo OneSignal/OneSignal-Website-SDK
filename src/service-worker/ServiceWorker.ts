@@ -649,8 +649,14 @@ export class ServiceWorker {
 
     const activeClients = await ServiceWorker.getActiveClients();
 
-    let launchUrl = await ServiceWorker.getNotificationUrlToOpen(notification);
-    let notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    const launchUrl = await ServiceWorker.getNotificationUrlToOpen(notification);
+    const notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+
+    // Start making REST API requests BEFORE self.clients.openWindow is called.
+    // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
+    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notification);
 
     /*
      Check if we can focus on an existing tab instead of opening a new url.
@@ -750,16 +756,27 @@ export class ServiceWorker {
       await ServiceWorker.openUrl(launchUrl);
     }
 
-    const { appId } = await Database.getAppConfig();
-    const { deviceId } = await Database.getSubscription();
-    if (appId && deviceId) {
-      await OneSignalApiBase.put('notifications/' + notification.id, {
-        app_id: appId,
-        player_id: deviceId,
-        opened: true
-      });
-    }
-    return await ServiceWorker.executeWebhooks('notification.clicked', notification);
+    return await convertedAPIRequests;
+  }
+
+  /**
+   * Makes network calls for the notification open event to;
+   *    1. OneSignal.com to increase the notification open count.
+   *    2. A website developer defined webhook URL, if set.
+   */
+  static async sendConvertedAPIRequests(
+    appId: string,
+    deviceId: string | undefined,
+    notification: any): Promise<void> {
+
+    const onesignalRest = OneSignalApiBase.put(`notifications/${notification.id}`, {
+      app_id: appId,
+      player_id: deviceId,
+      opened: true
+    });
+
+    await ServiceWorker.executeWebhooks('notification.clicked', notification);
+    await onesignalRest;
   }
 
   /**

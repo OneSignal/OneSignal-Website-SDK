@@ -23,6 +23,10 @@ import {
 import Event from "../../../src/Event";
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";
+import Database from "../../../src/services/Database";
+import { Subscription } from "../../../src/models/Subscription";
+import { ServiceWorker as ServiceWorkerReal } from "../../../src/service-worker/ServiceWorker";
+import MockNotification from "../../support/mocks/MockNotification";
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -32,7 +36,7 @@ class LocalHelpers {
       registrationOptions: { scope: '/' }
     });
   }
-};
+}
 
 // manually create and restore the sandbox
 let sandbox: SinonSandbox;
@@ -171,6 +175,119 @@ test('notification clicked - While page is opened in background', async t => {
   const listeners = workerMessageReplyBuffer.findListenersForMessage(WorkerMessengerCommand.NotificationClicked);
   for (const listenerRecord of listeners)
     listenerRecord.callback.apply(null, ['test']);
+});
+
+
+/***************************************************
+ * onNotificationClicked()
+ ****************************************************/
+async function onNotificationClickedEnvSetup() {
+  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
+  await TestEnvironment.stubServiceWorkerEnvironment();
+}
+
+async function setupFakeAppId(): Promise<string> {
+  const appConfig = TestEnvironment.getFakeAppConfig();
+  await Database.setAppConfig(appConfig);
+  return appConfig.appId;
+}
+
+async function setupFakePlayerId(): Promise<string> {
+  const subscription: Subscription = new Subscription();
+  subscription.deviceId = Random.getRandomUuid();
+  await OneSignal.database.setSubscription(subscription);
+  return subscription.deviceId;
+}
+
+function mockNotificationNotificationEventInit(id: string): NotificationEventInit {
+  const notificationOptions: NotificationOptions = { data: { id: id } };
+  const notification = new MockNotification("Title", notificationOptions);
+  return { notification: notification };
+}
+
+test('onNotificationClicked - notification click sends PUT api/v1/notification', async t => {
+  await onNotificationClickedEnvSetup();
+
+  const appId = await setupFakeAppId();
+  const playerId = await setupFakePlayerId();
+  const notificationId = Random.getRandomUuid();
+
+  const notificationPutCall = nock("https://onesignal.com")
+    .put(`/api/v1/notifications/${notificationId}`)
+    .reply(200, (_uri: string, requestBody: string) => {
+      t.deepEqual(JSON.parse(requestBody), {
+        app_id: appId,
+        opened: true,
+        player_id: playerId
+      });
+      return { success: true };
+    });
+
+  const notificationEvent = mockNotificationNotificationEventInit(notificationId);
+  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+
+  t.true(notificationPutCall.isDone());
+});
+
+function addNotificationPutNock(notificationId: string) {
+  nock("https://onesignal.com")
+    .put(`/api/v1/notifications/${notificationId}`)
+    .reply(200, {});
+}
+
+test('onNotificationClicked - sends webhook', async t => {
+  await onNotificationClickedEnvSetup();
+
+  const notificationId = Random.getRandomUuid();
+  addNotificationPutNock(notificationId);
+
+  const executeWebhooksSpy = sandbox.stub(ServiceWorkerReal, "executeWebhooks");
+
+  const notificationEvent = mockNotificationNotificationEventInit(notificationId);
+  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+  t.true(executeWebhooksSpy.calledWithExactly('notification.clicked', notificationEvent.notification.data));
+});
+
+test('onNotificationClicked - openWindow', async t => {
+  await onNotificationClickedEnvSetup();
+
+  const notificationId = Random.getRandomUuid();
+  addNotificationPutNock(notificationId);
+
+  const openWindowMock = sandbox.stub(self.clients, "openWindow");
+
+  const notificationEvent = mockNotificationNotificationEventInit(notificationId);
+  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+
+  t.true(openWindowMock.calledWithExactly('https://site.com'));
+});
+
+// Order is important on Chrome for Android when the site is added to the HomeScreen as
+//   a PWA app with a correctly configured manifest.json file.
+// We must make sure the network call is kicked off before opening a page as the ServiceWorker
+//   stops executing as soon as openWindow is called, before the onNotificationClicked function finishes.
+test('onNotificationClicked - notification PUT Before openWindow', async t => {
+  await onNotificationClickedEnvSetup();
+
+  const notificationId = Random.getRandomUuid();
+
+  const callOrder: string[] = [];
+  sandbox.stub(self.clients, "openWindow", function() {
+    callOrder.push("openWindow");
+  });
+
+  nock("https://onesignal.com")
+    .put(`/api/v1/notifications/${notificationId}`)
+    .reply(200, (_uri: string, _requestBody: string) => {
+      callOrder.push("notificationPut");
+      return { success: true };
+    });
+
+  const notificationEvent = mockNotificationNotificationEventInit(notificationId);
+  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+
+  t.is(callOrder[0], "notificationPut");
+  t.is(callOrder[1], "openWindow");
 });
 
 
