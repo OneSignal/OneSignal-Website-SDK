@@ -201,9 +201,11 @@ export default class InitHelper {
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
       if (emailProfile.emailId) {
+        const emailDeviceRecord = new EmailDeviceRecord(null, emailProfile.emailAuthHash);
+        emailDeviceRecord.appId = context.appConfig.appId;
         await OneSignalApiShared.updateUserSession(
           emailProfile.emailId,
-          new EmailDeviceRecord(null, emailProfile.emailAuthHash)
+          emailDeviceRecord
         );
       }
     }
@@ -323,7 +325,7 @@ export default class InitHelper {
       once(
         document,
         'visibilitychange',
-        (_, destroyEventListener) => {
+        (_: any, destroyEventListener: Function) => {
           if (document.visibilityState === 'visible') {
             destroyEventListener();
             InitHelper.sessionInit({ __fromInit: true });

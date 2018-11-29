@@ -15,12 +15,11 @@ import { DeviceRecord } from './DeviceRecord';
  * Describes an email device record.
  */
 export class EmailDeviceRecord extends DeviceRecord {
-
   /**
    * @param email Omitting this parameter does not void the record's identifier.
    */
   constructor(
-    public email: string,
+    public email: string | null,
     public emailAuthHash: string,
     public pushDeviceRecordId?: string,
   ) {
