@@ -201,7 +201,7 @@ export default class InitHelper {
     if (context.sessionManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
       if (emailProfile.emailId) {
-        const emailDeviceRecord = new EmailDeviceRecord(null, emailProfile.emailAuthHash);
+        const emailDeviceRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
         emailDeviceRecord.appId = context.appConfig.appId;
         await OneSignalApiShared.updateUserSession(
           emailProfile.emailId,

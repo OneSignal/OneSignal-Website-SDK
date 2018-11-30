@@ -7,15 +7,21 @@ export class EmailProfile implements Serializable {
    * The OneSignal email player ID obtained after creating an email device record with the plain
    * text email address.
    */
-  emailId: string;
+  public emailId: string | undefined;
   /**
    * The plain text email address.
    */
-  emailAddress: string;
+  public emailAddress: string | undefined;
   /**
    * The SHA-256 hash of the app's auth key and plain text email address in hex format.
    */
-  emailAuthHash: string;
+  public emailAuthHash: string | undefined;
+
+  constructor(emailId?: string, emailAddress?: string, emailAuthHash?: string) {
+    this.emailId = emailId;
+    this.emailAddress = emailAddress;
+    this.emailAuthHash = emailAuthHash;
+  }
 
   serialize() {
     return {
@@ -26,10 +32,10 @@ export class EmailProfile implements Serializable {
   }
 
   static deserialize(bundle: any): EmailProfile {
-    const emailProfile = new EmailProfile();
-    emailProfile.emailId = bundle.emailId;
-    emailProfile.emailAddress = bundle.emailAddress;
-    emailProfile.emailAuthHash = bundle.emailAuthHash;
-    return emailProfile;
+    return new EmailProfile(
+      bundle.emailId,
+      bundle.emailAddress,
+      bundle.emailAuthHash,
+    );
   }
 }

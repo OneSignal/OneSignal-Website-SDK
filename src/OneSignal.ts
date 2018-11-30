@@ -110,9 +110,7 @@ export default class OneSignal {
       throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Empty);
     }
 
-    const newEmailProfile = new EmailProfile();
-    newEmailProfile.emailId = existingEmailProfile.emailId;
-    newEmailProfile.emailAddress = email;
+    const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email);
     if (options && options.emailAuthHash) {
       newEmailProfile.emailAuthHash = options.emailAuthHash
     }

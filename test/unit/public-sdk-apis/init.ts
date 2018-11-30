@@ -136,9 +136,10 @@ function mockWebPushAnalytics() {
 }
 
 test("email session should be updated on first page view", async t => {
-  const testEmailProfile: EmailProfile = new EmailProfile();
-  testEmailProfile.emailId = Random.getRandomUuid();
-  testEmailProfile.emailAddress = "test@example.com";
+  const testEmailProfile: EmailProfile = new EmailProfile(
+    Random.getRandomUuid(),
+    "test@example.com",
+  );
 
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
@@ -154,7 +155,7 @@ test("email session should be updated on first page view", async t => {
   t.true(onSessionStub.calledOnce);
   t.is(onSessionStub.getCall(0).args.length, 2);
   t.is(onSessionStub.getCall(0).args[0], testEmailProfile.emailId);
-  const emailDeviceRecord: EmailDeviceRecord = onSessionStub.getCall(0).args[1];
+  const emailDeviceRecord = onSessionStub.getCall(0).args[1] as EmailDeviceRecord;
   t.is(emailDeviceRecord.appId, OneSignal.context.appConfig.appId);
 });
 

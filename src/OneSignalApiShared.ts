@@ -57,9 +57,9 @@ export default class OneSignalApiShared {
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);
-    const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
+    const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash,
+      pushDeviceRecordId);
     emailRecord.appId = appConfig.appId;
-    emailRecord.pushDeviceRecordId = pushDeviceRecordId;
     const response = await OneSignalApiBase.post(`players`, emailRecord.serialize());
     if (response && response.success) {
       return response.id;
@@ -75,9 +75,9 @@ export default class OneSignalApiShared {
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);
     Utils.enforcePlayerId(emailProfile.emailId);
-    const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);
+    const emailRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash,
+      pushDeviceRecordId);
     emailRecord.appId = appConfig.appId;
-    emailRecord.pushDeviceRecordId = pushDeviceRecordId;
     const response = await OneSignalApiBase.put(`players/${emailProfile.emailId}`, emailRecord.serialize());
     if (response && response.success) {
       return response.id;
