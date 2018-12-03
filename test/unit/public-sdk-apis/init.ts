@@ -9,13 +9,15 @@ import InitHelper from '../../../src/helpers/InitHelper';
 import {AppConfig, ConfigIntegrationKind, ServerAppConfig} from '../../../src/models/AppConfig';
 
 import nock from 'nock';
-import { SessionManager } from "../../../src/managers/SessionManager";
 import Random from "../../support/tester/Random";
 import OneSignalApi from "../../../src/OneSignalApi";
 import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
 import AltOriginManager from "../../../src/managers/AltOriginManager";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
+import OneSignalApiShared from "../../../src/OneSignalApiShared";
+import { EmailProfile } from "../../../src/models/EmailProfile";
+import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
@@ -40,13 +42,11 @@ class AssertInitSDK {
   }
 }
 
-let sinonSandbox: SinonSandbox;
+let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(function () {
   nock.disableNetConnect();
   mockWebPushAnalytics();
-
-  sinonSandbox = sinon.sandbox.create();
 });
 
 test.afterEach(function (_t: TestContext) {
@@ -121,16 +121,6 @@ test("correct degree of persistNotification setting should be stored", async t =
   }
 });
 
-function mockUserSessionCountUpdateRequest(pushDevicePlayerId: string) {
-  nock('https://onesignal.com')
-    .post(`/api/v1/players/${pushDevicePlayerId}/on_session`)
-    .reply(200, (_uri: string, _requestBody: any) => {
-      // Not matching for anything yet, because no email-specific data is sent here
-      // Just a whole bunch of params like timezone, os, sdk version..etc.
-      return { success: true };
-    });
-}
-
 function mockWebPushAnalytics() {
   nock('https://onesignal.com')
     .get("/webPushAnalytics")
@@ -146,23 +136,27 @@ function mockWebPushAnalytics() {
 }
 
 test("email session should be updated on first page view", async t => {
-  const testData = {
-    emailPlayerId: Random.getRandomUuid()
-  };
-  await TestEnvironment.initialize();
+  const testEmailProfile: EmailProfile = new EmailProfile(
+    Random.getRandomUuid(),
+    "test@example.com",
+  );
 
-  const sessionManager = new SessionManager();
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  OneSignal.context = new Context(appConfig);
-  OneSignal.config = appConfig;
-  OneSignal.context.sessionManager = sessionManager;
+  await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
 
   // Ensure this is true, that way email on_session gets run
-  sessionManager.setPageViewCount(1);
-  t.true(sessionManager.isFirstPageView());
-  mockUserSessionCountUpdateRequest(testData.emailPlayerId);
+  OneSignal.context.sessionManager.setPageViewCount(1);
+  t.true(OneSignal.context.sessionManager.isFirstPageView());
+  
+  await Database.setEmailProfile(testEmailProfile)
+
+  const onSessionStub = sinonSandbox.stub(OneSignalApiShared, "updateUserSession").resolves();
   await InitHelper.updateEmailSessionCount();
-  t.pass();
+  t.true(onSessionStub.calledOnce);
+  t.is(onSessionStub.getCall(0).args.length, 2);
+  t.is(onSessionStub.getCall(0).args[0], testEmailProfile.emailId);
+  const emailDeviceRecord = onSessionStub.getCall(0).args[1] as EmailDeviceRecord;
+  t.is(emailDeviceRecord.appId, OneSignal.context.appConfig.appId);
 });
 
 async function expectPushRecordCreationRequest(t: TestContext, createRequestPostStub: SinonStub) {
