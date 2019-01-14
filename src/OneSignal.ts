@@ -833,6 +833,12 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
+  static setExternalUserId(externalUserId: string | undefined) {
+    if (!externalUserId) {
+      Log.error()
+    }
+  }
+
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = Environment.version();
   static _VERSION = Environment.version();

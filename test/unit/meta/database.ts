@@ -65,3 +65,22 @@ test(`database should not be shared across DOM test environment initializations`
     t.is(appId, appConfig.appId);
   }
 });
+
+test('setExternalUserId saves value into database', async t => {
+  const externalUserId = "my_test_external_id";
+  t.is(await Database.getExternalUserId(), undefined);
+  await Database.setExternalUserId(externalUserId);
+  t.is(await Database.getExternalUserId(), externalUserId);
+
+  // passing undefined as parameter clears out value from db
+  await Database.setExternalUserId(undefined);
+  t.is(await Database.getExternalUserId(), undefined);
+});
+
+test("getExternalUserId retrieves correct value from the database", async t => {
+  const externalUserId = "my_test_external_id";
+  t.is(await Database.getExternalUserId(), undefined);
+
+  await Database.setExternalUserId(externalUserId);
+  t.is(await Database.getExternalUserId(), externalUserId);
+});
