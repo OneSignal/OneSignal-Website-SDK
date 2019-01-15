@@ -19,7 +19,6 @@ import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWo
 import PushManager from "../mocks/service-workers/models/PushManager";
 import PushSubscription from "../mocks/service-workers/models/PushSubscription";
 import Context from "../../../src/models/Context";
-import { SessionManager } from "../../../src/managers/SessionManager";
 import CustomLink from "../../../src/CustomLink";
 
 var global = new Function('return this')();
@@ -345,6 +344,7 @@ export class TestEnvironment {
           }
         },
         config: {
+          autoRegister: undefined,
           siteInfo: {
             name: "localhost https",
             origin: "https://localhost:3001",
@@ -496,6 +496,7 @@ export class TestEnvironment {
         }
       },
       config: {
+        autoRegister: false,
         origin: "https://example.com",
         subdomain: undefined,
         http_use_onesignal_com: false,

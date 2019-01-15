@@ -96,10 +96,14 @@ test('should initialize custom link config for custom code setup with correct us
     fakeServerConfig
   );
 
-  const customLinkConfig: AppUserConfigCustomLinkOptions = fakeUserConfig.promptOptions.customlink;
-  t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
-  if (fakeMergedConfig.userConfig.promptOptions) {
-    t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
+  if (!fakeUserConfig.promptOptions) {
+    t.fail();
+  } else {
+    const customLinkConfig: AppUserConfigCustomLinkOptions | undefined = fakeUserConfig.promptOptions.customlink;
+    t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
+    if (fakeMergedConfig.userConfig.promptOptions) {
+      t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
+    }
   }
 });
 
@@ -150,4 +154,20 @@ test('should have enableOnSession flag', t => {
   );
 
   t.not(fakeMergedConfig.enableOnSession, undefined);
+});
+
+test('should assign correct value for autoRegister for typical setup', t=> {
+  const fakeUserConfig: AppUserConfig = TestEnvironment.getFakeAppUserConfig();
+  const fakeServerConfig: ServerAppConfig =
+    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.TypicalSite);
+  const configManager = new ConfigManager();
+
+  fakeServerConfig.config.autoRegister = false;
+  t.false(configManager.getMergedConfig(fakeUserConfig, fakeServerConfig).userConfig.autoRegister);
+
+  fakeServerConfig.config.autoRegister = true;
+  t.true(configManager.getMergedConfig(fakeUserConfig, fakeServerConfig).userConfig.autoRegister);
+
+  fakeServerConfig.config.autoRegister = undefined;
+  t.false(configManager.getMergedConfig(fakeUserConfig, fakeServerConfig).userConfig.autoRegister);
 });

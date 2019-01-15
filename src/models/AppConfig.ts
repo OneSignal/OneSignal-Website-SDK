@@ -296,6 +296,7 @@ export interface ServerAppConfig {
     /**
      * The allowed origin this web push config is allowed to run on.
      */
+    autoRegister: boolean | undefined;
     origin: string;
     staticPrompts: ServerAppConfigPrompt;
     siteInfo: {
