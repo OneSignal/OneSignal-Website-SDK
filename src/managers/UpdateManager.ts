@@ -106,4 +106,11 @@ export class UpdateManager {
   public onSessionAlreadyCalled() {
     return this.onSessionSent;
   }
+
+  public async sendExternalUserIdUpdate(externalUserId: string | undefined): Promise<void> {
+    const deviceId: string = await this.getDeviceId();
+    await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
+      extenal_user_id: externalUserId
+    });
+  }
 }

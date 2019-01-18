@@ -1,10 +1,9 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-
 import Database from '../../../src/services/Database';
 import Random from '../../support/tester/Random';
-
+import { isNullOrUndefined } from "../../support/tester/utils";
 
 test(`database should not be shared across service worker test environment initializations`, async t => {
   let firstAppId;
@@ -66,20 +65,26 @@ test(`database should not be shared across DOM test environment initializations`
   }
 });
 
+const externalUserId = "my_test_external_id";
+
 test('setExternalUserId saves value into database', async t => {
-  const externalUserId = "my_test_external_id";
-  t.is(await Database.getExternalUserId(), undefined);
+  await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+
+  t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
   await Database.setExternalUserId(externalUserId);
   t.is(await Database.getExternalUserId(), externalUserId);
 
   // passing undefined as parameter clears out value from db
   await Database.setExternalUserId(undefined);
-  t.is(await Database.getExternalUserId(), undefined);
+  t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
 });
 
 test("getExternalUserId retrieves correct value from the database", async t => {
-  const externalUserId = "my_test_external_id";
-  t.is(await Database.getExternalUserId(), undefined);
+  await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+
+  t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
 
   await Database.setExternalUserId(externalUserId);
   t.is(await Database.getExternalUserId(), externalUserId);
