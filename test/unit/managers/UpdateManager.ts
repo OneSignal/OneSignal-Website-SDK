@@ -175,4 +175,5 @@ test("sendExternalUserIdUpdate makes an api call with the provided external user
   t.is(updatePlayerSpy.getCall(1).args[0], OneSignal.context.appConfig.appId);
   t.is(updatePlayerSpy.getCall(1).args[1], deviceId);
   t.is(updatePlayerSpy.getCall(1).args[2].extenal_user_id, undefined);
+  t.is(updatePlayerSpy.getCall(1).args[2].hasOwnProperty("extenal_user_id"), true);
 });
