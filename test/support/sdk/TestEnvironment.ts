@@ -19,8 +19,8 @@ import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWo
 import PushManager from "../mocks/service-workers/models/PushManager";
 import PushSubscription from "../mocks/service-workers/models/PushSubscription";
 import Context from "../../../src/models/Context";
-import { SessionManager } from "../../../src/managers/SessionManager";
 import CustomLink from "../../../src/CustomLink";
+import Emitter from '../../../src/libraries/Emitter';
 
 var global = new Function('return this')();
 
@@ -268,7 +268,7 @@ export class TestEnvironment {
     return TestEnvironment.stubServiceWorkerEnvironment(config);
   }
 
-  static async initialize(config: TestEnvironmentConfig = {}) {
+  static async initialize(config: TestEnvironmentConfig = {}): Promise<OneSignal> {
     // Erase and reset IndexedDb database name to something random
     Database.resetInstance();
     Database.databaseInstanceName = Random.getRandomString(10);
@@ -276,6 +276,7 @@ export class TestEnvironment {
     global.OneSignal = OneSignal;
     global.OneSignal.config = config.initOptions ? config.initOptions : {};
     global.OneSignal.initialized = true;
+    global.OneSignal.emitter = new Emitter();
     SdkEnvironment.getTestEnv = () => TestEnvironmentKind.UnitTesting;
     await TestEnvironment.stubDomEnvironment(config);
     TestEnvironment.stubNotifyButtonTransitionEvents();

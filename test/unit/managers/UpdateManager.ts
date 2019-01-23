@@ -155,3 +155,25 @@ test("sendPlayerCreate returns user id", async t => {
   t.is(onCreateSpy.called, true);
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), true);
 });
+
+test("sendExternalUserIdUpdate makes an api call with the provided external user id", async t => {
+  const deviceId = Random.getRandomUuid();
+  const externalUserId = "external_email@example.com";
+  
+  sandbox.stub(OneSignal.context.updateManager, "getDeviceId").resolves(deviceId);
+  const updatePlayerSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
+  await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId);
+
+  t.is(updatePlayerSpy.getCalls().length, 1);
+  t.is(updatePlayerSpy.getCall(0).args[0], OneSignal.context.appConfig.appId);
+  t.is(updatePlayerSpy.getCall(0).args[1], deviceId);
+  t.is(updatePlayerSpy.getCall(0).args[2].extenal_user_id, externalUserId);
+
+  await OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined);
+
+  t.is(updatePlayerSpy.getCalls().length, 2);
+  t.is(updatePlayerSpy.getCall(1).args[0], OneSignal.context.appConfig.appId);
+  t.is(updatePlayerSpy.getCall(1).args[1], deviceId);
+  t.is(updatePlayerSpy.getCall(1).args[2].extenal_user_id, undefined);
+  t.is(updatePlayerSpy.getCall(1).args[2].hasOwnProperty("extenal_user_id"), true);
+});

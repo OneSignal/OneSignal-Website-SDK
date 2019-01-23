@@ -580,6 +580,49 @@ export default class OneSignal {
     executeCallback(callback, deletedTagKeys);
     return deletedTagKeys;
   }
+  
+  /**
+   * @PublicApi
+   */
+  public static async setExternalUserId(externalUserId: string | undefined): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall("setExternalUserId");
+
+    const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (!isExistingUser) {
+      await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
+    }
+    await Promise.all([
+      OneSignal.database.setExternalUserId(externalUserId),
+      OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId),
+    ]);
+  }
+
+   /**
+   * @PublicApi
+   */
+  public static async getExternalUserId(): Promise<string | undefined> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall("getExternalUserId");
+    return await OneSignal.database.getExternalUserId();
+  }
+
+  /**
+   * @PublicApi
+   */
+  public static async removeExternalUserId(): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    logMethodCall("removeExternalUserId");
+    const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (!isExistingUser) {
+      Log.warn("User is not subscribed, cannot remove external user id.");
+      return;
+    }
+    await Promise.all([
+      OneSignal.database.setExternalUserId(undefined),
+      OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined),
+    ]);
+  }
 
   /**
    * @PublicApi

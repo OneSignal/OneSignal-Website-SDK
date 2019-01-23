@@ -172,7 +172,7 @@ export default class Database {
     }
   }
 
-  async getAppConfig(): Promise<any> {
+  async getAppConfig(): Promise<AppConfig> {
     const config: any = {};
     const appIdStr: string = await this.get<string>("Ids", "appId");
     config.appId = appIdStr;
@@ -182,7 +182,15 @@ export default class Database {
     return config;
   }
 
-  async setAppConfig(appConfig: AppConfig) {
+  async getExternalUserId(): Promise<string | undefined> {
+    return await this.get<string>("Ids", "externalUserId");
+  }
+
+  async setExternalUserId(externalUserId: string | undefined): Promise<void> {
+    return await this.put("Ids", {type: "externalUserId", id: externalUserId})
+  }
+
+  async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
       await this.put("Ids", {type: "appId", id: appConfig.appId})
     if (appConfig.subdomain)
@@ -386,6 +394,14 @@ export default class Database {
 
   static async getAppConfig(): Promise<AppConfig> {
     return await Database.singletonInstance.getAppConfig();
+  }
+
+  static async getExternalUserId(): Promise<string | undefined> {
+    return await Database.singletonInstance.getExternalUserId();
+  }
+
+  static async setExternalUserId(externalUserId: string | undefined): Promise<void> {
+    await Database.singletonInstance.setExternalUserId(externalUserId);
   }
 
   static async remove(table: OneSignalDbTable, keypath?: string) {
