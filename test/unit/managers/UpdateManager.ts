@@ -167,13 +167,22 @@ test("sendExternalUserIdUpdate makes an api call with the provided external user
   t.is(updatePlayerSpy.getCalls().length, 1);
   t.is(updatePlayerSpy.getCall(0).args[0], OneSignal.context.appConfig.appId);
   t.is(updatePlayerSpy.getCall(0).args[1], deviceId);
-  t.is(updatePlayerSpy.getCall(0).args[2].extenal_user_id, externalUserId);
+  t.is(updatePlayerSpy.getCall(0).args[2].hasOwnProperty("external_user_id"), true);
+  t.is(updatePlayerSpy.getCall(0).args[2].external_user_id, externalUserId);
 
   await OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined);
 
   t.is(updatePlayerSpy.getCalls().length, 2);
   t.is(updatePlayerSpy.getCall(1).args[0], OneSignal.context.appConfig.appId);
   t.is(updatePlayerSpy.getCall(1).args[1], deviceId);
-  t.is(updatePlayerSpy.getCall(1).args[2].extenal_user_id, undefined);
-  t.is(updatePlayerSpy.getCall(1).args[2].hasOwnProperty("extenal_user_id"), true);
+  t.is(updatePlayerSpy.getCall(1).args[2].hasOwnProperty("external_user_id"), true);
+  t.is(updatePlayerSpy.getCall(1).args[2].external_user_id, "");
+
+  await OneSignal.context.updateManager.sendExternalUserIdUpdate(null);
+
+  t.is(updatePlayerSpy.getCalls().length, 3);
+  t.is(updatePlayerSpy.getCall(2).args[0], OneSignal.context.appConfig.appId);
+  t.is(updatePlayerSpy.getCall(2).args[1], deviceId);
+  t.is(updatePlayerSpy.getCall(2).args[2].hasOwnProperty("external_user_id"), true);
+  t.is(updatePlayerSpy.getCall(2).args[2].external_user_id, "");
 });
