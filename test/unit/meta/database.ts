@@ -75,9 +75,23 @@ test('setExternalUserId saves value into database', async t => {
   await Database.setExternalUserId(externalUserId);
   t.is(await Database.getExternalUserId(), externalUserId);
 
-  // passing undefined as parameter clears out value from db
+  // passing undefined, null or empty string as parameter clears out value from db
   await Database.setExternalUserId(undefined);
   t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
+
+  //set it back so we can test removal
+  await Database.setExternalUserId(externalUserId);
+  t.is(await Database.getExternalUserId(), externalUserId);
+
+  await Database.setExternalUserId(null);
+  t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
+
+    //set it back so we can test removal
+    await Database.setExternalUserId(externalUserId);
+    t.is(await Database.getExternalUserId(), externalUserId);
+  
+    await Database.setExternalUserId("");
+    t.is(isNullOrUndefined(await Database.getExternalUserId()), true);
 });
 
 test("getExternalUserId retrieves correct value from the database", async t => {

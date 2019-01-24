@@ -571,7 +571,7 @@ export default class OneSignal {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
     }
-    const tagsToSend = {};
+    const tagsToSend = {} as {[key: string]: any};
     for (let tag of tags) {
       tagsToSend[tag] = '';
     }
@@ -584,7 +584,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  public static async setExternalUserId(externalUserId: string | undefined): Promise<void> {
+  public static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
@@ -601,7 +601,7 @@ export default class OneSignal {
    /**
    * @PublicApi
    */
-  public static async getExternalUserId(): Promise<string | undefined> {
+  public static async getExternalUserId(): Promise<string | undefined | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("getExternalUserId");
     return await OneSignal.database.getExternalUserId();
