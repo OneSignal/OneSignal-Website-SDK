@@ -4,14 +4,10 @@ import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnv
 import OneSignal from "../../../src/OneSignal";
 import sinon from 'sinon';
 import Bell from "../../../src/bell/Bell";
-import MainHelper from "../../../src/helpers/MainHelper";
 import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";
 import MockLauncher from "../../support/mocks/MockLauncher";
 import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
-import { AppConfig } from '../../../src/models/AppConfig';
 import Context from '../../../src/models/Context';
-import InitHelper from '../../../src/helpers/InitHelper';
-import ConfigManager from '../../../src/managers/ConfigManager';
 
 test.beforeEach(t => {
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -34,10 +30,12 @@ test("should call loadSdkStylesheet if notify button is used", async t => {
     httpOrHttps: HttpHttpsEnvironment.Https
   });
   OneSignal.context = new Context(t.context.appConfig);
-  const notifyButton = new Bell({
-    enable: true,
-    launcher: new MockLauncher(null)
-  });
+  const bellConfig = OneSignal.context.appConfig.userConfig.notifyButton;
+  if (!bellConfig) {
+    t.fail();
+    return;
+  }
+  const notifyButton = new Bell(bellConfig, new MockLauncher(null));
   notifyButton.launcher.bell = notifyButton;
   await notifyButton.create();
   t.is(t.context.loadSdkStylesheet.called, true);

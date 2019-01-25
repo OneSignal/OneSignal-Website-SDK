@@ -285,9 +285,6 @@ export class ConfigHelper {
               'dialog.blocked.title': serverConfig.config.staticPrompts.bell.dialog.blocked.title,
               'dialog.blocked.message': serverConfig.config.staticPrompts.bell.dialog.blocked.message,
             },
-            theme: "default",
-            showLauncherAfter: 10,
-            showBadgeAfter: 300,
           },
           persistNotification: serverConfig.config.notificationBehavior ?
             serverConfig.config.notificationBehavior.display.persist : undefined,

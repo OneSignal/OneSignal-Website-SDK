@@ -1,10 +1,13 @@
 import bowser from 'bowser';
-import { AppUserConfigNotifyButton } from "../models/AppConfig";
+import { AppUserConfigNotifyButton, BellSize, BellPosition } from "../models/AppConfig";
 import { NotificationPermission } from "../models/NotificationPermission";
 import OneSignalEvent from '../Event';
 import MainHelper from '../helpers/MainHelper';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
-import { addCssClass, addDomElement, contains, decodeHtmlEntities, delay, nothing, once, removeDomElement, isUsingSubscriptionWorkaround } from '../utils';
+import {
+  addCssClass, addDomElement, contains, decodeHtmlEntities, delay, nothing, once,
+  removeDomElement, isUsingSubscriptionWorkaround
+} from '../utils';
 import Badge from './Badge';
 import Button from './Button';
 import Dialog from './Dialog';
@@ -28,6 +31,10 @@ export default class Bell {
   public _badge: any;
   public _message: any;
   public _dialog: any;
+
+  private DEFAULT_SIZE: BellSize = "medium";
+  private DEFAULT_POSITION: BellPosition = "bottom-right";
+  private DEFAULT_THEME: string = "default";
 
   static get EVENTS() {
     return {
@@ -61,14 +68,14 @@ export default class Bell {
     }
   }
 
-  constructor(config: AppUserConfigNotifyButton) {
+  constructor(config: AppUserConfigNotifyButton, launcher?: Launcher) {
     this.options = {
       enable: config.enable,
-      size: config.size,
-      position: config.position,
-      theme: config.theme,
-      showLauncherAfter: config.showLauncherAfter,
-      showBadgeAfter: config.showBadgeAfter,
+      size: config.size || this.DEFAULT_SIZE,
+      position: config.position || this.DEFAULT_POSITION,
+      theme: config.theme || this.DEFAULT_THEME,
+      showLauncherAfter: config.showLauncherAfter || 10,
+      showBadgeAfter: config.showBadgeAfter || 300,
       text: config.text,
       prenotify: config.prenotify,
       showCredit: config.showCredit,
@@ -76,10 +83,14 @@ export default class Bell {
       offset: config.offset,
     };
 
+    if (launcher) {
+      this._launcher = launcher;
+    }
+
     if (!this.options.enable)
       return;
 
-    this.validateOptions();
+    this.validateOptions(this.options);
     this.setDefaultOptions();
 
     this.state = Bell.STATES.UNINITIALIZED;
@@ -110,16 +121,16 @@ export default class Bell {
     }
   }
 
-  private validateOptions() {
-    if (!contains(['small', 'medium', 'large'], this.options.size))
-      throw new Error(`Invalid size ${this.options.size} for notify button. Choose among 'small', 'medium', or 'large'.`);
-    if (!contains(['bottom-left', 'bottom-right'], this.options.position))
-      throw new Error(`Invalid position ${this.options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`);
-    if (!contains(['default', 'inverse'], this.options.theme))
-      throw new Error(`Invalid theme ${this.options.theme} for notify button. Choose either 'default', or 'inverse'.`);
-    if (this.options.showLauncherAfter < 0)
+  private validateOptions(options: AppUserConfigNotifyButton) {
+    if (!options.size || !contains(['small', 'medium', 'large'], options.size))
+      throw new Error(`Invalid size ${options.size} for notify button. Choose among 'small', 'medium', or 'large'.`);
+    if (!options.position || !contains(['bottom-left', 'bottom-right'], options.position))
+      throw new Error(`Invalid position ${options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`);
+    if (!options.theme || !contains(['default', 'inverse'], options.theme))
+      throw new Error(`Invalid theme ${options.theme} for notify button. Choose either 'default', or 'inverse'.`);
+    if (!options.showLauncherAfter || options.showLauncherAfter < 0)
       throw new Error(`Invalid delay duration of ${this.options.showLauncherAfter} for showing the notify button. Choose a value above 0.`);
-    if (this.options.showBadgeAfter < 0)
+    if (!options.showBadgeAfter || options.showBadgeAfter < 0)
       throw new Error(`Invalid delay duration of ${this.options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`);
   }
 
@@ -386,7 +397,7 @@ export default class Bell {
     const doNotPrompt = await MainHelper.wasHttpsNativePromptDismissed()
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
-    let resizeTo = (isPushEnabled ? 'small' : this.options.size);
+    let resizeTo = (isPushEnabled ? 'small' : (this.options.size || this.DEFAULT_SIZE));
     await this.launcher.resize(resizeTo);
 
     this.addDefaultClasses();
@@ -406,12 +417,14 @@ export default class Bell {
           });
         } else return nothing();
       })
-      .then(() => delay(this.options.showLauncherAfter))
+      .then(() => delay(this.options.showLauncherAfter || 0))
       .then(() => {
         if (isUsingSubscriptionWorkaround() &&
           notOptedOut &&
           doNotPrompt !== true && !isPushEnabled &&
-          (OneSignal.config.userConfig.autoRegister === true) && !MainHelper.isHttpPromptAlreadyShown()) {
+          (OneSignal.config.userConfig.promptOptions.autoPrompt === true) &&
+          !MainHelper.isHttpPromptAlreadyShown()
+        ) {
           Log.debug('Not showing notify button because popover will be shown.');
           return nothing();
         } else {
@@ -419,7 +432,7 @@ export default class Bell {
         }
       })
       .then(() => {
-        return delay(this.options.showBadgeAfter);
+        return delay(this.options.showBadgeAfter || 0);
       })
       .then(() => {
         if (this.options.prenotify && !isPushEnabled && OneSignal._isNewVisitor) {
