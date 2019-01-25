@@ -201,19 +201,28 @@ export class ConfigHelper {
         return {
           appId: serverConfig.app_id,
           autoRegister: false,
+          autoResubscribe: serverConfig.config.autoResubscribe,
           path: serverConfig.config.serviceWorker.path,
           serviceWorkerPath: serverConfig.config.serviceWorker.workerName,
           serviceWorkerUpdaterPath: serverConfig.config.serviceWorker.updaterWorkerName,
           serviceWorkerParam: { scope: serverConfig.config.serviceWorker.registrationScope },
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
           promptOptions: {
+            autoPrompt: serverConfig.config.staticPrompts.native.enabled ||
+              serverConfig.config.staticPrompts.slidedown.enabled,
+            native: {
+              enabled: serverConfig.config.staticPrompts.native.enabled,
+              autoPrompt: serverConfig.config.staticPrompts.native.enabled,
+            },
             slidedown: {
+              enabled: serverConfig.config.staticPrompts.slidedown.enabled,
               autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled,
               actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
               acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
               cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,
             },
             fullscreen: {
+              enabled: serverConfig.config.staticPrompts.fullscreen.enabled,
               actionMessage: serverConfig.config.staticPrompts.fullscreen.actionMessage,
               acceptButton: serverConfig.config.staticPrompts.fullscreen.acceptButton,
               cancelButton: serverConfig.config.staticPrompts.fullscreen.cancelButton,
@@ -266,6 +275,7 @@ export class ConfigHelper {
               'tip.state.subscribed': serverConfig.config.staticPrompts.bell.tooltip.subscribed,
               'tip.state.blocked': serverConfig.config.staticPrompts.bell.tooltip.blocked,
               'message.prenotify': serverConfig.config.staticPrompts.bell.tooltip.unsubscribed,
+              'message.action.subscribing': serverConfig.config.staticPrompts.bell.message.subscribing,
               'message.action.subscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
               'message.action.resubscribed': serverConfig.config.staticPrompts.bell.message.subscribing,
               'message.action.unsubscribed': serverConfig.config.staticPrompts.bell.message.unsubscribing,
@@ -274,7 +284,10 @@ export class ConfigHelper {
               'dialog.main.button.unsubscribe': serverConfig.config.staticPrompts.bell.dialog.main.unsubscribeButton,
               'dialog.blocked.title': serverConfig.config.staticPrompts.bell.dialog.blocked.title,
               'dialog.blocked.message': serverConfig.config.staticPrompts.bell.dialog.blocked.message,
-            }
+            },
+            theme: "default",
+            showLauncherAfter: 10,
+            showBadgeAfter: 300,
           },
           persistNotification: serverConfig.config.notificationBehavior ?
             serverConfig.config.notificationBehavior.display.persist : undefined,

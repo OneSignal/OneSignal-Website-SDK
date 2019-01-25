@@ -1,4 +1,4 @@
-import Event from '../Event';
+import OneSignalEvent from '../Event';
 import { addCssClass, contains, once, removeCssClass } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Log from '../libraries/Log';
@@ -19,10 +19,10 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
   constructor(public selector: string,
-              public showClass: string,
-              public hideClass: string,
-              public activeClass: string,
-              public inactiveClass: string,
+              public showClass: string | undefined,
+              public hideClass: string | undefined,
+              public activeClass: string | undefined,
+              public inactiveClass: string | undefined,
               public state = 'shown',
               public activeState = 'active',
               public targetTransitionEvents = ['opacity', 'transform'],
@@ -40,11 +40,17 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     }
     else return new Promise((resolve) => {
       this.activeState = 'activating';
-      Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
-      if (this.inactiveClass)
-        removeCssClass(this.element, this.inactiveClass);
-      if (this.activeClass)
-        addCssClass(this.element, this.activeClass);
+      OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
+      const element = this.element;
+      if (!element) {
+        Log.error("Could not find active animated element");
+      } else {
+        if (this.inactiveClass)
+          removeCssClass(element, this.inactiveClass);
+        if (this.activeClass)
+          addCssClass(element, this.activeClass);
+      }
+
       if (this.shown) {
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);
@@ -52,14 +58,14 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           var timerId = setTimeout(() => {
             Log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
-          once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
             if (event.target === this.element &&
-              contains(this.targetTransitionEvents, event.propertyName)) {
+              contains(this.targetTransitionEvents, (event as any).propertyName)) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();
               this.activeState = 'active';
-              Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+              OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
               return resolve(this);
             }
           }, true);
@@ -68,7 +74,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       else {
         Log.debug(`Ending activate() transition (alternative).`);
         this.activeState = 'active';
-        Event.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
+        OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVE, this);
         return resolve(this);
       }
     });
@@ -84,11 +90,17 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     }
     else return new Promise((resolve) => {
       this.activeState = 'inactivating';
-      Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
-      if (this.activeClass)
-        removeCssClass(this.element, this.activeClass);
-      if (this.inactiveClass)
-        addCssClass(this.element, this.inactiveClass);
+      OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
+      const element = this.element;
+      if (!element) {
+        Log.error("Could not find active animated element");
+      } else {
+        if (this.activeClass)
+          removeCssClass(element, this.activeClass);
+        if (this.inactiveClass)
+          addCssClass(element, this.inactiveClass);
+      }
+      
       if (this.shown) {
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);
@@ -96,14 +108,14 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           var timerId = setTimeout(() => {
             Log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
-          once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
             if (event.target === this.element &&
-              contains(this.targetTransitionEvents, event.propertyName)) {
+              contains(this.targetTransitionEvents, (event as any).propertyName)) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();
               this.activeState = 'inactive';
-              Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+              OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
               return resolve(this);
             }
           }, true);
@@ -111,7 +123,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       }
       else {
         this.activeState = 'inactive';
-        Event.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
+        OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVE, this);
         return resolve(this);
       }
     });

@@ -82,7 +82,7 @@ export function stringify(obj: any) {
   return Utils.stringify(obj);
 }
 
-export function executeCallback<T>(callback: Action<T>, ...args: any[]) {
+export function executeCallback<T>(callback?: Action<T>, ...args: any[]) {
   if (callback) {
     return callback.apply(null, args);
   }

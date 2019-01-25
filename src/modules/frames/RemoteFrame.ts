@@ -2,12 +2,9 @@
 
 
 import SubscriptionHelper from '../../helpers/SubscriptionHelper';
-import SdkEnvironment from '../../managers/SdkEnvironment';
 import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../Postmam';
 import Context from '../../models/Context';
-import { SubscriptionManager } from '../../managers/SubscriptionManager';
-import InitHelper from '../../helpers/InitHelper';
 import ConfigManager from '../../managers/ConfigManager';
 
 export default class RemoteFrame implements Disposable {

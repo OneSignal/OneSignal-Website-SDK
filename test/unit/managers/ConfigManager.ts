@@ -96,7 +96,12 @@ test('should initialize custom link config for custom code setup with correct us
     fakeServerConfig
   );
 
-  const customLinkConfig: AppUserConfigCustomLinkOptions = fakeUserConfig.promptOptions.customlink;
+  const promptOptions = fakeUserConfig.promptOptions
+  if (!promptOptions) {
+    throw new Error('promptOptions cannot be null');
+  }
+
+  const customLinkConfig: AppUserConfigCustomLinkOptions | undefined = promptOptions.customlink;
   t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
   if (fakeMergedConfig.userConfig.promptOptions) {
     t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);

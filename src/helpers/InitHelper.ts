@@ -415,7 +415,9 @@ export default class InitHelper {
         }
       } else if (options.__fromRegister) {
         await InitHelper.finishSessionInit(options);
-        OneSignal.setSubscription(true);
+        if (!isOptedOut) {
+          OneSignal.setSubscription(true);
+        }
       } else {
         await InitHelper.finishSessionInit(options);
       }
@@ -423,12 +425,11 @@ export default class InitHelper {
       return;
     }
 
-    if (OneSignal.config.userConfig.autoRegister !== true)
-      Log.debug('OneSignal: Not automatically showing popover because autoRegister is not specifically true.');
-    if (MainHelper.isHttpPromptAlreadyShown())
+    if (OneSignal.config.userConfig.autoPrompt !== true) {
+      Log.debug('OneSignal: Not automatically showing popover because autoPrompt is not specifically true.');
+    } else if (MainHelper.isHttpPromptAlreadyShown()) {
       Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
-
-    if (OneSignal.config.userConfig.autoRegister === true && !MainHelper.isHttpPromptAlreadyShown()) {
+    } else {
       await OneSignal.privateShowHttpPrompt().catch((e: Error) => {
         if (
           (e instanceof InvalidStateError &&
