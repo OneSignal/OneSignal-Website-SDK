@@ -2,16 +2,16 @@ import Emitter from "../libraries/Emitter";
 import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
-import { AppState } from "../models/AppState";
+import { AppState, ClickedNotifications } from "../models/AppState";
 import { Notification } from "../models/Notification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
-import { Timestamp } from "../models/Timestamp";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { EmailProfile } from "../models/EmailProfile";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
+import Utils from "../utils/Utils";
 
 enum DatabaseEventName {
   SET
@@ -182,12 +182,18 @@ export default class Database {
     return config;
   }
 
-  async getExternalUserId(): Promise<string | undefined> {
+  async getExternalUserId(): Promise<string | undefined | null> {
     return await this.get<string>("Ids", "externalUserId");
   }
 
-  async setExternalUserId(externalUserId: string | undefined): Promise<void> {
-    return await this.put("Ids", {type: "externalUserId", id: externalUserId})
+  async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
+    const emptyString: string = "";
+    const externalIdToSave = Utils.getValueOrDefault(externalUserId, emptyString);
+    if (externalIdToSave === emptyString) {
+      await this.remove("Ids", "externalUserId");
+    } else {
+      await this.put("Ids", {type: "externalUserId", id: externalIdToSave});
+    }
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
@@ -212,7 +218,7 @@ export default class Database {
     state.defaultNotificationUrl = await this.get<string>("Options", "defaultUrl");
     state.defaultNotificationTitle = await this.get<string>("Options", "defaultTitle");
     state.lastKnownPushEnabled = await this.get<boolean>("Options", "isPushEnabled");
-    state.clickedNotifications = await this.get<Map<URL, [Notification, Timestamp]>>("NotificationOpened");
+    state.clickedNotifications = await this.get<ClickedNotifications>("NotificationOpened");
     return state;
   }
 
@@ -396,11 +402,11 @@ export default class Database {
     return await Database.singletonInstance.getAppConfig();
   }
 
-  static async getExternalUserId(): Promise<string | undefined> {
+  static async getExternalUserId(): Promise<string | undefined | null> {
     return await Database.singletonInstance.getExternalUserId();
   }
 
-  static async setExternalUserId(externalUserId: string | undefined): Promise<void> {
+  static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
     await Database.singletonInstance.setExternalUserId(externalUserId);
   }
 

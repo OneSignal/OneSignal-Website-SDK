@@ -6,6 +6,7 @@ import MainHelper from '../helpers/MainHelper';
 import Database from "../services/Database";
 import Log from "../libraries/Log";
 import { ContextSWInterface } from '../models/ContextSW';
+import Utils from "../utils/Utils";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -107,10 +108,10 @@ export class UpdateManager {
     return this.onSessionSent;
   }
 
-  public async sendExternalUserIdUpdate(externalUserId: string | undefined): Promise<void> {
+  public async sendExternalUserIdUpdate(externalUserId: string | undefined | null): Promise<void> {
     const deviceId: string = await this.getDeviceId();
     await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-      extenal_user_id: externalUserId
+      external_user_id: Utils.getValueOrDefault(externalUserId, "")
     });
   }
 }
