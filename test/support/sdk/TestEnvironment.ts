@@ -346,6 +346,7 @@ export class TestEnvironment {
           }
         },
         config: {
+          autoResubscribe: true,
           siteInfo: {
             name: "localhost https",
             origin: "https://localhost:3001",
@@ -357,6 +358,9 @@ export class TestEnvironment {
             kind: ConfigIntegrationKind.Custom
           },
           staticPrompts: {
+            native: {
+              enabled: false,
+            },
             bell: {
               enabled: false,
               size: "large",
@@ -500,7 +504,11 @@ export class TestEnvironment {
         origin: "https://example.com",
         subdomain: undefined,
         http_use_onesignal_com: false,
+        autoResubscribe: false,
         staticPrompts: {
+          native: {
+            enabled: false,
+          },
           bell: {
             size: 'large',
             color: {
@@ -627,19 +635,26 @@ export class TestEnvironment {
     return {
       appId: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       autoRegister: true,
+      autoResubscribe: true,
       path: '/fake-page',
       serviceWorkerPath: 'fakeWorkerName.js',
       serviceWorkerUpdaterPath: 'fakeUpdaterWorkerName.js',
       serviceWorkerParam: { scope: '/fake-page' },
       subdomainName: 'fake-subdomain',
       promptOptions: {
+        native: {
+          enabled: false,
+          autoPrompt: false,
+        },
         slidedown: {
+          enabled: true,
           autoPrompt: true,
           actionMessage: "slidedown action message",
           acceptButtonText: 'slidedown accept button',
           cancelButtonText: 'slidedown cancel button',
         },
         fullscreen: {
+          enabled: true,
           actionMessage: 'fullscreen action message',
           acceptButton: 'fullscreenaccept button',
           cancelButton: 'fullscreencancel button',
@@ -696,6 +711,7 @@ export class TestEnvironment {
           'tip.state.subscribed': '1',
           'tip.state.blocked': '1',
           'message.prenotify': "Click to subscribe to notifications",
+          'message.action.subscribing': '1',
           'message.action.subscribed': '1',
           'message.action.resubscribed': '1',
           'message.action.unsubscribed': '1',
@@ -704,7 +720,7 @@ export class TestEnvironment {
           'dialog.main.button.unsubscribe': '1',
           'dialog.blocked.title': '1',
           'dialog.blocked.message': '1',
-        }
+        },
       },
       persistNotification: false,
       webhooks: {

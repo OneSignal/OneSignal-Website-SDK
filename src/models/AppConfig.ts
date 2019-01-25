@@ -165,17 +165,17 @@ export interface AppUserConfigWelcomeNotification {
 }
 
 export type BellSize = 'small' | 'medium' | 'large';
+export type BellPosition = 'bottom-left' | 'bottom-right';
 
 export interface AppUserConfigNotifyButton {
   options?: AppUserConfigNotifyButton;
   enable: boolean;
   displayPredicate?: Function | null | undefined;
-  size: BellSize;
-  position: 'bottom-left' | 'bottom-right';
-  offset: { bottom: string; left: string; right: string };
+  size?: BellSize;
+  position?: BellPosition;
+  offset?: { bottom: string; left: string; right: string };
   prenotify?: boolean;
   showCredit?: boolean;
-  theme: 'default' | 'inverse';
   colors: {
     'circle.background': string;
     'circle.foreground': string;
@@ -203,8 +203,9 @@ export interface AppUserConfigNotifyButton {
     'dialog.blocked.title': string;
     'dialog.blocked.message': string;
   };
-  showLauncherAfter: number;
-  showBadgeAfter: number;
+  theme?: string;
+  showLauncherAfter?: number;
+  showBadgeAfter?: number;
 }
 
 export interface AppUserConfigWebhooks {
