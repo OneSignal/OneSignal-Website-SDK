@@ -1,6 +1,5 @@
 import { addCssClass, removeCssClass, contains, once } from '../utils';
-
-import Event from '../Event'
+import OneSignalEvent from '../Event'
 import Log from '../libraries/Log';
 import OneSignal from '../OneSignal';
 
@@ -16,8 +15,8 @@ export default class AnimatedElement {
    * @param nestedContentSelector {string} The CSS selector targeting the nested element within the current element. This nested element will be used for content getters and setters.
    */
   constructor(public selector: string,
-              public showClass: string,
-              public hideClass: string,
+              public showClass: string | undefined,
+              public hideClass: string | undefined,
               public state = 'shown',
               public targetTransitionEvents = ['opacity', 'transform'],
               public nestedContentSelector?: string,
@@ -35,25 +34,31 @@ export default class AnimatedElement {
     }
     else return new Promise((resolve) => {
       this.state = 'showing';
-      Event.trigger(AnimatedElement.EVENTS.SHOWING, this);
-      if (this.hideClass)
-        removeCssClass(this.element, this.hideClass);
-      if (this.showClass)
-        addCssClass(this.element, this.showClass);
+      OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
+      const element = this.element;
+      if (!element) {
+        Log.error(`(show) could not find animated element with selector ${this.selector}`)
+      } else {
+        if (this.hideClass)
+          removeCssClass(element, this.hideClass);
+        if (this.showClass)
+          addCssClass(element, this.showClass);
+      }
+
       if (this.targetTransitionEvents.length == 0) {
         return resolve(this);
       } else {
         var timerId = setTimeout(() => {
           Log.debug(`Element did not completely show (state: ${this.state}).`)
         }, this.transitionCheckTimeout);
-        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+        once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
           if (event.target === this.element &&
-            contains(this.targetTransitionEvents, event.propertyName)) {
+            contains(this.targetTransitionEvents, (event as any).propertyName)) {
             clearTimeout(timerId);
             // Uninstall the event listener for transitionend
             destroyListenerFn();
             this.state = 'shown';
-            Event.trigger(AnimatedElement.EVENTS.SHOWN, this);
+            OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWN, this);
             return resolve(this);
           }
         }, true);
@@ -71,25 +76,31 @@ export default class AnimatedElement {
     }
     else return new Promise((resolve) => {
       this.state = 'hiding';
-      Event.trigger(AnimatedElement.EVENTS.HIDING, this);
-      if (this.showClass)
-        removeCssClass(this.element, this.showClass);
-      if (this.hideClass)
-        addCssClass(this.element, this.hideClass);
+      OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
+      const element = this.element;
+      if (!element) {
+        Log.error(`(hide) could not find animated element with selector ${this.selector}`)
+      } else {
+        if (this.showClass)
+          removeCssClass(element, this.showClass);
+        if (this.hideClass)
+          addCssClass(element, this.hideClass);
+      }
+
       if (this.targetTransitionEvents.length == 0) {
         return resolve(this);
       } else {
-        once(this.element, 'transitionend', (event, destroyListenerFn) => {
+        once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
           var timerId = setTimeout(() => {
             Log.debug(`Element did not completely hide (state: ${this.state}).`)
           }, this.transitionCheckTimeout);
           if (event.target === this.element &&
-            contains(this.targetTransitionEvents, event.propertyName)) {
+            contains(this.targetTransitionEvents, (event as any).propertyName)) {
             clearTimeout(timerId);
             // Uninstall the event listener for transitionend
             destroyListenerFn();
             this.state = 'hidden';
-            Event.trigger(AnimatedElement.EVENTS.HIDDEN, this);
+            OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDDEN, this);
             return resolve(this);
           }
         }, true);
@@ -143,10 +154,15 @@ export default class AnimatedElement {
    * @returns {string} Returns the native element's innerHTML property.
    */
   get content() {
-    if (this.nestedContentSelector)
-      return this.element.querySelector(this.nestedContentSelector).innerHTML;
-    else
+    if (!this.element) {
+      return "";
+    }
+    if (this.nestedContentSelector) {
+      const innerElement = this.element.querySelector(this.nestedContentSelector);
+      return innerElement ? innerElement.innerHTML : "";
+    } else {
       return this.element.innerHTML;
+    }
   }
 
   /**
@@ -165,7 +181,7 @@ export default class AnimatedElement {
 
   /**
    * Returns the native {Element} via document.querySelector().
-   * @returns {Element} Returns the native {Element} via document.querySelector().
+   * @returns {Element | null} Returns the native {Element} via document.querySelector() or {null} if not found.
    */
   get element() {
     return document.querySelector(this.selector);

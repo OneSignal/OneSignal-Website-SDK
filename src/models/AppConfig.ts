@@ -1,10 +1,3 @@
-export interface SlidedownPermissionMessageOptions {
-  autoPrompt: boolean;
-  actionMessage: string;
-  acceptButtonText: string;
-  cancelButtonText: string;
-}
-
 export interface AppConfig {
   /**
    * The OneSignal dashboard app ID. Although this value is provided, it isn't
@@ -86,6 +79,7 @@ export interface AppUserConfig {
   [key: string]: any;
   appId?: string;
   autoRegister?: boolean;
+  autoResubscribe?: boolean;
   path?: string;
   serviceWorkerPath?: string;
   serviceWorkerUpdaterPath?: string;
@@ -103,7 +97,18 @@ export interface AppUserConfig {
   pageUrl?: string;
 }
 
-export interface FullscreenPermissionMessageOptions {
+interface BasePromptOptions {
+  enabled: boolean;
+  autoPrompt?: boolean;
+}
+
+export interface SlidedownPermissionMessageOptions extends BasePromptOptions {
+  actionMessage: string;
+  acceptButtonText: string;
+  cancelButtonText: string;
+}
+
+export interface FullscreenPermissionMessageOptions extends BasePromptOptions {
   autoAcceptTitle?: string;
   actionMessage: string;
   acceptButton: string;
@@ -116,8 +121,7 @@ export interface FullscreenPermissionMessageOptions {
 type CustomLinkStyle = "button" | "link";
 type CustomLinkSize = "large" | "medium" | "small";
 
-export interface AppUserConfigCustomLinkOptions {
-  enabled: boolean;
+export interface AppUserConfigCustomLinkOptions extends BasePromptOptions {
   style?: CustomLinkStyle;
   size?: CustomLinkSize;
   unsubscribeEnabled?: boolean;
@@ -133,6 +137,7 @@ export interface AppUserConfigCustomLinkOptions {
 }
 
 export interface AppUserConfigPromptOptions {
+  autoPrompt?: boolean;
   subscribeText?: string;
   showGraphic?: boolean;
   timeout?: number;
@@ -146,6 +151,7 @@ export interface AppUserConfigPromptOptions {
   acceptButtonText?: string;
   cancelButtonText?: string;
   showCredit?: string;
+  native?: BasePromptOptions;
   slidedown?: SlidedownPermissionMessageOptions;
   fullscreen?: FullscreenPermissionMessageOptions;
   customlink?: AppUserConfigCustomLinkOptions;
@@ -158,14 +164,18 @@ export interface AppUserConfigWelcomeNotification {
   url: string | undefined;
 }
 
+export type BellSize = 'small' | 'medium' | 'large';
+
 export interface AppUserConfigNotifyButton {
+  options?: AppUserConfigNotifyButton;
   enable: boolean;
-  displayPredicate: Function | null | undefined;
-  size: 'small' | 'medium' | 'large';
+  displayPredicate?: Function | null | undefined;
+  size: BellSize;
   position: 'bottom-left' | 'bottom-right';
   offset: { bottom: string; left: string; right: string };
   prenotify?: boolean;
   showCredit?: boolean;
+  theme: 'default' | 'inverse';
   colors: {
     'circle.background': string;
     'circle.foreground': string;
@@ -184,6 +194,7 @@ export interface AppUserConfigNotifyButton {
     'tip.state.blocked': string;
     'message.prenotify': string;
     'message.action.subscribed': string;
+    'message.action.subscribing': string;
     'message.action.resubscribed': string;
     'message.action.unsubscribed': string;
     'dialog.main.title': string;
@@ -192,6 +203,8 @@ export interface AppUserConfigNotifyButton {
     'dialog.blocked.title': string;
     'dialog.blocked.message': string;
   };
+  showLauncherAfter: number;
+  showBadgeAfter: number;
 }
 
 export interface AppUserConfigWebhooks {
@@ -202,7 +215,11 @@ export interface AppUserConfigWebhooks {
 }
 
 export interface ServerAppConfigPrompt {
+  native: {
+    enabled: boolean,
+  },
   bell: {
+    enabled: boolean;
     size: 'small' | 'medium' | 'large';
     color: {
       main: string;
@@ -224,7 +241,6 @@ export interface ServerAppConfigPrompt {
       right: number;
       bottom: number;
     };
-    enabled: boolean;
     message: {
       subscribing: string;
       unsubscribing: string;
@@ -298,6 +314,7 @@ export interface ServerAppConfig {
      */
     origin: string;
     staticPrompts: ServerAppConfigPrompt;
+    autoResubscribe: boolean;
     siteInfo: {
       name: string;
       origin: string;

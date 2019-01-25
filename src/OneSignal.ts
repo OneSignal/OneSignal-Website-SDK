@@ -20,7 +20,9 @@ import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
-import {AppConfig, AppUserConfig} from './models/AppConfig';
+import {
+  AppConfig, AppUserConfig, AppUserConfigNotifyButton, SlidedownPermissionMessageOptions
+} from './models/AppConfig';
 import Context from './models/Context';
 import { Notification } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
@@ -35,7 +37,7 @@ import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
 import SubscriptionPopup from './modules/frames/SubscriptionPopup';
 import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
-import Popover from './popover/Popover';
+import Popover, { manageNotifyButtonStateWhilePopoverShows } from './popover/Popover';
 import Database from './services/Database';
 import { ResourceLoadState } from './services/DynamicResourceLoader';
 import IndexedDb from './services/IndexedDb';
@@ -55,12 +57,14 @@ import { EmailProfile } from './models/EmailProfile';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 import Emitter, { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
-import OneSignalError from "./errors/OneSignalError";
 import ConfigManager from "./managers/ConfigManager";
 import OneSignalUtils from "./utils/OneSignalUtils";
 import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
+import { AutoPromptOptions } from "./models/AutoPrompt";
 
 export default class OneSignal {
+  static __isAutoPromptShowing: boolean = false;
+
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
@@ -225,6 +229,10 @@ export default class OneSignal {
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal.initializeConfig(options);
 
+    if (!OneSignal.config) {
+      throw new Error("OneSignal config not initialized!");
+    }
+
     if (bowser.safari && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
@@ -264,8 +272,6 @@ export default class OneSignal {
       OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
       if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        OneSignal.appConfig = OneSignal.config;
-
         /**
          * The user may have forgot to choose a subdomain in his web app setup.
          *
@@ -274,7 +280,7 @@ export default class OneSignal {
          * perfectly, while causing errors and preventing web push from working
          * on the HTTP site.
          */
-        if (!OneSignal.appConfig.subdomain)
+        if (!OneSignal.config || !OneSignal.config.subdomain)
           throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
         /**
          * The iFrame may never load (e.g. OneSignal might be down), in which
@@ -282,7 +288,7 @@ export default class OneSignal {
          * good thing! We don't want to access IndexedDb before we know which
          * origin to store data on.
          */
-        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(OneSignal.appConfig);
+        OneSignal.proxyFrameHost = await AltOriginManager.discoverAltOrigin(OneSignal.config);
       }
 
       window.addEventListener('focus', () => {
@@ -336,21 +342,18 @@ export default class OneSignal {
    * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
    * @PublicApi
    */
-  static async showHttpPrompt(options?) {
+  static async showHttpPrompt(options?: AutoPromptOptions) {
     await awaitOneSignalInitAndSupported();
     await OneSignal.privateShowHttpPrompt(options);
   }
 
-  static async privateShowHttpPrompt(options?) {
-    if (!options)
-      options = {};
-
+  private static async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }) {
     /*
     Only show the HTTP popover if:
     - Notifications aren't already enabled
     - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
     */
-    if (OneSignal.__isPopoverShowing) {
+    if (OneSignal.__isAutoPromptShowing) {
       throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
         permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
       });
@@ -377,6 +380,49 @@ export default class OneSignal {
     if (!notOptedOut)
       throw new NotSubscribedError(NotSubscribedReason.OptedOut);
 
+  }
+
+  public static async privateShowAutoPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
+    if (!OneSignal.checkIfAutoPromptShouldBeShown(options)) {
+      return;
+    }
+    
+    if (!OneSignal.config || !OneSignal.config.userConfig.promptOptions) {
+      Log.error("OneSignal config was not initialized correctly. Aborting.");
+      return;
+    }
+
+    const promptOptions = OneSignal.config.userConfig.promptOptions;
+    if (!promptOptions.native && !promptOptions.slidedown) {
+      Log.error("No suitable prompt type enabled.");
+      return;
+    }
+
+    if (promptOptions.native && promptOptions.native.enabled) {
+      await OneSignal.privateShowNativePrompt();
+    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled) {
+      await OneSignal.privateShowSlidedownPrompt();
+    }
+  }
+
+  public static async privateShowNativePrompt(): Promise<void> {
+    if (OneSignal.__isAutoPromptShowing) {
+      Log.debug("Already showing autopromt. Abort showing a native prompt.");
+      return;
+    }
+
+    OneSignal.__isAutoPromptShowing = true;
+    MainHelper.markHttpPopoverShown();
+    await OneSignal.registerForPushNotifications();
+    OneSignal.__isAutoPromptShowing = false;
+  }
+
+  public static async privateShowSlidedownPrompt(): Promise<void> {
+    if (OneSignal.__isAutoPromptShowing) {
+      Log.debug("Already showing autopromt. Abort showing a slidedown.");
+      return;
+    }
+
     MainHelper.markHttpPopoverShown();
 
     const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
@@ -384,31 +430,27 @@ export default class OneSignal {
       Log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-    const slideDownOptions = MainHelper.getSlidedownPermissionMessageOptions();
+    const slideDownOptions: SlidedownPermissionMessageOptions = MainHelper.getSlidedownPermissionMessageOptions();
+    if (!slideDownOptions.enabled) {
+      Log.warn("Slidedown not enabled. Not showing.");
+    }
 
     OneSignal.popover = new Popover(slideDownOptions);
     await OneSignal.popover.create();
-    Log.debug('Showing the HTTP popover.');
-    if (OneSignal.notifyButton &&
-      OneSignal.notifyButton.options.enable &&
-      OneSignal.notifyButton.launcher.state !== 'hidden') {
-      OneSignal.notifyButton.launcher.waitUntilShown()
-        .then(() => {
-          OneSignal.notifyButton.launcher.hide();
-        });
-    }
+    Log.debug('Showing Slidedown(Popover).');
+
+    manageNotifyButtonStateWhilePopoverShows();
+
     OneSignal.emitter.once(Popover.EVENTS.SHOWN, () => {
-      OneSignal.__isPopoverShowing = true;
+      OneSignal.__isAutoPromptShowing = true;
     });
     OneSignal.emitter.once(Popover.EVENTS.CLOSED, () => {
-      OneSignal.__isPopoverShowing = false;
-      if (OneSignal.notifyButton &&
-        OneSignal.notifyButton.options.enable) {
-        OneSignal.notifyButton.launcher.show();
-      }
+      OneSignal.__isAutoPromptShowing = false;
     });
     OneSignal.emitter.once(Popover.EVENTS.ALLOW_CLICK, () => {
-      OneSignal.popover.close();
+      if (OneSignal.popover) {
+        OneSignal.popover.close();
+      }
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
       OneSignal.registerForPushNotifications({ autoAccept: true });
@@ -417,6 +459,10 @@ export default class OneSignal {
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
     });
+  }
+
+  static async privateShowHttpPrompt(options: AutoPromptOptions = { force: false }) {
+    await OneSignal.privateShowAutoPrompt(options);
   }
 
   /**
@@ -490,7 +536,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async getTags(callback) {
+  static async getTags(callback?: Action<any>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
@@ -508,8 +554,8 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendTag(key: string, value: any, callback?: Action<Object>): Promise<Object> {
-    const tag = {};
+  static async sendTag(key: string, value: any, callback?: Action<Object>): Promise<Object | null> {
+    const tag = {} as {[key: string]: any};
     tag[key] = value;
     return await OneSignal.sendTags(tag, callback);
   }
@@ -517,7 +563,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendTags(tags: Object, callback?: Action<Object>): Promise<Object> {
+  static async sendTags(tags: {[key: string]: any}, callback?: Action<Object>): Promise<Object | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendTags', tags, callback);
     if (!tags || Object.keys(tags).length === 0) {
@@ -572,14 +618,17 @@ export default class OneSignal {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
     }
-    const tagsToSend = {} as {[key: string]: any};
+    const tagsToSend = {} as {[key: string]: string};
     for (let tag of tags) {
       tagsToSend[tag] = '';
     }
     const deletedTags = await OneSignal.sendTags(tagsToSend);
-    const deletedTagKeys = Object.keys(deletedTags);
-    executeCallback(callback, deletedTagKeys);
-    return deletedTagKeys;
+    if (deletedTags) {
+      const deletedTagKeys = Object.keys(deletedTags);
+      executeCallback(callback, deletedTagKeys);
+      return deletedTagKeys;
+    }
+    return [];
   }
   
   /**
@@ -640,8 +689,9 @@ export default class OneSignal {
    * @PublicApi
    * @Deprecated
    */
-  static async getIdsAvailable(callback?: Action<{userId: string, registrationId: string}>):
-    Promise<{userId: string, registrationId: string}> {
+  static async getIdsAvailable(
+    callback?: Action<{userId: string | undefined | null, registrationId: string | undefined | null}>):
+    Promise<{userId: string | undefined | null, registrationId: string | undefined | null}> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getIdsAvailable', callback);
     const { deviceId, subscriptionToken } = await Database.getSubscription();
@@ -704,12 +754,14 @@ export default class OneSignal {
   /**
    * @PendingPublicApi
    */
-  static async isOptedOut(callback?: Action<boolean>): Promise<boolean> {
+  static async isOptedOut(callback?: Action<boolean | undefined | null>):
+    Promise<boolean | undefined | null> {
     await awaitOneSignalInitAndSupported();
     return OneSignal.internalIsOptedOut(callback);
   }
 
-  private static async internalIsOptedOut(callback?: Action<boolean>): Promise<boolean> {
+  private static async internalIsOptedOut(callback?: Action<boolean | undefined | null>):
+    Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
     const { optedOut } = await Database.getSubscription();
     executeCallback(callback, optedOut);
@@ -735,7 +787,7 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal email ID.
    * @PublicApi
    */
-  static async getEmailId(callback?: Action<string>): Promise<string> {
+  static async getEmailId(callback?: Action<string | undefined>): Promise<string | undefined> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
@@ -749,7 +801,7 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal user ID.
    * @PublicApi
    */
-  static async getUserId(callback?: Action<string>): Promise<string> {
+  static async getUserId(callback?: Action<string | undefined | null>): Promise<string | undefined | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getUserId', callback);
     const subscription = await Database.getSubscription();
@@ -762,7 +814,8 @@ export default class OneSignal {
    * Returns a promise that resolves to the stored push token if one is set; otherwise null.
    * @PublicApi
    */
-  static async getRegistrationId(callback?: Action<string>): Promise<string> {
+  static async getRegistrationId(callback?: Action<string | undefined | null>):
+    Promise<string | undefined | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getRegistrationId', callback);
     const subscription = await Database.getSubscription();
@@ -869,7 +922,6 @@ export default class OneSignal {
   static _idsAvailable_callback = [];
   static _defaultLaunchURL = null;
   static config: AppConfig | null = null;
-  static __isPopoverShowing = false;
   static _sessionInitAlreadyRunning = false;
   static _isNotificationEnabledCallback = [];
   static _subscriptionSet = true;
@@ -880,7 +932,7 @@ export default class OneSignal {
   static _channel = null;
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
-  static notifyButton = null;
+  static notifyButton: AppUserConfigNotifyButton | null = null;
   static store = LimitStore;
   static environment = Environment;
   static database = Database;

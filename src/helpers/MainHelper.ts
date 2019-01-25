@@ -129,6 +129,7 @@ export default class MainHelper {
     const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
     if (!promptOptions) {
       return {
+        enabled: false,
         autoPrompt: false,
         actionMessage: defaultActionMessage,
         acceptButtonText: defaultAcceptButtonText,
@@ -138,6 +139,7 @@ export default class MainHelper {
 
     if (!promptOptions.slidedown) {
       return {
+        enabled: false,
         autoPrompt: false,
         actionMessage: promptOptions.actionMessage || defaultActionMessage,
         acceptButtonText: promptOptions.acceptButtonText || defaultAcceptButtonText,
@@ -146,6 +148,7 @@ export default class MainHelper {
     }
 
     return {
+      enabled: promptOptions.slidedown.enabled,
       autoPrompt: promptOptions.slidedown.autoPrompt,
       actionMessage: promptOptions.slidedown.actionMessage || defaultActionMessage,
       acceptButtonText: promptOptions.slidedown.acceptButtonText || defaultAcceptButtonText,

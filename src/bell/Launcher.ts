@@ -4,6 +4,8 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import { addCssClass, contains, hasCssClass, nothing, once, removeCssClass } from '../utils';
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Log from '../libraries/Log';
+import Bell from './Bell';
+import { BellSize } from "../models/AppConfig";
 
 
 export default class Launcher extends ActiveAnimatedElement {
@@ -11,14 +13,15 @@ export default class Launcher extends ActiveAnimatedElement {
   public bell: any;
   public wasInactive: boolean;
 
-  constructor(bell) {
-    super('.onesignal-bell-launcher', 'onesignal-bell-launcher-active', null, null, 'onesignal-bell-launcher-inactive', 'hidden', 'active');
+  constructor(bell: Bell) {
+    super('.onesignal-bell-launcher','onesignal-bell-launcher-active', undefined, undefined,
+          'onesignal-bell-launcher-inactive', 'hidden', 'active');
 
     this.bell = bell;
     this.wasInactive = false;
   }
 
-  async resize(size) {
+  async resize(size: BellSize) {
     if (!this.element) {
       // Notify button doesn't exist
       throw new InvalidStateError(InvalidStateReason.MissingDomElement);
@@ -57,9 +60,9 @@ export default class Launcher extends ActiveAnimatedElement {
           var timerId = setTimeout(() => {
             Log.debug(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
           }, this.transitionCheckTimeout);
-          once(this.element, 'transitionend', (event, destroyListenerFn) => {
+          once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
             if (event.target === this.element &&
-              contains(this.targetTransitionEvents, event.propertyName)) {
+              contains(this.targetTransitionEvents, (event as any).propertyName)) {
               clearTimeout(timerId);
               // Uninstall the event listener for transitionend
               destroyListenerFn();
