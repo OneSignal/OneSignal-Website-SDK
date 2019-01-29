@@ -8,12 +8,13 @@ import Log from '../libraries/Log';
 
 export default class Message extends AnimatedElement {
 
-  public bell: any;
+  public bell: Bell;
   public contentType: string;
   public queued: any;
 
-  constructor(bell) {
-    super('.onesignal-bell-launcher-message', 'onesignal-bell-launcher-message-opened', null, 'hidden', ['opacity', 'transform'], '.onesignal-bell-launcher-message-body');
+  constructor(bell: Bell) {
+    super('.onesignal-bell-launcher-message', 'onesignal-bell-launcher-message-opened', undefined, 'hidden',
+          ['opacity', 'transform'], '.onesignal-bell-launcher-message-body');
 
     this.bell = bell;
     this.contentType = '';
@@ -53,16 +54,17 @@ export default class Message extends AnimatedElement {
       });
   }
 
-  getTipForState() {
+  getTipForState(): string {
     if (this.bell.state === Bell.STATES.UNSUBSCRIBED)
-      return this.bell.text['tip.state.unsubscribed'];
+      return this.bell.options.text['tip.state.unsubscribed'];
     else if (this.bell.state === Bell.STATES.SUBSCRIBED)
-      return this.bell.text['tip.state.subscribed'];
+      return this.bell.options.text['tip.state.subscribed'];
     else if (this.bell.state === Bell.STATES.BLOCKED)
-      return this.bell.text['tip.state.blocked'];
+      return this.bell.options.text['tip.state.blocked'];
+    return "";
   }
 
-  enqueue(message) {
+  enqueue(message: string) {
     this.queued.push(decodeHtmlEntities(message));
     return new Promise((resolve) => {
       if (this.bell.badge.shown) {
@@ -79,13 +81,13 @@ export default class Message extends AnimatedElement {
     });
   }
 
-  dequeue(message) {
+  dequeue(message: string) {
     let dequeuedMessage = this.queued.pop(message);
     return new Promise((resolve) => {
       if (this.bell.badge.shown) {
         this.bell.badge.hide()
           .then(() => this.bell.badge.decrement())
-          .then((numMessagesLeft) => {
+          .then((numMessagesLeft: number) => {
             if (numMessagesLeft > 0) {
               return this.bell.badge.show()
             } else {

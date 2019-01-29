@@ -10,13 +10,14 @@ import Bell from './Bell';
 
 export default class Dialog extends AnimatedElement {
 
-  public bell: any;
-  public subscribeButtonId: any;
-  public unsubscribeButtonId: any;
+  public bell: Bell;
+  public subscribeButtonId: string;
+  public unsubscribeButtonId: string;
   public notificationIcons: any;
 
-  constructor(bell) {
-    super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', null, 'hidden', ['opacity', 'transform'], '.onesignal-bell-launcher-dialog-body');
+  constructor(bell: Bell) {
+    super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', undefined, 'hidden',
+         ['opacity', 'transform'], '.onesignal-bell-launcher-dialog-body');
 
     this.bell = bell;
     this.subscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #subscribe-button';
@@ -50,16 +51,18 @@ export default class Dialog extends AnimatedElement {
   }
 
   get subscribeButton() {
-    return this.element.querySelector('#' + this.subscribeButtonSelectorId);
+    return this.element ? this.element.querySelector('#' + this.subscribeButtonSelectorId) : null;
   }
 
   get unsubscribeButton() {
-    return this.element.querySelector('#' + this.unsubscribeButtonSelectorId);
+    return this.element ? this.element.querySelector('#' + this.unsubscribeButtonSelectorId) : null;
   }
 
   updateBellLauncherDialogBody() {
-    return OneSignal.getSubscription().then((currentSetSubscription) => {
-      clearDomElementChildren(document.querySelector(this.nestedContentSelector));
+    return OneSignal.getSubscription().then((currentSetSubscription: boolean) => {
+      if (this.nestedContentSelector) {
+        clearDomElementChildren(this.nestedContentSelector);
+      }
       let contents = 'Nothing to show.';
 
       var footer = '';
@@ -80,11 +83,11 @@ export default class Dialog extends AnimatedElement {
 
         let buttonHtml = '';
         if (this.bell.state !== Bell.STATES.SUBSCRIBED)
-          buttonHtml = `<button type="button" class="action" id="${this.subscribeButtonSelectorId}">${this.bell.text['dialog.main.button.subscribe']}</button>`;
+          buttonHtml = `<button type="button" class="action" id="${this.subscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.subscribe']}</button>`;
         else
-          buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.text['dialog.main.button.unsubscribe']}</button>`;
+          buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.unsubscribe']}</button>`;
 
-        contents = `<h1>${this.bell.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
+        contents = `<h1>${this.bell.options.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
       }
       else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
@@ -108,9 +111,11 @@ export default class Dialog extends AnimatedElement {
         if ((bowser.mobile || bowser.tablet) && bowser.chrome) {
           instructionsHtml = `<ol><li>Access <strong>Settings</strong> by tapping the three menu dots <strong>⋮</strong></li><li>Click <strong>Site settings</strong> under Advanced.</li><li>Click <strong>Notifications</strong>.</li><li>Find and click this entry for this website.</li><li>Click <strong>Notifications</strong> and set it to <strong>Allow</strong>.</li></ol>`;
         }
-        contents = `<h1>${this.bell.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;
+        contents = `<h1>${this.bell.options.text['dialog.blocked.title']}</h1><div class="divider"></div><div class="instructions"><p>${this.bell.options.text['dialog.blocked.message']}</p>${instructionsHtml}</div>${footer}`;
       }
-      addDomElement(document.querySelector(this.nestedContentSelector), 'beforeend', contents);
+      if (this.nestedContentSelector) {
+        addDomElement(this.nestedContentSelector, 'beforeend', contents);
+      }
       if (this.subscribeButton) {
         this.subscribeButton.addEventListener('click', () => {
           /*

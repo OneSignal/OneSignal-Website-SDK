@@ -374,8 +374,11 @@ export default class Bell {
 
     // Insert the bell container
     addDomElement('body', 'beforeend', '<div id="onesignal-bell-container" class="onesignal-bell-container onesignal-reset"></div>');
-    // Insert the bell launcher
-    addDomElement(this.container, 'beforeend', '<div id="onesignal-bell-launcher" class="onesignal-bell-launcher"></div>');
+    if (this.container) {
+      // Insert the bell launcher
+      addDomElement(this.container, 'beforeend', '<div id="onesignal-bell-launcher" class="onesignal-bell-launcher"></div>');
+    }
+
     // Insert the bell launcher button
     addDomElement(this.launcher.selector, 'beforeend', '<div class="onesignal-bell-launcher-button"></div>');
     // Insert the bell launcher badge
@@ -390,7 +393,7 @@ export default class Bell {
     // Install events
 
     // Add visual elements
-    addDomElement(this.button.selector, 'beforeEnd', logoSvg);
+    addDomElement(this.button.selector, 'beforeend', logoSvg);
 
     const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
     const notOptedOut = await OneSignal.getSubscription();

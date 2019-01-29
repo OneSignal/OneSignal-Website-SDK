@@ -170,8 +170,14 @@ export default class AnimatedElement {
    * @param value {string} The HTML to set to the element.
    */
   set content(value) {
+    if (!this.element) {
+      return;
+    }
     if (this.nestedContentSelector) {
-      this.element.querySelector(this.nestedContentSelector).innerHTML = value;
+      const nestedContent = this.element.querySelector(this.nestedContentSelector);
+      if (nestedContent) {
+        nestedContent.innerHTML = value;
+      }
     }
     else {
       this.element.innerHTML = value;
