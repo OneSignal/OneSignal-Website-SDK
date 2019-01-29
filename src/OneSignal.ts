@@ -383,6 +383,8 @@ export default class OneSignal {
   }
 
   public static async privateShowAutoPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
+    logMethodCall("privateShowAutoPrompt", options);
+
     if (!OneSignal.checkIfAutoPromptShouldBeShown(options)) {
       return;
     }
@@ -405,7 +407,14 @@ export default class OneSignal {
     }
   }
 
+  public static async showNativePrompt(): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.privateShowNativePrompt();
+  }
+
   public static async privateShowNativePrompt(): Promise<void> {
+    logMethodCall("privateShowNativePrompt");
+
     if (OneSignal.__isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a native prompt.");
       return;
@@ -417,7 +426,14 @@ export default class OneSignal {
     OneSignal.__isAutoPromptShowing = false;
   }
 
+  public static async showSlidedownPrompt(): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.privateShowSlidedownPrompt();
+  }
+
   public static async privateShowSlidedownPrompt(): Promise<void> {
+    logMethodCall("privateShowSlidedownPrompt");
+
     if (OneSignal.__isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a slidedown.");
       return;
