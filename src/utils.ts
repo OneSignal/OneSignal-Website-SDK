@@ -26,11 +26,15 @@ export function isChromeLikeBrowser() {
     (bowser as any).yandexbrowser;
 }
 
-export function removeDomElement(selector) {
+export function removeDomElement(selector: string) {
   var els = document.querySelectorAll(selector);
   if (els.length > 0) {
-    for (let i = 0; i < els.length; i++)
-      els[i].parentNode.removeChild(els[i]);
+    for (let i = 0; i < els.length; i++) {
+      const parentNode = els[i].parentNode;
+      if (parentNode) {
+        parentNode.removeChild(els[i]);
+      }
+    }
   }
 }
 
@@ -97,13 +101,20 @@ export function isValidEmail(email: string | undefined | null) {
          !!email.match(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/)
 }
 
-export function addDomElement(targetSelectorOrElement, addOrder, elementHtml) {
-  if (typeof targetSelectorOrElement === 'string')
-    document.querySelector(targetSelectorOrElement).insertAdjacentHTML(addOrder, elementHtml);
-  else if (typeof targetSelectorOrElement === 'object')
-    targetSelectorOrElement.insertAdjacentHTML(addOrder, elementHtml);
-  else
-    throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+export function addDomElement(targetSelectorOrElement: string | Element,
+  addOrder: InsertPosition, elementHtml: string) {
+  let targetElement: Element | null;
+  if (typeof targetSelectorOrElement === 'string') {
+    targetElement = document.querySelector(targetSelectorOrElement);
+  } else {
+    targetElement = targetSelectorOrElement;
+  }
+  
+  if (targetElement) {
+    targetElement.insertAdjacentHTML(addOrder, elementHtml);
+    return;
+  }
+  throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
 }
 
 export function clearDomElementChildren(targetSelectorOrElement: Element | string) {
@@ -206,7 +217,8 @@ export function timeoutPromise(promise: Promise<any>, milliseconds: number): Pro
   return Utils.timeoutPromise(promise, milliseconds);
 }
 
-export function when(condition, promiseIfTrue, promiseIfFalse) {
+export function when(condition: Action<boolean>, promiseIfTrue: Promise<any> | undefined,
+  promiseIfFalse: Promise<any> | undefined) {
   if (promiseIfTrue === undefined)
     promiseIfTrue = nothing();
   if (promiseIfFalse === undefined)
@@ -282,7 +294,7 @@ export function unsubscribeFromPush() {
   Log.warn('OneSignal: Unsubscribing from push.');
   if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
     return (<any>self).registration.pushManager.getSubscription()
-                       .then(subscription => {
+                       .then((subscription: PushSubscription) => {
                          if (subscription) {
                            return subscription.unsubscribe();
                          } else throw new Error('Cannot unsubscribe because not subscribed.');
@@ -291,7 +303,7 @@ export function unsubscribeFromPush() {
     if (isUsingSubscriptionWorkaround()) {
       return new Promise((resolve, reject) => {
         Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, reply => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, (reply: any) => {
           Log.debug("Unsubscribe from push succesfully remotely executed.");
           if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
@@ -359,7 +371,7 @@ export function substringAfter(string: string, search: string) {
   return string.substr(string.indexOf(search) + search.length);
 }
 
-export function once(targetSelectorOrElement, event, task, manualDestroy=false) {
+export function once(targetSelectorOrElement: string | string[] | Element | Document, event: string, task: Function, manualDestroy=false) {
   if (!event) {
     Log.error('Cannot call on() with no event: ', event);
   }
@@ -374,14 +386,14 @@ export function once(targetSelectorOrElement, event, task, manualDestroy=false) 
     }
   }
   else if (isArray(targetSelectorOrElement)) {
-    for (let i = 0; i < targetSelectorOrElement.length; i++)
-      once(targetSelectorOrElement[i], event, task);
+    for (let i = 0; i < (targetSelectorOrElement as string[]).length; i++)
+      once((targetSelectorOrElement as string[])[i], event, task);
   }
   else if (typeof targetSelectorOrElement === 'object') {
     var taskWrapper = (function () {
-      var internalTaskFunction = function (e) {
+      var internalTaskFunction = function (e: Event) {
         var destroyEventListener = function() {
-          targetSelectorOrElement.removeEventListener(e.type, taskWrapper);
+          (targetSelectorOrElement as Element | Document).removeEventListener(e.type, taskWrapper);
         };
         if (!manualDestroy) {
           destroyEventListener();
@@ -390,7 +402,7 @@ export function once(targetSelectorOrElement, event, task, manualDestroy=false) 
       };
       return internalTaskFunction;
     })();
-    targetSelectorOrElement.addEventListener(event, taskWrapper);
+    (targetSelectorOrElement as Element | Document).addEventListener(event, taskWrapper);
   }
   else
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
@@ -406,7 +418,7 @@ export function getSdkLoadCount() {
 
 export async function awaitSdkEvent(eventName: string, predicate?: Action<any>) {
   return await new Promise(resolve => {
-    OneSignal.emitter.once(eventName, event => {
+    OneSignal.emitter.once(eventName, (event: Event) => {
       if (predicate) {
         const predicateResult = predicate(event);
         if (predicateResult)
