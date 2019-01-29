@@ -10,44 +10,47 @@ import OneSignal from '../OneSignal'
 export default class Button extends ActiveAnimatedElement {
 
   public events: any;
-  public bell: any;
+  public bell: Bell;
 
-  constructor(bell) {
-    super('.onesignal-bell-launcher-button', null, null, 'onesignal-bell-launcher-button-active', null, 'shown', '');
+  constructor(bell: Bell) {
+    super('.onesignal-bell-launcher-button', undefined, undefined, 'onesignal-bell-launcher-button-active', undefined, 'shown', '');
 
     this.bell = bell;
     this.events = {
       mouse: 'bell.launcher.button.mouse'
     };
 
-    this.element.addEventListener('touchstart', () => {
-      this.onHovering();
-      this.onTap();
-    }, { passive: true });
-
-    this.element.addEventListener('mouseenter', () => {
-      this.onHovering();
-    });
-
-    this.element.addEventListener('mouseleave', () => {
-      this.onHovered();
-    });
-    this.element.addEventListener('touchmove', () => {
-      this.onHovered();
-    }, { passive: true });
-
-    this.element.addEventListener('mousedown', () => {
-      this.onTap();
-    });
-
-    this.element.addEventListener('mouseup', () => {
-      this.onEndTap();
-    });
-
-    this.element.addEventListener('click', () => {
-      this.onHovered();
-      this.onClick();
-    });
+    const element = this.element;
+    if (element) {
+      element.addEventListener('touchstart', () => {
+        this.onHovering();
+        this.onTap();
+      }, { passive: true });
+  
+      element.addEventListener('mouseenter', () => {
+        this.onHovering();
+      });
+  
+      element.addEventListener('mouseleave', () => {
+        this.onHovered();
+      });
+      element.addEventListener('touchmove', () => {
+        this.onHovered();
+      }, { passive: true });
+  
+      element.addEventListener('mousedown', () => {
+        this.onTap();
+      });
+  
+      element.addEventListener('mouseup', () => {
+        this.onEndTap();
+      });
+  
+      element.addEventListener('click', () => {
+        this.onHovered();
+        this.onClick();
+      });
+    }
   }
 
   onHovering() {
@@ -95,11 +98,12 @@ export default class Button extends ActiveAnimatedElement {
         OneSignal.registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
         OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-          this.bell.message.display(Message.TYPES.MESSAGE, this.bell.text['message.action.subscribed'], Message.TIMEOUT)
-            .then(() => {
-              this.bell._ignoreSubscriptionState = false;
-              this.bell.launcher.inactivate();
-            });
+          this.bell.message.display(
+            Message.TYPES.MESSAGE, this.bell.options.text['message.action.subscribed'], Message.TIMEOUT
+          ).then(() => {
+            this.bell._ignoreSubscriptionState = false;
+            this.bell.launcher.inactivate();
+          });
         });
       }
     }
@@ -123,7 +127,9 @@ export default class Button extends ActiveAnimatedElement {
 
   pulse() {
     removeDomElement('.pulse-ring');
-    addDomElement(this.element, 'beforeend', '<div class="pulse-ring"></div>');
+    if (this.element) {
+      addDomElement(this.element, 'beforeend', '<div class="pulse-ring"></div>');
+    }
     this.bell.setCustomColorsIfSpecified();
   }
 }
