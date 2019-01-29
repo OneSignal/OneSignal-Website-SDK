@@ -1,8 +1,5 @@
 import bowser from 'bowser';
 
-import AlreadySubscribedError from '../errors/AlreadySubscribedError';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import PermissionMessageDismissedError from '../errors/PermissionMessageDismissedError';
 import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
@@ -19,7 +16,6 @@ import OneSignalApiShared from '../OneSignalApiShared';
 import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
 import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
@@ -145,7 +141,7 @@ export default class InitHelper {
     }
 
     await InitHelper.processExpiringSubscriptions();
-    if (OneSignal.config.userConfig.autoRegister === true && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
+    if (OneSignal.config.userConfig.autoPrompt && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
       OneSignal.once("ON_SESSION", async () => {
         OneSignal.context.updateManager.sendOnSessionUpdate();
       });
@@ -298,15 +294,15 @@ export default class InitHelper {
 
     context.sessionManager.incrementPageViewCount();
 
-    if (bowser.safari && OneSignal.config.userConfig.autoRegister === false) {
-      Log.debug('On Safari and autoregister is false, skipping sessionInit().');
-      // This *seems* to trigger on either Safari's autoregister false or Chrome HTTP
+    if (bowser.safari && OneSignal.config.userConfig.autoResubscribe === false) {
+      Log.debug('On Safari and autoResubscribe is false, skipping sessionInit().');
+      // This *seems* to trigger on either Safari's autoResubscribe false or Chrome HTTP
       // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
       Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       return;
     }
 
-    if (OneSignal.config.userConfig.autoRegister === false && !OneSignal.config.subdomain) {
+    if (!OneSignal.config.userConfig.autoResubscribe && !OneSignal.config.subdomain) {
       Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
       /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
       const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
@@ -381,71 +377,59 @@ export default class InitHelper {
     }
 
     if (!isUsingSubscriptionWorkaround()) {
-      /*
-        Show HTTPS modal prompt.
-       */
-      if (options.__fromInit && MainHelper.wasHttpsNativePromptDismissed()) {
-        Log.debug('OneSignal: Not automatically showing native HTTPS prompt because the user previously dismissed it.');
-        await InitHelper.finishSessionInit(options);
-        return;
-      }
-
       /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
       prevent the popup from opening. */
       const isOptedOut = await OneSignal.internalIsOptedOut();
-      if (!isOptedOut) {
-        /*
-        * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-        * permanent blocks, we want to replace sites automatically showing the native browser request
-        * with a slide prompt first.
-        * Same for Safari 12.1+.
-        */
-        const showSlidedown = !options.__fromRegister && OneSignal.config.userConfig.autoRegister === true &&
-        (
-          (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
-          (bowser.safari && Number(bowser.version) >= 12.1)
-        );
-        if (showSlidedown) {
-          await InitHelper.finishSessionInit(options);
-          OneSignal.privateShowHttpPrompt();
+
+      // from init
+      if (options.__fromInit) {
+        await InitHelper.finishSessionInit(options);
+        if (OneSignal.config.userConfig.autoPrompt && !isOptedOut) {
+          /*
+          * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+          * permanent blocks, we want to replace sites automatically showing the native browser request
+          * with a slide prompt first.
+          * Same for Safari 12.1+. It requires user interaction to request notification permissions.
+          * It simply wouldn't work to try to show native prompt from script.
+          */
+          const showSlidedown = OneSignal.config.userConfig.autoPrompt === true &&
+          (
+            (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
+            (bowser.safari && Number(bowser.version) >= 12.1)
+          );
+
+          if (showSlidedown) {
+            // TODO: check if force option is enough
+            OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
+            OneSignal.privateShowSlidedownPrompt();
+          } else {
+            OneSignal.privateShowAutoPrompt();
+          }
         }
-        else {
-          await InitHelper.finishSessionInit(options);
-          await SubscriptionHelper.registerForPush();
+
+        if (OneSignal.config.userConfig.autoResubscribe && !isOptedOut) {
+          const currentPermission: NotificationPermission =
+            await OneSignal.context.permissionManager.getNotificationPermission(
+              OneSignal.context.appConfig.safariWebId
+            );
+          if (currentPermission == NotificationPermission.Granted) {
+            await SubscriptionHelper.registerForPush();
+          }
         }
-      } else if (options.__fromRegister) {
+      }
+
+      // from register for push notifications
+      if (options.__fromRegister) {
         await InitHelper.finishSessionInit(options);
         if (!isOptedOut) {
-          OneSignal.setSubscription(true);
+          await SubscriptionHelper.registerForPush();
+          // OneSignal.setSubscription(true);
         }
-      } else {
-        await InitHelper.finishSessionInit(options);
       }
-      Event.trigger("ON_SESSION");
-      return;
+    } else {
+      await InitHelper.finishSessionInit(options);
     }
 
-    if (OneSignal.config.userConfig.autoPrompt !== true) {
-      Log.debug('OneSignal: Not automatically showing popover because autoPrompt is not specifically true.');
-    } else if (MainHelper.isHttpPromptAlreadyShown()) {
-      Log.debug('OneSignal: Not automatically showing popover because it was previously shown in the same session.');
-    } else {
-      await OneSignal.privateShowHttpPrompt().catch((e: Error) => {
-        if (
-          (e instanceof InvalidStateError &&
-            (e as any).reason === InvalidStateReason[InvalidStateReason.RedundantPermissionMessage]) ||
-          e instanceof PermissionMessageDismissedError ||
-          e instanceof AlreadySubscribedError ||
-          e instanceof PushPermissionNotGrantedError
-        ) {
-          Log.debug('[Prompt Not Showing]', e);
-          // Another prompt is being shown, that's okay
-        }
-        else
-          Log.info(e);
-      });
-    }
-    await InitHelper.finishSessionInit(options);
     Event.trigger("ON_SESSION");
   }
 
