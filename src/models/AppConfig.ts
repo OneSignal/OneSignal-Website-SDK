@@ -257,6 +257,7 @@ export interface ServerAppConfigPrompt {
   };
   slidedown: {
     enabled: boolean;
+    autoPrompt: boolean;
     acceptButton: string;
     cancelButton: string;
     actionMessage: string;
