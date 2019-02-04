@@ -8,7 +8,6 @@ import ProxyFrame from '../modules/frames/ProxyFrame';
 import SubscriptionModal from '../modules/frames/SubscriptionModal';
 import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
 import { getConsoleStyle } from '../utils';
-import SubscriptionHelper from './SubscriptionHelper';
 import Log from '../libraries/Log';
 
 declare var OneSignal: any;

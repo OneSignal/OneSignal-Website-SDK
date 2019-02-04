@@ -1,13 +1,8 @@
 import bowser from 'bowser';
-
 import Environment from './Environment';
-import AlreadySubscribedError from './errors/AlreadySubscribedError';
 import { InvalidArgumentError, InvalidArgumentReason } from './errors/InvalidArgumentError';
 import { InvalidStateError, InvalidStateReason } from './errors/InvalidStateError';
 import { NotSubscribedError, NotSubscribedReason } from './errors/NotSubscribedError';
-import PermissionMessageDismissedError from './errors/PermissionMessageDismissedError';
-import PushPermissionNotGrantedError from './errors/PushPermissionNotGrantedError';
-import { PushPermissionNotGrantedErrorReason } from './errors/PushPermissionNotGrantedError';
 import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
 import Event from './Event';
 import EventHelper from './helpers/EventHelper';
@@ -20,15 +15,11 @@ import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
-import {
-  AppConfig, AppUserConfig, AppUserConfigNotifyButton, SlidedownPermissionMessageOptions
-} from './models/AppConfig';
+import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
 import Context from './models/Context';
 import { Notification } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
-import { PermissionPromptType } from './models/PermissionPromptType';
-
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
@@ -37,9 +28,9 @@ import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
 import SubscriptionPopup from './modules/frames/SubscriptionPopup';
 import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
-import Popover, { manageNotifyButtonStateWhilePopoverShows } from './popover/Popover';
+import Popover from './popover/Popover';
 import Database from './services/Database';
-import { ResourceLoadState } from './services/DynamicResourceLoader';
+
 import IndexedDb from './services/IndexedDb';
 import {
   awaitOneSignalInitAndSupported,
@@ -60,7 +51,7 @@ import Log from './libraries/Log';
 import ConfigManager from "./managers/ConfigManager";
 import OneSignalUtils from "./utils/OneSignalUtils";
 import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
-import { AutoPromptOptions } from "./models/AutoPrompt";
+import { AutoPromptOptions } from "./managers/PromptsManager";
 
 export default class OneSignal {
   static __isAutoPromptShowing: boolean = false;
@@ -322,7 +313,7 @@ export default class OneSignal {
    * Call after use accepts your user consent agreement
    * @PublicApi
    */
-  static async provideUserConsent(consent: boolean): Promise<void> {
+  public static async provideUserConsent(consent: boolean): Promise<void> {
     await Database.setProvideUserConsent(consent);
     if (consent && OneSignal.pendingInit)
       await OneSignal.delayedInit();
@@ -332,7 +323,7 @@ export default class OneSignal {
    * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
    * @PublicApi
    */
-  static async showHttpPermissionRequest(options?: {_sdkCall: boolean}): Promise<any> {
+  public static async showHttpPermissionRequest(options?: { _sdkCall: boolean }): Promise<any> {
     Log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
 
     OneSignal.showHttpPrompt().catch(e => Log.info(e));
@@ -342,143 +333,36 @@ export default class OneSignal {
    * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
    * @PublicApi
    */
-  static async showHttpPrompt(options?: AutoPromptOptions) {
+  public static async showHttpPrompt(options?: AutoPromptOptions) {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.privateShowHttpPrompt(options);
+    await OneSignal.context.promptsManager.internalShowAutoPrompt(options);
   }
 
-  private static async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }) {
-    /*
-    Only show the HTTP popover if:
-    - Notifications aren't already enabled
-    - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
-    */
-    if (OneSignal.__isAutoPromptShowing) {
-      throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-        permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
-      });
-    }
-
-    const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
-
-    if (doNotPrompt && !options.force) {
-      Log.info(new PermissionMessageDismissedError());
-      return;
-    }
-
-    const permission = await OneSignal.privateGetNotificationPermission();
-    if (permission === NotificationPermission.Denied) {
-      Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
-      return;
-    }
-
-    const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    if (isEnabled)
-      throw new AlreadySubscribedError();
-
-    const notOptedOut = await OneSignal.privateGetSubscription();
-    if (!notOptedOut)
-      throw new NotSubscribedError(NotSubscribedReason.OptedOut);
-
+  /**
+   * Shows a native browser prompt or a slidedown depending on the configuration.
+   * @PublicApi
+   */
+  public static async showAutoPrompt(): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowAutoPrompt();
   }
 
-  public static async privateShowAutoPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
-    logMethodCall("privateShowAutoPrompt", options);
-
-    if (!OneSignal.checkIfAutoPromptShouldBeShown(options)) {
-      return;
-    }
-    
-    if (!OneSignal.config || !OneSignal.config.userConfig.promptOptions) {
-      Log.error("OneSignal config was not initialized correctly. Aborting.");
-      return;
-    }
-
-    const promptOptions = OneSignal.config.userConfig.promptOptions;
-    if (!promptOptions.native && !promptOptions.slidedown) {
-      Log.error("No suitable prompt type enabled.");
-      return;
-    }
-
-    if (promptOptions.native && promptOptions.native.enabled) {
-      await OneSignal.privateShowNativePrompt();
-    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled) {
-      await OneSignal.privateShowSlidedownPrompt();
-    }
-  }
-
+  /**
+   * Shows a native browser prompt.
+   * @PublicApi
+   */
   public static async showNativePrompt(): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.privateShowNativePrompt();
+    await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
 
-  public static async privateShowNativePrompt(): Promise<void> {
-    logMethodCall("privateShowNativePrompt");
-
-    if (OneSignal.__isAutoPromptShowing) {
-      Log.debug("Already showing autopromt. Abort showing a native prompt.");
-      return;
-    }
-
-    OneSignal.__isAutoPromptShowing = true;
-    MainHelper.markHttpPopoverShown();
-    await OneSignal.registerForPushNotifications();
-    OneSignal.__isAutoPromptShowing = false;
-  }
-
+  /**
+   * Shows a sliding modal prompt on the page for users.
+   * @PublicApi
+   */
   public static async showSlidedownPrompt(): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.privateShowSlidedownPrompt();
-  }
-
-  public static async privateShowSlidedownPrompt(): Promise<void> {
-    logMethodCall("privateShowSlidedownPrompt");
-
-    if (OneSignal.__isAutoPromptShowing) {
-      Log.debug("Already showing autopromt. Abort showing a slidedown.");
-      return;
-    }
-
-    MainHelper.markHttpPopoverShown();
-
-    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
-    if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug('Not showing slidedown permission message because styles failed to load.');
-      return;
-    }
-    const slideDownOptions: SlidedownPermissionMessageOptions = MainHelper.getSlidedownPermissionMessageOptions();
-    if (!slideDownOptions.enabled) {
-      Log.warn("Slidedown not enabled. Not showing.");
-    }
-
-    OneSignal.popover = new Popover(slideDownOptions);
-    await OneSignal.popover.create();
-    Log.debug('Showing Slidedown(Popover).');
-
-    manageNotifyButtonStateWhilePopoverShows();
-
-    OneSignal.emitter.once(Popover.EVENTS.SHOWN, () => {
-      OneSignal.__isAutoPromptShowing = true;
-    });
-    OneSignal.emitter.once(Popover.EVENTS.CLOSED, () => {
-      OneSignal.__isAutoPromptShowing = false;
-    });
-    OneSignal.emitter.once(Popover.EVENTS.ALLOW_CLICK, () => {
-      if (OneSignal.popover) {
-        OneSignal.popover.close();
-      }
-      Log.debug("Setting flag to not show the popover to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
-      OneSignal.registerForPushNotifications({ autoAccept: true });
-    });
-    OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {
-      Log.debug("Setting flag to not show the popover to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
-    });
-  }
-
-  static async privateShowHttpPrompt(options: AutoPromptOptions = { force: false }) {
-    await OneSignal.privateShowAutoPrompt(options);
+    await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
   }
 
   /**
@@ -699,8 +583,11 @@ export default class OneSignal {
     OneSignal.emitter.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
       executeCallback(callback, notification);
     });
-    EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl || OneSignal.config.userConfig.pageUrl);
+    if (OneSignal.config) {
+      EventHelper.fireStoredNotificationClicks(OneSignal.config.pageUrl || OneSignal.config.userConfig.pageUrl);
+    }
   }
+
   /**
    * @PublicApi
    * @Deprecated
