@@ -217,7 +217,8 @@ export class ConfigHelper {
             },
             slidedown: {
               enabled: serverConfig.config.staticPrompts.slidedown.enabled,
-              autoPrompt: serverConfig.config.staticPrompts.slidedown.autoPrompt,
+              autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled &&
+                serverConfig.config.staticPrompts.slidedown.autoPrompt,
               actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
               acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
               cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,

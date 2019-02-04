@@ -50,6 +50,7 @@ export class UpdateManager {
         ...deviceRecord.serialize(),
       });
     } else {
+      console.log("sendOnSessionUpdate", 3);
       await this.sendOnSessionUpdate(deviceRecord);
     }
   }

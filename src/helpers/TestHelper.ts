@@ -2,7 +2,6 @@
 
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import SubscriptionHelper from './SubscriptionHelper';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { isUsingSubscriptionWorkaround } from '../utils';

@@ -210,14 +210,6 @@ export default class InitHelper {
 
   private static async showPromptsFromWebConfigEditor() {
     const config: AppConfig = OneSignal.config;
-    if (!(await OneSignal.privateIsPushNotificationsEnabled()) &&
-      config.userConfig.promptOptions &&
-      config.userConfig.promptOptions.slidedown &&
-      config.userConfig.promptOptions.slidedown.autoPrompt &&
-      !(await OneSignal.internalIsOptedOut())) {
-      await OneSignal.privateShowHttpPrompt();
-    }
-
     if (config.userConfig.promptOptions) {
       await CustomLink.initialize(config.userConfig.promptOptions.customlink);
     }
@@ -303,20 +295,20 @@ export default class InitHelper {
       return;
     }
 
-    if (!OneSignal.config.userConfig.autoResubscribe && !OneSignal.config.subdomain) {
-      Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
-      /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
-      const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-      if (isPushEnabled && !isUsingSubscriptionWorkaround()) {
-        Log.info(
-          'Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.'
-        );
-        // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
-        await SubscriptionHelper.registerForPush();
-      }
-      await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      return;
-    }
+    // if (!OneSignal.config.userConfig.autoResubscribe && !OneSignal.config.subdomain) {
+    //   Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
+    //   /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
+    //   const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    //   if (isPushEnabled && !isUsingSubscriptionWorkaround()) {
+    //     Log.info(
+    //       'Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.'
+    //     );
+    //     // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
+    //     await SubscriptionHelper.registerForPush();
+    //   }
+    //   await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+    //   return;
+    // }
 
     if (document.visibilityState !== 'visible') {
       once(
@@ -354,6 +346,18 @@ export default class InitHelper {
     }
   }
 
+  public static async handleAutoResubscribe(isOptedOut: boolean) {
+    if (OneSignal.config.userConfig.autoResubscribe && !isOptedOut) {
+      const currentPermission: NotificationPermission =
+        await OneSignal.context.permissionManager.getNotificationPermission(
+          OneSignal.context.appConfig.safariWebId
+        );
+      if (currentPermission == NotificationPermission.Granted) {
+        await SubscriptionHelper.registerForPush();
+      }
+    }
+  }
+
   public static async sessionInit(options?: SessionInitOptions): Promise<void> {
     if (!options) {
       options = {} as SessionInitOptions;
@@ -377,48 +381,48 @@ export default class InitHelper {
       return;
     }
 
-    if (!isUsingSubscriptionWorkaround()) {
-      /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
-      prevent the popup from opening. */
-      const isOptedOut = await OneSignal.internalIsOptedOut();
+    /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
+    prevent the popup from opening. */
+    const isOptedOut = await OneSignal.internalIsOptedOut();
 
-      // from init
-      if (options.__fromInit) {
-        await InitHelper.finishSessionInit(options);
-        if (OneSignal.config.userConfig.autoPrompt && !isOptedOut) {
-          /*
-          * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-          * permanent blocks, we want to replace sites automatically showing the native browser request
-          * with a slide prompt first.
-          * Same for Safari 12.1+. It requires user interaction to request notification permissions.
-          * It simply wouldn't work to try to show native prompt from script.
-          */
-          const showSlidedown = OneSignal.config.userConfig.autoPrompt === true &&
-          (
-            (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
-            (bowser.safari && Number(bowser.version) >= 12.1)
-          );
+    // TODO: can we check if user's already subscribed as well?
 
-          if (showSlidedown) {
-            // TODO: check if force option is enough
-            OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
-            OneSignal.privateShowSlidedownPrompt();
-          } else {
-            OneSignal.privateShowAutoPrompt();
-          }
-        }
+    // from init
+    if (options.__fromInit) {
+      await InitHelper.finishSessionInit(options);
 
-        if (OneSignal.config.userConfig.autoResubscribe && !isOptedOut) {
-          const currentPermission: NotificationPermission =
-            await OneSignal.context.permissionManager.getNotificationPermission(
-              OneSignal.context.appConfig.safariWebId
-            );
-          if (currentPermission == NotificationPermission.Granted) {
-            await SubscriptionHelper.registerForPush();
-          }
-        }
+      // Autoresubscribe is working only on HTTPS
+      // Should be called before autoprompting to make sure user gets a chance to be re-subscribed first.
+      if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+        await InitHelper.handleAutoResubscribe(isOptedOut);
       }
 
+      if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
+        /*
+        * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+        * permanent blocks, we want to replace sites automatically showing the native browser request
+        * with a slide prompt first.
+        * Same for Safari 12.1+. It requires user interaction to request notification permissions.
+        * It simply wouldn't work to try to show native prompt from script.
+        */
+        const showSlidedown = OneSignal.config.userConfig.autoPrompt === true &&
+        (
+          (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          (bowser.safari && Number(bowser.version) >= 12.1)
+        );
+
+        if (showSlidedown) {
+          // TODO: check if force option is enough
+          OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
+          OneSignal.privateShowSlidedownPrompt();
+        } else {
+          OneSignal.privateShowAutoPrompt();
+        }
+      }
+    }
+
+    // TODO: check if it's really needed
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
       // from register for push notifications
       if (options.__fromRegister) {
         await InitHelper.finishSessionInit(options);

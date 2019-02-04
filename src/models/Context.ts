@@ -10,6 +10,7 @@ import MetricsManager from '../managers/MetricsManager';
 import { ContextSWInterface } from "./ContextSW";
 import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
+import { PromptsManager } from "../managers/PromptsManager";
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -28,6 +29,7 @@ export default class Context implements ContextInterface {
   public permissionManager: PermissionManager;
   public metricsManager: MetricsManager;
   public updateManager: UpdateManager;
+  public promptsManager: PromptsManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -38,6 +40,7 @@ export default class Context implements ContextInterface {
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);
     
+    this.promptsManager = new PromptsManager(this);
     this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
     this.dynamicResourceLoader = new DynamicResourceLoader();
     this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
