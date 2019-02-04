@@ -141,14 +141,15 @@ export default class InitHelper {
     }
 
     await InitHelper.processExpiringSubscriptions();
-    if (OneSignal.config.userConfig.autoPrompt && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
+    if (OneSignal.config.userConfig.promptOptions.autoPrompt && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
       OneSignal.once("ON_SESSION", async () => {
+        console.log("sendOnSessionUpdate", 1);
         OneSignal.context.updateManager.sendOnSessionUpdate();
       });
     } else {
+      console.log("sendOnSessionUpdate", 2);
       OneSignal.context.updateManager.sendOnSessionUpdate();
     }
-    // TODO: wrapped into Promise.all for parallel execution, seems to be working fine
     await Promise.all([
       InitHelper.showNotifyButton(),
       InitHelper.showPromptsFromWebConfigEditor(),
@@ -429,8 +430,6 @@ export default class InitHelper {
     } else {
       await InitHelper.finishSessionInit(options);
     }
-
-    Event.trigger("ON_SESSION");
   }
 
   static async polyfillSafariFetch() {

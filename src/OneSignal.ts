@@ -964,7 +964,6 @@ export default class OneSignal {
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
   static testHelper = TestHelper;
-  static appConfig: AppConfig | null = null;
   private static pendingInit: boolean;
 
   static subscriptionPopup: SubscriptionPopup;

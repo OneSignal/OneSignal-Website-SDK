@@ -1,17 +1,12 @@
-
-
 import Event from '../../Event';
 import EventHelper from '../../helpers/EventHelper';
 import MainHelper from '../../helpers/MainHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import { RawPushSubscription } from '../../models/RawPushSubscription';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
-import Database from '../../services/Database';
 import Context from '../../models/Context';
-import { IntegrationKind } from '../../models/IntegrationKind';
 import Log from '../../libraries/Log';
 
 /**
@@ -24,8 +19,8 @@ import Log from '../../libraries/Log';
 export default class SubscriptionPopupHost implements Disposable {
 
   public url: URL;
-  private popupWindow: Window;
-  private messenger: Postmam;
+  private popupWindow: Window | undefined | null;
+  private messenger: Postmam | undefined;
   private options: SubscriptionPopupHostOptions;
 
   // Promise to track whether the frame has finished loading
@@ -33,7 +28,7 @@ export default class SubscriptionPopupHost implements Disposable {
     promise: Promise<void>,
     resolver: Function,
     rejector: Function
-  }
+  };
 
   /**
    *
@@ -58,10 +53,11 @@ export default class SubscriptionPopupHost implements Disposable {
       ...{
         promptType: 'popup',
         parentHostname: encodeURIComponent(location.hostname)
-      }
+      },
+      autoAccept: false,
     };
     if (this.options.autoAccept) {
-      postData['autoAccept'] = true;
+      postData.autoAccept = true;
     }
     Log.info(`Opening a popup to ${this.url.toString()} with POST data:`, postData);
     this.popupWindow = this.openWindowViaPost(this.url.toString(), postData, null);
@@ -80,7 +76,7 @@ export default class SubscriptionPopupHost implements Disposable {
   // Arguments :
   //  verb : 'GET'|'POST'
   //  target : an optional opening target (a name, or "_blank"), defaults to "_self"
-  openWindowViaPost(url, data, overrides) {
+  openWindowViaPost(url: string, data, overrides) {
     var form = document.createElement("form");
     form.action = url;
     form.method = 'POST';
@@ -190,11 +186,12 @@ export default class SubscriptionPopupHost implements Disposable {
 
     const { rawPushSubscription }: { rawPushSubscription: RawPushSubscription } = message.data;
 
-    const appId = await MainHelper.getAppId()
-    this.messenger.stopPostMessageReceive();
+    if (this.messenger) {
+      this.messenger.stopPostMessageReceive();
+    }
 
     const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
-    const subscription = await subscriptionManager.registerSubscription(rawPushSubscription);
+    await subscriptionManager.registerSubscription(rawPushSubscription);
 
     await EventHelper.checkAndTriggerSubscriptionChanged();
     await MainHelper.checkAndTriggerNotificationPermissionChanged();
@@ -211,6 +208,8 @@ export default class SubscriptionPopupHost implements Disposable {
    * Shortcut method to messenger.message().
    */
   message() {
-    this.messenger.message.apply(this.messenger, arguments);
+    if (this.messenger) {
+      this.messenger.message.apply(this.messenger, arguments);
+    }
   }
 }

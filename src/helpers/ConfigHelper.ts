@@ -161,6 +161,7 @@ export class ConfigHelper {
       color: undefined,
     };
     const customlinkDefaults = defaultsFromServer.customlink;
+    // TODO: add slidedown and native prompt defaults here, and autoResubscribe somewhere too
     return {
       ...promptOptions,
       customlink: {
@@ -209,14 +210,14 @@ export class ConfigHelper {
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
           promptOptions: {
             autoPrompt: serverConfig.config.staticPrompts.native.enabled ||
-              serverConfig.config.staticPrompts.slidedown.enabled,
+              serverConfig.config.staticPrompts.slidedown.autoPrompt,
             native: {
               enabled: serverConfig.config.staticPrompts.native.enabled,
               autoPrompt: serverConfig.config.staticPrompts.native.enabled,
             },
             slidedown: {
               enabled: serverConfig.config.staticPrompts.slidedown.enabled,
-              autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled,
+              autoPrompt: serverConfig.config.staticPrompts.slidedown.autoPrompt,
               actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
               acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
               cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,

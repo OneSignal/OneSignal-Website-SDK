@@ -44,7 +44,7 @@ export default class OneSignalApi {
     }
   }
 
-  static async createUser(deviceRecord: DeviceRecord): Promise<string> {
+  static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
     return await OneSignalApiShared.createUser(deviceRecord);
   }
 
@@ -52,7 +52,7 @@ export default class OneSignalApi {
     appConfig: AppConfig,
     emailProfile: EmailProfile,
     pushDeviceRecordId?: string
-  ): Promise<string> {
+  ): Promise<string | null> {
     return await OneSignalApiShared.createEmailRecord(appConfig, emailProfile, pushDeviceRecordId);
   }
 
@@ -60,7 +60,7 @@ export default class OneSignalApi {
     appConfig: AppConfig,
     emailProfile: EmailProfile,
     pushDeviceRecordId?: string
-  ): Promise<string> {
+  ): Promise<string | null> {
     return await OneSignalApiShared.updateEmailRecord(appConfig, emailProfile, pushDeviceRecordId);
   }
 
