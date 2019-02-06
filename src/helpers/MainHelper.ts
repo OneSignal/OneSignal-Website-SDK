@@ -120,13 +120,12 @@ export default class MainHelper {
     return data;
   }
 
-  public static getSlidedownPermissionMessageOptions():
+  public static getSlidedownPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
     SlidedownPermissionMessageOptions {
     const defaultActionMessage = "We'd like to show you notifications for the latest news and updates.";
     const defaultAcceptButtonText = "Allow";
     const defaultCancelButtonText = "No Thanks";
 
-    const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
     if (!promptOptions) {
       return {
         enabled: false,
@@ -156,8 +155,8 @@ export default class MainHelper {
     } as SlidedownPermissionMessageOptions;
   }
 
-  static getFullscreenPermissionMessageOptions(): AppUserConfigPromptOptions | null {
-    const promptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
+  static getFullscreenPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
+    AppUserConfigPromptOptions | null {
     if (!promptOptions) {
       return null;
     }
@@ -179,7 +178,7 @@ export default class MainHelper {
   }
 
   static getPromptOptionsQueryString() {
-    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions();
+    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     let promptOptionsStr = '';
     if (promptOptions) {
       let hash = MainHelper.getPromptOptionsPostHash();
@@ -192,7 +191,7 @@ export default class MainHelper {
   }
 
   static getPromptOptionsPostHash() {
-    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions();
+    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     if (promptOptions) {
       var legacyParams = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',

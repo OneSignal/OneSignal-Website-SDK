@@ -405,14 +405,14 @@ export default class InitHelper {
         * Same for Safari 12.1+. It requires user interaction to request notification permissions.
         * It simply wouldn't work to try to show native prompt from script.
         */
-        const showSlidedown = OneSignal.config.userConfig.autoPrompt === true &&
-        (
-          (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
-          (bowser.safari && Number(bowser.version) >= 12.1)
-        );
+        const showSlidedown =
+          (
+            (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
+            (bowser.safari && Number(bowser.version) >= 12.1)
+          );
 
         if (showSlidedown) {
-          // TODO: check if force option is enough
+          // TODO: check if force option is enough/needed
           OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
           OneSignal.privateShowSlidedownPrompt();
         } else {

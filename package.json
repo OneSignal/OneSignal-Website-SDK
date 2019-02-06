@@ -14,7 +14,7 @@
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
   },
   "scripts": {
-    "clean": "rm -r build/ts-to-es6 && rm -r build/bundles",
+    "clean": "rm -rf build/ts-to-es6 && rm -rf build/bundles",
     "transpile:sources": "$(yarn bin)/tsc --project build/config/tsconfig.json",
     "transpile:tests": "$(yarn bin)/tsc --project build/config/tsconfig.tests.json",
     "bundle": "TESTS=false $(yarn bin)/webpack --config build/config/webpack.config.js",

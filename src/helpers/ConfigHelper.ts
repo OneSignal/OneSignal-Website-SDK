@@ -6,6 +6,7 @@ import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../utils/Utils";
+import MainHelper from './MainHelper';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -148,21 +149,19 @@ export class ConfigHelper {
     }
   }
 
-  public static injectDefaultsIntoPromptOptions(promptOptions: AppUserConfigPromptOptions | undefined,
-    defaultsFromServer: ServerAppConfigPrompt): AppUserConfigPromptOptions | undefined {
-    if (!promptOptions) return promptOptions;
+  public static injectDefaultsIntoPromptOptions(
+    promptOptions: AppUserConfigPromptOptions | undefined,
+    defaultsFromServer: ServerAppConfigPrompt,
+    wholeUserConfig: AppUserConfig
+  ): AppUserConfigPromptOptions | undefined {
   
-    const customlinkUser = promptOptions.customlink || {
-      enabled: undefined,
-      style: undefined,
-      size: undefined,
-      unsubscribeEnabled: undefined,
-      text: undefined,
-      color: undefined,
-    };
+    let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
+    if (promptOptions && promptOptions.customlink) {
+      customlinkUser = promptOptions.customlink;
+    }
     const customlinkDefaults = defaultsFromServer.customlink;
     // TODO: add slidedown and native prompt defaults here, and autoResubscribe somewhere too
-    return {
+    const promptOptionsConfig: AppUserConfigPromptOptions = {
       ...promptOptions,
       customlink: {
         enabled: Utils.getValueOrDefault(customlinkUser.enabled, customlinkDefaults.enabled),
@@ -186,6 +185,37 @@ export class ConfigHelper {
         },
       }
     };
+
+    if (promptOptionsConfig.slidedown) {
+      promptOptionsConfig.slidedown.enabled = !!promptOptionsConfig.slidedown.enabled;
+      promptOptionsConfig.slidedown.autoPrompt = promptOptionsConfig.slidedown.hasOwnProperty("autoPrompt") ?
+        !!promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt :
+        !!promptOptionsConfig.slidedown.enabled;
+    } else {
+      promptOptionsConfig.slidedown = MainHelper.getSlidedownPermissionMessageOptions(promptOptionsConfig);
+      promptOptionsConfig.slidedown.enabled = false;
+      promptOptionsConfig.slidedown.autoPrompt = false;
+    }
+
+    if (promptOptionsConfig.native) {
+      promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
+      promptOptionsConfig.native.autoPrompt = !!promptOptionsConfig.native.enabled;
+    } else if (wholeUserConfig.autoRegister) {
+      promptOptionsConfig.native = {
+        enabled: !(promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt),
+        autoPrompt: !(promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt),
+      }
+    } else {
+      promptOptionsConfig.native = {
+        enabled: false,
+        autoPrompt: false,
+      }
+    }
+
+    promptOptionsConfig.autoPrompt = promptOptionsConfig.native.autoPrompt ||
+      promptOptionsConfig.slidedown.autoPrompt;
+
+    return promptOptionsConfig;
   }
   
   public static getUserConfigForConfigIntegrationKind(
@@ -309,10 +339,13 @@ export class ConfigHelper {
           Ignores dashboard configuration and uses code-based configuration only.
           Except injecting some default values for prompts.
         */
-        return {
+        const config = {
           ...userConfig,
-          promptOptions:
-            this.injectDefaultsIntoPromptOptions(userConfig.promptOptions, serverConfig.config.staticPrompts),
+          promptOptions: this.injectDefaultsIntoPromptOptions(
+            userConfig.promptOptions,
+            serverConfig.config.staticPrompts,
+            userConfig
+          ),
           ...{
           serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
             ? OneSignal.SERVICE_WORKER_PARAM
@@ -326,6 +359,14 @@ export class ConfigHelper {
           path: !!userConfig.path ? userConfig.path : '/'
           }
         };
+
+        if (userConfig.hasOwnProperty("autoResubscribe")) {
+          config.autoResubscribe = !!userConfig.autoResubscribe;
+        } else {
+          config.autoResubscribe = !!userConfig.autoRegister;
+        }
+
+        return config;
     }
   }
 

@@ -20,7 +20,7 @@ export default class Popover {
 
   constructor(options?: SlidedownPermissionMessageOptions) {
     if (!options) {
-        options = MainHelper.getSlidedownPermissionMessageOptions();
+        options = MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     }
     this.options = options;
     this.options.actionMessage = options.actionMessage.substring(0, 90);
