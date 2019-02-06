@@ -114,7 +114,8 @@ export class PromptsManager {
       Log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-    const slideDownOptions: SlidedownPermissionMessageOptions = MainHelper.getSlidedownPermissionMessageOptions();
+    const slideDownOptions: SlidedownPermissionMessageOptions =
+      MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     if (!slideDownOptions.enabled) {
       Log.warn("Slidedown not enabled. Not showing.");
     }

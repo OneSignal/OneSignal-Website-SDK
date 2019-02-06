@@ -217,7 +217,8 @@ export interface AppUserConfigWebhooks {
 
 export interface ServerAppConfigPrompt {
   native: {
-    enabled: boolean,
+    enabled: boolean;
+    autoPrompt: boolean;
   },
   bell: {
     enabled: boolean;

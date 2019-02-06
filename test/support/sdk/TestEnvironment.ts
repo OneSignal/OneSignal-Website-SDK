@@ -360,6 +360,7 @@ export class TestEnvironment {
           staticPrompts: {
             native: {
               enabled: false,
+              autoPrompt: false,
             },
             bell: {
               enabled: false,
@@ -399,6 +400,7 @@ export class TestEnvironment {
             },
             slidedown: {
                 enabled: false,
+                autoPrompt: false,
                 acceptButton: "Allow",
                 cancelButton: "No Thanks",
                 actionMessage: "We'd like to send you notifications for the latest news and updates.",
@@ -508,6 +510,7 @@ export class TestEnvironment {
         staticPrompts: {
           native: {
             enabled: false,
+            autoPrompt: false,
           },
           bell: {
             size: 'large',
@@ -547,6 +550,7 @@ export class TestEnvironment {
           },
           slidedown: {
             enabled: true,
+            autoPrompt: true,
             acceptButton: 'Allow',
             cancelButton: 'No Thanks',
             actionMessage: "We'd like to send you notifications for the latest news and updates.",

@@ -5,11 +5,7 @@ import Context from "../../../src/models/Context";
 import MainHelper from "../../../src/helpers/MainHelper";
 import sinon, {SinonSandbox} from 'sinon';
 
-let sinonSandbox: SinonSandbox;
-
-test.beforeEach(function () {
-  sinonSandbox = sinon.sandbox.create();
-});
+let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
 test.afterEach(function (_t: TestContext) {
   sinonSandbox.restore();
@@ -25,7 +21,7 @@ test("Test showHttpPrompt with no params", async t => {
 
   // Ensure both public and private calls work
   await OneSignal.showHttpPrompt();
-  await OneSignal.privateShowHttpPrompt();
+  await OneSignal.context.promptsManager.internalShowAutoPrompt();
   // Pass if we did not throw
   t.pass();
 });
