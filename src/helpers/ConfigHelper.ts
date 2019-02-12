@@ -240,7 +240,8 @@ export class ConfigHelper {
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
           promptOptions: {
             autoPrompt: serverConfig.config.staticPrompts.native.enabled ||
-              serverConfig.config.staticPrompts.slidedown.autoPrompt,
+              (serverConfig.config.staticPrompts.slidedown.enabled &&
+                serverConfig.config.staticPrompts.slidedown.autoPrompt),
             native: {
               enabled: serverConfig.config.staticPrompts.native.enabled,
               autoPrompt: serverConfig.config.staticPrompts.native.enabled,

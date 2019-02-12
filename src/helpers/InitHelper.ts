@@ -287,29 +287,6 @@ export default class InitHelper {
 
     context.sessionManager.incrementPageViewCount();
 
-    if (bowser.safari && OneSignal.config.userConfig.autoResubscribe === false) {
-      Log.debug('On Safari and autoResubscribe is false, skipping sessionInit().');
-      // This *seems* to trigger on either Safari's autoResubscribe false or Chrome HTTP
-      // Chrome HTTP gets an SDK_INITIALIZED event from the iFrame postMessage, so don't call it here
-      Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      return;
-    }
-
-    // if (!OneSignal.config.userConfig.autoResubscribe && !OneSignal.config.subdomain) {
-    //   Log.debug('Skipping internal init. Not auto-registering and no subdomain.');
-    //   /* 3/25: If a user is already registered, re-register them in case the clicked Blocked and then Allow (which immediately invalidates the GCM token as soon as you click Blocked) */
-    //   const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    //   if (isPushEnabled && !isUsingSubscriptionWorkaround()) {
-    //     Log.info(
-    //       'Because the user is already subscribed and has enabled notifications, we will re-register their GCM token.'
-    //     );
-    //     // Resubscribes them, and in case their GCM registration token was invalid, gets a new one
-    //     await SubscriptionHelper.registerForPush();
-    //   }
-    //   await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-    //   return;
-    // }
-
     if (document.visibilityState !== 'visible') {
       once(
         document,
@@ -397,7 +374,8 @@ export default class InitHelper {
         await InitHelper.handleAutoResubscribe(isOptedOut);
       }
 
-      if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
+      const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+      if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
         /*
         * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
         * permanent blocks, we want to replace sites automatically showing the native browser request
@@ -414,25 +392,23 @@ export default class InitHelper {
         if (showSlidedown) {
           // TODO: check if force option is enough/needed
           OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
-          OneSignal.privateShowSlidedownPrompt();
+          OneSignal.context.promptsManager.internalShowSlidedownPrompt();
         } else {
-          OneSignal.privateShowAutoPrompt();
+          OneSignal.context.promptsManager.internalShowAutoPrompt();
         }
       }
     }
 
-    // TODO: check if it's really needed
-    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      // from register for push notifications
-      if (options.__fromRegister) {
-        await InitHelper.finishSessionInit(options);
-        if (!isOptedOut) {
+    // from register for push notifications
+    if (options.__fromRegister) {
+      await InitHelper.finishSessionInit(options);
+      if (!isOptedOut) {
+        if (bowser.safari && Number(bowser.version) >= 12.1) {
+          await SubscriptionHelper.internalRegisterForPush(false);
+        } else {
           await SubscriptionHelper.registerForPush();
-          // OneSignal.setSubscription(true);
         }
       }
-    } else {
-      await InitHelper.finishSessionInit(options);
     }
   }
 

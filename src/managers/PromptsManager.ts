@@ -78,9 +78,9 @@ export class PromptsManager {
     }
 
     if (promptOptions.native && promptOptions.native.enabled) {
-      await OneSignal.privateShowNativePrompt();
+      await this.internalShowNativePrompt();
     } else if (promptOptions.slidedown && promptOptions.slidedown.enabled) {
-      await OneSignal.privateShowSlidedownPrompt();
+      await this.internalShowSlidedownPrompt();
     }
   }
 
