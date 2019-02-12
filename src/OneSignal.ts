@@ -768,8 +768,11 @@ export default class OneSignal {
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
       throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
-    return await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], {'en': title}, {'en': message},
+
+    if (subscription.deviceId) {
+      await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], {'en': title}, {'en': message},
                                                url, icon, data, buttons);
+    }
   }
 
   /**
