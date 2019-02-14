@@ -3,6 +3,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import Log from "../libraries/Log";
 import { Utils } from "./Utils";
+import { redetectBrowserUserAgent } from "./BrowserSupportsPush";
 
 export class OneSignalUtils {
   public static getBaseUrl() {
@@ -56,17 +57,7 @@ export class OneSignalUtils {
   }
 
   public static redetectBrowserUserAgent(): IBowser {
-    /*
-     TODO: Make this a little neater
-     During testing, the browser object may be initialized before the userAgent is injected
-    */
-    let browser: IBowser;
-    if (bowser.name === '' && bowser.version === '') {
-      browser = bowser._detect(navigator.userAgent);
-    } else {
-      browser = bowser;
-    }
-    return browser;
+    return redetectBrowserUserAgent();
   }
 
   /**

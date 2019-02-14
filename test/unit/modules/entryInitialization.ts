@@ -1,13 +1,7 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { isPushNotificationsSupported } from '../../../src/utils';
-import { oneSignalSdkInit } from '../../../src/utils/pageSdkInit';
-
-
-test.todo("should initialize a global instance in Service Worker environment");
-
-test.todo("should initialize a global instance in browser DOM environment");
+import { oneSignalSdkInitStubs } from "../../../src/entries/OneSignalStub";
 
 test.todo("should execute OneSignal functions that were queued before SDK initialization");
 
@@ -16,10 +10,12 @@ test("should initialize a phantom stub in an unsupported environment", async t =
   await TestEnvironment.initialize();
   (window as any).Promise = undefined;
 
-  oneSignalSdkInit();
+  oneSignalSdkInitStubs();
+
   const untypedOneSignalStub = (window as any).OneSignal as any;
 
   t.false(untypedOneSignalStub.isPushNotificationsSupported());
+  t.false(untypedOneSignalStub.isPushNotificationsEnabled());
 
   // Promise-based functions should all share the same stub
   t.true(untypedOneSignalStub.setDefaultTitle === untypedOneSignalStub.setDefaultNotificationUrl);
@@ -30,8 +26,7 @@ test("should initialize a phantom stub in an unsupported environment", async t =
   t.true(untypedOneSignalStub.sendTags === untypedOneSignalStub.deleteTag);
   t.true(untypedOneSignalStub.deleteTag === untypedOneSignalStub.deleteTags);
   t.true(untypedOneSignalStub.deleteTags === untypedOneSignalStub.addListenerForNotificationOpened);
-  t.true(untypedOneSignalStub.addListenerForNotificationOpened === untypedOneSignalStub.isPushNotificationsEnabled);
-  t.true(untypedOneSignalStub.isPushNotificationsEnabled === untypedOneSignalStub.setSubscription);
+  t.true(untypedOneSignalStub.addListenerForNotificationOpened === untypedOneSignalStub.setSubscription);
   t.true(untypedOneSignalStub.setSubscription === untypedOneSignalStub.getUserId);
   t.true(untypedOneSignalStub.getUserId === untypedOneSignalStub.getRegistrationId);
   t.true(untypedOneSignalStub.getRegistrationId === untypedOneSignalStub.getSubscription);

@@ -1,6 +1,7 @@
-import OneSignalStub from "../OneSignalStub";
+// Only loads on browsers that support push, logic is in isPushNotificationsSupported()
+
 import Log from "../libraries/Log";
-import { incrementSdkLoadCount, getSdkLoadCount, isPushNotificationsSupported } from "../utils";
+import { incrementSdkLoadCount, getSdkLoadCount } from "../utils";
 
 export function oneSignalSdkInit() {
   incrementSdkLoadCount();
@@ -14,16 +15,12 @@ export function oneSignalSdkInit() {
 
   // We're running in the host page, iFrame of the host page, or popup window
   // Load OneSignal's web SDK
-  let predefinedOneSignalPushes: object[] | object | undefined | null;
-  if (typeof OneSignal !== "undefined")
+  let predefinedOneSignalPushes: Function[] | object[] | undefined | null;
+  if (typeof OneSignal !== "undefined") {
     predefinedOneSignalPushes = OneSignal;
-
-  if (isPushNotificationsSupported())
-    (window as any).OneSignal = require('../OneSignal').default;
-  else {
-    Log.debug('OneSignal: Push notifications are not supported. A stubbed version of the SDK will be initialized.');
-    (window as any).OneSignal = OneSignalStub;
   }
+
+  (window as any).OneSignal = require('../OneSignal').default;
 
   if (predefinedOneSignalPushes) {
     if (!Array.isArray(predefinedOneSignalPushes)) {
@@ -40,5 +37,8 @@ export function oneSignalSdkInit() {
       }
     }
   }
-
 }
+
+// Only if running on page in browser
+if (typeof window !== "undefined")
+  oneSignalSdkInit();

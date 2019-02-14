@@ -4,47 +4,10 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const { CheckerPlugin } = require('awesome-typescript-loader');
-const dir = require('node-dir');
-const md5file = require('md5-file');
-const crypto = require('crypto');
 
 const env = process.env.ENV || "production";
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
-
-async function getStylesheetsHash() {
-  const styleSheetsPath = "src/stylesheets";
-
-  return await new Promise((resolve, reject) => {
-    dir.files(styleSheetsPath, async (err, files) => {
-      if (err) throw err;
-      const filteredFiles = files.filter(filePath => {
-        console.log("CSS Stylesheet:", filePath);
-        const fileName = path.basename(filePath);
-        if (fileName.endsWith(".scss")) {
-          // Only hash SCSS source files
-          return true;
-        }
-      });
-      if (filteredFiles.length === 0) {
-        reject(
-          `No .scss files were found in ${styleSheetsPath}, but SCSS files were expected. SCSS stylesheets in this directory are MD5 hashed and added as a build-time variable so loading the stylesheet from the global CDN always loads the correct version.`
-        );
-      }
-      let hashes = [];
-      for (let styleSheetPath of filteredFiles) {
-        const hash = md5file.sync(styleSheetPath);
-        hashes.push(hash);
-      }
-      // Strangely enough, the order is inconsistent so we have to sort the hashes
-      hashes = hashes.sort();
-      const joinedHashesStr = hashes.join("-");
-      const combinedHash = crypto.createHash("md5").update(joinedHashesStr).digest("hex");
-      console.log(`MD5 hash of SCSS source files in ${styleSheetsPath} is ${combinedHash}.`);
-      resolve(combinedHash);
-    });
-  });
-}
 
 async function getWebpackPlugins() {
   const plugins = [
@@ -57,7 +20,6 @@ async function getWebpackPlugins() {
         __STAGING__: env === "staging",
         __VERSION__: process.env.npm_package_config_sdkVersion,
         __LOGGING__: env === "development",
-        __SRC_STYLESHEETS_MD5_HASH__: JSON.stringify(await getStylesheetsHash()),
         "process.env.NODE_ENV": JSON.stringify(nodeEnv),
       })
   ];
@@ -100,9 +62,7 @@ async function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
-      'OneSignalSDK.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
-      'OneSignalPageSDKES5.js': path.resolve('build/ts-to-es6/src/entries/OneSignalStub.js'),
-      'OneSignalSDKStyles.css': path.resolve('src/entries/stylesheet.scss')
+      'OneSignalPageSDKES6.js': path.resolve('build/ts-to-es6/src/entries/pageSDKInit.js'),
     },
     output: {
       path: path.resolve('build/bundles'),
@@ -149,7 +109,7 @@ async function generateWebpackConfig() {
             {
               loader: 'awesome-typescript-loader',
               options: {
-                configFileName: "build/config/tsconfig.es5.json"
+                configFileName: "build/config/tsconfig.es6.json"
               }
             },
           ]
