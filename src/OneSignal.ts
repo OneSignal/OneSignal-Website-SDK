@@ -824,7 +824,7 @@ export default class OneSignal {
    *  OneSignal.push(["functionName", param1, param2]);
    *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
    */
-  static push(item: Function | any[]) {
+  static push(item: Function | object[]) {
     if (typeof(item) == "function")
       item();
     else if (Array.isArray(item)) {

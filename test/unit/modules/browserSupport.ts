@@ -1,7 +1,7 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
-import { isPushNotificationsSupported } from "../../../src/utils";
+import { isPushNotificationsSupported } from "../../../src/utils/BrowserSupportsPush";
 import { setUserAgent } from '../../support/tester/browser';
 
 
