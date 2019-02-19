@@ -217,7 +217,44 @@ export class ConfigHelper {
 
     return promptOptionsConfig;
   }
-  
+
+  private static getPromptOptionsForDashboardConfiguration(serverConfig: ServerAppConfig): AppUserConfigPromptOptions {
+    const staticPrompts = serverConfig.config.staticPrompts;
+    const native = staticPrompts.native ? {
+      enabled: staticPrompts.native.enabled,
+      autoPrompt: staticPrompts.native.enabled,
+    } : {
+      enabled: false,
+      autoPrompt: false,
+    };
+
+    const slidedown = {
+      enabled: serverConfig.config.staticPrompts.slidedown.enabled,
+      // for backwards compatibility if not specifically false, then assume true for autoPrompt on slidedown
+      autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled &&
+        serverConfig.config.staticPrompts.slidedown.autoPrompt !== false,
+      actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
+      acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
+      cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,
+    };
+    return {
+      autoPrompt: native.autoPrompt || slidedown.autoPrompt,
+      native,
+      slidedown,
+      fullscreen: {
+        enabled: staticPrompts.fullscreen.enabled,
+        actionMessage: staticPrompts.fullscreen.actionMessage,
+        acceptButton: staticPrompts.fullscreen.acceptButton,
+        cancelButton: staticPrompts.fullscreen.cancelButton,
+        title: staticPrompts.fullscreen.title,
+        message: staticPrompts.fullscreen.message,
+        caption: staticPrompts.fullscreen.caption,
+        autoAcceptTitle: staticPrompts.fullscreen.autoAcceptTitle,
+      },
+      customlink: this.getCustomLinkConfig(serverConfig),
+    };
+  }
+
   public static getUserConfigForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
@@ -238,34 +275,7 @@ export class ConfigHelper {
           serviceWorkerUpdaterPath: serverConfig.config.serviceWorker.updaterWorkerName,
           serviceWorkerParam: { scope: serverConfig.config.serviceWorker.registrationScope },
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
-          promptOptions: {
-            autoPrompt: serverConfig.config.staticPrompts.native.enabled ||
-              (serverConfig.config.staticPrompts.slidedown.enabled &&
-                serverConfig.config.staticPrompts.slidedown.autoPrompt),
-            native: {
-              enabled: serverConfig.config.staticPrompts.native.enabled,
-              autoPrompt: serverConfig.config.staticPrompts.native.enabled,
-            },
-            slidedown: {
-              enabled: serverConfig.config.staticPrompts.slidedown.enabled,
-              autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled &&
-                serverConfig.config.staticPrompts.slidedown.autoPrompt,
-              actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
-              acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
-              cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,
-            },
-            fullscreen: {
-              enabled: serverConfig.config.staticPrompts.fullscreen.enabled,
-              actionMessage: serverConfig.config.staticPrompts.fullscreen.actionMessage,
-              acceptButton: serverConfig.config.staticPrompts.fullscreen.acceptButton,
-              cancelButton: serverConfig.config.staticPrompts.fullscreen.cancelButton,
-              title: serverConfig.config.staticPrompts.fullscreen.title,
-              message: serverConfig.config.staticPrompts.fullscreen.message,
-              caption: serverConfig.config.staticPrompts.fullscreen.caption,
-              autoAcceptTitle: serverConfig.config.staticPrompts.fullscreen.autoAcceptTitle,
-            },
-            customlink: this.getCustomLinkConfig(serverConfig),
-          },
+          promptOptions: this.getPromptOptionsForDashboardConfiguration(serverConfig),
           welcomeNotification: {
             disable: !serverConfig.config.welcomeNotification.enable,
             title: serverConfig.config.welcomeNotification.title,
