@@ -37,13 +37,13 @@ export class PromptsManager {
 
     const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
     if (doNotPrompt && !options.force) {
-      Log.warn(new PermissionMessageDismissedError());
+      Log.info(new PermissionMessageDismissedError());
       return false;
     }
 
     const permission = await OneSignal.privateGetNotificationPermission();
     if (permission === NotificationPermission.Denied) {
-      Log.warn(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
+      Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
       return false;
     }
 
