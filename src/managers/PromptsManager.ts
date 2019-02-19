@@ -23,7 +23,7 @@ export class PromptsManager {
   constructor(_context: ContextInterface) {
   }
 
-  private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }) {
+  private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
     /*
     Only show the popover if:
     - Notifications aren't already enabled
@@ -36,16 +36,15 @@ export class PromptsManager {
     }
 
     const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
-
     if (doNotPrompt && !options.force) {
-      Log.info(new PermissionMessageDismissedError());
-      return;
+      Log.warn(new PermissionMessageDismissedError());
+      return false;
     }
 
     const permission = await OneSignal.privateGetNotificationPermission();
     if (permission === NotificationPermission.Denied) {
-      Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
-      return;
+      Log.warn(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
+      return false;
     }
 
     const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
@@ -57,15 +56,13 @@ export class PromptsManager {
     if (!notOptedOut) {
       throw new NotSubscribedError(NotSubscribedReason.OptedOut);
     }
+
+    return true;
   }
 
   public async internalShowAutoPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowAutoPrompt", options);
 
-    if (!this.checkIfAutoPromptShouldBeShown(options)) {
-      return;
-    }
-    
     if (!OneSignal.config || !OneSignal.config.userConfig.promptOptions) {
       Log.error("OneSignal config was not initialized correctly. Aborting.");
       return;
@@ -99,11 +96,19 @@ export class PromptsManager {
     TestHelper.markHttpsNativePromptDismissed();
   }
 
-  public async internalShowSlidedownPrompt(): Promise<void> {
+  public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
 
     if (OneSignal.__isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a slidedown.");
+      return;
+    }
+
+    try {
+      const showPrompt = await this.checkIfAutoPromptShouldBeShown(options);
+      if (!showPrompt) { return; }
+    } catch(e) {
+      Log.warn("checkIfAutoPromptShouldBeShown returned an error", e);
       return;
     }
 

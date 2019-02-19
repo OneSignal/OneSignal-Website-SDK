@@ -342,9 +342,9 @@ export default class OneSignal {
    * Shows a native browser prompt or a slidedown depending on the configuration.
    * @PublicApi
    */
-  public static async showAutoPrompt(): Promise<void> {
+  public static async showAutoPrompt(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowAutoPrompt();
+    await OneSignal.context.promptsManager.internalShowAutoPrompt(options);
   }
 
   /**
@@ -360,9 +360,9 @@ export default class OneSignal {
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */
-  public static async showSlidedownPrompt(): Promise<void> {
+  public static async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
+    await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
   }
 
   /**
