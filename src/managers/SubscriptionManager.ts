@@ -250,6 +250,13 @@ export class SubscriptionManager {
     return !!deviceId;
   }
 
+  // console.log(`${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`, this.config.safariWebId, JSON.stringify({app_id: this.config.appId}))
+  // window.safari.pushNotification.requestPermission(
+  //   "https://localhost:3001/api/v1/safari",
+  //   "web.onesignal.auto.002ea938-3ebd-4740-ada1-6c17c5eb4600",
+  //   {app_id: "f20a2ec4-0f6b-42c6-a9d9-046cb0b346ff"},
+  //   (perm_data) => { console.log(666, perm_data, perm_data.permission) }
+  // );
   private subscribeSafariPromptPermission(): Promise<string | null> {
     return new Promise<string>(resolve => {
       window.safari.pushNotification.requestPermission(
@@ -295,7 +302,9 @@ export class SubscriptionManager {
        */
       Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     }
+    console.log(555);
     const deviceToken = await this.subscribeSafariPromptPermission();
+    console.log(666);
     PermissionUtils.triggerNotificationPermissionChanged();
     if (deviceToken) {
       pushSubscriptionDetails.setFromSafariSubscription(deviceToken);
