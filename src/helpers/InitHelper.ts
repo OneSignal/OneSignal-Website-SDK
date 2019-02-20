@@ -8,7 +8,7 @@ import { AppConfig } from '../models/AppConfig';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
-import { getConsoleStyle, once, isUsingSubscriptionWorkaround, triggerNotificationPermissionChanged } from '../utils';
+import { getConsoleStyle, once, triggerNotificationPermissionChanged } from '../utils';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
@@ -143,11 +143,9 @@ export default class InitHelper {
     await InitHelper.processExpiringSubscriptions();
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
       OneSignal.once("ON_SESSION", async () => {
-        console.log("sendOnSessionUpdate", 1);
         OneSignal.context.updateManager.sendOnSessionUpdate();
       });
     } else {
-      console.log("sendOnSessionUpdate", 2);
       OneSignal.context.updateManager.sendOnSessionUpdate();
     }
     await Promise.all([
@@ -324,6 +322,7 @@ export default class InitHelper {
   }
 
   public static async handleAutoResubscribe(isOptedOut: boolean) {
+    Log.info("handleAutoResubscribe", { autoResubscribe: OneSignal.config.userConfig.autoResubscribe, isOptedOut });
     if (OneSignal.config.userConfig.autoResubscribe && !isOptedOut) {
       const currentPermission: NotificationPermission =
         await OneSignal.context.permissionManager.getNotificationPermission(
