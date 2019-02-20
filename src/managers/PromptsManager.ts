@@ -63,7 +63,7 @@ export class PromptsManager {
   public async internalShowAutoPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowAutoPrompt", options);
 
-    if (!OneSignal.config || !OneSignal.config.userConfig.promptOptions) {
+    if (!OneSignal.config || !OneSignal.config.userConfig || !OneSignal.config.userConfig.promptOptions) {
       Log.error("OneSignal config was not initialized correctly. Aborting.");
       return;
     }
