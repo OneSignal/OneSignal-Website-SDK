@@ -14,6 +14,7 @@ import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
 import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
+import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 
 export interface AutoPromptOptions {
   force: boolean;
@@ -91,7 +92,7 @@ export class PromptsManager {
 
     OneSignal.__isAutoPromptShowing = true;
     MainHelper.markHttpPopoverShown();
-    await OneSignal.registerForPushNotifications();
+    await InitHelper.registerForPushNotifications();
     OneSignal.__isAutoPromptShowing = false;
     TestHelper.markHttpsNativePromptDismissed();
   }
@@ -125,10 +126,14 @@ export class PromptsManager {
       Log.warn("Slidedown not enabled. Not showing.");
     }
 
+    this.installEventHooksForPopover();
+
     OneSignal.popover = new Popover(slideDownOptions);
     await OneSignal.popover.create();
     Log.debug('Showing Slidedown(Popover).');
+  }
 
+  public installEventHooksForPopover(): void {
     manageNotifyButtonStateWhilePopoverShows();
 
     OneSignal.emitter.once(Popover.EVENTS.SHOWN, () => {
@@ -143,7 +148,8 @@ export class PromptsManager {
       }
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      OneSignal.registerForPushNotifications({ autoAccept: true });
+      const options: RegisterOptions = { autoAccept: true };
+      InitHelper.registerForPushNotifications(options);
     });
     OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the popover to the user again.");
