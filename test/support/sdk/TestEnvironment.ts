@@ -3,7 +3,9 @@ import Random from "../tester/Random";
 import Database from "../../../src/services/Database";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import jsdom from 'jsdom';
+// @ts-ignore
 import DOMStorage from "dom-storage";
+// @ts-ignore
 import fetch from "node-fetch";
 import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
@@ -21,6 +23,7 @@ import PushSubscription from "../mocks/service-workers/models/PushSubscription";
 import Context from "../../../src/models/Context";
 import CustomLink from "../../../src/CustomLink";
 import Emitter from '../../../src/libraries/Emitter';
+import ConfigManager from '../../../src/managers/ConfigManager';
 
 var global = new Function('return this')();
 
@@ -89,6 +92,8 @@ export interface TestEnvironmentConfig {
   url?: URL;
   initializeAsIframe?: boolean;
   addPrompts?: boolean;
+  integration?: ConfigIntegrationKind;
+  userConfig?: AppUserConfig;
 }
 
 /**
@@ -302,10 +307,19 @@ export class TestEnvironment {
     });
   }
 
-  static mockInternalOneSignal() {
-    const appConfig = TestEnvironment.getFakeAppConfig();
-    OneSignal.context = new Context(appConfig);
-    OneSignal.config = appConfig;
+  static mockInternalOneSignal(config?: TestEnvironmentConfig) {
+    config = config || {};
+
+    const fakeUserConfig = config.userConfig || TestEnvironment.getFakeAppUserConfig();
+    const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(config.integration || ConfigIntegrationKind.Custom);
+
+    const configManager = new ConfigManager();
+    const fakeMergedConfig = configManager.getMergedConfig(
+      fakeUserConfig,
+      fakeServerConfig
+    );
+    OneSignal.context = new Context(fakeMergedConfig);
+    OneSignal.config = fakeMergedConfig;
   }
 
   static getFakeAppConfig(): AppConfig {
