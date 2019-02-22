@@ -167,6 +167,22 @@ export interface AppUserConfigWelcomeNotification {
 export type BellSize = 'small' | 'medium' | 'large';
 export type BellPosition = 'bottom-left' | 'bottom-right';
 
+export interface BellText {
+  'tip.state.unsubscribed': string;
+  'tip.state.subscribed': string;
+  'tip.state.blocked': string;
+  'message.prenotify': string;
+  'message.action.subscribed': string;
+  'message.action.subscribing': string;
+  'message.action.resubscribed': string;
+  'message.action.unsubscribed': string;
+  'dialog.main.title': string;
+  'dialog.main.button.subscribe': string;
+  'dialog.main.button.unsubscribe': string;
+  'dialog.blocked.title': string;
+  'dialog.blocked.message': string;
+}
+
 export interface AppUserConfigNotifyButton {
   options?: AppUserConfigNotifyButton;
   enable: boolean;
@@ -188,21 +204,7 @@ export interface AppUserConfigNotifyButton {
     'dialog.button.background': string;
     'dialog.button.foreground': string;
   };
-  text: {
-    'tip.state.unsubscribed': string;
-    'tip.state.subscribed': string;
-    'tip.state.blocked': string;
-    'message.prenotify': string;
-    'message.action.subscribed': string;
-    'message.action.subscribing': string;
-    'message.action.resubscribed': string;
-    'message.action.unsubscribed': string;
-    'dialog.main.title': string;
-    'dialog.main.button.subscribe': string;
-    'dialog.main.button.unsubscribe': string;
-    'dialog.blocked.title': string;
-    'dialog.blocked.message': string;
-  };
+  text: BellText;
   theme?: string;
   showLauncherAfter?: number;
   showBadgeAfter?: number;
