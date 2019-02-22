@@ -1,5 +1,5 @@
 import bowser from 'bowser';
-import { AppUserConfigNotifyButton, BellSize, BellPosition } from "../models/AppConfig";
+import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from "../models/AppConfig";
 import { NotificationPermission } from "../models/NotificationPermission";
 import OneSignalEvent from '../Event';
 import MainHelper from '../helpers/MainHelper';
@@ -76,7 +76,7 @@ export default class Bell {
       theme: config.theme || this.DEFAULT_THEME,
       showLauncherAfter: config.showLauncherAfter || 10,
       showBadgeAfter: config.showBadgeAfter || 300,
-      text: config.text,
+      text: this.setDefaultOptions(config.text || {}),
       prenotify: config.prenotify,
       showCredit: config.showCredit,
       colors: config.colors,
@@ -91,8 +91,6 @@ export default class Bell {
       return;
 
     this.validateOptions(this.options);
-    this.setDefaultOptions();
-
     this.state = Bell.STATES.UNINITIALIZED;
     this._ignoreSubscriptionState = false;
 
@@ -134,33 +132,24 @@ export default class Bell {
       throw new Error(`Invalid delay duration of ${this.options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`);
   }
 
-  private setDefaultOptions() {
-    if (!this.options.text['tip.state.unsubscribed'])
-      this.options.text['tip.state.unsubscribed'] = 'Subscribe to notifications';
-    if (!this.options.text['tip.state.subscribed'])
-      this.options.text['tip.state.subscribed'] = "You're subscribed to notifications";
-    if (!this.options.text['tip.state.blocked'])
-      this.options.text['tip.state.blocked'] = "You've blocked notifications";
-    if (!this.options.text['message.prenotify'])
-      this.options.text['message.prenotify'] = "Click to subscribe to notifications";
-    if (!this.options.text['message.action.subscribed'])
-      this.options.text['message.action.subscribed'] = "Thanks for subscribing!";
-    if (!this.options.text['message.action.resubscribed'])
-      this.options.text['message.action.resubscribed'] = "You're subscribed to notifications";
-    if (!this.options.text['message.action.subscribing'])
-      this.options.text['message.action.subscribing'] = "Click <strong>{{prompt.native.grant}}</strong> to receive notifications";
-    if (!this.options.text['message.action.unsubscribed'])
-      this.options.text['message.action.unsubscribed'] = "You won't receive notifications again";
-    if (!this.options.text['dialog.main.title'])
-      this.options.text['dialog.main.title'] = 'Manage Site Notifications';
-    if (!this.options.text['dialog.main.button.subscribe'])
-      this.options.text['dialog.main.button.subscribe'] = 'SUBSCRIBE';
-    if (!this.options.text['dialog.main.button.unsubscribe'])
-      this.options.text['dialog.main.button.unsubscribe'] = 'UNSUBSCRIBE';
-    if (!this.options.text['dialog.blocked.title'])
-      this.options.text['dialog.blocked.title'] = 'Unblock Notifications';
-    if (!this.options.text['dialog.blocked.message'])
-      this.options.text['dialog.blocked.message'] = 'Follow these instructions to allow notifications:';
+  private setDefaultOptions(text: Partial<BellText>): BellText {
+    const finalText: BellText = {
+      'tip.state.unsubscribed': text['tip.state.unsubscribed'] || 'Subscribe to notifications',
+      'tip.state.subscribed': text['tip.state.subscribed'] || "You're subscribed to notifications",
+      'tip.state.blocked': text['tip.state.blocked'] || "You've blocked notifications",
+      'message.prenotify': text['message.prenotify'] || "Click to subscribe to notifications",
+      'message.action.subscribed': text['message.action.subscribed'] || "Thanks for subscribing!",
+      'message.action.resubscribed': text['message.action.resubscribed'] || "You're subscribed to notifications",
+      'message.action.subscribing':
+        text['message.action.subscribing'] || "Click <strong>{{prompt.native.grant}}</strong> to receive notifications",
+      'message.action.unsubscribed': text['message.action.unsubscribed'] || "You won't receive notifications again",
+      'dialog.main.title': text['dialog.main.title'] || 'Manage Site Notifications',
+      'dialog.main.button.subscribe': text['dialog.main.button.subscribe'] || 'SUBSCRIBE',
+      'dialog.main.button.unsubscribe': text['dialog.main.button.unsubscribe'] || 'UNSUBSCRIBE',
+      'dialog.blocked.title': text['dialog.blocked.title'] || 'Unblock Notifications',
+      'dialog.blocked.message': text['dialog.blocked.message'] || 'Follow these instructions to allow notifications:',
+    }
+    return finalText;
   }
 
   private installEventHooks() {
