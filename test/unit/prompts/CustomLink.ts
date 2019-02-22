@@ -8,14 +8,13 @@ import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/utils';
 import MainHelper from "../../../src/helpers/MainHelper";
 
-let sandbox: SinonSandbox;
+let sandbox: SinonSandbox = sinon.sandbox.create();;
 let config: AppUserConfigCustomLinkOptions;
 
 const stateSubscribedClass = "state-subscribed";
 const stateUnsubscribedClass = "state-unsubscribed";
 
 test.beforeEach(async () => {
-  sandbox = sinon.sandbox.create();
   config = {
     enabled: true,
     style: "button",
@@ -227,6 +226,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
+  // TODO: why is this called in custom link
   sandbox.stub(MainHelper, 'wasHttpsNativePromptDismissed').returns(false);
   sandbox.stub(OneSignal, 'internalIsOptedOut').returns(true);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
@@ -253,6 +253,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never subscribed.', async t => {
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
+  sandbox.stub(OneSignal, 'internalIsOptedOut').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
   const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
@@ -274,11 +275,31 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
   }
 });
 
-test('customlink: subscribe: clicked: unsubscribed -> subscribed. http.', async t => {
+test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. never subscribed.', async t => {
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
   const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(true);
+  sandbox.stub(OneSignal, 'internalIsOptedOut').returns(false);
+
+  await CustomLink.initialize(config);
+  const subscribeElement = document.querySelector<HTMLElement>(CustomLink.subscribeSelector);
+  const explanationElement = document.querySelector<HTMLElement>(CustomLink.explanationSelector);
+  t.not(subscribeElement, null);
+  t.not(explanationElement, null);
+
+  if (subscribeElement && explanationElement) {
+    t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "false");
+    await CustomLink.handleClick(subscribeElement);
+    t.is(registerSpy.calledOnce, true);
+  }
+});
+
+test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. opted out.', async t => {
+  sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
+  const registerSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
+  sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(true);
+  sandbox.stub(OneSignal, 'internalIsOptedOut').resolves(true);
 
   await CustomLink.initialize(config);
   const subscribeElement = document.querySelector<HTMLElement>(CustomLink.subscribeSelector);

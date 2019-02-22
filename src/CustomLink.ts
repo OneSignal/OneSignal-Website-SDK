@@ -1,9 +1,7 @@
 import { hasCssClass, addCssClass, removeCssClass } from "./utils";
 import { AppUserConfigCustomLinkOptions } from "./models/AppConfig";
 import { ResourceLoadState } from "./services/DynamicResourceLoader";
-import OneSignal from "./OneSignal";
 import Log from "./libraries/Log";
-import OneSignalUtils from "./utils/OneSignalUtils";
 
 export class CustomLink {
   public static readonly initializedAttribute = "data-cl-initialized";
@@ -113,7 +111,12 @@ export class CustomLink {
         await OneSignal.setSubscription(false);
       }
     } else {
-      await OneSignal.registerForPushNotifications();
+      const isOptedOut = await OneSignal.internalIsOptedOut();
+      if (!isOptedOut) {
+        await OneSignal.registerForPushNotifications();
+      } else {
+        await OneSignal.setSubscription(true);
+      }
     }
   }
 
