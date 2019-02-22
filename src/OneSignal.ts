@@ -7,7 +7,7 @@ import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
 import Event from './Event';
 import EventHelper from './helpers/EventHelper';
 import HttpHelper from './helpers/HttpHelper';
-import InitHelper, { SessionInitOptions } from './helpers/InitHelper';
+import InitHelper, { RegisterOptions } from './helpers/InitHelper';
 import MainHelper from './helpers/MainHelper';
 import SubscriptionHelper from './helpers/SubscriptionHelper';
 import TestHelper from './helpers/TestHelper';
@@ -42,7 +42,6 @@ import {
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { DeviceRecord } from './models/DeviceRecord';
-import { DeprecatedApiError, DeprecatedApiReason } from './errors/DeprecatedApiError';
 import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
@@ -369,45 +368,16 @@ export default class OneSignal {
    * Prompts the user to subscribe.
    * @PublicApi
    */
-  static async registerForPushNotifications(options?: any): Promise<void> {
-    // WARNING: Do NOT add callbacks that have to fire to get from here to window.open in _sessionInit.
-    //          Otherwise the pop-up to ask for push permission on HTTP connections will be blocked by Chrome.
-    async function __registerForPushNotifications() {
-      if (options && options.httpPermissionRequest && OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        /*
-          Do not throw an error because it may cause the parent event handler to
-          throw and stop processing the rest of their code. Typically, for this
-          prompt sequence, a custom modal is being shown thanking the user for
-          granting permissions. Throwing an error might cause the modal to stay
-          on screen and not close.
-
-          Only log an error for HTTP sites. A few HTTPS sites are mistakenly be
-          using this API instead of the parameter-less version to register for
-          push notifications.
-         */
-        Log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
-        return;
-      }
-      if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        await InitHelper.loadSubscriptionPopup(options);
-      } else if (bowser.safari && Number(bowser.version) >= 12.1) {
-        await SubscriptionHelper.internalRegisterForPush(false);
-      } else {
-        const sessionOptions: SessionInitOptions = options || {};
-        sessionOptions.__fromRegister = true;
-        await InitHelper.sessionInit(sessionOptions);
-      }
-    }
-
+  static async registerForPushNotifications(options?: RegisterOptions): Promise<void> {
     if (!OneSignal.initialized) {
       await new Promise((resolve, _reject) => {
         OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
-          await __registerForPushNotifications();
-          return resolve(undefined);
+          await InitHelper.registerForPushNotifications(options);
+          return resolve();
         });
       })
     } else
-      return await __registerForPushNotifications();
+      return await InitHelper.registerForPushNotifications(options);
   }
 
   /**

@@ -1,5 +1,4 @@
 import bowser from 'bowser';
-
 import Event from '../Event';
 import LimitStore from '../LimitStore';
 import { NotificationPermission } from '../models/NotificationPermission';
@@ -28,18 +27,189 @@ import { CustomLink } from '../CustomLink';
 import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
+import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
 
 declare var OneSignal: any;
 
 export interface SessionInitOptions {
+  autoAccept?: boolean;
+}
+
+export interface RegisterOptions {
   modalPrompt?: boolean;
-  __fromRegister?: boolean;
-  __fromInit?: boolean;
+  httpPermissionRequest?: boolean;
   autoAccept?: boolean;
 }
 
 export default class InitHelper {
-  static async storeInitialValues() {
+  /** Main methods */
+
+  public static async internalInit() {
+    Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
+
+    // Always check for an updated service worker
+    await OneSignal.context.serviceWorkerManager.updateWorker();
+
+    OneSignal.context.sessionManager.incrementPageViewCount();
+
+    if (document.visibilityState !== 'visible') {
+      once(
+        document,
+        'visibilitychange',
+        (_: any, destroyEventListener: Function) => {
+          if (document.visibilityState === 'visible') {
+            destroyEventListener();
+            InitHelper.sessionInit();
+          }
+        },
+        true
+      );
+      return;
+    }
+
+    await InitHelper.sessionInit();
+  }
+
+  public static async sessionInit(options: SessionInitOptions = {}): Promise<void> {
+    Log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
+
+    if (OneSignal._sessionInitAlreadyRunning) {
+      Log.debug('Returning from sessionInit because it has already been called.');
+      return;
+    }
+    OneSignal._sessionInitAlreadyRunning = true;
+
+    try {
+      await InitHelper.doInitialize();
+    } catch(err) {
+      if (err instanceof SdkInitError) {
+        return;
+      }
+      throw err;
+    }
+
+    /**
+     * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
+     * prevent the popup from opening.
+     */
+    const isOptedOut = await OneSignal.internalIsOptedOut();
+
+    /**
+     * Auto-resubscribe is working only on HTTPS (and in safari)
+     * Should be called before autoprompting to make sure user gets a chance to be re-subscribed first.
+     */
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      await InitHelper.handleAutoResubscribe(isOptedOut);
+    }
+
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
+      /*
+      * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+      * permanent blocks, we want to replace sites automatically showing the native browser request
+      * with a slide prompt first.
+      * Same for Safari 12.1+. It requires user interaction to request notification permissions.
+      * It simply wouldn't work to try to show native prompt from script.
+      */
+      const showSlidedown =
+        (
+          (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          (bowser.safari && Number(bowser.version) >= 12.1)
+        );
+
+      OneSignal.once("ON_SESSION", async () => { OneSignal.context.updateManager.sendOnSessionUpdate(); });
+      if (showSlidedown) {
+        OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
+        await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
+      } else {
+        await OneSignal.context.promptsManager.internalShowAutoPrompt();
+      }
+    }
+    OneSignal._sessionInitAlreadyRunning = false;
+    await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  }
+
+  public static async registerForPushNotifications(options: RegisterOptions = {}): Promise<void> {
+    if (options && options.modalPrompt) {
+      /* Show the HTTPS fullscreen modal permission message. */
+      OneSignal.subscriptionModalHost = new SubscriptionModalHost(OneSignal.config.appId, options);
+      await OneSignal.subscriptionModalHost.load();
+      return;
+    }
+
+    if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      if (options.httpPermissionRequest) {
+        /*
+         * Do not throw an error because it may cause the parent event handler to
+         * throw and stop processing the rest of their code. Typically, for this
+         * prompt sequence, a custom modal is being shown thanking the user for
+         * granting permissions. Throwing an error might cause the modal to stay
+         * on screen and not close.
+         *
+         * Only log an error for HTTP sites. A few HTTPS sites are mistakenly be
+         * using this API instead of the parameter-less version to register for
+         * push notifications.
+         */
+        Log.error(new DeprecatedApiError(DeprecatedApiReason.HttpPermissionRequest));
+        return;
+      }
+      await InitHelper.loadSubscriptionPopup(options);
+      return;
+    }
+
+    /**
+     * Safari 12.1+ is very sensitive about indexeddb queries. any queries performed before prompting for
+     * notifications are considered as violation of "Prompting requires a user gesture rule".
+     * TODO: May want to store isOptedOut flag somewhere during initialization. For now hardcoding it to false.
+     */
+    if (bowser.safari && Number(bowser.version) >= 12.1) {
+      await SubscriptionHelper.internalRegisterForPush(false);
+      return;
+    }
+
+    /*
+     * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
+     * prevent the popup from opening.
+     */
+    const isOptedOut = await OneSignal.internalIsOptedOut();
+    if (!isOptedOut) {
+      await SubscriptionHelper.registerForPush();
+    }
+  }
+
+  /**
+   * This event occurs after init.
+   * For HTTPS sites, this event is called after init.
+   * For HTTP sites, this event is called after the iFrame is created,
+   *    and a message is received from the iFrame signaling cross-origin messaging is ready.
+   * @private
+   */
+  public static async onSdkInitialized() {
+    await InitHelper.processExpiringSubscriptions();
+    if (!OneSignal.config.userConfig.promptOptions.autoPrompt || OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      await OneSignal.context.updateManager.sendOnSessionUpdate();
+    }
+
+    await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+  }
+
+  public static async loadSubscriptionPopup(options?: any) {
+    /**
+     * Users may be subscribed to either .onesignal.com or .os.tc. By this time
+     * that they are subscribing to the popup, the Proxy Frame has already been
+     * loaded and the user's subscription status has been obtained. We can then
+     * use the Proxy Frame present now and check its URL to see whether the user
+     * is finally subscribed to .onesignal.com or .os.tc.
+     */
+    OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
+    await OneSignal.subscriptionPopupHost.load();
+  }
+
+
+
+  /** Helper methods */
+
+  public static async storeInitialValues() {
     const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     const notificationPermission = await OneSignal.privateGetNotificationPermission();
     const isOptedOut = await OneSignal.internalIsOptedOut();
@@ -49,6 +219,36 @@ export default class InitHelper {
       key: 'notificationPermission',
       value: notificationPermission
     });
+  }
+
+  protected static async setWelcomeNotificationFlag(): Promise<void> {
+    /*
+     * If the user has already granted permission, the user has previously
+     * already subscribed. Don't show welcome notifications if the user is
+     * automatically resubscribed.
+     */
+    const permission: NotificationPermission =
+      await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.context.appConfig.safariWebId);
+    if (permission === NotificationPermission.Granted) {
+      OneSignal.__doNotShowWelcomeNotification = true;
+    }
+  }
+
+  protected static async establishServiceWorkerChannel(): Promise<void> {
+    if (
+      navigator.serviceWorker &&
+      window.location.protocol === 'https:' &&
+      !await SdkEnvironment.isFrameContextInsecure()
+    ) {
+      try {
+        const registration = await ServiceWorkerManager.getRegistration();
+        if (registration && registration.active) {
+          await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
+        }
+      } catch (e) { 
+        Log.error(e);
+      }
+    }
   }
 
   /** Entry method for any environment that sets expiring subscriptions. */
@@ -103,60 +303,29 @@ export default class InitHelper {
     }
   }
 
-  /**
-   * This event occurs after init.
-   * For HTTPS sites, this event is called after init.
-   * For HTTP sites, this event is called after the iFrame is created,
-   *    and a message is received from the iFrame signaling cross-origin messaging is ready.
-   * @private
-   */
-  static async onSdkInitialized() {
-    const context: ContextInterface = OneSignal.context;
+  protected static async doInitialize(): Promise<void> {
+    const promises: Promise<void>[] = [];
 
     // Store initial values of notification permission, user ID, and manual subscription status
     // This is done so that the values can be later compared to see if anything changed
-    // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites, since the iframe is needed for communication
-    await InitHelper.storeInitialValues();
-    await InitHelper.installNativePromptPermissionChangedHook();
-    /*
-      If the user has already granted permission, the user has previously
-      already subscribed. Don't show welcome notifications if the user is
-      automatically resubscribed.
-    */
-    if (await context.permissionManager.getNotificationPermission(context.appConfig.safariWebId) === NotificationPermission.Granted)
-      OneSignal.__doNotShowWelcomeNotification = true;
+    // This is done here for HTTPS, it is done after the call to _addSessionIframe in sessionInit for HTTP sites,
+    // since the iframe is needed for communication
+    promises.push(InitHelper.storeInitialValues());
+    promises.push(InitHelper.installNativePromptPermissionChangedHook());
+    promises.push(InitHelper.setWelcomeNotificationFlag());
+    promises.push(InitHelper.establishServiceWorkerChannel());
+    promises.push(InitHelper.showNotifyButton());
+    promises.push(InitHelper.showPromptsFromWebConfigEditor());
 
-    if (
-      navigator.serviceWorker &&
-      window.location.protocol === 'https:' &&
-      !await SdkEnvironment.isFrameContextInsecure()
-    ) {
-      try {
-        const registration = await ServiceWorkerManager.getRegistration();
-        if (registration && registration.active)
-          await context.serviceWorkerManager.establishServiceWorkerChannel();
-      } catch (e) { 
-        Log.error(e);
-      }
+    // Not awaiting on this one, no logic depends on it and doesn't matter too much if it fails
+    OneSignal.context.cookieSyncer.install();
+
+    try {
+      await Promise.all(promises);
+    } catch(e) {
+      Log.error(e);
+      throw new SdkInitError(SdkInitErrorKind.Unknown);
     }
-
-    await InitHelper.processExpiringSubscriptions();
-    if (OneSignal.config.userConfig.promptOptions.autoPrompt && !OneSignalUtils.isUsingSubscriptionWorkaround()) {
-      OneSignal.once("ON_SESSION", async () => {
-        OneSignal.context.updateManager.sendOnSessionUpdate();
-      });
-    } else {
-      OneSignal.context.updateManager.sendOnSessionUpdate();
-    }
-    await Promise.all([
-      InitHelper.showNotifyButton(),
-      InitHelper.showPromptsFromWebConfigEditor(),
-      InitHelper.updateEmailSessionCount(),
-      context.cookieSyncer.install(),
-    ]);
-
-    
-    await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
   }
 
   private static async showNotifyButton() {
@@ -206,14 +375,14 @@ export default class InitHelper {
     }
   }
 
-  private static async showPromptsFromWebConfigEditor() {
+  protected static async showPromptsFromWebConfigEditor() {
     const config: AppConfig = OneSignal.config;
     if (config.userConfig.promptOptions) {
       await CustomLink.initialize(config.userConfig.promptOptions.customlink);
     }
   }
 
-  static async installNativePromptPermissionChangedHook() {
+  public static async installNativePromptPermissionChangedHook() {
     if (navigator.permissions && !(bowser.firefox && Number(bowser.version) <= 45)) {
       OneSignal._usingNativePermissionHook = true;
       // If the browser natively supports hooking the subscription prompt permission change event,
@@ -225,7 +394,7 @@ export default class InitHelper {
     }
   }
 
-  static async saveInitOptions() {
+  public static async saveInitOptions() {
     let opPromises: Promise<any>[] = [];
     if (OneSignal.config.userConfig.persistNotification === false) {
       opPromises.push(Database.put('Options', { key: 'persistNotification', value: false }));
@@ -275,36 +444,8 @@ export default class InitHelper {
     return Promise.all(opPromises);
   }
 
-  static async internalInit() {
-    Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
-
-    const context: ContextInterface = OneSignal.context;
-
-    // Always check for an updated service worker
-    await context.serviceWorkerManager.updateWorker();
-
-    context.sessionManager.incrementPageViewCount();
-
-    if (document.visibilityState !== 'visible') {
-      once(
-        document,
-        'visibilitychange',
-        (_: any, destroyEventListener: Function) => {
-          if (document.visibilityState === 'visible') {
-            destroyEventListener();
-            InitHelper.sessionInit({ __fromInit: true });
-          }
-        },
-        true
-      );
-      return;
-    }
-
-    await InitHelper.sessionInit({ __fromInit: true });
-  }
-
   // overridingPageTitle: Only for the HTTP Iframe, pass the page title in from the top frame
-  static async initSaveState(overridingPageTitle: string) {
+  public static async initSaveState(overridingPageTitle: string) {
     const appId = await MainHelper.getAppId();
     await Database.put('Ids', { type: 'appId', id: appId });
     const initialPageTitle = overridingPageTitle || document.title || 'Notification';
@@ -312,13 +453,6 @@ export default class InitHelper {
     Log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
     const config: AppConfig = OneSignal.config;
     await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
-  }
-
-  private static async finishSessionInit(options: SessionInitOptions): Promise<void> {
-    OneSignal._sessionInitAlreadyRunning = false;
-    if (options.__fromInit) {
-      await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-    }
   }
 
   public static async handleAutoResubscribe(isOptedOut: boolean) {
@@ -334,84 +468,7 @@ export default class InitHelper {
     }
   }
 
-  public static async sessionInit(options?: SessionInitOptions): Promise<void> {
-    if (!options) {
-      options = {} as SessionInitOptions;
-    }
-
-    Log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
-
-    if (OneSignal._sessionInitAlreadyRunning) {
-      Log.debug('Returning from sessionInit because it has already been called.');
-      return;
-    }
-
-    OneSignal._sessionInitAlreadyRunning = true;
-
-    const appId: string = OneSignal.context.appConfig.appId;
-    if (options.__fromRegister && options.modalPrompt) {
-      /* Show the HTTPS fullscreen modal permission message. */
-      OneSignal.subscriptionModalHost = new SubscriptionModalHost(appId, options);
-      await OneSignal.subscriptionModalHost.load();
-      await InitHelper.finishSessionInit(options);
-      return;
-    }
-
-    /* We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
-    prevent the popup from opening. */
-    const isOptedOut = await OneSignal.internalIsOptedOut();
-
-    // TODO: can we check if user's already subscribed as well?
-
-    // from init
-    if (options.__fromInit) {
-      await InitHelper.finishSessionInit(options);
-
-      // Autoresubscribe is working only on HTTPS
-      // Should be called before autoprompting to make sure user gets a chance to be re-subscribed first.
-      if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        await InitHelper.handleAutoResubscribe(isOptedOut);
-      }
-
-      const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
-      if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
-        /*
-        * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-        * permanent blocks, we want to replace sites automatically showing the native browser request
-        * with a slide prompt first.
-        * Same for Safari 12.1+. It requires user interaction to request notification permissions.
-        * It simply wouldn't work to try to show native prompt from script.
-        */
-        const showSlidedown =
-          (
-            (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
-            (bowser.safari && Number(bowser.version) >= 12.1)
-          );
-
-        if (showSlidedown) {
-          // TODO: check if force option is enough/needed
-          OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
-          OneSignal.context.promptsManager.internalShowSlidedownPrompt();
-        } else {
-          OneSignal.context.promptsManager.internalShowAutoPrompt();
-        }
-      }
-    }
-
-    // from register for push notifications
-    if (options.__fromRegister) {
-      await InitHelper.finishSessionInit(options);
-      if (!isOptedOut) {
-        if (bowser.safari && Number(bowser.version) >= 12.1) {
-          await SubscriptionHelper.internalRegisterForPush(false);
-        } else {
-          await SubscriptionHelper.registerForPush();
-        }
-      }
-    }
-  }
-
-  static async polyfillSafariFetch() {
+  public static async polyfillSafariFetch() {
     // If Safari - add 'fetch' pollyfill if it isn't already added.
     if (bowser.safari && typeof window.fetch == 'undefined') {
       Log.debug('Loading fetch polyfill for Safari..');
@@ -424,21 +481,9 @@ export default class InitHelper {
     }
   }
 
-  static errorIfInitAlreadyCalled() {
+  public static errorIfInitAlreadyCalled() {
     if (OneSignal._initCalled)
       throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
     OneSignal._initCalled = true;
-  }
-
-  public static async loadSubscriptionPopup(options?: any) {
-    /**
-     * Users may be subscribed to either .onesignal.com or .os.tc. By this time
-     * that they are subscribing to the popup, the Proxy Frame has already been
-     * loaded and the user's subscription status has been obtained. We can then
-     * use the Proxy Frame present now and check its URL to see whether the user
-     * is finally subscribed to .onesignal.com or .os.tc.
-     */
-    OneSignal.subscriptionPopupHost = new SubscriptionPopupHost(OneSignal.proxyFrameHost.url, options);
-    await OneSignal.subscriptionPopupHost.load();
   }
 }
