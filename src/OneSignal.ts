@@ -53,8 +53,6 @@ import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
 
 export default class OneSignal {
-  static __isAutoPromptShowing: boolean = false;
-
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
