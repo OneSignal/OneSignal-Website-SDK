@@ -3,9 +3,9 @@ import test, { TestContext } from "ava";
 import sinon, {SinonSandbox, SinonStub} from 'sinon';
 import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from "../../../src/OneSignal";
 import Context from '../../../src/models/Context';
 import InitHelper from '../../../src/helpers/InitHelper';
+import OneSignalUtils from '../../../src/utils/OneSignalUtils';
 import {AppConfig, ConfigIntegrationKind, ServerAppConfig} from '../../../src/models/AppConfig';
 
 import nock from 'nock';
@@ -18,26 +18,24 @@ import { SdkInitError } from "../../../src/errors/SdkInitError";
 import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import { EmailProfile } from "../../../src/models/EmailProfile";
 import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
+import { stubMessageChannel } from '../../support/tester/utils';
 
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
 class AssertInitSDK {
-  static firedSDKInitializedPublic = false;
-  static doFiredSDKInitializedPublicCheck = false;
+  private firedSDKInitializedPublic: boolean = false;
 
-  public static ensureInitEventFires(t: TestContext) {
-    this.doFiredSDKInitializedPublicCheck = true;
+  public setupEnsureInitEventFires(t: TestContext) {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-      AssertInitSDK.firedSDKInitializedPublic = true;
+      this.firedSDKInitializedPublic = true;
       t.pass();
     });
   }
 
-  public static afterEachEnsureInitEventFires() {
-    if (this.doFiredSDKInitializedPublicCheck && !this.firedSDKInitializedPublic)
+  public ensureInitEventFired() {
+    if (!this.firedSDKInitializedPublic) {
       throw new Error("OneSignal.Init did not finish!");
-
-    this.doFiredSDKInitializedPublicCheck = false;
+    }
     this.firedSDKInitializedPublic = false;
   }
 }
@@ -55,7 +53,6 @@ test.afterEach(function (_t: TestContext) {
   OneSignal._initCalled = false;
   OneSignal.__initAlreadyCalled = false;
   OneSignal._sessionInitAlreadyRunning = false;
-  AssertInitSDK.afterEachEnsureInitEventFires();
 });
 
 class InitTestHelpers {
@@ -198,35 +195,7 @@ function mockIframeMessaging() {
 }
 
 test("Test OneSignal.init, Basic HTTP", async t => {
-  mockIframeMessaging();
-  sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
-
-  const testConfig = {
-    initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Http,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
-  };
-  await TestEnvironment.initialize(testConfig);
-  OneSignal.initialized = false;
-
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-
-  const serverAppConfig =TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false);
-  serverAppConfig.config.subdomain = "test";
-  InitTestHelpers.stubJSONP(serverAppConfig);
-
-  TestEnvironment.mockInternalOneSignal();
-
-  AssertInitSDK.ensureInitEventFires(t);
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
-  await OneSignal.init({
-    appId: Random.getRandomUuid()
-  });
-  t.true(createPlayerPostStub.notCalled);
-});
-
-test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
+  stubMessageChannel(t);
   mockIframeMessaging();
   sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
 
@@ -244,16 +213,56 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
   serverAppConfig.config.subdomain = "test";
   InitTestHelpers.stubJSONP(serverAppConfig);
 
-  TestEnvironment.mockInternalOneSignal();
+  const assertInit = new AssertInitSDK();
+  assertInit.setupEnsureInitEventFires(t);
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
+  await OneSignal.init({
+    appId: Random.getRandomUuid()
+  });
+  t.is(OneSignal.pendingInit, false);
+  t.true(createPlayerPostStub.notCalled);
+  assertInit.ensureInitEventFired();
+});
 
-  AssertInitSDK.ensureInitEventFires(t);
+test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
+  stubMessageChannel(t);
+  mockIframeMessaging();
+  sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
+
+  const testConfig = {
+    initOptions: {
+      autoRegister: true,
+    },
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+  };
+  await TestEnvironment.initialize(testConfig);
+  OneSignal.initialized = false;
+
+  sinonSandbox.stub(document, "visibilityState").value("visible");
+
+  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false);
+  serverAppConfig.config.subdomain = "test";
+  InitTestHelpers.stubJSONP(serverAppConfig);
+
+  const assertInit = new AssertInitSDK();
+  assertInit.setupEnsureInitEventFires(t);
+
+  sinonSandbox.stub(InitHelper, "doInitialize").resolves();
+  sinonSandbox.stub(OneSignal, "internalIsOptedOut").resolves(false);
+  sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").resolves(true);
+  sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
+  sinonSandbox.stub(OneSignal.context.promptsManager, "internalShowAutoPrompt").resolves();
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
     .resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
+  t.is(OneSignal.pendingInit, false);
   t.true(createPlayerPostStub.notCalled);
+  assertInit.ensureInitEventFired();
 });
 
 
@@ -270,13 +279,15 @@ test("Test OneSignal.init, Basic HTTPS", async t => {
   TestEnvironment.mockInternalOneSignal();
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
     .resolves({success: true, id: Random.getRandomUuid()});
-  // AssertInitSDK.ensureInitEventFires(t);
+  const assertInit = new AssertInitSDK();
+  assertInit.setupEnsureInitEventFires(t);
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
 
   expectPushRecordCreationRequest(t, createPlayerPostStub);
+  assertInit.ensureInitEventFired();
 });
 
 test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed accept", async t => {
@@ -296,7 +307,7 @@ test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed a
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
-  expectPushRecordCreationRequest(t, createPlayerPostStub)
+  expectPushRecordCreationRequest(t, createPlayerPostStub);
 
   // Check checkAndTriggerSubscriptionChanged if we get a 'Promise returned by test never resolved' Error
   await OneSignal.isPushNotificationsEnabled();
@@ -321,9 +332,9 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
 
   TestEnvironment.mockInternalOneSignal();
 
-  AssertInitSDK.ensureInitEventFires(t);
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
+  const assertInit = new AssertInitSDK();
+  assertInit.setupEnsureInitEventFires(t);
+  sinonSandbox.stub(OneSignalApiBase, "post").resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     requiresUserPrivacyConsent: true
@@ -331,7 +342,7 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
 
   delayInit = false;
   await OneSignal.provideUserConsent(true);
-  expectPushRecordCreationRequest(t, createPlayerPostStub);
+  assertInit.ensureInitEventFired();
 });
 
 test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async t => {
@@ -355,7 +366,8 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
   TestEnvironment.mockInternalOneSignal();
   // Don't need to mock create call, autoRegister not settable with TypicalSite
 
-  AssertInitSDK.ensureInitEventFires(t);
+  const assertInit = new AssertInitSDK();
+  assertInit.setupEnsureInitEventFires(t);
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     requiresUserPrivacyConsent: true
@@ -363,6 +375,7 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
 
   delayInit = false;
   await OneSignal.provideUserConsent(true);
+  assertInit.ensureInitEventFired();
 });
 
 test("Test OneSignal.init, No app id or wrong format of app id", async t => {

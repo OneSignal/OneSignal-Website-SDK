@@ -307,17 +307,27 @@ export class TestEnvironment {
     });
   }
 
-  static mockInternalOneSignal(config?: TestEnvironmentConfig) {
-    config = config || {};
-
+  static getFakeMergedConfig(config: TestEnvironmentConfig): AppConfig {
     const fakeUserConfig = config.userConfig || TestEnvironment.getFakeAppUserConfig();
-    const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(config.integration || ConfigIntegrationKind.Custom);
-
+    const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
+      config.integration || ConfigIntegrationKind.Custom,
+      config.httpOrHttps ? config.httpOrHttps === HttpHttpsEnvironment.Https : undefined
+    );
     const configManager = new ConfigManager();
     const fakeMergedConfig = configManager.getMergedConfig(
       fakeUserConfig,
       fakeServerConfig
     );
+    return fakeMergedConfig;
+  }
+
+  static mockInternalOneSignal(config?: TestEnvironmentConfig) {
+    config = config || { 
+      httpOrHttps: HttpHttpsEnvironment.Https,
+      integration: ConfigIntegrationKind.Custom,
+    };
+
+    const fakeMergedConfig: AppConfig = TestEnvironment.getFakeMergedConfig(config);
     OneSignal.context = new Context(fakeMergedConfig);
     OneSignal.config = fakeMergedConfig;
   }

@@ -334,7 +334,7 @@ export default class OneSignal {
    */
   public static async showHttpPrompt(options?: AutoPromptOptions) {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowAutoPrompt(options);
+    await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
   }
 
   /**
@@ -824,7 +824,7 @@ export default class OneSignal {
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
   static testHelper = TestHelper;
-  private static pendingInit: boolean;
+  private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;
   static subscriptionPopupHost: SubscriptionPopupHost;

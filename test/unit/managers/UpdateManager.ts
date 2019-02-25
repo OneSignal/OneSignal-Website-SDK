@@ -134,6 +134,7 @@ test("sendOnSessionUpdate includes appId at all times", async t => {
   OneSignal.context.sessionManager.setPageViewCount(1);
   OneSignal.context.updateManager = new UpdateManager(OneSignal.context);
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), false);
+  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
 
   const onSessionApiSpy = sandbox.stub(OneSignalApiShared, "updateUserSession").resolves();
   await OneSignal.context.updateManager.sendOnSessionUpdate();

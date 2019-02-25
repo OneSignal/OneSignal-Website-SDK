@@ -186,7 +186,9 @@ export default class InitHelper {
    */
   public static async onSdkInitialized() {
     await InitHelper.processExpiringSubscriptions();
-    if (!OneSignal.config.userConfig.promptOptions.autoPrompt || OneSignalUtils.isUsingSubscriptionWorkaround()) {
+    //TODO: why was I checking for isUsingSubscriptionWorkaround?
+    // if (!OneSignal.config.userConfig.promptOptions.autoPrompt || OneSignalUtils.isUsingSubscriptionWorkaround()) {
+    if (!OneSignal.config.userConfig.promptOptions.autoPrompt) {
       await OneSignal.context.updateManager.sendOnSessionUpdate();
     }
 
@@ -303,7 +305,7 @@ export default class InitHelper {
     }
   }
 
-  protected static async doInitialize(): Promise<void> {
+  public static async doInitialize(): Promise<void> {
     const promises: Promise<void>[] = [];
 
     // Store initial values of notification permission, user ID, and manual subscription status
