@@ -68,15 +68,15 @@ export default class Bell {
     }
   }
 
-  constructor(config: AppUserConfigNotifyButton, launcher?: Launcher) {
+  constructor(config: Partial<AppUserConfigNotifyButton>, launcher?: Launcher) {
     this.options = {
-      enable: config.enable,
+      enable: config.enable || false,
       size: config.size || this.DEFAULT_SIZE,
       position: config.position || this.DEFAULT_POSITION,
       theme: config.theme || this.DEFAULT_THEME,
       showLauncherAfter: config.showLauncherAfter || 10,
       showBadgeAfter: config.showBadgeAfter || 300,
-      text: this.setDefaultOptions(config.text || {}),
+      text: this.setDefaultTextOptions(config.text || {}),
       prenotify: config.prenotify,
       showCredit: config.showCredit,
       colors: config.colors,
@@ -132,7 +132,7 @@ export default class Bell {
       throw new Error(`Invalid delay duration of ${this.options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`);
   }
 
-  private setDefaultOptions(text: Partial<BellText>): BellText {
+  private setDefaultTextOptions(text: Partial<BellText>): BellText {
     const finalText: BellText = {
       'tip.state.unsubscribed': text['tip.state.unsubscribed'] || 'Subscribe to notifications',
       'tip.state.subscribed': text['tip.state.subscribed'] || "You're subscribed to notifications",

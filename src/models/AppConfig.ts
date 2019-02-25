@@ -87,7 +87,7 @@ export interface AppUserConfig {
   subdomainName?: string;
   promptOptions?: AppUserConfigPromptOptions;
   welcomeNotification?: AppUserConfigWelcomeNotification;
-  notifyButton?: AppUserConfigNotifyButton;
+  notifyButton?: Partial<AppUserConfigNotifyButton>;
   persistNotification?: boolean;
   webhooks?: AppUserConfigWebhooks;
   notificationClickHandlerMatch?: NotificationClickMatchBehavior;
@@ -192,7 +192,7 @@ export interface AppUserConfigNotifyButton {
   offset?: { bottom: string; left: string; right: string };
   prenotify?: boolean;
   showCredit?: boolean;
-  colors: {
+  colors?: {
     'circle.background': string;
     'circle.foreground': string;
     'badge.background': string;
