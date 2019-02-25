@@ -160,7 +160,6 @@ export class ConfigHelper {
       customlinkUser = promptOptions.customlink;
     }
     const customlinkDefaults = defaultsFromServer.customlink;
-    // TODO: add slidedown and native prompt defaults here, and autoResubscribe somewhere too
     const promptOptionsConfig: AppUserConfigPromptOptions = {
       ...promptOptions,
       customlink: {
@@ -189,7 +188,7 @@ export class ConfigHelper {
     if (promptOptionsConfig.slidedown) {
       promptOptionsConfig.slidedown.enabled = !!promptOptionsConfig.slidedown.enabled;
       promptOptionsConfig.slidedown.autoPrompt = promptOptionsConfig.slidedown.hasOwnProperty("autoPrompt") ?
-        !!promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt :
+        !!promptOptionsConfig.slidedown.enabled && !!promptOptionsConfig.slidedown.autoPrompt :
         !!promptOptionsConfig.slidedown.enabled;
     } else {
       promptOptionsConfig.slidedown = MainHelper.getSlidedownPermissionMessageOptions(promptOptionsConfig);
