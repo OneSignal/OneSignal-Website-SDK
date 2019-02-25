@@ -21,7 +21,10 @@ export interface AutoPromptOptions {
 }
 
 export class PromptsManager {
+  private isAutoPromptShowing: boolean;
+
   constructor(_context: ContextInterface) {
+    this.isAutoPromptShowing = false;
   }
 
   private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
@@ -30,7 +33,7 @@ export class PromptsManager {
     - Notifications aren't already enabled
     - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
     */
-    if (OneSignal.__isAutoPromptShowing) {
+    if (this.isAutoPromptShowing) {
       throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
         permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
       });
@@ -85,22 +88,22 @@ export class PromptsManager {
   public async internalShowNativePrompt(): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowNativePrompt");
 
-    if (OneSignal.__isAutoPromptShowing) {
+    if (this.isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a native prompt.");
       return;
     }
 
-    OneSignal.__isAutoPromptShowing = true;
+    this.isAutoPromptShowing = true;
     MainHelper.markHttpPopoverShown();
     await InitHelper.registerForPushNotifications();
-    OneSignal.__isAutoPromptShowing = false;
+    this.isAutoPromptShowing = false;
     TestHelper.markHttpsNativePromptDismissed();
   }
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
 
-    if (OneSignal.__isAutoPromptShowing) {
+    if (this.isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a slidedown.");
       return;
     }
@@ -137,10 +140,10 @@ export class PromptsManager {
     manageNotifyButtonStateWhilePopoverShows();
 
     OneSignal.emitter.once(Popover.EVENTS.SHOWN, () => {
-      OneSignal.__isAutoPromptShowing = true;
+      this.isAutoPromptShowing = true;
     });
     OneSignal.emitter.once(Popover.EVENTS.CLOSED, () => {
-      OneSignal.__isAutoPromptShowing = false;
+      this.isAutoPromptShowing = false;
     });
     OneSignal.emitter.once(Popover.EVENTS.ALLOW_CLICK, () => {
       if (OneSignal.popover) {
