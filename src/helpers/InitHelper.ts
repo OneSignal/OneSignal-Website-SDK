@@ -116,8 +116,6 @@ export default class InitHelper {
           (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
           (bowser.safari && Number(bowser.version) >= 12.1)
         );
-
-      OneSignal.once("ON_SESSION", async () => { OneSignal.context.updateManager.sendOnSessionUpdate(); });
       if (showSlidedownForceEnable) {
         OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
         await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
