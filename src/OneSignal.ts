@@ -58,6 +58,7 @@ import Log from './libraries/Log';
 import OneSignalError from "./errors/OneSignalError";
 import ConfigManager from "./managers/ConfigManager";
 import OneSignalUtils from "./utils/OneSignalUtils";
+import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 
 export default class OneSignal {
   /**
@@ -196,7 +197,7 @@ export default class OneSignal {
    * Returns true if the current browser supports web push.
    * @PublicApi
    */
-  static isPushNotificationsSupported() {
+  static isPushNotificationsSupported(): boolean {
     logMethodCall('isPushNotificationsSupported');
     /*
       Push notification support is checked in the initial entry code. If in an unsupported environment, a stubbed empty
@@ -825,23 +826,7 @@ export default class OneSignal {
    *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
    */
   static push(item: Function | object[]) {
-    if (typeof(item) == "function")
-      item();
-    else if (Array.isArray(item)) {
-      if (item.length == 0)
-        throw new OneSignalError("Empty array is not valid!");
-
-      const functionName = item.shift();
-      if (functionName == null || typeof(functionName) == "undefined")
-        throw new OneSignalError("First element in array must be the OneSignal function name");
-
-      const oneSignalFunction = (OneSignal as any)[functionName.toString()] as Function | undefined;
-      if (typeof(oneSignalFunction) != "function")
-        throw new OneSignalError(`No OneSignal function with the name '${functionName}'`);
-      oneSignalFunction.apply(null, item);
-    }
-    else
-      throw new OneSignalError("Only accepts function and Array types!");
+    ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
   /**
