@@ -10,7 +10,7 @@ export class ReplayCallsOnOneSignal {
     if (Array.isArray(stubOneSignal)) {
       ReplayCallsOnOneSignal.processAsArray(stubOneSignal);
     }
-    else if (stubOneSignal instanceof OneSignalStubES6) {
+    else if (stubOneSignal.constructor && stubOneSignal.constructor.name === "OneSignalStubES6") {
       ReplayCallsOnOneSignal.processAsES6Stub(stubOneSignal);
     }
     else {
