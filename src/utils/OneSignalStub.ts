@@ -20,6 +20,7 @@ export abstract class OneSignalStub<T> {
     "on",
     "off",
     "once",
+    "push",
     "isPushNotificationsSupported"
   ];
 
@@ -58,10 +59,6 @@ export abstract class OneSignalStub<T> {
   // Includes thisObj as the "this" variable loses it's context through setupStubFunctions
   protected abstract stubFunction(thisObj: T, functionName: string, args: any[]): any;
   protected abstract stubPromiseFunction(thisObj: T, functionName: string, args: any[]): Promise<any>;
-
-  public push(item: Function | object[]): void {
-    ProcessOneSignalPushCalls.processItem(this, item);
-  }
 
   protected constructor(omitStubsFor: Array<string> | undefined = undefined) {
     this.setupStubFunctions(OneSignalStub.FUNCTION_LIST_TO_STUB, this.stubFunction, omitStubsFor);
