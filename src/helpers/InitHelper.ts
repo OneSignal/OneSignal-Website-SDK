@@ -184,9 +184,7 @@ export default class InitHelper {
    */
   public static async onSdkInitialized() {
     await InitHelper.processExpiringSubscriptions();
-    //TODO: why was I checking for isUsingSubscriptionWorkaround?
-    // if (!OneSignal.config.userConfig.promptOptions.autoPrompt || OneSignalUtils.isUsingSubscriptionWorkaround()) {
-    if (!OneSignal.config.userConfig.promptOptions.autoPrompt) {
+    if (!OneSignal.config.userConfig.promptOptions.autoPrompt && !OneSignal.config.userConfig.autoResubscribe) {
       await OneSignal.context.updateManager.sendOnSessionUpdate();
     }
 

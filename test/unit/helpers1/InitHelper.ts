@@ -82,20 +82,32 @@ test("onSdkInitialized: processes expiring subscriptions", async (t) => {
   t.true(spy.calledOnce);
 });
 
-test("onSdkInitialized: sends on session update if not in autoPrompt", async (t) => {
+test("onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false", async (t) => {
   const spy = sandbox.stub(OneSignal.context.updateManager, "sendOnSessionUpdate").resolves();
   sandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").resolves(false);
   
   OneSignal.config.userConfig.promptOptions.autoPrompt = false;
+  OneSignal.config.userConfig.autoResubscribe = false;
   await InitHelper.onSdkInitialized();
   t.true(spy.calledOnce);
 });
 
-test("onSdkInitialized: sends on session update if not in autoPrompt", async (t) => {
+test("onSdkInitialized: does not send on session update", async (t) => {
   const spy = sandbox.stub(OneSignal.context.updateManager, "sendOnSessionUpdate").resolves();
   sandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").resolves(false);
   
   OneSignal.config.userConfig.promptOptions.autoPrompt = true;
+  OneSignal.config.userConfig.autoResubscribe = true;
+  await InitHelper.onSdkInitialized();
+  t.true(spy.notCalled);
+
+  OneSignal.config.userConfig.promptOptions.autoPrompt = false;
+  OneSignal.config.userConfig.autoResubscribe = true;
+  await InitHelper.onSdkInitialized();
+  t.true(spy.notCalled);
+
+  OneSignal.config.userConfig.promptOptions.autoPrompt = true;
+  OneSignal.config.userConfig.autoResubscribe = false;
   await InitHelper.onSdkInitialized();
   t.true(spy.notCalled);
 });
