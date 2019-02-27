@@ -31,11 +31,8 @@ test("should call loadSdkStylesheet if notify button is used", async t => {
   await TestEnvironment.initialize(testConfig);
   TestEnvironment.mockInternalOneSignal(testConfig);
   const bellConfig = OneSignal.context.appConfig.userConfig.notifyButton;
-  if (!bellConfig) {
-    t.fail();
-    return;
-  }
-  const notifyButton = new Bell(bellConfig, new MockLauncher(null));
+
+  const notifyButton = new Bell(bellConfig!, new MockLauncher(null));
   notifyButton.launcher.bell = notifyButton;
   await notifyButton.create();
   t.is(t.context.loadSdkStylesheet.called, true);
@@ -86,12 +83,8 @@ test("load successfully fetches and installs stylesheet", async t => {
   await DynamicResourceLoader.load(ResourceType.Stylesheet, new URL('https://test.node/styles/test.css'));
   // Check that the stylesheet is actually loaded into <head>
   const element = document.querySelector('head > link');
-  if (element) {
-    t.is(element.getAttribute('rel'), 'stylesheet');
-    t.is(element.getAttribute('href'), 'https://test.node/styles/test.css');
-  } else {
-    t.fail();
-  }
+  t.is(element!.getAttribute('rel'), 'stylesheet');
+  t.is(element!.getAttribute('href'), 'https://test.node/styles/test.css');
 });
 
 test("load successfully fetches and executes script", async t => {
@@ -102,10 +95,6 @@ test("load successfully fetches and executes script", async t => {
   await DynamicResourceLoader.load(ResourceType.Script, new URL('https://test.node/scripts/test.js'));
   // Check that the script is actually loaded
   const element = document.querySelector('head > script');
-  if (element) {
-    t.is(element.getAttribute('type'), 'text/javascript');
-    t.is(element.getAttribute('src'), 'https://test.node/scripts/test.js');
-  } else {
-    t.fail();
-  }
+  t.is(element!.getAttribute('type'), 'text/javascript');
+  t.is(element!.getAttribute('src'), 'https://test.node/scripts/test.js');
 });

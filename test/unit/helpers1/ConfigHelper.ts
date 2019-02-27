@@ -29,19 +29,12 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
     throw new Error("Prompt options cannot be empty!");
   }
 
-  if (!finalPromptOptions.native) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.native.enabled, true);
-    t.is(finalPromptOptions.native.autoPrompt, true);
-  }
-  
-  if (!finalPromptOptions.slidedown) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.slidedown.enabled, false);
-    t.is(finalPromptOptions.slidedown.autoPrompt, false);
-  }
+  t.is(finalPromptOptions!.native!.enabled, true);
+  t.is(finalPromptOptions!.native!.autoPrompt, true);
+
+  t.is(finalPromptOptions!.slidedown!.enabled, false);
+  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+
   t.is(finalPromptOptions.autoPrompt, true);
 });
 
@@ -62,19 +55,12 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
     throw new Error("Prompt options cannot be empty!");
   }
 
-  if (!finalPromptOptions.native) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.native.enabled, false);
-    t.is(finalPromptOptions.native.autoPrompt, false);
-  }
+  t.is(finalPromptOptions!.native!.enabled, false);
+  t.is(finalPromptOptions!.native!.autoPrompt, false);
   
-  if (!finalPromptOptions.slidedown) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.slidedown.enabled, false);
-    t.is(finalPromptOptions.slidedown.autoPrompt, false);
-  }
+  t.is(finalPromptOptions!.slidedown!.enabled, false);
+  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+
   t.is(finalPromptOptions.autoPrompt, false);
 });
 
@@ -100,19 +86,12 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
     throw new Error("Prompt options cannot be empty!");
   }
 
-  if (!finalPromptOptions.native) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.native.enabled, false);
-    t.is(finalPromptOptions.native.autoPrompt, false);
-  }
+  t.is(finalPromptOptions!.native!.enabled, false);
+  t.is(finalPromptOptions!.native!.autoPrompt, false);
   
-  if (!finalPromptOptions.slidedown) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.slidedown.enabled, true);
-    t.is(finalPromptOptions.slidedown.autoPrompt, true);
-  }
+  t.is(finalPromptOptions!.slidedown!.enabled, true);
+  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
+
   t.is(finalPromptOptions.autoPrompt, true);
 });
 
@@ -139,19 +118,12 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
     throw new Error("Prompt options cannot be empty!");
   }
 
-  if (!finalPromptOptions.native) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.native.enabled, true);
-    t.is(finalPromptOptions.native.autoPrompt, true);
-  }
+  t.is(finalPromptOptions!.native!.enabled, true);
+  t.is(finalPromptOptions!.native!.autoPrompt, true);
   
-  if (!finalPromptOptions.slidedown) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.slidedown.enabled, true);
-    t.is(finalPromptOptions.slidedown.autoPrompt, false);
-  }
+  t.is(finalPromptOptions!.slidedown!.enabled, true);
+  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+
   t.is(finalPromptOptions.autoPrompt, true);
 });
 
@@ -181,19 +153,12 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
     throw new Error("Prompt options cannot be empty!");
   }
 
-  if (!finalPromptOptions.native) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.native.enabled, true);
-    t.is(finalPromptOptions.native.autoPrompt, true);
-  }
-  
-  if (!finalPromptOptions.slidedown) {
-    t.fail();
-  } else {
-    t.is(finalPromptOptions.slidedown.enabled, true);
-    t.is(finalPromptOptions.slidedown.autoPrompt, false);
-  }
+  t.is(finalPromptOptions!.native!.enabled, true);
+  t.is(finalPromptOptions!.native!.autoPrompt, true);
+
+  t.is(finalPromptOptions!.slidedown!.enabled, true);
+  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+
   t.is(finalPromptOptions.autoPrompt, true);
 });
 
