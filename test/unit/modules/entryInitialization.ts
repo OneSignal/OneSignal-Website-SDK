@@ -6,6 +6,7 @@ import { OneSignalStubES6 } from "../../../src/utils/OneSignalStubES6";
 
 import  '../../support/sdk/TestEnvironment';
 import { ReplayCallsOnOneSignal } from "../../../src/utils/ReplayCallsOnOneSignal";
+import { ProcessOneSignalPushCalls } from '../../../src/utils/ProcessOneSignalPushCalls';
 
 class Defaults {
  public static delayedFunctionCall = { functionName: "", args: [], delayedPromise: undefined };
@@ -149,9 +150,12 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
 });
 
-
 class MockOneSignal {
   public lastSendTags: any = {};
+
+  push(item: Function | object[]): void {
+    ProcessOneSignalPushCalls.processItem(MockOneSignal, item);
+  }
 
   async sendTag(key: string, value: any, _callback?: Action<Object>): Promise<Object> {
     this.lastSendTags[key] = value;
@@ -194,8 +198,8 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using p
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.push(function(){}) like a site developer should be doing.
-  const sendTagsPromise = (oneSignalStub as any).push(function () {
-    (oneSignalStub as any).sendTag("key", "value");
+  const sendTagsPromise = (oneSignalStub as any).push(async function () {
+    await (oneSignalStub as any).sendTag("key", "value");
   });
 
   // Set our fake mock to as window.OneSignal
