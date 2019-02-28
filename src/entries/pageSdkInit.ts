@@ -5,8 +5,8 @@
 
 import Log from "../libraries/Log";
 import { incrementSdkLoadCount, getSdkLoadCount } from "../utils";
-import {ReplayCallsOnOneSignal} from "../utils/ReplayCallsOnOneSignal";
-import {OneSignalStubES6} from "../utils/OneSignalStubES6";
+import { ReplayCallsOnOneSignal } from "../utils/ReplayCallsOnOneSignal";
+import { OneSignalStubES6 } from "../utils/OneSignalStubES6";
 
 function oneSignalSdkInit() {
   incrementSdkLoadCount();

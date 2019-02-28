@@ -2,6 +2,7 @@
 // Careful if adding imports, ES5 targets can't clean up functions never called.
 
 import { OneSignalStub } from "./OneSignalStub";
+import { ProcessOneSignalPushCalls } from "./ProcessOneSignalPushCalls";
 
 export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
 
@@ -17,6 +18,11 @@ export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
   // @Override
   public isPushNotificationsEnabled(): Promise<boolean> {
     return new Promise(resolve => { resolve(false); } );
+  }
+
+  // @Override
+  public push(item: Function | object[]): void {
+    ProcessOneSignalPushCalls.processItem(this, item);
   }
 
   // By default do nothing unless the function is listed above.
