@@ -1,10 +1,10 @@
 /**
  * This is OneSignalSDK.js (ES5)
  *   * This is an entry point for pages and older service workers.
+ *   * Also we define a ES5 Stub for OneSignal for browsers that do not support push.
  * This is a shim to detect and load either;
  *   * ServiceWorkerSDK (ES6)                 - OneSignalSDKWorker.js
  *   * PageSDK (ES6)                          - OneSignalPageSDKES6.js
- *   * StubSDK for unsupported browsers (ES5) - OneSignalPageSDKES5.js
  */
 
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
