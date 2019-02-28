@@ -47,9 +47,9 @@ function addOneSignalPageSDKStub(): void {
   // 1. Do NOT replace window.OneSignal if its something else other than an Array.
   if (oneSignalExists && !oneSignalIsArray) {
     console.error(
-      `OneSignal already defined as ${typeof oneSignalExists}!
+      `window.OneSignal already defined as '${typeof OneSignal}'!
       Please make sure to define as 'var OneSignal = OneSignal || [];'`,
-      oneSignalExists
+      OneSignal
     );
     return;
   }
@@ -71,7 +71,7 @@ function addOneSignalPageSDKStub(): void {
 // Stub out all functions but save calls into push(...), OneSignalPageSDKES6.js will load soon.
 function addStubsForES6(): void {
   console.error("Deprecation Warning!: Please load OneSignalSDK.js async and use 'var OneSignal = OneSignal || [];'" +
-    "Direct to OneSignal without going through OneSignal.push(...) will be dropped in the future! ");
+    "Direct calls to OneSignal without going through OneSignal.push(...) will be dropped in the future! ");
   (window as any).OneSignal = new OneSignalStubES6();
 }
 
