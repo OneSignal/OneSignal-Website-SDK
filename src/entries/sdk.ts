@@ -40,12 +40,17 @@ function serviceWorkerSupportsPush(): boolean {
   return (typeof self.registration !== "undefined");
 }
 
-function addOneSignalPageSDKStub() {
+function addOneSignalPageSDKStub(): void {
   const oneSignalExists = (typeof (window as any).OneSignal !== "undefined");
   const oneSignalIsArray = Array.isArray((window as any).OneSignal);
 
   // 1. Do NOT replace window.OneSignal if its something else other than an Array.
   if (oneSignalExists && !oneSignalIsArray) {
+    console.error(
+      `OneSignal already defined as ${typeof oneSignalExists}!
+      Please make sure to define as 'var OneSignal = OneSignal || [];'`,
+      oneSignalExists
+    );
     return;
   }
 
@@ -53,7 +58,7 @@ function addOneSignalPageSDKStub() {
   //    This means the site developer would have to be using OneSignal.push(...) already
   // This technically isn't needed but due to the complexly of OneSignalStubES6
   //    would like to only load it when needed in case of any issues
-  const thisScript: any = document.currentScript;
+  const thisScript: any = document.currentScript; // TODO: Can drop any here after updating TypeScript
   if (thisScript) {
     if (thisScript.async || thisScript.defer)
       return;
@@ -65,7 +70,8 @@ function addOneSignalPageSDKStub() {
 
 // Stub out all functions but save calls into push(...), OneSignalPageSDKES6.js will load soon.
 function addStubsForES6(): void {
-  console.error("Please load OneSignalSDK.js async and use 'var OneSignal = OneSignal || [];'");
+  console.error("Deprecation Warning!: Please load OneSignalSDK.js async and use 'var OneSignal = OneSignal || [];'" +
+    "Direct to OneSignal without going through OneSignal.push(...) will be dropped in the future! ");
   (window as any).OneSignal = new OneSignalStubES6();
 }
 
