@@ -15,8 +15,8 @@ export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
   }
 
   // @Override
-  public isPushNotificationsEnabled(): boolean {
-    return false;
+  public isPushNotificationsEnabled(): Promise<boolean> {
+    return new Promise(resolve => { resolve(false); } );
   }
 
   // By default do nothing unless the function is listed above.

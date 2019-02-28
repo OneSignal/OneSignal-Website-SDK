@@ -14,7 +14,7 @@ export class ReplayCallsOnOneSignal {
       ReplayCallsOnOneSignal.processAsES6Stub(stubOneSignal);
     }
     else {
-      Log.error("window.OneSignal is an unexpected type! Should be undefined, Array, or OneSignalStubES6.");
+      Log.error("window.OneSignal is an unexpected type! Should be an Array, OneSignalStubES6, or undefined.");
     }
   }
 
@@ -48,7 +48,7 @@ export class ReplayCallsOnOneSignal {
       const functionToCall = OneSignal[item.functionName];
 
       const retValue = functionToCall.apply(OneSignal, item.args);
-      if (item.delayedPromise && retValue && retValue instanceof Promise) {
+      if (item.delayedPromise && retValue instanceof Promise) {
         retValue.then(function(...args: any[]) {
           if (item.delayedPromise && item.delayedPromise.resolve) {
             item.delayedPromise.resolve.apply(null, args);

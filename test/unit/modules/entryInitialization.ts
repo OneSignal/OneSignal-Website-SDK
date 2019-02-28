@@ -13,8 +13,8 @@ class Defaults {
 }
 
 class OneSignalStubES5Test extends OneSignalStubES5 {
-  public lastDirectFunctionCall: DelayedFunctionCall = Defaults.delayedFunctionCall;
-  public lastDirectPromiseFunctionCall: DelayedFunctionCall = Defaults.delayedFunctionCall;
+  public lastDirectFunctionCall: DelayedFunctionCall<any> = Defaults.delayedFunctionCall;
+  public lastDirectPromiseFunctionCall: DelayedFunctionCall<any> = Defaults.delayedFunctionCall;
 
   protected stubFunction(thisObj: OneSignalStubES5Test, functionName: string, args: any[]): any {
     thisObj.lastDirectFunctionCall = { functionName: functionName, args: args, delayedPromise: undefined };
@@ -50,7 +50,7 @@ test("correctly stubs all methods for ES5", async t => {
   const oneSignalStub = new OneSignalStubES5Test();
 
   t.false(oneSignalStub.isPushNotificationsSupported());
-  t.false(oneSignalStub.isPushNotificationsEnabled());
+  t.false(await oneSignalStub.isPushNotificationsEnabled());
 
   assertES5MethodIsCalled(t, oneSignalStub, "on");
   assertES5MethodIsCalled(t, oneSignalStub, "off");
@@ -82,12 +82,14 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "removeExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "isOptedOut");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "getEmailId");
 });
 
 
 class OneSignalStubES6Test extends OneSignalStubES6 {
 
-  public getLastStubCall(): DelayedFunctionCall {
+  public getLastStubCall(): DelayedFunctionCall<any> {
     return this.directFunctionCallsArray[this.directFunctionCallsArray.length - 1];
   }
 }
@@ -148,15 +150,19 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "removeExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "isOptedOut");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "getEmailId");
 });
 
-class MockOneSignal {
-  public lastSendTags: any = {};
+// Creating an object like OneSignal, but with only the methods we need to mock
+class MockOneSignal implements IOneSignal {
+  public lastSendTags: IndexableByString<string> = {};
 
   push(item: Function | object[]): void {
-    ProcessOneSignalPushCalls.processItem(MockOneSignal, item);
+    ProcessOneSignalPushCalls.processItem(this, item);
   }
 
+  // Mocking implementation of sendTags
   async sendTag(key: string, value: any, _callback?: Action<Object>): Promise<Object> {
     this.lastSendTags[key] = value;
     return new Promise((resolve, _reject) => {

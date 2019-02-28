@@ -14,7 +14,7 @@ export class OneSignalStubES6 extends OneSignalStub<OneSignalStubES6> {
     super(Object.getOwnPropertyNames(OneSignalStubES6.prototype));
   }
 
-  public directFunctionCallsArray = new Array<DelayedFunctionCall>();
+  public directFunctionCallsArray = new Array<DelayedFunctionCall<any>>();
 
   // @Override
   // Save function name and params to be called later when the full SDK loads
@@ -24,12 +24,12 @@ export class OneSignalStubES6 extends OneSignalStub<OneSignalStubES6> {
 
   // @Override
   // Save function name, params, and a delayed Promise to be called later when the full SDK loads
-  protected stubPromiseFunction(_thisObj: OneSignalStubES6, functionName: string, args: any[]): Promise<any> {
-    let delayedPromise: DelayedPromise | undefined = undefined;
+  protected stubPromiseFunction(thisObj: OneSignalStubES6, functionName: string, args: any[]): Promise<any> {
+    let delayedPromise: DelayedPromise<any> | undefined = undefined;
     const promise = new Promise((resolve, reject) => {
       delayedPromise = { resolve, reject };
     });
-    _thisObj.directFunctionCallsArray.push({ functionName, delayedPromise, args });
+    thisObj.directFunctionCallsArray.push({ functionName, delayedPromise, args });
     return promise;
   }
 }
