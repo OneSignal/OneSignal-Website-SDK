@@ -31,14 +31,9 @@ import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApi
 
 declare var OneSignal: any;
 
-export interface SessionInitOptions {
-  autoAccept?: boolean;
-}
-
-export interface RegisterOptions {
+export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
   httpPermissionRequest?: boolean;
-  autoAccept?: boolean;
 }
 
 export default class InitHelper {
@@ -70,8 +65,8 @@ export default class InitHelper {
     await InitHelper.sessionInit();
   }
 
-  public static async sessionInit(options: SessionInitOptions = {}): Promise<void> {
-    Log.debug(`Called %csessionInit(${JSON.stringify(options)})`, getConsoleStyle('code'));
+  public static async sessionInit(): Promise<void> {
+    Log.debug(`Called %csessionInit()`, getConsoleStyle('code'));
 
     if (OneSignal._sessionInitAlreadyRunning) {
       Log.debug('Returning from sessionInit because it has already been called.');
@@ -191,7 +186,7 @@ export default class InitHelper {
     await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
   }
 
-  public static async loadSubscriptionPopup(options?: any) {
+  public static async loadSubscriptionPopup(options?: SubscriptionPopupHostOptions) {
     /**
      * Users may be subscribed to either .onesignal.com or .os.tc. By this time
      * that they are subscribing to the popup, the Proxy Frame has already been
