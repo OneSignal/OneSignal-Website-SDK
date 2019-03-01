@@ -355,19 +355,14 @@ test("Make sure property field transfer over", async t => {
   t.deepEqual(mockOneSignal.SERVICE_WORKER_PARAM, { scope: "scope" });
 });
 
-test("Expect rejection on any Promise type methods on ES5 Stub", async t => {
+test("Expect Promise to never resolve for ES5 stubs", async t => {
   // Setup an OneSignalStubES5 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES5();
   const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
-
-  // Make sure the Promise is rejected with no params
-  try {
-    await sendTagsPromise;
-    // Should NOT get to this line as Promise.reject should be firing
-    t.fail();
-  } catch (e) {
-    t.is(e, undefined);
-  }
+  sendTagsPromise
+    .then(() => t.fail() )
+    .catch(() => t.fail());
+  t.pass();
 });
 
 test("OneSignalSDK.js set to load WITHOUT async", async t => {
