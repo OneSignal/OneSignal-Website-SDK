@@ -292,6 +292,8 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. never su
     t.is(subscribeElement.getAttribute(CustomLink.subscriptionStateAttribute), "false");
     await CustomLink.handleClick(subscribeElement);
     t.is(registerSpy.calledOnce, true);
+    t.is(registerSpy.getCall(0).args.length, 1);
+    t.is(registerSpy.getCall(0).args[0].autoAccept, true);
   }
 });
 
