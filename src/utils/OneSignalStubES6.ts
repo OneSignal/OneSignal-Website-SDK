@@ -18,8 +18,8 @@ export class OneSignalStubES6 extends OneSignalStub<OneSignalStubES6> {
 
   // @Override
   // Save function name and params to be called later when the full SDK loads
-  protected stubFunction(_thisObj: OneSignalStubES6, functionName: string, args: any[]): void {
-    _thisObj.directFunctionCallsArray.push({ functionName, args, delayedPromise: undefined });
+  protected stubFunction(thisObj: OneSignalStubES6, functionName: string, args: any[]): void {
+    thisObj.directFunctionCallsArray.push({ functionName, args, delayedPromise: undefined });
   }
 
   // @Override
