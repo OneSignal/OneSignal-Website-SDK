@@ -6,7 +6,26 @@ interface SubscriptionPopupHostOptions {
    * If true, this screen is skipped, and users see "Click Allow to receive
    * notifications" with the prompt auto-appearing.
    *
-   * If false, users see the first screen.
+   * If false or undefined, users see the first screen.
    */
-  autoAccept: boolean;
+  autoAccept?: boolean;
+}
+
+interface PromptOptionsPostData {
+  autoAcceptTitle?: string;
+  siteName?: string;
+  subscribeText?: string;
+  showGraphic?: boolean;
+  actionMessage?: string;
+  exampleNotificationTitle?: string;
+  exampleNotificationMessage?: string;
+  exampleNotificationCaption?: string;
+  acceptButtonText?: string;
+  cancelButtonText?: string;
+  timeout?: number;
+}
+
+interface PostData extends PromptOptionsPostData, SubscriptionPopupHostOptions {
+  promptType: "popup" | "modal";
+  parentHostname: string;
 }

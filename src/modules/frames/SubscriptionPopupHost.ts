@@ -34,12 +34,10 @@ export default class SubscriptionPopupHost implements Disposable {
    *
    * @param origin The URL object describing the origin to load.
    */
-  constructor(origin: URL, options: SubscriptionPopupHostOptions) {
+  constructor(origin: URL, options?: SubscriptionPopupHostOptions) {
     this.url = origin;
     this.url.pathname = 'subscribe';
-    this.options = options || {
-      autoAccept: false,
-    };
+    this.options = options || {};
   }
 
   /**
@@ -48,13 +46,12 @@ export default class SubscriptionPopupHost implements Disposable {
   load(): Promise<void> {
     // Instead of using URL query parameters, which are confusing and unsightly,
     // post the data invisible
-    let postData = {
+    const postData: PostData = {
       ...MainHelper.getPromptOptionsPostHash(),
       ...{
         promptType: 'popup',
         parentHostname: encodeURIComponent(location.hostname)
       },
-      autoAccept: false,
     };
     if (this.options.autoAccept) {
       postData.autoAccept = true;
