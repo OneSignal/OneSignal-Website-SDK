@@ -3,6 +3,7 @@
 
 import { OneSignalStub } from "./OneSignalStub";
 import { ProcessOneSignalPushCalls } from "./ProcessOneSignalPushCalls";
+import { PromiseFactory } from "./PromiseFactory";
 
 export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
 
@@ -17,7 +18,7 @@ export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
 
   // @Override
   public isPushNotificationsEnabled(): Promise<boolean> {
-    return new Promise(resolve => { resolve(false); } );
+    return PromiseFactory.newPromise<boolean>(resolve => { resolve(false); } );
   }
 
   // Implementation here so the passed in function is run and does not get dropped.
@@ -30,9 +31,11 @@ export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
   // @Override
   protected stubFunction(_thisObj: OneSignalStubES5, _functionName: string, _args: any[]): any {}
 
-  // Always reject promises as no logic will be run from this ES5 stub.
+  // Returns a Promise which is empty and is never resolved or rejected.
+  // This is done as we don't want to return an unexpectedly undefined value to resolve,
+  //   or require every call to OneSignal to have a catch.
   // @Override
   protected stubPromiseFunction(_thisObj: OneSignalStubES5, _functionName: string, _args: any[]): Promise<any> {
-    return new Promise((_resolve, reject) => { reject(); });
+    return PromiseFactory.newPromise<any>((_resolve: any, _reject: any) => {});
   }
 }
