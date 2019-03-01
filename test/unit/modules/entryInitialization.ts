@@ -1,12 +1,27 @@
 import "../../support/polyfills/polyfills";
 import test, { AssertContext } from "ava";
-import { HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
+import { BrowserUserAgent, HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { OneSignalStubES5 } from "../../../src/utils/OneSignalStubES5";
 import { OneSignalStubES6 } from "../../../src/utils/OneSignalStubES6";
 
 import  '../../support/sdk/TestEnvironment';
 import { ReplayCallsOnOneSignal } from "../../../src/utils/ReplayCallsOnOneSignal";
 import { ProcessOneSignalPushCalls } from '../../../src/utils/ProcessOneSignalPushCalls';
+import { OneSignalShimLoader } from "../../../src/utils/OneSignalShimLoader";
+import { SinonSandbox } from "sinon";
+import sinon from 'sinon';
+import { setUserAgent } from "../../support/tester/browser";
+
+let sandbox: SinonSandbox;
+
+test.beforeEach(async function() {
+  sandbox = sinon.sandbox.create();
+  await TestEnvironment.stubDomEnvironment({ httpOrHttps: HttpHttpsEnvironment.Https });
+});
+
+test.afterEach(function () {
+  sandbox.restore();
+});
 
 class Defaults {
  public static delayedFunctionCall = { functionName: "", args: [], delayedPromise: undefined };
@@ -51,6 +66,11 @@ test("correctly stubs all methods for ES5", async t => {
 
   t.false(oneSignalStub.isPushNotificationsSupported());
   t.false(await oneSignalStub.isPushNotificationsEnabled());
+
+  // Test OneSignal.push
+  let didCallPushFunction = false;
+  oneSignalStub.push(() => { didCallPushFunction = true; });
+  t.true(didCallPushFunction);
 
   assertES5MethodIsCalled(t, oneSignalStub, "on");
   assertES5MethodIsCalled(t, oneSignalStub, "off");
@@ -121,6 +141,7 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6MethodIsCalled(t, oneSignalStub, "on");
   assertES6MethodIsCalled(t, oneSignalStub, "off");
   assertES6MethodIsCalled(t, oneSignalStub, "once");
+  assertES6MethodIsCalled(t, oneSignalStub, "push");
 
   // These methods should be stub out in a generic way, make sure they don't error out and return a promise.
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "init");
@@ -172,10 +193,6 @@ class MockOneSignal implements IOneSignal {
 }
 
 test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params", async t => {
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.sendTags(...) directly like a site developer would
@@ -197,10 +214,6 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params", async
 
 
 test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using push with function", async t => {
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.push(function(){}) like a site developer should be doing.
@@ -223,10 +236,6 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using p
 });
 
 test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using push with params list", async t => {
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.push([]]) like a site developer should be doing.
@@ -262,10 +271,6 @@ class MockOneSignalWithPromiseControl {
 }
 
 test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", async t => {
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.sendTags(...) directly like a site developer may have done
@@ -290,10 +295,6 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", 
 });
 
 test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", async t => {
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.sendTags(...) directly like a site developer may have done
@@ -335,10 +336,6 @@ class MockOneSignalWithPublicProperties {
 }
 
 test("Make sure property field transfer over", async t => {
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-
   const oneSignalStub = new OneSignalStubES6();
   oneSignalStub.SERVICE_WORKER_PATH = "SERVICE_WORKER_UPDATER_PATH";
   oneSignalStub.SERVICE_WORKER_UPDATER_PATH = "SERVICE_WORKER_UPDATER_PATH";
@@ -356,4 +353,91 @@ test("Make sure property field transfer over", async t => {
   t.is(mockOneSignal.SERVICE_WORKER_UPDATER_PATH, "SERVICE_WORKER_UPDATER_PATH");
   t.is(mockOneSignal.currentLogLevel, "trace");
   t.deepEqual(mockOneSignal.SERVICE_WORKER_PARAM, { scope: "scope" });
+});
+
+test("Expect rejection on any Promise type methods on ES5 Stub", async t => {
+  // Setup an OneSignalStubES5 instance like the OneSignalSDK.js Shim does.
+  const oneSignalStub = new OneSignalStubES5();
+  const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
+
+  // Make sure the Promise is rejected with no params
+  try {
+    await sendTagsPromise;
+    // Should NOT get to this line as Promise.reject should be firing
+    t.fail();
+  } catch (e) {
+    t.is(e, undefined);
+  }
+});
+
+test("OneSignalSDK.js set to load WITHOUT async", async t => {
+  OneSignalShimLoader.start();
+  // Need to load stub as developer could have make OneSignal calls directly such as OneSignal.init(...)
+  t.true((<any>window).OneSignal instanceof OneSignalStubES6);
+});
+
+test("OneSignalSDK.js is loaded async", async t => {
+  // Mock that <script src="...OneSignalSDK.js" async> is included in the dev's site.
+  sandbox.stub(document, 'currentScript').get(() => { return { async: true }; });
+
+  // Setup spy for OneSignalShimLoader.addScriptToPage
+  const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
+
+  OneSignalShimLoader.start();
+
+  // No need to load a stub, OneSignalPageSDKES6.js as been added to the page
+  t.true(typeof((<any>window).OneSignal) === "undefined");
+  t.true(addScriptToPageSpy.getCall(0).calledWithExactly("https://cdn.onesignal.com/sdks/OneSignalPageSDKES6.js?v=1"));
+});
+
+test("OneSignalSDK.js is loaded on a page on a browser that does NOT support push", async t => {
+  (global as any).BrowserUserAgent = BrowserUserAgent;
+  setUserAgent(BrowserUserAgent.IE11);
+
+  // Setup spy for OneSignalShimLoader.addScriptToPage
+  const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
+
+  OneSignalShimLoader.start();
+
+  // Load ES5 stub on IE11. Built into shim, no need to load another js file.
+  t.true((<any>window).OneSignal instanceof OneSignalStubES5);
+  t.is(addScriptToPageSpy.callCount, 0);
+});
+
+test("OneSignalSDK.js load from service worker context that does NOT support push", async t => {
+  // 2 stub function calls to mock being a ServiceWorker that supports push.
+  sandbox.stub(OneSignalShimLoader, <any>'isServiceWorkerRuntime').callsFake(() => {
+    return true;
+  });
+
+  // Setup spy for self.importScripts
+  (<any>global).self = { importScripts: () => {} };
+  const importScriptsSpy = sandbox.spy((<any>global).self, 'importScripts');
+
+  // Setup spy for OneSignalShimLoader.addScriptToPage
+  const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
+
+  OneSignalShimLoader.start();
+
+  t.is(importScriptsSpy.callCount, 0);
+  t.is(addScriptToPageSpy.callCount, 0);
+});
+
+test("OneSignalSDK.js load from service worker context that supports push", async t => {
+  // 2 stub function calls to mock being a ServiceWorker that supports push.
+  sandbox.stub(OneSignalShimLoader, <any>'isServiceWorkerRuntime').callsFake(() => {
+    return true;
+  });
+  sandbox.stub(OneSignalShimLoader, <any>'serviceWorkerSupportsPush').callsFake(() => {
+    return true;
+  });
+
+  // Setup mock for self.importScripts
+  (<any>global).self = { importScripts: () => {} };
+  const importScriptsSpy = sandbox.spy((<any>global).self, 'importScripts');
+
+  OneSignalShimLoader.start();
+
+  // Ensure we load the worker build of the SDK with self.importScripts(<string>)
+  t.true(importScriptsSpy.getCall(0).calledWithExactly("https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js?v=1"));
 });
