@@ -20,9 +20,9 @@ function oneSignalSdkInit() {
 
   // We're running in the host page, iFrame of the host page, or popup window
   // Load OneSignal's web SDK
-  const predefinedOneSignal: OneSignalStubES6 | object[] | undefined | null = (window as any).OneSignal;
+  const predefinedOneSignal: OneSignalStubES6 | object[] | undefined | null = (<any>window).OneSignal;
 
-  (window as any).OneSignal = require('../OneSignal').default;
+  (<any>window).OneSignal = require('../OneSignal').default;
 
   ReplayCallsOnOneSignal.doReplay(predefinedOneSignal);
 }

@@ -1,6 +1,8 @@
 // NOTE: This is used with the OneSignalSDK.js shim
 // Careful if adding imports, ES5 targets can't clean up functions never called.
 
+export type PossiblePredefinedOneSignal = Array<Object[] | Function> | undefined | null;
+
 export abstract class OneSignalStub<T> implements IndexableByString<any> {
   public VERSION = (typeof __VERSION__) === "undefined" ? 1 : Number(__VERSION__);
   public SERVICE_WORKER_UPDATER_PATH: string | undefined;

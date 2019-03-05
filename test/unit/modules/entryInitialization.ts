@@ -255,6 +255,38 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using p
   await sendTagsPromise;
 });
 
+test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with expected params with a function", async t => {
+  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does, taking in any predefined window.OneSignal
+  const oneSignalStub = new OneSignalStubES6([() => {
+    (<any>global).OneSignal.sendTag("key", "value");
+  }]);
+
+  // Set our fake mock to as window.OneSignal
+  const mockOneSignal = new MockOneSignal();
+  (<any>global).OneSignal = mockOneSignal;
+
+  // Replay function calls we called on the stub on our mock
+  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
+
+  // Ensure our mock's sendTags got called correctly.
+  t.deepEqual(mockOneSignal.lastSendTags, { key: "value" });
+});
+
+test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with expected params using push with params list", async t => {
+  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
+  const oneSignalStub = new OneSignalStubES6([["sendTag", "key1", "value2"]]);
+
+  // Set our fake mock to as window.OneSignal
+  const mockOneSignal = new MockOneSignal();
+  (<any>global).OneSignal = mockOneSignal;
+
+  // Replay function calls we called on the stub on our mock
+  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
+
+  // Ensure our mock's sendTags got called correctly.
+  t.deepEqual(mockOneSignal.lastSendTags, { key1: "value2" });
+});
+
 class MockOneSignalWithPromiseControl {
   public resolveValue: any;
   public rejectValue: any;
@@ -365,29 +397,13 @@ test("Expect Promise to never resolve for ES5 stubs", async t => {
   t.pass();
 });
 
-test("OneSignalSDK.js set to load WITHOUT async", async t => {
+test("OneSignalSDK.js loads OneSignalStubES6 is loaded on a page on a browser supports push", async t => {
   OneSignalShimLoader.start();
-  // Need to load stub as developer could have make OneSignal calls directly such as OneSignal.init(...)
   t.true((<any>window).OneSignal instanceof OneSignalStubES6);
 });
 
-test("OneSignalSDK.js is loaded async", async t => {
-  // Mock that <script src="...OneSignalSDK.js" async> is included in the dev's site.
-  sandbox.stub(document, 'currentScript').get(() => { return { async: true }; });
-
-  // Setup spy for OneSignalShimLoader.addScriptToPage
-  const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
-
-  OneSignalShimLoader.start();
-
-  // No need to load a stub, OneSignalPageSDKES6.js as been added to the page
-  t.true(typeof((<any>window).OneSignal) === "undefined");
-  t.true(addScriptToPageSpy.getCall(0).calledWithExactly("https://cdn.onesignal.com/sdks/OneSignalPageSDKES6.js?v=1"));
-});
-
 test("OneSignalSDK.js is loaded on a page on a browser that does NOT support push", async t => {
-  (global as any).BrowserUserAgent = BrowserUserAgent;
-  setUserAgent(BrowserUserAgent.IE11);
+  setUserAgent(BrowserUserAgent.IE11); // ES5 browser
 
   // Setup spy for OneSignalShimLoader.addScriptToPage
   const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
@@ -396,6 +412,7 @@ test("OneSignalSDK.js is loaded on a page on a browser that does NOT support pus
 
   // Load ES5 stub on IE11. Built into shim, no need to load another js file.
   t.true((<any>window).OneSignal instanceof OneSignalStubES5);
+  // Should NOT load any other .js files, such as the ES6 SDK
   t.is(addScriptToPageSpy.callCount, 0);
 });
 
@@ -435,4 +452,26 @@ test("OneSignalSDK.js load from service worker context that supports push", asyn
 
   // Ensure we load the worker build of the SDK with self.importScripts(<string>)
   t.true(importScriptsSpy.getCall(0).calledWithExactly("https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js?v=1"));
+});
+
+
+test("Existing OneSignal array before OneSignalSDK.js loaded ES6", async t => {
+  const preExistingArray = [() => {}, ["init", "test"]];
+  (<any>window).OneSignal = preExistingArray;
+
+  OneSignalShimLoader.start();
+
+  t.deepEqual(<object[]>(<OneSignalStubES6>(<any>window).OneSignal).preExistingArray, preExistingArray);
+});
+
+test("Existing OneSignal array before OneSignalSDK.js loaded ES5", async t => {
+  setUserAgent(BrowserUserAgent.IE11); // ES5 browser
+
+  let didCallFunction = false;
+  const preExistingArray = [() => { didCallFunction = true; }];
+  (<any>window).OneSignal = preExistingArray;
+
+  OneSignalShimLoader.start();
+
+  t.true(didCallFunction);
 });

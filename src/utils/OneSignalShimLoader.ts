@@ -1,7 +1,10 @@
 import { isPushNotificationsSupported } from "./BrowserSupportsPush";
 import { OneSignalStubES6 } from "./OneSignalStubES6";
 import { OneSignalStubES5 } from "./OneSignalStubES5";
+import { PossiblePredefinedOneSignal } from "./OneSignalStub";
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
+
+// See sdk.ts for what entry points this handles
 
 export class OneSignalShimLoader {
 
@@ -36,41 +39,32 @@ export class OneSignalShimLoader {
   }
 
   private static addOneSignalPageES6SDKStub(): void {
-    const oneSignalExists = (typeof (window as any).OneSignal !== "undefined");
-    const oneSignalIsArray = Array.isArray((window as any).OneSignal);
+    const predefinedOneSignal: PossiblePredefinedOneSignal = (<any>window).OneSignal;
+    const oneSignalIsArray = Array.isArray(predefinedOneSignal);
 
-    // 1. Do NOT replace window.OneSignal if its something else other than an Array.
-    if (oneSignalExists && !oneSignalIsArray) {
+    // Do NOT replace window.OneSignal if it's something else other than an Array.
+    if (!!predefinedOneSignal && !oneSignalIsArray) {
       console.error(
         `window.OneSignal already defined as '${typeof OneSignal}'!
-         Please make sure to define as 'var OneSignal = OneSignal || [];'`,
+         Please make sure to define as 'window.OneSignal = window.OneSignal || [];'`,
         OneSignal
       );
       return;
     }
 
-    // 2. If this script was loaded with async or defer no need to create a stub.
-    //    This means the site developer would have to be using OneSignal.push(...) already
-    // This check technically isn't needed but due to the complexly of OneSignalStubES6
-    //    would like to only load it when needed in case of any issues
-    const thisScript: any = document.currentScript; // TODO: Can drop 'any' after updating TypeScript
-    if (thisScript) {
-      if (thisScript.async || thisScript.defer)
-        return;
-    }
-
-    // 3. Stub out all OneSignal functions with an implementation that save all params
-    //    OneSignalPageSDKES6.js will load soon and the function calls will be
-    //    replayed from pageSdkInit.ts
-    console.warn(`Deprecation Warning!: Please load OneSignalSDK.js async and use 'var OneSignal = OneSignal || [];
-                 Direct calls to OneSignal without going through OneSignal.push(...) will be dropped in the future!`);
-    (window as any).OneSignal = new OneSignalStubES6();
+    // Stub out all OneSignal functions with an implementation that save all params.
+    // OneSignalPageSDKES6.js will load soon and the function calls will be replayed from pageSdkInit.ts
+    // This is done regardless if document.currentScript.async is true as window.OneSignal needs to be available
+    //   for those who use script.onload = function() { } to add OneSignalSDK.js
+    (<any>window).OneSignal = new OneSignalStubES6(predefinedOneSignal);
   }
 
-// Stub out all functions with default values. Unlike ES6 all ES5 support will be in OneSignalSDK.js
+  // Stub out all functions with default values.
+  // OneSignalStubES5 class is bundled into the production OneSignalSDK.js so other .js files are loaded.
   private static addOneSignalPageES5SDKStub(): void {
     console.log("OneSignal: Using fallback ES5 Stub for backwards compatibility.");
-    (window as any).OneSignal = new OneSignalStubES5();
+    const predefinedOneSignal: PossiblePredefinedOneSignal = (<any>window).OneSignal;
+    (<any>window).OneSignal = new OneSignalStubES5(predefinedOneSignal);
   }
 
   public static start(): void {
@@ -89,10 +83,6 @@ export class OneSignalShimLoader {
     }
     else {
       OneSignalShimLoader.addOneSignalPageES5SDKStub();
-      // TODO: Make sure this is all working in the browser, now that this is in a static class
-      //        - Test service worker
-      //        - Test ES6
-      //        - Test ES5
     }
   }
 }

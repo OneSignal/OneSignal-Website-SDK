@@ -43,7 +43,13 @@ export class ReplayCallsOnOneSignal {
     if (stubOneSignal.SERVICE_WORKER_PARAM)
       OneSignal.SERVICE_WORKER_PARAM = stubOneSignal.SERVICE_WORKER_PARAM;
 
-    // Run methods in order, including firing any promises
+    // 1. Process any array defined BEFORE stubOneSignal was loaded
+    if (stubOneSignal.preExistingArray) {
+      ReplayCallsOnOneSignal.processAsArray(stubOneSignal.preExistingArray);
+    }
+
+    // 2. Process any array defined AFTER stubOneSignal was loaded
+    //    Runs methods in order, including firing any promises
     for(const item of stubOneSignal.directFunctionCallsArray) {
       const functionToCall = OneSignal[item.functionName];
 
