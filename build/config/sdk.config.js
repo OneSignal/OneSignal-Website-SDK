@@ -129,7 +129,8 @@ async function generateWebpackConfig() {
                 'PushNotSupportedError',
                 'PushPermissionNotGrantedError',
                 'SdkInitError',
-                'TimeoutError'
+                'TimeoutError',
+                'OneSignalStubES6'
               ]
             } : false,
             output: {
