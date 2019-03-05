@@ -198,7 +198,9 @@ export class ConfigHelper {
 
     if (promptOptionsConfig.native) {
       promptOptionsConfig.native.enabled = !!promptOptionsConfig.native.enabled;
-      promptOptionsConfig.native.autoPrompt = !!promptOptionsConfig.native.enabled;
+      promptOptionsConfig.native.autoPrompt = promptOptionsConfig.native.hasOwnProperty("autoPrompt") ?
+        !!promptOptionsConfig.native.enabled && !!promptOptionsConfig.native.autoPrompt :
+        !!promptOptionsConfig.native.enabled;
     } else if (wholeUserConfig.autoRegister) {
       promptOptionsConfig.native = {
         enabled: !(promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt),
@@ -221,20 +223,20 @@ export class ConfigHelper {
     const staticPrompts = serverConfig.config.staticPrompts;
     const native = staticPrompts.native ? {
       enabled: staticPrompts.native.enabled,
-      autoPrompt: staticPrompts.native.enabled,
+      autoPrompt: staticPrompts.native.enabled && staticPrompts.native.autoPrompt !== false,
     } : {
       enabled: false,
       autoPrompt: false,
     };
 
     const slidedown = {
-      enabled: serverConfig.config.staticPrompts.slidedown.enabled,
+      enabled: staticPrompts.slidedown.enabled,
       // for backwards compatibility if not specifically false, then assume true for autoPrompt on slidedown
-      autoPrompt: serverConfig.config.staticPrompts.slidedown.enabled &&
-        serverConfig.config.staticPrompts.slidedown.autoPrompt !== false,
-      actionMessage: serverConfig.config.staticPrompts.slidedown.actionMessage,
-      acceptButtonText: serverConfig.config.staticPrompts.slidedown.acceptButton,
-      cancelButtonText: serverConfig.config.staticPrompts.slidedown.cancelButton,
+      autoPrompt: staticPrompts.slidedown.enabled &&
+        staticPrompts.slidedown.autoPrompt !== false,
+      actionMessage: staticPrompts.slidedown.actionMessage,
+      acceptButtonText: staticPrompts.slidedown.acceptButton,
+      cancelButtonText: staticPrompts.slidedown.cancelButton,
     };
     return {
       autoPrompt: native.autoPrompt || slidedown.autoPrompt,

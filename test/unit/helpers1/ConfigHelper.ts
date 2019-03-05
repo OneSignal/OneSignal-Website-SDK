@@ -135,6 +135,7 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
   (fakeUserConfig as any).promptOptions = {
     native: {
       enabled: true,
+      autoPrompt: true,
     },
     slidedown: {
       enabled: true,
@@ -160,6 +161,42 @@ test('promptOptions - autoRegister backwards compatibility for custom integratio
   t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
 
   t.is(finalPromptOptions.autoPrompt, true);
+});
+
+test('promptOptions - autoRegister backwards compatibility for custom integration 6', t => {
+  const fakeUserConfig: AppUserConfig = {
+    appId: Random.getRandomUuid(),
+    autoRegister: true,
+  };
+  (fakeUserConfig as any).promptOptions = {
+    native: {
+      enabled: true,
+      autoPrompt: false,
+    },
+    slidedown: {
+      enabled: true,
+      autoPrompt: false,
+    }
+  };
+
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
+    fakeUserConfig.promptOptions,
+    fakeServerConfig.config.staticPrompts,
+    fakeUserConfig
+  );
+
+  if (!finalPromptOptions) {
+    throw new Error("Prompt options cannot be empty!");
+  }
+
+  t.is(finalPromptOptions!.native!.enabled, true);
+  t.is(finalPromptOptions!.native!.autoPrompt, false);
+
+  t.is(finalPromptOptions!.slidedown!.enabled, true);
+  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+
+  t.is(finalPromptOptions.autoPrompt, false);
 });
 
 test('autoResubscribe - autoRegister backwards compatibility for custom integration 1', t => {

@@ -12,7 +12,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
-import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
+import { SlidedownPermissionMessageOptions, AppUserConfigPromptOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 
@@ -73,15 +73,15 @@ export class PromptsManager {
     }
 
     const promptOptions = OneSignal.config.userConfig.promptOptions;
-    if (!promptOptions.native && !promptOptions.slidedown) {
+    if (!promptOptions.native.enabled && !promptOptions.slidedown.enabled) {
       Log.error("No suitable prompt type enabled.");
       return;
     }
 
-    if (promptOptions.native && promptOptions.native.enabled) {
+    if (promptOptions.native && promptOptions.native.enabled && promptOptions.native.autoPromt) {
       await this.internalShowNativePrompt();
-    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled) {
-      await this.internalShowSlidedownPrompt();
+    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled && promptOptions.slidedown.autoPromt) {
+      await this.internalShowSlidedownPrompt(options);
     }
   }
 
@@ -125,9 +125,6 @@ export class PromptsManager {
     }
     const slideDownOptions: SlidedownPermissionMessageOptions =
       MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
-    if (!slideDownOptions.enabled) {
-      Log.warn("Slidedown not enabled. Not showing.");
-    }
 
     this.installEventHooksForPopover();
 
