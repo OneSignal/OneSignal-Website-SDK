@@ -19,7 +19,7 @@ export class SdkInitError extends OneSignalError {
   }) {
     switch (reason) {
       case SdkInitErrorKind.InvalidAppId:
-        super('OneSignal: This app ID does match any existing app. Double check your app ID.');
+        super('OneSignal: This app ID does not match any existing app. Double check your app ID.');
         break;
       case SdkInitErrorKind.AppNotConfiguredForWebPush:
         super('OneSignal: This app ID does not have any web platforms enabled. Double check your app ID, or see step 1 on our setup guide (https://goo.gl/01h7fZ).');
