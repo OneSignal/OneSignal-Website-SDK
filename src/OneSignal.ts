@@ -320,10 +320,10 @@ export default class OneSignal {
    * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
    * @PublicApi
    */
-  public static async showHttpPermissionRequest(options?: { _sdkCall: boolean }): Promise<any> {
+  public static async showHttpPermissionRequest(options?: AutoPromptOptions): Promise<any> {
     Log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
 
-    OneSignal.showHttpPrompt().catch(e => Log.info(e));
+    OneSignal.showHttpPrompt(options).catch(e => Log.info(e));
   }
 
   /**
@@ -333,15 +333,6 @@ export default class OneSignal {
   public static async showHttpPrompt(options?: AutoPromptOptions) {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
-  }
-
-  /**
-   * Shows a native browser prompt or a slidedown depending on the configuration.
-   * @PublicApi
-   */
-  public static async showAutoPrompt(options?: AutoPromptOptions): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowAutoPrompt(options);
   }
 
   /**
