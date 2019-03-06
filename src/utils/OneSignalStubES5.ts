@@ -12,6 +12,7 @@ export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
 
   public constructor(stubOneSignal?: PossiblePredefinedOneSignal) {
     super(Object.getOwnPropertyNames(OneSignalStubES5.prototype));
+    (<any>window).OneSignal = this;
     this.playPushes(stubOneSignal);
   }
 
