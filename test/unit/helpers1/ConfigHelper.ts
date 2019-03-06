@@ -225,7 +225,7 @@ test('autoResubscribe - autoRegister backwards compatibility for custom integrat
     fakeUserConfig,
     fakeServerConfig
   );
-  t.is(finalConfig.autoResubscribe, false);
+  t.is(finalConfig.autoResubscribe, fakeServerConfig.config.autoResubscribe);
 });
 
 test('autoResubscribe - autoRegister backwards compatibility for custom integration 3', t => {

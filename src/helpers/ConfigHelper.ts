@@ -374,8 +374,10 @@ export class ConfigHelper {
 
         if (userConfig.hasOwnProperty("autoResubscribe")) {
           config.autoResubscribe = !!userConfig.autoResubscribe;
-        } else {
+        } else if (userConfig.hasOwnProperty("autoRegister")) {
           config.autoResubscribe = !!userConfig.autoRegister;
+        } else {
+          config.autoResubscribe = !!serverConfig.config.autoResubscribe;
         }
 
         return config;
