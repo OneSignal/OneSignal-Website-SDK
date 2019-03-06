@@ -11,6 +11,7 @@ import { OneSignalShimLoader } from "../../../src/utils/OneSignalShimLoader";
 import { SinonSandbox } from "sinon";
 import sinon from 'sinon';
 import { setUserAgent } from "../../support/tester/browser";
+import Log from "../../../src/libraries/Log";
 
 let sandbox: SinonSandbox;
 
@@ -466,12 +467,17 @@ test("Existing OneSignal array before OneSignalSDK.js loaded ES6", async t => {
 
 test("Existing OneSignal array before OneSignalSDK.js loaded ES5", async t => {
   setUserAgent(BrowserUserAgent.IE11); // ES5 browser
+  const logErrorSpy = sandbox.spy(Log, "error");
 
   let didCallFunction = false;
-  const preExistingArray = [() => { didCallFunction = true; }];
+  const preExistingArray = [() => {
+    didCallFunction = true;
+    (<any>window).OneSignal.setDefaultNotificationUrl("test");
+  }];
   (<any>window).OneSignal = preExistingArray;
 
   OneSignalShimLoader.start();
 
   t.true(didCallFunction);
+  t.false(logErrorSpy.called);
 });
