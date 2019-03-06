@@ -7,7 +7,6 @@ import Context from '../../../src/models/Context';
 import InitHelper from '../../../src/helpers/InitHelper';
 import OneSignalUtils from '../../../src/utils/OneSignalUtils';
 import {AppConfig, ConfigIntegrationKind, ServerAppConfig} from '../../../src/models/AppConfig';
-
 import nock from 'nock';
 import Random from "../../support/tester/Random";
 import OneSignalApi from "../../../src/OneSignalApi";
@@ -19,7 +18,6 @@ import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import { EmailProfile } from "../../../src/models/EmailProfile";
 import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import { stubMessageChannel } from '../../support/tester/utils';
-
 
 // Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
 class AssertInitSDK {
@@ -251,7 +249,7 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
 
   sinonSandbox.stub(InitHelper, "doInitialize").resolves();
   sinonSandbox.stub(OneSignal, "internalIsOptedOut").resolves(false);
-  sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").resolves(true);
+  sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").returns(true);
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(OneSignal.context.promptsManager, "internalShowAutoPrompt").resolves();
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
@@ -265,27 +263,62 @@ test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
   assertInit.ensureInitEventFired();
 });
 
-
-test("Test OneSignal.init, Basic HTTPS", async t => {
+test("Test OneSignal.init, Basic HTTPS, autoRegister = true with already granted push permissions", async t => {
   const testConfig = {
     initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
   };
   await TestEnvironment.initialize(testConfig);
-
   InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
-
   TestEnvironment.mockInternalOneSignal();
+  (window as any).Notification.permission = "granted";
+
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
     .resolves({success: true, id: Random.getRandomUuid()});
+
   const assertInit = new AssertInitSDK();
   assertInit.setupEnsureInitEventFires(t);
+
+  t.is(OneSignal.config.userConfig.autoResubscribe, true);
+
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
   });
 
+  expectPushRecordCreationRequest(t, createPlayerPostStub);
+  assertInit.ensureInitEventFired();
+});
+
+test("Test OneSignal.init, Basic HTTPS, autoRegister = true with default push permissions", async t => {
+  const testConfig = {
+    initOptions: {},
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+  };
+  await TestEnvironment.initialize(testConfig);
+  InitTestHelpers.mockBasicInitEnv(ConfigIntegrationKind.Custom);
+  TestEnvironment.mockInternalOneSignal();
+  (window as any).Notification.permission = "default";
+
+  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+    .resolves({success: true, id: Random.getRandomUuid()});
+
+  const assertInit = new AssertInitSDK();
+  assertInit.setupEnsureInitEventFires(t);
+
+  const initPromise = OneSignal.init({
+    appId: Random.getRandomUuid(),
+    autoRegister: true
+  });
+
+  // set up event to change permission after native prompt is displayed
+  OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
+    (window as any).Notification.permission = "granted";
+  });
+
+  await initPromise;
   expectPushRecordCreationRequest(t, createPlayerPostStub);
   assertInit.ensureInitEventFired();
 });
@@ -303,6 +336,7 @@ test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed a
   TestEnvironment.mockInternalOneSignal();
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
     .resolves({success: true, id: Random.getRandomUuid()});
+
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     autoRegister: true
