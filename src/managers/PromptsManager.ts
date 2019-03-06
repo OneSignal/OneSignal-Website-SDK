@@ -12,7 +12,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
-import { SlidedownPermissionMessageOptions, AppUserConfigPromptOptions } from '../models/AppConfig';
+import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 
@@ -78,9 +78,9 @@ export class PromptsManager {
       return;
     }
 
-    if (promptOptions.native && promptOptions.native.enabled && promptOptions.native.autoPromt) {
+    if (promptOptions.native && promptOptions.native.enabled && promptOptions.native.autoPrompt) {
       await this.internalShowNativePrompt();
-    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled && promptOptions.slidedown.autoPromt) {
+    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled && promptOptions.slidedown.autoPrompt) {
       await this.internalShowSlidedownPrompt(options);
     }
   }
