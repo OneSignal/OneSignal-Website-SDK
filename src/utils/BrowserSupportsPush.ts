@@ -35,7 +35,7 @@ export function isPushNotificationsSupported() {
     return false;
   }
 
-  if (browser.firefox && Number(browser.version) >= 44) {
+  if (browser.firefox && Number(browser.version) >= 47) {
     // check for Firefox Extended Support Release (ESR)
     // thanks to https://stackoverflow.com/questions/42674004/how-to-detect-difference-between-firefox-and-firefox-esr-in-javascript
     const esrBuildIds = [
@@ -93,7 +93,7 @@ export function isPushNotificationsSupported() {
     return true;
   }
 
-  if ((browser.chrome || (<any>browser).chromium) && Number(browser.version) >= 42) {
+  if ((browser.chrome || (<any>browser).chromium) && Number(browser.version) >= 54) {
     return true;
   }
 
@@ -101,7 +101,9 @@ export function isPushNotificationsSupported() {
   // 17.3.1.838 supports VAPID on Mac OS X
     return true;
 
-  // https://www.chromestatus.com/feature/5416033485586432
+  // https://help.opera.com/en/opera-version-history/
+  // Opera's Android versions do not match up with it's desktop versions.
+  //    Example: Desktop Opera 58 is Android Opera 50
   if (browser.opera && (browser.mobile || browser.tablet) && Number(browser.version) >= 37 ||
     browser.opera && Number(browser.version) >= 42)
     return true;
