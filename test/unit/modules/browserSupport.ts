@@ -64,6 +64,7 @@ test('should not support specific browser environments', async t => {
   shouldNotSupport(t, BrowserUserAgent.EdgeUnsupported2);
   shouldNotSupport(t, BrowserUserAgent.IE11);
 
+  shouldNotSupport(t, BrowserUserAgent.FirefoxWindowsUnSupported);
   shouldNotSupport(t, BrowserUserAgent.FirefoxMobileUnsupported);
   shouldNotSupport(t, BrowserUserAgent.FirefoxTabletUnsupported);
 
