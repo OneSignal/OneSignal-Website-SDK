@@ -32,7 +32,7 @@
     "publish": "yarn clean && yarn build:prod && yarn "
   },
   "config": {
-    "sdkVersion": "150701"
+    "sdkVersion": "150702"
   },
   "repository": {
     "type": "git",
