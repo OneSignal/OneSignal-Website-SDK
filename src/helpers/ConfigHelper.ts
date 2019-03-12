@@ -81,9 +81,24 @@ export class ConfigHelper {
 
   public static getMergedConfig(userConfig: AppUserConfig, serverConfig: ServerAppConfig): AppConfig {
     const configIntegrationKind = this.getConfigIntegrationKind(serverConfig);
+
+    const subdomain = this.getSubdomainForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig);
+    const allowLocalhostAsSecureOrigin = (
+      serverConfig.config.setupBehavior ?
+        serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin :
+        userConfig.allowLocalhostAsSecureOrigin
+    );
+    const isUsingSubscriptionWorkaround = OneSignalUtils.internalIsUsingSubscriptionWorkaround(
+      subdomain,
+      allowLocalhostAsSecureOrigin
+    );
+
+    const mergedUserConfig = this.getUserConfigForConfigIntegrationKind(
+      configIntegrationKind, userConfig, serverConfig, isUsingSubscriptionWorkaround);
+
     return {
       appId: serverConfig.app_id,
-      subdomain: this.getSubdomainForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
+      subdomain,
       origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       cookieSyncEnabled: serverConfig.features.cookie_sync.enable,
@@ -96,7 +111,7 @@ export class ConfigHelper {
       vapidPublicKey: serverConfig.config.vapid_public_key,
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
-      userConfig: this.getUserConfigForConfigIntegrationKind(configIntegrationKind, userConfig, serverConfig),
+      userConfig: mergedUserConfig,
       enableOnSession: serverConfig.features.enable_on_session || false,
     };
   }
@@ -152,7 +167,8 @@ export class ConfigHelper {
   public static injectDefaultsIntoPromptOptions(
     promptOptions: AppUserConfigPromptOptions | undefined,
     defaultsFromServer: ServerAppConfigPrompt,
-    wholeUserConfig: AppUserConfig
+    wholeUserConfig: AppUserConfig,
+    isUsingSubscriptionWorkaround: boolean = false,
   ): AppUserConfigPromptOptions | undefined {
   
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
@@ -201,15 +217,32 @@ export class ConfigHelper {
       promptOptionsConfig.native.autoPrompt = promptOptionsConfig.native.hasOwnProperty("autoPrompt") ?
         !!promptOptionsConfig.native.enabled && !!promptOptionsConfig.native.autoPrompt :
         !!promptOptionsConfig.native.enabled;
-    } else if (wholeUserConfig.autoRegister) {
-      promptOptionsConfig.native = {
-        enabled: !(promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt),
-        autoPrompt: !(promptOptionsConfig.slidedown.enabled && promptOptionsConfig.slidedown.autoPrompt),
-      }
     } else {
       promptOptionsConfig.native = {
         enabled: false,
         autoPrompt: false,
+      }
+    }
+
+    /**
+     * If autoRegister is true, show native prompt for https and slidedown for http ignoring any other related
+     * prompt options. 
+     */
+    if (wholeUserConfig.autoRegister === true) {
+      if (isUsingSubscriptionWorkaround) {
+        // disable native prompt
+        promptOptionsConfig.native.enabled = false;
+        promptOptionsConfig.native.autoPrompt = false;
+
+        // enable slidedown & make it autoPrompt
+        promptOptionsConfig.slidedown.enabled = true;
+        promptOptionsConfig.slidedown.autoPrompt = true;
+      } else {
+        //enable native prompt & make it autoPrompt
+        promptOptionsConfig.native.enabled = true;
+        promptOptionsConfig.native.autoPrompt = true;
+
+        //leave slidedown settings without change
       }
     }
 
@@ -259,7 +292,8 @@ export class ConfigHelper {
   public static getUserConfigForConfigIntegrationKind(
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
-    serverConfig: ServerAppConfig
+    serverConfig: ServerAppConfig,
+    isUsingSubscriptionWorkaround: boolean = false,
   ): AppUserConfig {
     const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
     switch (integrationCapabilities.configuration) {
@@ -356,7 +390,8 @@ export class ConfigHelper {
           promptOptions: this.injectDefaultsIntoPromptOptions(
             userConfig.promptOptions,
             serverConfig.config.staticPrompts,
-            userConfig
+            userConfig,
+            isUsingSubscriptionWorkaround
           ),
           ...{
           serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM

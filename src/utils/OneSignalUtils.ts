@@ -45,14 +45,30 @@ export class OneSignalUtils {
       return false;
     }
 
-    if (OneSignalUtils.isLocalhostAllowedAsSecureOrigin() &&
+    const allowLocalhostAsSecureOrigin: boolean = this.isLocalhostAllowedAsSecureOrigin();
+
+    return OneSignalUtils.internalIsUsingSubscriptionWorkaround(
+      OneSignal.config.subdomain, allowLocalhostAsSecureOrigin
+    );
+  }
+
+  public static internalIsUsingSubscriptionWorkaround(
+    subdomain: string | undefined,
+    allowLocalhostAsSecureOrigin: boolean | undefined
+  ): boolean {
+    if (bowser.safari) {
+      return false;
+    }
+
+    if (allowLocalhostAsSecureOrigin === true &&
       (location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
       return false;
     }
 
+    const windowEnv = SdkEnvironment.getWindowEnv();
     return (
       (windowEnv === WindowEnvironmentKind.Host || windowEnv === WindowEnvironmentKind.CustomIframe) &&
-      (!!OneSignal.config.subdomain || location.protocol === "http:")
+      (!!subdomain || location.protocol === "http:")
     );
   }
 
