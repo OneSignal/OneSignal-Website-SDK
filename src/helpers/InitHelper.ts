@@ -178,8 +178,23 @@ export default class InitHelper {
    * @private
    */
   public static async onSdkInitialized() {
-    await InitHelper.processExpiringSubscriptions();
-    if (!OneSignal.config.userConfig.promptOptions.autoPrompt && !OneSignal.config.userConfig.autoResubscribe) {
+    const wasUserResubscribed: boolean = await InitHelper.processExpiringSubscriptions();
+
+    /**
+     * If user's subscription was expiring and we processed it, our backend would get a player#create request.
+     * If user was not subscribed before and autoPrompting is on, user would get subscribed through player#create if
+     *  he clicks allow in an automatic prompt.
+     * It user has granted notification permissions but cleared the data and autoResubscribe is on, we will
+     *  resubscribe with autoResubscribe flag.
+     * In all other cases we would send an on_session request.
+     */
+    const isExistingUser: boolean = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (isExistingUser && !wasUserResubscribed) {
+      await OneSignal.context.updateManager.sendOnSessionUpdate();
+    } else if (
+      !OneSignal.config.userConfig.promptOptions.autoPrompt &&
+      !OneSignal.config.userConfig.autoResubscribe
+    ) {
       await OneSignal.context.updateManager.sendOnSessionUpdate();
     }
 
@@ -245,14 +260,14 @@ export default class InitHelper {
   }
 
   /** Entry method for any environment that sets expiring subscriptions. */
-  public static async processExpiringSubscriptions() {
+  public static async processExpiringSubscriptions(): Promise<boolean> {
     const context: ContextInterface = OneSignal.context;
 
     Log.debug("Checking subscription expiration...");
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
     if (!isSubscriptionExpiring) {
       Log.debug("Subscription is not considered expired.");
-      return;
+      return false;
     }
 
     const integrationKind = await SdkEnvironment.getIntegration();
@@ -294,6 +309,7 @@ export default class InitHelper {
         Log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
         break;
     }
+    return true;
   }
 
   public static async doInitialize(): Promise<void> {
