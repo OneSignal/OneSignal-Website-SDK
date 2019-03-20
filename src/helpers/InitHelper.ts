@@ -480,7 +480,6 @@ export default class InitHelper {
         await OneSignal.context.permissionManager.getNotificationPermission(
           OneSignal.context.appConfig.safariWebId
         );
-      console.log("currentPermission", currentPermission)
       if (currentPermission == NotificationPermission.Granted) {
         await SubscriptionHelper.registerForPush();
       }
