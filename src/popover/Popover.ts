@@ -82,32 +82,20 @@ export default class Popover {
     }, true);
   }
 
-  isSamsungBrowser() {
-    if(navigator.userAgent.match(/SAMSUNG|Samsung|SGH-[I|N|T]|GT-[I|N]|SM-[A|N|P|T|Z]|SHV-E|SCH-[I|J|R|S]|SPH-L/i)) {
-      return true;
-    }
-    return false;
-  }
-
   getPlatformNotificationIcon(): string {
-    if (this.notificationIcons) {
-      if (isChromeLikeBrowser() || bowser.firefox || bowser.msedge || this.isSamsungBrowser()) {
-        if (this.notificationIcons.chrome) {
-          return this.notificationIcons.chrome;
-        } else if (this.notificationIcons.firefox) {
-          return this.notificationIcons.firefox;
-        } 
-      }
-      else if (bowser.safari) {
-        if (this.notificationIcons.safari) {
-          return this.notificationIcons.safari;
-        } else if (this.notificationIcons.chrome) {
-          return this.notificationIcons.chrome;
-        }
-      }
-    }
-    return 'default-icon';
-}
+    if (!this.notificationIcons)
+      return 'default-icon';
+
+    if (bowser.safari && this.notificationIcons.safari)
+      return this.notificationIcons.safari;
+    else if (bowser.firefox && this.notificationIcons.firefox)
+      return this.notificationIcons.firefox;
+
+    return this.notificationIcons.chrome ||
+      this.notificationIcons.firefox ||
+      this.notificationIcons.safari ||
+      'default-icon';
+  }
 
   get container() {
     return document.querySelector('#onesignal-popover-container');
