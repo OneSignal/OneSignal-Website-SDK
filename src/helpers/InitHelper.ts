@@ -189,8 +189,10 @@ export default class InitHelper {
      * In all other cases we would send an on_session request.
      */
     const isExistingUser: boolean = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (isExistingUser && !wasUserResubscribed) {
-      await OneSignal.context.updateManager.sendOnSessionUpdate();
+    if (isExistingUser) {
+      if (!wasUserResubscribed) {
+        await OneSignal.context.updateManager.sendOnSessionUpdate();
+      }
     } else if (
       !OneSignal.config.userConfig.promptOptions.autoPrompt &&
       !OneSignal.config.userConfig.autoResubscribe
@@ -288,13 +290,7 @@ export default class InitHelper {
         break;
       case IntegrationKind.SecureProxy:
         if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
-          const newSubscription = await new Promise<Subscription>(resolve => {
-            context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
-              resolve(Subscription.deserialize(subscription));
-            });
-            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
-          });
-          Log.debug("Finished registering brand new subscription:", newSubscription);
+          await this.registerSubscriptionInProxyFrame(context);
         } else {
           const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
           await proxyFrame.runCommand(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS);
@@ -310,6 +306,17 @@ export default class InitHelper {
         break;
     }
     return true;
+  }
+
+  public static async registerSubscriptionInProxyFrame(context: ContextInterface): Promise<Subscription> {
+    const newSubscription = await new Promise<Subscription>(resolve => {
+      context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
+        resolve(Subscription.deserialize(subscription));
+      });
+      context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
+    });
+    Log.debug("Finished registering brand new subscription:", newSubscription);
+    return newSubscription;
   }
 
   public static async doInitialize(): Promise<void> {
@@ -473,6 +480,7 @@ export default class InitHelper {
         await OneSignal.context.permissionManager.getNotificationPermission(
           OneSignal.context.appConfig.safariWebId
         );
+      console.log("currentPermission", currentPermission)
       if (currentPermission == NotificationPermission.Granted) {
         await SubscriptionHelper.registerForPush();
       }

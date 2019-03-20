@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { TestContext } from "ava";
+import test, { TestContext, Context } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
 import nock from "nock";
 import {
@@ -22,10 +22,11 @@ import { Subscription } from "../../../src/models/Subscription";
 import { SessionManager } from "../../../src/managers/SessionManager";
 import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
 import InitHelper from "../../../src/helpers/InitHelper";
-import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import { WorkerMessenger } from '../../../src/libraries/WorkerMessenger';
+import { UpdateManager } from '../../../src/managers/UpdateManager';
+import PermissionManager from '../../../src/managers/PermissionManager';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const initTestHelper = new InitTestHelper(sinonSandbox);
@@ -71,7 +72,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       integration: ConfigIntegrationKind.Custom,
       pushIdentifier: 'granted'
     };
-    const stubs = await beforeTest(testConfig);
+    const stubs = await beforeTest(testConfig, t);
     
     simulateSlidedownAllowAfterShown();
     simulateNativeAllowAfterShown();
@@ -106,7 +107,6 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
     await initializePromise;
     await subscriptionPromise;
-    console.log("test 1 ends!!!!!")
 });
 
 test.serial(`HTTPS: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
@@ -117,10 +117,10 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     pushIdentifier: 'granted'
   };
 
-  const stubs = await beforeTest(testConfig);
+  const stubs = await beforeTest(testConfig, t);
   simulateSlidedownDismissAfterShown();
 
-  const subscribeSpy = sinonSandbox.stub(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
   const initializePromise = new Promise((resolve) => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -154,7 +154,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       permission: NotificationPermission.Granted,
     };
 
-    const stubs = await beforeTest(testConfig);
+    const stubs = await beforeTest(testConfig, t);
     stubServiceWorkerInstallation();
 
     const initializePromise = new Promise((resolve) => {
@@ -197,8 +197,8 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       integration: ConfigIntegrationKind.Custom,
       permission: NotificationPermission.Default,
     };
-    const stubs = await beforeTest(testConfig);
-    const subscribeSpy = sinonSandbox.stub(SubscriptionManager.prototype, "subscribe");
+    const stubs = await beforeTest(testConfig, t);
+    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
@@ -221,229 +221,590 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     t.is(subscribeSpy.callCount, 0);
 });
 
-// test.serial(`HTTPS: User not subscribed and not opted out => first page view => no autoResubscribe and no autoPrompt =>
-//   no requests`, async t => {
-//     const testConfig: TestEnvironmentConfig = {
-//       httpOrHttps: HttpHttpsEnvironment.Https,
-//       integration: ConfigIntegrationKind.Custom,
-//       pushIdentifier: 'granted',
-//       permission: NotificationPermission.Granted,
-//     };
-//     const stubs = await beforeTest(testConfig);
+test.serial(`HTTPS: User not subscribed and not opted out => first page view => no autoResubscribe and no autoPrompt =>
+  no requests`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Https,
+      integration: ConfigIntegrationKind.Custom,
+      pushIdentifier: 'granted',
+      permission: NotificationPermission.Granted,
+    };
+    const stubs = await beforeTest(testConfig, t);
+    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
+
+    const initPromise = OneSignal.init({
+      appId,
+      autoResubscribe: false,
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+    t.is(subscribeSpy.callCount, 0);
+});
+
+test.serial(`HTTPS: User opted out => first page view => onSession flag is on => sends on session`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Https,
+      integration: ConfigIntegrationKind.Custom,
+      permission: NotificationPermission.Granted,
+      pushIdentifier: 'granted'
+    };
+
+    const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
+    serverAppConfig.features.enable_on_session = true;
+    const stubs = await beforeTest(testConfig, t, serverAppConfig);
+    await markUserAsOptedOut();
+
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 1);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
+
+    const initPromise = OneSignal.init({
+      appId,
+      autoResubscribe: true,
+      promptOptions: {
+        slidedown: {
+          enabled: true,
+          autoPrompt: true,
+        }
+      }
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+});
+
+test.serial(`HTTPS: User opted out => first page view => onSession flag is off => no requests`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
+  serverAppConfig.features.enable_on_session = false;
+  const stubs = await beforeTest(testConfig, t, serverAppConfig);
+  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  await markUserAsOptedOut();
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+  t.is(subscribeSpy.callCount, 0);
+});
+
+test.serial(`HTTPS: User opted out => second page view => onSession flag is on => no requests`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
+  serverAppConfig.features.enable_on_session = true;
+  const stubs = await beforeTest(testConfig, t, serverAppConfig);
+  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  await markUserAsOptedOut();
+
+  sinonSandbox.stub(SessionManager.prototype, "getPageViewCount").resolves(2);
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  await initializePromise;
+  t.is(subscribeSpy.callCount, 0);
+});
+
+test.serial(`HTTPS: User subscribed => first page view => expiring subscription => sends player update`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const stubs = await beforeTest(testConfig, t);
+
+  // Using spy instead of stub here is intended. Spy does callThrough, i.e. executes underlying function, by default
+  //  while stub prevents the actual execution.
+  // Workaround with stubs would be `sinon.stub(object, "method", object.method);`
+  const playerUpdateStub = sinonSandbox.spy(UpdateManager.prototype, "sendPlayerUpdate");
+  await markUserAsSubscribed(true);
+  stubServiceWorkerInstallation();
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      // sends player update which actually calls on_session if this is the first call we're performing.
+      t.is(playerUpdateStub.callCount, 1);
+      t.is(stubs.onSessionStub.callCount, 1);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+});
+
+test.serial(`HTTPS: User subscribed => first page view => sends on session`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const stubs = await beforeTest(testConfig, t);
+  await markUserAsSubscribed();
+  stubServiceWorkerInstallation();
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 1);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+});
+
+test.serial(`HTTP: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
+  click allow => sends player create`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Https,
+      integration: ConfigIntegrationKind.Custom,
+      pushIdentifier: 'granted'
+    };
+    const stubs = await beforeTest(testConfig, t);
+
+    simulateSlidedownAllowAfterShown();
+    simulateNativeAllowAfterShown();
   
-//     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//       t.is(stubs.onSessionStub.callCount, 0);
-//       t.is(stubs.createPlayerPostStub.callCount, 0);
-//     });
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
 
-//     const initPromise = OneSignal.init({
-//       appId,
-//     });
-//     await initPromise;
-//     t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-// });
+    const subscriptionPromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
+        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.createPlayerPostStub.callCount, 1);
+        resolve();
+      });
+    });
 
-// test.serial(`HTTPS: User opted out => first page view => onSession flag is on => sends on session`, async t => {
-//     const testConfig: TestEnvironmentConfig = {
-//       httpOrHttps: HttpHttpsEnvironment.Https,
-//       integration: ConfigIntegrationKind.Custom,
-//       permission: NotificationPermission.Granted,
-//       pushIdentifier: 'granted'
-//     };
+    const initPromise = OneSignal.init({
+      appId,
+      promptOptions: {
+        slidedown: {
+          enabled: true,
+          autoPrompt: true,
+        }
+      },
+      autoResubscribe: false,
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+    await subscriptionPromise;
+});
 
-//     const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
-//     serverAppConfig.features.enable_on_session = true;
-//     const stubs = await beforeTest(testConfig, serverAppConfig);
-//     await markUserAsOptedOut();
+test.serial(`HTTP: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
+  click dismiss => no requests`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    integration: ConfigIntegrationKind.Custom,
+    pushIdentifier: 'granted'
+  };
 
-//     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//       t.is(stubs.onSessionStub.callCount, 1);
-//       t.is(stubs.createPlayerPostStub.callCount, 0);
-//     });
+  const stubs = await beforeTest(testConfig, t);
+  simulateSlidedownDismissAfterShown();
 
-//     const initPromise = OneSignal.init({
-//       appId,
-//       autoResubscribe: true,
-//       promptOptions: {
-//         slidedown: {
-//           enabled: true,
-//           autoPrompt: true,
-//         }
-//       }
-//     });
-//     await initPromise;
-//     t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-// });
+  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-// test.serial(`HTTPS: User opted out => first page view => onSession flag is off => no requests`, async t => {
-//   const testConfig: TestEnvironmentConfig = {
-//     httpOrHttps: HttpHttpsEnvironment.Https,
-//     integration: ConfigIntegrationKind.Custom,
-//     permission: NotificationPermission.Granted,
-//     pushIdentifier: 'granted'
-//   };
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
 
-//   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
-//   serverAppConfig.features.enable_on_session = false;
-//   const stubs = await beforeTest(testConfig, serverAppConfig);
-//   await markUserAsOptedOut();
+  const initPromise = OneSignal.init({
+    appId,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    },
+    autoResubscribe: false,
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+  t.is(subscribeSpy.callCount, 0);
+});
 
-//   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//     t.is(stubs.onSessionStub.callCount, 0);
-//     t.is(stubs.createPlayerPostStub.callCount, 0);
-//   });
+// autoResubscribe works only on https
+test.serial(`HTTP: User not subscribed and not opted out => first page view => autoResubscribe is on =>
+  permissions already granted => no requests`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Http,
+      integration: ConfigIntegrationKind.Custom,
+      permission: NotificationPermission.Granted,
+    };
 
-//   const initPromise = OneSignal.init({
-//     appId,
-//     autoResubscribe: true,
-//     promptOptions: {
-//       slidedown: {
-//         enabled: true,
-//         autoPrompt: true,
-//       }
-//     }
-//   });
-//   await initPromise;
-//   t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-// });
+    const stubs = await beforeTest(testConfig, t);
+    stubServiceWorkerInstallation();
 
-// test.serial(`HTTPS: User opted out => second page view => onSession flag is on => no requests`, async t => {
-//   const testConfig: TestEnvironmentConfig = {
-//     httpOrHttps: HttpHttpsEnvironment.Https,
-//     integration: ConfigIntegrationKind.Custom,
-//     permission: NotificationPermission.Granted,
-//     pushIdentifier: 'granted'
-//   };
+    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-//   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
-//   serverAppConfig.features.enable_on_session = true;
-//   const stubs = await beforeTest(testConfig, serverAppConfig);
-//   await markUserAsOptedOut();
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
 
-//   sinonSandbox.stub(SessionManager.prototype, "getPageViewCount").resolves(2);
+    const initPromise = OneSignal.init({
+      appId,
+      autoResubscribe: true,
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+    t.is(subscribeSpy.callCount, 0);
+});
 
-//   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//     t.is(stubs.onSessionStub.callCount, 0);
-//     t.is(stubs.createPlayerPostStub.callCount, 0);
-//   });
+test.serial(`HTTP: User not subscribed and not opted out => first page view => autoResubscribe is on =>
+  permissions default => no requests`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Http,
+      integration: ConfigIntegrationKind.Custom,
+      permission: NotificationPermission.Default,
+    };
+    const stubs = await beforeTest(testConfig, t);
+    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
+    OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+    });
 
-//   const initPromise = OneSignal.init({
-//     appId,
-//     autoResubscribe: true,
-//     promptOptions: {
-//       slidedown: {
-//         enabled: true,
-//         autoPrompt: true,
-//       }
-//     }
-//   });
-//   await initPromise;
-// });
+    const initPromise = OneSignal.init({
+      appId,
+      autoResubscribe: true,
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+    t.is(subscribeSpy.callCount, 0);
+});
 
-// test.serial(`HTTPS: User subscribed => first page view => expiring subscription => sends player update`, async t => {
-//   const testConfig: TestEnvironmentConfig = {
-//     httpOrHttps: HttpHttpsEnvironment.Https,
-//     integration: ConfigIntegrationKind.Custom,
-//     permission: NotificationPermission.Granted,
-//     pushIdentifier: 'granted'
-//   };
+test.serial(`HTTP: User not subscribed and not opted out => first page view => no autoResubscribe and no autoPrompt =>
+  no requests`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Http,
+      integration: ConfigIntegrationKind.Custom,
+      pushIdentifier: 'granted',
+      permission: NotificationPermission.Granted,
+    };
+    const stubs = await beforeTest(testConfig, t);
+    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-//   const stubs = await beforeTest(testConfig);
-//   await markUserAsSubscribed(true);
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
 
-//   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//     t.is(stubs.onSessionStub.callCount, 0);
-//     // TODO: uncomment after figuring out how to stub all service worker push subscription renewing stuff
-//     // t.is(stubs.createPlayerPostStub.callCount, 1);
-//     t.is(stubs.createPlayerPostStub.callCount, 0);
-//   });
+    const initPromise = OneSignal.init({
+      appId,
+      autoResubscribe: false,
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+    t.is(subscribeSpy.callCount, 0);
+});
 
-//   const initPromise = OneSignal.init({
-//     appId,
-//     autoResubscribe: true,
-//     promptOptions: {
-//       slidedown: {
-//         enabled: true,
-//         autoPrompt: true,
-//       }
-//     }
-//   });
-//   await initPromise;
-//   t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-// });
+test.serial(`HTTP: User opted out => first page view => onSession flag is on => sends on session`, async t => {
+    const testConfig: TestEnvironmentConfig = {
+      httpOrHttps: HttpHttpsEnvironment.Http,
+      integration: ConfigIntegrationKind.Custom,
+      permission: NotificationPermission.Granted,
+      pushIdentifier: 'granted'
+    };
 
-// test.serial(`HTTPS: User subscribed => first page view => sends on session`, async t => {
-//   const testConfig: TestEnvironmentConfig = {
-//     httpOrHttps: HttpHttpsEnvironment.Https,
-//     integration: ConfigIntegrationKind.Custom,
-//     permission: NotificationPermission.Granted,
-//     pushIdentifier: 'granted'
-//   };
+    const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
+    serverAppConfig.features.enable_on_session = true;
+    const stubs = await beforeTest(testConfig, t, serverAppConfig);
+    await markUserAsOptedOut();
 
-//   const stubs = await beforeTest(testConfig);
-//   await markUserAsSubscribed();
+    const initializePromise = new Promise((resolve) => {
+      OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+        t.is(stubs.onSessionStub.callCount, 1);
+        t.is(stubs.createPlayerPostStub.callCount, 0);
+        resolve();
+      });
+    });
 
-//   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//     t.is(stubs.onSessionStub.callCount, 1);
-//     t.is(stubs.createPlayerPostStub.callCount, 0);
-//   });
+    const initPromise = OneSignal.init({
+      appId,
+      autoResubscribe: true,
+      promptOptions: {
+        slidedown: {
+          enabled: true,
+          autoPrompt: true,
+        }
+      }
+    });
+    await initPromise;
+    t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+    await initializePromise;
+});
 
-//   const initPromise = OneSignal.init({
-//     appId,
-//     autoResubscribe: true,
-//     promptOptions: {
-//       slidedown: {
-//         enabled: true,
-//         autoPrompt: true,
-//       }
-//     }
-//   });
-//   await initPromise;
-//   t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-// });
+test.serial(`HTTP: User opted out => first page view => onSession flag is off => no requests`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
 
-// test.serial(`HTTP: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
-//   click allow => sends player create`, async t => {
-//     const testConfig: TestEnvironmentConfig = {
-//       httpOrHttps: HttpHttpsEnvironment.Http,
-//       integration: ConfigIntegrationKind.Custom,
-//       pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
-//     };
+  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
+  serverAppConfig.features.enable_on_session = false;
+  const stubs = await beforeTest(testConfig, t, serverAppConfig);
+  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  await markUserAsOptedOut();
 
-//     const stubs = await beforeTest(testConfig);
-//     stubMessageChannel(t);
-//     mockIframeMessaging(sinonSandbox);
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
 
-//     simulateSlidedownAllowAfterShown();
-//     simulateNativeAllowAfterShown();
-  
-//     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-//       t.is(stubs.onSessionStub.callCount, 0);
-//       t.is(stubs.createPlayerPostStub.callCount, 0);
-//       console.log(1)
-//     });
-//     OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-//       t.is(stubs.onSessionStub.callCount, 0);
-//       t.is(stubs.createPlayerPostStub.callCount, 1);
-//       console.log(2)
-//     });
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+  t.is(subscribeSpy.callCount, 0);
+});
 
-//     const initPromise = OneSignal.init({
-//       appId,
-//       promptOptions: {
-//         slidedown: {
-//           enabled: true,
-//           autoPrompt: true,
-//         }
-//       },
-//       autoResubscribe: false,
-//     });
-//     await initPromise;
-//     t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-// });
+test.serial(`HTTP: User opted out => second page view => onSession flag is on => no requests`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
+  serverAppConfig.features.enable_on_session = true;
+  const stubs = await beforeTest(testConfig, t, serverAppConfig);
+  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  await markUserAsOptedOut();
+
+  sinonSandbox.stub(SessionManager.prototype, "getPageViewCount").resolves(2);
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  await initializePromise;
+  t.is(subscribeSpy.callCount, 0);
+});
+
+test.serial(`HTTP: User subscribed => first page view => expiring subscription => sends player update`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const stubs = await beforeTest(testConfig, t);
+  const registerStub = sinonSandbox.stub(InitHelper, "registerSubscriptionInProxyFrame").resolves(createSubscription());
+
+  await markUserAsSubscribedOnHttp(true);
+  stubServiceWorkerInstallation();
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      // t.is(registerStub.callCount, 1);
+      t.is(stubs.onSessionStub.callCount, 0);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+});
+
+test.serial(`HTTP: User subscribed => first page view => sends on session`, async t => {
+  const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Http,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Granted,
+    pushIdentifier: 'granted'
+  };
+
+  const stubs = await beforeTest(testConfig, t);
+  await markUserAsSubscribedOnHttp();
+  stubServiceWorkerInstallation();
+
+  const initializePromise = new Promise((resolve) => {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      t.is(stubs.onSessionStub.callCount, 1);
+      t.is(stubs.createPlayerPostStub.callCount, 0);
+      resolve();
+    });
+  });
+
+  const initPromise = OneSignal.init({
+    appId,
+    autoResubscribe: true,
+    promptOptions: {
+      slidedown: {
+        enabled: true,
+        autoPrompt: true,
+      }
+    }
+  });
+  await initPromise;
+  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  await initializePromise;
+});
 
 /** Helper methods */
-async function beforeTest(testConfig: TestEnvironmentConfig, customServerAppConfig?: ServerAppConfig) {
+async function beforeTest(
+  testConfig: TestEnvironmentConfig,
+  t: TestContext & Context<any>,
+  customServerAppConfig?: ServerAppConfig
+) {
   await TestEnvironment.initialize(testConfig);
   initTestHelper.mockBasicInitEnv(testConfig, customServerAppConfig);
   OneSignal.initialized = false;
@@ -463,6 +824,10 @@ async function beforeTest(testConfig: TestEnvironmentConfig, customServerAppConf
       return { success: true };
     });
 
+  if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {
+    stubMessageChannel(t);
+    mockIframeMessaging(sinonSandbox);
+  }
   return { createPlayerPostStub, onSessionStub };
 }
 
@@ -502,11 +867,7 @@ async function markUserAsOptedOut() {
 }
 
 async function markUserAsSubscribed(expired?: boolean) {
-  const subscription = new Subscription();
-  subscription.deviceId = playerId;
-  subscription.optedOut = false;
-  subscription.subscriptionToken = "some_token";
-  subscription.createdAt = new Date(2017, 11, 13, 2, 3, 4, 0).getTime();
+  const subscription = createSubscription();
   await Database.setSubscription(subscription);
 
   sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
@@ -515,6 +876,12 @@ async function markUserAsSubscribed(expired?: boolean) {
   if (expired) {
     sinonSandbox.stub(InitHelper, "processExpiringSubscriptions").resolves(true);
   }
+}
+
+async function markUserAsSubscribedOnHttp(expired?: boolean) {
+  markUserAsSubscribed(expired);
+  sinonSandbox.stub(PermissionManager.prototype, "getOneSignalSubdomainNotificationPermission")
+    .resolves(NotificationPermission.Granted);
 }
 
 function stubServiceWorkerInstallation() {
@@ -528,4 +895,13 @@ function stubServiceWorkerInstallation() {
   sinonSandbox.stub(ServiceWorkerManager, "getRegistration")
     .resolves(swRegistration);
   sinonSandbox.stub(WorkerMessenger.prototype, "unicast").resolves();
+}
+
+function createSubscription(): Subscription {
+  const subscription = new Subscription();
+  subscription.deviceId = playerId;
+  subscription.optedOut = false;
+  subscription.subscriptionToken = "some_token";
+  subscription.createdAt = new Date(2017, 11, 13, 2, 3, 4, 0).getTime();
+  return subscription;
 }
