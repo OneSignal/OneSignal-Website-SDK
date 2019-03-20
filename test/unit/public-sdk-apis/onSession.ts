@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test, { TestContext, Context } from "ava";
-import sinon, { SinonSandbox } from 'sinon';
+import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from "nock";
 import {
   TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig
@@ -89,6 +89,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 1);
+        inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
         resolve();
       });
     });
@@ -161,6 +162,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 1);
+        inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
         resolve();
       });
     });
@@ -266,6 +268,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is on =>
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
+        inspectOnSessionRequest(t, stubs.onSessionStub);
         t.is(stubs.createPlayerPostStub.callCount, 0);
         resolve();
       });
@@ -385,6 +388,7 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
       // sends player update which actually calls on_session if this is the first call we're performing.
       t.is(playerUpdateStub.callCount, 1);
       t.is(stubs.onSessionStub.callCount, 1);
+      inspectOnSessionRequest(t, stubs.onSessionStub);
       t.is(stubs.createPlayerPostStub.callCount, 0);
       resolve();
     });
@@ -420,6 +424,7 @@ test.serial(`HTTPS: User subscribed => first page view => sends on session`, asy
   const initializePromise = new Promise((resolve) => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 1);
+      inspectOnSessionRequest(t, stubs.onSessionStub);
       t.is(stubs.createPlayerPostStub.callCount, 0);
       resolve();
     });
@@ -464,6 +469,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 1);
+        inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
         resolve();
       });
     });
@@ -629,6 +635,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is on => 
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
+        inspectOnSessionRequest(t, stubs.onSessionStub);
         t.is(stubs.createPlayerPostStub.callCount, 0);
         resolve();
       });
@@ -779,6 +786,7 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
   const initializePromise = new Promise((resolve) => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 1);
+      inspectOnSessionRequest(t, stubs.onSessionStub);
       t.is(stubs.createPlayerPostStub.callCount, 0);
       resolve();
     });
@@ -904,4 +912,53 @@ function createSubscription(): Subscription {
   subscription.subscriptionToken = "some_token";
   subscription.createdAt = new Date(2017, 11, 13, 2, 3, 4, 0).getTime();
   return subscription;
+}
+
+async function inspectPushRecordCreationRequest(t: TestContext, requestStub: SinonStub) {
+  // For player#create device record is already serialized. Checking serialized structure.
+  const anyValues = [
+    "device_type",
+    "language",
+    "timezone",
+    "device_os",
+    "sdk",
+    "delivery_platform",
+    "browser_name",
+    "browser_version",
+    "operating_system",
+    "operating_system_version",
+    "device_platform",
+    "device_model",
+    "identifier",
+    "notification_types"
+  ];
+  t.is(requestStub.callCount, 1);
+  t.not(requestStub.getCall(0), null);
+  const data: any = requestStub.getCall(0).args[1];
+  anyValues.forEach((valueKey) => {
+    t.not(data[valueKey], undefined, `player create: ${valueKey} is undefined! => data: ${JSON.stringify(data)}`);
+  });
+}
+
+async function inspectOnSessionRequest(t: TestContext, requestStub: SinonStub) {
+  // Device record is serialized inside of `updateUserSession`. Checking original DeviceRecord properties.
+  const anyValues = [
+    "deliveryPlatform",
+    "language",
+    "timezone",
+    "browserVersion",
+    "sdkVersion",
+    "browserName",
+    "subscriptionState",
+    "operatingSystem",
+    "operatingSystemVersion",
+    "devicePlatform",
+    "deviceModel",
+  ];
+  t.is(requestStub.callCount, 1);
+  t.not(requestStub.getCall(0), null);
+  const data: any = requestStub.getCall(0).args[1];
+  anyValues.forEach((valueKey) => {
+    t.not(data[valueKey], undefined, `on_session: ${valueKey} is undefined! => data: ${JSON.stringify(data)}`);
+  });
 }

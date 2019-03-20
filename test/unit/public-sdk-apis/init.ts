@@ -5,8 +5,7 @@ import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/models/Context';
 import InitHelper from '../../../src/helpers/InitHelper';
-import OneSignalUtils from '../../../src/utils/OneSignalUtils';
-import { AppConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
+import { AppConfig } from '../../../src/models/AppConfig';
 import nock from 'nock';
 import Random from "../../support/tester/Random";
 import OneSignalApiBase from "../../../src/OneSignalApiBase";
@@ -15,7 +14,7 @@ import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import { EmailProfile } from "../../../src/models/EmailProfile";
 import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
-  stubMessageChannel, mockIframeMessaging, mockWebPushAnalytics, InitTestHelper, AssertInitSDK
+  mockWebPushAnalytics, InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
 
 
@@ -103,185 +102,6 @@ test("email session should be updated on first page view", async t => {
   t.is(emailDeviceRecord.appId, OneSignal.context.appConfig.appId);
 });
 
-async function expectPushRecordCreationRequest(t: TestContext, createRequestPostStub: SinonStub) {
-  const anyValues = [
-    "device_type",
-    "language",
-    "timezone",
-    "device_os",
-    "sdk",
-    "delivery_platform",
-    "browser_name",
-    "browser_version",
-    "operating_system",
-    "operating_system_version",
-    "device_platform",
-    "device_model",
-    "identifier"
-  ];
-  t.true(createRequestPostStub.calledOnce);
-  t.not(createRequestPostStub.getCall(0), null);
-  const data: any = createRequestPostStub.getCall(0).args[1];
-  anyValues.forEach((valueKey) => {
-    t.not(data[valueKey], undefined);
-  });
-}
-
-test("Test OneSignal.init, Basic HTTP", async t => {
-  stubMessageChannel(t);
-  mockIframeMessaging(sinonSandbox);
-  sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
-
-  const testConfig = {
-    initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Http,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
-  };
-  await TestEnvironment.initialize(testConfig);
-  OneSignal.initialized = false;
-
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false);
-  serverAppConfig.config.subdomain = "test";
-  initTestHelper.stubJSONP(serverAppConfig);
-
-  const assertInit = new AssertInitSDK();
-  assertInit.setupEnsureInitEventFires(t);
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
-  await OneSignal.init({
-    appId: Random.getRandomUuid()
-  });
-  t.is(OneSignal.pendingInit, false);
-  t.true(createPlayerPostStub.notCalled);
-  assertInit.ensureInitEventFired();
-});
-
-test("Test OneSignal.init, Basic HTTP, autoRegister", async t => {
-  stubMessageChannel(t);
-  mockIframeMessaging(sinonSandbox);
-  sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
-
-  const testConfig = {
-    initOptions: {
-      autoRegister: true,
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
-  };
-  await TestEnvironment.initialize(testConfig);
-  OneSignal.initialized = false;
-
-  sinonSandbox.stub(document, "visibilityState").value("visible");
-
-  const serverAppConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom, false);
-  serverAppConfig.config.subdomain = "test";
-  initTestHelper.stubJSONP(serverAppConfig);
-
-  const assertInit = new AssertInitSDK();
-  assertInit.setupEnsureInitEventFires(t);
-
-  sinonSandbox.stub(InitHelper, "doInitialize").resolves();
-  sinonSandbox.stub(OneSignal, "internalIsOptedOut").resolves(false);
-  sinonSandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").returns(true);
-  sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
-  sinonSandbox.stub(OneSignal.context.promptsManager, "internalShowAutoPrompt").resolves();
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
-  await OneSignal.init({
-    appId: Random.getRandomUuid(),
-    autoRegister: true
-  });
-  t.is(OneSignal.pendingInit, false);
-  t.true(createPlayerPostStub.notCalled);
-  assertInit.ensureInitEventFired();
-});
-
-test("Test OneSignal.init, Basic HTTPS, autoRegister = true with already granted push permissions", async t => {
-  const testConfig = {
-    initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
-  };
-  await TestEnvironment.initialize(testConfig);
-  initTestHelper.mockBasicInitEnv(testConfig);
-  TestEnvironment.mockInternalOneSignal();
-  (window as any).Notification.permission = "granted";
-
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
-
-  const assertInit = new AssertInitSDK();
-  assertInit.setupEnsureInitEventFires(t);
-
-  t.is(OneSignal.config.userConfig.autoResubscribe, true);
-
-  await OneSignal.init({
-    appId: Random.getRandomUuid(),
-    autoRegister: true
-  });
-
-  expectPushRecordCreationRequest(t, createPlayerPostStub);
-  assertInit.ensureInitEventFired();
-});
-
-test("Test OneSignal.init, Basic HTTPS, autoRegister = true with default push permissions", async t => {
-  const testConfig = {
-    initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
-  };
-  await TestEnvironment.initialize(testConfig);
-  initTestHelper.mockBasicInitEnv(testConfig);
-  TestEnvironment.mockInternalOneSignal();
-  (window as any).Notification.permission = "default";
-
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
-
-  const assertInit = new AssertInitSDK();
-  assertInit.setupEnsureInitEventFires(t);
-
-  const initPromise = OneSignal.init({
-    appId: Random.getRandomUuid(),
-    autoRegister: true
-  });
-
-  // set up event to change permission after native prompt is displayed
-  OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
-    (window as any).Notification.permission = "granted";
-  });
-
-  await initPromise;
-  expectPushRecordCreationRequest(t, createPlayerPostStub);
-  assertInit.ensureInitEventFired();
-});
-
-test("Test OneSignal.init, Basic HTTPS, Custom, with autoRegister, and delayed accept", async t => {
-  const testConfig = {
-    initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: 'granted'
-  };
-  await TestEnvironment.initialize(testConfig);
-
-  initTestHelper.mockBasicInitEnv(testConfig);
-
-  TestEnvironment.mockInternalOneSignal();
-  const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: Random.getRandomUuid()});
-
-  await OneSignal.init({
-    appId: Random.getRandomUuid(),
-    autoRegister: true
-  });
-  expectPushRecordCreationRequest(t, createPlayerPostStub);
-
-  // Check checkAndTriggerSubscriptionChanged if we get a 'Promise returned by test never resolved' Error
-  await OneSignal.isPushNotificationsEnabled();
-  t.pass();
-});
 
 test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => {
   const testConfig = {
@@ -331,8 +151,6 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
     else
       t.pass();
   });
-
-  TestEnvironment.mockInternalOneSignal();
   // Don't need to mock create call, autoRegister not settable with TypicalSite
 
   const assertInit = new AssertInitSDK();
@@ -363,3 +181,5 @@ test("Test OneSignal.init, No app id or wrong format of app id", async t => {
   await t.throws(OneSignal.init({ appId: "" }), SdkInitError);
   await t.throws(OneSignal.init({ appId: "wrong-format" }), SdkInitError);
 });
+
+// more init tests in onSession.ts
