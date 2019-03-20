@@ -184,7 +184,7 @@ export default class InitHelper {
      * If user's subscription was expiring and we processed it, our backend would get a player#create request.
      * If user was not subscribed before and autoPrompting is on, user would get subscribed through player#create if
      *  he clicks allow in an automatic prompt.
-     * It user has granted notification permissions but cleared the data and autoResubscribe is on, we will
+     * If user has granted notification permissions but cleared the data and autoResubscribe is on, we will
      *  resubscribe with autoResubscribe flag.
      * In all other cases we would send an on_session request.
      */
