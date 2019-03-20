@@ -22,15 +22,19 @@ export default class TestHelper {
      * asynchronous.
      */
     if (isUsingSubscriptionWorkaround()) {
-      await new Promise((resolve, reject) => {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, {}, reply => {
-          if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
-            resolve();
-          } else {
-            reject();
-          }
+      try {
+        await new Promise((resolve, reject) => {
+          OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.MARK_PROMPT_DISMISSED, {}, reply => {
+            if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
+              resolve();
+            } else {
+              reject();
+            }
+          });
         });
-      });
+      } catch(e) {
+        Log.debug("Proxy Frame possibly didn't not receive MARK_PROMPT_DISMISSED message", e || "");
+      }
     }
     let dismissCount = await Database.get<number>('Options', 'promptDismissCount');
     if (!dismissCount) {

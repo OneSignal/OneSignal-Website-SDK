@@ -7,4 +7,6 @@ export default class ServiceWorker implements EventTarget {
   addEventListener = () => { throw new NotImplementedError(); };
   removeEventListener = () => { throw new NotImplementedError(); };
   dispatchEvent = () => { throw new NotImplementedError(); };
+  postMessage = () => { throw new NotImplementedError(); };
+  ready = new Promise((resolve) => { resolve(); })
 }

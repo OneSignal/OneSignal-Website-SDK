@@ -1,11 +1,96 @@
+import { TestContext, Context } from "ava";
+import { SinonSandbox } from 'sinon';
+import nock from 'nock';
+import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
+import AltOriginManager from "../../../src/managers/AltOriginManager";
+import OneSignalApi from "../../../src/OneSignalApi";
+import OneSignalApiBase from "../../../src/OneSignalApiBase";
+import { TestEnvironment, TestEnvironmentConfig, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import { ServerAppConfig } from '../../../src/models/AppConfig';
+
 export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;
 }
 
-
-export function stubMessageChannel(t: TestContext) {
+export function stubMessageChannel(t: TestContext & Context<any>) {
   // Stub MessageChannel
   const fakeClass = class Test { };
   t.context.originalMessageChannel = (global as any).MessageChannel;
   (global as any).MessageChannel = fakeClass;
+}
+
+// Mocks out any messages going to the *.os.tc iframe.
+export function mockIframeMessaging(sinonSandbox: SinonSandbox) {
+  sinonSandbox.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
+  sinonSandbox.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
+  sinonSandbox.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(() => {});
+  sinonSandbox.stub(ProxyFrameHost.prototype, 'runCommand').resolves(undefined);
+
+  const mockIframeMessageReceiver = function (_msg: string, _data: object, resolve: Function) {
+    // OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION
+    resolve(true);
+  };
+  sinonSandbox.stub(ProxyFrameHost.prototype, 'message').callsFake(mockIframeMessageReceiver);
+}
+
+export function mockWebPushAnalytics() {
+  nock('https://onesignal.com')
+    .get("/webPushAnalytics")
+    .reply(200, (_uri: string, _requestBody: string) => {
+      return { success: true };
+    }).persist(true);
+
+  nock('https://test.os.tc')
+    .get("/webPushAnalytics")
+    .reply(200, (_uri: string, _requestBody: string) => {
+      return { success: true };
+    }).persist(true);
+}
+
+export class InitTestHelper {
+  private readonly sinonSandbox: SinonSandbox;
+
+  constructor(sinonSandbox: SinonSandbox) {
+    this.sinonSandbox = sinonSandbox;
+  }
+  stubJSONP(serverAppConfig: ServerAppConfig) {
+    this.sinonSandbox.stub(OneSignalApi, "jsonpLib").callsFake(
+      function (_url: string, callback: Function) {
+        callback(null, serverAppConfig);
+      }
+    );
+  }
+
+  mockBasicInitEnv(testEnvironmentConfig: TestEnvironmentConfig, customServerAppConfig?: ServerAppConfig) {
+    OneSignal.initialized = false;
+
+    this.sinonSandbox.stub(document, "visibilityState").value("visible");
+
+    const isHttps = testEnvironmentConfig.httpOrHttps ?
+      testEnvironmentConfig.httpOrHttps == HttpHttpsEnvironment.Https :
+      undefined;
+    const serverAppConfig = customServerAppConfig ||
+      TestEnvironment.getFakeServerAppConfig(testEnvironmentConfig.integration!, isHttps);
+    this.stubJSONP(serverAppConfig);
+    this.sinonSandbox.stub(OneSignalApiBase, "get").resolves({});
+  }
+}
+
+// Helper class to ensure the public OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC event fires
+export class AssertInitSDK {
+  private firedSDKInitializedPublic: boolean = false;
+
+  public setupEnsureInitEventFires(t: TestContext) {
+    OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
+      this.firedSDKInitializedPublic = true;
+      t.pass();
+    });
+  }
+
+  public ensureInitEventFired() {
+    if (!this.firedSDKInitializedPublic) {
+      throw new Error("OneSignal.Init did not finish!");
+    }
+    this.firedSDKInitializedPublic = false;
+  }
 }

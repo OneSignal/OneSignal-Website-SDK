@@ -24,6 +24,7 @@ import Context from "../../../src/models/Context";
 import CustomLink from "../../../src/CustomLink";
 import Emitter from '../../../src/libraries/Emitter';
 import ConfigManager from '../../../src/managers/ConfigManager';
+import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 
 var global = new Function('return this')();
 
@@ -32,8 +33,8 @@ export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
 }
 
 export enum HttpHttpsEnvironment {
-  Http,
-  Https
+  Http = "Http",
+  Https = "Https"
 }
 
 export enum BrowserUserAgent {
@@ -762,5 +763,13 @@ export class TestEnvironment {
       notificationClickHandlerAction: NotificationClickActionBehavior.Focus,
       allowLocalhostAsSecureOrigin: true,
     };
+  }
+
+  static getFakeRawPushSubscription(): RawPushSubscription {
+    const pushSubscription: RawPushSubscription = new RawPushSubscription();
+    pushSubscription.w3cAuth = "7QdgQYTjZIeiCuLgopqeww";
+    pushSubscription.w3cP256dh = "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0";
+    pushSubscription.w3cEndpoint = new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh");
+    return pushSubscription;
   }
 }

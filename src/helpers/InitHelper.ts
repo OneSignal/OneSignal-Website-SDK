@@ -178,8 +178,25 @@ export default class InitHelper {
    * @private
    */
   public static async onSdkInitialized() {
-    await InitHelper.processExpiringSubscriptions();
-    if (!OneSignal.config.userConfig.promptOptions.autoPrompt && !OneSignal.config.userConfig.autoResubscribe) {
+    const wasUserResubscribed: boolean = await InitHelper.processExpiringSubscriptions();
+
+    /**
+     * If user's subscription was expiring and we processed it, our backend would get a player#create request.
+     * If user was not subscribed before and autoPrompting is on, user would get subscribed through player#create if
+     *  he clicks allow in an automatic prompt.
+     * If user has granted notification permissions but cleared the data and autoResubscribe is on, we will
+     *  resubscribe with autoResubscribe flag.
+     * In all other cases we would send an on_session request.
+     */
+    const isExistingUser: boolean = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    if (isExistingUser) {
+      if (!wasUserResubscribed) {
+        await OneSignal.context.updateManager.sendOnSessionUpdate();
+      }
+    } else if (
+      !OneSignal.config.userConfig.promptOptions.autoPrompt &&
+      !OneSignal.config.userConfig.autoResubscribe
+    ) {
       await OneSignal.context.updateManager.sendOnSessionUpdate();
     }
 
@@ -245,14 +262,14 @@ export default class InitHelper {
   }
 
   /** Entry method for any environment that sets expiring subscriptions. */
-  public static async processExpiringSubscriptions() {
+  public static async processExpiringSubscriptions(): Promise<boolean> {
     const context: ContextInterface = OneSignal.context;
 
     Log.debug("Checking subscription expiration...");
     const isSubscriptionExpiring = await context.subscriptionManager.isSubscriptionExpiring();
     if (!isSubscriptionExpiring) {
       Log.debug("Subscription is not considered expired.");
-      return;
+      return false;
     }
 
     const integrationKind = await SdkEnvironment.getIntegration();
@@ -273,13 +290,7 @@ export default class InitHelper {
         break;
       case IntegrationKind.SecureProxy:
         if (windowEnv === WindowEnvironmentKind.OneSignalProxyFrame) {
-          const newSubscription = await new Promise<Subscription>(resolve => {
-            context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
-              resolve(Subscription.deserialize(subscription));
-            });
-            context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
-          });
-          Log.debug("Finished registering brand new subscription:", newSubscription);
+          await this.registerSubscriptionInProxyFrame(context);
         } else {
           const proxyFrame: ProxyFrameHost = OneSignal.proxyFrameHost;
           await proxyFrame.runCommand(OneSignal.POSTMAM_COMMANDS.PROCESS_EXPIRING_SUBSCRIPTIONS);
@@ -294,6 +305,18 @@ export default class InitHelper {
         Log.debug("Unsubscribed expiring HTTP subscription by removing registration ID.");
         break;
     }
+    return true;
+  }
+
+  public static async registerSubscriptionInProxyFrame(context: ContextInterface): Promise<Subscription> {
+    const newSubscription = await new Promise<Subscription>(resolve => {
+      context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
+        resolve(Subscription.deserialize(subscription));
+      });
+      context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
+    });
+    Log.debug("Finished registering brand new subscription:", newSubscription);
+    return newSubscription;
   }
 
   public static async doInitialize(): Promise<void> {

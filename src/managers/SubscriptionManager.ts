@@ -245,7 +245,7 @@ export class SubscriptionManager {
     );
   }
 
-  public async isAlreadyRegisteredWithOneSignal() {
+  public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
     const { deviceId } = await Database.getSubscription();
     return !!deviceId;
   }
