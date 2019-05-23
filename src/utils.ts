@@ -330,33 +330,6 @@ export function unsubscribeFromPush() {
   }
 }
 
-
-/**
- * Unregisters the active service worker.
- */
-export function wipeServiceWorker() {
-  Log.warn('OneSignal: Unregistering service worker.');
-  if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
-    return Promise.resolve();
-  }
-  if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
-    return Promise.resolve();
-
-  return navigator.serviceWorker.ready
-      .then(registration => registration.unregister());
-}
-
-
-/**
- * Unsubscribe from push notifications and remove any active service worker.
- */
-export function wipeServiceWorkerAndUnsubscribe() {
-  return Promise.all([
-    unsubscribeFromPush(),
-    wipeServiceWorker()
-  ]);
-}
-
 export function wait(milliseconds: number) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
