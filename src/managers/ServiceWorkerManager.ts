@@ -392,18 +392,6 @@ export class ServiceWorkerManager {
   private async installAlternatingWorker() {
     const workerState = await this.getActiveState();
 
-    if (workerState === ServiceWorkerActiveState.ThirdParty) {
-      /*
-         Always unregister 3rd party service workers.
-
-         Unregistering unsubscribes the existing push subscription and allows us
-         to register a new push subscription. This takes care of possible previous mismatched sender IDs
-       */
-      const workerRegistration = await ServiceWorkerManager.getRegistration();
-      if (workerRegistration)
-        await workerRegistration.unregister();
-    }
-
     const workerFullPath = ServiceWorkerHelper.getServiceWorkerHref(workerState, this.config);
     const installUrlQueryParams = Utils.encodeHashAsUriComponent({
       appId: this.context.appConfig.appId
