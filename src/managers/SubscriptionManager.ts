@@ -467,19 +467,7 @@ export class SubscriptionManager {
       applicationServerKey property, our extra options will be safely ignored, and a non-VAPID
       subscription will be automatically returned.
      */
-    let subscriptionOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: this.getVapidKeyForBrowser() ? this.getVapidKeyForBrowser() : undefined
-    };
 
-    let newPushSubscription: PushSubscription;
-
-    /*
-      Is there an existing push subscription?
-
-      If so, and if we're on Chrome 54+, we can use its details to resubscribe
-      without any extra info needed.
-     */
     const existingPushSubscription = await pushManager.getSubscription();
 
     /* Record the subscription created at timestamp only if this is a new subscription */
@@ -488,32 +476,17 @@ export class SubscriptionManager {
     /* Depending on the subscription strategy, handle existing subscription in various ways */
     switch (subscriptionStrategy) {
       case SubscriptionStrategyKind.ResubscribeExisting:
-        /* Use the existing push subscription's PushSubscriptionOptions if it exists to resubscribe
-        an identical unchanged subscription, or unsubscribe this existing push subscription if
-        PushSubscriptionOptions is null. */
+        if (!existingPushSubscription)
+          break;
 
-        if (existingPushSubscription && existingPushSubscription.options) {
-          Log.debug('[Subscription Manager] An existing push subscription exists and options is not null. ' +
-            'Using existing options to resubscribe.');
-          /*
-            Hopefully we're on Chrome 54+, so we can use PushSubscriptionOptions to get the exact
-            applicationServerKey to use, without needing to assume a manifest.json exists or passing
-            in our VAPID key and dealing with potential mismatched sender ID issues.
-          */
-
-          /*
-            Overwrite our subscription options to use the exact same subscription options we used to
-            subscribe in the first place. The previous always-use-VAPID assignment is overriden by
-            this assignment.
-          */
-          subscriptionOptions = existingPushSubscription.options;
-
-          /* If we're not subscribing a new subscription, don't overwrite the created at timestamp */
-          shouldRecordSubscriptionCreatedAt = false;
-        } else if (existingPushSubscription && !existingPushSubscription.options) {
+        if (existingPushSubscription.options) {
+          Log.debug("[Subscription Manager] An existing push subscription exists and it's options is not null.");
+        }
+        else {
           Log.debug('[Subscription Manager] An existing push subscription exists and options is null. ' +
             'Unsubscribing from push first now.');
           /*
+            NOTE: Only applies to rare edge case of migrating from senderId to a VAPID subscription
             There isn't a great solution if PushSubscriptionOptions (supported on Chrome 54+) isn't
             supported.
 
@@ -528,9 +501,8 @@ export class SubscriptionManager {
             them.
           */
           await existingPushSubscription.unsubscribe();
-
           /* We're unsubscribing, so we want to store the created at timestamp */
-          shouldRecordSubscriptionCreatedAt = false;
+          shouldRecordSubscriptionCreatedAt = true;
         }
         break;
       case SubscriptionStrategyKind.SubscribeNew:
@@ -545,9 +517,13 @@ export class SubscriptionManager {
         break;
     }
 
+    const subscriptionOptions: PushSubscriptionOptionsInit = {
+      userVisibleOnly: true,
+      applicationServerKey: this.getVapidKeyForBrowser() ? this.getVapidKeyForBrowser() : undefined
+    };
+
     // Actually subscribe the user to push
-    Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
-    newPushSubscription = await pushManager.subscribe(subscriptionOptions);
+    const newPushSubscription = await SubscriptionManager.doPushSubscribe(pushManager, subscriptionOptions);
 
     if (shouldRecordSubscriptionCreatedAt) {
       const bundle = await Database.getSubscription();
@@ -563,6 +539,31 @@ export class SubscriptionManager {
         RawPushSubscription.setFromW3cSubscription(existingPushSubscription);
     }
     return pushSubscriptionDetails;
+  }
+
+  // Subscribes the ServiceWorker for a pushToken.
+  // If there is an error doing so unsubscribe from existing and try again
+  //    - This handles subscribing to new server VAPID key if it has changed.
+  private static async doPushSubscribe(
+    pushManager: PushManager,
+    subscriptionOptions: PushSubscriptionOptionsInit)
+    :Promise<PushSubscription> {
+    Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
+    try {
+      return await pushManager.subscribe(subscriptionOptions);
+    } catch (e) {
+      if (e.name == "InvalidStateError") {
+        // This exception is thrown if the key for the existing applicationServerKey is different,
+        //    so we must unregister first.
+        // In Chrome, e.message contains will be the following in this case for reference;
+        // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
+        //    to change the applicationServerKey, unsubscribe then resubscribe.
+        await (await pushManager.getSubscription()).unsubscribe();
+        return await pushManager.subscribe(subscriptionOptions);
+      }
+      else
+        throw e; // If some other error, bubble the exception up
+    }
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
