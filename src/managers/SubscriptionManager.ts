@@ -470,9 +470,6 @@ export class SubscriptionManager {
 
     const existingPushSubscription = await pushManager.getSubscription();
 
-    /* Record the subscription created at timestamp only if this is a new subscription */
-    let isNewSubscription = !existingPushSubscription;
-
     /* Depending on the subscription strategy, handle existing subscription in various ways */
     switch (subscriptionStrategy) {
       case SubscriptionStrategyKind.ResubscribeExisting:
@@ -502,28 +499,23 @@ export class SubscriptionManager {
           */
 
           /* We're unsubscribing, so we want to store the created at timestamp */
-          isNewSubscription = await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
+          await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
         }
         break;
       case SubscriptionStrategyKind.SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
-          isNewSubscription = await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
-          break;
+          await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
         }
-
-        // Always record the subscription if we're resubscribing
-        isNewSubscription = true;
         break;
     }
 
     // Actually subscribe the user to push
-    const [newPushSubscription, createdNew] =
+    const [newPushSubscription, isNewSubscription] =
       await SubscriptionManager.doPushSubscribe(pushManager, this.getVapidKeyForBrowser());
 
     // Update saved create and expired times
-    const didCreateNewSubscription = isNewSubscription || createdNew;
-    await SubscriptionManager.updateSubscriptionTime(didCreateNewSubscription, newPushSubscription.expirationTime);
+    await SubscriptionManager.updateSubscriptionTime(isNewSubscription, newPushSubscription.expirationTime);
 
     // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails = RawPushSubscription.setFromW3cSubscription(newPushSubscription);
@@ -559,13 +551,18 @@ export class SubscriptionManager {
     applicationServerKey: ArrayBuffer | undefined)
     :Promise<[PushSubscription, boolean]> {
 
+    if (!applicationServerKey) {
+      throw new Error("Missing required 'applicationServerKey' to subscribe for push notifications!");
+    }
+
     const subscriptionOptions: PushSubscriptionOptionsInit = {
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey
     };
     Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     try {
-      return [await pushManager.subscribe(subscriptionOptions), false];
+      const existingSubscription = await pushManager.getSubscription();
+      return [await pushManager.subscribe(subscriptionOptions), !existingSubscription];
     } catch (e) {
       if (e.name == "InvalidStateError") {
         // This exception is thrown if the key for the existing applicationServerKey is different,
