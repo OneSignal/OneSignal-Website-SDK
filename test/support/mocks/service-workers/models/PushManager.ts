@@ -1,13 +1,12 @@
 import PushSubscription from './PushSubscription';
 import PushSubscriptionOptions from './PushSubscriptionOptions';
-import { arrayBufferToBase64 } from "../../../../../src/utils/Encoding";
 
 /**
  * The PushManager interface of the Push API provides a way to receive notifications from
  * third-party servers as well as request URLs for push notifications.
  */
 export default class PushManager {
-  private subscription: PushSubscription;
+  private subscription: PushSubscription | null;
 
   constructor() {
     this.subscription = null;
@@ -18,7 +17,7 @@ export default class PushManager {
    * PushSubscription object containing details of an existing subscription. If no existing
    * subscription exists, this resolves to a null value.
    */
-  public async getSubscription(): Promise<PushSubscription> {
+  public async getSubscription(): Promise<PushSubscription | null> {
     return this.subscription;
   }
 
@@ -36,9 +35,16 @@ export default class PushManager {
    * service worker does not have an existing subscription.
    */
   public async subscribe(options: PushSubscriptionOptions): Promise<PushSubscription> {
-    if (!this.subscription) {
-      this.subscription = new PushSubscription(this, options);
+    if (this.subscription) {
+      if (this.subscription.options.applicationServerKey != options.applicationServerKey) {
+        // Simulate browser throwing if you don't unsubscribe first if applicationServerKey has changed.
+        throw {
+          name: "InvalidStateError",
+          message: "Can not change keys without calling unsubscribe first!"
+        };
+      }
     }
+    this.subscription = new PushSubscription(this, options);
     return this.subscription;
   }
 

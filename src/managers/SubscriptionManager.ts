@@ -422,7 +422,7 @@ export class SubscriptionManager {
    *
    * If the VAPID key isn't present, undefined is returned instead of null.
    */
-  public getVapidKeyForBrowser(): ArrayBuffer {
+  public getVapidKeyForBrowser(): ArrayBuffer | undefined {
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
@@ -471,7 +471,7 @@ export class SubscriptionManager {
     const existingPushSubscription = await pushManager.getSubscription();
 
     /* Record the subscription created at timestamp only if this is a new subscription */
-    let shouldRecordSubscriptionCreatedAt = !existingPushSubscription;
+    let isNewSubscription = !existingPushSubscription;
 
     /* Depending on the subscription strategy, handle existing subscription in various ways */
     switch (subscriptionStrategy) {
@@ -500,37 +500,30 @@ export class SubscriptionManager {
             Because of this, we should unsubscribe the user from push first and then resubscribe
             them.
           */
-          await existingPushSubscription.unsubscribe();
+
           /* We're unsubscribing, so we want to store the created at timestamp */
-          shouldRecordSubscriptionCreatedAt = true;
+          isNewSubscription = await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
         }
         break;
       case SubscriptionStrategyKind.SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
-          Log.debug('[Subscription Manager] Unsubscribing existing push subscription.');
-          await existingPushSubscription.unsubscribe();
+          isNewSubscription = await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
+          break;
         }
 
         // Always record the subscription if we're resubscribing
-        shouldRecordSubscriptionCreatedAt = true;
+        isNewSubscription = true;
         break;
     }
 
-    const subscriptionOptions: PushSubscriptionOptionsInit = {
-      userVisibleOnly: true,
-      applicationServerKey: this.getVapidKeyForBrowser() ? this.getVapidKeyForBrowser() : undefined
-    };
-
     // Actually subscribe the user to push
-    const newPushSubscription = await SubscriptionManager.doPushSubscribe(pushManager, subscriptionOptions);
+    const [newPushSubscription, createdNew] =
+      await SubscriptionManager.doPushSubscribe(pushManager, this.getVapidKeyForBrowser());
 
-    if (shouldRecordSubscriptionCreatedAt) {
-      const bundle = await Database.getSubscription();
-      bundle.createdAt = new Date().getTime();
-      bundle.expirationTime = newPushSubscription.expirationTime;
-      await Database.setSubscription(bundle);
-    }
+    // Update saved create and expired times
+    const didCreateNewSubscription = isNewSubscription || createdNew;
+    await SubscriptionManager.updateSubscriptionTime(didCreateNewSubscription, newPushSubscription.expirationTime);
 
     // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails = RawPushSubscription.setFromW3cSubscription(newPushSubscription);
@@ -541,16 +534,38 @@ export class SubscriptionManager {
     return pushSubscriptionDetails;
   }
 
+  private static async updateSubscriptionTime(updateCreatedAt: boolean, expirationTime: number | null): Promise<void> {
+    const bundle = await Database.getSubscription();
+    if (updateCreatedAt) {
+      bundle.createdAt = new Date().getTime();
+    }
+    bundle.expirationTime = expirationTime;
+    await Database.setSubscription(bundle);
+  }
+
+  private static async doPushUnsubscribe(pushSubscription: PushSubscription): Promise<boolean> {
+    Log.debug('[Subscription Manager] Unsubscribing existing push subscription.');
+    const result = await pushSubscription.unsubscribe();
+    Log.debug(`[Subscription Manager] Unsubscribing existing push subscription result: ${result}`);
+    return result;
+  }
+
   // Subscribes the ServiceWorker for a pushToken.
   // If there is an error doing so unsubscribe from existing and try again
   //    - This handles subscribing to new server VAPID key if it has changed.
+  // return type - [PushSubscription, createdNewPushSubscription(boolean)]
   private static async doPushSubscribe(
     pushManager: PushManager,
-    subscriptionOptions: PushSubscriptionOptionsInit)
-    :Promise<PushSubscription> {
+    applicationServerKey: ArrayBuffer | undefined)
+    :Promise<[PushSubscription, boolean]> {
+
+    const subscriptionOptions: PushSubscriptionOptionsInit = {
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    };
     Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     try {
-      return await pushManager.subscribe(subscriptionOptions);
+      return [await pushManager.subscribe(subscriptionOptions), false];
     } catch (e) {
       if (e.name == "InvalidStateError") {
         // This exception is thrown if the key for the existing applicationServerKey is different,
@@ -558,8 +573,10 @@ export class SubscriptionManager {
         // In Chrome, e.message contains will be the following in this case for reference;
         // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
         //    to change the applicationServerKey, unsubscribe then resubscribe.
-        await (await pushManager.getSubscription()).unsubscribe();
-        return await pushManager.subscribe(subscriptionOptions);
+        Log.warn("[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
+          "unsubscribe and attempting to subscribe with new key.", e);
+        await SubscriptionManager.doPushUnsubscribe(await pushManager.getSubscription());
+        return [await pushManager.subscribe(subscriptionOptions), true];
       }
       else
         throw e; // If some other error, bubble the exception up

@@ -392,6 +392,10 @@ export class ServiceWorkerManager {
   private async installAlternatingWorker() {
     const workerState = await this.getActiveState();
 
+    if (workerState === ServiceWorkerActiveState.ThirdParty) {
+      Log.info(`[Service Worker Installation] 3rd party service worker detected.`);
+    }
+
     const workerFullPath = ServiceWorkerHelper.getServiceWorkerHref(workerState, this.config);
     const installUrlQueryParams = Utils.encodeHashAsUriComponent({
       appId: this.context.appConfig.appId
