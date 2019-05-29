@@ -28,7 +28,7 @@ import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
 import { Subscription } from "../../../src/models/Subscription";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 
-const sandbox: SinonSandbox= sinon.sandbox.create();;
+const sandbox: SinonSandbox= sinon.sandbox.create();
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -149,7 +149,7 @@ test('uses globally shared VAPID public key for Firefox', async t => {
   );
 });
 
-test('resubscribe-existing strategy uses existing subscription options', async t => {
+test('resubscribe-existing strategy uses new subscription applicationServerKey', async t => {
   const initialVapidKeys = generateVapidKeys();
   const subsequentVapidKeys = generateVapidKeys();
 
@@ -158,21 +158,30 @@ test('resubscribe-existing strategy uses existing subscription options', async t
     applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
   };
 
+  let unsubscribeSpy: sinon.SinonSpy;
+
   await testCase(
     t,
     BrowserUserAgent.ChromeMacSupported,
     subsequentVapidKeys.uniquePublic,
     subsequentVapidKeys.sharedPublic,
     SubscriptionStrategyKind.ResubscribeExisting,
-    async (pushManager, subscriptionManager) => {
-      // Create an initial subscription, so subsequent subscription attempts re-use this initial
-      // subscription's options
+    async (pushManager, _subscriptionManager) => {
+      // Create an initial subscription, so subsequent subscription attempts logic is tested
       await pushManager.subscribe(initialSubscriptionOptions);
+      // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
+      unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
     },
-    async (pushManager, pushManagerSubscribeSpy) => {
-      // The subscription options used should be identical to our initial subscription's options
+    async (_pushManager, pushManagerSubscribeSpy) => {
+      const newSubscriptionOptions: PushSubscriptionOptions = {
+        userVisibleOnly: true,
+        applicationServerKey: base64ToUint8Array(subsequentVapidKeys.uniquePublic).buffer,
+      };
+      // The subscription options used should always use the new subscription's options
       const calledSubscriptionOptions = pushManagerSubscribeSpy.getCall(0).args[0];
-      t.deepEqual(calledSubscriptionOptions, initialSubscriptionOptions);
+      t.deepEqual(calledSubscriptionOptions, newSubscriptionOptions);
+      // Unsubscribe should have been called
+      t.true(unsubscribeSpy.calledOnce);
     }
   );
 });
@@ -221,8 +230,6 @@ test(
         t.true(unsubscribeSpy.calledOnce);
       }
     );
-
-    unsubscribeSpy.restore();
   }
 );
 

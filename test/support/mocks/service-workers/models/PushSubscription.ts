@@ -71,7 +71,7 @@ export default class PushSubscription {
    * Returns an ArrayBuffer which contains the client's public key, which can then be sent to a
    * server and used in encrypting push message data.
    */
-  getKey(param): ArrayBufferLike {
+  getKey(param: string): ArrayBufferLike | null {
     switch (param) {
       case 'p256dh':
         return this.p256dhArray.buffer;
