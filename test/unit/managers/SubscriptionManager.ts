@@ -233,6 +233,53 @@ test(
   }
 );
 
+test(
+  "resubscribe existing strategy does not unsubscribes if options are not null",
+  async t => {
+    const subsequentVapidKeys = generateVapidKeys();
+    let unsubscribeSpy: sinon.SinonSpy;
+
+    await testCase(
+      t,
+      BrowserUserAgent.ChromeMacSupported,
+      subsequentVapidKeys.uniquePublic,
+      subsequentVapidKeys.sharedPublic,
+      SubscriptionStrategyKind.ResubscribeExisting,
+      async (_pushManager, _subscriptionManager) => {
+        // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
+        unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
+      },
+      async (_pushManager, pushManagerSubscribeSpy) => {
+        // The subscription options used should be our subsequent subscription's options
+        const calledSubscriptionOptions = pushManagerSubscribeSpy.getCall(0).args[0];
+        const subsequentSubscriptionOptions: PushSubscriptionOptions = {
+          userVisibleOnly: true,
+          applicationServerKey: base64ToUint8Array(subsequentVapidKeys.uniquePublic).buffer,
+        };
+        t.deepEqual(calledSubscriptionOptions, subsequentSubscriptionOptions);
+
+        // Unsubscribe should NOT have been called
+        t.false(unsubscribeSpy.calledOnce);
+      }
+    );
+  }
+);
+
+test(
+  "null applicationServerKey throws when subscribing",
+  async t => {
+
+    const manager = new SubscriptionManager(OneSignal.context, {
+      safariWebId: undefined,
+      appId: Random.getRandomUuid(),
+      vapidPublicKey: <any>undefined, // Forcing vapidPublicKey to undefined to test throwing
+      onesignalVapidPublicKey: generateVapidKeys().sharedPublic
+    } as SubscriptionManagerConfig);
+
+    await t.throws(manager.subscribe(SubscriptionStrategyKind.SubscribeNew), Error);
+  }
+);
+
 test("registerSubscription with an existing subsription sends player update", async t => {
   TestEnvironment.mockInternalOneSignal();
 
@@ -396,18 +443,7 @@ test(
 test(
   "subscribe new strategy unsubscribes existing subscription to create new subscription",
   async t => {
-    const initialVapidKeys = generateVapidKeys();
     const subsequentVapidKeys = generateVapidKeys();
-
-    const initialSubscriptionOptions: PushSubscriptionOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
-    };
-    const subsequentSubscriptionOptions: PushSubscriptionOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: base64ToUint8Array(subsequentVapidKeys.uniquePublic).buffer,
-    };
-
     let unsubscribeSpy: sinon.SinonSpy;
 
     await testCase(
@@ -416,15 +452,20 @@ test(
       subsequentVapidKeys.uniquePublic,
       subsequentVapidKeys.sharedPublic,
       SubscriptionStrategyKind.SubscribeNew,
-      async (pushManager, subscriptionManager) => {
+      async (pushManager, _subscriptionManager) => {
         // Create an initial subscription, so subsequent subscriptions attempt to re-use this initial
         // subscription's options
-        await pushManager.subscribe(initialSubscriptionOptions);
+        const initialVapidKeys = generateVapidKeys();
+        const subscriptionOptions: PushSubscriptionOptions = {
+          userVisibleOnly: true,
+          applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
+        };
+        await pushManager.subscribe(subscriptionOptions);
 
         // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
         unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
       },
-      async (pushManager, pushManagerSubscribeSpy) => {
+      async (_pushManager, _pushManagerSubscribeSpy) => {
         // Unsubscribe should have been called
         t.true(unsubscribeSpy.calledOnce);
       }

@@ -52,6 +52,9 @@ export default class PushManager {
    * Only to be used internally from PushSubscription.unsubscribe().
    */
   public __unsubscribe() {
+    if (!this.subscription) {
+      throw new Error("No Existing subscription!");
+    }
     this.subscription = null;
   }
 }
