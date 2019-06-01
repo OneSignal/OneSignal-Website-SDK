@@ -7,6 +7,7 @@ import { RegisterOptions } from './helpers/InitHelper';
 export class CustomLink {
   public static readonly initializedAttribute = "data-cl-initialized";
   public static readonly subscriptionStateAttribute = "data-cl-state";
+  public static readonly optedOutAttribute = "data-cl-optedout";
 
   public static readonly containerClass = "onesignal-customlink-container";
   public static readonly containerSelector = `.${CustomLink.containerClass}`;
@@ -36,10 +37,11 @@ export class CustomLink {
     });
 
     const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const isOptedOut = await OneSignal.internalIsOptedOut();
 
     const subscribeElements = document.querySelectorAll<HTMLElement>(CustomLink.subscribeSelector);
     subscribeElements.forEach((element: HTMLElement) =>
-      CustomLink.initSubscribeElement(element, config, isPushEnabled));
+      CustomLink.initSubscribeElement(element, config, isPushEnabled, isOptedOut));
 
     const explanationElements = document.querySelectorAll<HTMLElement>(CustomLink.explanationSelector);
     explanationElements.forEach((element: HTMLElement) => 
@@ -72,7 +74,7 @@ export class CustomLink {
   }
 
   private static initSubscribeElement(element: HTMLElement,
-    config: AppUserConfigCustomLinkOptions, isPushEnabled: boolean): void {
+    config: AppUserConfigCustomLinkOptions, isPushEnabled: boolean, isOptedOut: boolean): void {
     if (config.text && config.text.subscribe) {
       if (!isPushEnabled) {
         element.textContent = config.text.subscribe;
@@ -94,6 +96,7 @@ export class CustomLink {
       addCssClass(element, "hide");
     }
     element.setAttribute(CustomLink.subscriptionStateAttribute, isPushEnabled.toString());
+    element.setAttribute(CustomLink.optedOutAttribute, isOptedOut.toString());
     if (!CustomLink.isInitialized(element)) {
       element.addEventListener("click", () => {
         Log.info("CustomLink: subscribe clicked");
@@ -105,15 +108,15 @@ export class CustomLink {
   }
 
   public static async handleClick(element: HTMLElement): Promise<void> {
-    const state:boolean = element.getAttribute(CustomLink.subscriptionStateAttribute) === "true";
+    const state: boolean = element.getAttribute(CustomLink.subscriptionStateAttribute) === "true";
+    const optedOut: boolean = element.getAttribute(CustomLink.optedOutAttribute) === "true";
     if (state) {
       const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
       if (isPushEnabled) {
         await OneSignal.setSubscription(false);
       }
     } else {
-      const isOptedOut = await OneSignal.internalIsOptedOut();
-      if (!isOptedOut) {
+      if (!optedOut) {
         const options: RegisterOptions = { autoAccept: true };
         await OneSignal.registerForPushNotifications(options);
       } else {
