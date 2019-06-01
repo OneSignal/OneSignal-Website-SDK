@@ -622,7 +622,7 @@ export default class OneSignal {
     return OneSignal.internalIsOptedOut(callback);
   }
 
-  private static async internalIsOptedOut(callback?: Action<boolean | undefined | null>):
+  static async internalIsOptedOut(callback?: Action<boolean | undefined | null>):
     Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
     const { optedOut } = await Database.getSubscription();
