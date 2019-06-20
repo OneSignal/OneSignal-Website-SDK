@@ -117,10 +117,8 @@ export class ServiceWorkerManager {
       return ServiceWorkerActiveState.ThirdParty;
     }
 
-    /*
-      At this point, there is an active service worker registration controlling this page.
-      Check the filename to see if it belongs to our A / B worker.
-    */
+    // At this point, there is an active service worker registration controlling this page.
+    // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
     const swFileName = ServiceWorkerManager.activeSwFileName(workerRegistration);
     const workerState = this.swActiveStateByFileName(swFileName);
 
@@ -142,6 +140,7 @@ export class ServiceWorkerManager {
     return workerState;
   }
 
+  // Get the file name of the active ServiceWorker
   private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
     if (!workerRegistration.active)
       return null;
@@ -150,18 +149,19 @@ export class ServiceWorkerManager {
     const swFileName = new Path(workerScriptPath).getFileName();
 
     // If the current service worker is Akamai's
-    //    Check if it is importing our's with a query param name "othersw"
     if (swFileName == "akam-sw.js") {
+      // Check if its importing a ServiceWorker under it's "othersw" query param
       const searchParams = new URLSearchParams(new URL(workerRegistration.active.scriptURL).search);
       const importedSw = searchParams.get("othersw");
       if (importedSw) {
-        Log.debug("Found OneSignal ServiceWorker under Akamai's akam-sw.js?othersw=", importedSw);
+        Log.debug("Found a ServiceWorker under Akamai's akam-sw.js?othersw=", importedSw);
         return new Path(new URL(importedSw).pathname).getFileName();
       }
     }
     return swFileName;
   }
 
+  // Check if the ServiceWorker file name is ours or a third party's
   private swActiveStateByFileName(fileName: string | null): ServiceWorkerActiveState {
     if (!fileName)
       return ServiceWorkerActiveState.None;
