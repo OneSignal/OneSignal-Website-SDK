@@ -117,21 +117,12 @@ export class ServiceWorkerManager {
       return ServiceWorkerActiveState.ThirdParty;
     }
 
-    const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
-    let workerState: ServiceWorkerActiveState;
-
     /*
       At this point, there is an active service worker registration controlling this page.
-
       Check the filename to see if it belongs to our A / B worker.
     */
-
-    if (new Path(workerScriptPath).getFileName() == this.config.workerAPath.getFileName())
-      workerState = ServiceWorkerActiveState.WorkerA;
-    else if (new Path(workerScriptPath).getFileName() == this.config.workerBPath.getFileName())
-      workerState = ServiceWorkerActiveState.WorkerB;
-    else
-      workerState = ServiceWorkerActiveState.ThirdParty;
+    const swFileName = ServiceWorkerManager.activeSwFileName(workerRegistration);
+    const workerState = this.swActiveStateByFileName(swFileName);
 
     /*
       Our service worker registration can be both active and in the controlling scope of the current
@@ -149,6 +140,36 @@ export class ServiceWorkerManager {
     ))
       return ServiceWorkerActiveState.Bypassed;
     return workerState;
+  }
+
+  private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
+    if (!workerRegistration.active)
+      return null;
+
+    const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
+    const swFileName = new Path(workerScriptPath).getFileName();
+
+    // If the current service worker is Akamai's
+    //    Check if it is importing our's with a query param name "othersw"
+    if (swFileName == "akam-sw.js") {
+      const searchParams = new URLSearchParams(new URL(workerRegistration.active.scriptURL).search);
+      const importedSw = searchParams.get("othersw");
+      if (importedSw) {
+        Log.debug("Found OneSignal ServiceWorker under Akamai's akam-sw.js?othersw=", importedSw);
+        return new Path(new URL(importedSw).pathname).getFileName();
+      }
+    }
+    return swFileName;
+  }
+
+  private swActiveStateByFileName(fileName: string | null): ServiceWorkerActiveState {
+    if (!fileName)
+      return ServiceWorkerActiveState.None;
+    if (fileName == this.config.workerAPath.getFileName())
+      return ServiceWorkerActiveState.WorkerA;
+    if (fileName == this.config.workerBPath.getFileName())
+      return  ServiceWorkerActiveState.WorkerB;
+    return ServiceWorkerActiveState.ThirdParty;
   }
 
   public async getWorkerVersion(): Promise<number> {
@@ -282,21 +303,34 @@ export class ServiceWorkerManager {
 
     const preInstallWorkerState = await this.getActiveState();
     await this.installAlternatingWorker();
+
     await new Promise(async resolve => {
       const postInstallWorkerState = await this.getActiveState();
+      Log.debug(
+        "installWorker - Comparing pre and post states",
+        preInstallWorkerState,
+        postInstallWorkerState
+      );
+
       if (preInstallWorkerState !== postInstallWorkerState &&
-        postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
+          postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
         resolve();
-      } else {
+      }
+      else {
+        Log.debug("installWorker - Awaiting on navigator.serviceWorker's 'controllerchange' event");
         navigator.serviceWorker.addEventListener('controllerchange', async e => {
           const postInstallWorkerState = await this.getActiveState();
           if (postInstallWorkerState !== preInstallWorkerState &&
             postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
             resolve();
           }
+          else {
+            Log.error("installWorker - SW's 'controllerchange' fired but no state change!");
+          }
         });
       }
     });
+
     if ((await this.getActiveState()) === ServiceWorkerActiveState.WorkerB) {
       // If the worker is Worker B, reinstall Worker A
       await this.installAlternatingWorker();
