@@ -141,6 +141,26 @@ test('getActiveState() detects an activated third-party service worker not contr
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
 });
 
+test('getActiveState() should detect Akamai akam-sw.js?othersw= when our is contain within', async t => {
+  await navigator.serviceWorker.register('/akam-sw.js?othersw=https://domain.com/Worker-A.js?appId=12345');
+
+  const manager = LocalHelpers.getServiceWorkerManager();
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+});
+
+test('getActiveState() should detect Akamai akam-sw.js as 3rd party if no othersw=', async t => {
+  await navigator.serviceWorker.register('/akam-sw.js?othersw=https://domain.com/someothersw.js');
+
+  const manager = LocalHelpers.getServiceWorkerManager();
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
+});
+
+test('getActiveState() should detect Akamai akam-sw.js as 3rd party if othersw= is not our worker', async t => {
+  await navigator.serviceWorker.register('/akam-sw.js');
+
+  const manager = LocalHelpers.getServiceWorkerManager();
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
+});
 
 test('notification clicked - While page is opened in background', async t => {
   await TestEnvironment.initialize({
