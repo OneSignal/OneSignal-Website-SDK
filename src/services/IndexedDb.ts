@@ -6,8 +6,8 @@ import Utils from "../context/shared/utils/Utils";
 export default class IndexedDb {
 
   public emitter: Emitter;
-  private database: IDBDatabase;
-  private openLock: Promise<IDBDatabase>;
+  private database: IDBDatabase | undefined;
+  private openLock: Promise<IDBDatabase> | undefined;
 
   constructor(private databaseName: string) {
     this.emitter = new Emitter();
@@ -15,9 +15,10 @@ export default class IndexedDb {
 
   private open(databaseName: string): Promise<IDBDatabase> {
     return new Promise<IDBDatabase>(resolve => {
+      let request: IDBOpenDBRequest | undefined = undefined;
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
-        var request: IDBOpenDBRequest = indexedDB.open(databaseName, 1);
+        request = indexedDB.open(databaseName, 1);
       } catch (e) {
         // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
         // for profile schema too high
@@ -37,15 +38,14 @@ export default class IndexedDb {
     });
   }
 
-  private async ensureDatabaseOpen() {
+  private async ensureDatabaseOpen(): Promise<IDBDatabase> {
     if (!this.openLock) {
       this.openLock = this.open(this.databaseName);
     }
-    await this.openLock;
-    return this.database;
+    return await this.openLock;
   }
 
-  private onDatabaseOpenError(event) {
+  private onDatabaseOpenError(event: any) {
     // Prevent the error from bubbling: https://bugzilla.mozilla.org/show_bug.cgi?id=1331103#c3
     /**
      * To prevent error reporting tools like Sentry.io from picking up errors that
@@ -53,7 +53,7 @@ export default class IndexedDb {
      * errors.
      */
     event.preventDefault();
-    const error = (<any>event.target).error;
+    const error = event.target.error;
     if (Utils.contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
       Utils.contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
       Log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
@@ -67,7 +67,7 @@ export default class IndexedDb {
    * the transaction, and then finally to the database object. If you want to avoid adding error handlers to every
    * request, you can instead add a single error handler on the database object.
    */
-  private onDatabaseError(event) {
+  private onDatabaseError(event: any) {
     Log.debug('IndexedDb: Generic database error', event.target.errorCode);
   }
 
@@ -105,6 +105,14 @@ export default class IndexedDb {
     db.createObjectStore("Options", { keyPath: "key" });
     db.createObjectStore("Sessions", { keyPath: "sessionKey" });
 
+    const notificationReceivedStore = db.createObjectStore("NotificationReceived", {
+      keyPath: "notificationId"
+    });
+    notificationReceivedStore.createIndex("timestamp", "timestamp", { unique: false });
+    const notificationClickedStore = db.createObjectStore("NotificationClicked", {
+      keyPath: "notificationId"
+    });
+    notificationClickedStore.createIndex("timestamp", "timestamp", { unique: false });
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
@@ -118,11 +126,11 @@ export default class IndexedDb {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   public async get(table: string, key?: string): Promise<any> {
-    await this.ensureDatabaseOpen();
+    const database = await this.ensureDatabaseOpen();
     if (key) {
       // Return a table-key value
       return await new Promise((resolve, reject) => {
-        var request: IDBRequest = this.database.transaction(table).objectStore(table).get(key);
+        var request: IDBRequest = database.transaction(table).objectStore(table).get(key);
         request.onsuccess = () => {
           resolve(request.result);
         };
@@ -133,12 +141,12 @@ export default class IndexedDb {
     } else {
       // Return all values in table
       return await new Promise((resolve, reject) => {
-        let jsonResult = {};
-        let cursor = this.database.transaction(table).objectStore(table).openCursor();
+        let jsonResult: {[key: string]: any} = {};
+        let cursor = database.transaction(table).objectStore(table).openCursor();
         cursor.onsuccess = (event: any) => {
           var cursorResult: IDBCursorWithValue = event.target.result;
           if (cursorResult) {
-            let cursorResultKey: any = cursorResult.key;
+            let cursorResultKey: string = cursorResult.key as string;
             jsonResult[cursorResultKey] = cursorResult.value;
             cursorResult.continue();
           } else {
@@ -150,6 +158,30 @@ export default class IndexedDb {
         };
       });
     }
+  }
+
+  public async queryFromIndex<T>(table: string, indexName: string, key?: string): Promise<T[]> {
+    const database = await this.ensureDatabaseOpen();
+    return await new Promise<T[]>((resolve, reject) => {
+      const result: T[] = [];
+
+      // Match anything up to, including the key
+      var upperBoundOpenKeyRange = IDBKeyRange.upperBound(key);
+      const indexCursor = database.transaction(table).objectStore(table)
+        .index(indexName).openCursor(upperBoundOpenKeyRange);
+      indexCursor.onsuccess = (event: any) => {
+        let cursorResult: IDBCursorWithValue = event.target.result;
+        if (cursorResult) {
+          result.push(cursorResult.value as T);
+          cursorResult.continue();
+        }
+        resolve(result);
+      };
+      indexCursor.onerror = () => {
+        reject(indexCursor.error);
+      };
+    });
+    
   }
 
   /**
@@ -178,17 +210,14 @@ export default class IndexedDb {
    * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
-  public remove(table: string, key?: string) {
-    if (key) {
-      // Remove a single key from a table
-      var method = "delete";
-    } else {
-      // Remove all keys from the table (wipe the table)
-      var method = "clear";
-    }
+  public async remove(table: string, key?: string) {
+    const database = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       try {
-        let request = this.database.transaction([table], 'readwrite').objectStore(table)[method](key);
+        const store = database.transaction([table], "readwrite").objectStore(table);
+        // If key is present remove a single key from a table.
+        // Otherwise wipe the table
+        const request = key ? store.delete(key) : store.clear();
         request.onsuccess = () => {
           resolve(key);
         };
