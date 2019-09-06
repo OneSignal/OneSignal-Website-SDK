@@ -3,7 +3,7 @@ import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
 import { AppState, ClickedNotifications } from "../models/AppState";
-import { Notification } from "../models/Notification";
+import { NotificationReceived } from "../models/Notification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
@@ -25,7 +25,10 @@ interface DatabaseResult {
   timestamp: any;
 }
 
-export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions";
+export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
+  "NotificationOpened" | "NotificationReceived" | "NotificationClicked";
+
+type OneSignalIndex = "name";
 
 export default class Database {
 
@@ -90,6 +93,12 @@ export default class Database {
     }
   }
 
+  private shouldUsePostmam(): boolean {
+    return SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      OneSignalUtils.isUsingSubscriptionWorkaround() &&
+      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None;
+  }
+
   /**
    * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table (if key is not specified).
    * If on an iFrame or popup environment, retrieves from the correct IndexedDB database using cross-domain messaging.
@@ -98,22 +107,35 @@ export default class Database {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-        OneSignalUtils.isUsingSubscriptionWorkaround() &&
-        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+    if (this.shouldUsePostmam()) {
       return await new Promise<T>(async (resolve) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
         }], (reply: any) => {
-          let result = reply.data[0];
+          const result = reply.data[0];
           resolve(result);
         });
       });
     } else {
       const result = await this.database.get(table, key);
-      let cleanResult = Database.applyDbResultFilter(table, key, result);
+      const cleanResult = Database.applyDbResultFilter(table, key, result);
       return cleanResult;
+    }
+  }
+
+  async queryFromIndex<T>(table: OneSignalDbTable, index: OneSignalIndex, key?: string): Promise<T[]> {
+    if (this.shouldUsePostmam()) {
+      return await new Promise<T[]>(async (resolve) => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_QUERY_INDEX, [{
+          table, index, key
+        }], (reply: any) => {
+          const result = reply.data as T[];
+          resolve(result);
+        });
+      });
+    } else {
+      return await this.database.queryFromIndex<T>(table, index, key);
     }
   }
 
@@ -351,6 +373,14 @@ export default class Database {
     await this.remove("Sessions", sessionKey);
   }
 
+  async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
+    return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
+  }
+
+  async getNotificationReceivedForTimeRange(maxTimestamp: string): Promise<NotificationReceived[]> {
+    return await this.queryFromIndex<NotificationReceived>("NotificationReceived", "name", maxTimestamp);
+  }
+
   /**
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
@@ -360,6 +390,8 @@ export default class Database {
       Database.singletonInstance.remove("Ids"),
       Database.singletonInstance.remove("NotificationOpened"),
       Database.singletonInstance.remove("Options"),
+      Database.singletonInstance.remove("NotificationReceived"),
+      Database.singletonInstance.remove("NotificationClicked"),
     ]);
   }
 
@@ -451,5 +483,5 @@ export default class Database {
   static async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     return await Database.singletonInstance.get<T>(table, key);
   }
-    // END: Static mappings to instance methods
+  // END: Static mappings to instance methods
 }
