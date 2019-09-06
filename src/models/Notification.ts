@@ -75,3 +75,19 @@ export class Notification {
         return Utils.trimUndefined(notification);
     }
 }
+
+export interface NotificationReceived {
+    notificationId: string;
+    appId: string;
+    url: string;
+    timestamp: string;
+    sent: boolean;
+}
+
+export interface NotificationClicked {
+    notificationId: string;
+    appId: string;
+    url: string;
+    timestamp: string;
+    sent: boolean;
+}
