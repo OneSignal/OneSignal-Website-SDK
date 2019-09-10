@@ -392,7 +392,12 @@ export class ConfigHelper {
             serverConfig.config.notificationBehavior.click.action : undefined,
           allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
             serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
-          requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent
+          requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent,
+          outcomes: {
+            ...serverConfig.config.outcomes,
+            influencedTimePeriodMin: serverConfig.config.outcomes.influencedTimePeriodMin,
+            influencedNotificationsLimit: serverConfig.config.outcomes.influencedNotificationsLimit,
+          }
         };
       case IntegrationConfigurationKind.JavaScript:
         /*
@@ -408,16 +413,21 @@ export class ConfigHelper {
             isUsingSubscriptionWorkaround
           ),
           ...{
-          serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
-            ? OneSignal.SERVICE_WORKER_PARAM
-            : { scope: '/' },
-          serviceWorkerPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
-              ? OneSignal.SERVICE_WORKER_PATH
-              : 'OneSignalSDKWorker.js',
-          serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
-              ? OneSignal.SERVICE_WORKER_UPDATER_PATH
-              : 'OneSignalSDUpdaterKWorker.js',
-          path: !!userConfig.path ? userConfig.path : '/'
+            serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
+              ? OneSignal.SERVICE_WORKER_PARAM
+              : { scope: '/' },
+            serviceWorkerPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
+                ? OneSignal.SERVICE_WORKER_PATH
+                : 'OneSignalSDKWorker.js',
+            serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
+                ? OneSignal.SERVICE_WORKER_UPDATER_PATH
+                : 'OneSignalSDUpdaterKWorker.js',
+            path: !!userConfig.path ? userConfig.path : '/'
+          },
+          outcomes: {
+            ...serverConfig.config.outcomes,
+            influencedTimePeriodMin: serverConfig.config.outcomes.influencedTimePeriodMin,
+            influencedNotificationsLimit: serverConfig.config.outcomes.influencedNotificationsLimit,
           }
         };
 

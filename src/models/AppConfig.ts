@@ -373,6 +373,10 @@ export interface ServerAppConfig {
         persist: boolean;
       };
     };
+    outcomes: {
+      influencedTimePeriodMin: number;
+      influencedNotificationsLimit: number;
+    },
     vapid_public_key: string;
     onesignal_vapid_public_key: string;
     http_use_onesignal_com?: boolean;
