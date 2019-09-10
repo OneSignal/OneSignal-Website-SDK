@@ -792,6 +792,15 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
+  public static async sendOutcome(outcomeName: string, value?: number): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    // 1. check if the open is open from a notif
+    // 2. if so, send 1 api call for a direct notif
+    // 3. else check all received notifs within timeframe from config
+    // 4. save all intended calls into IDB
+    // 5. perform all calls removing the record about them from IDB after finished successfully
+  }
+
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = Environment.version();
   static _VERSION = Environment.version();
