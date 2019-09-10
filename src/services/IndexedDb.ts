@@ -166,9 +166,9 @@ export default class IndexedDb {
       const result: T[] = [];
 
       // Match anything up to, including the key
-      var upperBoundOpenKeyRange = IDBKeyRange.upperBound(key);
+      var lowerBoundOpenKeyRange = IDBKeyRange.lowerBound(key);
       const indexCursor = database.transaction(table).objectStore(table)
-        .index(indexName).openCursor(upperBoundOpenKeyRange);
+        .index(indexName).openCursor(lowerBoundOpenKeyRange);
       indexCursor.onsuccess = (event: any) => {
         let cursorResult: IDBCursorWithValue = event.target.result;
         if (cursorResult) {
