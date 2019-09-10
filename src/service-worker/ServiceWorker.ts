@@ -22,6 +22,7 @@ import {
   OSWindowClient, OSServiceWorkerFields, PageVisibilityRequest, PageVisibilityResponse
 } from "./types";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
+import { NotificationReceived } from "../models/Notification";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
@@ -223,11 +224,22 @@ export class ServiceWorker {
         ServiceWorker.parseOrFetchNotifications(event)
             .then((notifications: any) => {
               //Display push notifications in the order we received them
-              let notificationEventPromiseFns = [];
+              const notificationEventPromiseFns = [];
+              const notificationReceivedPromises: Promise<void>[] = [];
 
               for (let rawNotification of notifications) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
                 let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
+
+                const notificationReceived: NotificationReceived = {
+                  notificationId: notification.id,
+                  url: notification.url,
+                  timestamp: new Date().getTime().toString(),
+                  sent: false,
+                };
+                notificationReceivedPromises.push(Database.put("NotificationReceived", notificationReceived));
+                // TODO: decide what to do with all the notif received promises
+                // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((notif => {
