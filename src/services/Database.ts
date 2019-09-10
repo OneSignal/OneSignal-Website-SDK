@@ -27,7 +27,7 @@ interface DatabaseResult {
 type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "NotificationReceived" |
   "NotificationClicked";
 
-type OneSignalIndex = "name";
+type OneSignalIndex = "timestamp";
 
 export default class Database {
 
@@ -361,7 +361,7 @@ export default class Database {
   }
 
   async getNotificationReceivedForTimeRange(maxTimestamp: string): Promise<NotificationReceived[]> {
-    return await this.queryFromIndex<NotificationReceived>("NotificationReceived", "name", maxTimestamp);
+    return await this.queryFromIndex<NotificationReceived>("NotificationReceived", "timestamp", maxTimestamp);
   }
 
   /**
@@ -433,6 +433,14 @@ export default class Database {
 
   static async getExternalUserId(): Promise<string | undefined | null> {
     return await Database.singletonInstance.getExternalUserId();
+  }
+
+  static async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
+    return await Database.singletonInstance.getNotificationReceivedById(notificationId);
+  }
+
+  static async getNotificationReceivedForTimeRange(maxTimestamp: string): Promise<NotificationReceived[]> {
+    return await Database.singletonInstance.getNotificationReceivedForTimeRange(maxTimestamp);
   }
 
   static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
