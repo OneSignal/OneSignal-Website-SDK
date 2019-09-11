@@ -3,6 +3,7 @@ import { DeviceRecord } from './models/DeviceRecord';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { EmailProfile } from './models/EmailProfile';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
+import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
 
@@ -121,6 +122,14 @@ export default class OneSignalApiShared {
         Utils.contains(e.errors[0], 'app_id not found')) {
         throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
       } else throw e;
+    }
+  }
+
+  static async sendOutcome(data: OutcomeRequestData): Promise<void> {
+    try {
+      await OneSignalApiBase.post("outcomes/measure", data);
+    } catch(e) {
+      console.log("sendOutcome", e);
     }
   }
 }
