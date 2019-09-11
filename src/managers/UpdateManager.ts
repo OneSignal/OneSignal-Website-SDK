@@ -8,6 +8,7 @@ import Log from "../libraries/Log";
 import { ContextSWInterface } from '../models/ContextSW';
 import Utils from "../context/shared/utils/Utils";
 import { SessionOrigin } from "../models/Session";
+import { OutcomeRequestData } from "../models/OutcomeRequestData";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -116,5 +117,46 @@ export class UpdateManager {
     await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
       external_user_id: Utils.getValueOrDefault(externalUserId, "")
     });
+  }
+
+  public async sendOutcomeDirect(appId: string, notificationId: string, outcomeName: string, value?: number) {
+    const outcomeRequestData: OutcomeRequestData = {
+      app_id: appId,
+      outcome_id: outcomeName,
+      device_type: 3, // TODO: where do I get device_type from?
+      notification_id: notificationId,
+      direct: true,
+    }
+    if (value !== undefined) {
+      outcomeRequestData.value = value;
+    }
+    await OneSignalApiShared.sendOutcome(outcomeRequestData);
+  }
+
+  public async sendOutcomeInfluenced(appId: string, notificationId: string, outcomeName: string, value?: number) {
+    const outcomeRequestData: OutcomeRequestData = {
+      app_id: appId,
+      outcome_id: outcomeName,
+      notification_id: notificationId,
+      device_type: 3, // TODO: where do I get device_type from?
+      direct: false,
+    }
+    if (value !== undefined) {
+      outcomeRequestData.value = value;
+    }
+    await OneSignalApiShared.sendOutcome(outcomeRequestData);
+  }
+
+  public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
+    const outcomeRequestData: OutcomeRequestData = {
+      app_id: appId,
+      outcome_id: outcomeName,
+      device_type: 3, // TODO: where do I get device_type from?
+      direct: true,
+    }
+    if (value !== undefined) {
+      outcomeRequestData.value = value;
+    }
+    await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
 }

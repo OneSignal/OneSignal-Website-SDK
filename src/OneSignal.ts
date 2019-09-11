@@ -17,7 +17,7 @@ import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
 import Context from './models/Context';
-import { Notification } from './models/Notification';
+import { Notification, NotificationReceived } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -792,13 +792,37 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
-  public static async sendOutcome(outcomeName: string, value?: number): Promise<void> {
+  public static async sendOutcome(outcomeName: string, value?: number | null): Promise<void> {
     await awaitOneSignalInitAndSupported();
+    // TODO: implement
     // 1. check if the open is open from a notif
     // 2. if so, send 1 api call for a direct notif
+
     // 3. else check all received notifs within timeframe from config
-    // 4. save all intended calls into IDB
-    // 5. perform all calls removing the record about them from IDB after finished successfully
+    const timeframeMs = OneSignal.config!.userConfig.outcomes.influencedTimePeriodMin * 60 * 1000;
+    const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
+    const maxTimestamp = beginningOfTimeframe.getTime().toString();
+    const matchingNotifications = await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
+
+    let outcomeWeight: number | undefined;
+    if (value !== null && value !== undefined) {
+      outcomeWeight = value;
+    }
+
+    if (matchingNotifications.length > 0) {
+      const max: number = OneSignal.config!.userConfig.outcomes.influencedNotificationsLimit;
+      const promises = matchingNotifications.slice(0, max).map(async (notif: NotificationReceived) => {
+        await OneSignal.context.updateManager.sendOutcomeInfluenced(
+          OneSignal.config!.appId, notif.notificationId, outcomeName, outcomeWeight);
+      });
+      await Promise.all(promises);
+      return;
+    }
+
+    await OneSignal.context.updateManager.sendOutcomeUnattributed(OneSignal.config!.appId, outcomeName, outcomeWeight);
+    // TODO 4. save all intended calls into IDB
+    // TODO 5. perform all calls removing the record about them from IDB after finished successfully
+    
   }
 
   static __doNotShowWelcomeNotification: boolean;
