@@ -792,7 +792,12 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
-  public static async sendOutcome(outcomeName: string, value?: number | null): Promise<void> {
+  public static async sendOutcome(outcomeName: string, value?: number | null | string): Promise<void> {
+    if (typeof value === "string" && value !== "") {
+      Log.error("Outcome values of type string are not allowed. Numbers only.");
+      return;
+    }
+
     await awaitOneSignalInitAndSupported();
     // TODO: implement
     // 1. check if the open is open from a notif
@@ -805,7 +810,7 @@ export default class OneSignal {
     const matchingNotifications = await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
 
     let outcomeWeight: number | undefined;
-    if (value !== null && value !== undefined) {
+    if (value !== null && value !== undefined && value !== "") {
       outcomeWeight = value;
     }
 
