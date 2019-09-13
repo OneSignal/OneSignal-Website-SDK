@@ -22,7 +22,7 @@ import {
   OSWindowClient, OSServiceWorkerFields, PageVisibilityRequest, PageVisibilityResponse
 } from "./types";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
-import { NotificationReceived } from "../models/Notification";
+import { NotificationReceived, NotificationClicked } from "../models/Notification";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
@@ -770,10 +770,21 @@ export class ServiceWorker {
     if (actionPreference)
       notificationClickHandlerAction = actionPreference;
 
-    const activeClients = await ServiceWorker.getActiveClients();
-
-    const launchUrl = await ServiceWorker.getNotificationUrlToOpen(notificationData);
-    const notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
+    const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    let saveNotificationClickedPromise: Promise<void> | undefined;
+    if (notificationOpensLink) {
+      const notificationClicked: NotificationClicked = {
+        notificationId: notificationData.id,
+        url: launchUrl,
+        timestamp: new Date().getTime().toString(),
+        sent: false,
+      }
+      Log.info("NotificationClicked", notificationClicked);
+      saveNotificationClickedPromise = (async (notificationClicked) => {
+        return await Database.put("NotificationClicked", notificationClicked)
+      })(notificationClicked);
+    }
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
@@ -787,6 +798,7 @@ export class ServiceWorker {
      an identical new tab being created. With a special setting, any existing tab matching the origin will
      be focused instead of an identical new tab being created.
      */
+    const activeClients = await ServiceWorker.getActiveClients();
     let doNotOpenLink = false;
     for (const client of activeClients) {
       let clientUrl = client.url;
@@ -880,6 +892,9 @@ export class ServiceWorker {
     if (notificationOpensLink && !doNotOpenLink) {
       await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
       await ServiceWorker.openUrl(launchUrl);
+    }
+    if (saveNotificationClickedPromise) {
+      await saveNotificationClickedPromise;
     }
 
     return await convertedAPIRequests;
