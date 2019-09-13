@@ -10,6 +10,7 @@ import OneSignalUtils from "../utils/OneSignalUtils";
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
 const API_URL_PORT = 3001;
+const TURBINE_API_URL_PORT = 18080;
 
 declare var self: ServiceWorkerGlobalScope | undefined;
 
@@ -261,11 +262,14 @@ export default class SdkEnvironment {
    * Returns the URL object representing the components of OneSignal's API
    * endpoint.
    */
-  public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()): URL {
+  public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(), action?: string): URL {
     const apiOrigin = (typeof __API_ORIGIN__ !== "undefined") ? __API_ORIGIN__ || "localhost" : "localhost";
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
+        if (action && action.indexOf("outcomes") > -1) {
+          return new URL(`https://${apiOrigin}:${TURBINE_API_URL_PORT}/api/v1`);
+        }
         return new URL(`https://${apiOrigin}:${API_URL_PORT}/api/v1`);
       case EnvironmentKind.Staging:
         return new URL(`https://${apiOrigin}/api/v1`);

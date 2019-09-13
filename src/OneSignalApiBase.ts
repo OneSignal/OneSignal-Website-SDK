@@ -55,7 +55,7 @@ export class OneSignalApiBase {
       contents.body = JSON.stringify(data);
 
     let status: number;
-    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
+    return fetch(SdkEnvironment.getOneSignalApiUrl(undefined, action).toString() + '/' + action, contents)
         .then(response => {
           status = response.status;
           return response.json();
