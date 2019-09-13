@@ -124,7 +124,7 @@ export class UpdateManager {
       app_id: appId,
       outcome_id: outcomeName,
       device_type: 3, // TODO: where do I get device_type from?
-      notification_id: notificationId,
+      id: notificationId,
       direct: true,
     }
     if (value !== undefined) {
@@ -137,7 +137,7 @@ export class UpdateManager {
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
       outcome_id: outcomeName,
-      notification_id: notificationId,
+      id: notificationId,
       device_type: 3, // TODO: where do I get device_type from?
       direct: false,
     }
