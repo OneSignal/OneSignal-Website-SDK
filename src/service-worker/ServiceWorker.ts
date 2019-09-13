@@ -222,10 +222,11 @@ export class ServiceWorker {
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
-            .then((notifications: any) => {
+            .then(async (notifications: any) => {
               //Display push notifications in the order we received them
               const notificationEventPromiseFns = [];
               const notificationReceivedPromises: Promise<void>[] = [];
+              const appId = await Database.get<string>("Ids", "appId");
 
               for (let rawNotification of notifications) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
@@ -233,6 +234,7 @@ export class ServiceWorker {
 
                 const notificationReceived: NotificationReceived = {
                   notificationId: notification.id,
+                  appId,
                   url: notification.url,
                   timestamp: new Date().getTime().toString(),
                   sent: false,
@@ -774,8 +776,10 @@ export class ServiceWorker {
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     let saveNotificationClickedPromise: Promise<void> | undefined;
     if (notificationOpensLink) {
+      const appId = await Database.get<string>("Ids", "appId");
       const notificationClicked: NotificationClicked = {
         notificationId: notificationData.id,
+        appId,
         url: launchUrl,
         timestamp: new Date().getTime().toString(),
         sent: false,
