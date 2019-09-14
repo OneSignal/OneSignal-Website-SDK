@@ -1,9 +1,9 @@
 import Emitter from "../libraries/Emitter";
 import IndexedDb from "./IndexedDb";
 
-import { AppConfig } from "../models/AppConfig";
+import { AppConfig, NotificationClickMatchBehavior } from "../models/AppConfig";
 import { AppState, ClickedNotifications } from "../models/AppState";
-import { NotificationReceived } from "../models/Notification";
+import { Notification, NotificationReceived, NotificationClicked } from "../models/Notification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
@@ -373,6 +373,33 @@ export default class Database {
     await this.remove("Sessions", sessionKey);
   }
 
+  async getNotificationClickedByUrl(url: string, _matchStrategy: NotificationClickMatchBehavior, appId: string):
+    Promise<NotificationClicked | null> {
+    const allClickedNotifications = await this.get<NotificationClicked[]>("NotificationClicked");
+
+    const predicate = (notification: NotificationClicked) => {
+      if (notification.appId !== appId) {
+        return false;
+      }
+
+      return new URL(url).origin === new URL(notification.url).origin;
+
+      // switch(matchStrategy) {
+      //   case NotificationClickMatchBehavior.Exact:
+      //     return url === notification.url;
+      //   case NotificationClickMatchBehavior.Origin:
+      //     return new URL(url).origin === new URL(notification.url).origin;
+      //   default:
+      //     return false;
+      // }
+    };
+    return allClickedNotifications.find(predicate) || null;
+  }
+
+  async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
+    return await this.get<NotificationClicked | null>("NotificationClicked", notificationId);
+  }
+
   async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
     return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
   }
@@ -462,6 +489,15 @@ export default class Database {
 
   static async getExternalUserId(): Promise<string | undefined | null> {
     return await Database.singletonInstance.getExternalUserId();
+  }
+
+  static async getNotificationClickedByUrl(url: string, matchStrategy: NotificationClickMatchBehavior, appId: string):
+    Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedByUrl(url, matchStrategy, appId);
+  }
+
+  static async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedById(notificationId);
   }
 
   static async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
