@@ -17,7 +17,7 @@ import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
 import Context from './models/Context';
-import { Notification, NotificationReceived } from './models/Notification';
+import { Notification, NotificationReceived, NotificationClicked } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -464,7 +464,7 @@ export default class OneSignal {
     }
     // After the user subscribers, he will have a device ID, so get it again
     var { deviceId: newDeviceId } = await Database.getSubscription();
-    await OneSignalApi.updatePlayer(appId, newDeviceId, {
+    await OneSignalApi.updatePlayer(appId, newDeviceId!, {
       tags: tags
     });
     executeCallback(callback, tags);
@@ -793,26 +793,54 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, value?: number | null | string): Promise<void> {
+    if (!outcomeName) {
+      Log.error("Outcome name is required");
+      return;
+    }
     if (typeof value === "string" && value !== "") {
       Log.error("Outcome values of type string are not allowed. Numbers only.");
       return;
     }
+    // TODO: check built-in outcome names? not allow sending?
 
     await awaitOneSignalInitAndSupported();
-    // TODO: implement
-    // 1. check if the open is open from a notif
-    // 2. if so, send 1 api call for a direct notif
 
-    // 3. else check all received notifs within timeframe from config
-    const timeframeMs = OneSignal.config!.userConfig.outcomes.influencedTimePeriodMin * 60 * 1000;
-    const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
-    const maxTimestamp = beginningOfTimeframe.getTime().toString();
-    const matchingNotifications = await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
+    // TODO: support for http!!
 
     let outcomeWeight: number | undefined;
     if (value !== null && value !== undefined && value !== "") {
       outcomeWeight = value;
     }
+    /**
+     * Flow:
+     * 1. check if the url was opened as a result of a notif;
+     * 2. if so, send an api call reporting direct notification outcome
+     *    (currently takes into account the match strategy selected in the app's settings);
+     * 3. else check all received notifs within timeframe from config;
+     * 4. send an api call reporting an influenced outcome for each matching notification
+     *    respecting the limit from config too;
+     * 5. if no influencing notification found, report unattributed outcome to the api.
+     */
+
+    // TODO save all intended calls into IDB
+    // TODO perform all calls removing the record about them from IDB after finished successfully
+
+    /* direct notification  */
+    const matchStrategy = OneSignal.config!.userConfig.notificationClickHandlerMatch!;
+    const clickedNotification: NotificationClicked | null = await OneSignal.database.getNotificationClickedByUrl(
+      window.location.href, matchStrategy, OneSignal.config!.appId);
+
+    if (clickedNotification) {
+      await OneSignal.context.updateManager.sendOutcomeDirect(
+        clickedNotification.appId, clickedNotification.notificationId, outcomeName, outcomeWeight);
+      return;
+    }
+
+    /* influencing notifications */
+    const timeframeMs = OneSignal.config!.userConfig.outcomes.influencedTimePeriodMin * 60 * 1000;
+    const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
+    const maxTimestamp = beginningOfTimeframe.getTime().toString();
+    const matchingNotifications = await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
 
     if (matchingNotifications.length > 0) {
       const max: number = OneSignal.config!.userConfig.outcomes.influencedNotificationsLimit;
@@ -841,10 +869,8 @@ export default class OneSignal {
       return;
     }
 
+    /* unattributed outcome report */
     await OneSignal.context.updateManager.sendOutcomeUnattributed(OneSignal.config!.appId, outcomeName, outcomeWeight);
-    // TODO 4. save all intended calls into IDB
-    // TODO 5. perform all calls removing the record about them from IDB after finished successfully
-    
   }
 
   static __doNotShowWelcomeNotification: boolean;
