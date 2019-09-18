@@ -1,8 +1,8 @@
 export interface OutcomeRequestData {
   app_id: string;
-  outcome_id: string;
+  id: string;
   device_type: number;
   direct?: boolean;
-  id?: string;
-  value?: number;
+  notification_id?: string;
+  weight?: number;
 }
