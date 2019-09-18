@@ -124,6 +124,21 @@ export default class Database {
     }
   }
 
+  public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
+    if (this.shouldUsePostmam()) {
+      return await new Promise<T[]>(async (resolve) => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, [{
+          table: table
+        }], (reply: T[]) => {
+          resolve(reply);
+        });
+      });
+    } else {
+      const result = await this.database.getAll<T>(table);
+      return result;
+    }
+  }
+
   async queryFromIndex<T>(table: OneSignalDbTable, index: OneSignalIndex, key?: string): Promise<T[]> {
     if (this.shouldUsePostmam()) {
       return await new Promise<T[]>(async (resolve) => {
@@ -375,8 +390,7 @@ export default class Database {
 
   async getNotificationClickedByUrl(url: string, _matchStrategy: NotificationClickMatchBehavior, appId: string):
     Promise<NotificationClicked | null> {
-    const allClickedNotifications = await this.get<NotificationClicked[]>("NotificationClicked");
-
+    const allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
     const predicate = (notification: NotificationClicked) => {
       if (notification.appId !== appId) {
         return false;
