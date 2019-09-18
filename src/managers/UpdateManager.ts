@@ -120,42 +120,44 @@ export class UpdateManager {
   }
 
   public async sendOutcomeDirect(appId: string, notificationId: string, outcomeName: string, value?: number) {
+    const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
-      outcome_id: outcomeName,
-      device_type: 3, // TODO: where do I get device_type from?
-      id: notificationId,
+      id: outcomeName,
+      device_type: deviceRecord.deliveryPlatform,
+      notification_id: notificationId,
       direct: true,
     }
     if (value !== undefined) {
-      outcomeRequestData.value = value;
+      outcomeRequestData.weight = value;
     }
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
 
   public async sendOutcomeInfluenced(appId: string, notificationId: string, outcomeName: string, value?: number) {
+    const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
-      outcome_id: outcomeName,
-      id: notificationId,
-      device_type: 3, // TODO: where do I get device_type from?
+      id: outcomeName,
+      device_type: deviceRecord.deliveryPlatform,
+      notification_id: notificationId,
       direct: false,
     }
     if (value !== undefined) {
-      outcomeRequestData.value = value;
+      outcomeRequestData.weight = value;
     }
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
 
   public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
+    const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
-      outcome_id: outcomeName,
-      device_type: 3, // TODO: where do I get device_type from?
-      direct: true,
+      id: outcomeName,
+      device_type: deviceRecord.deliveryPlatform,
     }
     if (value !== undefined) {
-      outcomeRequestData.value = value;
+      outcomeRequestData.weight = value;
     }
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
