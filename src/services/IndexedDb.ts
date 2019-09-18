@@ -160,6 +160,26 @@ export default class IndexedDb {
     }
   }
 
+  public async getAll<T>(table: string): Promise<T[]> {
+    return await new Promise<T[]>(async (resolve, reject) => {
+      const database = await this.ensureDatabaseOpen();
+      let cursor = database.transaction(table).objectStore(table).openCursor();
+      const result: T[] = [];
+      cursor.onsuccess = (event: any) => {
+        var cursorResult: IDBCursorWithValue = event.target.result;
+        if (cursorResult) {
+          result.push(cursorResult.value as T);
+          cursorResult.continue();
+        } else {
+          resolve(result);
+        }
+      };
+      cursor.onerror = () => {
+        reject(cursor.error);
+      };
+    });
+  }
+
   public async queryFromIndex<T>(table: string, indexName: string, key?: string): Promise<T[]> {
     const database = await this.ensureDatabaseOpen();
     return await new Promise<T[]>((resolve, reject) => {
