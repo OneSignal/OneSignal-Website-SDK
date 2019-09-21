@@ -1,122 +1,65 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { isPushNotificationsSupported } from "../../../src/utils/BrowserSupportsPush";
-import { setUserAgent } from '../../support/tester/browser';
+import sinon from 'sinon';
 
+const sandbox = sinon.sandbox.create();
 
-function shouldSupport(t: any, userAgent: BrowserUserAgent) {
-  setUserAgent(userAgent);
-  t.true(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be supported`)
+test.beforeEach(async () => {
+  await TestEnvironment.stubDomEnvironment();
+});
+
+test.afterEach(function () {
+  sandbox.restore();
+});
+
+// PushSubscriptionOptions is a class present in browsers that support the Push API
+export function browserWithPushAPIWithVAPIDEnv(): void {
+  const classDef = function() {};
+  classDef.prototype.applicationServerKey = null;
+  classDef.prototype.userVisibleOnly = null;
+
+  sandbox.stub((<any>global), "PushSubscriptionOptions").value(classDef);
 }
-function shouldNotSupport(t: any, userAgent: BrowserUserAgent) {
-  setUserAgent(userAgent);
-  t.false(isPushNotificationsSupported(), `Expected ${BrowserUserAgent[userAgent]} to be unsupported`)
+
+function browserWithPushAPIButNoVAPIDEnv(): void {
+  const classDef = function() {};
+  classDef.prototype.userVisibleOnly = null;
+
+  sandbox.stub((<any>global), "PushSubscriptionOptions").value(classDef);
 }
 
-test('should support specific browser environments', async t => {
-  (global as any).BrowserUserAgent = BrowserUserAgent;
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
+// Define window.safari.pushNotification
+function safariWithPushEnv(): void {
+  sandbox.stub((<any>global).self, "safari").value({ pushNotification: {} });
+}
 
-  shouldSupport(t, BrowserUserAgent.FirefoxMobileSupported);
-  shouldSupport(t, BrowserUserAgent.FirefoxTabletSupported);
-  shouldSupport(t, BrowserUserAgent.FirefoxWindowsSupported);
-  shouldSupport(t, BrowserUserAgent.FirefoxMacSupported);
-  shouldSupport(t, BrowserUserAgent.FirefoxLinuxSupported);
+// Define window.safari
+function safariWithoutPushEnv(): void {
+  sandbox.stub((<any>global).self, "safari").value({});
+}
 
-  shouldSupport(t, BrowserUserAgent.EdgeSupported);
-
-  shouldSupport(t, BrowserUserAgent.SafariSupportedMac);
-
-  shouldSupport(t, BrowserUserAgent.ChromeAndroidSupported);
-  shouldSupport(t, BrowserUserAgent.ChromeWindowsSupported);
-  shouldSupport(t, BrowserUserAgent.ChromeMacSupported);
-  shouldSupport(t, BrowserUserAgent.ChromeLinuxSupported);
-  shouldSupport(t, BrowserUserAgent.ChromeTabletSupported);
-
-  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedHigh);
-  shouldSupport(t, BrowserUserAgent.YandexDesktopSupportedLow);
-  shouldSupport(t, BrowserUserAgent.YandexMobileSupported);
-
-  shouldSupport(t, BrowserUserAgent.OperaDesktopSupported);
-  shouldSupport(t, BrowserUserAgent.OperaAndroidSupported);
-  shouldSupport(t, BrowserUserAgent.OperaTabletSupported);
-
-  shouldSupport(t, BrowserUserAgent.VivaldiWindowsSupported);
-  shouldSupport(t, BrowserUserAgent.VivaldiLinuxSupported);
-  shouldSupport(t, BrowserUserAgent.VivaldiMacSupported);
-
-  shouldSupport(t, BrowserUserAgent.SamsungBrowserSupported);
+test('should support browsers that have PushSubscriptionOptions.applicationServerKey defined', async t => {
+  browserWithPushAPIWithVAPIDEnv();
+  t.true(isPushNotificationsSupported());
 });
 
-test('should not support specific browser environments', async t => {
-  (global as any).BrowserUserAgent = BrowserUserAgent;
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-  shouldNotSupport(t, BrowserUserAgent.iPod);
-  shouldNotSupport(t, BrowserUserAgent.iPad);
-  shouldNotSupport(t, BrowserUserAgent.iPhone);
-
-  shouldNotSupport(t, BrowserUserAgent.EdgeUnsupported);
-  shouldNotSupport(t, BrowserUserAgent.EdgeUnsupported2);
-  shouldNotSupport(t, BrowserUserAgent.IE11);
-
-  shouldNotSupport(t, BrowserUserAgent.FirefoxWindowsUnSupported);
-  shouldNotSupport(t, BrowserUserAgent.FirefoxMobileUnsupported);
-  shouldNotSupport(t, BrowserUserAgent.FirefoxTabletUnsupported);
-
-  shouldNotSupport(t, BrowserUserAgent.SafariUnsupportedMac);
-
-  shouldNotSupport(t, BrowserUserAgent.FacebookBrowseriOS);
-  shouldNotSupport(t, BrowserUserAgent.FacebookBrowserAndroid);
-
-  shouldNotSupport(t, BrowserUserAgent.OperaMiniUnsupported);
-
-  shouldNotSupport(t, BrowserUserAgent.ChromeAndroidUnsupported);
-  shouldNotSupport(t, BrowserUserAgent.ChromeWindowsUnsupported);
-  shouldNotSupport(t, BrowserUserAgent.ChromeMacUnsupported);
-  shouldNotSupport(t, BrowserUserAgent.ChromeLinuxUnsupported);
-  shouldNotSupport(t, BrowserUserAgent.ChromeTabletUnsupported);
-
-  shouldNotSupport(t, BrowserUserAgent.SamsungBrowserUnsupported);
+test('should not support browsers without PushSubscriptionOptions', async t => {
+  t.false(isPushNotificationsSupported());
 });
 
-test('should not support environments without service workers (except Safari)', async t => {
-  (global as any).BrowserUserAgent = BrowserUserAgent;
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-  // Remove serviceWorker from navigator for testing
-  Object.defineProperty(navigator, 'serviceWorker', {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: undefined
-  });
-
-  setUserAgent(BrowserUserAgent.ChromeMacSupported);
-  t.false(isPushNotificationsSupported(), `Expected push to be unsupported if service workers don't exist in a non-Safari browser`);
-
-  setUserAgent(BrowserUserAgent.SafariSupportedMac);
-  t.true(isPushNotificationsSupported(), `Expected push to be supported if service workers don't exist in Safari`)
+test('should not support browsers without VAPID', async t => {
+  browserWithPushAPIButNoVAPIDEnv();
+  t.false(isPushNotificationsSupported());
 });
 
-test('should support Chrome 69+ on http', async t => {
-  (global as any).BrowserUserAgent = BrowserUserAgent;
-  await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Http
-  });
-  // Remove serviceWorker from navigator for testing
-  Object.defineProperty(navigator, 'serviceWorker', {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: undefined
-  });
+test('should support Safari if window.safari.pushNotification is defined', async t => {
+  safariWithPushEnv();
+  t.true(isPushNotificationsSupported());
+});
 
-  setUserAgent(BrowserUserAgent.ChromeMacSupported69);
-  t.true(isPushNotificationsSupported(), `Expected push to be supported in Chrome 69 on http`);
+test('should not support Safari unless pushNotification is defined on window.safari', async t => {
+  safariWithoutPushEnv();
+  t.false(isPushNotificationsSupported());
 });
