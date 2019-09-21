@@ -1,27 +1,10 @@
 // This is used by the OneSignalSDK.js shim
 // DO NOT add other imports since it is an ES5 target and dead code imports can't be clean up.
 
-import { IBowser } from "bowser";
-import bowser from "bowser";
-
-export function redetectBrowserUserAgent(): IBowser {
-  /*
-   TODO: Make this a little neater
-   During testing, the browser object may be initialized before the userAgent is injected
-  */
-  let browser: IBowser;
-  if (bowser.name === '' && bowser.version === '') {
-    browser = bowser._detect(navigator.userAgent);
-  } else {
-    browser = bowser;
-  }
-  return browser;
-}
-
 // Checks if the browser supports push notifications by checking if specific
 //   classes and properties on them exist
 
-// Safari -
+// Safari
 //   macOS - typeof safari.pushNotification == "object"
 //   iOS -  typeof safari == "undefined"
 // Chrome
