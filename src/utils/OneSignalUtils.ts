@@ -73,7 +73,7 @@ export class OneSignalUtils {
 
   public static redetectBrowserUserAgent(): IBowser {
     // During testing, the browser object may be initialized before the userAgent is injected
-    if (bowser.name === '' && bowser.version === '') {
+    if (bowser.name === "" && bowser.version === "") {
       return bowser._detect(navigator.userAgent);
     }
     return bowser;

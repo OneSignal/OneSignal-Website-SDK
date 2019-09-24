@@ -93,13 +93,7 @@ async function expectEmailRecordCreationRequest(
         "timezone",
         "device_os",
         "sdk",
-        "delivery_platform",
-        "browser_name",
-        "browser_version",
-        "operating_system",
-        "operating_system_version",
-        "device_platform",
-        "device_model",
+        "device_model"
       ];
       const parsedRequestBody = JSON.parse(requestBody);
       for (const sameValueKey of Object.keys(sameValues)) {
@@ -135,13 +129,7 @@ async function expectEmailRecordUpdateRequest(
         "timezone",
         "device_os",
         "sdk",
-        "delivery_platform",
-        "browser_name",
-        "browser_version",
-        "operating_system",
-        "operating_system_version",
-        "device_platform",
-        "device_model",
+        "device_model"
       ];
       const parsedRequestBody = JSON.parse(requestBody);
       for (const sameValueKey of Object.keys(sameValues)) {

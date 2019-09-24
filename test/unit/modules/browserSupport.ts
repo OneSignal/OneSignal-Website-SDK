@@ -3,6 +3,7 @@ import test from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { isPushNotificationsSupported } from "../../../src/utils/BrowserSupportsPush";
 import sinon from 'sinon';
+import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 
 const sandbox = sinon.sandbox.create();
 
@@ -14,16 +15,7 @@ test.afterEach(function () {
   sandbox.restore();
 });
 
-// PushSubscriptionOptions is a class present in browsers that support the Push API
-export function browserWithPushAPIWithVAPIDEnv(): void {
-  const classDef = function() {};
-  classDef.prototype.applicationServerKey = null;
-  classDef.prototype.userVisibleOnly = null;
-
-  sandbox.stub((<any>global), "PushSubscriptionOptions").value(classDef);
-}
-
-function browserWithPushAPIButNoVAPIDEnv(): void {
+function setupBrowserWithPushAPIButNoVAPIDEnv(): void {
   const classDef = function() {};
   classDef.prototype.userVisibleOnly = null;
 
@@ -31,17 +23,17 @@ function browserWithPushAPIButNoVAPIDEnv(): void {
 }
 
 // Define window.safari.pushNotification
-function safariWithPushEnv(): void {
+function setupSafariWithPushEnv(): void {
   sandbox.stub((<any>global).self, "safari").value({ pushNotification: {} });
 }
 
 // Define window.safari
-function safariWithoutPushEnv(): void {
+function setupSafariWithoutPushEnv(): void {
   sandbox.stub((<any>global).self, "safari").value({});
 }
 
 test('should support browsers that have PushSubscriptionOptions.applicationServerKey defined', async t => {
-  browserWithPushAPIWithVAPIDEnv();
+  setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
   t.true(isPushNotificationsSupported());
 });
 
@@ -50,16 +42,16 @@ test('should not support browsers without PushSubscriptionOptions', async t => {
 });
 
 test('should not support browsers without VAPID', async t => {
-  browserWithPushAPIButNoVAPIDEnv();
+  setupBrowserWithPushAPIButNoVAPIDEnv();
   t.false(isPushNotificationsSupported());
 });
 
 test('should support Safari if window.safari.pushNotification is defined', async t => {
-  safariWithPushEnv();
+  setupSafariWithPushEnv();
   t.true(isPushNotificationsSupported());
 });
 
 test('should not support Safari unless pushNotification is defined on window.safari', async t => {
-  safariWithoutPushEnv();
+  setupSafariWithoutPushEnv();
   t.false(isPushNotificationsSupported());
 });

@@ -1,5 +1,3 @@
-import bowser from 'bowser';
-
 import TimeoutError from './errors/TimeoutError';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -9,7 +7,7 @@ import { OneSignalUtils } from './utils/OneSignalUtils';
 import { PermissionUtils } from './utils/PermissionUtils';
 import { BrowserUtils } from './utils/BrowserUtils';
 import { Utils } from "./utils/Utils";
-
+import bowser from 'bowser';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -17,13 +15,6 @@ export function isArray(variable: any) {
 
 export function decodeHtmlEntities(text: string) {
   return BrowserUtils.decodeHtmlEntities(text);
-}
-
-export function isChromeLikeBrowser() {
-  return bowser.chrome ||
-    (bowser as any).chromium ||
-    (bowser as any).opera ||
-    (bowser as any).yandexbrowser;
 }
 
 export function removeDomElement(selector: string) {
@@ -36,10 +27,6 @@ export function removeDomElement(selector: string) {
       }
     }
   }
-}
-
-export function isLocalhostAllowedAsSecureOrigin() {
-  return OneSignalUtils.isLocalhostAllowedAsSecureOrigin();
 }
 
 /**
@@ -409,13 +396,17 @@ export function incrementSdkLoadCount() {
   (<any>window).__oneSignalSdkLoadCount = getSdkLoadCount() + 1;
 }
 
-/**
- * Returns the email with all whitespace removed and converted to lower case.
- */
-export function prepareEmailForHashing(email: string): string {
-  return email.replace(/\s/g, '').toLowerCase();
-}
+export function getPlatformNotificationIcon(notificationIcons: NotificationIcons | null): string {
+  if (!notificationIcons)
+    return 'default-icon';
 
-export function encodeHashAsUriComponent(hash: any): string {
-  return Utils.encodeHashAsUriComponent(hash);
+  if (bowser.safari && notificationIcons.safari)
+    return notificationIcons.safari;
+  else if (bowser.firefox && notificationIcons.firefox)
+    return notificationIcons.firefox;
+
+  return notificationIcons.chrome ||
+    notificationIcons.firefox ||
+    notificationIcons.safari ||
+    'default-icon';
 }

@@ -859,12 +859,6 @@ function simulateNativeAllowAfterShown() {
   });
 }
 
-function simulateNativeBlockAfterShown() {
-  OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
-    (window as any).Notification.permission = "blocked";
-  });
-}
-
 async function markUserAsOptedOut() {
   const subscription = new Subscription();
   subscription.deviceId = playerId;
@@ -922,12 +916,6 @@ async function inspectPushRecordCreationRequest(t: TestContext, requestStub: Sin
     "timezone",
     "device_os",
     "sdk",
-    "delivery_platform",
-    "browser_name",
-    "browser_version",
-    "operating_system",
-    "operating_system_version",
-    "device_platform",
     "device_model",
     "identifier",
     "notification_types"
@@ -935,7 +923,7 @@ async function inspectPushRecordCreationRequest(t: TestContext, requestStub: Sin
   t.is(requestStub.callCount, 1);
   t.not(requestStub.getCall(0), null);
   const data: any = requestStub.getCall(0).args[1];
-  anyValues.forEach((valueKey) => {
+  anyValues.forEach(valueKey => {
     t.not(data[valueKey], undefined, `player create: ${valueKey} is undefined! => data: ${JSON.stringify(data)}`);
   });
 }
@@ -948,17 +936,13 @@ async function inspectOnSessionRequest(t: TestContext, requestStub: SinonStub) {
     "timezone",
     "browserVersion",
     "sdkVersion",
-    "browserName",
     "subscriptionState",
-    "operatingSystem",
-    "operatingSystemVersion",
-    "devicePlatform",
     "deviceModel",
   ];
   t.is(requestStub.callCount, 1);
   t.not(requestStub.getCall(0), null);
   const data: any = requestStub.getCall(0).args[1];
-  anyValues.forEach((valueKey) => {
+  anyValues.forEach(valueKey => {
     t.not(data[valueKey], undefined, `on_session: ${valueKey} is undefined! => data: ${JSON.stringify(data)}`);
   });
 }

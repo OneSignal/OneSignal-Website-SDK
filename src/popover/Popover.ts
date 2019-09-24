@@ -2,12 +2,12 @@ import bowser from 'bowser';
 
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
-import { addCssClass, addDomElement, once, removeDomElement, isChromeLikeBrowser } from '../utils';
+import {addCssClass, addDomElement, getPlatformNotificationIcon, once, removeDomElement} from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
 
 export default class Popover {
   public options: SlidedownPermissionMessageOptions;
-  public notificationIcons: any;
+  public notificationIcons: NotificationIcons | null;
 
   static get EVENTS() {
     return {
@@ -83,18 +83,7 @@ export default class Popover {
   }
 
   getPlatformNotificationIcon(): string {
-    if (!this.notificationIcons)
-      return 'default-icon';
-
-    if (bowser.safari && this.notificationIcons.safari)
-      return this.notificationIcons.safari;
-    else if (bowser.firefox && this.notificationIcons.firefox)
-      return this.notificationIcons.firefox;
-
-    return this.notificationIcons.chrome ||
-      this.notificationIcons.firefox ||
-      this.notificationIcons.safari ||
-      'default-icon';
+    return getPlatformNotificationIcon(this.notificationIcons);
   }
 
   get container() {
