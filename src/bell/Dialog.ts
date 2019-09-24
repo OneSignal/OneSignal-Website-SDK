@@ -2,18 +2,16 @@ import bowser from 'bowser';
 
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { addDomElement, clearDomElementChildren, isChromeLikeBrowser } from '../utils';
+import {addDomElement, clearDomElementChildren, getPlatformNotificationIcon} from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
-
-
 
 export default class Dialog extends AnimatedElement {
 
   public bell: Bell;
   public subscribeButtonId: string;
   public unsubscribeButtonId: string;
-  public notificationIcons: any;
+  public notificationIcons: NotificationIcons | null;
 
   constructor(bell: Bell) {
     super('.onesignal-bell-launcher-dialog', 'onesignal-bell-launcher-dialog-opened', undefined, 'hidden',
@@ -23,18 +21,6 @@ export default class Dialog extends AnimatedElement {
     this.subscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #subscribe-button';
     this.unsubscribeButtonId = '#onesignal-bell-container .onesignal-bell-launcher #unsubscribe-button';
     this.notificationIcons = null;
-  }
-
-  getPlatformNotificationIcon() {
-    if (this.notificationIcons) {
-      if (isChromeLikeBrowser() || bowser.firefox || bowser.msedge) {
-        return this.notificationIcons.chrome || this.notificationIcons.safari;
-      }
-      else if (bowser.safari) {
-        return this.notificationIcons.safari || this.notificationIcons.chrome;
-      }
-    }
-    else return null;
   }
 
   show() {
@@ -74,7 +60,7 @@ export default class Dialog extends AnimatedElement {
         this.bell.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
 
         let notificationIconHtml = '';
-        let imageUrl = this.getPlatformNotificationIcon();
+        let imageUrl = getPlatformNotificationIcon(this.notificationIcons);
         if (imageUrl) {
           notificationIconHtml = `<div class="push-notification-icon"><img src="${imageUrl}"></div>`
         } else {

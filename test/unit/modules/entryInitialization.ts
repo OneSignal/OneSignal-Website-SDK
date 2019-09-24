@@ -11,7 +11,7 @@ import { OneSignalShimLoader } from "../../../src/utils/OneSignalShimLoader";
 import { SinonSandbox } from "sinon";
 import sinon from 'sinon';
 import Log from "../../../src/libraries/Log";
-import { browserWithPushAPIWithVAPIDEnv } from "./browserSupport";
+import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 
 let sandbox: SinonSandbox;
 
@@ -399,7 +399,7 @@ test("Expect Promise to never resolve for ES5 stubs", async t => {
 });
 
 test("OneSignalSDK.js loads OneSignalStubES6 is loaded on a page on a browser supports push", async t => {
-  browserWithPushAPIWithVAPIDEnv();
+  setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
   OneSignalShimLoader.start();
   t.true((<any>window).OneSignal instanceof OneSignalStubES6);
 });
@@ -459,7 +459,7 @@ test("Existing OneSignal array before OneSignalSDK.js loaded ES6", async t => {
   const preExistingArray = [() => {}, ["init", "test"]];
   (<any>window).OneSignal = preExistingArray;
 
-  browserWithPushAPIWithVAPIDEnv();
+  setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
   OneSignalShimLoader.start();
 
   t.deepEqual(<object[]>(<OneSignalStubES6>(<any>window).OneSignal).preExistingArray, preExistingArray);
