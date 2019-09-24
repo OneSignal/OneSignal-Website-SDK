@@ -499,27 +499,18 @@ export class ServiceWorker {
      * to 14 with requireInteraction and 28 without, we force Mac OS X Chrome
      * notifications to be transient.
      */
-    if (typeof options !== "object") {
-      return options;
-    } else {
-      const clone = {...options};
+    const clone = { ...options };
+    const browser = OneSignalUtils.redetectBrowserUserAgent();
 
-      if (bowser.name === '' && bowser.version === '') {
-        var browser = (bowser as any)._detect(navigator.userAgent);
-      } else {
-        var browser: any = bowser;
-      }
-
-      if (browser.chrome &&
-        browser.mac &&
-        clone) {
-        clone.requireInteraction = false;
-      }
-      if (forcePersistNotifications) {
-        clone.requireInteraction = true;
-      }
-      return clone;
+    if (browser.chrome &&
+      browser.mac &&
+      clone) {
+      clone.requireInteraction = false;
     }
+    if (forcePersistNotifications) {
+      clone.requireInteraction = true;
+    }
+    return clone;
   }
 
   /**

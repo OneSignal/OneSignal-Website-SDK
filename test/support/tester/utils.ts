@@ -94,3 +94,12 @@ export class AssertInitSDK {
     this.firedSDKInitializedPublic = false;
   }
 }
+
+// PushSubscriptionOptions is a class present in browsers that support the Push API
+export function setupBrowserWithPushAPIWithVAPIDEnv(sandbox: SinonSandbox): void {
+  const classDef = function() {};
+  classDef.prototype.applicationServerKey = null;
+  classDef.prototype.userVisibleOnly = null;
+
+  sandbox.stub((<any>global), "PushSubscriptionOptions").value(classDef);
+}
