@@ -1,7 +1,7 @@
 import Emitter from "../libraries/Emitter";
 import IndexedDb from "./IndexedDb";
 
-import { AppConfig, NotificationClickMatchBehavior } from "../models/AppConfig";
+import { AppConfig } from "../models/AppConfig";
 import { AppState, ClickedNotifications } from "../models/AppState";
 import { Notification, NotificationReceived, NotificationClicked } from "../models/Notification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
@@ -13,6 +13,7 @@ import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
+import Log from "../libraries/Log";
 
 enum DatabaseEventName {
   SET
@@ -388,24 +389,19 @@ export default class Database {
     await this.remove("Sessions", sessionKey);
   }
 
-  async getNotificationClickedByUrl(url: string, _matchStrategy: NotificationClickMatchBehavior, appId: string):
-    Promise<NotificationClicked | null> {
-    const allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+  private async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
+    let allClickedNotifications: NotificationClicked[] = [];
+    try {
+      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+    } catch(e) {
+      Log.error("Database.getNotificationClickedByUrl", e);
+    }
     const predicate = (notification: NotificationClicked) => {
       if (notification.appId !== appId) {
         return false;
       }
 
       return new URL(url).origin === new URL(notification.url).origin;
-
-      // switch(matchStrategy) {
-      //   case NotificationClickMatchBehavior.Exact:
-      //     return url === notification.url;
-      //   case NotificationClickMatchBehavior.Origin:
-      //     return new URL(url).origin === new URL(notification.url).origin;
-      //   default:
-      //     return false;
-      // }
     };
     return allClickedNotifications.find(predicate) || null;
   }
@@ -505,9 +501,8 @@ export default class Database {
     return await Database.singletonInstance.getExternalUserId();
   }
 
-  static async getNotificationClickedByUrl(url: string, matchStrategy: NotificationClickMatchBehavior, appId: string):
-    Promise<NotificationClicked | null> {
-    return await Database.singletonInstance.getNotificationClickedByUrl(url, matchStrategy, appId);
+  static async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedByUrl(url, appId);
   }
 
   static async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
