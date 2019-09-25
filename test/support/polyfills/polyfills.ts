@@ -6,6 +6,7 @@ declare var global: any;
 
 global.URL = require('url').URL;
 global.indexedDB = require('fake-indexeddb');
+global.IDBKeyRange = require("fake-indexeddb/lib/FDBKeyRange");
 global.Headers = require('./Headers');
 global.fetch = fetch;
 
