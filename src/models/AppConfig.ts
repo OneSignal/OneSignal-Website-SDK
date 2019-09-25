@@ -100,6 +100,21 @@ export interface AppUserConfig {
   allowLocalhostAsSecureOrigin?: boolean;
   requiresUserPrivacyConsent?: boolean;
   pageUrl?: string;
+  outcomes?: OutcomesConfig;
+}
+
+export interface OutcomesConfig {
+  direct: {
+    enabled: boolean;
+  }
+  indirect: {
+    enabled: boolean;
+    influencedTimePeriodMin: number;
+    influencedNotificationsLimit: number;
+  }
+  unattributed: {
+    enabled: boolean;
+  }
 }
 
 interface BasePromptOptions {
@@ -370,10 +385,7 @@ export interface ServerAppConfig {
         persist: boolean;
       };
     };
-    outcomes: {
-      influencedTimePeriodMin: number;
-      influencedNotificationsLimit: number;
-    },
+    outcomes: OutcomesConfig,
     vapid_public_key: string;
     onesignal_vapid_public_key: string;
     http_use_onesignal_com?: boolean;
