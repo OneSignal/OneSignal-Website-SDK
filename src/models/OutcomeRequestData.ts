@@ -3,6 +3,6 @@ export interface OutcomeRequestData {
   id: string;
   device_type: number;
   direct?: boolean;
-  notification_id?: string;
+  notification_ids?: string[];
   weight?: number;
 }
