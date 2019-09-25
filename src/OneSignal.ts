@@ -847,28 +847,14 @@ export default class OneSignal {
 
       if (matchingNotifications.length > 0) {
         const max: number = OneSignal.config!.userConfig.outcomes!.indirect.influencedNotificationsLimit;
-        let counter: number = 0;
-        const promises: Promise<void>[] = [];
         /**
          * To handle correctly the case when user got subscribed to a new app id
          * we check the appId on notifications to match the current app.
          */
-        for (let i = 0; i < matchingNotifications.length && counter < max; i++) {
-          const matchingNotification = matchingNotifications[i];
-          if (matchingNotification.appId !== OneSignal.config!.appId) {
-            continue;
-          }
-          promises.push(
-            (async (notif: NotificationReceived) => {
-              await OneSignal.context.updateManager.sendOutcomeInfluenced(
-                notif.appId, notif.notificationId, outcomeName, outcomeWeight);
-            })(matchingNotification)
-          );
-          counter++;
-        }
-        if (promises.length > 0) {
-          await Promise.all(promises);
-        }
+        const notificationIds = matchingNotifications.filter(notif => notif.appId === OneSignal.config!.appId)
+          .slice(0, max).map(notif => notif.notificationId);
+        await OneSignal.context.updateManager.sendOutcomeInfluenced(
+          OneSignal.config!.appId, notificationIds, outcomeName, outcomeWeight);
         return;
       }
     }
