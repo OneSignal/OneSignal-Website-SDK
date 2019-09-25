@@ -17,7 +17,7 @@ import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
 import Context from './models/Context';
-import { Notification, NotificationReceived, NotificationClicked } from './models/Notification';
+import { Notification, NotificationReceived, NotificationClicked } from "./models/Notification";
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -792,24 +792,23 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
-  public static async sendOutcome(outcomeName: string, value?: number | null | string): Promise<void> {
+  public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
     if (!outcomeName) {
       Log.error("Outcome name is required");
       return;
     }
-    if (typeof value === "string" && value !== "") {
-      Log.error("Outcome values of type string are not allowed. Numbers only.");
+    if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
+      Log.error("Outcome weight can only be a number if present.");
       return;
     }
     // TODO: check built-in outcome names? not allow sending?
 
     await awaitOneSignalInitAndSupported();
 
-    // TODO: support for http!!
-
-    let outcomeWeight: number | undefined;
-    if (value !== null && value !== undefined && value !== "") {
-      outcomeWeight = value;
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    if (!isSubscribed) {
+      Log.warn("Reporting outcomes is supported only for subscribed users.");
+      return;
     }
     /**
      * Flow:
@@ -827,11 +826,10 @@ export default class OneSignal {
 
     /* direct notification  */
     if (OneSignal.config!.userConfig.outcomes!.direct.enabled) {
-      const matchStrategy = OneSignal.config!.userConfig.notificationClickHandlerMatch!;
       const clickedNotification: NotificationClicked | null = await OneSignal.database.getNotificationClickedByUrl(
-        window.location.href, matchStrategy, OneSignal.config!.appId);
+        window.location.href, OneSignal.config!.appId);
 
-      if (clickedNotification) {
+        if (clickedNotification) {
         await OneSignal.context.updateManager.sendOutcomeDirect(
           clickedNotification.appId, clickedNotification.notificationId, outcomeName, outcomeWeight);
         return;
@@ -843,8 +841,8 @@ export default class OneSignal {
       const timeframeMs = OneSignal.config!.userConfig.outcomes!.indirect.influencedTimePeriodMin * 60 * 1000;
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
       const maxTimestamp = beginningOfTimeframe.getTime().toString();
-      const matchingNotifications = await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
-
+      const matchingNotifications: NotificationReceived[] =
+        await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
       if (matchingNotifications.length > 0) {
         const max: number = OneSignal.config!.userConfig.outcomes!.indirect.influencedNotificationsLimit;
         /**
