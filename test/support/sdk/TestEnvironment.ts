@@ -505,6 +505,19 @@ export class TestEnvironment {
           onesignal_vapid_public_key: "BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0",
           origin: "https://localhost:3001",
           subdomain: undefined,
+          outcomes: {
+            direct: {
+              enabled: true,
+            },
+            indirect: {
+              enabled: true,
+              influencedTimePeriodMin: 60,
+              influencedNotificationsLimit: 5,
+            },
+            unattributed: {
+              enabled: true,
+            }
+          }
         },
         "generated_at": 1531177265
       };
@@ -682,7 +695,20 @@ export class TestEnvironment {
         vapid_public_key: 'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
         onesignal_vapid_public_key:
           'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
-        safari_web_id: 'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d'
+        safari_web_id: 'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d',
+        outcomes: {
+          direct: {
+            enabled: true,
+          },
+          indirect: {
+            enabled: true,
+            influencedTimePeriodMin: 60,
+            influencedNotificationsLimit: 5,
+          },
+          unattributed: {
+            enabled: true,
+          }
+        }
       },
       generated_at: 1511912065
     };
