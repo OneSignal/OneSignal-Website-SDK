@@ -57,7 +57,8 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
     "getExternalUserId",
     "provideUserConsent",
     "isOptedOut",
-    "getEmailId"
+    "getEmailId",
+    "sendOutcome"
   ];
 
   public abstract isPushNotificationsSupported(): boolean;
