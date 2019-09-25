@@ -1,3 +1,4 @@
+import "../../support/polyfills/polyfills";
 import OneSignal from "../../../src/OneSignal";
 import Random from "../tester/Random";
 import Database from "../../../src/services/Database";
