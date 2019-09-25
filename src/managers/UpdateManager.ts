@@ -125,7 +125,7 @@ export class UpdateManager {
       app_id: appId,
       id: outcomeName,
       device_type: deviceRecord.deliveryPlatform,
-      notification_id: notificationId,
+      notification_ids: [notificationId],
       direct: true,
     }
     if (value !== undefined) {
@@ -134,13 +134,13 @@ export class UpdateManager {
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
 
-  public async sendOutcomeInfluenced(appId: string, notificationId: string, outcomeName: string, value?: number) {
+  public async sendOutcomeInfluenced(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
       id: outcomeName,
       device_type: deviceRecord.deliveryPlatform,
-      notification_id: notificationId,
+      notification_ids: notificationIds,
       direct: false,
     }
     if (value !== undefined) {
