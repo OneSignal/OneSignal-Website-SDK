@@ -62,7 +62,7 @@ async function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
-      'OneSignalPageSDKES6.js': path.resolve('build/ts-to-es6/src/entries/pageSDKInit.js'),
+      'OneSignalPageSDKES6.js': path.resolve('build/ts-to-es6/src/entries/pageSdkInit.js'),
     },
     output: {
       path: path.resolve('build/bundles'),
