@@ -140,7 +140,7 @@ export default class Database {
     }
   }
 
-  async queryFromIndex<T>(table: OneSignalDbTable, index: OneSignalIndex, key?: string): Promise<T[]> {
+  public async queryFromIndex<T>(table: OneSignalDbTable, index: OneSignalIndex, key?: string): Promise<T[]> {
     if (this.shouldUsePostmam()) {
       return await new Promise<T[]>(async (resolve) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_QUERY_INDEX, [{
