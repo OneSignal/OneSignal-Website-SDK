@@ -30,6 +30,7 @@ import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
 import Popover from './popover/Popover';
 import Database from './services/Database';
+import { Utils } from "./context/shared/utils/Utils";
 
 import IndexedDb from './services/IndexedDb';
 import {
@@ -828,8 +829,7 @@ export default class OneSignal {
     if (OneSignal.config!.userConfig.outcomes!.direct.enabled) {
       const clickedNotification: NotificationClicked | null = await OneSignal.database.getNotificationClickedByUrl(
         window.location.href, OneSignal.config!.appId);
-
-        if (clickedNotification) {
+      if (clickedNotification) {
         await OneSignal.context.updateManager.sendOutcomeDirect(
           clickedNotification.appId, clickedNotification.notificationId, outcomeName, outcomeWeight);
         return;
@@ -849,8 +849,11 @@ export default class OneSignal {
          * To handle correctly the case when user got subscribed to a new app id
          * we check the appId on notifications to match the current app.
          */
+
+        Utils.sortArrayOfObjects(matchingNotifications, (notif: NotificationReceived) => notif.timestamp, true, true);
         const notificationIds = matchingNotifications.filter(notif => notif.appId === OneSignal.config!.appId)
           .slice(0, max).map(notif => notif.notificationId);
+
         await OneSignal.context.updateManager.sendOutcomeInfluenced(
           OneSignal.config!.appId, notificationIds, outcomeName, outcomeWeight);
         return;
