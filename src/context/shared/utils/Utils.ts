@@ -189,6 +189,28 @@ export class Utils {
       } else throw e;
     }
   }
+
+  static sortArrayOfObjects<TObject, TProperty>(
+    arrayToSort: TObject[],
+    predicateForProperty: (obj: TObject) => TProperty,
+    descending: boolean = false,
+    doItInPlace: boolean = true
+  ): TObject[] {
+    const internalArrayToSort = doItInPlace ? arrayToSort : arrayToSort.slice();
+    internalArrayToSort.sort((a: TObject, b: TObject) => {
+      const propertyA = predicateForProperty(a);
+      const propertyB = predicateForProperty(b);
+
+      if (propertyA > propertyB) {
+        return !!descending ? -1 : 1;
+      }
+      if (propertyA < propertyB) {
+        return !!descending ? 1 : -1;
+      }
+      return 0;
+    })
+    return internalArrayToSort;
+  }
 }
 
 export default Utils;
