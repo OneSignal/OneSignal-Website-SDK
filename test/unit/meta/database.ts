@@ -5,6 +5,7 @@ import Database from '../../../src/services/Database';
 import Random from '../../support/tester/Random';
 import { isNullOrUndefined } from "../../support/tester/utils";
 import { initializeNewSession, Session } from "../../../src/models/Session";
+import { NotificationClicked } from "../../../src/models/Notification";
 
 test(`database should not be shared across service worker test environment initializations`, async t => {
   let firstAppId;
@@ -170,4 +171,36 @@ test("setDeviceId", async t => {
   await Database.setDeviceId(null);
   subscription = await Database.getSubscription();
   t.is(subscription!.deviceId, null);
+});
+
+test("queryFromIndex should work correctly", async t => {
+  const appId = Random.getRandomUuid();
+  const url = "https://localhost:3001";
+
+  const index = 5;
+  const expectedResult: string[] = [];
+
+  const promises: Promise<void>[] = [];
+  for (let i = 0; i < 10; i++) {
+    const notif: NotificationClicked = {
+      notificationId: Random.getRandomUuid(),
+      appId,
+      url,
+      timestamp: i.toString(),
+      sent: false,
+    }
+    if (i >= index) {
+      expectedResult.push(i.toString());
+    }
+    promises.push(Database.put("NotificationClicked", notif));
+  }
+  await Promise.all(promises);
+
+  const timestamp = index.toString();
+  const result = await Database.singletonInstance.queryFromIndex<NotificationClicked>(
+    "NotificationClicked", "timestamp", timestamp
+  );
+
+  t.is(result.length, expectedResult.length);
+  t.deepEqual(result.map(i => i.timestamp), expectedResult);
 });
