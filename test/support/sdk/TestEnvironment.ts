@@ -352,6 +352,7 @@ export class TestEnvironment {
     const fakeMergedConfig: AppConfig = TestEnvironment.getFakeMergedConfig(config);
     OneSignal.context = new Context(fakeMergedConfig);
     OneSignal.config = fakeMergedConfig;
+    OneSignal.config.appId = OneSignal.config.userConfig.appId!;
   }
 
   static getFakeAppConfig(): AppConfig {
