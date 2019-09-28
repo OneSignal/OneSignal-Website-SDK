@@ -187,7 +187,6 @@ test("queryFromIndex should work correctly", async t => {
       appId,
       url,
       timestamp: i.toString(),
-      sent: false,
     }
     if (i >= index) {
       expectedResult.push(i.toString());
