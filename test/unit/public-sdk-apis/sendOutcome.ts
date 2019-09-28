@@ -116,7 +116,7 @@ test("when outcome is direct and feature enabled it sends an api call", async t 
     notificationId: Random.getRandomUuid(),
     appId: OneSignal.config!.appId!,
     url: "https://localhost:3001",
-    timestamp: new Date().getTime().toString(),
+    timestamp: new Date().getTime(),
   }
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
@@ -144,7 +144,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
     notificationId: Random.getRandomUuid(),
     appId: OneSignal.config!.appId!,
     url: "https://localhost:3001",
-    timestamp: new Date().getTime().toString(),
+    timestamp: new Date().getTime(),
   }
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
@@ -160,7 +160,7 @@ test("when outcome is direct and feature enabled and has weight it sends an api 
     notificationId: Random.getRandomUuid(),
     appId: OneSignal.config!.appId!,
     url: "https://localhost:3001",
-    timestamp: new Date().getTime().toString(),
+    timestamp: new Date().getTime(),
   }
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
@@ -185,12 +185,12 @@ const setupReceivedNotifications = async () => {
   const now = new Date().getTime();
   const timeframeMs = OneSignal.config!.userConfig.outcomes!.indirect.influencedTimePeriodMin * 60 * 1000;
   const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
-  const maxTimestamp = beginningOfTimeframe.getTime().toString();
+  const maxTimestamp = beginningOfTimeframe.getTime();
   const limit = OneSignal.config!.userConfig.outcomes!.indirect.influencedNotificationsLimit;
 
   const receivedNotificationIdsWithinTimeframe: string[] = [];
   for (let i = 0; i < limit + 3; i++) {
-    const timestamp = new Date(now - i * TEN_MINUTES_MS).getTime().toString();
+    const timestamp = new Date(now - i * TEN_MINUTES_MS).getTime();
     const notificationReceived: NotificationReceived = {
       notificationId: Random.getRandomUuid(),
       appId: OneSignal.config!.appId!,

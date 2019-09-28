@@ -139,7 +139,7 @@ export default class Database {
     }
   }
 
-  public async queryFromIndex<T>(table: OneSignalDbTable, index: OneSignalIndex, key?: string): Promise<T[]> {
+  public async queryFromIndex<T, TKey>(table: OneSignalDbTable, index: OneSignalIndex, key?: TKey): Promise<T[]> {
     if (this.shouldUsePostmam()) {
       return await new Promise<T[]>(async (resolve) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_QUERY_INDEX, [{
@@ -150,7 +150,7 @@ export default class Database {
         });
       });
     } else {
-      return await this.database.queryFromIndex<T>(table, index, key);
+      return await this.database.queryFromIndex<T, TKey>(table, index, key);
     }
   }
 
@@ -397,8 +397,8 @@ export default class Database {
     return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
   }
 
-  async getNotificationReceivedForTimeRange(maxTimestamp: string): Promise<NotificationReceived[]> {
-    return await this.queryFromIndex<NotificationReceived>("NotificationReceived", "timestamp", maxTimestamp);
+  async getNotificationReceivedForTimeRange(maxTimestamp: number): Promise<NotificationReceived[]> {
+    return await this.queryFromIndex<NotificationReceived, number>("NotificationReceived", "timestamp", maxTimestamp);
   }
 
   /**
@@ -484,7 +484,7 @@ export default class Database {
     return await Database.singletonInstance.getNotificationReceivedById(notificationId);
   }
 
-  static async getNotificationReceivedForTimeRange(maxTimestamp: string): Promise<NotificationReceived[]> {
+  static async getNotificationReceivedForTimeRange(maxTimestamp: number): Promise<NotificationReceived[]> {
     return await Database.singletonInstance.getNotificationReceivedForTimeRange(maxTimestamp);
   }
 

@@ -80,12 +80,12 @@ export interface NotificationReceived {
     notificationId: string;
     appId: string;
     url: string;
-    timestamp: string;
+    timestamp: number;
 }
 
 export interface NotificationClicked {
     notificationId: string;
     appId: string;
     url: string;
-    timestamp: string;
+    timestamp: number;
 }

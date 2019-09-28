@@ -200,7 +200,7 @@ export class ServiceWorker {
                   notificationId: notification.id,
                   appId,
                   url: notification.url,
-                  timestamp: new Date().getTime().toString(),
+                  timestamp: new Date().getTime(),
                 };
                 notificationReceivedPromises.push(Database.put("NotificationReceived", notificationReceived));
                 // TODO: decide what to do with all the notif received promises
@@ -651,7 +651,7 @@ export class ServiceWorker {
         notificationId: notificationData.id,
         appId,
         url: launchUrl,
-        timestamp: new Date().getTime().toString(),
+        timestamp: new Date().getTime(),
       }
       Log.info("NotificationClicked", notificationClicked);
       saveNotificationClickedPromise = (async (notificationClicked) => {
