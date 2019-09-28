@@ -180,7 +180,7 @@ export default class IndexedDb {
     });
   }
 
-  public async queryFromIndex<T>(table: string, indexName: string, key?: string): Promise<T[]> {
+  public async queryFromIndex<T, TKey>(table: string, indexName: string, key?: TKey): Promise<T[]> {
     const database = await this.ensureDatabaseOpen();
     return await new Promise<T[]>((resolve, reject) => {
       const result: T[] = [];
@@ -211,7 +211,7 @@ export default class IndexedDb {
     await this.ensureDatabaseOpen();
     return await new Promise((resolve, reject) => {
       try {
-        let request = this.database.transaction([table], 'readwrite').objectStore(table).put(key);
+        let request = this.database!.transaction([table], 'readwrite').objectStore(table).put(key);
         request.onsuccess = () => {
           resolve(key);
         };
