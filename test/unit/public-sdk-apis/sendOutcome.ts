@@ -117,7 +117,6 @@ test("when outcome is direct and feature enabled it sends an api call", async t 
     appId: OneSignal.config!.appId!,
     url: "https://localhost:3001",
     timestamp: new Date().getTime().toString(),
-    sent: false,
   }
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
@@ -146,7 +145,6 @@ test("when outcome is direct and feature disabled there are no api calls", async
     appId: OneSignal.config!.appId!,
     url: "https://localhost:3001",
     timestamp: new Date().getTime().toString(),
-    sent: false,
   }
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
@@ -163,7 +161,6 @@ test("when outcome is direct and feature enabled and has weight it sends an api 
     appId: OneSignal.config!.appId!,
     url: "https://localhost:3001",
     timestamp: new Date().getTime().toString(),
-    sent: false,
   }
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
@@ -199,7 +196,6 @@ const setupReceivedNotifications = async () => {
       appId: OneSignal.config!.appId!,
       url: "https://localhost:3001",
       timestamp,
-      sent: false,
     }
     if (notificationReceived.timestamp >= maxTimestamp && receivedNotificationIdsWithinTimeframe.length < limit) {
       receivedNotificationIdsWithinTimeframe.push(notificationReceived.notificationId);
