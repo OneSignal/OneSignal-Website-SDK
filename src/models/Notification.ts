@@ -81,7 +81,6 @@ export interface NotificationReceived {
     appId: string;
     url: string;
     timestamp: string;
-    sent: boolean;
 }
 
 export interface NotificationClicked {
@@ -89,5 +88,4 @@ export interface NotificationClicked {
     appId: string;
     url: string;
     timestamp: string;
-    sent: boolean;
 }
