@@ -840,7 +840,7 @@ export default class OneSignal {
     if (OneSignal.config!.userConfig.outcomes!.indirect.enabled) {
       const timeframeMs = OneSignal.config!.userConfig.outcomes!.indirect.influencedTimePeriodMin * 60 * 1000;
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
-      const maxTimestamp = beginningOfTimeframe.getTime().toString();
+      const maxTimestamp = beginningOfTimeframe.getTime();
       const matchingNotifications: NotificationReceived[] =
         await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
       if (matchingNotifications.length > 0) {

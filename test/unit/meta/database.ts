@@ -178,7 +178,7 @@ test("queryFromIndex should work correctly", async t => {
   const url = "https://localhost:3001";
 
   const index = 5;
-  const expectedResult: string[] = [];
+  const expectedResult: number[] = [];
 
   const promises: Promise<void>[] = [];
   for (let i = 0; i < 10; i++) {
@@ -186,18 +186,17 @@ test("queryFromIndex should work correctly", async t => {
       notificationId: Random.getRandomUuid(),
       appId,
       url,
-      timestamp: i.toString(),
+      timestamp: i,
     }
     if (i >= index) {
-      expectedResult.push(i.toString());
+      expectedResult.push(i);
     }
     promises.push(Database.put("NotificationClicked", notif));
   }
   await Promise.all(promises);
 
-  const timestamp = index.toString();
-  const result = await Database.singletonInstance.queryFromIndex<NotificationClicked>(
-    "NotificationClicked", "timestamp", timestamp
+  const result = await Database.singletonInstance.queryFromIndex<NotificationClicked, number>(
+    "NotificationClicked", "timestamp", index
   );
 
   t.is(result.length, expectedResult.length);
