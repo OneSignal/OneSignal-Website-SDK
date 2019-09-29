@@ -24,12 +24,19 @@ function setupBrowserWithPushAPIButNoVAPIDEnv(): void {
 
 // Define window.safari.pushNotification
 function setupSafariWithPushEnv(): void {
-  sandbox.stub((<any>global).self, "safari").value({ pushNotification: {} });
+  sandbox.stub(window, "safari").value({ pushNotification: {} });
 }
 
 // Define window.safari
 function setupSafariWithoutPushEnv(): void {
-  sandbox.stub((<any>global).self, "safari").value({});
+  sandbox.stub(window, "safari").value({});
+}
+
+// Safari on macOS when running in iframe context
+function setupSafariMacOSInIframeContext(): void {
+  sandbox.stub(window, "top").value("someOtherWindow");
+  sandbox.stub(navigator, "vendor").value("Apple Computer, Inc.");
+  sandbox.stub(navigator, "platform").value("MacIntel");
 }
 
 test('should support browsers that have PushSubscriptionOptions.applicationServerKey defined', async t => {
@@ -54,4 +61,9 @@ test('should support Safari if window.safari.pushNotification is defined', async
 test('should not support Safari unless pushNotification is defined on window.safari', async t => {
   setupSafariWithoutPushEnv();
   t.false(isPushNotificationsSupported());
+});
+
+test('should support macOS Safari if running in iframe', async t => {
+  setupSafariMacOSInIframeContext();
+  t.true(isPushNotificationsSupported());
 });
