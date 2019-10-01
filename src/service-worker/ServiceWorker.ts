@@ -913,27 +913,27 @@ export class ServiceWorker {
   }
 
   /**
-   * Returns an array of raw notification objects, either fetched from the server (as from legacy GCM push), or read
-   * from the event.data.payload property (as from the new web push protocol).
+   * Returns an array of raw notification objects, read from the event.data.payload property
    * @param event
    * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
    * an array is returned for backwards compatibility with the rest of the service worker plumbing.
      */
   static parseOrFetchNotifications(event) {
-    if (event.data) {
-      const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
-      if (isValidPayload) {
-        Log.debug('Received a valid encrypted push payload.');
-        return Promise.resolve([event.data.json()]);
-      } else {
-        return Promise.reject('Unexpected push message payload received: ' + event.data.text());
-        /*
-         We received a push message payload from another service provider or a malformed
-         payload. The last received notification will be displayed.
-         */
-      }
+    if (!event || !event.data) {
+      return Promise.reject("Missing event.data on push payload!");
     }
-    else return ServiceWorker.retrieveNotifications();
+
+    const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
+    if (isValidPayload) {
+      Log.debug("Received a valid encrypted push payload.");
+      return Promise.resolve([event.data.json()]);
+    }
+
+    /*
+     We received a push message payload from another service provider or a malformed
+     payload. The last received notification will be displayed.
+    */
+    return Promise.reject(`Unexpected push message payload received: ${event.data}`);
   }
 
   /**
@@ -957,93 +957,6 @@ export class ServiceWorker {
       Log.debug('isValidPushPayload: Parsing to JSON failed with:', e);
       return false;
     }
-  }
-
-  /**
-   * Retrieves unread notifications from OneSignal's servers. For Chrome and Firefox's legacy web push protocol,
-   * a push signal is sent to the service worker without any message contents, and the service worker must retrieve
-   * the contents from OneSignal's servers. In Chrome and Firefox's new web push protocols involving payloads, the
-   * notification contents will arrive with the push signal. The legacy format must be supported for a while.
-   */
-  static retrieveNotifications() {
-    return new Promise(resolve => {
-      var notifications = [];
-      // Each entry is like:
-      /*
-       Object {custom: Object, icon: "https://onesignal.com/images/notification_logo.png", alert: "asd", title: "ss"}
-       alert: "asd"
-       custom: Object
-       i: "6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"
-       __proto__: Object
-       icon: "https://onesignal.com/images/notification_logo.png"
-       title: "ss"
-       __proto__: Object
-       */
-      Database.get('Ids', 'userId')
-        .then(userId => {
-          if (userId) {
-            Log.debug(`Legacy push signal received, retrieving contents from players/${userId}/chromeweb_notification`);
-            return OneSignalApiBase.get(`players/${userId}/chromeweb_notification`);
-          }
-          else {
-            Log.debug('Tried to get notification contents, but IndexedDB is missing user ID info.');
-            return Promise.all([
-                    ServiceWorker.getAppId(),
-                    self.registration.pushManager.getSubscription().then(subscription => subscription.endpoint)
-                  ])
-                .then(([appId, identifier]) => {
-                  let deviceType = PushDeviceRecord.prototype.getDeliveryPlatform();
-                  // Get the user ID from OneSignal
-                  return OneSignalApiSW.getUserIdFromSubscriptionIdentifier(appId, deviceType, identifier).then(recoveredUserId => {
-                    if (recoveredUserId) {
-                      Log.debug('Recovered OneSignal user ID:', recoveredUserId);
-                      // We now have our OneSignal user ID again
-                      return Promise.all([
-                        Database.put('Ids', {type: 'userId', id: recoveredUserId}),
-                        Database.put('Ids', {
-                          type: 'registrationId',
-                          id: (identifier as string).replace(new RegExp("^(https://android.googleapis.com/gcm/send/|https://updates.push.services.mozilla.com/push/)"), "")
-                        }),
-                      ]).then(() => {
-                        // Try getting the notification again
-                        Log.debug('Attempting to retrieve the notification again now with a recovered user ID.');
-                        return OneSignalApiBase.get(`players/${recoveredUserId}/chromeweb_notification`);
-                      });
-                    } else {
-                      return Promise.reject('Recovered user ID was null. Unsubscribing from push notifications.');
-                    }
-                  });
-                })
-                .catch(error => {
-                  Log.debug('Unsuccessfully attempted to recover OneSignal user ID:', error);
-                  // Actually unsubscribe from push so this user doesn't get bothered again
-                  return self.registration.pushManager.getSubscription()
-                      .then(subscription => {
-                        return subscription.unsubscribe()
-                      })
-                      .then (unsubscriptionResult => {
-                        Log.debug('Unsubscribed from push notifications result:', unsubscriptionResult);
-                        ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS = true;
-                      });
-                });
-          }
-        })
-        .then((response: any) => {
-          // The response is an array literal -- response.json() has been called by apiCall()
-          // The result looks like this:
-          // OneSignalApiBase.get('players/7442a553-5f61-4b3e-aedd-bb574ef6946f/chromeweb_notification').then(function(response) { Log.debug(response); });
-          // ["{"custom":{"i":"6d7ec82f-bc56-494f-b73a-3a3b48baa2d8"},"icon":"https://onesignal.com/images/notification_logo.png","alert":"asd","title":"ss"}"]
-          // ^ Notice this is an array literal with JSON data inside
-          for (var i = 0; i < response.length; i++) {
-            notifications.push(JSON.parse(response[i]));
-          }
-          if (notifications.length == 0) {
-            Log.warn('OneSignal Worker: Received a GCM push signal, but there were no messages to retrieve. Are you' +
-                ' using the wrong API URL?', SdkEnvironment.getOneSignalApiUrl().toString());
-          }
-          resolve(notifications);
-        });
-    });
   }
 }
 

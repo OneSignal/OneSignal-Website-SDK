@@ -888,7 +888,7 @@ async function markUserAsSubscribedOnHttp(expired?: boolean) {
 
 function stubServiceWorkerInstallation() {
   const swRegistration = new ServiceWorkerRegistration();
-  sinonSandbox.stub(SubscriptionManager.prototype, "subscribeFcmVapidOrLegacyKey")
+  sinonSandbox.stub(SubscriptionManager.prototype, "subscribeWithVapidKey")
     .resolves(TestEnvironment.getFakeRawPushSubscription());
   sinonSandbox.stub((global as any).navigator.serviceWorker, 'ready')
     .get(() => new Promise((resolve) => { resolve(swRegistration); }));

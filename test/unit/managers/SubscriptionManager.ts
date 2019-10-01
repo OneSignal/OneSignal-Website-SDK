@@ -89,7 +89,7 @@ async function testCase(
   const spy = sandbox.spy(PushManager.prototype, 'subscribe');
 
   // Subscribe for push
-  await manager.subscribeFcmVapidOrLegacyKey(registration.pushManager as any, subscriptionStrategy);
+  await manager.subscribeWithVapidKey(registration.pushManager as any, subscriptionStrategy);
 
   // Allow each test to verify mock parameters independently
   if (onPushManagerSubscribed) {
