@@ -376,7 +376,7 @@ export class SubscriptionManager {
     const workerRegistration = await navigator.serviceWorker.ready;
     Log.debug('Service worker is ready to continue subscribing.');
 
-    return await this.subscribeFcmVapidOrLegacyKey(workerRegistration.pushManager, subscriptionStrategy);
+    return await this.subscribeWithVapidKey(workerRegistration.pushManager, subscriptionStrategy);
   }
 
   public async subscribeFcmFromWorker(
@@ -414,7 +414,7 @@ export class SubscriptionManager {
       throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Default);
     }
 
-    return await this.subscribeFcmVapidOrLegacyKey(self.registration.pushManager, subscriptionStrategy);
+    return await this.subscribeWithVapidKey(self.registration.pushManager, subscriptionStrategy);
   }
 
   /**
@@ -457,15 +457,13 @@ export class SubscriptionManager {
    * push subscription is resubscribed as-is leaving it unchanged, or unsubscribed to make room for
    * a new push subscription.
    */
-  public async subscribeFcmVapidOrLegacyKey(
+  public async subscribeWithVapidKey(
     pushManager: PushManager,
     subscriptionStrategy: SubscriptionStrategyKind
   ): Promise<RawPushSubscription> {
     /*
       Always try subscribing using VAPID by providing an applicationServerKey, except for cases
-      where the user is already subscribed, handled below. If browser doesn't support VAPID's
-      applicationServerKey property, our extra options will be safely ignored, and a non-VAPID
-      subscription will be automatically returned.
+      where the user is already subscribed, handled below.
      */
 
     const existingPushSubscription = await pushManager.getSubscription();

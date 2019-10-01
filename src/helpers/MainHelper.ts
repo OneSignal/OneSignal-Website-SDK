@@ -12,26 +12,6 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../utils/Utils";
 
 export default class MainHelper {
-  /**
-   * If there are multiple manifests, and one of them is our OneSignal manifest, we move it to the top of <head> to ensure our manifest is used for push subscription (manifests after the first are ignored as part of the spec).
-   */
-  static fixWordpressManifestIfMisplaced() {
-    var manifests = document.querySelectorAll('link[rel=manifest]');
-    if (!manifests || manifests.length <= 1) {
-      // Multiple manifests do not exist on this webpage; there is no issue
-      return;
-    }
-    for (let i = 0; i < manifests.length; i++) {
-      let manifest = manifests[i];
-      let url = (manifest as any).href;
-      if (Utils.contains(url, 'gcm_sender_id')) {
-        // Move the <manifest> to the first thing in <head>
-        const head = document.querySelector('head');
-        head.insertBefore(manifest, head.children[0]);
-        Log.info('OneSignal: Moved the WordPress push <manifest> to the first element in <head>.');
-      }
-    }
-  }
 
   public static async getCurrentNotificationType(): Promise<SubscriptionStateKind> {
     const currentPermission: NotificationPermission =

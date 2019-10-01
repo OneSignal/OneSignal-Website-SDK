@@ -250,10 +250,8 @@ export default class OneSignal {
     async function __init() {
       if (OneSignal.__initAlreadyCalled)
         return;
-      else
-        OneSignal.__initAlreadyCalled = true;
 
-      MainHelper.fixWordpressManifestIfMisplaced();
+      OneSignal.__initAlreadyCalled = true;
 
       OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
       OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
