@@ -25,6 +25,7 @@
     "bundle-sw:analyze": "ANALYZE=true ENV=production TESTS=false $(yarn bin)/webpack --config build/config/serviceworker.config.js --profile --json > stats.json",
     "bundle-sdk:analyze": "ANALYZE=true ENV=production TESTS=false $(yarn bin)/webpack --config build/config/sdk.config.js --profile --json > stats.json",
     "build:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle-sw && ENV=development yarn bundle-sdk && ENV=development yarn bundle-page-sdk-es6 && ENV=development build/scripts/publish.sh",
+    "build:dev-dev":"ENV=development API=development yarn transpile:sources && ENV=development API=development yarn bundle-sw && ENV=development API=development yarn bundle-sdk && ENV=development API=development yarn bundle-page-sdk-es6 && ENV=development API=development build/scripts/publish.sh",
     "build:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle-sw && ENV=staging yarn bundle-sdk && ENV=staging yarn bundle-page-sdk-es6 && ENV=staging build/scripts/publish.sh",
     "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle-sw && ENV=production yarn bundle-sdk && ENV=production yarn bundle-page-sdk-es6 && ENV=production build/scripts/publish.sh",
     "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",

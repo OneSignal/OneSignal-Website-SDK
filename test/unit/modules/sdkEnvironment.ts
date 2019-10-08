@@ -4,7 +4,7 @@ import sinon from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';
-import { BuildEnvironmentKind } from '../../../src/models/BuildEnvironmentKind';
+import { EnvironmentKind } from '../../../src/models/EnvironmentKind';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
 
 test('should get service worker window environment', async t => {
@@ -28,7 +28,7 @@ test('getWindowEnv should get subscription popup window environment', async t =>
   t.is(SdkEnvironment.getWindowEnv(), WindowEnvironmentKind.OneSignalSubscriptionPopup);
 
   // For modern popup URL, using localhost dev
-  const stub = sinon.stub(SdkEnvironment, 'getBuildEnv').returns(BuildEnvironmentKind.Development);
+  const stub = sinon.stub(SdkEnvironment, 'getBuildEnv').returns(EnvironmentKind.Development);
   browser.changeURL(window, "https://anything.localhost:3001/subscribe");
   t.is(SdkEnvironment.getWindowEnv(), WindowEnvironmentKind.OneSignalSubscriptionPopup);
   stub.restore();
@@ -67,16 +67,16 @@ test('getWindowEnv should get custom iFrame window environment', async t => {
 });
 
 test('API URL should be valid for development environment', async t => {
-  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Development).toString(), 'https://localhost:3001/api/v1');
+  t.is(SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Development).toString(), 'https://localhost:3001/api/v1');
 });
 
 test('API URL should be valid for staging environment', async t => {
   const expectedUrl = `https://${window.location.host}/api/v1`;
-  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Staging).toString(), expectedUrl);
+  t.is(SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(), expectedUrl);
 });
 
 test('API URL should be valid for production environment', async t => {
-  t.is(SdkEnvironment.getOneSignalApiUrl(BuildEnvironmentKind.Production).toString(), 'https://onesignal.com/api/v1');
+  t.is(SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Production).toString(), 'https://onesignal.com/api/v1');
 });
 
 function mockParentFrame(https: boolean): sinon.SinonStub {

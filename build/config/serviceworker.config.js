@@ -5,6 +5,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const { CheckerPlugin } = require('awesome-typescript-loader');
 
 const env = process.env.ENV || "production";
+const apiEnv = process.env.API;
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
 
@@ -13,9 +14,9 @@ async function getWebpackPlugins() {
     new CheckerPlugin(),
     new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.DefinePlugin({
-      __DEV__: env === "development",
+      __BUILD_TYPE__: JSON.stringify(env),
+      __API_TYPE__: JSON.stringify(apiEnv),
       __TEST__: !!process.env.TESTS,
-      __STAGING__: env === "staging",
       __VERSION__: process.env.npm_package_config_sdkVersion,
       __LOGGING__: env === "development",
       "process.env.NODE_ENV": JSON.stringify(nodeEnv),

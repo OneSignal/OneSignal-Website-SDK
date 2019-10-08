@@ -1,5 +1,5 @@
 import { AppConfig } from '../models/AppConfig';
-import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
+import { EnvironmentKind } from '../models/EnvironmentKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import { contains } from '../utils';
 import SdkEnvironment from './SdkEnvironment';
@@ -66,9 +66,9 @@ export default class AltOriginManager {
       // they don't have duplicate subscriptions
       return null;
     }
-    if (SdkEnvironment.getBuildEnv() == BuildEnvironmentKind.Development) {
+    if (SdkEnvironment.getBuildEnv() == EnvironmentKind.Development) {
       var hostToCheck = '.localhost:3001';
-    } else if (SdkEnvironment.getBuildEnv() == BuildEnvironmentKind.Production) {
+    } else if (SdkEnvironment.getBuildEnv() == EnvironmentKind.Production) {
       var hostToCheck = '.onesignal.com';
     }
     var oneSignalComProxyFrameHost: ProxyFrameHost = (subscribedProxyFrameHosts as any).find(proxyFrameHost => contains(proxyFrameHost.url.host, hostToCheck));
@@ -103,7 +103,7 @@ export default class AltOriginManager {
    * possible URLs.
    */
   static getCanonicalSubscriptionUrls(config: AppConfig,
-                                      buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()
+                                      buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()
                                      ): Array<URL> {
     let urls = [];
 

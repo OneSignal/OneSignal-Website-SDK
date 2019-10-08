@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <script src="/sdks/Dev-OneSignalSDK.js" async=""></script>
+<script>
+    var OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+        appId: "8e7fe838-fbcd-4152-980d-32565a2dcf03",
+      });
+    });
+  </script>
 <head>
     <meta charset="utf-8">
     <title>Express and Webpack App</title>
