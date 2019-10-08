@@ -243,7 +243,7 @@ export default class SdkEnvironment {
   public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()): URL {
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        return new URL('http://onesignal.com/api/v1');
+        return new URL('http://localhost:3001/api/v1');
       case EnvironmentKind.Staging:
         return new URL(`http://${window.location.host}/api/v1`);
       case EnvironmentKind.Production:
