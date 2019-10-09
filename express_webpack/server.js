@@ -20,5 +20,9 @@ app.get('/sdks/:file', (req, res) => {
     res.sendFile(SDK_FILES+req.params.file);
 });
 
+app.get('/:file', (req, res) => {
+    res.sendFile(SDK_FILES+req.params.file);
+});
+
 https.createServer(options, app).listen(3001);
 
