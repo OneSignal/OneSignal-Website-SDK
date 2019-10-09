@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const env = process.env.ENV || "production";
 const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
 const apiEnv = process.env.API;
-const apiOrigin = process.env.ORIGIN || "localhost";
+const apiOrigin = process.env.API_ORIGIN || "localhost";
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
 

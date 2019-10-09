@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:dev": "./build.sh",
+    "certs": "./certs/gen-cert.sh",
     "start": "node ./server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
