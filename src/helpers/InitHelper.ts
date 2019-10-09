@@ -45,24 +45,28 @@ export default class InitHelper {
     // Always check for an updated service worker
     await OneSignal.context.serviceWorkerManager.installWorker();
 
-    OneSignal.context.sessionManager.incrementPageViewCount();
-
+    OneSignal.context.pageViewManager.incrementPageViewCount();
+    Log.warn("document.visibilityState", document.visibilityState);
     if (document.visibilityState !== 'visible') {
-      once(
-        document,
-        'visibilitychange',
-        (_: any, destroyEventListener: Function) => {
-          if (document.visibilityState === 'visible') {
-            destroyEventListener();
-            InitHelper.sessionInit();
-          }
-        },
-        true
-      );
+      InitHelper.postponeSesstionInitUntilPageIsInFocus();
       return;
     }
 
     await InitHelper.sessionInit();
+  }
+
+  public static postponeSesstionInitUntilPageIsInFocus(): void {
+    once(
+      document,
+      'visibilitychange',
+      (_: any, destroyEventListener: Function) => {
+        if (document.visibilityState === 'visible') {
+          destroyEventListener();
+          InitHelper.sessionInit();
+        }
+      },
+      true
+    );
   }
 
   public static async sessionInit(): Promise<void> {
@@ -380,7 +384,7 @@ export default class InitHelper {
   public static async updateEmailSessionCount() {
     const context: ContextInterface = OneSignal.context;
     /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
-    if (context.sessionManager.isFirstPageView()) {
+    if (context.pageViewManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
       if (emailProfile.emailId) {
         const emailDeviceRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.emailAuthHash);

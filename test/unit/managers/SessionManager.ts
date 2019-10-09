@@ -10,7 +10,7 @@ import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
 
 import Context from '../../../src/models/Context';
-import { SessionManager } from '../../../src/managers/SessionManager';
+import { PageViewManager } from '../../../src/managers/PageViewManager';
 import Random from '../../support/tester/Random';
 
 test.beforeEach(async t => {
@@ -24,40 +24,40 @@ test.beforeEach(async t => {
 });
 
 test('page view count for first page view should be zero', async t => {
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 0);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
 });
 
 test('page view count should increment', async t => {
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 0);
-  OneSignal.context.sessionManager.incrementPageViewCount();
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
+  OneSignal.context.pageViewManager.incrementPageViewCount();
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
 });
 
 test('page view count should only increment once for the current page view', async t => {
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 0);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
   for (let i = 0; i < 5; i++) {
     // Even though we're calling this 5 times
-    OneSignal.context.sessionManager.incrementPageViewCount();
+    OneSignal.context.pageViewManager.incrementPageViewCount();
   }
   // The final page count should only be incremented by one
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
 });
 
 test('page view count should increment per page-refresh', async t => {
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 0);
-  OneSignal.context.sessionManager.incrementPageViewCount();
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 0);
+  OneSignal.context.pageViewManager.incrementPageViewCount();
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
 
-  OneSignal.context.sessionManager.simulatePageNavigationOrRefresh();
+  OneSignal.context.pageViewManager.simulatePageNavigationOrRefresh();
 
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 1);
-  OneSignal.context.sessionManager.incrementPageViewCount();
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 2);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
+  OneSignal.context.pageViewManager.incrementPageViewCount();
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 2);
 
-  OneSignal.context.sessionManager.simulatePageNavigationOrRefresh();
+  OneSignal.context.pageViewManager.simulatePageNavigationOrRefresh();
 
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 2);
-  OneSignal.context.sessionManager.incrementPageViewCount();
-  t.is(OneSignal.context.sessionManager.getPageViewCount(), 3);
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 2);
+  OneSignal.context.pageViewManager.incrementPageViewCount();
+  t.is(OneSignal.context.pageViewManager.getPageViewCount(), 3);
 });
 
