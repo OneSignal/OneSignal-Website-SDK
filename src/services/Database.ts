@@ -9,6 +9,7 @@ import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { EmailProfile } from "../models/EmailProfile";
+import { Session } from "../models/Session";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../utils/Utils";
@@ -24,7 +25,9 @@ interface DatabaseResult {
   timestamp: any;
 }
 
-type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened";
+type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions";
+
+const ONESIGNAL_SESSION_KEY = "oneSignalSession";
 
 export default class Database {
 
@@ -337,6 +340,18 @@ export default class Database {
     return await this.get<boolean>("Options", "userConsent");
   }
 
+  private async getSession(sessionKey: string): Promise<Session | null> {
+    return await this.get<Session | null>("Sessions", sessionKey);
+  }
+
+  private async setSession(session: Session): Promise<void> {
+    await this.put("Sessions", session);
+  }
+
+  private async removeSession(sessionKey: string): Promise<void> {
+    await this.remove("Sessions", sessionKey);
+  }
+
   /**
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
@@ -352,6 +367,18 @@ export default class Database {
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
     return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
+  }
+
+  public static async getCurrentSession(): Promise<Session | null> {
+    return await Database.singletonInstance.getSession(ONESIGNAL_SESSION_KEY);
+  }
+
+  public static async upsertSession(session: Session): Promise<void> {
+    await Database.singletonInstance.setSession(session);
+  }
+
+  public static async cleanupCurrentSession(): Promise<void> {
+    await Database.singletonInstance.removeSession(ONESIGNAL_SESSION_KEY);
   }
 
   static async setEmailProfile(emailProfile: EmailProfile) {

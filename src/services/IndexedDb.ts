@@ -100,15 +100,11 @@ export default class IndexedDb {
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
     Log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
     const db = (event.target as IDBOpenDBRequest).result;
-    db.createObjectStore("Ids", {
-      keyPath: "type"
-    });
-    db.createObjectStore("NotificationOpened", {
-      keyPath: "url"
-    });
-    db.createObjectStore("Options", {
-      keyPath: "key"
-    });
+    db.createObjectStore("Ids", { keyPath: "type" });
+    db.createObjectStore("NotificationOpened", { keyPath: "url" });
+    db.createObjectStore("Options", { keyPath: "key" });
+    db.createObjectStore("Sessions", { keyPath: "sessionKey" });
+
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
