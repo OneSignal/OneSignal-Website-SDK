@@ -38,6 +38,7 @@ export default class ProxyFrameHost implements Disposable {
    * @param origin The URL object describing the origin to load.
    */
   constructor(origin: URL) {
+    console.log("origin:", origin);
     this.url = origin;
     this.url.pathname = 'webPushIframe';
   }

@@ -198,7 +198,9 @@ async function getStylesheetsHash() {
 async function getBuildDefines() {
   var buildDefines = {
     __BUILD_TYPE__: env,
+    __BUILD_ORIGIN__: buildOrigin,
     __API_TYPE__: apiEnv,
+    __API_ORIGIN__: apiOrigin,
     __TEST__: !!process.env.TESTS,
     __VERSION__: process.env.npm_package_config_sdkVersion,
     __LOGGING__: process.env.ENV === "development",

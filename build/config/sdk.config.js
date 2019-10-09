@@ -9,7 +9,9 @@ const md5file = require('md5-file');
 const crypto = require('crypto');
 
 const env = process.env.ENV || "production";
+const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
 const apiEnv = process.env.API;
+const apiOrigin = process.env.ORIGIN || "localhost";
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
 
@@ -54,7 +56,9 @@ async function getWebpackPlugins() {
       new ExtractTextPlugin("OneSignalSDKStyles.css"),
       new webpack.DefinePlugin({
         __BUILD_TYPE__: JSON.stringify(env),
+        __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
         __API_TYPE__: JSON.stringify(apiEnv),
+        __API_ORIGIN__: JSON.stringify(apiOrigin),
         __TEST__: !!process.env.TESTS,
         __VERSION__: process.env.npm_package_config_sdkVersion,
         __LOGGING__: env === "development",

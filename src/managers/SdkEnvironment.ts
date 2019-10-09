@@ -241,13 +241,14 @@ export default class SdkEnvironment {
    * endpoint.
    */
   public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()): URL {
+    const apiOrigin = __API_ORIGIN__ || "localhost";
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        return new URL('http://localhost:3001/api/v1');
+        return new URL(`https://${apiOrigin}:3001/api/v1`);
       case EnvironmentKind.Staging:
-        return new URL(`http://${window.location.host}/api/v1`);
+        return new URL(`https://${window.location.host}/api/v1`);
       case EnvironmentKind.Production:
-        return new URL('http://onesignal.com/api/v1');
+        return new URL('https://onesignal.com/api/v1');
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }

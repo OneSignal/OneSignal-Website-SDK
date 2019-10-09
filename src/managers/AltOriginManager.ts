@@ -103,7 +103,7 @@ export default class AltOriginManager {
    * possible URLs.
    */
   static getCanonicalSubscriptionUrls(config: AppConfig,
-                                      buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()
+                                      buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()
                                      ): Array<URL> {
     let urls = [];
 
