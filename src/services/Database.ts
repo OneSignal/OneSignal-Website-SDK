@@ -9,7 +9,7 @@ import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { EmailProfile } from "../models/EmailProfile";
-import { Session } from "../models/Session";
+import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../utils/Utils";
@@ -26,8 +26,6 @@ interface DatabaseResult {
 }
 
 type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions";
-
-const ONESIGNAL_SESSION_KEY = "oneSignalSession";
 
 export default class Database {
 

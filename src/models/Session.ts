@@ -8,7 +8,10 @@ export interface Session {
   sessionKey: string;
   startTimestamp: number;
   accumulatedDuration: number;
-  notificationId?: string; // for direct clicks
+  notificationId: string | null; // for direct clicks
   status: SessionStatus,
+  lastDeactivatedTimestamp: number | null;
   lastActivatedTimestamp: number;
 }
+
+export const ONESIGNAL_SESSION_KEY = "oneSignalSession";
