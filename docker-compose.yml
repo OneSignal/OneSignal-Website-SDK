@@ -7,6 +7,7 @@ services:
       volumes:
         - .:/sdk:cached
         - sdk-build:/sdk/build/releases
+      network_mode: "host"
 
 # Named volumes that are persisted between docker-compose rebuilds.
 # If you need to remove these volumes for some reason, run `docker-compose down -v`

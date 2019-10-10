@@ -25,4 +25,5 @@ app.get('/:file', (req, res) => {
 });
 
 https.createServer(options, app).listen(3001);
+console.log("express_webpack: listening on port 3001");
 
