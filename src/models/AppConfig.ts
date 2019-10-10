@@ -27,7 +27,7 @@ export interface AppConfig {
     mixpanelReportingToken: string | null;
   };
   enableOnSession?: boolean;
-
+  enableSessionDuration?: boolean;
   safariWebId?: string;
 
   /**
@@ -49,6 +49,7 @@ export interface AppConfig {
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
+  sessionThreshold?: number;
 }
 
 export enum ConfigIntegrationKind {
@@ -312,6 +313,7 @@ export interface ServerAppConfig {
       require_auth: boolean;
     };
     enable_on_session?: boolean;
+    enableSessionDuration: boolean;
   };
   config: {
     /**
@@ -321,6 +323,7 @@ export interface ServerAppConfig {
     origin: string;
     staticPrompts: ServerAppConfigPrompt;
     autoResubscribe: boolean;
+    sessionThreshold: number;
     siteInfo: {
       name: string;
       origin: string;

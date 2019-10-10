@@ -113,6 +113,8 @@ export class ConfigHelper {
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: mergedUserConfig,
       enableOnSession: serverConfig.features.enable_on_session || false,
+      sessionThreshold: serverConfig.config.sessionThreshold || 30,
+      enableSessionDuration: !!serverConfig.features.enableSessionDuration,
     };
   }
 
