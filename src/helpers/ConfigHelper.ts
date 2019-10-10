@@ -114,7 +114,9 @@ export class ConfigHelper {
       userConfig: mergedUserConfig,
       enableOnSession: serverConfig.features.enable_on_session || false,
       // default confirmed deliveries feature to off
-      receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false
+      receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false,
+      sessionThreshold: serverConfig.config.sessionThreshold || 30,
+      enableSessionDuration: !!serverConfig.features.enableSessionDuration,
     };
   }
 

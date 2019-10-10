@@ -27,7 +27,7 @@ export interface AppConfig {
     mixpanelReportingToken: string | null;
   };
   enableOnSession?: boolean;
-
+  enableSessionDuration?: boolean;
   safariWebId?: string;
 
   /**
@@ -54,6 +54,7 @@ export interface AppConfig {
    * Describes whether Confirmed Delivery should be active
    */
   receiveReceiptsEnable?: boolean;
+  sessionThreshold?: number;
 }
 
 export enum ConfigIntegrationKind {
@@ -318,6 +319,7 @@ export interface ServerAppConfig {
     };
     enable_on_session?: boolean;
     receive_receipts_enable?: boolean;
+    enableSessionDuration: boolean;
   };
   config: {
     /**
@@ -327,6 +329,7 @@ export interface ServerAppConfig {
     origin: string;
     staticPrompts: ServerAppConfigPrompt;
     autoResubscribe: boolean;
+    sessionThreshold: number;
     siteInfo: {
       name: string;
       origin: string;
