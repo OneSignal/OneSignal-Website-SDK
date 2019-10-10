@@ -7,6 +7,10 @@ From OneSignal-Website-SDK (root) directory, build the SDK by running one of the
 ```
 yarn build:<type>
 ```
+   - Options are:
+      - `dev`
+      - `stag`
+      - `prod`
 2. This will assign the environment type accordingly:
 ```
 yarn build:<type>-<type>
@@ -14,7 +18,9 @@ yarn build:<type>-<type>
 **Example**: `yarn build:dev-prod` builds the SDK with the BUILD environment as "development" and the API environment as "production"
 
 #### CUSTOM ORIGIN PARAMS: 
-You can pass two additional parameters to the above command, the first being the origin of the dev environment or the second being that of the api environment.
+You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. 
+
+If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api
 
 **Examples**:
 ```
@@ -34,3 +40,4 @@ This sets the dev environment origin to `texas` which will result in SDK files b
    - copy `dev-ssl.crt` from container to host with: `docker cp <containerId>:sdk/express_webpack/certs/dev-ssl.crt .`
    - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
    - add cert to keychain (mac OSX): `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/dev-ssl.crt`
+3. Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP in your `/etc/hosts` file
