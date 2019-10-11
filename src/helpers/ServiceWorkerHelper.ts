@@ -1,7 +1,9 @@
 import Log from '../libraries/Log';
 import Path from '../models/Path';
+import { Session, SessionStatus, initializeNewSession } from '../models/Session';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { OneSignalUtils } from '../utils/OneSignalUtils';
+import Database from "../services/Database";
 
 export default class ServiceWorkerHelper {
   // Gets details on the service-worker (if any) that controls the current page
@@ -40,6 +42,95 @@ export default class ServiceWorkerHelper {
     }
 
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+  }
+
+  public static async upsertSession(sessionThresholdInSeconds: number, sendOnFocus: boolean, timerId?: number): Promise<void> {
+    const existingSession = await Database.getCurrentSession();
+
+    if (!existingSession) {
+      // TODO: add notification id after second part is merged in
+      const session: Session = initializeNewSession();
+      await Database.upsertSession(session);
+      // TODO: send on_session api call
+      Log.debug("TODO: send on_session api call");
+      return;
+    }
+
+    if (existingSession.status === SessionStatus.Active) {
+      Log.debug("Session already active", existingSession);
+      return;
+    }
+    
+    if (!existingSession.lastDeactivatedTimestamp) {
+      Log.debug("Session is in invalid state", existingSession);
+      // TODO: possibly recover by re-starting session?
+      return;
+    }
+
+    const currentTimestamp = new Date().getTime();
+    const timeSinceLastDeactivatedInSeconds: number = Math.floor(
+      (currentTimestamp - existingSession.lastDeactivatedTimestamp)/ 1000
+    );
+
+    if (timerId) {
+      Log.debug("Clearing timeout from previous session deactivation");
+      self.clearTimeout(timerId);
+    }
+
+    if (timeSinceLastDeactivatedInSeconds < sessionThresholdInSeconds) {
+      existingSession.status = SessionStatus.Active;
+      existingSession.lastActivatedTimestamp = currentTimestamp;
+      existingSession.lastDeactivatedTimestamp = null;
+      await Database.upsertSession(existingSession);
+    } else {
+      // TODO: possible check that it's not unreasonably long
+      await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocus);
+      await Database.upsertSession(initializeNewSession());
+    }
+  }
+
+  public static async finalizeSession(session: Session, sendOnFocus: boolean): Promise<void> {
+    Log.debug(
+      "Finalize session",
+      `started: ${new Date(session.startTimestamp)}`,
+      `duration: ${session.accumulatedDuration}s`
+    );
+
+    if (sendOnFocus) {
+      Log.debug(`TODO: send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+    }
+
+    await Database.cleanupCurrentSession();
+  };
+
+  public static async deactivateSession(thresholdInSeconds: number, sendOnFocus: boolean): Promise<number | undefined> {
+    const existingSession = await Database.getCurrentSession();
+
+    if (!existingSession) {
+      Log.debug("No active session found. Cannot deactivate.");
+      return undefined;
+    }
+    const currentTimestamp = new Date().getTime();
+    const timeSinceLastActivatedInSeconds: number = Math.floor(
+      (currentTimestamp - existingSession.lastActivatedTimestamp)/ 1000
+    );
+
+    existingSession.lastDeactivatedTimestamp = currentTimestamp;
+    existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
+    existingSession.status = SessionStatus.Inactive;
+
+    const timerId = 
+      ((session, sendOnFocus) => {
+        const thresholdInMilliseconds = thresholdInSeconds * 1000;
+        return self.setTimeout(
+          () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus), 
+          thresholdInMilliseconds);
+      })(existingSession, sendOnFocus);
+
+
+    await Database.upsertSession(existingSession);
+
+    return timerId;
   }
 }
 

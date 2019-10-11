@@ -81,7 +81,11 @@ export class UpdateManager {
     }
 
     try {
-      await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
+      // Not sending on_session here but from SW instead.
+      // await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
+      
+      // Not awaiting here on purpose
+      this.context.sessionManager.upsertSession(deviceId, deviceRecord);
       this.onSessionSent = true;
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
@@ -94,6 +98,8 @@ export class UpdateManager {
       if (deviceId) {
         Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
         this.onSessionSent = true;
+        // Not awaiting here on purpose
+        this.context.sessionManager.upsertSession(deviceId, deviceRecord);
         return deviceId;
       }
       Log.error(`Failed to create user.`);
