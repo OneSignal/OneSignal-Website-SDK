@@ -2,13 +2,22 @@
 ## WebSDK Sandbox Environment
 ### Run Instructions
 1. `docker-compose up`
-   - If SSL certs need to be created, this will be done for you automatically with the common name default setting `texas`. This can be customized in `certs/gen-cert.sh`
+   - If SSL certs need to be created, this will be done for you automatically with the common name default setting `texas` and alternative DNS names (this can be customized in `certs/gen-cert.sh`):
+      - localhost
+      - california
+      - oregon
+      - washington
+   
 2. Follow the following instructions (also logged in console)
    - copy `dev-ssl.crt` from container to host with: 
-      ```docker cp <containerId>:sdk/express_webpack/certs/dev-ssl.crt .```
+      ```
+      docker cp <containerId>:sdk/express_webpack/certs/dev-ssl.crt .
+      ```
    - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
    - add cert to keychain (mac OSX): 
-      ```sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt```
+      ```
+      sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt
+      ```
 3. Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP in your `/etc/hosts` file
 4. Visit [https://localhost:4001?app_id=](https://localhost:4001?app_id=) and insert your app id as a URL query parameter
 
