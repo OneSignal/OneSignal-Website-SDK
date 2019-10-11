@@ -23,7 +23,7 @@ export class OneSignalShimLoader {
     const buildOrigin = __BUILD_ORIGIN__ || "localhost";
     switch(__BUILD_TYPE__){
       case "development":
-        return `https://${buildOrigin}:3001/sdks/Dev-`;
+        return `https://${buildOrigin}:4001/sdks/Dev-`;
       case "staging":
         return `https://${window.location.host}/sdks/Staging-`;
       default:

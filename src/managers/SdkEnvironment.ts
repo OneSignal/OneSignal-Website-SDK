@@ -255,7 +255,7 @@ export default class SdkEnvironment {
   }
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
-    const origin = `https://${__BUILD_ORIGIN__}:3001`; // assume build origin will always be https
+    const origin = `https://${__BUILD_ORIGIN__}:4001`; // assume build origin will always be https
     let path: string;
 
     switch (buildEnv) {

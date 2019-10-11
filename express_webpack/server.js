@@ -24,6 +24,6 @@ app.get('/:file', (req, res) => {
     res.sendFile(SDK_FILES+req.params.file);
 });
 
-https.createServer(options, app).listen(3001);
-console.log("express_webpack: listening on port 3001");
+https.createServer(options, app).listen(4001);
+console.log("express_webpack: listening on port 4001");
 
