@@ -15,6 +15,9 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   public static getBuildEnv(): EnvironmentKind {
+    if (typeof __BUILD_TYPE__ === "undefined") {
+      return EnvironmentKind.Production;
+    }
     switch(__BUILD_TYPE__){
       case "development":
         return EnvironmentKind.Development;
@@ -33,6 +36,9 @@ export default class SdkEnvironment {
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
+    if (typeof __API_TYPE__ === "undefined") {
+      return EnvironmentKind.Production;
+    }
     switch(__API_TYPE__){
       case "development":
         return EnvironmentKind.Development;
@@ -241,7 +247,8 @@ export default class SdkEnvironment {
    * endpoint.
    */
   public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()): URL {
-    const apiOrigin = __API_ORIGIN__ || "localhost";
+    const apiOrigin = (typeof __API_ORIGIN__ !== "undefined") ? __API_ORIGIN__ || "localhost" : "localhost";
+
     switch (buildEnv) {
       case EnvironmentKind.Development:
         return new URL(`https://${apiOrigin}:3001/api/v1`);
@@ -255,7 +262,8 @@ export default class SdkEnvironment {
   }
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
-    const origin = `https://${__BUILD_ORIGIN__}:4001`; // assume build origin will always be https
+    const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const origin = `https://${buildOrigin}:4001`; // assume build origin will always be https
     let path: string;
 
     switch (buildEnv) {
