@@ -7,6 +7,7 @@ import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { NotificationPermission } from "../models/NotificationPermission";
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../utils/Utils";
@@ -225,5 +226,17 @@ export default class MainHelper {
       const appId = await Database.get<string>('Ids', 'appId');
       return appId;
     }
+  }
+
+  public static async createDeviceRecord(appId: string): Promise<PushDeviceRecord> {
+    const deviceRecord = new PushDeviceRecord();
+    deviceRecord.appId = appId;
+    deviceRecord.subscriptionState = await MainHelper.getCurrentNotificationType();
+    return deviceRecord;
+  }
+
+  public static async getDeviceId(): Promise<string | undefined> {
+    const subscription = await OneSignal.database.getSubscription();
+    return subscription.deviceId || undefined;
   }
 }
