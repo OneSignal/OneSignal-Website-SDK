@@ -1,4 +1,4 @@
-import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
+import { EnvironmentKind } from '../models/EnvironmentKind';
 import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
@@ -14,13 +14,40 @@ export default class SdkEnvironment {
    * The magic constants used to detect the environment is set or unset when
    * building the SDK.
    */
-  public static getBuildEnv(): BuildEnvironmentKind {
-    if (typeof __DEV__ !== "undefined" && __DEV__) {
-      return BuildEnvironmentKind.Development;
-    } else if (typeof __STAGING__ !== "undefined" && __STAGING__) {
-      return BuildEnvironmentKind.Staging;
-    } else {
-      return BuildEnvironmentKind.Production;
+  public static getBuildEnv(): EnvironmentKind {
+    if (typeof __BUILD_TYPE__ === "undefined") {
+      return EnvironmentKind.Production;
+    }
+    switch(__BUILD_TYPE__){
+      case "development":
+        return EnvironmentKind.Development;
+      case "staging":
+        return EnvironmentKind.Staging;
+      case "production":
+        return EnvironmentKind.Production;
+      default:
+        return EnvironmentKind.Production;
+    }
+  }
+
+  /**
+   * Returns development staging, or production.
+   * 
+   * Refers to which API environment should be used. These constants are set when building the SDK
+   */
+  public static getApiEnv(): EnvironmentKind {
+    if (typeof __API_TYPE__ === "undefined") {
+      return EnvironmentKind.Production;
+    }
+    switch(__API_TYPE__){
+      case "development":
+        return EnvironmentKind.Development;
+      case "staging":
+        return EnvironmentKind.Staging;
+      case "production":
+        return EnvironmentKind.Production;
+      default:
+        return EnvironmentKind.Production;
     }
   }
 
@@ -164,7 +191,7 @@ export default class SdkEnvironment {
             location.hostname.endsWith('.onesignal.com') ||
             location.hostname.endsWith('.os.tc') ||
             (location.hostname.indexOf('.localhost') !== -1 &&
-              SdkEnvironment.getBuildEnv() === BuildEnvironmentKind.Development)
+              SdkEnvironment.getBuildEnv() === EnvironmentKind.Development)
           )
         ) {
           return WindowEnvironmentKind.OneSignalSubscriptionPopup;
@@ -202,13 +229,13 @@ export default class SdkEnvironment {
    * For example, in staging the registered service worker filename is
    * Staging-OneSignalSDKWorker.js.
    */
-  public static getBuildEnvPrefix(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
+  public static getBuildEnvPrefix(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
     switch (buildEnv) {
-      case BuildEnvironmentKind.Development:
+      case EnvironmentKind.Development:
         return 'Dev-';
-      case BuildEnvironmentKind.Staging:
+      case EnvironmentKind.Staging:
         return 'Staging-';
-      case BuildEnvironmentKind.Production:
+      case EnvironmentKind.Production:
         return '';
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
@@ -219,27 +246,30 @@ export default class SdkEnvironment {
    * Returns the URL object representing the components of OneSignal's API
    * endpoint.
    */
-  public static getOneSignalApiUrl(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
+  public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()): URL {
+    const apiOrigin = (typeof __API_ORIGIN__ !== "undefined") ? __API_ORIGIN__ || "localhost" : "localhost";
+
     switch (buildEnv) {
-      case BuildEnvironmentKind.Development:
-        return new URL('https://localhost:3001/api/v1');
-      case BuildEnvironmentKind.Staging:
+      case EnvironmentKind.Development:
+        return new URL(`https://${apiOrigin}:3001/api/v1`);
+      case EnvironmentKind.Staging:
         return new URL(`https://${window.location.host}/api/v1`);
-      case BuildEnvironmentKind.Production:
+      case EnvironmentKind.Production:
         return new URL('https://onesignal.com/api/v1');
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
   }
 
-  public static getOneSignalResourceUrlPath(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
-    const origin = SdkEnvironment.getOneSignalApiUrl(buildEnv).origin;
+  public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
+    const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const origin = `https://${buildOrigin}:4001`; // assume build origin will always be https
     let path: string;
 
     switch (buildEnv) {
-      case BuildEnvironmentKind.Development:
-      case BuildEnvironmentKind.Staging:
-      case BuildEnvironmentKind.Production:
+      case EnvironmentKind.Development:
+      case EnvironmentKind.Staging:
+      case EnvironmentKind.Production:
         path = '/sdks';
         break;
       default:
@@ -249,15 +279,15 @@ export default class SdkEnvironment {
     return new URL(origin + path)
   }
 
-  public static getOneSignalCssFileName(buildEnv: BuildEnvironmentKind = SdkEnvironment.getBuildEnv()): string {
+  public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {
     const baseFileName = "OneSignalSDKStyles.css";
 
     switch (buildEnv) {
-      case BuildEnvironmentKind.Development:
+      case EnvironmentKind.Development:
         return `Dev-${baseFileName}`;
-      case BuildEnvironmentKind.Staging:
+      case EnvironmentKind.Staging:
         return `Staging-${baseFileName}`;
-      case BuildEnvironmentKind.Production:
+      case EnvironmentKind.Production:
         return baseFileName;
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
