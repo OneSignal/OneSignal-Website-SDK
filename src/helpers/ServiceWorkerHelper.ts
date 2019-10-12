@@ -1,8 +1,10 @@
-import Log from '../libraries/Log';
-import Path from '../models/Path';
-import { Session, SessionStatus, initializeNewSession } from '../models/Session';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
+import { OneSignalApiSW } from "../OneSignalApiSW";
+import Log from "../libraries/Log";
+import Path from "../models/Path";
+import { Session, SessionStatus, initializeNewSession, SessionOrigin } from "../models/Session";
+import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
+import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
 
 export default class ServiceWorkerHelper {
@@ -44,15 +46,24 @@ export default class ServiceWorkerHelper {
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
   }
 
-  public static async upsertSession(sessionThresholdInSeconds: number, sendOnFocus: boolean, timerId?: number): Promise<void> {
+  public static async upsertSession(
+    sessionThresholdInSeconds: number, sendOnFocus: boolean, timerId: number | undefined,
+    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin
+  ): Promise<void> {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      // TODO: add notification id after second part is merged in
+      if (!deviceId) {
+        Log.error("No deviceId provided for new session.");
+        return;
+      }
+
+      // TODO: add notification id after second part is merged in.
       const session: Session = initializeNewSession();
       await Database.upsertSession(session);
-      // TODO: send on_session api call
-      Log.debug("TODO: send on_session api call");
+      if (sessionOrigin !== SessionOrigin.PlayerCreate) {
+        await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+      }
       return;
     }
 
@@ -63,7 +74,7 @@ export default class ServiceWorkerHelper {
     
     if (!existingSession.lastDeactivatedTimestamp) {
       Log.debug("Session is in invalid state", existingSession);
-      // TODO: possibly recover by re-starting session?
+      // TODO: possibly recover by re-starting session if deviceId is present?
       return;
     }
 
@@ -83,7 +94,7 @@ export default class ServiceWorkerHelper {
       existingSession.lastDeactivatedTimestamp = null;
       await Database.upsertSession(existingSession);
     } else {
-      // TODO: possible check that it's not unreasonably long
+      // TODO: Possibly check that it's not unreasonably long.
       await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocus);
       await Database.upsertSession(initializeNewSession());
     }
@@ -101,6 +112,10 @@ export default class ServiceWorkerHelper {
     }
 
     await Database.cleanupCurrentSession();
+    Log.debug(
+      "Finalize session finished",
+      `started: ${new Date(session.startTimestamp)}`
+    );
   };
 
   public static async deactivateSession(thresholdInSeconds: number, sendOnFocus: boolean): Promise<number | undefined> {

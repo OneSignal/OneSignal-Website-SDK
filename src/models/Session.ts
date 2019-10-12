@@ -1,9 +1,16 @@
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
 
 export enum SessionStatus {
   Active = "active",
   Inactive = "inactive",
   Expired = "expired"
+}
+
+export enum SessionOrigin {
+  PlayerCreate = 1,
+  PlayerOnSession = 2,
+  VisibilityVisible = 3,
+  VisibilityHidden = 4,
 }
 
 export interface Session {
@@ -36,7 +43,8 @@ export function initializeNewSession(options?: Partial<Session>): Session {
 
 export interface SessionPayload {
   deviceId?: string;
-  deviceRecord?: PushDeviceRecord;
+  deviceRecord: SerializedPushDeviceRecord;
   sessionThreshold: number;
   enableSessionDuration: boolean;
+  sessionOrigin: SessionOrigin;
 }

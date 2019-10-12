@@ -7,6 +7,7 @@ import Database from "../services/Database";
 import Log from "../libraries/Log";
 import { ContextSWInterface } from '../models/ContextSW';
 import Utils from "../utils/Utils";
+import { SessionOrigin } from '../models/Session';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -82,7 +83,7 @@ export class UpdateManager {
       // await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
       
       // Not awaiting here on purpose
-      this.context.sessionManager.upsertSession(deviceId, deviceRecord);
+      this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
@@ -96,7 +97,7 @@ export class UpdateManager {
         Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
         this.onSessionSent = true;
         // Not awaiting here on purpose
-        this.context.sessionManager.upsertSession(deviceId, deviceRecord);
+        this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerCreate);
         return deviceId;
       }
       Log.error(`Failed to create user.`);

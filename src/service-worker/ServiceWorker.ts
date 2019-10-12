@@ -20,7 +20,7 @@ import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../utils/Utils";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 
-declare var self: ServiceWorkerGlobalScope;
+declare var self: ServiceWorkerGlobalScope & { timerId: number | undefined; };
 declare var Notification: Notification;
 
 /**
@@ -178,7 +178,14 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: SessionPayload) => {
       Log.debug("[Service Worker] Received SessionUpsert", payload);
       try {
-        await ServiceWorkerHelper.upsertSession(payload.sessionThreshold, payload.enableSessionDuration, self.timerId);
+        await ServiceWorkerHelper.upsertSession(
+          payload.sessionThreshold,
+          payload.enableSessionDuration,
+          self.timerId,
+          payload.deviceRecord,
+          payload.deviceId,
+          payload.sessionOrigin
+        );
       } catch(e) {
         Log.error("Error in SW.SessionUpsert handler", e.message, e);
       }

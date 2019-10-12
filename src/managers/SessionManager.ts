@@ -1,6 +1,7 @@
 import { ContextSWInterface } from "../models/ContextSW";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { SessionPayload } from "../models/Session";
+import { SessionPayload, SessionOrigin } from "../models/Session";
+import MainHelper from "../helpers/MainHelper";
 import Log from "../libraries/Log";
 import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
 
@@ -11,45 +12,66 @@ export class SessionManager {
     this.context = context;
   }
 
-  public async notifySWToUpsertSession(deviceId?: string, deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async notifySWToUpsertSession(
+    deviceId: string | undefined,
+    deviceRecord: PushDeviceRecord,
+    sessionOrigin: SessionOrigin
+  ): Promise<void> {
     Log.debug("Notify SW to upsert session");
     const payload: SessionPayload = {
       deviceId,
-      deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
+      deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin,
     };
     await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
   }
 
-  public async notifySWToDeactivateSession(deviceId?: string, deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async notifySWToDeactivateSession(
+    deviceId: string | undefined,
+    deviceRecord: PushDeviceRecord,
+    sessionOrigin: SessionOrigin
+  ): Promise<void> {
     Log.debug("Notify SW to deactivate session");
     const payload: SessionPayload = {
       deviceId,
-      deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
+      deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin,
     };
     await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
   }
 
-  public handleVisibilityChange(): void {
+  public async handleVisibilityChange(): Promise<void> {
     const visibilityState = document.visibilityState;
+
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
     if (visibilityState === "visible") {
-      this.notifySWToUpsertSession();
+      this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
       return;
     }
 
     if (visibilityState === "hidden") {
-      this.notifySWToDeactivateSession();
+      this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
       return;
     }
 
     // it should never be anything else at this point
+    Log.warn("Unhandled visibility state happened", visibilityState);
   }
 
-  public async upsertSession(deviceId?: string, deviceRecord?: PushDeviceRecord): Promise<void> {
-    const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord);
+  public async upsertSession(
+    deviceId: string,
+    deviceRecord: PushDeviceRecord,
+    sessionOrigin: SessionOrigin
+  ): Promise<void> {
+    const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
 
     // TODO: Possibly need to add handling for "pagehide" event. And review all the cases both fire in general
     // https://github.com/w3c/page-visibility/issues/18
