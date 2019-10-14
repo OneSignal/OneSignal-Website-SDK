@@ -34,13 +34,16 @@ test.beforeEach(async() => {
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
   });
+  
   newSubscription = await new PushManager().subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
   });
+  
   await TestEnvironment.initializeForServiceWorker({
     url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
   });
+  
   setBrowser(BrowserUserAgent.ChromeMacSupported);
 });
 
@@ -50,12 +53,12 @@ test.afterEach(function (_t: TestContext) {
 
 test(`called with an old and new subscription successfully updates the subscription`, async t => {
   /*
-      For this test, pretend the user revoked permissions, pushsubscriptionchange's event provides
-      an oldSubscription but not a new subscription, and the service worker tries to resubscribe
-      anyways.
+    For this test, pretend the user revoked permissions, pushsubscriptionchange's event provides
+    an oldSubscription but not a new subscription, and the service worker tries to resubscribe
+    anyways.
 
-      It's going to fail due to the blocked permission, so let's simulate that here.
-     */
+    It's going to fail due to the blocked permission, so let's simulate that here.
+   */
   sinonSandbox
     .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
     .throws('some-error');
@@ -70,6 +73,10 @@ test(`called with an old and new subscription successfully updates the subscript
   const event = new PushSubscriptionChangeEvent();
   event.oldSubscription = oldSubscription;
   event.newSubscription = newSubscription;
+
+  // navigator.permissions is undefined in Firefox service worker context, lets simulate that here
+  sinonSandbox.stub(navigator, 'permissions').value(undefined);
+  
   await runPushSubscriptionChange(event);
 
   // After pushsubscriptionchange
