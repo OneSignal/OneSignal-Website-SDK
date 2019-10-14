@@ -167,6 +167,8 @@ export class TestEnvironment {
     workerInstance.state = "activated";
     serviceWorkerScope.registration = new ServiceWorkerRegistration();
     serviceWorkerScope.registration.active = workerInstance;
+    config.environment = "serviceWorker";
+    TestEnvironment.stubNotification(config);
 
     Object.assign(global, serviceWorkerScope);
     global.self = global;
@@ -253,7 +255,7 @@ export class TestEnvironment {
   }
 
   static stubNotification(config: TestEnvironmentConfig) {
-    global.window.Notification = global.Notification = {
+    global.Notification = {
       permission: config.permission ? config.permission: NotificationPermission.Default,
       maxActions: 2,
       requestPermission: function(callback: Function) {
@@ -261,6 +263,10 @@ export class TestEnvironment {
         callback(config.pushIdentifier);
       }
     };
+    
+    if (config.environment === "dom") {
+      global.window.Notification = global.Notification;
+    }
   }
 
   static stubNotifyButtonTransitionEvents() {
@@ -289,6 +295,7 @@ export class TestEnvironment {
     SdkEnvironment.getTestEnv = () => TestEnvironmentKind.UnitTesting;
     await TestEnvironment.stubDomEnvironment(config);
     TestEnvironment.stubNotifyButtonTransitionEvents();
+    config.environment = "dom";
     TestEnvironment.stubNotification(config);
     return global.OneSignal;
   }

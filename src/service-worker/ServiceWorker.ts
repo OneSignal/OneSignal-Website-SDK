@@ -873,7 +873,8 @@ export class ServiceWorker {
         If the permission is revoked, we should set the subscription state to permission revoked.
        */
       let subscriptionState: null | SubscriptionStateKind = null;
-      const pushPermission: string = Notification['permission'];
+      const pushPermission: string = Notification["permission"];
+
       if (pushPermission !== "granted") {
         subscriptionState = SubscriptionStateKind.PermissionRevoked;
       } else if (!rawPushSubscription) {
