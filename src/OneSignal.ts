@@ -820,6 +820,7 @@ export default class OneSignal {
   static proxyFrameHost: ProxyFrameHost;
   static proxyFrame: ProxyFrame;
   static emitter: Emitter = new Emitter();
+  static cache: any = {};
 
   /**
    * The additional path to the worker file.
