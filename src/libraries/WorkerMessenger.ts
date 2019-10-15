@@ -142,11 +142,16 @@ export class WorkerMessenger {
       }
       await this.waitUntilWorkerControlsPage();
       Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
-      navigator.serviceWorker.controller.postMessage({
-        command: command,
-        payload: payload
-      })
+      this.directPostMessageToSW(command, payload);
     }
+  }
+
+  public directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
+    Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
+    navigator.serviceWorker!.controller!.postMessage({
+      command: command,
+      payload: payload
+    });
   }
 
   /**

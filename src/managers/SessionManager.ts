@@ -1,6 +1,6 @@
 import { ContextSWInterface } from "../models/ContextSW";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { SessionPayload, SessionOrigin } from "../models/Session";
+import { UpsertSessionPayload, DeactivateSessionPayload, SessionOrigin } from "../models/Session";
 import MainHelper from "../helpers/MainHelper";
 import Log from "../libraries/Log";
 import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
@@ -18,7 +18,7 @@ export class SessionManager {
     sessionOrigin: SessionOrigin
   ): Promise<void> {
     Log.debug("Notify SW to upsert session");
-    const payload: SessionPayload = {
+    const payload: UpsertSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
@@ -30,18 +30,28 @@ export class SessionManager {
 
   public async notifySWToDeactivateSession(
     deviceId: string | undefined,
-    deviceRecord: PushDeviceRecord,
+    deviceRecord: PushDeviceRecord | undefined,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
     Log.debug("Notify SW to deactivate session");
-    const payload: SessionPayload = {
+    const payload: DeactivateSessionPayload = {
       deviceId,
-      deviceRecord: deviceRecord.serialize(),
+      deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
     };
     await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
+  }
+
+  public async handleOnBeforeUnload(): Promise<void> {
+    Log.debug("Notify SW to deactivate session");
+    const payload: DeactivateSessionPayload = {
+      sessionThreshold: OneSignal.config.sessionThreshold,
+      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin: SessionOrigin.BeforeUnload,
+    };
+    this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
   }
 
   public async handleVisibilityChange(): Promise<void> {
@@ -53,12 +63,12 @@ export class SessionManager {
     ]);
 
     if (visibilityState === "visible") {
-      this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+      await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
       return;
     }
 
     if (visibilityState === "hidden") {
-      this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
+      await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
       return;
     }
 
@@ -73,10 +83,25 @@ export class SessionManager {
   ): Promise<void> {
     const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
 
-    // TODO: Possibly need to add handling for "pagehide" event. And review all the cases both fire in general
-    // https://github.com/w3c/page-visibility/issues/18
-    document.addEventListener("visibilitychange", () => { this.handleVisibilityChange() }, false);
-    // TODO: also may need to check for beforeunload though "pagehide" may help account for it
+    // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
+
+    // TODO: add handlers for onblur and onfocus to complement visibilityChange
+  
+    /**
+     * To make sure we add these event listeners only once. Possible use-case is calling registerForPushNotifications
+     * multiple times.
+     */
+    if (!OneSignal.cache.visibilityChangeListener) {
+      // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
+      document.addEventListener("visibilitychange", () => { this.handleVisibilityChange(); }, true);
+      OneSignal.cache.visibilityChangeListener = true;
+    }
+    
+    if (!OneSignal.cache.beforeUnloadListener) {
+      // tracks closing of a tab / reloading / navigating away
+      window.addEventListener("beforeunload", (e) => { e.preventDefault(); this.handleOnBeforeUnload();}, true);
+      OneSignal.cache.beforeUnloadListener = true;
+    }
 
     await sessionPromise;
   }
