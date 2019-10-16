@@ -263,7 +263,8 @@ export class TestEnvironment {
         callback(config.pushIdentifier);
       }
     };
-    
+   
+    // window is only defined in DOM environment (not in SW)
     if (config.environment === "dom") {
       global.window.Notification = global.Notification;
     }
