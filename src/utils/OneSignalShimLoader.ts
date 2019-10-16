@@ -21,7 +21,7 @@ export class OneSignalShimLoader {
   // Some logic from SdkEnvironment
   private static getPathAndPrefix(): string {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
-    switch(buildOrigin){
+    switch(__BUILD_TYPE__){
       case "development":
         return `https://${buildOrigin}:4001/sdks/Dev-`;
       case "staging":
