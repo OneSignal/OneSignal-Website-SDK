@@ -11,7 +11,7 @@ export default class WorkerNavigator {
   ) {
     this.permissions = {
       query: async function() {
-        return "granted";
+        return { state: "granted" };
       }
     };
   }
