@@ -20,7 +20,7 @@ import { Utils } from "../utils/Utils";
 
 ///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
-
+declare var Notification: Notification;
 
 /**
  * The main service worker script fetching and displaying notifications to users in the background even when the client
@@ -873,7 +873,8 @@ export class ServiceWorker {
         If the permission is revoked, we should set the subscription state to permission revoked.
        */
       let subscriptionState: null | SubscriptionStateKind = null;
-      const pushPermission = await navigator.permissions.query({name:'push', userVisibleOnly:true});
+      const pushPermission= Notification.permission;
+
       if (pushPermission !== "granted") {
         subscriptionState = SubscriptionStateKind.PermissionRevoked;
       } else if (!rawPushSubscription) {
