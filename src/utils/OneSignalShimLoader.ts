@@ -21,13 +21,19 @@ export class OneSignalShimLoader {
   // Some logic from SdkEnvironment
   private static getPathAndPrefix(): string {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const productionOrigin = "https://cdn.onesignal.com/sdks/";
+
+    if (typeof __BUILD_TYPE__ === "undefined") {
+      return productionOrigin;
+    }
+
     switch(__BUILD_TYPE__){
       case "development":
         return `https://${buildOrigin}:4001/sdks/Dev-`;
       case "staging":
         return `https://${window.location.host}/sdks/Staging-`;
       default:
-        return "https://cdn.onesignal.com/sdks/";
+        return productionOrigin;
     }
   }
 
