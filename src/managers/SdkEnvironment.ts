@@ -264,26 +264,22 @@ export default class SdkEnvironment {
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
     let origin: string;
-    let path: string;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
         origin = `https://${buildOrigin}:4001`;
-        path = '/sdks';
         break;
       case EnvironmentKind.Staging:
         origin = `https://${window.location.host}`;
-        path = '/sdks';
         break;
       case EnvironmentKind.Production:
         origin = 'https://onesignal.com';
-        path = '/sdks';
         break;
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
 
-    return new URL(origin + path)
+    return new URL(origin + '/sdks')
   }
 
   public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {
