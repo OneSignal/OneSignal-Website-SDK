@@ -263,13 +263,20 @@ export default class SdkEnvironment {
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
-    const origin = `https://${buildOrigin}:4001`; // assume build origin will always be https
+    let origin: string;
     let path: string;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
+        origin = `https://${buildOrigin}:4001`;
+        path = '/sdks';
+        break;
       case EnvironmentKind.Staging:
+        origin = `https://${window.location.host}`;
+        path = '/sdks';
+        break;
       case EnvironmentKind.Production:
+        origin = 'https://onesignal.com';
         path = '/sdks';
         break;
       default:
