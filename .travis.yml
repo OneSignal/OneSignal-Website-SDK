@@ -11,7 +11,7 @@ cache:
     - node_modules
 script:
   - 'yarn run test:noWatch'
-  - 'yarn clean && yarn build:prod && ./.travis/s3-simple-upload-all.sh build/releases s3://onesignal-build/websdk'
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then yarn clean && yarn build:prod && ./.travis/s3-simple-upload-all.sh build/releases s3://onesignal-build/websdk/$TRAVIS_COMMIT; fi
 git:
   depth: 5
 env:
