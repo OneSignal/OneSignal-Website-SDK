@@ -392,10 +392,12 @@ export class TestEnvironment {
           metrics: {
             enable: true,
             mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673"
-          }
+          },
+          enableSessionDuration: true,
         },
         config: {
           autoResubscribe: true,
+          sessionThreshold: 30,
           siteInfo: {
             name: "localhost https",
             origin: "https://localhost:3001",
@@ -549,13 +551,15 @@ export class TestEnvironment {
         },
         email: {
           require_auth: true,
-        }
+        },
+        enableSessionDuration: true
       },
       config: {
         origin: "https://example.com",
         subdomain: undefined,
         http_use_onesignal_com: false,
         autoResubscribe: false,
+        sessionThreshold: 30,
         staticPrompts: {
           native: {
             enabled: false,
