@@ -51,6 +51,7 @@ import ConfigManager from "./managers/ConfigManager";
 import OneSignalUtils from "./utils/OneSignalUtils";
 import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
+import { SessionManager } from './managers/SessionManager';
 
 export default class OneSignal {
   /**
@@ -268,6 +269,15 @@ export default class OneSignal {
          */
         if (!OneSignal.config || !OneSignal.config.subdomain)
           throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
+
+
+        /**
+         * We'll need to set up page activity tracking events on the main page but we can do so
+         * only after the main initialization in the iframe is successful and a new session
+         * is initiated.
+         */
+        OneSignal.emitter.on(OneSignal.EVENTS.SESSION_STARTED, SessionManager.setupSessionEventListenersForHttp);
+
         /**
          * The iFrame may never load (e.g. OneSignal might be down), in which
          * case the rest of the SDK's initialization will be blocked. This is a
@@ -900,6 +910,8 @@ export default class OneSignal {
     SUBSCRIPTION_EXPIRATION_STATE: 'postmam.subscriptionExpirationState',
     PROCESS_EXPIRING_SUBSCRIPTIONS: 'postmam.processExpiringSubscriptions',
     GET_SUBSCRIPTION_STATE: 'postmam.getSubscriptionState',
+    SESSION_UPSERT: 'postmam.sessionUpsert',
+    SESSION_DEACTIVATE: 'postmam.sessionDeactivate'
   };
 
   static EVENTS = {
@@ -969,6 +981,7 @@ export default class OneSignal {
     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
     TEST_WOULD_DISPLAY: 'testWouldDisplay',
     POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
+    SESSION_STARTED: "sessionStarted",
   };
 }
 

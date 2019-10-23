@@ -4,6 +4,7 @@ import { UpsertSessionPayload, DeactivateSessionPayload, SessionOrigin } from ".
 import MainHelper from "../helpers/MainHelper";
 import Log from "../libraries/Log";
 import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 
 export class SessionManager {
   private context: ContextSWInterface;
@@ -25,7 +26,11 @@ export class SessionManager {
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
     };
-    await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
+    } else {
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
+    }
   }
 
   public async notifySWToDeactivateSession(
@@ -41,7 +46,11 @@ export class SessionManager {
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
     };
-    await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
+    } else {
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+    }
   }
 
   public async handleOnBeforeUnload(): Promise<void> {
@@ -51,7 +60,13 @@ export class SessionManager {
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin: SessionOrigin.BeforeUnload,
     };
-    this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+    } else {
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+    }
+    
   }
 
   public async handleVisibilityChange(): Promise<void> {
@@ -85,8 +100,18 @@ export class SessionManager {
 
     // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
 
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      this.setupSessionEventListeners();
+    } else {
+      OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+    }
+
+    await sessionPromise;
+  }
+
+  public setupSessionEventListeners(): void {
     // TODO: add handlers for onblur and onfocus to complement visibilityChange
-  
+
     /**
      * To make sure we add these event listeners only once. Possible use-case is calling registerForPushNotifications
      * multiple times.
@@ -102,7 +127,14 @@ export class SessionManager {
       window.addEventListener("beforeunload", (e) => { e.preventDefault(); this.handleOnBeforeUnload();}, true);
       OneSignal.cache.beforeUnloadListener = true;
     }
+  }
 
-    await sessionPromise;
+  public static setupSessionEventListenersForHttp(): void {
+    if (!OneSignal.context || !OneSignal.context.sessionManager) {
+      Log.error("OneSignal.context not available for http to setup session event listeners.");
+      return;
+    }
+
+    OneSignal.context.sessionManager.setupSessionEventListeners();
   }
 }

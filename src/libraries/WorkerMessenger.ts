@@ -141,13 +141,13 @@ export class WorkerMessenger {
         Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", (<ServiceWorkerGlobalScope><any>self).registration);
       }
       await this.waitUntilWorkerControlsPage();
-      Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
+      Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`);
       this.directPostMessageToSW(command, payload);
     }
   }
 
   public directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
-    Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
+    Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
     navigator.serviceWorker!.controller!.postMessage({
       command: command,
       payload: payload
@@ -273,7 +273,7 @@ export class WorkerMessenger {
     Subscribes a callback to be notified every time a service worker sends a
     message to the window frame with the specific command.
    */
-  on(command: WorkerMessengerCommand, callback: (WorkerMessengerPayload) => void): void {
+  on(command: WorkerMessengerCommand, callback: (payload: any) => void): void {
     this.replies.addListener(command, callback, false);
   }
 
@@ -283,7 +283,7 @@ export class WorkerMessenger {
 
   The callback is executed once at most.
   */
-  once(command: WorkerMessengerCommand, callback: (WorkerMessengerPayload) => void): void {
+  once(command: WorkerMessengerCommand, callback: (payload: any) => void): void {
     this.replies.addListener(command, callback, true);
   }
 

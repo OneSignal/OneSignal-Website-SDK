@@ -1,20 +1,19 @@
 
 
 
-import { InvalidStateReason } from '../../errors/InvalidStateError';
 import Event from '../../Event';
-import HttpHelper from '../../helpers/HttpHelper';
 import InitHelper from '../../helpers/InitHelper';
-import MainHelper from '../../helpers/MainHelper';
 import TestHelper from '../../helpers/TestHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import Database from '../../services/Database';
+import Database, { OneSignalDbTable } from '../../services/Database';
 import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
+import { UpsertSessionPayload, DeactivateSessionPayload } from "../../models/Session";
+import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -65,6 +64,8 @@ export default class ProxyFrame extends RemoteFrame {
       this.onProcessExpiringSubscriptions.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
       this.onGetSubscriptionState.bind(this));
+      this.messenger.on(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, this.onSessionUpsert.bind(this));
+      this.messenger.on(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, this.onSessionDeactivate.bind(this));
     this.messenger.listen();
   }
 
@@ -132,7 +133,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseGet(message: MessengerMessageEvent) {
     // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys:
     // 'someId'}, {table: 'Ids', keys: 'someId'}]
-    const retrievals: Array<{table, key}> = message.data;
+    const retrievals: Array<{table: OneSignalDbTable, key: string}> = message.data;
     const retrievalOpPromises = [];
     for (let retrieval of retrievals) {
       const {table, key} = retrieval;
@@ -146,7 +147,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabasePut(message: MessengerMessageEvent) {
     // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const insertions: Array<{table, keypath}> = message.data;
+    const insertions: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
     let insertionOpPromises = [];
     for (let insertion of insertions) {
       let {table, keypath} = insertion;
@@ -160,7 +161,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseRemove(message: MessengerMessageEvent) {
     // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const removals: Array<{table, keypath}> = message.data;
+    const removals: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
     let removalOpPromises = [];
     for (let removal of removals) {
       let {table, keypath} = removal;
@@ -248,5 +249,19 @@ export default class ProxyFrame extends RemoteFrame {
     const result = await context.subscriptionManager.getSubscriptionState();
     message.reply(result);
     return false;
+  }
+
+  private async onSessionUpsert(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const payload = message.data as UpsertSessionPayload;
+    context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionUpsert, payload);
+    message.reply(true);
+  }
+
+  private async onSessionDeactivate(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const payload = message.data as DeactivateSessionPayload;
+    context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+    message.reply(true);
   }
 }
