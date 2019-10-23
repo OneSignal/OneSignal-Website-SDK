@@ -20,12 +20,21 @@ export class OneSignalShimLoader {
 
   // Some logic from SdkEnvironment
   private static getPathAndPrefix(): string {
-    if (typeof __DEV__ !== "undefined" && __DEV__) {
-      return "https://localhost:3001/sdks/Dev-";
-    } else if (typeof __STAGING__ !== "undefined" && __STAGING__) {
-      return `https://${window.location.host}/sdks/Staging-`;
+    const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const productionOrigin = "https://cdn.onesignal.com/sdks/";
+
+    if (typeof __BUILD_TYPE__ === "undefined") {
+      return productionOrigin;
     }
-    return "https://cdn.onesignal.com/sdks/";
+
+    switch(__BUILD_TYPE__){
+      case "development":
+        return `https://${buildOrigin}:4001/sdks/Dev-`;
+      case "staging":
+        return `https://${window.location.host}/sdks/Staging-`;
+      default:
+        return productionOrigin;
+    }
   }
 
 // Will only be true for browsers that accepted OneSignal permissions before we moved to importing

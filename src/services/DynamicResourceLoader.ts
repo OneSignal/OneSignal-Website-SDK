@@ -1,6 +1,5 @@
 
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { BuildEnvironmentKind } from '../models/BuildEnvironmentKind';
 import Environment from '../Environment';
 
 export const enum ResourceType {

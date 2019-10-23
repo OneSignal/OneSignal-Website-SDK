@@ -10,6 +10,8 @@ build/size-analysis.html
 
 .DS_STORE
 *.pem
+*.key
+*.crt
 yarn-error.log
 dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map

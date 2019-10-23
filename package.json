@@ -29,7 +29,10 @@
     "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle-sw && ENV=production yarn bundle-sdk && ENV=production yarn bundle-page-sdk-es6 && ENV=production build/scripts/publish.sh",
     "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
-    "publish": "yarn clean && yarn build:prod && yarn "
+    "publish": "yarn clean && yarn build:prod && yarn",
+    "build:dev-dev":"./build/scripts/build.sh development development",
+    "build:dev-prod":"./build/scripts/build.sh development production",
+    "build:dev-stag":"./build/scripts/build.sh development staging"
   },
   "config": {
     "sdkVersion": "150709"

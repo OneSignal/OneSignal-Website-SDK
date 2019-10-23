@@ -1,4 +1,4 @@
-export enum BuildEnvironmentKind {
+export enum EnvironmentKind {
   Development = "Development",
   Staging = "Staging",
   Production = "Production"
