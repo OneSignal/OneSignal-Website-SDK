@@ -18,7 +18,6 @@ export class SessionManager {
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
-    Log.debug("Notify SW to upsert session");
     const payload: UpsertSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
@@ -27,8 +26,10 @@ export class SessionManager {
       sessionOrigin,
     };
     if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      Log.debug("Notify SW to upsert session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
     } else {
+      Log.debug("Notify iframe to notify SW to upsert session");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
     }
   }
@@ -38,7 +39,6 @@ export class SessionManager {
     deviceRecord: PushDeviceRecord | undefined,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
-    Log.debug("Notify SW to deactivate session");
     const payload: DeactivateSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
@@ -47,14 +47,35 @@ export class SessionManager {
       sessionOrigin,
     };
     if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      Log.debug("Notify SW to deactivate session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
     } else {
+      Log.debug("Notify SW to deactivate session");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     }
   }
 
+  private async handleOnFocus(): Promise<void> {
+    Log.debug("handleOnFocus");
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
+  }
+
+  private async handleOnBlur(): Promise<void> {
+    Log.debug("handleOnBlur");
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.Blur);
+  }
+
   public async handleOnBeforeUnload(): Promise<void> {
-    Log.debug("Notify SW to deactivate session");
     const payload: DeactivateSessionPayload = {
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
@@ -62,11 +83,12 @@ export class SessionManager {
     };
 
     if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      Log.debug("Notify SW to deactivate session (beforeunload)");
       this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
     } else {
+      Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     }
-    
   }
 
   public async handleVisibilityChange(): Promise<void> {
@@ -78,12 +100,22 @@ export class SessionManager {
     ]);
 
     if (visibilityState === "visible") {
-      await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+      this.setupOnFocusAndOnBlurForSession();
+
+      Log.debug("handleVisibilityChange", "visible", `hasFocus: ${document.hasFocus()}`);
+      if (document.hasFocus()) {
+        await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+      }
       return;
     }
 
     if (visibilityState === "hidden") {
-      await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
+      if (OneSignal.cache.focusHandler) {
+        window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
+      }
+      if (OneSignal.cache.blurHandler) {
+        window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
+      }
       return;
     }
 
@@ -98,8 +130,6 @@ export class SessionManager {
   ): Promise<void> {
     const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
 
-    // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
-
     if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
       this.setupSessionEventListeners();
     } else {
@@ -109,8 +139,24 @@ export class SessionManager {
     await sessionPromise;
   }
 
+  public setupOnFocusAndOnBlurForSession(): void {
+    Log.debug("setupOnFocusAndOnBlurForSession");
+
+    if (!OneSignal.cache.focusHandler) {
+      OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
+    }
+    window.addEventListener("focus", OneSignal.cache.focusHandler, true);
+
+    if (!OneSignal.cache.blurHandler) {
+      OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
+    }
+    window.addEventListener("blur", OneSignal.cache.blurHandler, true);
+  }
+
   public setupSessionEventListeners(): void {
-    // TODO: add handlers for onblur and onfocus to complement visibilityChange
+    // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
+
+    this.setupOnFocusAndOnBlurForSession();
 
     /**
      * To make sure we add these event listeners only once. Possible use-case is calling registerForPushNotifications
@@ -118,7 +164,7 @@ export class SessionManager {
      */
     if (!OneSignal.cache.visibilityChangeListener) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
-      document.addEventListener("visibilitychange", () => { this.handleVisibilityChange(); }, true);
+      document.addEventListener("visibilitychange", () => setTimeout(() => this.handleVisibilityChange(), 0), true);
       OneSignal.cache.visibilityChangeListener = true;
     }
     
