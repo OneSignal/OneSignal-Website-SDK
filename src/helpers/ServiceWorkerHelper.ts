@@ -50,16 +50,23 @@ export default class ServiceWorkerHelper {
     sessionThresholdInSeconds: number, sendOnFocus: boolean, timerId: number | undefined,
     deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin
   ): Promise<void> {
+    if (!deviceId) {
+      Log.error("No deviceId provided for new session.");
+      return;
+    }
+
+    if (!deviceRecord.app_id) {
+      Log.error("No appId provided for new session.");
+      return;
+    }
+
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      if (!deviceId) {
-        Log.error("No deviceId provided for new session.");
-        return;
-      }
-
       // TODO: add notification id after second part is merged in.
-      const session: Session = initializeNewSession();
+      const session: Session = initializeNewSession(
+        {deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type}
+      );
       await Database.upsertSession(session);
       if (sessionOrigin !== SessionOrigin.PlayerCreate) {
         await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
@@ -96,7 +103,9 @@ export default class ServiceWorkerHelper {
     } else {
       // TODO: Possibly check that it's not unreasonably long.
       await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocus);
-      await Database.upsertSession(initializeNewSession());
+      await Database.upsertSession(
+        initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type})
+      );
     }
   }
 
@@ -108,7 +117,13 @@ export default class ServiceWorkerHelper {
     );
 
     if (sendOnFocus) {
-      Log.debug(`TODO: send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      await OneSignalApiSW.sendSessionDuration(
+        session.appId,
+        session.deviceId,
+        session.accumulatedDuration,
+        session.deviceType,
+      );
     }
 
     await Database.cleanupCurrentSession();

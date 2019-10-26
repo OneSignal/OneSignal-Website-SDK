@@ -65,6 +65,27 @@ export class OneSignalApiSW {
       } else throw e;
     }
   };
+
+  public static async sendSessionDuration(
+    appId: string, deviceId: string, sessionDuration: number, deviceType: number): Promise<void> {
+      try {
+        Utils.enforceAppId(appId);
+        Utils.enforcePlayerId(deviceId);
+        const payload = {
+          app_id: appId,
+          type: 1,
+          state: "ping",
+          active_time: sessionDuration,
+          device_type: deviceType,
+        }
+        await OneSignalApiBase.post(`players/${deviceId}/on_focus`, payload);
+      } catch (e) {
+        if (e && Array.isArray(e.errors) && e.errors.length > 0 &&
+          Utils.contains(e.errors[0], 'app_id not found')) {
+          throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
+        } else throw e;
+      }
+  }
 }
 
 export default OneSignalApiSW;
