@@ -12,8 +12,3 @@ interface PushSubscriptionState {
   subscribed: boolean;
   optedOut: boolean;
 }
-
-interface SafarPushSubscriptionState {
-  deviceToken: string | null;
-  permission: NotificationPermission;
-}

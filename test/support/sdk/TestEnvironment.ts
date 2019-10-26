@@ -170,6 +170,8 @@ export class TestEnvironment {
     config.environment = "serviceWorker";
     TestEnvironment.stubNotification(config);
 
+    global.ServiceWorkerGlobalScope = ServiceWorkerGlobalScope;
+
     Object.assign(global, serviceWorkerScope);
     global.self = global;
     return global;

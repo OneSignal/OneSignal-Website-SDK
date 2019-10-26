@@ -8,6 +8,9 @@ import Environment from '../Environment';
 import Log from './Log';
 import { ContextSWInterface } from '../models/ContextSW';
 
+/**
+ * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
+*/
 
 export enum WorkerMessengerCommand {
   WorkerVersion = "GetWorkerVersion",
@@ -97,19 +100,16 @@ export class WorkerMessenger {
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async broadcast(command: WorkerMessengerCommand, payload: WorkerMessengerPayload) {
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env !== WindowEnvironmentKind.ServiceWorker) {
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker)
       return;
-    } else {
-      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      for (let client of clients) {
-        Log.debug(`[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${client.url}.`)
-        client.postMessage({
-          command: command,
-          payload: payload
-        } as any);
-      }
+
+    const clients = await (<ServiceWorkerGlobalScope><any>self).clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clients) {
+      Log.debug(`[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${client.url}.`);
+      client.postMessage({
+        command: command,
+        payload: payload
+      });
     }
   }
 
@@ -121,7 +121,7 @@ export class WorkerMessenger {
       Waits until the service worker is controlling the page before sending the
       message.
    */
-  async unicast(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload, windowClient?: WindowClient) {
+  async unicast(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload, windowClient?: Client) {
     const env = SdkEnvironment.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker) {
@@ -136,7 +136,7 @@ export class WorkerMessenger {
       }
     } else {
       if (!(await this.isWorkerControllingPage())) {
-        Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", self.registration);
+        Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", (<ServiceWorkerGlobalScope><any>self).registration);
       }
       await this.waitUntilWorkerControlsPage();
       Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
@@ -180,7 +180,7 @@ export class WorkerMessenger {
   private async listenForPage(listenIfPageUncontrolled?: boolean) {
     if (!listenIfPageUncontrolled) {
       if (!(await this.isWorkerControllingPage())) {
-        Log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, self.registration);
+        Log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, (<ServiceWorkerGlobalScope><any>self).registration);
       }
       await this.waitUntilWorkerControlsPage();
       Log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
@@ -310,7 +310,7 @@ export class WorkerMessenger {
     const env = SdkEnvironment.getWindowEnv();
 
     if (env === WindowEnvironmentKind.ServiceWorker)
-      return !!self.registration.active;
+      return !!(<ServiceWorkerGlobalScope><any>self).registration.active;
     else {
       const workerState = await this.context.serviceWorkerManager.getActiveState();
       return workerState === ServiceWorkerActiveState.WorkerA ||

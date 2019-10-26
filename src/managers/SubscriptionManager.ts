@@ -395,7 +395,10 @@ export class SubscriptionManager {
 
       Because of this, we're not able to check for this property on Firefox.
      */
-    if (!self.registration.active && !bowser.firefox) {
+
+    const swRegistration = (<ServiceWorkerGlobalScope><any>self).registration;
+
+    if (!swRegistration.active && !bowser.firefox) {
       throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
       /*
         Or should we wait for the service worker to be ready?
@@ -407,14 +410,14 @@ export class SubscriptionManager {
     /*
       Check to make sure push permissions have been granted.
      */
-    const pushPermission = await self.registration.pushManager.permissionState({ userVisibleOnly: true });
+    const pushPermission = await swRegistration.pushManager.permissionState({ userVisibleOnly: true });
     if (pushPermission === 'denied') {
       throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
     } else if (pushPermission === 'prompt') {
       throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Default);
     }
 
-    return await this.subscribeWithVapidKey(self.registration.pushManager, subscriptionStrategy);
+    return await this.subscribeWithVapidKey(swRegistration.pushManager, subscriptionStrategy);
   }
 
   /**
@@ -673,7 +676,7 @@ export class SubscriptionManager {
 
     switch (windowEnv) {
       case WindowEnvironmentKind.ServiceWorker:
-        const pushSubscription = await self.registration.pushManager.getSubscription();
+        const pushSubscription = await (<ServiceWorkerGlobalScope><any>self).registration.pushManager.getSubscription();
         const { optedOut } = await Database.getSubscription();
         return {
           subscribed: !!pushSubscription,
@@ -712,7 +715,7 @@ export class SubscriptionManager {
     const { deviceId, optedOut } = await Database.getSubscription();
 
     if (SubscriptionManager.isSafari()) {
-      const subscriptionState: SafarPushSubscriptionState = window.safari.pushNotification.permission(this.config.safariWebId);
+      const subscriptionState = window.safari.pushNotification.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(subscriptionState.permission === "granted" &&
         subscriptionState.deviceToken &&
         deviceId

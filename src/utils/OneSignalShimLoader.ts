@@ -43,10 +43,6 @@ export class OneSignalShimLoader {
     return (typeof window === "undefined");
   }
 
-  private static serviceWorkerSupportsPush(): boolean {
-    return (typeof self.registration !== "undefined");
-  }
-
   private static addOneSignalPageES6SDKStub(): void {
     const predefinedOneSignal: PossiblePredefinedOneSignal = (<any>window).OneSignal;
     const oneSignalIsArray = Array.isArray(predefinedOneSignal);
@@ -78,8 +74,8 @@ export class OneSignalShimLoader {
 
   public static start(): void {
     if (OneSignalShimLoader.isServiceWorkerRuntime()) {
-      if (OneSignalShimLoader.serviceWorkerSupportsPush()) {
-        (self as any).importScripts(
+      if (isPushNotificationsSupported()) {
+        (<ServiceWorkerGlobalScope><any>self).importScripts(
           `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDKWorker.js?v=${OneSignalShimLoader.VERSION}`
         );
       }

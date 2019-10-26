@@ -37,5 +37,3 @@ export default class OneSignalError extends Error {
     Object.setPrototypeOf(this, OneSignalError.prototype);
   }
 }
-
-export default ExtendableError;

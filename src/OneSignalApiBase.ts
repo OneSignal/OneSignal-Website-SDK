@@ -45,13 +45,13 @@ export class OneSignalApiBase {
       }
     }
 
-    let contents = {
+    const contents: RequestInit = {
       method: method || 'NO_METHOD_SPECIFIED',
       headers: callHeaders,
       cache: 'no-cache'
     };
     if (data)
-      (contents as any).body = JSON.stringify(data);
+      contents.body = JSON.stringify(data);
 
     let status: number;
     return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)

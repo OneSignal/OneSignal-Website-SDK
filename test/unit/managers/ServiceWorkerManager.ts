@@ -28,6 +28,8 @@ import { Subscription } from "../../../src/models/Subscription";
 import { ServiceWorker as ServiceWorkerReal } from "../../../src/service-worker/ServiceWorker";
 import MockNotification from "../../support/mocks/MockNotification";
 
+declare var self: ServiceWorkerGlobalScope;
+
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
     return new ServiceWorkerManager(OneSignal.context, {

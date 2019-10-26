@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test, { AssertContext } from "ava";
-import { BrowserUserAgent, HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
+import { HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { OneSignalStubES5 } from "../../../src/utils/OneSignalStubES5";
 import { OneSignalStubES6 } from "../../../src/utils/OneSignalStubES6";
 
@@ -436,13 +436,8 @@ test("OneSignalSDK.js load from service worker context that does NOT support pus
 });
 
 test("OneSignalSDK.js load from service worker context that supports push", async t => {
-  // 2 stub function calls to mock being a ServiceWorker that supports push.
-  sandbox.stub(OneSignalShimLoader, <any>'isServiceWorkerRuntime').callsFake(() => {
-    return true;
-  });
-  sandbox.stub(OneSignalShimLoader, <any>'serviceWorkerSupportsPush').callsFake(() => {
-    return true;
-  });
+  sandbox.stub((<any>global), "window").value(undefined);
+  setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
 
   // Setup mock for self.importScripts
   (<any>global).self = { importScripts: () => {} };

@@ -18,7 +18,6 @@ import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../utils/Utils";
 
-///<reference path="../../typings/globals/service_worker_api/index.d.ts"/>
 declare var self: ServiceWorkerGlobalScope;
 declare var Notification: Notification;
 
@@ -181,7 +180,7 @@ export class ServiceWorker {
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
    * notifications.
    */
-  static onPushReceived(event) {
+  static onPushReceived(event: PushEvent) {
     Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     event.waitUntil(
@@ -236,42 +235,46 @@ export class ServiceWorker {
    * @param notification A JSON object containing notification details the user consumes.
    * @returns {Promise}
    */
-  static async executeWebhooks(event: string, notification: any) {
+  static async executeWebhooks(event: string, notification: any): Promise<Response | undefined> {
+    const webhookTargetUrl = await Database.get<string>('Options', `webhooks.${event}`);
+    if (!webhookTargetUrl)
+      return undefined;
+
     const { deviceId } = await Database.getSubscription();
     const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
-    const webhookTargetUrl = await Database.get('Options', `webhooks.${event}`);
 
-    if (webhookTargetUrl) {
-      // JSON.stringify() does not include undefined values
-      // Our response will not contain those fields here which have undefined values
-      const postData = {
-        event: event,
-        id: notification.id,
-        userId: deviceId,
-        action: notification.action,
-        buttons: notification.buttons,
-        heading: notification.heading,
-        content: notification.content,
-        url: notification.url,
-        icon: notification.icon,
-        data: notification.data
-      };
-      const fetchOptions: any = {
-        method: 'post',
-        mode: 'no-cors',
-        body: JSON.stringify(postData),
+    // JSON.stringify() does not include undefined values
+    // Our response will not contain those fields here which have undefined values
+    const postData = {
+      event: event,
+      id: notification.id,
+      userId: deviceId,
+      action: notification.action,
+      buttons: notification.buttons,
+      heading: notification.heading,
+      content: notification.content,
+      url: notification.url,
+      icon: notification.icon,
+      data: notification.data
+    };
+    const fetchOptions: RequestInit = {
+      method: 'post',
+      mode: 'no-cors',
+      body: JSON.stringify(postData),
+    };
 
+    if (isServerCorsEnabled) {
+      fetchOptions.mode = 'cors';
+      fetchOptions.headers = {
+        'X-OneSignal-Event': event,
+        'Content-Type': 'application/json'
       };
-      if (isServerCorsEnabled) {
-        fetchOptions.mode = 'cors';
-        fetchOptions.headers = {
-          'X-OneSignal-Event': event,
-          'Content-Type': 'application/json'
-        };
-      }
-      Log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`, Utils.getConsoleStyle('code'), ':', postData);
-      return await fetch(webhookTargetUrl, fetchOptions);
     }
+    Log.debug(
+      `Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`,
+      Utils.getConsoleStyle('code'), ':', postData
+    );
+    return await fetch(webhookTargetUrl, fetchOptions);
   }
 
   /**
@@ -282,11 +285,11 @@ export class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static async getActiveClients(): Promise<Array<WindowClient>> {
-    const windowClients: Array<WindowClient> = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    let activeClients: Array<WindowClient> = [];
+  static async getActiveClients(): Promise<Array<Client>> {
+    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const activeClients: Array<Client> = [];
 
-    for (let client of windowClients) {
+    for (const client of windowClients) {
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
@@ -687,7 +690,8 @@ export class ServiceWorker {
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
           ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notificationData, client);
             try {
-              await client.focus();
+              if (client instanceof WindowClient)
+                await client.focus();
             } catch (e) {
               Log.error("Failed to focus:", client, e);
             }
@@ -700,8 +704,9 @@ export class ServiceWorker {
            */
           if (client['isSubdomainIframe']) {
             try {
-              Log.debug('Client is subdomain iFrame. Attempting to focus() client.')
-              await client.focus();
+              Log.debug('Client is subdomain iFrame. Attempting to focus() client.');
+              if (client instanceof WindowClient)
+                await client.focus();
             } catch (e) {
               Log.error("Failed to focus:", client, e);
             }
@@ -713,10 +718,11 @@ export class ServiceWorker {
               Log.debug('Not navigating because link is special.')
             }
           }
-          else if (client.navigate) {
+          else if (client instanceof WindowClient && client.navigate) {
             try {
-              Log.debug('Client is standard HTTPS site. Attempting to focus() client.')
-              await client.focus();
+              Log.debug('Client is standard HTTPS site. Attempting to focus() client.');
+              if (client instanceof WindowClient)
+                await client.focus();
             } catch (e) {
               Log.error("Failed to focus:", client, e);
             }
@@ -786,7 +792,7 @@ export class ServiceWorker {
    * Attempts to open the given url in a new browser tab. Called when a notification is clicked.
    * @param url May not be well-formed.
    */
-  static async openUrl(url: string): Promise<WindowClient | undefined> {
+  static async openUrl(url: string): Promise<Client | undefined | null> {
     Log.debug('Opening notification URL:', url);
     try {
       return await self.clients.openWindow(url);

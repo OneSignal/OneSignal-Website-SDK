@@ -32,6 +32,7 @@
       "node"
     ],
     "lib": [
+      "webworker",
       "es6",
       "dom",
       "dom.iterable",

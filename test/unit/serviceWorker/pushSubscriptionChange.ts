@@ -1,4 +1,4 @@
-import test from 'ava';
+import test, {TestContext} from 'ava';
 import '../../support/polyfills/polyfills';
 import sinon, { SinonSandbox } from 'sinon';
 
@@ -15,6 +15,7 @@ import Random from "../../support/tester/Random";
 import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import OneSignalApiSW from '../../../src/OneSignalApiSW';
+import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 
 declare var self: ServiceWorkerGlobalScope;
 const appId = Random.getRandomUuid();
@@ -45,6 +46,10 @@ test.beforeEach(async() => {
   });
   
   setBrowser(BrowserUserAgent.ChromeMacSupported);
+
+  sinonSandbox.stub((<any>global), "window").value(undefined);
+  setupBrowserWithPushAPIWithVAPIDEnv(sinonSandbox);
+
 });
 
 test.afterEach(function (_t: TestContext) {

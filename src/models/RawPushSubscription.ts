@@ -24,7 +24,7 @@ export class RawPushSubscription implements Serializable {
    * This is used to determine whether the subscription changed, so we know
    * whether to contact OneSignal to update the subscription.
    */
-  existingSafariDeviceToken: string | undefined;
+  existingSafariDeviceToken: string | undefined | null;
 
   /**
    * Returns true if an existing recorded W3C or Safari subscription is

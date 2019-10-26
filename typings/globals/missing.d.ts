@@ -1,74 +1,90 @@
-interface Navigator {
-  permissions: any;
+/**
+ * START: Permission Definitions added in TypeScript 3.5.1
+ */
+interface PermissionStatusEventMap {
+  "change": Event;
 }
 
-interface String {
-    repeat(count: number): string
-    substr(from: number, length?: number): string
+interface PermissionStatus extends EventTarget {
+  onchange: ((this: PermissionStatus, ev: Event) => any) | null;
+  readonly state: PermissionState;
+  addEventListener<K extends keyof PermissionStatusEventMap>(type: K, listener: (this: PermissionStatus, ev: PermissionStatusEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+  removeEventListener<K extends keyof PermissionStatusEventMap>(type: K, listener: (this: PermissionStatus, ev: PermissionStatusEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+}
+
+declare var PermissionStatus: {
+  prototype: PermissionStatus;
+  new(): PermissionStatus;
+};
+
+interface Permissions {
+  query(permissionDesc: PermissionDescriptor | DevicePermissionDescriptor | MidiPermissionDescriptor | PushPermissionDescriptor): Promise<PermissionStatus>;
+}
+
+declare var Permissions: {
+  prototype: Permissions;
+  new(): Permissions;
+};
+
+interface Navigator {
+  readonly permissions: Permissions;
+}
+
+
+interface Notification {
+  // Added in TypeScript 3.5.1
+  readonly permission: NotificationPermission;
+}
+
+/**
+ * END: Permission Definitions
+ */
+
+
+// FrameType - added in TypeScript 3.5.1
+//   https://github.com/microsoft/TypeScript/blob/v3.5.1/lib/lib.webworker.d.ts
+type FrameType = "auxiliary" | "top-level" | "nested" | "none";
+interface Client {
+  readonly frameType: FrameType;
+}
+
+/**
+ * START: window.safari definition
+ * https://developer.apple.com/documentation/safariextensions
+ */
+interface SafariRemoteNotificationPermission {
+  readonly deviceToken: string | null | undefined;
+  readonly permission: string;
+}
+
+interface SafariRemoteNotification {
+  permission(bundleIdentifier: string): SafariRemoteNotificationPermission;
+  requestPermission(
+    webAPIURL: string,
+    websiteIdentifier: string,
+    queryParameterDictionary: any,
+    callback: Function
+  ): void;
 }
 
 interface Window {
-  Notification: any;
-  __POSTDATA: any;
+  Notification: any; // TODO: Remove as "Notification" should be used over "window.Notification"
   safari: {
-    pushNotification: {
-      permission: any;
-      requestPermission: any;
-    }
-  }
+    pushNotification: SafariRemoteNotification
+  };
 }
 
-interface ServiceWorkerClients {
-  matchAll(options: ServiceWorkerClientsMatchOptions): Promise<Array<WindowClient>>;
-}
+/**
+ * END: window.safari definition
+ */
 
-interface WindowClient extends ServiceWorkerClient {
-  /**
-   * Loads a specified URL into a controlled client page.
-   */
-  navigate(url: string): Promise<WindowClient>;
-}
-
-interface PushMessageData {
-  arrayBuffer(): ArrayBuffer;
-  blob(): Blob;
-  json(): any;
-  text(): string;
-}
-
-interface PushEvent {
-  data?: PushMessageData
-}
-
-interface String {
-  endsWith(...args): any;
-}
-
-interface ServiceWorkerGlobalScope {
-  addEventListener(type: "push", listener: (this: this, ev: any) => any, ...args): void;
-  addEventListener(type: "notificationclose", listener: (this: this, ev: any) => any, ...args): void;
-  addEventListener(type: "notificationclick", listener: (this: this, ev: any) => any, ...args): void;
-  addEventListener(type: "install", listener: (this: this, ev: any) => any, ...args): void;
-  addEventListener(type: "activate", listener: (this: this, ev: any) => any, ...args): void;
-  addEventListener(type: "pushsubscriptionchange", listener: (this: this, ev: any) => any, ...args): void;
-  addEventListener(type: "fetch", listener: (this: this, ev: any) => any, ...args): void;
-  readonly location: Location;
-}
-
-interface TestContext {
-  context: any;
-}
-
-declare module ExtendableError {
-}
-
-interface Element extends Node, GlobalEventHandlers, ElementTraversal, NodeSelector, ChildNode, ParentNode {
-  addEventListener<K extends keyof ElementEventMap>(type: K, listener: (this: Element, ev: ElementEventMap[K]) => any, optionsOruseCapture?: boolean | { passive: boolean }): void;
-}
 
 declare var OneSignal: any;
 
-declare var ExtendableEvent;
+
+// These __*__ variables are defined from Webpack to change resulting JS
 declare var __VERSION__: string;
 declare var __BUILD_TYPE__: string;
 declare var __BUILD_ORIGIN__: string;
@@ -81,23 +97,3 @@ declare var __IS_ES6__: string;
 declare var __SRC_STYLESHEETS_MD5_HASH__: string;
 
 declare var __LOGGING__: boolean;
-
-declare var WorkerLocation: any;
-declare function fetch(...args): Promise<any>;
-
-/* Typing issue */
-interface SharedArrayBuffer { }
-
-interface PushSubscription {
-  /**
-   * A push subscription may have an associated subscription expiration time. When set, it must be
-   * the time, in milliseconds since 00:00:00 UTC on 1 January 1970, at which the subscription will
-   * be deactivated. The user agent should attempt to refresh the push subscription before the
-   * subscription expires.
-   *
-   * The expirationTime read-only property of the PushSubscription interface returns a
-   * DOMHighResTimeStamp of the subscription expiration time associated with the push subscription,
-   * if there is one, oor null otherwise.
-   */
-  expirationTime?: number;
-}
