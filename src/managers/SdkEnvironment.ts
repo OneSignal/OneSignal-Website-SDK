@@ -175,7 +175,7 @@ export default class SdkEnvironment {
    */
   public static getWindowEnv(): WindowEnvironmentKind {
     if (typeof window === "undefined") {
-      if (typeof self !== "undefined" && typeof self.registration !== "undefined") {
+      if (typeof self !== "undefined" && typeof ServiceWorkerGlobalScope !== "undefined") {
         return WindowEnvironmentKind.ServiceWorker;
       } else {
         return WindowEnvironmentKind.Unknown;
@@ -279,7 +279,7 @@ export default class SdkEnvironment {
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
 
-    return new URL(origin + '/sdks')
+    return new URL(`${origin}/sdks`);
   }
 
   public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {
