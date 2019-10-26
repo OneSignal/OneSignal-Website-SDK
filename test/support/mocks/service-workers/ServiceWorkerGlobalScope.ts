@@ -1,7 +1,6 @@
 import CacheStorage from './models/CacheStorage';
 import Clients from './models/Clients';
 import ServiceWorkerRegistration from './models/ServiceWorkerRegistration';
-import { handleEvents } from './utils/events';
 import { EventHandler } from "../../../../src/libraries/Emitter";
 import WorkerNavigator from './models/WorkerNavigator';
 

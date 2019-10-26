@@ -29,6 +29,8 @@ import { ServiceWorker as ServiceWorkerReal } from "../../../src/service-worker/
 import MockNotification from "../../support/mocks/MockNotification";
 import { setUserAgent } from "../../support/tester/browser";
 
+declare var self: ServiceWorkerGlobalScope;
+
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
     return new ServiceWorkerManager(OneSignal.context, {

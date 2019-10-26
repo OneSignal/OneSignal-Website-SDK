@@ -100,7 +100,7 @@ export default class MetricsManager {
     };
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
-    const requestOptions = {
+    const requestOptions: RequestInit = {
       method: 'GET',
       headers: new Headers(),
       cache: 'no-cache',
@@ -121,7 +121,7 @@ export default class MetricsManager {
     queryParamsData = {...queryParamsData, ...engagement.getOperationData()};
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
-    const requestOptions = {
+    const requestOptions: RequestInit = {
       method: 'GET',
       headers: new Headers(),
       cache: 'no-cache',

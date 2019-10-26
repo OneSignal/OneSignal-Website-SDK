@@ -24,7 +24,8 @@
       "es6",
       "dom",
       "dom.iterable",
-      "scripthost"
+      "scripthost",
+      "webworker"
     ],
     "target": "ES6",
     "mapRoot": "build/ts-to-es6"

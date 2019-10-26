@@ -3,7 +3,13 @@
   "compilerOptions": {
     "module": "commonjs",
     "importHelpers": false,
-    "noEmitHelpers": false
+    "noEmitHelpers": false,
+    "lib": [
+      "webworker",
+      "es6",
+      "dom",
+      "dom.iterable"
+    ]
   },
   "include": [
     "../../src/**/*",

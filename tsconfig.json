@@ -13,7 +13,13 @@
     "strictPropertyInitialization": true,
     "strictFunctionTypes": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "lib": [
+      "webworker",
+      "es6",
+      "dom",
+      "dom.iterable"
+    ]
   },
   "include": [
     "src/**/*",
