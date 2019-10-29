@@ -11,9 +11,6 @@ import Database from '../../../src/services/Database';
 import Context from '../../../src/models/Context';
 import { SubscriptionManager, SubscriptionManagerConfig } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
-import PushManager from '../../support/mocks/service-workers/models/PushManager';
-import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
-import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
@@ -27,6 +24,8 @@ import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
 import { Subscription } from "../../../src/models/Subscription";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
+import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
+import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
 
 const sandbox: SinonSandbox= sinon.sandbox.create();
 
@@ -86,10 +85,10 @@ async function testCase(
   }
 
   // Prepare to subscribe for push, hook the call to spy on params
-  const spy = sandbox.spy(PushManager.prototype, 'subscribe');
+  const spy = sandbox.spy(MockPushManager.prototype, 'subscribe');
 
   // Subscribe for push
-  await manager.subscribeWithVapidKey(registration.pushManager as any, subscriptionStrategy);
+  await manager.subscribeWithVapidKey(registration.pushManager, subscriptionStrategy);
 
   // Allow each test to verify mock parameters independently
   if (onPushManagerSubscribed) {
@@ -170,7 +169,7 @@ test('resubscribe-existing strategy uses new subscription applicationServerKey',
       // Create an initial subscription, so subsequent subscription attempts logic is tested
       await pushManager.subscribe(initialSubscriptionOptions);
       // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
-      unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
+      unsubscribeSpy = sandbox.spy(MockPushSubscription.prototype, 'unsubscribe');
     },
     async (_pushManager, pushManagerSubscribeSpy) => {
       const newSubscriptionOptions: PushSubscriptionOptions = {
@@ -214,14 +213,10 @@ test(
         // subscription's options
         await pushManager.subscribe(initialSubscriptionOptions);
 
-        // But set the subscription's options to be null
-        const subscription = await pushManager.getSubscription();
-        subscription.options = null;
-
         // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
-        unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
+        unsubscribeSpy = sandbox.spy(MockPushSubscription.prototype, 'unsubscribe');
       },
-      async (pushManager, pushManagerSubscribeSpy) => {
+      async (_pushManager, pushManagerSubscribeSpy) => {
         // The subscription options used should be our subsequent subscription's options
         const calledSubscriptionOptions = pushManagerSubscribeSpy.getCall(0).args[0];
         t.deepEqual(calledSubscriptionOptions, subsequentSubscriptionOptions);
@@ -247,7 +242,7 @@ test(
       SubscriptionStrategyKind.ResubscribeExisting,
       async (_pushManager, _subscriptionManager) => {
         // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
-        unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
+        unsubscribeSpy = sandbox.spy(MockPushSubscription.prototype, 'unsubscribe');
       },
       async (_pushManager, pushManagerSubscribeSpy) => {
         // The subscription options used should be our subsequent subscription's options
@@ -463,7 +458,7 @@ test(
         await pushManager.subscribe(subscriptionOptions);
 
         // And spy on PushManager.unsubscribe(), because we expect the existing subscription to be unsubscribed
-        unsubscribeSpy = sandbox.spy(PushSubscription.prototype, 'unsubscribe');
+        unsubscribeSpy = sandbox.spy(MockPushSubscription.prototype, 'unsubscribe');
       },
       async (_pushManager, _pushManagerSubscribeSpy) => {
         // Unsubscribe should have been called
@@ -529,17 +524,10 @@ async function expirationTestCase(
     .resolves(ServiceWorkerActiveState.WorkerA);
   const integrationStub = sandbox.stub(SdkEnvironment, "getIntegration").resolves(env);
 
-  const newTimeBeforeMidpoint = expirationCheckTime;
-
   // Set the initial datetime, which is used internally for the subscription created at
   timemachine.config({
     timestamp: subscriptionCreationTime
   });
-
-  const initialSubscriptionOptions: PushSubscriptionOptions = {
-    userVisibleOnly: true,
-    applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
-  };
 
   await testCase(
     t,
@@ -549,7 +537,7 @@ async function expirationTestCase(
     SubscriptionStrategyKind.SubscribeNew,
     async (_pushManager, _subscriptionManager) => {
       // Set every subscription's expiration time to 30 days plus
-      PushSubscription.prototype.expirationTime = subscriptionExpirationTime;
+      sandbox.stub(MockPushSubscription.prototype, "expirationTime").value(subscriptionExpirationTime);
     },
     async (_pushManager, _pushManagerSubscribeSpy, subscriptionManager) => {
       if (skipCreationDateSet) {
@@ -698,11 +686,6 @@ test(
     const initialVapidKeys = generateVapidKeys();
     const expirationTime = 1519675981599;
 
-    const initialSubscriptionOptions: PushSubscriptionOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
-    };
-
     await testCase(
       t,
       BrowserUserAgent.ChromeMacSupported,
@@ -710,7 +693,7 @@ test(
       initialVapidKeys.sharedPublic,
       SubscriptionStrategyKind.SubscribeNew,
       async (_pushManager, _subscriptionManager) => {
-        PushSubscription.prototype.expirationTime = expirationTime;
+        sandbox.stub(MockPushSubscription.prototype, "expirationTime").value(expirationTime);
       },
       async (_pushManager, _pushManagerSubscribeSpy) => {
         const subscription = await Database.getSubscription();

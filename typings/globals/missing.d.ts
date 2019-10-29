@@ -32,12 +32,6 @@ interface Navigator {
   readonly permissions: Permissions;
 }
 
-
-interface Notification {
-  // Added in TypeScript 3.5.1
-  readonly permission: NotificationPermission;
-}
-
 /**
  * END: Permission Definitions
  */
@@ -48,6 +42,11 @@ interface Notification {
 type FrameType = "auxiliary" | "top-level" | "nested" | "none";
 interface Client {
   readonly frameType: FrameType;
+}
+
+// Notification.requestPermission - Added in TypeScript 3.0.0
+interface Notification {
+  requestPermission(callback?: NotificationPermissionCallback): Promise<NotificationPermission>;
 }
 
 /**
@@ -70,7 +69,8 @@ interface SafariRemoteNotification {
 }
 
 interface Window {
-  Notification: any; // TODO: Remove as "Notification" should be used over "window.Notification"
+  // TODO: "Notification" should be used over "window.Notification". Do so when updating to TS 3
+  Notification: Notification;
   safari: {
     pushNotification: SafariRemoteNotification
   };

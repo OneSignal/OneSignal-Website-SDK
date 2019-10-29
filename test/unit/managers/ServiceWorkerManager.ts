@@ -26,10 +26,13 @@ import OneSignalUtils from "../../../src/utils/OneSignalUtils";
 import Database from "../../../src/services/Database";
 import { Subscription } from "../../../src/models/Subscription";
 import { ServiceWorker as ServiceWorkerReal } from "../../../src/service-worker/ServiceWorker";
+import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
+import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
+import { MockServiceWorkerGlobalScope } from "../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope";
 import MockNotification from "../../support/mocks/MockNotification";
 import { setUserAgent } from "../../support/tester/browser";
 
-declare var self: ServiceWorkerGlobalScope;
+declare var self: MockServiceWorkerGlobalScope;
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -101,8 +104,8 @@ test('getActiveState() detects worker B, even when worker filename uses query pa
 });
 
 test('getActiveState() detects an installing worker (not active)', async t => {
-  const mockWorkerRegistration = new ServiceWorkerRegistration();
-  const mockInstallingWorker = new ServiceWorker();
+  const mockWorkerRegistration = new MockServiceWorkerRegistration();
+  const mockInstallingWorker = new MockServiceWorker();
   mockInstallingWorker.state = 'installing';
   mockWorkerRegistration.installing = mockInstallingWorker;
 
@@ -119,8 +122,8 @@ test('getActiveState() detects a 3rd party worker, a worker that is activated bu
 });
 
 test('getActiveState() detects a page loaded by hard-refresh with our service worker as bypassed', async t => {
-  const mockWorkerRegistration = new ServiceWorkerRegistration();
-  const mockInstallingWorker = new ServiceWorker();
+  const mockWorkerRegistration = new MockServiceWorkerRegistration();
+  const mockInstallingWorker = new MockServiceWorker();
   mockInstallingWorker.state = 'activated';
   mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
   mockWorkerRegistration.active = mockInstallingWorker;
@@ -132,8 +135,8 @@ test('getActiveState() detects a page loaded by hard-refresh with our service wo
 });
 
 test('getActiveState() detects an activated third-party service worker not controlling the page as third-party and not bypassed', async t => {
-  const mockWorkerRegistration = new ServiceWorkerRegistration();
-  const mockInstallingWorker = new ServiceWorker();
+  const mockWorkerRegistration = new MockServiceWorkerRegistration();
+  const mockInstallingWorker = new MockServiceWorker();
   mockInstallingWorker.state = 'activated';
   mockInstallingWorker.scriptURL = 'https://site.com/another-worker.js';
   mockWorkerRegistration.active = mockInstallingWorker;
@@ -173,10 +176,10 @@ test('notification clicked - While page is opened in background', async t => {
     }
   });
 
-  const mockInstallingWorker = new ServiceWorker();
+  const mockInstallingWorker = new MockServiceWorker();
   mockInstallingWorker.state = 'activated';
   mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
-  const mockWorkerRegistration = new ServiceWorkerRegistration();
+  const mockWorkerRegistration = new MockServiceWorkerRegistration();
   mockWorkerRegistration.active = mockInstallingWorker;
 
   sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
