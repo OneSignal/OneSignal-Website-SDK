@@ -220,8 +220,11 @@ export class SubscriptionManager {
    *
    * window.Notification.requestPermission: The callback was deprecated since Gecko 46 in favor of a Promise
    */
-  public static requestNotificationPermission(): Promise<NotificationPermission> {
-    return new Promise(resolve => window.Notification.requestPermission(resolve));
+  public static async requestNotificationPermission(): Promise<NotificationPermission> {
+    const results = await window.Notification.requestPermission();
+    // TODO: Clean up our custom NotificationPermission enum
+    //         in favor of TS union type NotificationPermission instead of converting
+    return NotificationPermission[results];
   }
 
   /**

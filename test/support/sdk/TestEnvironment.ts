@@ -7,30 +7,25 @@ import jsdom from 'jsdom';
 import DOMStorage from "dom-storage";
 // @ts-ignore
 import fetch from "node-fetch";
-import ServiceWorkerGlobalScope from '../mocks/service-workers/ServiceWorkerGlobalScope';
-import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
-import { ServiceWorkerContainer } from '../mocks/service-workers/ServiceWorkerContainer';
-import MockServiceWorker from '../mocks/service-workers/ServiceWorker';
 
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
 import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior,
   NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind }
   from '../../../src/models/AppConfig';
-import ServiceWorkerRegistration from '../mocks/service-workers/models/ServiceWorkerRegistration';
-import PushManager from "../mocks/service-workers/models/PushManager";
-import PushSubscription from "../mocks/service-workers/models/PushSubscription";
 import Context from "../../../src/models/Context";
 import CustomLink from "../../../src/CustomLink";
 import Emitter from '../../../src/libraries/Emitter';
 import ConfigManager from '../../../src/managers/ConfigManager';
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
+import { MockServiceWorkerGlobalScope } from "../mocks/service-workers/models/MockServiceWorkerGlobalScope";
+import { MockServiceWorker } from "../mocks/service-workers/models/MockServiceWorker";
+import { MockPushManager } from "../mocks/service-workers/models/MockPushManager";
+import { MockServiceWorkerContainer } from "../mocks/service-workers/models/MockServiceWorkerContainer";
+import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 
-var global = new Function('return this')();
-
-export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
-  OneSignal: ServiceWorker;
-}
+// NodeJS.Global
+declare var global: any;
 
 export enum HttpHttpsEnvironment {
   Http = "Http",
@@ -153,26 +148,26 @@ export class TestEnvironment {
     };
   }
 
-  static stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerTestEnvironment> {
+  static stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerGlobalScope> {
     if (!config)
       config = {};
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
-    var serviceWorkerScope = new ServiceWorkerGlobalScope();
-    global.fetch = fetch;
-    global.location = config.url ? config.url : new URL('https://localhost:3001/webpush/sandbox?https=1');
+    const serviceWorkerScope = new MockServiceWorkerGlobalScope();
 
     // Install a fake service worker
     const workerInstance = new MockServiceWorker();
     workerInstance.scriptURL = "https://site.com";
     workerInstance.state = "activated";
-    serviceWorkerScope.registration = new ServiceWorkerRegistration();
-    serviceWorkerScope.registration.active = workerInstance;
+    serviceWorkerScope.mockRegistration.active = workerInstance;
+
     config.environment = "serviceWorker";
     TestEnvironment.stubNotification(config);
 
-    global.ServiceWorkerGlobalScope = ServiceWorkerGlobalScope;
+    global.ServiceWorkerGlobalScope = MockServiceWorkerGlobalScope;
+    addServiceWorkerGlobalScopeToGlobal(serviceWorkerScope);
 
-    Object.assign(global, serviceWorkerScope);
+    global.location = config.url ? config.url : new URL('https://localhost:3001/webpush/sandbox?https=1');
+    global.fetch = fetch;
     global.self = global;
     return global;
   }
@@ -224,7 +219,7 @@ export class TestEnvironment {
     });
     // Node has its own console; overwriting it will cause issues
     delete (windowDef as any)['console'];
-    (windowDef as any).navigator.serviceWorker = new ServiceWorkerContainer();
+    (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainer();
     (windowDef as any).localStorage = new DOMStorage(null);
     (windowDef as any).sessionStorage = new DOMStorage(null);
     const { TextEncoder, TextDecoder } = require('text-encoding');
@@ -257,15 +252,16 @@ export class TestEnvironment {
   }
 
   static stubNotification(config: TestEnvironmentConfig) {
+    // TODO: Move in MockNotification into class file when updating to TS 3
     global.Notification = {
       permission: config.permission ? config.permission: NotificationPermission.Default,
       maxActions: 2,
-      requestPermission: function(callback: Function) {
-        console.log("stubNotification", config.pushIdentifier);
-        callback(config.pushIdentifier);
+      requestPermission: function(callback?: Function) {
+        if (callback)
+          callback(config.pushIdentifier);
       }
     };
-   
+
     // window is only defined in DOM environment (not in SW)
     if (config.environment === "dom") {
       global.window.Notification = global.Notification;
@@ -315,7 +311,7 @@ export class TestEnvironment {
   }
 
   static async getFakePushSubscription(): Promise<PushSubscription> {
-    return await new PushManager().subscribe({
+    return await new MockPushManager().subscribe({
       userVisibleOnly: true,
       applicationServerKey: Random.getRandomUint8Array(65).buffer
     });

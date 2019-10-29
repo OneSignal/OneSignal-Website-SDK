@@ -1,4 +1,4 @@
-enum NotificationPermission {
+export enum NotificationPermission {
   /**
    * The user has not granted notification permissions and may have just dismissed the notification permission prompt.
    */
@@ -12,5 +12,3 @@ enum NotificationPermission {
    */
   Denied = "denied"
 }
-
-export { NotificationPermission };

@@ -1,4 +1,4 @@
-import test, {TestContext} from 'ava';
+import test, { TestContext } from 'ava';
 import '../../support/polyfills/polyfills';
 import sinon, { SinonSandbox } from 'sinon';
 
@@ -8,14 +8,12 @@ import { BrowserUserAgent, TestEnvironment } from '../../support/sdk/TestEnviron
 
 import Database from '../../../src/services/Database';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
-import { PushSubscriptionChangeEvent } from "../../support/mocks/service-workers/models/PushSubscriptionChangeEvent";
-import ServiceWorkerGlobalScope from '../../support/mocks/service-workers/ServiceWorkerGlobalScope';
-import PushManager from '../../support/mocks/service-workers/models/PushManager';
 import Random from "../../support/tester/Random";
-import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import OneSignalApiSW from '../../../src/OneSignalApiSW';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
+import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
+import { MockPushSubscriptionChangeEvent } from "../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent";
 
 declare var self: ServiceWorkerGlobalScope;
 const appId = Random.getRandomUuid();
@@ -31,12 +29,12 @@ test.beforeEach(async() => {
     .resolves(TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom));
   sinonSandbox.stub(OneSignalApiSW, 'updatePlayer').resolves();
 
-  oldSubscription = await new PushManager().subscribe({
+  oldSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
   });
   
-  newSubscription = await new PushManager().subscribe({
+  newSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
   });
@@ -47,7 +45,9 @@ test.beforeEach(async() => {
   
   setBrowser(BrowserUserAgent.ChromeMacSupported);
 
+  // Service worker does not have "window"
   sinonSandbox.stub((<any>global), "window").value(undefined);
+
   setupBrowserWithPushAPIWithVAPIDEnv(sinonSandbox);
 
 });
@@ -75,7 +75,7 @@ test(`called with an old and new subscription successfully updates the subscript
   t.deepEqual(subscription.deviceId, existingDeviceId);
   t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
   
-  const event = new PushSubscriptionChangeEvent();
+  const event = new MockPushSubscriptionChangeEvent();
   event.oldSubscription = oldSubscription;
   event.newSubscription = newSubscription;
 
@@ -102,7 +102,7 @@ test(`without an existing device ID, lookup existing device ID, updates the look
   t.deepEqual(subscription.deviceId, null);
   // Don't check existence of old endpoint, it isn't used, pushsubscriptionchange provides the old endpoint
 
-  const event = new PushSubscriptionChangeEvent();
+  const event = new MockPushSubscriptionChangeEvent();
   event.oldSubscription = oldSubscription;
   event.newSubscription = newSubscription;
   await runPushSubscriptionChange(event);
@@ -119,8 +119,8 @@ test(`called with an old and without a new subscription, custom resubscription s
   async t => {
   const newSubscriptionByReregistration = newSubscription;
 
-  sinonSandbox.stub(PushManager.prototype, 'subscribe')
-    .callsFake(async _options => {
+  sinonSandbox.stub(MockPushManager.prototype, 'subscribe')
+    .callsFake(async (_options?: PushSubscriptionOptionsInit) => {
       const subscription = await self.registration.pushManager.getSubscription();
       if (!subscription) {
         return newSubscriptionByReregistration;
@@ -128,7 +128,7 @@ test(`called with an old and without a new subscription, custom resubscription s
         return oldSubscription;
       }
     });
-    
+
   await setInitialDatabaseState(existingDeviceId, oldSubscription.endpoint);
 
   // Before pushsubscriptionchange
@@ -136,8 +136,9 @@ test(`called with an old and without a new subscription, custom resubscription s
   t.deepEqual(subscription.deviceId, existingDeviceId);
   t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
 
-  const event = new PushSubscriptionChangeEvent();
+  const event = new MockPushSubscriptionChangeEvent();
   event.oldSubscription = oldSubscription;
+  event.newSubscription = newSubscriptionByReregistration;
   await runPushSubscriptionChange(event);
 
   // After pushsubscriptionchange
@@ -161,7 +162,7 @@ test(
     t.deepEqual(subscription.deviceId, existingDeviceId);
     t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
 
-    const event = new PushSubscriptionChangeEvent();
+    const event = new MockPushSubscriptionChangeEvent();
     event.oldSubscription = oldSubscription;
     await runPushSubscriptionChange(event);
 
@@ -182,7 +183,7 @@ test(`called without an existing device ID, without old and new subscription, cu
   t.deepEqual(subscription.deviceId, null);
   t.deepEqual(subscription.subscriptionToken, null);
 
-  const event = new PushSubscriptionChangeEvent();
+  const event = new MockPushSubscriptionChangeEvent();
   await runPushSubscriptionChange(event);
 
   // After pushsubscriptionchange
@@ -196,7 +197,7 @@ test(`called without an existing device ID, without old and new subscription, cu
  * Helpers
  */
 async function setInitialDatabaseState(deviceId?: string, subscriptionToken?: string) {
-  let subscription = await Database.getSubscription();
+  const subscription = await Database.getSubscription();
   subscription.deviceId = deviceId;
   subscription.subscriptionToken = subscriptionToken;
   await Database.setSubscription(subscription);
@@ -204,7 +205,7 @@ async function setInitialDatabaseState(deviceId?: string, subscriptionToken?: st
 
 async function runPushSubscriptionChange(event: PushSubscriptionChangeEvent): Promise<void> {
   const testPromise = new Promise(resolve => {
-    self.addEventListener("pushsubscriptionchange", async (evt: any) => {
+    self.addEventListener("pushsubscriptionchange", async (evt: PushSubscriptionChangeEvent) => {
       await ServiceWorker.onPushSubscriptionChange(evt);
       resolve();
     });

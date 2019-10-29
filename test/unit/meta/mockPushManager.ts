@@ -1,18 +1,11 @@
 import '../../support/polyfills/polyfills';
 
 import test from 'ava';
-import sinon from 'sinon';
 
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
-import PushManager from '../../support/mocks/service-workers/models/PushManager';
-import PushSubscriptionOptions from '../../support/mocks/service-workers/models/PushSubscriptionOptions';
-import PushSubscription from '../../support/mocks/service-workers/models/PushSubscription';
 import Random from "../../support/tester/Random";
-
-const VAPID_PUBLIC_KEY_1 = 'CAdXhdGDgXJfJccxabiFhmlyTyF17HrCsfyIj3XEhg2j-RmT4wXU7lHiBPqSKSotvtfejZlAaPywJ3E-3AxXQBj1';
-const VAPID_PUBLIC_KEY_2 =
-  'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEgrjd4cWBgjEtiIqh45fbzkJdlr8ir7ZidvNzMAsHP_uBQuPsn1n5QWYqJy80fkkjbf-1LH99C_y9RjLGjsesUg';
+import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
+import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -25,7 +18,7 @@ test.beforeEach(async t => {
 test('mock push manager properties should exist', async t => {
   const registration: ServiceWorkerRegistration = await navigator.serviceWorker.getRegistration() as any;
 
-  t.true(registration.pushManager instanceof PushManager);
+  t.true(registration.pushManager instanceof MockPushManager);
   t.true(registration.pushManager.getSubscription instanceof Function);
   t.true(registration.pushManager.subscribe instanceof Function);
 });
@@ -46,7 +39,7 @@ test('mock push manager should subscribe successfully', async t => {
   };
   const subscription = await registration.pushManager.subscribe(subscriptionOptions);
 
-  t.true(subscription instanceof PushSubscription);
+  t.true(subscription instanceof MockPushSubscription);
   t.is(typeof subscription.endpoint, typeof '');
   t.true(subscription.getKey instanceof Function);
   t.deepEqual(subscription.options, subscriptionOptions);
