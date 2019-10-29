@@ -22,11 +22,11 @@ import { Subscription } from "../../../src/models/Subscription";
 import { SessionManager } from "../../../src/managers/SessionManager";
 import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
 import InitHelper from "../../../src/helpers/InitHelper";
-import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import { WorkerMessenger } from '../../../src/libraries/WorkerMessenger';
 import { UpdateManager } from '../../../src/managers/UpdateManager';
 import PermissionManager from '../../../src/managers/PermissionManager';
+import {MockServiceWorkerRegistration} from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const initTestHelper = new InitTestHelper(sinonSandbox);
@@ -228,6 +228,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
+
       pushIdentifier: 'granted',
       permission: NotificationPermission.Granted,
     };
@@ -817,7 +818,8 @@ async function beforeTest(
   initTestHelper.mockBasicInitEnv(testConfig, customServerAppConfig);
   OneSignal.initialized = false;
   OneSignal.__doNotShowWelcomeNotification = true;
-  (window as any).Notification.permission = testConfig.permission || "default";
+
+  sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");
 
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
     .resolves({success: true, id: playerId});
@@ -887,7 +889,7 @@ async function markUserAsSubscribedOnHttp(expired?: boolean) {
 }
 
 function stubServiceWorkerInstallation() {
-  const swRegistration = new ServiceWorkerRegistration();
+  const swRegistration = new MockServiceWorkerRegistration();
   sinonSandbox.stub(SubscriptionManager.prototype, "subscribeWithVapidKey")
     .resolves(TestEnvironment.getFakeRawPushSubscription());
   sinonSandbox.stub((global as any).navigator.serviceWorker, 'ready')
