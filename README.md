@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/OneSignal/OneSignal-Website-SDK.svg?branch=master)](https://travis-ci.org/OneSignal/OneSignal-Website-SDK)
 
 <p align="center">
-  <img src="https://onesignal.com/assets/common/logo_onesignal_color.png"/>
+  <img src="https://media.onesignal.com/cms/Website%20Layout/logo-red.svg"/>
   <br/>
     <br/>
   <img src="https://www.filepicker.io/api/file/FKy7xatlQeGqUuE9C3p8"/>
