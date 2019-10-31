@@ -414,15 +414,14 @@ export default class InitHelper {
 
   public static async saveInitOptions() {
     let opPromises: Promise<any>[] = [];
-    if (OneSignal.config.userConfig.persistNotification === false) {
-      opPromises.push(Database.put('Options', { key: 'persistNotification', value: false }));
-    } else {
-      if (OneSignal.config.userConfig.persistNotification === true) {
-        opPromises.push(Database.put('Options', { key: 'persistNotification', value: 'force' }));
-      } else {
-        opPromises.push(Database.put('Options', { key: 'persistNotification', value: true }));
-      }
-    }
+
+    const persistNotification = OneSignal.config.userConfig.persistNotification;
+    opPromises.push(
+      Database.put('Options', {
+        key: 'persistNotification',
+        value: persistNotification != null ? persistNotification : true
+      })
+    );
 
     let webhookOptions = OneSignal.config.userConfig.webhooks;
     ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(event => {

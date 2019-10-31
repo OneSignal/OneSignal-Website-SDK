@@ -45,36 +45,28 @@ test("correct degree of persistNotification setting should be stored", async t =
   OneSignal.config = appConfig;
   const config: AppConfig = OneSignal.config;
 
+  // If not set, default to true
   {
-    /*
-      If unspecified, persistNotification defaults to true on non-Mac OS X
-      environments, and false on Mac OS X due to changes in Chrome 59 limiting
-      web push notification content lengths.
-     */
     delete config.userConfig.persistNotification;
     await InitHelper.saveInitOptions();
     const persistNotification = await Database.get('Options', 'persistNotification');
     t.true(persistNotification);
   }
 
+  // If set to false, ensure value is false
   {
-    /*
-      If set to false, persistNotification is false on all environments.
-      */
     config.userConfig.persistNotification = false;
     await InitHelper.saveInitOptions();
     const persistNotification = await Database.get('Options', 'persistNotification');
     t.false(persistNotification);
   }
 
+  // If set to true, ensure value is true
   {
-    /*
-      If explicitly set to true, persistNotification is true on all environments.
-      */
     config.userConfig.persistNotification = true;
     await InitHelper.saveInitOptions();
     const persistNotification = await Database.get('Options', 'persistNotification');
-    t.is(persistNotification, 'force');
+    t.is(persistNotification, true);
   }
 });
 
