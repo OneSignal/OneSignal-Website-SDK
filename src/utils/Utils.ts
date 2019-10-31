@@ -125,7 +125,13 @@ export class Utils {
   public static isVersionAtLeast(toCheck: string | number, compareTo: number): boolean {
     const osVersionParts = toCheck.toString().split(".");
     const majorVersion = Utils.padStart(osVersionParts[0], 2, "0");
-    const minorVersion = Utils.padStart(osVersionParts[1], 2, "0");
+    let minorVersion: string;
+    if (osVersionParts[1]) {
+      minorVersion = Utils.padStart(osVersionParts[1], 2, "0");
+    }
+    else {
+      minorVersion = "00";
+    }
 
     const majorAndMinor = Number(`${majorVersion}.${minorVersion}`);
     return majorAndMinor >= compareTo;

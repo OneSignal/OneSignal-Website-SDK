@@ -408,14 +408,10 @@ export class ServiceWorker {
 
     notification.heading = notification.heading ? notification.heading : defaultTitle;
     notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
+
     const extra: any = {};
     extra.tag = notification.tag || appId;
-    if (persistNotification === 'force')
-      extra.persistNotification = true;
-    else if (persistNotification == null)
-      extra.persistNotification = true;
-    else
-      extra.persistNotification = persistNotification;
+    extra.persistNotification = persistNotification !== false;
 
     // Allow overriding some values
     if (!overrides)
