@@ -6,7 +6,7 @@ import nock from "nock";
 import { ServiceWorkerManager} from '../../../src/managers/ServiceWorkerManager';
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import Path from '../../../src/models/Path';
-import { HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
+import { BrowserUserAgent, HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
 import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
 import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import Context from '../../../src/models/Context';
@@ -27,6 +27,7 @@ import Database from "../../../src/services/Database";
 import { Subscription } from "../../../src/models/Subscription";
 import { ServiceWorker as ServiceWorkerReal } from "../../../src/service-worker/ServiceWorker";
 import MockNotification from "../../support/mocks/MockNotification";
+import { setUserAgent } from "../../support/tester/browser";
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -515,3 +516,89 @@ test('ServiceWorkerManager.getRegistration() handles throws by returning null', 
   const result = await ServiceWorkerManager.getRegistration();
   t.is(result, null);
 });
+
+
+
+
+/***************************************************
+ * displayNotification()
+ ****************************************************/
+async function displayNotificationEnvSetup() {
+  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
+  await TestEnvironment.stubServiceWorkerEnvironment();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
+}
+
+// Start - displayNotification - persistNotification
+test('displayNotification - persistNotification - true', async t => {
+  await displayNotificationEnvSetup();
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - undefined', async t => {
+  await displayNotificationEnvSetup();
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - force', async t => {
+  await displayNotificationEnvSetup();
+
+  // "force isn't set any more but for legacy users it still results in true
+  await Database.put('Options', { key: 'persistNotification', value: "force" });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - true - Chrome macOS 10.15', async t => {
+  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeMac10_15);
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
+});
+
+test('displayNotification - persistNotification - true - Chrome macOS pre-10.15', async t => {
+  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeMacSupported);
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - true - Opera macOS 10.14', async t => {
+  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.OperaMac10_14);
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
+});
+
+test('displayNotification - persistNotification - false', async t => {
+  await displayNotificationEnvSetup();
+
+  await Database.put('Options', { key: 'persistNotification', value: false });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
+});
+// End - displayNotification - persistNotification

@@ -408,13 +408,14 @@ export class ServiceWorker {
 
     notification.heading = notification.heading ? notification.heading : defaultTitle;
     notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
-    var extra: any = {};
+    const extra: any = {};
     extra.tag = notification.tag || appId;
-    if (persistNotification === 'force') {
+    if (persistNotification === 'force')
       extra.persistNotification = true;
-    } else {
+    else if (persistNotification == null)
+      extra.persistNotification = true;
+    else
       extra.persistNotification = persistNotification;
-    }
 
     // Allow overriding some values
     if (!overrides)
@@ -488,28 +489,30 @@ export class ServiceWorker {
       vibrate: notification.vibrate
     };
 
-    notificationOptions = ServiceWorker.filterNotificationOptions(notificationOptions, persistNotification === 'force');
+    notificationOptions = ServiceWorker.fixPlatformSpecificDisplayIssues(notificationOptions);
     return self.registration.showNotification(notification.heading, notificationOptions);
   }
 
-  static filterNotificationOptions(options: any, forcePersistNotifications?: boolean): any {
-    /**
-     * Due to Chrome 59+ notifications on Mac OS X using the native toast style
-     * which limits the number of characters available to display the subdomain
-     * to 14 with requireInteraction and 28 without, we force Mac OS X Chrome
-     * notifications to be transient.
-     */
-    const clone = { ...options };
+  /**
+   * Fixes display issue with some notification options causing the notification to never show!
+   * This happens when setting requireInteraction = true on the following platforms;
+   *   * macOS 10.15+ - Chrome based browsers
+   *      - https://bugs.chromium.org/p/chromium/issues/detail?id=1007418
+   *   * macOS 10.14+ - Opera
+   *      - https://forums.opera.com/topic/31334/push-notifications-with-requireinteraction-true-do-not-display-on-macos
+   * @param notificationOptions - Value passed to ServiceWorkerRegistration.prototype.showNotification
+   */
+  static fixPlatformSpecificDisplayIssues(notificationOptions: any): any {
+    const clone = { ...notificationOptions };
     const browser = OneSignalUtils.redetectBrowserUserAgent();
 
-    if (browser.chrome &&
-      browser.mac &&
-      clone) {
+    if (browser.chrome && browser.mac && Utils.isVersionAtLeast(browser.osversion, 10.15)) {
       clone.requireInteraction = false;
     }
-    if (forcePersistNotifications) {
-      clone.requireInteraction = true;
+    else if (browser.opera && browser.mac && Utils.isVersionAtLeast(browser.osversion, 10.14)) {
+      clone.requireInteraction = false;
     }
+
     return clone;
   }
 
