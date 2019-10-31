@@ -59,7 +59,8 @@ export default class Log {
       const methodToMapTo = methods[nativeMethod];
       const shouldMap = nativeMethodExists &&
         (
-          (typeof __LOGGING__ !== "undefined" && __LOGGING__ === true) ||
+          (true) ||
+          // (typeof __LOGGING__ !== "undefined" && __LOGGING__ === true) ||
           (Log.shouldLog()) ||
           methodToMapTo === "error"
         );
