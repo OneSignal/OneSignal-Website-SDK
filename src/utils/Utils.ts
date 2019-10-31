@@ -98,6 +98,39 @@ export class Utils {
     return defaultValue;
   }
 
+  /**
+   * This is similar to ECMAScript2107 String.prototype.padStart.
+   * Switch to this after updating TypeScript and can confirm it gets transpiled down to ES6
+   * @param str - String to pad left
+   * @param targetLength - Length to make the string
+   * @param padString - String value of length one to pad with.
+   * @returns {string} - Resulting string padded
+   */
+  public static padStart(str: string, targetLength: number, padString: string): string {
+    let result = str;
+    while(result.length < targetLength) {
+      result = padString + result;
+    }
+    return result;
+  }
+
+  /**
+   * Checks if a version is number is greater than or equal (AKA at least) to a specific compare
+   *   to version.
+   * Limited to only checking for major and minor version values, patch versions are ignored
+   * @param toCheck - Version we want to check
+   * @param compareTo - Version we want to be at or higher
+   * @returns {string} - Returns true if toCheck >= compareTo
+   */
+  public static isVersionAtLeast(toCheck: string | number, compareTo: number): boolean {
+    const osVersionParts = toCheck.toString().split(".");
+    const majorVersion = Utils.padStart(osVersionParts[0], 2, "0");
+    const minorVersion = Utils.padStart(osVersionParts[1], 2, "0");
+
+    const majorAndMinor = Number(`${majorVersion}.${minorVersion}`);
+    return majorAndMinor >= compareTo;
+  }
+
   public static enforceAppId(appId: string | undefined | null): void {
     if (!appId) {
       throw new Error("App id cannot be empty");
