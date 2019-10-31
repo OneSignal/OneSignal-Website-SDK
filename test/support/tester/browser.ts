@@ -2,13 +2,13 @@ import { BrowserUserAgent } from "../sdk/TestEnvironment";
 import bowser from 'bowser';
 
 export function setUserAgent(userAgent: BrowserUserAgent) {
-  Object.defineProperty((window as any).navigator, 'userAgent', {
+  Object.defineProperty(navigator, 'userAgent', {
       value: userAgent,
       configurable: true,
       enumerable: true,
       writable: true
   });
-  Object.defineProperty((window as any).navigator, 'platform', {
+  Object.defineProperty(navigator, 'platform', {
       value: "MacIntel",
       configurable: true,
       enumerable: true,
