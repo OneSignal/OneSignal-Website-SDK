@@ -715,8 +715,10 @@ export class SubscriptionManager {
     const { deviceId, optedOut } = await Database.getSubscription();
 
     if (SubscriptionManager.isSafari()) {
-      const subscriptionState = window.safari.pushNotification.permission(this.config.safariWebId);
-      const isSubscribedToSafari = !!(subscriptionState.permission === "granted" &&
+      const subscriptionState: SafariRemoteNotificationPermission =
+        window.safari.pushNotification.permission(this.config.safariWebId);
+      const isSubscribedToSafari = !!(
+        subscriptionState.permission === "granted" &&
         subscriptionState.deviceToken &&
         deviceId
       );

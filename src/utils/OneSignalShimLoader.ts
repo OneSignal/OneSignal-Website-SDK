@@ -37,8 +37,6 @@ export class OneSignalShimLoader {
     }
   }
 
-// Will only be true for browsers that accepted OneSignal permissions before we moved to importing
-//   the new OneSignalSDKWorker.js file.
   private static isServiceWorkerRuntime(): boolean {
     return (typeof window === "undefined");
   }
@@ -73,12 +71,12 @@ export class OneSignalShimLoader {
   }
 
   public static start(): void {
+    // Check if someone setup OneSignal before we instructed them to use "OneSignalSDKWorker.js"
+    //    instead of "OneSignal.js" for importScripts();
     if (OneSignalShimLoader.isServiceWorkerRuntime()) {
-      if (isPushNotificationsSupported()) {
-        (<ServiceWorkerGlobalScope><any>self).importScripts(
-          `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDKWorker.js?v=${OneSignalShimLoader.VERSION}`
-        );
-      }
+      (<ServiceWorkerGlobalScope><any>self).importScripts(
+        `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDKWorker.js?v=${OneSignalShimLoader.VERSION}`
+      );
     }
     else if (isPushNotificationsSupported()) {
       OneSignalShimLoader.addScriptToPage(

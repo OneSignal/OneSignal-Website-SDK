@@ -416,25 +416,6 @@ test("OneSignalSDK.js is loaded on a page on a browser that does NOT support pus
   t.is(addScriptToPageSpy.callCount, 0);
 });
 
-test("OneSignalSDK.js load from service worker context that does NOT support push", async t => {
-  // 2 stub function calls to mock being a ServiceWorker that supports push.
-  sandbox.stub(OneSignalShimLoader, <any>'isServiceWorkerRuntime').callsFake(() => {
-    return true;
-  });
-
-  // Setup spy for self.importScripts
-  (<any>global).self = { importScripts: () => {} };
-  const importScriptsSpy = sandbox.spy((<any>global).self, 'importScripts');
-
-  // Setup spy for OneSignalShimLoader.addScriptToPage
-  const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
-
-  OneSignalShimLoader.start();
-
-  t.is(importScriptsSpy.callCount, 0);
-  t.is(addScriptToPageSpy.callCount, 0);
-});
-
 test("OneSignalSDK.js load from service worker context that supports push", async t => {
   sandbox.stub((<any>global), "window").value(undefined);
   setupBrowserWithPushAPIWithVAPIDEnv(sandbox);

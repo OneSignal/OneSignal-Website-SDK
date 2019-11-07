@@ -8,6 +8,7 @@ export function isPushNotificationsSupported() {
 }
 
 // Does the browser support Safari's proprietary push
+// NOTE: Returns false in a ServiceWorker context
 function supportsSafariPush(): boolean {
   if (typeof window.safari !== "undefined" &&
       typeof window.safari.pushNotification !== "undefined") {

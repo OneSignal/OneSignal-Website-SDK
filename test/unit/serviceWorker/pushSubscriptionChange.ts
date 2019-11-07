@@ -1,4 +1,4 @@
-import test, {TestContext} from 'ava';
+import test, { TestContext } from 'ava';
 import '../../support/polyfills/polyfills';
 import sinon, { SinonSandbox } from 'sinon';
 
