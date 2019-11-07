@@ -1,4 +1,4 @@
-import test, {TestContext} from "ava";
+import test, { TestContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
 
 import MainHelper from "../../../src/helpers/MainHelper";

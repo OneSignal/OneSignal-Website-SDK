@@ -235,10 +235,10 @@ export class ServiceWorker {
    * @param notification A JSON object containing notification details the user consumes.
    * @returns {Promise}
    */
-  static async executeWebhooks(event: string, notification: any): Promise<Response | undefined> {
+  static async executeWebhooks(event: string, notification: any): Promise<Response | null> {
     const webhookTargetUrl = await Database.get<string>('Options', `webhooks.${event}`);
     if (!webhookTargetUrl)
-      return undefined;
+      return null;
 
     const { deviceId } = await Database.getSubscription();
     const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
@@ -286,7 +286,7 @@ export class ServiceWorker {
    * @returns {Promise}
    */
   static async getActiveClients(): Promise<Array<Client>> {
-    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const activeClients: Array<Client> = [];
 
     for (const client of windowClients) {
@@ -791,13 +791,13 @@ export class ServiceWorker {
    * Attempts to open the given url in a new browser tab. Called when a notification is clicked.
    * @param url May not be well-formed.
    */
-  static async openUrl(url: string): Promise<Client | undefined | null> {
+  static async openUrl(url: string): Promise<Client | null> {
     Log.debug('Opening notification URL:', url);
     try {
       return await self.clients.openWindow(url);
     } catch (e) {
       Log.warn(`Failed to open the URL '${url}':`, e);
-      return undefined;
+      return null;
     }
   }
 
