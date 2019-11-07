@@ -1,33 +1,13 @@
 {
-  // This file is used when runing yarn run build:*
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
-    "diagnostics": false,
-    "forceConsistentCasingInFileNames": true,
     "importHelpers": false,
     "module": "ES5",
-    "moduleResolution": "node",
     "noEmitHelpers": false,
-    "pretty": true,
-    "skipDefaultLibCheck": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
     "outDir": "../bundles",
     "sourceRoot": "../..",
     "rootDir": "../..",
     "baseUrl": "./",
-    "esModuleInterop": true,
-    "types": [
-      "node"
-    ],
-    "lib": [
-      "es6",
-      "dom",
-      "dom.iterable",
-      "scripthost",
-      "webworker"
-    ],
     "target": "ES5",
     "mapRoot": "build/ts-to-es6"
   }

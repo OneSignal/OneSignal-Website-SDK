@@ -1,15 +1,10 @@
 {
+  // Used for yarn transpile:tests
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
     "importHelpers": false,
-    "noEmitHelpers": false,
-    "lib": [
-      "webworker",
-      "es6",
-      "dom",
-      "dom.iterable"
-    ]
+    "noEmitHelpers": false
   },
   "include": [
     "../../src/**/*",
