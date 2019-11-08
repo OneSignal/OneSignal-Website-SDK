@@ -509,6 +509,18 @@ test("Service worker failed to install in popup. No handling.", async t => {
   t.is(error.message, workerRegistrationError.message);
 });
 
+
+test('installWorker() should not install when on an HTTPS site with a subdomain set', async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    initOptions: { subdomain: "abc" }
+  });
+
+  const manager = LocalHelpers.getServiceWorkerManager();
+  await manager.installWorker();
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
+});
+
 test('ServiceWorkerManager.getRegistration() handles throws by returning null', async t => {
   getRegistrationStub.restore();
   getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration');

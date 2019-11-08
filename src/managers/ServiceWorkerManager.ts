@@ -194,6 +194,13 @@ export class ServiceWorkerManager {
   }
 
   async shouldInstallWorker(): Promise<boolean> {
+    if (!Environment.supportsServiceWorkers())
+      return false;
+
+    // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
+    if (OneSignal.config.subdomain && SdkEnvironment.getWindowEnv() == WindowEnvironmentKind.Host)
+      return false;
+
     const workerState = await this.getActiveState();
 
     if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
@@ -297,7 +304,7 @@ export class ServiceWorkerManager {
    * considered subscribed.
    */
   public async installWorker() {
-    if (!Environment.supportsServiceWorkers()) {
+    if (!await OneSignal.context.serviceWorkerManager.shouldInstallWorker()) {
       return;
     }
 
