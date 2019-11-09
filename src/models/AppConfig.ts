@@ -317,6 +317,7 @@ export interface ServerAppConfig {
     /**
      * The allowed origin this web push config is allowed to run on.
      */
+    // TODO: origin and siteInfo.proxyOrigin are the same, clean up mixed usage in code
     origin: string;
     staticPrompts: ServerAppConfigPrompt;
     autoResubscribe: boolean;

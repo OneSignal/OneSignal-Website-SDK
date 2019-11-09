@@ -23,6 +23,7 @@ import { MockServiceWorker } from "../mocks/service-workers/models/MockServiceWo
 import { MockPushManager } from "../mocks/service-workers/models/MockPushManager";
 import { MockServiceWorkerContainer } from "../mocks/service-workers/models/MockServiceWorkerContainer";
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
+import deepmerge = require("deepmerge");
 
 // NodeJS.Global
 declare var global: any;
@@ -95,6 +96,7 @@ export interface TestEnvironmentConfig {
   addPrompts?: boolean;
   integration?: ConfigIntegrationKind;
   userConfig?: AppUserConfig;
+  overrideServerConfig?: RecursivePartial<ServerAppConfig>;
 }
 
 /**
@@ -323,7 +325,8 @@ export class TestEnvironment {
     const fakeUserConfig = config.userConfig || TestEnvironment.getFakeAppUserConfig();
     const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
       config.integration || ConfigIntegrationKind.Custom,
-      config.httpOrHttps ? config.httpOrHttps === HttpHttpsEnvironment.Https : undefined
+      config.httpOrHttps ? config.httpOrHttps === HttpHttpsEnvironment.Https : undefined,
+      config.overrideServerConfig
     );
     const configManager = new ConfigManager();
     const fakeMergedConfig = configManager.getMergedConfig(
@@ -364,7 +367,11 @@ export class TestEnvironment {
     };
   }
 
-  static getFakeServerAppConfig(configIntegrationKind: ConfigIntegrationKind, isHttps: boolean = true): ServerAppConfig {
+  static getFakeServerAppConfig(
+    configIntegrationKind: ConfigIntegrationKind,
+    isHttps: boolean = true,
+    overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null
+  ): ServerAppConfig {
     if (configIntegrationKind === ConfigIntegrationKind.Custom) {
       const customConfigHttps: ServerAppConfig = {
         success: true,
@@ -520,7 +527,7 @@ export class TestEnvironment {
       }
     }
 
-    return {
+    const remoteConfigMockDefaults: ServerAppConfig = {
       success: true,
       app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
       features: {
@@ -669,6 +676,11 @@ export class TestEnvironment {
       },
       generated_at: 1511912065
     };
+
+    return deepmerge(
+      <ServerAppConfig>remoteConfigMockDefaults as Partial<ServerAppConfig>,
+      overrideServerConfig || {}
+      );
   }
 
   static getFakeAppUserConfig(): AppUserConfig {

@@ -7,7 +7,7 @@ import OneSignal from '../../../src/OneSignal';
 import ConfigManager from '../../../src/managers/ConfigManager';
 
 test.beforeEach(t => {
-  t.context.serverConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  t.context.overrideServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
 });
 
 test('should assign the default service worker file path if not provided', async t => {

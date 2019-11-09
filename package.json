@@ -64,6 +64,7 @@
     "ava": "^0.21.0",
     "awesome-typescript-loader": "^4.0.1",
     "css-loader": "^0.26.2",
+    "deepmerge": "^4.2.2",
     "dom-storage": "^2.0.2",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "fake-indexeddb": "github:OneSignal/fakeIndexedDB#onesignal",

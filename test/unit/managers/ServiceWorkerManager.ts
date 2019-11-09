@@ -6,7 +6,12 @@ import nock from "nock";
 import { ServiceWorkerManager} from '../../../src/managers/ServiceWorkerManager';
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import Path from '../../../src/models/Path';
-import { BrowserUserAgent, HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
+import {
+  BrowserUserAgent,
+  HttpHttpsEnvironment,
+  TestEnvironment,
+  TestEnvironmentConfig
+} from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/models/Context';
 import SdkEnvironment from "../../../src/managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind";
@@ -29,6 +34,7 @@ import { MockServiceWorker } from "../../support/mocks/service-workers/models/Mo
 import { MockServiceWorkerGlobalScope } from "../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope";
 import MockNotification from "../../support/mocks/MockNotification";
 import { setUserAgent } from "../../support/tester/browser";
+import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -511,14 +517,26 @@ test("Service worker failed to install in popup. No handling.", async t => {
 
 
 test('installWorker() should not install when on an HTTPS site with a subdomain set', async t => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
-    initOptions: { subdomain: "abc" }
-  });
+  // 1. Mock site page as HTTPS
+  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
+
+  // 2. Set is set to use our subdomain however
+  const subdomain = "abc";
+  const testConfig: TestEnvironmentConfig = {
+    integration: ConfigIntegrationKind.TypicalSite,
+    overrideServerConfig: {
+      config: {
+        subdomain: subdomain,
+        siteInfo: { proxyOriginEnabled: true, proxyOrigin: subdomain }
+      }
+    }
+  };
+  TestEnvironment.mockInternalOneSignal(testConfig);
 
   const manager = LocalHelpers.getServiceWorkerManager();
   await manager.installWorker();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
+  // Since ServiceWorker will be installed in the iframe on os.tc Indeterminate is expected
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Indeterminate);
 });
 
 test('ServiceWorkerManager.getRegistration() handles throws by returning null', async t => {
