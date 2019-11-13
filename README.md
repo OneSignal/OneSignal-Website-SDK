@@ -3,14 +3,13 @@
 <p align="center">
   <img src="https://media.onesignal.com/cms/Website%20Layout/logo-red.svg"/>
   <br/>
-    <br/>
-  <img src="https://www.filepicker.io/api/file/FKy7xatlQeGqUuE9C3p8"/>
+  <br/>
   <span style="color: grey !important">Showing web push notifications from Chrome, Safari, and Firefox</span>
 </p>
 
 # OneSignal Web Push SDK
 
-[OneSignal](https://onesignal.com) is a free push notification service for web and mobile apps.
+[OneSignal](https://onesignal.com) is the market leader in customer engagement, powering mobile push, web push, email, and in-app messages.
 
 This SDK allows your site's visitors to receive push notifications from you. Send visitors custom notification content, target specific users, and send automatically based on triggers.
 
