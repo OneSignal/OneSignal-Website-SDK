@@ -7,8 +7,6 @@ import { ServiceWorkerManager} from '../../../src/managers/ServiceWorkerManager'
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import Path from '../../../src/models/Path';
 import { BrowserUserAgent, HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
-import ServiceWorkerRegistration from '../../support/mocks/service-workers/models/ServiceWorkerRegistration';
-import ServiceWorker from '../../support/mocks/service-workers/ServiceWorker';
 import Context from '../../../src/models/Context';
 import SdkEnvironment from "../../../src/managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind";
