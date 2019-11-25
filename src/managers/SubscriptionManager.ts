@@ -355,23 +355,21 @@ export class SubscriptionManager {
     }
 
     /* Now that permissions have been granted, install the service worker */
-    if (await this.context.serviceWorkerManager.shouldInstallWorker()) {
-        try {
-          await this.context.serviceWorkerManager.installWorker();
-        } catch(err) {
-          if (err instanceof ServiceWorkerRegistrationError) {
-            if (err.status === 403) {
-              await this.context.subscriptionManager.registerFailedSubscription(
-                SubscriptionStateKind.ServiceWorkerStatus403, 
-                this.context);
-            } else if (err.status === 404) {
-              await this.context.subscriptionManager.registerFailedSubscription(
-                SubscriptionStateKind.ServiceWorkerStatus404,
-                this.context);
-            } 
-          } 
-          throw err;
-        }
+    try {
+      await this.context.serviceWorkerManager.installWorker();
+    } catch(err) {
+      if (err instanceof ServiceWorkerRegistrationError) {
+        if (err.status === 403) {
+          await this.context.subscriptionManager.registerFailedSubscription(
+            SubscriptionStateKind.ServiceWorkerStatus403, 
+            this.context);
+        } else if (err.status === 404) {
+          await this.context.subscriptionManager.registerFailedSubscription(
+            SubscriptionStateKind.ServiceWorkerStatus404,
+            this.context);
+        } 
+      } 
+      throw err;
     }
       
 

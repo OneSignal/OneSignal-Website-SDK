@@ -197,6 +197,9 @@ export class ServiceWorkerManager {
     if (!Environment.supportsServiceWorkers())
       return false;
 
+    if (!OneSignal.config)
+      return false;
+
     // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
     if (OneSignal.config.subdomain && SdkEnvironment.getWindowEnv() == WindowEnvironmentKind.Host)
       return false;
@@ -206,7 +209,8 @@ export class ServiceWorkerManager {
     if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
       return true;
     }
-    return false;
+
+    return this.workerNeedsUpdate();
   }
 
   async subscribeForPushNotifications(): Promise<Subscription> {
@@ -228,16 +232,12 @@ export class ServiceWorkerManager {
    * with a content-identical but differently named alternate service worker
    * file.
    */
-  async updateWorker() {
-    if (!Environment.supportsServiceWorkers()) {
-      return;
-    }
-
+  async workerNeedsUpdate(): Promise<boolean> {
     const workerState = await this.getActiveState();
     Log.info(`[Service Worker Update] Checking service worker version...`);
-    let workerVersion;
+    let workerVersion: number;
     try {
-      workerVersion = await Utils.timeoutPromise(this.getWorkerVersion(), 2000);
+      workerVersion = await Utils.timeoutPromise(this.getWorkerVersion(), 2_000);
     } catch (e) {
       Log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
       workerVersion = 1;
@@ -248,15 +248,17 @@ export class ServiceWorkerManager {
       Log.debug(
         `[Service Worker Update] Not updating service worker, current active worker state is ${workerState}.`
       );
-      return;
+      return false;
     }
 
     if (workerVersion !== Environment.version()) {
       Log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
-      await this.installWorker();
+      return true;
     } else {
       Log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
     }
+
+    return false;
   }
 
   /**
@@ -304,7 +306,7 @@ export class ServiceWorkerManager {
    * considered subscribed.
    */
   public async installWorker() {
-    if (!await OneSignal.context.serviceWorkerManager.shouldInstallWorker()) {
+    if (!await this.shouldInstallWorker()) {
       return;
     }
 

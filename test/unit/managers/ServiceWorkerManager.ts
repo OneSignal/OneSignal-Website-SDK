@@ -35,6 +35,7 @@ import { MockServiceWorkerGlobalScope } from "../../support/mocks/service-worker
 import MockNotification from "../../support/mocks/MockNotification";
 import { setUserAgent } from "../../support/tester/browser";
 import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
+import Environment from '../../../src/Environment';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -385,7 +386,7 @@ test('installWorker() installs worker A when a third party service worker exists
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 });
 
-test('installWorker() installs Worker B and then A when Worker A exists', async t => {
+test('installWorker() installs Worker B and then A when Worker A is out of date', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
@@ -396,28 +397,35 @@ test('installWorker() installs Worker B and then A when Worker A exists', async 
     registrationOptions: { scope: '/' }
   });
 
+  // 1. Install ServiceWorker A and assert it was ServiceWorker A
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
+  // 2. Simulate an upgraded page SDK 
+  const envVerStub = sandbox.stub(Environment, "version").returns(2);
   const spy = sandbox.spy(navigator.serviceWorker, 'register');
 
-  const appConfig = OneSignal.context.appConfig;
-
+  // 3. Attempt to install ServiceWorker which should detect an upgrade
   await manager.installWorker();
 
+  const appConfig = OneSignal.context.appConfig;
   const registerOptions =  { scope: `${location.origin}/` };
   const serviceWorkerAPath = `${location.origin}/Worker-A.js?appId=${appConfig.appId}`;
   const serviceWorkerBPath = `${location.origin}/Worker-B.js?appId=${appConfig.appId}`;
 
+  // 4. Ensure we installed ServiceWorker B, followed by an immediate install of A to switch back.
   t.true(spy.getCall(0).calledWithExactly(serviceWorkerBPath, registerOptions));
   t.true(spy.getCall(1).calledWithExactly(serviceWorkerAPath, registerOptions));
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
+  // 5. Ensure a 2nd upgrade is handled corretly in the same way
+  envVerStub.returns(3);
   await manager.installWorker();
   t.true(spy.getCall(2).calledWithExactly(serviceWorkerBPath, registerOptions));
   t.true(spy.getCall(3).calledWithExactly(serviceWorkerAPath, registerOptions));
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
+  // 6. Ensure we did not call more than 4 times
   t.is(spy.callCount, 4);
 });
 
