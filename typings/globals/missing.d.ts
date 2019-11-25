@@ -97,7 +97,3 @@ declare var __IS_ES6__: string;
 declare var __SRC_STYLESHEETS_MD5_HASH__: string;
 
 declare var __LOGGING__: boolean;
-
-type RecursivePartial<T> = {
-  [P in keyof T]?: RecursivePartial<T[P]>;
-};

@@ -43,7 +43,7 @@ export default class InitHelper {
     Log.debug('Called %cinternalInit()', getConsoleStyle('code'));
 
     // Always check for an updated service worker
-    await OneSignal.context.serviceWorkerManager.updateWorker();
+    await OneSignal.context.serviceWorkerManager.installWorker();
 
     OneSignal.context.sessionManager.incrementPageViewCount();
 
