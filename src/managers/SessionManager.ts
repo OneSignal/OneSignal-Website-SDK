@@ -55,8 +55,11 @@ export class SessionManager {
     }
   }
 
-  private async handleOnFocus(): Promise<void> {
-    Log.debug("handleOnFocus");
+  private async handleOnFocus(e: Event): Promise<void> {
+    Log.debug("handleOnFocus", e);
+    if (e.target !== window) {
+      return;
+    }
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
       MainHelper.createDeviceRecord(this.context.appConfig.appId)
@@ -65,8 +68,11 @@ export class SessionManager {
     await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
   }
 
-  private async handleOnBlur(): Promise<void> {
-    Log.debug("handleOnBlur");
+  private async handleOnBlur(e: Event): Promise<void> {
+    Log.debug("handleOnBlur", e);
+    if (e.target !== window) {
+      return;
+    }
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
       MainHelper.createDeviceRecord(this.context.appConfig.appId)
@@ -110,11 +116,13 @@ export class SessionManager {
     }
 
     if (visibilityState === "hidden") {
-      if (OneSignal.cache.focusHandler) {
+      if (OneSignal.cache.focusHandler && OneSignal.cache.focusEventSetup) {
         window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
+        OneSignal.cache.focusEventSetup = false;
       }
-      if (OneSignal.cache.blurHandler) {
+      if (OneSignal.cache.blurHandler && OneSignal.cache.blurEventSetup) {
         window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
+        OneSignal.cache.blurEventSetup = false;
       }
       return;
     }
@@ -145,12 +153,19 @@ export class SessionManager {
     if (!OneSignal.cache.focusHandler) {
       OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
     }
-    window.addEventListener("focus", OneSignal.cache.focusHandler, true);
+    if (!OneSignal.cache.focusEventSetup) {
+      window.addEventListener("focus", OneSignal.cache.focusHandler, true);
+      OneSignal.cache.focusEventSetup = true;
+    }
+
 
     if (!OneSignal.cache.blurHandler) {
       OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
     }
-    window.addEventListener("blur", OneSignal.cache.blurHandler, true);
+    if (!OneSignal.cache.blurEventSetup) {
+      window.addEventListener("blur", OneSignal.cache.blurHandler, true);
+      OneSignal.cache.blurEventSetup = true;
+    }
   }
 
   public setupSessionEventListeners(): void {
@@ -164,13 +179,17 @@ export class SessionManager {
      */
     if (!OneSignal.cache.visibilityChangeListener) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
-      document.addEventListener("visibilitychange", () => setTimeout(() => this.handleVisibilityChange(), 0), true);
+      // document.addEventListener("visibilitychange", () => setTimeout(() => this.handleVisibilityChange(), 0), true);
+      document.addEventListener("visibilitychange", this.handleVisibilityChange.bind(this), true);
       OneSignal.cache.visibilityChangeListener = true;
     }
     
     if (!OneSignal.cache.beforeUnloadListener) {
       // tracks closing of a tab / reloading / navigating away
-      window.addEventListener("beforeunload", (e) => { e.preventDefault(); this.handleOnBeforeUnload();}, true);
+      window.addEventListener("beforeunload", (e) => {
+        this.handleOnBeforeUnload();
+        delete e.returnValue;
+      }, true);
       OneSignal.cache.beforeUnloadListener = true;
     }
   }
