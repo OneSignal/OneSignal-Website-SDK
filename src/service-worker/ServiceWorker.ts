@@ -178,14 +178,8 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: UpsertSessionPayload) => {
       Log.debug("[Service Worker] Received SessionUpsert", payload);
       try {
-        await ServiceWorkerHelper.upsertSession(
-          payload.sessionThreshold,
-          payload.enableSessionDuration,
-          self.timerId,
-          payload.deviceRecord,
-          payload.deviceId,
-          payload.sessionOrigin
-        );
+        const isHttps = true;
+        ServiceWorker.refreshSession(Object.assign(payload, { isHttps }));
       } catch(e) {
         Log.error("Error in SW.SessionUpsert handler", e.message, e);
       }
@@ -196,8 +190,7 @@ export class ServiceWorker {
       async (payload: DeactivateSessionPayload) => {
         Log.debug("[Service Worker] Received SessionDeactivate");
         try {
-          self.timerId = await ServiceWorkerHelper.deactivateSession(
-            payload.sessionThreshold, payload.enableSessionDuration);
+          
         } catch(e) {
           Log.error("Error in SW.SessionDeactivate handler", e);
         }
@@ -316,7 +309,7 @@ export class ServiceWorker {
    * @returns {Promise}
    */
   static async getActiveClients(): Promise<Array<Client>> {
-    const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const windowClients: readonly Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const activeClients: Array<Client> = [];
 
     for (const client of windowClients) {
@@ -334,6 +327,38 @@ export class ServiceWorker {
     }
 
     return activeClients;
+  }
+
+  static async refreshSession(options: UpsertSessionPayload & {isHttps: boolean;}): Promise<void> {
+    // if https
+    // getActiveClients
+    // check for the first focused
+    if (options.isHttps) {
+      const windowClients: readonly Client[] = await self.clients.matchAll(
+        { type: "window", includeUncontrolled: false }
+      );
+      const hasAnyActiveSessions = windowClients.some(w => (w as WindowClient).focused);
+      if (hasAnyActiveSessions) {
+        await ServiceWorkerHelper.upsertSession(
+          options.sessionThreshold,
+          options.enableSessionDuration,
+          self.timerId,
+          options.deviceRecord,
+          options.deviceId,
+          options.sessionOrigin
+        );
+      } else {
+        await ServiceWorkerHelper.deactivateSession(
+          options.sessionThreshold, options.enableSessionDuration);
+      }
+
+    }
+
+    // if http
+    // broadcast with 1 sec timeout
+    // possibly include some kind of id to identify a job
+    // if any positive answer, cancel
+
   }
 
   /**
