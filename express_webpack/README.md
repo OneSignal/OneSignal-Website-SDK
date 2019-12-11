@@ -44,14 +44,23 @@ You can pass two additional parameters to the above command, the first being the
 
 If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api
 
+**Ports:**
+The two environments will default to ports:
+   - BUILD: 4001
+   - API: 3001
+
 **Examples**:
+```
+yarn build:dev-dev localhost localhost
+```
+This sets the BUILD environment origin to `localhost` which will result in SDK files being fetched from `https://localhost:4001/sdks/` and the API environment origin to `localhost` which will make all onesignal api calls to that origin such as `https://localhost:3001/api/v1/apps/<app>`
+
 ```
 yarn build:dev-prod texas
 ```
-This sets the dev environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/`
+This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/` and the API environment origin to the default `https://onesignal.com/api/v1/apps/<app_id>`
 
 ```
-yarn build:dev-dev texas <ip>
+yarn build:dev-dev texas <hostname/ip>
 ```
-This sets the dev environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/` and the API environment origin to `<ip>` which will make all onesignal api calls to that origin such as `https://<ip>:3001/api/v1/apps/<app>`
-
+This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/` and the API environment origin to `<hostname/ip>` which will make all onesignal api calls to that origin such as `https://<hostname/ip>:3001/api/v1/apps/<app_id>`
