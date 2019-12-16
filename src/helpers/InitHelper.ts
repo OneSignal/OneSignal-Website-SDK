@@ -150,21 +150,11 @@ export default class InitHelper {
       return;
     }
 
-    /**
-     * Safari 12.1+ is very sensitive about indexeddb queries. any queries performed before prompting for
-     * notifications are considered as violation of "Prompting requires a user gesture rule".
-     * TODO: May want to store isOptedOut flag somewhere during initialization. For now hardcoding it to false.
-     */
-    if (bowser.safari && Number(bowser.version) >= 12.1) {
-      await SubscriptionHelper.internalRegisterForPush(false);
-      return;
-    }
-
     /*
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = await OneSignal.internalIsOptedOut();
+    const isOptedOut = localStorage.getItem('isOptedOut') === "true";
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
     }

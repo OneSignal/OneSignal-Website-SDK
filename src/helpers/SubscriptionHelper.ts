@@ -14,7 +14,7 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const isPushEnabled = localStorage.getItem('isPushNotificationsEnabled') === "true";
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
   }
 
