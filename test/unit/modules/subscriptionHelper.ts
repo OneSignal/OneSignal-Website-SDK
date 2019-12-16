@@ -21,7 +21,7 @@ test.afterEach(() => {
 })
 
 test('should not resubscribe user on subsequent page views if the user is already subscribed', async t => {
-  sinonSandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').resolves(true);
+  sinonSandbox.stub(SubscriptionHelper, 'getBrowserPushSetting').returns("true");
   sinonSandbox.stub(SessionManager.prototype, 'getPageViewCount').returns(2);
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, 'subscribe');
 

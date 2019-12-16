@@ -14,8 +14,12 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = localStorage.getItem('isPushNotificationsEnabled') === "true";
+    const isPushEnabled = SubscriptionHelper.getBrowserPushSetting('isPushNotificationsEnabled') === "true";
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
+  }
+
+  public static getBrowserPushSetting(key: string) {
+    return localStorage.getItem(key);
   }
 
   public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {

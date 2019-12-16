@@ -154,7 +154,7 @@ export default class InitHelper {
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = localStorage.getItem('isOptedOut') === "true";
+    const isOptedOut = SubscriptionHelper.getBrowserPushSetting('isOptedOut') === "true";
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
     }
