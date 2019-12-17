@@ -11,15 +11,12 @@ import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
+import LocalStorage from 'src/utils/LocalStorage';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = SubscriptionHelper.getBrowserPushSetting('isPushNotificationsEnabled') === "true";
+    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled() === "true";
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
-  }
-
-  public static getBrowserPushSetting(key: string) {
-    return localStorage.getItem(key);
   }
 
   public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {

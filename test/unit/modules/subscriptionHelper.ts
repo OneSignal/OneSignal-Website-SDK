@@ -6,6 +6,7 @@ import sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { SessionManager } from '../../../src/managers/SessionManager';
+import LocalStorage from 'src/utils/LocalStorage';
 
 const sinonSandbox = sinon.sandbox.create();
 
@@ -21,7 +22,7 @@ test.afterEach(() => {
 })
 
 test('should not resubscribe user on subsequent page views if the user is already subscribed', async t => {
-  sinonSandbox.stub(SubscriptionHelper, 'getBrowserPushSetting').returns("true");
+  sinonSandbox.stub(LocalStorage, 'getIsPushNotificationsEnabled').returns("true");
   sinonSandbox.stub(SessionManager.prototype, 'getPageViewCount').returns(2);
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, 'subscribe');
 

@@ -240,9 +240,6 @@ export default class OneSignal {
     }
 
     await OneSignal.delayedInit();
-
-    // stores `isOptedOut` and `isPushNotificationsEnabled` on init
-    OneSignal.storeBrowserPushSettings();
   }
 
   private static async delayedInit(): Promise<void> {

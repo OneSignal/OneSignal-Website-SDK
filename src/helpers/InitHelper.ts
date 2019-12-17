@@ -28,6 +28,7 @@ import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
+import LocalStorage from 'src/utils/LocalStorage';
 
 declare var OneSignal: any;
 
@@ -83,11 +84,13 @@ export default class InitHelper {
       throw err;
     }
 
+    await OneSignal.storeBrowserPushSettings();
+
     /**
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = await OneSignal.internalIsOptedOut();
+    const isOptedOut = LocalStorage.getIsOptedOut() === "true";
 
     /**
      * Auto-resubscribe is working only on HTTPS (and in safari)
@@ -97,15 +100,16 @@ export default class InitHelper {
       await InitHelper.handleAutoResubscribe(isOptedOut);
     }
 
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    const isSubscribed = LocalStorage.getIsPushNotificationsEnabled();
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
       /*
       * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
       * permanent blocks, we want to replace sites automatically showing the native browser request
       * with a slide prompt first.
-      * Same for Safari 12.1+. It requires user interaction to request notification permissions.
+      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
       * It simply wouldn't work to try to show native prompt from script.
       */
+
       const showSlidedownForceEnable =
         (
           (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
@@ -154,7 +158,7 @@ export default class InitHelper {
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = SubscriptionHelper.getBrowserPushSetting('isOptedOut') === "true";
+    const isOptedOut = LocalStorage.getIsOptedOut() === "true";
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
     }
