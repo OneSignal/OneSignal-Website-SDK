@@ -47,7 +47,7 @@ export default class ServiceWorkerHelper {
   }
 
   public static async upsertSession(
-    sessionThresholdInSeconds: number, sendOnFocus: boolean, timerId: number | undefined,
+    sessionThresholdInSeconds: number, sendOnFocus: boolean,
     deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin
   ): Promise<void> {
     if (!deviceId) {
@@ -89,11 +89,6 @@ export default class ServiceWorkerHelper {
     const timeSinceLastDeactivatedInSeconds: number = Math.floor(
       (currentTimestamp - existingSession.lastDeactivatedTimestamp)/ 1000
     );
-
-    if (timerId) {
-      Log.debug("Clearing timeout from previous session deactivation");
-      self.clearTimeout(timerId);
-    }
 
     if (timeSinceLastDeactivatedInSeconds < sessionThresholdInSeconds) {
       existingSession.status = SessionStatus.Active;

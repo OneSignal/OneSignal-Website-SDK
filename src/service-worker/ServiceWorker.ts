@@ -179,7 +179,7 @@ export class ServiceWorker {
       Log.debug("[Service Worker] Received SessionUpsert", payload);
       try {
         const isHttps = true;
-        ServiceWorker.refreshSession(Object.assign(payload, { isHttps }));
+        ServiceWorker.debounceRefreshSession(Object.assign(payload, { isHttps }));
       } catch(e) {
         Log.error("Error in SW.SessionUpsert handler", e.message, e);
       }
@@ -190,7 +190,8 @@ export class ServiceWorker {
       async (payload: DeactivateSessionPayload) => {
         Log.debug("[Service Worker] Received SessionDeactivate");
         try {
-          
+          const isHttps = true;
+          ServiceWorker.debounceRefreshSession(Object.assign(payload, { isHttps }));
         } catch(e) {
           Log.error("Error in SW.SessionDeactivate handler", e);
         }
@@ -300,6 +301,23 @@ export class ServiceWorker {
     return await fetch(webhookTargetUrl, fetchOptions);
   }
 
+  static debounceRefreshSession(options: DeactivateSessionPayload & {isHttps: boolean;}) {
+    Log.debug("[Service Worker] debounceRefreshSession", options);
+    const executeRefreshSession = () => {
+      if (self.timerId !== undefined) {
+        self.clearTimeout(self.timerId);
+        self.timerId = undefined;
+      }
+      ServiceWorker.refreshSession(options);
+    };
+
+    if (self.timerId !== undefined) {
+      self.clearTimeout(self.timerId);
+    }
+
+    self.timerId = self.setTimeout(executeRefreshSession, 1000);
+  }
+
   /**
    * Gets an array of active window clients along with whether each window client is the HTTP site's iFrame or an
    * HTTPS site page.
@@ -309,7 +327,7 @@ export class ServiceWorker {
    * @returns {Promise}
    */
   static async getActiveClients(): Promise<Array<Client>> {
-    const windowClients: readonly Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const activeClients: Array<Client> = [];
 
     for (const client of windowClients) {
@@ -329,29 +347,29 @@ export class ServiceWorker {
     return activeClients;
   }
 
-  static async refreshSession(options: UpsertSessionPayload & {isHttps: boolean;}): Promise<void> {
+  static async refreshSession(options: DeactivateSessionPayload & {isHttps: boolean;}): Promise<void> {
+    Log.debug("[Service Worker] refreshSession");
     // if https
     // getActiveClients
     // check for the first focused
     if (options.isHttps) {
-      const windowClients: readonly Client[] = await self.clients.matchAll(
+      const windowClients: Client[] = await self.clients.matchAll(
         { type: "window", includeUncontrolled: false }
       );
       const hasAnyActiveSessions = windowClients.some(w => (w as WindowClient).focused);
+      Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
       if (hasAnyActiveSessions) {
         await ServiceWorkerHelper.upsertSession(
           options.sessionThreshold,
           options.enableSessionDuration,
-          self.timerId,
-          options.deviceRecord,
+          options.deviceRecord!,
           options.deviceId,
           options.sessionOrigin
         );
       } else {
-        await ServiceWorkerHelper.deactivateSession(
+        self.timerId = await ServiceWorkerHelper.deactivateSession(
           options.sessionThreshold, options.enableSessionDuration);
       }
-
     }
 
     // if http
