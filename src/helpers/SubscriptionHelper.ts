@@ -15,7 +15,7 @@ import LocalStorage from '../utils/LocalStorage';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled() === "true";
+    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
   }
 

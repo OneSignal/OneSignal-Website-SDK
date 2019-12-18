@@ -84,13 +84,13 @@ export default class InitHelper {
       throw err;
     }
 
-    await OneSignal.storeBrowserPushSettings();
-
     /**
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = LocalStorage.getIsOptedOut() === "true";
+    const isOptedOut = await OneSignal.internalIsOptedOut();
+    // saves isOptedOut to localStorage. used for require user interaction functionality
+    LocalStorage.setIsOptedOut(!!isOptedOut);
 
     /**
      * Auto-resubscribe is working only on HTTPS (and in safari)
@@ -100,7 +100,10 @@ export default class InitHelper {
       await InitHelper.handleAutoResubscribe(isOptedOut);
     }
 
-    const isSubscribed = LocalStorage.getIsPushNotificationsEnabled() === "true";
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    // saves isSubscribed to localStorage. used for require user interaction functionality
+    LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
+
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
       /*
       * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
@@ -158,7 +161,7 @@ export default class InitHelper {
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = LocalStorage.getIsOptedOut() === "true";
+    const isOptedOut = LocalStorage.getIsOptedOut();
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
     }

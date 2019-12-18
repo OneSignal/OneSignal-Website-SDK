@@ -305,21 +305,6 @@ export default class OneSignal {
   }
 
   /**
-   * Saves `isPushNotificationsEnabled` and `isOptedOut` to local storage
-   *    - values are used to bypass codepath resulting in errors such as:
-   *        "The Notification permission may only be requested 
-   *         from inside a short running user-generated event handler."
-   *  @private
-   */
-  public static async storeBrowserPushSettings(){
-    const isPushNotificationsEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    localStorage.setItem('isPushNotificationsEnabled', String(isPushNotificationsEnabled));
-  
-    const isOptedOut = await OneSignal.internalIsOptedOut();
-    localStorage.setItem('isOptedOut', String(isOptedOut));
-  }
-
-  /**
    * Call after use accepts your user consent agreement
    * @PublicApi
    */
