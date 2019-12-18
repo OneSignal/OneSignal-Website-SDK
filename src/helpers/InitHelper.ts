@@ -28,7 +28,7 @@ import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
-import LocalStorage from 'src/utils/LocalStorage';
+import LocalStorage from '../utils/LocalStorage';
 
 declare var OneSignal: any;
 

@@ -311,7 +311,7 @@ export default class OneSignal {
    *         from inside a short running user-generated event handler."
    *  @private
    */
-  private static async storeBrowserPushSettings(){
+  public static async storeBrowserPushSettings(){
     const isPushNotificationsEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     localStorage.setItem('isPushNotificationsEnabled', String(isPushNotificationsEnabled));
   

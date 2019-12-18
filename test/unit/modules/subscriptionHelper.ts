@@ -6,7 +6,7 @@ import sinon from 'sinon';
 import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
 import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { SessionManager } from '../../../src/managers/SessionManager';
-import LocalStorage from 'src/utils/LocalStorage';
+import LocalStorage from '../../../src/utils/LocalStorage';
 
 const sinonSandbox = sinon.sandbox.create();
 

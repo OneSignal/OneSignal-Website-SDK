@@ -11,7 +11,7 @@ import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
-import LocalStorage from 'src/utils/LocalStorage';
+import LocalStorage from '../utils/LocalStorage';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
