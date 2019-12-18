@@ -100,7 +100,7 @@ export default class InitHelper {
       await InitHelper.handleAutoResubscribe(isOptedOut);
     }
 
-    const isSubscribed = LocalStorage.getIsPushNotificationsEnabled();
+    const isSubscribed = LocalStorage.getIsPushNotificationsEnabled() === "true";
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
       /*
       * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
