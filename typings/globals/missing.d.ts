@@ -90,6 +90,7 @@ declare var __BUILD_TYPE__: string;
 declare var __BUILD_ORIGIN__: string;
 declare var __API_TYPE__: string;
 declare var __API_ORIGIN__: string;
+declare var __IS_HTTPS__: string;
 declare var __DEV__: string;
 declare var __TEST__: string;
 declare var __STAGING__: string;

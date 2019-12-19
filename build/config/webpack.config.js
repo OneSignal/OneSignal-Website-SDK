@@ -201,6 +201,7 @@ async function getBuildDefines() {
     __BUILD_ORIGIN__: buildOrigin,
     __API_TYPE__: apiEnv,
     __API_ORIGIN__: apiOrigin,
+    __IS_HTTPS__: isHttps,
     __TEST__: !!process.env.TESTS,
     __VERSION__: process.env.npm_package_config_sdkVersion,
     __LOGGING__: process.env.ENV === "development",
