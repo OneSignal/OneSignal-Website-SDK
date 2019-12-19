@@ -263,9 +263,10 @@ export default class SdkEnvironment {
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const isHttps = (typeof __IS_HTTPS__ !== "undefined") ? __IS_HTTPS__ : true;
     let origin: string;
-    const protocol = __IS_HTTPS__ ? "https" : "http";
-    const port = __IS_HTTPS__ ? 4001 : 4000;
+    const protocol = isHttps ? "https" : "http";
+    const port = isHttps ? 4001 : 4000;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
