@@ -265,9 +265,11 @@ export default class SdkEnvironment {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
     let origin: string;
     const protocol = __IS_HTTPS__ ? "https" : "http";
+    const port = __IS_HTTPS__ ? 4001 : 4000;
+
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        origin = `${protocol}://${buildOrigin}:4001`;
+        origin = `${protocol}://${buildOrigin}:${port}`;
         break;
       case EnvironmentKind.Staging:
         origin = `${protocol}://${window.location.host}`;

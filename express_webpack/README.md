@@ -39,6 +39,10 @@ yarn build:<type>-<type>
 ```
 **Example**: `yarn build:dev-prod` builds the SDK with the BUILD environment as "development" and the API environment as "production"
 
+### HTTP
+All builds default to `https` unless `--http` is passed into the build command...
+**Example**: `yarn build:dev-prod --http` or `yarn build:dev-prod localhost --http`
+
 #### CUSTOM ORIGIN PARAMS: 
 You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. 
 

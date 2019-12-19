@@ -11,7 +11,6 @@ const apiEnv = process.env.API || "production";
 const apiOrigin = process.env.API_ORIGIN || "onesignal.com"
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
-const isHttps = !!process.env.HTTPS || true;
 
 async function getWebpackPlugins() {
   const plugins = [
@@ -23,7 +22,7 @@ async function getWebpackPlugins() {
         __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
         __API_TYPE__: JSON.stringify(apiEnv),
         __API_ORIGIN__: JSON.stringify(apiOrigin),
-        __IS_HTTPS__: JSON.stringify(isHttps),
+        __IS_HTTPS__: process.env.HTTPS == 1,
         __TEST__: !!process.env.TESTS,
         __VERSION__: process.env.npm_package_config_sdkVersion,
         __LOGGING__: env === "development",
