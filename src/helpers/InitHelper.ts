@@ -194,6 +194,7 @@ export default class InitHelper {
      */
     const isExistingUser: boolean = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (isExistingUser) {
+      OneSignal.context.sessionManager.setupSessionEventListeners();
       if (!wasUserResubscribed) {
         await OneSignal.context.updateManager.sendOnSessionUpdate();
       }
