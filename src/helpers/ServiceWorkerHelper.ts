@@ -91,9 +91,8 @@ export default class ServiceWorkerHelper {
     }
 
     const currentTimestamp = new Date().getTime();
-    const timeSinceLastDeactivatedInSeconds: number = Math.floor(
-      (currentTimestamp - existingSession.lastDeactivatedTimestamp)/ 1000
-    );
+    const timeSinceLastDeactivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+      currentTimestamp, existingSession.lastDeactivatedTimestamp);
 
     if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
       existingSession.status = SessionStatus.Active;
@@ -113,7 +112,40 @@ export default class ServiceWorkerHelper {
     );
   }
 
-  public static async deactivateSession(): Promise<void> {
+  public static async deactivateSession(
+    thresholdInSeconds: number, sendOnFocusEnabled: boolean
+  ): Promise<number | undefined> {
+    const existingSession = await Database.getCurrentSession();
+
+    if (!existingSession) {
+      Log.debug("No active session found. Cannot deactivate.");
+      return undefined;
+    }
+
+    if (existingSession.status !== SessionStatus.Active) {
+      Log.debug(`Session in invalid state ${existingSession.status}. Cannot deactivate.`);
+      return undefined;
+    }
+
+    const currentTimestamp = new Date().getTime();
+    const timeSinceLastActivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+      currentTimestamp, existingSession.lastActivatedTimestamp);
+
+    existingSession.lastDeactivatedTimestamp = currentTimestamp;
+    existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
+    existingSession.status = SessionStatus.Inactive;
+
+    const timerId = 
+      ((session, sendOnFocus) => {
+        const thresholdInMilliseconds = thresholdInSeconds * 1000;
+        return self.setTimeout(
+          () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus), 
+          thresholdInMilliseconds);
+      })(existingSession, sendOnFocusEnabled);
+
+    await Database.upsertSession(existingSession);
+
+    return timerId;
   }
 
   public static async finalizeSession(session: Session, sendOnFocusEnabled: boolean): Promise<void> {
@@ -133,6 +165,13 @@ export default class ServiceWorkerHelper {
       `started: ${new Date(session.startTimestamp)}`
     );
   };
+
+  static timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
+    if (timestamp1 <= timestamp2) {
+      return 0;
+    }
+    return Math.floor((timestamp1 - timestamp2) / 1000);
+  }
 }
 
 export enum ServiceWorkerActiveState {
