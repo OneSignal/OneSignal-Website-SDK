@@ -193,14 +193,15 @@ async function getStylesheetsHash() {
       resolve(combinedHash);
     });
   });
-}
+} 
 
 async function getBuildDefines() {
   var buildDefines = {
-    __BUILD_TYPE__: env,
-    __BUILD_ORIGIN__: buildOrigin,
-    __API_TYPE__: apiEnv,
-    __API_ORIGIN__: apiOrigin,
+    __BUILD_TYPE__: process.env.ENV,
+    __BUILD_ORIGIN__: process.env.BUILD_ORIGIN,
+    __API_TYPE__: process.env.API,
+    __API_ORIGIN__: process.env.API_ORIGIN,
+    __IS_HTTPS__: process.env.HTTPS,
     __TEST__: !!process.env.TESTS,
     __VERSION__: process.env.npm_package_config_sdkVersion,
     __LOGGING__: process.env.ENV === "development",
