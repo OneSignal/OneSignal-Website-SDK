@@ -38,38 +38,6 @@ test('registerForPushNotifications: load fullscreen popup when using subscriptio
   t.is(loadStub.calledOnce, true);
 });
 
-test('registerForPushNotifications: not using subscription workaround and safari < 12.1 and never subscribed',
-  async (t) => {
-    setBrowser(BrowserUserAgent.ChromeMacSupported);
-
-    sandbox.stub(OneSignal, 'internalIsOptedOut').resolves(false);
-    const registerSpy = sandbox.stub(SubscriptionHelper, 'registerForPush').resolves();
-    await InitHelper.registerForPushNotifications();
-    t.is(registerSpy.calledOnce, true);
-});
-
-test('registerForPushNotifications: not using subscription workaround and safari < 12.1 and opted out',
-  async (t) => {
-    setBrowser(BrowserUserAgent.ChromeMacSupported);
-
-    sandbox.stub(OneSignal, 'internalIsOptedOut').resolves(true);
-    const registerSpy = sandbox.stub(SubscriptionHelper, 'registerForPush').resolves();
-    await InitHelper.registerForPushNotifications();
-    t.is(registerSpy.notCalled, true);
-});
-
-test('registerForPushNotifications: after OneSignal.initialized and not using subscription workaround and safari 12.1',
-  async (t) => {
-    setBrowser(BrowserUserAgent.SafariSupportedMac121);
-
-    const registerStub = sandbox.stub(SubscriptionHelper, 'internalRegisterForPush').resolves();
-    await InitHelper.registerForPushNotifications();
-    t.is(registerStub.calledOnce, true);
-});
-
-/** sessionInit */
-
-
 /** onSdkInitialized */
 test("onSdkInitialized: ensure public sdk initialized triggered", async (t) => {
   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => { t.pass(); });
