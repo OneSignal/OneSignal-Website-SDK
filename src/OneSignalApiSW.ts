@@ -1,8 +1,10 @@
 import { ServerAppConfig } from "./models/AppConfig";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
+import { FlattenedDeviceRecord } from "./models/DeviceRecord";
 import Log from "./libraries/Log";
 import { Utils } from "./context/shared/utils/Utils";
+import { OneSignalApiErrorKind, OneSignalApiError } from "./errors/OneSignalApiError";
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
@@ -41,6 +43,28 @@ export class OneSignalApiSW {
     Utils.enforcePlayerId(playerId);
     return OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
   }
+
+  public static async updateUserSession(
+    userId: string,
+    serializedDeviceRecord: FlattenedDeviceRecord,
+  ): Promise<string> {
+    try {
+      Utils.enforceAppId(serializedDeviceRecord.app_id);
+      Utils.enforcePlayerId(userId);
+      const response = await OneSignalApiBase.post(`players/${userId}/on_session`, serializedDeviceRecord);
+      if (response.id) {
+        // A new user ID can be returned
+        return response.id;
+      } else {
+        return userId;
+      }
+    } catch (e) {
+      if (e && Array.isArray(e.errors) && e.errors.length > 0 &&
+        Utils.contains(e.errors[0], 'app_id not found')) {
+        throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
+      } else throw e;
+    }
+  };
 }
 
 export default OneSignalApiSW;
