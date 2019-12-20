@@ -29,7 +29,7 @@ export default class SubscriptionHelper {
       session count incremented on each page refresh. However, if the user is
       not subscribed, subscribe.
     */
-    if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
+    if (isPushEnabled && !context.pageViewManager.isFirstPageView()) {
       Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
       return null;
     }
@@ -49,7 +49,7 @@ export default class SubscriptionHelper {
             SubscriptionStrategyKind.ResubscribeExisting
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
-          context.sessionManager.incrementPageViewCount();
+          context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {

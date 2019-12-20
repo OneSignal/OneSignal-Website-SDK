@@ -726,11 +726,11 @@ test(
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
-    const sessionManager = context.sessionManager;
+    const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
 
-    sandbox.stub(sessionManager, "isFirstPageView").returns(true);
+    sandbox.stub(pageViewManager, "isFirstPageView").returns(true);
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error403);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
@@ -751,11 +751,11 @@ test(
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
-    const sessionManager = context.sessionManager;
+    const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
 
-    sandbox.stub(sessionManager, "isFirstPageView").returns(false);
+    sandbox.stub(pageViewManager, "isFirstPageView").returns(false);
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error403);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
@@ -776,11 +776,11 @@ test(
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
-    const sessionManager = context.sessionManager;
+    const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
 
-    sandbox.stub(sessionManager, "isFirstPageView").returns(true);
+    sandbox.stub(pageViewManager, "isFirstPageView").returns(true);
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error404);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
@@ -801,11 +801,11 @@ test(
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager; 
-    const sessionManager = context.sessionManager;
+    const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
 
-    sandbox.stub(sessionManager, "isFirstPageView").returns(false);
+    sandbox.stub(pageViewManager, "isFirstPageView").returns(false);
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error404);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
