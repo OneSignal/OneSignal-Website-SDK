@@ -5,6 +5,7 @@ import Postmam from '../../Postmam';
 import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
 import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
+import { PageVisibilityRequest } from '../../service-worker/types';
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
@@ -104,6 +105,8 @@ export default class ProxyFrameHost implements Disposable {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, this.onRequestHostUrl.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, this.onServiceWorkerCommandRedirect.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT, this.onGetEventListenerCount.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, this.onAreYouVisibleRequest.bind(this));
+    this.messenger.on("os.page_focused_request", this.onAreYouVisibleRequest.bind(this));
     this.messenger.connect();
   }
 
@@ -188,6 +191,15 @@ export default class ProxyFrameHost implements Disposable {
         resolve(reply.data);
       });
     });
+  }
+
+  onAreYouVisibleRequest(event: {data: PageVisibilityRequest}) {
+    console.log("onAreYouVisibleRequest page")
+    const response = {
+      timestamp: event.data.timestamp,
+      focused: document.hasFocus(),
+    };
+    this.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_RESPONSE, response);
   }
 
   async runCommand<T>(command: string, payload: any = null): Promise<T> {

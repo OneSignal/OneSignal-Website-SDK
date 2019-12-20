@@ -423,6 +423,29 @@ export class ServiceWorkerManager {
     workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, data => {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
+
+    const isHttps = !OneSignalUtils.isUsingSubscriptionWorkaround();
+    // const isSafari = !!bowser.safari;
+    const isSafari = false; //TODO: GET REAL VALUE
+    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (event: {data: {payload: any;}}) => {
+      // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
+      // For Safari, unfortunately, we need this messaging workaround since SW always gets false.
+      if (isHttps && isSafari) {
+        const payload = {
+          timestamp: event.data.payload.timestamp,
+          focused: document.hasFocus(),
+        };
+        workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
+      } else {
+        // TODO: fix types!!!!
+        const httpPayload = {timestamp: event.timestamp};
+        const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
+        if (proxyFrame) {
+          proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
+        }
+        // OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
+      }
+    });
   }
 
   /**

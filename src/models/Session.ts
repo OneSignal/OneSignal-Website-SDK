@@ -58,6 +58,8 @@ interface BaseSessionPayload {
   sessionThreshold: number;
   enableSessionDuration: boolean;
   sessionOrigin: SessionOrigin;
+  isHttps: boolean;
+  isSafari: boolean;
 }
 
 export interface UpsertSessionPayload extends BaseSessionPayload {

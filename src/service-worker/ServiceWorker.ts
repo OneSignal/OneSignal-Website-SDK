@@ -19,8 +19,9 @@ import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../utils/Utils";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
+import { OSServiceWorkerFields, PageVisibilityResponse, OSWindowClient, PageVisibilityRequest } from "./types";
 
-declare var self: ServiceWorkerGlobalScope & { timerId: number | undefined; };
+declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
 
 /**
@@ -175,11 +176,24 @@ export class ServiceWorker {
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
     });
+    ServiceWorker.workerMessenger.on(
+      WorkerMessengerCommand.AreYouVisibleResponse, async (payload: PageVisibilityResponse) => {
+        Log.debug('[Service Worker] Received response for AreYouVisible', payload);
+        if (!self.clientsStatus) { return; }
+
+        const timestamp = payload.timestamp;
+        if (self.clientsStatus.timestamp !== timestamp) { return; }
+        
+        self.clientsStatus.receivedResponsesCount++;
+        if (payload.focused) {
+          self.clientsStatus.hasAnyActiveSessions = true;
+        }
+      }
+    );
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: UpsertSessionPayload) => {
       Log.debug("[Service Worker] Received SessionUpsert", payload);
       try {
-        const isHttps = true;
-        ServiceWorker.debounceRefreshSession(Object.assign(payload, { isHttps }));
+        ServiceWorker.debounceRefreshSession(payload);
       } catch(e) {
         Log.error("Error in SW.SessionUpsert handler", e.message, e);
       }
@@ -190,8 +204,7 @@ export class ServiceWorker {
       async (payload: DeactivateSessionPayload) => {
         Log.debug("[Service Worker] Received SessionDeactivate");
         try {
-          const isHttps = true;
-          ServiceWorker.debounceRefreshSession(Object.assign(payload, { isHttps }));
+          ServiceWorker.debounceRefreshSession(payload);
         } catch(e) {
           Log.error("Error in SW.SessionDeactivate handler", e);
         }
@@ -301,7 +314,7 @@ export class ServiceWorker {
     return await fetch(webhookTargetUrl, fetchOptions);
   }
 
-  static debounceRefreshSession(options: DeactivateSessionPayload & {isHttps: boolean;}) {
+  static debounceRefreshSession(options: DeactivateSessionPayload ) {
     Log.debug("[Service Worker] debounceRefreshSession", options);
     const executeRefreshSession = () => {
       if (self.timerId !== undefined) {
@@ -326,11 +339,13 @@ export class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static async getActiveClients(): Promise<Array<Client>> {
+  static async getActiveClients(): Promise<Array<OSWindowClient>> {
     const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const activeClients: Array<Client> = [];
+    const activeClients: Array<OSWindowClient> = [];
 
     for (const client of windowClients) {
+      const windowClient: OSWindowClient = client as OSWindowClient;
+      windowClient.isSubdomainIframe = false;
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
@@ -339,15 +354,29 @@ export class ServiceWorker {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
-        (client as any).isSubdomainIframe = true;
+        windowClient.isSubdomainIframe = true;
       }
-      activeClients.push(client);
+      activeClients.push(windowClient);
     }
-
     return activeClients;
   }
 
-  static async refreshSession(options: DeactivateSessionPayload & {isHttps: boolean;}): Promise<void> {
+  static async updateSessionBasedOnHasActive(hasAnyActiveSessions: boolean, options: DeactivateSessionPayload) {
+    if (hasAnyActiveSessions) {
+      await ServiceWorkerHelper.upsertSession(
+        options.sessionThreshold,
+        options.enableSessionDuration,
+        options.deviceRecord!,
+        options.deviceId,
+        options.sessionOrigin
+      );
+    } else {
+      self.timerId = await ServiceWorkerHelper.deactivateSession(
+        options.sessionThreshold, options.enableSessionDuration);
+    }
+  }
+
+  static async refreshSession(options: DeactivateSessionPayload): Promise<void> {
     Log.debug("[Service Worker] refreshSession");
     // if https
     // getActiveClients
@@ -356,27 +385,48 @@ export class ServiceWorker {
       const windowClients: Client[] = await self.clients.matchAll(
         { type: "window", includeUncontrolled: false }
       );
-      const hasAnyActiveSessions = windowClients.some(w => (w as WindowClient).focused);
-      Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
-      if (hasAnyActiveSessions) {
-        await ServiceWorkerHelper.upsertSession(
-          options.sessionThreshold,
-          options.enableSessionDuration,
-          options.deviceRecord!,
-          options.deviceId,
-          options.sessionOrigin
-        );
+      // console.log(windowClients.map(c => {
+      //   const w = c as WindowClient; return {url: w.url, focused: w.focused, visibilityState: w.visibilityState}
+      // }));
+      if (options.isSafari) {
+        ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(windowClients, options);
       } else {
-        self.timerId = await ServiceWorkerHelper.deactivateSession(
-          options.sessionThreshold, options.enableSessionDuration);
+        const hasAnyActiveSessions = windowClients.some(w => (w as WindowClient).focused);
+        Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
+        await ServiceWorker.updateSessionBasedOnHasActive(hasAnyActiveSessions, options);
       }
+      return;
+    } else {
+      const osClients = await ServiceWorker.getActiveClients();
+      ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(osClients, options);
     }
+  }
 
-    // if http
-    // broadcast with 1 sec timeout
-    // possibly include some kind of id to identify a job
-    // if any positive answer, cancel
+  static checkIfAnyClientsFocusedAndUpdateSession(
+    windowClients: Client[], sessionInfo: DeactivateSessionPayload
+  ): void {
+    const timestamp = new Date().getTime();
+    self.clientsStatus = {
+      timestamp,
+      sentRequestsCount: 0,
+      receivedResponsesCount: 0,
+      hasAnyActiveSessions: false,
+    };
+    const payload: PageVisibilityRequest = { timestamp };
+    windowClients.forEach(c => {
+      if (self.clientsStatus) {
+        self.clientsStatus.sentRequestsCount++;
+      }
+      c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload })
+    });
+    self.setTimeout(() => {
+      if (!self.clientsStatus) { return; }
+      if (self.clientsStatus.timestamp !== timestamp) { return; }
 
+      Log.debug("updateSessionBasedOnHasActive", self.clientsStatus);
+      ServiceWorker.updateSessionBasedOnHasActive(self.clientsStatus.hasAnyActiveSessions, sessionInfo);
+      self.clientsStatus = undefined;
+    }, 500);
   }
 
   /**
@@ -733,7 +783,7 @@ export class ServiceWorker {
     let doNotOpenLink = false;
     for (const client of activeClients) {
       let clientUrl = client.url;
-      if ((client as any).isSubdomainIframe) {
+      if (client.isSubdomainIframe) {
         const lastKnownHostUrl = await Database.get<string>('Options', 'lastKnownHostUrl');
         // TODO: clientUrl is being overwritten by defaultUrl and lastKnownHostUrl.
         //       Should only use clientUrl if it is not null.

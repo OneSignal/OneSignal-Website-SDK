@@ -911,7 +911,9 @@ export default class OneSignal {
     PROCESS_EXPIRING_SUBSCRIPTIONS: 'postmam.processExpiringSubscriptions',
     GET_SUBSCRIPTION_STATE: 'postmam.getSubscriptionState',
     SESSION_UPSERT: 'postmam.sessionUpsert',
-    SESSION_DEACTIVATE: 'postmam.sessionDeactivate'
+    SESSION_DEACTIVATE: 'postmam.sessionDeactivate',
+    ARE_YOU_VISIBLE_REQUEST: 'postmam.areYouVisibleRequest',
+    ARE_YOU_VISIBLE_RESPONSE: 'postmam.areYouVisibleResponse',
   };
 
   static EVENTS = {

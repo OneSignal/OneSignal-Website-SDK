@@ -13,19 +13,25 @@ export class SessionManager {
     this.context = context;
   }
 
+  isSafari(): boolean {
+    return typeof window.safari !== "undefined";
+  }
   public async notifySWToUpsertSession(
     deviceId: string | undefined,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
+    const isHttps = !OneSignalUtils.isUsingSubscriptionWorkaround();
     const payload: UpsertSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
+      isHttps,
+      isSafari: this.isSafari(),
     };
-    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+    if (isHttps) {
       Log.debug("Notify SW to upsert session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
     } else {
@@ -39,14 +45,17 @@ export class SessionManager {
     deviceRecord: PushDeviceRecord | undefined,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
+    const isHttps = !OneSignalUtils.isUsingSubscriptionWorkaround();
     const payload: DeactivateSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
+      isHttps,
+      isSafari: this.isSafari(),
     };
-    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+    if (isHttps) {
       Log.debug("Notify SW to deactivate session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
     } else {
@@ -82,10 +91,13 @@ export class SessionManager {
   }
 
   public async handleOnBeforeUnload(): Promise<void> {
+    const isHttps = !OneSignalUtils.isUsingSubscriptionWorkaround();
     const payload: DeactivateSessionPayload = {
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin: SessionOrigin.BeforeUnload,
+      isHttps,
+      isSafari: this.isSafari(),
     };
 
     if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
