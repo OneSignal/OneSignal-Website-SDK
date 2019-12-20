@@ -4,7 +4,7 @@ import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import CookieSyncer from '../modules/CookieSyncer';
 import { AppConfig } from './AppConfig';
-import { SessionManager } from '../managers/SessionManager';
+import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
 import MetricsManager from '../managers/MetricsManager';
 import { ContextSWInterface } from "./ContextSW";
@@ -25,7 +25,7 @@ export default class Context implements ContextInterface {
   public serviceWorkerManager: ServiceWorkerManager;
   public workerMessenger: WorkerMessenger;
   public cookieSyncer: CookieSyncer;
-  public sessionManager: SessionManager;
+  public pageViewManager: PageViewManager;
   public permissionManager: PermissionManager;
   public metricsManager: MetricsManager;
   public updateManager: UpdateManager;
@@ -35,7 +35,7 @@ export default class Context implements ContextInterface {
     this.appConfig = appConfig;
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
-    this.sessionManager = new SessionManager();
+    this.pageViewManager = new PageViewManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);

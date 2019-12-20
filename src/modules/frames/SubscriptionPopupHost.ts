@@ -168,7 +168,7 @@ export default class SubscriptionPopupHost implements Disposable {
     Log.debug(SdkEnvironment.getWindowEnv().toString() + " Marking current session as a continuing browsing session.");
     const { sessionCount }: { sessionCount: number } = message.data;
     const context: Context = OneSignal.context;
-    context.sessionManager.setPageViewCount(sessionCount);
+    context.pageViewManager.setPageViewCount(sessionCount);
   }
 
   async onWindowTimeout(_: MessengerMessageEvent) {

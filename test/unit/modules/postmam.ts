@@ -10,7 +10,7 @@ import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import { AppConfig } from '../../../src/models/AppConfig';
 
 import Context from '../../../src/models/Context';
-import { SessionManager } from '../../../src/managers/SessionManager';
+import { PageViewManager } from '../../../src/managers/PageViewManager';
 import Postmam from '../../../src/Postmam';
 import { contains } from '../../../src/utils';
 

@@ -15,7 +15,7 @@ export class UpdateManager {
 
   constructor(context: ContextSWInterface) {
     this.context = context;
-    this.onSessionSent = context.sessionManager.getPageViewCount() > 1;
+    this.onSessionSent = context.pageViewManager.getPageViewCount() > 1;
   }
 
   private async getDeviceId(): Promise<string> {
@@ -60,7 +60,7 @@ export class UpdateManager {
       return;
     }
 
-    if (!this.context.sessionManager.isFirstPageView()) {
+    if (!this.context.pageViewManager.isFirstPageView()) {
       return;
     }
 
