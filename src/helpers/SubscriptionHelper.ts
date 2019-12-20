@@ -11,10 +11,11 @@ import Log from '../libraries/Log';
 import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
+import LocalStorage from '../utils/LocalStorage';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
   }
 

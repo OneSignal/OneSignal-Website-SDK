@@ -28,6 +28,7 @@ import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
+import LocalStorage from '../utils/LocalStorage';
 
 declare var OneSignal: any;
 
@@ -88,6 +89,8 @@ export default class InitHelper {
      * prevent the popup from opening.
      */
     const isOptedOut = await OneSignal.internalIsOptedOut();
+    // saves isOptedOut to localStorage. used for require user interaction functionality
+    LocalStorage.setIsOptedOut(!!isOptedOut);
 
     /**
      * Auto-resubscribe is working only on HTTPS (and in safari)
@@ -98,14 +101,18 @@ export default class InitHelper {
     }
 
     const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    // saves isSubscribed to localStorage. used for require user interaction functionality
+    LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
+
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
       /*
       * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
       * permanent blocks, we want to replace sites automatically showing the native browser request
       * with a slide prompt first.
-      * Same for Safari 12.1+. It requires user interaction to request notification permissions.
+      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
       * It simply wouldn't work to try to show native prompt from script.
       */
+
       const showSlidedownForceEnable =
         (
           (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
@@ -150,21 +157,11 @@ export default class InitHelper {
       return;
     }
 
-    /**
-     * Safari 12.1+ is very sensitive about indexeddb queries. any queries performed before prompting for
-     * notifications are considered as violation of "Prompting requires a user gesture rule".
-     * TODO: May want to store isOptedOut flag somewhere during initialization. For now hardcoding it to false.
-     */
-    if (bowser.safari && Number(bowser.version) >= 12.1) {
-      await SubscriptionHelper.internalRegisterForPush(false);
-      return;
-    }
-
     /*
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = await OneSignal.internalIsOptedOut();
+    const isOptedOut = LocalStorage.getIsOptedOut();
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
     }
