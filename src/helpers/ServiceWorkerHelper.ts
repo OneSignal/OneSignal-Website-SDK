@@ -1,9 +1,11 @@
+import { OneSignalApiSW } from "../OneSignalApiSW";
 import Log from "../libraries/Log";
 import Path from "../models/Path";
-import { Session, initializeNewSession } from "../models/Session";
+import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../models/Session";
 import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
+import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
 
 export default class ServiceWorkerHelper {
   // Gets details on the service-worker (if any) that controls the current page
@@ -44,21 +46,84 @@ export default class ServiceWorkerHelper {
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
   }
 
-  public static async upsertSession(): Promise<void> {
-    initializeNewSession();
+  public static async upsertSession(
+    sessionThresholdInSeconds: number, sendOnFocusEnabled: boolean,
+    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin
+  ): Promise<void> {
+    if (!deviceId) {
+      Log.error("No deviceId provided for new session.");
+      return;
+    }
+
+    if (!deviceRecord.app_id) {
+      Log.error("No appId provided for new session.");
+      return;
+    }
+
+    const existingSession = await Database.getCurrentSession();
+
+    if (!existingSession) {
+      // TODO: add notification id after second part is merged in.
+      const session: Session = initializeNewSession(
+        { deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type }
+      );
+      await Database.upsertSession(session);
+      /**
+       * Send on_session call on each new session initialization except the case
+       * when player create call occurs, e.g. first subscribed or re-subscribed cases after clearing cookies,
+       * since player#create call updates last_session field on player.
+       */
+      if (sessionOrigin !== SessionOrigin.PlayerCreate) {
+        await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+      }
+      return;
+    }
+
+    if (existingSession.status === SessionStatus.Active) {
+      Log.debug("Session already active", existingSession);
+      return;
+    }
+    
+    if (!existingSession.lastDeactivatedTimestamp) {
+      Log.debug("Session is in invalid state", existingSession);
+      // TODO: possibly recover by re-starting session if deviceId is present?
+      return;
+    }
+
+    const currentTimestamp = new Date().getTime();
+    const timeSinceLastDeactivatedInSeconds: number = Math.floor(
+      (currentTimestamp - existingSession.lastDeactivatedTimestamp)/ 1000
+    );
+
+    if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
+      existingSession.status = SessionStatus.Active;
+      existingSession.lastActivatedTimestamp = currentTimestamp;
+      existingSession.lastDeactivatedTimestamp = null;
+      await Database.upsertSession(existingSession);
+      return;
+    }
+
+    // If failed to report/clean-up last time, we can attempt to try again here.
+
+    // TODO: Possibly check that it's not unreasonably long.
+    // TODO: Or couple with periodic ping for better results.
+    await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled);
+    await Database.upsertSession(
+      initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type})
+    );
   }
 
   public static async deactivateSession(): Promise<void> {
   }
 
-  public static async finalizeSession(session: Session, sendOnFocus: boolean): Promise<void> {
+  public static async finalizeSession(session: Session, sendOnFocusEnabled: boolean): Promise<void> {
     Log.debug(
       "Finalize session",
       `started: ${new Date(session.startTimestamp)}`,
       `duration: ${session.accumulatedDuration}s`
     );
 
-    if (sendOnFocus) {
+    if (sendOnFocusEnabled) {
       Log.debug(`TODO: send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
     }
 
