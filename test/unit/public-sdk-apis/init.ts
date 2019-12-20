@@ -80,8 +80,8 @@ test("email session should be updated on first page view", async t => {
   TestEnvironment.mockInternalOneSignal();
 
   // Ensure this is true, that way email on_session gets run
-  OneSignal.context.sessionManager.setPageViewCount(1);
-  t.true(OneSignal.context.sessionManager.isFirstPageView());
+  OneSignal.context.pageViewManager.setPageViewCount(1);
+  t.true(OneSignal.context.pageViewManager.isFirstPageView());
   
   await Database.setEmailProfile(testEmailProfile);
 
