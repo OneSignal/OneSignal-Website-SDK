@@ -1,7 +1,9 @@
-import Log from '../libraries/Log';
-import Path from '../models/Path';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
+import Log from "../libraries/Log";
+import Path from "../models/Path";
+import { Session, initializeNewSession } from "../models/Session";
+import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
+import Database from "../services/Database";
 
 export default class ServiceWorkerHelper {
   // Gets details on the service-worker (if any) that controls the current page
@@ -41,6 +43,31 @@ export default class ServiceWorkerHelper {
 
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
   }
+
+  public static async upsertSession(): Promise<void> {
+    initializeNewSession();
+  }
+
+  public static async deactivateSession(): Promise<void> {
+  }
+
+  public static async finalizeSession(session: Session, sendOnFocus: boolean): Promise<void> {
+    Log.debug(
+      "Finalize session",
+      `started: ${new Date(session.startTimestamp)}`,
+      `duration: ${session.accumulatedDuration}s`
+    );
+
+    if (sendOnFocus) {
+      Log.debug(`TODO: send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+    }
+
+    await Database.cleanupCurrentSession();
+    Log.debug(
+      "Finalize session finished",
+      `started: ${new Date(session.startTimestamp)}`
+    );
+  };
 }
 
 export enum ServiceWorkerActiveState {
