@@ -1,4 +1,4 @@
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
 
 export enum SessionStatus {
   Active = "active",
@@ -28,7 +28,7 @@ export interface Session {
 
 export interface SessionPayload {
   deviceId?: string;
-  deviceRecord?: PushDeviceRecord;
+  deviceRecord: SerializedPushDeviceRecord;
   sessionThreshold: number;
   enableSessionDuration: boolean;
   sessionOrigin: SessionOrigin;
