@@ -25,6 +25,8 @@ export enum WorkerMessengerCommand {
   RedirectPage = 'command.redirect',
   SessionUpsert = 'os.session.upsert',
   SessionDeactivate = 'os.session.deactivate',
+  AreYouVisible = "os.page_focused_request",
+  AreYouVisibleResponse = "os.page_focused_response"
 }
 
 export interface WorkerMessengerMessage {
@@ -338,13 +340,13 @@ export class WorkerMessenger {
         const env = SdkEnvironment.getWindowEnv();
 
         if (env === WindowEnvironmentKind.ServiceWorker) {
-          self.addEventListener('activate', async e => {
+          self.addEventListener('activate', async (_e: Event) => {
             if (await this.isWorkerControllingPage())
               resolve();
           });
         }
         else {
-          navigator.serviceWorker.addEventListener('controllerchange', async e => {
+          navigator.serviceWorker.addEventListener('controllerchange', async (_e: Event) => {
             if (await this.isWorkerControllingPage())
               resolve();
           });
