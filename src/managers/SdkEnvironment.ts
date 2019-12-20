@@ -11,6 +11,8 @@ const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
 const API_URL_PORT = 3001;
 
+declare var self: ServiceWorkerGlobalScope | undefined;
+
 export default class SdkEnvironment {
   /**
    * Returns development, staging, or production.
@@ -172,6 +174,15 @@ export default class SdkEnvironment {
 
   public static isInsecureOrigin() {
     return window.location.protocol === "http:";
+  }
+
+  static getOrigin(): string {
+    if (Environment.isBrowser()) {
+      return window.location.origin;
+    } else if (typeof self !== "undefined" && typeof ServiceWorkerGlobalScope !== "undefined") {
+      return self.registration.scope;
+    }
+    return "Unknown";
   }
 
   /**
