@@ -47,22 +47,28 @@ export default class InitHelper {
     await OneSignal.context.serviceWorkerManager.installWorker();
 
     OneSignal.context.pageViewManager.incrementPageViewCount();
+
+    Log.warn("document.visibilityState", document.visibilityState);
     if (document.visibilityState !== 'visible') {
-      once(
-        document,
-        'visibilitychange',
-        (_: any, destroyEventListener: Function) => {
-          if (document.visibilityState === 'visible') {
-            destroyEventListener();
-            InitHelper.sessionInit();
-          }
-        },
-        true
-      );
+      InitHelper.postponeSesstionInitUntilPageIsInFocus();
       return;
     }
 
     await InitHelper.sessionInit();
+  }
+
+  public static postponeSesstionInitUntilPageIsInFocus(): void {
+    once(
+      document,
+      'visibilitychange',
+      (_: any, destroyEventListener: Function) => {
+        if (document.visibilityState === 'visible') {
+          destroyEventListener();
+          InitHelper.sessionInit();
+        }
+      },
+      true
+    );
   }
 
   public static async sessionInit(): Promise<void> {
