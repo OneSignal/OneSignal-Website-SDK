@@ -15,6 +15,7 @@ import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Po
 import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
+import { EnvironmentInfoHelper } from 'src/helpers/EnvironmentInfoHelper';
 
 export interface AutoPromptOptions {
   force: boolean;
@@ -148,7 +149,8 @@ export class PromptsManager {
       }
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      const options: RegisterOptions = { autoAccept: true };
+      const {shouldAutoAccept} = EnvironmentInfoHelper.getEnvironmentInfo();
+      const options: RegisterOptions = { autoAccept: shouldAutoAccept };
       InitHelper.registerForPushNotifications(options);
     });
     OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {

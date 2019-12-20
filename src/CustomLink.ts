@@ -3,6 +3,7 @@ import { AppUserConfigCustomLinkOptions } from "./models/AppConfig";
 import { ResourceLoadState } from "./services/DynamicResourceLoader";
 import Log from "./libraries/Log";
 import { RegisterOptions } from './helpers/InitHelper';
+import { EnvironmentInfoHelper } from './helpers/EnvironmentInfoHelper';
 
 export class CustomLink {
   public static readonly initializedAttribute = "data-cl-initialized";
@@ -117,7 +118,8 @@ export class CustomLink {
       }
     } else {
       if (!optedOut) {
-        const options: RegisterOptions = { autoAccept: true };
+        const {shouldAutoAccept} = EnvironmentInfoHelper.getEnvironmentInfo();
+        const options: RegisterOptions = { autoAccept: shouldAutoAccept };
         await OneSignal.registerForPushNotifications(options);
       } else {
         await OneSignal.setSubscription(true);
