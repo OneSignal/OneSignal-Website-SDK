@@ -11,6 +11,7 @@ export enum SessionOrigin {
   PlayerOnSession = 2,
   VisibilityVisible = 3,
   VisibilityHidden = 4,
+  BeforeUnload = 5,
 }
 
 export interface Session {
@@ -26,12 +27,19 @@ export interface Session {
   lastActivatedTimestamp: number;
 }
 
-export interface SessionPayload {
+interface BaseSessionPayload {
   deviceId?: string;
-  deviceRecord: SerializedPushDeviceRecord;
   sessionThreshold: number;
   enableSessionDuration: boolean;
   sessionOrigin: SessionOrigin;
+}
+
+export interface UpsertSessionPayload extends BaseSessionPayload {
+  deviceRecord: SerializedPushDeviceRecord;
+}
+
+export interface DeactivateSessionPayload extends BaseSessionPayload {
+  deviceRecord?: SerializedPushDeviceRecord;
 }
 
 export const ONESIGNAL_SESSION_KEY = "oneSignalSession";

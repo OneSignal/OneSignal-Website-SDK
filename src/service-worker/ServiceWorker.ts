@@ -13,7 +13,7 @@ import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { SessionPayload } from "../models/Session";
+import { UpsertSessionPayload, DeactivateSessionPayload } from "../models/Session";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
@@ -175,7 +175,7 @@ export class ServiceWorker {
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
     });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: SessionPayload) => {
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: UpsertSessionPayload) => {
       Log.debug("[Service Worker] Received SessionUpsert", payload);
       try {
         //TODO: add implementation
@@ -184,7 +184,7 @@ export class ServiceWorker {
       }
     });
 
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionDeactivate, async (payload: SessionPayload) => {
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionDeactivate, async (payload: DeactivateSessionPayload) => {
       Log.debug("[Service Worker] Received SessionDeactivate", payload);
       try {
         // TODO: add implementation
