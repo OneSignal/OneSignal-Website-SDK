@@ -18,6 +18,7 @@ import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../context/shared/utils/Utils";
+import { OSWindowClient } from "./types";
 
 declare var self: ServiceWorkerGlobalScope;
 declare var Notification: Notification;
@@ -330,11 +331,13 @@ export class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static async getActiveClients(): Promise<Array<Client>> {
+  static async getActiveClients(): Promise<Array<OSWindowClient>> {
     const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const activeClients: Array<Client> = [];
+    const activeClients: Array<OSWindowClient> = [];
 
     for (const client of windowClients) {
+      const windowClient: OSWindowClient = client as OSWindowClient;
+      windowClient.isSubdomainIframe = false;
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
@@ -343,11 +346,10 @@ export class ServiceWorker {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
-        (client as any).isSubdomainIframe = true;
+        windowClient.isSubdomainIframe = true;
       }
-      activeClients.push(client);
+      activeClients.push(windowClient);
     }
-
     return activeClients;
   }
 
