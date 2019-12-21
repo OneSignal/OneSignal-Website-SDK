@@ -156,7 +156,13 @@ export default class ServiceWorkerHelper {
     );
 
     if (sendOnFocusEnabled) {
-      Log.debug(`TODO: send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      await OneSignalApiSW.sendSessionDuration(
+        session.appId,
+        session.deviceId,
+        session.accumulatedDuration,
+        session.deviceType,
+      );
     }
 
     await Database.cleanupCurrentSession();
