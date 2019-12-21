@@ -1,9 +1,10 @@
 import { ContextSWInterface } from "../models/ContextSW";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { SessionPayload, SessionOrigin } from "../models/Session";
+import { UpsertSessionPayload, DeactivateSessionPayload, SessionOrigin } from "../models/Session";
 import MainHelper from "../helpers/MainHelper";
 import Log from "../libraries/Log";
 import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 
 export class SessionManager {
   private context: ContextSWInterface;
@@ -18,7 +19,7 @@ export class SessionManager {
     sessionOrigin: SessionOrigin
   ): Promise<void> {
     Log.debug("Notify SW to upsert session");
-    const payload: SessionPayload = {
+    const payload: UpsertSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
@@ -34,7 +35,7 @@ export class SessionManager {
     sessionOrigin: SessionOrigin
   ): Promise<void> {
     Log.debug("Notify SW to deactivate session");
-    const payload: SessionPayload = {
+    const payload: DeactivateSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
@@ -66,6 +67,21 @@ export class SessionManager {
     Log.warn("Unhandled visibility state happened", visibilityState);
   }
 
+  public async handleOnBeforeUnload(): Promise<void> {
+    // don't have much time on before unload
+    // have to skip adding device record to the payload
+    const payload: DeactivateSessionPayload = {
+      sessionThreshold: OneSignal.config.sessionThreshold,
+      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin: SessionOrigin.BeforeUnload,
+    };
+
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      Log.debug("Notify SW to deactivate session (beforeunload)");
+      this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+    }
+  }
+
   async upsertSession(
     deviceId: string,
     deviceRecord: PushDeviceRecord,
@@ -88,6 +104,16 @@ export class SessionManager {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
       document.addEventListener("visibilitychange", this.handleVisibilityChange.bind(this), true);
       OneSignal.cache.visibilityChangeListener = true;
+    }
+
+    if (!OneSignal.cache.beforeUnloadListener) {
+      // tracks closing of a tab / reloading / navigating away
+      window.addEventListener("beforeunload", (e) => {
+        this.handleOnBeforeUnload();
+        // deleting value to not show confirmation dialog
+        delete e.returnValue;
+      }, true);
+      OneSignal.cache.beforeUnloadListener = true;
     }
   }
 }
