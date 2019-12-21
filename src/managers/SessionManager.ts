@@ -13,7 +13,7 @@ export class SessionManager {
     this.context = context;
   }
 
-  public async notifySWToUpsertSession(
+  async notifySWToUpsertSession(
     deviceId: string | undefined,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
@@ -29,7 +29,7 @@ export class SessionManager {
     await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
   }
 
-  public async notifySWToDeactivateSession(
+  async notifySWToDeactivateSession(
     deviceId: string | undefined,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
@@ -54,12 +54,24 @@ export class SessionManager {
     ]);
 
     if (visibilityState === "visible") {
-      this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+      this.setupOnFocusAndOnBlurForSession();
+
+      Log.debug("handleVisibilityChange", "visible", `hasFocus: ${document.hasFocus()}`);
+      if (document.hasFocus()) {
+        await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+      }
       return;
     }
 
     if (visibilityState === "hidden") {
-      this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
+      if (OneSignal.cache.focusHandler && OneSignal.cache.focusEventSetup) {
+        window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
+        OneSignal.cache.focusEventSetup = false;
+      }
+      if (OneSignal.cache.blurHandler && OneSignal.cache.blurEventSetup) {
+        window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
+        OneSignal.cache.blurEventSetup = false;
+      }
       return;
     }
 
@@ -67,7 +79,7 @@ export class SessionManager {
     Log.warn("Unhandled visibility state happened", visibilityState);
   }
 
-  public async handleOnBeforeUnload(): Promise<void> {
+  async handleOnBeforeUnload(): Promise<void> {
     // don't have much time on before unload
     // have to skip adding device record to the payload
     const payload: DeactivateSessionPayload = {
@@ -80,6 +92,32 @@ export class SessionManager {
       Log.debug("Notify SW to deactivate session (beforeunload)");
       this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
     }
+  }
+
+  private async handleOnFocus(e: Event): Promise<void> {
+    Log.debug("handleOnFocus", e);
+    if (e.target !== window) {
+      return;
+    }
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
+  }
+
+  private async handleOnBlur(e: Event): Promise<void> {
+    Log.debug("handleOnBlur", e);
+    if (e.target !== window) {
+      return;
+    }
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.Blur);
   }
 
   async upsertSession(
@@ -99,6 +137,8 @@ export class SessionManager {
   setupSessionEventListeners(): void {
     // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
 
+    this.setupOnFocusAndOnBlurForSession();
+
     // To make sure we add these event listeners only once.
     if (!OneSignal.cache.visibilityChangeListener) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
@@ -114,6 +154,26 @@ export class SessionManager {
         delete e.returnValue;
       }, true);
       OneSignal.cache.beforeUnloadListener = true;
+    }
+  }
+
+  setupOnFocusAndOnBlurForSession(): void {
+    Log.debug("setupOnFocusAndOnBlurForSession");
+
+    if (!OneSignal.cache.focusHandler) {
+      OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
+    }
+    if (!OneSignal.cache.focusEventSetup) {
+      window.addEventListener("focus", OneSignal.cache.focusHandler, true);
+      OneSignal.cache.focusEventSetup = true;
+    }
+
+    if (!OneSignal.cache.blurHandler) {
+      OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
+    }
+    if (!OneSignal.cache.blurEventSetup) {
+      window.addEventListener("blur", OneSignal.cache.blurHandler, true);
+      OneSignal.cache.blurEventSetup = true;
     }
   }
 }
