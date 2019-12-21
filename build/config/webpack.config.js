@@ -193,7 +193,7 @@ async function getStylesheetsHash() {
       resolve(combinedHash);
     });
   });
-} 
+}
 
 async function getBuildDefines() {
   var buildDefines = {
