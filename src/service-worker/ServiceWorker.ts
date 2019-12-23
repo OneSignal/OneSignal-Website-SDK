@@ -181,7 +181,7 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: UpsertSessionPayload) => {
       Log.debug("[Service Worker] Received SessionUpsert", payload);
       try {
-        //TODO: add implementation
+        ServiceWorker.debounceRefreshSession(payload);
       } catch(e) {
         Log.error("Error in SW.SessionUpsert handler", e.message, e);
       }
@@ -190,7 +190,7 @@ export class ServiceWorker {
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionDeactivate, async (payload: DeactivateSessionPayload) => {
       Log.debug("[Service Worker] Received SessionDeactivate", payload);
       try {
-        // TODO: add implementation
+        ServiceWorker.debounceRefreshSession(payload);
       } catch(e) {
         Log.error("Error in SW.SessionDeactivate handler", e);
       }
@@ -443,6 +443,23 @@ export class ServiceWorker {
         self.clientsStatus.hasAnyActiveSessions, sessionInfo);
       self.clientsStatus = undefined;
     }, 500);
+  }
+
+  static debounceRefreshSession(options: DeactivateSessionPayload ) {
+    Log.debug("[Service Worker] debounceRefreshSession", options);
+    const executeRefreshSession = () => {
+      if (self.timerId !== undefined) {
+        self.clearTimeout(self.timerId);
+        self.timerId = undefined;
+      }
+      ServiceWorker.refreshSession(options);
+    };
+
+    if (self.timerId !== undefined) {
+      self.clearTimeout(self.timerId);
+    }
+
+    self.timerId = self.setTimeout(executeRefreshSession, 1000);
   }
 
   /**
