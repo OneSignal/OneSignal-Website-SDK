@@ -25,6 +25,8 @@ export enum WorkerMessengerCommand {
   RedirectPage = 'command.redirect',
   SessionUpsert = 'os.session.upsert',
   SessionDeactivate = 'os.session.deactivate',
+  AreYouVisible = "os.page_focused_request",
+  AreYouVisibleResponse = "os.page_focused_response",
 }
 
 export interface WorkerMessengerMessage {
