@@ -15,6 +15,8 @@ import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
+import { UpsertSessionPayload, DeactivateSessionPayload } from "../../models/Session";
+import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -65,6 +67,9 @@ export default class ProxyFrame extends RemoteFrame {
       this.onProcessExpiringSubscriptions.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_SUBSCRIPTION_STATE,
       this.onGetSubscriptionState.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, this.onSessionUpsert.bind(this));
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, this.onSessionDeactivate.bind(this));
     this.messenger.listen();
   }
 
@@ -248,5 +253,20 @@ export default class ProxyFrame extends RemoteFrame {
     const result = await context.subscriptionManager.getSubscriptionState();
     message.reply(result);
     return false;
+  }
+
+  async onSessionUpsert(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const payload = message.data as UpsertSessionPayload;
+    context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionUpsert, payload);
+    message.reply(true);
+  }
+
+  async onSessionDeactivate(message: MessengerMessageEvent) {
+    const context: Context = OneSignal.context;
+    const payload = message.data as DeactivateSessionPayload;
+    context.workerMessenger.directPostMessageToSW(
+      WorkerMessengerCommand.SessionDeactivate, payload);
+    message.reply(true);
   }
 }
