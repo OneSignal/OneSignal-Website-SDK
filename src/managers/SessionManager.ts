@@ -13,20 +13,37 @@ export class SessionManager {
     this.context = context;
   }
 
+  isSafari(): boolean {
+    return typeof window.safari !== "undefined";
+  }
+
+  isHttps(): boolean {
+    return !OneSignalUtils.isUsingSubscriptionWorkaround();
+  }
+
   async notifySWToUpsertSession(
     deviceId: string | undefined,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
-    Log.debug("Notify SW to upsert session");
+    const isHttps = this.isHttps();
+
     const payload: UpsertSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
+      isHttps,
+      isSafari: this.isSafari(),
     };
-    await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
+    if (isHttps) {
+      Log.debug("Notify SW to upsert session");
+      await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
+    } else {
+      Log.debug("Notify iframe to notify SW to upsert session");
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
+    }
   }
 
   async notifySWToDeactivateSession(
@@ -34,15 +51,23 @@ export class SessionManager {
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
   ): Promise<void> {
-    Log.debug("Notify SW to deactivate session");
+    const isHttps = this.isHttps();
     const payload: DeactivateSessionPayload = {
       deviceId,
-      deviceRecord: deviceRecord.serialize(),
+      deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin,
+      isHttps,
+      isSafari: this.isSafari(),
     };
-    await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
+    if (isHttps) {
+      Log.debug("Notify SW to deactivate session");
+      await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
+    } else {
+      Log.debug("Notify SW to deactivate session");
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+    }
   }
 
   async handleVisibilityChange(): Promise<void> {
@@ -82,20 +107,31 @@ export class SessionManager {
   async handleOnBeforeUnload(): Promise<void> {
     // don't have much time on before unload
     // have to skip adding device record to the payload
+    const isHttps = this.isHttps();
     const payload: DeactivateSessionPayload = {
       sessionThreshold: OneSignal.config.sessionThreshold,
       enableSessionDuration: OneSignal.config.enableSessionDuration,
       sessionOrigin: SessionOrigin.BeforeUnload,
+      isHttps,
+      isSafari: this.isSafari(),
     };
 
     if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
       Log.debug("Notify SW to deactivate session (beforeunload)");
       this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+    } else {
+      Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     }
   }
 
-  private async handleOnFocus(e: Event): Promise<void> {
+  async handleOnFocus(e: Event): Promise<void> {
     Log.debug("handleOnFocus", e);
+    /**
+     * Firefox has 2 focus events with different targets (document and window).
+     * While Chrome only has one on window.
+     * Target check is important to avoid double-firing of the event.
+     */
     if (e.target !== window) {
       return;
     }
@@ -107,8 +143,13 @@ export class SessionManager {
     await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
   }
 
-  private async handleOnBlur(e: Event): Promise<void> {
+  async handleOnBlur(e: Event): Promise<void> {
     Log.debug("handleOnBlur", e);
+    /**
+     * Firefox has 2 focus events with different targets (document and window).
+     * While Chrome only has one on window.
+     * Target check is important to avoid double-firing of the event.
+     */
     if (e.target !== window) {
       return;
     }
