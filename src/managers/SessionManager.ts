@@ -127,9 +127,11 @@ export class SessionManager {
   ): Promise<void> {
     const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
 
-    // TODO: Possibly need to add handling for "pagehide" event. And review all the cases both fire in general
-    // https://github.com/w3c/page-visibility/issues/18
-    this.setupSessionEventListeners();
+    if (!OneSignalUtils.isUsingSubscriptionWorkaround()) {
+      this.setupSessionEventListeners();
+    } else {
+      OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+    }
 
     await sessionPromise;
   }
@@ -175,5 +177,14 @@ export class SessionManager {
       window.addEventListener("blur", OneSignal.cache.blurHandler, true);
       OneSignal.cache.blurEventSetup = true;
     }
+  }
+
+  static setupSessionEventListenersForHttp(): void {
+    if (!OneSignal.context || !OneSignal.context.sessionManager) {
+      Log.error("OneSignal.context not available for http to setup session event listeners.");
+      return;
+    }
+
+    OneSignal.context.sessionManager.setupSessionEventListeners();
   }
 }
