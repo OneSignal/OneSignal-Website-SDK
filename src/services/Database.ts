@@ -25,7 +25,7 @@ interface DatabaseResult {
   timestamp: any;
 }
 
-type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions";
+export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions";
 
 export default class Database {
 
