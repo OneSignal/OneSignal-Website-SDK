@@ -64,6 +64,17 @@ export class Utils {
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
+  static isNullOrUndefined<T>(value: T | Nullable): boolean {
+    return typeof value === 'undefined' || value === null;
+  }
+
+  static valueOrDefault<T>(value: T | Nullable, defaultValue: T): T {
+    if (typeof value === "undefined" || value === null) {
+      return defaultValue;
+    }
+    return value;
+  }
+
   /**
    * JSON.stringify() but converts functions to "[Function]" so they aren't lost.
    * Helps when logging method calls.
