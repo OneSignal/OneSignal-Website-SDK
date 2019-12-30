@@ -275,7 +275,7 @@ export class WorkerMessenger {
     Subscribes a callback to be notified every time a service worker sends a
     message to the window frame with the specific command.
    */
-  on(command: WorkerMessengerCommand, callback: (WorkerMessengerPayload) => void): void {
+  on(command: WorkerMessengerCommand, callback: (WorkerMessengerPayload: any) => void): void {
     this.replies.addListener(command, callback, false);
   }
 
@@ -285,7 +285,7 @@ export class WorkerMessenger {
 
   The callback is executed once at most.
   */
-  once(command: WorkerMessengerCommand, callback: (WorkerMessengerPayload) => void): void {
+  once(command: WorkerMessengerCommand, callback: (WorkerMessengerPayload: any) => void): void {
     this.replies.addListener(command, callback, true);
   }
 
@@ -340,13 +340,13 @@ export class WorkerMessenger {
         const env = SdkEnvironment.getWindowEnv();
 
         if (env === WindowEnvironmentKind.ServiceWorker) {
-          self.addEventListener('activate', async e => {
+          self.addEventListener('activate', async (_e: Event) => {
             if (await this.isWorkerControllingPage())
               resolve();
           });
         }
         else {
-          navigator.serviceWorker.addEventListener('controllerchange', async e => {
+          navigator.serviceWorker.addEventListener('controllerchange', async (_e: Event) => {
             if (await this.isWorkerControllingPage())
               resolve();
           });
