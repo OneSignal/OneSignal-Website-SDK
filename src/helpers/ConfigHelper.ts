@@ -7,6 +7,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
+import { SERVER_CONFIG_DEFAULTS_SESSION } from "../config";
 
 export enum IntegrationConfigurationKind {
   /**
@@ -112,11 +113,20 @@ export class ConfigHelper {
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: mergedUserConfig,
-      enableOnSession: serverConfig.features.enable_on_session || false,
       // default confirmed deliveries feature to off
       receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false,
-      sessionThreshold: serverConfig.config.sessionThreshold || 30,
-      enableSessionDuration: !!serverConfig.features.enableSessionDuration,
+      enableOnSession: Utils.valueOrDefault(
+        serverConfig.features.enable_on_session,
+        SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed
+      ),
+      sessionThreshold: Utils.valueOrDefault(
+        serverConfig.config.sessionThreshold,
+        SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold
+      ),
+      enableSessionDuration: Utils.valueOrDefault(
+        serverConfig.features.enableSessionDuration,
+        SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus
+      )
     };
   }
 
