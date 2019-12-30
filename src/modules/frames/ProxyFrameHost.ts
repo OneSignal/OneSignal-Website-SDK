@@ -7,6 +7,9 @@ import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
 import { PageVisibilityRequest } from "../../service-worker/types";
 
+interface Reply {
+  data: any;
+}
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
  * page (not the iFrame itself).
@@ -124,7 +127,7 @@ export default class ProxyFrameHost implements Disposable {
       hostInitOptions: JSON.parse(JSON.stringify(OneSignal.config)), // Removes functions and unmessageable objects
       pageUrl: window.location.href,
       pageTitle: document.title,
-    }, reply => {
+    }, (reply: Reply) => {
       if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
         this.loadPromise.resolver();
         // This needs to be initialized so that isSubscribed() can be called to
@@ -170,7 +173,7 @@ export default class ProxyFrameHost implements Disposable {
 
   isSubscribed(): Promise<boolean> {
     return new Promise(resolve => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, reply => {
+      this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, (reply: Reply) => {
         resolve(reply.data);
       });
     });
@@ -178,15 +181,15 @@ export default class ProxyFrameHost implements Disposable {
 
   unsubscribeFromPush(): Promise<void> {
     return new Promise<void>(resolve => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null, _ => {
-        resolve();
-      });
+      this.messenger.message(
+        OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null,
+        (_reply: Reply) => { resolve(); });
     });
   }
 
   getProxyServiceWorkerActiveState() {
     return new Promise<ServiceWorkerActiveState>((resolve, reject) => {
-      this.message(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, null, reply => {
+      this.message(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, null, (reply: Reply) => {
         resolve(reply.data);
       });
     });
@@ -194,7 +197,7 @@ export default class ProxyFrameHost implements Disposable {
 
   async runCommand<T>(command: string): Promise<T> {
     const result = await new Promise<T>((resolve, reject) => {
-      this.message(command, null, reply => {
+      this.message(command, null, (reply: Reply) => {
         resolve(reply.data);
       });
     });
