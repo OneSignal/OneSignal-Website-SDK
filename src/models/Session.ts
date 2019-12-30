@@ -54,7 +54,7 @@ export function initializeNewSession(
 ): Session {
   const currentTimestamp = new Date().getTime();
   const sessionKey = options && options.sessionKey || ONESIGNAL_SESSION_KEY;
-  const notificationId = options && options.notificationId || null;
+  const notificationId = (options && options.notificationId) || null;
 
   return {
     sessionKey,
