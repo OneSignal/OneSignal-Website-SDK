@@ -420,7 +420,11 @@ export class ServiceWorkerManager {
         };
         workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
       } else {
-        // TODO: http
+        const httpPayload = { timestamp: event.timestamp };
+        const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
+        if (proxyFrame) {
+          proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
+        }
       }
     });
   }
