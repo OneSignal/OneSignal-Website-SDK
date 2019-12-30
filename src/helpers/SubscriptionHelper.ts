@@ -12,6 +12,9 @@ import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
 import LocalStorage from '../utils/LocalStorage';
+import { SessionOrigin } from "../models/Session";
+import MainHelper from "./MainHelper";
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -31,6 +34,14 @@ export default class SubscriptionHelper {
     */
     if (isPushEnabled && !context.pageViewManager.isFirstPageView()) {
       Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
+      Log.debug("But we want to rekindle their session.");
+      const deviceId = await MainHelper.getDeviceId();
+      if (deviceId) {
+        const deviceRecord: PushDeviceRecord = await MainHelper.createDeviceRecord(OneSignal.config.appId);
+        await OneSignal.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PageRefresh);
+      } else {
+        Log.error("Should have been impossible to have push as enabled but no device id.");
+      }
       return null;
     }
 
