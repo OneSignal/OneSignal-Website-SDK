@@ -1,16 +1,10 @@
-
-
-
-import { InvalidStateReason } from '../../errors/InvalidStateError';
 import Event from '../../Event';
-import HttpHelper from '../../helpers/HttpHelper';
 import InitHelper from '../../helpers/InitHelper';
-import MainHelper from '../../helpers/MainHelper';
 import TestHelper from '../../helpers/TestHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import Database from '../../services/Database';
+import Database, { OneSignalDbTable } from '../../services/Database';
 import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
@@ -142,7 +136,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseGet(message: MessengerMessageEvent) {
     // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys:
     // 'someId'}, {table: 'Ids', keys: 'someId'}]
-    const retrievals: Array<{table, key}> = message.data;
+    const retrievals: Array<{table: OneSignalDbTable, key: string}> = message.data;
     const retrievalOpPromises = [];
     for (let retrieval of retrievals) {
       const {table, key} = retrieval;
@@ -156,7 +150,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabasePut(message: MessengerMessageEvent) {
     // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const insertions: Array<{table, keypath}> = message.data;
+    const insertions: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
     let insertionOpPromises = [];
     for (let insertion of insertions) {
       let {table, keypath} = insertion;
@@ -170,7 +164,7 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseRemove(message: MessengerMessageEvent) {
     // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const removals: Array<{table, keypath}> = message.data;
+    const removals: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
     let removalOpPromises = [];
     for (let removal of removals) {
       let {table, keypath} = removal;
