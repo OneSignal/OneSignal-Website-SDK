@@ -405,9 +405,8 @@ export class ServiceWorkerManager {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
 
-    const isHttps = !OneSignalUtils.isUsingSubscriptionWorkaround();
-    // const isSafari = !!bowser.safari; or typeof window.safari !== "undefined"
-    const isSafari = false; // TODO: GET REAL VALUE
+    const isHttps = OneSignalUtils.isHttps();
+    const isSafari = OneSignalUtils.isSafari();
 
     // TODO: fix types. Seems like it's "{data: {payload: PageVisibilityRequest;}}" for https
     //       and "PageVisibilityRequest" for http

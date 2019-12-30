@@ -1,5 +1,6 @@
 import bowser, { IBowser } from "bowser";
 import SdkEnvironment from "../managers/SdkEnvironment";
+import Environment from "../Environment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import Log from "../libraries/Log";
 import { Utils } from "../context/shared/utils/Utils";
@@ -109,6 +110,17 @@ export class OneSignalUtils {
 
   public static logMethodCall(methodName: string, ...args: any[]) {
     return Log.debug(`Called %c${methodName}(${args.map(Utils.stringify).join(', ')})`, Utils.getConsoleStyle('code'), '.');
+  }
+
+  static isHttps(): boolean {
+    if (OneSignalUtils.isSafari()) {
+      return window.location.protocol === "https:";
+    }
+    return !OneSignalUtils.isUsingSubscriptionWorkaround();
+  }
+
+  static isSafari(): boolean {
+    return Environment.isBrowser() && typeof window.safari !== "undefined";
   }
 }
 
