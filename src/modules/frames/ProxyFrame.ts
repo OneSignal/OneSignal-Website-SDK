@@ -17,6 +17,7 @@ import Context from '../../models/Context';
 import Log from '../../libraries/Log';
 import { UpsertSessionPayload, DeactivateSessionPayload } from "../../models/Session";
 import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
+import { PageVisibilityResponse } from "../../service-worker/types";
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -70,6 +71,10 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, this.onSessionUpsert.bind(this));
     this.messenger.on(
       OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, this.onSessionDeactivate.bind(this));
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, this.onAreYouVisibleRequest.bind(this));
+    this.messenger.on(
+      OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_RESPONSE, this.onAreYouVisibleResponse.bind(this));
     this.messenger.listen();
   }
 
@@ -267,6 +272,19 @@ export default class ProxyFrame extends RemoteFrame {
     const payload = message.data as DeactivateSessionPayload;
     context.workerMessenger.directPostMessageToSW(
       WorkerMessengerCommand.SessionDeactivate, payload);
+    message.reply(true);
+  }
+
+  async onAreYouVisibleRequest(message: MessengerMessageEvent) {
+    Log.debug("onAreYouVisibleRequest iframe", message);
+  }
+
+  async onAreYouVisibleResponse(message: MessengerMessageEvent) {
+    Log.debug("onAreYouVisibleResponse iframe", message);
+    const context: Context = OneSignal.context;
+    const payload = message.data as PageVisibilityResponse;
+    context.workerMessenger.directPostMessageToSW(
+      WorkerMessengerCommand.AreYouVisibleResponse, payload);
     message.reply(true);
   }
 }
