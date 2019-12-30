@@ -195,10 +195,10 @@ export default class ProxyFrameHost implements Disposable {
     });
   }
 
-  async runCommand<T>(command: string): Promise<T> {
-    const result = await new Promise<T>((resolve, reject) => {
-      this.message(command, null, (reply: Reply) => {
-        resolve(reply.data);
+  async runCommand<T>(command: string, payload: any = null): Promise<T> {
+    const result = await new Promise<T>((resolve, _reject) => {
+      this.message(command, payload, (reply: Reply) => {
+        resolve(reply.data as T);
       });
     });
     return result;
