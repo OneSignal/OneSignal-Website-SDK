@@ -30,6 +30,8 @@ export interface Session {
   lastActivatedTimestamp: number;
 }
 
+type NewSessionOptions = Partial<Session> & {deviceId: string; appId: string, deviceType: number;};
+
 interface BaseSessionPayload {
   deviceId?: string;
   sessionThreshold: number;
@@ -49,9 +51,7 @@ export interface DeactivateSessionPayload extends BaseSessionPayload {
 
 export const ONESIGNAL_SESSION_KEY = "oneSignalSession";
 
-export function initializeNewSession(
-  options: Partial<Session> & { deviceId: string; appId: string, deviceType: number; }
-): Session {
+export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
   const sessionKey = options && options.sessionKey || ONESIGNAL_SESSION_KEY;
   const notificationId = (options && options.notificationId) || null;
