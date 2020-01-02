@@ -273,10 +273,10 @@ export default class SdkEnvironment {
         origin = `${protocol}://${buildOrigin}:${port}`;
         break;
       case EnvironmentKind.Staging:
-        origin = `${protocol}://${window.location.host}`;
+        origin = `https://${window.location.host}`;
         break;
       case EnvironmentKind.Production:
-        origin = `${protocol}://onesignal.com`;
+        origin = `https://onesignal.com`;
         break;
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);

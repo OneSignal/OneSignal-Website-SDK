@@ -27,14 +27,15 @@ export class OneSignalShimLoader {
       return productionOrigin;
     }
 
-    const protocol = __IS_HTTPS__ ? "https" : "http";
-    const port = __IS_HTTPS__ ? 4001 : 4000;
+    const isHttps = (typeof __IS_HTTPS__ !== "undefined") ? __IS_HTTPS__ : true;
+    const protocol = isHttps ? "https" : "http";
+    const port = isHttps ? 4001 : 4000;
 
     switch(__BUILD_TYPE__){
       case "development":
         return `${protocol}://${buildOrigin}:${port}/sdks/Dev-`;
       case "staging":
-        return `${protocol}://${window.location.host}/sdks/Staging-`;
+        return `https://${window.location.host}/sdks/Staging-`;
       default:
         return productionOrigin;
     }

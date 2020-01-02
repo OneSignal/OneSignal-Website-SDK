@@ -2,14 +2,15 @@
 # codepath for all commands of the form `yarn build:<env>-<env>`
 ENV=$1
 API=$2
-HTTPS=1
+HTTPS=true
 
 if [ -z "$3" ]; then
-  # no origin provided
-  echo "No build origin provided";
+  BUILD_ORIGIN_PROVIDED=false
 else
+  BUILD_ORIGIN_PROVIDED=true
   if [ $3 == "--http" ]; then
-    HTTPS=0
+    HTTPS=false
+    BUILD_ORIGIN_PROVIDED=false
   # custom origin provided. api env must be dev
   elif [ $ENV == "development" ]; then
     BUILD_ORIGIN=$3
@@ -20,11 +21,12 @@ else
 fi
 
 if [ -z "$4" ]; then
-  # no origin provided
-  echo "No API origin provided";
+  API_ORIGIN_PROVIDED=false
 else
+  API_ORIGIN_PROVIDED=true
   if [ $4 == "--http" ]; then
-    HTTPS=0
+    HTTPS=false
+    API_ORIGIN_PROVIDED=false
   # custom origin provided. api env must be dev
   elif [ $API == "development" ]; then
     API_ORIGIN=$4
@@ -34,8 +36,28 @@ else
   fi
 fi
 
+# both origins provided + http flag
 if [[ $5 == "--http" ]]; then 
-  HTTPS=0
+  HTTPS=false
+fi
+
+# verbose
+if [ $BUILD_ORIGIN_PROVIDED = true ]; then
+  echo "BUILD_ORIGIN: ${BUILD_ORIGIN}"
+else
+  echo "BUILD_ORIGIN: not provided"
+fi
+
+if [ $API_ORIGIN_PROVIDED = true ]; then
+  echo "API_ORIGIN: ${API_ORIGIN}"
+else
+  echo "API_ORIGIN: not provided"
+fi
+
+if [ $HTTPS = true ]; then
+  echo "PROTOCOL: https"
+else
+  echo "PROTOCOL: http"
 fi
 
 ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn transpile:sources 
