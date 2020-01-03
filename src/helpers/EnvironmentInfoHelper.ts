@@ -1,6 +1,7 @@
 import bowser from "bowser";
 import {EnvironmentInfo} from '../models/EnvironmentInfo';
 import BROWSER_TYPES from '../utils/BrowserTypes';
+import { OneSignalUtils } from 'src/utils/OneSignalUtils';
 
 export class EnvironmentInfoHelper {
     public static getEnvironmentInfo() : EnvironmentInfo {
@@ -9,8 +10,8 @@ export class EnvironmentInfoHelper {
             browserType: this.getBrowser(),
             browserVersion: this.getBrowserVersion(),
             isHttps: this.isHttps(),
-            isUsingSubscriptionWorkaround: true,    // TO DO: use isUsingSubscriptionWorkaround
-            supportsServiceWorkers: this.supportsServiceWorkers(),
+            isUsingSubscriptionWorkaround: this.isUsingSubscriptionWorkaround(),
+            isBrowserAndSupportsServiceWorkers: this.isBrowserAndSupportsServiceWorkers(),
             requiresUserInteraction: this.shouldRequireUserInteraction(),
             osVersion: this.getOsVersion()
         }
@@ -33,15 +34,12 @@ export class EnvironmentInfoHelper {
         return location.protocol == 'https:';
     }
 
-    /*
     private static isUsingSubscriptionWorkaround(): boolean {
-        // TO DO:
-        return true;
+        return OneSignalUtils.isUsingSubscriptionWorkaround();
     }
-    */
-
-    private static supportsServiceWorkers(): boolean {
-        return (navigator && 'serviceWorker' in navigator);
+    
+    private static isBrowserAndSupportsServiceWorkers(): boolean {
+        return (this.isBrowser() && navigator && 'serviceWorker' in navigator);
     }
 
     private static shouldRequireUserInteraction(): boolean {

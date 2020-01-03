@@ -5,7 +5,7 @@ export interface EnvironmentInfo {
     browserVersion: number;
     isHttps: boolean;
     isUsingSubscriptionWorkaround: boolean;
-    supportsServiceWorkers: boolean;
+    isBrowserAndSupportsServiceWorkers: boolean;
     requiresUserInteraction: boolean;
     osVersion: number; 
 }
