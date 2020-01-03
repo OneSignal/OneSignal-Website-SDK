@@ -61,8 +61,6 @@ export default class Event {
    * @param remoteTriggerEnv If this method is being called in a different environment (e.g. was triggered in iFrame but now retriggered on main host), this is the string of the original environment for logging purposes.
    */
   static async trigger(eventName: string, data?: any, remoteTriggerEnv: string | null = null) {
-    const {isBrowser} = OneSignal.environmentInfo;
-    
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
       let displayData = data;
       let env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
@@ -78,7 +76,7 @@ export default class Event {
     }
 
     // Actually fire the event that can be listened to via OneSignal.on()
-    if (isBrowser) {
+    if (Environment.isBrowser()) {
       if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
         if (OneSignal.initialized)
           return;
@@ -93,7 +91,7 @@ export default class Event {
     }
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page
-    if (isBrowser &&
+    if (Environment.isBrowser() &&
         (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup ||
           SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame)) {
       const creator = opener || parent;

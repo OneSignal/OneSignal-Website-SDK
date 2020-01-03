@@ -194,7 +194,7 @@ export class ServiceWorkerManager {
   }
 
   async shouldInstallWorker(): Promise<boolean> {
-    if (!OneSignal.environmentInfo.supportsServiceWorkers)
+    if (!Environment.supportsServiceWorkers())
       return false;
 
     if (!OneSignal.config)

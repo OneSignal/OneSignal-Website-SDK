@@ -60,7 +60,7 @@ export default class Postmam {
       Log.debug('(Postmam) Already listening for Postmam connections.');
       return;
     }
-    if (!OneSignal.environmentInfo.isBrowser) {
+    if (!Environment.isBrowser()) {
       return;
     }
     this.isListening = true;

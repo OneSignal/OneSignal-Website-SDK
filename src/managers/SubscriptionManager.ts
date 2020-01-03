@@ -59,7 +59,7 @@ export class SubscriptionManager {
   }
 
   static isSafari(): boolean {
-    return OneSignal.environmentInfo.browserType === "safari";
+    return Environment.isSafari();
   }
 
   /**

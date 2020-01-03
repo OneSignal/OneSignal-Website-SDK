@@ -10,6 +10,10 @@ export default class Environment {
     return typeof window !== 'undefined';
   }
 
+  public static isSafari(): boolean {
+    return Environment.isBrowser() && bowser.safari;
+  }
+
   public static version() {
     return (typeof __VERSION__ === "undefined" ? 1 : Number(__VERSION__));
   }
@@ -48,6 +52,18 @@ export default class Environment {
       }
     } else {
       return 'en';
+    }
+  }
+
+  public static supportsServiceWorkers() {
+    const env = SdkEnvironment.getWindowEnv();
+
+    switch (env) {
+      case WindowEnvironmentKind.ServiceWorker:
+        return true;
+      default:
+        return typeof navigator !== "undefined" &&
+          'serviceWorker' in navigator;
     }
   }
 

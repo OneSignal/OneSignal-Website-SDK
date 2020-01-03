@@ -3,7 +3,7 @@ import Environment from "../Environment";
 export class BrowserUtils {
   private static decodeTextArea: HTMLTextAreaElement | null = null;
   public static decodeHtmlEntities(text: string) {
-    if (OneSignal.environmentInfo.isBrowser) {
+    if (Environment.isBrowser()) {
       if (!BrowserUtils.decodeTextArea) {
         BrowserUtils.decodeTextArea = document.createElement("textarea");
       }

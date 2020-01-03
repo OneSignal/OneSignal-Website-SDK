@@ -158,7 +158,7 @@ export class WorkerMessenger {
    * that live under an HTTP page.
    */
   public async listen(listenIfPageUncontrolled?: boolean) {
-    if (!OneSignal.environmentInfo.supportsServiceWorkers)
+    if (!Environment.supportsServiceWorkers())
       return;
 
     const env = SdkEnvironment.getWindowEnv();

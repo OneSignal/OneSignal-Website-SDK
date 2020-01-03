@@ -18,7 +18,7 @@ export class EnvironmentInfoHelper {
     }
 
     private static isBrowser(): boolean {
-        return typeof window !== 'undefined';
+        return !!this.getBrowser();
     }
 
     private static getBrowser(): string {
