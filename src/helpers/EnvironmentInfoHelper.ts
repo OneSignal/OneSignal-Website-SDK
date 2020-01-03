@@ -17,7 +17,7 @@ export class EnvironmentInfoHelper {
     }
 
     private static isBrowser(): boolean {
-        return !!this.getBrowser();
+        return typeof window !== 'undefined';
     }
 
     private static getBrowser(): string {
@@ -41,7 +41,7 @@ export class EnvironmentInfoHelper {
     */
 
     private static supportsServiceWorkers(): boolean {
-        return ('serviceWorker' in navigator);
+        return (navigator && 'serviceWorker' in navigator);
     }
 
     private static shouldRequireUserInteraction(): boolean {

@@ -80,7 +80,7 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   removeFrame() {
-    if (!Environment.isBrowser())
+    if (!OneSignal.environmentInfo.isBrowser)
       return;
 
     const existingInstance = document.querySelector(`iframe[src='${this.url.toString()}']`);

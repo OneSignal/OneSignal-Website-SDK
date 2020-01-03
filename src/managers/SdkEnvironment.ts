@@ -78,7 +78,7 @@ export default class SdkEnvironment {
    * @param usingProxyOrigin Using a subdomain of os.tc or onesignal.com for subscribing to push.
    */
   public static async getIntegration(usingProxyOrigin?: boolean): Promise<IntegrationKind> {
-    if (Environment.isSafari()) {
+    if (OneSignal.environment.browserType === "safari") {
       /* HTTP doesn't apply to Safari sites */
       return IntegrationKind.Secure;
     }

@@ -342,7 +342,7 @@ export default class InitHelper {
   }
 
   private static async showNotifyButton() {
-    if (Environment.isBrowser() && !OneSignal.notifyButton) {
+    if (OneSignal.environmentInfo.isBrowser && !OneSignal.notifyButton) {
       OneSignal.config.userConfig.notifyButton = OneSignal.config.userConfig.notifyButton || {};
       if (OneSignal.config.userConfig.bell) {
         // If both bell and notifyButton, notifyButton's options take precedence
