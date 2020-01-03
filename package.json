@@ -30,9 +30,9 @@
     "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
     "publish": "yarn clean && yarn build:prod && yarn",
-    "build:dev-dev":"./build/scripts/build.sh development development",
-    "build:dev-prod":"./build/scripts/build.sh development production",
-    "build:dev-stag":"./build/scripts/build.sh development staging"
+    "build:dev-dev":"./build/scripts/build.sh -f development -t development",
+    "build:dev-prod":"./build/scripts/build.sh -f development -t production",
+    "build:dev-stag":"./build/scripts/build.sh -f development -t staging"
   },
   "config": {
     "sdkVersion": "150711"

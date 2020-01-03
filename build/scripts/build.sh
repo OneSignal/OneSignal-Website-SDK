@@ -1,64 +1,57 @@
 #!/bin/bash
 # codepath for all commands of the form `yarn build:<env>-<env>`
-ENV=$1
-API=$2
-HTTPS=true
+# defaults
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
 
-if [ -z "$3" ]; then
-  BUILD_ORIGIN_PROVIDED=false
-else
-  BUILD_ORIGIN_PROVIDED=true
-  if [ $3 == "--http" ]; then
+case $key in
+    -b|--build)
+    BUILD_ORIGIN="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -a|--api)
+    API_ORIGIN="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -f|--from)
+    ENV="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -t|--target)
+    API="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    --http)
     HTTPS=false
-    BUILD_ORIGIN_PROVIDED=false
-  # custom origin provided. api env must be dev
-  elif [ $ENV == "development" ]; then
-    BUILD_ORIGIN=$3
-  else
-    # empty, default to production
-    BUILD_ORIGIN=""
-  fi
-fi
+    shift # past argument
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
 
-if [ -z "$4" ]; then
-  API_ORIGIN_PROVIDED=false
-else
-  API_ORIGIN_PROVIDED=true
-  if [ $4 == "--http" ]; then
-    HTTPS=false
-    API_ORIGIN_PROVIDED=false
-  # custom origin provided. api env must be dev
-  elif [ $API == "development" ]; then
-    API_ORIGIN=$4
-  else
-    # empty, default to production
-    API_ORIGIN=""
-  fi
-fi
+BUILD_ORIGIN=${BUILD_ORIGIN:-"localhost"}
+API_ORIGIN=${API_ORIGIN:-"onesignal.com"}
+ENV=${ENV:-"development"}
+API=${API:-"production"}
+HTTPS=${HTTPS:-true}
 
-# both origins provided + http flag
-if [[ $5 == "--http" ]]; then 
-  HTTPS=false
-fi
+echo "BUILD_ORIGIN = ${BUILD_ORIGIN}"
+echo "API_ORIGIN = ${API_ORIGIN}"
+echo "HTTPS = ${HTTPS}"
+echo "ENV = ${ENV}"
+echo "API = ${API}"
+echo "Unknown options -> ${POSITIONAL}"
+set -- "${POSITIONAL[@]}" # restore positional parameters
 
-# verbose
-if [ $BUILD_ORIGIN_PROVIDED = true ]; then
-  echo "BUILD_ORIGIN: ${BUILD_ORIGIN}"
-else
-  echo "BUILD_ORIGIN: not provided"
-fi
-
-if [ $API_ORIGIN_PROVIDED = true ]; then
-  echo "API_ORIGIN: ${API_ORIGIN}"
-else
-  echo "API_ORIGIN: not provided"
-fi
-
-if [ $HTTPS = true ]; then
-  echo "PROTOCOL: https"
-else
-  echo "PROTOCOL: http"
-fi
 
 ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn transpile:sources 
 ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn bundle-sw 
