@@ -118,7 +118,7 @@ export class CustomLink {
       }
     } else {
       if (!optedOut) {
-        const {requiresUserInteraction} = EnvironmentInfoHelper.getEnvironmentInfo();
+        const {requiresUserInteraction} = OneSignal.environmentInfo;
         const options: RegisterOptions = { autoAccept: requiresUserInteraction };
         await OneSignal.registerForPushNotifications(options);
       } else {
