@@ -1,7 +1,7 @@
 import bowser from "bowser";
 import {EnvironmentInfo} from '../models/EnvironmentInfo';
 import BROWSER_TYPES from '../utils/BrowserTypes';
-import { OneSignalUtils } from 'src/utils/OneSignalUtils';
+import { OneSignalUtils } from '../utils/OneSignalUtils';
 
 export class EnvironmentInfoHelper {
     public static getEnvironmentInfo() : EnvironmentInfo {
