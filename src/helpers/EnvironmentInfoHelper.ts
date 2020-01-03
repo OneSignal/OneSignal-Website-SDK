@@ -1,42 +1,61 @@
 import bowser from "bowser";
-import {EnvironmentInfo, Browser} from '../models/EnvironmentInfo';
+import {EnvironmentInfo} from '../models/EnvironmentInfo';
+import BROWSER_TYPES from '../utils/BrowserTypes';
 
 export class EnvironmentInfoHelper {
     public static getEnvironmentInfo() : EnvironmentInfo {
         return {
-            browser : this.getBrowser(),
-            browserVersion : this.getBrowserVersion(),
-            isHttps : this.isHttps(),
-            shouldAutoAccept : this.shouldAutoAccept()
+            isBrowser: this.isBrowser(),
+            browserType: this.getBrowser(),
+            browserVersion: this.getBrowserVersion(),
+            isHttps: this.isHttps(),
+            isUsingSubscriptionWorkaround: true,    // TO DO: use isUsingSubscriptionWorkaround
+            supportsServiceWorkers: this.supportsServiceWorkers(),
+            requiresUserInteraction: this.shouldRequireUserInteraction(),
+            osVersion: this.getOsVersion()
         }
     }
 
-    private static getBrowser() : Browser {
-        if (bowser.chrome) return Browser.Chrome;
-        if (bowser.firefox) return Browser.Firefox;
-        if (bowser.msedge) return Browser.Edge;
-        if (bowser.opera) return Browser.Opera;
-        if (bowser.safari) return Browser.Safari;
-        if (bowser.msie) return Browser.InternetExplorer;
-        return Browser.Other;
+    private static isBrowser(): boolean {
+        return !!this.getBrowser();
     }
 
-    private static getBrowserVersion() : number {
+    private static getBrowser(): string {
+        // from bowser source: https://bit.ly/36mq1R5
+        return (BROWSER_TYPES as any)[bowser.name];
+    }
+
+    private static getBrowserVersion(): number {
         return Number(bowser.version);
     }
 
-    private static isHttps() : boolean {
+    private static isHttps(): boolean {
         return location.protocol == 'https:';
     }
 
-    private static shouldAutoAccept() : boolean {
+    /*
+    private static isUsingSubscriptionWorkaround(): boolean {
+        // TO DO:
+        return true;
+    }
+    */
+
+    private static supportsServiceWorkers(): boolean {
+        return ('serviceWorker' in navigator);
+    }
+
+    private static shouldRequireUserInteraction(): boolean {
         var autoAccept = true;
 
         // Firefox 72+ requires user-interaction. For HTTP prompt to work,
         // we need to set autoAccept to false
-        if (this.getBrowser() === Browser.Firefox && this.getBrowserVersion() > 72) {
+        if (this.getBrowser() === "firefox" && this.getBrowserVersion() > 72) {
             autoAccept = false;
         }
         return autoAccept;
+    }
+
+    private static getOsVersion(): number {
+        return Number(bowser.osversion);
     }
 }
