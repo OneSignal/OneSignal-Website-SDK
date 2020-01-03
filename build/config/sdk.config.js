@@ -14,6 +14,9 @@ const apiEnv = process.env.API;
 const apiOrigin = process.env.API_ORIGIN || "localhost";
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
+const isHttps = process.env.HTTPS;
+const tests = process.env.TESTS;
+const sdkVersion = process.env.npm_package_config_sdkVersion;
 
 async function getStylesheetsHash() {
   const styleSheetsPath = "src/stylesheets";
@@ -59,9 +62,9 @@ async function getWebpackPlugins() {
         __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
         __API_TYPE__: JSON.stringify(apiEnv),
         __API_ORIGIN__: JSON.stringify(apiOrigin),
-        __IS_HTTPS__: process.env.HTTPS == true,
-        __TEST__: !!process.env.TESTS,
-        __VERSION__: process.env.npm_package_config_sdkVersion,
+        __IS_HTTPS__: isHttps == true,
+        __TEST__: !!tests,
+        __VERSION__: sdkVersion,
         __LOGGING__: env === "development",
         __SRC_STYLESHEETS_MD5_HASH__: JSON.stringify(await getStylesheetsHash()),
         "process.env.NODE_ENV": JSON.stringify(nodeEnv),
