@@ -149,8 +149,8 @@ export class PromptsManager {
       }
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      const {requiresUserInteraction} = OneSignal.environmentInfo;
-      const options: RegisterOptions = { autoAccept: requiresUserInteraction };
+      const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+      const options: RegisterOptions = { autoAccept };
       InitHelper.registerForPushNotifications(options);
     });
     OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {

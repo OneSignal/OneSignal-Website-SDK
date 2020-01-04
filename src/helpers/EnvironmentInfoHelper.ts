@@ -12,7 +12,7 @@ export class EnvironmentInfoHelper {
             isHttps: this.isHttps(),
             isUsingSubscriptionWorkaround: this.isUsingSubscriptionWorkaround(),
             isBrowserAndSupportsServiceWorkers: this.isBrowserAndSupportsServiceWorkers(),
-            requiresUserInteraction: this.shouldRequireUserInteraction(),
+            requiresUserInteraction: this.requiresUserInteraction(),
             osVersion: this.getOsVersion()
         }
     }
@@ -42,15 +42,15 @@ export class EnvironmentInfoHelper {
         return (this.isBrowser() && navigator && 'serviceWorker' in navigator);
     }
 
-    private static shouldRequireUserInteraction(): boolean {
-        var autoAccept = true;
+    private static requiresUserInteraction(): boolean {
+        var requiresUserInteraction = true;
 
         // Firefox 72+ requires user-interaction. For HTTP prompt to work,
         // we need to set autoAccept to false
-        if (this.getBrowser() === "firefox" && this.getBrowserVersion() > 72) {
-            autoAccept = false;
+        if (this.getBrowser() === "firefox" && this.getBrowserVersion() < 72) {
+            requiresUserInteraction = false;
         }
-        return autoAccept;
+        return requiresUserInteraction;
     }
 
     private static getOsVersion(): number {
