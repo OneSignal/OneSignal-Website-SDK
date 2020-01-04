@@ -100,6 +100,17 @@ export interface TestEnvironmentConfig {
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
 }
 
+export interface TestEnvironmentInfo {
+    isBrowser?: boolean;
+    browserType?: string;
+    browserVersion?: number;
+    isHttps?: boolean;
+    isUsingSubscriptionWorkaround?: boolean;
+    isBrowserAndSupportsServiceWorkers?: boolean;
+    requiresUserInteraction?: boolean;
+    osVersion?: number; 
+}
+
 /**
  *
  */
@@ -303,6 +314,10 @@ export class TestEnvironment {
     TestEnvironment.stubNotification(config);
     return global.OneSignal;
   }
+
+  static setEnvironmentInfo(envInfo: TestEnvironmentInfo = {}) {
+    global.OneSignal.environmentInfo = envInfo;
+  } 
 
   // This allows detailed error printing of test that fails due to missing network mock or other reasons.
   static addUnhandledRejectionHandler() {
