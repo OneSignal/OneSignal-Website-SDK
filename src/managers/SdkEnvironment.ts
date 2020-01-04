@@ -263,20 +263,17 @@ export default class SdkEnvironment {
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
-    const isHttps = (typeof __IS_HTTPS__ !== "undefined") ? __IS_HTTPS__ : true;
     let origin: string;
-    const protocol = isHttps ? "https" : "http";
-    const port = isHttps ? 4001 : 4000;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        origin = `${protocol}://${buildOrigin}:${port}`;
+        origin = `https://${buildOrigin}:4001`;
         break;
       case EnvironmentKind.Staging:
-        origin = `${protocol}://${window.location.host}`;
+        origin = `https://${window.location.host}`;
         break;
       case EnvironmentKind.Production:
-        origin = `${protocol}://onesignal.com`;
+        origin = 'https://onesignal.com';
         break;
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
