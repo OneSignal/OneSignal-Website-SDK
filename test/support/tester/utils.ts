@@ -7,6 +7,8 @@ import OneSignalApi from "../../../src/OneSignalApi";
 import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import { TestEnvironment, TestEnvironmentConfig, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import { ServerAppConfig } from '../../../src/models/AppConfig';
+import Random from "../../support/tester/Random";
+import { Subscription } from "../../../src/models/Subscription";
 
 export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;
@@ -102,4 +104,13 @@ export function setupBrowserWithPushAPIWithVAPIDEnv(sandbox: SinonSandbox): void
   classDef.prototype.userVisibleOnly = null;
 
   sandbox.stub((<any>global), "PushSubscriptionOptions").value(classDef);
+}
+
+export function createSubscription(playerId?: string): Subscription {
+  const subscription = new Subscription();
+  subscription.deviceId = playerId || Random.getRandomUuid();
+  subscription.optedOut = false;
+  subscription.subscriptionToken = "some_token";
+  subscription.createdAt = new Date(2017, 11, 13, 2, 3, 4, 0).getTime();
+  return subscription;
 }
