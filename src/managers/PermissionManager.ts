@@ -4,7 +4,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidAr
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import LocalStorage from 'src/utils/LocalStorage';
+import LocalStorage from '../utils/LocalStorage';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions

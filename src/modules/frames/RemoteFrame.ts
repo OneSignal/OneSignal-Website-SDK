@@ -6,7 +6,7 @@ import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import ConfigManager from '../../managers/ConfigManager';
-import LocalStorage from 'src/utils/LocalStorage';
+import LocalStorage from '../../utils/LocalStorage';
 
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;

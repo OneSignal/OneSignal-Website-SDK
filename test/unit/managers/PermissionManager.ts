@@ -23,7 +23,7 @@ test('should set and get stored permission correctly', async t => {
   const permissionManager = OneSignal.context.permissionManager;
 
   // No existing stored permission should exist
-  t.is( permissionManager.getStoredPermission(), null);
+  t.is( permissionManager.getStoredPermission(), 'default');
 
    permissionManager.setStoredPermission(NotificationPermission.Default);
   t.is( permissionManager.getStoredPermission(), NotificationPermission.Default);
@@ -46,7 +46,7 @@ test('should interpret ambiguous browser permission correctly', async t => {
 
   // A reported permission of denied, without any previously stored permission, should be assumed to
   // be default
-  t.is(permissionManager.getStoredPermission(), null);
+  t.is(permissionManager.getStoredPermission(), 'default');
   t.is(
     await permissionManager.getInterpretedAmbiguousPermission(NotificationPermission.Denied),
     NotificationPermission.Default
