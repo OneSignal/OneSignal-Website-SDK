@@ -6,6 +6,7 @@ import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import ConfigManager from '../../managers/ConfigManager';
+import LocalStorage from 'src/utils/LocalStorage';
 
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;
@@ -105,7 +106,7 @@ export default class RemoteFrame implements Disposable {
 
   async subscribe() {
     // Do not register OneSignalSDKUpdaterWorker.js for HTTP popup sites; the file does not exist
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     const windowCreator = opener || parent;
 
     if (!isPushEnabled) {
