@@ -202,16 +202,16 @@ export default class PermissionManager {
   }
 
   public getStoredPermission(): NotificationPermission {
-    return LocalStorage.getStoredPermission(PermissionManager.STORED_PERMISSION_KEY);
+    return LocalStorage.getStoredPermission();
   }
 
   public setStoredPermission(permission: NotificationPermission) {
-    LocalStorage.setStoredPermission(PermissionManager.STORED_PERMISSION_KEY, permission);
+    LocalStorage.setStoredPermission(permission);
   }
 
   public async updateStoredPermission() {
     // TODO verify if `OneSignal.config.safariWebId` should be passed as a parameter
     const permission = await this.getNotificationPermission();
-    return await this.setStoredPermission(permission);
+    return this.setStoredPermission(permission);
   }
 }
