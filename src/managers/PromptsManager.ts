@@ -15,7 +15,6 @@ import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Po
 import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
-import { EnvironmentInfoHelper } from '../context/page/helpers/EnvironmentInfoHelper';
 
 export interface AutoPromptOptions {
   force: boolean;
