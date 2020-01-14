@@ -25,6 +25,7 @@ import { MockServiceWorkerContainer } from "../mocks/service-workers/models/Mock
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/utils/Utils';
+import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
 
 // NodeJS.Global
 declare var global: any;
@@ -98,17 +99,6 @@ export interface TestEnvironmentConfig {
   integration?: ConfigIntegrationKind;
   userConfig?: AppUserConfig;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
-}
-
-export interface TestEnvironmentInfo {
-    isBrowser?: boolean;
-    browserType?: string;
-    browserVersion?: number;
-    isHttps?: boolean;
-    isUsingSubscriptionWorkaround?: boolean;
-    isBrowserAndSupportsServiceWorkers?: boolean;
-    requiresUserInteraction?: boolean;
-    osVersion?: number; 
 }
 
 /**
@@ -315,7 +305,7 @@ export class TestEnvironment {
     return global.OneSignal;
   }
 
-  static setEnvironmentInfo(envInfo: TestEnvironmentInfo = {}) {
+  static setEnvironmentInfo(envInfo: EnvironmentInfo = {}) {
     global.OneSignal.environmentInfo = envInfo;
   } 
 
