@@ -39,19 +39,35 @@ yarn build:<type>-<type>
 ```
 **Example**: `yarn build:dev-prod` builds the SDK with the BUILD environment as "development" and the API environment as "production"
 
-#### CUSTOM ORIGIN PARAMS: 
-You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. 
+### HTTP
+All builds default to `https` unless `--http` is passed to the end of the build command...
+**Example**: `yarn build:dev-prod --http` or `yarn build:dev-prod -b localhost --http`
 
-If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api
+#### CUSTOM ORIGIN PARAMS: 
+You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. These parameters use option flags. 
+
+   - Option flags are:
+      - `-b` or `--build`
+      - `-a` or `--api`
+
+If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api. 
+
+**Note:**: make sure custom origins make sense with respect to the build and api environments set (e.g: you cannot use a `prod` api environment and expect a custom api origin to be used).
 
 **Examples**:
 ```
-yarn build:dev-prod texas
+yarn build:dev-prod -b texas
 ```
 This sets the dev environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/`
 
 ```
-yarn build:dev-dev texas <ip>
+yarn build:dev-dev -b texas -a <ip>
 ```
 This sets the dev environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/` and the API environment origin to `<ip>` which will make all onesignal api calls to that origin such as `https://<ip>:3001/api/v1/apps/<app>`
 
+#### NOTE ON PORTS:
+**SDK**: SDK files will automatically be fetched from the 4000s ports depending on the HTTP/S setting
+   - HTTP: `4000`
+   - HTTPS: `4001`
+
+**API**: dev-environment API calls will be made to the `3001` port (e.g: `<custom-origin>:3001`)

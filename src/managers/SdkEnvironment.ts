@@ -7,6 +7,10 @@ import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import Environment from "../Environment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 
+const RESOURCE_HTTP_PORT = 4000;
+const RESOURCE_HTTPS_PORT = 4001;
+const API_URL_PORT = 3001;
+
 export default class SdkEnvironment {
   /**
    * Returns development, staging, or production.
@@ -251,7 +255,7 @@ export default class SdkEnvironment {
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        return new URL(`https://${apiOrigin}:3001/api/v1`);
+        return new URL(`https://${apiOrigin}:${API_URL_PORT}/api/v1`);
       case EnvironmentKind.Staging:
         return new URL(`https://${window.location.host}/api/v1`);
       case EnvironmentKind.Production:
@@ -263,17 +267,20 @@ export default class SdkEnvironment {
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const isHttps = (typeof __IS_HTTPS__ !== "undefined") ? __IS_HTTPS__ : true;
     let origin: string;
+    const protocol = isHttps ? "https" : "http";
+    const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        origin = `https://${buildOrigin}:4001`;
+        origin = `${protocol}://${buildOrigin}:${port}`;
         break;
       case EnvironmentKind.Staging:
         origin = `https://${window.location.host}`;
         break;
       case EnvironmentKind.Production:
-        origin = 'https://onesignal.com';
+        origin = "https://onesignal.com";
         break;
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
