@@ -4,6 +4,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidAr
 import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
+import LocalStorage from '../utils/LocalStorage';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -186,7 +187,7 @@ export default class PermissionManager {
   public async getInterpretedAmbiguousPermission(reportedPermission: NotificationPermission) {
     switch (reportedPermission) {
       case NotificationPermission.Denied:
-        const storedPermission = await this.getStoredPermission();
+        const storedPermission = this.getStoredPermission();
 
         if (storedPermission) {
           // If we've recorded the last known actual browser permission, return that
@@ -200,17 +201,17 @@ export default class PermissionManager {
     }
   }
 
-  public async getStoredPermission(): Promise<NotificationPermission> {
-    return await Database.get<NotificationPermission>('Options', PermissionManager.STORED_PERMISSION_KEY);
+  public getStoredPermission(): NotificationPermission {
+    return LocalStorage.getStoredPermission();
   }
 
-  public async setStoredPermission(permission: NotificationPermission) {
-    await Database.put('Options', { key: PermissionManager.STORED_PERMISSION_KEY, value: permission });
+  public setStoredPermission(permission: NotificationPermission) {
+    LocalStorage.setStoredPermission(permission);
   }
 
-    public async updateStoredPermission() {
-      // TODO verify if `OneSignal.config.safariWebId` should be passed as a parameter
-      const permission = await this.getNotificationPermission();
-      return await this.setStoredPermission(permission);
-    }
+  public async updateStoredPermission() {
+    // TODO verify if `OneSignal.config.safariWebId` should be passed as a parameter
+    const permission = await this.getNotificationPermission();
+    return this.setStoredPermission(permission);
+  }
 }
