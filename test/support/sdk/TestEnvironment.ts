@@ -305,7 +305,7 @@ export class TestEnvironment {
     return global.OneSignal;
   }
 
-  static setEnvironmentInfo(envInfo: EnvironmentInfo = {}) {
+  static setEnvironmentInfo(envInfo: Partial<EnvironmentInfo> = {}) {
     global.OneSignal.environmentInfo = envInfo;
   } 
 
