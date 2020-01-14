@@ -1,11 +1,12 @@
+import { Browser } from './Browser';
+
 // for runtime environment info
 export interface EnvironmentInfo {
-    isBrowser: boolean;
-    browserType: string;
-    browserVersion: number;
+    browserType: Browser;
+    browserVersion: string|number;
     isHttps: boolean;
     isUsingSubscriptionWorkaround: boolean;
     isBrowserAndSupportsServiceWorkers: boolean;
     requiresUserInteraction: boolean;
-    osVersion: number; 
+    osVersion: string|number; 
 }

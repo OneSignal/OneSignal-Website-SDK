@@ -3,7 +3,6 @@ import { AppUserConfigCustomLinkOptions } from "./models/AppConfig";
 import { ResourceLoadState } from "./services/DynamicResourceLoader";
 import Log from "./libraries/Log";
 import { RegisterOptions } from './helpers/InitHelper';
-import { EnvironmentInfoHelper } from './helpers/EnvironmentInfoHelper';
 
 export class CustomLink {
   public static readonly initializedAttribute = "data-cl-initialized";

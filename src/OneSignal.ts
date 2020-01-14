@@ -51,7 +51,7 @@ import ConfigManager from "./managers/ConfigManager";
 import OneSignalUtils from "./utils/OneSignalUtils";
 import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
-import { EnvironmentInfoHelper } from './helpers/EnvironmentInfoHelper';
+import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
 
 export default class OneSignal {
   /**
