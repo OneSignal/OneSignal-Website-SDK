@@ -23,10 +23,10 @@ test('should set and get stored permission correctly', async t => {
   const permissionManager = OneSignal.context.permissionManager;
 
   // No existing stored permission should exist
-  t.is(await permissionManager.getStoredPermission(), null);
+  t.is( permissionManager.getStoredPermission(), 'default');
 
-  await permissionManager.setStoredPermission(NotificationPermission.Default);
-  t.is(await permissionManager.getStoredPermission(), NotificationPermission.Default);
+   permissionManager.setStoredPermission(NotificationPermission.Default);
+  t.is( permissionManager.getStoredPermission(), NotificationPermission.Default);
 });
 
 test('should interpret ambiguous browser permission correctly', async t => {
@@ -46,7 +46,7 @@ test('should interpret ambiguous browser permission correctly', async t => {
 
   // A reported permission of denied, without any previously stored permission, should be assumed to
   // be default
-  t.is(await permissionManager.getStoredPermission(), null);
+  t.is(permissionManager.getStoredPermission(), 'default');
   t.is(
     await permissionManager.getInterpretedAmbiguousPermission(NotificationPermission.Denied),
     NotificationPermission.Default
@@ -54,7 +54,7 @@ test('should interpret ambiguous browser permission correctly', async t => {
 
   // A reported permission of denied, with a stored permission, should be assumed to be the stored
   // permission (in this case default)
-  await permissionManager.setStoredPermission(NotificationPermission.Default);
+  permissionManager.setStoredPermission(NotificationPermission.Default);
   t.is(
     await permissionManager.getInterpretedAmbiguousPermission(NotificationPermission.Denied),
     NotificationPermission.Default
@@ -62,7 +62,7 @@ test('should interpret ambiguous browser permission correctly', async t => {
 
   // A reported permission of denied, with a stored permission, should be assumed to be the stored
   // permission (in this case granted)
-  await permissionManager.setStoredPermission(NotificationPermission.Granted);
+  permissionManager.setStoredPermission(NotificationPermission.Granted);
   t.is(
     await permissionManager.getInterpretedAmbiguousPermission(NotificationPermission.Denied),
     NotificationPermission.Granted
@@ -70,7 +70,7 @@ test('should interpret ambiguous browser permission correctly', async t => {
 
   // A reported permission of denied, with a stored permission, should be assumed to be the stored
   // permission (in this case denied)
-  await permissionManager.setStoredPermission(NotificationPermission.Denied);
+  permissionManager.setStoredPermission(NotificationPermission.Denied);
   t.is(
     await permissionManager.getInterpretedAmbiguousPermission(NotificationPermission.Denied),
     NotificationPermission.Denied
@@ -78,8 +78,6 @@ test('should interpret ambiguous browser permission correctly', async t => {
 });
 
 test('should detect an insecure top-level frame', async t => {
-  const permissionManager = OneSignal.context.permissionManager;
-
   t.false(SdkEnvironment.isInsecureOrigin());
 
   await TestEnvironment.initialize({
@@ -139,7 +137,7 @@ test('should use browser reported permission value in non-ambiguous environment 
   const isFrameContextInsecureStub = sinon
     .stub(SdkEnvironment, 'isFrameContextInsecure')
     .resolves(false);
-  t.deepEqual(await permissionManager.getNotificationPermission(null), NotificationPermission.Denied);
+  t.deepEqual(await permissionManager.getNotificationPermission(), NotificationPermission.Denied);
   isCurrentFrameContextCrossOriginStub.restore();
   isFrameContextInsecureStub.restore();
 });
