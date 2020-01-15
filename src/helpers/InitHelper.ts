@@ -113,11 +113,15 @@ export default class InitHelper {
       * It simply wouldn't work to try to show native prompt from script.
       */
 
+     const { environmentInfo } = OneSignal;
+     const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
+
       const showSlidedownForceEnable =
         (
-          (bowser.chrome && Number(bowser.version) >= 63 && (bowser.tablet || bowser.mobile)) ||
-          (bowser.safari && Number(bowser.version) >= 12.1)
+          (browserType.Chrome && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          requiresUserInteraction
         );
+        
       if (showSlidedownForceEnable) {
         OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
         await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
