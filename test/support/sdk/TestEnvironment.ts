@@ -25,6 +25,7 @@ import { MockServiceWorkerContainer } from "../mocks/service-workers/models/Mock
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/utils/Utils';
+import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
 
 // NodeJS.Global
 declare var global: any;
@@ -303,6 +304,10 @@ export class TestEnvironment {
     TestEnvironment.stubNotification(config);
     return global.OneSignal;
   }
+
+  static overrideEnvironmentInfo(envInfo: Partial<EnvironmentInfo> = {}) {
+    global.OneSignal.environmentInfo = { ...global.OneSignal.environmentInfo, ...envInfo };
+  } 
 
   // This allows detailed error printing of test that fails due to missing network mock or other reasons.
   static addUnhandledRejectionHandler() {

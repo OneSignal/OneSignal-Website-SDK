@@ -117,7 +117,8 @@ export class CustomLink {
       }
     } else {
       if (!optedOut) {
-        const options: RegisterOptions = { autoAccept: true };
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept };
         await OneSignal.registerForPushNotifications(options);
       } else {
         await OneSignal.setSubscription(true);
