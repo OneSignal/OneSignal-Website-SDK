@@ -38,7 +38,7 @@ export class EnvironmentInfoHelper {
         if (typeof window.safari !== "undefined") {
             return true;
         }
-    
+
         return isMacOSSafariInIframe();
     }
 
@@ -53,25 +53,23 @@ export class EnvironmentInfoHelper {
     private static isUsingSubscriptionWorkaround(): boolean {
         return OneSignalUtils.isUsingSubscriptionWorkaround();
     }
-    
+
     private static supportsServiceWorkers(): boolean {
-        return (navigator && 'serviceWorker' in navigator);
+        return (window.navigator && 'serviceWorker' in window.navigator);
     }
 
     private static requiresUserInteraction(): boolean {
-        let requiresUserInteraction = false;
-
         // Firefox 72+ requires user-interaction
         if (this.getBrowser() === "firefox" && this.getBrowserVersion() >= 72) {
-            requiresUserInteraction = true;
+            return true;
         }
 
         // Safari 12.1+ requires user-interaction
         if (this.getBrowser() === "safari" && this.getBrowserVersion() >= 12.1) {
-            requiresUserInteraction = true;
+            return true;
         }
 
-        return requiresUserInteraction;
+        return false;
     }
 
     private static getOsVersion(): string|number {

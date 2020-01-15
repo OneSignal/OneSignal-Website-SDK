@@ -8,5 +8,5 @@ export interface EnvironmentInfo {
     isUsingSubscriptionWorkaround: boolean;
     isBrowserAndSupportsServiceWorkers: boolean;
     requiresUserInteraction: boolean;
-    osVersion: string|number; 
+    osVersion: string|number;
 }
