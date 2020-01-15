@@ -35,12 +35,12 @@ export class EnvironmentInfoHelper {
 
     // NOTE: Returns false in a ServiceWorker context
     private static isMacOSSafari(): boolean {
-    if (typeof window.safari !== "undefined") {
-      return true;
+        if (typeof window.safari !== "undefined") {
+            return true;
+        }
+    
+        return isMacOSSafariInIframe();
     }
-  
-    return isMacOSSafariInIframe();
-  }
 
     private static getBrowserVersion(): string|number {
         return bowser.version;

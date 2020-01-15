@@ -8,14 +8,14 @@ export function isPushNotificationsSupported() {
 }
 
 export function isMacOSSafariInIframe(): boolean {
-    // Fallback detection for Safari on macOS in an iframe context
-    return window.top !== window && // isContextIframe
-    navigator.vendor === "Apple Computer, Inc." && // isSafari
-    navigator.platform === "MacIntel"; // isMacOS
+  // Fallback detection for Safari on macOS in an iframe context
+  return window.top !== window && // isContextIframe
+  navigator.vendor === "Apple Computer, Inc." && // isSafari
+  navigator.platform === "MacIntel"; // isMacOS
 }
 
 function supportsSafariPush(): boolean {
-  return window.safari && typeof window.safari.pushNotification !== "undefined" ||
+  return (window.safari && typeof window.safari.pushNotification !== "undefined") ||
           isMacOSSafariInIframe();
 }
 
