@@ -785,7 +785,7 @@ export default class OneSignal {
   static VERSION = Environment.version();
   static _VERSION = Environment.version();
   static sdkEnvironment = SdkEnvironment;
-  static environmentInfo ?: EnvironmentInfo = undefined;
+  static environmentInfo ?: EnvironmentInfo;
   static _notificationOpenedCallbacks = [];
   static _idsAvailable_callback = [];
   static _defaultLaunchURL = null;
