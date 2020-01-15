@@ -118,10 +118,10 @@ export default class InitHelper {
 
       const showSlidedownForceEnable =
         (
-          (browserType.Chrome && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
           requiresUserInteraction
         );
-        
+
       if (showSlidedownForceEnable) {
         OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
         await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
