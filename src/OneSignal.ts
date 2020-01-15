@@ -52,6 +52,7 @@ import OneSignalUtils from "./utils/OneSignalUtils";
 import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
 import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
+import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 
 export default class OneSignal {
   /**
@@ -784,7 +785,7 @@ export default class OneSignal {
   static VERSION = Environment.version();
   static _VERSION = Environment.version();
   static sdkEnvironment = SdkEnvironment;
-  static environmentInfo = {};
+  static environmentInfo ?: EnvironmentInfo = undefined;
   static _notificationOpenedCallbacks = [];
   static _idsAvailable_callback = [];
   static _defaultLaunchURL = null;
