@@ -288,7 +288,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. never subscribed.', async t => {
-  TestEnvironment.setEnvironmentInfo({requiresUserInteraction: false});
+  TestEnvironment.overrideEnvironmentInfo({requiresUserInteraction: false});
   
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();

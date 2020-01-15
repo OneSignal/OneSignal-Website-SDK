@@ -305,8 +305,8 @@ export class TestEnvironment {
     return global.OneSignal;
   }
 
-  static setEnvironmentInfo(envInfo: Partial<EnvironmentInfo> = {}) {
-    global.OneSignal.environmentInfo = envInfo;
+  static overrideEnvironmentInfo(envInfo: Partial<EnvironmentInfo> = {}) {
+    global.OneSignal.environmentInfo = { ...global.OneSignal.environmentInfo, ...envInfo };
   } 
 
   // This allows detailed error printing of test that fails due to missing network mock or other reasons.
