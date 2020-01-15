@@ -70,9 +70,4 @@ This sets the BUILD environment origin to `texas` which will result in SDK files
    - HTTP: `4000`
    - HTTPS: `4001`
 
-#### NOTE ON PORTS:
-**SDK**: SDK files will automatically be fetched from the 4000s ports depending on the HTTP/S setting
-   - HTTP: `4000`
-   - HTTPS: `4001`
-
 **API**: dev-environment API calls will be made to the `3001` port (e.g: `<custom-origin>:3001`)

@@ -264,6 +264,8 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never subscribed.', async t => {
+  TestEnvironment.overrideEnvironmentInfo({requiresUserInteraction: false});
+  
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'internalIsOptedOut').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
@@ -288,6 +290,8 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. never subscribed.', async t => {
+  TestEnvironment.overrideEnvironmentInfo({requiresUserInteraction: false});
+  
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
   const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();

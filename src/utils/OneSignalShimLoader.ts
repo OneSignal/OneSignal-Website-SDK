@@ -1,4 +1,4 @@
-import { isPushNotificationsSupported } from "./BrowserSupportsPush";
+import { isPushNotificationsSupported } from "../context/browser/utils/BrowserSupportsPush";
 import { OneSignalStubES6 } from "./OneSignalStubES6";
 import { OneSignalStubES5 } from "./OneSignalStubES5";
 import { PossiblePredefinedOneSignal } from "./OneSignalStub";

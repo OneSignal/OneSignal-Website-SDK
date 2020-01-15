@@ -51,6 +51,8 @@ import ConfigManager from "./managers/ConfigManager";
 import OneSignalUtils from "./utils/OneSignalUtils";
 import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
+import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
+import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 
 export default class OneSignal {
   /**
@@ -216,6 +218,8 @@ export default class OneSignal {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal.initializeConfig(options);
+
+    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
@@ -781,6 +785,7 @@ export default class OneSignal {
   static VERSION = Environment.version();
   static _VERSION = Environment.version();
   static sdkEnvironment = SdkEnvironment;
+  static environmentInfo?: EnvironmentInfo;
   static _notificationOpenedCallbacks = [];
   static _idsAvailable_callback = [];
   static _defaultLaunchURL = null;

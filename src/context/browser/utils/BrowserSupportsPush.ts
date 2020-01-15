@@ -7,18 +7,16 @@ export function isPushNotificationsSupported() {
   return supportsVapidPush() || supportsSafariPush();
 }
 
-// Does the browser support Safari's proprietary push
-// NOTE: Returns false in a ServiceWorker context
-function supportsSafariPush(): boolean {
-  if (typeof window.safari !== "undefined" &&
-      typeof window.safari.pushNotification !== "undefined") {
-    return true;
-  }
-
+export function isMacOSSafariInIframe(): boolean {
   // Fallback detection for Safari on macOS in an iframe context
   return window.top !== window && // isContextIframe
-         navigator.vendor === "Apple Computer, Inc." && // isSafari
-         navigator.platform === "MacIntel"; // isMacOS
+  navigator.vendor === "Apple Computer, Inc." && // isSafari
+  navigator.platform === "MacIntel"; // isMacOS
+}
+
+function supportsSafariPush(): boolean {
+  return (window.safari && typeof window.safari.pushNotification !== "undefined") ||
+          isMacOSSafariInIframe();
 }
 
 // Does the browser support the standard Push API
