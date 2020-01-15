@@ -5,8 +5,7 @@ import Database from '../services/Database';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { isUsingSubscriptionWorkaround } from '../utils';
-
-declare var OneSignal: any;
+import OneSignal from '../OneSignal';
 
 export default class TestHelper {
   /**

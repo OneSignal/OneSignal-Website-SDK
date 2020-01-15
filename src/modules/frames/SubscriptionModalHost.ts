@@ -7,6 +7,7 @@ import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import Log from '../../libraries/Log';
+import OneSignal from "../../OneSignal"
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -14,10 +15,13 @@ import Log from '../../libraries/Log';
  * subdomain.os.tc/webPushIFrame. *
  */
 export default class SubscriptionModalHost implements Disposable {
-  private messenger: Postmam;
+  private messenger?: Postmam;
   private appId: string;
-  private modal: HTMLIFrameElement;
-  private url: URL;
+  private _modal?: HTMLIFrameElement;
+  get modal(): HTMLIFrameElement | undefined {
+    return this._modal;
+  }
+  private url?: URL;
   private registrationOptions: any;
 
   constructor(appId: string, registrationOptions: any) {
@@ -44,7 +48,7 @@ export default class SubscriptionModalHost implements Disposable {
     this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
     Log.info(`Loading iFrame for HTTPS subscription modal at ${this.url.toString()}`);
 
-    this.modal = this.createHiddenSubscriptionDomModal(this.url.toString());
+    this._modal = this.createHiddenSubscriptionDomModal(this.url.toString());
 
     this.establishCrossOriginMessaging();
   }
@@ -86,7 +90,7 @@ export default class SubscriptionModalHost implements Disposable {
   }
 
   establishCrossOriginMessaging() {
-    this.messenger = new Postmam(this.modal, this.url.origin, this.url.origin);
+    this.messenger = new Postmam(this._modal, this.url.origin, this.url.origin);
     this.messenger.startPostMessageReceive();
 
     this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_LOADED, this.onModalLoaded.bind(this));

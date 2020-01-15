@@ -29,8 +29,8 @@ import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
 import LocalStorage from '../utils/LocalStorage';
-
-declare var OneSignal: any;
+import OneSignal from '../OneSignal';
+import { EnvironmentInfo } from '../context/browser/models/EnvironmentInfo';
 
 export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
@@ -113,8 +113,8 @@ export default class InitHelper {
       * It simply wouldn't work to try to show native prompt from script.
       */
 
-     const { environmentInfo } = OneSignal;
-     const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
+     const { environmentInfo } = OneSignal
+     const { browserType, browserVersion, requiresUserInteraction } : EnvironmentInfo = environmentInfo;
 
       const showSlidedownForceEnable =
         (
@@ -360,7 +360,7 @@ export default class InitHelper {
         };
       }
 
-      const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
+      const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
         OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
           const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());

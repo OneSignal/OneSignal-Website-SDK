@@ -7,6 +7,7 @@ import OneSignalApi from "../../../src/OneSignalApi";
 import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import { TestEnvironment, TestEnvironmentConfig, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import { ServerAppConfig } from '../../../src/models/AppConfig';
+import OneSignal from "../../../src/OneSignal"
 
 export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;

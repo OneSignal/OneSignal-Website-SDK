@@ -1,8 +1,7 @@
-
-
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Log from '../libraries/Log';
+import OneSignal from "../OneSignal"
 
 export class SessionManager {
   private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';

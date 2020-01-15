@@ -1,7 +1,7 @@
 import OneSignalError from "../errors/OneSignalError";
 
 export class ProcessOneSignalPushCalls {
-  public static processItem(oneSignalInstance: IOneSignal, item: Function | object[]) {
+  public static processItem(oneSignalInstance: IOneSignal, item: Function | object[] | object) {
     if (typeof(item) === "function")
       item();
     else if (Array.isArray(item)) {

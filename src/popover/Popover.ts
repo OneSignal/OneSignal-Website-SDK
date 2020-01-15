@@ -4,6 +4,7 @@ import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
 import {addCssClass, addDomElement, getPlatformNotificationIcon, once, removeDomElement} from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
+import OneSignal from "../OneSignal"
 
 export default class Popover {
   public options: SlidedownPermissionMessageOptions;

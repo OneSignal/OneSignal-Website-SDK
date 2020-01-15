@@ -8,6 +8,7 @@ import { PermissionUtils } from './utils/PermissionUtils';
 import { BrowserUtils } from './utils/BrowserUtils';
 import { Utils } from "./utils/Utils";
 import bowser from 'bowser';
+import OneSignal from "./OneSignal";
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';

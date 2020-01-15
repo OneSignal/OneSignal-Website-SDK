@@ -3,7 +3,7 @@ import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Log from './libraries/Log';
 import Utils from "./utils/Utils";
-
+import OneSignal from "./OneSignal";
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',

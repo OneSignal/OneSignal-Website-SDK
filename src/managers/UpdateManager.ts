@@ -7,6 +7,7 @@ import Database from "../services/Database";
 import Log from "../libraries/Log";
 import { ContextSWInterface } from '../models/ContextSW';
 import Utils from "../utils/Utils";
+import OneSignal from "../OneSignal"
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -18,7 +19,7 @@ export class UpdateManager {
     this.onSessionSent = context.sessionManager.getPageViewCount() > 1;
   }
 
-  private async getDeviceId(): Promise<string> {
+  async getDeviceId(): Promise<string> {
     const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);

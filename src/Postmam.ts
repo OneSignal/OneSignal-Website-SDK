@@ -6,6 +6,7 @@ import Emitter from './libraries/Emitter';
 import Log from './libraries/Log';
 import { Utils } from "./utils/Utils";
 import { OneSignalUtils } from "./utils/OneSignalUtils";
+import OneSignal from "./OneSignal";
 
 /**
  * Establishes a cross-domain MessageChannel between the current browsing context (this page) and another (an iFrame, popup, or parent page).

@@ -9,9 +9,7 @@ import SubscriptionModal from '../modules/frames/SubscriptionModal';
 import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
 import { getConsoleStyle } from '../utils';
 import Log from '../libraries/Log';
-
-declare var OneSignal: any;
-
+import OneSignal from '../OneSignal';
 
 export default class HttpHelper {
 

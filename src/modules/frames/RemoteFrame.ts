@@ -7,6 +7,7 @@ import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import ConfigManager from '../../managers/ConfigManager';
 import LocalStorage from '../../utils/LocalStorage';
+import OneSignal from "../../OneSignal";
 
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;
@@ -75,7 +76,7 @@ export default class RemoteFrame implements Disposable {
     /* This is necessary, otherwise the subdomain is lost after ConfigManager.getAppConfig */
     (rasterizedOptions as any).subdomainName = rasterizedOptions.subdomain;
     rasterizedOptions.origin = rasterizedOptions.origin;
-    OneSignal.config = rasterizedOptions || {};
+    OneSignal.config = rasterizedOptions;
 
     const appConfig = await new ConfigManager().getAppConfig(rasterizedOptions);
     OneSignal.context = new Context(appConfig);

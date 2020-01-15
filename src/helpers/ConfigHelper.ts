@@ -7,6 +7,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../utils/Utils";
 import MainHelper from './MainHelper';
+import OneSignal from "../OneSignal"
 
 export enum IntegrationConfigurationKind {
   /**

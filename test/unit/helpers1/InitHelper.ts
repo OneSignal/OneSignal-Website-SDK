@@ -7,6 +7,7 @@ import { TestEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnviron
 import { setBrowser } from '../../support/tester/browser';
 import { stubMessageChannel } from '../../support/tester/utils';
 import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
+import OneSignal from "../../../src/OneSignal"
 
 let sandbox: SinonSandbox = sinon.sandbox.create();
 

@@ -6,6 +6,7 @@ import { IntegrationKind } from "../models/IntegrationKind";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import Environment from "../Environment";
 import OneSignalUtils from "../utils/OneSignalUtils";
+import OneSignal from "../OneSignal";
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;

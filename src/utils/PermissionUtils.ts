@@ -1,5 +1,6 @@
 import Database from "../services/Database";
 import Event from '../Event';
+import OneSignal from '../OneSignal';
 
 export class PermissionUtils {
   public static async triggerNotificationPermissionChanged(updateIfIdentical = false) {

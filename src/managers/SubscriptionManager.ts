@@ -31,6 +31,7 @@ import NotImplementedError from "../errors/NotImplementedError";
 import { PermissionUtils } from "../utils/PermissionUtils";
 import { base64ToUint8Array } from "../utils/Encoding";
 import { ContextSWInterface } from '../models/ContextSW';
+import OneSignal from "../OneSignal";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;

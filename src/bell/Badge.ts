@@ -1,5 +1,6 @@
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import AnimatedElement from './AnimatedElement';
+import OneSignal from "../OneSignal"
 
 
 export default class Badge extends ActiveAnimatedElement {

@@ -16,7 +16,7 @@ import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
   mockWebPushAnalytics, InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
-
+import OneSignal from "../../../src/OneSignal"
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 let initTestHelper = new InitTestHelper(sinonSandbox);

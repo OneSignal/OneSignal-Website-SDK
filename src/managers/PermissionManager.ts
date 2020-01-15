@@ -5,6 +5,7 @@ import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
+import OneSignal from "../OneSignal"
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions

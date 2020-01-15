@@ -8,6 +8,7 @@ import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import MainHelper from "../../../src/helpers/MainHelper";
 import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
+import OneSignal from "../../../src/OneSignal"
 
 // manually create and restore the sandbox
 const sandbox: SinonSandbox = sinon.sandbox.create();

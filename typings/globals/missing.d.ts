@@ -80,10 +80,6 @@ interface Window {
  * END: window.safari definition
  */
 
-
-declare var OneSignal: any;
-
-
 // These __*__ variables are defined from Webpack to change resulting JS
 declare var __VERSION__: string;
 declare var __BUILD_TYPE__: string;

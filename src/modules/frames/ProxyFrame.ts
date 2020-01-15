@@ -15,6 +15,7 @@ import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
+import OneSignal from "../../OneSignal"
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded

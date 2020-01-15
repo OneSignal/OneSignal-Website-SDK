@@ -18,6 +18,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
   from "../helpers/ServiceWorkerHelper";
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../utils/Utils";
+import OneSignal from '../OneSignal';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;

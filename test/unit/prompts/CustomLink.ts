@@ -7,6 +7,7 @@ import OneSignalUtils from '../../../src/utils/OneSignalUtils';
 import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/utils';
 import MainHelper from "../../../src/helpers/MainHelper";
+import OneSignal from "../../../src/OneSignal"
 
 let sandbox: SinonSandbox = sinon.sandbox.create();;
 let config: AppUserConfigCustomLinkOptions;

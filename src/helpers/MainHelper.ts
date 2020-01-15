@@ -10,6 +10,7 @@ import { NotificationPermission } from "../models/NotificationPermission";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../utils/Utils";
+import OneSignal from "../OneSignal";
 
 export default class MainHelper {
 

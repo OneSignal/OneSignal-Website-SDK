@@ -12,6 +12,7 @@ import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
 import LocalStorage from '../utils/LocalStorage';
+import OneSignal from "../OneSignal";
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {

@@ -15,7 +15,7 @@ import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
+import { AppConfig, AppUserConfig } from './models/AppConfig';
 import Context from './models/Context';
 import { Notification } from './models/Notification';
 import { NotificationActionButton } from './models/NotificationActionButton';
@@ -53,6 +53,7 @@ import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
 import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
+import Bell from './bell/Bell';
 
 export default class OneSignal {
   /**
@@ -745,7 +746,7 @@ export default class OneSignal {
    *  OneSignal.push(["functionName", param1, param2]);
    *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
    */
-  static push(item: Function | object[]) {
+  static push(item: Function | object[] | object) {
     ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
@@ -800,7 +801,7 @@ export default class OneSignal {
   static _channel = null;
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
-  static notifyButton: AppUserConfigNotifyButton | null = null;
+  static notifyButton: Bell | null = null;
   static store = LimitStore;
   static environment = Environment;
   static database = Database;
@@ -850,6 +851,7 @@ export default class OneSignal {
   static _usingNativePermissionHook = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
+  static _isRegisteringForPush: boolean;
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
   static DeviceRecord = DeviceRecord;

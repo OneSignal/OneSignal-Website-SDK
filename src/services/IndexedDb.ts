@@ -3,6 +3,8 @@ import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import Utils from "../utils/Utils";
 
+import OneSignal from "../OneSignal"
+
 export default class IndexedDb {
 
   public emitter: Emitter;

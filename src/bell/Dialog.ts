@@ -5,6 +5,7 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import {addDomElement, clearDomElementChildren, getPlatformNotificationIcon} from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
+import OneSignal from "../OneSignal"
 
 export default class Dialog extends AnimatedElement {
 

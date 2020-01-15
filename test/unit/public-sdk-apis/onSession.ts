@@ -26,7 +26,8 @@ import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelp
 import { WorkerMessenger } from '../../../src/libraries/WorkerMessenger';
 import { UpdateManager } from '../../../src/managers/UpdateManager';
 import PermissionManager from '../../../src/managers/PermissionManager';
-import {MockServiceWorkerRegistration} from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
+import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
+import OneSignal from "../../../src/OneSignal"
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const initTestHelper = new InitTestHelper(sinonSandbox);

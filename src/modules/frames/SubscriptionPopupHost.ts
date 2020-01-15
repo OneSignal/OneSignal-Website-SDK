@@ -8,6 +8,7 @@ import { RawPushSubscription } from '../../models/RawPushSubscription';
 import { SubscriptionManager } from '../../managers/SubscriptionManager';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
+import OneSignal from "../../OneSignal"
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main

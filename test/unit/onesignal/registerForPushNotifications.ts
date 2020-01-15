@@ -4,6 +4,7 @@ import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import InitHelper from "../../../src/helpers/InitHelper";
 import Event from '../../../src/Event';
+import OneSignal from "../../../src/OneSignal"
 
 let sandbox: SinonSandbox;
 

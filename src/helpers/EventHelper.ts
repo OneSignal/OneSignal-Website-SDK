@@ -7,6 +7,7 @@ import Log from '../libraries/Log';
 import { CustomLink } from "../CustomLink";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { BrowserUtils } from "../utils/BrowserUtils";
+import OneSignal from "../OneSignal"
 
 export default class EventHelper {
   static onNotificationPermissionChange() {

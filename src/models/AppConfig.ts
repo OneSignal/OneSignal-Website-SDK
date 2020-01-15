@@ -49,6 +49,7 @@ export interface AppConfig {
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
+  pageTitle?: string;
 }
 
 export enum ConfigIntegrationKind {
@@ -103,9 +104,9 @@ interface BasePromptOptions {
 }
 
 export interface SlidedownPermissionMessageOptions extends BasePromptOptions {
-  actionMessage: string;
-  acceptButtonText: string;
-  cancelButtonText: string;
+  actionMessage?: string;
+  acceptButtonText?: string;
+  cancelButtonText?: string;
 }
 
 export interface FullscreenPermissionMessageOptions extends BasePromptOptions {

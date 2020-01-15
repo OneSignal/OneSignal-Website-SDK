@@ -5,6 +5,7 @@ import Postmam from '../../Postmam';
 import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
 import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
+import OneSignal from "../../OneSignal";
 
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main

@@ -3,6 +3,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import Log from "../libraries/Log";
 import { Utils } from "./Utils";
+import OneSignal from '../OneSignal';
 
 export class OneSignalUtils {
   public static getBaseUrl() {

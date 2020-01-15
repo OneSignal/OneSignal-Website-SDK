@@ -3,6 +3,7 @@ import { OneSignalStubES6 } from "./OneSignalStubES6";
 import { OneSignalStubES5 } from "./OneSignalStubES5";
 import { PossiblePredefinedOneSignal } from "./OneSignalStub";
 // NOTE: Careful if adding imports, ES5 targets can't clean up functions never called.
+declare var OneSignal : any;
 
 // See sdk.ts for what entry points this handles
 
