@@ -6,7 +6,7 @@ import MainHelper from '../helpers/MainHelper';
 import Database from "../services/Database";
 import Log from "../libraries/Log";
 import { ContextSWInterface } from '../models/ContextSW';
-import Utils from "../utils/Utils";
+import Utils from "../context/shared/utils/Utils";
 
 export class UpdateManager {
   private context: ContextSWInterface;

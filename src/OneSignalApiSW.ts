@@ -2,7 +2,7 @@ import { ServerAppConfig } from "./models/AppConfig";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
 import Log from "./libraries/Log";
-import { Utils } from "./utils/Utils";
+import { Utils } from "./context/shared/utils/Utils";
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {

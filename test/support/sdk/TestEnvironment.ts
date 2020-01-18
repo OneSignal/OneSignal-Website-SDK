@@ -24,7 +24,7 @@ import { MockPushManager } from "../mocks/service-workers/models/MockPushManager
 import { MockServiceWorkerContainer } from "../mocks/service-workers/models/MockServiceWorkerContainer";
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
-import { RecursivePartial } from '../../../src/utils/Utils';
+import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
 import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
 
 // NodeJS.Global

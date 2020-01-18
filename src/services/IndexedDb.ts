@@ -1,7 +1,7 @@
 
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
-import Utils from "../utils/Utils";
+import Utils from "../context/shared/utils/Utils";
 
 export default class IndexedDb {
 

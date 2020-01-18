@@ -17,7 +17,7 @@ import OneSignalUtils from "../utils/OneSignalUtils";
 import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConfig }
   from "../helpers/ServiceWorkerHelper";
 import { ContextSWInterface } from '../models/ContextSW';
-import { Utils } from "../utils/Utils";
+import { Utils } from "../context/shared/utils/Utils";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;

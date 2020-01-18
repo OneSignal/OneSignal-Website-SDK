@@ -6,7 +6,7 @@ import Log from './libraries/Log';
 import { OneSignalUtils } from './utils/OneSignalUtils';
 import { PermissionUtils } from './utils/PermissionUtils';
 import { BrowserUtils } from './utils/BrowserUtils';
-import { Utils } from "./utils/Utils";
+import { Utils } from "./context/shared/utils/Utils";
 import bowser from 'bowser';
 
 export function isArray(variable: any) {

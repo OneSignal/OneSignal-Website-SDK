@@ -9,7 +9,7 @@ import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { NotificationPermission } from "../models/NotificationPermission";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { PermissionUtils } from "../utils/PermissionUtils";
-import { Utils } from "../utils/Utils";
+import { Utils } from "../context/shared/utils/Utils";
 
 export default class MainHelper {
 

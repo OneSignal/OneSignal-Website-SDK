@@ -16,7 +16,7 @@ import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
-import { Utils } from "../utils/Utils";
+import { Utils } from "../context/shared/utils/Utils";
 
 declare var self: ServiceWorkerGlobalScope;
 declare var Notification: Notification;

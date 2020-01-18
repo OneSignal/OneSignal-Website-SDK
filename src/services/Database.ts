@@ -11,7 +11,7 @@ import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { EmailProfile } from "../models/EmailProfile";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
-import Utils from "../utils/Utils";
+import Utils from "../context/shared/utils/Utils";
 
 enum DatabaseEventName {
   SET

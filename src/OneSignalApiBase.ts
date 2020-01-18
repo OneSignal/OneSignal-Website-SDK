@@ -1,6 +1,6 @@
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { Utils } from "./utils/Utils";
+import { Utils } from "./context/shared/utils/Utils";
 import { OneSignalApiError, OneSignalApiErrorKind } from './errors/OneSignalApiError';
 
 type Headers = any[] & {[key: string]: any};

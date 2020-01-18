@@ -2,7 +2,7 @@ import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Log from './libraries/Log';
-import Utils from "./utils/Utils";
+import Utils from "./context/shared/utils/Utils";
 
 
 const SILENT_EVENTS = [
