@@ -1,4 +1,5 @@
 import test from "ava";
+import nock from "nock";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import { UpdateManager } from "../../../src/managers/UpdateManager";
@@ -8,6 +9,7 @@ import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import MainHelper from "../../../src/helpers/MainHelper";
 import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
+import { Subscription } from '../../../src/models/Subscription';
 
 // manually create and restore the sandbox
 const sandbox: SinonSandbox = sinon.sandbox.create();
@@ -96,6 +98,29 @@ test("sendOnSessionUpdate triggers on_session for existing subscribed user if ha
   await OneSignal.context.updateManager.sendOnSessionUpdate();
   t.is(onSessionSpy.called, true);
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), true);
+});
+
+test("on_session saves new player id if returned from onesignal.com", async t => {
+  // 1. Setup existing player id in indexDB
+  const playerId = Random.getRandomUuid();
+  const subscription = new Subscription();
+  subscription.deviceId = playerId;
+  await Database.setSubscription(subscription);
+
+  // 2. Mock on_session endpoint to give a new player_id
+  const newPlayerId = Random.getRandomUuid();
+  nock('https://onesignal.com')
+   .post(`/api/v1/players/${playerId}/on_session`)
+   .reply(200, { success: true, id: newPlayerId });
+
+  // 3. Make on_session call
+  sandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(true);
+  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
+  await OneSignal.context.updateManager.sendOnSessionUpdate();
+
+  // 4. Ensure we have the new playe_id saved in indexDB
+  const newSubscription = await Database.getSubscription();
+  t.is(newSubscription.deviceId, newPlayerId);
 });
 
 test("sendOnSessionUpdate triggers on_session for existing unsubscribed user if hasn't done so already and if enableOnSession flag is present", async t => {
