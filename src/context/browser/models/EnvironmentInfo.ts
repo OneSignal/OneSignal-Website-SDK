@@ -3,7 +3,7 @@ import { Browser } from './Browser';
 // for runtime environment info
 export interface EnvironmentInfo {
     browserType: Browser;
-    browserVersion: string|number;
+    browserVersion: number;
     isHttps: boolean;
     isUsingSubscriptionWorkaround: boolean;
     isBrowserAndSupportsServiceWorkers: boolean;

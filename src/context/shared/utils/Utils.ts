@@ -1,4 +1,4 @@
-import TimeoutError from '../errors/TimeoutError';
+import TimeoutError from '../../../errors/TimeoutError';
 
 interface IndexOfAble {
   indexOf(match:string): number;
@@ -119,15 +119,12 @@ export class Utils {
   }
 
   /**
-   * Checks if a version is number is greater than or equal (AKA at least) to a specific compare
-   *   to version.
-   * Limited to only checking for major and minor version values, patch versions are ignored
-   * @param toCheck - Version we want to check
-   * @param compareTo - Version we want to be at or higher
-   * @returns {string} - Returns true if toCheck >= compareTo
+   * Returns trimmed version number
+   * e.g: "10.01.30" becomes "10.01"
+   * @param version - version number we want to check
    */
-  public static isVersionAtLeast(toCheck: string | number, compareTo: number): boolean {
-    const osVersionParts = toCheck.toString().split(".");
+  public static parseVersionString(version: string | number): number {
+    const osVersionParts = version.toString().split(".");
     const majorVersion = Utils.padStart(osVersionParts[0], 2, "0");
     let minorVersion: string;
     if (osVersionParts[1]) {
@@ -137,8 +134,19 @@ export class Utils {
       minorVersion = "00";
     }
 
-    const majorAndMinor = Number(`${majorVersion}.${minorVersion}`);
-    return majorAndMinor >= compareTo;
+    return Number(`${majorVersion}.${minorVersion}`);
+  }
+
+  /**
+   * Checks if a version is number is greater than or equal (AKA at least) to a specific compare
+   *   to version.
+   * Limited to only checking for major and minor version values, patch versions are ignored
+   * @param toCheck - Version we want to check
+   * @param compareTo - Version we want to be at or higher
+   * @returns {string} - Returns true if toCheck >= compareTo
+   */
+  public static isVersionAtLeast(toCheck: string | number, compareTo: number): boolean {
+    return this.parseVersionString(toCheck) >= compareTo;
   }
 
   public static enforceAppId(appId: string | undefined | null): void {

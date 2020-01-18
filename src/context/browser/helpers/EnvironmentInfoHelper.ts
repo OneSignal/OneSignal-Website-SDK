@@ -3,6 +3,7 @@ import { EnvironmentInfo } from '../models/EnvironmentInfo';
 import { Browser } from '../models/Browser';
 import { OneSignalUtils } from '../../../utils/OneSignalUtils';
 import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
+import Utils from '../../shared/utils/Utils';
 
 /**
  * EnvironmentInfoHelper is used to save page ("browser") context environment information to
@@ -42,8 +43,8 @@ export class EnvironmentInfoHelper {
         return isMacOSSafariInIframe();
     }
 
-    private static getBrowserVersion(): string|number {
-        return bowser.version;
+    private static getBrowserVersion(): number {
+        return Utils.parseVersionString(bowser.version);
     }
 
     private static isHttps(): boolean {

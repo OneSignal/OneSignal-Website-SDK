@@ -1,6 +1,6 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { NotificationActionButton } from './NotificationActionButton';
-import Utils from "../utils/Utils";
+import Utils from "../context/shared/utils/Utils";
 
 export class Notification {
     public id?: string;

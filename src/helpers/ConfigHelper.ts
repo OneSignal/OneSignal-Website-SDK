@@ -5,7 +5,7 @@ import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
-import Utils from "../utils/Utils";
+import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
 
 export enum IntegrationConfigurationKind {

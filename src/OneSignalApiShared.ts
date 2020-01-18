@@ -4,7 +4,7 @@ import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiE
 import { EmailProfile } from './models/EmailProfile';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 import OneSignalApiBase from "./OneSignalApiBase";
-import Utils from "./utils/Utils";
+import Utils from "./context/shared/utils/Utils";
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {

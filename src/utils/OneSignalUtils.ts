@@ -2,7 +2,7 @@ import bowser, { IBowser } from "bowser";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import Log from "../libraries/Log";
-import { Utils } from "./Utils";
+import { Utils } from "../context/shared/utils/Utils";
 
 export class OneSignalUtils {
   public static getBaseUrl() {

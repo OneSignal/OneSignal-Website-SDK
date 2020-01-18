@@ -4,7 +4,7 @@ import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import Emitter from './libraries/Emitter';
 import Log from './libraries/Log';
-import { Utils } from "./utils/Utils";
+import { Utils } from "./context/shared/utils/Utils";
 import { OneSignalUtils } from "./utils/OneSignalUtils";
 
 /**
