@@ -193,7 +193,7 @@ export class ServiceWorkerManager {
     });
   }
 
-  async shouldInstallWorker(): Promise<boolean> {
+  private async shouldInstallWorker(): Promise<boolean> {
     if (!Environment.supportsServiceWorkers())
       return false;
 
@@ -205,26 +205,17 @@ export class ServiceWorkerManager {
       return false;
 
     const workerState = await this.getActiveState();
+    // If there isn't a SW or it isn't OneSignal's only install our SW if notification permissions are enabled
+    // This prevents an unnessary install which saves bandwidth
+    if (workerState === ServiceWorkerActiveState.None || workerState === ServiceWorkerActiveState.ThirdParty) {
+      const permission = await OneSignal.context.permissionManager.getNotificationPermission(
+        OneSignal.config!.safariWebId
+      );
 
-    if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
-      return true;
+      return permission === "granted";
     }
 
     return this.workerNeedsUpdate();
-  }
-
-  async subscribeForPushNotifications(): Promise<Subscription> {
-    const workerState = await this.getActiveState();
-
-    if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
-      throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
-    }
-    return new Promise<Subscription>(resolve => {
-      this.context.workerMessenger.once(WorkerMessengerCommand.Subscribe, subscription => {
-        resolve(Subscription.deserialize(subscription));
-      });
-      this.context.workerMessenger.unicast(WorkerMessengerCommand.Subscribe, this.context.appConfig);
-    });
   }
 
   /**
@@ -232,32 +223,22 @@ export class ServiceWorkerManager {
    * with a content-identical but differently named alternate service worker
    * file.
    */
-  async workerNeedsUpdate(): Promise<boolean> {
-    const workerState = await this.getActiveState();
-    Log.info(`[Service Worker Update] Checking service worker version...`);
+  private async workerNeedsUpdate(): Promise<boolean> {
+    Log.info("[Service Worker Update] Checking service worker version...");
     let workerVersion: number;
     try {
       workerVersion = await Utils.timeoutPromise(this.getWorkerVersion(), 2_000);
     } catch (e) {
-      Log.info(`[Service Worker Update] Worker did not reply to version query; assuming older version.`);
-      workerVersion = 1;
-    }
-
-    if (workerState !== ServiceWorkerActiveState.WorkerA && workerState !== ServiceWorkerActiveState.WorkerB) {
-      // Do not update 3rd party workers
-      Log.debug(
-        `[Service Worker Update] Not updating service worker, current active worker state is ${workerState}.`
-      );
-      return false;
+      Log.info("[Service Worker Update] Worker did not reply to version query; assuming older version and updating.");
+      return true;
     }
 
     if (workerVersion !== Environment.version()) {
-      Log.info(`[Service Worker Update] Updating service worker from v${workerVersion} --> v${Environment.version()}.`);
+      Log.info(`[Service Worker Update] Updating service worker from ${workerVersion} --> ${Environment.version()}.`);
       return true;
-    } else {
-      Log.info(`[Service Worker Update] Service worker version is current at v${workerVersion} (no update required).`);
     }
 
+    Log.info(`[Service Worker Update] Service worker version is current at ${workerVersion} (no update required).`);
     return false;
   }
 

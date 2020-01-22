@@ -358,6 +358,7 @@ test('installWorker() installs worker A with the correct file name and query par
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
@@ -372,10 +373,24 @@ test('installWorker() installs worker A with the correct file name and query par
   }
 });
 
+test('installWorker() does NOT install ServiceWorker when permission has NOT been granted', async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+
+  const manager = LocalHelpers.getServiceWorkerManager();
+
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
+  await manager.installWorker();
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
+  t.is(navigator.serviceWorker.controller, null);
+});
+
 test('installWorker() installs worker A when a third party service worker exists', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  sandbox.stub(Notification, <any>"permission").value("granted");
 
   await navigator.serviceWorker.register('/another-service-worker.js');
 
@@ -390,6 +405,7 @@ test('installWorker() installs Worker B and then A when Worker A is out of date'
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
     workerAPath: new Path('/Worker-A.js'),
@@ -433,6 +449,7 @@ test('Server worker register URL correct when service worker path is a absolute 
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
     workerAPath: new Path(`${location.origin}/Worker-A.js`),
@@ -454,6 +471,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  sandbox.stub(Notification, <any>"permission").value("granted");
 
   const context = OneSignal.context;
 
@@ -490,6 +508,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  sandbox.stub(Notification, <any>"permission").value("granted");
 
   const context = OneSignal.context;
 
