@@ -7,6 +7,11 @@ import PermissionManager from '../managers/PermissionManager';
 import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
 
+
+// TODO: Ideally this file should only import classes used by ServiceWorker.ts.
+//       Example, ServiceWorkerManager should be remove as it is used by the page / browser,
+//         not the ServiceWorker itself internally.
+
 export interface ContextSWInterface {
   appConfig: AppConfig;
   subscriptionManager: SubscriptionManager;
