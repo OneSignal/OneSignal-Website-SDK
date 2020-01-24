@@ -13,6 +13,8 @@ import Random from '../../../support/tester/Random';
 import { MockServiceWorkerGlobalScope } from '../../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope';
 import MockNotification from '../../../support/mocks/MockNotification';
 import { Subscription } from '../../../../src/models/Subscription';
+import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
+import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -32,88 +34,101 @@ test.afterEach(function () {
   sandbox.restore();
 });
 
+
+/***************************************************
+ * onPushReceived() 
+ ****************************************************/
+
+test('onPushReceived - Ensure undefined payload does not throw', async t => {
+  const mockPushEvent = new MockPushEvent(new MockPushMessageData());
+  await ServiceWorkerReal.onPushReceived(mockPushEvent);
+  t.pass();
+});
+
+/* MockPushSubscriptionChangeEvent */
+
 /***************************************************
  * displayNotification()
  ****************************************************/
 async function displayNotificationEnvSetup() {
-    await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-    await TestEnvironment.stubServiceWorkerEnvironment();
-    setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
-  }
+  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
+  await TestEnvironment.stubServiceWorkerEnvironment();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
+}
   
-  // Start - displayNotification - persistNotification
-  test('displayNotification - persistNotification - true', async t => {
-    await displayNotificationEnvSetup();
-  
-    await Database.put('Options', { key: 'persistNotification', value: true });
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
-  });
-  
-  test('displayNotification - persistNotification - undefined', async t => {
-    await displayNotificationEnvSetup();
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
-  });
-  
-  test('displayNotification - persistNotification - force', async t => {
-    await displayNotificationEnvSetup();
-  
-    // "force isn't set any more but for legacy users it still results in true
-    await Database.put('Options', { key: 'persistNotification', value: "force" });
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
-  });
-  
-  test('displayNotification - persistNotification - true - Chrome macOS 10.15', async t => {
-    await displayNotificationEnvSetup();
-    setUserAgent(BrowserUserAgent.ChromeMac10_15);
-  
-    await Database.put('Options', { key: 'persistNotification', value: true });
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
-  });
-  
-  test('displayNotification - persistNotification - true - Chrome macOS pre-10.15', async t => {
-    await displayNotificationEnvSetup();
-    setUserAgent(BrowserUserAgent.ChromeMacSupported);
-  
-    await Database.put('Options', { key: 'persistNotification', value: true });
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
-  });
-  
-  test('displayNotification - persistNotification - true - Opera macOS 10.14', async t => {
-    await displayNotificationEnvSetup();
-    setUserAgent(BrowserUserAgent.OperaMac10_14);
-  
-    await Database.put('Options', { key: 'persistNotification', value: true });
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
-  });
-  
-  test('displayNotification - persistNotification - false', async t => {
-    await displayNotificationEnvSetup();
-  
-    await Database.put('Options', { key: 'persistNotification', value: false });
-  
-    const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-    await ServiceWorkerReal.displayNotification({});
-    t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
-  });
-  // End - displayNotification - persistNotification
+// Start - displayNotification - persistNotification
+test('displayNotification - persistNotification - true', async t => {
+  await displayNotificationEnvSetup();
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - undefined', async t => {
+  await displayNotificationEnvSetup();
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - force', async t => {
+  await displayNotificationEnvSetup();
+
+  // "force isn't set any more but for legacy users it still results in true
+  await Database.put('Options', { key: 'persistNotification', value: "force" });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - true - Chrome macOS 10.15', async t => {
+  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeMac10_15);
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
+});
+
+test('displayNotification - persistNotification - true - Chrome macOS pre-10.15', async t => {
+  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeMacSupported);
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
+});
+
+test('displayNotification - persistNotification - true - Opera macOS 10.14', async t => {
+  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.OperaMac10_14);
+
+  await Database.put('Options', { key: 'persistNotification', value: true });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
+});
+
+test('displayNotification - persistNotification - false', async t => {
+  await displayNotificationEnvSetup();
+
+  await Database.put('Options', { key: 'persistNotification', value: false });
+
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+  await ServiceWorkerReal.displayNotification({});
+  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
+});
+// End - displayNotification - persistNotification
 
 
   /***************************************************
