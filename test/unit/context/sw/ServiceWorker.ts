@@ -17,13 +17,11 @@ import { Subscription } from '../../../../src/models/Subscription';
 declare var self: MockServiceWorkerGlobalScope;
 
 let sandbox: SinonSandbox;
-let getRegistrationStub: SinonStub;
 
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
 
-  await TestEnvironment.stubDomEnvironment();
-  getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').callThrough();
+  await TestEnvironment.stubServiceWorkerEnvironment();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();
@@ -31,8 +29,6 @@ test.beforeEach(async function() {
 });
 
 test.afterEach(function () {
-  if (getRegistrationStub.callCount > 0)
-    sandbox.assert.alwaysCalledWithExactly(getRegistrationStub, location.href);
   sandbox.restore();
 });
 
