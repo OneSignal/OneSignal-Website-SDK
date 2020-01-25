@@ -180,18 +180,12 @@ export class ServiceWorker {
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
    * notifications.
    */
-  static onPushReceived(event: PushEvent) {
+  static onPushReceived(event: PushEvent): void {
     Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
             .then((notifications: any) => {
-              if (!notifications || notifications.length == 0) {
-                Log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
-                          " long as it isn't the welcome notification.");
-                return ServiceWorker.displayBackupNotification();
-              }
-
               //Display push notifications in the order we received them
               let notificationEventPromiseFns = [];
 
@@ -219,10 +213,6 @@ export class ServiceWorker {
               if (ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
                 Log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
                 return undefined;
-              } else {
-                Log.debug(
-                    "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
-                return ServiceWorker.displayBackupNotification();
               }
             })
     )
@@ -529,29 +519,6 @@ export class ServiceWorker {
     if (isWelcomeNotification)
       return;
     await Database.put('Ids', {type: 'backupNotification', id: notification});
-  }
-
-  /**
-   * Displays a fail-safe notification during a push event in case notification contents could not be retrieved.
-   * This is to avoid Chrome's forced "This site has been updated in the background" message. See this post for
-   * more details: http://stackoverflow.com/a/35045513/555547.
-   */
-  static displayBackupNotification() {
-    return Database.get('Ids', 'backupNotification')
-        .then(backupNotification => {
-          let overrides = {
-            // Don't persist our backup notification; users should ideally not see them
-            persistNotification: false,
-            data: {__isOneSignalBackupNotification: true}
-          };
-          if (backupNotification) {
-            return ServiceWorker.displayNotification(backupNotification, overrides);
-          } else {
-            return ServiceWorker.displayNotification({
-              content: 'You have new updates.'
-            }, overrides);
-          }
-        });
   }
 
   /**

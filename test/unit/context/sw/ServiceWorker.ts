@@ -1,5 +1,5 @@
-import test from 'ava';
-import sinon, { SinonSandbox, SinonStub } from 'sinon';
+import test, { TestContext } from 'ava';
+import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
 import OneSignal from '../../../../src/OneSignal';
@@ -15,6 +15,7 @@ import MockNotification from '../../../support/mocks/MockNotification';
 import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
+import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -37,15 +38,79 @@ test.afterEach(function () {
 
 /***************************************************
  * onPushReceived() 
- ****************************************************/
+****************************************************/
 
-test('onPushReceived - Ensure undefined payload does not throw', async t => {
+function mockOneSignalPushEvent(data: object): MockPushEvent {
+  const payloadTemplate = {
+    custom: {
+      i: Random.getRandomUuid()
+    }
+  };
+
+  const payload = { ...payloadTemplate, ...data };
+  return new MockPushEvent(new MockPushMessageData(payload));
+}
+
+function assertValidNotificationShown(t: TestContext, spy: SinonSpy): void {
+  // Only one should show
+  t.is(spy.callCount, 1);
+
+  const notifTitle: string = spy.lastCall.args[0];
+  const options: NotificationOptions | undefined = spy.lastCall.args[1];
+  
+  // Must have a title
+  t.truthy(notifTitle);
+
+  // Must have options set
+  if (typeof options === "undefined") {
+    t.fail("assertValidNotificationShown - Missing options");
+    return;
+  }
+
+  // data.id must be a valid UUID (this is the OneSignal Notification id)
+  t.true(OneSignalUtils.isValidUuid(options.data.id));
+}
+
+test('onPushReceived - Ensure undefined payload does not show', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
   const mockPushEvent = new MockPushEvent(new MockPushMessageData());
-  await ServiceWorkerReal.onPushReceived(mockPushEvent);
-  t.pass();
+  ServiceWorkerReal.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  t.true(showNotificationSpy.notCalled);
 });
 
-/* MockPushSubscriptionChangeEvent */
+test('onPushReceived - Ensure empty payload does not show', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
+  const mockPushEvent = new MockPushEvent(new MockPushMessageData({}));
+  ServiceWorkerReal.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  t.true(showNotificationSpy.notCalled);
+});
+
+test('onPushReceived - Ensure non-OneSignal payload does not show', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
+  const mockPushEvent = new MockPushEvent(new MockPushMessageData({ title: "Test Title" }));
+  ServiceWorkerReal.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  t.true(showNotificationSpy.notCalled);
+});
+
+test('onPushReceived - Ensure display when only required values', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
+  const mockPushEvent = mockOneSignalPushEvent({ title: "Test Title" });
+  ServiceWorkerReal.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  assertValidNotificationShown(t, showNotificationSpy);
+  t.is(showNotificationSpy.lastCall.args[0], "Test Title");
+});
 
 /***************************************************
  * displayNotification()
