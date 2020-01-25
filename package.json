@@ -26,7 +26,7 @@
     "bundle-sdk:analyze": "ANALYZE=true ENV=production TESTS=false $(yarn bin)/webpack --config build/config/sdk.config.js --profile --json > stats.json",
     "build:dev": "ENV=development yarn transpile:sources && ENV=development yarn bundle-sw && ENV=development yarn bundle-sdk && ENV=development yarn bundle-page-sdk-es6 && ENV=development build/scripts/publish.sh",
     "build:staging": "ENV=staging yarn transpile:sources && ENV=staging yarn bundle-sw && ENV=staging yarn bundle-sdk && ENV=staging yarn bundle-page-sdk-es6 && ENV=staging build/scripts/publish.sh",
-    "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle-sw && ENV=production yarn bundle-sdk && ENV=production yarn bundle-page-sdk-es6 && ENV=production build/scripts/publish.sh",
+    "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle-sw && ENV=production yarn bundle-sdk && ENV=production yarn bundle-page-sdk-es6 && bundlesize && ENV=production build/scripts/publish.sh",
     "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
     "publish": "yarn clean && yarn build:prod && yarn",
@@ -63,6 +63,7 @@
     "@types/whatwg-fetch": "latest",
     "ava": "^0.21.0",
     "awesome-typescript-loader": "^4.0.1",
+    "bundlesize": "^0.18.0",
     "css-loader": "^0.26.2",
     "deepmerge": "^4.2.2",
     "dom-storage": "^2.0.2",
@@ -110,5 +111,27 @@
     "include": [
       "build/ts-to-es6/src/**/*.js"
     ]
-  }
+  },
+  "bundlesize": [
+    {
+      "path": "./build/bundles/OneSignalSDK.js",
+      "maxSize": "3 kB",
+      "compression": "gzip"
+    },
+    {
+      "path": "./build/bundles/OneSignalPageSDKES6.js",
+      "maxSize": "55 kB",
+      "compression": "gzip"
+    },
+    {
+      "path": "./build/bundles/OneSignalSDKWorker.js",
+      "maxSize": "30 kB",
+      "compression": "gzip"
+    },
+    {
+      "path": "./build/bundles/OneSignalSDKStyles.css",
+      "maxSize": "7 kB",
+      "compression": "gzip"
+    }
+  ]
 }
