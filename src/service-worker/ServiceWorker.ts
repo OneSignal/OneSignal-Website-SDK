@@ -206,7 +206,8 @@ export class ServiceWorker {
                       .then(() => {
                         return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e))
                       })
-                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif).catch(e => Log.error(e)))
+                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif)
+                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e)));
                 }).bind(null, notification));
               }
 
@@ -275,6 +276,35 @@ export class ServiceWorker {
       Utils.getConsoleStyle('code'), ':', postData
     );
     return await fetch(webhookTargetUrl, fetchOptions);
+  }
+
+  /**
+   * Makes a PUT call to log the delivery of the notification
+   * @param notification A JSON object containing notification details.
+   * @returns {Promise}
+   */
+  static async sendConfirmedDelivery(notification: any): Promise<Response | null> {
+    const appId = await ServiceWorker.getAppId();
+    const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
+    const { deviceId } = await Database.getSubscription();
+    const hasRequiredParams = notification && notification.id && deviceId && appId;
+
+    if (!hasRequiredParams || !appConfig.receiveReceiptsEnable) {
+      return Promise.resolve(null);
+    }
+ 
+    // JSON.stringify() does not include undefined values
+    // Our response will not contain those fields here which have undefined values
+    const postData = {
+      player_id : deviceId, 
+      app_id : appId
+    };
+    
+    Log.debug(`Called %csendConfirmedDelivery(${
+      JSON.stringify(notification, null, 4)
+    })`, Utils.getConsoleStyle('code'));
+    
+    return await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
   }
 
   /**

@@ -73,9 +73,9 @@ export class ConfigHelper {
     switch (integration) {
       case ConfigIntegrationKind.Custom:
       case ConfigIntegrationKind.WordPress:
-        return {configuration: IntegrationConfigurationKind.JavaScript};
+        return { configuration: IntegrationConfigurationKind.JavaScript };
       default:
-        return {configuration: IntegrationConfigurationKind.Dashboard};
+        return { configuration: IntegrationConfigurationKind.Dashboard };
     }
   }
 
@@ -96,6 +96,9 @@ export class ConfigHelper {
     const mergedUserConfig = this.getUserConfigForConfigIntegrationKind(
       configIntegrationKind, userConfig, serverConfig, isUsingSubscriptionWorkaround);
 
+    const receiveReceiptsEnable = typeof serverConfig.features.receive_receipts_enable !== "undefined" ?
+                                    serverConfig.features.receive_receipts_enable : true;
+
     return {
       appId: serverConfig.app_id,
       subdomain,
@@ -113,6 +116,7 @@ export class ConfigHelper {
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: mergedUserConfig,
       enableOnSession: serverConfig.features.enable_on_session || false,
+      receiveReceiptsEnable
     };
   }
 
