@@ -15,6 +15,8 @@ import MockNotification from '../../../support/mocks/MockNotification';
 import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
+import OneSignalApiSW from '../../../../src/OneSignalApiSW';
+import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -131,7 +133,7 @@ test('displayNotification - persistNotification - false', async t => {
 // End - displayNotification - persistNotification
 
 
-  /***************************************************
+ /***************************************************
  * onNotificationClicked()
  ****************************************************/
 async function onNotificationClickedEnvSetup() {
@@ -263,3 +265,62 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
 
   t.deepEqual(callOrder, ["notificationPut", "openWindow"]);
 });
+
+/***************************************************
+ * sendConfirmedDelivery() 
+ ****************************************************/
+
+ // HELPER: mocks the call to the notifications report_received endpoint
+ function mockNotificationPutCall(notificationId : any) {
+  return nock("https://onesignal.com")
+    .put(`/api/v1/notifications/${notificationId}/report_received`)
+    .reply(200, { success: true });
+ }
+
+ // HELPER: stubs the receive_receipts_enable of the ServerAppConfig object
+ function stubServerAppConfig(receiveReceiptsEnable : boolean) {
+  sandbox.stub(OneSignalApiSW, 'downloadServerAppConfig')
+  .resolves(TestEnvironment.getFakeServerAppConfig(
+    ConfigIntegrationKind.TypicalSite,
+    true,
+    { features : { receive_receipts_enable : receiveReceiptsEnable } }
+    ));
+ }
+
+ // HELPER: sets a fake subscription
+ async function fakeSetSubscription(){
+  const playerId = Random.getRandomUuid();
+  const subscription = new Subscription();
+  subscription.deviceId = playerId;
+  await Database.setSubscription(subscription);
+ }
+
+ test('sendConfirmedDelivery - notification is null - feature flag is true', async t => {
+   const notificationId = null;
+   const notificationPutCall = mockNotificationPutCall(notificationId);
+   stubServerAppConfig(true);
+   fakeSetSubscription();
+
+   await ServiceWorkerReal.sendConfirmedDelivery({ id: notificationId });
+   t.false(notificationPutCall.isDone());
+ });
+
+ test('sendConfirmedDelivery - notification is valid - feature flag is true', async t => {
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = mockNotificationPutCall(notificationId);
+  stubServerAppConfig(true);
+  fakeSetSubscription();
+
+  await ServiceWorkerReal.sendConfirmedDelivery({ id: notificationId });
+  t.true(notificationPutCall.isDone());
+ });
+
+ test('sendConfirmedDelivery - notification is valid - feature flag is false', async t => {
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = mockNotificationPutCall(notificationId);
+  stubServerAppConfig(false);
+  fakeSetSubscription();
+
+  await ServiceWorkerReal.sendConfirmedDelivery({ id: notificationId });
+  t.false(notificationPutCall.isDone());
+ });
