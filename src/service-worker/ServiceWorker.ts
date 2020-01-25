@@ -196,7 +196,6 @@ export class ServiceWorker {
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
-                      .then(() => ServiceWorker.updateBackupNotification(notif).catch(e => Log.error(e)))
                       .then(() => {
                         return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e))
                       })
@@ -503,22 +502,6 @@ export class ServiceWorker {
     }
 
     return clone;
-  }
-
-  /**
-   * Stores the most recent notification into IndexedDB so that it can be shown as a backup if a notification fails
-   * to be displayed. This is to avoid Chrome's forced "This site has been updated in the background" message. See
-   * this post for more details: http://stackoverflow.com/a/35045513/555547.
-   * This is called every time is a push message is received so that the most recent message can be used as the
-   * backup notification.
-   * @param notification The most recent notification as a structured notification object.
-   */
-  static async updateBackupNotification(notification): Promise<void> {
-    let isWelcomeNotification = notification.data && notification.data.__isOneSignalWelcomeNotification;
-    // Don't save the welcome notification, that just looks broken
-    if (isWelcomeNotification)
-      return;
-    await Database.put('Ids', {type: 'backupNotification', id: notification});
   }
 
   /**
