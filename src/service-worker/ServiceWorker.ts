@@ -287,10 +287,13 @@ export class ServiceWorker {
     const appId = await ServiceWorker.getAppId();
     const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
     const { deviceId } = await Database.getSubscription();
-    const hasRequiredParams = notification && notification.id && deviceId && appId;
+
+    // Decided to exclude deviceId from required params
+    // In rare case we don't have it we can still report as confirmed to backend to increment count
+    const hasRequiredParams = appId && notification && notification.id;
 
     if (!hasRequiredParams || !appConfig.receiveReceiptsEnable) {
-      return Promise.resolve(null);
+      return null;
     }
  
     // JSON.stringify() does not include undefined values
