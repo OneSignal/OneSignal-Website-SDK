@@ -7,7 +7,7 @@ import Database from '../../../../src/services/Database';
 import Context from '../../../../src/models/Context';
 import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 
-import { TestEnvironment, BrowserUserAgent, HttpHttpsEnvironment } from "../../../support/sdk/TestEnvironment";
+import { TestEnvironment, BrowserUserAgent } from "../../../support/sdk/TestEnvironment";
 import { setUserAgent } from '../../../support/tester/browser';
 import Random from '../../../support/tester/Random';
 import { MockServiceWorkerGlobalScope } from '../../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope';
@@ -25,12 +25,12 @@ let sandbox: SinonSandbox;
 
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
-
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  await TestEnvironment.stubServiceWorkerEnvironment();
+  
+  await TestEnvironment.initializeForServiceWorker();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
+  await Database.setAppConfig(appConfig);
+
   OneSignal.context = new Context(appConfig);
 });
 
@@ -196,12 +196,6 @@ test('displayNotification - persistNotification - false', async t => {
  * onNotificationClicked()
  ****************************************************/
 
-async function setupFakeAppId(): Promise<string> {
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  await Database.setAppConfig(appConfig);
-  return appConfig.appId;
-}
-
 async function setupFakePlayerId(): Promise<string> {
   const subscription: Subscription = new Subscription();
   subscription.deviceId = Random.getRandomUuid();
@@ -216,7 +210,6 @@ function mockNotificationNotificationEventInit(id: string): NotificationEventIni
 }
 
 test('onNotificationClicked - notification click sends PUT api/v1/notification', async t => {
-  const appId = await setupFakeAppId();
   const playerId = await setupFakePlayerId();
   const notificationId = Random.getRandomUuid();
 
@@ -224,7 +217,7 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
     .put(`/api/v1/notifications/${notificationId}`)
     .reply(200, (_uri: string, requestBody: string) => {
       t.deepEqual(JSON.parse(requestBody), {
-        app_id: appId,
+        app_id: OneSignal.context.appConfig.appId,
         opened: true,
         player_id: playerId
       });
@@ -238,6 +231,12 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
 });
 
 test('onNotificationClicked - notification click count omitted when appId is null', async t => {
+  await TestEnvironment.initializeForServiceWorker();
+
+  // Remove AppId to test it being msising
+  const appConfig = TestEnvironment.getFakeAppConfig();
+  appConfig.appId = "";
+
   const notificationId = Random.getRandomUuid();
 
   const notificationPutCall = nock("https://onesignal.com")
@@ -253,7 +252,9 @@ test('onNotificationClicked - notification click count omitted when appId is nul
 function addNotificationPutNock(notificationId: string) {
   nock("https://onesignal.com")
     .put(`/api/v1/notifications/${notificationId}`)
-    .reply(200);
+    .reply(200, (_uri: string, _requestBody: string) => {
+      return { success: true };
+    });
 }
 
 test('onNotificationClicked - sends webhook', async t => {
@@ -290,8 +291,6 @@ test('onNotificationClicked - openWindow', async t => {
    before the onNotificationClicked function finishes.
 */
 test('onNotificationClicked - notification PUT Before openWindow', async t => {
-  await setupFakeAppId();
-
   const notificationId = Random.getRandomUuid();
 
   const callOrder: string[] = [];
