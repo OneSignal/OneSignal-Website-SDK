@@ -24,6 +24,7 @@ let sandbox: SinonSandbox;
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
 
+  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
   await TestEnvironment.stubServiceWorkerEnvironment();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -115,15 +116,11 @@ test('onPushReceived - Ensure display when only required values', async t => {
 /***************************************************
  * displayNotification()
  ****************************************************/
-async function displayNotificationEnvSetup() {
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  await TestEnvironment.stubServiceWorkerEnvironment();
-  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
-}
+
   
 // Start - displayNotification - persistNotification
 test('displayNotification - persistNotification - true', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
 
@@ -133,7 +130,7 @@ test('displayNotification - persistNotification - true', async t => {
 });
 
 test('displayNotification - persistNotification - undefined', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
   await ServiceWorkerReal.displayNotification({});
@@ -141,7 +138,7 @@ test('displayNotification - persistNotification - undefined', async t => {
 });
 
 test('displayNotification - persistNotification - force', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   // "force isn't set any more but for legacy users it still results in true
   await Database.put('Options', { key: 'persistNotification', value: "force" });
@@ -152,7 +149,6 @@ test('displayNotification - persistNotification - force', async t => {
 });
 
 test('displayNotification - persistNotification - true - Chrome macOS 10.15', async t => {
-  await displayNotificationEnvSetup();
   setUserAgent(BrowserUserAgent.ChromeMac10_15);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
@@ -163,7 +159,6 @@ test('displayNotification - persistNotification - true - Chrome macOS 10.15', as
 });
 
 test('displayNotification - persistNotification - true - Chrome macOS pre-10.15', async t => {
-  await displayNotificationEnvSetup();
   setUserAgent(BrowserUserAgent.ChromeMacSupported);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
@@ -174,7 +169,6 @@ test('displayNotification - persistNotification - true - Chrome macOS pre-10.15'
 });
 
 test('displayNotification - persistNotification - true - Opera macOS 10.14', async t => {
-  await displayNotificationEnvSetup();
   setUserAgent(BrowserUserAgent.OperaMac10_14);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
@@ -185,7 +179,7 @@ test('displayNotification - persistNotification - true - Opera macOS 10.14', asy
 });
 
 test('displayNotification - persistNotification - false', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   await Database.put('Options', { key: 'persistNotification', value: false });
 
@@ -199,10 +193,6 @@ test('displayNotification - persistNotification - false', async t => {
   /***************************************************
  * onNotificationClicked()
  ****************************************************/
-async function onNotificationClickedEnvSetup() {
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  await TestEnvironment.stubServiceWorkerEnvironment();
-}
 
 async function setupFakeAppId(): Promise<string> {
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -224,8 +214,6 @@ function mockNotificationNotificationEventInit(id: string): NotificationEventIni
 }
 
 test('onNotificationClicked - notification click sends PUT api/v1/notification', async t => {
-  await onNotificationClickedEnvSetup();
-
   const appId = await setupFakeAppId();
   const playerId = await setupFakePlayerId();
   const notificationId = Random.getRandomUuid();
@@ -248,8 +236,6 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
 });
 
 test('onNotificationClicked - notification click count omitted when appId is null', async t => {
-  await onNotificationClickedEnvSetup();
-
   const notificationId = Random.getRandomUuid();
 
   const notificationPutCall = nock("https://onesignal.com")
@@ -269,8 +255,6 @@ function addNotificationPutNock(notificationId: string) {
 }
 
 test('onNotificationClicked - sends webhook', async t => {
-  await onNotificationClickedEnvSetup();
-
   const notificationId = Random.getRandomUuid();
   addNotificationPutNock(notificationId);
 
@@ -285,8 +269,6 @@ test('onNotificationClicked - sends webhook', async t => {
 });
 
 test('onNotificationClicked - openWindow', async t => {
-  await onNotificationClickedEnvSetup();
-
   const notificationId = Random.getRandomUuid();
   addNotificationPutNock(notificationId);
 
@@ -306,7 +288,6 @@ test('onNotificationClicked - openWindow', async t => {
    before the onNotificationClicked function finishes.
 */
 test('onNotificationClicked - notification PUT Before openWindow', async t => {
-  await onNotificationClickedEnvSetup();
   await setupFakeAppId();
 
   const notificationId = Random.getRandomUuid();
