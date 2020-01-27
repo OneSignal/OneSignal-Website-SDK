@@ -1,11 +1,11 @@
-import test from 'ava';
-import sinon, { SinonSandbox, SinonStub } from 'sinon';
+import test, { TestContext } from 'ava';
+import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
 import OneSignal from '../../../../src/OneSignal';
 import Database from '../../../../src/services/Database';
 import Context from '../../../../src/models/Context';
-import { ServiceWorker as ServiceWorkerReal } from "../../../../src/service-worker/ServiceWorker";
+import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 
 import { TestEnvironment, BrowserUserAgent, HttpHttpsEnvironment } from "../../../support/sdk/TestEnvironment";
 import { setUserAgent } from '../../../support/tester/browser';
@@ -17,6 +17,7 @@ import { MockPushEvent } from '../../../support/mocks/service-workers/models/Moc
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
 import OneSignalApiSW from '../../../../src/OneSignalApiSW';
 import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
+import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -25,6 +26,7 @@ let sandbox: SinonSandbox;
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
 
+  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
   await TestEnvironment.stubServiceWorkerEnvironment();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -39,95 +41,152 @@ test.afterEach(function () {
 
 /***************************************************
  * onPushReceived() 
- ****************************************************/
+****************************************************/
 
-test('onPushReceived - Ensure undefined payload does not throw', async t => {
+function mockOneSignalPushEvent(data: object): MockPushEvent {
+  const payloadTemplate = {
+    custom: {
+      i: Random.getRandomUuid()
+    }
+  };
+
+  const payload = { ...payloadTemplate, ...data };
+  return new MockPushEvent(new MockPushMessageData(payload));
+}
+
+function assertValidNotificationShown(t: TestContext, spy: SinonSpy): void {
+  // Only one should show
+  t.is(spy.callCount, 1);
+
+  const notifTitle: string = spy.lastCall.args[0];
+  const options: NotificationOptions | undefined = spy.lastCall.args[1];
+  
+  // Must have a title
+  t.truthy(notifTitle);
+
+  // Must have options set
+  if (typeof options === "undefined") {
+    t.fail("assertValidNotificationShown - Missing options");
+    return;
+  }
+
+  // data.id must be a valid UUID (this is the OneSignal Notification id)
+  t.true(OneSignalUtils.isValidUuid(options.data.id));
+}
+
+test('onPushReceived - Ensure undefined payload does not show', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
   const mockPushEvent = new MockPushEvent(new MockPushMessageData());
-  await ServiceWorkerReal.onPushReceived(mockPushEvent);
-  t.pass();
+  OSServiceWorker.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  t.true(showNotificationSpy.notCalled);
 });
 
-/* MockPushSubscriptionChangeEvent */
+test('onPushReceived - Ensure empty payload does not show', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
+  const mockPushEvent = new MockPushEvent(new MockPushMessageData({}));
+  OSServiceWorker.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  t.true(showNotificationSpy.notCalled);
+});
+
+test('onPushReceived - Ensure non-OneSignal payload does not show', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
+  const mockPushEvent = new MockPushEvent(new MockPushMessageData({ title: "Test Title" }));
+  OSServiceWorker.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  t.true(showNotificationSpy.notCalled);
+});
+
+test('onPushReceived - Ensure display when only required values', async t => {
+  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
+
+  const mockPushEvent = mockOneSignalPushEvent({ title: "Test Title" });
+  OSServiceWorker.onPushReceived(mockPushEvent);
+  await mockPushEvent.lastWaitUntilPromise;
+
+  assertValidNotificationShown(t, showNotificationSpy);
+  t.is(showNotificationSpy.lastCall.args[0], "Test Title");
+});
 
 /***************************************************
  * displayNotification()
  ****************************************************/
-async function displayNotificationEnvSetup() {
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  await TestEnvironment.stubServiceWorkerEnvironment();
-  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
-}
+
   
 // Start - displayNotification - persistNotification
 test('displayNotification - persistNotification - true', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
 test('displayNotification - persistNotification - undefined', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
 test('displayNotification - persistNotification - force', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   // "force isn't set any more but for legacy users it still results in true
   await Database.put('Options', { key: 'persistNotification', value: "force" });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
 test('displayNotification - persistNotification - true - Chrome macOS 10.15', async t => {
-  await displayNotificationEnvSetup();
   setUserAgent(BrowserUserAgent.ChromeMac10_15);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
 });
 
 test('displayNotification - persistNotification - true - Chrome macOS pre-10.15', async t => {
-  await displayNotificationEnvSetup();
   setUserAgent(BrowserUserAgent.ChromeMacSupported);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
 test('displayNotification - persistNotification - true - Opera macOS 10.14', async t => {
-  await displayNotificationEnvSetup();
   setUserAgent(BrowserUserAgent.OperaMac10_14);
 
   await Database.put('Options', { key: 'persistNotification', value: true });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
 });
 
 test('displayNotification - persistNotification - false', async t => {
-  await displayNotificationEnvSetup();
+  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 
   await Database.put('Options', { key: 'persistNotification', value: false });
 
   const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await ServiceWorkerReal.displayNotification({});
+  await OSServiceWorker.displayNotification({});
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
 });
 // End - displayNotification - persistNotification
@@ -136,10 +195,6 @@ test('displayNotification - persistNotification - false', async t => {
  /***************************************************
  * onNotificationClicked()
  ****************************************************/
-async function onNotificationClickedEnvSetup() {
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  await TestEnvironment.stubServiceWorkerEnvironment();
-}
 
 async function setupFakeAppId(): Promise<string> {
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -161,8 +216,6 @@ function mockNotificationNotificationEventInit(id: string): NotificationEventIni
 }
 
 test('onNotificationClicked - notification click sends PUT api/v1/notification', async t => {
-  await onNotificationClickedEnvSetup();
-
   const appId = await setupFakeAppId();
   const playerId = await setupFakePlayerId();
   const notificationId = Random.getRandomUuid();
@@ -179,14 +232,12 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
     });
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
-  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+  await OSServiceWorker.onNotificationClicked(notificationEvent);
 
   t.true(notificationPutCall.isDone());
 });
 
 test('onNotificationClicked - notification click count omitted when appId is null', async t => {
-  await onNotificationClickedEnvSetup();
-
   const notificationId = Random.getRandomUuid();
 
   const notificationPutCall = nock("https://onesignal.com")
@@ -194,7 +245,7 @@ test('onNotificationClicked - notification click count omitted when appId is nul
     .reply(200);
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
-  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+  await OSServiceWorker.onNotificationClicked(notificationEvent);
 
   t.false(notificationPutCall.isDone());
 });
@@ -206,15 +257,13 @@ function addNotificationPutNock(notificationId: string) {
 }
 
 test('onNotificationClicked - sends webhook', async t => {
-  await onNotificationClickedEnvSetup();
-
   const notificationId = Random.getRandomUuid();
   addNotificationPutNock(notificationId);
 
-  const executeWebhooksSpy = sandbox.stub(ServiceWorkerReal, "executeWebhooks");
+  const executeWebhooksSpy = sandbox.stub(OSServiceWorker, "executeWebhooks");
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
-  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+  await OSServiceWorker.onNotificationClicked(notificationEvent);
   t.true(executeWebhooksSpy.calledWithExactly(
     'notification.clicked',
     notificationEvent.notification.data
@@ -222,15 +271,13 @@ test('onNotificationClicked - sends webhook', async t => {
 });
 
 test('onNotificationClicked - openWindow', async t => {
-  await onNotificationClickedEnvSetup();
-
   const notificationId = Random.getRandomUuid();
   addNotificationPutNock(notificationId);
 
   const openWindowMock = sandbox.stub(self.clients, "openWindow");
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
-  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+  await OSServiceWorker.onNotificationClicked(notificationEvent);
 
   t.true(openWindowMock.calledWithExactly('https://site.com'));
 });
@@ -243,7 +290,6 @@ test('onNotificationClicked - openWindow', async t => {
    before the onNotificationClicked function finishes.
 */
 test('onNotificationClicked - notification PUT Before openWindow', async t => {
-  await onNotificationClickedEnvSetup();
   await setupFakeAppId();
 
   const notificationId = Random.getRandomUuid();
@@ -261,7 +307,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
     });
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
-  await ServiceWorkerReal.onNotificationClicked(notificationEvent);
+  await OSServiceWorker.onNotificationClicked(notificationEvent);
 
   t.deepEqual(callOrder, ["notificationPut", "openWindow"]);
 });
