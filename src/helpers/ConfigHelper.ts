@@ -73,9 +73,9 @@ export class ConfigHelper {
     switch (integration) {
       case ConfigIntegrationKind.Custom:
       case ConfigIntegrationKind.WordPress:
-        return {configuration: IntegrationConfigurationKind.JavaScript};
+        return { configuration: IntegrationConfigurationKind.JavaScript };
       default:
-        return {configuration: IntegrationConfigurationKind.Dashboard};
+        return { configuration: IntegrationConfigurationKind.Dashboard };
     }
   }
 
@@ -113,6 +113,8 @@ export class ConfigHelper {
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: mergedUserConfig,
       enableOnSession: serverConfig.features.enable_on_session || false,
+      // default confirmed deliveries feature to off
+      receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false
     };
   }
 

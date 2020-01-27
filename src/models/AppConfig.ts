@@ -49,6 +49,11 @@ export interface AppConfig {
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
+
+  /**
+   * Describes whether Confirmed Delivery should be active
+   */
+  receiveReceiptsEnable?: boolean;
 }
 
 export enum ConfigIntegrationKind {
@@ -312,6 +317,7 @@ export interface ServerAppConfig {
       require_auth: boolean;
     };
     enable_on_session?: boolean;
+    receive_receipts_enable?: boolean;
   };
   config: {
     /**

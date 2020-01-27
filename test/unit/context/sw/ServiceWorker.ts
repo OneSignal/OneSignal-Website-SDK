@@ -7,7 +7,7 @@ import Database from '../../../../src/services/Database';
 import Context from '../../../../src/models/Context';
 import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 
-import { TestEnvironment, BrowserUserAgent, HttpHttpsEnvironment } from "../../../support/sdk/TestEnvironment";
+import { TestEnvironment, BrowserUserAgent } from "../../../support/sdk/TestEnvironment";
 import { setUserAgent } from '../../../support/tester/browser';
 import Random from '../../../support/tester/Random';
 import { MockServiceWorkerGlobalScope } from '../../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope';
@@ -15,6 +15,8 @@ import MockNotification from '../../../support/mocks/MockNotification';
 import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
+import OneSignalApiSW from '../../../../src/OneSignalApiSW';
+import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 
 declare var self: MockServiceWorkerGlobalScope;
@@ -23,12 +25,12 @@ let sandbox: SinonSandbox;
 
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
-
-  await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-  await TestEnvironment.stubServiceWorkerEnvironment();
+  
+  await TestEnvironment.initializeForServiceWorker();
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  appConfig.appId = Random.getRandomUuid();
+  await Database.setAppConfig(appConfig);
+
   OneSignal.context = new Context(appConfig);
 });
 
@@ -190,15 +192,9 @@ test('displayNotification - persistNotification - false', async t => {
 // End - displayNotification - persistNotification
 
 
-  /***************************************************
+ /***************************************************
  * onNotificationClicked()
  ****************************************************/
-
-async function setupFakeAppId(): Promise<string> {
-  const appConfig = TestEnvironment.getFakeAppConfig();
-  await Database.setAppConfig(appConfig);
-  return appConfig.appId;
-}
 
 async function setupFakePlayerId(): Promise<string> {
   const subscription: Subscription = new Subscription();
@@ -214,7 +210,6 @@ function mockNotificationNotificationEventInit(id: string): NotificationEventIni
 }
 
 test('onNotificationClicked - notification click sends PUT api/v1/notification', async t => {
-  const appId = await setupFakeAppId();
   const playerId = await setupFakePlayerId();
   const notificationId = Random.getRandomUuid();
 
@@ -222,7 +217,7 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
     .put(`/api/v1/notifications/${notificationId}`)
     .reply(200, (_uri: string, requestBody: string) => {
       t.deepEqual(JSON.parse(requestBody), {
-        app_id: appId,
+        app_id: OneSignal.context.appConfig.appId,
         opened: true,
         player_id: playerId
       });
@@ -236,6 +231,12 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
 });
 
 test('onNotificationClicked - notification click count omitted when appId is null', async t => {
+  await TestEnvironment.initializeForServiceWorker();
+
+  // Remove AppId to test it being msising
+  const appConfig = TestEnvironment.getFakeAppConfig();
+  appConfig.appId = "";
+
   const notificationId = Random.getRandomUuid();
 
   const notificationPutCall = nock("https://onesignal.com")
@@ -251,7 +252,9 @@ test('onNotificationClicked - notification click count omitted when appId is nul
 function addNotificationPutNock(notificationId: string) {
   nock("https://onesignal.com")
     .put(`/api/v1/notifications/${notificationId}`)
-    .reply(200);
+    .reply(200, (_uri: string, _requestBody: string) => {
+      return { success: true };
+    });
 }
 
 test('onNotificationClicked - sends webhook', async t => {
@@ -288,8 +291,6 @@ test('onNotificationClicked - openWindow', async t => {
    before the onNotificationClicked function finishes.
 */
 test('onNotificationClicked - notification PUT Before openWindow', async t => {
-  await setupFakeAppId();
-
   const notificationId = Random.getRandomUuid();
 
   const callOrder: string[] = [];
@@ -309,3 +310,62 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
 
   t.deepEqual(callOrder, ["notificationPut", "openWindow"]);
 });
+
+/***************************************************
+ * sendConfirmedDelivery() 
+ ****************************************************/
+
+ // HELPER: mocks the call to the notifications report_received endpoint
+ function mockNotificationPutCall(notificationId : any) {
+  return nock("https://onesignal.com")
+    .put(`/api/v1/notifications/${notificationId}/report_received`)
+    .reply(200, { success: true });
+ }
+
+ // HELPER: stubs the receive_receipts_enable of the ServerAppConfig object
+ function stubServerAppConfig(receiveReceiptsEnable : boolean) {
+  sandbox.stub(OneSignalApiSW, 'downloadServerAppConfig')
+  .resolves(TestEnvironment.getFakeServerAppConfig(
+    ConfigIntegrationKind.TypicalSite,
+    true,
+    { features : { receive_receipts_enable : receiveReceiptsEnable } }
+    ));
+ }
+
+ // HELPER: sets a fake subscription
+ async function fakeSetSubscription(){
+  const playerId = Random.getRandomUuid();
+  const subscription = new Subscription();
+  subscription.deviceId = playerId;
+  await Database.setSubscription(subscription);
+ }
+
+ test('sendConfirmedDelivery - notification is null - feature flag is true', async t => {
+   const notificationId = null;
+   const notificationPutCall = mockNotificationPutCall(notificationId);
+   stubServerAppConfig(true);
+   fakeSetSubscription();
+
+   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+   t.false(notificationPutCall.isDone());
+ });
+
+ test('sendConfirmedDelivery - notification is valid - feature flag is true', async t => {
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = mockNotificationPutCall(notificationId);
+  stubServerAppConfig(true);
+  fakeSetSubscription();
+
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+  t.true(notificationPutCall.isDone());
+ });
+
+ test('sendConfirmedDelivery - notification is valid - feature flag is false', async t => {
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = mockNotificationPutCall(notificationId);
+  stubServerAppConfig(false);
+  fakeSetSubscription();
+
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+  t.false(notificationPutCall.isDone());
+ });
