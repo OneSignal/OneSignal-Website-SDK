@@ -347,7 +347,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
    stubServerAppConfig(true);
    fakeSetSubscription();
 
-   await ServiceWorkerReal.sendConfirmedDelivery({ id: notificationId });
+   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
    t.false(notificationPutCall.isDone());
  });
 
@@ -357,7 +357,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   stubServerAppConfig(true);
   fakeSetSubscription();
 
-  await ServiceWorkerReal.sendConfirmedDelivery({ id: notificationId });
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
   t.true(notificationPutCall.isDone());
  });
 
@@ -367,6 +367,6 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   stubServerAppConfig(false);
   fakeSetSubscription();
 
-  await ServiceWorkerReal.sendConfirmedDelivery({ id: notificationId });
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
   t.false(notificationPutCall.isDone());
  });
