@@ -258,9 +258,9 @@ export default class Database {
 
    async setServiceWorkerState(state: ServiceWorkerState) {
     if (state.workerVersion)
-      await this.put("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion});
+      await this.put("Ids", { type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion });
     if (state.updaterWorkerVersion)
-      await this.put("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: state.updaterWorkerVersion});
+      await this.put("Ids", { type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: state.updaterWorkerVersion });
   }
 
   async getSubscription(): Promise<Subscription> {
