@@ -38,6 +38,6 @@
       "dom.iterable",
       "scripthost"
     ],
-    "target": "ESNext"
+    "target": "ES2017"
   }
 }

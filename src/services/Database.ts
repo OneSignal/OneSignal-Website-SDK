@@ -253,17 +253,14 @@ export default class Database {
     const state = new ServiceWorkerState();
     state.workerVersion = await this.get<number>("Ids", "WORKER1_ONE_SIGNAL_SW_VERSION");
     state.updaterWorkerVersion = await this.get<number>("Ids", "WORKER2_ONE_SIGNAL_SW_VERSION");
-    state.backupNotification = await this.get<Notification>("Ids", "backupNotification");
     return state;
   }
 
    async setServiceWorkerState(state: ServiceWorkerState) {
     if (state.workerVersion)
-      await this.put("Ids", {type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion});
+      await this.put("Ids", { type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion });
     if (state.updaterWorkerVersion)
-      await this.put("Ids", {type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: state.updaterWorkerVersion});
-    if (state.backupNotification)
-      await this.put("Ids", {type: "backupNotification", id: state.backupNotification});
+      await this.put("Ids", { type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: state.updaterWorkerVersion });
   }
 
   async getSubscription(): Promise<Subscription> {
