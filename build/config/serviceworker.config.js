@@ -23,7 +23,7 @@ async function getWebpackPlugins() {
       __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
       __API_TYPE__: JSON.stringify(apiEnv),
       __API_ORIGIN__: JSON.stringify(apiOrigin),
-      __IS_HTTPS__: isHttps == "true",
+      __IS_HTTPS__: isHttps === "true",
       __TEST__: !!tests,
       __VERSION__: sdkVersion,
       __LOGGING__: env === "development",
