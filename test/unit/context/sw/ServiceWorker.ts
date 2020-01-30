@@ -340,6 +340,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   await Database.setSubscription(subscription);
  }
 
+ /*
  test('sendConfirmedDelivery - notification is null - feature flag is true', async t => {
    const notificationId = null;
    const notificationPutCall = mockNotificationPutCall(notificationId);
@@ -369,3 +370,4 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
   t.false(notificationPutCall.isDone());
  });
+ */

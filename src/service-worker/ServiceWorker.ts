@@ -274,7 +274,9 @@ export class ServiceWorker {
    */
   static async sendConfirmedDelivery(notification: any): Promise<Response | null> {
     const appId = await ServiceWorker.getAppId();
-    const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
+    // const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
+    // Disable confirmed delivery, for now.
+    const appConfig = { receiveReceiptsEnable: false };
     const { deviceId } = await Database.getSubscription();
 
     // Decided to exclude deviceId from required params
