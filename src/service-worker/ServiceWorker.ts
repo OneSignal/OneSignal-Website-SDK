@@ -346,6 +346,7 @@ export class ServiceWorker {
       content: rawNotification.alert,
       data: rawNotification.custom.a,
       url: rawNotification.custom.u,
+      rr: rawNotification.custom.rr, // received receipts
       icon: rawNotification.icon,
       image: rawNotification.image,
       tag: rawNotification.tag,
