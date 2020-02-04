@@ -15,8 +15,6 @@ import MockNotification from '../../../support/mocks/MockNotification';
 import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
-import OneSignalApiSW from '../../../../src/OneSignalApiSW';
-import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 
 declare var self: MockServiceWorkerGlobalScope;
@@ -316,20 +314,10 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
  ****************************************************/
 
  // HELPER: mocks the call to the notifications report_received endpoint
- function mockNotificationPutCall(notificationId : any) {
+ function mockNotificationPutCall(notificationId: string | null) {
   return nock("https://onesignal.com")
     .put(`/api/v1/notifications/${notificationId}/report_received`)
     .reply(200, { success: true });
- }
-
- // HELPER: stubs the receive_receipts_enable of the ServerAppConfig object
- function stubServerAppConfig(receiveReceiptsEnable : boolean) {
-  sandbox.stub(OneSignalApiSW, 'downloadServerAppConfig')
-  .resolves(TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.TypicalSite,
-    true,
-    { features : { receive_receipts_enable : receiveReceiptsEnable } }
-    ));
  }
 
  // HELPER: sets a fake subscription
@@ -340,32 +328,47 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   await Database.setSubscription(subscription);
  }
 
- test('sendConfirmedDelivery - notification is null - feature flag is true', async t => {
+ test('sendConfirmedDelivery - notification is null - feature flag is y', async t => {
    const notificationId = null;
    const notificationPutCall = mockNotificationPutCall(notificationId);
-   stubServerAppConfig(true);
-   fakeSetSubscription();
+   await fakeSetSubscription();
 
-   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
    t.false(notificationPutCall.isDone());
  });
 
- test('sendConfirmedDelivery - notification is valid - feature flag is true', async t => {
+ test('sendConfirmedDelivery - notification is valid - feature flag is y', async t => {
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = mockNotificationPutCall(notificationId);
-  stubServerAppConfig(true);
-  fakeSetSubscription();
+  await fakeSetSubscription();
 
-  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
   t.true(notificationPutCall.isDone());
  });
 
- test('sendConfirmedDelivery - notification is valid - feature flag is false', async t => {
+ test('sendConfirmedDelivery - notification is valid - feature flag is n', async t => {
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = mockNotificationPutCall(notificationId);
-  stubServerAppConfig(false);
-  fakeSetSubscription();
+  await fakeSetSubscription();
+
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "n" });
+  t.false(notificationPutCall.isDone());
+ });
+
+ test('sendConfirmedDelivery - notification is valid - feature flag is undefined', async t => {
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = mockNotificationPutCall(notificationId);
+  await fakeSetSubscription();
 
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
+  t.false(notificationPutCall.isDone());
+ });
+
+ test('sendConfirmedDelivery - notification is valid - feature flag is null', async t => {
+  const notificationId = Random.getRandomUuid();
+  const notificationPutCall = mockNotificationPutCall(notificationId);
+  await fakeSetSubscription();
+
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: null });
   t.false(notificationPutCall.isDone());
  });
