@@ -8,7 +8,6 @@ import {
 import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
 import OneSignalApiBase from "../../../src/OneSignalApiBase";
-import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import {
   stubMessageChannel, mockIframeMessaging, mockWebPushAnalytics, InitTestHelper
 } from '../../support/tester/utils';
@@ -19,6 +18,7 @@ import { ServiceWorkerManager } from "../../../src/managers/ServiceWorkerManager
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import { UpdateManager } from '../../../src/managers/UpdateManager';
 import { PageViewManager } from "../../../src/managers/PageViewManager";
+import { SessionManager } from "../../../src/managers/SessionManager";
 import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
 import InitHelper from "../../../src/helpers/InitHelper";
 import {
@@ -33,7 +33,8 @@ const initTestHelper = new InitTestHelper(sinonSandbox);
 const playerId = Random.getRandomUuid();
 const appId = Random.getRandomUuid();
 
-test.beforeEach(function () {
+test.beforeEach(async () => {
+  // tests use customizable beforeEach method defined below. add logic there if needed.
   mockWebPushAnalytics();
 });
 
@@ -49,16 +50,15 @@ test.afterEach(function (_t: TestContext) {
  * HTTP/HTTPS
  * 1. user not subscribed and not opted out
  *    1. first page view
- *     + 1. autoPrompt -> click allow -> player create
+ *     + 1. autoPrompt -> click allow -> player create and upsert session
  *     + 2. autoPrompt -> click dismiss -> no requests
- *     + 3. autoResubscribe and permissions granted -> player create
+ *     + 3. autoResubscribe and permissions granted -> player create and upsert session
  *     + 4. autoResubscribe and permissions default or blocked -> no requests
  *     + 5. no autoResubscribe and no autoPrompt -> no requests
  *    2. second page view - TODO
  * 2. user opted out
- *     + 1. new on session flag enabled and first page view -> on session
- *     + 2. no flag and first page view -> no requests
- *     + 3. second page view -> no requests
+ *     + 1. no flag and first page view -> no requests
+ *     + 2. second page view -> no requests
  * 3. user subscribed
  *     + 1. expiring subscription -> player update
  *     + 2. not-expiring subscription and first page view -> on session
@@ -79,15 +79,15 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
   
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-        t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
+        t.is(stubs.onSessionStub.callCount, 0);
         resolve();
       });
     });
 
     const subscriptionPromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
         inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
         resolve();
@@ -160,7 +160,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
 
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
-        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
         inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
         resolve();
@@ -169,7 +169,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
 
     const registrationPromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.REGISTERED, () => {
-        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
         resolve();
       });
@@ -253,7 +253,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     t.is(subscribeSpy.callCount, 0);
 });
 
-test.serial(`HTTPS: User opted out => first page view => onSession flag is on => sends on session`, async t => {
+test.serial(`HTTPS: User opted out => first page view => onSession flag is on => do not send on session`, async t => {
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
@@ -269,7 +269,6 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is on =>
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
-        inspectOnSessionRequest(t, stubs.onSessionStub);
         t.is(stubs.createPlayerPostStub.callCount, 0);
         resolve();
       });
@@ -389,7 +388,6 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
       // sends player update which actually calls on_session if this is the first call we're performing.
       t.is(playerUpdateStub.callCount, 1);
       t.is(stubs.onSessionStub.callCount, 1);
-      inspectOnSessionRequest(t, stubs.onSessionStub);
       t.is(stubs.createPlayerPostStub.callCount, 0);
       resolve();
     });
@@ -425,7 +423,6 @@ test.serial(`HTTPS: User subscribed => first page view => sends on session`, asy
   const initializePromise = new Promise((resolve) => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 1);
-      inspectOnSessionRequest(t, stubs.onSessionStub);
       t.is(stubs.createPlayerPostStub.callCount, 0);
       resolve();
     });
@@ -468,7 +465,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
 
     const subscriptionPromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
-        t.is(stubs.onSessionStub.callCount, 0);
+        t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
         inspectPushRecordCreationRequest(t, stubs.createPlayerPostStub);
         resolve();
@@ -620,7 +617,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => n
     t.is(subscribeSpy.callCount, 0);
 });
 
-test.serial(`HTTP: User opted out => first page view => onSession flag is on => sends on session`, async t => {
+test.serial(`HTTP: User opted out => first page view => onSession flag is on => send on session`, async t => {
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
@@ -636,7 +633,6 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is on => 
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
-        inspectOnSessionRequest(t, stubs.onSessionStub);
         t.is(stubs.createPlayerPostStub.callCount, 0);
         resolve();
       });
@@ -787,7 +783,6 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
   const initializePromise = new Promise((resolve) => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 1);
-      inspectOnSessionRequest(t, stubs.onSessionStub);
       t.is(stubs.createPlayerPostStub.callCount, 0);
       resolve();
     });
@@ -823,8 +818,8 @@ async function beforeTest(
 
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
     .resolves({success: true, id: playerId});
-  const onSessionStub = sinonSandbox.stub(OneSignalApiShared, "updateUserSession")
-    .resolves({success: true, id: playerId});
+  const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
+  // const onSessionStub = sinonSandbox.stub(OneSignal.context.sessionManager, "upsertSession").resolves();
 
   sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
   sinonSandbox.stub(ServiceWorkerManager.prototype, "installWorker").resolves();
@@ -880,24 +875,5 @@ async function inspectPushRecordCreationRequest(t: TestContext, requestStub: Sin
   const data: any = requestStub.getCall(0).args[1];
   anyValues.forEach(valueKey => {
     t.not(data[valueKey], undefined, `player create: ${valueKey} is undefined! => data: ${JSON.stringify(data)}`);
-  });
-}
-
-async function inspectOnSessionRequest(t: TestContext, requestStub: SinonStub) {
-  // Device record is serialized inside of `updateUserSession`. Checking original DeviceRecord properties.
-  const anyValues = [
-    "deliveryPlatform",
-    "language",
-    "timezone",
-    "browserVersion",
-    "sdkVersion",
-    "subscriptionState",
-    "deviceModel",
-  ];
-  t.is(requestStub.callCount, 1);
-  t.not(requestStub.getCall(0), null);
-  const data: any = requestStub.getCall(0).args[1];
-  anyValues.forEach(valueKey => {
-    t.not(data[valueKey], undefined, `on_session: ${valueKey} is undefined! => data: ${JSON.stringify(data)}`);
   });
 }
