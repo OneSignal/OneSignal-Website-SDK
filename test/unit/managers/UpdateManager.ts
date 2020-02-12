@@ -110,28 +110,29 @@ test("sendOnSessionUpdate triggers on_session for existing subscribed user if ha
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), true);
 });
 
-test("on_session saves new player id if returned from onesignal.com", async t => {
-  // 1. Setup existing player id in indexDB
-  const playerId = Random.getRandomUuid();
-  const subscription = new Subscription();
-  subscription.deviceId = playerId;
-  await Database.setSubscription(subscription);
+// TODO: needs to be moved into ServiceWorkerHelper tests
+// test("on_session saves new player id if returned from onesignal.com", async t => {
+//   // 1. Setup existing player id in indexDB
+//   const playerId = Random.getRandomUuid();
+//   const subscription = new Subscription();
+//   subscription.deviceId = playerId;
+//   await Database.setSubscription(subscription);
 
-  // 2. Mock on_session endpoint to give a new player_id
-  const newPlayerId = Random.getRandomUuid();
-  nock('https://onesignal.com')
-   .post(`/api/v1/players/${playerId}/on_session`)
-   .reply(200, { success: true, id: newPlayerId });
+//   // 2. Mock on_session endpoint to give a new player_id
+//   const newPlayerId = Random.getRandomUuid();
+//   nock('https://onesignal.com')
+//    .post(`/api/v1/players/${playerId}/on_session`)
+//    .reply(200, { success: true, id: newPlayerId });
 
-  // 3. Make on_session call
-  sandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(true);
-  sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
-  await OneSignal.context.updateManager.sendOnSessionUpdate();
+//   // 3. Make on_session call
+//   sandbox.stub(OneSignal.context.sessionManager, "isFirstPageView").returns(true);
+//   sandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
+//   await OneSignal.context.updateManager.sendOnSessionUpdate();
 
-  // 4. Ensure we have the new playe_id saved in indexDB
-  const newSubscription = await Database.getSubscription();
-  t.is(newSubscription.deviceId, newPlayerId);
-});
+//   // 4. Ensure we have the new playe_id saved in indexDB
+//   const newSubscription = await Database.getSubscription();
+//   t.is(newSubscription.deviceId, newPlayerId);
+// });
 
 test("sendOnSessionUpdate triggers on_session for existing unsubscribed user if hasn't done so already and if enableOnSession flag is present", async t => {
   sandbox.stub(Database, "getSubscription").resolves({ deviceId: Random.getRandomUuid() });

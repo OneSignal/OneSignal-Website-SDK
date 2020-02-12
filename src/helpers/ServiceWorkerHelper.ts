@@ -74,7 +74,15 @@ export default class ServiceWorkerHelper {
        * since player#create call updates last_session field on player.
        */
       if (sessionOrigin !== SessionOrigin.PlayerCreate) {
-        await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+        const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+        // If the returned player id is different, save the new id to indexed db and update session
+        if (newPlayerId !== deviceId) {
+          session.deviceId = newPlayerId;
+          await Promise.all([
+            Database.setDeviceId(newPlayerId),
+            Database.upsertSession(session)
+          ]);
+        }
       }
       return;
     }

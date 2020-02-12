@@ -79,19 +79,11 @@ export class UpdateManager {
     }
 
     try {
-      const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
       // Not sending on_session here but from SW instead.
       
       // Not awaiting here on purpose
-      this.context.sessionManager.upsertSession(newPlayerId, deviceRecord, SessionOrigin.PlayerOnSession);
+      this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
-
-      // If the returned player id is different, save the new id.
-      if (newPlayerId !== deviceId) {
-        const subscription = await Database.getSubscription();
-        subscription.deviceId = newPlayerId;
-        await Database.setSubscription(subscription);
-      }
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
