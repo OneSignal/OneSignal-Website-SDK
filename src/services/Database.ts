@@ -291,9 +291,13 @@ export default class Database {
     return subscription;
   }
 
+  async setDeviceId(deviceId: string | null): Promise<void> {
+    await this.put("Ids", { type: "userId", id: deviceId });
+  }
+
   async setSubscription(subscription: Subscription) {
     if (subscription.deviceId) {
-      await this.put("Ids", { type: "userId", id: subscription.deviceId });
+      await this.setDeviceId(subscription.deviceId);
     }
     if (typeof subscription.subscriptionToken !== "undefined") {
       // Allow null subscriptions to be set
@@ -430,6 +434,10 @@ export default class Database {
 
   static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
     await Database.singletonInstance.setExternalUserId(externalUserId);
+  }
+
+  static async setDeviceId(deviceId: string | null): Promise<void> {
+    await Database.singletonInstance.setDeviceId(deviceId);
   }
 
   static async remove(table: OneSignalDbTable, keypath?: string) {
