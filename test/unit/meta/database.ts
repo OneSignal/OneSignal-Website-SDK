@@ -158,3 +158,16 @@ test("cleanupCurrentSession", async t => {
   currentSession = await Database.getCurrentSession();
   t.is(currentSession, null);
 });
+
+test("setDeviceId", async t => {
+  let subscription = await Database.getSubscription();
+  t.is(subscription.deviceId, null);
+
+  await Database.setDeviceId(deviceId);
+  subscription = await Database.getSubscription();
+  t.is(subscription.deviceId, deviceId);
+
+  await Database.setDeviceId(null);
+  subscription = await Database.getSubscription();
+  t.is(subscription!.deviceId, null);
+});
