@@ -81,13 +81,13 @@ export class SessionManager {
     }
 
     if (visibilityState === "hidden") {
-      if (OneSignal.cache.focusHandler && OneSignal.cache.focusEventSetup) {
+      if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
         window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
-        OneSignal.cache.focusEventSetup = false;
+        OneSignal.cache.isFocusEventSetup = false;
       }
-      if (OneSignal.cache.blurHandler && OneSignal.cache.blurEventSetup) {
+      if (OneSignal.cache.blurHandler && OneSignal.cache.isBlurEventSetup) {
         window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
-        OneSignal.cache.blurEventSetup = false;
+        OneSignal.cache.isBlurEventSetup = false;
       }
       return;
     }
@@ -175,20 +175,20 @@ export class SessionManager {
     this.setupOnFocusAndOnBlurForSession();
 
     // To make sure we add these event listeners only once.
-    if (!OneSignal.cache.visibilityChangeListener) {
+    if (!OneSignal.cache.isVisibilityChangeEventSetup) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
       document.addEventListener("visibilitychange", this.handleVisibilityChange.bind(this), true);
-      OneSignal.cache.visibilityChangeListener = true;
+      OneSignal.cache.isVisibilityChangeEventSetup = true;
     }
 
-    if (!OneSignal.cache.beforeUnloadListener) {
+    if (!OneSignal.cache.isBeforeUnloadEventSetup) {
       // tracks closing of a tab / reloading / navigating away
       window.addEventListener("beforeunload", (e) => {
         this.handleOnBeforeUnload();
         // deleting value to not show confirmation dialog
         delete e.returnValue;
       }, true);
-      OneSignal.cache.beforeUnloadListener = true;
+      OneSignal.cache.isBeforeUnloadEventSetup = true;
     }
   }
 
@@ -198,17 +198,17 @@ export class SessionManager {
     if (!OneSignal.cache.focusHandler) {
       OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
     }
-    if (!OneSignal.cache.focusEventSetup) {
+    if (!OneSignal.cache.isFocusEventSetup) {
       window.addEventListener("focus", OneSignal.cache.focusHandler, true);
-      OneSignal.cache.focusEventSetup = true;
+      OneSignal.cache.isFocusEventSetup = true;
     }
 
     if (!OneSignal.cache.blurHandler) {
       OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
     }
-    if (!OneSignal.cache.blurEventSetup) {
+    if (!OneSignal.cache.isBlurEventSetup) {
       window.addEventListener("blur", OneSignal.cache.blurHandler, true);
-      OneSignal.cache.blurEventSetup = true;
+      OneSignal.cache.isBlurEventSetup = true;
     }
   }
 
