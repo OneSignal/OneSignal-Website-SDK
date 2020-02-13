@@ -48,16 +48,15 @@ export default class InitHelper {
 
     OneSignal.context.pageViewManager.incrementPageViewCount();
 
-    Log.warn("document.visibilityState", document.visibilityState);
     if (document.visibilityState !== 'visible') {
-      InitHelper.postponeSesstionInitUntilPageIsInFocus();
+      InitHelper.postponeSessionInitUntilPageIsInFocus();
       return;
     }
 
     await InitHelper.sessionInit();
   }
 
-  public static postponeSesstionInitUntilPageIsInFocus(): void {
+  public static postponeSessionInitUntilPageIsInFocus(): void {
     once(
       document,
       'visibilitychange',
