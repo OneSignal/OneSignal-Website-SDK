@@ -91,7 +91,7 @@ export default class ServiceWorkerHelper {
       Log.debug("Session already active", existingSession);
       return;
     }
-    
+
     if (!existingSession.lastDeactivatedTimestamp) {
       Log.debug("Session is in invalid state", existingSession);
       // TODO: possibly recover by re-starting session if deviceId is present?
