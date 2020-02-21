@@ -6,6 +6,7 @@ import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateErr
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
 import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
+import { NotificationClicked } from "../models/Notification";
 import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 
 export default class ServiceWorkerHelper {
@@ -56,10 +57,17 @@ export default class ServiceWorkerHelper {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      // TODO: add notification id after second part is merged in.
+      const appId = deviceRecord.app_id;
       const session: Session = initializeNewSession(
-        { deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type }
+        { deviceId, appId, deviceType:deviceRecord.device_type }
       );
+
+      // if there is a record about a clicked notification in our database, attribute session to it.
+      const clickedNotification: NotificationClicked | null = await Database.getLastNotificationClicked(appId);
+      if (clickedNotification) {
+        session.notificationId = clickedNotification.notificationId;
+      }
+
       await Database.upsertSession(session);
       /**
        * Send on_session call on each new session initialization except the case
@@ -166,7 +174,7 @@ export default class ServiceWorkerHelper {
       );
     }
 
-    await Database.cleanupCurrentSession();
+    await Promise.all([Database.cleanupCurrentSession(), Database.removeAllNotificationClicked()]);
     Log.debug(
       "Finalize session finished",
       `started: ${new Date(session.startTimestamp)}`
