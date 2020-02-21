@@ -92,6 +92,12 @@ export class SessionManager {
       }
 
       // TODO: (iryna) need to send deactivate from here?
+      const [deviceId, deviceRecord] = await Promise.all([
+        MainHelper.getDeviceId(),
+        MainHelper.createDeviceRecord(this.context.appConfig.appId)
+      ]);
+  
+      await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
       return;
     }
 
