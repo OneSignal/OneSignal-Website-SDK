@@ -67,7 +67,7 @@ export class SessionManager {
 
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
     ]);
 
     if (visibilityState === "visible") {
@@ -81,6 +81,7 @@ export class SessionManager {
     }
 
     if (visibilityState === "hidden") {
+      Log.debug("handleVisibilityChange", "hidden");
       if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
         window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
         OneSignal.cache.isFocusEventSetup = false;
@@ -89,6 +90,8 @@ export class SessionManager {
         window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
         OneSignal.cache.isBlurEventSetup = false;
       }
+
+      // TODO: (iryna) need to send deactivate from here?
       return;
     }
 
@@ -129,7 +132,7 @@ export class SessionManager {
     }
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
     ]);
 
     await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
