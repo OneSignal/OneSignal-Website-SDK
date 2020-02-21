@@ -794,6 +794,11 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
+    const outcomesConfig = OneSignal.config!.userConfig.outcomes;
+    if (!outcomesConfig) {
+      Log.debug("Outcomes feature not supported by main application yet.");
+      return;
+    }
     if (!outcomeName) {
       Log.error("Outcome name is required");
       return;
@@ -826,7 +831,7 @@ export default class OneSignal {
     // TODO perform all calls removing the record about them from IDB after finished successfully
 
     /* direct notification  */
-    if (OneSignal.config!.userConfig.outcomes!.direct.enabled) {
+    if (outcomesConfig.direct && outcomesConfig.direct.enabled) {
       const clickedNotification: NotificationClicked | null = await OneSignal.database.getNotificationClickedByUrl(
         window.location.href, OneSignal.config!.appId);
       if (clickedNotification) {
@@ -837,14 +842,15 @@ export default class OneSignal {
     }
 
     /* influencing notifications */
-    if (OneSignal.config!.userConfig.outcomes!.indirect.enabled) {
-      const timeframeMs = OneSignal.config!.userConfig.outcomes!.indirect.influencedTimePeriodMin * 60 * 1000;
+    if (outcomesConfig.indirect && outcomesConfig.indirect.enabled) {
+      const timeframeMs = outcomesConfig.indirect.influencedTimePeriodMin * 60 * 1000;
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
       const maxTimestamp = beginningOfTimeframe.getTime();
       const matchingNotifications: NotificationReceived[] =
         await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
+      Log.debug(`Found total of ${matchingNotifications.length} received notifications for timestamp ${maxTimestamp}`);
       if (matchingNotifications.length > 0) {
-        const max: number = OneSignal.config!.userConfig.outcomes!.indirect.influencedNotificationsLimit;
+        const max: number = outcomesConfig.indirect.influencedNotificationsLimit;
         /**
          * To handle correctly the case when user got subscribed to a new app id
          * we check the appId on notifications to match the current app.
@@ -861,7 +867,7 @@ export default class OneSignal {
     }
 
     /* unattributed outcome report */
-    if (OneSignal.config!.userConfig.outcomes!.unattributed.enabled) {
+    if (outcomesConfig.unattributed && outcomesConfig.unattributed.enabled) {
       await OneSignal.context.updateManager.sendOutcomeUnattributed(
         OneSignal.config!.appId, outcomeName, outcomeWeight);
     }
