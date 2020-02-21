@@ -19,6 +19,21 @@
     OneSignal.push(function() {
       OneSignal.init({appId});
     });
+
+    function sendOutcome() {
+        OneSignal.push(function() {
+            const outcomeName = document.querySelector('#outcome_name').value;
+            OneSignal.sendOutcome(outcomeName);
+        });
+    }
+
+    function sendOutcomeWithWeight() {
+        OneSignal.push(function() {
+            const outcomeName = document.querySelector('#outcome_name').value;
+            const outcomeWeight = parseFloat(document.querySelector('#outcome_weight').value);
+            OneSignal.sendOutcome(outcomeName, outcomeWeight);
+        });
+    }
   </script>
 <head>
     <meta charset="utf-8">
@@ -28,5 +43,10 @@
 <body>
     <h1>OneSignal WebSDK Sandbox</h1>
     <p class="description">WebSDK Sandbox Environment</p>
+    <input id="outcome_name" value="iryna-022020" />
+    <button onclick="javascript:sendOutcome();">Send outcome</button>
+    <br />
+    <input id="outcome_weight" value=""/>
+    <button onclick="javascript:sendOutcomeWithWeight();">Send outcome with weight</button>
 </body>
 </html>
