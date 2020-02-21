@@ -64,11 +64,12 @@ export default class Log {
           methodToMapTo === "error"
         );
 
-      if (shouldMap) {
+      if (true) {
         Log[methodToMapTo] = console[nativeMethod].bind(console);
-      } else {
-        Log[methodToMapTo] = function() {};
       }
+      // } else {
+      //   Log[methodToMapTo] = function() {};
+      // }
     }
   }
 }
