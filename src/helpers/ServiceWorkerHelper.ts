@@ -75,6 +75,7 @@ export default class ServiceWorkerHelper {
        * since player#create call updates last_session field on player.
        */
       if (sessionOrigin !== SessionOrigin.PlayerCreate) {
+        // TODO: (iryna) add notification id to on_session payload for direct session application
         const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
         // If the returned player id is different, save the new id to indexed db and update session
         if (newPlayerId !== deviceId) {
