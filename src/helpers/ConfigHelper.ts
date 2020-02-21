@@ -393,7 +393,12 @@ export class ConfigHelper {
           allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
             serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
           requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent,
-          outcomes: serverConfig.config.outcomes,
+          // outcomes: serverConfig.config.outcomes,
+          outcomes: {
+            direct: { enabled: true },
+            indirect: { enabled: true, influencedTimePeriodMin: 5, influencedNotificationsLimit: 10 },
+            unattributed: { enabled: true }
+          }
         };
       case IntegrationConfigurationKind.JavaScript:
         /*
