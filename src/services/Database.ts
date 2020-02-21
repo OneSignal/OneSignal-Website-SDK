@@ -389,7 +389,18 @@ export default class Database {
     await this.remove("Sessions", sessionKey);
   }
 
-  private async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
+  async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
+    let allClickedNotifications: NotificationClicked[] = [];
+    try {
+      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+    } catch(e) {
+      Log.error("Database.getNotificationClickedByUrl", e);
+    }
+    const predicate = (notification: NotificationClicked) => notification.appId === appId;
+    return allClickedNotifications.find(predicate) || null;
+  }
+
+  async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
     let allClickedNotifications: NotificationClicked[] = [];
     try {
       allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
@@ -416,6 +427,14 @@ export default class Database {
 
   async getNotificationReceivedForTimeRange(maxTimestamp: number): Promise<NotificationReceived[]> {
     return await this.queryFromIndex<NotificationReceived, number>("NotificationReceived", "timestamp", maxTimestamp);
+  }
+
+  async removeNotificationClickedById(notificationId: string): Promise<void> {
+    await this.remove("NotificationClicked", notificationId);
+  }
+
+  async removeAllNotificationClicked(): Promise<void> {
+    await this.remove("NotificationClicked");
   }
 
   /**
@@ -499,6 +518,18 @@ export default class Database {
 
   static async getExternalUserId(): Promise<string | undefined | null> {
     return await Database.singletonInstance.getExternalUserId();
+  }
+
+  static async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getLastNotificationClicked(appId);
+  }
+
+  static async removeNotificationClickedById(notificationId: string): Promise<void> {
+    return await Database.singletonInstance.removeNotificationClickedById(notificationId);
+  }
+
+  static async removeAllNotificationClicked(): Promise<void> {
+    return await Database.singletonInstance.removeAllNotificationClicked();
   }
 
   static async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
