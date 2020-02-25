@@ -108,16 +108,22 @@ export interface AppUserConfig {
 
 interface BasePromptOptions {
   enabled: boolean;
-  autoPrompt?: boolean;
 }
 
-export interface SlidedownPermissionMessageOptions extends BasePromptOptions {
+export interface DelayedPromptOptions extends BasePromptOptions {
+  autoPrompt?: boolean;
+  timeDelay?: number;
+  pageViews?: number;
+}
+
+
+export interface SlidedownPermissionMessageOptions extends DelayedPromptOptions {
   actionMessage: string;
   acceptButtonText: string;
   cancelButtonText: string;
 }
 
-export interface FullscreenPermissionMessageOptions extends BasePromptOptions {
+export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
   autoAcceptTitle?: string;
   actionMessage: string;
   acceptButton: string;
@@ -160,7 +166,7 @@ export interface AppUserConfigPromptOptions {
   acceptButtonText?: string;
   cancelButtonText?: string;
   showCredit?: string;
-  native?: BasePromptOptions;
+  native?: DelayedPromptOptions;
   slidedown?: SlidedownPermissionMessageOptions;
   fullscreen?: FullscreenPermissionMessageOptions;
   customlink?: AppUserConfigCustomLinkOptions;

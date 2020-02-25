@@ -12,12 +12,18 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
-import { SlidedownPermissionMessageOptions } from '../models/AppConfig';
+import { SlidedownPermissionMessageOptions, DelayedPromptOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
+import { PageViewManager } from './PageViewManager';
 
 export interface AutoPromptOptions {
   force: boolean;
+}
+
+enum DelayedPromptType {
+  Native = "native",
+  Slidedown = "slidedown"
 }
 
 export class PromptsManager {
@@ -78,10 +84,18 @@ export class PromptsManager {
       return;
     }
 
-    if (promptOptions.native && promptOptions.native.enabled && promptOptions.native.autoPrompt) {
-      await this.internalShowNativePrompt();
-    } else if (promptOptions.slidedown && promptOptions.slidedown.enabled && promptOptions.slidedown.autoPrompt) {
-      await this.internalShowSlidedownPrompt(options);
+    const nativePromptOptions = this.getDelayedPromptOptions(promptOptions, DelayedPromptType.Native);
+    const nativePromptPageViewCondition = this.isPageViewConditionMet(nativePromptOptions);
+
+    const slidedownPromptOptions = this.getDelayedPromptOptions(promptOptions, DelayedPromptType.Slidedown);
+    const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
+
+    if (promptOptions.native && nativePromptPageViewCondition) {
+      setTimeout(await this.internalShowNativePrompt(), promptOptions.native.timeDelay*1000);
+    }
+
+    if (promptOptions.slidedown && slidedownPromptPageViewCondition) {
+      setTimeout(await this.internalShowSlidedownPrompt(options), promptOptions.slidedown.timeDelay*1000);
     }
   }
 
@@ -156,5 +170,32 @@ export class PromptsManager {
       Log.debug("Setting flag to not show the popover to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
     });
+  }
+
+  private isPageViewConditionMet(options: DelayedPromptOptions | void): boolean {
+    if(!options) return false;
+
+    const { autoPrompt, enabled } = options;
+    if(!autoPrompt || !enabled) return false;
+    
+    let { pageViews } = options;
+    if(!pageViews) pageViews = 0;
+
+    const localPageViews = PageViewManager.getLocalPageViewCount();
+    return localPageViews >= pageViews;
+  }
+
+  private getDelayedPromptOptions(promptOptions: any, type: DelayedPromptType): DelayedPromptOptions | void {
+    if(!promptOptions[type]) {
+      Log.error(`No suitable type '${type}' found on promptOptions`);
+      return;
+    }
+
+    return {
+      enabled: promptOptions[type].enabled,
+      autoPrompt: promptOptions[type].autoPrompt,
+      timeDelay: promptOptions[type].timeDelay,
+      pageViews: promptOptions[type].pageViews
+    };
   }
 }
