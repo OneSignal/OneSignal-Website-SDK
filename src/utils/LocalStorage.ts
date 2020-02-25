@@ -3,6 +3,7 @@ import PermissionManager from '../managers/PermissionManager';
 
 const IS_OPTED_OUT = "isOptedOut";
 const IS_PUSH_NOTIFICATIONS_ENABLED = "isPushNotificationsEnabled";
+const PAGE_VIEWS = "pageViews";
 
 export default class LocalStorage {
     public static getIsOptedOut(): boolean {
@@ -35,5 +36,13 @@ export default class LocalStorage {
             default:
                 return NotificationPermission.Default;
         }
+    }
+
+    public static setLocalPageViewCount(count: number): void {
+        localStorage.setItem(PAGE_VIEWS, count.toString());
+    }
+
+    public static getLocalPageViewCount(): number {
+        return Number(localStorage.getItem(PAGE_VIEWS));
     }
 }
