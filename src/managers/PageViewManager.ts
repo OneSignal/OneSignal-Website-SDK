@@ -51,13 +51,21 @@ export class PageViewManager {
   }
 
   /**
-   * Increments the session count at most once for the current page view.
+   * Increments:
+   *    - session pageView count AND 
+   *    - total pageView count 
+   * 
+   * at most once for the current page view.
    *
    * A flag is set to prevent incrementing the session count more than once for
    * the current page view. If the page is refreshed, this in-memory variable
    * will be automatically reset. Because of this, regardless of the number of
    * times this method is called on the current page view, the page view count
    * will only be incremented once.
+   * 
+   * LocalStorage pageView count added for use in Delayed Prompts feature. This
+   * pageView count persists even past sessions since it is saved to local stor-
+   * age (as opposed to Session Storage which persists only for that tab)
    */
   incrementPageViewCount() {
     if (this.incrementedPageViewCount) {
