@@ -3,6 +3,7 @@
 import SdkEnvironment from "../managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import Log from "../libraries/Log";
+import LocalStorage from '../utils/LocalStorage';
 
 export class PageViewManager {
   private static SESSION_STORAGE_KEY_NAME = "onesignal-pageview-count";
@@ -66,7 +67,11 @@ export class PageViewManager {
     }
 
     const newCount = this.getPageViewCount() + 1;
+    const newLocalCount = PageViewManager.getLocalPageViewCount() + 1;
+
     this.setPageViewCount(newCount);
+    PageViewManager.setLocalPageViewCount(newLocalCount);
+
     Log.debug(`Incremented page view count to ${newCount}.`);
     this.incrementedPageViewCount = true;
   }
@@ -81,5 +86,19 @@ export class PageViewManager {
    */
   isFirstPageView() {
     return this.getPageViewCount() === 1;
+  }
+
+  /**
+   * Returns Page Views saved to Local Storage (Persists Longer than Single Session)
+   */
+  static getLocalPageViewCount() {
+    return LocalStorage.getLocalPageViewCount();
+  }
+
+  /**
+   * Sets Page Views to Local Storage 
+   */
+  static setLocalPageViewCount(count: number) {
+    LocalStorage.setLocalPageViewCount(count);
   }
 }
