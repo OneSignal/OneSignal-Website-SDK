@@ -112,7 +112,7 @@ export default class PermissionManager {
         OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
         { safariWebId: safariWebId },
         (reply: any) => {
-          let remoteNotificationPermission = reply.data;
+          const remoteNotificationPermission = reply.data;
           resolve(remoteNotificationPermission);
         }
       );
