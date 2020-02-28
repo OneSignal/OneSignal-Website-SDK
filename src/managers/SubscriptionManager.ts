@@ -583,7 +583,10 @@ export class SubscriptionManager {
         //    to change the applicationServerKey, unsubscribe then resubscribe.
         Log.warn("[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
           "unsubscribe and attempting to subscribe with new key.", e);
-        await SubscriptionManager.doPushUnsubscribe(await pushManager.getSubscription());
+        const subscription = await pushManager.getSubscription();
+        if (subscription) {
+          await SubscriptionManager.doPushUnsubscribe(subscription);
+        }
         return [await pushManager.subscribe(subscriptionOptions), true];
       }
       else
