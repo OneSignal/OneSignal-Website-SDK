@@ -70,32 +70,38 @@ export class PromptsManager {
     return true;
   }
 
-  public async internalShowAutoPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
-    OneSignalUtils.logMethodCall("internalShowAutoPrompt", options);
+  public async internalShowAutoPrompt(autoPromptOptions: AutoPromptOptions = { force: false }): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowAutoPrompt", autoPromptOptions);
 
     if (!OneSignal.config || !OneSignal.config.userConfig || !OneSignal.config.userConfig.promptOptions) {
       Log.error("OneSignal config was not initialized correctly. Aborting.");
       return;
     }
 
-    const promptOptions = OneSignal.config.userConfig.promptOptions;
-    if (!promptOptions.native.enabled && !promptOptions.slidedown.enabled) {
+    // user config prompt options
+    const userPromptOptions = OneSignal.config.userConfig.promptOptions;
+    if (!userPromptOptions.native.enabled && !userPromptOptions.slidedown.enabled) {
       Log.error("No suitable prompt type enabled.");
       return;
     }
 
+    this.showDelayedPrompt(autoPromptOptions, userPromptOptions);
+  }
+
+  private async showDelayedPrompt(autoPromptOptions: AutoPromptOptions, promptOptions: any) {
     const nativePromptOptions = this.getDelayedPromptOptions(promptOptions, DelayedPromptType.Native);
     const nativePromptPageViewCondition = this.isPageViewConditionMet(nativePromptOptions);
 
     const slidedownPromptOptions = this.getDelayedPromptOptions(promptOptions, DelayedPromptType.Slidedown);
     const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
 
-    if (promptOptions.native && nativePromptPageViewCondition) {
-      setTimeout(await this.internalShowNativePrompt(), promptOptions.native.timeDelay*1000);
+    if(promptOptions.native && nativePromptPageViewCondition) {
+      setTimeout(async ()=>{ this.internalShowNativePrompt(); }, promptOptions.native.timeDelay*1000);
     }
 
     if (promptOptions.slidedown && slidedownPromptPageViewCondition) {
-      setTimeout(await this.internalShowSlidedownPrompt(options), promptOptions.slidedown.timeDelay*1000);
+      setTimeout(async ()=>{ this.internalShowSlidedownPrompt(autoPromptOptions); },
+      promptOptions.slidedown.timeDelay*1000);
     }
   }
 
