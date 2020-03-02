@@ -85,23 +85,37 @@ export class PromptsManager {
       return;
     }
 
-    this.showDelayedPrompt(autoPromptOptions, userPromptOptions);
-  }
-
-  private async showDelayedPrompt(autoPromptOptions: AutoPromptOptions, promptOptions: any) {
-    const nativePromptOptions = this.getDelayedPromptOptions(promptOptions, DelayedPromptType.Native);
+    const nativePromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Native);
     const nativePromptPageViewCondition = this.isPageViewConditionMet(nativePromptOptions);
 
-    const slidedownPromptOptions = this.getDelayedPromptOptions(promptOptions, DelayedPromptType.Slidedown);
+    const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Slidedown);
     const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
 
-    if(promptOptions.native && nativePromptPageViewCondition) {
-      setTimeout(async ()=>{ this.internalShowNativePrompt(); }, promptOptions.native.timeDelay*1000);
+    // show native prompt
+    if(userPromptOptions.native && nativePromptPageViewCondition) {
+      this.showDelayedPrompt(DelayedPromptType.Native, userPromptOptions.native.timeDelay);
+    }
+    // show slidedown prompt
+    if (userPromptOptions.slidedown && slidedownPromptPageViewCondition) {
+      this.showDelayedPrompt(DelayedPromptType.Slidedown, userPromptOptions.slidedown.timeDelay, autoPromptOptions);
+    }
+  }
+
+  public async showDelayedPrompt(type: DelayedPromptType, timeDelay: number, autoPromptOptions?: AutoPromptOptions) {
+    if (typeof timeDelay !== "number") {
+      Log.error("showDelayedPrompt: timeDelay not a number");
+      return;
     }
 
-    if (promptOptions.slidedown && slidedownPromptPageViewCondition) {
-      setTimeout(async ()=>{ this.internalShowSlidedownPrompt(autoPromptOptions); },
-      promptOptions.slidedown.timeDelay*1000);
+    switch(type){
+      case DelayedPromptType.Native:
+        setTimeout(async ()=>{ this.internalShowNativePrompt(); }, timeDelay*1000);
+        break;
+      case DelayedPromptType.Slidedown:
+        setTimeout(async ()=>{ this.internalShowSlidedownPrompt(autoPromptOptions); }, timeDelay*1000);
+        break;
+      default:
+        Log.error("Invalid Delayed Prompt type");
     }
   }
 
