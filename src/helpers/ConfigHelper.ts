@@ -7,7 +7,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
-import { SERVER_CONFIG_DEFAULTS_SESSION } from "../config";
+import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../config";
 
 export enum IntegrationConfigurationKind {
   /**
@@ -220,10 +220,16 @@ export class ConfigHelper {
       promptOptionsConfig.slidedown.autoPrompt = promptOptionsConfig.slidedown.hasOwnProperty("autoPrompt") ?
         !!promptOptionsConfig.slidedown.enabled && !!promptOptionsConfig.slidedown.autoPrompt :
         !!promptOptionsConfig.slidedown.enabled;
+        promptOptionsConfig.slidedown.pageViews = Utils.getValueOrDefault(promptOptionsConfig.slidedown.pageViews,
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews);
+        promptOptionsConfig.slidedown.timeDelay = Utils.getValueOrDefault(promptOptionsConfig.slidedown.timeDelay, 
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay);
     } else {
       promptOptionsConfig.slidedown = MainHelper.getSlidedownPermissionMessageOptions(promptOptionsConfig);
       promptOptionsConfig.slidedown.enabled = false;
       promptOptionsConfig.slidedown.autoPrompt = false;
+      promptOptionsConfig.slidedown.pageViews = SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews;
+      promptOptionsConfig.slidedown.timeDelay = SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay;
     }
 
     if (promptOptionsConfig.native) {
@@ -231,11 +237,17 @@ export class ConfigHelper {
       promptOptionsConfig.native.autoPrompt = promptOptionsConfig.native.hasOwnProperty("autoPrompt") ?
         !!promptOptionsConfig.native.enabled && !!promptOptionsConfig.native.autoPrompt :
         !!promptOptionsConfig.native.enabled;
+      promptOptionsConfig.native.pageViews = Utils.getValueOrDefault(promptOptionsConfig.native.pageViews,
+        SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews);
+      promptOptionsConfig.native.timeDelay = Utils.getValueOrDefault(promptOptionsConfig.native.timeDelay,
+        SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay);
     } else {
       promptOptionsConfig.native = {
         enabled: false,
         autoPrompt: false,
-      }
+        pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
+      };
     }
 
     /**
@@ -271,9 +283,15 @@ export class ConfigHelper {
     const native = staticPrompts.native ? {
       enabled: staticPrompts.native.enabled,
       autoPrompt: staticPrompts.native.enabled && staticPrompts.native.autoPrompt !== false,
+      pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews, 
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
+      timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay, 
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay)
     } : {
       enabled: false,
       autoPrompt: false,
+      pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
+      timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
     };
 
     const slidedown = {
@@ -281,6 +299,10 @@ export class ConfigHelper {
       // for backwards compatibility if not specifically false, then assume true for autoPrompt on slidedown
       autoPrompt: staticPrompts.slidedown.enabled &&
         staticPrompts.slidedown.autoPrompt !== false,
+      pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews, 
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
+      timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay, 
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay),
       actionMessage: staticPrompts.slidedown.actionMessage,
       acceptButtonText: staticPrompts.slidedown.acceptButton,
       cancelButtonText: staticPrompts.slidedown.cancelButton,
