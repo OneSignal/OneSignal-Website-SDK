@@ -236,6 +236,8 @@ export interface ServerAppConfigPrompt {
   native: {
     enabled: boolean;
     autoPrompt: boolean;
+    pageViews?: number;
+    timeDelay?: number;
   },
   bell: {
     enabled: boolean;
@@ -276,6 +278,8 @@ export interface ServerAppConfigPrompt {
   slidedown: {
     enabled: boolean;
     autoPrompt: boolean;
+    pageViews?: number;
+    timeDelay?: number;
     acceptButton: string;
     cancelButton: string;
     actionMessage: string;

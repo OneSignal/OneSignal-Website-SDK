@@ -184,10 +184,9 @@ export class PromptsManager {
     const { autoPrompt, enabled } = options;
     if(!autoPrompt || !enabled) return false;
     
-    let { pageViews } = options;
-    if(!pageViews) pageViews = 0;
-
+    const { pageViews } = options;
     const localPageViews = PageViewManager.getLocalPageViewCount();
+    
     return localPageViews >= pageViews;
   }
 
