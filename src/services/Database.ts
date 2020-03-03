@@ -567,5 +567,9 @@ export default class Database {
   static async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     return await Database.singletonInstance.get<T>(table, key);
   }
+
+  static async getAll<T>(table: OneSignalDbTable): Promise<Array<T>> {
+    return await Database.singletonInstance.getAll<T>(table);
+  }
   // END: Static mappings to instance methods
 }
