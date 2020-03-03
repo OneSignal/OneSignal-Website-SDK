@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test, { TestContext, Context } from "ava";
-import sinon, { SinonSandbox, SinonStub } from 'sinon';
+import sinon, { SinonSandbox } from 'sinon';
 import nock from "nock";
 import {
     TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig
@@ -19,6 +19,9 @@ import {
     stubServiceWorkerInstallation,
 } from "../../support/tester/sinonSandboxUtils";
 import LocalStorage from '../../../src/utils/LocalStorage';
+import { PromptsManager } from '../../../src/managers/PromptsManager';
+import InitHelper from '../../../src/helpers/InitHelper';
+import { PageViewManager } from '../../../src/managers/PageViewManager';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const initTestHelper = new InitTestHelper(sinonSandbox);
@@ -45,32 +48,37 @@ test.afterEach(function (_t: TestContext) {
 
 /**
  * Unit Tests
+ *
+ * NOTE: 
+ *  - currently, showDelayedPrompt encapsulates both types of delayed prompts for easy stubbing/spying since
+ *    setTimeout doesn't work as intended in testing environment due to jsdom bugs
  */
 
 test.serial(`Delayed Prompt: native prompt is shown after 1 page view`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
     
-    const promptShownPromise = new Promise((resolve, reject) => {
-        OneSignal.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
-            resolve();
-        });
+    const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
+    await initWithDelayedOptions(DelayedPromptType.Native, 0, 1);
 
-        setTimeout(reject, 500);
-    });
-    
-    const nativeSpy = sinonSandbox.stub(window.Notification, "requestPermission");
-    const initPromise = initWithDelayedOptions(DelayedPromptType.Native, 0, 1);
-
-    await initPromise;
-    await promptShownPromise;
     const pageViews = LocalStorage.getLocalPageViewCount();
     t.is(nativeSpy.calledOnce, true);
     t.is(pageViews, 1);
 });
 
-/*
-test.serial(`Delayed Prompt: native prompt not called after 1 page view`, async t => {
+test.serial(`Delayed Prompt: native prompt is shown after 0 page views`, async t => {
+    await beforeTest(t);
+    stubServiceWorkerInstallation(sinonSandbox);
+    
+    const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
+    await initWithDelayedOptions(DelayedPromptType.Native, 0, 0);
+
+    const pageViews = LocalStorage.getLocalPageViewCount();
+    t.is(nativeSpy.calledOnce, true);
+    t.is(pageViews, 1);
+});
+
+test.serial(`Delayed Prompt: native prompt not shown after 1 page view`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
 
@@ -78,13 +86,34 @@ test.serial(`Delayed Prompt: native prompt not called after 1 page view`, async 
         t.fail();
     });
 
-    const initPromise = initWithDelayedOptions(DelayedPromptType.Native, 0, 2);
+    const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
+    // requires 2 page views
+    await initWithDelayedOptions(DelayedPromptType.Native, 0, 2);
 
-    await initPromise;
     const pageViews = LocalStorage.getLocalPageViewCount();
+    t.is(nativeSpy.called, false);
     t.is(pageViews, 1);
 });
-*/
+
+test.serial(`Delayed Prompt: native prompt is shown after 3 page views`, async t => {
+    await beforeTest(t);
+    stubServiceWorkerInstallation(sinonSandbox);
+    
+    const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
+
+    await initWithDelayedOptions(DelayedPromptType.Native, 0, 3);
+    
+    for(let i=0; i<2; i++) {
+        OneSignal.context.pageViewManager.simulatePageNavigationOrRefresh();
+        await InitHelper.internalInit();
+    }
+
+    const pageViews = PageViewManager.getLocalPageViewCount();
+    t.is(pageViews, 3);
+    t.is(nativeSpy.calledOnce, true);
+});
+
+/** HELPERS */
 
 /**
  * initWithDelayedOptions
@@ -120,7 +149,6 @@ async function beforeTest(
     const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
         .resolves({ success: true, id: playerId });
     const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
-    // const onSessionStub = sinonSandbox.stub(OneSignal.context.sessionManager, "upsertSession").resolves();
 
     sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
     sinonSandbox.stub(ServiceWorkerManager.prototype, "installWorker").resolves();
