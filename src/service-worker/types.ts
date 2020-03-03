@@ -18,6 +18,7 @@ export interface PageVisibilityResponse extends PageVisibilityRequest {
 }
 
 export interface OSServiceWorkerFields { 
-  timerId?: number;
+  debounceSessionTimerId?: number;
+  finalizeSessionTimerId?: number;
   clientsStatus?: ClientStatus;
 }
