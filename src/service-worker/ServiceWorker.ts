@@ -395,7 +395,7 @@ export class ServiceWorker {
         options.sessionOrigin
       );
     } else {
-      self.timerId = await ServiceWorkerHelper.deactivateSession(
+      self.finalizeSessionTimerId = await ServiceWorkerHelper.deactivateSession(
         options.sessionThreshold, options.enableSessionDuration);
     }
   }
@@ -461,18 +461,18 @@ export class ServiceWorker {
   static debounceRefreshSession(options: DeactivateSessionPayload ) {
     Log.debug("[Service Worker] debounceRefreshSession", options);
     const executeRefreshSession = () => {
-      if (self.timerId !== undefined) {
-        self.clearTimeout(self.timerId);
-        self.timerId = undefined;
+      if (self.finalizeSessionTimerId !== undefined) {
+        self.clearTimeout(self.finalizeSessionTimerId);
+        self.finalizeSessionTimerId = undefined;
       }
       ServiceWorker.refreshSession(options);
     };
 
-    if (self.timerId !== undefined) {
-      self.clearTimeout(self.timerId);
+    if (self.debounceSessionTimerId !== undefined) {
+      self.clearTimeout(self.debounceSessionTimerId);
     }
 
-    self.timerId = self.setTimeout(executeRefreshSession, 1000);
+    self.debounceSessionTimerId = self.setTimeout(executeRefreshSession, 1000);
   }
 
   /**
