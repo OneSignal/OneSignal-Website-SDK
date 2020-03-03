@@ -1,3 +1,5 @@
+import { OutcomesConfig } from "./Outcomes";
+
 export interface AppConfig {
   /**
    * The OneSignal dashboard app ID. Although this value is provided, it isn't
@@ -102,20 +104,6 @@ export interface AppUserConfig {
   requiresUserPrivacyConsent?: boolean;
   pageUrl?: string;
   outcomes?: OutcomesConfig;
-}
-
-export interface OutcomesConfig {
-  direct: {
-    enabled: boolean;
-  }
-  indirect: {
-    enabled: boolean;
-    influencedTimePeriodMin: number;
-    influencedNotificationsLimit: number;
-  }
-  unattributed: {
-    enabled: boolean;
-  }
 }
 
 interface BasePromptOptions {
