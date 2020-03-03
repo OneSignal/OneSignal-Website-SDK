@@ -48,7 +48,6 @@ export default class OutcomesHelper {
           matchingNotifications, (notif: NotificationReceived) => notif.timestamp, true, false
         );
         const notificationIds = sortedArray
-          .filter(notif => notif.appId === OneSignal.config!.appId)
           .filter(notif => notif.timestamp >= maxTimestamp)
           .slice(0, max)
           .map(notif => notif.notificationId);
