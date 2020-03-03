@@ -846,9 +846,9 @@ export default class OneSignal {
       const timeframeMs = outcomesConfig.indirect.influencedTimePeriodMin * 60 * 1000;
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
       const maxTimestamp = beginningOfTimeframe.getTime();
-      const matchingNotifications: NotificationReceived[] =
-        await OneSignal.database.getNotificationReceivedForTimeRange(maxTimestamp);
-      Log.debug(`Found total of ${matchingNotifications.length} received notifications for timestamp ${maxTimestamp}`);
+
+      const matchingNotifications = await OneSignal.database.getAll<NotificationReceived>("NotificationReceived");
+      Log.debug(`Found total of ${matchingNotifications.length} received notifications`);
       if (matchingNotifications.length > 0) {
         const max: number = outcomesConfig.indirect.influencedNotificationsLimit;
         /**
@@ -856,13 +856,18 @@ export default class OneSignal {
          * we check the appId on notifications to match the current app.
          */
 
-        Utils.sortArrayOfObjects(matchingNotifications, (notif: NotificationReceived) => notif.timestamp, true, true);
-        const notificationIds = matchingNotifications.filter(notif => notif.appId === OneSignal.config!.appId)
-          .slice(0, max).map(notif => notif.notificationId);
-
-        await OneSignal.context.updateManager.sendOutcomeInfluenced(
-          OneSignal.config!.appId, notificationIds, outcomeName, outcomeWeight);
-        return;
+        const sortedArray = Utils.sortArrayOfObjects(matchingNotifications, (notif: NotificationReceived) => notif.timestamp, true, false);
+        const notificationIds = sortedArray
+          .filter(notif => notif.appId === OneSignal.config!.appId)
+          .filter(notif => notif.timestamp >= maxTimestamp)
+          .slice(0, max)
+          .map(notif => notif.notificationId);
+        Log.debug(`Total of ${notificationIds.length} received notifications are within reporting window`);
+        if (notificationIds.length > 0) {
+          await OneSignal.context.updateManager.sendOutcomeInfluenced(
+            OneSignal.config!.appId, notificationIds, outcomeName, outcomeWeight);
+          return;
+        }
       }
     }
 
