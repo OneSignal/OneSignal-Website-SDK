@@ -132,8 +132,24 @@ export default class ServiceWorkerHelper {
       return undefined;
     }
 
+    /**
+     * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
+     * Timer gets cleaned up before figuring out it's activate or deactivate.
+     * No update needed for the session, early return.
+     */
+    if (existingSession.status === SessionStatus.Inactive) {
+      const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
+        existingSession, sendOnFocusEnabled, thresholdInSeconds
+      );
+      return timerId;
+    }
+
+    /**
+     * Can only be active or expired at this point, but more statuses may come in in the future.
+     * For anything but active, logging a warning and doing early return.
+     */
     if (existingSession.status !== SessionStatus.Active) {
-      Log.debug(`Session in invalid state ${existingSession.status}. Cannot deactivate.`);
+      Log.warn(`Session in invalid state ${existingSession.status}. Cannot deactivate.`);
       return undefined;
     }
 
@@ -145,17 +161,18 @@ export default class ServiceWorkerHelper {
     existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
     existingSession.status = SessionStatus.Inactive;
 
-    const timerId = 
-      ((session, sendOnFocus) => {
-        const thresholdInMilliseconds = thresholdInSeconds * 1000;
-        return self.setTimeout(
-          () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus), 
-          thresholdInMilliseconds);
-      })(existingSession, sendOnFocusEnabled);
-
+    const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
+      existingSession, sendOnFocusEnabled, thresholdInSeconds
+    );
     await Database.upsertSession(existingSession);
-
     return timerId;
+  }
+
+  static setTimeoutForFinalize = (session: Session, sendOnFocus: boolean, thresholdInSeconds: number): number => {
+    const thresholdInMilliseconds = thresholdInSeconds * 1000;
+    return self.setTimeout(
+      () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus), 
+      thresholdInMilliseconds);
   }
 
   public static async finalizeSession(session: Session, sendOnFocusEnabled: boolean): Promise<void> {
