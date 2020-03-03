@@ -119,13 +119,13 @@ export class UpdateManager {
     });
   }
 
-  public async sendOutcomeDirect(appId: string, notificationId: string, outcomeName: string, value?: number) {
+  public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
       id: outcomeName,
       device_type: deviceRecord.deliveryPlatform,
-      notification_ids: [notificationId],
+      notification_ids: notificationIds,
       direct: true,
     }
     if (value !== undefined) {

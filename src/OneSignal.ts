@@ -30,7 +30,6 @@ import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
 import Popover from './popover/Popover';
 import Database from './services/Database';
-import { Utils } from "./context/shared/utils/Utils";
 
 import IndexedDb from './services/IndexedDb';
 import {
@@ -55,6 +54,8 @@ import { AutoPromptOptions } from "./managers/PromptsManager";
 import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/SessionManager';
+import OutcomesHelper from "./helpers/shared/OutcomesHelper";
+import { OutcomeAttributionType } from "./models/Outcomes";
 
 export default class OneSignal {
   /**
@@ -816,65 +817,26 @@ export default class OneSignal {
       Log.warn("Reporting outcomes is supported only for subscribed users.");
       return;
     }
-    /**
-     * Flow:
-     * 1. check if the url was opened as a result of a notif;
-     * 2. if so, send an api call reporting direct notification outcome
-     *    (currently takes into account the match strategy selected in the app's settings);
-     * 3. else check all received notifs within timeframe from config;
-     * 4. send an api call reporting an influenced outcome for each matching notification
-     *    respecting the limit from config too;
-     * 5. if no influencing notification found, report unattributed outcome to the api.
-     */
 
-    // TODO save all intended calls into IDB
-    // TODO perform all calls removing the record about them from IDB after finished successfully
-
-    /* direct notification  */
-    if (outcomesConfig.direct && outcomesConfig.direct.enabled) {
-      const clickedNotification: NotificationClicked | null = await OneSignal.database.getNotificationClickedByUrl(
-        window.location.href, OneSignal.config!.appId);
-      if (clickedNotification) {
+     // TODO: add error handling
+    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
+    switch (outcomeAttribution.type) {
+      case OutcomeAttributionType.Direct:
         await OneSignal.context.updateManager.sendOutcomeDirect(
-          clickedNotification.appId, clickedNotification.notificationId, outcomeName, outcomeWeight);
+          OneSignal.config!.appId, outcomeAttribution.notificationIds, outcomeName, outcomeWeight
+        );
         return;
-      }
-    }
-
-    /* influencing notifications */
-    if (outcomesConfig.indirect && outcomesConfig.indirect.enabled) {
-      const timeframeMs = outcomesConfig.indirect.influencedTimePeriodMin * 60 * 1000;
-      const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
-      const maxTimestamp = beginningOfTimeframe.getTime();
-
-      const matchingNotifications = await OneSignal.database.getAll<NotificationReceived>("NotificationReceived");
-      Log.debug(`Found total of ${matchingNotifications.length} received notifications`);
-      if (matchingNotifications.length > 0) {
-        const max: number = outcomesConfig.indirect.influencedNotificationsLimit;
-        /**
-         * To handle correctly the case when user got subscribed to a new app id
-         * we check the appId on notifications to match the current app.
-         */
-
-        const sortedArray = Utils.sortArrayOfObjects(matchingNotifications, (notif: NotificationReceived) => notif.timestamp, true, false);
-        const notificationIds = sortedArray
-          .filter(notif => notif.appId === OneSignal.config!.appId)
-          .filter(notif => notif.timestamp >= maxTimestamp)
-          .slice(0, max)
-          .map(notif => notif.notificationId);
-        Log.debug(`Total of ${notificationIds.length} received notifications are within reporting window`);
-        if (notificationIds.length > 0) {
-          await OneSignal.context.updateManager.sendOutcomeInfluenced(
-            OneSignal.config!.appId, notificationIds, outcomeName, outcomeWeight);
-          return;
-        }
-      }
-    }
-
-    /* unattributed outcome report */
-    if (outcomesConfig.unattributed && outcomesConfig.unattributed.enabled) {
-      await OneSignal.context.updateManager.sendOutcomeUnattributed(
-        OneSignal.config!.appId, outcomeName, outcomeWeight);
+      case OutcomeAttributionType.Indirect:
+        await OneSignal.context.updateManager.sendOutcomeInfluenced(
+          OneSignal.config!.appId, outcomeAttribution.notificationIds, outcomeName, outcomeWeight
+        );
+        return;
+      case OutcomeAttributionType.Unattributed:
+        await OneSignal.context.updateManager.sendOutcomeUnattributed(
+          OneSignal.config!.appId, outcomeName, outcomeWeight);
+        return;
+      default:
+        return;
     }
   }
 
