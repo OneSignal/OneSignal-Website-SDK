@@ -1,4 +1,5 @@
-import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
+import { SerializedPushDeviceRecord } from "./PushDeviceRecord";
+import { OutcomesConfig } from "./Outcomes";
 
 export enum SessionStatus {
   Active = "active",
@@ -39,6 +40,7 @@ interface BaseSessionPayload {
   sessionOrigin: SessionOrigin;
   isHttps: boolean;
   isSafari: boolean;
+  outcomesConfig: OutcomesConfig;
 }
 
 export interface UpsertSessionPayload extends BaseSessionPayload {
