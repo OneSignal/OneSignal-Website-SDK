@@ -8,6 +8,8 @@ import Database from "../services/Database";
 import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
 import { NotificationClicked } from "../models/Notification";
 import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
+import { OutcomesConfig } from "../models/Outcomes";
+import OutcomesHelper from './shared/OutcomesHelper';
 
 export default class ServiceWorkerHelper {
   public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
@@ -42,7 +44,8 @@ export default class ServiceWorkerHelper {
 
   public static async upsertSession(
     sessionThresholdInSeconds: number, sendOnFocusEnabled: boolean,
-    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin
+    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin,
+    outcomesConfig: OutcomesConfig
   ): Promise<void> {
     if (!deviceId) {
       Log.error("No deviceId provided for new session.");
@@ -116,14 +119,15 @@ export default class ServiceWorkerHelper {
 
     // TODO: Possibly check that it's not unreasonably long.
     // TODO: Or couple with periodic ping for better results.
-    await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled);
+    await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig);
     await Database.upsertSession(
       initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type})
     );
   }
 
   public static async deactivateSession(
-    thresholdInSeconds: number, sendOnFocusEnabled: boolean
+    thresholdInSeconds: number, sendOnFocusEnabled: boolean,
+    outcomesConfig: OutcomesConfig
   ): Promise<number | undefined> {
     const existingSession = await Database.getCurrentSession();
 
@@ -139,7 +143,7 @@ export default class ServiceWorkerHelper {
      */
     if (existingSession.status === SessionStatus.Inactive) {
       const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
-        existingSession, sendOnFocusEnabled, thresholdInSeconds
+        existingSession, sendOnFocusEnabled, thresholdInSeconds, outcomesConfig
       );
       return timerId;
     }
@@ -162,20 +166,24 @@ export default class ServiceWorkerHelper {
     existingSession.status = SessionStatus.Inactive;
 
     const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
-      existingSession, sendOnFocusEnabled, thresholdInSeconds
+      existingSession, sendOnFocusEnabled, thresholdInSeconds, outcomesConfig
     );
     await Database.upsertSession(existingSession);
     return timerId;
   }
 
-  static setTimeoutForFinalize = (session: Session, sendOnFocus: boolean, thresholdInSeconds: number): number => {
+  static setTimeoutForFinalize = (
+    session: Session, sendOnFocus: boolean, thresholdInSeconds: number, outcomesConfig: OutcomesConfig
+  ): number => {
     const thresholdInMilliseconds = thresholdInSeconds * 1000;
     return self.setTimeout(
-      () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus), 
+      () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus, outcomesConfig), 
       thresholdInMilliseconds);
   }
 
-  public static async finalizeSession(session: Session, sendOnFocusEnabled: boolean): Promise<void> {
+  public static async finalizeSession(
+    session: Session, sendOnFocusEnabled: boolean, outcomesConfig: OutcomesConfig
+  ): Promise<void> {
     Log.debug(
       "Finalize session",
       `started: ${new Date(session.startTimestamp)}`,
@@ -184,11 +192,14 @@ export default class ServiceWorkerHelper {
 
     if (sendOnFocusEnabled) {
       Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      const attribution = await OutcomesHelper.getAttribution(outcomesConfig);
+      Log.debug("send on_focus with attribution", attribution);
       await OneSignalApiSW.sendSessionDuration(
         session.appId,
         session.deviceId,
         session.accumulatedDuration,
         session.deviceType,
+        attribution
       );
     }
 
