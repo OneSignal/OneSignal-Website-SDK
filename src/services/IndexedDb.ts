@@ -3,6 +3,8 @@ import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import Utils from "../context/shared/utils/Utils";
 
+const DATABASE_VERSION = 2;
+
 export default class IndexedDb {
 
   public emitter: Emitter;
@@ -18,7 +20,7 @@ export default class IndexedDb {
       let request: IDBOpenDBRequest | undefined = undefined;
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
-        request = indexedDB.open(databaseName, 1);
+        request = indexedDB.open(databaseName, DATABASE_VERSION);
       } catch (e) {
         // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
         // for profile schema too high
@@ -105,14 +107,8 @@ export default class IndexedDb {
     db.createObjectStore("Options", { keyPath: "key" });
     db.createObjectStore("Sessions", { keyPath: "sessionKey" });
 
-    const notificationReceivedStore = db.createObjectStore("NotificationReceived", {
-      keyPath: "notificationId"
-    });
-    notificationReceivedStore.createIndex("timestamp", "timestamp", { unique: false });
-    const notificationClickedStore = db.createObjectStore("NotificationClicked", {
-      keyPath: "notificationId"
-    });
-    notificationClickedStore.createIndex("timestamp", "timestamp", { unique: false });
+    db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
+    db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
@@ -178,30 +174,6 @@ export default class IndexedDb {
         reject(cursor.error);
       };
     });
-  }
-
-  public async queryFromIndex<T, TKey>(table: string, indexName: string, key?: TKey): Promise<T[]> {
-    const database = await this.ensureDatabaseOpen();
-    return await new Promise<T[]>((resolve, reject) => {
-      const result: T[] = [];
-
-      // Match anything up to, including the key
-      var lowerBoundOpenKeyRange = IDBKeyRange.upperBound(key);
-      const indexCursor = database.transaction(table).objectStore(table)
-        .index(indexName).openCursor(lowerBoundOpenKeyRange);
-      indexCursor.onsuccess = (event: any) => {
-        let cursorResult: IDBCursorWithValue = event.target.result;
-        if (cursorResult) {
-          result.push(cursorResult.value as T);
-          cursorResult.continue();
-        }
-        resolve(result);
-      };
-      indexCursor.onerror = () => {
-        reject(indexCursor.error);
-      };
-    });
-    
   }
 
   /**

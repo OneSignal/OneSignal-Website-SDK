@@ -172,33 +172,3 @@ test("setDeviceId", async t => {
   subscription = await Database.getSubscription();
   t.is(subscription!.deviceId, null);
 });
-
-test("queryFromIndex should work correctly", async t => {
-  const appId = Random.getRandomUuid();
-  const url = "https://localhost:3001";
-
-  const index = 5;
-  const expectedResult: number[] = [];
-
-  const promises: Promise<void>[] = [];
-  for (let i = 0; i < 10; i++) {
-    const notif: NotificationClicked = {
-      notificationId: Random.getRandomUuid(),
-      appId,
-      url,
-      timestamp: i,
-    }
-    if (i >= index) {
-      expectedResult.push(i);
-    }
-    promises.push(Database.put("NotificationClicked", notif));
-  }
-  await Promise.all(promises);
-
-  const result = await Database.singletonInstance.queryFromIndex<NotificationClicked, number>(
-    "NotificationClicked", "timestamp", index
-  );
-
-  t.is(result.length, expectedResult.length);
-  t.deepEqual(result.map(i => i.timestamp), expectedResult);
-});
