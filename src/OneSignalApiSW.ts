@@ -4,6 +4,7 @@ import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
 import { FlattenedDeviceRecord } from "./models/DeviceRecord";
 import Log from "./libraries/Log";
 import { Utils } from "./context/shared/utils/Utils";
+import { OutcomeAttribution, OutcomeAttributionType } from "./models/Outcomes";
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
@@ -62,15 +63,27 @@ export class OneSignalApiSW {
   };
 
   public static async sendSessionDuration(
-    appId: string, deviceId: string, sessionDuration: number, deviceType: number
+    appId: string, deviceId: string, sessionDuration: number, deviceType: number, attribution: OutcomeAttribution
   ): Promise<void> {
     const funcToExecute = async () => {
-      const payload = {
+      const payload: any = {
         app_id: appId,
         type: 1,
         state: "ping",
         active_time: sessionDuration,
         device_type: deviceType,
+      };
+      switch (attribution.type) {
+        case OutcomeAttributionType.Direct:
+          payload.direct = true;
+          payload.notification_ids = attribution.notificationIds;
+          break;
+        case OutcomeAttributionType.Indirect:
+          payload.direct = false;
+          payload.notification_ids = attribution.notificationIds;
+          break;
+        default:
+          break;
       }
       await OneSignalApiBase.post(`players/${deviceId}/on_focus`, payload);
     }
