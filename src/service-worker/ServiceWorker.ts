@@ -392,11 +392,12 @@ export class ServiceWorker {
         options.enableSessionDuration,
         options.deviceRecord!,
         options.deviceId,
-        options.sessionOrigin
+        options.sessionOrigin,
+        options.outcomesConfig
       );
     } else {
       self.finalizeSessionTimerId = await ServiceWorkerHelper.deactivateSession(
-        options.sessionThreshold, options.enableSessionDuration);
+        options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig);
     }
   }
 
