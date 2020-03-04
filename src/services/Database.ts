@@ -3,7 +3,7 @@ import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
 import { AppState, ClickedNotifications } from "../models/AppState";
-import { Notification, NotificationReceived, NotificationClicked } from "../models/Notification";
+import { NotificationReceived, NotificationClicked } from "../models/Notification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
@@ -28,8 +28,6 @@ interface DatabaseResult {
 
 export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
   "NotificationOpened" | "NotificationReceived" | "NotificationClicked";
-
-type OneSignalIndex = "timestamp";
 
 export default class Database {
 
@@ -137,21 +135,6 @@ export default class Database {
     } else {
       const result = await this.database.getAll<T>(table);
       return result;
-    }
-  }
-
-  public async queryFromIndex<T, TKey>(table: OneSignalDbTable, index: OneSignalIndex, key?: TKey): Promise<T[]> {
-    if (this.shouldUsePostmam()) {
-      return await new Promise<T[]>(async (resolve) => {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_QUERY_INDEX, [{
-          table, index, key
-        }], (reply: any) => {
-          const result = reply.data as T[];
-          resolve(result);
-        });
-      });
-    } else {
-      return await this.database.queryFromIndex<T, TKey>(table, index, key);
     }
   }
 
@@ -425,10 +408,6 @@ export default class Database {
     return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
   }
 
-  async getNotificationReceivedForTimeRange(maxTimestamp: number): Promise<NotificationReceived[]> {
-    return await this.queryFromIndex<NotificationReceived, number>("NotificationReceived", "timestamp", maxTimestamp);
-  }
-
   async removeNotificationClickedById(notificationId: string): Promise<void> {
     await this.remove("NotificationClicked", notificationId);
   }
@@ -542,10 +521,6 @@ export default class Database {
 
   static async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
     return await Database.singletonInstance.getNotificationReceivedById(notificationId);
-  }
-
-  static async getNotificationReceivedForTimeRange(maxTimestamp: number): Promise<NotificationReceived[]> {
-    return await Database.singletonInstance.getNotificationReceivedForTimeRange(maxTimestamp);
   }
 
   static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {

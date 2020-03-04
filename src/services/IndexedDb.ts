@@ -105,14 +105,8 @@ export default class IndexedDb {
     db.createObjectStore("Options", { keyPath: "key" });
     db.createObjectStore("Sessions", { keyPath: "sessionKey" });
 
-    const notificationReceivedStore = db.createObjectStore("NotificationReceived", {
-      keyPath: "notificationId"
-    });
-    notificationReceivedStore.createIndex("timestamp", "timestamp", { unique: false });
-    const notificationClickedStore = db.createObjectStore("NotificationClicked", {
-      keyPath: "notificationId"
-    });
-    notificationClickedStore.createIndex("timestamp", "timestamp", { unique: false });
+    db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
+    db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
