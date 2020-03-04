@@ -34,28 +34,36 @@ export default class OutcomesHelper {
       const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
       const maxTimestamp = beginningOfTimeframe.getTime();
 
-      const matchingNotifications = await Database.getAll<NotificationReceived>("NotificationReceived");
-      Log.debug(`Found total of ${matchingNotifications.length} received notifications`);
+      const allReceivedNotification = await Database.getAll<NotificationReceived>("NotificationReceived");
+      Log.debug(`Found total of ${allReceivedNotification.length} received notifications`);
 
-      if (matchingNotifications.length > 0) {
+      if (allReceivedNotification.length > 0) {
         const max: number = outcomesConfig.indirect.influencedNotificationsLimit;
         /**
          * To handle correctly the case when user got subscribed to a new app id
          * we check the appId on notifications to match the current app.
          */
 
-        const sortedArray = Utils.sortArrayOfObjects(
-          matchingNotifications, (notif: NotificationReceived) => notif.timestamp, true, false
+        const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
+          allReceivedNotification, (notif: NotificationReceived) => notif.timestamp, true, false
         );
-        const notificationIds = sortedArray
+        const matchingNotificationIds = allReceivedNotificationSorted
           .filter(notif => notif.timestamp >= maxTimestamp)
           .slice(0, max)
           .map(notif => notif.notificationId);
-        Log.debug(`Total of ${notificationIds.length} received notifications are within reporting window`);
-        if (notificationIds.length > 0) {
+        Log.debug(`Total of ${matchingNotificationIds.length} received notifications are within reporting window.`);
+        
+        // Deleting all unmatched received notifications
+        const notificationIdsToDelete = allReceivedNotificationSorted
+          .filter(notif => matchingNotificationIds.indexOf(notif.notificationId) === -1)
+          .map(notif => notif.notificationId);
+        notificationIdsToDelete.forEach(id => Database.remove("NotificationReceived", id));
+        Log.debug(`${notificationIdsToDelete.length} received notifications will be deleted.`);
+
+        if (matchingNotificationIds.length > 0) {
           return {
             type: OutcomeAttributionType.Indirect,
-            notificationIds,
+            notificationIds: matchingNotificationIds,
           }
         }
       }
