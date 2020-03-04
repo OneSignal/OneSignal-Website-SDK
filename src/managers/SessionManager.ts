@@ -23,11 +23,12 @@ export class SessionManager {
     const payload: UpsertSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord.serialize(),
-      sessionThreshold: OneSignal.config.sessionThreshold,
-      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionThreshold: this.context.appConfig.sessionThreshold || 0,
+      enableSessionDuration: !!this.context.appConfig.enableSessionDuration,
       sessionOrigin,
       isHttps,
       isSafari: OneSignalUtils.isSafari(),
+      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (isHttps) {
       Log.debug("Notify SW to upsert session");
@@ -47,11 +48,12 @@ export class SessionManager {
     const payload: DeactivateSessionPayload = {
       deviceId,
       deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
-      sessionThreshold: OneSignal.config.sessionThreshold,
-      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionThreshold: this.context.appConfig.sessionThreshold!,
+      enableSessionDuration: this.context.appConfig.enableSessionDuration!,
       sessionOrigin,
       isHttps,
       isSafari: OneSignalUtils.isSafari(),
+      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (isHttps) {
       Log.debug("Notify SW to deactivate session");
@@ -110,11 +112,12 @@ export class SessionManager {
     // have to skip adding device record to the payload
     const isHttps = OneSignalUtils.isHttps();
     const payload: DeactivateSessionPayload = {
-      sessionThreshold: OneSignal.config.sessionThreshold,
-      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionThreshold: this.context.appConfig.sessionThreshold!,
+      enableSessionDuration: this.context.appConfig.enableSessionDuration!,
       sessionOrigin: SessionOrigin.BeforeUnload,
       isHttps,
       isSafari: OneSignalUtils.isSafari(),
+      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
 
     if (isHttps) {
