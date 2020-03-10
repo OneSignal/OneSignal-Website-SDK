@@ -196,7 +196,7 @@ export class PromptsManager {
   }
 
   private isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
-    if (!options || !options.pageViews) { return false; }
+    if (!options || typeof options.pageViews === "undefined") { return false; }
     if (!options.autoPrompt || !options.enabled) { return false; }
     const localPageViews = OneSignal.context.pageViewManager.getLocalPageViewCount();
     return localPageViews >= options.pageViews;
