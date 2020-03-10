@@ -3,7 +3,7 @@ import PermissionManager from '../managers/PermissionManager';
 
 const IS_OPTED_OUT = "isOptedOut";
 const IS_PUSH_NOTIFICATIONS_ENABLED = "isPushNotificationsEnabled";
-const PAGE_VIEWS = "pageViews";
+const PAGE_VIEWS = "os_pageViews";
 
 export default class LocalStorage {
     public static getIsOptedOut(): boolean {
