@@ -12,7 +12,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
-import { SlidedownPermissionMessageOptions, DelayedPromptOptions } from '../models/AppConfig';
+import { SlidedownPermissionMessageOptions, DelayedPromptOptions, AppUserConfigPromptOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { PageViewManager } from './PageViewManager';
@@ -92,7 +92,7 @@ export class PromptsManager {
     const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
 
     // show native prompt
-    if(userPromptOptions.native && nativePromptPageViewCondition) {
+    if (userPromptOptions.native && nativePromptPageViewCondition) {
       this.showDelayedPrompt(DelayedPromptType.Native, userPromptOptions.native.timeDelay);
     }
     // show slidedown prompt
@@ -101,18 +101,21 @@ export class PromptsManager {
     }
   }
 
-  public async showDelayedPrompt(type: DelayedPromptType, timeDelay: number, autoPromptOptions?: AutoPromptOptions) {
-    if (typeof timeDelay !== "number") {
+  public async showDelayedPrompt(type: DelayedPromptType, 
+      timeDelaySeconds: number, 
+      autoPromptOptions?: AutoPromptOptions
+    ) {
+    if (typeof timeDelaySeconds !== "number") {
       Log.error("showDelayedPrompt: timeDelay not a number");
       return;
     }
 
     switch(type){
       case DelayedPromptType.Native:
-        setTimeout(async ()=>{ this.internalShowNativePrompt(); }, timeDelay*1000);
+        setTimeout(async () => { this.internalShowNativePrompt(); }, timeDelaySeconds*1000);
         break;
       case DelayedPromptType.Slidedown:
-        setTimeout(async ()=>{ this.internalShowSlidedownPrompt(autoPromptOptions); }, timeDelay*1000);
+        setTimeout(async () => { this.internalShowSlidedownPrompt(autoPromptOptions); }, timeDelaySeconds*1000);
         break;
       default:
         Log.error("Invalid Delayed Prompt type");
@@ -192,29 +195,30 @@ export class PromptsManager {
     });
   }
 
-  private isPageViewConditionMet(options: DelayedPromptOptions | void): boolean {
-    if(!options) return false;
-
-    const { autoPrompt, enabled } = options;
-    if(!autoPrompt || !enabled) return false;
-    
-    const { pageViews } = options;
-    const localPageViews = PageViewManager.getLocalPageViewCount();
-    
-    return localPageViews >= pageViews;
+  private isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
+    if (!options || !options.pageViews) { return false; }
+    if (!options.autoPrompt || !options.enabled) { return false; }
+    const localPageViews = OneSignal.context.pageViewManager.getLocalPageViewCount();
+    return localPageViews >= options.pageViews;
   }
 
-  private getDelayedPromptOptions(promptOptions: any, type: DelayedPromptType): DelayedPromptOptions | void {
-    if(!promptOptions[type]) {
-      Log.error(`No suitable type '${type}' found on promptOptions`);
-      return;
+  private getDelayedPromptOptions(promptOptions: AppUserConfigPromptOptions, 
+      type: DelayedPromptType
+    ): DelayedPromptOptions {
+    let promptOptionsForSpecificType = promptOptions[type];
+    if (!promptOptions || !promptOptionsForSpecificType) { 
+      promptOptionsForSpecificType = {
+        enabled: false,
+        autoPrompt: false,
+        timeDelay: 0,
+        pageViews: 1
+      };
     }
-
     return {
-      enabled: promptOptions[type].enabled,
-      autoPrompt: promptOptions[type].autoPrompt,
-      timeDelay: promptOptions[type].timeDelay,
-      pageViews: promptOptions[type].pageViews
+      enabled: promptOptionsForSpecificType.enabled,
+      autoPrompt: promptOptionsForSpecificType.autoPrompt,
+      timeDelay: promptOptionsForSpecificType.timeDelay,
+      pageViews: promptOptionsForSpecificType.pageViews
     };
   }
 }
