@@ -54,7 +54,7 @@ test.afterEach(function (_t: TestContext) {
  *    setTimeout doesn't work as intended in testing environment due to jsdom bugs
  */
 
-test.serial(`Delayed Prompt: native prompt is shown after 1 page view`, async t => {
+test.serial(`Delayed Prompt: native prompt is shown after 1 page view if configured so`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
     
@@ -62,11 +62,11 @@ test.serial(`Delayed Prompt: native prompt is shown after 1 page view`, async t 
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 1);
 
     const pageViews = LocalStorage.getLocalPageViewCount();
-    t.is(nativeSpy.calledOnce, true);
+    t.is(nativeSpy.callCount, 1);
     t.is(pageViews, 1);
 });
 
-test.serial(`Delayed Prompt: native prompt is shown after 0 page views`, async t => {
+test.serial(`Delayed Prompt: native prompt is shown after 0 page views if configured so`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
     
@@ -74,11 +74,11 @@ test.serial(`Delayed Prompt: native prompt is shown after 0 page views`, async t
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 0);
 
     const pageViews = LocalStorage.getLocalPageViewCount();
-    t.is(nativeSpy.calledOnce, true);
+    t.is(nativeSpy.callCount, 1);
     t.is(pageViews, 1);
 });
 
-test.serial(`Delayed Prompt: native prompt not shown after 1 page view`, async t => {
+test.serial(`Delayed Prompt: native prompt not shown if less than configured page views`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
 
@@ -95,12 +95,10 @@ test.serial(`Delayed Prompt: native prompt not shown after 1 page view`, async t
     t.is(pageViews, 1);
 });
 
-test.serial(`Delayed Prompt: native prompt is shown after 3 page views`, async t => {
+test.serial(`Delayed Prompt: native prompt is shown after 3 page views if configured so`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
-    
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
-
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 3);
     
     for(let i=0; i<2; i++) {
@@ -108,9 +106,9 @@ test.serial(`Delayed Prompt: native prompt is shown after 3 page views`, async t
         await InitHelper.internalInit();
     }
 
-    const pageViews = PageViewManager.getLocalPageViewCount();
+    const pageViews = OneSignal.context.pageViewManager.getLocalPageViewCount();
     t.is(pageViews, 3);
-    t.is(nativeSpy.calledOnce, true);
+    t.is(nativeSpy.callCount, 1);
 });
 
 /** HELPERS */
