@@ -75,10 +75,10 @@ export class PageViewManager {
     }
 
     const newCount = this.getPageViewCount() + 1;
-    const newLocalCount = PageViewManager.getLocalPageViewCount() + 1;
+    const newLocalCount = this.getLocalPageViewCount() + 1;
 
     this.setPageViewCount(newCount);
-    PageViewManager.setLocalPageViewCount(newLocalCount);
+    this.setLocalPageViewCount(newLocalCount);
 
     Log.debug(`Incremented page view count to ${newCount}.`);
     this.incrementedPageViewCount = true;
@@ -99,14 +99,14 @@ export class PageViewManager {
   /**
    * Returns Page Views saved to Local Storage (Persists Longer than Single Session)
    */
-  static getLocalPageViewCount() {
+  getLocalPageViewCount() {
     return LocalStorage.getLocalPageViewCount();
   }
 
   /**
    * Sets Page Views to Local Storage 
    */
-  static setLocalPageViewCount(count: number) {
+  setLocalPageViewCount(count: number) {
     LocalStorage.setLocalPageViewCount(count);
   }
 }
