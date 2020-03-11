@@ -16,6 +16,7 @@ import { SlidedownPermissionMessageOptions, DelayedPromptOptions, AppUserConfigP
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { PageViewManager } from './PageViewManager';
+import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 
 export interface AutoPromptOptions {
   force: boolean;
@@ -205,13 +206,13 @@ export class PromptsManager {
   private getDelayedPromptOptions(promptOptions: AppUserConfigPromptOptions, 
       type: DelayedPromptType
     ): DelayedPromptOptions {
-    let promptOptionsForSpecificType = promptOptions[type];
+    const promptOptionsForSpecificType = promptOptions[type];
     if (!promptOptions || !promptOptionsForSpecificType) { 
-      promptOptionsForSpecificType = {
+      return {
         enabled: false,
         autoPrompt: false,
-        timeDelay: 0,
-        pageViews: 1
+        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
+        pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews
       };
     }
     return {
