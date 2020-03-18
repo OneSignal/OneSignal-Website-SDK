@@ -21,4 +21,5 @@ export interface OSServiceWorkerFields {
   debounceSessionTimerId?: number;
   finalizeSessionTimerId?: number;
   clientsStatus?: ClientStatus;
+  cancel?: () => void;
 }

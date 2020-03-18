@@ -10,6 +10,7 @@ import { NotificationClicked } from "../models/Notification";
 import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
+import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
 
 export default class ServiceWorkerHelper {
   public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
@@ -128,7 +129,7 @@ export default class ServiceWorkerHelper {
   public static async deactivateSession(
     thresholdInSeconds: number, sendOnFocusEnabled: boolean,
     outcomesConfig: OutcomesConfig
-  ): Promise<number | undefined> {
+  ): Promise<CancelableTimeoutPromise | undefined> {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
@@ -142,10 +143,10 @@ export default class ServiceWorkerHelper {
      * No update needed for the session, early return.
      */
     if (existingSession.status === SessionStatus.Inactive) {
-      const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
-        existingSession, sendOnFocusEnabled, thresholdInSeconds, outcomesConfig
+      return cancelableTimeout(
+        () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig), 
+        thresholdInSeconds
       );
-      return timerId;
     }
 
     /**
@@ -165,20 +166,14 @@ export default class ServiceWorkerHelper {
     existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
     existingSession.status = SessionStatus.Inactive;
 
-    const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
-      existingSession, sendOnFocusEnabled, thresholdInSeconds, outcomesConfig
+    const cancelableFinalize = cancelableTimeout(
+      () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig), 
+      thresholdInSeconds
     );
-    await Database.upsertSession(existingSession);
-    return timerId;
-  }
 
-  static setTimeoutForFinalize = (
-    session: Session, sendOnFocus: boolean, thresholdInSeconds: number, outcomesConfig: OutcomesConfig
-  ): number => {
-    const thresholdInMilliseconds = thresholdInSeconds * 1000;
-    return self.setTimeout(
-      () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus, outcomesConfig), 
-      thresholdInMilliseconds);
+    await Database.upsertSession(existingSession);
+
+    return cancelableFinalize;
   }
 
   public static async finalizeSession(
