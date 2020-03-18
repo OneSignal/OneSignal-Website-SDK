@@ -802,7 +802,14 @@ export class ServiceWorker {
       }
       Log.info("NotificationClicked", notificationClicked);
       saveNotificationClickedPromise = (async (notificationClicked) => {
-        return await Database.put("NotificationClicked", notificationClicked)
+        try {
+          const existingSession = await Database.getCurrentSession();
+          if (!existingSession) {
+            await Database.put("NotificationClicked", notificationClicked)
+          }
+        } catch(e) {
+          Log.error("Failed to save clicked notification.", e);
+        }
       })(notificationClicked);
     }
 
