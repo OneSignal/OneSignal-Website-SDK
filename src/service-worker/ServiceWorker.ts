@@ -1,7 +1,7 @@
 import bowser from "bowser";
 
 import Environment from "../Environment";
-import { WorkerMessenger, WorkerMessengerCommand } from "../libraries/WorkerMessenger";
+import { WorkerMessenger, WorkerMessengerCommand, WorkerMessengerMessage } from "../libraries/WorkerMessenger";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import ContextSW from "../models/ContextSW";
 import OneSignalApiBase from "../OneSignalApiBase";
@@ -23,6 +23,7 @@ import {
 } from "./types";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import { NotificationReceived, NotificationClicked } from "../models/Notification";
+import { cancelableTimeout } from "src/helpers/sw/CancelableTimeout";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
@@ -95,6 +96,28 @@ export class ServiceWorker {
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
       event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
+    });
+
+
+    self.addEventListener('message', (event: ExtendableMessageEvent) => {
+      const data: WorkerMessengerMessage = event.data;
+      if (!data || !data.command) {
+        return;
+      }
+      const payload = data.payload;
+
+      switch(data.command) {
+        case WorkerMessengerCommand.SessionUpsert:
+          Log.debug("[Service Worker] Received SessionUpsert", payload);
+          ServiceWorker.debounceRefreshSession(event, payload as UpsertSessionPayload);
+          break;
+        case WorkerMessengerCommand.SessionDeactivate:
+          Log.debug("[Service Worker] Received SessionDeactivate", payload);
+          ServiceWorker.debounceRefreshSession(event, payload as DeactivateSessionPayload);
+          break;
+        default:
+          return;
+      }
     });
     /*
       According to
@@ -178,23 +201,6 @@ export class ServiceWorker {
       const context = new ContextSW(appConfig);
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
-    });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: UpsertSessionPayload) => {
-      Log.debug("[Service Worker] Received SessionUpsert", payload);
-      try {
-        ServiceWorker.debounceRefreshSession(payload);
-      } catch(e) {
-        Log.error("Error in SW.SessionUpsert handler", e.message, e);
-      }
-    });
-
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionDeactivate, async (payload: DeactivateSessionPayload) => {
-      Log.debug("[Service Worker] Received SessionDeactivate", payload);
-      try {
-        ServiceWorker.debounceRefreshSession(payload);
-      } catch(e) {
-        Log.error("Error in SW.SessionDeactivate handler", e);
-      }
     });
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.AreYouVisibleResponse, async (payload: PageVisibilityResponse) => {
@@ -384,6 +390,7 @@ export class ServiceWorker {
   }
 
   static async updateSessionBasedOnHasActive(
+    event: ExtendableMessageEvent,
     hasAnyActiveSessions: boolean, options: DeactivateSessionPayload
   ) {
     if (hasAnyActiveSessions) {
@@ -396,12 +403,17 @@ export class ServiceWorker {
         options.outcomesConfig
       );
     } else {
-      self.finalizeSessionTimerId = await ServiceWorkerHelper.deactivateSession(
-        options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig);
+      const cancelableFinalize = await ServiceWorkerHelper.deactivateSession(
+        options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig
+      );
+      if (cancelableFinalize) {
+        self.cancel = cancelableFinalize.cancel;
+        event.waitUntil(cancelableFinalize.promise);
+      }
     }
   }
 
-  static async refreshSession(options: DeactivateSessionPayload): Promise<void> {
+  static async refreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload): Promise<void> {
     Log.debug("[Service Worker] refreshSession");
     /**
      * if https -> getActiveClients -> check for the first focused
@@ -417,22 +429,24 @@ export class ServiceWorker {
       );
 
       if (options.isSafari) {
-        ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(windowClients, options);
+        await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
       } else {
         const hasAnyActiveSessions: boolean = windowClients.some(w => (w as WindowClient).focused);
         Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
-        await ServiceWorker.updateSessionBasedOnHasActive(hasAnyActiveSessions, options);
+        await ServiceWorker.updateSessionBasedOnHasActive(event, hasAnyActiveSessions, options);
       }
       return;
     } else {
       const osClients = await ServiceWorker.getActiveClients();
-      ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(osClients, options);
+      await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(event, osClients, options);
     }
   }
 
-  static checkIfAnyClientsFocusedAndUpdateSession(
-    windowClients: Client[], sessionInfo: DeactivateSessionPayload
-  ): void {
+  static async checkIfAnyClientsFocusedAndUpdateSession(
+    event: ExtendableMessageEvent,
+    windowClients: Client[],
+    sessionInfo: DeactivateSessionPayload
+  ): Promise<void> {
     const timestamp = new Date().getTime();
     self.clientsStatus = {
       timestamp,
@@ -448,32 +462,35 @@ export class ServiceWorker {
       }
       c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload })
     });
-    self.setTimeout(() => {
+    const updateOnHasActive = async () => {
       if (!self.clientsStatus) { return; }
       if (self.clientsStatus.timestamp !== timestamp) { return; }
 
       Log.debug("updateSessionBasedOnHasActive", self.clientsStatus);
-      ServiceWorker.updateSessionBasedOnHasActive(
+      await ServiceWorker.updateSessionBasedOnHasActive(event,
         self.clientsStatus.hasAnyActiveSessions, sessionInfo);
       self.clientsStatus = undefined;
-    }, 500);
+    }
+    const getClientStatusesCancelable = cancelableTimeout(updateOnHasActive, 0.5);
+    self.cancel = getClientStatusesCancelable.cancel;
+    event.waitUntil(getClientStatusesCancelable.promise);
   }
 
-  static debounceRefreshSession(options: DeactivateSessionPayload ) {
+  static debounceRefreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload) {
     Log.debug("[Service Worker] debounceRefreshSession", options);
-    const executeRefreshSession = () => {
-      if (self.finalizeSessionTimerId !== undefined) {
-        self.clearTimeout(self.finalizeSessionTimerId);
-        self.finalizeSessionTimerId = undefined;
-      }
-      ServiceWorker.refreshSession(options);
-    };
 
-    if (self.debounceSessionTimerId !== undefined) {
-      self.clearTimeout(self.debounceSessionTimerId);
+    if (self.cancel) {
+      self.cancel();
+      self.cancel = undefined;
     }
 
-    self.debounceSessionTimerId = self.setTimeout(executeRefreshSession, 1000);
+    const executeRefreshSession = async () => {
+      await ServiceWorker.refreshSession(event, options);
+    };
+
+    const cancelableRefreshSession = cancelableTimeout(executeRefreshSession, 1);
+    self.cancel = cancelableRefreshSession.cancel;
+    event.waitUntil(cancelableRefreshSession.promise);
   }
 
   /**
