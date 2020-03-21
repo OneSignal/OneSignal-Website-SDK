@@ -51,6 +51,14 @@ export interface DeactivateSessionPayload extends BaseSessionPayload {
   deviceRecord?: SerializedPushDeviceRecord;
 }
 
+export interface PageVisibilityRequest {
+  timestamp: number;
+}
+
+export interface PageVisibilityResponse extends PageVisibilityRequest {
+  focused: boolean;
+}
+
 export const ONESIGNAL_SESSION_KEY = "oneSignalSession";
 
 export function initializeNewSession(options: NewSessionOptions): Session {

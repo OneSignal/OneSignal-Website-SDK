@@ -13,13 +13,16 @@ import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { UpsertSessionPayload, DeactivateSessionPayload } from "../models/Session";
+import { 
+  UpsertSessionPayload, DeactivateSessionPayload,
+  PageVisibilityRequest, PageVisibilityResponse
+} from "../models/Session";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../context/shared/utils/Utils";
 import {
-  OSWindowClient, OSServiceWorkerFields, PageVisibilityRequest, PageVisibilityResponse
+  OSWindowClient, OSServiceWorkerFields
 } from "./types";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import { NotificationReceived, NotificationClicked } from "../models/Notification";
@@ -460,7 +463,7 @@ export class ServiceWorker {
         // keeping track of number of sent requests mostly for debugging purposes
         self.clientsStatus.sentRequestsCount++;
       }
-      c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload })
+      c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload });
     });
     const updateOnHasActive = async () => {
       if (!self.clientsStatus) { return; }

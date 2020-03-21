@@ -5,7 +5,7 @@ import Postmam from '../../Postmam';
 import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
 import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
-import { PageVisibilityRequest } from "../../service-worker/types";
+import { PageVisibilityRequest } from "../../models/Session";
 
 interface Reply {
   data: any;
