@@ -1,9 +1,7 @@
 import Environment from '../Environment';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { Subscription } from '../models/Subscription';
 import Database from '../services/Database';
 import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -18,6 +16,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
   from "../helpers/ServiceWorkerHelper";
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
+import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -410,17 +409,17 @@ export class ServiceWorkerManager {
 
     // TODO: fix types. Seems like it's "{data: {payload: PageVisibilityRequest;}}" for https
     //       and "PageVisibilityRequest" for http
-    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (event: any) => {
+    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (incomingPayload: PageVisibilityRequest) => {
       // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
       // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
       if (isHttps && isSafari) {
-        const payload = {
-          timestamp: event.data.payload.timestamp,
+        const payload: PageVisibilityResponse = {
+          timestamp: incomingPayload.timestamp,
           focused: document.hasFocus(),
         };
         workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
       } else {
-        const httpPayload = { timestamp: event.timestamp };
+        const httpPayload: PageVisibilityRequest = { timestamp: incomingPayload.timestamp };
         const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
         if (proxyFrame) {
           proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
