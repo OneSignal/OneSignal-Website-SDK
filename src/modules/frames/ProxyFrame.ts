@@ -9,9 +9,10 @@ import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
-import { UpsertSessionPayload, DeactivateSessionPayload } from "../../models/Session";
+import {
+  UpsertSessionPayload, DeactivateSessionPayload, PageVisibilityResponse
+} from "../../models/Session";
 import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
-import { PageVisibilityResponse } from "../../service-worker/types";
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
