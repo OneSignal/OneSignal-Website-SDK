@@ -977,6 +977,7 @@ export class ServiceWorker {
   }
 
   static onServiceWorkerInstalled(event) {
+    Log.info("Installing service worker...");
     // At this point, the old service worker is still in control
     event.waitUntil(self.skipWaiting());
   }
