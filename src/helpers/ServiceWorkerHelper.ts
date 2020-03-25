@@ -5,12 +5,16 @@ import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../
 import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
-import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
+import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
 import { NotificationClicked } from "../models/Notification";
+import { RawPushSubscription } from '../models/RawPushSubscription';
 import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
+import { OSServiceWorkerFields } from "../service-worker/types";
+
+declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
   public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
@@ -79,7 +83,15 @@ export default class ServiceWorkerHelper {
        * since player#create call updates last_session field on player.
        */
       if (sessionOrigin !== SessionOrigin.PlayerCreate) {
-        // TODO: (iryna) add notification id to on_session payload for direct session application
+        if (!deviceRecord.identifier) {
+          const subscription = await self.registration.pushManager.getSubscription()
+          if (subscription) {
+            const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
+            const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
+            deviceRecord.identifier = fullDeviceRecord.identifier;
+          }
+        }
+
         const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
         // If the returned player id is different, save the new id to indexed db and update session
         if (newPlayerId !== deviceId) {

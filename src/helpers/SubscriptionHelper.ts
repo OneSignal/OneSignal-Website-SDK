@@ -18,7 +18,6 @@ import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 import { Browser } from "../context/browser/models/Browser";
-import NotImplementedError from '../errors/NotImplementedError';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -176,7 +175,8 @@ export default class SubscriptionHelper {
   }
 
   static async getRawPushSubscriptionWhenUsingSubscriptionWorkaround(): Promise<RawPushSubscription | null> {
-    throw new NotImplementedError();
+    // we would need to message service worker to get it. we'll get it from inside if necessary
+    return null;
   }
 
   static async getRawPushSubscription(
