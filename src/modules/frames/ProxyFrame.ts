@@ -49,6 +49,7 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
       this.onRemoteNotificationPermission.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, this.onRemoteDatabaseGet.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, this.onRemoteDatabaseGetAll.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, this.onRemoteDatabasePut.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, this.onRemoteDatabaseRemove.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, this.onUnsubscribeFromPush.bind(this));
@@ -144,6 +145,15 @@ export default class ProxyFrame extends RemoteFrame {
       retrievalOpPromises.push(Database.get(table, key));
     }
     const results = await Promise.all(retrievalOpPromises);
+    message.reply(results);
+    return false;
+  }
+
+  async onRemoteDatabaseGetAll(message: MessengerMessageEvent) {
+    const table: OneSignalDbTable = message.data.table;
+    console.log("onRemoteDatabaseGetAll", table);
+    const results = await Database.getAll(table);
+    
     message.reply(results);
     return false;
   }

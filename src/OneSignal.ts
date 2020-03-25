@@ -934,6 +934,7 @@ export default class OneSignal {
     CONNECTED: 'connect',
     REMOTE_NOTIFICATION_PERMISSION: 'postmam.remoteNotificationPermission',
     REMOTE_DATABASE_GET: 'postmam.remoteDatabaseGet',
+    REMOTE_DATABASE_GET_ALL: 'postmam.remoteDatabaseGetAll',
     REMOTE_DATABASE_PUT: 'postmam.remoteDatabasePut',
     REMOTE_DATABASE_REMOVE: 'postmam.remoteDatabaseRemove',
     REMOTE_OPERATION_COMPLETE: 'postman.operationComplete',

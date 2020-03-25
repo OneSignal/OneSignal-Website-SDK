@@ -126,10 +126,11 @@ export default class Database {
   public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
     if (this.shouldUsePostmam()) {
       return await new Promise<T[]>(async (resolve) => {
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, [{
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, {
           table: table
-        }], (reply: T[]) => {
-          resolve(reply);
+        }, (reply: any) => {
+          const result = reply.data;
+          resolve(result);
         });
       });
     } else {
