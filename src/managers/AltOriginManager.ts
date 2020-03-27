@@ -116,7 +116,7 @@ export default class AltOriginManager {
 
     let osTcDomainUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
     // Always add subdomain.os.tc
-    osTcDomainUrl.host = [config.subdomain, 'os.tc'].join('.');
+    osTcDomainUrl.host = `${config.subdomain}.os.tc:3001`;
     urls.push(osTcDomainUrl);
 
     for (const url of urls) {
