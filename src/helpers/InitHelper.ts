@@ -46,6 +46,9 @@ export default class InitHelper {
     // Always check for an updated service worker
     await OneSignal.context.serviceWorkerManager.installWorker();
 
+    const sessionManager = OneSignal.context.sessionManager;
+    OneSignal.emitter.on(OneSignal.EVENTS.SESSION_STARTED,
+      sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager));
     OneSignal.context.pageViewManager.incrementPageViewCount();
 
     if (document.visibilityState !== 'visible') {
