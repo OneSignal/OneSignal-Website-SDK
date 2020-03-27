@@ -188,7 +188,10 @@ export class SessionManager {
   ): Promise<void> {
     const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
 
-    if (OneSignalUtils.isHttps()) {
+    if (
+      this.context.environmentInfo.isBrowserAndSupportsServiceWorkers ||
+      this.context.environmentInfo.isUsingSubscriptionWorkaround
+    ) {
       this.setupSessionEventListeners();
     } else if (
       !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
@@ -202,6 +205,15 @@ export class SessionManager {
   }
 
   setupSessionEventListeners(): void {
+    // Only want these events if it's using subscription workaround
+    if (
+      !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
+      !this.context.environmentInfo.isUsingSubscriptionWorkaround
+    ) {
+      Log.debug("Not setting session event listeners. No SW possible.");
+      return;
+    }
+
     // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
 
     this.setupOnFocusAndOnBlurForSession();
