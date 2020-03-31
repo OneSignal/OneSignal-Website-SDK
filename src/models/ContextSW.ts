@@ -2,10 +2,11 @@ import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { AppConfig } from './AppConfig';
-import { SessionManager } from '../managers/SessionManager';
+import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
 import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
+import { SessionManager } from '../managers/SessionManager';
 
 
 // TODO: Ideally this file should only import classes used by ServiceWorker.ts.
@@ -16,6 +17,7 @@ export interface ContextSWInterface {
   appConfig: AppConfig;
   subscriptionManager: SubscriptionManager;
   serviceWorkerManager: ServiceWorkerManager;
+  pageViewManager: PageViewManager;
   sessionManager: SessionManager;
   permissionManager: PermissionManager;
   workerMessenger: WorkerMessenger;
@@ -26,6 +28,7 @@ export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
+  public pageViewManager: PageViewManager;
   public sessionManager: SessionManager;
   public permissionManager: PermissionManager;
   public workerMessenger: WorkerMessenger;
@@ -35,7 +38,8 @@ export default class ContextSW implements ContextSWInterface {
     this.appConfig = appConfig;
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
-    this.sessionManager = new SessionManager();
+    this.pageViewManager = new PageViewManager();
+    this.sessionManager = new SessionManager(this);
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);

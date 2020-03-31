@@ -13,12 +13,17 @@ import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import { UpsertSessionPayload, DeactivateSessionPayload } from "../models/Session";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../context/shared/utils/Utils";
+import {
+  OSWindowClient, OSServiceWorkerFields, PageVisibilityRequest, PageVisibilityResponse
+} from "./types";
+import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 
-declare var self: ServiceWorkerGlobalScope;
+declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
 
 /**
@@ -173,6 +178,37 @@ export class ServiceWorker {
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
     });
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionUpsert, async (payload: UpsertSessionPayload) => {
+      Log.debug("[Service Worker] Received SessionUpsert", payload);
+      try {
+        ServiceWorker.debounceRefreshSession(payload);
+      } catch(e) {
+        Log.error("Error in SW.SessionUpsert handler", e.message, e);
+      }
+    });
+
+    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SessionDeactivate, async (payload: DeactivateSessionPayload) => {
+      Log.debug("[Service Worker] Received SessionDeactivate", payload);
+      try {
+        ServiceWorker.debounceRefreshSession(payload);
+      } catch(e) {
+        Log.error("Error in SW.SessionDeactivate handler", e);
+      }
+    });
+    ServiceWorker.workerMessenger.on(
+      WorkerMessengerCommand.AreYouVisibleResponse, async (payload: PageVisibilityResponse) => {
+        Log.debug('[Service Worker] Received response for AreYouVisible', payload);
+        if (!self.clientsStatus) { return; }
+
+        const timestamp = payload.timestamp;
+        if (self.clientsStatus.timestamp !== timestamp) { return; }
+        
+        self.clientsStatus.receivedResponsesCount++;
+        if (payload.focused) {
+          self.clientsStatus.hasAnyActiveSessions = true;
+        }
+      }
+    );
   }
 
   /**
@@ -312,11 +348,13 @@ export class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static async getActiveClients(): Promise<Array<Client>> {
+  static async getActiveClients(): Promise<Array<OSWindowClient>> {
     const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const activeClients: Array<Client> = [];
+    const activeClients: Array<OSWindowClient> = [];
 
     for (const client of windowClients) {
+      const windowClient: OSWindowClient = client as OSWindowClient;
+      windowClient.isSubdomainIframe = false;
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
@@ -325,12 +363,103 @@ export class ServiceWorker {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
-        (client as any).isSubdomainIframe = true;
+        windowClient.isSubdomainIframe = true;
       }
-      activeClients.push(client);
+      activeClients.push(windowClient);
+    }
+    return activeClients;
+  }
+
+  static async updateSessionBasedOnHasActive(
+    hasAnyActiveSessions: boolean, options: DeactivateSessionPayload
+  ) {
+    if (hasAnyActiveSessions) {
+      await ServiceWorkerHelper.upsertSession(
+        options.sessionThreshold,
+        options.enableSessionDuration,
+        options.deviceRecord!,
+        options.deviceId,
+        options.sessionOrigin
+      );
+    } else {
+      self.timerId = await ServiceWorkerHelper.deactivateSession(
+        options.sessionThreshold, options.enableSessionDuration);
+    }
+  }
+
+  static async refreshSession(options: DeactivateSessionPayload): Promise<void> {
+    Log.debug("[Service Worker] refreshSession");
+    /**
+     * if https -> getActiveClients -> check for the first focused
+     * unfortunately, not enough for safari, it always returns false for focused state of a client
+     * have to workaround it with messaging to the client.
+     * 
+     * if http, also have to workaround with messaging:
+     *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
+     */
+    if (options.isHttps) {
+      const windowClients: Client[] = await self.clients.matchAll(
+        { type: "window", includeUncontrolled: false }
+      );
+
+      if (options.isSafari) {
+        ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(windowClients, options);
+      } else {
+        const hasAnyActiveSessions: boolean = windowClients.some(w => (w as WindowClient).focused);
+        Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
+        await ServiceWorker.updateSessionBasedOnHasActive(hasAnyActiveSessions, options);
+      }
+      return;
+    } else {
+      const osClients = await ServiceWorker.getActiveClients();
+      ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(osClients, options);
+    }
+  }
+
+  static checkIfAnyClientsFocusedAndUpdateSession(
+    windowClients: Client[], sessionInfo: DeactivateSessionPayload
+  ): void {
+    const timestamp = new Date().getTime();
+    self.clientsStatus = {
+      timestamp,
+      sentRequestsCount: 0,
+      receivedResponsesCount: 0,
+      hasAnyActiveSessions: false,
+    };
+    const payload: PageVisibilityRequest = { timestamp };
+    windowClients.forEach(c => {
+      if (self.clientsStatus) {
+        // keeping track of number of sent requests mostly for debugging purposes
+        self.clientsStatus.sentRequestsCount++;
+      }
+      c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload })
+    });
+    self.setTimeout(() => {
+      if (!self.clientsStatus) { return; }
+      if (self.clientsStatus.timestamp !== timestamp) { return; }
+
+      Log.debug("updateSessionBasedOnHasActive", self.clientsStatus);
+      ServiceWorker.updateSessionBasedOnHasActive(
+        self.clientsStatus.hasAnyActiveSessions, sessionInfo);
+      self.clientsStatus = undefined;
+    }, 500);
+  }
+
+  static debounceRefreshSession(options: DeactivateSessionPayload ) {
+    Log.debug("[Service Worker] debounceRefreshSession", options);
+    const executeRefreshSession = () => {
+      if (self.timerId !== undefined) {
+        self.clearTimeout(self.timerId);
+        self.timerId = undefined;
+      }
+      ServiceWorker.refreshSession(options);
+    };
+
+    if (self.timerId !== undefined) {
+      self.clearTimeout(self.timerId);
     }
 
-    return activeClients;
+    self.timerId = self.setTimeout(executeRefreshSession, 1000);
   }
 
   /**

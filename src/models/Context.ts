@@ -4,13 +4,14 @@ import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import CookieSyncer from '../modules/CookieSyncer';
 import { AppConfig } from './AppConfig';
-import { SessionManager } from '../managers/SessionManager';
+import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
 import MetricsManager from '../managers/MetricsManager';
 import { ContextSWInterface } from "./ContextSW";
 import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
 import { PromptsManager } from "../managers/PromptsManager";
+import { SessionManager } from "../managers/SessionManager";
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -25,20 +26,22 @@ export default class Context implements ContextInterface {
   public serviceWorkerManager: ServiceWorkerManager;
   public workerMessenger: WorkerMessenger;
   public cookieSyncer: CookieSyncer;
-  public sessionManager: SessionManager;
+  public pageViewManager: PageViewManager;
   public permissionManager: PermissionManager;
   public metricsManager: MetricsManager;
   public updateManager: UpdateManager;
   public promptsManager: PromptsManager;
+  public sessionManager: SessionManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
-    this.sessionManager = new SessionManager();
+    this.pageViewManager = new PageViewManager();
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);
+    this.sessionManager = new SessionManager(this);
     
     this.promptsManager = new PromptsManager(this);
     this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);

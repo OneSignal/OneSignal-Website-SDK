@@ -103,10 +103,20 @@ export class SubscriptionManager {
         if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
 
-        if (SubscriptionManager.isSafari())
+        if (SubscriptionManager.isSafari()) {
           rawPushSubscription = await this.subscribeSafari();
-        else
+          /* Now that permissions have been granted, install the service worker */
+          Log.info("Installing SW on Safari");
+          try {
+            await this.context.serviceWorkerManager.installWorker();
+            Log.info("SW on Safari successfully installed");
+          } catch(e) {
+            Log.error("SW on Safari failed to install.");
+          }
+
+        } else {
           rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
+        }
         break;
       default:
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
@@ -371,7 +381,6 @@ export class SubscriptionManager {
       } 
       throw err;
     }
-      
 
     Log.debug('Waiting for the service worker to activate...');
     const workerRegistration = await navigator.serviceWorker.ready;
@@ -798,9 +807,9 @@ export class SubscriptionManager {
   public async registerFailedSubscription(
     subscriptionState: SubscriptionStateServiceWorkerNotIntalled,
     context: ContextSWInterface) {
-    if (context.sessionManager.isFirstPageView()) {
+    if (context.pageViewManager.isFirstPageView()) {
       context.subscriptionManager.registerSubscription(new RawPushSubscription(), subscriptionState);
-      context.sessionManager.incrementPageViewCount();
+      context.pageViewManager.incrementPageViewCount();
     }
   }
 }

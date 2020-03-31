@@ -7,6 +7,7 @@ import Database from "../services/Database";
 import Log from "../libraries/Log";
 import { ContextSWInterface } from '../models/ContextSW';
 import Utils from "../context/shared/utils/Utils";
+import { SessionOrigin } from "../models/Session";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -15,7 +16,7 @@ export class UpdateManager {
 
   constructor(context: ContextSWInterface) {
     this.context = context;
-    this.onSessionSent = context.sessionManager.getPageViewCount() > 1;
+    this.onSessionSent = context.pageViewManager.getPageViewCount() > 1;
   }
 
   private async getDeviceId(): Promise<string> {
@@ -27,10 +28,7 @@ export class UpdateManager {
   }
 
   private async createDeviceRecord(): Promise<PushDeviceRecord> {
-    const deviceRecord = new PushDeviceRecord();
-    deviceRecord.appId = this.context.appConfig.appId;
-    deviceRecord.subscriptionState = await MainHelper.getCurrentNotificationType();
-    return deviceRecord;
+    return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
   public async sendPlayerUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
@@ -60,7 +58,7 @@ export class UpdateManager {
       return;
     }
 
-    if (!this.context.sessionManager.isFirstPageView()) {
+    if (!this.context.pageViewManager.isFirstPageView()) {
       return;
     }
 
@@ -81,15 +79,11 @@ export class UpdateManager {
     }
 
     try {
-      const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
+      // Not sending on_session here but from SW instead.
+      
+      // Not awaiting here on purpose
+      this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
-
-      // If the returned player id is different, save the new id.
-      if (newPlayerId !== deviceId) {
-        const subscription = await Database.getSubscription();
-        subscription.deviceId = newPlayerId;
-        await Database.setSubscription(subscription);
-      }
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
@@ -101,6 +95,8 @@ export class UpdateManager {
       if (deviceId) {
         Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
         this.onSessionSent = true;
+        // Not awaiting here on purpose
+        this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerCreate);
         return deviceId;
       }
       Log.error(`Failed to create user.`);

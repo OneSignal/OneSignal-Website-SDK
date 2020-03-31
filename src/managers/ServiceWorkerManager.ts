@@ -404,6 +404,29 @@ export class ServiceWorkerManager {
     workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, data => {
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
+
+    const isHttps = OneSignalUtils.isHttps();
+    const isSafari = OneSignalUtils.isSafari();
+
+    // TODO: fix types. Seems like it's "{data: {payload: PageVisibilityRequest;}}" for https
+    //       and "PageVisibilityRequest" for http
+    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (event: any) => {
+      // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
+      // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
+      if (isHttps && isSafari) {
+        const payload = {
+          timestamp: event.data.payload.timestamp,
+          focused: document.hasFocus(),
+        };
+        workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
+      } else {
+        const httpPayload = { timestamp: event.timestamp };
+        const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
+        if (proxyFrame) {
+          proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
+        }
+      }
+    });
   }
 
   /**

@@ -1,7 +1,11 @@
-import Log from '../libraries/Log';
-import Path from '../models/Path';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
+import { OneSignalApiSW } from "../OneSignalApiSW";
+import Log from "../libraries/Log";
+import Path from "../models/Path";
+import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../models/Session";
+import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
+import Database from "../services/Database";
+import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
 
 export default class ServiceWorkerHelper {
   // Gets details on the service-worker (if any) that controls the current page
@@ -40,6 +44,147 @@ export default class ServiceWorkerHelper {
     }
 
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+  }
+
+  public static async upsertSession(
+    sessionThresholdInSeconds: number, sendOnFocusEnabled: boolean,
+    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin
+  ): Promise<void> {
+    if (!deviceId) {
+      Log.error("No deviceId provided for new session.");
+      return;
+    }
+
+    if (!deviceRecord.app_id) {
+      Log.error("No appId provided for new session.");
+      return;
+    }
+
+    const existingSession = await Database.getCurrentSession();
+
+    if (!existingSession) {
+      // TODO: add notification id after second part is merged in.
+      const session: Session = initializeNewSession(
+        { deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type }
+      );
+      await Database.upsertSession(session);
+      /**
+       * Send on_session call on each new session initialization except the case
+       * when player create call occurs, e.g. first subscribed or re-subscribed cases after clearing cookies,
+       * since player#create call updates last_session field on player.
+       */
+      if (sessionOrigin !== SessionOrigin.PlayerCreate) {
+        const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+        // If the returned player id is different, save the new id to indexed db and update session
+        if (newPlayerId !== deviceId) {
+          session.deviceId = newPlayerId;
+          await Promise.all([
+            Database.setDeviceId(newPlayerId),
+            Database.upsertSession(session)
+          ]);
+        }
+      }
+      return;
+    }
+
+    if (existingSession.status === SessionStatus.Active) {
+      Log.debug("Session already active", existingSession);
+      return;
+    }
+
+    if (!existingSession.lastDeactivatedTimestamp) {
+      Log.debug("Session is in invalid state", existingSession);
+      // TODO: possibly recover by re-starting session if deviceId is present?
+      return;
+    }
+
+    const currentTimestamp = new Date().getTime();
+    const timeSinceLastDeactivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+      currentTimestamp, existingSession.lastDeactivatedTimestamp);
+
+    if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
+      existingSession.status = SessionStatus.Active;
+      existingSession.lastActivatedTimestamp = currentTimestamp;
+      existingSession.lastDeactivatedTimestamp = null;
+      await Database.upsertSession(existingSession);
+      return;
+    }
+
+    // If failed to report/clean-up last time, we can attempt to try again here.
+
+    // TODO: Possibly check that it's not unreasonably long.
+    // TODO: Or couple with periodic ping for better results.
+    await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled);
+    await Database.upsertSession(
+      initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type})
+    );
+  }
+
+  public static async deactivateSession(
+    thresholdInSeconds: number, sendOnFocusEnabled: boolean
+  ): Promise<number | undefined> {
+    const existingSession = await Database.getCurrentSession();
+
+    if (!existingSession) {
+      Log.debug("No active session found. Cannot deactivate.");
+      return undefined;
+    }
+
+    if (existingSession.status !== SessionStatus.Active) {
+      Log.debug(`Session in invalid state ${existingSession.status}. Cannot deactivate.`);
+      return undefined;
+    }
+
+    const currentTimestamp = new Date().getTime();
+    const timeSinceLastActivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+      currentTimestamp, existingSession.lastActivatedTimestamp);
+
+    existingSession.lastDeactivatedTimestamp = currentTimestamp;
+    existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
+    existingSession.status = SessionStatus.Inactive;
+
+    const timerId = 
+      ((session, sendOnFocus) => {
+        const thresholdInMilliseconds = thresholdInSeconds * 1000;
+        return self.setTimeout(
+          () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus), 
+          thresholdInMilliseconds);
+      })(existingSession, sendOnFocusEnabled);
+
+    await Database.upsertSession(existingSession);
+
+    return timerId;
+  }
+
+  public static async finalizeSession(session: Session, sendOnFocusEnabled: boolean): Promise<void> {
+    Log.debug(
+      "Finalize session",
+      `started: ${new Date(session.startTimestamp)}`,
+      `duration: ${session.accumulatedDuration}s`
+    );
+
+    if (sendOnFocusEnabled) {
+      Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      await OneSignalApiSW.sendSessionDuration(
+        session.appId,
+        session.deviceId,
+        session.accumulatedDuration,
+        session.deviceType,
+      );
+    }
+
+    await Database.cleanupCurrentSession();
+    Log.debug(
+      "Finalize session finished",
+      `started: ${new Date(session.startTimestamp)}`
+    );
+  };
+
+  static timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
+    if (timestamp1 <= timestamp2) {
+      return 0;
+    }
+    return Math.floor((timestamp1 - timestamp2) / 1000);
   }
 }
 

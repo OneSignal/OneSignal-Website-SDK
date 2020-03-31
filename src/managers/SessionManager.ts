@@ -1,85 +1,223 @@
-
-
-import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import Log from '../libraries/Log';
+import { ContextSWInterface } from "../models/ContextSW";
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import { UpsertSessionPayload, DeactivateSessionPayload, SessionOrigin } from "../models/Session";
+import MainHelper from "../helpers/MainHelper";
+import Log from "../libraries/Log";
+import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
+import { OneSignalUtils } from "../utils/OneSignalUtils";
 
 export class SessionManager {
-  private static SESSION_STORAGE_KEY_NAME = 'onesignal-pageview-count';
-  private incrementedPageViewCount: boolean = false;
+  private context: ContextSWInterface;
 
-  getPageViewCount(): number {
-    try {
-      /*
-        sessionStorage may be supported by the browser but may not be available
-        as an API in incognito mode and in cases where the user disables
-        third-party cookies on some browsers.
-       */
-      const pageViewCountStr = sessionStorage.getItem(SessionManager.SESSION_STORAGE_KEY_NAME);
-      const pageViewCount = pageViewCountStr ? parseInt(pageViewCountStr) : 0;
-      if (isNaN(pageViewCount)) {
-        return 0;
-      } else {
-        return pageViewCount;
-      }
-    } catch (e) {
-      /*
-        If we're in incognito mode or sessionStorage is otherwise unsupported,
-        pretend we're starting our first session.
-       */
-      return 0;
+  constructor(context: ContextSWInterface) {
+    this.context = context;
+  }
+
+  async notifySWToUpsertSession(
+    deviceId: string | undefined,
+    deviceRecord: PushDeviceRecord,
+    sessionOrigin: SessionOrigin
+  ): Promise<void> {
+    const isHttps = OneSignalUtils.isHttps();
+
+    const payload: UpsertSessionPayload = {
+      deviceId,
+      deviceRecord: deviceRecord.serialize(),
+      sessionThreshold: OneSignal.config.sessionThreshold,
+      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin,
+      isHttps,
+      isSafari: OneSignalUtils.isSafari(),
+    };
+    if (isHttps) {
+      Log.debug("Notify SW to upsert session");
+      await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
+    } else {
+      Log.debug("Notify iframe to notify SW to upsert session");
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
     }
   }
 
-  setPageViewCount(sessionCount: number) {
-    try {
-      sessionStorage.setItem(SessionManager.SESSION_STORAGE_KEY_NAME, sessionCount.toString());
-
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
-        // If we're setting sessionStorage and we're in an Popup, we need to also set sessionStorage on the
-        // main page
-        if (OneSignal.subscriptionPopup) {
-          OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.SET_SESSION_COUNT);
-        }
-      }
-    } catch (e) {
-      /*
-        If sessionStorage isn't available, don't error.
-       */
+  async notifySWToDeactivateSession(
+    deviceId: string | undefined,
+    deviceRecord: PushDeviceRecord,
+    sessionOrigin: SessionOrigin
+  ): Promise<void> {
+    const isHttps = OneSignalUtils.isHttps();
+    const payload: DeactivateSessionPayload = {
+      deviceId,
+      deviceRecord: deviceRecord ? deviceRecord.serialize() : undefined,
+      sessionThreshold: OneSignal.config.sessionThreshold,
+      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin,
+      isHttps,
+      isSafari: OneSignalUtils.isSafari(),
+    };
+    if (isHttps) {
+      Log.debug("Notify SW to deactivate session");
+      await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
+    } else {
+      Log.debug("Notify SW to deactivate session");
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     }
   }
 
-  /**
-   * Increments the session count at most once for the current page view.
-   *
-   * A flag is set to prevent incrementing the session count more than once for
-   * the current page view. If the page is refreshed, this in-memory variable
-   * will be automatically reset. Because of this, regardless of the number of
-   * times this method is called on the current page view, the page view count
-   * will only be incremented once.
-   */
-  incrementPageViewCount() {
-    if (this.incrementedPageViewCount) {
-      // For this method, we don't want to increment the session count more than
-      // once per pageview
+  async handleVisibilityChange(): Promise<void> {
+    const visibilityState = document.visibilityState;
+
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    if (visibilityState === "visible") {
+      this.setupOnFocusAndOnBlurForSession();
+
+      Log.debug("handleVisibilityChange", "visible", `hasFocus: ${document.hasFocus()}`);
+      if (document.hasFocus()) {
+        await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+      }
       return;
     }
 
-    const newCount = this.getPageViewCount() + 1;
-    this.setPageViewCount(newCount);
-    Log.debug(`Incremented page view count to ${newCount}.`);
-    this.incrementedPageViewCount = true;
+    if (visibilityState === "hidden") {
+      if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
+        window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
+        OneSignal.cache.isFocusEventSetup = false;
+      }
+      if (OneSignal.cache.blurHandler && OneSignal.cache.isBlurEventSetup) {
+        window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
+        OneSignal.cache.isBlurEventSetup = false;
+      }
+      return;
+    }
+
+    // it should never be anything else at this point
+    Log.warn("Unhandled visibility state happened", visibilityState);
   }
 
-  simulatePageNavigationOrRefresh() {
-    this.incrementedPageViewCount = false;
+  async handleOnBeforeUnload(): Promise<void> {
+    // don't have much time on before unload
+    // have to skip adding device record to the payload
+    const isHttps = OneSignalUtils.isHttps();
+    const payload: DeactivateSessionPayload = {
+      sessionThreshold: OneSignal.config.sessionThreshold,
+      enableSessionDuration: OneSignal.config.enableSessionDuration,
+      sessionOrigin: SessionOrigin.BeforeUnload,
+      isHttps,
+      isSafari: OneSignalUtils.isSafari(),
+    };
+
+    if (isHttps) {
+      Log.debug("Notify SW to deactivate session (beforeunload)");
+      this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+    } else {
+      Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
+      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+    }
   }
 
-  /**
-   * Returns true if this page is running OneSignal for the first time and has
-   * not been navigated or refreshed.
-   */
-  isFirstPageView() {
-    return this.getPageViewCount() === 1;
+  async handleOnFocus(e: Event): Promise<void> {
+    Log.debug("handleOnFocus", e);
+    /**
+     * Firefox has 2 focus events with different targets (document and window).
+     * While Chrome only has one on window.
+     * Target check is important to avoid double-firing of the event.
+     */
+    if (e.target !== window) {
+      return;
+    }
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
+  }
+
+  async handleOnBlur(e: Event): Promise<void> {
+    Log.debug("handleOnBlur", e);
+    /**
+     * Firefox has 2 focus events with different targets (document and window).
+     * While Chrome only has one on window.
+     * Target check is important to avoid double-firing of the event.
+     */
+    if (e.target !== window) {
+      return;
+    }
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
+    await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.Blur);
+  }
+
+  async upsertSession(
+    deviceId: string,
+    deviceRecord: PushDeviceRecord,
+    sessionOrigin: SessionOrigin
+  ): Promise<void> {
+    const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
+
+    if (OneSignalUtils.isHttps()) {
+      this.setupSessionEventListeners();
+    } else {
+      OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+    }
+
+    await sessionPromise;
+  }
+
+  setupSessionEventListeners(): void {
+    // Page lifecycle events https://developers.google.com/web/updates/2018/07/page-lifecycle-api
+
+    this.setupOnFocusAndOnBlurForSession();
+
+    // To make sure we add these event listeners only once.
+    if (!OneSignal.cache.isVisibilityChangeEventSetup) {
+      // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
+      document.addEventListener("visibilitychange", this.handleVisibilityChange.bind(this), true);
+      OneSignal.cache.isVisibilityChangeEventSetup = true;
+    }
+
+    if (!OneSignal.cache.isBeforeUnloadEventSetup) {
+      // tracks closing of a tab / reloading / navigating away
+      window.addEventListener("beforeunload", (e) => {
+        this.handleOnBeforeUnload();
+        // deleting value to not show confirmation dialog
+        delete e.returnValue;
+      }, true);
+      OneSignal.cache.isBeforeUnloadEventSetup = true;
+    }
+  }
+
+  setupOnFocusAndOnBlurForSession(): void {
+    Log.debug("setupOnFocusAndOnBlurForSession");
+
+    if (!OneSignal.cache.focusHandler) {
+      OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
+    }
+    if (!OneSignal.cache.isFocusEventSetup) {
+      window.addEventListener("focus", OneSignal.cache.focusHandler, true);
+      OneSignal.cache.isFocusEventSetup = true;
+    }
+
+    if (!OneSignal.cache.blurHandler) {
+      OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
+    }
+    if (!OneSignal.cache.isBlurEventSetup) {
+      window.addEventListener("blur", OneSignal.cache.blurHandler, true);
+      OneSignal.cache.isBlurEventSetup = true;
+    }
+  }
+
+  static setupSessionEventListenersForHttp(): void {
+    if (!OneSignal.context || !OneSignal.context.sessionManager) {
+      Log.error("OneSignal.context not available for http to setup session event listeners.");
+      return;
+    }
+
+    OneSignal.context.sessionManager.setupSessionEventListeners();
   }
 }

@@ -1,6 +1,7 @@
 import { ServerAppConfig } from "./models/AppConfig";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
+import { FlattenedDeviceRecord } from "./models/DeviceRecord";
 import Log from "./libraries/Log";
 import { Utils } from "./context/shared/utils/Utils";
 
@@ -36,10 +37,44 @@ export class OneSignalApiSW {
     });
   }
 
-  static updatePlayer(appId: string, playerId: string, options?: Object) {
-    Utils.enforceAppId(appId);
-    Utils.enforcePlayerId(playerId);
-    return OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
+  static async updatePlayer(appId: string, playerId: string, options?: Object): Promise<void> {
+    const funcToExecute = async () => {
+      await OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
+    }
+    return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
+  }
+
+  public static async updateUserSession(
+    userId: string,
+    serializedDeviceRecord: FlattenedDeviceRecord,
+  ): Promise<string> {
+    const funcToExecute = async () => {
+      const response = await OneSignalApiBase.post(
+        `players/${userId}/on_session`, serializedDeviceRecord);
+      if (response.id) {
+        // A new user ID can be returned
+        return response.id;
+      } else {
+        return userId;
+      }
+    };
+    return await Utils.enforceAppIdAndPlayerId(serializedDeviceRecord.app_id, userId, funcToExecute);
+  };
+
+  public static async sendSessionDuration(
+    appId: string, deviceId: string, sessionDuration: number, deviceType: number
+  ): Promise<void> {
+    const funcToExecute = async () => {
+      const payload = {
+        app_id: appId,
+        type: 1,
+        state: "ping",
+        active_time: sessionDuration,
+        device_type: deviceType,
+      }
+      await OneSignalApiBase.post(`players/${deviceId}/on_focus`, payload);
+    }
+    Utils.enforceAppIdAndPlayerId(appId, deviceId, funcToExecute);
   }
 }
 
