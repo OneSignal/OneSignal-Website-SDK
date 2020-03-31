@@ -151,7 +151,6 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onRemoteDatabaseGetAll(message: MessengerMessageEvent) {
     const table: OneSignalDbTable = message.data.table;
-    console.log("onRemoteDatabaseGetAll", table);
     const results = await Database.getAll(table);
     
     message.reply(results);
