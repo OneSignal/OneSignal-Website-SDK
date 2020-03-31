@@ -234,7 +234,7 @@ export default class MainHelper {
     appId: string, includeSubscription: boolean = false): Promise<PushDeviceRecord> {
     let subscription: RawPushSubscription | undefined;
     if (includeSubscription) {
-      // TODO: (iryna) refactor to replace with dependency injection
+      // TODO: refactor to replace config with dependency injection
       const rawSubscription = await SubscriptionHelper.getRawPushSubscription(
         OneSignal.environmentInfo!, OneSignal.config.safariWebId
       );

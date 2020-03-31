@@ -414,8 +414,6 @@ export class ServiceWorkerManager {
     const isHttps = OneSignalUtils.isHttps();
     const isSafari = OneSignalUtils.isSafari();
 
-    // TODO: fix types. Seems like it's "{data: {payload: PageVisibilityRequest;}}" for https
-    //       and "PageVisibilityRequest" for http
     workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (incomingPayload: PageVisibilityRequest) => {
       // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
       // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
