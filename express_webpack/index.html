@@ -14,7 +14,11 @@
         if (!results[2]) return '';
         return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
-    const appId = getUrlQueryParam('app_id');
+    // const appId = getUrlQueryParam('app_id');
+    // const appId = "d7e2ad9a-674e-4ccb-9cb9-246ac4eb1f87"; // prod - https
+    // const appId = "060df26e-4362-440b-9f2d-316c23ca3cc2"; // prod - https w/ subscription workaround
+    const appId = "5f365fd7-da0d-4a14-8e34-934cf7ac348a"; // prod - http
+    // const appId = "210cdfbd-1b5e-401d-ac6f-0f0888ffe64a"; // localhost
     var OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
       OneSignal.init({appId});
