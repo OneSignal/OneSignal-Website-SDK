@@ -35,7 +35,7 @@ export class OneSignalShimLoader {
       case "development":
         return `${protocol}://${buildOrigin}:${port}/sdks/Dev-`;
       case "staging":
-        return `https://${window.location.host}/sdks/Staging-`;
+        return `https://${buildOrigin}/sdks/Staging-`;
       default:
         return productionOrigin;
     }
