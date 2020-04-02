@@ -120,11 +120,11 @@ export class ConfigHelper {
         SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed
       ),
       sessionThreshold: Utils.valueOrDefault(
-        serverConfig.config.sessionThreshold,
+        serverConfig.features.session_threshold,
         SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold
       ),
       enableSessionDuration: Utils.valueOrDefault(
-        serverConfig.features.enableSessionDuration,
+        serverConfig.features.web_on_focus_enabled,
         SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus
       )
     };
@@ -393,7 +393,16 @@ export class ConfigHelper {
           allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
             serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
           requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent,
-          outcomes: serverConfig.config.outcomes,
+          outcomes: {
+            direct: serverConfig.config.outcomes.direct,
+            indirect: {
+              enabled: serverConfig.config.outcomes.indirect.enabled,
+              influencedTimePeriodMin:
+                serverConfig.config.outcomes.indirect.notification_attribution.minutes_since_displayed,
+              influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
+            },
+            unattributed: serverConfig.config.outcomes.unattributed,
+          }
         };
       case IntegrationConfigurationKind.JavaScript:
         /*
@@ -420,7 +429,16 @@ export class ConfigHelper {
                 : 'OneSignalSDUpdaterKWorker.js',
             path: !!userConfig.path ? userConfig.path : '/'
           },
-          outcomes: serverConfig.config.outcomes,
+          outcomes: {
+            direct: serverConfig.config.outcomes.direct,
+            indirect: {
+              enabled: serverConfig.config.outcomes.indirect.enabled,
+              influencedTimePeriodMin:
+                serverConfig.config.outcomes.indirect.notification_attribution.minutes_since_displayed,
+              influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
+            },
+            unattributed: serverConfig.config.outcomes.unattributed,
+          }
         };
 
         if (userConfig.hasOwnProperty("autoResubscribe")) {

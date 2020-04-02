@@ -1,4 +1,4 @@
-import { OutcomesConfig } from "./Outcomes";
+import { OutcomesConfig, OutcomesServerConfig } from "./Outcomes";
 
 export interface AppConfig {
   /**
@@ -322,7 +322,8 @@ export interface ServerAppConfig {
     };
     enable_on_session?: boolean;
     receive_receipts_enable?: boolean;
-    enableSessionDuration: boolean;
+    web_on_focus_enabled: boolean;
+    session_threshold: number;
   };
   config: {
     /**
@@ -332,7 +333,6 @@ export interface ServerAppConfig {
     origin: string;
     staticPrompts: ServerAppConfigPrompt;
     autoResubscribe: boolean;
-    sessionThreshold: number;
     siteInfo: {
       name: string;
       origin: string;
@@ -376,7 +376,7 @@ export interface ServerAppConfig {
         persist: boolean;
       };
     };
-    outcomes: OutcomesConfig,
+    outcomes: OutcomesServerConfig,
     vapid_public_key: string;
     onesignal_vapid_public_key: string;
     http_use_onesignal_com?: boolean;
