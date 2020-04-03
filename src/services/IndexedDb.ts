@@ -165,7 +165,7 @@ export default class IndexedDb {
       let cursor = database.transaction(table).objectStore(table).openCursor();
       const result: T[] = [];
       cursor.onsuccess = (event: any) => {
-        var cursorResult: IDBCursorWithValue = event.target.result;
+        const cursorResult: IDBCursorWithValue = event.target.result;
         if (cursorResult) {
           result.push(cursorResult.value as T);
           cursorResult.continue();
@@ -177,30 +177,6 @@ export default class IndexedDb {
         reject(cursor.error);
       };
     });
-  }
-
-  public async queryFromIndex<T, TKey>(table: string, indexName: string, key?: TKey): Promise<T[]> {
-    const database = await this.ensureDatabaseOpen();
-    return await new Promise<T[]>((resolve, reject) => {
-      const result: T[] = [];
-
-      // Match anything up to, including the key
-      var lowerBoundOpenKeyRange = IDBKeyRange.lowerBound(key);
-      const indexCursor = database.transaction(table).objectStore(table)
-        .index(indexName).openCursor(lowerBoundOpenKeyRange);
-      indexCursor.onsuccess = (event: any) => {
-        let cursorResult: IDBCursorWithValue = event.target.result;
-        if (cursorResult) {
-          result.push(cursorResult.value as T);
-          cursorResult.continue();
-        }
-        resolve(result);
-      };
-      indexCursor.onerror = () => {
-        reject(indexCursor.error);
-      };
-    });
-    
   }
 
   /**
