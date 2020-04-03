@@ -35,7 +35,7 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
       Log.debug("Cancel called");
       self.clearTimeout(timerId); 
       if (!startedExecution) {
-        reject();
+        resolve();
       }
     }
   });
