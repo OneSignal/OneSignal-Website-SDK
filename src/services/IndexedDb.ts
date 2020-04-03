@@ -3,6 +3,8 @@ import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import Utils from "../context/shared/utils/Utils";
 
+const DATABASE_VERSION = 2;
+
 export default class IndexedDb {
 
   public emitter: Emitter;
@@ -18,7 +20,7 @@ export default class IndexedDb {
       let request: IDBOpenDBRequest | undefined = undefined;
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
-        request = indexedDB.open(databaseName, 1);
+        request = indexedDB.open(databaseName, DATABASE_VERSION);
       } catch (e) {
         // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
         // for profile schema too high
@@ -100,13 +102,16 @@ export default class IndexedDb {
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
     Log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
     const db = (event.target as IDBOpenDBRequest).result;
-    db.createObjectStore("Ids", { keyPath: "type" });
-    db.createObjectStore("NotificationOpened", { keyPath: "url" });
-    db.createObjectStore("Options", { keyPath: "key" });
-    db.createObjectStore("Sessions", { keyPath: "sessionKey" });
-
-    db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
-    db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
+    if (event.oldVersion < 1) {
+      db.createObjectStore("Ids", { keyPath: "type" });
+      db.createObjectStore("NotificationOpened", { keyPath: "url" });
+      db.createObjectStore("Options", { keyPath: "key" });
+    }
+    if (event.oldVersion < 2) {
+      db.createObjectStore("Sessions", { keyPath: "sessionKey" });
+      db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
+      db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
+    }
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
