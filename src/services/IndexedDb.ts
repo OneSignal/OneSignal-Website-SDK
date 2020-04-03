@@ -129,7 +129,7 @@ export default class IndexedDb {
     if (key) {
       // Return a table-key value
       return await new Promise((resolve, reject) => {
-        var request: IDBRequest = database.transaction(table).objectStore(table).get(key);
+        const request: IDBRequest = database.transaction(table).objectStore(table).get(key);
         request.onsuccess = () => {
           resolve(request.result);
         };
@@ -143,7 +143,7 @@ export default class IndexedDb {
         let jsonResult: {[key: string]: any} = {};
         let cursor = database.transaction(table).objectStore(table).openCursor();
         cursor.onsuccess = (event: any) => {
-          var cursorResult: IDBCursorWithValue = event.target.result;
+          const cursorResult: IDBCursorWithValue = event.target.result;
           if (cursorResult) {
             let cursorResultKey: string = cursorResult.key as string;
             jsonResult[cursorResultKey] = cursorResult.value;
