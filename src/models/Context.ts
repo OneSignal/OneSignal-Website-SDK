@@ -11,7 +11,8 @@ import { ContextSWInterface } from "./ContextSW";
 import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
 import { PromptsManager } from "../managers/PromptsManager";
-import { SessionManager } from "../managers/SessionManager";
+import { ISessionManager } from "../managers/sessionManager/types";
+import { SessionManager } from "../managers/sessionManager/page/SessionManager";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 
 export interface ContextInterface extends ContextSWInterface {
@@ -34,7 +35,7 @@ export default class Context implements ContextInterface {
   public metricsManager: MetricsManager;
   public updateManager: UpdateManager;
   public promptsManager: PromptsManager;
-  public sessionManager: SessionManager;
+  public sessionManager: ISessionManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;

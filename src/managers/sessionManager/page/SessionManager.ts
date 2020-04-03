@@ -1,15 +1,16 @@
-import { ContextInterface } from "../models/Context";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { UpsertSessionPayload, DeactivateSessionPayload, SessionOrigin } from "../models/Session";
-import MainHelper from "../helpers/MainHelper";
-import Log from "../libraries/Log";
-import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
-import OneSignalApiShared from "../OneSignalApiShared";
-import Database from "../services/Database";
+import { ContextInterface } from "../../../models/Context";
+import { PushDeviceRecord } from "../../../models/PushDeviceRecord";
+import { UpsertSessionPayload, DeactivateSessionPayload, SessionOrigin } from "../../../models/Session";
+import MainHelper from "../../../helpers/MainHelper";
+import Log from "../../../libraries/Log";
+import { WorkerMessengerCommand } from "../../../libraries/WorkerMessenger";
+import { OneSignalUtils } from "../../../utils/OneSignalUtils";
+import { SubscriptionStateKind } from "../../../models/SubscriptionStateKind";
+import OneSignalApiShared from "../../../OneSignalApiShared";
+import Database from "../../../services/Database";
+import { ISessionManager } from "../types";
 
-export class SessionManager {
+export class SessionManager implements ISessionManager {
   private context: ContextInterface;
   private onSessionSent: boolean = false;
 
