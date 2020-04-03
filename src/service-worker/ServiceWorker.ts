@@ -794,31 +794,29 @@ export class ServiceWorker {
 
     const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    const appId = await Database.get<string>("Ids", "appId");
+
     let saveNotificationClickedPromise: Promise<void> | undefined;
-    if (notificationOpensLink) {
-      const appId = await Database.get<string>("Ids", "appId");
-      const notificationClicked: NotificationClicked = {
-        notificationId: notificationData.id,
-        appId,
-        url: launchUrl,
-        timestamp: new Date().getTime(),
-      }
-      Log.info("NotificationClicked", notificationClicked);
-      saveNotificationClickedPromise = (async (notificationClicked) => {
-        try {
-          const existingSession = await Database.getCurrentSession();
-          if (!existingSession) {
-            await Database.put("NotificationClicked", notificationClicked)
-          }
-        } catch(e) {
-          Log.error("Failed to save clicked notification.", e);
-        }
-      })(notificationClicked);
+    const notificationClicked: NotificationClicked = {
+      notificationId: notificationData.id,
+      appId,
+      url: launchUrl,
+      timestamp: new Date().getTime(),
     }
+    Log.info("NotificationClicked", notificationClicked);
+    saveNotificationClickedPromise = (async (notificationClicked) => {
+      try {
+        const existingSession = await Database.getCurrentSession();
+        if (!existingSession) {
+          await Database.put("NotificationClicked", notificationClicked);
+        }
+      } catch(e) {
+        Log.error("Failed to save clicked notification.", e);
+      }
+    })(notificationClicked);
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
-    const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
     const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationData);
 
