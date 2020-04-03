@@ -15,7 +15,7 @@ import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { 
   UpsertSessionPayload, DeactivateSessionPayload,
-  PageVisibilityRequest, PageVisibilityResponse
+  PageVisibilityRequest, PageVisibilityResponse, SessionStatus
 } from "../models/Session";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
@@ -807,8 +807,16 @@ export class ServiceWorker {
     saveNotificationClickedPromise = (async (notificationClicked) => {
       try {
         const existingSession = await Database.getCurrentSession();
-        if (!existingSession) {
-          await Database.put("NotificationClicked", notificationClicked);
+        if (existingSession && existingSession.status === SessionStatus.Active) {
+          return;
+        }
+        await Database.put("NotificationClicked", notificationClicked);
+
+        // upgrade existing session to be directly attributed to the notif
+        // if it results in re-focusing the site
+        if (existingSession) {
+          existingSession.notificationId = notificationClicked.notificationId;
+          await Database.upsertSession(existingSession);
         }
       } catch(e) {
         Log.error("Failed to save clicked notification.", e);
