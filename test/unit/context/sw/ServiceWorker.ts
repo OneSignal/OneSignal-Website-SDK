@@ -4,7 +4,6 @@ import nock from 'nock';
 
 import OneSignal from '../../../../src/OneSignal';
 import Database from '../../../../src/services/Database';
-import Context from '../../../../src/models/Context';
 import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 
 import { TestEnvironment, BrowserUserAgent } from "../../../support/sdk/TestEnvironment";
@@ -20,16 +19,14 @@ import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 declare var self: MockServiceWorkerGlobalScope;
 
 let sandbox: SinonSandbox;
+const appConfig = TestEnvironment.getFakeAppConfig();
 
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
   
   await TestEnvironment.initializeForServiceWorker();
 
-  const appConfig = TestEnvironment.getFakeAppConfig();
   await Database.setAppConfig(appConfig);
-
-  OneSignal.context = new Context(appConfig);
 });
 
 test.afterEach(function () {
@@ -215,7 +212,7 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
     .put(`/api/v1/notifications/${notificationId}`)
     .reply(200, (_uri: string, requestBody: string) => {
       t.deepEqual(JSON.parse(requestBody), {
-        app_id: OneSignal.context.appConfig.appId,
+        app_id: appConfig.appId,
         opened: true,
         player_id: playerId
       });
