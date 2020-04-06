@@ -26,7 +26,7 @@ import {
 } from "./types";
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import { NotificationReceived, NotificationClicked } from "../models/Notification";
-import { cancelableTimeout } from "src/helpers/sw/CancelableTimeout";
+import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
