@@ -11,16 +11,20 @@ import { ContextSWInterface } from "./ContextSW";
 import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
 import { PromptsManager } from "../managers/PromptsManager";
-import { SessionManager } from "../managers/SessionManager";
+import { ISessionManager } from "../managers/sessionManager/types";
+import { SessionManager } from "../managers/sessionManager/page/SessionManager";
+import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
   cookieSyncer: CookieSyncer;
   metricsManager: MetricsManager;
+  environmentInfo?: EnvironmentInfo;
 }
 
 export default class Context implements ContextInterface {
   public appConfig: AppConfig;
+  public environmentInfo?: EnvironmentInfo;
   public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
@@ -31,10 +35,13 @@ export default class Context implements ContextInterface {
   public metricsManager: MetricsManager;
   public updateManager: UpdateManager;
   public promptsManager: PromptsManager;
-  public sessionManager: SessionManager;
+  public sessionManager: ISessionManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
+    if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
+      this.environmentInfo = OneSignal.environmentInfo;
+    }
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
     this.pageViewManager = new PageViewManager();

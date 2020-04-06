@@ -6,6 +6,7 @@ import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
+import Log from "./libraries/Log";
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {
@@ -129,7 +130,7 @@ export default class OneSignalApiShared {
     try {
       await OneSignalApiBase.post("outcomes/measure", data);
     } catch(e) {
-      console.log("sendOutcome", e);
+      Log.error("sendOutcome", e);
     }
   }
 }

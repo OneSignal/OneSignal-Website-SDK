@@ -9,16 +9,9 @@ export interface ClientStatus {
   hasAnyActiveSessions: boolean;
 }
 
-export interface PageVisibilityRequest {
-  timestamp: number;
-}
-
-export interface PageVisibilityResponse extends PageVisibilityRequest {
-  focused: boolean;
-}
-
 export interface OSServiceWorkerFields { 
   debounceSessionTimerId?: number;
   finalizeSessionTimerId?: number;
   clientsStatus?: ClientStatus;
+  cancel?: () => void;
 }

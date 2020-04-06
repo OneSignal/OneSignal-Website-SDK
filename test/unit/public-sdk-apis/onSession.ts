@@ -18,7 +18,7 @@ import { ServiceWorkerManager } from "../../../src/managers/ServiceWorkerManager
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import { UpdateManager } from '../../../src/managers/UpdateManager';
 import { PageViewManager } from "../../../src/managers/PageViewManager";
-import { SessionManager } from "../../../src/managers/SessionManager";
+import { SessionManager } from "../../../src/managers/sessionManager/page/SessionManager";
 import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
 import InitHelper from "../../../src/helpers/InitHelper";
 import {

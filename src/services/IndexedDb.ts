@@ -102,13 +102,16 @@ export default class IndexedDb {
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
     Log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
     const db = (event.target as IDBOpenDBRequest).result;
-    db.createObjectStore("Ids", { keyPath: "type" });
-    db.createObjectStore("NotificationOpened", { keyPath: "url" });
-    db.createObjectStore("Options", { keyPath: "key" });
-    db.createObjectStore("Sessions", { keyPath: "sessionKey" });
-
-    db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
-    db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
+    if (event.oldVersion < 1) {
+      db.createObjectStore("Ids", { keyPath: "type" });
+      db.createObjectStore("NotificationOpened", { keyPath: "url" });
+      db.createObjectStore("Options", { keyPath: "key" });
+    }
+    if (event.oldVersion < 2) {
+      db.createObjectStore("Sessions", { keyPath: "sessionKey" });
+      db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
+      db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
+    }
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
@@ -126,7 +129,7 @@ export default class IndexedDb {
     if (key) {
       // Return a table-key value
       return await new Promise((resolve, reject) => {
-        var request: IDBRequest = database.transaction(table).objectStore(table).get(key);
+        const request: IDBRequest = database.transaction(table).objectStore(table).get(key);
         request.onsuccess = () => {
           resolve(request.result);
         };
@@ -140,7 +143,7 @@ export default class IndexedDb {
         let jsonResult: {[key: string]: any} = {};
         let cursor = database.transaction(table).objectStore(table).openCursor();
         cursor.onsuccess = (event: any) => {
-          var cursorResult: IDBCursorWithValue = event.target.result;
+          const cursorResult: IDBCursorWithValue = event.target.result;
           if (cursorResult) {
             let cursorResultKey: string = cursorResult.key as string;
             jsonResult[cursorResultKey] = cursorResult.value;
@@ -162,7 +165,7 @@ export default class IndexedDb {
       let cursor = database.transaction(table).objectStore(table).openCursor();
       const result: T[] = [];
       cursor.onsuccess = (event: any) => {
-        var cursorResult: IDBCursorWithValue = event.target.result;
+        const cursorResult: IDBCursorWithValue = event.target.result;
         if (cursorResult) {
           result.push(cursorResult.value as T);
           cursorResult.continue();

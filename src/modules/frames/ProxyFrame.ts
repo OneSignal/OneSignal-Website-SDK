@@ -9,9 +9,10 @@ import { unsubscribeFromPush } from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
-import { UpsertSessionPayload, DeactivateSessionPayload } from "../../models/Session";
+import {
+  UpsertSessionPayload, DeactivateSessionPayload, PageVisibilityResponse
+} from "../../models/Session";
 import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
-import { PageVisibilityResponse } from "../../service-worker/types";
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -48,6 +49,7 @@ export default class ProxyFrame extends RemoteFrame {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
       this.onRemoteNotificationPermission.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, this.onRemoteDatabaseGet.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, this.onRemoteDatabaseGetAll.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, this.onRemoteDatabasePut.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE, this.onRemoteDatabaseRemove.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, this.onUnsubscribeFromPush.bind(this));
@@ -143,6 +145,14 @@ export default class ProxyFrame extends RemoteFrame {
       retrievalOpPromises.push(Database.get(table, key));
     }
     const results = await Promise.all(retrievalOpPromises);
+    message.reply(results);
+    return false;
+  }
+
+  async onRemoteDatabaseGetAll(message: MessengerMessageEvent) {
+    const table: OneSignalDbTable = message.data.table;
+    const results = await Database.getAll(table);
+    
     message.reply(results);
     return false;
   }

@@ -5,11 +5,16 @@ import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../
 import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
-import { SerializedPushDeviceRecord } from "../models/PushDeviceRecord";
+import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
 import { NotificationClicked } from "../models/Notification";
+import { RawPushSubscription } from '../models/RawPushSubscription';
 import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
+import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
+import { OSServiceWorkerFields } from "../service-worker/types";
+
+declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
   public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
@@ -78,7 +83,15 @@ export default class ServiceWorkerHelper {
        * since player#create call updates last_session field on player.
        */
       if (sessionOrigin !== SessionOrigin.PlayerCreate) {
-        // TODO: (iryna) add notification id to on_session payload for direct session application
+        if (!deviceRecord.identifier) {
+          const subscription = await self.registration.pushManager.getSubscription()
+          if (subscription) {
+            const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
+            const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
+            deviceRecord.identifier = fullDeviceRecord.identifier;
+          }
+        }
+
         const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
         // If the returned player id is different, save the new id to indexed db and update session
         if (newPlayerId !== deviceId) {
@@ -128,7 +141,7 @@ export default class ServiceWorkerHelper {
   public static async deactivateSession(
     thresholdInSeconds: number, sendOnFocusEnabled: boolean,
     outcomesConfig: OutcomesConfig
-  ): Promise<number | undefined> {
+  ): Promise<CancelableTimeoutPromise | undefined> {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
@@ -142,10 +155,10 @@ export default class ServiceWorkerHelper {
      * No update needed for the session, early return.
      */
     if (existingSession.status === SessionStatus.Inactive) {
-      const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
-        existingSession, sendOnFocusEnabled, thresholdInSeconds, outcomesConfig
+      return cancelableTimeout(
+        () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig), 
+        thresholdInSeconds
       );
-      return timerId;
     }
 
     /**
@@ -165,20 +178,14 @@ export default class ServiceWorkerHelper {
     existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
     existingSession.status = SessionStatus.Inactive;
 
-    const timerId = ServiceWorkerHelper.setTimeoutForFinalize(
-      existingSession, sendOnFocusEnabled, thresholdInSeconds, outcomesConfig
+    const cancelableFinalize = cancelableTimeout(
+      () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig), 
+      thresholdInSeconds
     );
-    await Database.upsertSession(existingSession);
-    return timerId;
-  }
 
-  static setTimeoutForFinalize = (
-    session: Session, sendOnFocus: boolean, thresholdInSeconds: number, outcomesConfig: OutcomesConfig
-  ): number => {
-    const thresholdInMilliseconds = thresholdInSeconds * 1000;
-    return self.setTimeout(
-      () => ServiceWorkerHelper.finalizeSession(session, sendOnFocus, outcomesConfig), 
-      thresholdInMilliseconds);
+    await Database.upsertSession(existingSession);
+
+    return cancelableFinalize;
   }
 
   public static async finalizeSession(

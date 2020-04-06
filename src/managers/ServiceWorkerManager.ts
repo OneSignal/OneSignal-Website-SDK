@@ -1,9 +1,7 @@
 import Environment from '../Environment';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { Subscription } from '../models/Subscription';
 import Database from '../services/Database';
 import { IntegrationKind } from '../models/IntegrationKind';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
@@ -18,6 +16,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
   from "../helpers/ServiceWorkerHelper";
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
+import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -200,9 +199,16 @@ export class ServiceWorkerManager {
     if (!OneSignal.config)
       return false;
 
-    // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
-    if (OneSignal.config.subdomain && SdkEnvironment.getWindowEnv() == WindowEnvironmentKind.Host)
-      return false;
+    if (OneSignal.config.subdomain) {
+      // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
+      // But since safari does not need subscription workaround, installing SW for session tracking.
+      if (
+        OneSignal.environmentInfo.browserType !== "safari" && 
+          SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host
+      ) {
+        return false;
+      }
+    }
 
     const workerState = await this.getActiveState();
     // If there isn't a SW or it isn't OneSignal's only install our SW if notification permissions are enabled
@@ -408,19 +414,17 @@ export class ServiceWorkerManager {
     const isHttps = OneSignalUtils.isHttps();
     const isSafari = OneSignalUtils.isSafari();
 
-    // TODO: fix types. Seems like it's "{data: {payload: PageVisibilityRequest;}}" for https
-    //       and "PageVisibilityRequest" for http
-    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (event: any) => {
+    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (incomingPayload: PageVisibilityRequest) => {
       // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
       // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
       if (isHttps && isSafari) {
-        const payload = {
-          timestamp: event.data.payload.timestamp,
+        const payload: PageVisibilityResponse = {
+          timestamp: incomingPayload.timestamp,
           focused: document.hasFocus(),
         };
         workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
       } else {
-        const httpPayload = { timestamp: event.timestamp };
+        const httpPayload: PageVisibilityRequest = { timestamp: incomingPayload.timestamp };
         const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
         if (proxyFrame) {
           proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
@@ -448,13 +452,10 @@ export class ServiceWorkerManager {
       appId: this.context.appConfig.appId
     });
     const fullWorkerPath = `${workerFullPath}?${installUrlQueryParams}`;
-
-    Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath}.`);
+    const scope = `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}`;
+    Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath} ${scope}.`);
     try {
-      await navigator.serviceWorker.register(
-        fullWorkerPath,
-        { scope: `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}` }
-      );
+      await navigator.serviceWorker.register(fullWorkerPath, { scope });
     } catch (error) {
       Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);
       // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.

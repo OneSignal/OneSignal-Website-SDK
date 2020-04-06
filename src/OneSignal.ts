@@ -207,6 +207,11 @@ export default class OneSignal {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
+    // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.
+    // Workaround to temp assign config so that it can be used in context.
+    OneSignal.config = appConfig;
+    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
+
     OneSignal.context = new Context(appConfig);
     OneSignal.config = OneSignal.context.appConfig;
   }
@@ -221,8 +226,6 @@ export default class OneSignal {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal.initializeConfig(options);
-
-    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
@@ -934,6 +937,7 @@ export default class OneSignal {
     CONNECTED: 'connect',
     REMOTE_NOTIFICATION_PERMISSION: 'postmam.remoteNotificationPermission',
     REMOTE_DATABASE_GET: 'postmam.remoteDatabaseGet',
+    REMOTE_DATABASE_GET_ALL: 'postmam.remoteDatabaseGetAll',
     REMOTE_DATABASE_PUT: 'postmam.remoteDatabasePut',
     REMOTE_DATABASE_REMOVE: 'postmam.remoteDatabaseRemove',
     REMOTE_OPERATION_COMPLETE: 'postman.operationComplete',

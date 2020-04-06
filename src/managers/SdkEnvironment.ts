@@ -273,7 +273,7 @@ export default class SdkEnvironment {
         }
         return new URL(`https://${apiOrigin}:${API_URL_PORT}/api/v1`);
       case EnvironmentKind.Staging:
-        return new URL(`https://${window.location.host}/api/v1`);
+        return new URL(`https://${apiOrigin}/api/v1`);
       case EnvironmentKind.Production:
         return new URL('https://onesignal.com/api/v1');
       default:
@@ -293,7 +293,7 @@ export default class SdkEnvironment {
         origin = `${protocol}://${buildOrigin}:${port}`;
         break;
       case EnvironmentKind.Staging:
-        origin = `https://${window.location.host}`;
+        origin = `https://${buildOrigin}`;
         break;
       case EnvironmentKind.Production:
         origin = "https://onesignal.com";
