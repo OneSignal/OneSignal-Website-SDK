@@ -27,6 +27,7 @@ import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
 import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
+import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
 
 // NodeJS.Global
 declare var global: any;
@@ -356,6 +357,8 @@ export class TestEnvironment {
     };
 
     const fakeMergedConfig: AppConfig = TestEnvironment.getFakeMergedConfig(config);
+    OneSignal.config = fakeMergedConfig;
+    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
     OneSignal.context = new Context(fakeMergedConfig);
     OneSignal.config = fakeMergedConfig;
   }
