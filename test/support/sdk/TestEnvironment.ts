@@ -116,7 +116,7 @@ export class TestEnvironment {
   /**
    * Intercepts requests to our virtual DOM to return fake responses.
    */
-  static onVirtualDomResourceRequested(resource, callback: Function) {
+  static onVirtualDomResourceRequested(resource: any, callback: Function) {
     const pathname = resource.url.pathname;
     if (pathname.startsWith('https://test.node/scripts/')) {
       if (pathname.startsWith('https://test.node/scripts/delayed')) {
@@ -147,7 +147,7 @@ export class TestEnvironment {
     }
   }
 
-  static onVirtualDomDelayedResourceRequested(resource, callback: Function) {
+  static onVirtualDomDelayedResourceRequested(resource: any, callback: Function) {
     const pathname = resource.url.pathname;
     var delay = pathname.match(/\d+/) || 1000;
     // Simulate a delayed request
@@ -220,7 +220,7 @@ export class TestEnvironment {
           ProcessExternalResources: ['script']
         },
         resourceLoader: TestEnvironment.onVirtualDomResourceRequested,
-        done: (err, window) => {
+        done: (err: any, window: Window) => {
           if (err) {
             console.log(err);
             reject('Failed to create a JsDom mock browser environment:' + err);
@@ -254,7 +254,7 @@ export class TestEnvironment {
   }
 
   static addCustomEventPolyfill(windowDef: any) {
-    function CustomEvent(event, params) {
+    function CustomEvent(event: any, params: any) {
       params = params || { bubbles: false, cancelable: false, detail: undefined };
       const evt = document.createEvent( 'CustomEvent' );
       evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
@@ -402,11 +402,11 @@ export class TestEnvironment {
             enable: true,
             mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673"
           },
-          enableSessionDuration: true,
+          web_on_focus_enabled: true,
+          session_threshold: 30
         },
         config: {
           autoResubscribe: true,
-          sessionThreshold: 30,
           siteInfo: {
             name: "localhost https",
             origin: "https://localhost:3001",
@@ -520,8 +520,10 @@ export class TestEnvironment {
             },
             indirect: {
               enabled: true,
-              influencedTimePeriodMin: 60,
-              influencedNotificationsLimit: 5,
+              notification_attribution: {
+                limit: 5,
+                minutes_since_displayed: 60
+              }
             },
             unattributed: {
               enabled: true,
@@ -574,14 +576,14 @@ export class TestEnvironment {
         email: {
           require_auth: true,
         },
-        enableSessionDuration: true
+        web_on_focus_enabled: true,
+        session_threshold: 30
       },
       config: {
         origin: "https://example.com",
         subdomain: undefined,
         http_use_onesignal_com: false,
         autoResubscribe: false,
-        sessionThreshold: 30,
         staticPrompts: {
           native: {
             enabled: false,
@@ -711,8 +713,10 @@ export class TestEnvironment {
           },
           indirect: {
             enabled: true,
-            influencedTimePeriodMin: 60,
-            influencedNotificationsLimit: 5,
+            notification_attribution: {
+              minutes_since_displayed: 60,
+              limit: 5
+            }
           },
           unattributed: {
             enabled: true,
