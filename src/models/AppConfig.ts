@@ -144,11 +144,11 @@ export interface AppUserConfigCustomLinkOptions extends BasePromptOptions {
     explanation?: string;
     subscribe?: string;
     unsubscribe?: string;
-  }
+  };
   color?: {
     button?: string;
     text?: string;
-  }
+  };
 }
 
 export interface AppUserConfigPromptOptions {
@@ -238,7 +238,7 @@ export interface ServerAppConfigPrompt {
     autoPrompt: boolean;
     pageViews?: number;
     timeDelay?: number;
-  },
+  };
   bell: {
     enabled: boolean;
     size: 'small' | 'medium' | 'large';
@@ -310,7 +310,7 @@ export interface ServerAppConfigPrompt {
       button: string;
       text: string;
     }
-  }
+  };
 }
 
 export interface ServerAppConfig {

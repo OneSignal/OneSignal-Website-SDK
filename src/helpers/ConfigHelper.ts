@@ -175,7 +175,7 @@ export class ConfigHelper {
         button: customlink.color.button,
         text: customlink.color.text,
       } : initialState.color,
-    }
+    };
   }
 
   public static injectDefaultsIntoPromptOptions(
@@ -368,9 +368,9 @@ export class ConfigHelper {
             position: serverConfig.config.staticPrompts.bell.location,
             showCredit: false,
             offset: {
-              bottom: serverConfig.config.staticPrompts.bell.offset.bottom + 'px',
-              left: serverConfig.config.staticPrompts.bell.offset.left + 'px',
-              right: serverConfig.config.staticPrompts.bell.offset.right + 'px'
+              bottom: `${serverConfig.config.staticPrompts.bell.offset.bottom}px`,
+              left: `${serverConfig.config.staticPrompts.bell.offset.left}px`,
+              right: `${serverConfig.config.staticPrompts.bell.offset.right}px`
             },
             colors: {
               'circle.background': serverConfig.config.staticPrompts.bell.color.main,
@@ -484,7 +484,7 @@ export class ConfigHelper {
     serverConfig: ServerAppConfig
   ): string | undefined {
     const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
-    let userValue: string | undefined = userConfig.subdomainName;
+    const userValue: string | undefined = userConfig.subdomainName;
     let serverValue: string | undefined = '';
   
     switch (integrationCapabilities.configuration) {
