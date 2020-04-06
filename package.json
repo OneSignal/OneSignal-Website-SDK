@@ -120,12 +120,12 @@
     },
     {
       "path": "./build/bundles/OneSignalPageSDKES6.js",
-      "maxSize": "55 kB",
+      "maxSize": "58 kB",
       "compression": "gzip"
     },
     {
       "path": "./build/bundles/OneSignalSDKWorker.js",
-      "maxSize": "31 kB",
+      "maxSize": "35 kB",
       "compression": "gzip"
     },
     {
