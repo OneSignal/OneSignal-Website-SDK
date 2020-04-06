@@ -53,7 +53,7 @@ import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
 import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
-import { SessionManager } from './managers/SessionManager';
+import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
 
