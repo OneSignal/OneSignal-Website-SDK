@@ -12,7 +12,10 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
-import { SlidedownPermissionMessageOptions, DelayedPromptOptions, AppUserConfigPromptOptions } from '../models/AppConfig';
+import {
+  SlidedownPermissionMessageOptions,
+  DelayedPromptOptions,
+  AppUserConfigPromptOptions } from '../models/AppConfig';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { PageViewManager } from './PageViewManager';
@@ -29,9 +32,11 @@ enum DelayedPromptType {
 
 export class PromptsManager {
   private isAutoPromptShowing: boolean;
+  private context: ContextInterface;
 
   constructor(_context: ContextInterface) {
     this.isAutoPromptShowing = false;
+    this.context = _context;
   }
 
   private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
@@ -102,8 +107,8 @@ export class PromptsManager {
     }
   }
 
-  public async showDelayedPrompt(type: DelayedPromptType, 
-      timeDelaySeconds: number, 
+  public async showDelayedPrompt(type: DelayedPromptType,
+      timeDelaySeconds: number,
       autoPromptOptions?: AutoPromptOptions
     ) {
     if (typeof timeDelaySeconds !== "number") {
@@ -156,7 +161,7 @@ export class PromptsManager {
 
     MainHelper.markHttpPopoverShown();
 
-    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+    const sdkStylesLoadResult = await this.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
@@ -199,15 +204,15 @@ export class PromptsManager {
   private isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
     if (!options || typeof options.pageViews === "undefined") { return false; }
     if (!options.autoPrompt || !options.enabled) { return false; }
-    const localPageViews = OneSignal.context.pageViewManager.getLocalPageViewCount();
+    const localPageViews = this.context.pageViewManager.getLocalPageViewCount();
     return localPageViews >= options.pageViews;
   }
 
-  private getDelayedPromptOptions(promptOptions: AppUserConfigPromptOptions, 
+  private getDelayedPromptOptions(promptOptions: AppUserConfigPromptOptions,
       type: DelayedPromptType
     ): DelayedPromptOptions {
     const promptOptionsForSpecificType = promptOptions[type];
-    if (!promptOptions || !promptOptionsForSpecificType) { 
+    if (!promptOptions || !promptOptionsForSpecificType) {
       return {
         enabled: false,
         autoPrompt: false,
