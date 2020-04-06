@@ -19,12 +19,12 @@ export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
   cookieSyncer: CookieSyncer;
   metricsManager: MetricsManager;
-  environmentInfo: EnvironmentInfo;
+  environmentInfo?: EnvironmentInfo;
 }
 
 export default class Context implements ContextInterface {
   public appConfig: AppConfig;
-  public environmentInfo: EnvironmentInfo;
+  public environmentInfo?: EnvironmentInfo;
   public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
@@ -39,7 +39,9 @@ export default class Context implements ContextInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    this.environmentInfo = OneSignal.environmentInfo;
+    if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
+      this.environmentInfo = OneSignal.environmentInfo;
+    }
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
     this.pageViewManager = new PageViewManager();
