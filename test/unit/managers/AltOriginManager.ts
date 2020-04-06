@@ -33,7 +33,7 @@ test(`should get correct canonical subscription URL for staging environment`, as
 
   const stagingUrlsOsTcDomain = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Staging);
   t.is(stagingUrlsOsTcDomain.length, 2);
-  t.is(stagingUrlsOsTcDomain[0].host, new URL('https://test.staging-01.onesignal.com').host);
+  t.is(stagingUrlsOsTcDomain[0].host, new URL('https://test.localhost').host);
   t.is(stagingUrlsOsTcDomain[1].host, new URL('https://test.os.tc').host);
 
   config.httpUseOneSignalCom = false;
