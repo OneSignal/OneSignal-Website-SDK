@@ -2,6 +2,7 @@ import { AppConfig } from '../models/AppConfig';
 import { EnvironmentKind } from '../models/EnvironmentKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import SdkEnvironment from './SdkEnvironment';
+import { Utils } from '../context/shared/utils/Utils';
 
 export default class AltOriginManager {
 
@@ -33,8 +34,7 @@ export default class AltOriginManager {
     if (subscribedProxyFrameHosts.length === 0) {
       // Use the first (preferred) host (os.tc in this case) if not subscribed to any
       preferredProxyFrameHost = allProxyFrameHosts[0];
-    }
-    else {
+    } else {
       // Otherwise if their was one or more use the highest preferred one in the list
       preferredProxyFrameHost = subscribedProxyFrameHosts[0];
     }
