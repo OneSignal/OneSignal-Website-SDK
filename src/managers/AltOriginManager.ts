@@ -125,17 +125,4 @@ export default class AltOriginManager {
 
     return urls;
   }
-
-  /**
-   * Returns the URL of the OneSignal subscription popup.
-   */
-  static getOneSignalSubscriptionPopupUrls(config: AppConfig): Array<URL> {
-    const urls = AltOriginManager.getCanonicalSubscriptionUrls(config);
-
-    for (const url of urls) {
-      url.pathname = 'subscribe';
-    }
-
-    return urls;
-  }
 }
