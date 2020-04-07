@@ -87,20 +87,21 @@ export default class AltOriginManager {
   }
 
   /**
+   * Only used for sites using a OneSignal subdomain (AKA HTTP setup).
+   * 
    * Returns the array of possible URL in which the push subscription and
    * IndexedDb site data will be stored.
    *
-   * For native HTTPS sites not using a subdomain of our service, this is the
-   * top-level URL.
-   *
-   * For sites using a subdomain of our service, this URL was typically
-   * subdomain.onesignal.com, until we switched to subdomain.os.tc for a shorter
-   * origin to fit into Mac's native notifications on Chrome 59+.
+   * This URL was typically subdomain.onesignal.com, until we switched
+   * to subdomain.os.tc for a shorter origin to fit into Mac's native
+   * notifications on Chrome 59+.
    *
    * Because a user may be subscribed to subdomain.onesignal.com or
    * subdomain.os.tc, we have to load both in certain scenarios to determine
    * which the user is subscribed to; hence, this method returns an array of
    * possible URLs.
+   * 
+   * Order of URL is in priority order of one should be used.
    */
   static getCanonicalSubscriptionUrls(config: AppConfig,
                                       buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()
@@ -113,7 +114,7 @@ export default class AltOriginManager {
       return [legacyDomainUrl];
     }
 
-    // Always add subdomain.os.tc
+    // Use os.tc as a first pick
     const urls = [new URL(`https://${config.subdomain}.os.tc`)];
 
     if (config.httpUseOneSignalCom) {
