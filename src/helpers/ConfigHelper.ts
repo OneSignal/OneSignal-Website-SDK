@@ -1,4 +1,4 @@
-import { 
+import {
   AppUserConfig, AppConfig, AppUserConfigPromptOptions, ServerAppConfigPrompt,
   ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from "../models/AppConfig";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
@@ -30,7 +30,7 @@ export class ConfigHelper {
     try {
       if (!userConfig || !userConfig.appId || !OneSignalUtils.isValidUuid(userConfig.appId))
         throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
-  
+
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       this.checkRestrictedOrigin(appConfig);
@@ -151,16 +151,16 @@ export class ConfigHelper {
         button: "",
         text: "",
       }
-    }; 
-  
+    };
+
     if (!serverConfig || !serverConfig.config ||
       !serverConfig.config.staticPrompts || !serverConfig.config.staticPrompts.customlink ||
       !serverConfig.config.staticPrompts.customlink.enabled) {
       return initialState;
     }
-  
+
     const customlink = serverConfig.config.staticPrompts.customlink;
-  
+
     return {
       enabled: customlink.enabled,
       style: customlink.style,
@@ -486,7 +486,7 @@ export class ConfigHelper {
     const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
     const userValue: string | undefined = userConfig.subdomainName;
     let serverValue: string | undefined = '';
-  
+
     switch (integrationCapabilities.configuration) {
       case IntegrationConfigurationKind.Dashboard:
         serverValue = serverConfig.config.siteInfo.proxyOriginEnabled ?
@@ -497,14 +497,14 @@ export class ConfigHelper {
         serverValue = serverConfig.config.subdomain;
         break;
     }
-  
+
     if (serverValue && !this.shouldUseServerConfigSubdomain(userValue, integrationCapabilities)) {
       return undefined;
     } else {
       return serverValue;
     }
   }
-  
+
   public static shouldUseServerConfigSubdomain(
     userProvidedSubdomain: string | undefined,
     capabilities: IntegrationCapabilities

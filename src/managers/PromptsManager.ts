@@ -34,9 +34,9 @@ export class PromptsManager {
   private isAutoPromptShowing: boolean;
   private context: ContextInterface;
 
-  constructor(_context: ContextInterface) {
+  constructor(context: ContextInterface) {
     this.isAutoPromptShowing = false;
-    this.context = _context;
+    this.context = context;
   }
 
   private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
