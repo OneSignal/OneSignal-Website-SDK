@@ -1,7 +1,6 @@
 import { AppConfig } from '../models/AppConfig';
 import { EnvironmentKind } from '../models/EnvironmentKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
-import { contains } from '../utils';
 import SdkEnvironment from './SdkEnvironment';
 
 export default class AltOriginManager {
@@ -10,7 +9,13 @@ export default class AltOriginManager {
 
   }
 
-  static async discoverAltOrigin(appConfig): Promise<ProxyFrameHost> {
+  /*
+  * This loads all possible iframes that a site could be subscribed to
+  * (os.tc & onesignal.com) then checks to see we are subscribed to any.
+  * If we find what we are subscribed to both unsubscribe from onesignal.com.
+  * This method prefers os.tc over onesignal.com where possible.
+  */
+  static async discoverAltOrigin(appConfig: AppConfig): Promise<ProxyFrameHost> {
     const iframeUrls = AltOriginManager.getOneSignalProxyIframeUrls(appConfig);
 
     const allProxyFrameHosts: ProxyFrameHost[] = [];
