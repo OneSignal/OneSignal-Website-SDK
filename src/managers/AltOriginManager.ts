@@ -105,22 +105,19 @@ export default class AltOriginManager {
   static getCanonicalSubscriptionUrls(config: AppConfig,
                                       buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()
                                      ): Array<URL> {
-    let urls = [];
+    const apiUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
+    const legacyDomainUrl = new URL(`https://${config.subdomain}.${apiUrl.host}`);
 
-    if (config.httpUseOneSignalCom) {
-      let legacyDomainUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
-      // Add subdomain.onesignal.com
-      legacyDomainUrl.host = [config.subdomain, legacyDomainUrl.host].join('.');
-      urls.push(legacyDomainUrl);
+    // Staging and Dev don't support going through the os.tc domain
+    if (buildEnv !== EnvironmentKind.Production) {
+      return [legacyDomainUrl];
     }
 
-    let osTcDomainUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
     // Always add subdomain.os.tc
-    osTcDomainUrl.host = [config.subdomain, 'os.tc'].join('.');
-    urls.push(osTcDomainUrl);
+    const urls = [new URL(`https://${config.subdomain}.os.tc`)];
 
-    for (const url of urls) {
-      url.pathname = '';
+    if (config.httpUseOneSignalCom) {
+      urls.push(legacyDomainUrl);
     }
 
     return urls;
