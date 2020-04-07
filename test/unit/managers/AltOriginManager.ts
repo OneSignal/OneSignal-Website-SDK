@@ -43,7 +43,41 @@ test(`should get correct canonical subscription URL for staging environment`, as
   t.is(stagingUrls[0].host, new URL(`https://test.${stagingDomain}`).host);
 });
 
+
+test(`should get correct canonical subscription URL when api.staging.onesignal.com is used`, async t => {
+  const stagingDomain = "staging.onesignal.com";
+  (<any>global).__API_ORIGIN__ = `api.${stagingDomain}`; 
+  const config = TestEnvironment.getFakeAppConfig();
+  config.subdomain = 'test';
+  config.httpUseOneSignalCom = true;
+
+  const browser = await TestEnvironment.stubDomEnvironment();
+  browser.changeURL(window, `http://${stagingDomain}`);
+
+  const stagingUrlsOsTcDomain = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Staging);
+  t.is(stagingUrlsOsTcDomain.length, 1);
+  t.is(stagingUrlsOsTcDomain[0].host, new URL(`https://test.${stagingDomain}`).host);
+});
+
 test(`should get correct canonical subscription URL for production environment`, async t => {
+  const config = TestEnvironment.getFakeAppConfig();
+  config.subdomain = 'test';
+  config.httpUseOneSignalCom = true;
+
+  const prodUrlsOsTcDomain = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Production);
+  t.is(prodUrlsOsTcDomain.length, 2);
+  t.is(prodUrlsOsTcDomain[0].host, new URL('https://test.os.tc').host);
+  t.is(prodUrlsOsTcDomain[1].host, new URL('https://test.onesignal.com').host);
+
+  config.httpUseOneSignalCom = false;
+  
+  const prodUrls = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Production);
+  t.is(prodUrls.length, 1);
+  t.is(prodUrls[0].host, new URL('https://test.os.tc').host);
+});
+
+test(`should get correct canonical subscription URL for production environment with api. prefix`, async t => {
+  (<any>global).__API_ORIGIN__ = `api.onesignal.com`; 
   const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;

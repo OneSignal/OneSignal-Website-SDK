@@ -100,8 +100,8 @@ export default class AltOriginManager {
   static getCanonicalSubscriptionUrls(config: AppConfig,
                                       buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv()
                                      ): Array<URL> {
-    const apiUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
-    const legacyDomainUrl = new URL(`https://${config.subdomain}.${apiUrl.host}`);
+    const subscriptionDomain = AltOriginManager.getWildcardLegacySubscriptionDomain(buildEnv);
+    const legacyDomainUrl = new URL(`https://${config.subdomain}.${subscriptionDomain}`);
 
     // Staging and Dev don't support going through the os.tc domain
     if (buildEnv !== EnvironmentKind.Production) {
@@ -116,6 +116,23 @@ export default class AltOriginManager {
     }
 
     return urls;
+  }
+
+  /**
+   * Get the wildcard part of the legacy subscription domain.
+   * Examples: onesignal.com, staging.onesignal.com, or localhost
+   */
+  static getWildcardLegacySubscriptionDomain(buildEnv: EnvironmentKind): string {
+    const apiUrl = SdkEnvironment.getOneSignalApiUrl(buildEnv);
+
+    // Prod and Dev support domains like *.onesignal.com and *.localhost 
+    let envSubdomainParts: number = 2;
+    if (buildEnv === EnvironmentKind.Staging) {
+      // Allow up to 3 parts so *.staging.onesignal.com works.
+      envSubdomainParts = 3;
+    }
+
+    return Utils.lastParts(apiUrl.host, ".", envSubdomainParts);
   }
 
   /**
