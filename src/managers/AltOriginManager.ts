@@ -12,83 +12,67 @@ export default class AltOriginManager {
 
   static async discoverAltOrigin(appConfig): Promise<ProxyFrameHost> {
     const iframeUrls = AltOriginManager.getOneSignalProxyIframeUrls(appConfig);
+
     const allProxyFrameHosts: ProxyFrameHost[] = [];
-    let targetProxyFrameHost;
     for (const iframeUrl of iframeUrls) {
       const proxyFrameHost = new ProxyFrameHost(iframeUrl);
       // A TimeoutError could happen here; it gets rejected out of this entire loop
       await proxyFrameHost.load();
       allProxyFrameHosts.push(proxyFrameHost);
     }
-    const nonDuplicatedAltOriginSubscriptions = await AltOriginManager.removeDuplicatedAltOriginSubscription(allProxyFrameHosts);
 
-    const preferredAfterUnsubscribes = 
-      await AltOriginManager.removeDuplicatedAltOriginSubscription(allProxyFrameHosts);
-    if (preferredAfterUnsubscribes) {
-      return preferredAfterUnsubscribes;
-    } else {
-      for (const proxyFrameHost of allProxyFrameHosts) {
-        if (await proxyFrameHost.isSubscribed()) {
-          // If we're subscribed, we're done searching for the iframe
-          targetProxyFrameHost = proxyFrameHost;
-        } else {
-          if (contains(proxyFrameHost.url.host, '.os.tc')) {
-            if (!targetProxyFrameHost) {
-              // We've already loaded .onesignal.com and they're not subscribed
-              // There's no other frames to check; the user is completely not subscribed
-              targetProxyFrameHost = proxyFrameHost;
-            } else {
-              // Already subscribed to .onesignal.com; remove os.tc frame
-            proxyFrameHost.dispose();
-            }
-          } else {
-            // We've just loaded .onesignal.com and they're not subscribed
-            // Load the .os.tc frame next to check
-            // Remove the .onesignal.com frame; there's no need to keep it around anymore
-            // Actually don't dispose it, so we can check for duplicate subscriptions
-            proxyFrameHost.dispose();
-            continue;
-          }
-        }
+    const subscribedProxyFrameHosts = await AltOriginManager.subscribedProxyFrameHosts(allProxyFrameHosts);
+    await AltOriginManager.removeDuplicatedAltOriginSubscription(subscribedProxyFrameHosts);
+
+    let preferredProxyFrameHost: ProxyFrameHost;
+    if (subscribedProxyFrameHosts.length === 0) {
+      // Use the first (preferred) host (os.tc in this case) if not subscribed to any
+      preferredProxyFrameHost = allProxyFrameHosts[0];
+    }
+    else {
+      // Otherwise if their was one or more use the highest preferred one in the list
+      preferredProxyFrameHost = subscribedProxyFrameHosts[0];
+    }
+
+    // Remove all other unneeded iframes from the page
+    for (const proxyFrameHost of allProxyFrameHosts) {
+      if (preferredProxyFrameHost !== proxyFrameHost) {
+        proxyFrameHost.dispose();
       }
     }
 
-    return targetProxyFrameHost;
+    return preferredProxyFrameHost;
+  }
+
+  static async subscribedProxyFrameHosts(proxyFrameHosts: ProxyFrameHost[]): Promise<ProxyFrameHost[]> {
+    const subscribed: ProxyFrameHost[] = [];
+    for (const proxyFrameHost of proxyFrameHosts) {
+      if (await proxyFrameHost.isSubscribed()) {
+        subscribed.push(proxyFrameHost);
+      }
+    }
+    return subscribed;
   }
 
   /*
   * If the user is subscribed to more than OneSignal subdomain (AKA HTTP setup)
   * unsubscribe them from ones lower in the list.
   * Example: Such as being being subscribed to mysite.os.tc & mysite.onesignal.com
-  * 
-  * Returns null if no actions we taken.
-  * Returns the remaining subscribed ProxyFrameHost if there were duplicate(s)
-  *    that were subscribed.
   */
   static async removeDuplicatedAltOriginSubscription(
-    proxyFrameHosts: ProxyFrameHost[]
-  ): Promise<null | ProxyFrameHost> {
-    const subscribedProxyFrameHosts: ProxyFrameHost[] = [];
-    for (const proxyFrameHost of proxyFrameHosts) {
-      if (await proxyFrameHost.isSubscribed()) {
-        subscribedProxyFrameHosts.push(proxyFrameHost);
-      }
-    }
-
+    subscribedProxyFrameHosts: ProxyFrameHost[]
+  ): Promise<void> {
     // Not subscribed or subscribed to just one domain, nothing to do, no duplicates
     if (subscribedProxyFrameHosts.length < 2) {
-      return null;
+      return;
     }
 
     // At this point we have 2+ subscriptions
     // Keep only the first (highest priority) domain and unsubscribe the rest.
-    const preferredAfterUnsubscribes = subscribedProxyFrameHosts[0];
     const toUnsubscribeProxyFrameHosts = subscribedProxyFrameHosts.slice(1);
-    for (const subscribedHost of toUnsubscribeProxyFrameHosts) {
-      await subscribedHost.unsubscribeFromPush();
-      subscribedHost.dispose();
+    for (const dupSubscribedHost of toUnsubscribeProxyFrameHosts) {
+      await dupSubscribedHost.unsubscribeFromPush();
     }
-    return preferredAfterUnsubscribes;
   }
 
   /**
