@@ -14,14 +14,13 @@ import {
 import { DynamicResourceLoader, ResourceLoadState } from "../../../src/services/DynamicResourceLoader";
 import { ServiceWorkerManager } from "../../../src/managers/ServiceWorkerManager";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import { SessionManager } from "../../../src/managers/SessionManager";
+import { SessionManager } from "../../../src/managers/sessionManager/page/SessionManager";
 import {
     stubServiceWorkerInstallation,
 } from "../../support/tester/sinonSandboxUtils";
 import LocalStorage from '../../../src/utils/LocalStorage';
 import { PromptsManager } from '../../../src/managers/PromptsManager';
 import InitHelper from '../../../src/helpers/InitHelper';
-import { PageViewManager } from '../../../src/managers/PageViewManager';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const initTestHelper = new InitTestHelper(sinonSandbox);
@@ -49,7 +48,7 @@ test.afterEach(function (_t: TestContext) {
 /**
  * Unit Tests
  *
- * NOTE: 
+ * NOTE:
  *  - currently, showDelayedPrompt encapsulates both types of delayed prompts for easy stubbing/spying since
  *    setTimeout doesn't work as intended in testing environment due to jsdom bugs
  */
@@ -57,7 +56,7 @@ test.afterEach(function (_t: TestContext) {
 test.serial(`Delayed Prompt: native prompt is shown after 1 page view if configured so`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
-    
+
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 1);
 
@@ -69,7 +68,7 @@ test.serial(`Delayed Prompt: native prompt is shown after 1 page view if configu
 test.serial(`Delayed Prompt: native prompt is shown after 0 page views if configured so`, async t => {
     await beforeTest(t);
     stubServiceWorkerInstallation(sinonSandbox);
-    
+
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 0);
 
@@ -100,7 +99,7 @@ test.serial(`Delayed Prompt: native prompt is shown after 3 page views if config
     stubServiceWorkerInstallation(sinonSandbox);
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "showDelayedPrompt").resolves();
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 3);
-    
+
     for(let i=0; i<2; i++) {
         OneSignal.context.pageViewManager.simulatePageNavigationOrRefresh();
         await InitHelper.internalInit();
