@@ -71,6 +71,8 @@ test('API URL should be valid for development environment', async t => {
 });
 
 test('API URL should be valid for staging environment', async t => {
+  const browser = await TestEnvironment.stubDomEnvironment();
+  browser.changeURL(window, "https://localhost");
   const expectedUrl = `https://${window.location.host}/api/v1`;
   t.is(SdkEnvironment.getOneSignalApiUrl(EnvironmentKind.Staging).toString(), expectedUrl);
 });
