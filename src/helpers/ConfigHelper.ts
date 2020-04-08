@@ -283,9 +283,9 @@ export class ConfigHelper {
     const native = staticPrompts.native ? {
       enabled: staticPrompts.native.enabled,
       autoPrompt: staticPrompts.native.enabled && staticPrompts.native.autoPrompt !== false,
-      pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews, 
+      pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
-      timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay, 
+      timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay)
     } : {
       enabled: false,
@@ -299,9 +299,9 @@ export class ConfigHelper {
       // for backwards compatibility if not specifically false, then assume true for autoPrompt on slidedown
       autoPrompt: staticPrompts.slidedown.enabled &&
         staticPrompts.slidedown.autoPrompt !== false,
-      pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews, 
+      pageViews: Utils.getValueOrDefault(staticPrompts.slidedown.pageViews,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
-      timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay, 
+      timeDelay: Utils.getValueOrDefault(staticPrompts.slidedown.timeDelay,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay),
       actionMessage: staticPrompts.slidedown.actionMessage,
       acceptButtonText: staticPrompts.slidedown.acceptButton,
