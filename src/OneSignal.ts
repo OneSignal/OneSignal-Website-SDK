@@ -839,6 +839,7 @@ export default class OneSignal {
           OneSignal.config!.appId, outcomeName, outcomeWeight);
         return;
       default:
+        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
         return;
     }
   }
