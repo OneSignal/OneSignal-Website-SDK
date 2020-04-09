@@ -7,6 +7,7 @@ import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import ConfigManager from '../../managers/ConfigManager';
 import LocalStorage from '../../utils/LocalStorage';
+import { EnvironmentInfoHelper } from "../../context/browser/helpers/EnvironmentInfoHelper";
 
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;
@@ -78,6 +79,7 @@ export default class RemoteFrame implements Disposable {
     OneSignal.config = rasterizedOptions || {};
 
     const appConfig = await new ConfigManager().getAppConfig(rasterizedOptions);
+    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
     OneSignal.context = new Context(appConfig);
     OneSignal.context.workerMessenger.listen(true);
 
