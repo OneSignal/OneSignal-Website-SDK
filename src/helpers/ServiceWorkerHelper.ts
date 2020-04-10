@@ -77,31 +77,7 @@ export default class ServiceWorkerHelper {
       }
 
       await Database.upsertSession(session);
-      /**
-       * Send on_session call on each new session initialization except the case
-       * when player create call occurs, e.g. first subscribed or re-subscribed cases after clearing cookies,
-       * since player#create call updates last_session field on player.
-       */
-      if (sessionOrigin !== SessionOrigin.PlayerCreate) {
-        if (!deviceRecord.identifier) {
-          const subscription = await self.registration.pushManager.getSubscription()
-          if (subscription) {
-            const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
-            const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
-            deviceRecord.identifier = fullDeviceRecord.identifier;
-          }
-        }
-
-        const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
-        // If the returned player id is different, save the new id to indexed db and update session
-        if (newPlayerId !== deviceId) {
-          session.deviceId = newPlayerId;
-          await Promise.all([
-            Database.setDeviceId(newPlayerId),
-            Database.upsertSession(session)
-          ]);
-        }
-      }
+      await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
       return;
     }
 
@@ -133,9 +109,10 @@ export default class ServiceWorkerHelper {
     // TODO: Possibly check that it's not unreasonably long.
     // TODO: Or couple with periodic ping for better results.
     await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig);
-    await Database.upsertSession(
-      initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type})
-    );
+
+    const session = initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type});
+    await Database.upsertSession(session);
+    await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
   }
 
   public static async deactivateSession(
@@ -186,6 +163,39 @@ export default class ServiceWorkerHelper {
     await Database.upsertSession(existingSession);
 
     return cancelableFinalize;
+  }
+
+  /**
+   * Sends on_session call on each new session initialization except the case
+   * when player create call occurs, e.g. first subscribed or re-subscribed cases after clearing cookies,
+   * since player#create call updates last_session field on player.
+   */
+  public static async sendOnSessionCallIfNecessary(
+    sessionOrigin: SessionOrigin, deviceRecord: SerializedPushDeviceRecord,
+    deviceId: string, session: Session
+  ) {
+    if (sessionOrigin === SessionOrigin.PlayerCreate) {
+      return;
+    }
+
+    if (!deviceRecord.identifier) {
+      const subscription = await self.registration.pushManager.getSubscription()
+      if (subscription) {
+        const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
+        const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
+        deviceRecord.identifier = fullDeviceRecord.identifier;
+      }
+    }
+
+    const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+    // If the returned player id is different, save the new id to indexed db and update session
+    if (newPlayerId !== deviceId) {
+      session.deviceId = newPlayerId;
+      await Promise.all([
+        Database.setDeviceId(newPlayerId),
+        Database.upsertSession(session)
+      ]);
+    }
   }
 
   public static async finalizeSession(
