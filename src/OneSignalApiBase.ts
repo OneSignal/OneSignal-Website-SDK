@@ -37,6 +37,7 @@ export class OneSignalApiBase {
     }
 
     let callHeaders: any = new Headers();
+    callHeaders.append("Origin", SdkEnvironment.getOrigin());
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
     if (headers) {
@@ -54,7 +55,7 @@ export class OneSignalApiBase {
       contents.body = JSON.stringify(data);
 
     let status: number;
-    return fetch(SdkEnvironment.getOneSignalApiUrl().toString() + '/' + action, contents)
+    return fetch(SdkEnvironment.getOneSignalApiUrl(undefined, action).toString() + '/' + action, contents)
         .then(response => {
           status = response.status;
           return response.json();

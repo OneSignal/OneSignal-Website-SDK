@@ -7,6 +7,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
+import { SERVER_CONFIG_DEFAULTS_SESSION } from "../config";
 
 export enum IntegrationConfigurationKind {
   /**
@@ -112,9 +113,20 @@ export class ConfigHelper {
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
       emailAuthRequired: serverConfig.features.email && serverConfig.features.email.require_auth,
       userConfig: mergedUserConfig,
-      enableOnSession: serverConfig.features.enable_on_session || false,
       // default confirmed deliveries feature to off
-      receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false
+      receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false,
+      enableOnSession: Utils.valueOrDefault(
+        serverConfig.features.enable_on_session,
+        SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed
+      ),
+      sessionThreshold: Utils.valueOrDefault(
+        serverConfig.features.session_threshold,
+        SERVER_CONFIG_DEFAULTS_SESSION.reportingThreshold
+      ),
+      enableSessionDuration: Utils.valueOrDefault(
+        serverConfig.features.web_on_focus_enabled,
+        SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus
+      )
     };
   }
 
@@ -380,7 +392,17 @@ export class ConfigHelper {
             serverConfig.config.notificationBehavior.click.action : undefined,
           allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
             serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
-          requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent
+          requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent,
+          outcomes: {
+            direct: serverConfig.config.outcomes.direct,
+            indirect: {
+              enabled: serverConfig.config.outcomes.indirect.enabled,
+              influencedTimePeriodMin:
+                serverConfig.config.outcomes.indirect.notification_attribution.minutes_since_displayed,
+              influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
+            },
+            unattributed: serverConfig.config.outcomes.unattributed,
+          }
         };
       case IntegrationConfigurationKind.JavaScript:
         /*
@@ -396,16 +418,26 @@ export class ConfigHelper {
             isUsingSubscriptionWorkaround
           ),
           ...{
-          serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
-            ? OneSignal.SERVICE_WORKER_PARAM
-            : { scope: '/' },
-          serviceWorkerPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
-              ? OneSignal.SERVICE_WORKER_PATH
-              : 'OneSignalSDKWorker.js',
-          serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
-              ? OneSignal.SERVICE_WORKER_UPDATER_PATH
-              : 'OneSignalSDUpdaterKWorker.js',
-          path: !!userConfig.path ? userConfig.path : '/'
+            serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
+              ? OneSignal.SERVICE_WORKER_PARAM
+              : { scope: '/' },
+            serviceWorkerPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
+                ? OneSignal.SERVICE_WORKER_PATH
+                : 'OneSignalSDKWorker.js',
+            serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
+                ? OneSignal.SERVICE_WORKER_UPDATER_PATH
+                : 'OneSignalSDUpdaterKWorker.js',
+            path: !!userConfig.path ? userConfig.path : '/'
+          },
+          outcomes: {
+            direct: serverConfig.config.outcomes.direct,
+            indirect: {
+              enabled: serverConfig.config.outcomes.indirect.enabled,
+              influencedTimePeriodMin:
+                serverConfig.config.outcomes.indirect.notification_attribution.minutes_since_displayed,
+              influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
+            },
+            unattributed: serverConfig.config.outcomes.unattributed,
           }
         };
 

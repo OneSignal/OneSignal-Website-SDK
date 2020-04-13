@@ -12,6 +12,12 @@ import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { PermissionUtils } from "../utils/PermissionUtils";
 import LocalStorage from '../utils/LocalStorage';
+import { SessionOrigin } from "../models/Session";
+import MainHelper from "./MainHelper";
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
+import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
+import { Browser } from "../context/browser/models/Browser";
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -21,7 +27,7 @@ export default class SubscriptionHelper {
 
   public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {
     const context: ContextSWInterface = OneSignal.context;
-    let subscription: Subscription;
+    let subscription: Subscription | null = null;
 
     /*
       Within the same page navigation (the same session), do not register for
@@ -29,8 +35,16 @@ export default class SubscriptionHelper {
       session count incremented on each page refresh. However, if the user is
       not subscribed, subscribe.
     */
-    if (isPushEnabled && !context.sessionManager.isFirstPageView()) {
+    if (isPushEnabled && !context.pageViewManager.isFirstPageView()) {
       Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
+      Log.debug("But we want to rekindle their session.");
+      const deviceId = await MainHelper.getDeviceId();
+      if (deviceId) {
+        const deviceRecord: PushDeviceRecord = await MainHelper.createDeviceRecord(OneSignal.config.appId, true);
+        await OneSignal.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PageRefresh);
+      } else {
+        Log.error("Should have been impossible to have push as enabled but no device id.");
+      }
       return null;
     }
 
@@ -49,7 +63,7 @@ export default class SubscriptionHelper {
             SubscriptionStrategyKind.ResubscribeExisting
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
-          context.sessionManager.incrementPageViewCount();
+          context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
         } catch (e) {
@@ -137,5 +151,49 @@ export default class SubscriptionHelper {
       OneSignal._isRegisteringForPush = false;
 
     return subscription;
+  }
+
+  static getRawPushSubscriptionForSafari(safariWebId: string): RawPushSubscription {
+    const subscription = new RawPushSubscription();
+
+    const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(safariWebId);
+    subscription.existingSafariDeviceToken = existingDeviceToken;
+
+    return subscription;
+  }
+
+  static async getRawPushSubscriptionFromServiceWorkerRegistration(): Promise<RawPushSubscription | null> {
+    const registration = await PageServiceWorkerHelper.getRegistration();
+    if (!registration) {
+      return null;
+    }
+    const swSubscription = await registration.pushManager.getSubscription();
+    if (!swSubscription) {
+      return null;
+    }
+    return RawPushSubscription.setFromW3cSubscription(swSubscription);
+  }
+
+  static async getRawPushSubscriptionWhenUsingSubscriptionWorkaround(): Promise<RawPushSubscription | null> {
+    // we would need to message service worker to get it. we'll get it from inside if necessary
+    return null;
+  }
+
+  static async getRawPushSubscription(
+    environmentInfo: EnvironmentInfo, safariWebId: string
+  ):Promise<RawPushSubscription | null> {
+    if (environmentInfo.browserType === Browser.Safari) {
+      return SubscriptionHelper.getRawPushSubscriptionForSafari(safariWebId);
+    }
+
+    if (environmentInfo.isUsingSubscriptionWorkaround) {
+      return SubscriptionHelper.getRawPushSubscriptionWhenUsingSubscriptionWorkaround();
+    }
+
+    if (environmentInfo.isBrowserAndSupportsServiceWorkers) {
+      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration();
+    }
+
+    return null;
   }
 }

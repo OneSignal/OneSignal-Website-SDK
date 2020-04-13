@@ -7,9 +7,12 @@ import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { NotificationPermission } from "../models/NotificationPermission";
+import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../context/shared/utils/Utils";
+import { RawPushSubscription } from "../models/RawPushSubscription";
+import SubscriptionHelper from "./SubscriptionHelper";
 
 export default class MainHelper {
 
@@ -225,5 +228,28 @@ export default class MainHelper {
       const appId = await Database.get<string>('Ids', 'appId');
       return appId;
     }
+  }
+
+  static async createDeviceRecord(
+    appId: string, includeSubscription: boolean = false): Promise<PushDeviceRecord> {
+    let subscription: RawPushSubscription | undefined;
+    if (includeSubscription) {
+      // TODO: refactor to replace config with dependency injection
+      const rawSubscription = await SubscriptionHelper.getRawPushSubscription(
+        OneSignal.environmentInfo!, OneSignal.config.safariWebId
+      );
+      if (rawSubscription) {
+        subscription = rawSubscription;
+      }
+    }
+    const deviceRecord = new PushDeviceRecord(subscription);
+    deviceRecord.appId = appId;
+    deviceRecord.subscriptionState = await MainHelper.getCurrentNotificationType();
+    return deviceRecord;
+  }
+
+  static async getDeviceId(): Promise<string | undefined> {
+    const subscription = await OneSignal.database.getSubscription();
+    return subscription.deviceId || undefined;
   }
 }

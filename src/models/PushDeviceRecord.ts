@@ -3,8 +3,13 @@ import bowser from 'bowser';
 import NotImplementedError from '../errors/NotImplementedError';
 import { RawPushSubscription } from './RawPushSubscription';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { DeviceRecord } from './DeviceRecord';
+import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
 
+export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
+  identifier?: string | null;
+  web_auth?: string;
+  web_p256?: string;
+}
 
 /**
  * Describes a push notification device record.
@@ -20,8 +25,8 @@ export class PushDeviceRecord extends DeviceRecord {
     this.subscription = subscription;
   }
 
-  serialize() {
-    const serializedBundle: any = super.serialize();
+  serialize(): SerializedPushDeviceRecord {
+    const serializedBundle: SerializedPushDeviceRecord = super.serialize();
 
     if (this.subscription) {
       serializedBundle.identifier = bowser.safari ?

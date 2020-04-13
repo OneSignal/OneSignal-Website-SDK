@@ -68,7 +68,7 @@
     "deepmerge": "^4.2.2",
     "dom-storage": "^2.0.2",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
-    "fake-indexeddb": "github:OneSignal/fakeIndexedDB#onesignal",
+    "fake-indexeddb": "^2.1.1",
     "imports-loader": "^0.7.1",
     "md5-file": "^3.2.2",
     "nock": "^9.1.6",
@@ -120,12 +120,12 @@
     },
     {
       "path": "./build/bundles/OneSignalPageSDKES6.js",
-      "maxSize": "55 kB",
+      "maxSize": "58 kB",
       "compression": "gzip"
     },
     {
       "path": "./build/bundles/OneSignalSDKWorker.js",
-      "maxSize": "30 kB",
+      "maxSize": "35 kB",
       "compression": "gzip"
     },
     {

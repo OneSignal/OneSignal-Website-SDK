@@ -1,4 +1,7 @@
 import TimeoutError from '../../../errors/TimeoutError';
+import { OneSignalApiErrorKind, OneSignalApiError } from "../../../errors/OneSignalApiError";
+
+type Nullable = undefined | null;
 
 interface IndexOfAble {
   indexOf(match:string): number;
@@ -59,6 +62,17 @@ export class Utils {
    */
   public static capitalize(text: string): string {
     return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  static isNullOrUndefined<T>(value: T | Nullable): boolean {
+    return typeof value === 'undefined' || value === null;
+  }
+
+  static valueOrDefault<T>(value: T | Nullable, defaultValue: T): T {
+    if (typeof value === "undefined" || value === null) {
+      return defaultValue;
+    }
+    return value;
   }
 
   /**
@@ -169,6 +183,43 @@ export class Utils {
     if (!playerId) {
       throw new Error("Player id cannot be empty");
     }
+  }
+
+  public static async enforceAppIdAndPlayerId<T>(
+    appId: string | Nullable, playerId: string | Nullable, funcToExecute: () => Promise<T>
+  ): Promise<T> {
+    Utils.enforceAppId(appId);
+    Utils.enforcePlayerId(playerId);
+    try {
+      return await funcToExecute();
+    } catch(e) {
+      if (e && Array.isArray(e.errors) && e.errors.length > 0 &&
+        Utils.contains(e.errors[0], "app_id not found")) {
+        throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
+      } else throw e;
+    }
+  }
+
+  static sortArrayOfObjects<TObject, TProperty>(
+    arrayToSort: TObject[],
+    predicateForProperty: (obj: TObject) => TProperty,
+    descending: boolean = false,
+    doItInPlace: boolean = true
+  ): TObject[] {
+    const internalArrayToSort = doItInPlace ? arrayToSort : arrayToSort.slice();
+    internalArrayToSort.sort((a: TObject, b: TObject) => {
+      const propertyA = predicateForProperty(a);
+      const propertyB = predicateForProperty(b);
+
+      if (propertyA > propertyB) {
+        return !!descending ? -1 : 1;
+      }
+      if (propertyA < propertyB) {
+        return !!descending ? 1 : -1;
+      }
+      return 0;
+    })
+    return internalArrayToSort;
   }
 }
 

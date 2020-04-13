@@ -1,9 +1,8 @@
 import "../../support/polyfills/polyfills";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/libraries/WorkerMessenger';
-import Context from '../../../src/models/Context';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
-import test, { TestContext } from "ava";
+import ContextSW from '../../../src/models/ContextSW';
+import test from "ava";
 import Random from "../../support/tester/Random";
 
 
@@ -13,7 +12,7 @@ test('service worker should gracefully handle unexpected page messages', async t
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
-  const context = new Context(appConfig);
+  const context = new ContextSW(appConfig);
   const workerMessenger = new WorkerMessenger(context);
 
   /* We should be guaranteed a MessageEvent with at least an `event.data` property. */
@@ -58,7 +57,7 @@ test(
     });
 
     const appConfig = TestEnvironment.getFakeAppConfig();
-    const context = new Context(appConfig);
+    const context = new ContextSW(appConfig);
     const workerMessenger = new WorkerMessenger(context);
 
     /* We should be guaranteed a MessageEvent with at least an `event.data` property. */

@@ -17,7 +17,7 @@ import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
 import Context from './models/Context';
-import { Notification } from './models/Notification';
+import { Notification } from "./models/Notification";
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -53,6 +53,9 @@ import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
 import { AutoPromptOptions } from "./managers/PromptsManager";
 import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
+import { SessionManager } from './managers/sessionManager/page/SessionManager';
+import OutcomesHelper from "./helpers/shared/OutcomesHelper";
+import { OutcomeAttributionType } from "./models/Outcomes";
 
 export default class OneSignal {
   /**
@@ -204,6 +207,11 @@ export default class OneSignal {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
+    // TODO: environmentInfo is explicitly dependent on existence of OneSignal.config. Needs refactor.
+    // Workaround to temp assign config so that it can be used in context.
+    OneSignal.config = appConfig;
+    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
+
     OneSignal.context = new Context(appConfig);
     OneSignal.config = OneSignal.context.appConfig;
   }
@@ -218,8 +226,6 @@ export default class OneSignal {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal.initializeConfig(options);
-
-    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
@@ -272,6 +278,16 @@ export default class OneSignal {
          */
         if (!OneSignal.config || !OneSignal.config.subdomain)
           throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
+
+        /**
+         * We'll need to set up page activity tracking events on the main page but we can do so
+         * only after the main initialization in the iframe is successful and a new session
+         * is initiated.
+         */
+        OneSignal.emitter.on(
+          OneSignal.EVENTS.SESSION_STARTED, SessionManager.setupSessionEventListenersForHttp
+        );
+
         /**
          * The iFrame may never load (e.g. OneSignal might be down), in which
          * case the rest of the SDK's initialization will be blocked. This is a
@@ -453,7 +469,7 @@ export default class OneSignal {
     }
     // After the user subscribers, he will have a device ID, so get it again
     var { deviceId: newDeviceId } = await Database.getSubscription();
-    await OneSignalApi.updatePlayer(appId, newDeviceId, {
+    await OneSignalApi.updatePlayer(appId, newDeviceId!, {
       tags: tags
     });
     executeCallback(callback, tags);
@@ -781,6 +797,53 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
+  public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
+    const outcomesConfig = OneSignal.config!.userConfig.outcomes;
+    if (!outcomesConfig) {
+      Log.debug("Outcomes feature not supported by main application yet.");
+      return;
+    }
+    if (!outcomeName) {
+      Log.error("Outcome name is required");
+      return;
+    }
+    if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
+      Log.error("Outcome weight can only be a number if present.");
+      return;
+    }
+    // TODO: check built-in outcome names? not allow sending?
+
+    await awaitOneSignalInitAndSupported();
+
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    if (!isSubscribed) {
+      Log.warn("Reporting outcomes is supported only for subscribed users.");
+      return;
+    }
+
+     // TODO: add error handling
+    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
+    switch (outcomeAttribution.type) {
+      case OutcomeAttributionType.Direct:
+        await OneSignal.context.updateManager.sendOutcomeDirect(
+          OneSignal.config!.appId, outcomeAttribution.notificationIds, outcomeName, outcomeWeight
+        );
+        return;
+      case OutcomeAttributionType.Indirect:
+        await OneSignal.context.updateManager.sendOutcomeInfluenced(
+          OneSignal.config!.appId, outcomeAttribution.notificationIds, outcomeName, outcomeWeight
+        );
+        return;
+      case OutcomeAttributionType.Unattributed:
+        await OneSignal.context.updateManager.sendOutcomeUnattributed(
+          OneSignal.config!.appId, outcomeName, outcomeWeight);
+        return;
+      default:
+        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
+        return;
+    }
+  }
+
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = Environment.version();
   static _VERSION = Environment.version();
@@ -825,6 +888,7 @@ export default class OneSignal {
   static proxyFrameHost: ProxyFrameHost;
   static proxyFrame: ProxyFrame;
   static emitter: Emitter = new Emitter();
+  static cache: any = {};
 
   /**
    * The additional path to the worker file.
@@ -874,6 +938,7 @@ export default class OneSignal {
     CONNECTED: 'connect',
     REMOTE_NOTIFICATION_PERMISSION: 'postmam.remoteNotificationPermission',
     REMOTE_DATABASE_GET: 'postmam.remoteDatabaseGet',
+    REMOTE_DATABASE_GET_ALL: 'postmam.remoteDatabaseGetAll',
     REMOTE_DATABASE_PUT: 'postmam.remoteDatabasePut',
     REMOTE_DATABASE_REMOVE: 'postmam.remoteDatabaseRemove',
     REMOTE_OPERATION_COMPLETE: 'postman.operationComplete',
@@ -904,6 +969,10 @@ export default class OneSignal {
     SUBSCRIPTION_EXPIRATION_STATE: 'postmam.subscriptionExpirationState',
     PROCESS_EXPIRING_SUBSCRIPTIONS: 'postmam.processExpiringSubscriptions',
     GET_SUBSCRIPTION_STATE: 'postmam.getSubscriptionState',
+    SESSION_UPSERT: 'postmam.sessionUpsert',
+    SESSION_DEACTIVATE: 'postmam.sessionDeactivate',
+    ARE_YOU_VISIBLE_REQUEST: 'postmam.areYouVisibleRequest',
+    ARE_YOU_VISIBLE_RESPONSE: 'postmam.areYouVisibleResponse',
   };
 
   static EVENTS = {
@@ -973,6 +1042,7 @@ export default class OneSignal {
     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
     TEST_WOULD_DISPLAY: 'testWouldDisplay',
     POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
+    SESSION_STARTED: "os.sessionStarted",
   };
 }
 

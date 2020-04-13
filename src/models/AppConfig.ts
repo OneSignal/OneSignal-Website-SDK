@@ -1,3 +1,5 @@
+import { OutcomesConfig, OutcomesServerConfig } from "./Outcomes";
+
 export interface AppConfig {
   /**
    * The OneSignal dashboard app ID. Although this value is provided, it isn't
@@ -27,7 +29,7 @@ export interface AppConfig {
     mixpanelReportingToken: string | null;
   };
   enableOnSession?: boolean;
-
+  enableSessionDuration?: boolean;
   safariWebId?: string;
 
   /**
@@ -54,6 +56,7 @@ export interface AppConfig {
    * Describes whether Confirmed Delivery should be active
    */
   receiveReceiptsEnable?: boolean;
+  sessionThreshold?: number;
 }
 
 export enum ConfigIntegrationKind {
@@ -100,6 +103,7 @@ export interface AppUserConfig {
   allowLocalhostAsSecureOrigin?: boolean;
   requiresUserPrivacyConsent?: boolean;
   pageUrl?: string;
+  outcomes?: OutcomesConfig;
 }
 
 interface BasePromptOptions {
@@ -318,6 +322,8 @@ export interface ServerAppConfig {
     };
     enable_on_session?: boolean;
     receive_receipts_enable?: boolean;
+    web_on_focus_enabled: boolean;
+    session_threshold: number;
   };
   config: {
     /**
@@ -370,6 +376,7 @@ export interface ServerAppConfig {
         persist: boolean;
       };
     };
+    outcomes: OutcomesServerConfig,
     vapid_public_key: string;
     onesignal_vapid_public_key: string;
     http_use_onesignal_com?: boolean;

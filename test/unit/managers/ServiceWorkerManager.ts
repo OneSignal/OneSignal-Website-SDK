@@ -53,7 +53,6 @@ test.beforeEach(async function() {
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();
   OneSignal.context = new Context(appConfig);
-
   (global as any).OneSignal = OneSignal;
 });
 
@@ -405,7 +404,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
 test('installWorker() should not install when on an HTTPS site with a subdomain set', async t => {
   // 1. Mock site page as HTTPS
   await TestEnvironment.initialize({ httpOrHttps: HttpHttpsEnvironment.Https });
-
+  TestEnvironment.mockInternalOneSignal();
   // 2. Set is set to use our subdomain however
   const subdomain = "abc";
   const testConfig: TestEnvironmentConfig = {

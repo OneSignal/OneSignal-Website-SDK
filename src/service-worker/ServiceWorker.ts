@@ -1,7 +1,7 @@
 import bowser from "bowser";
 
 import Environment from "../Environment";
-import { WorkerMessenger, WorkerMessengerCommand } from "../libraries/WorkerMessenger";
+import { WorkerMessenger, WorkerMessengerCommand, WorkerMessengerMessage } from "../libraries/WorkerMessenger";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import ContextSW from "../models/ContextSW";
 import OneSignalApiBase from "../OneSignalApiBase";
@@ -13,12 +13,22 @@ import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
+import { 
+  UpsertSessionPayload, DeactivateSessionPayload,
+  PageVisibilityRequest, PageVisibilityResponse, SessionStatus
+} from "../models/Session";
 import Log from "../libraries/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../context/shared/utils/Utils";
+import {
+  OSWindowClient, OSServiceWorkerFields
+} from "./types";
+import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
+import { NotificationReceived, NotificationClicked } from "../models/Notification";
+import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 
-declare var self: ServiceWorkerGlobalScope;
+declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
 
 /**
@@ -89,6 +99,28 @@ export class ServiceWorker {
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
       event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
+    });
+
+
+    self.addEventListener('message', (event: ExtendableMessageEvent) => {
+      const data: WorkerMessengerMessage = event.data;
+      if (!data || !data.command) {
+        return;
+      }
+      const payload = data.payload;
+
+      switch(data.command) {
+        case WorkerMessengerCommand.SessionUpsert:
+          Log.debug("[Service Worker] Received SessionUpsert", payload);
+          ServiceWorker.debounceRefreshSession(event, payload as UpsertSessionPayload);
+          break;
+        case WorkerMessengerCommand.SessionDeactivate:
+          Log.debug("[Service Worker] Received SessionDeactivate", payload);
+          ServiceWorker.debounceRefreshSession(event, payload as DeactivateSessionPayload);
+          break;
+        default:
+          return;
+      }
     });
     /*
       According to
@@ -173,6 +205,20 @@ export class ServiceWorker {
       await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
     });
+    ServiceWorker.workerMessenger.on(
+      WorkerMessengerCommand.AreYouVisibleResponse, async (payload: PageVisibilityResponse) => {
+        Log.debug('[Service Worker] Received response for AreYouVisible', payload);
+        if (!self.clientsStatus) { return; }
+
+        const timestamp = payload.timestamp;
+        if (self.clientsStatus.timestamp !== timestamp) { return; }
+        
+        self.clientsStatus.receivedResponsesCount++;
+        if (payload.focused) {
+          self.clientsStatus.hasAnyActiveSessions = true;
+        }
+      }
+    );
   }
 
   /**
@@ -185,13 +231,25 @@ export class ServiceWorker {
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
-            .then((notifications: any) => {
+            .then(async (notifications: any) => {
               //Display push notifications in the order we received them
-              let notificationEventPromiseFns = [];
+              const notificationEventPromiseFns = [];
+              const notificationReceivedPromises: Promise<void>[] = [];
+              const appId = await Database.get<string>("Ids", "appId");
 
               for (let rawNotification of notifications) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
                 let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
+
+                const notificationReceived: NotificationReceived = {
+                  notificationId: notification.id,
+                  appId,
+                  url: notification.url,
+                  timestamp: new Date().getTime(),
+                };
+                notificationReceivedPromises.push(Database.put("NotificationReceived", notificationReceived));
+                // TODO: decide what to do with all the notif received promises
+                // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
                 notificationEventPromiseFns.push((notif => {
@@ -312,11 +370,13 @@ export class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static async getActiveClients(): Promise<Array<Client>> {
+  static async getActiveClients(): Promise<Array<OSWindowClient>> {
     const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const activeClients: Array<Client> = [];
+    const activeClients: Array<OSWindowClient> = [];
 
     for (const client of windowClients) {
+      const windowClient: OSWindowClient = client as OSWindowClient;
+      windowClient.isSubdomainIframe = false;
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
@@ -325,12 +385,115 @@ export class ServiceWorker {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
-        (client as any).isSubdomainIframe = true;
+        windowClient.isSubdomainIframe = true;
       }
-      activeClients.push(client);
+      activeClients.push(windowClient);
+    }
+    return activeClients;
+  }
+
+  static async updateSessionBasedOnHasActive(
+    event: ExtendableMessageEvent,
+    hasAnyActiveSessions: boolean, options: DeactivateSessionPayload
+  ) {
+    if (hasAnyActiveSessions) {
+      await ServiceWorkerHelper.upsertSession(
+        options.sessionThreshold,
+        options.enableSessionDuration,
+        options.deviceRecord!,
+        options.deviceId,
+        options.sessionOrigin,
+        options.outcomesConfig
+      );
+    } else {
+      const cancelableFinalize = await ServiceWorkerHelper.deactivateSession(
+        options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig
+      );
+      if (cancelableFinalize) {
+        self.cancel = cancelableFinalize.cancel;
+        event.waitUntil(cancelableFinalize.promise);
+      }
+    }
+  }
+
+  static async refreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload): Promise<void> {
+    Log.debug("[Service Worker] refreshSession");
+    /**
+     * if https -> getActiveClients -> check for the first focused
+     * unfortunately, not enough for safari, it always returns false for focused state of a client
+     * have to workaround it with messaging to the client.
+     * 
+     * if http, also have to workaround with messaging:
+     *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
+     */
+    if (options.isHttps) {
+      const windowClients: Client[] = await self.clients.matchAll(
+        { type: "window", includeUncontrolled: false }
+      );
+
+      if (options.isSafari) {
+        await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
+      } else {
+        const hasAnyActiveSessions: boolean = windowClients.some(w => (w as WindowClient).focused);
+        Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
+        await ServiceWorker.updateSessionBasedOnHasActive(event, hasAnyActiveSessions, options);
+      }
+      return;
+    } else {
+      const osClients = await ServiceWorker.getActiveClients();
+      await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(event, osClients, options);
+    }
+  }
+
+  static async checkIfAnyClientsFocusedAndUpdateSession(
+    event: ExtendableMessageEvent,
+    windowClients: Client[],
+    sessionInfo: DeactivateSessionPayload
+  ): Promise<void> {
+    const timestamp = new Date().getTime();
+    self.clientsStatus = {
+      timestamp,
+      sentRequestsCount: 0,
+      receivedResponsesCount: 0,
+      hasAnyActiveSessions: false,
+    };
+    const payload: PageVisibilityRequest = { timestamp };
+    windowClients.forEach(c => {
+      if (self.clientsStatus) {
+        // keeping track of number of sent requests mostly for debugging purposes
+        self.clientsStatus.sentRequestsCount++;
+      }
+      c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload });
+    });
+    const updateOnHasActive = async () => {
+      if (!self.clientsStatus) { return; }
+      if (self.clientsStatus.timestamp !== timestamp) { return; }
+
+      Log.debug("updateSessionBasedOnHasActive", self.clientsStatus);
+      await ServiceWorker.updateSessionBasedOnHasActive(event,
+        self.clientsStatus.hasAnyActiveSessions, sessionInfo);
+      self.clientsStatus = undefined;
+    }
+    const getClientStatusesCancelable = cancelableTimeout(updateOnHasActive, 0.5);
+    self.cancel = getClientStatusesCancelable.cancel;
+    event.waitUntil(getClientStatusesCancelable.promise);
+  }
+
+  static debounceRefreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload) {
+    Log.debug("[Service Worker] debounceRefreshSession", options);
+
+    if (self.cancel) {
+      self.cancel();
+      self.cancel = undefined;
     }
 
-    return activeClients;
+    const executeRefreshSession = async () => {
+      await ServiceWorker.refreshSession(event, options);
+    };
+
+    const cancelableRefreshSession = cancelableTimeout(executeRefreshSession, 1);
+    self.cancel = cancelableRefreshSession.cancel;
+    event.waitUntil(cancelableRefreshSession.promise);
   }
 
   /**
@@ -629,14 +792,39 @@ export class ServiceWorker {
     if (actionPreference)
       notificationClickHandlerAction = actionPreference;
 
-    const activeClients = await ServiceWorker.getActiveClients();
+    const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
+    const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    const appId = await Database.get<string>("Ids", "appId");
 
-    const launchUrl = await ServiceWorker.getNotificationUrlToOpen(notificationData);
-    const notificationOpensLink = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
+    let saveNotificationClickedPromise: Promise<void> | undefined;
+    const notificationClicked: NotificationClicked = {
+      notificationId: notificationData.id,
+      appId,
+      url: launchUrl,
+      timestamp: new Date().getTime(),
+    }
+    Log.info("NotificationClicked", notificationClicked);
+    saveNotificationClickedPromise = (async (notificationClicked) => {
+      try {
+        const existingSession = await Database.getCurrentSession();
+        if (existingSession && existingSession.status === SessionStatus.Active) {
+          return;
+        }
+        await Database.put("NotificationClicked", notificationClicked);
+
+        // upgrade existing session to be directly attributed to the notif
+        // if it results in re-focusing the site
+        if (existingSession) {
+          existingSession.notificationId = notificationClicked.notificationId;
+          await Database.upsertSession(existingSession);
+        }
+      } catch(e) {
+        Log.error("Failed to save clicked notification.", e);
+      }
+    })(notificationClicked);
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
-    const { appId } = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
     const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationData);
 
@@ -646,6 +834,7 @@ export class ServiceWorker {
      an identical new tab being created. With a special setting, any existing tab matching the origin will
      be focused instead of an identical new tab being created.
      */
+    const activeClients = await ServiceWorker.getActiveClients();
     let doNotOpenLink = false;
     for (const client of activeClients) {
       let clientUrl = client.url;
@@ -740,6 +929,9 @@ export class ServiceWorker {
       await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
       await ServiceWorker.openUrl(launchUrl);
     }
+    if (saveNotificationClickedPromise) {
+      await saveNotificationClickedPromise;
+    }
 
     return await convertedAPIRequests;
   }
@@ -791,6 +983,7 @@ export class ServiceWorker {
   }
 
   static onServiceWorkerInstalled(event) {
+    Log.info("Installing service worker...");
     // At this point, the old service worker is still in control
     event.waitUntil(self.skipWaiting());
   }

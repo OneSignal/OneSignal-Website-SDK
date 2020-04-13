@@ -1,3 +1,4 @@
+import "../../support/polyfills/polyfills";
 import OneSignal from "../../../src/OneSignal";
 import Random from "../tester/Random";
 import Database from "../../../src/services/Database";
@@ -26,9 +27,16 @@ import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
 import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
+import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
 
 // NodeJS.Global
 declare var global: any;
+
+const APP_ID = "34fcbe85-278d-4fd2-a4ec-0f80e95072c5";
+
+export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
+  OneSignal: ServiceWorker;
+}
 
 export enum HttpHttpsEnvironment {
   Http = "Http",
@@ -109,7 +117,7 @@ export class TestEnvironment {
   /**
    * Intercepts requests to our virtual DOM to return fake responses.
    */
-  static onVirtualDomResourceRequested(resource, callback: Function) {
+  static onVirtualDomResourceRequested(resource: any, callback: Function) {
     const pathname = resource.url.pathname;
     if (pathname.startsWith('https://test.node/scripts/')) {
       if (pathname.startsWith('https://test.node/scripts/delayed')) {
@@ -140,7 +148,7 @@ export class TestEnvironment {
     }
   }
 
-  static onVirtualDomDelayedResourceRequested(resource, callback: Function) {
+  static onVirtualDomDelayedResourceRequested(resource: any, callback: Function) {
     const pathname = resource.url.pathname;
     var delay = pathname.match(/\d+/) || 1000;
     // Simulate a delayed request
@@ -213,7 +221,7 @@ export class TestEnvironment {
           ProcessExternalResources: ['script']
         },
         resourceLoader: TestEnvironment.onVirtualDomResourceRequested,
-        done: (err, window) => {
+        done: (err: any, window: Window) => {
           if (err) {
             console.log(err);
             reject('Failed to create a JsDom mock browser environment:' + err);
@@ -247,7 +255,7 @@ export class TestEnvironment {
   }
 
   static addCustomEventPolyfill(windowDef: any) {
-    function CustomEvent(event, params) {
+    function CustomEvent(event: any, params: any) {
       params = params || { bubbles: false, cancelable: false, detail: undefined };
       const evt = document.createEvent( 'CustomEvent' );
       evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
@@ -349,13 +357,15 @@ export class TestEnvironment {
     };
 
     const fakeMergedConfig: AppConfig = TestEnvironment.getFakeMergedConfig(config);
+    OneSignal.config = fakeMergedConfig;
+    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
     OneSignal.context = new Context(fakeMergedConfig);
     OneSignal.config = fakeMergedConfig;
   }
 
-  static getFakeAppConfig(): AppConfig {
+  static getFakeAppConfig(appId: string = APP_ID): AppConfig {
     return {
-      appId: Random.getRandomUuid(),
+      appId,
       subdomain: undefined,
       httpUseOneSignalCom: false,
       cookieSyncEnabled: true,
@@ -373,15 +383,17 @@ export class TestEnvironment {
     };
   }
 
+  // TODO: make sure new appId param does not conflict with app_id in overrideServerConfig section
   static getFakeServerAppConfig(
     configIntegrationKind: ConfigIntegrationKind,
     isHttps: boolean = true,
-    overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null
+    overrideServerConfig: RecursivePartial<ServerAppConfig> | null = null,
+    appId: string = APP_ID
   ): ServerAppConfig {
     if (configIntegrationKind === ConfigIntegrationKind.Custom) {
       const customConfigHttps: ServerAppConfig = {
         success: true,
-        app_id: "3d9dbff9-3956-49b3-9521-b0d755b350e5",
+        app_id: appId,
         features: {
           restrict_origin: {
             enable: true
@@ -392,7 +404,9 @@ export class TestEnvironment {
           metrics: {
             enable: true,
             mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673"
-          }
+          },
+          web_on_focus_enabled: true,
+          session_threshold: 30
         },
         config: {
           autoResubscribe: true,
@@ -503,6 +517,21 @@ export class TestEnvironment {
           onesignal_vapid_public_key: "BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0",
           origin: "https://localhost:3001",
           subdomain: undefined,
+          outcomes: {
+            direct: {
+              enabled: true,
+            },
+            indirect: {
+              enabled: true,
+              notification_attribution: {
+                limit: 5,
+                minutes_since_displayed: 60
+              }
+            },
+            unattributed: {
+              enabled: true,
+            }
+          }
         },
         "generated_at": 1531177265
       };
@@ -535,7 +564,7 @@ export class TestEnvironment {
 
     const remoteConfigMockDefaults: ServerAppConfig = {
       success: true,
-      app_id: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      app_id: appId,
       features: {
         restrict_origin: {
           enable: false,
@@ -549,7 +578,9 @@ export class TestEnvironment {
         },
         email: {
           require_auth: true,
-        }
+        },
+        web_on_focus_enabled: true,
+        session_threshold: 30
       },
       config: {
         origin: "https://example.com",
@@ -678,7 +709,22 @@ export class TestEnvironment {
         vapid_public_key: 'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
         onesignal_vapid_public_key:
           'BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0',
-        safari_web_id: 'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d'
+        safari_web_id: 'web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d',
+        outcomes: {
+          direct: {
+            enabled: true,
+          },
+          indirect: {
+            enabled: true,
+            notification_attribution: {
+              minutes_since_displayed: 60,
+              limit: 5
+            }
+          },
+          unattributed: {
+            enabled: true,
+          }
+        }
       },
       generated_at: 1511912065
     };
@@ -689,9 +735,9 @@ export class TestEnvironment {
       );
   }
 
-  static getFakeAppUserConfig(): AppUserConfig {
+  static getFakeAppUserConfig(appId: string = APP_ID): AppUserConfig {
     return {
-      appId: '34fcbe85-278d-4fd2-a4ec-0f80e95072c5',
+      appId,
       autoRegister: true,
       autoResubscribe: true,
       path: '/fake-page',

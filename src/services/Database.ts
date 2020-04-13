@@ -3,15 +3,17 @@ import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
 import { AppState, ClickedNotifications } from "../models/AppState";
-import { Notification } from "../models/Notification";
+import { NotificationReceived, NotificationClicked } from "../models/Notification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { EmailProfile } from "../models/EmailProfile";
+import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
+import Log from "../libraries/Log";
 
 enum DatabaseEventName {
   SET
@@ -24,7 +26,8 @@ interface DatabaseResult {
   timestamp: any;
 }
 
-type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened";
+export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
+  "NotificationOpened" | "NotificationReceived" | "NotificationClicked";
 
 export default class Database {
 
@@ -89,6 +92,12 @@ export default class Database {
     }
   }
 
+  private shouldUsePostmam(): boolean {
+    return SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      OneSignalUtils.isUsingSubscriptionWorkaround() &&
+      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None;
+  }
+
   /**
    * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table (if key is not specified).
    * If on an iFrame or popup environment, retrieves from the correct IndexedDB database using cross-domain messaging.
@@ -97,22 +106,36 @@ export default class Database {
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-        OneSignalUtils.isUsingSubscriptionWorkaround() &&
-        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
+    if (this.shouldUsePostmam()) {
       return await new Promise<T>(async (resolve) => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
         }], (reply: any) => {
-          let result = reply.data[0];
+          const result = reply.data[0];
           resolve(result);
         });
       });
     } else {
       const result = await this.database.get(table, key);
-      let cleanResult = Database.applyDbResultFilter(table, key, result);
+      const cleanResult = Database.applyDbResultFilter(table, key, result);
       return cleanResult;
+    }
+  }
+
+  public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
+    if (this.shouldUsePostmam()) {
+      return await new Promise<T[]>(async (resolve) => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, {
+          table: table
+        }, (reply: any) => {
+          const result = reply.data;
+          resolve(result);
+        });
+      });
+    } else {
+      const result = await this.database.getAll<T>(table);
+      return result;
     }
   }
 
@@ -290,9 +313,13 @@ export default class Database {
     return subscription;
   }
 
+  async setDeviceId(deviceId: string | null): Promise<void> {
+    await this.put("Ids", { type: "userId", id: deviceId });
+  }
+
   async setSubscription(subscription: Subscription) {
     if (subscription.deviceId) {
-      await this.put("Ids", { type: "userId", id: subscription.deviceId });
+      await this.setDeviceId(subscription.deviceId);
     }
     if (typeof subscription.subscriptionToken !== "undefined") {
       // Allow null subscriptions to be set
@@ -334,6 +361,62 @@ export default class Database {
     return await this.get<boolean>("Options", "userConsent");
   }
 
+  private async getSession(sessionKey: string): Promise<Session | null> {
+    return await this.get<Session | null>("Sessions", sessionKey);
+  }
+
+  private async setSession(session: Session): Promise<void> {
+    await this.put("Sessions", session);
+  }
+
+  private async removeSession(sessionKey: string): Promise<void> {
+    await this.remove("Sessions", sessionKey);
+  }
+
+  async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
+    let allClickedNotifications: NotificationClicked[] = [];
+    try {
+      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+    } catch(e) {
+      Log.error("Database.getNotificationClickedByUrl", e);
+    }
+    const predicate = (notification: NotificationClicked) => notification.appId === appId;
+    return allClickedNotifications.find(predicate) || null;
+  }
+
+  async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
+    let allClickedNotifications: NotificationClicked[] = [];
+    try {
+      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+    } catch(e) {
+      Log.error("Database.getNotificationClickedByUrl", e);
+    }
+    const predicate = (notification: NotificationClicked) => {
+      if (notification.appId !== appId) {
+        return false;
+      }
+
+      return new URL(url).origin === new URL(notification.url).origin;
+    };
+    return allClickedNotifications.find(predicate) || null;
+  }
+
+  async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
+    return await this.get<NotificationClicked | null>("NotificationClicked", notificationId);
+  }
+
+  async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
+    return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
+  }
+
+  async removeNotificationClickedById(notificationId: string): Promise<void> {
+    await this.remove("NotificationClicked", notificationId);
+  }
+
+  async removeAllNotificationClicked(): Promise<void> {
+    await this.remove("NotificationClicked");
+  }
+
   /**
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
@@ -343,12 +426,26 @@ export default class Database {
       Database.singletonInstance.remove("Ids"),
       Database.singletonInstance.remove("NotificationOpened"),
       Database.singletonInstance.remove("Options"),
+      Database.singletonInstance.remove("NotificationReceived"),
+      Database.singletonInstance.remove("NotificationClicked"),
     ]);
   }
 
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
     return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
+  }
+
+  public static async getCurrentSession(): Promise<Session | null> {
+    return await Database.singletonInstance.getSession(ONESIGNAL_SESSION_KEY);
+  }
+
+  public static async upsertSession(session: Session): Promise<void> {
+    await Database.singletonInstance.setSession(session);
+  }
+
+  public static async cleanupCurrentSession(): Promise<void> {
+    await Database.singletonInstance.removeSession(ONESIGNAL_SESSION_KEY);
   }
 
   static async setEmailProfile(emailProfile: EmailProfile) {
@@ -403,8 +500,36 @@ export default class Database {
     return await Database.singletonInstance.getExternalUserId();
   }
 
+  static async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getLastNotificationClicked(appId);
+  }
+
+  static async removeNotificationClickedById(notificationId: string): Promise<void> {
+    return await Database.singletonInstance.removeNotificationClickedById(notificationId);
+  }
+
+  static async removeAllNotificationClicked(): Promise<void> {
+    return await Database.singletonInstance.removeAllNotificationClicked();
+  }
+
+  static async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedByUrl(url, appId);
+  }
+
+  static async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedById(notificationId);
+  }
+
+  static async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
+    return await Database.singletonInstance.getNotificationReceivedById(notificationId);
+  }
+
   static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
     await Database.singletonInstance.setExternalUserId(externalUserId);
+  }
+
+  static async setDeviceId(deviceId: string | null): Promise<void> {
+    await Database.singletonInstance.setDeviceId(deviceId);
   }
 
   static async remove(table: OneSignalDbTable, keypath?: string) {
@@ -418,5 +543,9 @@ export default class Database {
   static async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     return await Database.singletonInstance.get<T>(table, key);
   }
-    // END: Static mappings to instance methods
+
+  static async getAll<T>(table: OneSignalDbTable): Promise<Array<T>> {
+    return await Database.singletonInstance.getAll<T>(table);
+  }
+  // END: Static mappings to instance methods
 }

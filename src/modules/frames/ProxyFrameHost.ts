@@ -5,7 +5,11 @@ import Postmam from '../../Postmam';
 import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
 import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
+import { PageVisibilityRequest } from "../../models/Session";
 
+interface Reply {
+  data: any;
+}
 /**
  * Manager for an instance of the OneSignal proxy frame, for use from the main
  * page (not the iFrame itself).
@@ -104,6 +108,7 @@ export default class ProxyFrameHost implements Disposable {
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.REQUEST_HOST_URL, this.onRequestHostUrl.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, this.onServiceWorkerCommandRedirect.bind(this));
     this.messenger.on(OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT, this.onGetEventListenerCount.bind(this));
+    this.messenger.on(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, this.onAreYouVisibleRequest.bind(this));
     this.messenger.connect();
   }
 
@@ -122,7 +127,7 @@ export default class ProxyFrameHost implements Disposable {
       hostInitOptions: JSON.parse(JSON.stringify(OneSignal.config)), // Removes functions and unmessageable objects
       pageUrl: window.location.href,
       pageTitle: document.title,
-    }, reply => {
+    }, (reply: Reply) => {
       if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
         this.loadPromise.resolver();
         // This needs to be initialized so that isSubscribed() can be called to
@@ -168,7 +173,7 @@ export default class ProxyFrameHost implements Disposable {
 
   isSubscribed(): Promise<boolean> {
     return new Promise(resolve => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, reply => {
+      this.messenger.message(OneSignal.POSTMAM_COMMANDS.IS_SUBSCRIBED, null, (reply: Reply) => {
         resolve(reply.data);
       });
     });
@@ -176,27 +181,36 @@ export default class ProxyFrameHost implements Disposable {
 
   unsubscribeFromPush(): Promise<void> {
     return new Promise<void>(resolve => {
-      this.messenger.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null, _ => {
-        resolve();
-      });
+      this.messenger.message(
+        OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_PROXY_FRAME, null,
+        (_reply: Reply) => { resolve(); });
     });
   }
 
   getProxyServiceWorkerActiveState() {
     return new Promise<ServiceWorkerActiveState>((resolve, reject) => {
-      this.message(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, null, reply => {
+      this.message(OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE, null, (reply: Reply) => {
         resolve(reply.data);
       });
     });
   }
 
-  async runCommand<T>(command: string): Promise<T> {
-    const result = await new Promise<T>((resolve, reject) => {
-      this.message(command, null, reply => {
-        resolve(reply.data);
+  async runCommand<T>(command: string, payload: any = null): Promise<T> {
+    const result = await new Promise<T>((resolve, _reject) => {
+      this.message(command, payload, (reply: Reply) => {
+        resolve(reply.data as T);
       });
     });
     return result;
+  }
+
+  onAreYouVisibleRequest(event: {data: PageVisibilityRequest}) {
+    Log.debug("onAreYouVisibleRequest page", event)
+    const response = {
+      timestamp: event.data.timestamp,
+      focused: document.hasFocus(),
+    };
+    this.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_RESPONSE, response);
   }
 
   /**
