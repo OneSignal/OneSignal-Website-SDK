@@ -17,7 +17,7 @@ import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
 import Context from './models/Context';
-import { Notification, NotificationReceived, NotificationClicked } from "./models/Notification";
+import { Notification } from "./models/Notification";
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
@@ -839,6 +839,7 @@ export default class OneSignal {
           OneSignal.config!.appId, outcomeName, outcomeWeight);
         return;
       default:
+        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
         return;
     }
   }

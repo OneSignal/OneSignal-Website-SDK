@@ -152,6 +152,16 @@ export class Utils {
   }
 
   /**
+   * Gives back the last x number of parts providing a string with a delimiter.
+   * Example: lastParts("api.staging.onesignal.com", ".", 3) will return "staging.onesignal.com"
+   */
+  public static lastParts(subject: string, delimiter: string, maxParts: number): string {
+    const parts = subject.split(delimiter);
+    const skipParts = Math.max(parts.length - maxParts, 0);
+    return parts.slice(skipParts).join(delimiter);
+  }
+
+  /**
    * Checks if a version is number is greater than or equal (AKA at least) to a specific compare
    *   to version.
    * Limited to only checking for major and minor version values, patch versions are ignored

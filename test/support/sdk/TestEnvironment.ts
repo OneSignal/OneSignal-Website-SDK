@@ -405,7 +405,6 @@ export class TestEnvironment {
             enable: true,
             mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673"
           },
-          enableSessionDuration: true,
           web_on_focus_enabled: true,
           session_threshold: 30
         },
@@ -581,7 +580,6 @@ export class TestEnvironment {
         email: {
           require_auth: true,
         },
-        enableSessionDuration: true
         web_on_focus_enabled: true,
         session_threshold: 30
       },
