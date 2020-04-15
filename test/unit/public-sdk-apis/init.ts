@@ -82,7 +82,7 @@ test("email session should be updated on first page view", async t => {
   // Ensure this is true, that way email on_session gets run
   OneSignal.context.pageViewManager.setPageViewCount(1);
   t.true(OneSignal.context.pageViewManager.isFirstPageView());
-  
+
   await Database.setEmailProfile(testEmailProfile);
 
   const onSessionStub = sinonSandbox.stub(OneSignalApiShared, "updateUserSession").resolves();
@@ -99,7 +99,8 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
   const testConfig = {
     initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
+    stubSetTimeout: true
   };
   await TestEnvironment.initialize(testConfig);
 
@@ -130,7 +131,8 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
   const testConfig = {
     initOptions: { },
     httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
+    stubSetTimeout: true
   };
   await TestEnvironment.initialize(testConfig);
 
@@ -168,7 +170,7 @@ test("Test OneSignal.init, No app id or wrong format of app id", async t => {
 
   sinonSandbox.stub(document, "visibilityState").value("visible");
   sinonSandbox.stub(InitHelper, "errorIfInitAlreadyCalled").returns(false);
-  
+
   await t.throws(OneSignal.init({}), SdkInitError);
   await t.throws(OneSignal.init({ appId: "" }), SdkInitError);
   await t.throws(OneSignal.init({ appId: "wrong-format" }), SdkInitError);

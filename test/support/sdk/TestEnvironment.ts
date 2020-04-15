@@ -107,6 +107,7 @@ export interface TestEnvironmentConfig {
   integration?: ConfigIntegrationKind;
   userConfig?: AppUserConfig;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
+  stubSetTimeout?: boolean;
 }
 
 /**
@@ -240,6 +241,18 @@ export class TestEnvironment {
     (windowDef as any).TextEncoder = TextEncoder;
     (windowDef as any).TextDecoder = TextDecoder;
     (windowDef as any).isSecureContext = isSecureContext;
+
+    if (config.stubSetTimeout) {
+      (windowDef as any).setTimeout = async (callback: Function, timeDelay: number) => {
+        console.log("override setTimeout invoked");
+        const end = new Date().getTime() + timeDelay;
+        while (new Date().getTime() < end) {
+          // wait
+        }
+        await callback();
+      };
+    }
+
     TestEnvironment.addCustomEventPolyfill(windowDef);
 
     let topWindow = config.initializeAsIframe ? {
