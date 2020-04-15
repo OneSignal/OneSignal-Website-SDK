@@ -26,6 +26,7 @@ import {
   stubServiceWorkerInstallation, 
 } from "../../support/tester/sinonSandboxUtils";
 import { createSubscription } from "../../support/tester/utils";
+import { PromptsManager } from '../../../src/managers/PromptsManager';
 
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -70,13 +71,13 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      pushIdentifier: 'granted'
+      pushIdentifier: 'granted',
+      stubSetTimeout: true
     };
     const stubs = await beforeTest(testConfig, t);
-    
     simulateSlidedownAllowAfterShown();
     simulateNativeAllowAfterShown();
-  
+
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -115,7 +116,8 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
   const testConfig: TestEnvironmentConfig = {
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
+    stubSetTimeout: true
   };
 
   const stubs = await beforeTest(testConfig, t);
@@ -152,7 +154,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Granted,
+      permission: NotificationPermission.Granted
     };
 
     const stubs = await beforeTest(testConfig, t);
@@ -197,7 +199,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Default,
+      permission: NotificationPermission.Default
     };
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -230,7 +232,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       integration: ConfigIntegrationKind.Custom,
 
       pushIdentifier: 'granted',
-      permission: NotificationPermission.Granted,
+      permission: NotificationPermission.Granted
     };
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -448,13 +450,14 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      pushIdentifier: 'granted'
+      pushIdentifier: 'granted',
+      stubSetTimeout: true
     };
     const stubs = await beforeTest(testConfig, t);
 
     simulateSlidedownAllowAfterShown();
     simulateNativeAllowAfterShown();
-  
+
     const initializePromise = new Promise((resolve) => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
@@ -493,7 +496,8 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
   const testConfig: TestEnvironmentConfig = {
     httpOrHttps: HttpHttpsEnvironment.Http,
     integration: ConfigIntegrationKind.Custom,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
+    stubSetTimeout: true
   };
 
   const stubs = await beforeTest(testConfig, t);
@@ -531,7 +535,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Granted,
+      permission: NotificationPermission.Granted
     };
 
     const stubs = await beforeTest(testConfig, t);
@@ -562,7 +566,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Default,
+      permission: NotificationPermission.Default
     };
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -594,7 +598,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => n
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
       pushIdentifier: 'granted',
-      permission: NotificationPermission.Granted,
+      permission: NotificationPermission.Granted
     };
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
