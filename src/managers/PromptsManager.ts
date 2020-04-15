@@ -76,35 +76,42 @@ export class PromptsManager {
     return true;
   }
 
-  public async internalShowAutoPrompt(autoPromptOptions: AutoPromptOptions = { force: false }): Promise<void> {
-    OneSignalUtils.logMethodCall("internalShowAutoPrompt", autoPromptOptions);
+  public async internalShowAutoPrompt(showSlidedownForceEnable: boolean,
+    autoPromptOptions: AutoPromptOptions = { force: false }): Promise<void> {
+      OneSignalUtils.logMethodCall("internalShowAutoPrompt", autoPromptOptions);
 
-    if (!OneSignal.config || !OneSignal.config.userConfig || !OneSignal.config.userConfig.promptOptions) {
-      Log.error("OneSignal config was not initialized correctly. Aborting.");
-      return;
-    }
+      if (!OneSignal.config || !OneSignal.config.userConfig || !OneSignal.config.userConfig.promptOptions) {
+        Log.error("OneSignal config was not initialized correctly. Aborting.");
+        return;
+      }
 
-    // user config prompt options
-    const userPromptOptions = OneSignal.config.userConfig.promptOptions;
-    if (!userPromptOptions.native.enabled && !userPromptOptions.slidedown.enabled) {
-      Log.error("No suitable prompt type enabled.");
-      return;
-    }
+      // user config prompt options
+      const userPromptOptions = OneSignal.config.userConfig.promptOptions;
 
-    const nativePromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Native);
-    const nativePromptPageViewCondition = this.isPageViewConditionMet(nativePromptOptions);
+      if (!userPromptOptions.native.enabled && !userPromptOptions.slidedown.enabled) {
+        Log.error("No suitable prompt type enabled.");
+        return;
+      }
 
-    const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Slidedown);
-    const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
+      const nativePromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Native);
+      const nativePromptPageViewCondition = this.isPageViewConditionMet(nativePromptOptions);
+      const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Slidedown);
+      const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
 
-    // show native prompt
-    if (userPromptOptions.native && nativePromptPageViewCondition) {
-      this.showDelayedPrompt(DelayedPromptType.Native, userPromptOptions.native.timeDelay);
-    }
-    // show slidedown prompt
-    if (userPromptOptions.slidedown && slidedownPromptPageViewCondition) {
-      this.showDelayedPrompt(DelayedPromptType.Slidedown, userPromptOptions.slidedown.timeDelay, autoPromptOptions);
-    }
+      const conditionMetWithNativeOptions = nativePromptOptions.enabled && nativePromptPageViewCondition;
+      const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && slidedownPromptPageViewCondition;
+      const forceSlidedownWithNativeOptions = showSlidedownForceEnable && conditionMetWithNativeOptions;
+
+      // show native prompt
+      if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
+        this.showDelayedPrompt(DelayedPromptType.Native, nativePromptOptions.timeDelay || 0);
+      }
+
+      // show slidedown prompt
+      if (conditionMetWithSlidedownOptions || forceSlidedownWithNativeOptions) {
+        const { timeDelay } = conditionMetWithSlidedownOptions ? slidedownPromptOptions : nativePromptOptions;
+        this.showDelayedPrompt(DelayedPromptType.Slidedown, timeDelay || 0, autoPromptOptions);
+      }
   }
 
   public async showDelayedPrompt(type: DelayedPromptType,
