@@ -129,12 +129,8 @@ export default class InitHelper {
           requiresUserInteraction
         );
 
-      if (showSlidedownForceEnable) {
-        OneSignal.config.userConfig.promptOptions.slidedown.enabled = true;
-        await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
-      } else {
-        await OneSignal.context.promptsManager.internalShowAutoPrompt();
-      }
+      await OneSignal.context.promptsManager.internalShowAutoPrompt(showSlidedownForceEnable);
+
     }
     OneSignal._sessionInitAlreadyRunning = false;
     await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
