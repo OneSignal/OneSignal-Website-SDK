@@ -17,7 +17,7 @@ import {
   UpsertSessionPayload, DeactivateSessionPayload,
   PageVisibilityRequest, PageVisibilityResponse, SessionStatus
 } from "../models/Session";
-import Log from "../libraries/Log";
+import Log from "../libraries/sw/Log";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../context/shared/utils/Utils";
@@ -216,6 +216,15 @@ export class ServiceWorker {
         self.clientsStatus.receivedResponsesCount++;
         if (payload.focused) {
           self.clientsStatus.hasAnyActiveSessions = true;
+        }
+      }
+    );
+    ServiceWorker.workerMessenger.on(
+      WorkerMessengerCommand.SetLogging, async (payload: {shouldLog: boolean}) => {
+        if (payload.shouldLog) {
+          self.shouldLog = true;
+        } else {
+          self.shouldLog = undefined;
         }
       }
     );

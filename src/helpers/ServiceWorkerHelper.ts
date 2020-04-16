@@ -1,5 +1,5 @@
 import { OneSignalApiSW } from "../OneSignalApiSW";
-import Log from "../libraries/Log";
+import Log from "../libraries/sw/Log";
 import Path from "../models/Path";
 import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../models/Session";
 import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
