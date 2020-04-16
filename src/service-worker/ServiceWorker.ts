@@ -380,8 +380,8 @@ export class ServiceWorker {
       // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
       if (client.frameType && client.frameType === 'nested') {
         // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-        if (!Utils.contains(client.url, SdkEnvironment.getOneSignalApiUrl().host) &&
-            !Utils.contains(client.url, '.os.tc')) {
+        if (!Utils.contains(client.url, '.os.tc') &&
+            !Utils.contains(client.url, '.onesignal.com')) {
           continue;
         }
         // Indicates this window client is an HTTP subdomain iFrame
