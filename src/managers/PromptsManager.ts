@@ -125,10 +125,30 @@ export class PromptsManager {
 
     switch(type){
       case DelayedPromptType.Native:
-        setTimeout(async () => { this.internalShowNativePrompt(); }, timeDelaySeconds*1000);
+        await new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            try {
+              await this.internalShowNativePrompt();
+              resolve();
+            } catch(e) {
+              reject(e);
+            }
+            }, timeDelaySeconds*1000
+          );
+        });
         break;
       case DelayedPromptType.Slidedown:
-        setTimeout(async () => { this.internalShowSlidedownPrompt(autoPromptOptions); }, timeDelaySeconds*1000);
+        await new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            try {
+              await this.internalShowSlidedownPrompt(autoPromptOptions);
+              resolve();
+            } catch(e) {
+              reject(e);
+            }
+            }, timeDelaySeconds*1000
+          );
+        });
         break;
       default:
         Log.error("Invalid Delayed Prompt type");
