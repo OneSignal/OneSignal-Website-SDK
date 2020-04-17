@@ -1,9 +1,10 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { ConfigIntegrationKind, AppUserConfigCustomLinkOptions } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import ConfigManager from '../../../src/managers/ConfigManager';
 import { AppUserConfig, AppConfig, ServerAppConfig } from '../../../src/models/AppConfig';
+import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
@@ -85,7 +86,7 @@ test('should initialize custom link config for typical setup', t => {
   if (fakeMergedConfig.userConfig.promptOptions) {
     t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
   }
-})
+});
 
 test('should initialize custom link config for custom code setup with correct user config', t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
@@ -96,7 +97,7 @@ test('should initialize custom link config for custom code setup with correct us
     fakeServerConfig
   );
 
-  const promptOptions = fakeUserConfig.promptOptions
+  const promptOptions = fakeUserConfig.promptOptions;
   if (!promptOptions) {
     throw new Error('promptOptions cannot be null');
   }
@@ -113,7 +114,7 @@ test('should initialize custom link config for custom code setup with incorrect 
     if (fakeUserConfig.promptOptions) {
       fakeUserConfig.promptOptions.customlink = {
         enabled: true,
-      }
+      };
     }
     const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
 
