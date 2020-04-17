@@ -5,7 +5,7 @@ import { addCssClass, contains, hasCssClass, nothing, once, removeCssClass } fro
 import ActiveAnimatedElement from './ActiveAnimatedElement';
 import Log from '../libraries/Log';
 import Bell from './Bell';
-import { BellSize } from "../models/AppConfig";
+import { BellSize } from "../models/Prompts";
 
 
 export default class Launcher extends ActiveAnimatedElement {

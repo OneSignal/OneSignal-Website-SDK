@@ -1,7 +1,7 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import Popover from '../../../src/popover/Popover';
-import { SlidedownPermissionMessageOptions } from '../../../src/models/AppConfig';
+import { SlidedownPermissionMessageOptions } from '../../../src/models/Prompts';
 import "../../support/polyfills/polyfills";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { setUserAgent } from '../../support/tester/browser';

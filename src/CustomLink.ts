@@ -1,5 +1,5 @@
 import { hasCssClass, addCssClass, removeCssClass } from "./utils";
-import { AppUserConfigCustomLinkOptions } from "./models/AppConfig";
+import { AppUserConfigCustomLinkOptions } from "./models/Prompts";
 import { ResourceLoadState } from "./services/DynamicResourceLoader";
 import Log from "./libraries/Log";
 import { RegisterOptions } from './helpers/InitHelper';
@@ -164,7 +164,7 @@ export class CustomLink {
 
   private static setStyleClass(element: Element, config: AppUserConfigCustomLinkOptions): void {
     if (!config || !config.style) {
-      return
+      return;
     }
     const newClassName = config.style;
 
