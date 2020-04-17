@@ -2,7 +2,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { AppUserConfigPromptOptions, SlidedownPermissionMessageOptions } from '../models/AppConfig';
+import { AppUserConfigPromptOptions, SlidedownPermissionMessageOptions } from '../models/Prompts';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';

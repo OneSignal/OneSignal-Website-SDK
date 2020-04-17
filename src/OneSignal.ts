@@ -15,7 +15,7 @@ import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { AppConfig, AppUserConfig, AppUserConfigNotifyButton } from './models/AppConfig';
+import { AppConfig, AppUserConfig } from './models/AppConfig';
 import Context from './models/Context';
 import { Notification } from "./models/Notification";
 import { NotificationActionButton } from './models/NotificationActionButton';
@@ -56,6 +56,7 @@ import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
+import { DelayedPromptType, AppUserConfigNotifyButton } from './models/Prompts';
 
 export default class OneSignal {
   /**
@@ -73,7 +74,8 @@ export default class OneSignal {
   }
 
   /**
-   * Sets the default title to display on notifications. Will default to the page's document.title if you don't call this.
+   * Sets the default title to display on notifications. Will default to the page's document.title
+   *  if you don't call this.
    * @remarks Either DB value defaultTitle or pageTitle is used when showing a notification title.
    * @PublicApi
    */
@@ -516,7 +518,7 @@ export default class OneSignal {
     }
     return [];
   }
-  
+
   /**
    * @PublicApi
    */
@@ -593,7 +595,8 @@ export default class OneSignal {
   }
 
   /**
-   * Returns a promise that resolves to true if all required conditions for push messaging are met; otherwise resolves to false.
+   * Returns a promise that resolves to true if all required conditions
+   * for push messaging are met; otherwise resolves to false.
    * @param callback A callback function that will be called when the current subscription status has been obtained.
    * @PublicApi
    */

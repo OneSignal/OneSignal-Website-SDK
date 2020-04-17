@@ -15,20 +15,15 @@ import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Po
 import {
   SlidedownPermissionMessageOptions,
   DelayedPromptOptions,
-  AppUserConfigPromptOptions } from '../models/AppConfig';
+  AppUserConfigPromptOptions,
+  DelayedPromptType} from '../models/Prompts';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
-import { PageViewManager } from './PageViewManager';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 
 export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
-}
-
-enum DelayedPromptType {
-  Native = "native",
-  Slidedown = "slidedown"
 }
 
 export class PromptsManager {
