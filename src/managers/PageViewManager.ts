@@ -74,14 +74,15 @@ export class PageViewManager {
       return;
     }
 
-    const newCount = this.getPageViewCount() + 1;
-    const newLocalCount = this.getLocalPageViewCount() + 1;
+    const newCountSingleTab = this.getPageViewCount() + 1;
+    const newCountAcrossTabs = this.getLocalPageViewCount() + 1;
 
-    this.setPageViewCount(newCount);
-    this.setLocalPageViewCount(newLocalCount);
-
-    Log.debug(`Incremented page view count to ${newCount}.`);
+    this.setPageViewCount(newCountSingleTab);
+    this.setLocalPageViewCount(newCountAcrossTabs);
     this.incrementedPageViewCount = true;
+
+    Log.debug(`Incremented page view count: newCountSingleTab: ${newCountSingleTab},
+      newCountAccrossTabs: ${newCountAcrossTabs}.`);
   }
 
   simulatePageNavigationOrRefresh() {
