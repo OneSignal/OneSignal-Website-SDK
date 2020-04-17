@@ -20,6 +20,7 @@ import {
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
+import { wrapSetTimeoutInPromise } from '../helpers/page/WrapSetTimeoutInPromise';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -116,41 +117,26 @@ export class PromptsManager {
   public async internalShowDelayedPrompt(type: DelayedPromptType,
       timeDelaySeconds: number,
       options?: AutoPromptOptions
-    ) {
+    ): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowDelayedPrompt");
     if (typeof timeDelaySeconds !== "number") {
       Log.error("internalShowDelayedPrompt: timeDelay not a number");
       return;
     }
 
-    const awaitSetTimeout = async (callback: Function) => {
-      await new Promise((resolve, reject) => {
-        setTimeout(async () => {
-          try {
-            callback();
-            resolve();
-          } catch(e) {
-            reject(e);
-          }
-          }, timeDelaySeconds*1000
-        );
-      });
-    };
-
     switch(type){
       case DelayedPromptType.Native:
         if (timeDelaySeconds === 0) {
-          await awaitSetTimeout(this.internalShowNativePrompt);
+          await this.internalShowNativePrompt();
           break;
         }
-        setTimeout(async () => { await this.internalShowNativePrompt(); }, timeDelaySeconds*1000);
-        break;
+        return wrapSetTimeoutInPromise(this.internalShowNativePrompt.bind(this), timeDelaySeconds);
       case DelayedPromptType.Slidedown:
         if (timeDelaySeconds === 0) {
-          await awaitSetTimeout(this.internalShowSlidedownPrompt.bind(this, options));
+          await this.internalShowSlidedownPrompt(options);
           break;
         }
-        setTimeout(async () => { await this.internalShowSlidedownPrompt(options); }, timeDelaySeconds*1000);
-        break;
+        return wrapSetTimeoutInPromise(this.internalShowSlidedownPrompt.bind(this, options), timeDelaySeconds);
       default:
         Log.error("Invalid Delayed Prompt type");
     }

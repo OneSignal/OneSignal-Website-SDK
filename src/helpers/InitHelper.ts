@@ -129,7 +129,7 @@ export default class InitHelper {
           requiresUserInteraction
         );
 
-      await OneSignal.context.promptsManager.internalShowAutoPrompt({ forceSlidedownOverNative, force: false });
+      await OneSignal.context.promptsManager.internalShowAutoPrompt({ forceSlidedownOverNative });
 
     }
     OneSignal._sessionInitAlreadyRunning = false;
