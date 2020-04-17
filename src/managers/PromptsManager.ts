@@ -22,7 +22,8 @@ import { PageViewManager } from './PageViewManager';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 
 export interface AutoPromptOptions {
-  force: boolean;
+  force?: boolean;
+  forceSlidedownOverNative?: boolean;
 }
 
 enum DelayedPromptType {
@@ -76,14 +77,15 @@ export class PromptsManager {
     return true;
   }
 
-  public async internalShowAutoPrompt(showSlidedownForceEnable: boolean,
-    autoPromptOptions: AutoPromptOptions = { force: false }): Promise<void> {
-      OneSignalUtils.logMethodCall("internalShowAutoPrompt", autoPromptOptions);
+  public async internalShowAutoPrompt(options: AutoPromptOptions = { force: false, forceSlidedownOverNative: false }
+    ): Promise<void> {
+      OneSignalUtils.logMethodCall("internalShowAutoPrompt", options);
 
       if (!OneSignal.config || !OneSignal.config.userConfig || !OneSignal.config.userConfig.promptOptions) {
         Log.error("OneSignal config was not initialized correctly. Aborting.");
         return;
       }
+      const { forceSlidedownOverNative } = options;
 
       // user config prompt options
       const userPromptOptions = OneSignal.config.userConfig.promptOptions;
@@ -94,61 +96,65 @@ export class PromptsManager {
       }
 
       const nativePromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Native);
-      const nativePromptPageViewCondition = this.isPageViewConditionMet(nativePromptOptions);
-      const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Slidedown);
-      const slidedownPromptPageViewCondition = this.isPageViewConditionMet(slidedownPromptOptions);
+      const isPageViewConditionMetForNative: boolean = this.isPageViewConditionMet(nativePromptOptions);
 
-      const conditionMetWithNativeOptions = nativePromptOptions.enabled && nativePromptPageViewCondition;
-      const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && slidedownPromptPageViewCondition;
-      const forceSlidedownWithNativeOptions = showSlidedownForceEnable && conditionMetWithNativeOptions;
+      const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Slidedown);
+      const isPageViewConditionMetForSlidedown: boolean = this.isPageViewConditionMet(slidedownPromptOptions);
+
+      const conditionMetWithNativeOptions = nativePromptOptions.enabled && isPageViewConditionMetForNative;
+      const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
+      const forceSlidedownWithNativeOptions = forceSlidedownOverNative && conditionMetWithNativeOptions;
 
       // show native prompt
       if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
-        this.showDelayedPrompt(DelayedPromptType.Native, nativePromptOptions.timeDelay || 0);
+        this.internalShowDelayedPrompt(DelayedPromptType.Native, nativePromptOptions.timeDelay || 0);
+        return;
       }
 
       // show slidedown prompt
       if (conditionMetWithSlidedownOptions || forceSlidedownWithNativeOptions) {
         const { timeDelay } = conditionMetWithSlidedownOptions ? slidedownPromptOptions : nativePromptOptions;
-        this.showDelayedPrompt(DelayedPromptType.Slidedown, timeDelay || 0, autoPromptOptions);
+        this.internalShowDelayedPrompt(DelayedPromptType.Slidedown, timeDelay || 0, options);
       }
   }
 
-  public async showDelayedPrompt(type: DelayedPromptType,
+  public async internalShowDelayedPrompt(type: DelayedPromptType,
       timeDelaySeconds: number,
-      autoPromptOptions?: AutoPromptOptions
+      options?: AutoPromptOptions
     ) {
     if (typeof timeDelaySeconds !== "number") {
-      Log.error("showDelayedPrompt: timeDelay not a number");
+      Log.error("internalShowDelayedPrompt: timeDelay not a number");
       return;
     }
 
+    const awaitSetTimeout = async (callback: Function) => {
+      await new Promise((resolve, reject) => {
+        setTimeout(async () => {
+          try {
+            callback();
+            resolve();
+          } catch(e) {
+            reject(e);
+          }
+          }, timeDelaySeconds*1000
+        );
+      });
+    };
+
     switch(type){
       case DelayedPromptType.Native:
-        await new Promise((resolve, reject) => {
-          setTimeout(async () => {
-            try {
-              await this.internalShowNativePrompt();
-              resolve();
-            } catch(e) {
-              reject(e);
-            }
-            }, timeDelaySeconds*1000
-          );
-        });
+        if (timeDelaySeconds === 0) {
+          await awaitSetTimeout(this.internalShowNativePrompt);
+          break;
+        }
+        setTimeout(async () => { await this.internalShowNativePrompt(); }, timeDelaySeconds*1000);
         break;
       case DelayedPromptType.Slidedown:
-        await new Promise((resolve, reject) => {
-          setTimeout(async () => {
-            try {
-              await this.internalShowSlidedownPrompt(autoPromptOptions);
-              resolve();
-            } catch(e) {
-              reject(e);
-            }
-            }, timeDelaySeconds*1000
-          );
-        });
+        if (timeDelaySeconds === 0) {
+          await awaitSetTimeout(this.internalShowSlidedownPrompt.bind(this, options));
+          break;
+        }
+        setTimeout(async () => { await this.internalShowSlidedownPrompt(options); }, timeDelaySeconds*1000);
         break;
       default:
         Log.error("Invalid Delayed Prompt type");
@@ -230,7 +236,9 @@ export class PromptsManager {
 
   private isPageViewConditionMet(options?: DelayedPromptOptions): boolean {
     if (!options || typeof options.pageViews === "undefined") { return false; }
+
     if (!options.autoPrompt || !options.enabled) { return false; }
+
     const localPageViews = this.context.pageViewManager.getLocalPageViewCount();
     return localPageViews >= options.pageViews;
   }

@@ -123,13 +123,13 @@ export default class InitHelper {
      const { environmentInfo } = OneSignal;
      const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
 
-      const showSlidedownForceEnable =
+      const forceSlidedownOverNative =
         (
           (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
           requiresUserInteraction
         );
 
-      await OneSignal.context.promptsManager.internalShowAutoPrompt(showSlidedownForceEnable);
+      await OneSignal.context.promptsManager.internalShowAutoPrompt({ forceSlidedownOverNative, force: false });
 
     }
     OneSignal._sessionInitAlreadyRunning = false;

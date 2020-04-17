@@ -363,6 +363,15 @@ export default class OneSignal {
   }
 
   /**
+   * Shows Delayed Prompt
+   * @PublicApi
+   */
+  public static async showDelayedPrompt(type: DelayedPromptType, timeDelaySeconds: number) {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowDelayedPrompt(type, timeDelaySeconds);
+  }
+
+  /**
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */

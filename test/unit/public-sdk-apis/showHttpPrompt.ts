@@ -21,7 +21,7 @@ test("Test showHttpPrompt with no params", async t => {
 
   // Ensure both public and private calls work
   await OneSignal.showHttpPrompt();
-  await OneSignal.context.promptsManager.internalShowAutoPrompt(false);
+  await OneSignal.context.promptsManager.internalShowAutoPrompt();
   // Pass if we did not throw
   t.pass();
 });
