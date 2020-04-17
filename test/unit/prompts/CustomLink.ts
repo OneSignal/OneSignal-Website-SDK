@@ -1,14 +1,14 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { AppUserConfigCustomLinkOptions } from '../../../src/models/AppConfig';
+import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
 import CustomLink from '../../../src/CustomLink';
 import OneSignalUtils from '../../../src/utils/OneSignalUtils';
 import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/utils';
 import MainHelper from "../../../src/helpers/MainHelper";
 
-let sandbox: SinonSandbox = sinon.sandbox.create();;
+let sandbox: SinonSandbox = sinon.sandbox.create();
 let config: AppUserConfigCustomLinkOptions;
 
 const stateSubscribedClass = "state-subscribed";
@@ -265,7 +265,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never subscribed.', async t => {
   TestEnvironment.overrideEnvironmentInfo({requiresUserInteraction: false});
-  
+
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'internalIsOptedOut').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
@@ -290,7 +290,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never s
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. http. never subscribed.', async t => {
-  TestEnvironment.overrideEnvironmentInfo({requiresUserInteraction: false});
+  TestEnvironment.overrideEnvironmentInfo({ requiresUserInteraction: false });
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'setSubscription').resolves();
   const registerSpy = sandbox.stub(OneSignal, 'registerForPushNotifications').resolves();

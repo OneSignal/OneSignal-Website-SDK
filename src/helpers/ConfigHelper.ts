@@ -1,6 +1,6 @@
 import {
-  AppUserConfig, AppConfig, AppUserConfigPromptOptions, ServerAppConfigPrompt,
-  ConfigIntegrationKind, ServerAppConfig, AppUserConfigCustomLinkOptions } from "../models/AppConfig";
+  AppUserConfig, AppConfig, ServerAppConfigPrompt,
+  ConfigIntegrationKind, ServerAppConfig } from "../models/AppConfig";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { SdkInitError, SdkInitErrorKind } from "../errors/SdkInitError";
 import SdkEnvironment from "../managers/SdkEnvironment";
@@ -8,6 +8,7 @@ import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
 import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../config";
+import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -222,7 +223,7 @@ export class ConfigHelper {
         !!promptOptionsConfig.slidedown.enabled;
         promptOptionsConfig.slidedown.pageViews = Utils.getValueOrDefault(promptOptionsConfig.slidedown.pageViews,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews);
-        promptOptionsConfig.slidedown.timeDelay = Utils.getValueOrDefault(promptOptionsConfig.slidedown.timeDelay, 
+        promptOptionsConfig.slidedown.timeDelay = Utils.getValueOrDefault(promptOptionsConfig.slidedown.timeDelay,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay);
     } else {
       promptOptionsConfig.slidedown = MainHelper.getSlidedownPermissionMessageOptions(promptOptionsConfig);

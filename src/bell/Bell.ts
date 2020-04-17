@@ -1,5 +1,5 @@
 import bowser from 'bowser';
-import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from "../models/AppConfig";
+import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from "../models/Prompts";
 import { NotificationPermission } from "../models/NotificationPermission";
 import OneSignalEvent from '../Event';
 import MainHelper from '../helpers/MainHelper';
