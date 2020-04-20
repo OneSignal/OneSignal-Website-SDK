@@ -21,6 +21,7 @@ import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { wrapSetTimeoutInPromise } from '../helpers/page/WrapSetTimeoutInPromise';
+import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -122,6 +123,11 @@ export class PromptsManager {
     if (typeof timeDelaySeconds !== "number") {
       Log.error("internalShowDelayedPrompt: timeDelay not a number");
       return;
+    }
+
+    const { requiresUserInteraction } = EnvironmentInfoHelper.getEnvironmentInfo();
+    if (requiresUserInteraction && type === DelayedPromptType.Native) {
+      type = DelayedPromptType.Slidedown;
     }
 
     switch(type){
