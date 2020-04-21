@@ -1,4 +1,4 @@
-import Log from "../../libraries/Log";
+import Log from "../../libraries/sw/Log";
 
 export interface CancelableTimeoutPromise {
   cancel: () => void;

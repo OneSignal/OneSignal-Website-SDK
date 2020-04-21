@@ -10,6 +10,7 @@ export interface ClientStatus {
 }
 
 export interface OSServiceWorkerFields { 
+  shouldLog?: boolean;
   debounceSessionTimerId?: number;
   finalizeSessionTimerId?: number;
   clientsStatus?: ClientStatus;

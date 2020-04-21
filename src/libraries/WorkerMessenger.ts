@@ -27,6 +27,7 @@ export enum WorkerMessengerCommand {
   SessionDeactivate = 'os.session.deactivate',
   AreYouVisible = "os.page_focused_request",
   AreYouVisibleResponse = "os.page_focused_response",
+  SetLogging = "os.set_sw_logging",
 }
 
 export interface WorkerMessengerMessage {
