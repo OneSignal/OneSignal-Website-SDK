@@ -365,19 +365,6 @@ export default class OneSignal {
   }
 
   /**
-   * Shows delayed prompt
-   * @PublicApi
-   * @param type - type of prompt: "native" | "slidedown"
-   * @param timeDelaySeconds - number of seconds to delay the prompt by
-   * @Example
-   *  OneSignal.push(function() { OneSignal.showDelayedPrompt("native", 20); });
-   */
-  public static async showDelayedPrompt(type: DelayedPromptType, timeDelaySeconds: number): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    return await OneSignal.context.promptsManager.internalShowDelayedPrompt(type, timeDelaySeconds);
-  }
-
-  /**
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */
