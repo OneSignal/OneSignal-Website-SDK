@@ -214,7 +214,8 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
       t.deepEqual(JSON.parse(requestBody), {
         app_id: appConfig.appId,
         opened: true,
-        player_id: playerId
+        player_id: playerId,
+        device_type: 5
       });
       return { success: true };
     });

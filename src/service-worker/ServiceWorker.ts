@@ -13,7 +13,7 @@ import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { 
+import {
   UpsertSessionPayload, DeactivateSessionPayload,
   PageVisibilityRequest, PageVisibilityResponse, SessionStatus
 } from "../models/Session";
@@ -27,6 +27,7 @@ import {
 import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import { NotificationReceived, NotificationClicked } from "../models/Notification";
 import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
+import { DeviceRecord } from '../models/DeviceRecord';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 declare var Notification: Notification;
@@ -804,6 +805,7 @@ export class ServiceWorker {
     const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await Database.get<string>("Ids", "appId");
+    const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
     let saveNotificationClickedPromise: Promise<void> | undefined;
     const notificationClicked: NotificationClicked = {
@@ -835,7 +837,7 @@ export class ServiceWorker {
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
     const { deviceId } = await Database.getSubscription();
-    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationData);
+    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationData, deviceType);
 
     /*
      Check if we can focus on an existing tab instead of opening a new url.
@@ -953,7 +955,8 @@ export class ServiceWorker {
   static async sendConvertedAPIRequests(
     appId: string | undefined | null,
     deviceId: string | undefined,
-    notificationData: any): Promise<void> {
+    notificationData: any,
+    deviceType: number): Promise<void> {
 
     if (!notificationData.id) {
       console.error("No notification id, skipping networks calls to report open!");
@@ -966,7 +969,8 @@ export class ServiceWorker {
       onesignalRestPromise = OneSignalApiBase.put(`notifications/${notificationData.id}`, {
         app_id: appId,
         player_id: deviceId,
-        opened: true
+        opened: true,
+        device_type: deviceType
       });
     }
     else
