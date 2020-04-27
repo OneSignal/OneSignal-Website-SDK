@@ -65,7 +65,18 @@ export class ConfigHelper {
 
   public static doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
     try {
-      return location.origin === new URL(configOrigin).origin;
+      const configUrl = new URL(configOrigin);
+      const configOriginIncludes3W = configUrl.origin.includes("www.");
+      const configOriginWithout3W = configOriginIncludes3W ? `${configUrl.protocol}//${configUrl.host.split("www.")[1]}`
+                                    : null;
+      const locationOriginWithStricterProtocol = `https://${location.host}`;
+
+      const matches = location.origin === configUrl.origin;
+      const matchesWithStricterProtocol = locationOriginWithStricterProtocol === configUrl.origin ||
+                                          locationOriginWithStricterProtocol === configOriginWithout3W;
+      const matchesWithout3W = location.origin === configOriginWithout3W;
+
+      return matches || matchesWithStricterProtocol || matchesWithout3W;
     } catch (e) {
       return false;
     }
