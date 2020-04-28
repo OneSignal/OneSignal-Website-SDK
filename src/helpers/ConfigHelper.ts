@@ -62,21 +62,25 @@ export class ConfigHelper {
       }
     }
   }
-
+  /**
+   * Checks if current origin matches:
+   *  - config origin exactly
+   *  - variants:
+   *    - config origin without 'www.'
+   *    - config origin with stricter protocol (we should allow http sites to initialize with https but not viceversa)
+   *    - both
+   */
   public static doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
     try {
       const configUrl = new URL(configOrigin);
-      const configOriginIncludes3W = configUrl.origin.includes("www.");
-      const configOriginWithout3W = configOriginIncludes3W ? `${configUrl.protocol}//${configUrl.host.split("www.")[1]}`
-                                    : null;
-      const locationOriginWithStricterProtocol = `https://${location.host}`;
 
-      const matches = location.origin === configUrl.origin;
-      const matchesWithStricterProtocol = locationOriginWithStricterProtocol === configUrl.origin ||
-                                          locationOriginWithStricterProtocol === configOriginWithout3W;
-      const matchesWithout3W = location.origin === configOriginWithout3W;
+      if (location.origin === configUrl.origin) {
+        return true;
+      }
 
-      return matches || matchesWithStricterProtocol || matchesWithout3W;
+      const configURLWithout3W = new URL(configUrl.origin.split("www.").join(''));
+      const configOriginWithHttps = `https://${configURLWithout3W.host}`;
+      return location.origin === configOriginWithHttps;
     } catch (e) {
       return false;
     }
@@ -196,7 +200,7 @@ export class ConfigHelper {
     wholeUserConfig: AppUserConfig,
     isUsingSubscriptionWorkaround: boolean = false,
   ): AppUserConfigPromptOptions | undefined {
-  
+
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
     if (promptOptions && promptOptions.customlink) {
       customlinkUser = promptOptions.customlink;
