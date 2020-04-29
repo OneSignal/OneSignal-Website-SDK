@@ -67,20 +67,20 @@ export class ConfigHelper {
    *  - config origin exactly
    *  - variants:
    *    - config origin without 'www.'
-   *    - config origin with stricter protocol (we should allow http sites to initialize with https but not viceversa)
+   *    - config origin with weaker protocol (we should allow http sites to initialize with https but not viceversa)
    *    - both
    */
   public static doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
     try {
-      const configUrl = new URL(configOrigin);
+      const configURLWithout3W = new URL(configOrigin.replace("www.", ""));
+      const locationURLWithout3W = new URL(location.origin.replace("www.", ""));
 
-      if (location.origin === configUrl.origin) {
+      if (locationURLWithout3W.origin === configURLWithout3W.origin) {
         return true;
       }
 
-      const configURLWithout3W = new URL(configUrl.origin.split("www.").join(''));
       const configOriginWithHttps = `https://${configURLWithout3W.host}`;
-      return location.origin === configOriginWithHttps;
+      return locationURLWithout3W.origin === configOriginWithHttps;
     } catch (e) {
       return false;
     }

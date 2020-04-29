@@ -9,6 +9,7 @@ import Random from '../../support/tester/Random';
 import { InitTestHelper } from '../../support/tester/utils';
 import sinon, { SinonSandbox } from 'sinon';
 import { ConfigHelper } from '../../../src/helpers/ConfigHelper';
+import { resetOneSignalInit } from '../helpers/sharedHelpers';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const initTestHelper = new InitTestHelper(sinonSandbox);
@@ -21,10 +22,7 @@ test.beforeEach(async () => {
 
 test.afterEach(function (_t: TestContext) {
   sinonSandbox.restore();
-
-  OneSignal._initCalled = false;
-  OneSignal.__initAlreadyCalled = false;
-  OneSignal._sessionInitAlreadyRunning = false;
+  resetOneSignalInit();
 });
 
 test('can customize initialization options', async t => {
@@ -191,7 +189,7 @@ test('should match origins', async t => {
   t.false(checkRestrictedOriginSpy.threw());
 });
 
-test('should match origins even with www. variant', async t => {
+test('should match origins with www. variant in config', async t => {
   const checkRestrictedOriginSpy = sinonSandbox.spy(ConfigHelper, "checkRestrictedOrigin");
   const doesOriginMatchSpy = sinonSandbox.spy(ConfigHelper, "doesCurrentOriginMatchConfigOrigin");
   sinonSandbox.stub(OneSignal, "delayedInit");
@@ -206,7 +204,23 @@ test('should match origins even with www. variant', async t => {
   t.false(checkRestrictedOriginSpy.threw());
 });
 
-test('should match origins with both www. and https variants', async t => {
+test('should match origins with www. variant on page', async t => {
+  const checkRestrictedOriginSpy = sinonSandbox.spy(ConfigHelper, "checkRestrictedOrigin");
+  const doesOriginMatchSpy = sinonSandbox.spy(ConfigHelper, "doesCurrentOriginMatchConfigOrigin");
+  sinonSandbox.stub(OneSignal, "delayedInit");
+  try{
+    // allow https for http-configured sites
+    await initOneSignalOnUrlWithConfigOrigin("https://www.example.com", "https://example.com");
+  } catch (e) {
+    // pass
+  }
+
+  t.true(doesOriginMatchSpy.calledOnce);
+  t.true(doesOriginMatchSpy.returnValues[0]);
+  t.false(checkRestrictedOriginSpy.threw());
+});
+
+test('should match origins with both www. and https variants in config', async t => {
   const checkRestrictedOriginSpy = sinonSandbox.spy(ConfigHelper, "checkRestrictedOrigin");
   const doesOriginMatchSpy = sinonSandbox.spy(ConfigHelper, "doesCurrentOriginMatchConfigOrigin");
   sinonSandbox.stub(OneSignal, "delayedInit");
@@ -222,7 +236,7 @@ test('should match origins with both www. and https variants', async t => {
   t.false(checkRestrictedOriginSpy.threw());
 });
 
-test('should throw if current page origin has less strict protocol', async t => {
+test('should throw if current page origin has weaker protocol', async t => {
   const checkRestrictedOriginSpy = sinonSandbox.spy(ConfigHelper, "checkRestrictedOrigin");
   const doesOriginMatchSpy = sinonSandbox.spy(ConfigHelper, "doesCurrentOriginMatchConfigOrigin");
   sinonSandbox.stub(OneSignal, "delayedInit");
@@ -243,7 +257,7 @@ test('should throw if origins do not match', async t => {
   const doesOriginMatchSpy = sinonSandbox.spy(ConfigHelper, "doesCurrentOriginMatchConfigOrigin");
   sinonSandbox.stub(OneSignal, "delayedInit");
   try{
-    await initOneSignalOnUrlWithConfigOrigin("https://www.example.com", "https://example.com");
+    await initOneSignalOnUrlWithConfigOrigin("https://site.com", "https://example.com");
   } catch (e) {
     // pass
   }
@@ -265,12 +279,13 @@ async function initOneSignalOnUrlWithConfigOrigin(url: string, configOrigin: str
   const serverConfig = TestEnvironment.getFakeServerAppConfig(
     ConfigIntegrationKind.TypicalSite,
     true,
-    { features: {
+    {
+      features: {
         restrict_origin: { enable: true }
       },
       config: { origin: configOrigin }
     },
-      appId
+    appId
   );
 
   await TestEnvironment.initialize(testConfig);

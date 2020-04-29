@@ -16,6 +16,7 @@ import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
   mockWebPushAnalytics, InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
+import { resetOneSignalInit } from '../helpers/sharedHelpers';
 
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -28,10 +29,7 @@ test.beforeEach(function () {
 
 test.afterEach(function (_t: TestContext) {
   sinonSandbox.restore();
-
-  OneSignal._initCalled = false;
-  OneSignal.__initAlreadyCalled = false;
-  OneSignal._sessionInitAlreadyRunning = false;
+  resetOneSignalInit();
 });
 
 test("correct degree of persistNotification setting should be stored", async t => {
