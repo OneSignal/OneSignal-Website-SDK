@@ -410,3 +410,9 @@ export function getPlatformNotificationIcon(notificationIcons: NotificationIcons
     notificationIcons.safari ||
     'default-icon';
 }
+
+export function strip3WFromOrigin(origin: string): string {
+  const regex = /(https*:\/\/)(www\.)(.*)/;
+  const matchArray = origin.match(regex);
+  return matchArray ? matchArray[1]+matchArray[3] : origin;
+}

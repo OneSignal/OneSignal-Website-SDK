@@ -9,6 +9,7 @@ import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
 import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
+import { strip3WFromOrigin } from '../utils';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -72,13 +73,14 @@ export class ConfigHelper {
    */
   public static doesCurrentOriginMatchConfigOrigin(configOrigin: string): boolean {
     try {
-      const configURLWithout3W = new URL(configOrigin.replace("www.", ""));
-      const locationURLWithout3W = new URL(location.origin.replace("www.", ""));
+      const configURLWithout3W = new URL(strip3WFromOrigin(configOrigin));
+      const locationURLWithout3W = new URL(strip3WFromOrigin(location.origin));
 
       if (locationURLWithout3W.origin === configURLWithout3W.origin) {
         return true;
       }
-
+      // In addition we allow the HTTPS variant of the site if the OneSignal config contains http:// for the site URL.
+      // However for security not the other way around.
       const configOriginWithHttps = `https://${configURLWithout3W.host}`;
       return locationURLWithout3W.origin === configOriginWithHttps;
     } catch (e) {
