@@ -32,6 +32,7 @@ export default class Slidedown {
   }
 
   async create(shouldUpdate?: boolean) {
+    // TO DO: dynamically change btns depending on if its first or repeat display of slidedown (subscribe vs update)
     if (this.notificationIcons === null) {
       const icons = await MainHelper.getNotificationIcons();
 

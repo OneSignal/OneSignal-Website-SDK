@@ -4,12 +4,13 @@ import { addDomElement } from '../utils';
 export default class TaggingContainer {
     private html: string;
 
-    constructor(remoteTagCategories: Array<TagCategory>, existingPlayerTags: Object){
-        // TO DO: tagging class and functions
-        const checkedTagCategories = remoteTagCategories.map(elem => {
-            elem.checked = Object.keys(existingPlayerTags).indexOf(elem.tag) !== -1 ? true : false;
-            return elem;
-        });
+    constructor(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: Object){
+        const checkedTagCategories = !!existingPlayerTags ?
+            remoteTagCategories.map(elem => {
+                elem.checked = Object.keys(existingPlayerTags).indexOf(elem.tag) !== -1 ? true : false;
+                return elem;
+            })
+            : remoteTagCategories;
         let innerHtml;
         for (let i=0; i<checkedTagCategories.length; i++) {
             if (i===0) {
