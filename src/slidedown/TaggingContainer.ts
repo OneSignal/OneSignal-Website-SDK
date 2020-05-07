@@ -28,6 +28,8 @@ export default class TaggingContainer {
 
     public mount(): void {
         addDomElement('#slidedown-body', 'beforeend', this.html);
+
+        // TO DO: remove loading state styling
     }
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
