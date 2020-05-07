@@ -22,10 +22,15 @@ import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
+import TagCategory from '../models/TagCategory';
+import TagManager from './TagManager';
+import TaggingContainer from '../slidedown/TaggingContainer';
 
 export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
+  shouldUpdate?: boolean;
+  tagCategories?: Array<TagCategory>;
 }
 
 export class PromptsManager {
@@ -163,6 +168,7 @@ export class PromptsManager {
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
+    const { tagCategories, shouldUpdate } = options;
 
     if (this.isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a slidedown.");
@@ -190,6 +196,19 @@ export class PromptsManager {
     this.installEventHooksForSlidedown();
 
     OneSignal.slidedown = new Slidedown(slideDownOptions);
+    if (tagCategories && tagCategories.length > 0) {
+      // show slidedown with tagging container
+      await OneSignal.slidedown.create(shouldUpdate);
+      let existingTags;
+
+      if (shouldUpdate) {
+        // updating
+        existingTags = await TagManager.tagFetchWithRetries(1000, 5);
+      }
+      new TaggingContainer(tagCategories, existingTags).mount();
+    } else {
+      await OneSignal.slidedown.create();
+    }
     await OneSignal.slidedown.create();
     Log.debug('Showing Slidedown(Slidedown).');
   }
