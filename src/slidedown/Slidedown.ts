@@ -53,8 +53,10 @@ export default class Slidedown {
       // Insert the dialog
       addDomElement(this.container, 'beforeend',
           `<div id="onesignal-slidedown-dialog" class="onesignal-slidedown-dialog">${dialogHtml}</div>`);
+
       // Animate it in depending on environment
       addCssClass(this.container, bowser.mobile ? 'slide-up' : 'slide-down');
+
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
       this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));

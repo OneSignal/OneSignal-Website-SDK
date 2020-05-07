@@ -11,19 +11,21 @@ export default class TaggingContainer {
                 return elem;
             })
             : remoteTagCategories;
-        let innerHtml;
-        for (let i=0; i<checkedTagCategories.length; i++) {
-            if (i===0) {
-                innerHtml = `<div class="tagging-container-col">`;
-            }
-            if (i===5) {
-                innerHtml += `</div><div class="tagging-container-col">`;
-            }
-            innerHtml+=this.getCategoryLabelHtml(checkedTagCategories[i]);
-        }
-        innerHtml+="</div>";
+        const firstColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
+        const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
+        let innerHtml = `<div class="tagging-container-col">`;
 
-        this.html = `<div class="tagging-container">${innerHtml}</div>`;
+        for (const elem of firstColumnArr) {
+            innerHtml+=this.getCategoryLabelHtml(elem);
+        }
+
+        innerHtml+=`</div><div class="tagging-container-col">`;
+
+        for (const elem of secondColumnArr) {
+            innerHtml+=this.getCategoryLabelHtml(elem);
+        }
+
+        this.html = `<div class="tagging-container">${innerHtml}</div></div>`;
     }
 
     public mount(): void {
