@@ -1,5 +1,7 @@
 import TagCategory from '../models/TagCategory';
 import { addDomElement } from '../utils';
+import Log from '../libraries/Log';
+import TagManager from '../managers/TagManager';
 
 export default class TaggingContainer {
     private html: string;
@@ -30,7 +32,9 @@ export default class TaggingContainer {
 
     public mount(): void {
         addDomElement('#slidedown-body', 'beforeend', this.html);
-
+        if (this.taggingContainer) {
+            this.taggingContainer.addEventListener('click', this.toggleCheckedTag);
+        }
         // TO DO: remove loading state styling
     }
 
@@ -40,5 +44,16 @@ export default class TaggingContainer {
         return `<label class="onesignal-category-label">${label}
         <input type="checkbox" value="${tagCategory.tag}" ${isChecked}>
         <span class="onesignal-checkmark"></span></label>`;
+    }
+
+    private get taggingContainer(){
+        return document.querySelector("#slidedown-body > div.tagging-container");
+    }
+
+    private toggleCheckedTag(e: Event) {
+        if (e.srcElement && e.srcElement.getAttribute("type") === "checkbox") {
+            const tag = e.srcElement.getAttribute("value");
+            OneSignal.context.tagManager.toggleCheckedTag(tag);
+        }
     }
 }

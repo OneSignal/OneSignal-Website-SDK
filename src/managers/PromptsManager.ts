@@ -23,7 +23,6 @@ import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import TagCategory from '../models/TagCategory';
-import TagManager from './TagManager';
 import TaggingContainer from '../slidedown/TaggingContainer';
 
 export interface AutoPromptOptions {
@@ -203,7 +202,7 @@ export class PromptsManager {
 
       if (shouldUpdate) {
         // updating
-        existingTags = await TagManager.tagFetchWithRetries(1000, 5);
+        existingTags = await OneSignal.context.tagManager.tagFetchWithRetries(1000, 5);
       }
       new TaggingContainer(tagCategories, existingTags).mount();
     } else {
