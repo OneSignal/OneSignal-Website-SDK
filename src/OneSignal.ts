@@ -55,7 +55,7 @@ import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfo
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
-import { OutcomeAttributionType } from "./models/Outcomes";
+import { OutcomeAttributionType, SentUniqueOutcome } from "./models/Outcomes";
 import { DelayedPromptType, AppUserConfigNotifyButton } from './models/Prompts';
 
 export default class OneSignal {
@@ -801,6 +801,7 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
+    logMethodCall("sendOutcome");
     const outcomesConfig = OneSignal.config!.userConfig.outcomes;
     if (!outcomesConfig) {
       Log.debug("Outcomes feature not supported by main application yet.");
@@ -840,6 +841,64 @@ export default class OneSignal {
       case OutcomeAttributionType.Unattributed:
         await OneSignal.context.updateManager.sendOutcomeUnattributed(
           OneSignal.config!.appId, outcomeName, outcomeWeight);
+        return;
+      default:
+        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
+        return;
+    }
+  }
+
+  public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
+    logMethodCall("sendUniqueOutcome");
+    const outcomesConfig = OneSignal.config!.userConfig.outcomes;
+    if (!outcomesConfig) {
+      Log.debug("Outcomes feature not supported by main application yet.");
+      return;
+    }
+    if (!outcomeName) {
+      Log.error("Outcome name is required");
+      return;
+    }
+
+    await awaitOneSignalInitAndSupported();
+
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    if (!isSubscribed) {
+      Log.warn("Reporting outcomes is supported only for subscribed users.");
+      return;
+    }
+
+    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
+    const { notificationIds } = outcomeAttribution;
+
+    const sentUniqueOutcomes = await Database.getAllAsObject<SentUniqueOutcome>(
+      "SentUniqueOutcome", "outcomeName", "notificationIds");
+    Log.debug(`Found total of ${Object.keys(sentUniqueOutcomes).length} sent unique outcomes`);
+
+    const uniqueNotificationIds = notificationIds.filter(id => (!(<any>sentUniqueOutcomes)[outcomeName] ||
+          (<any>sentUniqueOutcomes)[outcomeName] &&
+          (<any>sentUniqueOutcomes)[outcomeName].indexOf(id) === -1));
+
+    if (uniqueNotificationIds.length === 0) {
+      Log.debug(`Failed to send unique outcome. Unique outcome previously sent or out of attribution window`);
+      return;
+    }
+
+    switch (outcomeAttribution.type) {
+      case OutcomeAttributionType.Direct:
+        await OneSignal.context.updateManager.sendOutcomeDirect(
+          OneSignal.config!.appId, uniqueNotificationIds, outcomeName);
+        await OutcomesHelper.saveUniqueOutcome(outcomeName, uniqueNotificationIds);
+        return;
+      case OutcomeAttributionType.Indirect:
+        await OneSignal.context.updateManager.sendOutcomeInfluenced(
+          OneSignal.config!.appId, uniqueNotificationIds, outcomeName);
+        await OutcomesHelper.saveUniqueOutcome(outcomeName, uniqueNotificationIds);
+        return;
+      case OutcomeAttributionType.Unattributed:
+        await OneSignal.context.updateManager.sendOutcomeUnattributed(
+          OneSignal.config!.appId, outcomeName);
+        await OutcomesHelper.saveUniqueOutcome(outcomeName, []);
         return;
       default:
         Log.warn("You are on a free plan. Please upgrade to use this functionality.");

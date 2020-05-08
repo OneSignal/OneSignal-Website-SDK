@@ -39,3 +39,8 @@ export interface OutcomeAttribution {
   type: OutcomeAttributionType;
   notificationIds: string[];
 }
+
+export interface SentUniqueOutcome {
+  outcomeName: string;
+  notificationIds: Array<String>;
+}

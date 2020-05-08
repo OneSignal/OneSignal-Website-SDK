@@ -3,7 +3,7 @@ import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 import Utils from "../context/shared/utils/Utils";
 
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 export default class IndexedDb {
 
@@ -111,6 +111,9 @@ export default class IndexedDb {
       db.createObjectStore("Sessions", { keyPath: "sessionKey" });
       db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
       db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
+    }
+    if (event.oldVersion < 3) {
+      db.createObjectStore("SentUniqueOutcome", { keyPath: "outcomeName" });
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
