@@ -868,37 +868,38 @@ export default class OneSignal {
       return;
     }
 
+    if (await OutcomesHelper.wasSentDuringCurrentSession(outcomeName)) {
+      Log.warn(`Unique outcome '${outcomeName}' was previously sent during this session.`);
+      return;
+    }
+
     const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
     const { notificationIds } = outcomeAttribution;
 
-    const sentUniqueOutcomes = await Database.getAllAsObject<SentUniqueOutcome>(
-      "SentUniqueOutcome", "outcomeName", "notificationIds");
-    Log.debug(`Found total of ${Object.keys(sentUniqueOutcomes).length} sent unique outcomes`);
+    const previouslyAttributedNotifArr = await OutcomesHelper.getAttributedNotifsByOutcomeName(outcomeName);
+    const newNotifsToAttributeWithOutcome = notificationIds.filter(id => (!previouslyAttributedNotifArr ||
+          previouslyAttributedNotifArr && previouslyAttributedNotifArr.indexOf(id) === -1));
 
-    const uniqueNotificationIds = notificationIds.filter(id => (!(<any>sentUniqueOutcomes)[outcomeName] ||
-          (<any>sentUniqueOutcomes)[outcomeName] &&
-          (<any>sentUniqueOutcomes)[outcomeName].indexOf(id) === -1));
-
-    if (uniqueNotificationIds.length === 0) {
-      Log.debug(`Failed to send unique outcome. Unique outcome previously sent or out of attribution window`);
-      return;
+    if (newNotifsToAttributeWithOutcome.length === 0 &&
+      outcomeAttribution.type !== OutcomeAttributionType.Unattributed) {
+        return;
     }
 
     switch (outcomeAttribution.type) {
       case OutcomeAttributionType.Direct:
         await OneSignal.context.updateManager.sendOutcomeDirect(
-          OneSignal.config!.appId, uniqueNotificationIds, outcomeName);
-        await OutcomesHelper.saveUniqueOutcome(outcomeName, uniqueNotificationIds);
+          OneSignal.config!.appId, newNotifsToAttributeWithOutcome, outcomeName);
+        await OutcomesHelper.saveSentUniqueOutcome(outcomeName, newNotifsToAttributeWithOutcome);
         return;
       case OutcomeAttributionType.Indirect:
         await OneSignal.context.updateManager.sendOutcomeInfluenced(
-          OneSignal.config!.appId, uniqueNotificationIds, outcomeName);
-        await OutcomesHelper.saveUniqueOutcome(outcomeName, uniqueNotificationIds);
+          OneSignal.config!.appId, newNotifsToAttributeWithOutcome, outcomeName);
+        await OutcomesHelper.saveSentUniqueOutcome(outcomeName, newNotifsToAttributeWithOutcome);
         return;
       case OutcomeAttributionType.Unattributed:
         await OneSignal.context.updateManager.sendOutcomeUnattributed(
           OneSignal.config!.appId, outcomeName);
-        await OutcomesHelper.saveUniqueOutcome(outcomeName, []);
+        await OutcomesHelper.saveSentUniqueOutcome(outcomeName, []);
         return;
       default:
         Log.warn("You are on a free plan. Please upgrade to use this functionality.");
