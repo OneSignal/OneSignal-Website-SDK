@@ -14,6 +14,7 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import Log from "../libraries/Log";
+import { SentUniqueOutcome } from '../models/Outcomes';
 
 enum DatabaseEventName {
   SET
@@ -417,6 +418,15 @@ export default class Database {
     await this.remove("NotificationClicked");
   }
 
+  async resetSentUniqueOutcomes(): Promise<void> {
+    this.getAll<SentUniqueOutcome>("SentUniqueOutcome").then(arr => {
+      arr.forEach(elem => {
+        elem.sentDuringCurrentSession = false;
+        Database.put("SentUniqueOutcome", elem);
+      });
+    });
+  }
+
   /**
    * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
@@ -428,6 +438,7 @@ export default class Database {
       Database.singletonInstance.remove("Options"),
       Database.singletonInstance.remove("NotificationReceived"),
       Database.singletonInstance.remove("NotificationClicked"),
+      Database.singletonInstance.remove("SentUniqueOutcome")
     ]);
   }
 
@@ -510,6 +521,10 @@ export default class Database {
 
   static async removeAllNotificationClicked(): Promise<void> {
     return await Database.singletonInstance.removeAllNotificationClicked();
+  }
+
+  static async resetSentUniqueOutcomes(): Promise<void> {
+    return await Database.singletonInstance.resetSentUniqueOutcomes();
   }
 
   static async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {

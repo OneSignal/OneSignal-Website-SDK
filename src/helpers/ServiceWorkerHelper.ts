@@ -220,7 +220,10 @@ export default class ServiceWorkerHelper {
       );
     }
 
-    await Promise.all([Database.cleanupCurrentSession(), Database.removeAllNotificationClicked()]);
+    await Promise.all([Database.cleanupCurrentSession(),
+      Database.removeAllNotificationClicked(),
+      Database.resetSentUniqueOutcomes()
+    ]);
     Log.debug(
       "Finalize session finished",
       `started: ${new Date(session.startTimestamp)}`
