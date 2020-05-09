@@ -1,4 +1,4 @@
-import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType } from '../../models/Outcomes';
+import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType, SentUniqueOutcome } from '../../models/Outcomes';
 import { NotificationClicked, NotificationReceived } from '../../models/Notification';
 import Database from "../../services/Database";
 import Log from "../../libraries/Log";
@@ -23,8 +23,8 @@ export default class OutcomesHelper {
       if (clickedNotifications.length > 0) {
         return {
           type: OutcomeAttributionType.Direct,
-          notificationIds: [clickedNotifications[0].notificationId],
-        }
+          notificationIds: [clickedNotifications[0].notificationId]
+        };
       }
     }
 
@@ -73,8 +73,8 @@ export default class OutcomesHelper {
     if (outcomesConfig.unattributed && outcomesConfig.unattributed.enabled) {
       return {
         type: OutcomeAttributionType.Unattributed,
-        notificationIds: [],
-      }
+        notificationIds: []
+      };
     }
 
     return {
@@ -82,8 +82,32 @@ export default class OutcomesHelper {
       notificationIds: [],
     };
   }
+  /**
+   * Returns array of notification ids outcome is currently attributed to
+   * @param  {string} outcomeName
+   * @returns Promise
+   */
+  static async getAttributedNotifsByOutcomeName(outcomeName: string): Promise<string[] | undefined> {
+    const sentOutcomes = await Database.getAll<SentUniqueOutcome>("SentUniqueOutcome");
+    if (!sentOutcomes.length) {
+      return [];
+    }
 
-  static async saveUniqueOutcome(outcomeName: string, notificationIds: string[]): Promise<void>{
-    await Database.put("SentUniqueOutcome", { outcomeName, notificationIds });
+    for (const elem of sentOutcomes) {
+      if (elem.outcomeName === outcomeName) {
+        return elem.notificationIds;
+      }
+    }
+
+    return undefined;
+  }
+
+  static async saveSentUniqueOutcome(outcomeName: string, notificationIds: string[]): Promise<void>{
+    await Database.put("SentUniqueOutcome", { outcomeName, notificationIds, sentDuringCurrentSession: true });
+  }
+
+  static async wasSentDuringCurrentSession(outcomeName: string) {
+    const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
+    return sentOutcome && sentOutcome.sentDuringCurrentSession;
   }
 }

@@ -547,27 +547,5 @@ export default class Database {
   static async getAll<T>(table: OneSignalDbTable): Promise<Array<T>> {
     return await Database.singletonInstance.getAll<T>(table);
   }
-
-  /**
-   * Returns database elements with two values as a single object where one value of an element is the key
-   * and the other value is the value in the new object
-   * @param  {OneSignalDbTable} table - table name
-   * @param  {string} key - key of objectArray elements to use as return object key
-   * @param  {string} valueKey - key of value in objectArray
-   * @returns Promise
-   * Example:
-   *  - converts [{a:w, b:x}, {a:y, b:z}] to {w:x, y:z} where 'a' is key and 'b' is valueKey
-   */
-  static async getAllAsObject<T>(table: OneSignalDbTable, key: string, valueKey: string): Promise<Object> {
-    interface ReturnObject {
-      [key:string]: any;
-    }
-    const elemArr = await Database.singletonInstance.getAll<T>(table);
-    const returnObject: ReturnObject = {};
-    elemArr.forEach(elem => {
-      returnObject[(<any>elem)[key]] = (<any>elem)[valueKey];
-    });
-    return returnObject;
-  }
   // END: Static mappings to instance methods
 }
