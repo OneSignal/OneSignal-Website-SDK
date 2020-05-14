@@ -1,8 +1,8 @@
 $slidedown-transition-duration: 400ms;
-$border-radius: 2px;
+$border-radius: 0.5em;
 
 #onesignal-slidedown-container {
-  font-size: 14px;
+  font-size: 16px;
   position: fixed;
   z-index: 2258594000;
   left: 0;
@@ -72,7 +72,7 @@ $border-radius: 2px;
 
     .tagging-container {
       display: flex;
-      margin-bottom: 2em;
+      margin: 2em 0;
     }
 
     .tagging-container-col {
@@ -80,18 +80,27 @@ $border-radius: 2px;
       padding-left: 1.286em;
     }
 
+    .tagging-container-col:nth-of-type(2n) {
+      padding-left: 1.5em;
+    }
+
     .onesignal-category-label {
       display: block;
       position: relative;
       padding-left: 2.5em;
-      margin-bottom: 1.75em;
+      margin-bottom: 1.5em;
       color: #051B2C;
       cursor: pointer;
-      font-size: 1.143em;
+      font-size: 1em;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      height: 1.5em;
+      line-height: 1.5em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .onesignal-category-label input {
@@ -106,21 +115,21 @@ $border-radius: 2px;
       position: absolute;
       top: 0;
       left: 0;
-      height: 25px;
-      width: 25px;
-      border-radius: 5px;
+      height: 1.5em;
+      width: 1.5em;
+      border-radius: .25em;
       cursor: pointer;
-      background-color: #eee;
+      background-color: #ebedef;
     }
 
     /* On mouse-over, add a grey background color */
     .onesignal-category-label:hover input ~ .onesignal-checkmark {
-      background-color: #ccc;
+      background-color: #dde1e4;
     }
 
     /* When the checkbox is checked, add a blue background */
     .onesignal-category-label input:checked ~ .onesignal-checkmark {
-      background-color: #1165f1;
+      background-color: #4285f4;
     }
 
     /* Create the checkmark/indicator (hidden when not checked) */
@@ -137,10 +146,10 @@ $border-radius: 2px;
 
     /* Style the checkmark/indicator */
     .onesignal-category-label .onesignal-checkmark:after {
-      left: 9px;
-      top: 5px;
-      width: 5px;
-      height: 10px;
+      left: 0.5em;
+      top: 0.25em;
+      width: 0.33em;
+      height: 0.66em;
       border: solid white;
       border-width: 0 3px 3px 0;
       -webkit-transform: rotate(45deg);
@@ -191,12 +200,12 @@ $border-radius: 2px;
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
-    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22) !important;
+    box-shadow: 0 1px 6px rgba(5,27,44,.06), 0 2px 32px rgba(5,27,44,.16) !important;
     background: white !important;
-    padding: 1.286em;
+    padding: 1em 1.5em;
     border-bottom-left-radius: $border-radius;
     border-bottom-right-radius: $border-radius;
-    font-family: 'Roboto', 'Noto', Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Seoe UI Symbol";
 
     .slidedown-body {
       box-sizing: border-box;
@@ -227,10 +236,9 @@ $border-radius: 2px;
 
     .slidedown-body-message {
       box-sizing: border-box;
-      padding: 0 0.2em 0 1.286em;
+      padding: 0 0 0 1em;
       float: left;
       width: calc(100% - 80px);
-      font-size: 1.143em;
       line-height: 1.45em;
       -o-user-select: none;
       user-select: none;
@@ -263,23 +271,21 @@ $border-radius: 2px;
     }
 
     .slidedown-button {
-      padding: 0.714em 2em;
+      padding: 0.75em 1.25em;
       font-size: 1em;
-      text-transform: uppercase;
-      border-radius: 2px;
+      border-radius: .25em;
       font-weight: 400;
 
       &.primary {
-        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
-        background: #1165f1 !important;
+        background: #4285f4;
         color: white !important;
 
         &:hover {
-          background: darken(#1165f1, 7.5%);
+          background: darken(#4285f4, 7.5%);
         }
 
         &:active {
-          background: darken(#1165f1, 15%);
+          background: darken(#4285f4, 15%);
         }
       }
 
@@ -290,14 +296,14 @@ $border-radius: 2px;
           We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
           Some sites set their own !important tag for text and we don't want that to be able to override ours.
          */
-        color: #1165f1 !important;
+        color: #4285f4 !important;
 
         &:hover {
-          color: darken(#1165f1, 12.5%);
+          color: darken(#4285f4, 12.5%);
         }
 
         &:active {
-          color: darken(#1165f1, 30.5%);
+          color: darken(#4285f4, 30.5%);
         }
       }
     }
