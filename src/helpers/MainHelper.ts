@@ -19,7 +19,7 @@ export default class MainHelper {
   public static async getCurrentNotificationType(): Promise<SubscriptionStateKind> {
     const currentPermission: NotificationPermission =
       await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.context.appConfig.safariWebId);
-    
+
     if (currentPermission === NotificationPermission.Default) {
       return SubscriptionStateKind.Default;
     }
