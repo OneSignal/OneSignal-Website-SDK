@@ -1,3 +1,5 @@
+import TagCategory from './TagCategory';
+
 export enum DelayedPromptType {
   Native = "native",
   Slidedown = "slidedown"
@@ -18,8 +20,8 @@ export interface SlidedownPermissionMessageOptions extends DelayedPromptOptions 
   actionMessage: string;
   acceptButtonText: string;
   cancelButtonText: string;
-  positiveUpdateButtonText: string;
-  negativeUpdateButtonText: string;
+  positiveUpdateButtonText?: string;
+  negativeUpdateButtonText?: string;
 }
 
 export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
@@ -115,4 +117,10 @@ export interface AppUserConfigNotifyButton {
   theme?: string;
   showLauncherAfter?: number;
   showBadgeAfter?: number;
+}
+
+export interface Categories {
+  positiveButton?: string;
+  negativeButton?: string;
+  tags: Array<TagCategory>;
 }

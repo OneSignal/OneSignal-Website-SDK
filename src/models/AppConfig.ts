@@ -1,5 +1,10 @@
 import { OutcomesConfig, OutcomesServerConfig } from "./Outcomes";
-import { AppUserConfigPromptOptions, CustomLinkStyle, CustomLinkSize, AppUserConfigNotifyButton } from './Prompts';
+import {
+  AppUserConfigPromptOptions,
+  CustomLinkStyle,
+  CustomLinkSize,
+  AppUserConfigNotifyButton,
+  Categories } from './Prompts';
 
 export interface AppConfig {
   /**
@@ -173,6 +178,7 @@ export interface ServerAppConfigPrompt {
     cancelButton: string;
     actionMessage: string;
     customizeTextEnabled: boolean;
+    categories?: Categories;
   };
   fullscreen: {
     title: string;
