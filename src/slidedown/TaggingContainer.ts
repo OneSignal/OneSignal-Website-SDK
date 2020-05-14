@@ -54,7 +54,6 @@ export default class TaggingContainer {
         if (e.srcElement && e.srcElement.getAttribute("type") === "checkbox") {
             const tagKey = e.srcElement.getAttribute("value");
             const isChecked = (<HTMLInputElement>e.srcElement).checked;
-            console.log(tagKey, isChecked);
             OneSignal.context.tagManager.toggleCheckedTag(tagKey, isChecked);
         }
     }
