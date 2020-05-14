@@ -77,11 +77,7 @@ $border-radius: 0.5em;
 
     .tagging-container-col {
       flex: 1;
-      padding-left: 1.286em;
-    }
-
-    .tagging-container-col:nth-of-type(2n) {
-      padding-left: 1.5em;
+      padding-left: 1em;
     }
 
     .onesignal-category-label {
@@ -98,9 +94,6 @@ $border-radius: 0.5em;
       user-select: none;
       height: 1.5em;
       line-height: 1.5em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .onesignal-category-label input {
@@ -109,6 +102,14 @@ $border-radius: 0.5em;
       cursor: pointer;
       height: 0;
       width: 0;
+    }
+
+    .onesignal-category-label-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      cursor: pointer;
     }
 
     .onesignal-checkmark {
@@ -202,7 +203,7 @@ $border-radius: 0.5em;
     margin: 0 auto;
     box-shadow: 0 1px 6px rgba(5,27,44,.06), 0 2px 32px rgba(5,27,44,.16) !important;
     background: white !important;
-    padding: 1em 1.5em;
+    padding: 1.5em 1.5em;
     border-bottom-left-radius: $border-radius;
     border-bottom-right-radius: $border-radius;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Seoe UI Symbol";
@@ -271,7 +272,7 @@ $border-radius: 0.5em;
     }
 
     .slidedown-button {
-      padding: 0.75em 1.25em;
+      padding: 0.75em 1.5em;
       font-size: 1em;
       border-radius: .25em;
       font-weight: 400;
@@ -314,7 +315,6 @@ $border-radius: 0.5em;
 
     .slidedown-footer {
       position: relative;
-      margin: 0.25em 0.25em 0 0;
     }
 
     .align-right {

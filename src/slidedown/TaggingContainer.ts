@@ -41,7 +41,8 @@ export default class TaggingContainer {
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
         const isChecked = tagCategory.checked ? 'checked' : '';
         const { label } = tagCategory;
-        return `<label class="onesignal-category-label" title="${label}">${label}
+        return `<label class="onesignal-category-label" title="${label}">
+        <span class="onesignal-category-label-text">${label}</span>
         <input type="checkbox" value="${tagCategory.tag}" ${isChecked}>
         <span class="onesignal-checkmark"></span></label>`;
     }
