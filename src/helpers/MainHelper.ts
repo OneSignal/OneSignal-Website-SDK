@@ -108,6 +108,7 @@ export default class MainHelper {
     const defaultActionMessage = "We'd like to show you notifications for the latest news and updates.";
     const defaultAcceptButtonText = "Allow";
     const defaultCancelButtonText = "No Thanks";
+    const defaultPositiveUpdateButtonText = "Update Settings";
 
     if (!promptOptions) {
       return {
@@ -116,6 +117,8 @@ export default class MainHelper {
         actionMessage: defaultActionMessage,
         acceptButtonText: defaultAcceptButtonText,
         cancelButtonText: defaultCancelButtonText,
+        positiveUpdateButtonText: defaultPositiveUpdateButtonText,
+        negativeUpdateButtonText: defaultCancelButtonText
       } as SlidedownPermissionMessageOptions;
     }
 
@@ -135,6 +138,8 @@ export default class MainHelper {
       actionMessage: promptOptions.slidedown.actionMessage || defaultActionMessage,
       acceptButtonText: promptOptions.slidedown.acceptButtonText || defaultAcceptButtonText,
       cancelButtonText: promptOptions.slidedown.cancelButtonText || defaultCancelButtonText,
+      positiveUpdateButtonText: promptOptions.slidedown.positiveUpdateButtonText || defaultPositiveUpdateButtonText,
+      negativeUpdateButtonText: promptOptions.slidedown.negativeUpdateButtonText || defaultCancelButtonText
     } as SlidedownPermissionMessageOptions;
   }
 
