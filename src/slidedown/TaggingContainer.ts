@@ -33,7 +33,7 @@ export default class TaggingContainer {
     public mount(): void {
         addDomElement('#slidedown-body', 'beforeend', this.html);
         if (this.taggingContainer) {
-            this.taggingContainer.addEventListener('click', this.toggleCheckedTag);
+            this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
         }
         // TO DO: remove loading state styling
     }
@@ -52,8 +52,10 @@ export default class TaggingContainer {
 
     private toggleCheckedTag(e: Event) {
         if (e.srcElement && e.srcElement.getAttribute("type") === "checkbox") {
-            const tag = e.srcElement.getAttribute("value");
-            OneSignal.context.tagManager.toggleCheckedTag(tag);
+            const tagKey = e.srcElement.getAttribute("value");
+            const isChecked = (<HTMLInputElement>e.srcElement).checked;
+            console.log(tagKey, isChecked);
+            OneSignal.context.tagManager.toggleCheckedTag(tagKey, isChecked);
         }
     }
 }

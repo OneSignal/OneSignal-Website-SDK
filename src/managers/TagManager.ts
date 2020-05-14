@@ -1,11 +1,11 @@
 import Log from '../libraries/Log';
 
-interface TagObject {
-    [key:string]: any;
+interface TagsObject {
+    [key:string]: string|boolean|number;
 }
 
 export default class TagManager {
-    private checkedTags: Array<string> = [];
+    private tags: TagsObject = {};
 
     public async tagFetchWithRetries(ms: number, maxTries: number): Promise<Object> {
         return  new Promise(async (resolve, reject) => {
@@ -21,24 +21,15 @@ export default class TagManager {
         });
     }
 
-    public toggleCheckedTag(tag: string): void {
-        const tagIndex = this.checkedTags.indexOf(tag);
-        if (tagIndex === -1) {
-            this.checkedTags.push(tag);
-        } else {
-            this.checkedTags.splice(tagIndex, 1);
-        }
+    public toggleCheckedTag(tagKey: string, isChecked: boolean): void {
+        this.tags[tagKey] = isChecked;
     }
 
-    public async updateRemoteTags(): Promise<void> {
-        if (!this.checkedTags.length) {
+    public async syncTags(): Promise<void> {
+        if (!Object.keys(this.tags).length) {
             return;
         }
-        Log.info("Updating tags from Category Slidedown:", this.checkedTags);
-        const payload: TagObject = {};
-        this.checkedTags.forEach(async tag => {
-            payload[tag] = true;
-        });
-        await OneSignal.sendTags(payload);
+        Log.info("Updating tags from Category Slidedown:", this.tags);
+        await OneSignal.sendTags(this.tags);
     }
 }
