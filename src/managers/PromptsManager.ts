@@ -22,8 +22,9 @@ import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
-import TagCategory from '../models/TagCategory';
+import { TagCategory } from '../models/Tags';
 import TaggingContainer from '../slidedown/TaggingContainer';
+import TagManager from './TagManager';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -221,15 +222,23 @@ export class PromptsManager {
     OneSignal.emitter.once(Slidedown.EVENTS.CLOSED, () => {
       this.isAutoPromptShowing = false;
     });
-    OneSignal.emitter.once(Slidedown.EVENTS.ALLOW_CLICK, () => {
+    OneSignal.emitter.once(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      OneSignal.context.tagManager.storeTagValuesToUpdate();
+
       if (OneSignal.slidedown) {
         OneSignal.slidedown.close();
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-      const options: RegisterOptions = { autoAccept };
-      InitHelper.registerForPushNotifications(options);
+
+      if (await OneSignal.context.subscriptionManager.getSubscriptionState().subscribed) {
+        // Sync Category Slidedown tags
+        await OneSignal.context.tagManager.syncTags();
+      } else {
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept };
+        InitHelper.registerForPushNotifications(options);
+      }
     });
     OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the slidedown to the user again.");

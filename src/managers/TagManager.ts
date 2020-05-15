@@ -1,8 +1,5 @@
 import Log from '../libraries/Log';
-
-interface TagsObject {
-    [key:string]: string|boolean|number;
-}
+import { TagsObject } from '../models/Tags';
 
 export default class TagManager {
     private tags: TagsObject = {};
@@ -21,15 +18,22 @@ export default class TagManager {
         });
     }
 
-    public toggleCheckedTag(tagKey: string, isChecked: boolean): void {
-        this.tags[tagKey] = isChecked;
+    public async syncTags(): Promise<void> {
+        Log.info("Updating tags from Category Slidedown:", this.tags);
+        await OneSignal.sendTags(this.tags); // TO DO: retries?
     }
 
-    public async syncTags(): Promise<void> {
-        if (!Object.keys(this.tags).length) {
-            return;
-        }
-        Log.info("Updating tags from Category Slidedown:", this.tags);
-        await OneSignal.sendTags(this.tags);
+    public storeTagValuesToUpdate(): void {
+        this.tags = this.getValuesFromTaggingContainer();
+    }
+
+    private getValuesFromTaggingContainer(): TagsObject {
+        const selector = "#slidedown-body > div.tagging-container > div > label > input[type=checkbox]";
+        const inputNodeArr = document.querySelectorAll(selector);
+        const tags: TagsObject = {};
+        inputNodeArr.forEach(node => {
+            tags[(<HTMLInputElement>node).defaultValue] = (<HTMLInputElement>node).checked;
+        });
+        return tags;
     }
 }

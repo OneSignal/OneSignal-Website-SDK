@@ -1,4 +1,4 @@
-import TagCategory from '../models/TagCategory';
+import { TagCategory } from '../models/Tags';
 import { addDomElement } from '../utils';
 import Log from '../libraries/Log';
 import TagManager from '../managers/TagManager';
@@ -39,11 +39,11 @@ export default class TaggingContainer {
     }
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
-        const isChecked = tagCategory.checked ? 'checked' : '';
         const { label } = tagCategory;
         return `<label class="onesignal-category-label" title="${label}">
         <span class="onesignal-category-label-text">${label}</span>
-        <input type="checkbox" value="${tagCategory.tag}" ${isChecked}>
+        <input type="checkbox" value="${tagCategory.tag}"
+            ${tagCategory.checked ? `checked="${tagCategory.checked}` : ``}">
         <span class="onesignal-checkmark"></span></label>`;
     }
 
@@ -53,9 +53,8 @@ export default class TaggingContainer {
 
     private toggleCheckedTag(e: Event) {
         if (e.srcElement && e.srcElement.getAttribute("type") === "checkbox") {
-            const tagKey = e.srcElement.getAttribute("value");
             const isChecked = (<HTMLInputElement>e.srcElement).checked;
-            OneSignal.context.tagManager.toggleCheckedTag(tagKey, isChecked);
+            e.srcElement.setAttribute("checked", isChecked.toString());
         }
     }
 }

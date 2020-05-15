@@ -1,4 +1,4 @@
-import TagCategory from './TagCategory';
+import { TagCategory } from './Tags';
 
 export enum DelayedPromptType {
   Native = "native",
