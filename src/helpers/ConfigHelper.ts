@@ -7,7 +7,8 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
-import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS, SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS } from "../config";
+import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
+         SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS } from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
 
 export enum IntegrationConfigurationKind {
