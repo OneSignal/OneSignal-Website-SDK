@@ -157,6 +157,12 @@ $border-radius: 0.5em;
       -ms-transform: rotate(45deg);
       transform: rotate(45deg);
     }
+
+    .onesignal-loading-container {
+      display: flex;
+      margin-top: 1em;
+      margin-bottom: 2em;
+    }
   }
 
   #blocked-slidedown {
@@ -287,6 +293,10 @@ $border-radius: 0.5em;
 
         &:active {
           background: darken(#4285f4, 15%);
+        }
+
+        &.disabled {
+          opacity: 0.5;
         }
       }
 

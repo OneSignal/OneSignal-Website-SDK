@@ -1,12 +1,34 @@
 import { TagCategory } from '../models/Tags';
-import { addDomElement } from '../utils';
+import { addDomElement, removeDomElement, addCssClass, removeCssClass } from '../utils';
 import Log from '../libraries/Log';
 import TagManager from '../managers/TagManager';
+import LoadingIndicator from './LoadingIndicator';
 
 export default class TaggingContainer {
-    private html: string;
+    private html: string = "";
 
-    constructor(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: Object){
+    public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: Object): void {
+        this.generateHTML(remoteTagCategories, existingPlayerTags);
+        addDomElement('#slidedown-body', 'beforeend', this.html);
+        if (this.taggingContainer) {
+            this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
+        }
+        removeCssClass("#onesignal-slidedown-allow-button", 'disabled');
+        removeCssClass("#onesignal-loading-container", 'onesignal-loading-container');
+        const allowButton = document.querySelector("#onesignal-slidedown-allow-button");
+        (<HTMLButtonElement>allowButton).disabled = false;
+        removeDomElement("#onesignal-loading-container");
+    }
+
+    public load(): void {
+        addCssClass("#onesignal-loading-container", 'onesignal-loading-container');
+        addDomElement("#onesignal-loading-container", 'beforeend', LoadingIndicator);
+        const allowButton = document.querySelector("#onesignal-slidedown-allow-button");
+        (<HTMLButtonElement>allowButton).disabled = true;
+        addCssClass("#onesignal-slidedown-allow-button", 'disabled');
+    }
+
+    private generateHTML(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: Object): void {
         const checkedTagCategories = !!existingPlayerTags ?
             remoteTagCategories.map(elem => {
                 elem.checked = Object.keys(existingPlayerTags).indexOf(elem.tag) !== -1 ? true : false;
@@ -28,14 +50,6 @@ export default class TaggingContainer {
         }
 
         this.html = `<div class="tagging-container">${innerHtml}</div></div>`;
-    }
-
-    public mount(): void {
-        addDomElement('#slidedown-body', 'beforeend', this.html);
-        if (this.taggingContainer) {
-            this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
-        }
-        // TO DO: remove loading state styling
     }
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {

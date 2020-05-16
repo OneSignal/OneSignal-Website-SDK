@@ -29,7 +29,7 @@ import TagManager from './TagManager';
 export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
-  shouldUpdate?: boolean;
+  isInUpdateMode?: boolean;
   tagCategories?: Array<TagCategory>;
 }
 
@@ -168,7 +168,7 @@ export class PromptsManager {
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
-    const { tagCategories, shouldUpdate } = options;
+    const { tagCategories, isInUpdateMode } = options;
 
     if (this.isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a slidedown.");
@@ -198,14 +198,21 @@ export class PromptsManager {
     OneSignal.slidedown = new Slidedown(slideDownOptions);
     if (tagCategories && tagCategories.length > 0) {
       // show slidedown with tagging container
-      await OneSignal.slidedown.create(shouldUpdate);
+      await OneSignal.slidedown.create(isInUpdateMode);
       let existingTags;
+      const taggingContainer = new TaggingContainer();
 
-      if (shouldUpdate) {
-        // updating
-        existingTags = await OneSignal.context.tagManager.tagFetchWithRetries(1000, 5);
+      if (isInUpdateMode) {
+        taggingContainer.load();
+        // updating. pull remote tags
+        // TO DO: remove promise simulating slow connection
+        existingTags = await new Promise(resolve=>{
+          setTimeout(()=>{
+            OneSignal.context.tagManager.tagFetchWithRetries(1000, 5); resolve();
+          },3000);
+        });
       }
-      new TaggingContainer(tagCategories, existingTags).mount();
+      taggingContainer.mount(tagCategories, existingTags);
     } else {
       await OneSignal.slidedown.create();
     }
