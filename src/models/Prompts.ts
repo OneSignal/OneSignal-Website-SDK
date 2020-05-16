@@ -22,6 +22,7 @@ export interface SlidedownPermissionMessageOptions extends DelayedPromptOptions 
   cancelButtonText: string;
   positiveUpdateButtonText?: string;
   negativeUpdateButtonText?: string;
+  categories?: Categories;
 }
 
 export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
