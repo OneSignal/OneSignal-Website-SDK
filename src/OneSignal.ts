@@ -868,11 +868,6 @@ export default class OneSignal {
       return;
     }
 
-    if (await OutcomesHelper.wasSentDuringCurrentSession(outcomeName)) {
-      Log.warn(`Unique outcome '${outcomeName}' was previously sent during this session.`);
-      return;
-    }
-
     const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
     const { notificationIds } = outcomeAttribution;
 
@@ -882,6 +877,7 @@ export default class OneSignal {
 
     if (newNotifsToAttributeWithOutcome.length === 0 &&
       outcomeAttribution.type !== OutcomeAttributionType.Unattributed) {
+        Log.warn(`No notifications to attribute with outcome '${outcomeName}'.`);
         return;
     }
 
@@ -897,6 +893,11 @@ export default class OneSignal {
         await OutcomesHelper.saveSentUniqueOutcome(outcomeName, newNotifsToAttributeWithOutcome);
         return;
       case OutcomeAttributionType.Unattributed:
+        if (await OutcomesHelper.wasSentDuringCurrentSession(outcomeName)) {
+          Log.warn(`Unique outcome '${outcomeName}' was previously sent during this session.`);
+          return;
+        }
+        console.log("Sending unattributed");
         await OneSignal.context.updateManager.sendOutcomeUnattributed(
           OneSignal.config!.appId, outcomeName);
         await OutcomesHelper.saveSentUniqueOutcome(outcomeName, []);
