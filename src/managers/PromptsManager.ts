@@ -55,7 +55,7 @@ export class PromptsManager {
     }
 
     const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
-    if (doNotPrompt && !options.force) {
+    if (doNotPrompt && !options.force && !options.isInUpdateMode) {
       Log.info(new PermissionMessageDismissedError());
       return false;
     }
@@ -67,7 +67,7 @@ export class PromptsManager {
     }
 
     const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    if (isEnabled) {
+    if (isEnabled && !options.isInUpdateMode) {
       throw new AlreadySubscribedError();
     }
 
