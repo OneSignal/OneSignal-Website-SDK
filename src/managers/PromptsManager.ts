@@ -171,7 +171,7 @@ export class PromptsManager {
     const { categoryOptions, isInUpdateMode } = options;
 
     if (this.isAutoPromptShowing) {
-      Log.debug("Already showing autopromt. Abort showing a slidedown.");
+      Log.debug("Already showing autoprompt. Abort showing a slidedown.");
       return;
     }
 
