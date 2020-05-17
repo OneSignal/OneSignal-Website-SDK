@@ -128,8 +128,12 @@ export default class InitHelper {
           (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
           requiresUserInteraction
         );
+      const categoryOptions = OneSignal.context.appConfig.userConfig.promptOptions.slidedown.categories;
 
-      await OneSignal.context.promptsManager.internalShowAutoPrompt({ forceSlidedownOverNative });
+      await OneSignal.context.promptsManager.internalShowAutoPrompt({
+        forceSlidedownOverNative,
+        categoryOptions
+      });
 
     }
     OneSignal._sessionInitAlreadyRunning = false;
@@ -171,6 +175,12 @@ export default class InitHelper {
     const isOptedOut = LocalStorage.getIsOptedOut();
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
+      const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
+      const isUsingCategoryConfig = promptOptions && promptOptions.slidedown && promptOptions.slidedown.categories;
+
+      if (isUsingCategoryConfig) {
+        await OneSignal.context.tagManager.syncTags();
+      }
     }
   }
 

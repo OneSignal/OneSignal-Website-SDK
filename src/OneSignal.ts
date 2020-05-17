@@ -376,15 +376,16 @@ export default class OneSignal {
   public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
-    const isUsingCategoryConfig = promptOptions && promptOptions.slidedown && promptOptions.slidedown.categories;
-    const tagCategories = isUsingCategoryConfig ? promptOptions.slidedown.categories.tags : [];
+    const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown && promptOptions.slidedown;
+    const isUsingCategoryOptions = isUsingSlidedownOptions && promptOptions.slidedown.categories;
 
-    if (!isUsingCategoryConfig || tagCategories.length === 0) {
+    if (!isUsingCategoryOptions) {
       Log.error("OneSignal: no categories to display. Check your configuration on the OneSignal dashboard.");
       return;
     }
 
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt({ ...options, tagCategories });
+    const categoryOptions = promptOptions.slidedown.categories;
+    await OneSignal.context.promptsManager.internalShowSlidedownPrompt({ ...options, categoryOptions });
   }
 
   /**

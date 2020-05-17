@@ -16,13 +16,13 @@ import {
   SlidedownPermissionMessageOptions,
   DelayedPromptOptions,
   AppUserConfigPromptOptions,
-  DelayedPromptType} from '../models/Prompts';
+  DelayedPromptType,
+  Categories} from '../models/Prompts';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
-import { TagCategory } from '../models/Tags';
 import TaggingContainer from '../slidedown/TaggingContainer';
 import TagManager from './TagManager';
 
@@ -30,7 +30,7 @@ export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
   isInUpdateMode?: boolean;
-  tagCategories?: Array<TagCategory>;
+  categoryOptions?: Categories;
 }
 
 export class PromptsManager {
@@ -168,7 +168,7 @@ export class PromptsManager {
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
-    const { tagCategories, isInUpdateMode } = options;
+    const { categoryOptions, isInUpdateMode } = options;
 
     if (this.isAutoPromptShowing) {
       Log.debug("Already showing autopromt. Abort showing a slidedown.");
@@ -196,7 +196,7 @@ export class PromptsManager {
     this.installEventHooksForSlidedown();
 
     OneSignal.slidedown = new Slidedown(slideDownOptions);
-    if (tagCategories && tagCategories.length > 0) {
+    if (categoryOptions && categoryOptions.tags && categoryOptions.tags.length > 0) {
       // show slidedown with tagging container
       await OneSignal.slidedown.create(isInUpdateMode);
       let existingTags;
@@ -212,7 +212,7 @@ export class PromptsManager {
           },3000);
         });
       }
-      taggingContainer.mount(tagCategories, existingTags);
+      taggingContainer.mount(categoryOptions.tags, existingTags);
     } else {
       await OneSignal.slidedown.create();
     }
