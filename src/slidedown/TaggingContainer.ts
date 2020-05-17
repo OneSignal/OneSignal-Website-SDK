@@ -1,4 +1,4 @@
-import { TagCategory } from '../models/Tags';
+import { TagCategory, TagsObject } from '../models/Tags';
 import { addDomElement, removeDomElement, addCssClass, removeCssClass } from '../utils';
 import Log from '../libraries/Log';
 import TagManager from '../managers/TagManager';
@@ -7,7 +7,7 @@ import LoadingIndicator from './LoadingIndicator';
 export default class TaggingContainer {
     private html: string = "";
 
-    public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: Object): void {
+    public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
         this.generateHTML(remoteTagCategories, existingPlayerTags);
         addDomElement('#slidedown-body', 'beforeend', this.html);
         if (this.taggingContainer) {
@@ -28,10 +28,11 @@ export default class TaggingContainer {
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
 
-    private generateHTML(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: Object): void {
+    private generateHTML(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
         const checkedTagCategories = !!existingPlayerTags ?
             remoteTagCategories.map(elem => {
-                elem.checked = Object.keys(existingPlayerTags).indexOf(elem.tag) !== -1 ? true : false;
+                const existingTagValue = existingPlayerTags[elem.tag]; // "1"|"0"
+                elem.checked = existingTagValue === "1" ? true : false;
                 return elem;
             })
             : remoteTagCategories;

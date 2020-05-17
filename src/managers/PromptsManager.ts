@@ -208,7 +208,7 @@ export class PromptsManager {
         // TO DO: remove promise simulating slow connection
         existingTags = await new Promise(resolve=>{
           setTimeout(()=>{
-            OneSignal.context.tagManager.tagFetchWithRetries(1000, 5); resolve();
+            resolve(OneSignal.context.tagManager.tagFetchWithRetries(1000, 5));
           },3000);
         });
       }

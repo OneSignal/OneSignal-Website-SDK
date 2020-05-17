@@ -32,7 +32,7 @@ export default class TagManager {
         const inputNodeArr = document.querySelectorAll(selector);
         const tags: TagsObject = {};
         inputNodeArr.forEach(node => {
-            tags[(<HTMLInputElement>node).defaultValue] = (<HTMLInputElement>node).checked;
+            tags[(<HTMLInputElement>node).defaultValue] = Number((<HTMLInputElement>node).checked); // 1|0
         });
         return tags;
     }
