@@ -17,7 +17,74 @@
     const appId = getUrlQueryParam('app_id');
     var OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
-      OneSignal.init({appId});
+      OneSignal.init({
+          appId,
+          notifyButton: {
+              enable: true
+          },
+          promptOptions: {
+              slidedown: {
+                  autoPrompt: false,
+                  enabled: true,
+                  categories: {
+                      positiveButton: "Howdy, yes",
+                      negativeButton: "Cancelar",
+                      tags: [
+                        {
+                            tag: "tag1",
+                            label: "Tag 1",
+                            checked: true
+                        },
+                        {
+                            tag: "tag2",
+                            label: "Tag 2",
+                            checked: false
+                        },
+                        {
+                            tag: "tag3",
+                            label: "Tag 3",
+                            checked: true
+                        },
+                        {
+                            tag: "tag4",
+                            label: "Tag 4",
+                            checked: true
+                        },
+                        {
+                            tag: "tag5",
+                            label: "Tag 5",
+                            checked: true
+                        },
+                        {
+                            tag: "tag6",
+                            label: "Tag 6",
+                            checked: true
+                        },
+                        {
+                            tag: "tag7",
+                            label: "Tag 7",
+                            checked: true
+                        },
+                        {
+                            tag: "tag8",
+                            label: "Tag 8",
+                            checked: true
+                        },
+                        {
+                            tag: "tag9",
+                            label: "Tag 9",
+                            checked: true
+                        },
+                        {
+                            tag: "tag10",
+                            label: "Tag 10 Long Label That needs to be shortened",
+                            checked: true
+                        },
+                      ]
+                  }
+              }
+          }
+        });
     });
 
     function sendOutcome() {
