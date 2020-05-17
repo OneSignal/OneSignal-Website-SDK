@@ -35,6 +35,7 @@ declare var OneSignal: any;
 export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
   httpPermissionRequest?: boolean;
+  slidedown?: boolean;
 }
 
 export default class InitHelper {
@@ -178,7 +179,7 @@ export default class InitHelper {
       const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
       const isUsingCategoryConfig = promptOptions && promptOptions.slidedown && promptOptions.slidedown.categories;
 
-      if (isUsingCategoryConfig) {
+      if (isUsingCategoryConfig && options.slidedown) {
         await OneSignal.context.tagManager.syncTags();
       }
     }

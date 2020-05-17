@@ -243,7 +243,7 @@ export class PromptsManager {
         await OneSignal.context.tagManager.syncTags();
       } else {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = { autoAccept };
+        const options: RegisterOptions = { autoAccept, slidedown: true };
         InitHelper.registerForPushNotifications(options);
       }
     });
