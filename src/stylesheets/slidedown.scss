@@ -162,6 +162,14 @@ $border-radius: 0.5em;
       display: flex;
       margin-top: 1em;
       margin-bottom: 2em;
+      flex-direction: column;
+      align-items: center;
+
+      & .onesignal-loading-message {
+        flex: 1;
+        color: #CED3D8;
+        margin-top: .8125em;
+      }
     }
   }
 
@@ -282,6 +290,7 @@ $border-radius: 0.5em;
       font-size: 1em;
       border-radius: .25em;
       font-weight: 400;
+      box-shadow: unset;
 
       &.primary {
         background: #4285f4;
@@ -296,7 +305,7 @@ $border-radius: 0.5em;
         }
 
         &.disabled {
-          opacity: 0.5;
+          background-color: #CED3D8;
         }
       }
 
