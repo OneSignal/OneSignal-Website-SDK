@@ -17,6 +17,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
+import { once } from '../utils';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -314,16 +315,18 @@ export class ServiceWorkerManager {
       }
       else {
         Log.debug("installWorker - Awaiting on navigator.serviceWorker's 'controllerchange' event");
-        navigator.serviceWorker.addEventListener('controllerchange', async e => {
+        once(navigator.serviceWorker, 'controllerchange', async (e, removeListener) => {
           const postInstallWorkerState = await this.getActiveState();
           if (postInstallWorkerState !== preInstallWorkerState &&
             postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
+
+            removeListener();
             resolve();
           }
           else {
             Log.error("installWorker - SW's 'controllerchange' fired but no state change!");
           }
-        });
+        }, true);
       }
     });
 

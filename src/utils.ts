@@ -331,7 +331,7 @@ export function substringAfter(string: string, search: string) {
   return string.substr(string.indexOf(search) + search.length);
 }
 
-export function once(targetSelectorOrElement: string | string[] | Element | Document, event: string, task: Function, manualDestroy=false) {
+export function once(targetSelectorOrElement: string | string[] | Element | Document | ServiceWorkerContainer, event: string, task: Function, manualDestroy=false) {
   if (!event) {
     Log.error('Cannot call on() with no event: ', event);
   }
@@ -353,7 +353,7 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
     var taskWrapper = (function () {
       var internalTaskFunction = function (e: Event) {
         var destroyEventListener = function() {
-          (targetSelectorOrElement as Element | Document).removeEventListener(e.type, taskWrapper);
+          (targetSelectorOrElement as Element | Document | ServiceWorkerContainer).removeEventListener(e.type, taskWrapper);
         };
         if (!manualDestroy) {
           destroyEventListener();
@@ -362,7 +362,7 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
       };
       return internalTaskFunction;
     })();
-    (targetSelectorOrElement as Element | Document).addEventListener(event, taskWrapper);
+    (targetSelectorOrElement as Element | Document | ServiceWorkerContainer).addEventListener(event, taskWrapper);
   }
   else
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
