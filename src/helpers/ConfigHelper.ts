@@ -8,7 +8,7 @@ import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
 import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-         SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS } from "../config";
+         SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
 
 export enum IntegrationConfigurationKind {
@@ -298,9 +298,9 @@ export class ConfigHelper {
     let positiveUpdateButtonText, negativeUpdateButtonText;
     if (staticPrompts.slidedown.categories) {
       positiveUpdateButtonText = Utils.getValueOrDefault(staticPrompts.slidedown.categories.positiveButton,
-        SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS.positiveButton);
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveButton);
       negativeUpdateButtonText = Utils.getValueOrDefault(staticPrompts.slidedown.categories.negativeButton,
-        SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS.negativeButton);
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeButton);
     }
 
     const slidedown = {

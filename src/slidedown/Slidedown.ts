@@ -5,7 +5,7 @@ import MainHelper from '../helpers/MainHelper';
 import { addCssClass, addDomElement, getPlatformNotificationIcon, once, removeDomElement } from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import TaggingContainer from './TaggingContainer';
-import { SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS } from '../config';
+import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 
 export default class Slidedown {
   public options: SlidedownPermissionMessageOptions;
@@ -26,12 +26,14 @@ export default class Slidedown {
     }
     this.options = options;
     this.options.actionMessage = options.actionMessage.substring(0, 90);
-    this.options.acceptButtonText = options.acceptButtonText.substring(0, 15);
-    this.options.cancelButtonText = options.cancelButtonText.substring(0, 15);
+    this.options.acceptButtonText = options.acceptButtonText.substring(0, 16);
+    this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
     this.options.positiveUpdateButtonText = options.positiveUpdateButtonText ?
-      options.positiveUpdateButtonText.substring(0, 15): SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS.positiveButton;
+      options.positiveUpdateButtonText.substring(0, 16):
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveButton;
     this.options.negativeUpdateButtonText = options.negativeUpdateButtonText?
-      options.negativeUpdateButtonText.substring(0, 15): SERVER_CONFIG_DEFAULTS_UPDATE_BUTTONS.negativeButton;
+      options.negativeUpdateButtonText.substring(0, 16):
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeButton;
 
     this.notificationIcons = null;
   }

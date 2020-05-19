@@ -13,6 +13,7 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../context/shared/utils/Utils";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import SubscriptionHelper from "./SubscriptionHelper";
+import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 
 export default class MainHelper {
 
@@ -105,41 +106,30 @@ export default class MainHelper {
 
   public static getSlidedownPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
     SlidedownPermissionMessageOptions {
-    const defaultActionMessage = "We'd like to show you notifications for the latest news and updates.";
-    const defaultAcceptButtonText = "Allow";
-    const defaultCancelButtonText = "No Thanks";
-    const defaultPositiveUpdateButtonText = "Update Settings";
 
-    if (!promptOptions) {
+    if (!promptOptions || !promptOptions.slidedown) {
       return {
         enabled: false,
         autoPrompt: false,
-        actionMessage: defaultActionMessage,
-        acceptButtonText: defaultAcceptButtonText,
-        cancelButtonText: defaultCancelButtonText,
-        positiveUpdateButtonText: defaultPositiveUpdateButtonText,
-        negativeUpdateButtonText: defaultCancelButtonText
+        actionMessage: promptOptions.actionMessage || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+        acceptButtonText: promptOptions.acceptButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+        cancelButtonText: promptOptions.cancelButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
       } as SlidedownPermissionMessageOptions;
     }
-
-    if (!promptOptions.slidedown) {
-      return {
-        enabled: false,
-        autoPrompt: false,
-        actionMessage: promptOptions.actionMessage || defaultActionMessage,
-        acceptButtonText: promptOptions.acceptButtonText || defaultAcceptButtonText,
-        cancelButtonText: promptOptions.cancelButtonText || defaultCancelButtonText,
-      } as SlidedownPermissionMessageOptions;
-    }
+    const { categories } = promptOptions.slidedown;
+    const positiveUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.positiveButton : null),
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveButton);
+    const negativeUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.negativeButton : null),
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeButton);
 
     return {
       enabled: promptOptions.slidedown.enabled,
       autoPrompt: promptOptions.slidedown.autoPrompt,
-      actionMessage: promptOptions.slidedown.actionMessage || defaultActionMessage,
-      acceptButtonText: promptOptions.slidedown.acceptButtonText || defaultAcceptButtonText,
-      cancelButtonText: promptOptions.slidedown.cancelButtonText || defaultCancelButtonText,
-      positiveUpdateButtonText: promptOptions.slidedown.positiveUpdateButtonText || defaultPositiveUpdateButtonText,
-      negativeUpdateButtonText: promptOptions.slidedown.negativeUpdateButtonText || defaultCancelButtonText
+      actionMessage: promptOptions.slidedown.actionMessage || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+      acceptButtonText: promptOptions.slidedown.acceptButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+      cancelButtonText: promptOptions.slidedown.cancelButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
+      positiveUpdateButtonText,
+      negativeUpdateButtonText
     } as SlidedownPermissionMessageOptions;
   }
 
