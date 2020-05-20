@@ -12,7 +12,7 @@ import Database from "../../../src/services/Database";
 import { NotificationClicked } from "../../../src/models/Notification";
 import Random from "../../support/tester/Random";
 import timemachine from "timemachine";
-import { setupReceivedNotifications, OUTCOME_NAME } from '../helpers1/OutcomeHelper';
+import { setupReceivedNotifications, OUTCOME_NAME, generateNotificationClicked } from '../helpers1/OutcomeHelper';
 
 const OUTCOME_WEIGHT = 55.6;
 
@@ -112,12 +112,7 @@ test("when outcome is unattributed and feature enabled and has weight it sends a
 });
 
 test("when outcome is direct and feature enabled it sends an api call", async t => {
-  const notificationClicked: NotificationClicked = {
-    notificationId: Random.getRandomUuid(),
-    appId: OneSignal.config!.appId!,
-    url: "https://localhost:3001",
-    timestamp: new Date().getTime(),
-  }
+  const notificationClicked = generateNotificationClicked();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -140,12 +135,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
   OneSignal.config!.userConfig.outcomes!.indirect.enabled = false;
   OneSignal.config!.userConfig.outcomes!.unattributed.enabled = false;
 
-  const notificationClicked: NotificationClicked = {
-    notificationId: Random.getRandomUuid(),
-    appId: OneSignal.config!.appId!,
-    url: "https://localhost:3001",
-    timestamp: new Date().getTime(),
-  }
+  const notificationClicked = generateNotificationClicked();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -156,12 +146,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
 });
 
 test("when outcome is direct and feature enabled and has weight it sends an api call", async t => {
-  const notificationClicked: NotificationClicked = {
-    notificationId: Random.getRandomUuid(),
-    appId: OneSignal.config!.appId!,
-    url: "https://localhost:3001",
-    timestamp: new Date().getTime(),
-  }
+  const notificationClicked = generateNotificationClicked();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
