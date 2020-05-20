@@ -205,3 +205,16 @@ test("when unattributed outcome is sent twice, there is only one api call", asyn
   t.is(apiSpy.callCount, 1);
   t.is(logSpy.callCount, 1);
 });
+
+test("when session ends between unattributed outcome sends, there are two api calls", async t => {
+  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
+  const logSpy = sinonSandbox.stub(Log, "warn");
+  sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
+  sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
+  await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
+  await Database.resetSentUniqueOutcomes();   // end session
+  await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
+
+  t.is(apiSpy.callCount, 2);
+  t.is(logSpy.callCount, 0);
+});
