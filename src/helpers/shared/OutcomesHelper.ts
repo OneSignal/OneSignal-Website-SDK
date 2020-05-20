@@ -103,18 +103,15 @@ export default class OutcomesHelper {
   }
 
   static async saveSentUniqueOutcome(outcomeName: string, notificationIds: string[]): Promise<void>{
-    const session = await Database.getCurrentSession();
-    const timestamp = session ? session.startTimestamp : null;
     await Database.put("SentUniqueOutcome", {
       outcomeName,
       notificationIds,
-      sentDuringCurrentSession: timestamp
+      sentDuringCurrentSession: true
     });
   }
 
   static async wasSentDuringCurrentSession(outcomeName: string) {
     const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
-    const session = await Database.getCurrentSession();
-    return session && sentOutcome && sentOutcome.sentDuringCurrentSession === session.startTimestamp;
+    return sentOutcome && sentOutcome.sentDuringCurrentSession;
   }
 }
