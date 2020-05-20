@@ -102,7 +102,9 @@ export default class OutcomesHelper {
     return undefined;
   }
 
-  static async saveSentUniqueOutcome(outcomeName: string, notificationIds: string[]): Promise<void>{
+  static async saveSentUniqueOutcome(outcomeName: string, newNotificationIds: string[]): Promise<void>{
+    const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
+    const notificationIds = [...sentOutcome.notificationIds, ...newNotificationIds];
     await Database.put("SentUniqueOutcome", {
       outcomeName,
       notificationIds,
