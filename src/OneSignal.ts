@@ -877,7 +877,7 @@ export default class OneSignal {
 
     if (newNotifsToAttributeWithOutcome.length === 0 &&
       outcomeAttribution.type !== OutcomeAttributionType.Unattributed) {
-        Log.warn(`No notifications to attribute with outcome '${outcomeName}'.`);
+        Log.warn(`No notifications to attribute with unique outcome '${outcomeName}'.`);
         return;
     }
 
@@ -897,7 +897,6 @@ export default class OneSignal {
           Log.warn(`Unique outcome '${outcomeName}' was previously sent during this session.`);
           return;
         }
-        console.log("Sending unattributed");
         await OneSignal.context.updateManager.sendOutcomeUnattributed(
           OneSignal.config!.appId, outcomeName);
         await OutcomesHelper.saveSentUniqueOutcome(outcomeName, []);
