@@ -30,7 +30,7 @@ export const setupReceivedNotifications = async () => {
   return receivedNotificationIdsWithinTimeframe;
 };
 
-export function generateNotificationClicked() {
+export function generateNotification() {
   return {
     notificationId: Random.getRandomUuid(),
     appId: OneSignal.config!.appId!,

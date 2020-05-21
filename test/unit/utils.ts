@@ -2,6 +2,7 @@ import '../support/polyfills/polyfills';
 import test from "ava";
 import { timeoutPromise } from "../../src/utils";
 import TimeoutError from '../../src/errors/TimeoutError';
+import { isArrayContentsEqual } from '../support/tester/utils';
 
 
 test(`timeoutPromise should reject after the specified amount of time`, async t => {
@@ -28,4 +29,10 @@ test(`timeoutPromise should resolve target promise if its faster`, async t => {
   } catch (e) {
     t.fail("No error should have been raised.");
   }
+});
+
+test(`isArrayContentsEqual works correctly`, t => {
+  t.true(isArrayContentsEqual([1],[1]));
+  t.true(isArrayContentsEqual([1,2],[2,1]));
+  t.false(isArrayContentsEqual([1],[1,2]));
 });
