@@ -104,7 +104,8 @@ export default class OutcomesHelper {
 
   static async saveSentUniqueOutcome(outcomeName: string, newNotificationIds: string[]): Promise<void>{
     const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
-    const notificationIds = [...sentOutcome.notificationIds, ...newNotificationIds];
+    const existingNotificationIds = !!sentOutcome ? sentOutcome.notificationIds : [];
+    const notificationIds = [...existingNotificationIds, ...newNotificationIds];
     await Database.put("SentUniqueOutcome", {
       outcomeName,
       notificationIds,
