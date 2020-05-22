@@ -65,6 +65,7 @@ export default class ServiceWorkerHelper {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
+      Database.resetSentUniqueOutcomes();
       const appId = deviceRecord.app_id;
       const session: Session = initializeNewSession(
         { deviceId, appId, deviceType:deviceRecord.device_type }
@@ -221,14 +222,13 @@ export default class ServiceWorkerHelper {
     }
 
     await Promise.all([Database.cleanupCurrentSession(),
-      Database.removeAllNotificationClicked(),
-      Database.resetSentUniqueOutcomes()
+      Database.removeAllNotificationClicked()
     ]);
     Log.debug(
       "Finalize session finished",
       `started: ${new Date(session.startTimestamp)}`
     );
-  };
+  }
 
   static timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
     if (timestamp1 <= timestamp2) {
