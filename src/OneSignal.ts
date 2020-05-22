@@ -893,7 +893,7 @@ export default class OneSignal {
         await OutcomesHelper.saveSentUniqueOutcome(outcomeName, newNotifsToAttributeWithOutcome);
         return;
       case OutcomeAttributionType.Unattributed:
-        if (await OutcomesHelper.wasSentDuringCurrentSession(outcomeName)) {
+        if (await OutcomesHelper.wasSentDuringSession(outcomeName)) {
           Log.warn(`Unique outcome '${outcomeName}' was previously sent during this session.`);
           return;
         }
