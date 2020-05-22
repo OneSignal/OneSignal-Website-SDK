@@ -421,7 +421,7 @@ export default class Database {
   async resetSentUniqueOutcomes(): Promise<void> {
     this.getAll<SentUniqueOutcome>("SentUniqueOutcome").then(arr => {
       arr.forEach(elem => {
-        elem.sentDuringCurrentSession = null;
+        elem.sentDuringSession = null;
         Database.put("SentUniqueOutcome", elem);
       });
     });

@@ -43,5 +43,5 @@ export interface OutcomeAttribution {
 export interface SentUniqueOutcome {
   outcomeName: string;
   notificationIds: Array<string>;
-  sentDuringCurrentSession: boolean|null;
+  sentDuringSession: number|null; // used for unattributed
 }

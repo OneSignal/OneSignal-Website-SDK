@@ -35,7 +35,7 @@ export default class OutcomesHelper {
       const maxTimestamp = beginningOfTimeframe.getTime();
 
       const allReceivedNotification = await Database.getAll<NotificationReceived>("NotificationReceived");
-      Log.debug(`Found total of ${allReceivedNotification.length} received notifications`);
+      Log.debug(`\tFound total of ${allReceivedNotification.length} received notifications`);
 
       if (allReceivedNotification.length > 0) {
         const max: number = outcomesConfig.indirect.influencedNotificationsLimit;
@@ -106,15 +106,21 @@ export default class OutcomesHelper {
     const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
     const existingNotificationIds = !!sentOutcome ? sentOutcome.notificationIds : [];
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
+    const session = await Database.getCurrentSession();
+    const timestamp = session ? session.startTimestamp : null;
     await Database.put("SentUniqueOutcome", {
       outcomeName,
       notificationIds,
-      sentDuringCurrentSession: true
+      sentDuringSession: timestamp
     });
   }
 
-  static async wasSentDuringCurrentSession(outcomeName: string) {
+  static async wasSentDuringSession(outcomeName: string) {
     const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
-    return sentOutcome && sentOutcome.sentDuringCurrentSession;
+    const session = await Database.getCurrentSession();
+    const sessionExistsAndWasPreviouslySent = session && sentOutcome &&
+      sentOutcome.sentDuringSession === session.startTimestamp;
+    const sessionWasClearedButWasPreviouslySent = !session && sentOutcome && !!sentOutcome.sentDuringSession;
+    return sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent;
   }
 }
