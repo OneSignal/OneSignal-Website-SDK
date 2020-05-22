@@ -9,14 +9,13 @@ import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind
 import MainHelper from "../../../src/helpers/MainHelper";
 import Log from "../../../src/libraries/Log";
 import Database from "../../../src/services/Database";
-import { NotificationClicked } from "../../../src/models/Notification";
-import Random from "../../support/tester/Random";
 import timemachine from "timemachine";
-import { setupReceivedNotifications, OUTCOME_NAME, generateNotification } from '../helpers1/OutcomeHelper';
+import OutcomeTestHelper from '../helpers1/OutcomeTestHelper';
 import { SentUniqueOutcome } from '../../../src/models/Outcomes';
 import { isArrayContentsEqual } from '../../support/tester/utils';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
+const OUTCOME_NAME="test_outcome";
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize();
@@ -88,7 +87,7 @@ test("when outcome is unattributed and feature disabled there are no api calls",
 });
 
 test("when outcome is direct and feature enabled it sends an api call", async t => {
-  const notificationClicked = generateNotification();
+  const notificationClicked = OutcomeTestHelper.generateNotification();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -110,7 +109,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
   OneSignal.config!.userConfig.outcomes!.indirect.enabled = false;
   OneSignal.config!.userConfig.outcomes!.unattributed.enabled = false;
 
-  const notificationClicked = generateNotification();
+  const notificationClicked = OutcomeTestHelper.generateNotification();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -121,7 +120,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
 });
 
 test("when outcome is indirect and feature enabled it sends an api call", async t => {
-  const receivedNotificationIdsWithinTimeframe = await setupReceivedNotifications();
+  const receivedNotificationIdsWithinTimeframe = await OutcomeTestHelper.setupReceivedNotifications();
 
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -145,7 +144,7 @@ test("when outcome is indirect and feature disabled there are no api calls", asy
   OneSignal.config!.userConfig.outcomes!.indirect.enabled = false;
   OneSignal.config!.userConfig.outcomes!.unattributed.enabled = false;
 
-  await setupReceivedNotifications();
+  await OutcomeTestHelper.setupReceivedNotifications();
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
@@ -156,7 +155,7 @@ test("when outcome is indirect and feature disabled there are no api calls", asy
 
 
 test("when direct outcome is sent twice, there is only one api call", async t => {
-  const notificationClicked = generateNotification();
+  const notificationClicked = OutcomeTestHelper.generateNotification();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   const logSpy = sinonSandbox.stub(Log, "warn");
@@ -170,7 +169,7 @@ test("when direct outcome is sent twice, there is only one api call", async t =>
 });
 
 test("when indirect outcome is sent twice, there is only one api call", async t => {
-  await setupReceivedNotifications();
+  await OutcomeTestHelper.setupReceivedNotifications();
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   const logSpy = sinonSandbox.stub(Log, "warn");
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -183,13 +182,13 @@ test("when indirect outcome is sent twice, there is only one api call", async t 
 });
 
 test("indirect outcome sent -> receive new notification -> indirect outcome sent, there are two api calls", async t => {
-  await setupReceivedNotifications();
+  await OutcomeTestHelper.setupReceivedNotifications();
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   const logSpy = sinonSandbox.stub(Log, "warn");
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
-  await setupReceivedNotifications();
+  await OutcomeTestHelper.setupReceivedNotifications();
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 2);
@@ -197,7 +196,8 @@ test("indirect outcome sent -> receive new notification -> indirect outcome sent
 });
 
 test("when unattributed outcome is sent twice, there is only one api call", async t => {
-  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
+  await OutcomeTestHelper.initializeSession();
+  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves(true);
   const logSpy = sinonSandbox.stub(Log, "warn");
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
@@ -208,13 +208,13 @@ test("when unattributed outcome is sent twice, there is only one api call", asyn
   t.is(logSpy.callCount, 1);
 });
 
-test("when session ends between unattributed outcome sends, there are two api calls", async t => {
-  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
+test("when new session starts between unattributed outcome sends, there are two api calls", async t => {
+  const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves(true);
   const logSpy = sinonSandbox.stub(Log, "warn");
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
-  await Database.resetSentUniqueOutcomes();   // end session
+  await OutcomeTestHelper.initializeSession();
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   t.is(apiSpy.callCount, 2);
@@ -222,15 +222,16 @@ test("when session ends between unattributed outcome sends, there are two api ca
 });
 
 test("attribution of an outcome with multiple notifications happens correctly", async t => {
+  sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves(true);
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
 
   const notificationArr = [];
-  let notificationReceived = generateNotification();
+  let notificationReceived = OutcomeTestHelper.generateNotification();
   notificationArr.push(notificationReceived.notificationId);
   await Database.put("NotificationReceived", notificationReceived);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
-  notificationReceived = generateNotification();
+  notificationReceived = OutcomeTestHelper.generateNotification();
   notificationArr.push(notificationReceived.notificationId);
   await Database.put("NotificationReceived", notificationReceived);
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);

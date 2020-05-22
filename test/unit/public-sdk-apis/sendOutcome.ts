@@ -9,12 +9,11 @@ import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind
 import MainHelper from "../../../src/helpers/MainHelper";
 import Log from "../../../src/libraries/Log";
 import Database from "../../../src/services/Database";
-import { NotificationClicked } from "../../../src/models/Notification";
-import Random from "../../support/tester/Random";
 import timemachine from "timemachine";
-import { setupReceivedNotifications, OUTCOME_NAME, generateNotification } from '../helpers1/OutcomeHelper';
+import OutcomeTestHelper from '../helpers1/OutcomeTestHelper';
 
 const OUTCOME_WEIGHT = 55.6;
+const OUTCOME_NAME="test_outcome";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -112,7 +111,7 @@ test("when outcome is unattributed and feature enabled and has weight it sends a
 });
 
 test("when outcome is direct and feature enabled it sends an api call", async t => {
-  const notificationClicked = generateNotification();
+  const notificationClicked = OutcomeTestHelper.generateNotification();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -135,7 +134,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
   OneSignal.config!.userConfig.outcomes!.indirect.enabled = false;
   OneSignal.config!.userConfig.outcomes!.unattributed.enabled = false;
 
-  const notificationClicked = generateNotification();
+  const notificationClicked = OutcomeTestHelper.generateNotification();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -146,7 +145,7 @@ test("when outcome is direct and feature disabled there are no api calls", async
 });
 
 test("when outcome is direct and feature enabled and has weight it sends an api call", async t => {
-  const notificationClicked = generateNotification();
+  const notificationClicked = OutcomeTestHelper.generateNotification();
   await Database.put("NotificationClicked", notificationClicked);
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -165,7 +164,7 @@ test("when outcome is direct and feature enabled and has weight it sends an api 
 });
 
 test("when outcome is indirect and feature enabled it sends an api call", async t => {
-  const receivedNotificationIdsWithinTimeframe = await setupReceivedNotifications();
+  const receivedNotificationIdsWithinTimeframe = await OutcomeTestHelper.setupReceivedNotifications();
 
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
@@ -190,7 +189,7 @@ test("when outcome is indirect and feature disabled there are no api calls", asy
   OneSignal.config!.userConfig.outcomes!.indirect.enabled = false;
   OneSignal.config!.userConfig.outcomes!.unattributed.enabled = false;
 
-  await setupReceivedNotifications();
+  await OutcomeTestHelper.setupReceivedNotifications();
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);
@@ -200,7 +199,7 @@ test("when outcome is indirect and feature disabled there are no api calls", asy
 });
 
 test("when outcome is indirect and feature enabled and has weight it sends an api call", async t => {
-  const receivedNotificationIdsWithinTimeframe = await setupReceivedNotifications();
+  const receivedNotificationIdsWithinTimeframe = await OutcomeTestHelper.setupReceivedNotifications();
   const apiSpy = sinonSandbox.stub(OneSignalApiShared, "sendOutcome").resolves();
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
   sinonSandbox.stub(MainHelper, "getCurrentNotificationType").resolves(SubscriptionStateKind.Subscribed);

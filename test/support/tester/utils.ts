@@ -119,9 +119,7 @@ export function isArrayContentsEqual<T>(arr1:Array<T>, arr2:Array<T>){
   if (arr1.length !== arr2.length) {
     return false;
   }
-
-  arr1.sort();
-  arr2.sort();
+  [arr1, arr2] = [arr1, arr2].map(x => x.sort());
 
   for (let i=0; i<arr1.length; i++) {
     if (arr1[i] !== arr2[i]) {
