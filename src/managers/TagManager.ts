@@ -4,23 +4,29 @@ import { TagsObject } from '../models/Tags';
 export default class TagManager {
     private tags: TagsObject = {};
 
-    public async tagFetchWithRetries(ms: number, maxTries: number): Promise<Object> {
+    public async tagHelperWithRetries(callback:Function, ms: number, maxTries: number): Promise<Object> {
         return  new Promise(async (resolve, reject) => {
-            OneSignal.getTags()
-            .then(resolve)
-            .catch(()=>{
-                if(!maxTries) return reject('Could not fetch tags');
-                setTimeout(()=>{
-                    Log.debug("Retrying getTags");
-                    this.tagFetchWithRetries(ms, maxTries-1).then(resolve);
-                }, ms);
+            callback().then(resolve)
+            .catch( e => {
+                if(!maxTries) {
+                    reject(new Error(`Could not execute tag request:${e}`));
+                } else {
+                    setTimeout(() => {
+                        Log.debug("Retrying tag request");
+                        this.tagHelperWithRetries(callback, ms, maxTries-1).then(resolve);
+                    }, ms);
+                }
             });
         });
     }
 
-    public async syncTags(): Promise<void> {
+    public async syncTags(): Promise<TagsObject|null> {
         Log.info("Updating tags from Category Slidedown:", this.tags);
-        await OneSignal.sendTags(this.tags); // TO DO: retries?
+        try {
+            return await this.tagHelperWithRetries(OneSignal.sendTags.bind(this, this.tags), 1000, 5) as TagsObject;
+        } catch (e) {
+            return null;
+        }
     }
 
     public storeTagValuesToUpdate(): void {
