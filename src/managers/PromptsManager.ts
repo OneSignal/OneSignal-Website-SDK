@@ -36,10 +36,12 @@ export interface AutoPromptOptions {
 export class PromptsManager {
   private isAutoPromptShowing: boolean;
   private context: ContextInterface;
+  private eventHooksInstalled: boolean;
 
   constructor(context: ContextInterface) {
     this.isAutoPromptShowing = false;
     this.context = context;
+    this.eventHooksInstalled = false;
   }
 
   private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
@@ -193,7 +195,9 @@ export class PromptsManager {
     const slideDownOptions: SlidedownPermissionMessageOptions =
       MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
 
-    this.installEventHooksForSlidedown();
+    if (!this.eventHooksInstalled) {
+      this.installEventHooksForSlidedown();
+    }
 
     OneSignal.slidedown = new Slidedown(slideDownOptions);
     if (categoryOptions && categoryOptions.tags && categoryOptions.tags.length > 0) {
@@ -208,19 +212,19 @@ export class PromptsManager {
         // TO DO: remove promise simulating slow connection
         existingTags = await new Promise(resolve=>{
           setTimeout(()=>{
-            resolve(OneSignal.context.tagManager.tagFetchWithRetries(1000, 5));
-          },3000);
+            resolve(OneSignal.context.tagManager.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
+          },0);
         });
       }
       taggingContainer.mount(categoryOptions.tags, existingTags);
-    } else {
-      await OneSignal.slidedown.create();
     }
+
     await OneSignal.slidedown.create();
     Log.debug('Showing Slidedown(Slidedown).');
   }
 
   public installEventHooksForSlidedown(): void {
+    this.eventHooksInstalled = true;
     manageNotifyButtonStateWhileSlidedownShows();
 
     OneSignal.emitter.once(Slidedown.EVENTS.SHOWN, () => {
@@ -229,23 +233,31 @@ export class PromptsManager {
     OneSignal.emitter.once(Slidedown.EVENTS.CLOSED, () => {
       this.isAutoPromptShowing = false;
     });
-    OneSignal.emitter.once(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       OneSignal.context.tagManager.storeTagValuesToUpdate();
+      const subscriptionState = await OneSignal.context.subscriptionManager.getSubscriptionState();
+
+      if (subscriptionState.subscribed) {
+        // Sync Category Slidedown tags
+        OneSignal.slidedown.saveState();
+        const tags = await OneSignal.context.tagManager.syncTags();
+
+        if (!tags) {
+          // Display tag update error
+          Log.warn(`OneSignal: couldn't update tags`);
+          return;
+        }
+      } else {
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept, slidedown: true };
+        InitHelper.registerForPushNotifications(options);
+      }
 
       if (OneSignal.slidedown) {
         OneSignal.slidedown.close();
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-
-      if (await OneSignal.context.subscriptionManager.getSubscriptionState().subscribed) {
-        // Sync Category Slidedown tags
-        await OneSignal.context.tagManager.syncTags();
-      } else {
-        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = { autoAccept, slidedown: true };
-        InitHelper.registerForPushNotifications(options);
-      }
     });
     OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the slidedown to the user again.");
