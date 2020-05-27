@@ -5,11 +5,11 @@ export default class TagManager {
     private tags: TagsObject = {};
 
     public async tagHelperWithRetries(callback:Function, ms: number, maxTries: number): Promise<Object> {
-        return  new Promise(async (resolve, reject) => {
+        return  new Promise(async resolve => {
             callback().then(resolve)
-            .catch( e => {
+            .catch( () => {
                 if(!maxTries) {
-                    reject(new Error(`Could not execute tag request:${e}`));
+                    resolve();
                 } else {
                     setTimeout(() => {
                         Log.debug("Retrying tag request");
@@ -22,11 +22,7 @@ export default class TagManager {
 
     public async syncTags(): Promise<TagsObject|null> {
         Log.info("Updating tags from Category Slidedown:", this.tags);
-        try {
-            return await this.tagHelperWithRetries(OneSignal.sendTags.bind(this, this.tags), 1000, 5) as TagsObject;
-        } catch (e) {
-            return null;
-        }
+        return await this.tagHelperWithRetries(OneSignal.sendTags.bind(this, this.tags), 1000, 5) as TagsObject;
     }
 
     public storeTagValuesToUpdate(): void {
