@@ -296,6 +296,7 @@ $border-radius: 0.5em;
       &.primary {
         background: #4285f4;
         color: white !important;
+        transition: linear 75ms;
 
         &:hover {
           background: darken(#4285f4, 7.5%);

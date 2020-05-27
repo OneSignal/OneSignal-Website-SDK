@@ -234,17 +234,22 @@ export class PromptsManager {
       this.isAutoPromptShowing = false;
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      if (OneSignal.slidedown.isShowingFailureMessage) {
+        OneSignal.slidedown.toggleFailureMessage();
+      }
       OneSignal.context.tagManager.storeTagValuesToUpdate();
       const subscriptionState = await OneSignal.context.subscriptionManager.getSubscriptionState();
 
       if (subscriptionState.subscribed) {
         // Sync Category Slidedown tags
-        OneSignal.slidedown.saveState();
+        OneSignal.slidedown.toggleSaveState();
         const tags = await OneSignal.context.tagManager.syncTags();
 
         if (!tags) {
           // Display tag update error
           Log.warn(`OneSignal: couldn't update tags`);
+          OneSignal.slidedown.toggleSaveState();
+          OneSignal.slidedown.toggleFailureMessage();
           return;
         }
       } else {
