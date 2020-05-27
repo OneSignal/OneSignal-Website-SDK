@@ -307,6 +307,7 @@ $border-radius: 0.5em;
 
         &.disabled {
           background-color: #CED3D8;
+          cursor: default;
         }
 
         &.eight-width-btn {

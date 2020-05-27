@@ -112,6 +112,8 @@ export default class Slidedown {
   saveState() {
     this.allowButton.innerHTML = `Saving...<div id="saving-loading-indicator-holder" style="display: flex"></div>`;
     addDomElement(this.savingLoadingIndicatorHolder, 'beforeend', getLoadingIndicatorWithColor("#FFFFFF"));
+    (<HTMLButtonElement>this.allowButton).disabled = true;
+    addCssClass(this.allowButton, 'disabled');
     addCssClass(this.allowButton, 'onesignal-saving-state-button');
   }
 
