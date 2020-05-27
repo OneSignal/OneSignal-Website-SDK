@@ -130,6 +130,7 @@ $border-radius: 0.5em;
 
     /* When the checkbox is checked, add a blue background */
     .onesignal-category-label input:checked ~ .onesignal-checkmark {
+      transition: ease 75ms;
       background-color: #4285f4;
     }
 
@@ -307,6 +308,34 @@ $border-radius: 0.5em;
         &.disabled {
           background-color: #CED3D8;
         }
+
+        &.eight-width-btn {
+          width: 8em;
+          display: flex;
+          justify-content: center;
+        }
+
+        &.ten-width-btn {
+          width: 10em;
+          display: flex;
+          justify-content: center;
+        }
+
+        &.twelve-width-btn {
+          width: 12em;
+          display: flex;
+          justify-content: center;
+        }
+
+        &.onesignal-saving-state-button {
+          padding: 0.75em 1em;
+          background: #CED3D8;
+          transition: linear 75ms;
+        }
+      }
+
+      .saving-loading-indicator-holder {
+        display: flex;
       }
 
       &.secondary {

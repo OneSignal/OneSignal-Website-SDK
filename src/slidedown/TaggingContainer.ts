@@ -2,7 +2,7 @@ import { TagCategory, TagsObject } from '../models/Tags';
 import { addDomElement, removeDomElement, addCssClass, removeCssClass } from '../utils';
 import Log from '../libraries/Log';
 import TagManager from '../managers/TagManager';
-import LoadingIndicator from './LoadingIndicator';
+import getLoadingIndicatorWithColor from './LoadingIndicator';
 
 export default class TaggingContainer {
     private html: string = "";
@@ -22,7 +22,9 @@ export default class TaggingContainer {
 
     public load(): void {
         addCssClass("#onesignal-loading-container", 'onesignal-loading-container');
-        addDomElement("#onesignal-loading-container", 'beforeend', LoadingIndicator);
+        addDomElement("#onesignal-loading-container", 'beforeend', getLoadingIndicatorWithColor('#95A1AC'));
+        addDomElement("#onesignal-loading-container", 'beforeend',
+            `<div class="onesignal-loading-message">Fetching your preferences</div>`);
         const allowButton = document.querySelector("#onesignal-slidedown-allow-button");
         (<HTMLButtonElement>allowButton).disabled = true;
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
