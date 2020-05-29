@@ -3,8 +3,49 @@ import { NotificationClicked, NotificationReceived } from '../../models/Notifica
 import Database from "../../services/Database";
 import Log from "../../libraries/Log";
 import { Utils } from "../../context/shared/utils/Utils";
+import { logMethodCall, awaitOneSignalInitAndSupported } from '../../utils';
+
+interface OutcomeSupportedWithConfig {
+  supported: boolean;
+  outcomesConfig?: OutcomesConfig;
+}
 
 export default class OutcomesHelper {
+  static async beforeOutcomeSend(outcomeMethodString: string, outcomeName: string): Promise<OutcomeSupportedWithConfig>{
+    logMethodCall(outcomeMethodString, outcomeName);
+
+    if (!OutcomesHelper.getConfig()) {
+      Log.debug("Outcomes feature not supported by main application yet.");
+      return { supported: false };
+    }
+    if (!outcomeName) {
+      Log.error("Outcome name is required");
+      return { supported: false };
+    }
+    // TODO: check built-in outcome names? not allow sending?
+
+    await awaitOneSignalInitAndSupported();
+
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    if (!isSubscribed) {
+      Log.warn("Reporting outcomes is supported only for subscribed users.");
+      return { supported: false };
+    }
+    return {
+      supported: true,
+      outcomesConfig: OutcomesHelper.getConfig()
+    };
+  }
+  /**
+   * Returns `OutcomeAttribution` object which includes
+   *    1) attribution type
+   *    2) notification ids
+   *
+   * Note: this just looks at notifications that fall within the attribution window and
+   *       does not check if they have been previously attributed (used in both sendOutcome & sendUniqueOutcome)
+   * @param  {OutcomesConfig} outcomesConfig
+   * @returns Promise
+   */
   static async getAttribution(outcomesConfig: OutcomesConfig): Promise<OutcomeAttribution> {
     /**
      * Flow:
@@ -64,7 +105,7 @@ export default class OutcomesHelper {
           return {
             type: OutcomeAttributionType.Indirect,
             notificationIds: matchingNotificationIds,
-          }
+          };
         }
       }
     }
@@ -82,12 +123,13 @@ export default class OutcomesHelper {
       notificationIds: [],
     };
   }
+
   /**
-   * Returns array of notification ids outcome is currently attributed to
+   * Returns array of notification ids outcome is currently attributed with
    * @param  {string} outcomeName
    * @returns Promise
    */
-  static async getAttributedNotifsByOutcomeName(outcomeName: string): Promise<string[] | undefined> {
+  static async getAttributedNotifsByUniqueOutcomeName(outcomeName: string): Promise<string[]> {
     const sentOutcomes = await Database.getAll<SentUniqueOutcome>("SentUniqueOutcome");
     if (!sentOutcomes.length) {
       return [];
@@ -99,7 +141,27 @@ export default class OutcomesHelper {
       }
     }
 
-    return undefined;
+    return [];
+  }
+
+  /**
+   * Returns array of new notifications that have never been attributed to the outcome
+   * @param  {string} outcomeName
+   * @param  {string[]} notificationIds
+   */
+  static async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[], outcomeName: string) {
+    const previouslyAttributedArr: string[] = await OutcomesHelper.getAttributedNotifsByUniqueOutcomeName(outcomeName);
+
+    return notificationIds.filter(id => (!previouslyAttributedArr ||
+                                  previouslyAttributedArr && previouslyAttributedArr.indexOf(id) === -1));
+  }
+
+  static shouldSend(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
+    // we should only send if there are notifs to attribute OR type is unattributed
+    if (notifArr.length > 0 || outcomeAttribution.type === OutcomeAttributionType.Unattributed) {
+        return true;
+    }
+    return false;
   }
 
   static async saveSentUniqueOutcome(outcomeName: string, newNotificationIds: string[]): Promise<void>{
@@ -122,5 +184,9 @@ export default class OutcomesHelper {
       sentOutcome.sentDuringSession === session.startTimestamp;
     const sessionWasClearedButWasPreviouslySent = !session && sentOutcome && !!sentOutcome.sentDuringSession;
     return sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent;
+  }
+
+  static getConfig(): OutcomesConfig|undefined {
+    return OneSignal.config!.userConfig.outcomes;
   }
 }
