@@ -801,32 +801,12 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
-    logMethodCall("sendOutcome");
-    const outcomesConfig = OneSignal.config!.userConfig.outcomes;
-    if (!outcomesConfig) {
-      Log.debug("Outcomes feature not supported by main application yet.");
+    const { supported, outcomesConfig } = await OutcomesHelper.beforeOutcomeSend("sendUniqueOutcome", outcomeName);
+    if (!supported) {
       return;
     }
-    if (!outcomeName) {
-      Log.error("Outcome name is required");
-      return;
-    }
-    if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
-      Log.error("Outcome weight can only be a number if present.");
-      return;
-    }
-    // TODO: check built-in outcome names? not allow sending?
-
-    await awaitOneSignalInitAndSupported();
-
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
-    if (!isSubscribed) {
-      Log.warn("Reporting outcomes is supported only for subscribed users.");
-      return;
-    }
-
      // TODO: add error handling
-    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
+    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig!);
     switch (outcomeAttribution.type) {
       case OutcomeAttributionType.Direct:
         await OneSignal.context.updateManager.sendOutcomeDirect(
@@ -849,36 +829,22 @@ export default class OneSignal {
   }
 
   public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
-    logMethodCall("sendUniqueOutcome");
-    const outcomesConfig = OneSignal.config!.userConfig.outcomes;
-    if (!outcomesConfig) {
-      Log.debug("Outcomes feature not supported by main application yet.");
+    const { supported, outcomesConfig } = await OutcomesHelper.beforeOutcomeSend("sendUniqueOutcome", outcomeName);
+    if (!supported) {
       return;
     }
-    if (!outcomeName) {
-      Log.error("Outcome name is required");
-      return;
-    }
-
-    await awaitOneSignalInitAndSupported();
-
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
-    if (!isSubscribed) {
-      Log.warn("Reporting outcomes is supported only for subscribed users.");
-      return;
-    }
-
-    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
+    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig!);
+    // all notifs in attribution window
     const { notificationIds } = outcomeAttribution;
+    // new notifs that ought to be attributed
+    const newNotifsToAttributeWithOutcome = await OutcomesHelper.getNotifsToAttributeWithUniqueOutcome(
+      notificationIds,
+      outcomeName
+    );
 
-    const previouslyAttributedNotifArr = await OutcomesHelper.getAttributedNotifsByOutcomeName(outcomeName);
-    const newNotifsToAttributeWithOutcome = notificationIds.filter(id => (!previouslyAttributedNotifArr ||
-          previouslyAttributedNotifArr && previouslyAttributedNotifArr.indexOf(id) === -1));
-
-    if (newNotifsToAttributeWithOutcome.length === 0 &&
-      outcomeAttribution.type !== OutcomeAttributionType.Unattributed) {
-        Log.warn(`No notifications to attribute with unique outcome '${outcomeName}'.`);
-        return;
+    if(!OutcomesHelper.shouldSend(outcomeAttribution, newNotifsToAttributeWithOutcome)) {
+      Log.warn(`'${outcomeName}' was already reported for all notifications.`);
+      return;
     }
 
     switch (outcomeAttribution.type) {
