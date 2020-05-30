@@ -419,12 +419,12 @@ export default class Database {
   }
 
   async resetSentUniqueOutcomes(): Promise<void> {
-    this.getAll<SentUniqueOutcome>("SentUniqueOutcome").then(arr => {
-      arr.forEach(elem => {
-        elem.sentDuringSession = null;
-        Database.put("SentUniqueOutcome", elem);
-      });
+    const outcomes = await this.getAll<SentUniqueOutcome>("SentUniqueOutcome");
+    const promises = outcomes.map(o => {
+      o.sentDuringSession = null;
+      return Database.put("SentUniqueOutcome", o);
     });
+    await Promise.all(promises);
   }
 
   /**
