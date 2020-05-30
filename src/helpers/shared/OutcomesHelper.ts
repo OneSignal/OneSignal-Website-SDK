@@ -68,17 +68,12 @@ export default class OutcomesHelper {
    */
    async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
     const sentOutcomes = await Database.getAll<SentUniqueOutcome>("SentUniqueOutcome");
-    if (!sentOutcomes.length) {
-      return [];
-    }
-
-    for (const elem of sentOutcomes) {
-      if (elem.outcomeName === this.outcomeName) {
-        return elem.notificationIds;
-      }
-    }
-
-    return [];
+    return sentOutcomes
+      .filter(o => o.outcomeName === this.outcomeName)
+      .reduce((acc: string[], curr: SentUniqueOutcome) => {
+        const notificationIds = curr.notificationIds || [];
+        return [...acc, ...notificationIds];
+      }, []);
   }
 
   /**
@@ -103,11 +98,13 @@ export default class OutcomesHelper {
 
    async saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void>{
     const outcomeName = this.outcomeName;
-    const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
-    const existingNotificationIds = !!sentOutcome ? sentOutcome.notificationIds : [];
+    const existingSentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
+    const currentSession = await Database.getCurrentSession();
+
+    const existingNotificationIds = !!existingSentOutcome ? existingSentOutcome.notificationIds : [];
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
-    const session = await Database.getCurrentSession();
-    const timestamp = session ? session.startTimestamp : null;
+
+    const timestamp = currentSession ? currentSession.startTimestamp : null;
     await Database.put("SentUniqueOutcome", {
       outcomeName,
       notificationIds,
