@@ -802,13 +802,18 @@ export default class OneSignal {
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
     const outcomesHelper = new OutcomesHelper(outcomeName);
+    if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
+      Log.error("Outcome weight can only be a number if present.");
+      return;
+    }
 
     if (!await outcomesHelper.beforeOutcomeSend("sendOutcome")) {
       return;
     }
+
     const outcomeAttribution = await outcomesHelper.getAttribution();
 
-    outcomesHelper.send({
+    await outcomesHelper.send({
       type: outcomeAttribution.type,
       notificationIds: outcomeAttribution.notificationIds,
       isUnique: false,
@@ -833,7 +838,7 @@ export default class OneSignal {
       return;
     }
 
-    outcomesHelper.send({
+    await outcomesHelper.send({
       type: outcomeAttribution.type,
       notificationIds: newNotifsToAttributeWithOutcome,
       isUnique: true,
