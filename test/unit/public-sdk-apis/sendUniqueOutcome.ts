@@ -1,4 +1,5 @@
 import test from "ava";
+import _ from "lodash";
 import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
@@ -12,7 +13,6 @@ import Database from "../../../src/services/Database";
 import timemachine from "timemachine";
 import OutcomeTestHelper from '../helpers/OutcomeTestHelper';
 import { SentUniqueOutcome } from '../../../src/models/Outcomes';
-import { isArrayContentsEqual } from '../../support/tester/utils';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const OUTCOME_NAME = "test_outcome";
@@ -237,5 +237,5 @@ test("attribution of an outcome with multiple notifications happens correctly", 
   await OneSignal.sendUniqueOutcome(OUTCOME_NAME);
 
   const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", OUTCOME_NAME);
-  t.true(isArrayContentsEqual(sentOutcome.notificationIds, notificationArr));
+  t.true(_.isEqual(sentOutcome.notificationIds, notificationArr));
 });
