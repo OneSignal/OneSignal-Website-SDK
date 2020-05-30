@@ -65,7 +65,6 @@ export default class ServiceWorkerHelper {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      Database.resetSentUniqueOutcomes();
       const appId = deviceRecord.app_id;
       const session: Session = initializeNewSession(
         { deviceId, appId, deviceType:deviceRecord.device_type }
@@ -194,7 +193,8 @@ export default class ServiceWorkerHelper {
       session.deviceId = newPlayerId;
       await Promise.all([
         Database.setDeviceId(newPlayerId),
-        Database.upsertSession(session)
+        Database.upsertSession(session),
+        Database.resetSentUniqueOutcomes()
       ]);
     }
   }
@@ -221,7 +221,8 @@ export default class ServiceWorkerHelper {
       );
     }
 
-    await Promise.all([Database.cleanupCurrentSession(),
+    await Promise.all([
+      Database.cleanupCurrentSession(),
       Database.removeAllNotificationClicked()
     ]);
     Log.debug(
