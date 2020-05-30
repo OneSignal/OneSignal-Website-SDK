@@ -13,7 +13,7 @@ import timemachine from "timemachine";
 import OutcomeTestHelper from '../helpers/OutcomeTestHelper';
 
 const OUTCOME_WEIGHT = 55.6;
-const OUTCOME_NAME="test_outcome";
+const OUTCOME_NAME = "test_outcome";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 

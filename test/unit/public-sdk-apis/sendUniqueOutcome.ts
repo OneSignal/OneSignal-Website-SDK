@@ -15,7 +15,7 @@ import { SentUniqueOutcome } from '../../../src/models/Outcomes';
 import { isArrayContentsEqual } from '../../support/tester/utils';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
-const OUTCOME_NAME="test_outcome";
+const OUTCOME_NAME = "test_outcome";
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize();
