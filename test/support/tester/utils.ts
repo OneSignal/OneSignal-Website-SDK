@@ -114,17 +114,3 @@ export function createSubscription(playerId?: string): Subscription {
   subscription.createdAt = new Date(2017, 11, 13, 2, 3, 4, 0).getTime();
   return subscription;
 }
-
-export function isArrayContentsEqual<T>(arr1:Array<T>, arr2:Array<T>){
-  if (arr1.length !== arr2.length) {
-    return false;
-  }
-  [arr1, arr2] = [arr1, arr2].map(x => x.sort());
-
-  for (let i=0; i<arr1.length; i++) {
-    if (arr1[i] !== arr2[i]) {
-      return false;
-    }
-  }
-  return true;
-}
