@@ -5,36 +5,20 @@ import Log from "../../libraries/Log";
 import { Utils } from "../../context/shared/utils/Utils";
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../../utils';
 
-interface OutcomeSupportedWithConfig {
-  supported: boolean;
-  outcomesConfig?: OutcomesConfig;
+interface OutcomeProps {
+  type: OutcomeAttributionType;
+  notificationIds: string[];
+  isUnique: boolean;
+  weight?: number|undefined;
 }
 
 export default class OutcomesHelper {
-  static async beforeOutcomeSend(outcomeMethodString: string, outcomeName: string): Promise<OutcomeSupportedWithConfig>{
-    logMethodCall(outcomeMethodString, outcomeName);
+  private outcomeName: string;
+  private config: OutcomesConfig;
 
-    if (!OutcomesHelper.getConfig()) {
-      Log.debug("Outcomes feature not supported by main application yet.");
-      return { supported: false };
-    }
-    if (!outcomeName) {
-      Log.error("Outcome name is required");
-      return { supported: false };
-    }
-    // TODO: check built-in outcome names? not allow sending?
-
-    await awaitOneSignalInitAndSupported();
-
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
-    if (!isSubscribed) {
-      Log.warn("Reporting outcomes is supported only for subscribed users.");
-      return { supported: false };
-    }
-    return {
-      supported: true,
-      outcomesConfig: OutcomesHelper.getConfig()
-    };
+  constructor(outcomeName: string) {
+    this.outcomeName = outcomeName;
+    this.config = OneSignal.config!.userConfig.outcomes;
   }
   /**
    * Returns `OutcomeAttribution` object which includes
@@ -43,85 +27,38 @@ export default class OutcomesHelper {
    *
    * Note: this just looks at notifications that fall within the attribution window and
    *       does not check if they have been previously attributed (used in both sendOutcome & sendUniqueOutcome)
-   * @param  {OutcomesConfig} outcomesConfig
    * @returns Promise
    */
-  static async getAttribution(outcomesConfig: OutcomesConfig): Promise<OutcomeAttribution> {
-    /**
-     * Flow:
-     * 1. check if the url was opened as a result of a notif;
-     * 2. if so, send an api call reporting direct notification outcome
-     *    (currently takes into account the match strategy selected in the app's settings);
-     * 3. else check all received notifs within timeframe from config;
-     * 4. send an api call reporting an influenced outcome for each matching notification
-     *    respecting the limit from config too;
-     * 5. if no influencing notification found, report unattributed outcome to the api.
-     */
+  async getAttribution(): Promise<OutcomeAttribution> {
+    return await OutcomesHelper.getAttribution(this.config);
+  }
 
-    /* direct notifications */
-    if (outcomesConfig.direct && outcomesConfig.direct.enabled) {
-      const clickedNotifications = await Database.getAll<NotificationClicked>("NotificationClicked");
-      if (clickedNotifications.length > 0) {
-        return {
-          type: OutcomeAttributionType.Direct,
-          notificationIds: [clickedNotifications[0].notificationId]
-        };
-      }
+  /**
+   * Performs logging of method call and returns whether Outcomes are supported
+   * @param  {string} outcomeMethodString
+   * @returns Promise
+   */
+  async beforeOutcomeSend(outcomeMethodString: string): Promise<boolean>{
+    logMethodCall(outcomeMethodString, this.outcomeName);
+
+    if (!this.config) {
+      Log.debug("Outcomes feature not supported by main application yet.");
+      return false;
     }
-
-    /* influencing notifications */
-    if (outcomesConfig.indirect && outcomesConfig.indirect.enabled) {
-      const timeframeMs = outcomesConfig.indirect.influencedTimePeriodMin * 60 * 1000;
-      const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
-      const maxTimestamp = beginningOfTimeframe.getTime();
-
-      const allReceivedNotification = await Database.getAll<NotificationReceived>("NotificationReceived");
-      Log.debug(`\tFound total of ${allReceivedNotification.length} received notifications`);
-
-      if (allReceivedNotification.length > 0) {
-        const max: number = outcomesConfig.indirect.influencedNotificationsLimit;
-        /**
-         * To handle correctly the case when user got subscribed to a new app id
-         * we check the appId on notifications to match the current app.
-         */
-
-        const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
-          allReceivedNotification, (notif: NotificationReceived) => notif.timestamp, true, false
-        );
-        const matchingNotificationIds = allReceivedNotificationSorted
-          .filter(notif => notif.timestamp >= maxTimestamp)
-          .slice(0, max)
-          .map(notif => notif.notificationId);
-        Log.debug(`Total of ${matchingNotificationIds.length} received notifications are within reporting window.`);
-
-        // Deleting all unmatched received notifications
-        const notificationIdsToDelete = allReceivedNotificationSorted
-          .filter(notif => matchingNotificationIds.indexOf(notif.notificationId) === -1)
-          .map(notif => notif.notificationId);
-        notificationIdsToDelete.forEach(id => Database.remove("NotificationReceived", id));
-        Log.debug(`${notificationIdsToDelete.length} received notifications will be deleted.`);
-
-        if (matchingNotificationIds.length > 0) {
-          return {
-            type: OutcomeAttributionType.Indirect,
-            notificationIds: matchingNotificationIds,
-          };
-        }
-      }
+    if (!this.outcomeName) {
+      Log.error("Outcome name is required");
+      return false;
     }
+    // TODO: check built-in outcome names? not allow sending?
 
-    /* unattributed outcome report */
-    if (outcomesConfig.unattributed && outcomesConfig.unattributed.enabled) {
-      return {
-        type: OutcomeAttributionType.Unattributed,
-        notificationIds: []
-      };
+    await awaitOneSignalInitAndSupported();
+
+    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    if (!isSubscribed) {
+      Log.warn("Reporting outcomes is supported only for subscribed users.");
+      return false;
     }
-
-    return {
-      type: OutcomeAttributionType.NotSupported,
-      notificationIds: [],
-    };
+    return true;
   }
 
   /**
@@ -129,14 +66,14 @@ export default class OutcomesHelper {
    * @param  {string} outcomeName
    * @returns Promise
    */
-  static async getAttributedNotifsByUniqueOutcomeName(outcomeName: string): Promise<string[]> {
+   async getAttributedNotifsByUniqueOutcomeName(): Promise<string[]> {
     const sentOutcomes = await Database.getAll<SentUniqueOutcome>("SentUniqueOutcome");
     if (!sentOutcomes.length) {
       return [];
     }
 
     for (const elem of sentOutcomes) {
-      if (elem.outcomeName === outcomeName) {
+      if (elem.outcomeName === this.outcomeName) {
         return elem.notificationIds;
       }
     }
@@ -149,22 +86,23 @@ export default class OutcomesHelper {
    * @param  {string} outcomeName
    * @param  {string[]} notificationIds
    */
-  static async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[], outcomeName: string) {
-    const previouslyAttributedArr: string[] = await OutcomesHelper.getAttributedNotifsByUniqueOutcomeName(outcomeName);
+   async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
+    const previouslyAttributedArr: string[] = await this.getAttributedNotifsByUniqueOutcomeName();
 
     return notificationIds.filter(id => (!previouslyAttributedArr ||
                                   previouslyAttributedArr && previouslyAttributedArr.indexOf(id) === -1));
   }
 
-  static shouldSend(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
-    // we should only send if there are notifs to attribute OR type is unattributed
-    if (notifArr.length > 0 || outcomeAttribution.type === OutcomeAttributionType.Unattributed) {
-        return true;
+  shouldSendUnique(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
+    // we should only send if type is unattributed OR there are notifs to attribute
+    if (outcomeAttribution.type === OutcomeAttributionType.Unattributed) {
+      return true;
     }
-    return false;
+    return notifArr.length > 0;
   }
 
-  static async saveSentUniqueOutcome(outcomeName: string, newNotificationIds: string[]): Promise<void>{
+   async saveSentUniqueOutcome(newNotificationIds: string[]): Promise<void>{
+    const outcomeName = this.outcomeName;
     const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
     const existingNotificationIds = !!sentOutcome ? sentOutcome.notificationIds : [];
     const notificationIds = [...existingNotificationIds, ...newNotificationIds];
@@ -177,8 +115,8 @@ export default class OutcomesHelper {
     });
   }
 
-  static async wasSentDuringSession(outcomeName: string) {
-    const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", outcomeName);
+  async wasSentDuringSession() {
+    const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", this.outcomeName);
     const session = await Database.getCurrentSession();
     const sessionExistsAndWasPreviouslySent = session && sentOutcome &&
       sentOutcome.sentDuringSession === session.startTimestamp;
@@ -186,7 +124,130 @@ export default class OutcomesHelper {
     return sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent;
   }
 
-  static getConfig(): OutcomesConfig|undefined {
-    return OneSignal.config!.userConfig.outcomes;
+  async send(outcomeProps: OutcomeProps): Promise<void>{
+    const { type, notificationIds, isUnique, weight } = outcomeProps;
+
+    switch (type) {
+      case OutcomeAttributionType.Direct:
+        if (isUnique) {
+          await this.saveSentUniqueOutcome(notificationIds);
+        }
+        await OneSignal.context.updateManager.sendOutcomeDirect(
+          OneSignal.config!.appId, notificationIds, this.outcomeName, weight
+        );
+        return;
+      case OutcomeAttributionType.Indirect:
+        if (isUnique) {
+          await this.saveSentUniqueOutcome(notificationIds);
+        }
+        await OneSignal.context.updateManager.sendOutcomeInfluenced(
+          OneSignal.config!.appId, notificationIds, this.outcomeName, weight
+        );
+        return;
+      case OutcomeAttributionType.Unattributed:
+        if (isUnique) {
+          if (await this.wasSentDuringSession()) {
+            Log.warn(`(Unattributed) unique outcome was already sent during this session`);
+            return;
+          }
+          await this.saveSentUniqueOutcome([]);
+        }
+        await OneSignal.context.updateManager.sendOutcomeUnattributed(
+          OneSignal.config!.appId, this.outcomeName, weight);
+        return;
+      default:
+        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
+        return;
+    }
+  }
+
+  // statics
+
+  /**
+   * Static method: returns `OutcomeAttribution` object which includes
+   *    1) attribution type
+   *    2) notification ids
+   *
+   * Note: this just looks at notifications that fall within the attribution window and
+   *       does not check if they have been previously attributed (used in both sendOutcome & sendUniqueOutcome)
+   * @param  {OutcomesConfig} config
+   * @returns Promise
+   */
+  static async getAttribution(config: OutcomesConfig): Promise<OutcomeAttribution> {
+    /**
+     * Flow:
+     * 1. check if the url was opened as a result of a notif;
+     * 2. if so, send an api call reporting direct notification outcome
+     *    (currently takes into account the match strategy selected in the app's settings);
+     * 3. else check all received notifs within timeframe from config;
+     * 4. send an api call reporting an influenced outcome for each matching notification
+     *    respecting the limit from config too;
+     * 5. if no influencing notification found, report unattributed outcome to the api.
+     */
+
+    /* direct notifications */
+    if (config.direct && config.direct.enabled) {
+      const clickedNotifications = await Database.getAll<NotificationClicked>("NotificationClicked");
+      if (clickedNotifications.length > 0) {
+        return {
+          type: OutcomeAttributionType.Direct,
+          notificationIds: [clickedNotifications[0].notificationId]
+        };
+      }
+    }
+
+    /* influencing notifications */
+    if (config.indirect && config.indirect.enabled) {
+      const timeframeMs = config.indirect.influencedTimePeriodMin * 60 * 1000;
+      const beginningOfTimeframe = new Date(new Date().getTime() - timeframeMs);
+      const maxTimestamp = beginningOfTimeframe.getTime();
+
+      const allReceivedNotification = await Database.getAll<NotificationReceived>("NotificationReceived");
+      Log.debug(`\tFound total of ${allReceivedNotification.length} received notifications`);
+
+      if (allReceivedNotification.length > 0) {
+        const max: number = config.indirect.influencedNotificationsLimit;
+        /**
+         * To handle correctly the case when user got subscribed to a new app id
+         * we check the appId on notifications to match the current app.
+         */
+
+        const allReceivedNotificationSorted = Utils.sortArrayOfObjects(
+          allReceivedNotification, (notif: NotificationReceived) => notif.timestamp, true, false
+        );
+        const matchingNotificationIds = allReceivedNotificationSorted
+          .filter(notif => notif.timestamp >= maxTimestamp)
+          .slice(0, max)
+          .map(notif => notif.notificationId);
+        Log.debug(`\tTotal of ${matchingNotificationIds.length} received notifications are within reporting window.`);
+
+        // Deleting all unmatched received notifications
+        const notificationIdsToDelete = allReceivedNotificationSorted
+          .filter(notif => matchingNotificationIds.indexOf(notif.notificationId) === -1)
+          .map(notif => notif.notificationId);
+        notificationIdsToDelete.forEach(id => Database.remove("NotificationReceived", id));
+        Log.debug(`\t${notificationIdsToDelete.length} received notifications will be deleted.`);
+
+        if (matchingNotificationIds.length > 0) {
+          return {
+            type: OutcomeAttributionType.Indirect,
+            notificationIds: matchingNotificationIds,
+          };
+        }
+      }
+    }
+
+    /* unattributed outcome report */
+    if (config.unattributed && config.unattributed.enabled) {
+      return {
+        type: OutcomeAttributionType.Unattributed,
+        notificationIds: []
+      };
+    }
+
+    return {
+      type: OutcomeAttributionType.NotSupported,
+      notificationIds: [],
+    };
   }
 }
