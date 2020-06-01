@@ -242,7 +242,6 @@ export class PromptsManager {
   }
 
   public installEventHooksForSlidedown(): void {
-    const { slidedown } = OneSignal;
     this.eventHooksInstalled = true;
     manageNotifyButtonStateWhileSlidedownShows();
 
@@ -253,10 +252,12 @@ export class PromptsManager {
       this.isAutoPromptShowing = false;
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      const { slidedown } = OneSignal;
       if (slidedown.isShowingFailureMessage) {
         slidedown.toggleFailureMessage();
       }
-      this.context.tagManager.storeTagValuesToUpdate();
+      const tags = TaggingContainer.getValuesFromTaggingContainer();
+      this.context.tagManager.storeTagValuesToUpdate(tags);
       const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
 
       if (isPushEnabled) {

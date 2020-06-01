@@ -74,4 +74,14 @@ export default class TaggingContainer {
             e.srcElement.setAttribute("checked", isChecked.toString());
         }
     }
+
+    static getValuesFromTaggingContainer(): TagsObject {
+        const selector = "#slidedown-body > div.tagging-container > div > label > input[type=checkbox]";
+        const inputNodeArr = document.querySelectorAll(selector);
+        const tags: TagsObject = {};
+        inputNodeArr.forEach(node => {
+            tags[(<HTMLInputElement>node).defaultValue] = (<HTMLInputElement>node).checked;
+        });
+        return tags;
+    }
 }
