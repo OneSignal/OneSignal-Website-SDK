@@ -256,9 +256,9 @@ export class PromptsManager {
         slidedown.toggleFailureMessage();
       }
       this.context.tagManager.storeTagValuesToUpdate();
-      const subscriptionState = await this.context.subscriptionManager.getSubscriptionState();
+      const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
 
-      if (subscriptionState.subscribed) {
+      if (isPushEnabled) {
         // Sync Category Slidedown tags
         OneSignal.slidedown.toggleSaveState();
         const tags = await this.context.tagManager.syncTags();
