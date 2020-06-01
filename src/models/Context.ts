@@ -15,6 +15,7 @@ import { ISessionManager } from "../managers/sessionManager/types";
 import { SessionManager } from "../managers/sessionManager/page/SessionManager";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 import TagManager from '../managers/tagManager/page/TagManager';
+import { ITagManager } from '../managers/tagManager/types';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -37,7 +38,7 @@ export default class Context implements ContextInterface {
   public updateManager: UpdateManager;
   public promptsManager: PromptsManager;
   public sessionManager: ISessionManager;
-  public tagManager: TagManager;
+  public tagManager: ITagManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;

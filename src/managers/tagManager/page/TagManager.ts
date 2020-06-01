@@ -2,8 +2,9 @@ import Log from '../../../libraries/Log';
 import { TagsObject } from '../../../models/Tags';
 import TagUtils from '../../../utils/TagUtils';
 import Context from '../../../models/Context';
+import { ITagManager } from '../types';
 
-export default class TagManager {
+export default class TagManager implements ITagManager{
     private tags: TagsObject = {};
     private context: Context;
 
