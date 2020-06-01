@@ -26,6 +26,7 @@ import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import TaggingContainer from '../slidedown/TaggingContainer';
 import TagManager from './TagManager';
 import { TagsObject } from '../models/Tags';
+import TagUtils from '../utils/TagUtils';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -212,7 +213,7 @@ export class PromptsManager {
         // updating. pull remote tags
         // TO DO: remove promise simulating slow connection
         existingTags = await new Promise(resolve => {
-            resolve(this.context.tagManager.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
+            resolve(TagUtils.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
         });
       }
       taggingContainer.mount(categoryOptions.tags, <TagsObject>existingTags);
