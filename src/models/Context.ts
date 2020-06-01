@@ -14,7 +14,7 @@ import { PromptsManager } from "../managers/PromptsManager";
 import { ISessionManager } from "../managers/sessionManager/types";
 import { SessionManager } from "../managers/sessionManager/page/SessionManager";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
-import TagManager from '../managers/TagManager';
+import TagManager from '../managers/tagManager/page/TagManager';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;

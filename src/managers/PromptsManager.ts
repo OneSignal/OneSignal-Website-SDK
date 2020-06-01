@@ -24,7 +24,6 @@ import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import TaggingContainer from '../slidedown/TaggingContainer';
-import TagManager from './TagManager';
 import { TagsObject } from '../models/Tags';
 import TagUtils from '../utils/TagUtils';
 

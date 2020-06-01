@@ -1,7 +1,6 @@
-import Log from '../libraries/Log';
-import { TagsObject } from '../models/Tags';
-import TagUtils from '../utils/TagUtils';
-import TaggingContainer from '../slidedown/TaggingContainer';
+import Log from '../../../libraries/Log';
+import { TagsObject } from '../../../models/Tags';
+import TagUtils from '../../../utils/TagUtils';
 
 export default class TagManager {
     private tags: TagsObject = {};

@@ -1,7 +1,5 @@
 import { TagCategory, TagsObject } from '../models/Tags';
 import { addDomElement, removeDomElement, addCssClass, removeCssClass } from '../utils';
-import Log from '../libraries/Log';
-import TagManager from '../managers/TagManager';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 
 export default class TaggingContainer {
