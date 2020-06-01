@@ -1,6 +1,6 @@
 import Log from "../libraries/Log";
 import OneSignalUtils from "../utils/OneSignalUtils";
-import { ContextInterface } from "../models/Context";
+import Context from "../models/Context";
 import { NotSubscribedError, NotSubscribedReason } from "../errors/NotSubscribedError";
 import MainHelper from '../helpers/MainHelper';
 import AlreadySubscribedError from '../errors/AlreadySubscribedError';
@@ -25,6 +25,7 @@ import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInf
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import TaggingContainer from '../slidedown/TaggingContainer';
 import TagManager from './TagManager';
+import { TagsObject } from '../models/Tags';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -35,10 +36,10 @@ export interface AutoPromptOptions {
 
 export class PromptsManager {
   private isAutoPromptShowing: boolean;
-  private context: ContextInterface;
+  private context: Context;
   private eventHooksInstalled: boolean;
 
-  constructor(context: ContextInterface) {
+  constructor(context: Context) {
     this.isAutoPromptShowing = false;
     this.context = context;
     this.eventHooksInstalled = false;
@@ -210,21 +211,19 @@ export class PromptsManager {
         taggingContainer.load();
         // updating. pull remote tags
         // TO DO: remove promise simulating slow connection
-        existingTags = await new Promise(resolve=>{
-          setTimeout(()=>{
-            resolve(OneSignal.context.tagManager.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
-          },0);
+        existingTags = await new Promise(resolve => {
+            resolve(this.context.tagManager.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
         });
       }
-      taggingContainer.mount(categoryOptions.tags, existingTags);
+      taggingContainer.mount(categoryOptions.tags, <TagsObject>existingTags);
     }
 
     await OneSignal.slidedown.create();
-    Log.debug('Showing Slidedown(Slidedown).');
+    Log.debug('Showing Slidedown.');
   }
 
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
-    const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
+    const promptOptions = await this.context.appConfig.userConfig.promptOptions;
     const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown && promptOptions.slidedown;
     const isUsingCategoryOptions = isUsingSlidedownOptions && promptOptions!.slidedown!.categories;
     const categoryOptions = promptOptions!.slidedown!.categories;
@@ -242,6 +241,7 @@ export class PromptsManager {
   }
 
   public installEventHooksForSlidedown(): void {
+    const { slidedown } = OneSignal;
     this.eventHooksInstalled = true;
     manageNotifyButtonStateWhileSlidedownShows();
 
@@ -252,16 +252,16 @@ export class PromptsManager {
       this.isAutoPromptShowing = false;
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      if (OneSignal.slidedown.isShowingFailureMessage) {
-        OneSignal.slidedown.toggleFailureMessage();
+      if (slidedown.isShowingFailureMessage) {
+        slidedown.toggleFailureMessage();
       }
-      OneSignal.context.tagManager.storeTagValuesToUpdate();
-      const subscriptionState = await OneSignal.context.subscriptionManager.getSubscriptionState();
+      this.context.tagManager.storeTagValuesToUpdate();
+      const subscriptionState = await this.context.subscriptionManager.getSubscriptionState();
 
       if (subscriptionState.subscribed) {
         // Sync Category Slidedown tags
         OneSignal.slidedown.toggleSaveState();
-        const tags = await OneSignal.context.tagManager.syncTags();
+        const tags = await this.context.tagManager.syncTags();
 
         if (!tags) {
           // Display tag update error
