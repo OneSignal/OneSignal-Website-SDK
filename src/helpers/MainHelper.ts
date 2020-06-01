@@ -111,9 +111,12 @@ export default class MainHelper {
       return {
         enabled: false,
         autoPrompt: false,
-        actionMessage: promptOptions.actionMessage || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-        acceptButtonText: promptOptions.acceptButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-        cancelButtonText: promptOptions.cancelButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
+        actionMessage: Utils.getValueOrDefault((!!promptOptions ? promptOptions.actionMessage : null),
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage),
+        acceptButtonText: Utils.getValueOrDefault((!!promptOptions ? promptOptions.acceptButtonText : null),
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton),
+        cancelButtonText: Utils.getValueOrDefault((!!promptOptions ? promptOptions.cancelButtonText : null),
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton),
       } as SlidedownPermissionMessageOptions;
     }
     const { categories } = promptOptions.slidedown;
