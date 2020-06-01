@@ -51,7 +51,7 @@ export default class Context implements ContextInterface {
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);
     this.sessionManager = new SessionManager(this);
-    this.tagManager = new TagManager();
+    this.tagManager = new TagManager(this);
     this.promptsManager = new PromptsManager(this);
     this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
     this.dynamicResourceLoader = new DynamicResourceLoader();
