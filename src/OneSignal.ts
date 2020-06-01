@@ -375,27 +375,7 @@ export default class OneSignal {
 
   public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
-      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      Log.error(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return;
-    }
-    const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
-    const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown && promptOptions.slidedown;
-    const isUsingCategoryOptions = isUsingSlidedownOptions && promptOptions.slidedown.categories;
-
-    if (!isUsingCategoryOptions) {
-      Log.error("OneSignal: no categories to display. Check your configuration on the OneSignal dashboard.");
-      return;
-    }
-
-    const categoryOptions = promptOptions.slidedown.categories;
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt({
-      ...options,
-      categoryOptions,
-      isInUpdateMode: true
-    });
+    await OneSignal.context.promptsManager.internalShowCategorySlidedown(options);
   }
 
   /**
@@ -409,7 +389,7 @@ export default class OneSignal {
           await InitHelper.registerForPushNotifications(options);
           return resolve();
         });
-      })
+      });
     } else
       return await InitHelper.registerForPushNotifications(options);
   }

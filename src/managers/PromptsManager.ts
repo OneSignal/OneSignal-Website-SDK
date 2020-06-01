@@ -223,6 +223,24 @@ export class PromptsManager {
     Log.debug('Showing Slidedown(Slidedown).');
   }
 
+  public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
+    const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown && promptOptions.slidedown;
+    const isUsingCategoryOptions = isUsingSlidedownOptions && promptOptions!.slidedown!.categories;
+    const categoryOptions = promptOptions!.slidedown!.categories;
+
+    if (!isUsingCategoryOptions) {
+      Log.error("OneSignal: no categories to display. Check your configuration on the OneSignal dashboard or your custom code initialization.");
+      return;
+    }
+
+    await this.internalShowSlidedownPrompt({
+      ...options,
+      categoryOptions,
+      isInUpdateMode: true
+    });
+  }
+
   public installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
     manageNotifyButtonStateWhileSlidedownShows();
