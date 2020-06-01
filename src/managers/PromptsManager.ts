@@ -215,8 +215,9 @@ export class PromptsManager {
         existingTags = await new Promise(resolve => {
             resolve(TagUtils.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
         });
+        existingTags = TagUtils.convertTagNumberValuesToBooleans(<TagsObject>existingTags);
       }
-      taggingContainer.mount(categoryOptions.tags, <TagsObject>existingTags);
+      taggingContainer.mount(categoryOptions.tags, existingTags);
     }
 
     await OneSignal.slidedown.create();

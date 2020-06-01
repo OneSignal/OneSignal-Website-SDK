@@ -33,8 +33,8 @@ export default class TaggingContainer {
     private generateHTML(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
         const checkedTagCategories = !!existingPlayerTags ?
             remoteTagCategories.map(elem => {
-                const existingTagValue = existingPlayerTags[elem.tag]; // "1"|"0"
-                elem.checked = existingTagValue === "1" ? true : false;
+                const existingTagValue = <boolean>existingPlayerTags[elem.tag];
+                elem.checked = existingTagValue;
                 return elem;
             })
             : remoteTagCategories;

@@ -24,4 +24,11 @@ export default class TagUtils {
         });
         return tags;
     }
+
+    static convertTagNumberValuesToBooleans(tags: TagsObject): TagsObject {
+        Object.keys(tags).forEach(key => {
+            tags[key] = tags[key] === "1" ? true : false;
+        });
+        return tags;
+    }
 }
