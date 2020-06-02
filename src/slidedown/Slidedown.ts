@@ -58,7 +58,7 @@ export default class Slidedown {
       this.notificationIcons = icons;
 
       // Remove any existing container
-      if (this.container) {
+      if (this.container.className.includes("onesignal-slidedown-container")) {
           removeDomElement('#onesignal-slidedown-container');
       }
       const positiveButtonText = isInUpdateMode ?
