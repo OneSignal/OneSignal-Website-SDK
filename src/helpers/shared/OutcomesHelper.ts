@@ -4,13 +4,7 @@ import Database from "../../services/Database";
 import Log from "../../libraries/Log";
 import { Utils } from "../../context/shared/utils/Utils";
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../../utils';
-
-interface OutcomeProps {
-  type: OutcomeAttributionType;
-  notificationIds: string[];
-  isUnique: boolean;
-  weight?: number|undefined;
-}
+import OutcomeProps from '../../models/OutcomeProps';
 
 export default class OutcomesHelper {
   private outcomeName: string;
