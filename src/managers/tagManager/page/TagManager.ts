@@ -5,6 +5,7 @@ import Context from '../../../models/Context';
 import { ITagManager } from '../types';
 
 export default class TagManager implements ITagManager{
+    // local tags from tagging container
     private tags: TagsObject = {};
     private context: Context;
 
@@ -22,5 +23,11 @@ export default class TagManager implements ITagManager{
 
     public storeTagValuesToUpdate(tags: TagsObject): void {
         this.tags = tags;
+    }
+
+    static async downloadTags(): Promise<TagsObject> {
+        return <TagsObject> await new Promise(resolve => {
+            resolve(TagUtils.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
+        });
     }
 }

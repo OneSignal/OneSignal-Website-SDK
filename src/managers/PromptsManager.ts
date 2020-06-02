@@ -26,6 +26,7 @@ import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import TaggingContainer from '../slidedown/TaggingContainer';
 import { TagsObject } from '../models/Tags';
 import TagUtils from '../utils/TagUtils';
+import TagManager from './tagManager/page/TagManager';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -204,17 +205,15 @@ export class PromptsManager {
     if (categoryOptions && categoryOptions.tags && categoryOptions.tags.length > 0) {
       // show slidedown with tagging container
       await OneSignal.slidedown.create(isInUpdateMode);
-      let existingTags;
+      let existingTags: TagsObject = {};
       const taggingContainer = new TaggingContainer();
 
       if (isInUpdateMode) {
         taggingContainer.load();
         // updating. pull remote tags
         // TO DO: remove promise simulating slow connection
-        existingTags = await new Promise(resolve => {
-            resolve(TagUtils.tagHelperWithRetries(OneSignal.getTags, 1000, 5));
-        });
-        existingTags = TagUtils.convertTagNumberValuesToBooleans(<TagsObject>existingTags);
+        const existingTagsAsNumbers = await TagManager.downloadTags();
+        existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
       }
       taggingContainer.mount(categoryOptions.tags, existingTags);
     }
