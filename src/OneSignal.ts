@@ -801,13 +801,19 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
-    const outcomesHelper = new OutcomesHelper(outcomeName);
+    const config = OneSignal.config!.userConfig.outcomes;
+    if (!config) {
+      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
+      return;
+    }
+
+    const outcomesHelper = new OutcomesHelper(OneSignal.config!.appId, config, outcomeName, false);
     if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
       Log.error("Outcome weight can only be a number if present.");
       return;
     }
 
-    if (!await outcomesHelper.beforeOutcomeSend("sendOutcome")) {
+    if (!await outcomesHelper.beforeOutcomeSend()) {
       return;
     }
 
@@ -816,15 +822,20 @@ export default class OneSignal {
     await outcomesHelper.send({
       type: outcomeAttribution.type,
       notificationIds: outcomeAttribution.notificationIds,
-      isUnique: false,
       weight: outcomeWeight
     });
   }
 
   public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
-    const outcomesHelper = new OutcomesHelper(outcomeName);
+    const config = OneSignal.config!.userConfig.outcomes;
+    if (!config) {
+      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
+      return;
+    }
 
-    if (!await outcomesHelper.beforeOutcomeSend("sendUniqueOutcome")) {
+    const outcomesHelper = new OutcomesHelper(OneSignal.config!.appId, config, outcomeName, true);
+
+    if (!await outcomesHelper.beforeOutcomeSend()) {
       return;
     }
     const outcomeAttribution = await outcomesHelper.getAttribution();
@@ -841,7 +852,6 @@ export default class OneSignal {
     await outcomesHelper.send({
       type: outcomeAttribution.type,
       notificationIds: newNotifsToAttributeWithOutcome,
-      isUnique: true,
     });
   }
 

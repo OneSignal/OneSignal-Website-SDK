@@ -6,13 +6,26 @@ import { Utils } from "../../context/shared/utils/Utils";
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../../utils';
 import OutcomeProps from '../../models/OutcomeProps';
 
+const SEND_OUTCOME = "sendOutcome";
+const SEND_UNIQUE_OUTCOME = "sendUniqueOutcome";
+
 export default class OutcomesHelper {
   private outcomeName: string;
   private config: OutcomesConfig;
+  private appId: string;
+  private isUnique: boolean;
 
-  constructor(outcomeName: string) {
+  /**
+   * @param  {string} appId
+   * @param  {OutcomesConfig} config - refers specifically to outcomes config
+   * @param  {boolean} isUnique
+   * @param  {string} outcomeName
+   */
+  constructor(appId: string, config: OutcomesConfig, outcomeName: string, isUnique: boolean) {
     this.outcomeName = outcomeName;
-    this.config = OneSignal.config!.userConfig.outcomes;
+    this.config = config;
+    this.appId = appId;
+    this.isUnique = isUnique;
   }
   /**
    * Returns `OutcomeAttribution` object which includes
@@ -29,16 +42,18 @@ export default class OutcomesHelper {
 
   /**
    * Performs logging of method call and returns whether Outcomes are supported
-   * @param  {string} outcomeMethodString
+   * @param  {boolean} isUnique
    * @returns Promise
    */
-  async beforeOutcomeSend(outcomeMethodString: string): Promise<boolean>{
+  async beforeOutcomeSend(): Promise<boolean>{
+    const outcomeMethodString = this.isUnique ? SEND_UNIQUE_OUTCOME : SEND_OUTCOME;
     logMethodCall(outcomeMethodString, this.outcomeName);
 
     if (!this.config) {
       Log.debug("Outcomes feature not supported by main application yet.");
       return false;
     }
+
     if (!this.outcomeName) {
       Log.error("Outcome name is required");
       return false;
@@ -121,27 +136,27 @@ export default class OutcomesHelper {
   }
 
   async send(outcomeProps: OutcomeProps): Promise<void>{
-    const { type, notificationIds, isUnique, weight } = outcomeProps;
+    const { type, notificationIds, weight } = outcomeProps;
 
     switch (type) {
       case OutcomeAttributionType.Direct:
-        if (isUnique) {
+        if (this.isUnique) {
           await this.saveSentUniqueOutcome(notificationIds);
         }
         await OneSignal.context.updateManager.sendOutcomeDirect(
-          OneSignal.config!.appId, notificationIds, this.outcomeName, weight
+          this.appId, notificationIds, this.outcomeName, weight
         );
         return;
       case OutcomeAttributionType.Indirect:
-        if (isUnique) {
+        if (this.isUnique) {
           await this.saveSentUniqueOutcome(notificationIds);
         }
         await OneSignal.context.updateManager.sendOutcomeInfluenced(
-          OneSignal.config!.appId, notificationIds, this.outcomeName, weight
+          this.appId, notificationIds, this.outcomeName, weight
         );
         return;
       case OutcomeAttributionType.Unattributed:
-        if (isUnique) {
+        if (this.isUnique) {
           if (await this.wasSentDuringSession()) {
             Log.warn(`(Unattributed) unique outcome was already sent during this session`);
             return;
@@ -149,7 +164,7 @@ export default class OutcomesHelper {
           await this.saveSentUniqueOutcome([]);
         }
         await OneSignal.context.updateManager.sendOutcomeUnattributed(
-          OneSignal.config!.appId, this.outcomeName, weight);
+          this.appId, this.outcomeName, weight);
         return;
       default:
         Log.warn("You are on a free plan. Please upgrade to use this functionality.");
