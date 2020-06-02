@@ -78,8 +78,7 @@ export default class OutcomesHelper {
    async getNotifsToAttributeWithUniqueOutcome(notificationIds: string[]) {
     const previouslyAttributedArr: string[] = await this.getAttributedNotifsByUniqueOutcomeName();
 
-    return notificationIds.filter(id => (!previouslyAttributedArr ||
-                                  previouslyAttributedArr && previouslyAttributedArr.indexOf(id) === -1));
+    return notificationIds.filter(id => (previouslyAttributedArr.indexOf(id) === -1));
   }
 
   shouldSendUnique(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
