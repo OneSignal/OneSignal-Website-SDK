@@ -120,10 +120,10 @@ export default class MainHelper {
       } as SlidedownPermissionMessageOptions;
     }
     const { categories } = promptOptions.slidedown;
-    const positiveUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.positiveButton : null),
-      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveButton);
-    const negativeUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.negativeButton : null),
-      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeButton);
+    const positiveUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.positiveUpdateButton : null),
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton);
+    const negativeUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.negativeUpdateButton : null),
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton);
 
     return {
       enabled: promptOptions.slidedown.enabled,

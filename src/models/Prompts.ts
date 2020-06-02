@@ -121,7 +121,7 @@ export interface AppUserConfigNotifyButton {
 }
 
 export interface Categories {
-  positiveButton?: string;
-  negativeButton?: string;
-  tags: Array<TagCategory>;
+  positiveUpdateButton?: string;
+  negativeUpdateButton?: string;
+  tags: TagCategory[];
 }

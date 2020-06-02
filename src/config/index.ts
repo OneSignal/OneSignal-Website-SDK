@@ -14,7 +14,7 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   acceptButton: "Allow",
   cancelButton: "Cancel",
   categoryDefaults: {
-    positiveButton: "Save Preferences",
-    negativeButton: "Cancel"
+    positiveUpdateButton: "Save Preferences",
+    negativeUpdateButton: "Cancel"
   }
 };

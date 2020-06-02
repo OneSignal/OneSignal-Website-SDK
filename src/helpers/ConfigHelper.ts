@@ -298,9 +298,10 @@ export class ConfigHelper {
     let positiveUpdateButtonText, negativeUpdateButtonText;
     if (staticPrompts.slidedown.categories) {
       positiveUpdateButtonText = Utils.getValueOrDefault(staticPrompts.slidedown.categories.positiveButton,
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveButton);
-      negativeUpdateButtonText = Utils.getValueOrDefault(staticPrompts.slidedown.categories.negativeButton,
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeButton);
+      positiveUpdateButtonText = Utils.getValueOrDefault(staticPrompts.slidedown.categories.positiveUpdateButton,
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton);
+      negativeUpdateButtonText = Utils.getValueOrDefault(staticPrompts.slidedown.categories.negativeUpdateButton,
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton);
     }
 
     const slidedown = {
