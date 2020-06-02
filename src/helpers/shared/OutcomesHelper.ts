@@ -114,10 +114,16 @@ export default class OutcomesHelper {
 
   async wasSentDuringSession() {
     const sentOutcome = await Database.get<SentUniqueOutcome>("SentUniqueOutcome", this.outcomeName);
+
+    if (!sentOutcome) {
+      return false;
+    }
+
     const session = await Database.getCurrentSession();
-    const sessionExistsAndWasPreviouslySent = session && sentOutcome &&
-      sentOutcome.sentDuringSession === session.startTimestamp;
-    const sessionWasClearedButWasPreviouslySent = !session && sentOutcome && !!sentOutcome.sentDuringSession;
+
+    const sessionExistsAndWasPreviouslySent = session && sentOutcome.sentDuringSession === session.startTimestamp;
+    const sessionWasClearedButWasPreviouslySent = !session && !!sentOutcome.sentDuringSession;
+
     return sessionExistsAndWasPreviouslySent || sessionWasClearedButWasPreviouslySent;
   }
 
