@@ -413,9 +413,18 @@ export function getPlatformNotificationIcon(notificationIcons: NotificationIcons
 
 export function getDomElementOrStub(selector: string): Element {
   const foundElement = document.querySelector(selector);
-  if(!foundElement) {
-    Log.error(`No instance of ${selector} found. Returning stub.`);
-    return new Element();
+  if (!foundElement) {
+    Log.warn(`No instance of ${selector} found. Returning empty div stub.`);
+    return document.createElement('div');
   }
   return foundElement;
+}
+
+export function getAllDomElementsOrStub(selector: string): NodeList {
+  const foundElementList = document.querySelectorAll(selector);
+  if (!foundElementList) {
+    Log.warn(`No instance of ${selector} found. Returning empty div stub.`);
+    return new NodeList();
+  }
+  return foundElementList;
 }

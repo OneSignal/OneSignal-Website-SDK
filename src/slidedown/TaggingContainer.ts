@@ -1,5 +1,5 @@
 import { TagCategory, TagsObject } from '../models/Tags';
-import { addDomElement, removeDomElement, addCssClass, removeCssClass } from '../utils';
+import { addDomElement, removeDomElement, addCssClass, removeCssClass, getDomElementOrStub, getAllDomElementsOrStub } from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 
 export default class TaggingContainer {
@@ -12,8 +12,7 @@ export default class TaggingContainer {
             this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
         }
         removeCssClass("#onesignal-slidedown-allow-button", 'disabled');
-        removeCssClass("#onesignal-loading-container", 'onesignal-loading-container');
-        const allowButton = document.querySelector("#onesignal-slidedown-allow-button");
+        const allowButton = getDomElementOrStub("#onesignal-slidedown-allow-button");
         (<HTMLButtonElement>allowButton).disabled = false;
         removeDomElement("#onesignal-loading-container");
     }
@@ -23,7 +22,7 @@ export default class TaggingContainer {
         addDomElement("#onesignal-loading-container", 'beforeend', getLoadingIndicatorWithColor('#95A1AC'));
         addDomElement("#onesignal-loading-container", 'beforeend',
             `<div class="onesignal-loading-message">Fetching your preferences</div>`);
-        const allowButton = document.querySelector("#onesignal-slidedown-allow-button");
+        const allowButton = getDomElementOrStub("#onesignal-slidedown-allow-button");
         (<HTMLButtonElement>allowButton).disabled = true;
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
@@ -63,7 +62,7 @@ export default class TaggingContainer {
     }
 
     private get taggingContainer(){
-        return document.querySelector("#slidedown-body > div.tagging-container");
+        return getDomElementOrStub("#slidedown-body > div.tagging-container");
     }
 
     private toggleCheckedTag(e: Event) {
@@ -75,7 +74,7 @@ export default class TaggingContainer {
 
     static getValuesFromTaggingContainer(): TagsObject {
         const selector = "#slidedown-body > div.tagging-container > div > label > input[type=checkbox]";
-        const inputNodeArr = document.querySelectorAll(selector);
+        const inputNodeArr = getAllDomElementsOrStub(selector);
         const tags: TagsObject = {};
         inputNodeArr.forEach(node => {
             tags[(<HTMLInputElement>node).defaultValue] = (<HTMLInputElement>node).checked;
