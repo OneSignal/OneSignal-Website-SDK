@@ -58,7 +58,6 @@ export default class OutcomesHelper {
       Log.error("Outcome name is required");
       return false;
     }
-    // TODO: check built-in outcome names? not allow sending?
 
     await awaitOneSignalInitAndSupported();
 
