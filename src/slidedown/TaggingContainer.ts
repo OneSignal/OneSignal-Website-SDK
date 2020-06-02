@@ -1,5 +1,11 @@
 import { TagCategory, TagsObject } from '../models/Tags';
-import { addDomElement, removeDomElement, addCssClass, removeCssClass, getDomElementOrStub, getAllDomElementsOrStub } from '../utils';
+import {
+    addDomElement,
+    removeDomElement,
+    addCssClass,
+    removeCssClass,
+    getDomElementOrStub,
+    getAllDomElementsOrStub } from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 
 export default class TaggingContainer {
