@@ -2,9 +2,15 @@ import bowser from 'bowser';
 
 import Event from '../Event';
 import MainHelper from '../helpers/MainHelper';
-import { addCssClass, addDomElement, getPlatformNotificationIcon, once, removeDomElement, removeCssClass } from '../utils';
+import {
+  addCssClass,
+  addDomElement,
+  getPlatformNotificationIcon,
+  once,
+  removeDomElement,
+  removeCssClass,
+  getDomElementOrStub } from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
-import TaggingContainer from './TaggingContainer';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 import getDialogHTML from './DialogHTML';
@@ -118,6 +124,9 @@ export default class Slidedown {
     }, true);
   }
 
+  /**
+   * only used with Category Slidedown
+   */
   toggleSaveState() {
     if (!this.isInSaveState) {
       this.allowButton.innerHTML = `Saving...<div id="saving-loading-indicator-holder" style="display: flex"></div>`;
@@ -126,7 +135,8 @@ export default class Slidedown {
       addCssClass(this.allowButton, 'disabled');
       addCssClass(this.allowButton, 'onesignal-saving-state-button');
     } else {
-      this.allowButton.innerHTML = this.options.positiveUpdateButtonText;
+      // positiveUpdateButtonText should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
+      this.allowButton.innerHTML = this.options.positiveUpdateButtonText!;
       removeDomElement('#saving-loading-indicator-holder');
       (<HTMLButtonElement>this.allowButton).disabled = false;
       removeCssClass(this.allowButton, 'disabled');
@@ -149,27 +159,27 @@ export default class Slidedown {
   }
 
   get container() {
-    return document.querySelector('#onesignal-slidedown-container');
+    return getDomElementOrStub('#onesignal-slidedown-container');
   }
 
   get dialog() {
-    return document.querySelector('#onesignal-slidedown-dialog');
+    return getDomElementOrStub('#onesignal-slidedown-dialog');
   }
 
   get allowButton() {
-    return document.querySelector('#onesignal-slidedown-allow-button');
+    return getDomElementOrStub('#onesignal-slidedown-allow-button');
   }
 
   get cancelButton() {
-    return document.querySelector('#onesignal-slidedown-cancel-button');
+    return getDomElementOrStub('#onesignal-slidedown-cancel-button');
   }
 
   get savingLoadingIndicatorHolder() {
-    return document.querySelector('#saving-loading-indicator-holder');
+    return getDomElementOrStub('#saving-loading-indicator-holder');
   }
 
   get slidedownFooter() {
-    return document.querySelector('#slidedown-footer');
+    return getDomElementOrStub('#slidedown-footer');
   }
 }
 
