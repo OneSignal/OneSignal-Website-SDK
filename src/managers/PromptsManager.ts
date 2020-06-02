@@ -245,10 +245,10 @@ export class PromptsManager {
     this.eventHooksInstalled = true;
     manageNotifyButtonStateWhileSlidedownShows();
 
-    OneSignal.emitter.once(Slidedown.EVENTS.SHOWN, () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.isAutoPromptShowing = true;
     });
-    OneSignal.emitter.once(Slidedown.EVENTS.CLOSED, () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this.isAutoPromptShowing = false;
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
