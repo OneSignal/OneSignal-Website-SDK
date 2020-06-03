@@ -129,7 +129,7 @@ export default class Slidedown {
    */
   toggleSaveState() {
     if (!this.isInSaveState) {
-      this.allowButton.innerHTML = `Saving...<div id="saving-loading-indicator-holder" style="display: flex"></div>`;
+      this.allowButton.innerHTML = `Saving...<div id="saving-loading-indicator-holder" class="saving-loading-indicator-holder"></div>`;
       addDomElement(this.savingLoadingIndicatorHolder, 'beforeend', getLoadingIndicatorWithColor("#FFFFFF"));
       (<HTMLButtonElement>this.allowButton).disabled = true;
       addCssClass(this.allowButton, 'disabled');

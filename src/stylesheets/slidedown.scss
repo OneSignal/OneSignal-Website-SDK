@@ -172,6 +172,10 @@ $border-radius: 0.5em;
         margin-top: .8125em;
       }
     }
+
+    .saving-loading-indicator-holder {
+      display: flex;
+    }
   }
 
   #blocked-slidedown {
@@ -336,7 +340,7 @@ $border-radius: 0.5em;
         }
       }
 
-      .saving-loading-indicator-holder {
+      &.saving-loading-indicator-holder {
         display: flex;
       }
 
