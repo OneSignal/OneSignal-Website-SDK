@@ -236,7 +236,6 @@ export class PromptsManager {
     await this.internalShowSlidedownPrompt({
       ...options,
       categoryOptions,
-      isInUpdateMode: true
     });
   }
 
