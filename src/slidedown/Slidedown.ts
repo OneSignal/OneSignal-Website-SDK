@@ -147,7 +147,8 @@ export default class Slidedown {
 
   toggleFailureMessage() {
     if (!this.isShowingFailureMessage) {
-      addDomElement(this.slidedownFooter, 'afterbegin', `<div id="failure-message" class="onesignal-tag-failure-message">Updating failed</div>`);
+      const { failureMessage } = SERVER_CONFIG_DEFAULTS_SLIDEDOWN;
+      addDomElement(this.slidedownFooter, 'afterbegin', `<div id="failure-message" class="onesignal-tag-failure-message">${failureMessage}</div>`);
     } else {
       removeDomElement('#failure-message');
     }

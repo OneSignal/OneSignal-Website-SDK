@@ -16,5 +16,6 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   categoryDefaults: {
     positiveUpdateButton: "Save Preferences",
     negativeUpdateButton: "Cancel"
-  }
+  },
+  failureMessage: "Updating failed"
 };
