@@ -33,7 +33,7 @@ export default class TaggingContainer {
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
 
-    private generateHTML(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
+    private generateHTML(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject): void {
         const checkedTagCategories = !!existingPlayerTags ?
             remoteTagCategories.map(elem => {
                 const existingTagValue = <boolean>existingPlayerTags[elem.tag];
