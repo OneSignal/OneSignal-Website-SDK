@@ -386,6 +386,12 @@ $border-radius: 0.5em;
       clear: both;
       visibility: hidden;
     }
+
+    .onesignal-tag-failure-message {
+      display: flex;
+      float:left;
+      color:red;
+    }
   }
 }
 

@@ -147,7 +147,7 @@ export default class Slidedown {
 
   toggleFailureMessage() {
     if (!this.isShowingFailureMessage) {
-      addDomElement(this.slidedownFooter, 'afterbegin', `<div id="failure-message" style="display: flex; float:left; color:red;">Updating failed</div>`);
+      addDomElement(this.slidedownFooter, 'afterbegin', `<div id="failure-message" class="onesignal-tag-failure-message">Updating failed</div>`);
     } else {
       removeDomElement('#failure-message');
     }
