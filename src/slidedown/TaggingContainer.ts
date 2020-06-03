@@ -45,15 +45,15 @@ export default class TaggingContainer {
         const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
         let innerHtml = `<div class="tagging-container-col">`;
 
-        for (const elem of firstColumnArr) {
+        firstColumnArr.forEach(elem => {
             innerHtml+=this.getCategoryLabelHtml(elem);
-        }
+        });
 
         innerHtml+=`</div><div class="tagging-container-col">`;
 
-        for (const elem of secondColumnArr) {
+        secondColumnArr.forEach(elem => {
             innerHtml+=this.getCategoryLabelHtml(elem);
-        }
+        });
 
         this.html = `<div class="tagging-container">${innerHtml}</div></div>`;
     }
