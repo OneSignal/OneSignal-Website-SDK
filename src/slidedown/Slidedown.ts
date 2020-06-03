@@ -40,7 +40,6 @@ export default class Slidedown {
     this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
     this.options.positiveUpdateButtonText = options.positiveUpdateButtonText ?
       options.positiveUpdateButtonText.substring(0, 16):
-      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveButton;
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
     this.options.negativeUpdateButtonText = options.negativeUpdateButtonText?
       options.negativeUpdateButtonText.substring(0, 16):
