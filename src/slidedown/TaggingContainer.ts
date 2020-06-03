@@ -72,9 +72,10 @@ export default class TaggingContainer {
     }
 
     private toggleCheckedTag(e: Event) {
-        if (e.srcElement && e.srcElement.getAttribute("type") === "checkbox") {
-            const isChecked = (<HTMLInputElement>e.srcElement).checked;
-            e.srcElement.setAttribute("checked", isChecked.toString());
+        const target = (<HTMLInputElement>e.target);
+        if (target && target.getAttribute("type") === "checkbox") {
+            const isChecked = target.checked;
+            target.setAttribute("checked", isChecked.toString());
         }
     }
 
