@@ -97,7 +97,8 @@ export default class OutcomesHelper {
 
   shouldSendUnique(outcomeAttribution: OutcomeAttribution, notifArr: string[]) {
     // we should only send if type is unattributed OR there are notifs to attribute
-    if (outcomeAttribution.type === OutcomeAttributionType.Unattributed) {
+    if (outcomeAttribution.type === OutcomeAttributionType.Unattributed ||
+        outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
       return true;
     }
     return notifArr.length > 0;
