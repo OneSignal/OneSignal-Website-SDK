@@ -108,22 +108,29 @@ export default class MainHelper {
     SlidedownPermissionMessageOptions {
 
     if (!promptOptions || !promptOptions.slidedown) {
+      const actionMessage = !!promptOptions ? promptOptions.actionMessage :
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage;
+      const acceptButtonText = !!promptOptions ? promptOptions.acceptButtonText :
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton;
+      const cancelButtonText = !!promptOptions ? promptOptions.cancelButtonText :
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton;
+
       return {
         enabled: false,
         autoPrompt: false,
-        actionMessage: Utils.getValueOrDefault((!!promptOptions ? promptOptions.actionMessage : null),
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage),
-        acceptButtonText: Utils.getValueOrDefault((!!promptOptions ? promptOptions.acceptButtonText : null),
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton),
-        cancelButtonText: Utils.getValueOrDefault((!!promptOptions ? promptOptions.cancelButtonText : null),
-          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton),
+        actionMessage,
+        acceptButtonText,
+        cancelButtonText,
       } as SlidedownPermissionMessageOptions;
     }
+
+    // slidedown prompt options are defined
+
     const { categories } = promptOptions.slidedown;
-    const positiveUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.positiveUpdateButton : null),
-      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton);
-    const negativeUpdateButtonText = Utils.getValueOrDefault((!!categories ? categories.negativeUpdateButton : null),
-      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton);
+    const positiveUpdateButtonText = !!categories ? categories.positiveUpdateButton :
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
+    const negativeUpdateButtonText = !!categories ? categories.negativeUpdateButton :
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
 
     return {
       enabled: promptOptions.slidedown.enabled,
