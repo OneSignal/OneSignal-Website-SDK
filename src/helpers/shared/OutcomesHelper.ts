@@ -52,7 +52,7 @@ export default class OutcomesHelper {
           .slice(0, max)
           .map(notif => notif.notificationId);
         Log.debug(`Total of ${matchingNotificationIds.length} received notifications are within reporting window.`);
-        
+
         // Deleting all unmatched received notifications
         const notificationIdsToDelete = allReceivedNotificationSorted
           .filter(notif => matchingNotificationIds.indexOf(notif.notificationId) === -1)
