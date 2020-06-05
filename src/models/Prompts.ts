@@ -20,8 +20,8 @@ export interface SlidedownPermissionMessageOptions extends DelayedPromptOptions 
   actionMessage: string;
   acceptButtonText: string;
   cancelButtonText: string;
-  positiveUpdateButtonText?: string;
-  negativeUpdateButtonText?: string;
+  positiveUpdateButton?: string;
+  negativeUpdateButton?: string;
   categories?: Categories;
 }
 

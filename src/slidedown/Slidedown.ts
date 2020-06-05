@@ -38,11 +38,11 @@ export default class Slidedown {
     this.options.actionMessage = options.actionMessage.substring(0, 90);
     this.options.acceptButtonText = options.acceptButtonText.substring(0, 16);
     this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
-    this.options.positiveUpdateButtonText = options.positiveUpdateButtonText ?
-      options.positiveUpdateButtonText.substring(0, 16):
+    this.options.positiveUpdateButton = options.positiveUpdateButton ?
+      options.positiveUpdateButton.substring(0, 16):
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
-    this.options.negativeUpdateButtonText = options.negativeUpdateButtonText?
-      options.negativeUpdateButtonText.substring(0, 16):
+    this.options.negativeUpdateButton = options.negativeUpdateButton?
+      options.negativeUpdateButton.substring(0, 16):
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
 
     this.notificationIcons = null;
@@ -62,9 +62,9 @@ export default class Slidedown {
           removeDomElement('#onesignal-slidedown-container');
       }
       const positiveButtonText = isInUpdateMode ?
-        this.options.positiveUpdateButtonText : this.options.acceptButtonText;
+        this.options.positiveUpdateButton : this.options.acceptButtonText;
       const negativeButtonText = isInUpdateMode ?
-        this.options.negativeUpdateButtonText : this.options.cancelButtonText;
+        this.options.negativeUpdateButton : this.options.cancelButtonText;
 
       const icon = this.getPlatformNotificationIcon();
       const dialogHtml = getDialogHTML({
@@ -135,8 +135,8 @@ export default class Slidedown {
       addCssClass(this.allowButton, 'disabled');
       addCssClass(this.allowButton, 'onesignal-saving-state-button');
     } else {
-      // positiveUpdateButtonText should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
-      this.allowButton.innerHTML = this.options.positiveUpdateButtonText!;
+      // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
+      this.allowButton.innerHTML = this.options.positiveUpdateButton!;
       removeDomElement('#saving-loading-indicator-holder');
       (<HTMLButtonElement>this.allowButton).disabled = false;
       removeCssClass(this.allowButton, 'disabled');
