@@ -7,6 +7,7 @@ import {
     getDomElementOrStub,
     getAllDomElementsOrStub } from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
+import sanitizeHtml from 'sanitize-html';
 
 export default class TaggingContainer {
     private html: string = "";
@@ -60,10 +61,10 @@ export default class TaggingContainer {
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
         const { label } = tagCategory;
-        return `<label class="onesignal-category-label" title="${label}">
-        <span class="onesignal-category-label-text">${label}</span>
-        <input type="checkbox" value="${tagCategory.tag}"
-            ${tagCategory.checked ? `checked="${tagCategory.checked}` : ``}">
+        return `<label class="onesignal-category-label" title="${sanitizeHtml(label)}">
+        <span class="onesignal-category-label-text">${sanitizeHtml(label)}</span>
+        <input type="checkbox" value="${sanitizeHtml(tagCategory.tag)}"
+            ${tagCategory.checked ? `checked="${sanitizeHtml(tagCategory.checked)}` : ``}">
         <span class="onesignal-checkmark"></span></label>
         <div style="clear:both"></div>`;
     }

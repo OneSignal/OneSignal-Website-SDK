@@ -10,6 +10,7 @@
     "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
+    "sanitize-html": "^1.26.0",
     "tslib": "^1.9.0",
     "validator": "https://registry.npmjs.org/validator/-/validator-6.0.0.tgz"
   },
@@ -30,9 +31,9 @@
     "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
     "publish": "yarn clean && yarn build:prod && yarn",
-    "build:dev-dev":"./build/scripts/build.sh -f development -t development",
-    "build:dev-prod":"./build/scripts/build.sh -f development -t production",
-    "build:dev-stag":"./build/scripts/build.sh -f development -t staging"
+    "build:dev-dev": "./build/scripts/build.sh -f development -t development",
+    "build:dev-prod": "./build/scripts/build.sh -f development -t production",
+    "build:dev-stag": "./build/scripts/build.sh -f development -t staging"
   },
   "config": {
     "sdkVersion": "151000"
@@ -81,9 +82,9 @@
     "svgo": "^0.7.2",
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
-    "typescript": "^2.7.1",
     "tslint": "^5.10.0",
     "tslint-eslint-rules": "^5.2.0",
+    "typescript": "^2.7.1",
     "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^4.3.0",
     "webpack-bundle-analyzer": "^3.3.2",

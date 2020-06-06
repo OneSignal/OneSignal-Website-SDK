@@ -14,6 +14,7 @@ import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 import getDialogHTML from './DialogHTML';
+import sanitizeHtml from 'sanitize-html';
 
 export default class Slidedown {
   public options: SlidedownPermissionMessageOptions;
@@ -35,14 +36,14 @@ export default class Slidedown {
         options = MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     }
     this.options = options;
-    this.options.actionMessage = options.actionMessage.substring(0, 90);
-    this.options.acceptButtonText = options.acceptButtonText.substring(0, 16);
-    this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
+    this.options.actionMessage = sanitizeHtml(options.actionMessage.substring(0, 90));
+    this.options.acceptButtonText = sanitizeHtml(options.acceptButtonText.substring(0, 16));
+    this.options.cancelButtonText = sanitizeHtml(options.cancelButtonText.substring(0, 16));
     this.options.positiveUpdateButton = options.positiveUpdateButton ?
-      options.positiveUpdateButton.substring(0, 16):
+      sanitizeHtml(options.positiveUpdateButton.substring(0, 16)):
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
-    this.options.negativeUpdateButton = options.negativeUpdateButton?
-      options.negativeUpdateButton.substring(0, 16):
+    this.options.negativeUpdateButton = options.negativeUpdateButton ?
+      sanitizeHtml(options.negativeUpdateButton.substring(0, 16)) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
 
     this.notificationIcons = null;
