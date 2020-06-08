@@ -839,6 +839,12 @@ export default class OneSignal {
       return;
     }
     const outcomeAttribution = await outcomesHelper.getAttribution();
+
+    if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
+      Log.warn("You are on a free plan. Please upgrade to use this functionality.");
+      return;
+    }
+
     // all notifs in attribution window
     const { notificationIds } = outcomeAttribution;
     // only new notifs that ought to be attributed
