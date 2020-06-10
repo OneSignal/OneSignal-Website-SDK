@@ -48,15 +48,11 @@ test('category options are configured, not in update mode, check remote tag fetc
     await initializeConfigWithCategories();
     const tagFetchSpy = sinonSandbox.stub(TagManager, "downloadTags").resolves({});
     sinonSandbox.stub(PageViewManager.prototype, "getLocalPageViewCount").returns(1);
-    const autoPromptSpy = sinonSandbox.spy(PromptsManager.prototype, "internalShowAutoPrompt");
-    const delayedPromptSpy = sinonSandbox.spy(PromptsManager.prototype, "internalShowDelayedPrompt");
     const slidedownSpy = sinonSandbox.spy(PromptsManager.prototype, "internalShowSlidedownPrompt");
     const createSpy = sinonSandbox.spy(Slidedown.prototype, "create");
     await InitHelper.sessionInit();
 
     t.true(!tagFetchSpy.called);
-    t.true(autoPromptSpy.calledOnce);
-    t.true(delayedPromptSpy.calledOnce);
     t.true(slidedownSpy.calledOnce);
     t.true(createSpy.called);
 });
