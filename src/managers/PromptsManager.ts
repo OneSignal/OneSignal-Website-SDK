@@ -224,7 +224,7 @@ export class PromptsManager {
 
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     const promptOptions = await this.context.appConfig.userConfig.promptOptions;
-    const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown && promptOptions.slidedown;
+    const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown;
     const isUsingCategoryOptions = isUsingSlidedownOptions && promptOptions!.slidedown!.categories;
     const categoryOptions = promptOptions!.slidedown!.categories;
 
