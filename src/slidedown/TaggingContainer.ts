@@ -33,15 +33,23 @@ export default class TaggingContainer {
         (<HTMLButtonElement>allowButton).disabled = true;
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
+    /**
+     * Finds intersection between remoteTagCategories (from config) and existingPlayerTags (from `getTags`)
+     * @param  {TagCategory[]} remoteTagCategories
+     * @param  {TagsObject} existingPlayerTags?
+     */
+    private getCheckedTagCategories(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject)
+        : TagCategory[] {
+            return !!existingPlayerTags ?
+                remoteTagCategories.map(elem => {
+                    const existingTagValue = <boolean>existingPlayerTags[elem.tag];
+                    elem.checked = existingTagValue;
+                    return elem;
+                }) : remoteTagCategories;
+    }
 
     private generateHTML(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject): void {
-        const checkedTagCategories = !!existingPlayerTags ?
-            remoteTagCategories.map(elem => {
-                const existingTagValue = <boolean>existingPlayerTags[elem.tag];
-                elem.checked = existingTagValue;
-                return elem;
-            })
-            : remoteTagCategories;
+        const checkedTagCategories = this.getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
         const firstColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
         const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
         let innerHtml = `<div class="tagging-container-col">`;
