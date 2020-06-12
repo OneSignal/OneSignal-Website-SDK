@@ -61,7 +61,7 @@
     "@types/text-encoding": "^0.0.31",
     "@types/validator": "latest",
     "@types/whatwg-fetch": "latest",
-    "ava": "^0.21.0",
+    "ava": "^3.8.2",
     "awesome-typescript-loader": "^4.0.1",
     "bundlesize": "^0.18.0",
     "css-loader": "^0.26.2",
