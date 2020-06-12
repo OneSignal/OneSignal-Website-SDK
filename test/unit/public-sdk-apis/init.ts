@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { TestContext } from "ava";
+import test from "ava";
 import sinon, {SinonSandbox, SinonStub} from 'sinon';
 import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
@@ -26,7 +26,7 @@ test.beforeEach(function () {
   mockWebPushAnalytics();
 });
 
-test.afterEach(function (_t: TestContext) {
+test.afterEach(function (_t: any) {
   sinonSandbox.restore();
 
   OneSignal._initCalled = false;
@@ -171,9 +171,9 @@ test("Test OneSignal.init, No app id or wrong format of app id", async t => {
   sinonSandbox.stub(document, "visibilityState").value("visible");
   sinonSandbox.stub(InitHelper, "errorIfInitAlreadyCalled").returns(false);
 
-  await t.throws(OneSignal.init({}), SdkInitError);
-  await t.throws(OneSignal.init({ appId: "" }), SdkInitError);
-  await t.throws(OneSignal.init({ appId: "wrong-format" }), SdkInitError);
+  await t.throws(OneSignal.init({}));
+  await t.throws(OneSignal.init({ appId: "" }));
+  await t.throws(OneSignal.init({ appId: "wrong-format" }));
 });
 
 // more init tests in onSession.ts

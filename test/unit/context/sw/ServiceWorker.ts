@@ -1,4 +1,4 @@
-import test, { TestContext } from 'ava';
+import test from 'ava';
 import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
@@ -49,13 +49,13 @@ function mockOneSignalPushEvent(data: object): MockPushEvent {
   return new MockPushEvent(new MockPushMessageData(payload));
 }
 
-function assertValidNotificationShown(t: TestContext, spy: SinonSpy): void {
+function assertValidNotificationShown(t: any, spy: SinonSpy): void {
   // Only one should show
   t.is(spy.callCount, 1);
 
   const notifTitle: string = spy.lastCall.args[0];
   const options: NotificationOptions | undefined = spy.lastCall.args[1];
-  
+
   // Must have a title
   t.truthy(notifTitle);
 

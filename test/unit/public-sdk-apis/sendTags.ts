@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { TestContext, Context } from "ava";
+import test from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/OneSignal';
 import nock from 'nock';
@@ -56,7 +56,7 @@ test.beforeEach(t => {
 });
 
 async function expectPushRecordTagUpdateRequest(
-  t: TestContext & Context<any>,
+  t: any,
   pushDevicePlayerId: string,
   emailAuthHash: string | undefined,
 ) {
