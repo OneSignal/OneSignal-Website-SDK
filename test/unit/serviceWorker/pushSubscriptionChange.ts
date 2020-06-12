@@ -1,4 +1,4 @@
-import test, { TestContext } from 'ava';
+import test from 'ava';
 import '../../support/polyfills/polyfills';
 import sinon, { SinonSandbox } from 'sinon';
 
@@ -52,7 +52,7 @@ test.beforeEach(async() => {
 
 });
 
-test.afterEach(function (_t: TestContext) {
+test.afterEach(function (_t: any) {
   sinonSandbox.restore();
 });
 

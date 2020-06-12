@@ -359,7 +359,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
   sandbox.stub(OneSignalUtils, "getBaseUrl").returns(origin);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-  await t.throws(manager.installWorker(), ServiceWorkerRegistrationError);
+  await t.throws(()=>manager.installWorker());
 });
 
 test("Service worker failed to install in popup. No handling.", async t => {
@@ -396,7 +396,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
   sandbox.stub(location, "origin").returns(origin);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
-  const error = await t.throws(manager.installWorker(), Error);
+  const error = await t.throws(()=>manager.installWorker());
   t.is(error.message, workerRegistrationError.message);
 });
 
