@@ -327,7 +327,7 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", 
   t.plan(1);
 });
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", async t => {
+test("Test ReplayCallsOnOneSignal replays ES6 calls executing reject promise", async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.sendTags(...) directly like a site developer may have done
