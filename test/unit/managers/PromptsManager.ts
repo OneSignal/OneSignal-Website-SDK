@@ -1,4 +1,3 @@
-
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
@@ -10,6 +9,7 @@ import InitHelper from '../../../src/helpers/InitHelper';
 import { PromptsManager } from '../../../src/managers/PromptsManager';
 import { PageViewManager } from '../../../src/managers/PageViewManager';
 import Slidedown from '../../../src/slidedown/Slidedown';
+import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -48,6 +48,9 @@ test('category options are configured, not in update mode, check remote tag fetc
     await initializeConfigWithCategories();
     const tagFetchSpy = sinonSandbox.stub(TagManager, "downloadTags").resolves({});
     sinonSandbox.stub(PageViewManager.prototype, "getLocalPageViewCount").returns(1);
+    sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
+    sinonSandbox.stub(PromptsManager.prototype as any, "checkIfAutoPromptShouldBeShown").resolves(true);
+    sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
     const slidedownSpy = sinonSandbox.spy(PromptsManager.prototype, "internalShowSlidedownPrompt");
     const createSpy = sinonSandbox.spy(Slidedown.prototype, "create");
     await InitHelper.sessionInit();
