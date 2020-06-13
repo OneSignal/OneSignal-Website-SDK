@@ -10,7 +10,7 @@ import MainHelper from "../../../src/helpers/MainHelper";
 import Log from "../../../src/libraries/Log";
 import Database from "../../../src/services/Database";
 import timemachine from "timemachine";
-import OutcomeTestHelper from '../helpers/OutcomeTestHelper';
+import OutcomeTestHelper from '../../support/tester/OutcomeTestHelper';
 
 const OUTCOME_WEIGHT = 55.6;
 const OUTCOME_NAME = "test_outcome";
