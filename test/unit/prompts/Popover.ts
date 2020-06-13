@@ -60,16 +60,6 @@ test('popover: uses chrome by default on linux', async t => {
 });
 
 test('popover: uses chrome by default on windows', async t => {
-  setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
-  const popover = new Popover(options);
-
-  popover.notificationIcons = {chrome: "http://url.com"};
-  const icon = popover.getPlatformNotificationIcon();
-
-  t.is(icon, "http://url.com");
-});
-
-test('popover: uses chrome by default on windows', async t => {
   setUserAgent(BrowserUserAgent.ChromeAndroidSupported);
   const popover = new Popover(options);
 
@@ -161,7 +151,7 @@ test('popover: uses samsung browser by default', async t => {
 /**
  * default catch tests
  */
-test('popover: uses samsung browser by default', async t => {
+test('popover: uses samsung browser by default w/ icons undefined', async t => {
   setUserAgent(BrowserUserAgent.SamsungBrowserSupported);
   const popover = new Popover(options);
 
@@ -171,7 +161,7 @@ test('popover: uses samsung browser by default', async t => {
   t.is(icon, "default-icon");
 });
 
-test('popover: uses samsung browser by default', async t => {
+test('popover: uses samsung browser by default w/ empty icons object', async t => {
   setUserAgent(BrowserUserAgent.SamsungBrowserSupported);
   const popover = new Popover(options);
 
