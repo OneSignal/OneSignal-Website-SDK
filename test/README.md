@@ -16,7 +16,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Program",
+            "name": "Transpile & Run",
             "preLaunchTask": "transpile",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
             "runtimeArgs": [
@@ -26,7 +26,7 @@
                 "--color",
                 "--serial",
                 "--watch=false",
-                "build/ts-to-es6/test/**/${fileBasenameNoExtension}.js"
+                "build/ts-to-es6/test/**/${fileBasenameNoExtension}.js",
             ],
             "request": "launch",
             "skipFiles": [
@@ -37,26 +37,34 @@
             "port": 9229,
             "sourceMaps": true,
             "trace": true,
-            "protocol": "auto"
+            "protocol": "auto",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+            "runtimeArgs": [
+                "debug",
+                "--break",
+                "--verbose",
+                "--color",
+                "--watch=false",
+                "--fail-fast=false",
+                "build/ts-to-es6/test/**/${fileBasenameNoExtension}.js",
+            ],
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "outputCapture": "std",
+            "port": 9229,
+            "sourceMaps": true,
+            "trace": true,
+            "protocol": "auto",
+            "console": "integratedTerminal"
         },
     ]
-}
-```
-
-Your `tasks.json` should look like this:
-
-```
-{
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "transpile:tests",
-			"problemMatcher": [],
-			"label": "transpile",
-			"detail": "ENV=development $(yarn bin)/tsc --project build/config/tsconfig.tests.json"
-		},
-	]
 }
 ```
 
