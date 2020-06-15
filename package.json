@@ -98,9 +98,7 @@
     ],
     "concurrency": 1,
     "serial": true,
-    "powerAssert": true,
-    "watch": true,
-    "failFast": true
+    "powerAssert": true
   },
   "nyc": {
     "cache": true,
