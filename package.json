@@ -36,7 +36,7 @@
     "build:dev-stag": "./build/scripts/build.sh -f development -t staging"
   },
   "config": {
-    "sdkVersion": "151000"
+    "sdkVersion": "151002"
   },
   "repository": {
     "type": "git",
@@ -62,7 +62,7 @@
     "@types/text-encoding": "^0.0.31",
     "@types/validator": "latest",
     "@types/whatwg-fetch": "latest",
-    "ava": "^0.21.0",
+    "ava": "^3.8.2",
     "awesome-typescript-loader": "^4.0.1",
     "bundlesize": "^0.18.0",
     "css-loader": "^0.26.2",
@@ -121,12 +121,12 @@
     },
     {
       "path": "./build/bundles/OneSignalPageSDKES6.js",
-      "maxSize": "58 kB",
+      "maxSize": "64 kB",
       "compression": "gzip"
     },
     {
       "path": "./build/bundles/OneSignalSDKWorker.js",
-      "maxSize": "35 kB",
+      "maxSize": "38 kB",
       "compression": "gzip"
     },
     {

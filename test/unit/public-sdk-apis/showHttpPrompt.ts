@@ -1,4 +1,4 @@
-import test, {TestContext} from "ava";
+import test from "ava";
 import OneSignal from "../../../src/OneSignal";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import Context from "../../../src/models/Context";
@@ -7,7 +7,7 @@ import sinon, {SinonSandbox} from 'sinon';
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
-test.afterEach(function (_t: TestContext) {
+test.afterEach(function (_t: any) {
   sinonSandbox.restore();
 });
 

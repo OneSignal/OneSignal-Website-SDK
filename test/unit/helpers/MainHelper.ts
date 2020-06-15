@@ -1,4 +1,4 @@
-import test, { TestContext } from "ava";
+import test from "ava";
 import sinon, { SinonSandbox } from 'sinon';
 
 import MainHelper from "../../../src/helpers/MainHelper";
@@ -20,14 +20,14 @@ test.beforeEach(async () => {
   TestEnvironment.mockInternalOneSignal();
 });
 
-test.afterEach(function (_t: TestContext) {
+test.afterEach(function (_t: any) {
   sinonSandbox.restore();
 });
 
 test("getCurrentNotificationType for default permission", async t => {
   sinonSandbox.stub(OneSignal.context.permissionManager, "getNotificationPermission")
     .resolves(NotificationPermission.Default);
-    
+
   t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.Default);
 });
 
@@ -61,7 +61,7 @@ test("getCurrentNotificationType for granted permission: opted out", async t => 
     .resolves(NotificationPermission.Granted);
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
-    
+
   t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.MutedByApi);
 });
 
@@ -69,6 +69,6 @@ test("getCurrentNotificationType for granted permission: new user", async t => {
   sinonSandbox.stub(OneSignal.context.permissionManager, "getNotificationPermission")
     .resolves(NotificationPermission.Granted);
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
-    
+
   t.is(await MainHelper.getCurrentNotificationType(), SubscriptionStateKind.Default);
 });

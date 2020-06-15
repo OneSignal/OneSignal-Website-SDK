@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { TestContext, Context } from "ava";
+import test from "ava";
 import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from "nock";
 import {
@@ -39,7 +39,7 @@ test.beforeEach(async () => {
   mockWebPushAnalytics();
 });
 
-test.afterEach(function (_t: TestContext) {
+test.afterEach(function (_t: any) {
   sinonSandbox.restore();
 
   OneSignal._initCalled = false;
@@ -810,7 +810,7 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
 /** Helper methods */
 async function beforeTest(
   testConfig: TestEnvironmentConfig,
-  t: TestContext & Context<any>,
+  t: any,
   customServerAppConfig?: ServerAppConfig
 ) {
   await TestEnvironment.initialize(testConfig);
@@ -862,7 +862,7 @@ function simulateNativeAllowAfterShown() {
 
 
 
-async function inspectPushRecordCreationRequest(t: TestContext, requestStub: SinonStub) {
+async function inspectPushRecordCreationRequest(t: any, requestStub: SinonStub) {
   // For player#create device record is already serialized. Checking serialized structure.
   const anyValues = [
     "device_type",

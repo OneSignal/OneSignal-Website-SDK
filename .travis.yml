@@ -4,7 +4,7 @@
 
 language: node_js
 node_js:
-  - '10.16.0'
+  - '12.18.0'
 cache:
   yarn: true
   directories:
