@@ -7,7 +7,7 @@ import {throws} from "../../support/tester/asyncFunctions";
 test(`custom error thrown from sync function`, async t => {
   t.throws(() => {
     throw new OneSignalError('my message');
-  });
+  }, { instanceOf: OneSignalError });
 });
 
 test(`custom error thrown from down-emitted "async" function`, async t => {

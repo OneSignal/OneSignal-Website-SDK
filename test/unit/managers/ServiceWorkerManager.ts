@@ -396,7 +396,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
   sandbox.stub(navigator.serviceWorker, "register").throws(workerRegistrationError);
   sandbox.stub(location, "origin").returns(origin);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.OneSignalSubscriptionPopup);
-  const error = await t.throwsAsync(async ()=>manager.installWorker());
+  const error = await t.throwsAsync(async ()=>manager.installWorker(), { instanceOf: Error });
   t.is(error.message, workerRegistrationError.message);
 });
 
