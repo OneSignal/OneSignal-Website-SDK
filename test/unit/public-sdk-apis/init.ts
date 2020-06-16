@@ -171,9 +171,9 @@ test("Test OneSignal.init, No app id or wrong format of app id", async t => {
   sinonSandbox.stub(document, "visibilityState").value("visible");
   sinonSandbox.stub(InitHelper, "errorIfInitAlreadyCalled").returns(false);
 
-  await t.throwsAsync(async () => OneSignal.init({}));
-  await t.throwsAsync(async () => OneSignal.init({ appId: "" }));
-  await t.throwsAsync(async () => OneSignal.init({ appId: "wrong-format" }));
+  await t.throwsAsync(async () => OneSignal.init({}), { instanceOf: SdkInitError });
+  await t.throwsAsync(async () => OneSignal.init({ appId: "" }), { instanceOf: SdkInitError });
+  await t.throwsAsync(async () => OneSignal.init({ appId: "wrong-format" }), { instanceOf: SdkInitError });
 });
 
 // more init tests in onSession.ts
