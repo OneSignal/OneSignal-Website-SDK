@@ -1,6 +1,6 @@
 import '../../support/polyfills/polyfills';
 
-import test, { ThrowsExpectation } from 'ava';
+import test, { ThrowsExpectation, ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import timemachine from 'timemachine';
 
@@ -47,7 +47,7 @@ async function testCase(
    * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
    * global onesignalVapidPublicKey.
    */
-  t: any,
+  t: ExecutionContext,
   browser: BrowserUserAgent,
   vapidPublicKey: string,
   sharedVapidPublicKey: string,
@@ -509,7 +509,7 @@ async function expirationTestCase(
    * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
    * global onesignalVapidPublicKey.
    */
-  t: any,
+  t: ExecutionContext,
   subscriptionCreationTime: number,
   subscriptionExpirationTime: number,
   expirationCheckTime: number,

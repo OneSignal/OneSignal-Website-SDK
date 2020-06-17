@@ -1,4 +1,4 @@
-import test from "ava";
+import test, { ExecutionContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
 
 import MainHelper from "../../../src/helpers/MainHelper";
@@ -20,7 +20,7 @@ test.beforeEach(async () => {
   TestEnvironment.mockInternalOneSignal();
 });
 
-test.afterEach(function (_t: any) {
+test.afterEach(function (_t: ExecutionContext) {
   sinonSandbox.restore();
 });
 

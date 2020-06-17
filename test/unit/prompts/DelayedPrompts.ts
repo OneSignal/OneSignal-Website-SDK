@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test from "ava";
+import test, { ExecutionContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
 import nock from "nock";
 import {
@@ -37,7 +37,7 @@ test.beforeEach(async () => {
     mockWebPushAnalytics();
 });
 
-test.afterEach(function (_t: any) {
+test.afterEach(function (_t: ExecutionContext) {
     sinonSandbox.restore();
 
     OneSignal._initCalled = false;
@@ -128,7 +128,7 @@ async function initWithDelayedOptions(type: DelayedPromptType, timeDelay: number
 }
 
 async function beforeTest(
-    t: any,
+    t: ExecutionContext,
     customServerAppConfig?: ServerAppConfig
 ) {
     const testConfig: TestEnvironmentConfig = {
