@@ -295,12 +295,14 @@ export class ConfigHelper {
       pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
       timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
     };
-    let positiveUpdateButton, negativeUpdateButton;
+    let positiveUpdateButton, negativeUpdateButton, updateMessage;
     if (staticPrompts.slidedown.categories) {
       positiveUpdateButton = Utils.getValueOrDefault(staticPrompts.slidedown.categories.positiveUpdateButton,
         SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton);
       negativeUpdateButton = Utils.getValueOrDefault(staticPrompts.slidedown.categories.negativeUpdateButton,
         SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton);
+      updateMessage = Utils.getValueOrDefault(staticPrompts.slidedown.categories.updateMessage,
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage);
     }
 
     const slidedown = {
@@ -316,7 +318,8 @@ export class ConfigHelper {
       acceptButtonText: staticPrompts.slidedown.acceptButton,
       cancelButtonText: staticPrompts.slidedown.cancelButton,
       positiveUpdateButton,
-      negativeUpdateButton
+      negativeUpdateButton,
+      updateMessage
     };
     return {
       autoPrompt: native.autoPrompt || slidedown.autoPrompt,

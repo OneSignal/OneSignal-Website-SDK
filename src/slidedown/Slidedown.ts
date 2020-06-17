@@ -45,6 +45,8 @@ export default class Slidedown {
     this.options.negativeUpdateButton = options.negativeUpdateButton ?
       sanitizeHtml(options.negativeUpdateButton.substring(0, 16)) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
+    this.options.updateMessage = !!options.updateMessage ? sanitizeHtml(options.updateMessage.substring(0, 90)) :
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
 
     this.notificationIcons = null;
     this.isInSaveState = false;
@@ -66,11 +68,13 @@ export default class Slidedown {
         this.options.positiveUpdateButton : this.options.acceptButtonText;
       const negativeButtonText = isInUpdateMode ?
         this.options.negativeUpdateButton : this.options.cancelButtonText;
+      const messageText = isInUpdateMode ?
+        this.options.updateMessage : this.options.actionMessage;
 
       const icon = this.getPlatformNotificationIcon();
       const dialogHtml = getDialogHTML({
+        messageText,
         icon,
-        actionMessage: this.options.actionMessage,
         positiveButtonText,
         negativeButtonText
       });
