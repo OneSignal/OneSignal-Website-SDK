@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test from "ava";
+import test, { ExecutionContext } from "ava";
 import sinon, {SinonSandbox, SinonStub} from 'sinon';
 import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
@@ -26,7 +26,7 @@ test.beforeEach(function () {
   mockWebPushAnalytics();
 });
 
-test.afterEach(function (_t: any) {
+test.afterEach(function (_t: ExecutionContext) {
   sinonSandbox.restore();
 
   OneSignal._initCalled = false;
