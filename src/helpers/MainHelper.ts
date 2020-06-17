@@ -131,6 +131,8 @@ export default class MainHelper {
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
     const negativeUpdateButton = !!categories ? categories.negativeUpdateButton :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
+    const updateMessage = !!categories ? categories.updateMessage :
+      SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
 
     return {
       enabled: promptOptions.slidedown.enabled,
@@ -139,7 +141,8 @@ export default class MainHelper {
       acceptButtonText: promptOptions.slidedown.acceptButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
       cancelButtonText: promptOptions.slidedown.cancelButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
       positiveUpdateButton,
-      negativeUpdateButton
+      negativeUpdateButton,
+      updateMessage
     } as SlidedownPermissionMessageOptions;
   }
 
