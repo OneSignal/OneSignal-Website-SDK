@@ -1,6 +1,6 @@
 import '../../support/polyfills/polyfills';
 
-import test, { ThrowsExpectation } from 'ava';
+import test, { ThrowsExpectation, ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import timemachine from 'timemachine';
 
@@ -47,7 +47,7 @@ async function testCase(
    * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
    * global onesignalVapidPublicKey.
    */
-  t: any,
+  t: ExecutionContext,
   browser: BrowserUserAgent,
   vapidPublicKey: string,
   sharedVapidPublicKey: string,
@@ -509,7 +509,7 @@ async function expirationTestCase(
    * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
    * global onesignalVapidPublicKey.
    */
-  t: any,
+  t: ExecutionContext,
   subscriptionCreationTime: number,
   subscriptionExpirationTime: number,
   expirationCheckTime: number,
@@ -739,7 +739,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew));
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus403);
     t.is(smSpyRegister.calledOnce, true);
@@ -764,7 +765,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew));
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus403);
     t.is(smSpyRegister.calledOnce, false);
@@ -789,7 +791,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew));
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus404);
     t.is(smSpyRegister.calledOnce, true);
@@ -814,7 +817,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew));
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus404);
     t.is(smSpyRegister.calledOnce, false);
