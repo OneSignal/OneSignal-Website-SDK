@@ -69,7 +69,7 @@ test('slidedown: uses chrome by default on windows', async t => {
   t.is(icon, "http://url.com");
 });
 
-test('slidedown: uses chrome by default on windows', async t => {
+test('slidedown: uses chrome by default on Android', async t => {
   setUserAgent(BrowserUserAgent.ChromeAndroidSupported);
   const slidedown = new Slidedown(options);
 
