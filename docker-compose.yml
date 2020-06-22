@@ -10,7 +10,7 @@ services:
 
       # docker for Ubuntu VM
       # network_mode: "host"
-      
+
       # docker for mac
       ports:
           - published: 4001
