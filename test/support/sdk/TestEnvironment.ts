@@ -28,6 +28,7 @@ import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
 import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
 import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
+import Slidedown from '../../../src/slidedown/Slidedown';
 
 // NodeJS.Global
 declare var global: any;
@@ -188,8 +189,10 @@ export class TestEnvironment {
   }
 
   static async stubDomEnvironment(config?: TestEnvironmentConfig) {
-    if (!config)
+    if (!config) {
       config = {};
+    }
+
     let url: string | undefined = undefined;
     let isSecureContext: boolean | undefined = undefined;
     if (config.httpOrHttps == HttpHttpsEnvironment.Http) {
@@ -209,7 +212,12 @@ export class TestEnvironment {
       <div class="${CustomLink.containerClass}"></div>\
       <div class="${CustomLink.containerClass}"></div>\
       <button class="${CustomLink.subscribeClass}"></button>\
-      </head><body></body></html>`;
+      </head><body>\
+        <div id="${Slidedown.slidedownBody}"></div>\
+        <div id="${Slidedown.slidedownFooter}">\
+        <button id="onesignal-slidedown-allow-button"></button>\
+        <button id="onesignal-slidedown-cancel-button"></button>\
+        </div></body></html>`;
     }
 
     var windowDef = await new Promise<Window>((resolve, reject) => {
@@ -241,6 +249,7 @@ export class TestEnvironment {
     (windowDef as any).TextEncoder = TextEncoder;
     (windowDef as any).TextDecoder = TextDecoder;
     (windowDef as any).isSecureContext = isSecureContext;
+    (windowDef as any).location = url;
 
     if (config.stubSetTimeout) {
       (windowDef as any).setTimeout = async (callback: Function, timeDelay: number) => {
@@ -255,7 +264,7 @@ export class TestEnvironment {
 
     TestEnvironment.addCustomEventPolyfill(windowDef);
 
-    let topWindow = config.initializeAsIframe ? {
+    const topWindow = config.initializeAsIframe ? {
       location: {
         get origin() {
           throw new Error("SecurityError: Permission denied to access property 'origin' on cross-origin object");
@@ -364,7 +373,7 @@ export class TestEnvironment {
   }
 
   static mockInternalOneSignal(config?: TestEnvironmentConfig) {
-    config = config || { 
+    config = config || {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
     };
