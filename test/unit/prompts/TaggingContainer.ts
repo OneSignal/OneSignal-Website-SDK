@@ -7,6 +7,7 @@ import Slidedown from '../../../src/slidedown/Slidedown';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { TagCategory, TagsObject } from 'src/models/Tags';
 import _ from "lodash";
+import { getDomElementOrStub } from '../../../src/utils';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -36,13 +37,9 @@ test('check sanitization is working correctly', t => {
     }];
     const taggingContainer = new TaggingContainer();
     taggingContainer.mount(tagCategoryList);
-    const generatedHtml = taggingContainer.getHtml();
-    t.is(generatedHtml, `<div class="tagging-container"><div class="tagging-container-col">`+
-    `<label class="onesignal-category-label" title="Tag 1">`+
-    `<span class="onesignal-category-label-text">Tag 1</span>`+
-    `<input type="checkbox" value="tag1">`+
-    `<span class="onesignal-checkmark"></span></label>`+
-    `<div style="clear:both"></div></div><div class="tagging-container-col"></div></div>`);
+    const labelElement = getDomElementOrStub(".onesignal-category-label");
+    t.is(labelElement.innerHTML, `<span class="onesignal-category-label-text">Tag 1</span>`+
+      `<input type="checkbox" value="tag1"><span class="onesignal-checkmark"></span>`);
 });
 
 test('check that correct TagCategory object is returned after applying remote player tags', t => {
