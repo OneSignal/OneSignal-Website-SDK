@@ -5,12 +5,18 @@ import {
     addCssClass,
     removeCssClass,
     getDomElementOrStub,
-    getAllDomElementsOrStub, 
+    getAllDomElementsOrStub,
     sanitizeHtmlAndDoubleQuotes} from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 
 export default class TaggingContainer {
     private html: string = "";
+
+    /* for testing only */
+    public TESTING = {
+        getCheckedTagCategories: this._getCheckedTagCategories
+    };
+    /* for testing only */
 
     public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
         this.generateHTML(remoteTagCategories, existingPlayerTags);
@@ -39,14 +45,16 @@ export default class TaggingContainer {
     }
 
     /**
-     * Finds intersection between remoteTagCategories (from config) and existingPlayerTags (from `getTags`)
+     * Returns checked TagCategory[] using unchecked remoteTagCategories (from config)
+     * and existingPlayerTags (from `getTags`)
      * @param  {TagCategory[]} remoteTagCategories
      * @param  {TagsObject} existingPlayerTags?
      */
-    private getCheckedTagCategories(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject)
+    private _getCheckedTagCategories(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject)
         : TagCategory[] {
+            const remoteTagCategoriesCopy: TagCategory[] = JSON.parse(JSON.stringify(remoteTagCategories));
             return !!existingPlayerTags ?
-                remoteTagCategories.map(elem => {
+                remoteTagCategoriesCopy.map(elem => {
                     const existingTagValue = <boolean>existingPlayerTags[elem.tag];
                     elem.checked = existingTagValue;
                     return elem;
@@ -54,7 +62,7 @@ export default class TaggingContainer {
     }
 
     private generateHTML(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject): void {
-        const checkedTagCategories = this.getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
+        const checkedTagCategories = this._getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
         const firstColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
         const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
         let innerHtml = `<div class="tagging-container-col">`;
@@ -93,6 +101,8 @@ export default class TaggingContainer {
             target.setAttribute("checked", isChecked.toString());
         }
     }
+
+    // static
 
     static getValuesFromTaggingContainer(): TagsObject {
         const selector = "#slidedown-body > div.tagging-container > div > label > input[type=checkbox]";
