@@ -5,9 +5,9 @@ import {
     addCssClass,
     removeCssClass,
     getDomElementOrStub,
-    getAllDomElementsOrStub } from '../utils';
+    getAllDomElementsOrStub, 
+    sanitizeHtmlAndDoubleQuotes} from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
-import sanitizeHtml from 'sanitize-html';
 
 export default class TaggingContainer {
     private html: string = "";
@@ -33,6 +33,11 @@ export default class TaggingContainer {
         (<HTMLButtonElement>allowButton).disabled = true;
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
+
+    public getHtml(): string {
+        return this.html;
+    }
+
     /**
      * Finds intersection between remoteTagCategories (from config) and existingPlayerTags (from `getTags`)
      * @param  {TagCategory[]} remoteTagCategories
@@ -69,12 +74,12 @@ export default class TaggingContainer {
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
         const { label } = tagCategory;
-        return `<label class="onesignal-category-label" title="${sanitizeHtml(label)}">
-        <span class="onesignal-category-label-text">${sanitizeHtml(label)}</span>
-        <input type="checkbox" value="${sanitizeHtml(tagCategory.tag)}"
-            ${tagCategory.checked ? `checked="${sanitizeHtml(tagCategory.checked)}` : ``}">
-        <span class="onesignal-checkmark"></span></label>
-        <div style="clear:both"></div>`;
+        return `<label class="onesignal-category-label" title="${sanitizeHtmlAndDoubleQuotes(label)}">`+
+        `<span class="onesignal-category-label-text">${sanitizeHtmlAndDoubleQuotes(label)}</span>`+
+        `<input type="checkbox" value="${sanitizeHtmlAndDoubleQuotes(tagCategory.tag)}"`+
+            `${tagCategory.checked ? `checked="${sanitizeHtmlAndDoubleQuotes(`${tagCategory.checked}`)}"` : ''}>`+
+        `<span class="onesignal-checkmark"></span></label>`+
+        `<div style="clear:both"></div>`;
     }
 
     private get taggingContainer(){
