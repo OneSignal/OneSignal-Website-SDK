@@ -4,7 +4,6 @@ import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { setUserAgent } from '../../support/tester/browser';
 import Slidedown from '../../../src/slidedown/Slidedown';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { TagCategory, TagsObject } from 'src/models/Tags';
 import _ from "lodash";
 import { getDomElementOrStub } from '../../../src/utils';
