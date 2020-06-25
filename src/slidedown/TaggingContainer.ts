@@ -40,10 +40,6 @@ export default class TaggingContainer {
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
 
-    public getHtml(): string {
-        return this.html;
-    }
-
     /**
      * Returns checked TagCategory[] using unchecked remoteTagCategories (from config)
      * and existingPlayerTags (from `getTags`)
