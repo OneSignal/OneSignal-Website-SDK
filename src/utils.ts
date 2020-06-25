@@ -8,6 +8,7 @@ import { PermissionUtils } from './utils/PermissionUtils';
 import { BrowserUtils } from './utils/BrowserUtils';
 import { Utils } from "./context/shared/utils/Utils";
 import bowser from 'bowser';
+import sanitizeHtml from 'sanitize-html';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -427,4 +428,8 @@ export function getAllDomElementsOrStub(selector: string): NodeList {
     return new NodeList();
   }
   return foundElementList;
+}
+
+export function sanitizeHtmlAndDoubleQuotes(input: string) {
+  return sanitizeHtml(input).replace(/['"]+/g, '').replace(/[\s]+$/g, '');
 }
