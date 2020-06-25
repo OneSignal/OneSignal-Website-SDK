@@ -431,5 +431,5 @@ export function getAllDomElementsOrStub(selector: string): NodeList {
 }
 
 export function sanitizeHtmlAndDoubleQuotes(input: string) {
-  return sanitizeHtml(input).replace(/['"]+/g, '').replace(/[\s]+$/g, '');
+  return sanitizeHtml(input).replace(/["]+/g, '').replace(/[\s]+$/g, '');
 }
