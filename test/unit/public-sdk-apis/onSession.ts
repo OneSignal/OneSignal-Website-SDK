@@ -11,8 +11,6 @@ import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import {
   stubMessageChannel, mockIframeMessaging, mockWebPushAnalytics, InitTestHelper
 } from '../../support/tester/utils';
-import Slidedown from "../../../src/slidedown/Slidedown";
-import OneSignalEvent from "../../../src/Event";
 import { DynamicResourceLoader, ResourceLoadState } from "../../../src/services/DynamicResourceLoader";
 import { ServiceWorkerManager } from "../../../src/managers/ServiceWorkerManager";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
@@ -23,10 +21,10 @@ import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
 import InitHelper from "../../../src/helpers/InitHelper";
 import {
   markUserAsOptedOut, markUserAsSubscribed, markUserAsSubscribedOnHttp,
-  stubServiceWorkerInstallation, 
+  stubServiceWorkerInstallation
 } from "../../support/tester/sinonSandboxUtils";
 import { createSubscription } from "../../support/tester/utils";
-import { PromptsManager } from '../../../src/managers/PromptsManager';
+import EventsTestHelper from '../../support/tester/EventsTestHelper';
 
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -75,10 +73,11 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       stubSetTimeout: true
     };
     const stubs = await beforeTest(testConfig, t);
-    simulateSlidedownAllowAfterShown();
-    simulateNativeAllowAfterShown();
+    const eventsHelper = new EventsTestHelper(sinonSandbox);
+    eventsHelper.simulateSlidedownAllowAfterShown();
+    eventsHelper.simulateNativeAllowAfterShown();
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.createPlayerPostStub.callCount, 0);
         t.is(stubs.onSessionStub.callCount, 0);
@@ -86,7 +85,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       });
     });
 
-    const subscriptionPromise = new Promise((resolve) => {
+    const subscriptionPromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
         t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
@@ -121,11 +120,12 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
   };
 
   const stubs = await beforeTest(testConfig, t);
-  simulateSlidedownDismissAfterShown();
+  const eventsHelper = new EventsTestHelper(sinonSandbox);
+  eventsHelper.simulateSlidedownDismissAfterShown();
 
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 0);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -160,7 +160,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const stubs = await beforeTest(testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
@@ -169,7 +169,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       });
     });
 
-    const registrationPromise = new Promise((resolve) => {
+    const registrationPromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.REGISTERED, () => {
         t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
@@ -177,7 +177,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       });
     });
 
-    const subscriptionPromise = new Promise((resolve) => {
+    const subscriptionPromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
         resolve();
       });
@@ -203,7 +203,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     };
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -237,7 +237,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -268,7 +268,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is on =>
     const stubs = await beforeTest(testConfig, t, serverAppConfig);
     await markUserAsOptedOut(sinonSandbox, playerId);
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -305,7 +305,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is off =
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
   await markUserAsOptedOut(sinonSandbox, playerId);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 0);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -345,7 +345,7 @@ test.serial(`HTTPS: User opted out => second page view => onSession flag is on =
 
   sinonSandbox.stub(PageViewManager.prototype, "getPageViewCount").resolves(2);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 0);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -385,7 +385,7 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
   await markUserAsSubscribed(sinonSandbox, playerId, true);
   stubServiceWorkerInstallation(sinonSandbox);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       // sends player update which actually calls on_session if this is the first call we're performing.
       t.is(playerUpdateStub.callCount, 1);
@@ -422,7 +422,7 @@ test.serial(`HTTPS: User subscribed => first page view => sends on session`, asy
   await markUserAsSubscribed(sinonSandbox, playerId);
   stubServiceWorkerInstallation(sinonSandbox);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 1);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -455,10 +455,11 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
     };
     const stubs = await beforeTest(testConfig, t);
 
-    simulateSlidedownAllowAfterShown();
-    simulateNativeAllowAfterShown();
+    const eventsHelper = new EventsTestHelper(sinonSandbox);
+    eventsHelper.simulateSlidedownAllowAfterShown();
+    eventsHelper.simulateNativeAllowAfterShown();
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -466,7 +467,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
       });
     });
 
-    const subscriptionPromise = new Promise((resolve) => {
+    const subscriptionPromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
         t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 1);
@@ -501,11 +502,11 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
   };
 
   const stubs = await beforeTest(testConfig, t);
-  simulateSlidedownDismissAfterShown();
+  new EventsTestHelper(sinonSandbox).simulateSlidedownDismissAfterShown();
 
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 0);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -543,7 +544,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
 
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -570,7 +571,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
     };
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -603,7 +604,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => n
     const stubs = await beforeTest(testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -634,7 +635,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is on => 
     const stubs = await beforeTest(testConfig, t, serverAppConfig);
     await markUserAsOptedOut(sinonSandbox, playerId);
 
-    const initializePromise = new Promise((resolve) => {
+    const initializePromise = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 1);
         t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -671,7 +672,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is off =>
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
   await markUserAsOptedOut(sinonSandbox, playerId);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 0);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -711,7 +712,7 @@ test.serial(`HTTP: User opted out => second page view => onSession flag is on =>
 
   sinonSandbox.stub(PageViewManager.prototype, "getPageViewCount").resolves(2);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 0);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -748,7 +749,7 @@ test.serial(`HTTP: User subscribed => first page view => expiring subscription =
   await markUserAsSubscribedOnHttp(sinonSandbox, playerId, true);
   stubServiceWorkerInstallation(sinonSandbox);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       // t.is(registerStub.callCount, 1);
       t.is(stubs.onSessionStub.callCount, 0);
@@ -784,7 +785,7 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
   await markUserAsSubscribedOnHttp(sinonSandbox, playerId);
   stubServiceWorkerInstallation(sinonSandbox);
 
-  const initializePromise = new Promise((resolve) => {
+  const initializePromise = new Promise(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       t.is(stubs.onSessionStub.callCount, 1);
       t.is(stubs.createPlayerPostStub.callCount, 0);
@@ -821,7 +822,7 @@ async function beforeTest(
   sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");
 
   const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-    .resolves({success: true, id: playerId});
+    .resolves({ success: true, id: playerId });
   const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
   // const onSessionStub = sinonSandbox.stub(OneSignal.context.sessionManager, "upsertSession").resolves();
 
@@ -839,28 +840,6 @@ async function beforeTest(
   }
   return { createPlayerPostStub, onSessionStub };
 }
-
-function simulateSlidedownAllowAfterShown() {
-  OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-    OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
-  });
-}
-
-function simulateSlidedownDismissAfterShown() {
-  OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-    OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
-  });
-}
-
-function simulateNativeAllowAfterShown() {
-  OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
-    sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
-      .resolves({subscribed: true, isOptedOut: false});
-    stubServiceWorkerInstallation(sinonSandbox);
-  });
-}
-
-
 
 async function inspectPushRecordCreationRequest(t: ExecutionContext, requestStub: SinonStub) {
   // For player#create device record is already serialized. Checking serialized structure.
