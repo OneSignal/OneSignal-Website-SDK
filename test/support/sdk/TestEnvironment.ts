@@ -29,6 +29,16 @@ import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
 import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
 import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
 import Slidedown from '../../../src/slidedown/Slidedown';
+import { ExecutionContext } from 'ava';
+import { InitTestHelper, mockWebPushAnalytics, stubMessageChannel, mockIframeMessaging, mockGetIcon } from '../tester/utils';
+import OneSignalApiBase from '../../../src/OneSignalApiBase';
+import { SessionManager } from '../../../src/managers/sessionManager/page/SessionManager';
+import TagManager from '../../../src/managers/tagManager/page/TagManager';
+import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
+import { SinonSandbox } from 'sinon';
+import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
+import OneSignalApi from '../../../src/OneSignalApi';
+import TaggingContainer from '../../../src/slidedown/TaggingContainer';
 
 // NodeJS.Global
 declare var global: any;
@@ -867,5 +877,50 @@ export class TestEnvironment {
     pushSubscription.w3cP256dh = "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0";
     pushSubscription.w3cEndpoint = new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh");
     return pushSubscription;
+  }
+
+
+  static async setupOneSignalWithStubs(
+    sinonSandbox: SinonSandbox,
+    testConfig: TestEnvironmentConfig,
+    t: ExecutionContext,
+    customServerAppConfig?: ServerAppConfig
+  ) {
+    const playerId = Random.getRandomUuid();
+
+    await TestEnvironment.initialize(testConfig);
+    new InitTestHelper(sinonSandbox).mockBasicInitEnv(testConfig, customServerAppConfig);
+
+    OneSignal.initialized = false;
+    OneSignal.__doNotShowWelcomeNotification = true;
+
+    // non-returnable stubs
+    sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");
+    sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
+    sinonSandbox.stub(ServiceWorkerManager.prototype, "installWorker").resolves();
+    sinonSandbox.stub(OneSignalApi, "updatePlayer").resolves({ success: true, id: playerId });
+    sinonSandbox.stub(TaggingContainer, "getValuesFromTaggingContainer").returns({ tag: 1 });
+
+    // returnable stubs
+    const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+      .resolves({ success: true, id: playerId });
+    const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
+
+    // returnable spys
+    const syncTagsSpy = sinonSandbox.spy(TagManager.prototype, "syncTags");
+
+    // network mocks
+    mockWebPushAnalytics();
+    mockGetIcon();
+
+    if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {
+      stubMessageChannel(t);
+      mockIframeMessaging(sinonSandbox);
+    }
+    return {
+      syncTagsSpy,
+      createPlayerPostStub,
+      onSessionStub
+    };
   }
 }
