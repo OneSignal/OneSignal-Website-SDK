@@ -148,7 +148,7 @@ test('slidedown: uses edge by default', async t => {
 /**
  * samsung test
  */
-test('slidedown: uses samsung browser by default', async t => {
+test('slidedown: uses samsung browser by default, icon url defined', async t => {
   setUserAgent(BrowserUserAgent.SamsungBrowserSupported);
   const slidedown = new Slidedown(options);
 
@@ -161,17 +161,17 @@ test('slidedown: uses samsung browser by default', async t => {
 /**
  * default catch tests
  */
-test('slidedown: uses samsung browser by default', async t => {
+test('slidedown: uses samsung browser by default, icon undefined', async t => {
   setUserAgent(BrowserUserAgent.SamsungBrowserSupported);
   const slidedown = new Slidedown(options);
 
-  slidedown.notificationIcons = undefined;
+  slidedown.notificationIcons = null;
   const icon = slidedown.getPlatformNotificationIcon();
 
   t.is(icon, "default-icon");
 });
 
-test('slidedown: uses samsung browser by default', async t => {
+test('slidedown: uses samsung browser by default, icon empty', async t => {
   setUserAgent(BrowserUserAgent.SamsungBrowserSupported);
   const slidedown = new Slidedown(options);
 
