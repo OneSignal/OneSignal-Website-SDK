@@ -52,9 +52,14 @@ test.afterEach(function (_t: ExecutionContext) {
  *  - currently, internalShowDelayedPrompt encapsulates both types of delayed prompts for easy stubbing/spying since
  *    setTimeout doesn't work as intended in testing environment due to jsdom bugs
  */
+const testConfig: TestEnvironmentConfig = {
+    httpOrHttps: HttpHttpsEnvironment.Https,
+    integration: ConfigIntegrationKind.Custom,
+    permission: NotificationPermission.Default
+};
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 1 page view if configured so`, async t => {
-    await beforeTest(t);
+    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt").resolves();
@@ -66,7 +71,7 @@ test.serial(`Delayed Prompt: delayed prompt is shown after 1 page view if config
 });
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 0 page views if configured so`, async t => {
-    await beforeTest(t);
+    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt").resolves();
@@ -78,7 +83,7 @@ test.serial(`Delayed Prompt: delayed prompt is shown after 0 page views if confi
 });
 
 test.serial(`Delayed Prompt: delayed prompt not shown if less than configured page views`, async t => {
-    await beforeTest(t);
+    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
     OneSignal.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
@@ -95,7 +100,7 @@ test.serial(`Delayed Prompt: delayed prompt not shown if less than configured pa
 });
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 3 page views if configured so`, async t => {
-    await beforeTest(t);
+    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt").resolves();
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 3);
@@ -125,41 +130,6 @@ async function initWithDelayedOptions(type: DelayedPromptType, timeDelay: number
         autoResubscribe: true,
         promptOptions
     });
-}
-
-async function beforeTest(
-    t: ExecutionContext,
-    customServerAppConfig?: ServerAppConfig
-) {
-    const testConfig: TestEnvironmentConfig = {
-        httpOrHttps: HttpHttpsEnvironment.Https,
-        integration: ConfigIntegrationKind.Custom,
-        permission: NotificationPermission.Default
-    };
-    await TestEnvironment.initialize(testConfig);
-    initTestHelper.mockBasicInitEnv(testConfig, customServerAppConfig);
-    OneSignal.initialized = false;
-    OneSignal.__doNotShowWelcomeNotification = true;
-
-    sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");
-
-    const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
-        .resolves({ success: true, id: playerId });
-    const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
-
-    sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
-    sinonSandbox.stub(ServiceWorkerManager.prototype, "installWorker").resolves();
-    nock('https://onesignal.com')
-        .get(/.*icon$/)
-        .reply(200, (_uri: string, _requestBody: string) => {
-            return { success: true };
-        });
-
-    if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {
-        stubMessageChannel(t);
-        mockIframeMessaging(sinonSandbox);
-    }
-    return { createPlayerPostStub, onSessionStub };
 }
 
 function getPromptOptions(
