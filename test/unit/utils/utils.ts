@@ -1,4 +1,4 @@
-import '../support/polyfills/polyfills';
+import '../../support/polyfills/polyfills';
 import test from "ava";
 import { timeoutPromise } from "../../../src/utils";
 import TimeoutError from '../../../src/errors/TimeoutError';
