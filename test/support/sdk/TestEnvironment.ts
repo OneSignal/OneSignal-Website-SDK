@@ -30,7 +30,12 @@ import { EnvironmentInfo } from  '../../../src/context/browser/models/Environmen
 import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
 import Slidedown from '../../../src/slidedown/Slidedown';
 import { ExecutionContext } from 'ava';
-import { InitTestHelper, mockWebPushAnalytics, stubMessageChannel, mockIframeMessaging, mockGetIcon } from '../tester/utils';
+import {
+  InitTestHelper,
+  mockWebPushAnalytics,
+  stubMessageChannel,
+  mockIframeMessaging,
+  mockGetIcon } from '../tester/utils';
 import OneSignalApiBase from '../../../src/OneSignalApiBase';
 import { SessionManager } from '../../../src/managers/sessionManager/page/SessionManager';
 import TagManager from '../../../src/managers/tagManager/page/TagManager';
