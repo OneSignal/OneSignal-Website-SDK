@@ -485,6 +485,11 @@ export default class OneSignal {
       tags: tags
     });
     executeCallback(callback, tags);
+
+    /* for testing only */
+    Event.trigger(OneSignal.EVENTS.TEST_TAGS_SENT);
+    /* for testing only */
+
     return tags;
   }
 
@@ -1070,6 +1075,7 @@ export default class OneSignal {
     TEST_WOULD_DISPLAY: 'testWouldDisplay',
     POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
     SESSION_STARTED: "os.sessionStarted",
+    TEST_TAGS_SENT: 'testTagsSent'
   };
 }
 
