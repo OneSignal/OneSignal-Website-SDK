@@ -181,7 +181,7 @@ export default class InitHelper {
         const isUsingCategoryConfig = promptOptions && promptOptions.slidedown && promptOptions.slidedown.categories;
 
         if (isUsingCategoryConfig) {
-          await OneSignal.context.tagManager.syncTags();
+          await OneSignal.context.tagManager.sendTags();
         }
       }
     }
