@@ -212,7 +212,7 @@ export class PromptsManager {
         taggingContainer.load();
         // updating. pull remote tags
         // TO DO: remove promise simulating slow connection
-        const existingTagsAsNumbers = await TagManager.downloadTags();
+        const existingTagsAsNumbers = await TagManager.getTags();
         existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
       }
       taggingContainer.mount(categoryOptions.tags, existingTags);
@@ -261,7 +261,7 @@ export class PromptsManager {
       if (isPushEnabled) {
         // Sync Category Slidedown tags
         OneSignal.slidedown.toggleSaveState();
-        const tags = await this.context.tagManager.syncTags();
+        const tags = await this.context.tagManager.sendTags();
 
         if (!tags) {
           // Display tag update error
