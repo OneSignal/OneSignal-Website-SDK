@@ -19,6 +19,7 @@ export default class TagUtils {
     }
 
     static convertTagBooleanValuesToNumbers(tags: TagsObject): TagsObject {
+        tags = JSON.parse(JSON.stringify(tags));
         Object.keys(tags).forEach(key => {
             tags[key] = Number(tags[key]);
         });
@@ -26,8 +27,9 @@ export default class TagUtils {
     }
 
     static convertTagNumberValuesToBooleans(tags: TagsObject): TagsObject {
+        tags = JSON.parse(JSON.stringify(tags));
         Object.keys(tags).forEach(key => {
-            tags[key] = tags[key] === "1" ? true : false;
+            tags[key] = tags[key].toString() === "1" ? true : false;
         });
         return tags;
     }
