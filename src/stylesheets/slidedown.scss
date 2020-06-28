@@ -133,69 +133,64 @@ $border-radius: 0.5em;
     height: 1.5em;
     line-height: 1.5em;
     float:left;
-  }
 
-  .onesignal-category-label input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-  }
+    .onesignal-category-label-input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
 
-  .onesignal-category-label-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 8em;
-  }
+      /* When the checkbox is checked, add a blue background */
+      &:checked ~ .onesignal-checkmark {
+        transition: ease 75ms;
+        background-color: #4285f4;
+      }
 
-  .onesignal-checkmark {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 1.5em;
-    width: 1.5em;
-    border-radius: .25em;
-    cursor: pointer;
-    background-color: #ebedef;
-  }
+      &:checked ~ .onesignal-checkmark:after {
+        display: block;
+      }
+    }
 
-  /* On mouse-over, add a grey background color */
-  .onesignal-category-label:hover input ~ .onesignal-checkmark {
-    background-color: #dde1e4;
-  }
+    /* On mouse-over, add a grey background color */
+    &:hover input ~ .onesignal-checkmark {
+      background-color: #dde1e4;
+    }
 
-  /* When the checkbox is checked, add a blue background */
-  .onesignal-category-label input:checked ~ .onesignal-checkmark {
-    transition: ease 75ms;
-    background-color: #4285f4;
-  }
+    .onesignal-category-label-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      max-width: 8em;
+    }
 
-  /* Create the checkmark/indicator (hidden when not checked) */
-  .onesignal-checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-  }
+    .onesignal-checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 1.5em;
+      width: 1.5em;
+      border-radius: .25em;
+      cursor: pointer;
+      background-color: #ebedef;
 
-  /* Show the checkmark when checked */
-  .onesignal-category-label input:checked ~ .onesignal-checkmark:after {
-    display: block;
-  }
-
-  /* Style the checkmark/indicator */
-  .onesignal-category-label .onesignal-checkmark:after {
-    left: 0.5em;
-    top: 0.25em;
-    width: 0.33em;
-    height: 0.66em;
-    border: solid white;
-    border-width: 0 3px 3px 0;
-    -webkit-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    transform: rotate(45deg);
+      /* Create the checkmark/indicator (hidden when not checked) */
+      &:after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 0.5em;
+        top: 0.25em;
+        width: 0.33em;
+        height: 0.66em;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+      }
+    }
   }
 
   .onesignal-loading-container {
