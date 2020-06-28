@@ -63,7 +63,7 @@ export default class TaggingContainer {
         const { label } = tagCategory;
         return `<label class="onesignal-category-label" title="${sanitizeHtml(label)}">
         <span class="onesignal-category-label-text">${sanitizeHtml(label)}</span>
-        <input type="checkbox" value="${sanitizeHtml(tagCategory.tag)}"
+        <input class="onesignal-category-label-input" type="checkbox" value="${sanitizeHtml(tagCategory.tag)}"
             ${tagCategory.checked ? `checked="${sanitizeHtml(tagCategory.checked)}` : ``}">
         <span class="onesignal-checkmark"></span></label>
         <div style="clear:both"></div>`;
