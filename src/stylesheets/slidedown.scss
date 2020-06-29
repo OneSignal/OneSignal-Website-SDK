@@ -1,7 +1,7 @@
 $slidedown-transition-duration: 400ms;
 $border-radius: 0.5em;
 
-#onesignal-slidedown-container {
+#onesignal-slidedown-container, #onesignal-popover-container {
   font-size: 16px;
   position: fixed;
   z-index: 2258594000;
@@ -13,7 +13,7 @@ $border-radius: 0.5em;
     top: 0;
 
     &.close-slidedown {
-      #onesignal-slidedown-dialog {
+      #onesignal-slidedown-dialog, #onesignal-popover-dialog {
         -webkit-animation-name: slideDownExit;
         -webkit-animation-iteration-count: 1;
         -webkit-animation-timing-function: ease-out;
@@ -27,7 +27,7 @@ $border-radius: 0.5em;
       }
     }
 
-    #onesignal-slidedown-dialog {
+    #onesignal-slidedown-dialog, #onesignal-popover-dialog {
       width: 500px;
 
       -webkit-animation-name: slideDownEnter;
@@ -45,10 +45,10 @@ $border-radius: 0.5em;
         #blocked-slidedown {
           display: block;
         }
-        #normal-slidedown {
+        #normal-slidedown, #normal-popover {
           display: none;
         }
-        .slidedown-body-message {
+        .slidedown-body-message, .popover-body-message {
           padding: 0 0.2em 0 0.2em;
           text-align: center;
           width: 100%;
@@ -64,22 +64,22 @@ $border-radius: 0.5em;
         width: 612px;
         margin-bottom: 18px;
 
-        .slidedown-button.secondary {
+        .slidedown-button.secondary, .popover-button.secondary {
           padding: 0.714em 2em;
         }
       }
     }
   }
 
-  #blocked-slidedown {
+  #blocked-slidedown, #blocked-popover {
     display: none;
   }
 
   &.slide-up {
     bottom: 0;
 
-    &.close-slidedown {
-      #onesignal-slidedown-dialog {
+    &.close-slidedown, &.close-popover {
+      #onesignal-slidedown-dialog, #onesignal-popover-dialog {
         -webkit-animation-name: slideUpExit;
         -webkit-animation-iteration-count: 1;
         -webkit-animation-timing-function: ease-out;
@@ -93,7 +93,7 @@ $border-radius: 0.5em;
       }
     }
 
-    #onesignal-slidedown-dialog {
+    #onesignal-slidedown-dialog, #onesignal-popover-dialog {
       width: 100%;
 
       -webkit-animation-name: slideUpEnter;
@@ -211,7 +211,7 @@ $border-radius: 0.5em;
     display: flex;
   }
 
-  #onesignal-slidedown-dialog {
+  #onesignal-slidedown-dialog, #onesignal-popover-dialog {
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
@@ -222,12 +222,12 @@ $border-radius: 0.5em;
     border-bottom-right-radius: $border-radius;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Seoe UI Symbol";
 
-    .slidedown-body {
+    .slidedown-body, .popover-body {
       box-sizing: border-box;
       margin: 0;
     }
 
-    .slidedown-body-icon {
+    .slidedown-body-icon, .popover-body-icon {
       box-sizing: border-box;
       float: left;
       width: 80px;
@@ -249,7 +249,7 @@ $border-radius: 0.5em;
       }
     }
 
-    .slidedown-body-message {
+    .slidedown-body-message, .popover-body-message {
       box-sizing: border-box;
       padding: 0 0 0 1em;
       float: left;
@@ -285,7 +285,7 @@ $border-radius: 0.5em;
       margin: 0;
     }
 
-    .slidedown-button {
+    .slidedown-button, .popover-button {
       padding: 0.75em 1.5em;
       font-size: 1em;
       border-radius: .25em;
@@ -358,11 +358,11 @@ $border-radius: 0.5em;
       }
     }
 
-    .primary.slidedown-button+.secondary.slidedown-button {
+    .primary.slidedown-button+.secondary.slidedown-button, .primary.popover-button+.secondary.popover-button {
       margin-right: 0.714em;
     }
 
-    .slidedown-footer {
+    .slidedown-footer, .popover-footer {
       position: relative;
     }
 
