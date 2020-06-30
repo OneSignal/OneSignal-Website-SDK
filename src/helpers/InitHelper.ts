@@ -176,14 +176,6 @@ export default class InitHelper {
     const isOptedOut = LocalStorage.getIsOptedOut();
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
-      if (options.slidedown) {
-        const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
-        const isUsingCategoryConfig = promptOptions && promptOptions.slidedown && promptOptions.slidedown.categories;
-
-        if (isUsingCategoryConfig) {
-          await OneSignal.context.tagManager.sendTags();
-        }
-      }
     }
   }
 
