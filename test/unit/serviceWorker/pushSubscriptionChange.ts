@@ -1,4 +1,4 @@
-import test, { ExecutionContext } from 'ava';
+import test, { TestContext } from 'ava';
 import '../../support/polyfills/polyfills';
 import sinon, { SinonSandbox } from 'sinon';
 
@@ -13,9 +13,7 @@ import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import OneSignalApiSW from '../../../src/OneSignalApiSW';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
-import {
-  MockPushSubscriptionChangeEvent
-} from "../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent";
+import { MockPushSubscriptionChangeEvent } from "../../support/mocks/service-workers/models/MockPushSubscriptionChangeEvent";
 
 declare var self: ServiceWorkerGlobalScope;
 const appId = Random.getRandomUuid();
@@ -35,16 +33,16 @@ test.beforeEach(async() => {
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
   });
-
+  
   newSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(65).buffer
   });
-
+  
   await TestEnvironment.initializeForServiceWorker({
     url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
   });
-
+  
   setBrowser(BrowserUserAgent.ChromeMacSupported);
 
   // Service worker does not have "window"
@@ -54,7 +52,7 @@ test.beforeEach(async() => {
 
 });
 
-test.afterEach(function (_t: ExecutionContext) {
+test.afterEach(function (_t: TestContext) {
   sinonSandbox.restore();
 });
 

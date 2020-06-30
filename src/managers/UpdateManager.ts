@@ -9,7 +9,6 @@ import { ContextSWInterface } from '../models/ContextSW';
 import Utils from "../context/shared/utils/Utils";
 import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
-import { logMethodCall } from '../utils';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -121,7 +120,6 @@ export class UpdateManager {
   }
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
-    logMethodCall("sendOutcomeDirect");
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
@@ -129,7 +127,7 @@ export class UpdateManager {
       device_type: deviceRecord.deliveryPlatform,
       notification_ids: notificationIds,
       direct: true,
-    };
+    }
     if (value !== undefined) {
       outcomeRequestData.weight = value;
     }
@@ -137,7 +135,6 @@ export class UpdateManager {
   }
 
   public async sendOutcomeInfluenced(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
-    logMethodCall("sendOutcomeInfluenced");
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
@@ -145,7 +142,7 @@ export class UpdateManager {
       device_type: deviceRecord.deliveryPlatform,
       notification_ids: notificationIds,
       direct: false,
-    };
+    }
     if (value !== undefined) {
       outcomeRequestData.weight = value;
     }
@@ -153,13 +150,12 @@ export class UpdateManager {
   }
 
   public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
-    logMethodCall("sendOutcomeUnattributed");
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
       id: outcomeName,
       device_type: deviceRecord.deliveryPlatform,
-    };
+    }
     if (value !== undefined) {
       outcomeRequestData.weight = value;
     }

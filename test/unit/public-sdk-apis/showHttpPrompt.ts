@@ -1,13 +1,13 @@
-import test, { ExecutionContext } from "ava";
+import test, {TestContext} from "ava";
 import OneSignal from "../../../src/OneSignal";
-import { TestEnvironment } from "../../support/sdk/TestEnvironment";
+import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import Context from "../../../src/models/Context";
 import MainHelper from "../../../src/helpers/MainHelper";
-import sinon, { SinonSandbox } from 'sinon';
+import sinon, {SinonSandbox} from 'sinon';
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
-test.afterEach(function (_t: ExecutionContext) {
+test.afterEach(function (_t: TestContext) {
   sinonSandbox.restore();
 });
 

@@ -1,4 +1,4 @@
-FROM node:12.18.0
+FROM node:10.16.0
 WORKDIR /sdk
 COPY package.json .
 RUN yarn

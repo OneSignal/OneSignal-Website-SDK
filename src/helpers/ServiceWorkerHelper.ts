@@ -193,8 +193,7 @@ export default class ServiceWorkerHelper {
       session.deviceId = newPlayerId;
       await Promise.all([
         Database.setDeviceId(newPlayerId),
-        Database.upsertSession(session),
-        Database.resetSentUniqueOutcomes()
+        Database.upsertSession(session)
       ]);
     }
   }
@@ -221,15 +220,12 @@ export default class ServiceWorkerHelper {
       );
     }
 
-    await Promise.all([
-      Database.cleanupCurrentSession(),
-      Database.removeAllNotificationClicked()
-    ]);
+    await Promise.all([Database.cleanupCurrentSession(), Database.removeAllNotificationClicked()]);
     Log.debug(
       "Finalize session finished",
       `started: ${new Date(session.startTimestamp)}`
     );
-  }
+  };
 
   static timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
     if (timestamp1 <= timestamp2) {

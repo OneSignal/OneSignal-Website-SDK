@@ -39,9 +39,3 @@ export interface OutcomeAttribution {
   type: OutcomeAttributionType;
   notificationIds: string[];
 }
-
-export interface SentUniqueOutcome {
-  outcomeName: string;
-  notificationIds: string[];
-  sentDuringSession: number | null; // used for unattributed
-}

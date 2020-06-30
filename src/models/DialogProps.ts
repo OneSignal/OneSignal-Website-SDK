@@ -1,6 +1,6 @@
 export default interface DialogProps {
     icon?: string;
-    messageText?: string;
+    actionMessage?: string;
     positiveButtonText?: string;
     negativeButtonText?: string;
 }

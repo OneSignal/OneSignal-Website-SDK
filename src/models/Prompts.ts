@@ -22,7 +22,6 @@ export interface SlidedownPermissionMessageOptions extends DelayedPromptOptions 
   cancelButtonText: string;
   positiveUpdateButton?: string;
   negativeUpdateButton?: string;
-  updateMessage?: string;
   categories?: Categories;
 }
 
@@ -124,6 +123,5 @@ export interface AppUserConfigNotifyButton {
 export interface Categories {
   positiveUpdateButton?: string;
   negativeUpdateButton?: string;
-  updateMessage?: string;
   tags: TagCategory[];
 }

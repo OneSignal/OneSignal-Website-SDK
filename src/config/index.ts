@@ -14,7 +14,6 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   acceptButton: "Allow",
   cancelButton: "Cancel",
   categoryDefaults: {
-    updateMessage: "Update your push notification subscription preferences.",
     positiveUpdateButton: "Save Preferences",
     negativeUpdateButton: "Cancel"
   },

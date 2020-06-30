@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { ExecutionContext } from "ava";
+import test, { TestContext, Context } from "ava";
 import Database from '../../../src/services/Database';
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
@@ -16,7 +16,7 @@ interface LogoutEmailTestData {
 }
 
 async function logoutEmailTest(
-  t: ExecutionContext,
+  t: TestContext & Context<any>,
   testData: LogoutEmailTestData
 ) {
   await TestEnvironment.initialize();
@@ -56,7 +56,7 @@ async function logoutEmailTest(
 }
 
 async function expectEmailLogoutRequest(
-  t: ExecutionContext,
+  t: TestContext & Context<any>,
   pushDevicePlayerId: string | null,
   emailId: string,
   emailAuthHash: string,

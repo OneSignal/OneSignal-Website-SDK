@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { ExecutionContext } from "ava";
+import test, { TestContext, Context } from "ava";
 import Database from "../../../src/services/Database";
 import {TestEnvironment, BrowserUserAgent} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
@@ -72,7 +72,7 @@ test("setEmail should not accept an email auth SHA-256 hex hash not 64 character
  */
 
 async function expectEmailRecordCreationRequest(
-  t: ExecutionContext,
+  t: TestContext & Context<any>,
   emailAddress: string,
   pushDevicePlayerId: string | null,
   emailAuthHash: string | undefined | null,
@@ -107,7 +107,7 @@ async function expectEmailRecordCreationRequest(
 }
 
 async function expectEmailRecordUpdateRequest(
-  t: ExecutionContext,
+  t: TestContext & Context<any>,
   emailId: string | null,
   emailAddress: string,
   pushDevicePlayerId: string | null,
@@ -143,7 +143,7 @@ async function expectEmailRecordUpdateRequest(
 }
 
 async function expectPushRecordUpdateRequest(
-  t: ExecutionContext,
+  t: TestContext & Context<any>,
   pushDevicePlayerId: string,
   newEmailId: string,
   emailAddress: string,
@@ -175,7 +175,7 @@ interface SetEmailTestData {
 }
 
 async function setEmailTest(
-  t: ExecutionContext,
+  t: TestContext & Context<any>,
   testData: SetEmailTestData
 ) {
   setUserAgent(BrowserUserAgent.FirefoxMacSupported);

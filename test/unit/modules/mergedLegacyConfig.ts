@@ -173,3 +173,10 @@ test('should overwrite provided safari web ID', async t => {
   );
   t.is(result.safariWebId, 'web.onesignal.auto.01ea4289-b460-45e4-8d90-838752554827');
 });
+
+test('should assign downloaded safari web ID if not provided', async t => {
+  const serverConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+  serverConfig.config.safari_web_id = 'web.onesignal.auto.01ea4289-b460-45e4-8d90-838752554827';
+  const result = new ConfigManager().getMergedConfig({}, serverConfig);
+  t.is(result.safariWebId, serverConfig.config.safari_web_id);
+});

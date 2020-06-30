@@ -2,6 +2,9 @@ import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import ServiceWorkerHelper from "../../../src/helpers/ServiceWorkerHelper";
+import Random from "../../support/tester/Random";
+import { SessionOrigin } from "../../../src/models/Session";
 
 // manually create and restore the sandbox
 const sandbox: SinonSandbox = sinon.sandbox.create();
@@ -35,6 +38,7 @@ test.todo(
 );
 test.todo("upsertSession: if has existing session, reactivate if inactive");
 test.todo("upsertSession: if has existing session, don't do anyting if invalid");
+test.todo("upsertSession: if has existing session, reactivate if inactive");
 
 test.todo("deactivateSession: sets session as inactive and updates session duration");
 test.todo("deactivateSession: sets timeout to finalize the session");
