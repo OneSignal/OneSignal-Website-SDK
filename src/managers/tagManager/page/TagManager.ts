@@ -19,7 +19,11 @@ export default class TagManager implements ITagManager{
     public async sendTags(): Promise<TagsObject|null> {
         Log.info("Updating tags from Category Slidedown:", this.tags);
         const tagsWithNumberValues = TagUtils.convertTagBooleanValuesToNumbers(this.tags);
-        return await OneSignal.sendTags(tagsWithNumberValues) as TagsObject;
+        try {
+            return await OneSignal.sendTags(tagsWithNumberValues) as TagsObject;
+        } catch (e) {
+            return null;
+        }
     }
 
     public storeTagValuesToUpdate(tags: TagsObject): void {
