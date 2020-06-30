@@ -27,6 +27,7 @@ import TaggingContainer from '../slidedown/TaggingContainer';
 import { TagsObject } from '../models/Tags';
 import TagUtils from '../utils/TagUtils';
 import TagManager from './tagManager/page/TagManager';
+import LocalStorage from '../utils/LocalStorage';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -256,9 +257,10 @@ export class PromptsManager {
       }
       const tags = TaggingContainer.getValuesFromTaggingContainer();
       this.context.tagManager.storeTagValuesToUpdate(tags);
-      const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+      // use local storage permission to get around user-gesture sync requirement
+      const permission = LocalStorage.getStoredPermission();
 
-      if (isPushEnabled) {
+      if (permission === NotificationPermission.Granted) {
         // Sync Category Slidedown tags
         OneSignal.slidedown.toggleSaveState();
         const tags = await this.context.tagManager.sendTags();
