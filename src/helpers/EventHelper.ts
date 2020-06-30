@@ -40,8 +40,21 @@ export default class EventHelper {
 
   static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
     EventHelper.onSubscriptionChanged_showWelcomeNotification(newSubscriptionState);
+    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(newSubscriptionState);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
     EventHelper.onSubscriptionChanged_updateCustomLink();
+  }
+
+  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed: boolean | undefined) {
+    if (isSubscribed === true) {
+        const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
+        const isUsingCategoryConfig = !!promptOptions && !!promptOptions.slidedown &&
+          !!promptOptions.slidedown.categories;
+
+        if (isUsingCategoryConfig) {
+          await OneSignal.context.tagManager.sendTags();
+        }
+    }
   }
 
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {

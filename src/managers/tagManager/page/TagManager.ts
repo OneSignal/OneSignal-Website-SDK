@@ -4,6 +4,9 @@ import TagUtils from '../../../utils/TagUtils';
 import Context from '../../../models/Context';
 import { ITagManager } from '../types';
 
+/**
+ * Manages tags for the TaggingContainer
+ */
 export default class TagManager implements ITagManager{
     // local tags from tagging container
     private tags: TagsObject = {};
