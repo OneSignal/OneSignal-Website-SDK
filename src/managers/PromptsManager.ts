@@ -258,9 +258,9 @@ export class PromptsManager {
       const tags = TaggingContainer.getValuesFromTaggingContainer();
       this.context.tagManager.storeTagValuesToUpdate(tags);
       // use local storage permission to get around user-gesture sync requirement
-      const permission = LocalStorage.getStoredPermission();
+      const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
 
-      if (permission === NotificationPermission.Granted) {
+      if (isPushEnabled) {
         // Sync Category Slidedown tags
         OneSignal.slidedown.toggleSaveState();
         const tags = await this.context.tagManager.sendTags();
