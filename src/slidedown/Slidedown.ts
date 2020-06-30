@@ -9,7 +9,7 @@ import {
   once,
   removeDomElement,
   removeCssClass,
-  getDomElementOrStub, 
+  getDomElementOrStub,
   sanitizeHtmlAndDoubleQuotes} from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
@@ -55,7 +55,8 @@ export default class Slidedown {
     this.options.negativeUpdateButton = options.negativeUpdateButton ?
       sanitizeHtmlAndDoubleQuotes(options.negativeUpdateButton.substring(0, 16)) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
-    this.options.updateMessage = !!options.updateMessage ? sanitizeHtml(options.updateMessage).substring(0, 90) :
+    this.options.updateMessage = !!options.updateMessage ?
+      sanitizeHtmlAndDoubleQuotes(options.updateMessage).substring(0, 90) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
 
     this.notificationIcons = null;
