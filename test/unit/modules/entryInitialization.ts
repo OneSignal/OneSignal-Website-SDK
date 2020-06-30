@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { AssertContext } from "ava";
+import test, { ExecutionContext } from "ava";
 import { HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { OneSignalStubES5 } from "../../../src/utils/OneSignalStubES5";
 import { OneSignalStubES6 } from "../../../src/utils/OneSignalStubES6";
@@ -42,7 +42,7 @@ class OneSignalStubES5Test extends OneSignalStubES5 {
   }
 }
 
-function assertES5MethodIsCalled(t: AssertContext, oneSignalStub: OneSignalStubES5Test, functionName: string) {
+function assertES5MethodIsCalled(t: ExecutionContext, oneSignalStub: OneSignalStubES5Test, functionName: string) {
   const retValue = (oneSignalStub as any)[functionName].call(null, `${functionName}:arg1`);
   t.is(oneSignalStub.lastDirectFunctionCall.functionName, functionName);
   t.is(oneSignalStub.lastDirectFunctionCall.args[0], `${functionName}:arg1`);
@@ -50,12 +50,13 @@ function assertES5MethodIsCalled(t: AssertContext, oneSignalStub: OneSignalStubE
   t.is(retValue,undefined);
 }
 
-function assertES5PromiseMethodIsCalled(t: AssertContext, oneSignalStub: OneSignalStubES5Test, functionName: string) {
-  const retValue = (oneSignalStub as any)[functionName].call(null, `${functionName}:arg1`);
-  t.is(oneSignalStub.lastDirectPromiseFunctionCall.functionName, functionName);
-  t.is(oneSignalStub.lastDirectPromiseFunctionCall.args[0], `${functionName}:arg1`);
-  t.is(oneSignalStub.lastDirectPromiseFunctionCall.args.length, 1);
-  t.notDeepEqual(retValue, new Promise(() => {}));
+function assertES5PromiseMethodIsCalled(t: ExecutionContext, oneSignalStub: OneSignalStubES5Test,
+  functionName: string) {
+    const retValue = (oneSignalStub as any)[functionName].call(null, `${functionName}:arg1`);
+    t.is(oneSignalStub.lastDirectPromiseFunctionCall.functionName, functionName);
+    t.is(oneSignalStub.lastDirectPromiseFunctionCall.args[0], `${functionName}:arg1`);
+    t.is(oneSignalStub.lastDirectPromiseFunctionCall.args.length, 1);
+    t.notDeepEqual(retValue, new Promise(() => {}));
 }
 
 test("correctly stubs all methods for ES5", async t => {
@@ -115,7 +116,7 @@ class OneSignalStubES6Test extends OneSignalStubES6 {
   }
 }
 
-function assertES6MethodIsCalled(t: AssertContext, oneSignalStub: OneSignalStubES6Test, functionName: string) {
+function assertES6MethodIsCalled(t: ExecutionContext, oneSignalStub: OneSignalStubES6Test, functionName: string) {
   const retValue = (oneSignalStub as any)[functionName].call(null, `${functionName}:arg1`);
 
   t.is(oneSignalStub.getLastStubCall().functionName, functionName);
@@ -124,12 +125,13 @@ function assertES6MethodIsCalled(t: AssertContext, oneSignalStub: OneSignalStubE
   t.is(retValue,undefined);
 }
 
-function assertES6PromiseMethodIsCalled(t: AssertContext, oneSignalStub: OneSignalStubES6Test, functionName: string) {
-  const retValue = (oneSignalStub as any)[functionName].call(null, `${functionName}:arg1`);
-  t.is(oneSignalStub.getLastStubCall().functionName, functionName);
-  t.is(oneSignalStub.getLastStubCall().args[0], `${functionName}:arg1`);
-  t.is(oneSignalStub.getLastStubCall().args.length, 1);
-  t.notDeepEqual(retValue, new Promise(() => {}));
+function assertES6PromiseMethodIsCalled(t: ExecutionContext, oneSignalStub: OneSignalStubES6Test,
+  functionName: string) {
+    const retValue = (oneSignalStub as any)[functionName].call(null, `${functionName}:arg1`);
+    t.is(oneSignalStub.getLastStubCall().functionName, functionName);
+    t.is(oneSignalStub.getLastStubCall().args[0], `${functionName}:arg1`);
+    t.is(oneSignalStub.getLastStubCall().args.length, 1);
+    t.notDeepEqual(retValue, new Promise(() => {}));
 }
 
 test("correctly stubs all methods for ES6", async t => {
@@ -327,7 +329,7 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", 
   t.plan(1);
 });
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", async t => {
+test("Test ReplayCallsOnOneSignal replays ES6 calls executing reject promise", async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
   // Call OneSignal.sendTags(...) directly like a site developer may have done

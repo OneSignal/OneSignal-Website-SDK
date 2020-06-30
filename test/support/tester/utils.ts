@@ -1,4 +1,3 @@
-import { TestContext, Context } from "ava";
 import { SinonSandbox } from 'sinon';
 import nock from 'nock';
 import ProxyFrameHost from "../../../src/modules/frames/ProxyFrameHost";
@@ -9,12 +8,13 @@ import { TestEnvironment, TestEnvironmentConfig, HttpHttpsEnvironment } from '..
 import { ServerAppConfig } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
 import { Subscription } from "../../../src/models/Subscription";
+import { ExecutionContext } from 'ava';
 
 export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;
 }
 
-export function stubMessageChannel(t: TestContext & Context<any>) {
+export function stubMessageChannel(t: ExecutionContext) {
   // Stub MessageChannel
   const fakeClass = class Test { };
   t.context.originalMessageChannel = (global as any).MessageChannel;
@@ -82,7 +82,7 @@ export class InitTestHelper {
 export class AssertInitSDK {
   private firedSDKInitializedPublic: boolean = false;
 
-  public setupEnsureInitEventFires(t: TestContext) {
+  public setupEnsureInitEventFires(t: ExecutionContext) {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
       this.firedSDKInitializedPublic = true;
       t.pass();

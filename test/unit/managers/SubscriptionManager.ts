@@ -1,6 +1,6 @@
 import '../../support/polyfills/polyfills';
 
-import test, { GenericTestContext, Context as AvaContext } from 'ava';
+import test, { ThrowsExpectation, ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import timemachine from 'timemachine';
 
@@ -47,7 +47,7 @@ async function testCase(
    * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
    * global onesignalVapidPublicKey.
    */
-  t: GenericTestContext<AvaContext<any>>,
+  t: ExecutionContext,
   browser: BrowserUserAgent,
   vapidPublicKey: string,
   sharedVapidPublicKey: string,
@@ -270,8 +270,8 @@ test(
       vapidPublicKey: <any>undefined, // Forcing vapidPublicKey to undefined to test throwing
       onesignalVapidPublicKey: generateVapidKeys().sharedPublic
     } as SubscriptionManagerConfig);
-
-    await t.throws(manager.subscribe(SubscriptionStrategyKind.SubscribeNew), Error);
+    await t.throwsAsync(manager.subscribe.bind(null, SubscriptionStrategyKind.SubscribeNew),
+    { instanceOf: Error });
   }
 );
 
@@ -509,7 +509,7 @@ async function expirationTestCase(
    * The browser to simulate. Chrome means using vapidPublicKey, while Firefox means using the
    * global onesignalVapidPublicKey.
    */
-  t: GenericTestContext<AvaContext<any>>,
+  t: ExecutionContext,
   subscriptionCreationTime: number,
   subscriptionExpirationTime: number,
   expirationCheckTime: number,
@@ -725,7 +725,7 @@ test(
   "Service worker failed to install due to 403. Send a notification for the first user's session.", async t => {
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
-    const subscriptionManager = context.subscriptionManager; 
+    const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
@@ -739,7 +739,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus403);
     t.is(smSpyRegister.calledOnce, true);
@@ -750,7 +751,7 @@ test(
   "Service worker failed to install due to 403. Not the first user's session, do not send a notification.", async t => {
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
-    const subscriptionManager = context.subscriptionManager; 
+    const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
@@ -764,7 +765,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus403);
     t.is(smSpyRegister.calledOnce, false);
@@ -775,7 +777,7 @@ test(
   "Service worker failed to install due to 404. Send a notification for the first user's session.", async t => {
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
-    const subscriptionManager = context.subscriptionManager; 
+    const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
@@ -789,7 +791,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus404);
     t.is(smSpyRegister.calledOnce, true);
@@ -800,7 +803,7 @@ test(
   "Service worker failed to install due to 404. Not the first user's session, do not send a notification.", async t => {
     const context: Context = OneSignal.context;
     const serviceWorkerManager = context.serviceWorkerManager;
-    const subscriptionManager = context.subscriptionManager; 
+    const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
 
     TestEnvironment.mockInternalOneSignal();
@@ -814,7 +817,8 @@ test(
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
 
-    await t.throws(subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew), ServiceWorkerRegistrationError);
+    await t.throwsAsync(async ()=>subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew),
+      { instanceOf: ServiceWorkerRegistrationError });
     t.is(smSpyRegisterFailed.calledOnce, true);
     t.is(smSpyRegisterFailed.getCall(0).args[0], SubscriptionStateKind.ServiceWorkerStatus404);
     t.is(smSpyRegister.calledOnce, false);
