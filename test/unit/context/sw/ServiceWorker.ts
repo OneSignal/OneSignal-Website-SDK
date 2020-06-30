@@ -1,4 +1,4 @@
-import test, { TestContext } from 'ava';
+import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
@@ -9,7 +9,8 @@ import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker
 import { TestEnvironment, BrowserUserAgent } from "../../../support/sdk/TestEnvironment";
 import { setUserAgent } from '../../../support/tester/browser';
 import Random from '../../../support/tester/Random';
-import { MockServiceWorkerGlobalScope } from '../../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope';
+import { MockServiceWorkerGlobalScope }
+  from '../../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope';
 import MockNotification from '../../../support/mocks/MockNotification';
 import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
@@ -49,13 +50,13 @@ function mockOneSignalPushEvent(data: object): MockPushEvent {
   return new MockPushEvent(new MockPushMessageData(payload));
 }
 
-function assertValidNotificationShown(t: TestContext, spy: SinonSpy): void {
+function assertValidNotificationShown(t: ExecutionContext, spy: SinonSpy): void {
   // Only one should show
   t.is(spy.callCount, 1);
 
   const notifTitle: string = spy.lastCall.args[0];
   const options: NotificationOptions | undefined = spy.lastCall.args[1];
-  
+
   // Must have a title
   t.truthy(notifTitle);
 

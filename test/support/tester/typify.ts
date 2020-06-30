@@ -1,6 +1,6 @@
-import ava, { RegisterContextual } from 'ava';
+import ava from 'ava';
 
-export function beforeEach<T>(getContext: () => Promise<T>): RegisterContextual<T> {
+export function beforeEach<T>(getContext: () => Promise<T>): any {
     ava.beforeEach(async t => {
         Object.assign(t.context, await getContext());
     });

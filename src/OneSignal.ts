@@ -55,7 +55,7 @@ import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfo
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
-import { OutcomeAttributionType } from "./models/Outcomes";
+import { OutcomeAttributionType, SentUniqueOutcome } from "./models/Outcomes";
 import { DelayedPromptType, AppUserConfigNotifyButton } from './models/Prompts';
 
 export default class OneSignal {
@@ -811,50 +811,64 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
-    const outcomesConfig = OneSignal.config!.userConfig.outcomes;
-    if (!outcomesConfig) {
-      Log.debug("Outcomes feature not supported by main application yet.");
+    const config = OneSignal.config!.userConfig.outcomes;
+    if (!config) {
+      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
       return;
     }
-    if (!outcomeName) {
-      Log.error("Outcome name is required");
-      return;
-    }
+
+    const outcomesHelper = new OutcomesHelper(OneSignal.config!.appId, config, outcomeName, false);
     if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
       Log.error("Outcome weight can only be a number if present.");
       return;
     }
-    // TODO: check built-in outcome names? not allow sending?
 
-    await awaitOneSignalInitAndSupported();
-
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
-    if (!isSubscribed) {
-      Log.warn("Reporting outcomes is supported only for subscribed users.");
+    if (!await outcomesHelper.beforeOutcomeSend()) {
       return;
     }
 
-     // TODO: add error handling
-    const outcomeAttribution = await OutcomesHelper.getAttribution(outcomesConfig);
-    switch (outcomeAttribution.type) {
-      case OutcomeAttributionType.Direct:
-        await OneSignal.context.updateManager.sendOutcomeDirect(
-          OneSignal.config!.appId, outcomeAttribution.notificationIds, outcomeName, outcomeWeight
-        );
-        return;
-      case OutcomeAttributionType.Indirect:
-        await OneSignal.context.updateManager.sendOutcomeInfluenced(
-          OneSignal.config!.appId, outcomeAttribution.notificationIds, outcomeName, outcomeWeight
-        );
-        return;
-      case OutcomeAttributionType.Unattributed:
-        await OneSignal.context.updateManager.sendOutcomeUnattributed(
-          OneSignal.config!.appId, outcomeName, outcomeWeight);
-        return;
-      default:
-        Log.warn("You are on a free plan. Please upgrade to use this functionality.");
-        return;
+    const outcomeAttribution = await outcomesHelper.getAttribution();
+
+    await outcomesHelper.send({
+      type: outcomeAttribution.type,
+      notificationIds: outcomeAttribution.notificationIds,
+      weight: outcomeWeight
+    });
+  }
+
+  public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
+    const config = OneSignal.config!.userConfig.outcomes;
+    if (!config) {
+      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
+      return;
     }
+
+    const outcomesHelper = new OutcomesHelper(OneSignal.config!.appId, config, outcomeName, true);
+
+    if (!await outcomesHelper.beforeOutcomeSend()) {
+      return;
+    }
+    const outcomeAttribution = await outcomesHelper.getAttribution();
+
+    if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
+      Log.warn("You are on a free plan. Please upgrade to use this functionality.");
+      return;
+    }
+
+    // all notifs in attribution window
+    const { notificationIds } = outcomeAttribution;
+    // only new notifs that ought to be attributed
+    const newNotifsToAttributeWithOutcome = await outcomesHelper.getNotifsToAttributeWithUniqueOutcome(notificationIds);
+
+    if(!outcomesHelper.shouldSendUnique(outcomeAttribution, newNotifsToAttributeWithOutcome)) {
+      Log.warn(`'${outcomeName}' was already reported for all notifications.`);
+      return;
+    }
+
+    await outcomesHelper.send({
+      type: outcomeAttribution.type,
+      notificationIds: newNotifsToAttributeWithOutcome,
+    });
   }
 
   static __doNotShowWelcomeNotification: boolean;
