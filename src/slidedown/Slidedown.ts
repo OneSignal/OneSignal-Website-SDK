@@ -9,12 +9,12 @@ import {
   once,
   removeDomElement,
   removeCssClass,
-  getDomElementOrStub } from '../utils';
+  getDomElementOrStub, 
+  sanitizeHtmlAndDoubleQuotes} from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 import getDialogHTML from './DialogHTML';
-import sanitizeHtml from 'sanitize-html';
 
 export default class Slidedown {
   public options: SlidedownPermissionMessageOptions;
@@ -36,14 +36,14 @@ export default class Slidedown {
         options = MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     }
     this.options = options;
-    this.options.actionMessage = sanitizeHtml(options.actionMessage.substring(0, 90));
-    this.options.acceptButtonText = sanitizeHtml(options.acceptButtonText.substring(0, 16));
-    this.options.cancelButtonText = sanitizeHtml(options.cancelButtonText.substring(0, 16));
+    this.options.actionMessage = sanitizeHtmlAndDoubleQuotes(options.actionMessage.substring(0, 90));
+    this.options.acceptButtonText = sanitizeHtmlAndDoubleQuotes(options.acceptButtonText.substring(0, 16));
+    this.options.cancelButtonText = sanitizeHtmlAndDoubleQuotes(options.cancelButtonText.substring(0, 16));
     this.options.positiveUpdateButton = options.positiveUpdateButton ?
-      sanitizeHtml(options.positiveUpdateButton).substring(0, 16):
+      sanitizeHtmlAndDoubleQuotes(options.positiveUpdateButton.substring(0, 16)):
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
     this.options.negativeUpdateButton = options.negativeUpdateButton ?
-      sanitizeHtml(options.negativeUpdateButton).substring(0, 16) :
+      sanitizeHtmlAndDoubleQuotes(options.negativeUpdateButton.substring(0, 16)) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
     this.options.updateMessage = !!options.updateMessage ? sanitizeHtml(options.updateMessage).substring(0, 90) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
