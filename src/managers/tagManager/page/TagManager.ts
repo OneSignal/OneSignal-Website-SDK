@@ -9,7 +9,8 @@ import { ITagManager } from '../types';
  */
 export default class TagManager implements ITagManager{
     // local tags from tagging container
-    private tags: TagsObject = {};
+    private tagValuesToUpdate: TagsObject = {};
+    public playerTags: TagsObject = {};
     private context: Context;
 
     constructor(context: Context) {
@@ -17,20 +18,30 @@ export default class TagManager implements ITagManager{
     }
 
     public async sendTags(): Promise<TagsObject|null> {
-        Log.info("Updating tags from Category Slidedown:", this.tags);
-        const tagsWithNumberValues = TagUtils.convertTagBooleanValuesToNumbers(this.tags);
+        Log.info("Updating tags from Category Slidedown:", this.tagValuesToUpdate);
+        const tagsWithNumberValues = TagUtils.convertTagBooleanValuesToNumbers(this.tagValuesToUpdate);
+        const playerTagsWithNumberValues = TagUtils.convertTagStringValuesToNumbers(this.context.tagManager.playerTags);
+        const diff = TagUtils.getObjectDifference(tagsWithNumberValues, playerTagsWithNumberValues);
+        const finalTagsObject = TagUtils.getOnlyKeysObject(diff, tagsWithNumberValues);
+
+        if (Object.keys(finalTagsObject).length === 0) {
+            Log.warn("OneSignal: no change detected in Category preferences.");
+            return {} as TagsObject;
+        }
         try {
-            return await OneSignal.sendTags(tagsWithNumberValues) as TagsObject;
+            return await OneSignal.sendTags(finalTagsObject) as TagsObject;
         } catch (e) {
             return null;
         }
     }
 
     public storeTagValuesToUpdate(tags: TagsObject): void {
-        this.tags = tags;
+        this.tagValuesToUpdate = tags;
     }
 
     static async getTags(): Promise<TagsObject> {
-        return <TagsObject> await OneSignal.getTags();
+        const playerTags = await OneSignal.getTags();
+        OneSignal.context.tagManager.playerTags = playerTags;
+        return playerTags;
     }
 }
