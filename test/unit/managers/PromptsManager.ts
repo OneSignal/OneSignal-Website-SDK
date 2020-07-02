@@ -10,6 +10,7 @@ import { PromptsManager } from '../../../src/managers/PromptsManager';
 import { PageViewManager } from '../../../src/managers/PageViewManager';
 import Slidedown from '../../../src/slidedown/Slidedown';
 import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
+import EventsTestHelper from '../../support/tester/EventsTestHelper';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -30,7 +31,7 @@ test('if category options are not configured, check that an error was logged', a
 
 test('category options are configured, in update mode, check 1) tagging container loaded 2) remote tag fetch',
     async t => {
-        await initializeConfigWithCategories();
+        await initializeConfigWithCategories(true);
         sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
         sinonSandbox.stub(MainHelper, "getNotificationIcons");
 
@@ -45,8 +46,8 @@ test('category options are configured, in update mode, check 1) tagging containe
 
 
 test('category options are configured, not in update mode, check remote tag fetch not made', async t => {
-    await initializeConfigWithCategories();
-    const tagFetchSpy = sinonSandbox.stub(TagManager, "downloadTags").resolves({});
+    await initializeConfigWithCategories(true);
+    const tagFetchStub = sinonSandbox.stub(TagManager, "downloadTags").resolves({});
     sinonSandbox.stub(PageViewManager.prototype, "getLocalPageViewCount").returns(1);
     sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
     sinonSandbox.stub(PromptsManager.prototype as any, "checkIfAutoPromptShouldBeShown").resolves(true);
@@ -55,16 +56,44 @@ test('category options are configured, not in update mode, check remote tag fetc
     const createSpy = sinonSandbox.spy(Slidedown.prototype, "create");
     await InitHelper.sessionInit();
 
-    t.true(!tagFetchSpy.called);
+    t.true(!tagFetchStub.called);
     t.true(slidedownSpy.calledOnce);
     t.true(createSpy.called);
 });
 
-async function initializeConfigWithCategories() {
+test('category options are configured, in update mode, no change to remote tags on allow, check remote tag update not made', async t => {
+    await initializeConfigWithCategories(false);
+    const tagSyncSpy = sinonSandbox.stub(TagManager.prototype, "syncTags").resolves({});
+    const showCatSlidedownSpy = sinonSandbox.spy(OneSignal, "showCategorySlidedown");
+
+    sinonSandbox.stub(PageViewManager.prototype, "getLocalPageViewCount").returns(1);
+    sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
+    sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
+    sinonSandbox.stub(TagManager, "downloadTags").resolves({ tag1:'1' });
+    sinonSandbox.stub(TaggingContainer, "getValuesFromTaggingContainer").resolves({ tag1: true });
+    sinonSandbox.stub(MainHelper, "getNotificationIcons");
+
+    await InitHelper.sessionInit();
+    await OneSignal.showCategorySlidedown();
+
+    const slidedownClosed = new Promise(resolve => {
+        OneSignal.on(OneSignal.emitter.on(Slidedown.EVENTS.CLOSED) , () => {
+            t.is(tagSyncSpy.callCount, 0);
+            resolve();
+        });
+    });
+    new EventsTestHelper(sinonSandbox).simulateSlidedownAllowAfterShown();
+    await slidedownClosed;
+
+    t.true(!tagSyncSpy.called);
+    t.true(showCatSlidedownSpy.calledOnce);
+});
+
+async function initializeConfigWithCategories(autoPrompt: boolean) {
     const config = {
         userConfig: {
             promptOptions: {
-                autoPrompt: true,
+                autoPrompt,
                 slidedown: {
                     enabled: true,
                     actionMessage: "",
