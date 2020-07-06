@@ -15,12 +15,13 @@ import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 import getDialogHTML from './DialogHTML';
 import sanitizeHtml from 'sanitize-html';
+import getRetryIndicator from './RetryIndicator';
 
 export default class Slidedown {
   public options: SlidedownPermissionMessageOptions;
   public notificationIcons: NotificationIcons | null;
   private isInSaveState: boolean;
-  public isShowingFailureMessage: boolean;
+  public isShowingFailureState: boolean;
 
   static get EVENTS() {
     return {
@@ -47,10 +48,12 @@ export default class Slidedown {
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
     this.options.updateMessage = !!options.updateMessage ? sanitizeHtml(options.updateMessage).substring(0, 90) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
+    this.options.savingButtonText = "Saving...";
+    this.options.errorButtonText = this.options.positiveUpdateButton; // configurable in the future
 
     this.notificationIcons = null;
     this.isInSaveState = false;
-    this.isShowingFailureMessage = false;
+    this.isShowingFailureState = false;
   }
 
   async create(isInUpdateMode?: boolean) {
@@ -87,7 +90,7 @@ export default class Slidedown {
           `<div id="onesignal-slidedown-dialog" class="onesignal-slidedown-dialog">${dialogHtml}</div>`);
 
       // Add dynamic button width by class
-      // Need this due to saving state (with loading indicator) which may be different size as text
+      // Need this due to saving state (with indicator icons) which may be different size as text
       // 8em is the minimum to avoid wrapping indicator
       if (positiveButtonText!.length > 14) {
         addCssClass(this.allowButton, 'twelve-width-btn');
@@ -134,15 +137,16 @@ export default class Slidedown {
    */
   toggleSaveState() {
     if (!this.isInSaveState) {
-      this.allowButton.innerHTML = `Saving...<div id="saving-loading-indicator-holder" class="saving-loading-indicator-holder"></div>`;
-      addDomElement(this.savingLoadingIndicatorHolder, 'beforeend', getLoadingIndicatorWithColor("#FFFFFF"));
+      // note: savingButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
+      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.options.savingButtonText!);
+      addDomElement(this.buttonIndicatorHolder, 'beforeend', getLoadingIndicatorWithColor("#FFFFFF"));
       (<HTMLButtonElement>this.allowButton).disabled = true;
       addCssClass(this.allowButton, 'disabled');
       addCssClass(this.allowButton, 'onesignal-saving-state-button');
     } else {
       // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
       this.allowButton.innerHTML = this.options.positiveUpdateButton!;
-      removeDomElement('#saving-loading-indicator-holder');
+      removeDomElement('#onesignal-button-indicator-holder');
       (<HTMLButtonElement>this.allowButton).disabled = false;
       removeCssClass(this.allowButton, 'disabled');
       removeCssClass(this.allowButton, 'onesignal-saving-state-button');
@@ -150,18 +154,25 @@ export default class Slidedown {
     this.isInSaveState = !this.isInSaveState;
   }
 
-  toggleFailureMessage() {
-    if (!this.isShowingFailureMessage) {
-      const { failureMessage } = SERVER_CONFIG_DEFAULTS_SLIDEDOWN;
-      addDomElement(this.slidedownFooter, 'afterbegin', `<div id="failure-message" class="onesignal-tag-failure-message">${failureMessage}</div>`);
+  toggleFailureState() {
+    if (!this.isShowingFailureState) {
+      // note: errorButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
+      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.options.errorButtonText!);
+      addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
+      addCssClass(this.allowButton, 'onesignal-error-state-button');
     } else {
-      removeDomElement('#failure-message');
+      removeDomElement('#onesignal-button-indicator-holder');
+      removeCssClass(this.allowButton, 'onesignal-error-state-button');
     }
-    this.isShowingFailureMessage = !this.isShowingFailureMessage;
+    this.isShowingFailureState = !this.isShowingFailureState;
   }
 
   getPlatformNotificationIcon(): string {
     return getPlatformNotificationIcon(this.notificationIcons);
+  }
+
+  getIndicatorHolderHtmlWithText(text: string) {
+    return `${text}<div id="onesignal-button-indicator-holder" class="onesignal-button-indicator-holder"></div>`;
   }
 
   get container() {
@@ -180,8 +191,8 @@ export default class Slidedown {
     return getDomElementOrStub('#onesignal-slidedown-cancel-button');
   }
 
-  get savingLoadingIndicatorHolder() {
-    return getDomElementOrStub('#saving-loading-indicator-holder');
+  get buttonIndicatorHolder() {
+    return getDomElementOrStub('#onesignal-button-indicator-holder');
   }
 
   get slidedownFooter() {

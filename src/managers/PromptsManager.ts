@@ -252,8 +252,8 @@ export class PromptsManager {
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       const { slidedown } = OneSignal;
-      if (slidedown.isShowingFailureMessage) {
-        slidedown.toggleFailureMessage();
+      if (slidedown.isShowingFailureState) {
+        slidedown.toggleFailureState();
       }
       const tags = TaggingContainer.getValuesFromTaggingContainer();
       this.context.tagManager.storeTagValuesToUpdate(tags);
@@ -269,7 +269,7 @@ export class PromptsManager {
           // Display tag update error
           Log.warn(`OneSignal: couldn't update tags`);
           OneSignal.slidedown.toggleSaveState();
-          OneSignal.slidedown.toggleFailureMessage();
+          OneSignal.slidedown.toggleFailureState();
           return;
         }
       } else {
