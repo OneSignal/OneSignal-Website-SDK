@@ -207,8 +207,9 @@ $border-radius: 0.5em;
     }
   }
 
-  .saving-loading-indicator-holder {
+  .onesignal-button-indicator-holder {
     display: flex;
+    margin-left: 0.5em;
   }
 
   #onesignal-slidedown-dialog, #onesignal-popover-dialog {
@@ -333,10 +334,18 @@ $border-radius: 0.5em;
           background: #CED3D8;
           transition: linear 75ms;
         }
+
+        &.onesignal-error-state-button {
+          padding: 0.75em 1em;
+          background: #E54A4D;
+          transition: linear 75ms;
+          align-items: center;
+        }
       }
 
-      &.saving-loading-indicator-holder {
+      &.onesignal-button-indicator-holder {
         display: flex;
+        margin-left: 0.5em;
       }
 
       &.secondary {
