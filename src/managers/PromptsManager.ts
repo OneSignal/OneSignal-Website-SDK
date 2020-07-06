@@ -212,7 +212,6 @@ export class PromptsManager {
       if (isInUpdateMode) {
         taggingContainer.load();
         // updating. pull remote tags
-        // TO DO: remove promise simulating slow connection
         const existingTagsAsNumbers = await TagManager.getTags();
         existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
       }
