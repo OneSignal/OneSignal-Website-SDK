@@ -292,6 +292,7 @@ $border-radius: 0.5em;
       border-radius: .25em;
       font-weight: 400;
       box-shadow: unset;
+      display: flex;
 
       &.primary {
         background: #4285f4;
@@ -309,24 +310,6 @@ $border-radius: 0.5em;
         &.disabled {
           background-color: #CED3D8;
           cursor: default;
-        }
-
-        &.eight-width-btn {
-          width: 8em;
-          display: flex;
-          justify-content: center;
-        }
-
-        &.ten-width-btn {
-          width: 10em;
-          display: flex;
-          justify-content: center;
-        }
-
-        &.twelve-width-btn {
-          width: 12em;
-          display: flex;
-          justify-content: center;
         }
 
         &.onesignal-saving-state-button {

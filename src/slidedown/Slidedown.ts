@@ -89,17 +89,6 @@ export default class Slidedown {
       addDomElement(this.container, 'beforeend',
           `<div id="onesignal-slidedown-dialog" class="onesignal-slidedown-dialog">${dialogHtml}</div>`);
 
-      // Add dynamic button width by class
-      // Need this due to saving state (with indicator icons) which may be different size as text
-      // 8em is the minimum to avoid wrapping indicator
-      if (positiveButtonText!.length > 14) {
-        addCssClass(this.allowButton, 'twelve-width-btn');
-      } else if (positiveButtonText!.length > 10) {
-        addCssClass(this.allowButton, 'ten-width-btn');
-      } else {
-        addCssClass(this.allowButton, 'eight-width-btn');
-      }
-
       // Animate it in depending on environment
       addCssClass(this.container, bowser.mobile ? 'slide-up' : 'slide-down');
 
