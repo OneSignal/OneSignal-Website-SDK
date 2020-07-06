@@ -17,6 +17,5 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
     updateMessage: "Update your push notification subscription preferences.",
     positiveUpdateButton: "Save Preferences",
     negativeUpdateButton: "Cancel"
-  },
-  failureMessage: "Updating failed"
+  }
 };
