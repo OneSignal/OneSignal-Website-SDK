@@ -27,9 +27,10 @@ export default class Slidedown {
   public static readonly onesignalSlidedownContainerClass = "onesignal-slidedown-container";
   public static readonly onesignalResetClass = "onesignal-reset";
   public static readonly onesignalSlidedownDialogClass = "onesignal-slidedown-dialog";
-  public static readonly onesignalSavingLoadingIndicatorHolderClass = "onesignal-saving-loading-indicator-holder";
+  public static readonly onesignalButtonIndicatorHolderClass = "onesignal-button-indicator-holder";
   public static readonly onesignalSlidedownAllowButtonClass = "onesignal-slidedown-allow-button";
   public static readonly onesignalSlidedownCancelButtonClass = "onesignal-slidedown-cancel-button";
+  public static readonly onesignalSavingStateButtonClass = "onesignal-saving-state-button";
   public static readonly slidedownBody = "slidedown-body";
   public static readonly slidedownFooter = "slidedown-footer";
 
@@ -142,14 +143,14 @@ export default class Slidedown {
       addDomElement(this.buttonIndicatorHolder, 'beforeend', getLoadingIndicatorWithColor("#FFFFFF"));
       (<HTMLButtonElement>this.allowButton).disabled = true;
       addCssClass(this.allowButton, 'disabled');
-      addCssClass(this.allowButton, 'onesignal-saving-state-button');
+      addCssClass(this.allowButton, Slidedown.onesignalSavingStateButtonClass);
     } else {
       // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
       this.allowButton.innerHTML = this.options.positiveUpdateButton!;
-      removeDomElement(`#${Slidedown.onesignalSavingLoadingIndicatorHolderClass}`);
+      removeDomElement(`#${Slidedown.onesignalButtonIndicatorHolderClass}`);
       (<HTMLButtonElement>this.allowButton).disabled = false;
       removeCssClass(this.allowButton, 'disabled');
-      removeCssClass(this.allowButton, 'onesignal-saving-state-button');
+      removeCssClass(this.allowButton, Slidedown.onesignalSavingStateButtonClass);
     }
     this.isInSaveState = !this.isInSaveState;
   }
@@ -172,7 +173,8 @@ export default class Slidedown {
   }
 
   getIndicatorHolderHtmlWithText(text: string) {
-    return `${text}<div id="onesignal-button-indicator-holder" class="onesignal-button-indicator-holder"></div>`;
+    return `${text}<div id="${Slidedown.onesignalButtonIndicatorHolderClass}"` +
+      `class="${Slidedown.onesignalButtonIndicatorHolderClass}"></div>`;
   }
 
   get container() {
@@ -192,11 +194,11 @@ export default class Slidedown {
   }
 
   get buttonIndicatorHolder() {
-    return getDomElementOrStub(`#${Slidedown.onesignalSavingLoadingIndicatorHolderClass}`);
+    return getDomElementOrStub(`#${Slidedown.onesignalButtonIndicatorHolderClass}`);
   }
 
   get slidedownFooter() {
-    return getDomElementOrStub('#slidedown-footer');
+    return getDomElementOrStub(`#${Slidedown.slidedownFooter}`);
   }
 }
 
