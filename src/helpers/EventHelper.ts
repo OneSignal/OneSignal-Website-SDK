@@ -46,14 +46,16 @@ export default class EventHelper {
   }
 
   private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed: boolean | undefined) {
-    if (isSubscribed === true) {
-        const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
-        const isUsingCategoryConfig = !!promptOptions && !!promptOptions.slidedown &&
-          !!promptOptions.slidedown.categories;
+    if (isSubscribed !== true) {
+      return;
+    }
 
-        if (isUsingCategoryConfig) {
-          await OneSignal.context.tagManager.sendTags();
-        }
+    const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
+    const isUsingCategoryConfig = !!promptOptions && !!promptOptions.slidedown &&
+      !!promptOptions.slidedown.categories;
+
+    if (isUsingCategoryConfig) {
+      await OneSignal.context.tagManager.sendTags();
     }
   }
 
