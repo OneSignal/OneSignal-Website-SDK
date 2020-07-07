@@ -9,12 +9,12 @@ import {
   once,
   removeDomElement,
   removeCssClass,
-  getDomElementOrStub } from '../utils';
+  getDomElementOrStub,
+  sanitizeHtmlAndDoubleQuotes} from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 import getDialogHTML from './DialogHTML';
-import sanitizeHtml from 'sanitize-html';
 import getRetryIndicator from './RetryIndicator';
 
 export default class Slidedown {
@@ -22,6 +22,16 @@ export default class Slidedown {
   public notificationIcons: NotificationIcons | null;
   private isInSaveState: boolean;
   public isShowingFailureState: boolean;
+
+  // identifiers and style classes
+  public static readonly onesignalSlidedownContainerClass = "onesignal-slidedown-container";
+  public static readonly onesignalResetClass = "onesignal-reset";
+  public static readonly onesignalSlidedownDialogClass = "onesignal-slidedown-dialog";
+  public static readonly onesignalSavingLoadingIndicatorHolderClass = "onesignal-saving-loading-indicator-holder";
+  public static readonly onesignalSlidedownAllowButtonClass = "onesignal-slidedown-allow-button";
+  public static readonly onesignalSlidedownCancelButtonClass = "onesignal-slidedown-cancel-button";
+  public static readonly slidedownBody = "slidedown-body";
+  public static readonly slidedownFooter = "slidedown-footer";
 
   static get EVENTS() {
     return {
@@ -37,16 +47,17 @@ export default class Slidedown {
         options = MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     }
     this.options = options;
-    this.options.actionMessage = sanitizeHtml(options.actionMessage.substring(0, 90));
-    this.options.acceptButtonText = sanitizeHtml(options.acceptButtonText.substring(0, 16));
-    this.options.cancelButtonText = sanitizeHtml(options.cancelButtonText.substring(0, 16));
+    this.options.actionMessage = sanitizeHtmlAndDoubleQuotes(options.actionMessage.substring(0, 90));
+    this.options.acceptButtonText = sanitizeHtmlAndDoubleQuotes(options.acceptButtonText.substring(0, 16));
+    this.options.cancelButtonText = sanitizeHtmlAndDoubleQuotes(options.cancelButtonText.substring(0, 16));
     this.options.positiveUpdateButton = options.positiveUpdateButton ?
-      sanitizeHtml(options.positiveUpdateButton).substring(0, 16):
+      sanitizeHtmlAndDoubleQuotes(options.positiveUpdateButton.substring(0, 16)):
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
     this.options.negativeUpdateButton = options.negativeUpdateButton ?
-      sanitizeHtml(options.negativeUpdateButton).substring(0, 16) :
+      sanitizeHtmlAndDoubleQuotes(options.negativeUpdateButton.substring(0, 16)) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
-    this.options.updateMessage = !!options.updateMessage ? sanitizeHtml(options.updateMessage).substring(0, 90) :
+    this.options.updateMessage = !!options.updateMessage ?
+      sanitizeHtmlAndDoubleQuotes(options.updateMessage).substring(0, 90) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
     this.options.savingButtonText = "Saving...";
     this.options.errorButtonText = this.options.positiveUpdateButton; // configurable in the future
@@ -64,8 +75,8 @@ export default class Slidedown {
       this.notificationIcons = icons;
 
       // Remove any existing container
-      if (this.container.className.includes("onesignal-slidedown-container")) {
-          removeDomElement('#onesignal-slidedown-container');
+      if (this.container.className.includes(Slidedown.onesignalSlidedownContainerClass)) {
+          removeDomElement(`#${Slidedown.onesignalSlidedownContainerClass}`);
       }
       const positiveButtonText = isInUpdateMode ?
         this.options.positiveUpdateButton : this.options.acceptButtonText;
@@ -84,10 +95,10 @@ export default class Slidedown {
 
       // Insert the container
       addDomElement('body', 'beforeend',
-          '<div id="onesignal-slidedown-container" class="onesignal-slidedown-container onesignal-reset"></div>');
+          `<div id="${Slidedown.onesignalSlidedownContainerClass}" class="${Slidedown.onesignalSlidedownContainerClass} ${Slidedown.onesignalResetClass}"></div>`);
       // Insert the dialog
       addDomElement(this.container, 'beforeend',
-          `<div id="onesignal-slidedown-dialog" class="onesignal-slidedown-dialog">${dialogHtml}</div>`);
+          `<div id="${Slidedown.onesignalSlidedownDialogClass}" class="${Slidedown.onesignalSlidedownDialogClass}">${dialogHtml}</div>`);
 
       // Animate it in depending on environment
       addCssClass(this.container, bowser.mobile ? 'slide-up' : 'slide-down');
@@ -114,7 +125,7 @@ export default class Slidedown {
       if (event.target === this.dialog &&
           (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
           // Uninstall the event listener for animationend
-          removeDomElement('#onesignal-slidedown-container');
+          removeDomElement(`#${Slidedown.onesignalSlidedownContainerClass}`);
           destroyListenerFn();
           Event.trigger(Slidedown.EVENTS.CLOSED);
       }
@@ -135,7 +146,7 @@ export default class Slidedown {
     } else {
       // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
       this.allowButton.innerHTML = this.options.positiveUpdateButton!;
-      removeDomElement('#onesignal-button-indicator-holder');
+      removeDomElement(`#${Slidedown.onesignalSavingLoadingIndicatorHolderClass}`);
       (<HTMLButtonElement>this.allowButton).disabled = false;
       removeCssClass(this.allowButton, 'disabled');
       removeCssClass(this.allowButton, 'onesignal-saving-state-button');
@@ -165,23 +176,23 @@ export default class Slidedown {
   }
 
   get container() {
-    return getDomElementOrStub('#onesignal-slidedown-container');
+    return getDomElementOrStub(`#${Slidedown.onesignalSlidedownContainerClass}`);
   }
 
   get dialog() {
-    return getDomElementOrStub('#onesignal-slidedown-dialog');
+    return getDomElementOrStub(`#${Slidedown.onesignalSlidedownDialogClass}`);
   }
 
   get allowButton() {
-    return getDomElementOrStub('#onesignal-slidedown-allow-button');
+    return getDomElementOrStub(`#${Slidedown.onesignalSlidedownAllowButtonClass}`);
   }
 
   get cancelButton() {
-    return getDomElementOrStub('#onesignal-slidedown-cancel-button');
+    return getDomElementOrStub(`#${Slidedown.onesignalSlidedownCancelButtonClass}`);
   }
 
   get buttonIndicatorHolder() {
-    return getDomElementOrStub('#onesignal-button-indicator-holder');
+    return getDomElementOrStub(`#${Slidedown.onesignalSavingLoadingIndicatorHolderClass}`);
   }
 
   get slidedownFooter() {

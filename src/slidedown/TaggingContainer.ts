@@ -5,12 +5,18 @@ import {
     addCssClass,
     removeCssClass,
     getDomElementOrStub,
-    getAllDomElementsOrStub } from '../utils';
+    getAllDomElementsOrStub,
+    sanitizeHtmlAndDoubleQuotes} from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
-import sanitizeHtml from 'sanitize-html';
 
 export default class TaggingContainer {
     private html: string = "";
+
+    /* for testing only */
+    public TESTING = {
+        getCheckedTagCategories: this._getCheckedTagCategories
+    };
+    /* for testing only */
 
     public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
         this.generateHTML(remoteTagCategories, existingPlayerTags);
@@ -34,14 +40,25 @@ export default class TaggingContainer {
         addCssClass("#onesignal-slidedown-allow-button", 'disabled');
     }
 
+    /**
+     * Returns checked TagCategory[] using unchecked remoteTagCategories (from config)
+     * and existingPlayerTags (from `getTags`)
+     * @param  {TagCategory[]} remoteTagCategories
+     * @param  {TagsObject} existingPlayerTags?
+     */
+    private _getCheckedTagCategories(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject)
+        : TagCategory[] {
+            const remoteTagCategoriesCopy: TagCategory[] = JSON.parse(JSON.stringify(remoteTagCategories));
+            return !!existingPlayerTags ?
+                remoteTagCategoriesCopy.map(elem => {
+                    const existingTagValue = <boolean>existingPlayerTags[elem.tag];
+                    elem.checked = existingTagValue;
+                    return elem;
+                }) : remoteTagCategories;
+    }
+
     private generateHTML(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject): void {
-        const checkedTagCategories = !!existingPlayerTags ?
-            remoteTagCategories.map(elem => {
-                const existingTagValue = <boolean>existingPlayerTags[elem.tag];
-                elem.checked = existingTagValue;
-                return elem;
-            })
-            : remoteTagCategories;
+        const checkedTagCategories = this._getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
         const firstColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
         const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
         let innerHtml = `<div class="tagging-container-col">`;
@@ -61,12 +78,12 @@ export default class TaggingContainer {
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
         const { label } = tagCategory;
-        return `<label class="onesignal-category-label" title="${sanitizeHtml(label)}">
-        <span class="onesignal-category-label-text">${sanitizeHtml(label)}</span>
-        <input class="onesignal-category-label-input" type="checkbox" value="${sanitizeHtml(tagCategory.tag)}"
-            ${tagCategory.checked ? `checked="${sanitizeHtml(tagCategory.checked)}` : ``}">
-        <span class="onesignal-checkmark"></span></label>
-        <div style="clear:both"></div>`;
+        return `<label class="onesignal-category-label" title="${sanitizeHtmlAndDoubleQuotes(label)}">`+
+        `<span class="onesignal-category-label-text">${sanitizeHtmlAndDoubleQuotes(label)}</span>`+
+        `<input type="checkbox" value="${sanitizeHtmlAndDoubleQuotes(tagCategory.tag)}"`+
+            `${tagCategory.checked ? `checked="${sanitizeHtmlAndDoubleQuotes(`${tagCategory.checked}`)}"` : ''}>`+
+        `<span class="onesignal-checkmark"></span></label>`+
+        `<div style="clear:both"></div>`;
     }
 
     private get taggingContainer(){
@@ -80,6 +97,8 @@ export default class TaggingContainer {
             target.setAttribute("checked", isChecked.toString());
         }
     }
+
+    // static
 
     static getValuesFromTaggingContainer(): TagsObject {
         const selector = "#slidedown-body > div.tagging-container > div > label > input[type=checkbox]";

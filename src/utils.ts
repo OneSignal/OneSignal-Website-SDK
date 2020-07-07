@@ -446,3 +446,7 @@ export function assertObjectValuesType(object: TagsObject, type: string): boolea
     Log.error(`OneSignal: assertObjectValuesType: ${e}`);
   }
 }
+
+export function sanitizeHtmlAndDoubleQuotes(input: string) {
+  return sanitizeHtml(input).replace(/["]+/g, '').replace(/[\s]+$/g, '');
+}
