@@ -16,16 +16,27 @@ export default class TagManager implements ITagManager{
     constructor(context: Context) {
         this.context = context;
     }
-
-    public async sendTags(): Promise<TagsObject|null> {
+    /**
+     * @param  {boolean} isInUpdateMode
+     * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
+     */
+    public async sendTags(isInUpdateMode: boolean): Promise<TagsObject|null> {
+        let finalTagsObject;
         Log.info("Updating tags from Category Slidedown:", this.tagValuesToUpdate);
         const tagsWithNumberValues = TagUtils.convertTagBooleanValuesToNumbers(this.tagValuesToUpdate);
-        const playerTagsWithNumberValues = TagUtils.convertTagStringValuesToNumbers(this.context.tagManager.playerTags);
-        const diff = TagUtils.getObjectDifference(tagsWithNumberValues, playerTagsWithNumberValues);
-        const finalTagsObject = TagUtils.getOnlyKeysObject(diff, tagsWithNumberValues);
+
+        if (!isInUpdateMode) {
+            finalTagsObject = TagUtils.getTruthyValuePairsFromNumbers(tagsWithNumberValues);
+        } else {
+            const playerTagsWithNumberValues = TagUtils.convertTagStringValuesToNumbers(
+                this.context.tagManager.playerTags
+                );
+            const diff = TagUtils.getObjectDifference(tagsWithNumberValues, playerTagsWithNumberValues);
+            finalTagsObject = TagUtils.getOnlyKeysObject(diff, tagsWithNumberValues);
+        }
 
         if (Object.keys(finalTagsObject).length === 0) {
-            Log.warn("OneSignal: no change detected in Category preferences.");
+            Log.warn("OneSignal: no change detected in Category preferences. Abort tag update.");
             return {} as TagsObject;
         }
         try {
@@ -39,9 +50,7 @@ export default class TagManager implements ITagManager{
         this.tagValuesToUpdate = tags;
     }
 
-    static async getTags(): Promise<TagsObject> {
-        const playerTags = await OneSignal.getTags();
+    static storeRemotePlayerTags(playerTags: TagsObject): void {
         OneSignal.context.tagManager.playerTags = playerTags;
-        return playerTags;
     }
 }

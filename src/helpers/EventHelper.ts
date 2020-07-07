@@ -54,7 +54,7 @@ export default class EventHelper {
     }
 
     if (PromptsHelper.isCategorySlidedownConfigured()) {
-      await OneSignal.context.tagManager.sendTags();
+      await OneSignal.context.tagManager.sendTags(false);
     }
   }
 

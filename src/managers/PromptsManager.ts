@@ -177,7 +177,7 @@ export class PromptsManager {
     const { categoryOptions, isInUpdateMode } = options;
 
     if (this.isAutoPromptShowing) {
-      Log.debug("Already showing autoprompt. Abort showing a slidedown.");
+      Log.debug("Already showing slidedown. Abort.");
       return;
     }
 
@@ -204,7 +204,7 @@ export class PromptsManager {
     }
 
     OneSignal.slidedown = new Slidedown(slideDownOptions);
-    if (categoryOptions && categoryOptions.tags && categoryOptions.tags.length > 0) {
+    if (PromptsHelper.isCategorySlidedownConfigured()) {
       // show slidedown with tagging container
       await OneSignal.slidedown.create(isInUpdateMode);
       let existingTags: TagsObject = {};
@@ -212,11 +212,12 @@ export class PromptsManager {
 
       if (isInUpdateMode) {
         taggingContainer.load();
-        // updating. pull remote tags
-        const existingTagsAsNumbers = await TagManager.getTags();
+        // updating. pull remote tags.
+        const existingTagsAsNumbers = await OneSignal.getTags();
+        TagManager.storeRemotePlayerTags(existingTagsAsNumbers);
         existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
       }
-      taggingContainer.mount(categoryOptions.tags, existingTags);
+      taggingContainer.mount(categoryOptions!.tags, existingTags); // defined because of isCategorySlidedownConfigured
     }
 
     await OneSignal.slidedown.create();
@@ -259,9 +260,9 @@ export class PromptsManager {
       const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
 
       if (isPushEnabled) {
-        // Sync Category Slidedown tags
         OneSignal.slidedown.toggleSaveState();
-        const tags = await this.context.tagManager.sendTags();
+        // Sync Category Slidedown tags (isInUpdateMode = true)
+        const tags = await this.context.tagManager.sendTags(true);
 
         if (!tags) {
           // Display tag update error
