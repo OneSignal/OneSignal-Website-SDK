@@ -1,6 +1,5 @@
 import Log from '../libraries/Log';
 import { TagsObject } from '../models/Tags';
-import _ from "lodash";
 
 export default class TagUtils {
     static convertTagBooleanValuesToNumbers(tags: TagsObject): TagsObject {
@@ -32,9 +31,13 @@ export default class TagUtils {
      * @returns array of keys of corresponding different values
      */
     static getObjectDifference(a: TagsObject, b: TagsObject): string[] {
-        return _.reduce(a, function(res, val, key) {
-            return _.isEqual(val, b[key]) ? res : res.concat(key);
-        }, []);
+        const keysArray: string[] = [];
+        Object.keys(a).forEach(key => {
+            if (a[key] !== b[key]) {
+                keysArray.push(key);
+            }
+        });
+        return keysArray;
     }
     /**
      * @param  {string[]} keys
