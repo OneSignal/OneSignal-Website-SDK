@@ -7,6 +7,7 @@ import Log from '../libraries/Log';
 import { CustomLink } from "../CustomLink";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { BrowserUtils } from "../utils/BrowserUtils";
+import LocalStorage from '../utils/LocalStorage';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -33,6 +34,7 @@ export default class EventHelper {
       `The user's subscription state changed from ` +
         `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
     );
+    LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
     await Database.setAppState(appState);
     EventHelper.triggerSubscriptionChanged(isPushEnabled);
