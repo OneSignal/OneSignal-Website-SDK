@@ -7,6 +7,7 @@ import Log from '../libraries/Log';
 import { CustomLink } from "../CustomLink";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { BrowserUtils } from "../utils/BrowserUtils";
+import PromptsHelper from './PromptsHelper';
 import LocalStorage from '../utils/LocalStorage';
 
 export default class EventHelper {
@@ -52,11 +53,7 @@ export default class EventHelper {
       return;
     }
 
-    const promptOptions = await OneSignal.context.appConfig.userConfig.promptOptions;
-    const isUsingCategoryConfig = !!promptOptions && !!promptOptions.slidedown &&
-      !!promptOptions.slidedown.categories;
-
-    if (isUsingCategoryConfig) {
+    if (PromptsHelper.isCategorySlidedownConfigured()) {
       await OneSignal.context.tagManager.sendTags();
     }
   }

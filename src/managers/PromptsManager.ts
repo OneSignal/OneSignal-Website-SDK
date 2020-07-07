@@ -28,6 +28,7 @@ import { TagsObject } from '../models/Tags';
 import TagUtils from '../utils/TagUtils';
 import TagManager from './tagManager/page/TagManager';
 import LocalStorage from '../utils/LocalStorage';
+import PromptsHelper from '../helpers/PromptsHelper';
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -224,12 +225,9 @@ export class PromptsManager {
 
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     const promptOptions = await this.context.appConfig.userConfig.promptOptions;
-    const isUsingSlidedownOptions = promptOptions && promptOptions.slidedown && promptOptions.slidedown;
-    const isUsingCategoryOptions = isUsingSlidedownOptions && promptOptions!.slidedown!.categories &&
-      promptOptions!.slidedown!.categories!.tags.length > 0;
     const categoryOptions = promptOptions!.slidedown!.categories;
 
-    if (!isUsingCategoryOptions) {
+    if (!PromptsHelper.isCategorySlidedownConfigured()) {
       Log.error("OneSignal: no categories to display. Check your configuration on the OneSignal dashboard or your custom code initialization.");
       return;
     }
