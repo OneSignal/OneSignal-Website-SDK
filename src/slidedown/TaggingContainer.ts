@@ -5,8 +5,7 @@ import {
     addCssClass,
     removeCssClass,
     getDomElementOrStub,
-    getAllDomElementsOrStub,
-    sanitizeHtmlAndDoubleQuotes} from '../utils';
+    getAllDomElementsOrStub } from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
 
 export default class TaggingContainer {
@@ -78,11 +77,11 @@ export default class TaggingContainer {
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
         const { label } = tagCategory;
-        return `<label class="onesignal-category-label" title="${sanitizeHtmlAndDoubleQuotes(label)}">`+
-        `<span class="onesignal-category-label-text">${sanitizeHtmlAndDoubleQuotes(label)}</span>`+
-        `<input type="checkbox" value="${sanitizeHtmlAndDoubleQuotes(tagCategory.tag)}"`+
-            `${tagCategory.checked ? `checked="${sanitizeHtmlAndDoubleQuotes(`${tagCategory.checked}`)}"` : ''}>`+
-        `<span class="onesignal-checkmark"></span></label>`+
+        return `<label class="onesignal-category-label" title="${(label)}">` +
+        `<span class="onesignal-category-label-text">${label}</span>` +
+        `<input type="checkbox" value="${tagCategory.tag}"` +
+            `${tagCategory.checked ? `checked="${`${tagCategory.checked}`}"` : ''}>` +
+        `<span class="onesignal-checkmark"></span></label>` +
         `<div style="clear:both"></div>`;
     }
 
