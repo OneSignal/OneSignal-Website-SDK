@@ -35,7 +35,7 @@ test('category options are configured, in update mode, check 1) tagging containe
         sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(true);
         sinonSandbox.stub(MainHelper, "getNotificationIcons");
 
-        const tagFetchSpy = sinonSandbox.stub(TagManager, "downloadTags").resolves({});
+        const tagFetchSpy = sinonSandbox.stub(OneSignal, "getTags").resolves({});
         const loadSpy = sinonSandbox.spy(TaggingContainer.prototype, "load");
 
         await OneSignal.showCategorySlidedown();
@@ -47,7 +47,7 @@ test('category options are configured, in update mode, check 1) tagging containe
 
 test('category options are configured, not in update mode, check remote tag fetch not made', async t => {
     await initializeConfigWithCategories(true);
-    const tagFetchStub = sinonSandbox.stub(TagManager, "downloadTags").resolves({});
+    const tagFetchStub = sinonSandbox.stub(OneSignal, "getTags").resolves({});
     sinonSandbox.stub(PageViewManager.prototype, "getLocalPageViewCount").returns(1);
     sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
     sinonSandbox.stub(PromptsManager.prototype as any, "checkIfAutoPromptShouldBeShown").resolves(true);
@@ -63,13 +63,13 @@ test('category options are configured, not in update mode, check remote tag fetc
 
 test('category options are configured, in update mode, no change to remote tags on allow, check remote tag update not made', async t => {
     await initializeConfigWithCategories(false);
-    const tagSyncSpy = sinonSandbox.stub(TagManager.prototype, "syncTags").resolves({});
+    const sendTagsSpy = sinonSandbox.stub(TagManager.prototype, "sendTags").resolves({});
     const showCatSlidedownSpy = sinonSandbox.spy(OneSignal, "showCategorySlidedown");
 
     sinonSandbox.stub(PageViewManager.prototype, "getLocalPageViewCount").returns(1);
     sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
     sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
-    sinonSandbox.stub(TagManager, "downloadTags").resolves({ tag1:'1' });
+    sinonSandbox.stub(OneSignal, "getTags").resolves({ tag1:'1' });
     sinonSandbox.stub(TaggingContainer, "getValuesFromTaggingContainer").resolves({ tag1: true });
     sinonSandbox.stub(MainHelper, "getNotificationIcons");
 
@@ -78,14 +78,14 @@ test('category options are configured, in update mode, no change to remote tags 
 
     const slidedownClosed = new Promise(resolve => {
         OneSignal.on(OneSignal.emitter.on(Slidedown.EVENTS.CLOSED) , () => {
-            t.is(tagSyncSpy.callCount, 0);
+            t.is(sendTagsSpy.callCount, 0);
             resolve();
         });
     });
     new EventsTestHelper(sinonSandbox).simulateSlidedownAllowAfterShown();
     await slidedownClosed;
 
-    t.true(!tagSyncSpy.called);
+    t.true(!sendTagsSpy.called);
     t.true(showCatSlidedownSpy.calledOnce);
 });
 

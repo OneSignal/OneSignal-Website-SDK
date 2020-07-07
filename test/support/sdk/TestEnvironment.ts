@@ -912,7 +912,7 @@ export class TestEnvironment {
     const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
 
     // returnable spys
-    const syncTagsSpy = sinonSandbox.spy(TagManager.prototype, "syncTags");
+    const sendTagsSpy = sinonSandbox.spy(TagManager.prototype, "sendTags");
 
     // network mocks
     mockWebPushAnalytics();
@@ -923,7 +923,7 @@ export class TestEnvironment {
       mockIframeMessaging(sinonSandbox);
     }
     return {
-      syncTagsSpy,
+      sendTagsSpy,
       createPlayerPostStub,
       onSessionStub
     };

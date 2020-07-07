@@ -17,22 +17,16 @@ test.afterEach(() => {
     sinonSandbox.restore();
 });
 
-test('calling `syncTags` results in remote tag update with sendTags', async t => {
+test('calling `sendTags` results in remote tag update with sendTags in update mode', async t => {
     const mockTags = { tag1: 1, tag2: 2 };
     const sendTagsSpy = sinonSandbox.stub(OneSignal, "sendTags").resolves();
     OneSignal.context.tagManager.storeTagValuesToUpdate(mockTags);
-    await OneSignal.context.tagManager.syncTags();
+    await OneSignal.context.tagManager.sendTags(true);
     t.is(sendTagsSpy.callCount, 1);
     t.true(sendTagsSpy.getCall(0).calledWith(mockTags));
 });
 
-test('`downloadTags` results in remote getTags call', async t => {
-    const getTagsSpy = sinonSandbox.stub(OneSignal, "getTags").resolves({});
-    await TagManager.downloadTags();
-    t.is(getTagsSpy.callCount, 1);
-});
-
-test('subscribing through category slidedown accept button calls syncTags', async t => {
+test('subscribing through category slidedown accept button calls sendTags', async t => {
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
@@ -48,7 +42,7 @@ test('subscribing through category slidedown accept button calls syncTags', asyn
 
     const accepted = new Promise(resolve => {
       OneSignal.on(OneSignal.EVENTS.TEST_TAGS_SENT, () => {
-        t.is(stubs.syncTagsSpy.callCount, 1);
+        t.is(stubs.sendTagsSpy.callCount, 1);
         resolve();
       });
     });
