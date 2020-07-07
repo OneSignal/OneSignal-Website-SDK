@@ -8,6 +8,7 @@ import { PermissionUtils } from './utils/PermissionUtils';
 import { BrowserUtils } from './utils/BrowserUtils';
 import { Utils } from "./context/shared/utils/Utils";
 import bowser from 'bowser';
+import { TagsObject } from './models/Tags';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -427,4 +428,21 @@ export function getAllDomElementsOrStub(selector: string): NodeList {
     return new NodeList();
   }
   return foundElementList;
+}
+/**
+ * @param  {TagsObject} object
+ * @param  {string} type - primitive type: "string", "number", "boolean"
+ * @returns boolean
+ */
+export function assertObjectValuesType(object: TagsObject, type: string): boolean|void {
+  try {
+    if (["string", "number", "boolean"].indexOf(type) === -1) throw "invalid primitive type.";
+    const keys = Object.keys(object);
+    for (let i=0; i<keys.length; i++) {
+      if (typeof object[keys[i]] !== type) return false;
+    }
+    return true;
+  } catch (e) {
+    Log.error(`OneSignal: assertObjectValuesType: ${e}`);
+  }
 }
