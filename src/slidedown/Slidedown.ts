@@ -9,8 +9,7 @@ import {
   once,
   removeDomElement,
   removeCssClass,
-  getDomElementOrStub,
-  sanitizeHtmlAndDoubleQuotes} from '../utils';
+  getDomElementOrStub } from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
@@ -48,17 +47,17 @@ export default class Slidedown {
         options = MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     }
     this.options = options;
-    this.options.actionMessage = sanitizeHtmlAndDoubleQuotes(options.actionMessage.substring(0, 90));
-    this.options.acceptButtonText = sanitizeHtmlAndDoubleQuotes(options.acceptButtonText.substring(0, 16));
-    this.options.cancelButtonText = sanitizeHtmlAndDoubleQuotes(options.cancelButtonText.substring(0, 16));
+    this.options.actionMessage = options.actionMessage.substring(0, 90);
+    this.options.acceptButtonText = options.acceptButtonText.substring(0, 16);
+    this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
     this.options.positiveUpdateButton = options.positiveUpdateButton ?
-      sanitizeHtmlAndDoubleQuotes(options.positiveUpdateButton.substring(0, 16)):
+      options.positiveUpdateButton.substring(0, 16):
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton;
     this.options.negativeUpdateButton = options.negativeUpdateButton ?
-      sanitizeHtmlAndDoubleQuotes(options.negativeUpdateButton.substring(0, 16)) :
+      options.negativeUpdateButton.substring(0, 16) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton;
     this.options.updateMessage = !!options.updateMessage ?
-      sanitizeHtmlAndDoubleQuotes(options.updateMessage).substring(0, 90) :
+      options.updateMessage.substring(0, 90) :
       SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage;
     this.options.savingButtonText = "Saving...";
     this.options.errorButtonText = this.options.positiveUpdateButton; // configurable in the future

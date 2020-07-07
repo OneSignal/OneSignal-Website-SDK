@@ -27,20 +27,6 @@ test.afterEach(function () {
   sandbox.restore();
 });
 
-test('check sanitization is working correctly', t => {
-    setUserAgent(BrowserUserAgent.ChromeMacSupported);
-    OneSignal.slidedown = new Slidedown();
-    const tagCategoryList = [{
-        tag: "tag1\"<script> // injected code </script> \"\"",
-        label: "Tag 1\"<script> // injected code </script> \"",
-    }];
-    const taggingContainer = new TaggingContainer();
-    taggingContainer.mount(tagCategoryList);
-    const labelElement = getDomElementOrStub(".onesignal-category-label");
-    t.is(labelElement.innerHTML, `<span class="onesignal-category-label-text">Tag 1</span>`+
-      `<input type="checkbox" value="tag1"><span class="onesignal-checkmark"></span>`);
-});
-
 test('check that correct TagCategory object is returned after applying remote player tags', t => {
   setUserAgent(BrowserUserAgent.ChromeMacSupported);
   const tagCateogryList: TagCategory[] = [
