@@ -30,19 +30,29 @@ export default class TagUtils {
         return tags;
     }
     /**
-     * @param  {TagsObject} a
-     * @param  {TagsObject} b
-     * @returns array of keys of corresponding different values
+     * @param  {TagsObject} localTags - tags from taggingContainer
+     * @param  {TagsObject} playerTags - remote player tags
+     * @returns array of keys of corresponding different values (finds difference)
      */
-    static getObjectDifference(a: TagsObject, b: TagsObject): string[] {
+    static getObjectDifference(localTags: TagsObject, playerTags: TagsObject): string[] {
         const keysArray: string[] = [];
-        Object.keys(a).forEach(key => {
-            if (a[key] !== b[key]) {
+        const playerTagsCopy = { ...playerTags };
+
+        Object.keys(localTags).forEach(key => {
+            // treat undefined remote playerTag values as 0
+            if (typeof playerTagsCopy[key] === "undefined") {
+                playerTagsCopy[key] = 0;
+            }
+
+            const areDifferent = localTags[key] !== playerTagsCopy[key];
+
+            if (areDifferent) {
                 keysArray.push(key);
             }
         });
         return keysArray;
     }
+
     /**
      * @param  {string[]} keys
      * @param  {TagsObject} object
