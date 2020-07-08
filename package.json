@@ -129,7 +129,7 @@
     },
     {
       "path": "./build/bundles/OneSignalSDKStyles.css",
-      "maxSize": "7 kB",
+      "maxSize": "8 kB",
       "compression": "gzip"
     }
   ]
