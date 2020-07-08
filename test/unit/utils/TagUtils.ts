@@ -61,4 +61,4 @@ test('check correct truthy value pairs object is returned', t => {
     const object: TagsObject = { tag1: 0, tag2: 1, tag3: 1, tag4: 0, tag5: 1 };
     const cleaned = TagUtils.getTruthyValuePairsFromNumbers(object);
     t.true(_.isEqual(cleaned, { tag2: 1, tag3: 1, tag5: 1 }));
-})
+});
