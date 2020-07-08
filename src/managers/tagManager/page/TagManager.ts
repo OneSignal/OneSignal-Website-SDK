@@ -45,12 +45,18 @@ export default class TagManager implements ITagManager{
             return null;
         }
     }
-
+    /**
+     * @param  {TagsObject} tags - values of type "boolean"
+     * @returns void
+     */
     public storeTagValuesToUpdate(tags: TagsObject): void {
         assertObjectValuesType(tags, "boolean");
         this.tagsFromTaggingContainer = tags;
     }
-
+    /**
+     * @param  {TagsObject} remoteTags - values of type "number"
+     * @returns void
+     */
     static storeRemotePlayerTags(remoteTags: TagsObject): void {
         assertObjectValuesType(remoteTags, "number");
         OneSignal.context.tagManager.remoteTags = remoteTags;
