@@ -12,22 +12,28 @@ export default class EventsTestHelper {
     }
 
     public simulateSlidedownAllowAfterShown() {
-    OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-        OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
-    });
+        OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+            OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
+        });
     }
 
     public simulateSlidedownDismissAfterShown() {
-    OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-        OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
-    });
+        OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+            OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
+        });
+    }
+
+    public simulateSlidedownCloseAfterAllow() {
+        OneSignal.on(Slidedown.EVENTS.ALLOW_CLICK, () => {
+            OneSignalEvent.trigger(Slidedown.EVENTS.CLOSED);
+        });
     }
 
     public simulateNativeAllowAfterShown() {
-    OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
-        this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
-        .resolves({ subscribed: true, isOptedOut: false });
-        stubServiceWorkerInstallation(this.sinonSandbox);
-    });
+        OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
+            this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
+            .resolves({ subscribed: true, isOptedOut: false });
+            stubServiceWorkerInstallation(this.sinonSandbox);
+        });
     }
 }
