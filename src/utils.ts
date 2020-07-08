@@ -430,18 +430,18 @@ export function getAllDomElementsOrStub(selector: string): NodeList {
   return foundElementList;
 }
 /**
+ * Assert that ALL values in object key-value pairs are of type x
  * @param  {TagsObject} object
  * @param  {string} type - primitive type: "string", "number", "boolean"
  * @returns boolean
  */
-export function assertObjectValuesType(object: TagsObject, type: string): boolean|void {
+export function assertObjectValuesType(object: TagsObject, type: string) {
   try {
     if (["string", "number", "boolean"].indexOf(type) === -1) throw "invalid primitive type.";
     const keys = Object.keys(object);
     for (let i=0; i<keys.length; i++) {
-      if (typeof object[keys[i]] !== type) return false;
+      if (typeof object[keys[i]] !== type) throw `value corresponding to key ${keys[i]} not of type ${type}`;
     }
-    return true;
   } catch (e) {
     Log.error(`OneSignal: assertObjectValuesType: ${e}`);
   }
