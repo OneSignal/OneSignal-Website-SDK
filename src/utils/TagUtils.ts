@@ -85,7 +85,7 @@ export default class TagUtils {
         assertObjectValuesType(object, "number");
         const returnObj: TagsObject = {};
         Object.keys(object).forEach(key => {
-            if (object[key] === "1") {
+            if (object[key] === 1) {
                 returnObj[key] = object[key];
             }
         });
