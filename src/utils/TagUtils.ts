@@ -30,16 +30,27 @@ export default class TagUtils {
         return tags;
     }
     /**
+     * Used in determining what Tag/Category preferences changed in order
+     * to only update what is necessary
      * @param  {TagsObject} localTags - tags from taggingContainer
      * @param  {TagsObject} playerTags - remote player tags
      * @returns array of keys of corresponding different values (finds difference)
      */
     static getObjectDifference(localTags: TagsObject, playerTags: TagsObject): string[] {
+        assertObjectValuesType(localTags, "number");
+        assertObjectValuesType(playerTags, "number");
+
         const keysArray: string[] = [];
         const playerTagsCopy = { ...playerTags };
 
         Object.keys(localTags).forEach(key => {
-            // treat undefined remote playerTag values as 0
+            /**
+             * treat undefined remote playerTag values as 0
+             *  logic:
+             *      LOCAL   REMOTE  RESULT
+             *      1       0       1   <-- same
+             *      1       undef   1   <-- same
+             */
             if (typeof playerTagsCopy[key] === "undefined") {
                 playerTagsCopy[key] = 0;
             }
