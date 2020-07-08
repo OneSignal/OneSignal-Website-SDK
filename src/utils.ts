@@ -442,6 +442,8 @@ export function assertObjectValuesType(object: TagsObject, type: string) {
   const keys = Object.keys(object);
 
   keys.forEach(key => {
-    if (typeof object[key] !== type) throw `value corresponding to key ${key} not of type ${type}`;
+    if (typeof object[key] !== type) {
+      throw `value corresponding to key ${key} not of type ${type}`;
+    }
   });
 }
