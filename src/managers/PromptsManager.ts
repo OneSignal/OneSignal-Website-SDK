@@ -204,20 +204,25 @@ export class PromptsManager {
     }
 
     OneSignal.slidedown = new Slidedown(slideDownOptions);
-    if (PromptsHelper.isCategorySlidedownConfigured()) {
-      // show slidedown with tagging container
-      await OneSignal.slidedown.create(isInUpdateMode);
-      let existingTags: TagsObject = {};
-      const taggingContainer = new TaggingContainer();
+    try {
+      if (PromptsHelper.isCategorySlidedownConfigured()) {
+        // show slidedown with tagging container
+        await OneSignal.slidedown.create(isInUpdateMode);
+        let existingTags: TagsObject = {};
+        const taggingContainer = new TaggingContainer();
 
-      if (isInUpdateMode) {
-        taggingContainer.load();
-        // updating. pull remote tags.
-        const existingTagsAsNumbers = await OneSignal.getTags();
-        TagManager.storeRemotePlayerTags(existingTagsAsNumbers);
-        existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
+        if (isInUpdateMode) {
+          taggingContainer.load();
+          // updating. pull remote tags.
+          const existingTagsAsNumberStrings = await OneSignal.getTags();
+          const existingTagsAsNumbers = TagUtils.convertTagStringValuesToNumbers(existingTagsAsNumberStrings);
+          TagManager.storeRemotePlayerTags(existingTagsAsNumbers);
+          existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
+        }
+        taggingContainer.mount(categoryOptions!.tags, existingTags); // defined because of isCategorySlidedownConfigured
       }
-      taggingContainer.mount(categoryOptions!.tags, existingTags); // defined because of isCategorySlidedownConfigured
+    } catch (e) {
+      Log.error(`OneSignal: Attempted to create tagging container with eror: ${e}`);
     }
 
     await OneSignal.slidedown.create();

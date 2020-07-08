@@ -3,6 +3,7 @@ import { TagsObject } from '../../../models/Tags';
 import TagUtils from '../../../utils/TagUtils';
 import Context from '../../../models/Context';
 import { ITagManager } from '../types';
+import { assertObjectValuesType } from '../../../../src/utils';
 
 /**
  * Manages tags for the TaggingContainer
@@ -30,9 +31,7 @@ export default class TagManager implements ITagManager{
         if (!isInUpdateMode) {
             finalTagsObject = TagUtils.getTruthyValuePairsFromNumbers(localTagsWithNumberValues);
         } else {
-            const remoteTagsWithNumberValues =
-                TagUtils.convertTagStringValuesToNumbers(this.context.tagManager.remoteTags);
-            finalTagsObject = TagManager.getTagsToUpdate(localTagsWithNumberValues, remoteTagsWithNumberValues);
+            finalTagsObject = TagManager.getTagsToUpdate(localTagsWithNumberValues, this.remoteTags);
         }
 
         if (Object.keys(finalTagsObject).length === 0) {
@@ -48,10 +47,12 @@ export default class TagManager implements ITagManager{
     }
 
     public storeTagValuesToUpdate(tags: TagsObject): void {
+        assertObjectValuesType(tags, "boolean");
         this.tagsFromTaggingContainer = tags;
     }
 
     static storeRemotePlayerTags(remoteTags: TagsObject): void {
+        assertObjectValuesType(remoteTags, "number");
         OneSignal.context.tagManager.remoteTags = remoteTags;
     }
 
