@@ -33,15 +33,15 @@ export default class TagUtils {
      * Used in determining what Tag/Category preferences changed in order
      * to only update what is necessary
      * @param  {TagsObject} localTags - tags from taggingContainer
-     * @param  {TagsObject} playerTags - remote player tags
+     * @param  {TagsObject} remoteTags - remote player tags
      * @returns array of keys of corresponding different values (finds difference)
      */
-    static getObjectDifference(localTags: TagsObject, playerTags: TagsObject): string[] {
+    static getObjectDifference(localTags: TagsObject, remoteTags: TagsObject): string[] {
         assertObjectValuesType(localTags, "number");
-        assertObjectValuesType(playerTags, "number");
+        assertObjectValuesType(remoteTags, "number");
 
         const keysArray: string[] = [];
-        const playerTagsCopy = { ...playerTags };
+        const remoteTagsCopy = { ...remoteTags };
 
         Object.keys(localTags).forEach(key => {
             /**
@@ -51,11 +51,11 @@ export default class TagUtils {
              *      1       0       1   <-- same
              *      1       undef   1   <-- same
              */
-            if (typeof playerTagsCopy[key] === "undefined") {
-                playerTagsCopy[key] = 0;
+            if (typeof remoteTagsCopy[key] === "undefined") {
+                remoteTagsCopy[key] = 0;
             }
 
-            const areDifferent = localTags[key] !== playerTagsCopy[key];
+            const areDifferent = localTags[key] !== remoteTagsCopy[key];
 
             if (areDifferent) {
                 keysArray.push(key);
@@ -76,6 +76,7 @@ export default class TagUtils {
         });
         return returnObj;
     }
+
     /**
      * @param  {TagsObject} object - with object values of type "Number"
      * @returns TagsObject with only those key value pairs with the value as "1"
