@@ -228,8 +228,8 @@ export class TestEnvironment {
       <div class="${CustomLink.containerClass}"></div>\
       <button class="${CustomLink.subscribeClass}"></button>\
       </head><body>\
-        <div id="${Slidedown.slidedownBody}"></div>\
-        <div id="${Slidedown.slidedownFooter}">\
+        <div id="${Slidedown.slidedownBodyClass}"></div>\
+        <div id="${Slidedown.slidedownFooterClass}">\
         <button id="onesignal-slidedown-allow-button"></button>\
         <button id="onesignal-slidedown-cancel-button"></button>\
         </div></body></html>`;

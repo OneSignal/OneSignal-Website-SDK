@@ -7,9 +7,20 @@ import {
     getDomElementOrStub,
     getAllDomElementsOrStub } from '../utils';
 import getLoadingIndicatorWithColor from './LoadingIndicator';
+import Slidedown from './Slidedown';
 
 export default class TaggingContainer {
     private html: string = "";
+
+    /* styles */
+    public static readonly onesignalCategoryLabelInputClass = "onesignal-category-label-input";
+    public static readonly onesignalCategoryLabelTextClass = "onesignal-category-label-text";
+    public static readonly onesignalCategoryLabelClass = "onesignal-category-label";
+    public static readonly onesignalCheckmarkClass = "onesignal-checkmark";
+    public static readonly taggingContainerClass = "tagging-container";
+    public static readonly taggingContainerColClass = "tagging-container-col";
+    public static readonly onesignalLoadingContainerClass = "onesignal-loading-container";
+    public static readonly onesignalLoadingMessageClass = "onesignal-loading-message";
 
     /* for testing only */
     public TESTING = {
@@ -19,24 +30,28 @@ export default class TaggingContainer {
 
     public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObject): void {
         this.generateHTML(remoteTagCategories, existingPlayerTags);
-        addDomElement('#slidedown-body', 'beforeend', this.html);
+        addDomElement(`#${Slidedown.slidedownBodyClass}`, 'beforeend', this.html);
         if (this.taggingContainer) {
             this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
         }
-        removeCssClass("#onesignal-slidedown-allow-button", 'disabled');
-        const allowButton = getDomElementOrStub("#onesignal-slidedown-allow-button");
+        removeCssClass(`#${Slidedown.onesignalSlidedownAllowButtonClass}`, 'disabled');
+        const allowButton = getDomElementOrStub(`#${Slidedown.onesignalSlidedownAllowButtonClass}`);
         (<HTMLButtonElement>allowButton).disabled = false;
-        removeDomElement("#onesignal-loading-container");
+        removeDomElement(`#${TaggingContainer.onesignalLoadingContainerClass}`);
     }
 
     public load(): void {
-        addCssClass("#onesignal-loading-container", 'onesignal-loading-container');
-        addDomElement("#onesignal-loading-container", 'beforeend', getLoadingIndicatorWithColor('#95A1AC'));
-        addDomElement("#onesignal-loading-container", 'beforeend',
-            `<div class="onesignal-loading-message">Fetching your preferences</div>`);
-        const allowButton = getDomElementOrStub("#onesignal-slidedown-allow-button");
+        addCssClass(`#${TaggingContainer.onesignalLoadingContainerClass}`,
+            `${TaggingContainer.onesignalLoadingContainerClass}`);
+        addDomElement(`#${TaggingContainer.onesignalLoadingContainerClass}`,
+            'beforeend', getLoadingIndicatorWithColor('#95A1AC'));
+        addDomElement(`#${TaggingContainer.onesignalLoadingContainerClass}`, 'beforeend',
+            `<div class="${TaggingContainer.onesignalLoadingMessageClass}">Fetching your preferences</div>`);
+
+        const allowButton = getDomElementOrStub(`#${Slidedown.onesignalSlidedownAllowButtonClass}`);
         (<HTMLButtonElement>allowButton).disabled = true;
-        addCssClass("#onesignal-slidedown-allow-button", 'disabled');
+
+        addCssClass(`#${Slidedown.onesignalSlidedownAllowButtonClass}`, 'disabled');
     }
 
     /**
@@ -60,33 +75,33 @@ export default class TaggingContainer {
         const checkedTagCategories = this._getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
         const firstColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
         const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
-        let innerHtml = `<div class="tagging-container-col">`;
+        let innerHtml = `<div class="${TaggingContainer.taggingContainerColClass}">`;
 
         firstColumnArr.forEach(elem => {
             innerHtml+=this.getCategoryLabelHtml(elem);
         });
 
-        innerHtml+=`</div><div class="tagging-container-col">`;
+        innerHtml+=`</div><div class="${TaggingContainer.taggingContainerColClass}">`;
 
         secondColumnArr.forEach(elem => {
             innerHtml+=this.getCategoryLabelHtml(elem);
         });
 
-        this.html = `<div class="tagging-container">${innerHtml}</div></div>`;
+        this.html = `<div class="${TaggingContainer.taggingContainerClass}">${innerHtml}</div></div>`;
     }
 
     private getCategoryLabelHtml(tagCategory: TagCategory): string {
         const { label } = tagCategory;
-        return `<label class="onesignal-category-label" title="${(label)}">` +
-        `<span class="onesignal-category-label-text">${label}</span>` +
-        `<input type="checkbox" value="${tagCategory.tag}"` +
-            `${tagCategory.checked ? `checked="${`${tagCategory.checked}`}"` : ''}>` +
-        `<span class="onesignal-checkmark"></span></label>` +
+        return `<label class="${TaggingContainer.onesignalCategoryLabelClass}" title="${(label)}">` +
+        `<span class="${TaggingContainer.onesignalCategoryLabelTextClass}">${label}</span>` +
+        `<input class="${TaggingContainer.onesignalCategoryLabelInputClass}" type="checkbox"` +
+        `value="${tagCategory.tag}" ${tagCategory.checked ? `checked="${`${tagCategory.checked}`}"` : ''}>` +
+        `<span class="${TaggingContainer.onesignalCheckmarkClass}"></span></label>` +
         `<div style="clear:both"></div>`;
     }
 
     private get taggingContainer(){
-        return getDomElementOrStub("#slidedown-body > div.tagging-container");
+        return getDomElementOrStub(`#${Slidedown.slidedownBodyClass} > div.${TaggingContainer.taggingContainerClass}`);
     }
 
     private toggleCheckedTag(e: Event) {
@@ -100,7 +115,8 @@ export default class TaggingContainer {
     // static
 
     static getValuesFromTaggingContainer(): TagsObject {
-        const selector = "#slidedown-body > div.tagging-container > div > label > input[type=checkbox]";
+        const selector = `#${Slidedown.slidedownBodyClass} > div.${TaggingContainer.taggingContainerClass}` +
+            `> div > label > input[type=checkbox]`;
         const inputNodeArr = getAllDomElementsOrStub(selector);
         const tags: TagsObject = {};
         inputNodeArr.forEach(node => {

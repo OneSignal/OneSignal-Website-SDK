@@ -22,7 +22,9 @@ export default class Slidedown {
   private isInSaveState: boolean;
   public isShowingFailureState: boolean;
 
-  // identifiers and style classes
+  /**
+   * identifiers and style classes (note that some of these are used as both style classes and selectors)
+   */
   public static readonly onesignalSlidedownContainerClass = "onesignal-slidedown-container";
   public static readonly onesignalResetClass = "onesignal-reset";
   public static readonly onesignalSlidedownDialogClass = "onesignal-slidedown-dialog";
@@ -30,8 +32,8 @@ export default class Slidedown {
   public static readonly onesignalSlidedownAllowButtonClass = "onesignal-slidedown-allow-button";
   public static readonly onesignalSlidedownCancelButtonClass = "onesignal-slidedown-cancel-button";
   public static readonly onesignalSavingStateButtonClass = "onesignal-saving-state-button";
-  public static readonly slidedownBody = "slidedown-body";
-  public static readonly slidedownFooter = "slidedown-footer";
+  public static readonly slidedownBodyClass = "slidedown-body";
+  public static readonly slidedownFooterClass = "slidedown-footer";
 
   static get EVENTS() {
     return {
@@ -197,7 +199,7 @@ export default class Slidedown {
   }
 
   get slidedownFooter() {
-    return getDomElementOrStub(`#${Slidedown.slidedownFooter}`);
+    return getDomElementOrStub(`#${Slidedown.slidedownFooterClass}`);
   }
 }
 
