@@ -16,17 +16,6 @@ export default class TagManager implements ITagManager{
     constructor(context: Context) {
         this.context = context;
     }
-    /**
-     * - Returns an object with only the tags that should be updated
-     * - Used when is in update mode (not first subscribe)
-     * @param  {TagsObject} localTags - from tagging container (type "number" values)
-     * @param  {TagsObject} remoteTags - from remote player record (type "number" values)
-     * @returns TagsObject
-     */
-    private getTagsToUpdate(localTags: TagsObject, remoteTags: TagsObject): TagsObject {
-        const diff = TagUtils.getObjectDifference(localTags, remoteTags);
-        return TagUtils.getOnlyKeysObject(diff, localTags);
-    }
 
     /**
      * @param  {boolean} isInUpdateMode
@@ -43,7 +32,7 @@ export default class TagManager implements ITagManager{
         } else {
             const remoteTagsWithNumberValues =
                 TagUtils.convertTagStringValuesToNumbers(this.context.tagManager.remoteTags);
-            finalTagsObject = this.getTagsToUpdate(localTagsWithNumberValues, remoteTagsWithNumberValues);
+            finalTagsObject = TagManager.getTagsToUpdate(localTagsWithNumberValues, remoteTagsWithNumberValues);
         }
 
         if (Object.keys(finalTagsObject).length === 0) {
@@ -64,5 +53,17 @@ export default class TagManager implements ITagManager{
 
     static storeRemotePlayerTags(remoteTags: TagsObject): void {
         OneSignal.context.tagManager.remoteTags = remoteTags;
+    }
+
+    /**
+     * - Returns an object with only the tags that should be updated
+     * - Used when is in update mode (not first subscribe)
+     * @param  {TagsObject} localTags - from tagging container (type "number" values)
+     * @param  {TagsObject} remoteTags - from remote player record (type "number" values)
+     * @returns TagsObject
+     */
+    static getTagsToUpdate(localTags: TagsObject, remoteTags: TagsObject): TagsObject {
+        const diff = TagUtils.getObjectDifference(localTags, remoteTags);
+        return TagUtils.getOnlyKeysObject(diff, localTags);
     }
 }
