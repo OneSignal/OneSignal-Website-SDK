@@ -3,10 +3,7 @@ import TagUtils from '../../../src/utils/TagUtils';
 import _ from "lodash";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignalApiBase from '../../../src/OneSignalApiBase';
-import Database from '../../../src/services/Database';
 import { TagsObject } from 'src/models/Tags';
-import TagManager from 'src/managers/tagManager/page/TagManager';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
