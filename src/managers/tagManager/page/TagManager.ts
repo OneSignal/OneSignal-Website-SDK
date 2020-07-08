@@ -23,7 +23,7 @@ export default class TagManager implements ITagManager{
      * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
      */
     public async sendTags(isInUpdateMode: boolean): Promise<TagsObject|null> {
-        Log.info("Updating tags from Category Slidedown:", this.tagsFromTaggingContainer);
+        Log.info("Category Slidedown Configuration:", this.tagsFromTaggingContainer);
 
         let finalTagsObject;
         const localTagsWithNumberValues = TagUtils.convertTagBooleanValuesToNumbers(this.tagsFromTaggingContainer);

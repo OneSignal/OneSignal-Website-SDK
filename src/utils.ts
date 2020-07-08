@@ -437,13 +437,13 @@ export function getAllDomElementsOrStub(selector: string): NodeList {
  */
 export function assertObjectValuesType(object: TagsObject, type: string) {
   if (["string", "number", "boolean"].indexOf(type) === -1) {
-    throw "invalid primitive type.";
+    throw "OneSignal: assertObjectValuesType: invalid primitive type.";
   }
   const keys = Object.keys(object);
 
   keys.forEach(key => {
     if (typeof object[key] !== type) {
-      throw `value corresponding to key ${key} not of type ${type}`;
+      throw `OneSignal: assertObjectValuesType: value corresponding to key ${key} not of type ${type}`;
     }
   });
 }
