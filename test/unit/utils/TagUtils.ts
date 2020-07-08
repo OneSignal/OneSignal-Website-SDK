@@ -6,6 +6,7 @@ import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignalApiBase from '../../../src/OneSignalApiBase';
 import Database from '../../../src/services/Database';
 import { TagsObject } from 'src/models/Tags';
+import TagManager from 'src/managers/tagManager/page/TagManager';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -50,3 +51,17 @@ test('check correct object difference is returned', t => {
     t.true(_.isEqual(diff2, ["tag1"]));
     t.true(_.isEqual(diff3, ["tag1"]));
 });
+
+
+test('check correct correct object of specified keys is returned', t => {
+    const keys = ['tag2', 'tag5'];
+    const object: TagsObject = { tag1: 0, tag2: 1, tag3: 0, tag4: 0, tag5: 1 };
+    const cleaned = TagUtils.getOnlyKeysObject(keys, object);
+    t.true(_.isEqual(cleaned, { tag2: 1, tag5: 1 }));
+});
+
+test('check correct truthy value pairs object is returned', t => {
+    const object: TagsObject = { tag1: 0, tag2: 1, tag3: 1, tag4: 0, tag5: 1 };
+    const cleaned = TagUtils.getTruthyValuePairsFromNumbers(object);
+    t.true(_.isEqual(cleaned, { tag2: 1, tag3: 1, tag5: 1 }));
+})
