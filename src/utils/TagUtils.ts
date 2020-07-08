@@ -16,7 +16,7 @@ export default class TagUtils {
         assertObjectValuesType(tags, "number");
         tags = JSON.parse(JSON.stringify(tags));
         Object.keys(tags).forEach(key => {
-            tags[key] = tags[key].toString() === "1" ? true : false;
+            tags[key] = tags[key] === 1 ? true : false;
         });
         return tags;
     }

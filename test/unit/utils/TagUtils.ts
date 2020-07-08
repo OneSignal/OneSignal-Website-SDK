@@ -17,7 +17,7 @@ test.afterEach(() => {
 });
 
 test('check conversion from tag number values to booleans', t => {
-    const converted = TagUtils.convertTagNumberValuesToBooleans({ tag1: "1", tag2: "0" });
+    const converted = TagUtils.convertTagNumberValuesToBooleans({ tag1: 1, tag2: 0 });
     t.true(_.isEqual(converted, { tag1: true, tag2: false }));
 });
 
