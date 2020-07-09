@@ -7,8 +7,12 @@ import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
-import { SERVER_CONFIG_DEFAULTS_SESSION, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../config";
+import {
+  SERVER_CONFIG_DEFAULTS_SESSION,
+  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
+} from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
+import { Categories } from '../../src/models/Tags';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -179,13 +183,21 @@ export class ConfigHelper {
     };
   }
 
+  /**
+   * Used for Custom Code Integration Type
+   * @param  {AppUserConfigPromptOptions|undefined} promptOptions
+   * @param  {ServerAppConfigPrompt} defaultsFromServer
+   * @param  {AppUserConfig} wholeUserConfig
+   * @param  {boolean=false} isUsingSubscriptionWorkaround
+   * @returns AppUserConfigPromptOptions
+   */
   public static injectDefaultsIntoPromptOptions(
     promptOptions: AppUserConfigPromptOptions | undefined,
     defaultsFromServer: ServerAppConfigPrompt,
     wholeUserConfig: AppUserConfig,
     isUsingSubscriptionWorkaround: boolean = false,
   ): AppUserConfigPromptOptions | undefined {
-  
+
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
     if (promptOptions && promptOptions.customlink) {
       customlinkUser = promptOptions.customlink;
@@ -253,7 +265,7 @@ export class ConfigHelper {
 
     /**
      * If autoRegister is true, show native prompt for https and slidedown for http ignoring any other related
-     * prompt options. 
+     * prompt options.
      */
     if (wholeUserConfig.autoRegister === true) {
       if (isUsingSubscriptionWorkaround) {
@@ -278,7 +290,11 @@ export class ConfigHelper {
 
     return promptOptionsConfig;
   }
-
+  /**
+   * Used only with Dashboard Configuration
+   * @param  {ServerAppConfig} serverConfig
+   * @returns AppUserConfigPromptOptions
+   */
   private static getPromptOptionsForDashboardConfiguration(serverConfig: ServerAppConfig): AppUserConfigPromptOptions {
     const staticPrompts = serverConfig.config.staticPrompts;
     const native = staticPrompts.native ? {
@@ -294,6 +310,10 @@ export class ConfigHelper {
       pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
       timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
     };
+    let categories: Categories;
+    if (staticPrompts.slidedown.categories) {
+      categories = staticPrompts.slidedown.categories;
+    }
 
     const slidedown = {
       enabled: staticPrompts.slidedown.enabled,
@@ -307,6 +327,7 @@ export class ConfigHelper {
       actionMessage: staticPrompts.slidedown.actionMessage,
       acceptButtonText: staticPrompts.slidedown.acceptButton,
       cancelButtonText: staticPrompts.slidedown.cancelButton,
+      categories
     };
     return {
       autoPrompt: native.autoPrompt || slidedown.autoPrompt,
