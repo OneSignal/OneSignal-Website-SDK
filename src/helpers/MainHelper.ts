@@ -2,7 +2,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { AppUserConfigPromptOptions, SlidedownPermissionMessageOptions } from '../models/Prompts';
+import { AppUserConfigPromptOptions, SlidedownPermissionMessageOptions, CategorySlidedownOptions } from '../models/Prompts';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
@@ -13,13 +13,14 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../context/shared/utils/Utils";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import SubscriptionHelper from "./SubscriptionHelper";
+import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 
 export default class MainHelper {
 
   public static async getCurrentNotificationType(): Promise<SubscriptionStateKind> {
     const currentPermission: NotificationPermission =
       await OneSignal.context.permissionManager.getNotificationPermission(OneSignal.context.appConfig.safariWebId);
-    
+
     if (currentPermission === NotificationPermission.Default) {
       return SubscriptionStateKind.Default;
     }
@@ -93,7 +94,7 @@ export default class MainHelper {
     if (!appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     }
-    var url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
+    const url = `${SdkEnvironment.getOneSignalApiUrl().toString()}/apps/${appId}/icon`;
     const response = await fetch(url);
     const data = await response.json();
     if (data.errors) {
@@ -105,37 +106,44 @@ export default class MainHelper {
 
   public static getSlidedownPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
     SlidedownPermissionMessageOptions {
-    const defaultActionMessage = "We'd like to show you notifications for the latest news and updates.";
-    const defaultAcceptButtonText = "Allow";
-    const defaultCancelButtonText = "No Thanks";
 
-    if (!promptOptions) {
+    if (!promptOptions || !promptOptions.slidedown) {
+      const actionMessage = !!promptOptions ? promptOptions.actionMessage :
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage;
+      const acceptButtonText = !!promptOptions ? promptOptions.acceptButtonText :
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton;
+      const cancelButtonText = !!promptOptions ? promptOptions.cancelButtonText :
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton;
+
       return {
         enabled: false,
         autoPrompt: false,
-        actionMessage: defaultActionMessage,
-        acceptButtonText: defaultAcceptButtonText,
-        cancelButtonText: defaultCancelButtonText,
+        actionMessage,
+        acceptButtonText,
+        cancelButtonText,
       } as SlidedownPermissionMessageOptions;
     }
 
-    if (!promptOptions.slidedown) {
-      return {
-        enabled: false,
-        autoPrompt: false,
-        actionMessage: promptOptions.actionMessage || defaultActionMessage,
-        acceptButtonText: promptOptions.acceptButtonText || defaultAcceptButtonText,
-        cancelButtonText: promptOptions.cancelButtonText || defaultCancelButtonText,
-      } as SlidedownPermissionMessageOptions;
+    // slidedown prompt options are defined
+    const { categories } = promptOptions.slidedown;
+    if (!!categories) {
+      categories.positiveUpdateButton = Utils.getValueOrDefault(categories.positiveUpdateButton,
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton);
+      categories.negativeUpdateButton = Utils.getValueOrDefault(categories.negativeUpdateButton,
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton);
+      categories.updateMessage = Utils.getValueOrDefault(categories.updateMessage,
+        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage);
     }
 
     return {
       enabled: promptOptions.slidedown.enabled,
       autoPrompt: promptOptions.slidedown.autoPrompt,
-      actionMessage: promptOptions.slidedown.actionMessage || defaultActionMessage,
-      acceptButtonText: promptOptions.slidedown.acceptButtonText || defaultAcceptButtonText,
-      cancelButtonText: promptOptions.slidedown.cancelButtonText || defaultCancelButtonText,
+      actionMessage: promptOptions.slidedown.actionMessage || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+      acceptButtonText: promptOptions.slidedown.acceptButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+      cancelButtonText: promptOptions.slidedown.cancelButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
+      categories
     } as SlidedownPermissionMessageOptions;
+
   }
 
   static getFullscreenPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
