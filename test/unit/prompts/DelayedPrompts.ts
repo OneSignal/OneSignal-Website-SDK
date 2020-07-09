@@ -59,7 +59,7 @@ const testConfig: TestEnvironmentConfig = {
 };
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 1 page view if configured so`, async t => {
-    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
+    await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt").resolves();
@@ -71,7 +71,7 @@ test.serial(`Delayed Prompt: delayed prompt is shown after 1 page view if config
 });
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 0 page views if configured so`, async t => {
-    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
+    await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt").resolves();
@@ -83,7 +83,7 @@ test.serial(`Delayed Prompt: delayed prompt is shown after 0 page views if confi
 });
 
 test.serial(`Delayed Prompt: delayed prompt not shown if less than configured page views`, async t => {
-    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
+    await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
     OneSignal.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
@@ -100,7 +100,7 @@ test.serial(`Delayed Prompt: delayed prompt not shown if less than configured pa
 });
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 3 page views if configured so`, async t => {
-    await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
+    await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
     const nativeSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt").resolves();
     await initWithDelayedOptions(DelayedPromptType.Native, 0, 3);

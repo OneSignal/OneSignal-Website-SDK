@@ -885,7 +885,7 @@ export class TestEnvironment {
   }
 
 
-  static async setupOneSignalWithStubs(
+  static async setupOneSignalPageWithStubs(
     sinonSandbox: SinonSandbox,
     testConfig: TestEnvironmentConfig,
     t: ExecutionContext,
@@ -903,8 +903,7 @@ export class TestEnvironment {
     sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");
     sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
     sinonSandbox.stub(ServiceWorkerManager.prototype, "installWorker").resolves();
-    sinonSandbox.stub(OneSignalApi, "updatePlayer").resolves({ success: true, id: playerId });
-    sinonSandbox.stub(TaggingContainer, "getValuesFromTaggingContainer").returns({ tag: 1 });
+    // sinonSandbox.stub(TaggingContainer, "getValuesFromTaggingContainer").returns({ tag: 1 });
 
     // returnable stubs
     const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
