@@ -28,7 +28,7 @@ export class CustomLink {
         Log.debug('Not initializing custom link button because styles failed to load.');
         return;
     }
-    
+
     const containerElements = document.querySelectorAll<HTMLElement>(CustomLink.containerSelector);
     containerElements.forEach((element: HTMLElement) => {
       if (!CustomLink.isInitialized(element)) {
@@ -44,7 +44,7 @@ export class CustomLink {
       CustomLink.initSubscribeElement(element, config, isPushEnabled, isOptedOut));
 
     const explanationElements = document.querySelectorAll<HTMLElement>(CustomLink.explanationSelector);
-    explanationElements.forEach((element: HTMLElement) => 
+    explanationElements.forEach((element: HTMLElement) =>
       CustomLink.initExplanationElement(element, config, isPushEnabled));
   }
 
@@ -139,7 +139,7 @@ export class CustomLink {
     }
   }
 
-  // Using stricter HTMLElement class for element parameter to access style property 
+  // Using stricter HTMLElement class for element parameter to access style property
   private static setCustomColors(element: HTMLElement, config: AppUserConfigCustomLinkOptions): void {
     if (config.style === "button" && config.color && config.color.button && config.color.text) {
       element.style.backgroundColor = config.color.button;
