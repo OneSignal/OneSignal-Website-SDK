@@ -2,6 +2,7 @@ import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import { Utils } from "./context/shared/utils/Utils";
 import { OneSignalApiError, OneSignalApiErrorKind } from './errors/OneSignalApiError';
+import Log from "./libraries/Log";
 
 type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE";
@@ -71,6 +72,10 @@ export class OneSignalApiBase {
               return Promise.reject(json);
             }
           }
+        })
+        .catch(err => {
+          Log.warn(`Could not complete request to /${action}`, err);
+          return Promise.reject(err);
         });
   }
 
