@@ -487,7 +487,7 @@ export default class OneSignal {
     executeCallback(callback, tags);
 
     /* for testing only */
-    if (OneSignal.environmentInfo && !OneSignal.environmentInfo.isBrowserAndSupportsServiceWorkers) {
+    if (__TEST__) {
       Event.trigger(OneSignal.EVENTS.TEST_TAGS_SENT);
     }
     /* for testing only */
