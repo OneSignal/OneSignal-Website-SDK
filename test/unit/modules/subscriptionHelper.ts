@@ -19,7 +19,7 @@ test.beforeEach(async () => {
 
 test.afterEach(() => {
   sinonSandbox.restore();
-})
+});
 
 test('should not resubscribe user on subsequent page views if the user is already subscribed', async t => {
   sinonSandbox.stub(LocalStorage, 'getIsPushNotificationsEnabled').returns("true");
@@ -34,7 +34,7 @@ test('should subscribe user on subsequent page views if the user is not subscrib
   sinonSandbox.stub(OneSignal, 'isPushNotificationsEnabled').resolves(false);
   sinonSandbox.stub(PageViewManager.prototype, 'getPageViewCount').returns(2);
   sinonSandbox.stub(SubscriptionManager.prototype, 'registerSubscription').resolves();
-  
+
   const subscribeStub = sinonSandbox.stub(SubscriptionManager.prototype, 'subscribe').resolves(null);
   await SubscriptionHelper.registerForPush();
   t.true(subscribeStub.called);
