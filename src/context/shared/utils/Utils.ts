@@ -218,7 +218,7 @@ export class Utils {
         return !!descending ? 1 : -1;
       }
       return 0;
-    })
+    });
     return internalArrayToSort;
   }
 }
