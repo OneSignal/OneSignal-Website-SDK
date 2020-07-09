@@ -1,7 +1,6 @@
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment, TestEnvironmentConfig, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import TagManager from '../../../src/managers/tagManager/page/TagManager';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import Random from '../../support/tester/Random';
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
@@ -18,24 +17,26 @@ test.afterEach(() => {
 });
 
 test('calling `sendTags` results in remote tag update with sendTags in update mode', async t => {
-    const mockTags = { tag1: 1, tag2: 2 };
+    const mockTags = { tag1: true, tag2: false };
+
     const sendTagsSpy = sinonSandbox.stub(OneSignal, "sendTags").resolves();
     OneSignal.context.tagManager.storeTagValuesToUpdate(mockTags);
     await OneSignal.context.tagManager.sendTags(true);
+
     t.is(sendTagsSpy.callCount, 1);
-    t.true(sendTagsSpy.getCall(0).calledWith(mockTags));
+    t.true(sendTagsSpy.getCall(0).calledWith({ tag1: 1 }));
 });
 
 test('subscribing through category slidedown accept button calls sendTags', async t => {
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      pushIdentifier: 'granted',
+      pushIdentifier: 'granted', // to do: check this ???
       stubSetTimeout: true
     };
 
     const appId = Random.getRandomUuid();
-    const stubs = await TestEnvironment.setupOneSignalWithStubs(sinonSandbox, testConfig, t);
+    const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const eventsHelper = new EventsTestHelper(sinonSandbox);
     eventsHelper.simulateSlidedownAllowAfterShown();
     eventsHelper.simulateNativeAllowAfterShown();
@@ -61,6 +62,6 @@ test('subscribing through category slidedown accept button calls sendTags', asyn
       autoResubscribe: false,
     });
     await initPromise;
+    console.log("Finished initPromise");
     await accepted;
 });
-
