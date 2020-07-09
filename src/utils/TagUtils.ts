@@ -32,8 +32,8 @@ export default class TagUtils {
     /**
      * Used in determining what Tag/Category preferences changed in order
      * to only update what is necessary
-     * @param  {TagsObject} localTags - tags from taggingContainer
-     * @param  {TagsObject} remoteTags - remote player tags
+     * @param  {TagsObject} localTags - tags from taggingContainer with values of type "number"
+     * @param  {TagsObject} remoteTags - remote player tags with values of type "number"
      * @returns array of keys of corresponding different values (finds difference)
      */
     static getObjectDifference(localTags: TagsObject, remoteTags: TagsObject): string[] {
