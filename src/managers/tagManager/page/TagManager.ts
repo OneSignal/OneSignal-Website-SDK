@@ -67,7 +67,7 @@ export default class TagManager implements ITagManager{
      * - Used when is in update mode (not first subscribe)
      * @param  {TagsObject} localTags - from tagging container (type "number" values)
      * @param  {TagsObject} remoteTags - from remote player record (type "number" values)
-     * @returns TagsObject
+     * @returns TagsObject - with values of type "number"
      */
     static getTagsToUpdate(localTags: TagsObject, remoteTags: TagsObject): TagsObject {
         const diff = TagUtils.getObjectDifference(localTags, remoteTags);
