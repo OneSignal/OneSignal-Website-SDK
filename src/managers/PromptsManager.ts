@@ -222,7 +222,7 @@ export class PromptsManager {
         taggingContainer.mount(categoryOptions!.tags, existingTags); // defined because of isCategorySlidedownConfigured
       }
     } catch (e) {
-      Log.error(`OneSignal: Attempted to create tagging container with eror: ${e}`);
+      Log.error(`OneSignal: Attempted to create tagging container with error: ${e}`);
     }
 
     await OneSignal.slidedown.create();
