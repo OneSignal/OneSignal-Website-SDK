@@ -26,7 +26,7 @@ export interface Session {
   startTimestamp: number;
   accumulatedDuration: number;
   notificationId: string | null; // for direct clicks
-  status: SessionStatus,
+  status: SessionStatus;
   lastDeactivatedTimestamp: number | null;
   lastActivatedTimestamp: number;
 }
@@ -77,5 +77,5 @@ export function initializeNewSession(options: NewSessionOptions): Session {
     status: SessionStatus.Active,
     lastDeactivatedTimestamp: null,
     lastActivatedTimestamp: currentTimestamp,
-  }
+  };
 }
