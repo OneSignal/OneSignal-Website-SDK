@@ -210,6 +210,7 @@ export class PromptsManager {
         await OneSignal.slidedown.create(isInUpdateMode);
         let existingTags: TagsObject = {};
         const taggingContainer = new TaggingContainer();
+        const tagCategoryArray = categoryOptions!.tags;
 
         if (isInUpdateMode) {
           taggingContainer.load();
@@ -218,8 +219,11 @@ export class PromptsManager {
           const existingTagsAsNumbers = TagUtils.convertTagStringValuesToNumbers(existingTagsAsNumberStrings);
           TagManager.storeRemotePlayerTags(existingTagsAsNumbers);
           existingTags = TagUtils.convertTagNumberValuesToBooleans(existingTagsAsNumbers);
+        } else {
+          // first subscription
+          TagManager.setTagCategoryArrayWithCheckedValue(tagCategoryArray, true);
         }
-        taggingContainer.mount(categoryOptions!.tags, existingTags); // defined because of isCategorySlidedownConfigured
+        taggingContainer.mount(tagCategoryArray, existingTags); // defined because of isCategorySlidedownConfigured
       }
     } catch (e) {
       Log.error(`OneSignal: Attempted to create tagging container with error: ${e}`);

@@ -63,9 +63,10 @@ export default class TaggingContainer {
     private _getCheckedTagCategories(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObject)
         : TagCategory[] {
             const remoteTagCategoriesCopy: TagCategory[] = JSON.parse(JSON.stringify(remoteTagCategories));
-            return !!existingPlayerTags ?
+            const isExistingPlayerTagsEmpty = Object.keys(<Object>existingPlayerTags).length === 0;
+            return !isExistingPlayerTagsEmpty ?
                 remoteTagCategoriesCopy.map(elem => {
-                    const existingTagValue = <boolean>existingPlayerTags[elem.tag];
+                    const existingTagValue = <boolean>existingPlayerTags![elem.tag];
                     elem.checked = existingTagValue;
                     return elem;
                 }) : remoteTagCategories;

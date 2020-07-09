@@ -1,5 +1,5 @@
 import Log from '../../../libraries/Log';
-import { TagsObject } from '../../../models/Tags';
+import { TagsObject, TagCategory } from '../../../models/Tags';
 import TagUtils from '../../../utils/TagUtils';
 import Context from '../../../models/Context';
 import { ITagManager } from '../types';
@@ -72,5 +72,11 @@ export default class TagManager implements ITagManager{
     static getTagsToUpdate(localTags: TagsObject, remoteTags: TagsObject): TagsObject {
         const diff = TagUtils.getObjectDifference(localTags, remoteTags);
         return TagUtils.getOnlyKeysObject(diff, localTags);
+    }
+
+    static setTagCategoryArrayWithCheckedValue(categoryArray: TagCategory[], checked: boolean) {
+        categoryArray.forEach(elem => {
+            elem.checked = checked;
+        });
     }
 }
