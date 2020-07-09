@@ -18,7 +18,7 @@ export default class OneSignalApiShared {
   static updatePlayer(appId: string, playerId: string, options?: Object) {
     Utils.enforceAppId(appId);
     Utils.enforcePlayerId(playerId);
-    return OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
+    return OneSignalApiBase.put(`players/${playerId}`, { app_id: appId, ...options });
   }
 
   static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {
