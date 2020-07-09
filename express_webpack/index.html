@@ -17,7 +17,64 @@
     const appId = getUrlQueryParam('app_id');
     var OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
-      OneSignal.init({appId});
+      OneSignal.init({
+          appId,
+          notifyButton: {
+              enable: true
+          },
+          promptOptions: {
+              slidedown: {
+                  autoPrompt: false,
+                  enabled: true,
+                  categories: {
+                      positiveButton: "Howdy, yes",
+                      negativeButton: "Cancelar",
+                      tags: [
+                        {
+                            tag: "tag1",
+                            label: "Tag 1",
+                        },
+                        {
+                            tag: "tag2",
+                            label: "Tag 2",
+                        },
+                        {
+                            tag: "tag3",
+                            label: "Tag 3",
+                        },
+                        {
+                            tag: "tag4",
+                            label: "Tag 4",
+                        },
+                        {
+                            tag: "tag5",
+                            label: "Tag 5",
+                        },
+                        {
+                            tag: "tag6",
+                            label: "Tag 6",
+                        },
+                        {
+                            tag: "tag7",
+                            label: "Tag 7",
+                        },
+                        {
+                            tag: "tag8",
+                            label: "Tag 8",
+                        },
+                        {
+                            tag: "tag9",
+                            label: "Tag 9",
+                        },
+                        {
+                            tag: "tag10",
+                            label: "Tag 10 Long Label That needs to be shortened",
+                        },
+                      ]
+                  }
+              }
+          }
+        });
     });
 
     function sendUniqueOutcome() {
@@ -44,6 +101,7 @@
   </script>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OneSignal WebSDK Sandbox</title>
     <link rel="shortcut icon" href="#">
 </head>
