@@ -35,6 +35,7 @@ declare var OneSignal: any;
 export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
   httpPermissionRequest?: boolean;
+  slidedown?: boolean;
 }
 
 export default class InitHelper {
@@ -128,8 +129,12 @@ export default class InitHelper {
           (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
           requiresUserInteraction
         );
+      const categoryOptions = OneSignal.context.appConfig.userConfig.promptOptions.slidedown.categories;
 
-      await OneSignal.context.promptsManager.internalShowAutoPrompt({ forceSlidedownOverNative });
+      await OneSignal.context.promptsManager.internalShowAutoPrompt({
+        forceSlidedownOverNative,
+        categoryOptions
+      });
 
     }
     OneSignal._sessionInitAlreadyRunning = false;

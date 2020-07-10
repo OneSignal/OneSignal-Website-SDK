@@ -17,24 +17,33 @@ import {
   DelayedPromptOptions,
   AppUserConfigPromptOptions,
   DelayedPromptType} from '../models/Prompts';
+import { Categories, TagsObjectForApi, TagsObjectWithBoolean } from "../models/Tags";
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
+import TaggingContainer from '../slidedown/TaggingContainer';
+import TagUtils from '../utils/TagUtils';
+import LocalStorage from '../utils/LocalStorage';
+import PromptsHelper from '../helpers/PromptsHelper';
 
 export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
+  isInUpdateMode?: boolean;
+  categoryOptions?: Categories;
 }
 
 export class PromptsManager {
   private isAutoPromptShowing: boolean;
   private context: ContextInterface;
+  private eventHooksInstalled: boolean;
 
   constructor(context: ContextInterface) {
     this.isAutoPromptShowing = false;
     this.context = context;
+    this.eventHooksInstalled = false;
   }
 
   private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
@@ -50,7 +59,7 @@ export class PromptsManager {
     }
 
     const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
-    if (doNotPrompt && !options.force) {
+    if (doNotPrompt && !options.force && !options.isInUpdateMode) {
       Log.info(new PermissionMessageDismissedError());
       return false;
     }
@@ -62,7 +71,7 @@ export class PromptsManager {
     }
 
     const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    if (isEnabled) {
+    if (isEnabled && !options.isInUpdateMode) {
       throw new AlreadySubscribedError();
     }
 
@@ -163,6 +172,7 @@ export class PromptsManager {
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
+    const { categoryOptions, isInUpdateMode } = options;
 
     if (this.isAutoPromptShowing) {
       Log.debug("Already showing slidedown. Abort.");
@@ -187,14 +197,59 @@ export class PromptsManager {
     const slideDownOptions: SlidedownPermissionMessageOptions =
       MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
 
-    this.installEventHooksForSlidedown();
+    if (!this.eventHooksInstalled) {
+      this.installEventHooksForSlidedown();
+    }
 
     OneSignal.slidedown = new Slidedown(slideDownOptions);
+    try {
+      if (PromptsHelper.isCategorySlidedownConfigured()) {
+        // show slidedown with tagging container
+        await OneSignal.slidedown.create(isInUpdateMode);
+        let tagsForComponent: TagsObjectWithBoolean = {};
+        const taggingContainer = new TaggingContainer();
+        const tagCategoryArray = categoryOptions!.tags;
+
+        if (isInUpdateMode) {
+          taggingContainer.load();
+          // updating. pull remote tags.
+          const existingTags = await OneSignal.getTags() as TagsObjectForApi;
+          this.context.tagManager.storeRemotePlayerTags(existingTags);
+          tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
+        } else {
+          // first subscription
+          TagUtils.markAllTagsAsSpecified(tagCategoryArray, true);
+        }
+        taggingContainer.mount(tagCategoryArray, tagsForComponent);
+      }
+    } catch (e) {
+      Log.error("OneSignal: Attempted to create tagging container with error" , e);
+    }
+
     await OneSignal.slidedown.create();
     Log.debug('Showing Slidedown.');
   }
 
+  // Wrapper for existing method `internalShowSlidedownPrompt`. Inserts information about
+  // provided categories, then calls `internalShowSlidedownPrompt`.
+  public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    const promptOptions = await this.context.appConfig.userConfig.promptOptions;
+    const categoryOptions = promptOptions!.slidedown!.categories;
+
+    if (!PromptsHelper.isCategorySlidedownConfigured()) {
+      Log.error("OneSignal: no categories to display. Check your configuration on the OneSignal dashboard or your custom code initialization.");
+      return;
+    }
+
+    await this.internalShowSlidedownPrompt({
+      ...options,
+      categoryOptions,
+    });
+  }
+
   public installEventHooksForSlidedown(): void {
+    this.eventHooksInstalled = true;
+    manageNotifyButtonStateWhileSlidedownShows();
 
     OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.isAutoPromptShowing = true;
@@ -202,15 +257,39 @@ export class PromptsManager {
     OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this.isAutoPromptShowing = false;
     });
-    OneSignal.emitter.once(Slidedown.EVENTS.ALLOW_CLICK, () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      const { slidedown } = OneSignal;
+      if (slidedown.isShowingFailureState) {
+        slidedown.toggleFailureState();
+      }
+      const tags = TaggingContainer.getValuesFromTaggingContainer();
+      this.context.tagManager.storeTagValuesToUpdate(tags);
+      // use local storage permission to get around user-gesture sync requirement
+      const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
+
+      if (isPushEnabled) {
+        OneSignal.slidedown.toggleSaveState();
+        // Sync Category Slidedown tags (isInUpdateMode = true)
+        try {
+          await this.context.tagManager.sendTags(true);
+        } catch (e) {
+          Log.error("Failed to update tags", e);
+          // Display tag update error
+          OneSignal.slidedown.toggleSaveState();
+          OneSignal.slidedown.toggleFailureState();
+          return;
+        }
+      } else {
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept, slidedown: true };
+        InitHelper.registerForPushNotifications(options);
+      }
+
       if (OneSignal.slidedown) {
         OneSignal.slidedown.close();
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
-      const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-      const options: RegisterOptions = { autoAccept };
-      InitHelper.registerForPushNotifications(options);
     });
     OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the slidedown to the user again.");
