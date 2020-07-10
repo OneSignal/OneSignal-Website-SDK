@@ -1,6 +1,8 @@
 $slidedown-transition-duration: 400ms;
+$border-radius: 0.5em;
 
 #onesignal-slidedown-container, #onesignal-popover-container {
+  font-size: 16px;
   position: fixed;
   z-index: 2258594000;
   left: 0;
@@ -40,7 +42,7 @@ $slidedown-transition-duration: 400ms;
       animation-fill-mode: forwards;
 
       &.blocked-dialog {
-        #blocked-popover, #blocked-slidedown {
+        #blocked-slidedown {
           display: block;
         }
         #normal-slidedown, #normal-popover {
@@ -107,16 +109,119 @@ $slidedown-transition-duration: 400ms;
     }
   }
 
-  #onesignal-popover-dialog {
+  .tagging-container {
+    display: flex;
+    margin: 2em 0;
+  }
+
+  .tagging-container-col {
+    flex: 1;
+    padding-left: 1em;
+  }
+
+  .onesignal-category-label {
+    display: block;
+    position: relative;
+    padding-left: 2.5em;
+    margin-bottom: 1.5em;
+    color: #051B2C;
+    font-size: 1em;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    height: 1.5em;
+    line-height: 1.5em;
+    float:left;
+
+    .onesignal-category-label-input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+
+      /* When the checkbox is checked, add a blue background */
+      &:checked ~ .onesignal-checkmark {
+        transition: ease 75ms;
+        background-color: #4285f4;
+      }
+
+      &:checked ~ .onesignal-checkmark:after {
+        display: block;
+      }
+    }
+
+    /* On mouse-over, add a grey background color */
+    &:hover input ~ .onesignal-checkmark {
+      background-color: #dde1e4;
+    }
+
+    .onesignal-category-label-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      max-width: 8em;
+    }
+
+    .onesignal-checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 1.5em;
+      width: 1.5em;
+      border-radius: .25em;
+      cursor: pointer;
+      background-color: #ebedef;
+
+      /* Create the checkmark/indicator (hidden when not checked) */
+      &:after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 0.5em;
+        top: 0.25em;
+        width: 0.33em;
+        height: 0.66em;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+      }
+    }
+  }
+
+  .onesignal-loading-container {
+    display: flex;
+    margin-top: 1em;
+    margin-bottom: 2em;
+    flex-direction: column;
+    align-items: center;
+
+    & .onesignal-loading-message {
+      flex: 1;
+      color: #CED3D8;
+      margin-top: .8125em;
+    }
+  }
+
+  .onesignal-button-indicator-holder {
+    display: flex;
+    margin-left: 0.5em;
+  }
+
+  #onesignal-slidedown-dialog, #onesignal-popover-dialog {
     box-sizing: border-box;
     max-width: 100%;
     margin: 0 auto;
-    box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, .22) !important;
+    box-shadow: 0 1px 6px rgba(5,27,44,.06), 0 2px 32px rgba(5,27,44,.16) !important;
     background: white !important;
-    padding: 1.286em;
+    padding: 1.5em 1.5em;
     border-bottom-left-radius: $border-radius;
     border-bottom-right-radius: $border-radius;
-    font-family: 'Roboto', 'Noto', Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Seoe UI Symbol";
 
     .slidedown-body, .popover-body {
       box-sizing: border-box;
@@ -147,15 +252,14 @@ $slidedown-transition-duration: 400ms;
 
     .slidedown-body-message, .popover-body-message {
       box-sizing: border-box;
-      padding: 0 0.2em 0 1.286em;
+      padding: 0 0 0 1em;
       float: left;
       width: calc(100% - 80px);
-      font-size: 1.143em;
       line-height: 1.45em;
       -o-user-select: none;
       user-select: none;
       cursor: default;
-      color: #666 !important;
+      color: #051B2C !important;
     }
 
     button {
@@ -183,23 +287,48 @@ $slidedown-transition-duration: 400ms;
     }
 
     .slidedown-button, .popover-button {
+      padding: 0.75em 1.5em;
       font-size: 1em;
-      text-transform: uppercase;
-      border-radius: 2px;
+      border-radius: .25em;
       font-weight: 400;
+      box-shadow: unset;
+      display: flex;
 
       &.primary {
-        box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 6px 0 rgba(0, 0, 0, 0.12);
-        background: #1165f1 !important;
+        background: #4285f4;
         color: white !important;
+        transition: linear 75ms;
 
         &:hover {
-          background: darken(#1165f1, 7.5%);
+          background: darken(#4285f4, 7.5%);
         }
 
         &:active {
-          background: darken(#1165f1, 15%);
+          background: darken(#4285f4, 15%);
         }
+
+        &.disabled {
+          background-color: #CED3D8;
+          cursor: default;
+        }
+
+        &.onesignal-saving-state-button {
+          padding: 0.75em 1em;
+          background: #CED3D8;
+          transition: linear 75ms;
+        }
+
+        &.onesignal-error-state-button {
+          padding: 0.75em 1em;
+          background: #E54A4D;
+          transition: linear 75ms;
+          align-items: center;
+        }
+      }
+
+      &.onesignal-button-indicator-holder {
+        display: flex;
+        margin-left: 0.5em;
       }
 
       &.secondary {
@@ -209,14 +338,14 @@ $slidedown-transition-duration: 400ms;
           We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
           Some sites set their own !important tag for text and we don't want that to be able to override ours.
          */
-        color: #1165f1 !important;
+        color: #4285f4 !important;
 
         &:hover {
-          color: darken(#1165f1, 12.5%);
+          color: darken(#4285f4, 12.5%);
         }
 
         &:active {
-          color: darken(#1165f1, 30.5%);
+          color: darken(#4285f4, 30.5%);
         }
       }
     }
@@ -227,7 +356,6 @@ $slidedown-transition-duration: 400ms;
 
     .slidedown-footer, .popover-footer {
       position: relative;
-      margin: 0.25em 0.25em 0 0;
     }
 
     .align-right {
@@ -244,6 +372,12 @@ $slidedown-transition-duration: 400ms;
       height: 0;
       clear: both;
       visibility: hidden;
+    }
+
+    .onesignal-tag-failure-message {
+      display: flex;
+      float:left;
+      color:red;
     }
   }
 }
