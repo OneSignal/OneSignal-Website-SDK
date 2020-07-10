@@ -1,4 +1,5 @@
 import { TagsObjectForApi, TagsObjectWithBoolean, TagCategory } from '../models/Tags';
+import { deepCopy } from '../../src/utils';
 
 export default class TagUtils {
     static convertTagsApiToBooleans(tags: TagsObjectForApi): TagsObjectWithBoolean {
@@ -30,9 +31,12 @@ export default class TagUtils {
         // Going off local tags since it's our categories. Trying to find only changed tags and returning those
         // as a final object.
         Object.keys(localTags).forEach(key => {
-            if (remoteTags[key] && localTags[key] !== remoteTags[key]) {
-                finalTags[key] = localTags[key];
+            // only if user's tag value did not change, skip it
+            if (remoteTags[key] === localTags[key]) {
+                return;
             }
+
+            finalTags[key] = localTags[key];
         });
         return finalTags;
     }
@@ -43,7 +47,41 @@ export default class TagUtils {
         });
     }
 
-    static isTagObjectEmpty(tags: TagsObjectForApi): boolean {
-        return Object.keys(tags).length > 0;
-    } 
+    static isTagObjectEmpty(tags: TagsObjectForApi | TagsObjectWithBoolean): boolean {
+        return Object.keys(tags).length === 0;
+    }
+    /**
+     * Uses configured categories and remote player tags to calculate which boxes should be checked
+     * @param  {TagCategory[]} categories
+     * @param  {TagsObjectWithBoolean} existingPlayerTags?
+     */
+    static getCheckedTagCategories(categories: TagCategory[], existingPlayerTags?: TagsObjectWithBoolean)
+        : TagCategory[] {
+            if (!existingPlayerTags) {
+                return categories;
+            }
+
+            const isExistingPlayerTagsEmpty = TagUtils.isTagObjectEmpty(existingPlayerTags);
+            if (isExistingPlayerTagsEmpty) {
+                const categoriesCopy = deepCopy(categories);
+                TagUtils.markAllTagsAsSpecified(categoriesCopy, true);
+                return categoriesCopy;
+            }
+
+            const categoriesCopy = deepCopy<TagCategory[]>(categories);
+            return categoriesCopy.map(category => {
+                const existingTagValue: boolean = existingPlayerTags[category.tag];
+                category.checked = TagUtils.getCheckedStatusForTagValue(existingTagValue);
+                return category;
+            });
+    }
+
+    static getCheckedStatusForTagValue(tagValue: boolean | undefined): boolean {
+        // If user does not have tag assigned to them, consider it selected
+        if (tagValue === undefined) {
+            return true;
+        }
+
+        return tagValue;
+    }
 }
