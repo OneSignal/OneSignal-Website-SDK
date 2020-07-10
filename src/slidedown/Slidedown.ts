@@ -5,16 +5,16 @@ import MainHelper from '../helpers/MainHelper';
 import { addCssClass, addDomElement, getPlatformNotificationIcon, once, removeDomElement } from '../utils';
 import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 
-export default class Popover {
+export default class Slidedown {
   public options: SlidedownPermissionMessageOptions;
   public notificationIcons: NotificationIcons | null;
 
   static get EVENTS() {
     return {
-      ALLOW_CLICK: 'popoverAllowClick',
-      CANCEL_CLICK: 'popoverCancelClick',
-      SHOWN: 'popoverShown',
-      CLOSED: 'popoverClosed',
+      ALLOW_CLICK: 'slidedownAllowClick',
+      CANCEL_CLICK: 'slidedownCancelClick',
+      SHOWN: 'slidedownShown',
+      CLOSED: 'slidedownClosed',
     };
   }
 
@@ -38,7 +38,7 @@ export default class Popover {
 
       // Remove any existing container
       if (this.container) {
-          removeDomElement('#onesignal-popover-container');
+        removeDomElement('#onesignal-popover-container');
       }
 
       const icon = this.getPlatformNotificationIcon();
@@ -54,30 +54,30 @@ export default class Popover {
       // Animate it in depending on environment
       addCssClass(this.container, bowser.mobile ? 'slide-up' : 'slide-down');
       // Add click event handlers
-      this.allowButton.addEventListener('click', this.onPopoverAllowed.bind(this));
-      this.cancelButton.addEventListener('click', this.onPopoverCanceled.bind(this));
-      Event.trigger(Popover.EVENTS.SHOWN);
+      this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
+      this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));
+      Event.trigger(Slidedown.EVENTS.SHOWN);
     }
   }
 
-  async onPopoverAllowed(_: any) {
-    await Event.trigger(Popover.EVENTS.ALLOW_CLICK);
+  async onSlidedownAllowed(_: any) {
+    await Event.trigger(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
-  onPopoverCanceled(_: any) {
-    Event.trigger(Popover.EVENTS.CANCEL_CLICK);
+  onSlidedownCanceled(_: any) {
+    Event.trigger(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
   }
 
   close() {
-    addCssClass(this.container, 'close-popover');
-    once(this.dialog, 'animationend', (event, destroyListenerFn) => {
+    addCssClass(this.container, 'close-slidedown');
+    once(this.dialog, 'animationend', (event: any, destroyListenerFn: () => void) => {
       if (event.target === this.dialog &&
           (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
           // Uninstall the event listener for animationend
           removeDomElement('#onesignal-popover-container');
           destroyListenerFn();
-          Event.trigger(Popover.EVENTS.CLOSED);
+          Event.trigger(Slidedown.EVENTS.CLOSED);
       }
     }, true);
   }
@@ -103,7 +103,7 @@ export default class Popover {
   }
 }
 
-export function manageNotifyButtonStateWhilePopoverShows() {
+export function manageNotifyButtonStateWhileSlidedownShows() {
   const notifyButton = OneSignal.notifyButton;
   if (notifyButton &&
     notifyButton.options.enable &&
@@ -113,7 +113,7 @@ export function manageNotifyButtonStateWhilePopoverShows() {
         OneSignal.notifyButton.launcher.hide();
       });
   }
-  OneSignal.emitter.once(Popover.EVENTS.CLOSED, () => {
+  OneSignal.emitter.once(Slidedown.EVENTS.CLOSED, () => {
     if (OneSignal.notifyButton &&
       OneSignal.notifyButton.options.enable) {
       OneSignal.notifyButton.launcher.show();
