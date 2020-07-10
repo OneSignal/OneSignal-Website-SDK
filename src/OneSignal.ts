@@ -57,6 +57,7 @@ import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType, SentUniqueOutcome } from "./models/Outcomes";
 import { DelayedPromptType, AppUserConfigNotifyButton } from './models/Prompts';
+import LocalStorage from './utils/LocalStorage';
 
 export default class OneSignal {
   /**
@@ -373,6 +374,15 @@ export default class OneSignal {
     await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
   }
 
+  public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
+    await OneSignal.context.promptsManager.internalShowCategorySlidedown({
+      ...options,
+      isInUpdateMode: isPushEnabled
+    });
+  }
+
   /**
    * Prompts the user to subscribe.
    * @PublicApi
@@ -384,7 +394,7 @@ export default class OneSignal {
           await InitHelper.registerForPushNotifications(options);
           return resolve();
         });
-      })
+      });
     } else
       return await InitHelper.registerForPushNotifications(options);
   }
