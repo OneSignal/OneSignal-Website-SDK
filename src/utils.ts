@@ -96,7 +96,7 @@ export function addDomElement(targetSelectorOrElement: string | Element,
   } else {
     targetElement = targetSelectorOrElement;
   }
-  
+
   if (targetElement) {
     targetElement.insertAdjacentHTML(addOrder, elementHtml);
     return;
@@ -409,4 +409,13 @@ export function getPlatformNotificationIcon(notificationIcons: NotificationIcons
     notificationIcons.firefox ||
     notificationIcons.safari ||
     'default-icon';
+}
+
+export function getDomElementOrStub(selector: string): Element {
+  const foundElement = document.querySelector(selector);
+  if (!foundElement) {
+    Log.info(`No instance of ${selector} found. Returning stub.`);
+    return document.createElement('div');
+  }
+  return foundElement;
 }
