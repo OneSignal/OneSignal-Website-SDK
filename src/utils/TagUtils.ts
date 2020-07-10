@@ -1,4 +1,5 @@
 import { TagsObjectForApi, TagsObjectWithBoolean, TagCategory } from '../models/Tags';
+import { deepCopy } from '../../src/utils';
 
 export default class TagUtils {
     static convertTagsApiToBooleans(tags: TagsObjectForApi): TagsObjectWithBoolean {
@@ -30,9 +31,12 @@ export default class TagUtils {
         // Going off local tags since it's our categories. Trying to find only changed tags and returning those
         // as a final object.
         Object.keys(localTags).forEach(key => {
-            if (remoteTags[key] && localTags[key] !== remoteTags[key]) {
-                finalTags[key] = localTags[key];
+            // only if user's tag value did not change, skip it
+            if (remoteTags[key] === localTags[key]) {
+                return;
             }
+
+            finalTags[key] = localTags[key];
         });
         return finalTags;
     }
@@ -43,7 +47,32 @@ export default class TagUtils {
         });
     }
 
-    static isTagObjectEmpty(tags: TagsObjectForApi): boolean {
-        return Object.keys(tags).length > 0;
-    } 
+    static isTagObjectEmpty(tags: TagsObjectForApi | TagsObjectWithBoolean): boolean {
+        return Object.keys(tags).length === 0;
+    }
+
+    /**
+     * Returns checked TagCategory[] using unchecked categories from config
+     * and existingPlayerTags (from `getTags`)
+     * @param  {TagCategory[]} remoteTagCategories
+     * @param  {TagsObjectWithBoolean} existingPlayerTags?
+     */
+    static getCheckedTagCategories(categories: TagCategory[], existingPlayerTags?: TagsObjectWithBoolean)
+        : TagCategory[] {
+            if (!existingPlayerTags) {
+                return categories;
+            }
+
+            const isExistingPlayerTagsEmpty = TagUtils.isTagObjectEmpty(existingPlayerTags);
+            if (isExistingPlayerTagsEmpty) {
+                return categories;
+            }
+
+            const categoriesCopy = deepCopy<TagCategory[]>(categories);
+            return categoriesCopy.map(category => {
+                const existingTagValue: boolean = existingPlayerTags[category.tag];
+                category.checked = existingTagValue === undefined ? true : existingTagValue;
+                return category;
+            });
+    }
 }
