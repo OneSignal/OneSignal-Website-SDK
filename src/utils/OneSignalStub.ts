@@ -45,6 +45,7 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
     "showHttpPermissionRequest",
     "showNativePrompt",
     "showSlidedownPrompt",
+    "showCategorySlidedown",
     "getNotificationPermission",
     "getUserId",
     "getRegistrationId",
