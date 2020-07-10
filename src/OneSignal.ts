@@ -373,6 +373,16 @@ export default class OneSignal {
     await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
   }
 
+  public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    await OneSignal.context.promptsManager.internalShowCategorySlidedown({
+      ...options,
+      force: true,
+      isInUpdateMode: isPushEnabled
+    });
+  }
+
   /**
    * Prompts the user to subscribe.
    * @PublicApi
@@ -384,7 +394,7 @@ export default class OneSignal {
           await InitHelper.registerForPushNotifications(options);
           return resolve();
         });
-      })
+      });
     } else
       return await InitHelper.registerForPushNotifications(options);
   }
