@@ -11,7 +11,7 @@ import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import {
   stubMessageChannel, mockIframeMessaging, mockWebPushAnalytics, InitTestHelper
 } from '../../support/tester/utils';
-import Popover from "../../../src/popover/Popover";
+import Slidedown from "../../../src/slidedown/Slidedown";
 import OneSignalEvent from "../../../src/Event";
 import { DynamicResourceLoader, ResourceLoadState } from "../../../src/services/DynamicResourceLoader";
 import { ServiceWorkerManager } from "../../../src/managers/ServiceWorkerManager";
@@ -23,10 +23,9 @@ import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
 import InitHelper from "../../../src/helpers/InitHelper";
 import {
   markUserAsOptedOut, markUserAsSubscribed, markUserAsSubscribedOnHttp,
-  stubServiceWorkerInstallation, 
+  stubServiceWorkerInstallation,
 } from "../../support/tester/sinonSandboxUtils";
 import { createSubscription } from "../../support/tester/utils";
-import { PromptsManager } from '../../../src/managers/PromptsManager';
 
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -841,14 +840,14 @@ async function beforeTest(
 }
 
 function simulateSlidedownAllowAfterShown() {
-  OneSignal.on(Popover.EVENTS.SHOWN, () => {
-    OneSignalEvent.trigger(Popover.EVENTS.ALLOW_CLICK);
+  OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+    OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
   });
 }
 
 function simulateSlidedownDismissAfterShown() {
-  OneSignal.on(Popover.EVENTS.SHOWN, () => {
-    OneSignalEvent.trigger(Popover.EVENTS.CANCEL_CLICK);
+  OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+    OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
   });
 }
 
