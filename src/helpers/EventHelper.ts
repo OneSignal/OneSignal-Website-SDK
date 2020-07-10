@@ -7,6 +7,7 @@ import Log from '../libraries/Log';
 import { CustomLink } from "../CustomLink";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { BrowserUtils } from "../utils/BrowserUtils";
+import PromptsHelper from './PromptsHelper';
 import LocalStorage from '../utils/LocalStorage';
 
 export default class EventHelper {
@@ -42,8 +43,19 @@ export default class EventHelper {
 
   static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
     EventHelper.onSubscriptionChanged_showWelcomeNotification(newSubscriptionState);
+    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(newSubscriptionState);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
     EventHelper.onSubscriptionChanged_updateCustomLink();
+  }
+
+  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed: boolean | undefined) {
+    if (isSubscribed !== true) {
+      return;
+    }
+
+    if (PromptsHelper.isCategorySlidedownConfigured()) {
+      await OneSignal.context.tagManager.sendTags(false);
+    }
   }
 
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
