@@ -1,8 +1,6 @@
-$popover-transition-duration: 400ms;
-$border-radius: 2px;
+$slidedown-transition-duration: 400ms;
 
-#onesignal-popover-container {
-  font-size: 14px;
+#onesignal-slidedown-container, #onesignal-popover-container {
   position: fixed;
   z-index: 2258594000;
   left: 0;
@@ -12,43 +10,43 @@ $border-radius: 2px;
   &.slide-down {
     top: 0;
 
-    &.close-popover {
-      #onesignal-popover-dialog {
+    &.close-slidedown {
+      #onesignal-slidedown-dialog, #onesignal-popover-dialog {
         -webkit-animation-name: slideDownExit;
         -webkit-animation-iteration-count: 1;
         -webkit-animation-timing-function: ease-out;
-        -webkit-animation-duration: $popover-transition-duration;
+        -webkit-animation-duration: $slidedown-transition-duration;
         -webkit-animation-fill-mode: forwards;
         animation-name: slideDownExit;
         animation-iteration-count: 1;
         animation-timing-function: ease-out;
-        animation-duration: $popover-transition-duration;
+        animation-duration: $slidedown-transition-duration;
         animation-fill-mode: forwards;
       }
     }
 
-    #onesignal-popover-dialog {
+    #onesignal-slidedown-dialog, #onesignal-popover-dialog {
       width: 500px;
 
       -webkit-animation-name: slideDownEnter;
       -webkit-animation-iteration-count: 1;
       -webkit-animation-timing-function: ease-out;
-      -webkit-animation-duration: $popover-transition-duration;
+      -webkit-animation-duration: $slidedown-transition-duration;
       -webkit-animation-fill-mode: forwards;
       animation-name: slideDownEnter;
       animation-iteration-count: 1;
       animation-timing-function: ease-out;
-      animation-duration: $popover-transition-duration;
+      animation-duration: $slidedown-transition-duration;
       animation-fill-mode: forwards;
 
       &.blocked-dialog {
-        #blocked-popover {
+        #blocked-popover, #blocked-slidedown {
           display: block;
         }
-        #normal-popover {
+        #normal-slidedown, #normal-popover {
           display: none;
         }
-        .popover-body-message {
+        .slidedown-body-message, .popover-body-message {
           padding: 0 0.2em 0 0.2em;
           text-align: center;
           width: 100%;
@@ -64,47 +62,47 @@ $border-radius: 2px;
         width: 612px;
         margin-bottom: 18px;
 
-        .popover-button.secondary {
+        .slidedown-button.secondary, .popover-button.secondary {
           padding: 0.714em 2em;
         }
       }
     }
   }
 
-  #blocked-popover {
+  #blocked-slidedown, #blocked-popover {
     display: none;
   }
 
   &.slide-up {
     bottom: 0;
 
-    &.close-popover {
-      #onesignal-popover-dialog {
+    &.close-slidedown, &.close-popover {
+      #onesignal-slidedown-dialog, #onesignal-popover-dialog {
         -webkit-animation-name: slideUpExit;
         -webkit-animation-iteration-count: 1;
         -webkit-animation-timing-function: ease-out;
-        -webkit-animation-duration: $popover-transition-duration;
+        -webkit-animation-duration: $slidedown-transition-duration;
         -webkit-animation-fill-mode: forwards;
         animation-name: slideUpExit;
         animation-iteration-count: 1;
         animation-timing-function: ease-out;
-        animation-duration: $popover-transition-duration;
+        animation-duration: $slidedown-transition-duration;
         animation-fill-mode: forwards;
       }
     }
 
-    #onesignal-popover-dialog {
+    #onesignal-slidedown-dialog, #onesignal-popover-dialog {
       width: 100%;
 
       -webkit-animation-name: slideUpEnter;
       -webkit-animation-iteration-count: 1;
       -webkit-animation-timing-function: ease-out;
-      -webkit-animation-duration: $popover-transition-duration;
+      -webkit-animation-duration: $slidedown-transition-duration;
       -webkit-animation-fill-mode: backwards;
       animation-name: slideUpEnter;
       animation-iteration-count: 1;
       animation-timing-function: ease-out;
-      animation-duration: $popover-transition-duration;
+      animation-duration: $slidedown-transition-duration;
       animation-fill-mode: backwards;
     }
   }
@@ -120,12 +118,12 @@ $border-radius: 2px;
     border-bottom-right-radius: $border-radius;
     font-family: 'Roboto', 'Noto', Helvetica Neue, Helvetica, Arial, sans-serif;
 
-    .popover-body {
+    .slidedown-body, .popover-body {
       box-sizing: border-box;
       margin: 0;
     }
 
-    .popover-body-icon {
+    .slidedown-body-icon, .popover-body-icon {
       box-sizing: border-box;
       float: left;
       width: 80px;
@@ -147,7 +145,7 @@ $border-radius: 2px;
       }
     }
 
-    .popover-body-message {
+    .slidedown-body-message, .popover-body-message {
       box-sizing: border-box;
       padding: 0 0.2em 0 1.286em;
       float: left;
@@ -184,8 +182,7 @@ $border-radius: 2px;
       margin: 0;
     }
 
-    .popover-button {
-      padding: 0.714em 2em;
+    .slidedown-button, .popover-button {
       font-size: 1em;
       text-transform: uppercase;
       border-radius: 2px;
@@ -224,11 +221,11 @@ $border-radius: 2px;
       }
     }
 
-    .primary.popover-button+.secondary.popover-button {
+    .primary.slidedown-button+.secondary.slidedown-button, .primary.popover-button+.secondary.popover-button {
       margin-right: 0.714em;
     }
 
-    .popover-footer {
+    .slidedown-footer, .popover-footer {
       position: relative;
       margin: 0.25em 0.25em 0 0;
     }
