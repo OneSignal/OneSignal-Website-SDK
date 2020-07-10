@@ -28,7 +28,7 @@ import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
 import SubscriptionPopup from './modules/frames/SubscriptionPopup';
 import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
 import OneSignalApi from './OneSignalApi';
-import Popover from './popover/Popover';
+import Slidedown from './slidedown/Slidedown';
 import Database from './services/Database';
 
 import IndexedDb from './services/IndexedDb';
@@ -886,7 +886,7 @@ export default class OneSignal {
   static database = Database;
   static event = Event;
   static browser = bowser;
-  static popover: Popover | null = null;
+  static slidedown: Slidedown | null = null;
   static log = Log;
   static api = OneSignalApi;
   static indexedDb = IndexedDb;

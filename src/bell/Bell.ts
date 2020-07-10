@@ -417,7 +417,7 @@ export default class Bell {
           (OneSignal.config.userConfig.promptOptions.autoPrompt === true) &&
           !MainHelper.isHttpPromptAlreadyShown()
         ) {
-          Log.debug('Not showing notify button because popover will be shown.');
+          Log.debug('Not showing notify button because slidedown will be shown.');
           return nothing();
         } else {
           return this.launcher.show();

@@ -11,7 +11,7 @@ import { PermissionPromptType } from '../models/PermissionPromptType';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
-import Popover, { manageNotifyButtonStateWhilePopoverShows } from '../popover/Popover';
+import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from '../slidedown/Slidedown';
 import {
   SlidedownPermissionMessageOptions,
   DelayedPromptOptions,
@@ -39,7 +39,7 @@ export class PromptsManager {
 
   private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
     /*
-    Only show the popover if:
+    Only show the slidedown if:
     - Notifications aren't already enabled
     - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
     */
@@ -155,7 +155,7 @@ export class PromptsManager {
     }
 
     this.isAutoPromptShowing = true;
-    MainHelper.markHttpPopoverShown();
+    MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
     this.isAutoPromptShowing = false;
     TestHelper.markHttpsNativePromptDismissed();
@@ -165,7 +165,7 @@ export class PromptsManager {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
 
     if (this.isAutoPromptShowing) {
-      Log.debug("Already showing autopromt. Abort showing a slidedown.");
+      Log.debug("Already showing slidedown. Abort.");
       return;
     }
 
@@ -177,7 +177,7 @@ export class PromptsManager {
       return;
     }
 
-    MainHelper.markHttpPopoverShown();
+    MainHelper.markHttpSlidedownShown();
 
     const sdkStylesLoadResult = await this.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
@@ -187,34 +187,33 @@ export class PromptsManager {
     const slideDownOptions: SlidedownPermissionMessageOptions =
       MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
 
-    this.installEventHooksForPopover();
+    this.installEventHooksForSlidedown();
 
-    OneSignal.popover = new Popover(slideDownOptions);
-    await OneSignal.popover.create();
-    Log.debug('Showing Slidedown(Popover).');
+    OneSignal.slidedown = new Slidedown(slideDownOptions);
+    await OneSignal.slidedown.create();
+    Log.debug('Showing Slidedown.');
   }
 
-  public installEventHooksForPopover(): void {
-    manageNotifyButtonStateWhilePopoverShows();
+  public installEventHooksForSlidedown(): void {
 
-    OneSignal.emitter.once(Popover.EVENTS.SHOWN, () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.isAutoPromptShowing = true;
     });
-    OneSignal.emitter.once(Popover.EVENTS.CLOSED, () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this.isAutoPromptShowing = false;
     });
-    OneSignal.emitter.once(Popover.EVENTS.ALLOW_CLICK, () => {
-      if (OneSignal.popover) {
-        OneSignal.popover.close();
+    OneSignal.emitter.once(Slidedown.EVENTS.ALLOW_CLICK, () => {
+      if (OneSignal.slidedown) {
+        OneSignal.slidedown.close();
       }
-      Log.debug("Setting flag to not show the popover to the user again.");
+      Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
       const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
       const options: RegisterOptions = { autoAccept };
       InitHelper.registerForPushNotifications(options);
     });
-    OneSignal.emitter.once(Popover.EVENTS.CANCEL_CLICK, () => {
-      Log.debug("Setting flag to not show the popover to the user again.");
+    OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
+      Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
     });
   }
