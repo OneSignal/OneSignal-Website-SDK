@@ -1,4 +1,4 @@
-import { TagsObjectForApi, TagsObjectWithBoolean, TagCategory } from '../models/Tags';
+import { TagsObjectForApi, TagsObjectWithBoolean, TagCategory, Categories } from '../models/Tags';
 import { deepCopy } from '../../src/utils';
 
 export default class TagUtils {
@@ -74,5 +74,10 @@ export default class TagUtils {
                 category.checked = existingTagValue === undefined ? true : existingTagValue;
                 return category;
             });
+    }
+
+    static limitCategoriesToMaxCount(categories: Categories, max: number): Categories {
+        categories.tags = categories.tags.slice(0, max);
+        return categories;
     }
 }
