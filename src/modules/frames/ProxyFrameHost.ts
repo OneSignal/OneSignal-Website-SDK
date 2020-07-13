@@ -2,7 +2,7 @@ import Environment from '../../Environment';
 import Event from '../../Event';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import { timeoutPromise, triggerNotificationPermissionChanged } from '../../utils';
+import { timeoutPromise, triggerNotificationPermissionChanged, deepCopy } from '../../utils';
 import { ServiceWorkerActiveState } from "../../helpers/ServiceWorkerHelper";
 import Log from '../../libraries/Log';
 import { PageVisibilityRequest } from "../../models/Session";
@@ -124,7 +124,7 @@ export default class ProxyFrameHost implements Disposable {
     Log.debug(`Successfully established cross-origin communication for iFrame at ${this.url.toString()}`);
 
     this.messenger.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
-      hostInitOptions: JSON.parse(JSON.stringify(OneSignal.config)), // Removes functions and unmessageable objects
+      hostInitOptions: deepCopy(OneSignal.config), // Removes functions and unmessageable objects
       pageUrl: window.location.href,
       pageTitle: document.title,
     }, (reply: Reply) => {

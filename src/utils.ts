@@ -419,3 +419,7 @@ export function getDomElementOrStub(selector: string): Element {
   }
   return foundElement;
 }
+
+export function deepCopy<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
+  }
