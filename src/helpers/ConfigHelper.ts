@@ -12,6 +12,7 @@ import {
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
 } from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
+import TagUtils from '../../src/utils/TagUtils';
 import { Categories } from '../../src/models/Tags';
 
 export enum IntegrationConfigurationKind {
@@ -237,6 +238,11 @@ export class ConfigHelper {
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews);
         promptOptionsConfig.slidedown.timeDelay = Utils.getValueOrDefault(promptOptionsConfig.slidedown.timeDelay,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay);
+
+      if (promptOptionsConfig.slidedown.categories) {
+        const { categories } = promptOptionsConfig.slidedown;
+        promptOptionsConfig.slidedown.categories = TagUtils.limitCategoriesToMaxCount(categories, 10);
+      }
     } else {
       promptOptionsConfig.slidedown = MainHelper.getSlidedownPermissionMessageOptions(promptOptionsConfig);
       promptOptionsConfig.slidedown.enabled = false;
@@ -312,7 +318,7 @@ export class ConfigHelper {
     };
     let categories: Categories;
     if (staticPrompts.slidedown.categories) {
-      categories = staticPrompts.slidedown.categories;
+      categories = TagUtils.limitCategoriesToMaxCount(staticPrompts.slidedown.categories, 10);
     }
 
     const slidedown = {
