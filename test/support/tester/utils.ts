@@ -49,6 +49,14 @@ export function mockWebPushAnalytics() {
     }).persist(true);
 }
 
+export function mockGetIcon() {
+  nock('https://onesignal.com')
+    .get(/.*icon$/)
+    .reply(200, (_uri: string, _requestBody: string) => {
+      return { success: true };
+    });
+}
+
 export class InitTestHelper {
   private readonly sinonSandbox: SinonSandbox;
 
