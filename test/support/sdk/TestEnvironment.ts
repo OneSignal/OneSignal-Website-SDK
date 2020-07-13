@@ -28,6 +28,20 @@ import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
 import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
 import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
+import { ExecutionContext } from 'ava';
+import {
+  InitTestHelper,
+  mockWebPushAnalytics,
+  stubMessageChannel,
+  mockIframeMessaging,
+  mockGetIcon } from '../tester/utils';
+import OneSignalApiBase from '../../../src/OneSignalApiBase';
+import { SessionManager } from '../../../src/managers/sessionManager/page/SessionManager';
+import TagManager from '../../../src/managers/tagManager/page/TagManager';
+import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
+import { SinonSandbox } from 'sinon';
+import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
+import { SlidedownCssIds } from '../../../src/slidedown/constants';
 
 // NodeJS.Global
 declare var global: any;
@@ -188,8 +202,10 @@ export class TestEnvironment {
   }
 
   static async stubDomEnvironment(config?: TestEnvironmentConfig) {
-    if (!config)
+    if (!config) {
       config = {};
+    }
+
     let url: string | undefined = undefined;
     let isSecureContext: boolean | undefined = undefined;
     if (config.httpOrHttps == HttpHttpsEnvironment.Http) {
@@ -209,7 +225,12 @@ export class TestEnvironment {
       <div class="${CustomLink.containerClass}"></div>\
       <div class="${CustomLink.containerClass}"></div>\
       <button class="${CustomLink.subscribeClass}"></button>\
-      </head><body></body></html>`;
+      </head><body>\
+        <div id="${SlidedownCssIds.body}"></div>\
+        <div id="${SlidedownCssIds.footer}">\
+        <button id="onesignal-slidedown-allow-button"></button>\
+        <button id="onesignal-slidedown-cancel-button"></button>\
+        </div></body></html>`;
     }
 
     var windowDef = await new Promise<Window>((resolve, reject) => {
@@ -241,6 +262,7 @@ export class TestEnvironment {
     (windowDef as any).TextEncoder = TextEncoder;
     (windowDef as any).TextDecoder = TextDecoder;
     (windowDef as any).isSecureContext = isSecureContext;
+    (windowDef as any).location = url;
 
     if (config.stubSetTimeout) {
       (windowDef as any).setTimeout = async (callback: Function, timeDelay: number) => {
@@ -255,7 +277,7 @@ export class TestEnvironment {
 
     TestEnvironment.addCustomEventPolyfill(windowDef);
 
-    let topWindow = config.initializeAsIframe ? {
+    const topWindow = config.initializeAsIframe ? {
       location: {
         get origin() {
           throw new Error("SecurityError: Permission denied to access property 'origin' on cross-origin object");
@@ -858,5 +880,49 @@ export class TestEnvironment {
     pushSubscription.w3cP256dh = "BBGhFwQ146CSOWhuz-r4ItRK2cQuZ4FZNkiW7uTEpf2JsPfxqbWtQvfGf4FvnaZ35hqjkwbtUUIn8wxwhhc3O_0";
     pushSubscription.w3cEndpoint = new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh");
     return pushSubscription;
+  }
+
+
+  static async setupOneSignalPageWithStubs(
+    sinonSandbox: SinonSandbox,
+    testConfig: TestEnvironmentConfig,
+    t: ExecutionContext,
+    customServerAppConfig?: ServerAppConfig
+  ) {
+    const playerId = Random.getRandomUuid();
+
+    await TestEnvironment.initialize(testConfig);
+    new InitTestHelper(sinonSandbox).mockBasicInitEnv(testConfig, customServerAppConfig);
+
+    OneSignal.initialized = false;
+    OneSignal.__doNotShowWelcomeNotification = true;
+
+    // non-returnable stubs
+    sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");
+    sinonSandbox.stub(DynamicResourceLoader.prototype, "loadSdkStylesheet").resolves(ResourceLoadState.Loaded);
+    sinonSandbox.stub(ServiceWorkerManager.prototype, "installWorker").resolves();
+    // sinonSandbox.stub(TaggingContainer, "getValuesFromTaggingContainer").returns({ tag: 1 });
+
+    // returnable stubs
+    const createPlayerPostStub = sinonSandbox.stub(OneSignalApiBase, "post")
+      .resolves({ success: true, id: playerId });
+    const onSessionStub = sinonSandbox.stub(SessionManager.prototype, "upsertSession").resolves();
+
+    // returnable spys
+    const sendTagsSpy = sinonSandbox.spy(TagManager.prototype, "sendTags");
+
+    // network mocks
+    mockWebPushAnalytics();
+    mockGetIcon();
+
+    if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {
+      stubMessageChannel(t);
+      mockIframeMessaging(sinonSandbox);
+    }
+    return {
+      sendTagsSpy,
+      createPlayerPostStub,
+      onSessionStub
+    };
   }
 }
