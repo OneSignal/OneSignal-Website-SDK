@@ -12,7 +12,7 @@ import {
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
 } from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
-import TagUtils from 'src/utils/TagUtils';
+import TagUtils from '../../src/utils/TagUtils';
 
 export enum IntegrationConfigurationKind {
   /**
