@@ -1,14 +1,14 @@
-import '../support/polyfills/polyfills';
+import '../../support/polyfills/polyfills';
 import test from "ava";
-import { timeoutPromise } from "../../src/utils";
-import TimeoutError from '../../src/errors/TimeoutError';
+import { timeoutPromise } from "../../../src/utils";
+import TimeoutError from '../../../src/errors/TimeoutError';
 
 
 test(`timeoutPromise should reject after the specified amount of time`, async t => {
   try {
     await timeoutPromise(new Promise(() => {
       /* Never resolve */
-    }), 15 /* Timeout immediately for test */)
+    }), 15 /* Timeout immediately for test */);
     t.fail("Asynchronous block that was awaited on should not have continued");
   } catch (e) {
     if (e instanceof TimeoutError) {
