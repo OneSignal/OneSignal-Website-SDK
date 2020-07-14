@@ -42,6 +42,7 @@ import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/
 import { SinonSandbox } from 'sinon';
 import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
 import { SlidedownCssIds } from '../../../src/slidedown/constants';
+import { getSlidedownHtml } from '../../../src/slidedown/SlidedownHtml';
 
 // NodeJS.Global
 declare var global: any;
@@ -226,11 +227,7 @@ export class TestEnvironment {
       <div class="${CustomLink.containerClass}"></div>\
       <button class="${CustomLink.subscribeClass}"></button>\
       </head><body>\
-        <div id="${SlidedownCssIds.body}"></div>\
-        <div id="${SlidedownCssIds.footer}">\
-        <button id="onesignal-slidedown-allow-button"></button>\
-        <button id="onesignal-slidedown-cancel-button"></button>\
-        </div></body></html>`;
+        ${getSlidedownHtml({})}</div></body></html>`;
     }
 
     var windowDef = await new Promise<Window>((resolve, reject) => {
