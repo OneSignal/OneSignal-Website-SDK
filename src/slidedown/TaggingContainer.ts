@@ -7,7 +7,6 @@ import {
     getDomElementOrStub
 } from '../utils';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
-import TagUtils from '../utils/TagUtils';
 import {
     SlidedownCssIds,
     TaggingContainerCssClasses,
@@ -15,13 +14,14 @@ import {
     TaggingContainerStrings,
     COLORS
 } from './constants';
+import TagUtils from '../../src/utils/TagUtils';
 
 export default class TaggingContainer {
     private html: string = "";
 
     public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObjectWithBoolean): void {
         this.html = this.generateHtml(remoteTagCategories, existingPlayerTags);
-        
+
         const body = getDomElementOrStub(`#${SlidedownCssIds.body}`);
         addDomElement(body, 'beforeend', this.html);
 
