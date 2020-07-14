@@ -71,9 +71,18 @@ export default class TagUtils {
             const categoriesCopy = deepCopy<TagCategory[]>(categories);
             return categoriesCopy.map(category => {
                 const existingTagValue: boolean = existingPlayerTags[category.tag];
-                category.checked = existingTagValue === undefined ? true : existingTagValue;
+                category.checked = TagUtils.getCheckedStatusForTagValue(existingTagValue);
                 return category;
             });
+    }
+
+    static getCheckedStatusForTagValue(tagValue: boolean | undefined): boolean {
+        // If user does not have tag assigned to them, consider it selected
+        if (tagValue === undefined) {
+            return true;
+        }
+
+        return tagValue;
     }
 
     static limitCategoriesToMaxCount(categories: Categories, max: number): Categories {
