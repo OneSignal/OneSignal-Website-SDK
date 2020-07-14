@@ -9,8 +9,7 @@ import Utils from "../context/shared/utils/Utils";
 import MainHelper from './MainHelper';
 import {
   SERVER_CONFIG_DEFAULTS_SESSION,
-  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-  SERVER_CONFIG_DEFAULTS_SLIDEDOWN
+  SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
 } from "../config";
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
 import TagUtils from 'src/utils/TagUtils';
