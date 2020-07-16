@@ -72,6 +72,6 @@ export default class Environment {
     directory.
    */
   public static getSdkStylesVersionHash() {
-    return (typeof __SRC_STYLESHEETS_MD5_HASH__ === "undefined" ? '1' : __SRC_STYLESHEETS_MD5_HASH__);
+    return (typeof __SRC_STYLESHEETS_MD5_HASH__ === "undefined" ? '2' : __SRC_STYLESHEETS_MD5_HASH__);
   }
 }
