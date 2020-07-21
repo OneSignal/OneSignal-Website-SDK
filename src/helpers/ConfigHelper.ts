@@ -30,6 +30,8 @@ export interface IntegrationCapabilities {
   configuration: IntegrationConfigurationKind;
 }
 
+const MAX_CATEGORIES = 10;
+
 export class ConfigHelper {
   public static async getAppConfig(userConfig: AppUserConfig,
     downloadServerAppConfig: (appId: string) => Promise<ServerAppConfig>): Promise<AppConfig> {
@@ -241,7 +243,7 @@ export class ConfigHelper {
 
       if (promptOptionsConfig.slidedown.categories) {
         const { categories } = promptOptionsConfig.slidedown;
-        promptOptionsConfig.slidedown.categories = TagUtils.limitCategoriesToMaxCount(categories, 10);
+        promptOptionsConfig.slidedown.categories = TagUtils.limitCategoriesToMaxCount(categories, MAX_CATEGORIES);
       }
     } else {
       promptOptionsConfig.slidedown = MainHelper.getSlidedownPermissionMessageOptions(promptOptionsConfig);
@@ -318,7 +320,7 @@ export class ConfigHelper {
     };
     let categories: Categories;
     if (staticPrompts.slidedown.categories) {
-      categories = TagUtils.limitCategoriesToMaxCount(staticPrompts.slidedown.categories, 10);
+      categories = TagUtils.limitCategoriesToMaxCount(staticPrompts.slidedown.categories, MAX_CATEGORIES);
     }
 
     const slidedown = {
