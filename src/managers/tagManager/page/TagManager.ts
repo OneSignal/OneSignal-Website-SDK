@@ -18,7 +18,6 @@ export default class TagManager implements ITagManager {
     }
 
     /**
-     * @param  {boolean} isInUpdateMode
      * @returns Promise resolving TagsObject if successful, {} if no change detected, null if failed
      */
     public async sendTags(): Promise<TagsObjectForApi> {
