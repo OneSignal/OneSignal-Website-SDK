@@ -265,7 +265,7 @@ export default class InitHelper {
         if (registration && registration.active) {
           await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
         }
-      } catch (e) { 
+      } catch (e) {
         Log.error(e);
       }
     }
@@ -475,7 +475,7 @@ export default class InitHelper {
   public static async initSaveState(overridingPageTitle: string) {
     const appId = await MainHelper.getAppId();
     await Database.put('Ids', { type: 'appId', id: appId });
-    const initialPageTitle = overridingPageTitle || document.title || 'Notification';
+    const initialPageTitle = overridingPageTitle || '';
     await Database.put('Options', { key: 'pageTitle', value: initialPageTitle });
     Log.info(`OneSignal: Set pageTitle to be '${initialPageTitle}'.`);
     const config: AppConfig = OneSignal.config;

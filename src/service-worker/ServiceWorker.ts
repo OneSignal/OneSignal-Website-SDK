@@ -102,7 +102,6 @@ export class ServiceWorker {
       event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
     });
 
-
     self.addEventListener('message', (event: ExtendableMessageEvent) => {
       const data: WorkerMessengerMessage = event.data;
       if (!data || !data.command) {
@@ -213,7 +212,7 @@ export class ServiceWorker {
 
         const timestamp = payload.timestamp;
         if (self.clientsStatus.timestamp !== timestamp) { return; }
-        
+
         self.clientsStatus.receivedResponsesCount++;
         if (payload.focused) {
           self.clientsStatus.hasAnyActiveSessions = true;
@@ -357,18 +356,18 @@ export class ServiceWorker {
     if (!hasRequiredParams) {
       return null;
     }
- 
+
     // JSON.stringify() does not include undefined values
     // Our response will not contain those fields here which have undefined values
     const postData = {
-      player_id : deviceId, 
+      player_id : deviceId,
       app_id : appId
     };
-    
+
     Log.debug(`Called %csendConfirmedDelivery(${
       JSON.stringify(notification, null, 4)
     })`, Utils.getConsoleStyle('code'));
-    
+
     return await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
   }
 
@@ -432,7 +431,7 @@ export class ServiceWorker {
      * if https -> getActiveClients -> check for the first focused
      * unfortunately, not enough for safari, it always returns false for focused state of a client
      * have to workaround it with messaging to the client.
-     * 
+     *
      * if http, also have to workaround with messaging:
      *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
      */
@@ -602,7 +601,8 @@ export class ServiceWorker {
     Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
-    const defaultTitle = await ServiceWorker._getTitle();
+    const defaultTitle = await Database.get("Options", "defaultTitle") || "";
+
     // Use the default icon if one isn't provided
     const defaultIcon = await Database.get('Options', 'defaultIcon');
     // Get option of whether we should leave notification displaying indefinitely
@@ -1091,26 +1091,6 @@ export class ServiceWorker {
         subscriptionState
       );
     }
-  }
-
-  /**
-   * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
-   */
-  static _getTitle() {
-    return new Promise(resolve => {
-      Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
-        .then(([defaultTitle, pageTitle]) => {
-          if (defaultTitle !== null) {
-            resolve(defaultTitle);
-          }
-          else if (pageTitle != null) {
-            resolve(pageTitle);
-          }
-          else {
-            resolve('');
-          }
-        });
-    });
   }
 
   /**

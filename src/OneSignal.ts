@@ -306,7 +306,6 @@ export default class OneSignal {
         MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
 
-      await InitHelper.initSaveState(document.title);
       await InitHelper.saveInitOptions();
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
         await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
