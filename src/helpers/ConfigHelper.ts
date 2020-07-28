@@ -478,7 +478,7 @@ export class ConfigHelper {
                 : 'OneSignalSDKWorker.js',
             serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
                 ? OneSignal.SERVICE_WORKER_UPDATER_PATH
-                : 'OneSignalSDUpdaterKWorker.js',
+                : 'OneSignalSDKUpdaterWorker.js',
             path: !!userConfig.path ? userConfig.path : '/'
           },
           outcomes: {
