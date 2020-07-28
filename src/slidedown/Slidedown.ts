@@ -43,8 +43,8 @@ export default class Slidedown {
     this.options = options;
     this.categoryOptions = options.categories;
     this.options.actionMessage = options.actionMessage.substring(0, 90);
-    this.options.acceptButtonText = options.acceptButtonText.substring(0, 15);
-    this.options.cancelButtonText = options.cancelButtonText.substring(0, 15);
+    this.options.acceptButtonText = options.acceptButtonText.substring(0, 16);
+    this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
     this.notificationIcons = null;
     this.isShowingFailureState = false;
 
