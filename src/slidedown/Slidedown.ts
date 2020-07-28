@@ -27,12 +27,21 @@ export default class Slidedown {
 
   private categoryOptions: Categories|undefined;
 
-  static get EVENTS() {
+  static get LEGACY_EVENTS() {
     return {
       ALLOW_CLICK: 'popoverAllowClick',
       CANCEL_CLICK: 'popoverCancelClick',
       SHOWN: 'popoverShown',
       CLOSED: 'popoverClosed',
+    };
+  }
+
+  static get EVENTS() {
+    return {
+      ALLOW_CLICK: 'slidedownAllowClick',
+      CANCEL_CLICK: 'slidedownCancelClick',
+      SHOWN: 'slidedownShown',
+      CLOSED: 'slidedownClosed',
     };
   }
 
@@ -98,15 +107,18 @@ export default class Slidedown {
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
       this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));
+      Event.trigger(Slidedown.LEGACY_EVENTS.SHOWN);
       Event.trigger(Slidedown.EVENTS.SHOWN);
     }
   }
 
   async onSlidedownAllowed(_: any) {
+    await Event.trigger(Slidedown.LEGACY_EVENTS.ALLOW_CLICK);
     await Event.trigger(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   onSlidedownCanceled(_: any) {
+    Event.trigger(Slidedown.LEGACY_EVENTS.CANCEL_CLICK);
     Event.trigger(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
   }
@@ -119,6 +131,7 @@ export default class Slidedown {
           // Uninstall the event listener for animationend
           removeDomElement(`#${SlidedownCssIds.container}`);
           destroyListenerFn();
+          Event.trigger(Slidedown.LEGACY_EVENTS.CLOSED);
           Event.trigger(Slidedown.EVENTS.CLOSED);
       }
     }, true);
@@ -205,6 +218,7 @@ export default class Slidedown {
 
 export function manageNotifyButtonStateWhileSlidedownShows() {
   const notifyButton = OneSignal.notifyButton;
+
   if (notifyButton &&
     notifyButton.options.enable &&
     OneSignal.notifyButton.launcher.state !== 'hidden') {
