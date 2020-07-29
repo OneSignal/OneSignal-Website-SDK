@@ -15,7 +15,7 @@ import { SlidedownPermissionMessageOptions } from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
-import { SlidedownCssClasses, SlidedownCssIds, COLORS } from "./constants";
+import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
 import { Categories } from '../../src/models/Tags';
 import Log from '../../src/libraries/Log';
 import { getSlidedownElement } from './SlidedownElement';
@@ -59,7 +59,7 @@ export default class Slidedown {
     }
   }
 
-  async create(isInUpdateMode?: boolean) {
+  async create(isInUpdateMode?: boolean): Promise<void> {
     // TODO: dynamically change btns depending on if its first or repeat display of slidedown (subscribe vs update)
     if (this.notificationIcons === null) {
       const icons = await MainHelper.getNotificationIcons();
@@ -67,8 +67,8 @@ export default class Slidedown {
       this.notificationIcons = icons;
 
       // Remove any existing container
-      if (this.container.className.includes(SlidedownCssClasses.container)) {
-          removeDomElement(`#${SlidedownCssIds.container}`);
+      if (this.container.className.includes(SLIDEDOWN_CSS_CLASSES.container)) {
+          removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
       }
       const positiveButtonText = isInUpdateMode && !!this.categoryOptions ?
         this.categoryOptions.positiveUpdateButton : this.options.acceptButtonText;
@@ -78,22 +78,30 @@ export default class Slidedown {
         this.categoryOptions.updateMessage : this.options.actionMessage;
 
       const icon = this.getPlatformNotificationIcon();
-      const slidedownHtml = getSlidedownHtml({
+      const slidedownElement = getSlidedownElement({
         messageText,
         icon,
         positiveButtonText,
         negativeButtonText
       });
 
+      const slidedownContainer = document.createElement("div");
+      const dialogContainer = document.createElement("div");
+
       // Insert the container
-      addDomElement('body', 'beforeend', `<div id="${SlidedownCssIds.container}"` +
-        `class="${SlidedownCssClasses.container} ${SlidedownCssClasses.reset}"></div>`);
+      slidedownContainer.id = SLIDEDOWN_CSS_IDS.container;
+      addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.container);
+      addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.reset);
+      getDomElementOrStub('body').appendChild(slidedownContainer);
+
       // Insert the dialog
-      addDomElement(this.container, 'beforeend',
-          `<div id="${SlidedownCssIds.dialog}" class="${SlidedownCssClasses.dialog}">${slidedownHtml}</div>`);
+      dialogContainer.id = SLIDEDOWN_CSS_IDS.dialog;
+      addCssClass(dialogContainer, SLIDEDOWN_CSS_CLASSES.dialog);
+      dialogContainer.appendChild(slidedownElement);
+      this.container.appendChild(dialogContainer);
 
       // Animate it in depending on environment
-      addCssClass(this.container, bowser.mobile ? 'slide-up' : 'slide-down');
+      addCssClass(this.container, bowser.mobile ? SLIDEDOWN_CSS_CLASSES.slideUp : SLIDEDOWN_CSS_CLASSES.slideDown);
 
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
@@ -102,22 +110,22 @@ export default class Slidedown {
     }
   }
 
-  async onSlidedownAllowed(_: any) {
+  async onSlidedownAllowed(_: any): Promise<void> {
     await Event.trigger(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
-  onSlidedownCanceled(_: any) {
+  onSlidedownCanceled(_: any): void {
     Event.trigger(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
   }
 
-  close() {
-    addCssClass(this.container, 'close-slidedown');
+  close(): void {
+    addCssClass(this.container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
     once(this.dialog, 'animationend', (event: any, destroyListenerFn: () => void) => {
       if (event.target === this.dialog &&
           (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
           // Uninstall the event listener for animationend
-          removeDomElement(`#${SlidedownCssIds.container}`);
+          removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
           destroyListenerFn();
           Event.trigger(Slidedown.EVENTS.CLOSED);
       }
@@ -127,7 +135,7 @@ export default class Slidedown {
   /**
    * only used with Category Slidedown
    */
-  setSaveState(state: boolean) {
+  setSaveState(state: boolean): void {
     if (!this.categoryOptions) {
       Log.debug("Slidedown private category options are not defined");
       return;
@@ -135,23 +143,22 @@ export default class Slidedown {
 
     if (state) {
       // note: savingButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.categoryOptions!.savingButtonText!);
-      addDomElement(this.buttonIndicatorHolder, 'beforeend',
-        getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
+      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.categoryOptions.savingButtonText).innerHTML;
       this.allowButton.disabled = true;
+      addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
       addCssClass(this.allowButton, 'disabled');
-      addCssClass(this.allowButton, SlidedownCssClasses.savingStateButton);
+      addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
     } else {
       // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
-      this.allowButton.innerHTML = this.categoryOptions!.positiveUpdateButton!;
-      removeDomElement(`#${SlidedownCssClasses.buttonIndicatorHolder}`);
+      this.allowButton.innerHTML = this.categoryOptions.positiveUpdateButton!;
+      removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
       this.allowButton.disabled = false;
       removeCssClass(this.allowButton, 'disabled');
-      removeCssClass(this.allowButton, SlidedownCssClasses.savingStateButton);
+      removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
     }
   }
 
-  setFailureState(state: boolean) {
+  setFailureState(state: boolean): void {
     if (!this.categoryOptions) {
       Log.debug("Slidedown private category options are not defined");
       return;
@@ -159,13 +166,14 @@ export default class Slidedown {
 
     if (state) {
       // note: errorButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.categoryOptions!.errorButtonText);
+      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.categoryOptions.errorButtonText).innerHTML;
       addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
       addCssClass(this.allowButton, 'onesignal-error-state-button');
     } else {
       removeDomElement('#onesignal-button-indicator-holder');
       removeCssClass(this.allowButton, 'onesignal-error-state-button');
     }
+
     this.isShowingFailureState = state;
   }
 
@@ -173,37 +181,46 @@ export default class Slidedown {
     return getPlatformNotificationIcon(this.notificationIcons);
   }
 
-  getIndicatorHolderHtmlWithText(text: string) {
-    return `${text}<div id="${SlidedownCssIds.buttonIndicatorHolder}"` +
-      `class="${SlidedownCssClasses.buttonIndicatorHolder}"></div>`;
+  getIndicatorHolderHtmlWithText(text: string): Element {
+    const indicatorHolder = document.createElement("div");
+    const textHolder = document.createElement("span");
+    const divWrapper = document.createElement("div");
+
+    indicatorHolder.id = SLIDEDOWN_CSS_IDS.buttonIndicatorHolder;
+    textHolder.textContent = text;
+    addCssClass(indicatorHolder, SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder);
+
+    divWrapper.appendChild(textHolder);
+    divWrapper.appendChild(indicatorHolder);
+    return divWrapper;
   }
 
   get container() {
-    return getDomElementOrStub(`#${SlidedownCssIds.container}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.container}`);
   }
 
   get dialog() {
-    return getDomElementOrStub(`#${SlidedownCssIds.dialog}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.dialog}`);
   }
 
   get allowButton() {
-    return getDomElementOrStub(`#${SlidedownCssIds.allowButton}`) as HTMLButtonElement;
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.allowButton}`) as HTMLButtonElement;
   }
 
   get cancelButton() {
-    return getDomElementOrStub(`#${SlidedownCssIds.cancelButton}`) as HTMLButtonElement;
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.cancelButton}`) as HTMLButtonElement;
   }
 
   get buttonIndicatorHolder() {
-    return getDomElementOrStub(`#${SlidedownCssIds.buttonIndicatorHolder}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.buttonIndicatorHolder}`);
   }
 
   get slidedownFooter() {
-    return getDomElementOrStub(`#${SlidedownCssIds.footer}`);
+    return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.footer}`);
   }
 }
 
-export function manageNotifyButtonStateWhileSlidedownShows() {
+export function manageNotifyButtonStateWhileSlidedownShows(): void {
   const notifyButton = OneSignal.notifyButton;
   if (notifyButton &&
     notifyButton.options.enable &&
