@@ -41,8 +41,7 @@ import TagManager from '../../../src/managers/tagManager/page/TagManager';
 import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { SinonSandbox } from 'sinon';
 import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
-import { SlidedownCssIds } from '../../../src/slidedown/constants';
-import { getSlidedownHtml } from '../../../src/slidedown/SlidedownHtml';
+import { getSlidedownElement } from '../../../src/slidedown/SlidedownElement';
 
 // NodeJS.Global
 declare var global: any;
@@ -227,7 +226,7 @@ export class TestEnvironment {
       <div class="${CustomLink.containerClass}"></div>\
       <button class="${CustomLink.subscribeClass}"></button>\
       </head><body>\
-        ${getSlidedownHtml({})}</div></body></html>`;
+        ${getSlidedownElement({}).outerHTML}</div></body></html>`;
     }
 
     var windowDef = await new Promise<Window>((resolve, reject) => {
