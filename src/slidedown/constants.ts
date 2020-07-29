@@ -1,4 +1,4 @@
-export const SlidedownCssClasses = {
+export const SLIDEDOWN_CSS_CLASSES = {
   allowButton: "onesignal-slidedown-allow-button",
   body: "slidedown-body",
   buttonIndicatorHolder: "onesignal-button-indicator-holder",
@@ -7,10 +7,18 @@ export const SlidedownCssClasses = {
   dialog: "onesignal-slidedown-dialog",
   footer: "slidedown-footer",
   reset: "onesignal-reset",
-  savingStateButton: "onesignal-saving-state-button"
+  savingStateButton: "onesignal-saving-state-button",
+  slideUp: 'slide-up',
+  slideDown: 'slide-down',
+  closeSlidedown: 'close-slidedown',
+  icon: 'slidedown-body-icon',
+  message: 'slidedown-body-message',
+  defaultIcon: 'default-icon',
+  loadingContainer: "onesignal-loading-container",
+  clearfix: "clearfix"
 };
 
-export const SlidedownCssIds = {
+export const SLIDEDOWN_CSS_IDS = {
   allowButton: "onesignal-slidedown-allow-button",
   body: "slidedown-body",
   buttonIndicatorHolder: "onesignal-button-indicator-holder",
@@ -18,21 +26,28 @@ export const SlidedownCssIds = {
   container: "onesignal-slidedown-container",
   dialog: "onesignal-slidedown-dialog",
   footer: "slidedown-footer",
+  normalSlidedown: "normal-slidedown",
+  loadingContainer: "onesignal-loading-container",
 };
 
-export const TaggingContainerCssClasses = {
+export const SLIDEDOWN_BUTTON_CLASSES = {
+  alignRight: 'align-right',
+  primary: 'primary',
+  secondary: 'secondary',
+  slidedownButton: 'slidedown-button'
+};
+
+export const TAGGING_CONTAINER_CSS_CLASSES = {
   categoryLabelInput: "onesignal-category-label-input",
   categoryLabelText: "onesignal-category-label-text",
   categoryLabel: "onesignal-category-label",
   checkmark: "onesignal-checkmark",
   taggingContainer: "tagging-container",
   taggingContainerCol: "tagging-container-col",
-  loadingContainer: "onesignal-loading-container",
   loadingMessage: "onesignal-loading-message"
 };
 
-export const TaggingContainerCssIds = {
-  loadingContainer: "onesignal-loading-container",
+export const TAGGING_CONTAINER_CSS_IDS = {
   taggingContainer: "tagging-container",
 };
 
@@ -50,6 +65,6 @@ export const COLORS = {
   whiteLoadingIndicator: "#FFFFFF"
 };
 
-export const TaggingContainerStrings = {
+export const TAGGING_CONTAINER_STRINGS = {
   fetchingPreferences : "Fetching your preferences"
 };
