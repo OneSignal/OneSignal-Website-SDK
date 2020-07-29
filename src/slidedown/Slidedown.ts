@@ -18,7 +18,7 @@ import { getRetryIndicator } from './RetryIndicator';
 import { SlidedownCssClasses, SlidedownCssIds, COLORS } from "./constants";
 import { Categories } from '../../src/models/Tags';
 import Log from '../../src/libraries/Log';
-import { getSlidedownHtml } from './SlidedownHtml';
+import { getSlidedownElement } from './SlidedownElement';
 
 export default class Slidedown {
   public options: SlidedownPermissionMessageOptions;
