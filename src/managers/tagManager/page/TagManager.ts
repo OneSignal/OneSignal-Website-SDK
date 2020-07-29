@@ -34,6 +34,7 @@ export default class TagManager implements ITagManager {
         // no change detected, return {}
         return finalTagsObject;
     }
+
     /**
      * @param  {TagsObject} tags - values of type "boolean"
      * @returns void
@@ -41,6 +42,7 @@ export default class TagManager implements ITagManager {
     storeTagValuesToUpdate(tags: TagsObjectWithBoolean): void {
         this.tagsFromTaggingContainer = tags;
     }
+
     /**
      * @param  {TagsObject} remoteTags - values of type "number"
      * @returns void

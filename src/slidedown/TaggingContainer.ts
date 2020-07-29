@@ -97,8 +97,8 @@ export default class TaggingContainer {
         addCssClass(inputElement, TAGGING_CONTAINER_CSS_CLASSES.categoryLabelInput);
         addCssClass(checkmarkSpan, TAGGING_CONTAINER_CSS_CLASSES.checkmark);
 
-        labelElement.title = label;
-        labelSpan.innerText = label;
+        labelElement.title   = label;
+        labelSpan.innerText  = label;
         inputElement.type    = "checkbox";
         inputElement.value   = tagCategory.tag;
         inputElement.checked = !!tagCategory.checked;
@@ -136,7 +136,7 @@ export default class TaggingContainer {
         const tags: TagsObjectWithBoolean = {};
 
         inputNodeArr.forEach(node => {
-            tags[(<HTMLInputElement>node).defaultValue] = (<HTMLInputElement>node).checked;
+            tags[(<HTMLInputElement>node).value] = (<HTMLInputElement>node).checked;
         });
         return tags;
     }
