@@ -220,6 +220,11 @@ export class TestEnvironment {
     }
 
     let html = '<!doctype html><html><head></head><body></body></html>';
+
+    // global document object must be defined for `getSlidedownElement` to work correctly.
+    // this line initializes the document object
+    global.document = jsdom.jsdom('');
+
     if (config.addPrompts) {
       html = `<!doctype html><html><head>\
       <div class="${CustomLink.containerClass}"></div>\
