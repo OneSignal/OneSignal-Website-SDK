@@ -8,89 +8,121 @@ import {
 } from '../utils';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import {
-    SlidedownCssIds,
-    TaggingContainerCssClasses,
-    TaggingContainerCssIds,
-    TaggingContainerStrings,
-    COLORS
+    SLIDEDOWN_CSS_IDS,
+    TAGGING_CONTAINER_CSS_CLASSES,
+    TAGGING_CONTAINER_CSS_IDS,
+    TAGGING_CONTAINER_STRINGS,
+    COLORS,
+    SLIDEDOWN_CSS_CLASSES
 } from './constants';
 import TagUtils from '../../src/utils/TagUtils';
 
 export default class TaggingContainer {
-    private html: string = "";
 
     public mount(remoteTagCategories: Array<TagCategory>, existingPlayerTags?: TagsObjectWithBoolean): void {
-        this.html = this.generateHtml(remoteTagCategories, existingPlayerTags);
+        const taggingContainer = this.generateHtml(remoteTagCategories, existingPlayerTags);
 
-        const body = getDomElementOrStub(`#${SlidedownCssIds.body}`);
-        addDomElement(body, 'beforeend', this.html);
+        const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
+        body.appendChild(taggingContainer);
 
         if (this.taggingContainer) {
-            // TODO: is there unmount and remove this listener?
             this.taggingContainer.addEventListener('change', this.toggleCheckedTag);
         }
 
-        const allowButton = getDomElementOrStub(`#${SlidedownCssIds.allowButton}`) as HTMLButtonElement;
+        const allowButton = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.allowButton}`) as HTMLButtonElement;
         allowButton.disabled = false;
-        removeCssClass(allowButton, 'disabled');
 
-        removeDomElement(`#${TaggingContainerCssClasses.loadingContainer}`);
+        removeCssClass(allowButton, 'disabled');
+        removeDomElement(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
     }
 
     public load(): void {
-        const loadingContainer = getDomElementOrStub(`#${TaggingContainerCssIds.loadingContainer}`);
-        addCssClass(loadingContainer, `${TaggingContainerCssClasses.loadingContainer}`);
-        addDomElement(loadingContainer, 'beforeend', getLoadingIndicatorWithColor(COLORS.greyLoadingIndicator));
-        addDomElement(loadingContainer, 'beforeend', `<div class="${TaggingContainerCssClasses.loadingMessage}">` +
-            `${TaggingContainerStrings.fetchingPreferences}</div>`);
+        const loadingContainer = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
+        const allowButton = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.allowButton}`) as HTMLButtonElement;
+        const loadingMessageContainer = document.createElement("div");
 
-        const allowButton = getDomElementOrStub(`#${SlidedownCssIds.allowButton}`) as HTMLButtonElement;
-        allowButton.disabled = true;
+        addCssClass(loadingContainer, `${SLIDEDOWN_CSS_CLASSES.loadingContainer}`);
+        addCssClass(loadingMessageContainer, TAGGING_CONTAINER_CSS_CLASSES.loadingMessage);
         addCssClass(allowButton, 'disabled');
+
+        addDomElement(loadingContainer, 'beforeend', getLoadingIndicatorWithColor(COLORS.greyLoadingIndicator));
+
+        loadingMessageContainer.innerText = TAGGING_CONTAINER_STRINGS.fetchingPreferences;
+        loadingContainer.appendChild(loadingMessageContainer);
+        allowButton.disabled = true;
     }
 
-    private generateHtml(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObjectWithBoolean): string {
+    private generateHtml(remoteTagCategories: TagCategory[], existingPlayerTags?: TagsObjectWithBoolean): Element {
         const checkedTagCategories = TagUtils.getCheckedTagCategories(remoteTagCategories, existingPlayerTags);
-        const firstColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
+
+        const firstColumnArr  = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2 === 0);
         const secondColumnArr = checkedTagCategories.filter(elem => checkedTagCategories.indexOf(elem) % 2);
 
-        let innerHtml = `<div class="${TaggingContainerCssClasses.taggingContainerCol}">`;
+        const firstColumnContainer  = document.createElement("div");
+        const secondColumnContainer = document.createElement("div");
+        const taggingContainer      = document.createElement("div");
+
+        addCssClass(firstColumnContainer, TAGGING_CONTAINER_CSS_CLASSES.taggingContainerCol);
+        addCssClass(secondColumnContainer, TAGGING_CONTAINER_CSS_CLASSES.taggingContainerCol);
+        addCssClass(taggingContainer, TAGGING_CONTAINER_CSS_CLASSES.taggingContainer);
+
+        taggingContainer.id = TAGGING_CONTAINER_CSS_IDS.taggingContainer;
+
         firstColumnArr.forEach(elem => {
-            innerHtml += this.getCategoryLabelHtml(elem);
+            firstColumnContainer.appendChild(this.getCategoryLabelElement(elem));
         });
-        innerHtml += "</div>";
 
-        innerHtml += `<div class="${TaggingContainerCssClasses.taggingContainerCol}">`;
         secondColumnArr.forEach(elem => {
-            innerHtml += this.getCategoryLabelHtml(elem);
+            secondColumnContainer.appendChild(this.getCategoryLabelElement(elem));
         });
-        innerHtml += "</div>";
 
-        return `<div id=${TaggingContainerCssIds.taggingContainer}` +
-            ` class="${TaggingContainerCssClasses.taggingContainer}">${innerHtml}</div>`;
+        taggingContainer.appendChild(firstColumnContainer);
+        taggingContainer.appendChild(secondColumnContainer);
+
+        return taggingContainer;
     }
 
-    private getCategoryLabelHtml(tagCategory: TagCategory): string {
+    private getCategoryLabelElement(tagCategory: TagCategory): Element {
         const { label } = tagCategory;
-        return `
-            <label class="${TaggingContainerCssClasses.categoryLabel}" title="${(label)}">
-                <span class="${TaggingContainerCssClasses.categoryLabelText}">${label}</span>
-                <input class="${TaggingContainerCssClasses.categoryLabelInput}"
-                    type="checkbox"
-                    value="${tagCategory.tag}"
-                    ${tagCategory.checked ? `checked="${`${tagCategory.checked}`}"` : ''}
-                />
-                <span class="${TaggingContainerCssClasses.checkmark}" />
-            </label>
-            <div style="clear:both"></div>`;
+
+        const labelElement  = document.createElement("label");
+        const labelSpan     = document.createElement("span");
+        const inputElement  = document.createElement("input");
+        const checkmarkSpan = document.createElement("span");
+        const clear         = document.createElement("div");
+        const wrappingDiv   = document.createElement("div");
+
+        addCssClass(labelElement, TAGGING_CONTAINER_CSS_CLASSES.categoryLabel);
+        addCssClass(labelSpan, TAGGING_CONTAINER_CSS_CLASSES.categoryLabelText);
+        addCssClass(inputElement, TAGGING_CONTAINER_CSS_CLASSES.categoryLabelInput);
+        addCssClass(checkmarkSpan, TAGGING_CONTAINER_CSS_CLASSES.checkmark);
+
+        labelElement.title = label;
+        labelSpan.innerText = label;
+        inputElement.type    = "checkbox";
+        inputElement.value   = tagCategory.tag;
+        inputElement.checked = !!tagCategory.checked;
+
+        labelElement.appendChild(labelSpan);
+        labelElement.appendChild(inputElement);
+        labelElement.appendChild(checkmarkSpan);
+
+        clear.setAttribute("style", "clear:both");
+
+        wrappingDiv.appendChild(labelElement);
+        wrappingDiv.appendChild(clear);
+
+        return wrappingDiv;
     }
 
     private get taggingContainer(): Element {
-        return getDomElementOrStub(`#${SlidedownCssIds.body} > div.${TaggingContainerCssClasses.taggingContainer}`);
+        const selector = `#${SLIDEDOWN_CSS_IDS.body} > div.${TAGGING_CONTAINER_CSS_CLASSES.taggingContainer}`;
+        return getDomElementOrStub(selector);
     }
 
     private toggleCheckedTag(e: Event): void {
         const target = (<HTMLInputElement>e.target);
+
         if (target && target.getAttribute("type") === "checkbox") {
             const isChecked = target.checked;
             target.setAttribute("checked", isChecked.toString());
@@ -98,10 +130,11 @@ export default class TaggingContainer {
     }
 
     static getValuesFromTaggingContainer(): TagsObjectWithBoolean {
-        const selector = `#${SlidedownCssIds.body} > div.${TaggingContainerCssClasses.taggingContainer}` +
-            `> div > label > input[type=checkbox]`;
+        const selector = `#${SLIDEDOWN_CSS_IDS.body} > div.${TAGGING_CONTAINER_CSS_CLASSES.taggingContainer}` +
+            `> div > div > label > input[type=checkbox]`;
         const inputNodeArr = document.querySelectorAll(selector);
         const tags: TagsObjectWithBoolean = {};
+
         inputNodeArr.forEach(node => {
             tags[(<HTMLInputElement>node).defaultValue] = (<HTMLInputElement>node).checked;
         });

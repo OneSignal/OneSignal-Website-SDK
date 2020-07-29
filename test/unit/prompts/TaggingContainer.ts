@@ -5,7 +5,7 @@ import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../s
 import { TagsObjectWithBoolean } from '../../../src/models/Tags';
 import { getDomElementOrStub } from '../../../src/utils';
 import TagUtils from '../../../src/utils/TagUtils';
-import { TaggingContainerCssIds, SlidedownCssClasses } from '../../../src/slidedown/constants';
+import { TAGGING_CONTAINER_CSS_IDS, SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS } from '../../../src/slidedown/constants';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -29,13 +29,13 @@ test.afterEach(function () {
 test('check that calling mount() adds the tagging container to DOM', t => {
   const taggingContainer = new TaggingContainer();
   const categoryArr = [{ tag: "tag1", label: "label1" }];
-  let containerFromDom = getDomElementOrStub(`#${TaggingContainerCssIds.taggingContainer}`);
-  t.false(containerFromDom.id === TaggingContainerCssIds.taggingContainer);
+  let containerFromDom = getDomElementOrStub(`#${TAGGING_CONTAINER_CSS_IDS.taggingContainer}`);
+  t.false(containerFromDom.id === TAGGING_CONTAINER_CSS_IDS.taggingContainer);
 
   taggingContainer.mount(categoryArr);
 
-  containerFromDom = getDomElementOrStub(`#${TaggingContainerCssIds.taggingContainer}`);
-  t.true(containerFromDom.id === TaggingContainerCssIds.taggingContainer);
+  containerFromDom = getDomElementOrStub(`#${TAGGING_CONTAINER_CSS_IDS.taggingContainer}`);
+  t.true(containerFromDom.id === TAGGING_CONTAINER_CSS_IDS.taggingContainer);
 });
 
 test('check that calling mount() results in allowButton enabled', t => {
@@ -44,19 +44,19 @@ test('check that calling mount() results in allowButton enabled', t => {
 
   taggingContainer.mount(categoryArr);
 
-  const allowButtonElement = getDomElementOrStub(`#${SlidedownCssClasses.allowButton}`);
+  const allowButtonElement = getDomElementOrStub(`#${SLIDEDOWN_CSS_CLASSES.allowButton}`);
   t.false((<HTMLButtonElement>allowButtonElement).disabled);
 });
 
 test('check that calling load() adds the loading container to DOM', t => {
   const taggingContainer = new TaggingContainer();
-  let loadingContainer = getDomElementOrStub(`#${TaggingContainerCssIds.loadingContainer}`);
+  let loadingContainer = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
   t.false(loadingContainer.innerHTML !== "");
   t.false(loadingContainer.classList.length > 0);
 
   taggingContainer.load();
 
-  loadingContainer = getDomElementOrStub(`#${TaggingContainerCssIds.loadingContainer}`);
+  loadingContainer = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
   t.true(loadingContainer.innerHTML !== "");
   t.true(loadingContainer.classList.length > 0);
 });
