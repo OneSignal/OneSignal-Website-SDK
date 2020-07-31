@@ -7,7 +7,8 @@
 
 ## VSCode Testing Current File
 1. To test the current file, make sure you have set up the following run configuration in the `.vscode/launch.json` file:
-
+   - Tested up to VSCode Version: `1.46.1`
+      - (later versions seem to have broken debugging)
 ```
 {
     // Use IntelliSense to learn about possible attributes.
