@@ -41,7 +41,8 @@ export class SessionManager implements ISessionManager {
     ) {
       Log.debug("Notify SW to upsert session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
-    } else if (this.context.environmentInfo.isUsingSubscriptionWorkaround) {
+    } else if (this.context.environmentInfo.canTalkToServiceWorker &&
+        this.context.environmentInfo.isUsingSubscriptionWorkaround) {
       Log.debug("Notify iframe to notify SW to upsert session");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
     } else { // http w/o our iframe
@@ -72,7 +73,8 @@ export class SessionManager implements ISessionManager {
     ) {
       Log.debug("Notify SW to deactivate session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
-    } else if (this.context.environmentInfo.isUsingSubscriptionWorkaround) {
+    } else if (this.context.environmentInfo.canTalkToServiceWorker &&
+        this.context.environmentInfo.isUsingSubscriptionWorkaround) {
       Log.debug("Notify SW to deactivate session");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     } else { // http w/o our iframe
