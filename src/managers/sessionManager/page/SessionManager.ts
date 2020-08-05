@@ -218,7 +218,12 @@ export class SessionManager implements ISessionManager {
       !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
       !this.context.environmentInfo.isUsingSubscriptionWorkaround
     ) {
-      Log.debug("Not setting session event listeners. No SW possible.");
+      Log.debug("Not setting session event listeners. No service worker possible.");
+      return;
+    }
+
+    if (!this.context.environmentInfo.canTalkToServiceWorker) {
+      Log.debug("Not setting session event listeners. Can't talk to ServiceWorker due being hosted on an HTTP page.");
       return;
     }
 
