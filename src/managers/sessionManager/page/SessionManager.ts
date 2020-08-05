@@ -193,7 +193,12 @@ export class SessionManager implements ISessionManager {
       this.context.environmentInfo.isBrowserAndSupportsServiceWorkers ||
       this.context.environmentInfo.isUsingSubscriptionWorkaround
     ) {
-      this.setupSessionEventListeners();
+      if (!this.context.environmentInfo.canTalkToServiceWorker) {
+        this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
+        OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+      } else {
+        this.setupSessionEventListeners();
+      }
     } else if (
       !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
       !this.context.environmentInfo.isUsingSubscriptionWorkaround
