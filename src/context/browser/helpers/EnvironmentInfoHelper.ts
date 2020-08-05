@@ -19,8 +19,9 @@ export class EnvironmentInfoHelper {
             isUsingSubscriptionWorkaround: this.isUsingSubscriptionWorkaround(),
             isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
             requiresUserInteraction: this.requiresUserInteraction(),
-            osVersion: this.getOsVersion()
-        }
+            osVersion: this.getOsVersion(),
+            canTalkToServiceWorker: this.canTalkToServiceWorker()
+        };
     }
 
     private static getBrowser(): Browser {
@@ -75,5 +76,9 @@ export class EnvironmentInfoHelper {
 
     private static getOsVersion(): string|number {
         return bowser.osversion;
+    }
+
+    private static canTalkToServiceWorker(): boolean {
+        return window.isSecureContext;
     }
 }
