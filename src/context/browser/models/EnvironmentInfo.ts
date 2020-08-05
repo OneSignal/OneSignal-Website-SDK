@@ -9,4 +9,5 @@ export interface EnvironmentInfo {
     isBrowserAndSupportsServiceWorkers: boolean;
     requiresUserInteraction: boolean;
     osVersion: string|number;
+    canTalkToServiceWorker: boolean;
 }
