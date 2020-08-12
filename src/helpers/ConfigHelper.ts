@@ -108,6 +108,7 @@ export class ConfigHelper {
     return {
       appId: serverConfig.app_id,
       subdomain,
+      siteName: serverConfig.config.siteInfo.name,
       origin: serverConfig.config.origin,
       httpUseOneSignalCom: serverConfig.config.http_use_onesignal_com,
       cookieSyncEnabled: serverConfig.features.cookie_sync.enable,
