@@ -319,7 +319,7 @@ export class ConfigHelper {
       pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
       timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
     };
-    let categories: Categories;
+    let categories: Categories | undefined = undefined;
     if (staticPrompts.slidedown.categories) {
       categories = TagUtils.limitCategoriesToMaxCount(staticPrompts.slidedown.categories, MAX_CATEGORIES);
     }
@@ -336,7 +336,7 @@ export class ConfigHelper {
       actionMessage: staticPrompts.slidedown.actionMessage,
       acceptButtonText: staticPrompts.slidedown.acceptButton,
       cancelButtonText: staticPrompts.slidedown.cancelButton,
-      categories
+      categories,
     };
     return {
       autoPrompt: native.autoPrompt || slidedown.autoPrompt,
