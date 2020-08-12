@@ -324,12 +324,17 @@ $border-radius: 0.5em;
           background: #E54A4D;
           transition: linear 75ms;
           align-items: center;
+
+          span {
+            cursor: pointer;
+          }
         }
       }
 
       &.onesignal-button-indicator-holder {
         display: flex;
         margin-left: 0.5em;
+        cursor: pointer;
       }
 
       &.secondary {
