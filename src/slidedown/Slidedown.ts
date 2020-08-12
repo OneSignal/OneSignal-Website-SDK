@@ -143,14 +143,18 @@ export default class Slidedown {
 
     if (state) {
       // note: savingButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.categoryOptions.savingButtonText).innerHTML;
       this.allowButton.disabled = true;
+      this.allowButton.textContent = null;
+
+      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.categoryOptions.savingButtonText));
+      this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
+
       addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
       addCssClass(this.allowButton, 'disabled');
       addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
     } else {
       // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
-      this.allowButton.innerHTML = this.categoryOptions.positiveUpdateButton!;
+      this.allowButton.textContent = this.categoryOptions.positiveUpdateButton;
       removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
       this.allowButton.disabled = false;
       removeCssClass(this.allowButton, 'disabled');
@@ -166,7 +170,10 @@ export default class Slidedown {
 
     if (state) {
       // note: errorButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.innerHTML = this.getIndicatorHolderHtmlWithText(this.categoryOptions.errorButtonText).innerHTML;
+      this.allowButton.textContent = null;
+      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.categoryOptions.errorButtonText));
+      this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
+
       addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
       addCssClass(this.allowButton, 'onesignal-error-state-button');
     } else {
@@ -181,18 +188,17 @@ export default class Slidedown {
     return getPlatformNotificationIcon(this.notificationIcons);
   }
 
-  getIndicatorHolderHtmlWithText(text: string): Element {
+  getIndicatorHolder(): Element {
     const indicatorHolder = document.createElement("div");
-    const textHolder = document.createElement("span");
-    const divWrapper = document.createElement("div");
-
     indicatorHolder.id = SLIDEDOWN_CSS_IDS.buttonIndicatorHolder;
-    textHolder.textContent = text;
     addCssClass(indicatorHolder, SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder);
+    return indicatorHolder;
+  }
 
-    divWrapper.appendChild(textHolder);
-    divWrapper.appendChild(indicatorHolder);
-    return divWrapper;
+  getTextSpan(text: string): Element {
+    const textHolder = document.createElement("span");
+    textHolder.textContent = text;
+    return textHolder;
   }
 
   get container() {
