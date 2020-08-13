@@ -5,6 +5,7 @@ import LegacyManager from '../managers/LegacyManager';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import ProxyFrame from '../modules/frames/ProxyFrame';
+import { RemoteFrameOptions } from '../modules/frames/RemoteFrame';
 import SubscriptionModal from '../modules/frames/SubscriptionModal';
 import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
 import { getConsoleStyle } from '../utils';
@@ -12,11 +13,10 @@ import Log from '../libraries/Log';
 
 declare var OneSignal: any;
 
-
 export default class HttpHelper {
 
   // Http only - Only called from iframe's init.js
-  static async initHttp(options) {
+  static async initHttp(options: RemoteFrameOptions) {
     Log.debug(`Called %cinitHttp(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
     switch (SdkEnvironment.getWindowEnv()) {
