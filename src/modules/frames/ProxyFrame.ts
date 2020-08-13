@@ -112,7 +112,7 @@ export default class ProxyFrame extends RemoteFrame {
      * stores the last visited full page URL.
      */
     await Database.put('Options', { key: 'lastKnownHostUrl', value: OneSignal.config.pageUrl });
-    await InitHelper.initSaveState(OneSignal.config.pageTitle);
+    await InitHelper.initSaveState();
     await InitHelper.storeInitialValues();
     await InitHelper.saveInitOptions();
 
