@@ -79,6 +79,6 @@ export class EnvironmentInfoHelper {
     }
 
     private static canTalkToServiceWorker(): boolean {
-        return window.isSecureContext;
+        return !!window.isSecureContext;
     }
 }
