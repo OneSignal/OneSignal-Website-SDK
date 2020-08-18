@@ -9,6 +9,23 @@ import ConfigManager from '../../managers/ConfigManager';
 import LocalStorage from '../../utils/LocalStorage';
 import { EnvironmentInfoHelper } from "../../context/browser/helpers/EnvironmentInfoHelper";
 
+/*
+  These options are passed from the Rails app as plain raw untyped values.
+  They have to be converted to the right types.
+*/
+export interface RemoteFrameOptions {
+  appId: string;
+  /* Passed to both the iFrame and popup */
+  subdomainName: string;
+  /* Passed to both the iFrame and popup. Represents Site URL in dashboard config. */
+  origin: string;
+  siteName: string;
+  /* These three flags may be deprecated */
+  continuePressed?: boolean;
+  isPopup?: boolean;
+  isModal?: boolean;
+}
+
 export default class RemoteFrame implements Disposable {
   protected messenger: Postmam;
   protected options: ProxyFrameInitOptions;
@@ -21,26 +38,12 @@ export default class RemoteFrame implements Disposable {
     rejector: Function;
   };
 
-  constructor(initOptions: {
-    /*
-      These options are passed from the Rails app as plain raw untyped values.
-
-      They have to be converted to the right types.
-      */
-    appId: string;
-    /* Passed to both the iFrame and popup */
-    subdomainName: string;
-    /* Passed to both the iFrame and popup. Represents Site URL in dashboard config. */
-    origin: string;
-    /* These three flags may be deprecated */
-    continuePressed: boolean;
-    isPopup: boolean;
-    isModal: boolean;
-  }) {
+  constructor(initOptions: RemoteFrameOptions) {
     this.options = {
       appId: initOptions.appId,
       subdomain: initOptions.subdomainName,
       origin: initOptions.origin,
+      siteName: initOptions.siteName,
       metrics: {
         enable: false,
         mixpanelReportingToken: null

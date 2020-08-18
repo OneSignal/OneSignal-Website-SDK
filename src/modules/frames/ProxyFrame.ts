@@ -13,7 +13,7 @@ import {
   UpsertSessionPayload, DeactivateSessionPayload, PageVisibilityResponse
 } from "../../models/Session";
 import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
-
+import { AppConfig } from "../../models/AppConfig";
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
  * into the iFrame URL as subdomain.onesignal.com/webPushIFrame or
@@ -87,14 +87,13 @@ export default class ProxyFrame extends RemoteFrame {
   async onProxyFrameInitializing(message: MessengerMessageEvent) {
     Log.info(`(${SdkEnvironment.getWindowEnv().toString()}) The iFrame has just received initOptions from the host page!`);
 
-    OneSignal.config = {
+    const config: AppConfig = {
       ...message.data.hostInitOptions,
       ...OneSignal.config,
-      ...{
       pageUrl: message.data.pageUrl,
-      pageTitle: message.data.pageTitle
-      }
     };
+
+    OneSignal.config = config;
 
     InitHelper.installNativePromptPermissionChangedHook();
 
@@ -112,7 +111,7 @@ export default class ProxyFrame extends RemoteFrame {
      * stores the last visited full page URL.
      */
     await Database.put('Options', { key: 'lastKnownHostUrl', value: OneSignal.config.pageUrl });
-    await InitHelper.initSaveState(OneSignal.config.pageTitle);
+    await InitHelper.initSaveState();
     await InitHelper.storeInitialValues();
     await InitHelper.saveInitOptions();
 

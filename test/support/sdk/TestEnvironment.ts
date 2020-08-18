@@ -403,6 +403,7 @@ export class TestEnvironment {
     return {
       appId,
       subdomain: undefined,
+      siteName: "Fake App",
       httpUseOneSignalCom: false,
       cookieSyncEnabled: true,
       restrictedOriginEnabled: true,

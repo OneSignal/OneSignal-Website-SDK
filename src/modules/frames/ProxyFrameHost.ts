@@ -126,7 +126,6 @@ export default class ProxyFrameHost implements Disposable {
     this.messenger.message(OneSignal.POSTMAM_COMMANDS.IFRAME_POPUP_INITIALIZE, {
       hostInitOptions: deepCopy(OneSignal.config), // Removes functions and unmessageable objects
       pageUrl: window.location.href,
-      pageTitle: document.title,
     }, (reply: Reply) => {
       if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
         this.loadPromise.resolver();

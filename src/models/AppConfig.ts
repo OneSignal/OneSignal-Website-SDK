@@ -64,6 +64,8 @@ export interface AppConfig {
    */
   receiveReceiptsEnable?: boolean;
   sessionThreshold?: number;
+
+  siteName: string;
 }
 
 export enum ConfigIntegrationKind {

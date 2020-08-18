@@ -75,8 +75,8 @@ export default class OneSignal {
   }
 
   /**
-   * Sets the default title to display on notifications. Will default to the page's document.title
-   *  if you don't call this.
+   * Sets the default title to display on notifications. Will default to the site name provided
+   * on the dashboard if you don't call this.
    * @remarks Either DB value defaultTitle or pageTitle is used when showing a notification title.
    * @PublicApi
    */
@@ -306,7 +306,7 @@ export default class OneSignal {
         MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
 
-      await InitHelper.initSaveState(document.title);
+      await InitHelper.initSaveState();
       await InitHelper.saveInitOptions();
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
         await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
