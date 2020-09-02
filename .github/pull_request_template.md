@@ -29,7 +29,7 @@ Functions:
 
 Typescript:
    - [ ] No Typescript warnings
-   - [ ] Avoid silencing null/undefined warnings by with the explanation point
+   - [ ] Avoid silencing null/undefined warnings with the exclamation point
 
 Other:
    - [ ] Iteration: refrain from using `elem of array` syntax. Prefer `forEach` or use `map`
