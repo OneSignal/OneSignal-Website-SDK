@@ -1,7 +1,6 @@
 import OneSignalUtils from '../utils/OneSignalUtils';
 import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
-import Database from '../services/Database';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';

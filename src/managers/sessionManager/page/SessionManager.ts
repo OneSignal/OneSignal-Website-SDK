@@ -117,7 +117,7 @@ export class SessionManager implements ISessionManager {
         MainHelper.getDeviceId(),
         MainHelper.createDeviceRecord(this.context.appConfig.appId)
       ]);
-  
+
       await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
       return;
     }
