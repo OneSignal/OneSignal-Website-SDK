@@ -145,7 +145,7 @@ $border-radius: 0.5em;
       /* When the checkbox is checked, add a blue background */
       &:checked ~ .onesignal-checkmark {
         transition: ease 75ms;
-        background-color: #4285f4;
+        background-color: #0078D1;
       }
 
       &:checked ~ .onesignal-checkmark:after {
@@ -296,16 +296,16 @@ $border-radius: 0.5em;
       display: flex;
 
       &.primary {
-        background: #4285f4;
+        background: #0078D1;
         color: white !important;
         transition: linear 75ms;
 
         &:hover {
-          background: darken(#4285f4, 7.5%);
+          background: darken(#0078D1, 7.5%);
         }
 
         &:active {
-          background: darken(#4285f4, 15%);
+          background: darken(#0078D1, 15%);
         }
 
         &.disabled {
@@ -344,14 +344,14 @@ $border-radius: 0.5em;
           We sparingly use an !important tag here because it's important for the user to be able to click "No Thanks".
           Some sites set their own !important tag for text and we don't want that to be able to override ours.
          */
-        color: #4285f4 !important;
+        color: #0078D1 !important;
 
         &:hover {
-          color: darken(#4285f4, 12.5%);
+          color: darken(#0078D1, 12.5%);
         }
 
         &:active {
-          color: darken(#4285f4, 30.5%);
+          color: darken(#0078D1, 30.5%);
         }
       }
     }
