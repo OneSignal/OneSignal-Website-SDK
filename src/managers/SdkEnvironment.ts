@@ -271,7 +271,7 @@ export default class SdkEnvironment {
         if (SdkEnvironment.isTurbineEndpoint(action)) {
           return new URL(`https://${apiOrigin}:${TURBINE_API_URL_PORT}/api/v1`);
         }
-        return new URL(`https://${apiOrigin}:${API_URL_PORT}/api/v1`);
+        return new URL(`http://${apiOrigin}:3000/api/v1`);
       case EnvironmentKind.Staging:
         return new URL(`https://${apiOrigin}/api/v1`);
       case EnvironmentKind.Production:
