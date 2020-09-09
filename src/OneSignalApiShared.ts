@@ -8,6 +8,7 @@ import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
 import Log from "./libraries/Log";
 import Database from './services/Database';
+import { awaitOneSignalInitAndSupported } from './utils';
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {
@@ -142,6 +143,8 @@ export default class OneSignalApiShared {
 
   static async updateUserFeatureFlags(response: any) {
     if (response.feature_flags) {
+      // await for init so DB is ready
+      await awaitOneSignalInitAndSupported();
       console.log("Updating feature_flags", response.feature_flags);
       await Database.setUserFeatureFlags(response.feature_flags);
     }

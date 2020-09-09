@@ -14,6 +14,7 @@ import {
 import { AppUserConfigCustomLinkOptions, AppUserConfigPromptOptions } from '../models/Prompts';
 import TagUtils from '../../src/utils/TagUtils';
 import { Categories } from '../../src/models/Tags';
+import OneSignalApiShared from '../OneSignalApiShared';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -42,6 +43,9 @@ export class ConfigHelper {
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
       const appConfig = this.getMergedConfig(userConfig, serverConfig);
       this.checkRestrictedOrigin(appConfig);
+
+      OneSignalApiShared.updateUserFeatureFlags(serverConfig);
+
       return appConfig;
     }
     catch (e) {
