@@ -196,6 +196,11 @@ export default class Database {
     }
   }
 
+  async getUserFeatureFlags(): Promise<FeatureFlags> {
+    const flags = await this.get<FeatureFlags>("Options", "user_feature_flags");
+    return flags;
+  }
+
   async getAppConfig(): Promise<AppConfig> {
     const config: any = {};
     const appIdStr: string = await this.get<string>("Ids", "appId");
@@ -218,6 +223,10 @@ export default class Database {
     } else {
       await this.put("Ids", {type: "externalUserId", id: externalIdToSave});
     }
+  }
+
+  async setUserFeatureFlags(flags: FeatureFlags): Promise<void> {
+    await this.put("Options", { key: 'user_feature_flags', value: flags });
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
@@ -503,8 +512,16 @@ export default class Database {
     return await Database.singletonInstance.setAppConfig(appConfig);
   }
 
+  static async setUserFeatureFlags(flags: FeatureFlags) {
+    return await Database.singletonInstance.setUserFeatureFlags(flags);
+  }
+
   static async getAppConfig(): Promise<AppConfig> {
     return await Database.singletonInstance.getAppConfig();
+  }
+
+  static async getUserFeatureFlags(): Promise<FeatureFlags> {
+    return await Database.singletonInstance.getUserFeatureFlags();
   }
 
   static async getExternalUserId(): Promise<string | undefined | null> {
