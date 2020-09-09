@@ -208,17 +208,10 @@
 							<div class="animate-box">
 								<h2>Take on your biggest projects and goals</h2>
 								<p>with Flash's high quality features</p>
-							
-
-                            if (OneSignal.getFeatureFlag("showbutton")=="true") {
-                                <p>
-                                    <a href="gallery.html" class="btn btn-primary btn-lg btn-custom">Get premium</a></p>
-                                }
-
-	
-
+                                <p id="gallery_button" style="visibility: hidden;">
+                                    <a href="gallery.html" class="btn btn-primary btn-lg btn-custom">Get premium</a>
+                                </p>
 							</div>
-
 						</div>
 					</div>
 				</div>
@@ -636,6 +629,15 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 	<!-- Main -->
 	<script src="js/main.js"></script>
 
-	</body>
+    </body>
+    <script>
+        async function readRemoteParams() {
+            const showButtonFlag = await OneSignal.getFeatureFlag("showbutton");
+            if (showButtonFlag === "true") {
+                document.getElementById("gallery_button").style.visibility = "initial";
+            }
+        };
+        OneSignal.push(readRemoteParams);
+    </script>
 </html>
 
