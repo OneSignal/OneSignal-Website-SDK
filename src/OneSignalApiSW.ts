@@ -5,6 +5,7 @@ import { FlattenedDeviceRecord } from "./models/DeviceRecord";
 import Log from "./libraries/Log";
 import { Utils } from "./context/shared/utils/Utils";
 import { OutcomeAttribution, OutcomeAttributionType } from "./models/Outcomes";
+import OneSignalApiShared from './OneSignalApiShared';
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
@@ -52,6 +53,7 @@ export class OneSignalApiSW {
     const funcToExecute = async () => {
       const response = await OneSignalApiBase.post(
         `players/${userId}/on_session`, serializedDeviceRecord);
+      OneSignalApiShared.updateUserFeatureFlags(response);
       if (response.id) {
         // A new user ID can be returned
         return response.id;

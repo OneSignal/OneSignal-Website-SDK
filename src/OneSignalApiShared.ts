@@ -7,6 +7,7 @@ import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
 import Log from "./libraries/Log";
+import Database from './services/Database';
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {
@@ -48,8 +49,11 @@ export default class OneSignalApiShared {
     const serializedDeviceRecord = deviceRecord.serialize();
     Utils.enforceAppId(serializedDeviceRecord.app_id);
     const response = await OneSignalApiBase.post(`players`, serializedDeviceRecord);
-    if (response && response.success)
+
+    if (response && response.success) {
+      OneSignalApiShared.updateUserFeatureFlags(response);
       return response.id;
+    }
     return null;
   }
 
@@ -112,6 +116,7 @@ export default class OneSignalApiShared {
       Utils.enforceAppId(serializedDeviceRecord.app_id);
       Utils.enforcePlayerId(userId);
       const response = await OneSignalApiBase.post(`players/${userId}/on_session`, serializedDeviceRecord);
+      OneSignalApiShared.updateUserFeatureFlags(response);
       if (response.id) {
         // A new user ID can be returned
         return response.id;
@@ -132,6 +137,13 @@ export default class OneSignalApiShared {
       await OneSignalApiBase.post("outcomes/measure", data);
     } catch(e) {
       Log.error("sendOutcome", e);
+    }
+  }
+
+  static async updateUserFeatureFlags(response: any) {
+    if (response.feature_flags) {
+      console.log("Updating feature_flags", response.feature_flags);
+      await Database.setUserFeatureFlags(response.feature_flags);
     }
   }
 }
