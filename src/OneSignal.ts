@@ -443,9 +443,11 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async getFeatureFlag(key: String): Promise<String | undefined>{
-    // TODO: Wait for create / on_session
-    return undefined;
+  static async getFeatureFlag(key: string): Promise<String | undefined>{
+    await awaitOneSignalInitAndSupported();
+    
+    const flags: FeatureFlags = await Database.getUserFeatureFlags();
+    return flags[key];
   }
 
   /**
