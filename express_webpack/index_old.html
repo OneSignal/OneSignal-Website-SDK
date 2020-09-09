@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="/sdks/Dev-OneSignalSDK.js" async=""></script>
+<script>
+    function getUrlQueryParam(name) {
+        var url = window.location.href;
+        // This is just to avoid case sensitiveness
+        url = url.toLowerCase();
+        // This is just to avoid case sensitiveness for query parameter name
+        name = name.replace(/[\[\]]/g, "\\$&").toLowerCase();
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+    const appId = getUrlQueryParam('app_id');
+    var OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+          appId,
+          notifyButton: {
+              enable: true
+          },
+          promptOptions: {
+              slidedown: {
+                  autoPrompt: true,
+                  enabled: true,
+                  categories: {
+                      positiveButton: "Howdy, yes",
+                      negativeButton: "Cancel",
+                      tags: [
+                        {
+                            tag: "politics",
+                            label: "Politics",
+                        },
+                        {
+                            tag: "usa_news",
+                            label: "USA News",
+                        },
+                        {
+                            tag: "world_news",
+                            label: "World News",
+                        },
+                        {
+                            tag: "culture",
+                            label: "Culture",
+                        },
+                        {
+                            tag: "technology",
+                            label: "Technology",
+                        },
+                        {
+                            tag: "fashion",
+                            label: "Fashion",
+                        },
+                        {
+                            tag: "art",
+                            label: "Art",
+                        },
+                        {
+                            tag: "long_category",
+                            label: "Very Long Category",
+                        }
+                      ]
+                  }
+              },
+              customlink: {
+                enabled: true, /* Required to use the Custom Link */
+                style: "button", /* Has value of 'button' or 'link' */
+                size: "medium", /* One of 'small', 'medium', or 'large' */
+                color: {
+                    button: '#E12D30', /* Color of the button background if style = "button" */
+                    text: '#FFFFFF', /* Color of the prompt's text */
+                },
+                text: {
+                    subscribe: "Subscribe to push notifications", /* Prompt's text when not subscribed */
+                    unsubscribe: "Unsubscribe from push notifications", /* Prompt's text when subscribed */
+                    explanation: "Get updates from all sorts of things that matter to you", /* Optional text appearing before the prompt button */
+                },
+                unsubscribeEnabled: true, /* Controls whether the prompt is visible after subscription */
+              }
+          }
+        });
+    });
+
+    function sendUniqueOutcome() {
+        OneSignal.push(function() {
+            const outcomeName = document.querySelector('#unique_outcome_name').value;
+            OneSignal.sendUniqueOutcome(outcomeName);
+        });
+    }
+
+    function sendOutcome() {
+        OneSignal.push(function() {
+            const outcomeName = document.querySelector('#outcome_name').value;
+            OneSignal.sendOutcome(outcomeName);
+        });
+    }
+
+    function sendOutcomeWithWeight() {
+        OneSignal.push(function() {
+            const outcomeName = document.querySelector('#outcome_name').value;
+            const outcomeWeight = parseFloat(document.querySelector('#outcome_weight').value);
+            OneSignal.sendOutcome(outcomeName, outcomeWeight);
+        });
+    }
+
+    function showCategorySlidedown() {
+        OneSignal.push(function() {
+            OneSignal.showCategorySlidedown();
+        })
+    }
+  </script>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneSignal WebSDK Sandbox</title>
+    <link rel="shortcut icon" href="#">
+</head>
+<body>
+    <h1>OneSignal WebSDK Sandbox</h1>
+    <p class="description">WebSDK Sandbox Environment</p>
+    <input id="unique_outcome_name" value="TestUnique" />
+    <button onclick="javascript:sendUniqueOutcome();">Send unique outcome</button>
+    <br />
+    <br />
+    <input id="outcome_name" value="Rodrigo" />
+    <button onclick="javascript:sendOutcome();">Send outcome</button>
+    <br />
+    <input id="outcome_weight" value=""/>
+    <button onclick="javascript:sendOutcomeWithWeight();">Send outcome with weight</button>
+    <br />
+    <br />
+    <button onclick="javascript:showCategorySlidedown();">Show Category Slidedown</button>
+    <br />
+    <br />
+    <div class='onesignal-customlink-container'></div>
+</body>
+</html>
