@@ -447,6 +447,9 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     
     const flags: FeatureFlags = await Database.getUserFeatureFlags();
+    if (!flags)
+      return undefined;
+
     return flags[key];
   }
 
