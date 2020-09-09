@@ -443,6 +443,14 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
+  static async getFeatureFlag(key: String): Promise<String | undefined>{
+    // TODO: Wait for create / on_session
+    return undefined;
+  }
+
+  /**
+   * @PublicApi
+   */
   static async sendTag(key: string, value: any, callback?: Action<Object>): Promise<Object | null> {
     const tag = {} as {[key: string]: any};
     tag[key] = value;
