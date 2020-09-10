@@ -443,14 +443,19 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async getFeatureFlag(key: string): Promise<String | undefined>{
+  static async getFeatureFlag(key: any): Promise<String | undefined>{
     await awaitOneSignalInitAndSupported();
     
-    const flags: FeatureFlags = await Database.getUserFeatureFlags();
+    const flags: any = await Database.getUserFeatureFlags();
     if (!flags)
       return undefined;
+    
+    const filtered = flags.filter(f=>f.name==key);
 
-    return flags[key];
+    if(filtered.length===1 && filtered[0].enabled)
+      return "true"
+
+    return "false";
   }
 
   /**

@@ -632,9 +632,11 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
     </body>
     <script>
         async function readRemoteParams() {
+			
             const showButtonFlag = await OneSignal.getFeatureFlag("showbutton");
-            if (showButtonFlag === "true") {
-                document.getElementById("gallery_button").style.visibility = "initial";
+			
+            if (showButtonFlag == "true") {
+                document.getElementById("gallery_button").style.visibility = "visible";
             }
         };
         OneSignal.push(readRemoteParams);

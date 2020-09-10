@@ -197,6 +197,7 @@ export default class Database {
   }
 
   async getUserFeatureFlags(): Promise<FeatureFlags> {
+    console.log("pre-getUserFeatureFlags")
     const flags = await this.get<FeatureFlags>("Options", "user_feature_flags");
     return flags;
   }
@@ -521,6 +522,7 @@ export default class Database {
   }
 
   static async getUserFeatureFlags(): Promise<FeatureFlags> {
+    console.log("pre-init")
     return await Database.singletonInstance.getUserFeatureFlags();
   }
 
