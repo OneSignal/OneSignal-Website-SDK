@@ -73,7 +73,7 @@
     "md5-file": "^3.2.2",
     "nock": "^9.1.6",
     "node-dir": "^0.1.16",
-    "node-fetch": "^1.6.3",
+    "node-fetch": "^2.6.1",
     "nyc": "^11.1.0",
     "postcss-loader": "^2.0.6",
     "sass-loader": "^6.0.6",
