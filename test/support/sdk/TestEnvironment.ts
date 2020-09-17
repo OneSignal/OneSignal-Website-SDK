@@ -31,7 +31,6 @@ import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/Envi
 import { ExecutionContext } from 'ava';
 import {
   InitTestHelper,
-  mockWebPushAnalytics,
   stubMessageChannel,
   mockIframeMessaging,
   mockGetIcon } from '../tester/utils';
@@ -907,7 +906,6 @@ export class TestEnvironment {
     const sendTagsSpy = sinonSandbox.spy(TagManager.prototype, "sendTags");
 
     // network mocks
-    mockWebPushAnalytics();
     mockGetIcon();
 
     if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {
