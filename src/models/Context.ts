@@ -2,7 +2,6 @@ import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager } from '../managers/SubscriptionManager';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import CookieSyncer from '../modules/CookieSyncer';
 import { AppConfig } from './AppConfig';
 import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
@@ -19,7 +18,6 @@ import { ITagManager } from '../managers/tagManager/types';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
-  cookieSyncer: CookieSyncer;
   metricsManager: MetricsManager;
   environmentInfo?: EnvironmentInfo;
   tagManager: ITagManager;
@@ -32,7 +30,6 @@ export default class Context implements ContextInterface {
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
   public workerMessenger: WorkerMessenger;
-  public cookieSyncer: CookieSyncer;
   public pageViewManager: PageViewManager;
   public permissionManager: PermissionManager;
   public metricsManager: MetricsManager;
@@ -55,7 +52,6 @@ export default class Context implements ContextInterface {
     this.sessionManager = new SessionManager(this);
     this.tagManager = new TagManager(this);
     this.promptsManager = new PromptsManager(this);
-    this.cookieSyncer = new CookieSyncer(this, appConfig.cookieSyncEnabled);
     this.dynamicResourceLoader = new DynamicResourceLoader();
     this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
   }

@@ -405,7 +405,6 @@ export class TestEnvironment {
       subdomain: undefined,
       siteName: "Fake App",
       httpUseOneSignalCom: false,
-      cookieSyncEnabled: true,
       restrictedOriginEnabled: true,
       origin: 'https://example.com',
       metrics: {
@@ -434,9 +433,6 @@ export class TestEnvironment {
         features: {
           restrict_origin: {
             enable: true
-          },
-          cookie_sync: {
-            enable: false
           },
           metrics: {
             enable: true,
@@ -605,9 +601,6 @@ export class TestEnvironment {
       features: {
         restrict_origin: {
           enable: false,
-        },
-        cookie_sync: {
-          enable: false
         },
         metrics: {
           enable: true,

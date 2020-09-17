@@ -1,7 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import CookieSyncer from '../../../src/modules/CookieSyncer';
 import OneSignal from '../../../src/OneSignal';
 import MainHelper from '../../../src/helpers/MainHelper';
 import sinon from 'sinon';

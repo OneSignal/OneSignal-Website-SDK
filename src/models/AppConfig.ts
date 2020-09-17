@@ -29,7 +29,6 @@ export interface AppConfig {
    * the legacy domain onesignal.com, or the newer domain os.tc.
    */
   httpUseOneSignalCom?: boolean;
-  cookieSyncEnabled?: boolean;
   restrictedOriginEnabled?: boolean | null;
   metrics: {
     enable: boolean;
@@ -215,9 +214,6 @@ export interface ServerAppConfig {
   success: boolean;
   app_id: string;
   features: {
-    cookie_sync: {
-      enable: boolean;
-    };
     metrics: {
       enable: boolean;
       mixpanel_reporting_token: string;
