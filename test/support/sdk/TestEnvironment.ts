@@ -31,7 +31,6 @@ import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/Envi
 import { ExecutionContext } from 'ava';
 import {
   InitTestHelper,
-  mockWebPushAnalytics,
   stubMessageChannel,
   mockIframeMessaging,
   mockGetIcon } from '../tester/utils';
@@ -405,7 +404,6 @@ export class TestEnvironment {
       subdomain: undefined,
       siteName: "Fake App",
       httpUseOneSignalCom: false,
-      cookieSyncEnabled: true,
       restrictedOriginEnabled: true,
       origin: 'https://example.com',
       metrics: {
@@ -434,9 +432,6 @@ export class TestEnvironment {
         features: {
           restrict_origin: {
             enable: true
-          },
-          cookie_sync: {
-            enable: false
           },
           metrics: {
             enable: true,
@@ -605,9 +600,6 @@ export class TestEnvironment {
       features: {
         restrict_origin: {
           enable: false,
-        },
-        cookie_sync: {
-          enable: false
         },
         metrics: {
           enable: true,
@@ -914,7 +906,6 @@ export class TestEnvironment {
     const sendTagsSpy = sinonSandbox.spy(TagManager.prototype, "sendTags");
 
     // network mocks
-    mockWebPushAnalytics();
     mockGetIcon();
 
     if (testConfig.httpOrHttps === HttpHttpsEnvironment.Http) {

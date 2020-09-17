@@ -35,20 +35,6 @@ export function mockIframeMessaging(sinonSandbox: SinonSandbox) {
   sinonSandbox.stub(ProxyFrameHost.prototype, 'message').callsFake(mockIframeMessageReceiver);
 }
 
-export function mockWebPushAnalytics() {
-  nock('https://onesignal.com')
-    .get("/webPushAnalytics")
-    .reply(200, (_uri: string, _requestBody: string) => {
-      return { success: true };
-    }).persist(true);
-
-  nock('https://test.os.tc')
-    .get("/webPushAnalytics")
-    .reply(200, (_uri: string, _requestBody: string) => {
-      return { success: true };
-    }).persist(true);
-}
-
 export function mockGetIcon() {
   nock('https://onesignal.com')
     .get(/.*icon$/)

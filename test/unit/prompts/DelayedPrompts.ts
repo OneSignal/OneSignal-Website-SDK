@@ -6,7 +6,6 @@ import {
 } from '../../support/sdk/TestEnvironment';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { mockWebPushAnalytics } from '../../support/tester/utils';
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import {
     stubServiceWorkerInstallation,
@@ -22,11 +21,6 @@ enum DelayedPromptType {
     Native = "native",
     Slidedown = "slidedown"
 }
-
-test.beforeEach(async () => {
-    // tests use customizable beforeEach method defined below. add logic there if needed.
-    mockWebPushAnalytics();
-});
 
 test.afterEach(function (_t: ExecutionContext) {
     sinonSandbox.restore();

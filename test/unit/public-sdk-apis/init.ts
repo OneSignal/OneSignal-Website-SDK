@@ -14,7 +14,7 @@ import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import { EmailProfile } from "../../../src/models/EmailProfile";
 import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
-  mockWebPushAnalytics, InitTestHelper, AssertInitSDK
+  InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
 
 
@@ -23,7 +23,6 @@ let initTestHelper = new InitTestHelper(sinonSandbox);
 
 test.beforeEach(function () {
   nock.disableNetConnect();
-  mockWebPushAnalytics();
 });
 
 test.afterEach(function (_t: ExecutionContext) {

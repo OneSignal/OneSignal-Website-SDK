@@ -6,7 +6,6 @@ import {
 } from '../../support/sdk/TestEnvironment';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { mockWebPushAnalytics } from '../../support/tester/utils';
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import { UpdateManager } from '../../../src/managers/UpdateManager';
 import { PageViewManager } from "../../../src/managers/PageViewManager";
@@ -23,11 +22,6 @@ import EventsTestHelper from '../../support/tester/EventsTestHelper';
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const playerId = Random.getRandomUuid();
 const appId = Random.getRandomUuid();
-
-test.beforeEach(async () => {
-  // tests use customizable beforeEach method defined below. add logic there if needed.
-  mockWebPushAnalytics();
-});
 
 test.afterEach(function (_t: ExecutionContext) {
   sinonSandbox.restore();
