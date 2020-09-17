@@ -343,9 +343,6 @@ export default class InitHelper {
     promises.push(InitHelper.showNotifyButton());
     promises.push(InitHelper.showPromptsFromWebConfigEditor());
 
-    // Not awaiting on this one, no logic depends on it and doesn't matter too much if it fails
-    OneSignal.context.cookieSyncer.install();
-
     try {
       await Promise.all(promises);
     } catch(e) {
