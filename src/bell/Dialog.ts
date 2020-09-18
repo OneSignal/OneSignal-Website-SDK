@@ -61,7 +61,7 @@ export default class Dialog extends AnimatedElement {
 
         let notificationIconHtml = '';
         let imageUrl = getPlatformNotificationIcon(this.notificationIcons);
-        if (imageUrl) {
+        if (imageUrl != 'default-icon') {
           notificationIconHtml = `<div class="push-notification-icon"><img src="${imageUrl}"></div>`
         } else {
           notificationIconHtml = `<div class="push-notification-icon push-notification-icon-default"></div>`
