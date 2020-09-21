@@ -156,7 +156,6 @@ async function generateWebpackConfig() {
         'node_modules'
       ]
     },
-    devtool: 'source-map',
     plugins: await getWebpackPlugins()
   };
 }
