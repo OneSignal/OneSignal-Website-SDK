@@ -12,6 +12,7 @@ cache:
 script:
   - yarn test:noWatch
   - yarn build:prod
+  - yarn build:staging
   # thanks to https://graysonkoonce.com/getting-the-current-branch-name-during-a-pull-request-in-travis-ci/
   - BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - if [ "$BRANCH" = "master" ]; then ./.travis/s3-simple-upload-all.sh build/releases s3://onesignal-build/websdk/$TRAVIS_COMMIT && ./.travis/s3-simple-upload-all.sh build/amp s3://onesignal-build/websdk/$TRAVIS_COMMIT && echo Successfully uploaded Web SDK artifacts for version $TRAVIS_COMMIT; else echo Not uploading artifacts for this build; fi
