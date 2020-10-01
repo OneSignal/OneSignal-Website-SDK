@@ -26,3 +26,8 @@ cp build/bundles/OneSignalSDKWorker.js.map build/releases/$PREFIX"OneSignalSDKWo
 
 cp build/bundles/OneSignalSDKStyles.css build/releases/$PREFIX"OneSignalSDKStyles.css"
 cp build/bundles/OneSignalSDKStyles.css.map build/releases/$PREFIX"OneSignalSDKStyles.css.map"
+
+if [ "$ENV" = "staging" ]; then
+  sed -i 's/sourceMappingURL=OneSignal/sourceMappingURL=Staging-OneSignal/' build/releases/Staging-*.js
+  sed -i 's/sourceMappingURL=OneSignal/sourceMappingURL=Staging-OneSignal/' build/releases/Staging-*.css
+fi
