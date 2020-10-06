@@ -44,6 +44,12 @@ ENV=${ENV:-"development"}
 API=${API:-"production"}
 HTTPS=${HTTPS:-true}
 
+if [ "$ENV" = "staging" ]; then
+    API="staging"
+    API_ORIGIN=$STAGING_DOMAIN
+    BUILD_ORIGIN=$STAGING_DOMAIN
+fi
+
 echo "BUILD_ORIGIN = ${BUILD_ORIGIN}"
 echo "API_ORIGIN = ${API_ORIGIN}"
 echo "HTTPS = ${HTTPS}"
