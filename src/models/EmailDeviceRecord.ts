@@ -13,6 +13,7 @@ export class EmailDeviceRecord extends DeviceRecord {
     public email?: string,
     public emailAuthHash?: string,
     public pushDeviceRecordId?: string,
+    public externalUserId ?: string
   ) {
     super();
     this.deliveryPlatform = DeliveryPlatformKind.Email;
@@ -29,6 +30,9 @@ export class EmailDeviceRecord extends DeviceRecord {
     }
     if (this.pushDeviceRecordId) {
       serializedBundle.device_player_id = this.pushDeviceRecordId;
+    }
+    if (this.externalUserId) {
+      serializedBundle.external_user_id = this.externalUserId;
     }
 
     return serializedBundle;

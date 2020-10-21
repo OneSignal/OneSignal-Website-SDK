@@ -24,6 +24,7 @@ export interface FlattenedDeviceRecord {
  *
  * This is used when creating or modifying push and email records.
  */
+ */
 export abstract class DeviceRecord implements Serializable {
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;

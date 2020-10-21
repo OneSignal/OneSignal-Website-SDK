@@ -10,6 +10,7 @@ import Utils from "../context/shared/utils/Utils";
 import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
 import { logMethodCall } from '../utils';
+import { EmailProfile } from 'src/models/EmailProfile';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -27,6 +28,14 @@ export class UpdateManager {
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     }
     return deviceId;
+  }
+
+  private async getEmailProfile(): Promise<EmailProfile | undefined > {
+    const emailProfile = await Database.getEmailProfile();
+    if (!emailProfile) {
+      return undefined;
+    }
+    return emailProfile;
   }
 
   private async createDeviceRecord(): Promise<PushDeviceRecord> {
@@ -115,9 +124,19 @@ export class UpdateManager {
 
   public async sendExternalUserIdUpdate(externalUserId: string | undefined | null): Promise<void> {
     const deviceId: string = await this.getDeviceId();
-    await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-      external_user_id: Utils.getValueOrDefault(externalUserId, "")
-    });
+    const { emailId } = await this.getEmailProfile();
+
+    if(emailId){
+      await Promise.all([OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
+        external_user_id: Utils.getValueOrDefault(externalUserId, "")
+      }), OneSignalApiShared.updatePlayer(this.context.appConfig.appId, emailId, {
+        external_user_id: Utils.getValueOrDefault(externalUserId, "")
+      })]);
+    } else {
+      await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
+        external_user_id: Utils.getValueOrDefault(externalUserId, "")
+      });  
+    }
   }
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {

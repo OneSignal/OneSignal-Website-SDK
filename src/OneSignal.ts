@@ -105,6 +105,7 @@ export default class OneSignal {
 
     const appConfig = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
+    const externalUserId = await Database.getExternalUserId();
     const existingEmailProfile = await Database.getEmailProfile();
 
     if (appConfig.emailAuthRequired && !(options && options.emailAuthHash)) {
@@ -117,19 +118,26 @@ export default class OneSignal {
     }
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
+    var sanitizedExternalUserId: string | undefined;
+    if(externalUserId == null){
+      sanitizedExternalUserId = undefined
+    }
+
     if (isExistingEmailSaved && appConfig.emailAuthRequired) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
         appConfig,
         newEmailProfile,
-        deviceId
+        deviceId,
+        sanitizedExternalUserId
       );
     } else {
       // Otherwise, make a POST call to create a new email record
       newEmailProfile.emailId = await OneSignalApi.createEmailRecord(
         appConfig,
         newEmailProfile,
-        deviceId
+        deviceId,
+        sanitizedExternalUserId
       );
     }
 

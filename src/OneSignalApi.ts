@@ -51,17 +51,19 @@ export default class OneSignalApi {
   static async createEmailRecord(
     appConfig: AppConfig,
     emailProfile: EmailProfile,
-    pushDeviceRecordId?: string
+    pushDeviceRecordId?: string,
+    externalUserId?: string,
   ): Promise<string | null> {
-    return await OneSignalApiShared.createEmailRecord(appConfig, emailProfile, pushDeviceRecordId);
+    return await OneSignalApiShared.createEmailRecord(appConfig, emailProfile, pushDeviceRecordId, externalUserId);
   }
 
   static async updateEmailRecord(
     appConfig: AppConfig,
     emailProfile: EmailProfile,
-    pushDeviceRecordId?: string
+    pushDeviceRecordId?: string,
+    externalUserId?: string,
   ): Promise<string | null> {
-    return await OneSignalApiShared.updateEmailRecord(appConfig, emailProfile, pushDeviceRecordId);
+    return await OneSignalApiShared.updateEmailRecord(appConfig, emailProfile, pushDeviceRecordId, externalUserId);
   }
 
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {
