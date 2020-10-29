@@ -23,6 +23,7 @@ Interfaces:
    - [ ] New interfaces are in model files
 
 Functions:
+   - [ ] All new public functions are added to OneSignalStub.ts
    - [ ] Don't use default export
    - [ ] All function signatures have return types
    - [ ] Helpers should not access any data but rather be given the data to operate on.
