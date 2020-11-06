@@ -50,6 +50,7 @@ $border-radius: 0.5em;
         }
         .slidedown-body-message, .popover-body-message {
           padding: 0 0.2em 0 0.2em;
+          white-space: pre-line;
           text-align: center;
           width: 100%;
           img {
@@ -252,6 +253,7 @@ $border-radius: 0.5em;
     }
 
     .slidedown-body-message, .popover-body-message {
+      white-space: pre-line;
       box-sizing: border-box;
       padding: 0 0 0 1em;
       float: left;
