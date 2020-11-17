@@ -6,6 +6,7 @@ declare module "OneSignal" {
 
 interface SetEmailOptions {
   emailAuthHash: string;
+  identifierAuthHash: string;
 }
 
 interface PushSubscriptionState {
