@@ -113,11 +113,15 @@ export class UpdateManager {
     return this.onSessionSent;
   }
 
-  public async sendExternalUserIdUpdate(externalUserId: string | undefined | null): Promise<void> {
+  public async sendExternalUserIdUpdate(externalUserId: string | undefined | null, authHash?: string): Promise<void> {
     const deviceId: string = await this.getDeviceId();
-    await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-      external_user_id: Utils.getValueOrDefault(externalUserId, "")
-    });
+    const payload = { external_user_id: Utils.getValueOrDefault(externalUserId, "") };
+
+    if (authHash) {
+      payload['external_user_id'] = authHash;
+    }
+
+    await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
   }
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
