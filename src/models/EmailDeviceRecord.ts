@@ -10,9 +10,9 @@ export class EmailDeviceRecord extends DeviceRecord {
    * @param email Omitting this parameter does not void the record's identifier.
    */
   constructor(
-    public email?: string,
-    public emailAuthHash?: string,
-    public pushDeviceRecordId?: string,
+    public email?: string | null,
+    public emailAuthHash?: string | null,
+    public pushDeviceRecordId?: string | null,
   ) {
     super();
     this.deliveryPlatform = DeliveryPlatformKind.Email;
