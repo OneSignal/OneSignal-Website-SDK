@@ -112,8 +112,15 @@ export default class OneSignal {
     }
 
     const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email);
+
+    // leaving for backwards-contability. moving forward, email & external_id auth hash will be handled
+    // by identifierAuthHash
     if (options && options.emailAuthHash) {
-      newEmailProfile.emailAuthHash = options.emailAuthHash
+      newEmailProfile.emailAuthHash = options.emailAuthHash;
+    }
+
+    if (options && options.identifierAuthHash) {
+      newEmailProfile.identifierAuthHash = options.identifierAuthHash;
     }
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
@@ -523,7 +530,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  public static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
+  public static async setExternalUserId(externalUserId: string | undefined | null , authHash?: string): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
@@ -533,7 +540,7 @@ export default class OneSignal {
     }
     await Promise.all([
       OneSignal.database.setExternalUserId(externalUserId),
-      OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId),
+      OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash),
     ]);
   }
 
