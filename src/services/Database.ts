@@ -202,7 +202,6 @@ export default class Database {
     config.appId = appIdStr;
     config.subdomain = await this.get<string>("Options", "subdomain");
     config.vapidPublicKey = await this.get<string>("Options", "vapidPublicKey");
-    config.emailAuthRequired = await this.get<boolean>("Options", "emailAuthRequired");
     return config;
   }
 
@@ -229,10 +228,6 @@ export default class Database {
       await this.put("Options", { key: "httpUseOneSignalCom", value: true })
     else if (appConfig.httpUseOneSignalCom === false)
       await this.put("Options", {key: "httpUseOneSignalCom", value: false })
-    if (appConfig.emailAuthRequired === true)
-      await this.put("Options", { key: "emailAuthRequired", value: true })
-    else if (appConfig.emailAuthRequired === false)
-      await this.put("Options", {key: "emailAuthRequired", value: false })
     if (appConfig.vapidPublicKey)
       await this.put("Options", {key: "vapidPublicKey", value: appConfig.vapidPublicKey})
   }
