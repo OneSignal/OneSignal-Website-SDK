@@ -113,18 +113,13 @@ export class UpdateManager {
     return this.onSessionSent;
   }
 
-  public async sendExternalUserIdUpdate(externalUserId: string | undefined | null, authHash?: string): Promise<void> {
+  public async sendExternalUserIdUpdate(externalUserId: string | undefined | null, authHash?: string | null )
+  :Promise<void> {
     const deviceId: string = await this.getDeviceId();
     const payload = {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
-      identifier_auth_hash: ""
+      identifier_auth_hash: Utils.getValueOrDefault(authHash, undefined)
     };
-
-    if (authHash) {
-      payload['identifier_auth_hash'] = authHash;
-    } else {
-      delete payload['identifier_auth_hash'];
-    }
 
     await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
   }
