@@ -133,7 +133,7 @@ export default class OneSignal {
     const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email, authHash);
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
-    if (isExistingEmailSaved && appConfig.emailAuthRequired) {
+    if (isExistingEmailSaved) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
         appConfig,
