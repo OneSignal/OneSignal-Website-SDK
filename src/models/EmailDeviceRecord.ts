@@ -12,8 +12,8 @@ export class EmailDeviceRecord extends DeviceRecord {
   constructor(
     public email?: string,
     public emailAuthHash?: string,
-    public identifierAuthHash?: string,
     public pushDeviceRecordId?: string,
+    public identifierAuthHash?: string
   ) {
     super();
     this.deliveryPlatform = DeliveryPlatformKind.Email;
