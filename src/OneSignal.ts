@@ -118,7 +118,7 @@ export default class OneSignal {
     }
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
-    var sanitizedExternalUserId: string | undefined;
+    let sanitizedExternalUserId: string | undefined;
     if(externalUserId == null){
       sanitizedExternalUserId = undefined
     }
