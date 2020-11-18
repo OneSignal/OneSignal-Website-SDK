@@ -50,10 +50,6 @@ export interface AppConfig {
    */
   onesignalVapidPublicKey?: string;
 
-  /**
-   * Describes whether this app's email records require authentication.
-   */
-  emailAuthRequired?: boolean;
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
