@@ -17,6 +17,9 @@ import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
 
+// TO DO: delete this comment
+// TESTS ARE PASSING IN THIS COMMIT
+
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 let initTestHelper = new InitTestHelper(sinonSandbox);
