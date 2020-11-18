@@ -107,10 +107,6 @@ export default class OneSignal {
     const { deviceId } = await Database.getSubscription();
     const existingEmailProfile = await Database.getEmailProfile();
 
-    if (appConfig.emailAuthRequired && !(options && options.emailAuthHash)) {
-      throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Empty);
-    }
-
     const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email);
 
     // leaving for backwards-contability. moving forward, email & external_id auth hash will be handled
@@ -124,7 +120,7 @@ export default class OneSignal {
     }
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
-    if (isExistingEmailSaved && appConfig.emailAuthRequired) {
+    if (isExistingEmailSaved) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
         appConfig,
