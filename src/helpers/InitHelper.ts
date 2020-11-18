@@ -476,7 +476,6 @@ export default class InitHelper {
       overridingPageTitle || config.siteName || document.title || 'Notification';
     await Database.put('Options', { key: 'pageTitle', value: pageTitle });
     Log.info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
-    await Database.put('Options', { key: 'emailAuthRequired', value: !!config.emailAuthRequired })
   }
 
   public static async handleAutoResubscribe(isOptedOut: boolean) {
