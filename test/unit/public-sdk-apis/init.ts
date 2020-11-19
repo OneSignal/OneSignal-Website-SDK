@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
-import sinon, {SinonSandbox, SinonStub} from 'sinon';
+import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/models/Context';
@@ -16,10 +16,6 @@ import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
-
-// TO DO: delete this comment
-// TESTS ARE PASSING IN THIS COMMIT
-
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 let initTestHelper = new InitTestHelper(sinonSandbox);

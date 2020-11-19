@@ -55,8 +55,8 @@ import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfo
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
-import { OutcomeAttributionType, SentUniqueOutcome } from "./models/Outcomes";
-import { DelayedPromptType, AppUserConfigNotifyButton } from './models/Prompts';
+import { OutcomeAttributionType } from "./models/Outcomes";
+import { AppUserConfigNotifyButton } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 
 export default class OneSignal {
@@ -103,7 +103,7 @@ export default class OneSignal {
     const isEmailAuthHashDefined      = options && !!options.emailAuthHash;
 
     const authHash = isIdentifierAuthHashDefined ? options.identifierAuthHash :
-    (isEmailAuthHashDefined ? options.emailAuthHash : undefined);
+      (isEmailAuthHashDefined ? options.emailAuthHash : undefined);
 
     if (!!authHash) {
       if (isIdentifierAuthHashDefined && isEmailAuthHashDefined) {
@@ -282,7 +282,8 @@ export default class OneSignal {
 
       OneSignal.__initAlreadyCalled = true;
 
-      OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, EventHelper.onNotificationPermissionChange);
+      OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED,
+        EventHelper.onNotificationPermissionChange);
       OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
       OneSignal.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
@@ -491,12 +492,12 @@ export default class OneSignal {
       });
     }
 
-    var { deviceId } = await Database.getSubscription();
+    const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
-    // After the user subscribers, he will have a device ID, so get it again
-    var { deviceId: newDeviceId } = await Database.getSubscription();
+    // After the user subscribes, he will have a device ID, so get it again
+    const { deviceId: newDeviceId } = await Database.getSubscription();
     await OneSignalApi.updatePlayer(appId, newDeviceId!, {
       tags: tags
     });
@@ -524,7 +525,7 @@ export default class OneSignal {
       Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
     }
     const tagsToSend = {} as {[key: string]: string};
-    for (let tag of tags) {
+    for (const tag of tags) {
       tagsToSend[tag] = '';
     }
     const deletedTags = await OneSignal.sendTags(tagsToSend);
@@ -702,7 +703,7 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal email ID.
    * @PublicApi
    */
-  static async getEmailId(callback?: Action<string | undefined>): Promise<string | undefined> {
+  static async getEmailId(callback?: Action<string | undefined>): Promise<string | null | undefined> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
@@ -764,7 +765,7 @@ export default class OneSignal {
    */
   static async sendSelfNotification(title: string = 'OneSignal Test Message',
                               message: string = 'This is an example notification.',
-                              url: string = new URL(location.href).origin + '?_osp=do_not_open',
+                              url: string = `${new URL(location.href).origin}?_osp=do_not_open`,
                               icon: URL,
                               data: Map<String, any>,
                               buttons: Array<NotificationActionButton>): Promise<void> {
@@ -782,7 +783,7 @@ export default class OneSignal {
       throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
 
     if (subscription.deviceId) {
-      await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], {'en': title}, {'en': message},
+      await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], { en : title }, { en : message },
                                                url, icon, data, buttons);
     }
   }
@@ -1097,6 +1098,7 @@ export default class OneSignal {
 
 LegacyManager.ensureBackwardsCompatibility(OneSignal);
 
-Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
+Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
+  ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
 Log.debug(`Browser Environment: ${bowser.name} ${bowser.version}`);

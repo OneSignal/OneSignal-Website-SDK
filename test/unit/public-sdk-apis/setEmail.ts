@@ -102,7 +102,7 @@ async function expectEmailRecordCreationRequest(
       for (const anyValueKey of anyValues) {
         t.not(parsedRequestBody[anyValueKey], undefined);
       }
-      return { success : true, id : newCreatedEmailId };
+      return { success : true, id: newCreatedEmailId };
     });
 }
 
