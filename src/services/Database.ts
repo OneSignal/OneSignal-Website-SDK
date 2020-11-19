@@ -80,7 +80,7 @@ export default class Database {
           return null;
       case "NotificationOpened":
         if (result && key)
-          return {data: result.data, timestamp: result.timestamp};
+          return { data: result.data, timestamp: result.timestamp };
         else if (result && !key)
           return result;
         else
@@ -100,7 +100,8 @@ export default class Database {
   }
 
   /**
-   * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table (if key is not specified).
+   * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table
+   * (if key is not specified).
    * If on an iFrame or popup environment, retrieves from the correct IndexedDB database using cross-domain messaging.
    * @param table The table to retrieve the value from.
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
@@ -108,7 +109,7 @@ export default class Database {
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     if (this.shouldUsePostmam()) {
-      return await new Promise<T>(async (resolve) => {
+      return await new Promise<T>(async resolve => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
           key: key
@@ -126,7 +127,7 @@ export default class Database {
 
   public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
     if (this.shouldUsePostmam()) {
-      return await new Promise<T[]>(async (resolve) => {
+      return await new Promise<T[]>(async resolve => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, {
           table: table
         }, (reply: any) => {
@@ -151,13 +152,14 @@ export default class Database {
         OneSignalUtils.isUsingSubscriptionWorkaround() &&
         SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, 
-          [{table: table, keypath: keypath}], 
+          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT,
+          [{ table: table, keypath: keypath }],
           (reply: any) => {
             if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
               resolve();
             } else {
-              reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}), but did not get success response.`);
+              reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}),`+
+              `but did not get success response.`);
             }
           }
         );
@@ -170,7 +172,8 @@ export default class Database {
   }
 
   /**
-   * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
+   * Asynchronously removes the specified key from the table, or if the key is not specified, removes all
+   * keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   remove(table: OneSignalDbTable, keypath?: string) {
@@ -185,7 +188,8 @@ export default class Database {
             if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
               resolve();
             } else {
-              reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}), but did not get success response.`);
+              reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}),`+
+              `but did not get success response.`);
             }
           }
         );
@@ -215,21 +219,21 @@ export default class Database {
     if (externalIdToSave === emptyString) {
       await this.remove("Ids", "externalUserId");
     } else {
-      await this.put("Ids", {type: "externalUserId", id: externalIdToSave});
+      await this.put("Ids", { type: "externalUserId", id: externalIdToSave });
     }
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
-      await this.put("Ids", {type: "appId", id: appConfig.appId})
+      await this.put("Ids", { type: "appId", id: appConfig.appId });
     if (appConfig.subdomain)
-      await this.put("Options", {key: "subdomain", value: appConfig.subdomain})
+      await this.put("Options", { key: "subdomain", value: appConfig.subdomain });
     if (appConfig.httpUseOneSignalCom === true)
-      await this.put("Options", { key: "httpUseOneSignalCom", value: true })
+      await this.put("Options", { key: "httpUseOneSignalCom", value: true });
     else if (appConfig.httpUseOneSignalCom === false)
-      await this.put("Options", {key: "httpUseOneSignalCom", value: false })
+      await this.put("Options", { key: "httpUseOneSignalCom", value: false });
     if (appConfig.vapidPublicKey)
-      await this.put("Options", {key: "vapidPublicKey", value: appConfig.vapidPublicKey})
+      await this.put("Options", { key: "vapidPublicKey", value: appConfig.vapidPublicKey });
   }
 
   async getAppState(): Promise<AppState> {
@@ -243,14 +247,14 @@ export default class Database {
 
   async setAppState(appState: AppState) {
     if (appState.defaultNotificationUrl)
-      await this.put("Options", {key: "defaultUrl", value: appState.defaultNotificationUrl});
+      await this.put("Options", { key: "defaultUrl", value: appState.defaultNotificationUrl });
     if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
-      await this.put("Options", {key: "defaultTitle", value: appState.defaultNotificationTitle});
+      await this.put("Options", { key: "defaultTitle", value: appState.defaultNotificationTitle });
     if (appState.lastKnownPushEnabled != null)
-      await this.put("Options", {key: "isPushEnabled", value: appState.lastKnownPushEnabled});
+      await this.put("Options", { key: "isPushEnabled", value: appState.lastKnownPushEnabled });
     if (appState.clickedNotifications) {
       const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
-      for (let url of clickedNotificationUrls) {
+      for (const url of clickedNotificationUrls) {
         const notificationDetails = appState.clickedNotifications[url];
         if (notificationDetails) {
           await this.put("NotificationOpened", {
@@ -325,10 +329,10 @@ export default class Database {
       await this.put("Options", { key: "optedOut", value: subscription.optedOut });
     }
     if (subscription.createdAt != null) {
-      await this.put("Options", { key: "subscriptionCreatedAt", value: subscription.createdAt});
+      await this.put("Options", { key: "subscriptionCreatedAt", value: subscription.createdAt });
     }
     if (subscription.expirationTime != null) {
-      await this.put("Options", { key: "subscriptionExpirationTime", value: subscription.expirationTime});
+      await this.put("Options", { key: "subscriptionExpirationTime", value: subscription.expirationTime });
     } else {
       await this.remove("Options", "subscriptionExpirationTime");
     }
@@ -423,7 +427,8 @@ export default class Database {
   }
 
   /**
-   * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them with blank values.
+   * Asynchronously removes the Ids, NotificationOpened, and Options tables from the database and recreates them
+   * with blank values.
    * @returns {Promise} Returns a promise that is fulfilled when rebuilding is completed, or rejects with an error.
    */
   static async rebuild() {
