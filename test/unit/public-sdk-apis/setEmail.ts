@@ -1,7 +1,7 @@
 import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import Database from "../../../src/services/Database";
-import { TestEnvironment, BrowserUserAgent } from "../../support/sdk/TestEnvironment";
+import {TestEnvironment, BrowserUserAgent} from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
@@ -104,7 +104,7 @@ async function expectEmailRecordCreationRequest(
       for (const anyValueKey of anyValues) {
         t.not(parsedRequestBody[anyValueKey], undefined);
       }
-      return { success : true, id : newCreatedEmailId };
+      return { success : true, id: newCreatedEmailId };
     });
 }
 
