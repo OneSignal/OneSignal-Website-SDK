@@ -328,7 +328,7 @@ export default class OneSignal {
   }
 
   /**
-   * Call after use accepts your user consent agreement
+   * Call after user accepts your user consent agreement
    * @PublicApi
    */
   public static async provideUserConsent(consent: boolean): Promise<void> {
