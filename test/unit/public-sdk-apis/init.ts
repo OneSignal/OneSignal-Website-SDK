@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
-import sinon, {SinonSandbox, SinonStub} from 'sinon';
+import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import Database from "../../../src/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import Context from '../../../src/models/Context';
