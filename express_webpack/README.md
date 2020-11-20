@@ -7,15 +7,15 @@
       - california
       - oregon
       - washington
-   
+
 2. Follow the following instructions (also logged in console)
-   - copy `dev-ssl.crt` from container to host with: 
+   - copy `dev-ssl.crt` from container to host with:
       ```
       docker cp <containerId>:sdk/express_webpack/certs/dev-ssl.crt .
       ```
       You can get the container id by running `docker ps`
    - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
-   - add cert to keychain (mac OSX): 
+   - add cert to keychain (mac OSX):
       ```
       sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain dev-ssl.crt
       ```
@@ -40,14 +40,14 @@ yarn build:<type>-<type>
 ```
 **Example**: `yarn build:dev-prod` builds the SDK with the BUILD environment as "development" and the API environment as "production"
 
-### CUSTOM ORIGIN PARAMS: 
-You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. These parameters use option flags. 
+### CUSTOM ORIGIN PARAMS:
+You can pass two additional parameters to the above command, the first being the origin of the build environment and the second being that of the api environment. These parameters use option flags.
 
    - Option flags are:
       - `-b` or `--build`
       - `-a` or `--api`
 
-If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api. 
+If no custom origins are set, defaults will be used: `localhost` for build and `onesignal.com` for api.
 
 **Note:** make sure custom origins make sense with respect to the build and api environments set (e.g: you cannot use a `prod` api environment and expect a custom api origin to be used).
 
@@ -80,7 +80,7 @@ You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You wi
 1. Make sure your browser can make secure connections to wherever your OneSignal container is running, VM or otherwise. This may involve adding a cert to your keychain and/or visiting the container's frontend (Dashboard) and allowing the browser to proceed past the "unsafe" warning.
 
 2. If you are running the OneSignal container on a machine with a different IP address, add an alias to your hosts file which you can then use easily in your API environment option at build time.
- 
+
    ```
    // file: /etc/hosts
 
@@ -88,7 +88,17 @@ You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You wi
    ```
    See above for example on using `texas` as the API environment option
 
-3. Make sure that the OneSignal container is using the URLs to your WebSDK container's build files. To do this, 
+3. Make sure that the OneSignal container is using the URLs to your WebSDK container's build files. To do this,
    - change the URLs in the file `development.rb` so that they point to the files' absolute paths (these are the files in the `build` directory after running `yarn build:<>-<>`)
 
 4. Remove the `$PREFIX` var from the `publish.sh` script for all map files
+
+## Troubleshooting
+1. Sourcemaps not working (you should be able to go to the **Sources** devtools tab and pull up individual files e.g: `OneSignal.js`, set breakpoints, etc...)
+   - Remove the `$PREFIX` var from the `publish.sh` script for all `.map` files
+
+2. Connection Not Secure:
+   - Make sure you have created a cert and added it correctly to your keychain
+   - Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP address in your `/etc/hosts` file
+   - Delete the `build/bundles` directory and try rebuilding the SDK
+   - If nothing else works, delete both `dev-*` files from the `express_webpack/certs` directory and restart the docker container to automatically regenerate new certs. Then add them to your keychain by following step 2 of the [Run Instructions](#run-instructions)
