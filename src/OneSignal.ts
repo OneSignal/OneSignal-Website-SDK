@@ -109,14 +109,8 @@ export default class OneSignal {
 
     const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email);
 
-    // leaving for backwards-contability. moving forward, email & external_id auth hash will be handled
-    // by identifierAuthHash
     if (options && options.emailAuthHash) {
       newEmailProfile.emailAuthHash = options.emailAuthHash;
-    }
-
-    if (options && options.identifierAuthHash) {
-      newEmailProfile.identifierAuthHash = options.identifierAuthHash;
     }
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
