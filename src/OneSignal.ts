@@ -96,9 +96,9 @@ export default class OneSignal {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     if (!isValidEmail(email))
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
-    // emailAuthHash is expected to be a 64 character SHA-256 hex hash
-    if (options && options.emailAuthHash && options.emailAuthHash.length !== 64) {
-      throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
+    // identifierAuthHash is expected to be a 64 character SHA-256 hex hash
+    if (options && options.identifierAuthHash && options.identifierAuthHash.length !== 64) {
+      throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
     }
     await awaitOneSignalInitAndSupported();
     logMethodCall('setEmail', email, options);
@@ -109,8 +109,8 @@ export default class OneSignal {
 
     const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email);
 
-    if (options && options.emailAuthHash) {
-      newEmailProfile.emailAuthHash = options.emailAuthHash;
+    if (options && options.identifierAuthHash) {
+      newEmailProfile.identifierAuthHash = options.identifierAuthHash;
     }
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
@@ -468,7 +468,7 @@ export default class OneSignal {
     if (emailProfile.emailId) {
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
         tags: tags,
-        email_auth_hash: emailProfile.emailAuthHash,
+        identifier_auth_hash: emailProfile.identifierAuthHash,
       });
     }
 
