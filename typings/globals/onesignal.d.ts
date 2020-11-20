@@ -5,7 +5,6 @@ declare module "OneSignal" {
 }
 
 interface SetEmailOptions {
-  emailAuthHash?: string;
   identifierAuthHash?: string;
   emailAuthHash?: string; // backwards compatibility
 }

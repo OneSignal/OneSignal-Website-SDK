@@ -62,7 +62,6 @@ export default class OneSignalApiShared {
 
     const emailRecord = new EmailDeviceRecord(
       emailProfile.emailAddress,
-      emailProfile.emailAuthHash,
       emailProfile.identifierAuthHash,
       pushDeviceRecordId
     );
@@ -86,7 +85,6 @@ export default class OneSignalApiShared {
 
     const emailRecord = new EmailDeviceRecord(
       emailProfile.emailAddress,
-      emailProfile.emailAuthHash,
       emailProfile.identifierAuthHash,
       pushDeviceRecordId
     );
@@ -106,7 +104,7 @@ export default class OneSignalApiShared {
     const response = await OneSignalApiBase.post(`players/${deviceId}/email_logout`, {
       app_id: appConfig.appId,
       parent_player_id: emailProfile.emailId,
-      email_auth_hash: emailProfile.emailAuthHash ? emailProfile.emailAuthHash : undefined
+      identifier_auth_hash: emailProfile.identifierAuthHash ? emailProfile.identifierAuthHash : undefined
     });
     if (response && response.success) {
       return true;

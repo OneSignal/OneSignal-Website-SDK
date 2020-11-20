@@ -488,7 +488,7 @@ export default class OneSignal {
     if (emailProfile.emailId) {
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
         tags: tags,
-        email_auth_hash: emailProfile.emailAuthHash,
+        identifier_auth_hash: emailProfile.identifierAuthHash,
       });
     }
 

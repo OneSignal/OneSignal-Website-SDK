@@ -48,7 +48,7 @@ test("setEmail should reject an empty or invalid emails", async t => {
 test("setEmail should not accept an email auth SHA-256 hex hash not 64 characters long", async t => {
   try {
     await OneSignal.setEmail("test@example.com", {
-      emailAuthHash: "12345"
+      identifierAuthHash: "12345"
     });
     t.fail('expected exception not caught');
   } catch (e) {
@@ -68,14 +68,14 @@ test("setEmail should not accept an email auth SHA-256 hex hash not 64 character
  *
  * ---
  *
- * ..., existing email (identical or not), emailAuthHash --> makes a PUT call instead of POST
+ * ..., existing email (identical or not), identifierAuthHash --> makes a PUT call instead of POST
  */
 
 async function expectEmailRecordCreationRequest(
   t: ExecutionContext,
   emailAddress: string,
   pushDevicePlayerId: string | null,
-  emailAuthHash: string | undefined | null,
+  identifierAuthHash: string | undefined | null,
   newCreatedEmailId: string
 ) {
   nock('https://onesignal.com')
@@ -85,7 +85,7 @@ async function expectEmailRecordCreationRequest(
         app_id: OneSignal.context.appConfig.appId,
         identifier: emailAddress,
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
-        email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+        identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
       };
       const anyValues = [
         "device_type",
@@ -111,7 +111,7 @@ async function expectEmailRecordUpdateRequest(
   emailId: string | null,
   emailAddress: string,
   pushDevicePlayerId: string | null,
-  emailAuthHash: string | undefined,
+  identifierAuthHash: string | undefined,
   newUpdatedEmailId: string
 ) {
   nock('https://onesignal.com')
@@ -121,7 +121,7 @@ async function expectEmailRecordUpdateRequest(
         app_id: OneSignal.context.appConfig.appId,
         identifier: emailAddress,
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
-        email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+        identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
       };
       const anyValues = [
         "device_type",
@@ -168,7 +168,7 @@ interface SetEmailTestData {
   existingEmailAddress: string | null;
   newEmailAddress: string; /* Email address used for setEmail */
   existingPushDeviceId: string | null;
-  emailAuthHash: string | undefined;
+  identifierAuthHash: string | undefined;
   existingEmailId: string | null;
   newEmailId: string; /* Returned by the create or update email record call */
 }
@@ -193,9 +193,9 @@ async function setEmailTest(
   }
 
   /* If test data has an email auth hash, fake the config parameter */
-  if (testData.emailAuthHash) {
+  if (testData.identifierAuthHash) {
     const emailProfile = await Database.getEmailProfile();
-    emailProfile.emailAuthHash = testData.emailAuthHash;
+    emailProfile.identifierAuthHash = testData.identifierAuthHash;
     await Database.setEmailProfile(emailProfile);
   }
 
@@ -215,7 +215,7 @@ async function setEmailTest(
       testData.existingEmailId,
       testData.newEmailAddress,
       testData.existingPushDeviceId,
-      testData.emailAuthHash,
+      testData.identifierAuthHash,
       testData.newEmailId
     );
   } else {
@@ -224,7 +224,7 @@ async function setEmailTest(
       t,
       testData.newEmailAddress,
       testData.existingPushDeviceId,
-      testData.emailAuthHash,
+      testData.identifierAuthHash,
       testData.newEmailId
     );
   }
@@ -252,8 +252,8 @@ async function setEmailTest(
 
   await OneSignal.setEmail(
     testData.newEmailAddress,
-    testData.emailAuthHash ?
-      { emailAuthHash: testData.emailAuthHash } :
+    testData.identifierAuthHash ?
+      { identifierAuthHash: testData.identifierAuthHash } :
       undefined
   );
 
@@ -262,7 +262,7 @@ async function setEmailTest(
 
   t.deepEqual(finalPushDeviceId, testData.existingPushDeviceId ? testData.existingPushDeviceId : null);
   t.deepEqual(finalEmailProfile.emailAddress, testData.newEmailAddress);
-  t.deepEqual(finalEmailProfile.emailAuthHash, testData.emailAuthHash);
+  t.deepEqual(finalEmailProfile.identifierAuthHash, testData.identifierAuthHash);
   t.deepEqual(finalEmailProfile.emailId, testData.newEmailId);
 }
 
@@ -271,7 +271,7 @@ test("No push subscription, no email, first setEmail call", async t => {
     existingEmailAddress: null,
     newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
-    emailAuthHash: undefined,
+    identifierAuthHash: undefined,
     existingEmailId: null,
     newEmailId: Random.getRandomUuid()
   };
@@ -297,7 +297,7 @@ test("No push subscription, existing identical email, refreshing setEmail call",
     existingEmailAddress: "test@example.com",
     newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
-    emailAuthHash: undefined,
+    identifierAuthHash: undefined,
     existingEmailId: emailId,
     newEmailId: emailId
   };
@@ -309,7 +309,7 @@ test("No push subscription, existing different email, updating setEmail call", a
     existingEmailAddress: "existing-different-email-address@example.com",
     newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
-    emailAuthHash: undefined,
+    identifierAuthHash: undefined,
     existingEmailId: Random.getRandomUuid(),
     newEmailId: Random.getRandomUuid()
   };
@@ -321,7 +321,7 @@ test("Existing push subscription, no email, first setEmail call", async t => {
     existingEmailAddress: null,
     newEmailAddress: "test@example.com",
     existingPushDeviceId: Random.getRandomUuid(),
-    emailAuthHash: undefined,
+    identifierAuthHash: undefined,
     existingEmailId: null,
     newEmailId: Random.getRandomUuid()
   };
@@ -334,7 +334,7 @@ test("Existing push subscription, existing identical email, refreshing setEmail 
     existingEmailAddress: "test@example.com",
     newEmailAddress: "test@example.com",
     existingPushDeviceId: Random.getRandomUuid(),
-    emailAuthHash: undefined,
+    identifierAuthHash: undefined,
     existingEmailId: emailId,
     newEmailId: emailId
   };
@@ -347,7 +347,7 @@ test("Existing push subscription, existing different email, updating setEmail ca
     existingEmailAddress: "existing-different-email@example.com",
     newEmailAddress: "test@example.com",
     existingPushDeviceId: Random.getRandomUuid(),
-    emailAuthHash: undefined,
+    identifierAuthHash: undefined,
     existingEmailId: Random.getRandomUuid(),
     newEmailId: Random.getRandomUuid(),
   };
@@ -355,13 +355,13 @@ test("Existing push subscription, existing different email, updating setEmail ca
 });
 
 test(
-  "Existing push subscription, existing identical email, with emailAuthHash, refreshing setEmail call",
+  "Existing push subscription, existing identical email, with identifierAuthHash, refreshing setEmail call",
   async t => {
     const testData: SetEmailTestData = {
       existingEmailAddress: "existing-different-email@example.com",
       newEmailAddress: "test@example.com",
       existingPushDeviceId: Random.getRandomUuid(),
-      emailAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
+      identifierAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
       existingEmailId: Random.getRandomUuid(),
       newEmailId: Random.getRandomUuid(),
     };
