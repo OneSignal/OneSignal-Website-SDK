@@ -11,7 +11,7 @@ export class EmailDeviceRecord extends DeviceRecord {
    */
   constructor(
     public email?: string | null,
-    public emailAuthHash?: string | null,
+    public identifierAuthHash?: string | null,
     public pushDeviceRecordId?: string | null,
   ) {
     super();
@@ -24,8 +24,8 @@ export class EmailDeviceRecord extends DeviceRecord {
     if (this.email) {
       serializedBundle.identifier = this.email;
     }
-    if (this.emailAuthHash) {
-      serializedBundle.email_auth_hash = this.emailAuthHash;
+    if (this.identifierAuthHash) {
+      serializedBundle.identifier_auth_hash = this.identifierAuthHash;
     }
     if (this.pushDeviceRecordId) {
       serializedBundle.device_player_id = this.pushDeviceRecordId;

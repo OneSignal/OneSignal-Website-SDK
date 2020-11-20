@@ -12,7 +12,7 @@ import Random from "../../support/tester/Random";
 interface LogoutEmailTestData {
   existingPushDeviceId: string | null;
   emailDeviceId: string;
-  emailAuthHash: string;
+  identifierAuthHash: string;
 }
 
 async function logoutEmailTest(
@@ -31,9 +31,9 @@ async function logoutEmailTest(
   }
 
   /* If test data has an email auth has, fake the auth hash */
-  if (testData.emailAuthHash) {
+  if (testData.identifierAuthHash) {
     const emailProfile = await Database.getEmailProfile();
-    emailProfile.emailAuthHash = testData.emailAuthHash;
+    emailProfile.identifierAuthHash = testData.identifierAuthHash;
     await Database.setEmailProfile(emailProfile);
   }
 
@@ -48,7 +48,7 @@ async function logoutEmailTest(
     t,
     testData.existingPushDeviceId,
     testData.emailDeviceId,
-    testData.emailAuthHash,
+    testData.identifierAuthHash,
     Random.getRandomUuid(),
   );
 
@@ -59,7 +59,7 @@ async function expectEmailLogoutRequest(
   t: ExecutionContext,
   pushDevicePlayerId: string | null,
   emailId: string,
-  emailAuthHash: string,
+  identifierAuthHash: string,
   newUpdatedPlayerId: string
 ) {
   nock('https://onesignal.com')
@@ -70,7 +70,7 @@ async function expectEmailLogoutRequest(
         JSON.stringify({
           app_id: OneSignal.context.appConfig.appId,
           parent_player_id: emailId ? emailId : undefined,
-          email_auth_hash: emailAuthHash ? emailAuthHash : undefined
+          identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
         })
       );
       return { "success":true, "id": newUpdatedPlayerId };
@@ -81,7 +81,7 @@ test("logoutEmail returns if not subscribed to web push", async t => {
   const testData = {
     existingPushDeviceId: null,
     emailDeviceId: Random.getRandomUuid(),
-    emailAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
+    identifierAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
   }
 
   await logoutEmailTest(t, testData);
@@ -89,14 +89,14 @@ test("logoutEmail returns if not subscribed to web push", async t => {
   // Confirm email details have not been erased
   const emailProfile = await Database.getEmailProfile();
   t.deepEqual(emailProfile.emailId, testData.emailDeviceId);
-  t.deepEqual(emailProfile.emailAuthHash, testData.emailAuthHash);
+  t.deepEqual(emailProfile.identifierAuthHash, testData.identifierAuthHash);
 });
 
 test("logoutEmail calls POST email_logout and clears local data", async t => {
   const testData = {
     existingPushDeviceId: Random.getRandomUuid(),
     emailDeviceId: Random.getRandomUuid(),
-    emailAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
+    identifierAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
   }
   await logoutEmailTest(t, testData);
 
@@ -105,7 +105,7 @@ test("logoutEmail calls POST email_logout and clears local data", async t => {
   const finalEmailProfile = await Database.getEmailProfile();
   t.deepEqual(finalPushDeviceId, testData.existingPushDeviceId ? testData.existingPushDeviceId : null);
   t.deepEqual(finalEmailProfile.emailAddress, undefined);
-  t.deepEqual(finalEmailProfile.emailAuthHash, undefined);
+  t.deepEqual(finalEmailProfile.identifierAuthHash, undefined);
   t.deepEqual(finalEmailProfile.emailId, undefined);
 });
 
