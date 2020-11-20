@@ -118,7 +118,7 @@ export class UpdateManager {
     const deviceId: string = await this.getDeviceId();
     const payload = {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
-      identifier_auth_hash: Utils.getValueOrDefault(authHash, undefined)
+      external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
     };
 
     await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
