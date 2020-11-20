@@ -16,21 +16,15 @@ export class EmailProfile implements Serializable {
    * The SHA-256 hash of the app's auth key and plain text email address in hex format.
    */
   public emailAuthHash: string | null | undefined;
-  /**
-   * The SHA-256 hash of the app's auth key and plain text email address in hex format.
-   */
-  public identifierAuthHash: string | null | undefined;
 
-  constructor(emailId?: string, emailAddress?: string, emailAuthHash?: string, identifierAuthHash?: string) {
+  constructor(emailId?: string, emailAddress?: string, emailAuthHash?: string) {
     this.emailId = emailId;
     this.emailAddress = emailAddress;
     this.emailAuthHash = emailAuthHash;
-    this.identifierAuthHash = identifierAuthHash;
   }
 
   serialize() {
     return {
-      identifierAuthHash: this.identifierAuthHash,
       emailAuthHash: this.emailAuthHash,
       emailAddress: this.emailAddress,
       emailId: this.emailId,
@@ -42,7 +36,6 @@ export class EmailProfile implements Serializable {
       bundle.emailId,
       bundle.emailAddress,
       bundle.emailAuthHash,
-      bundle.identifierAuthHash
     );
   }
 }
