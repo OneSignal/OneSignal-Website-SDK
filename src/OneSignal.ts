@@ -99,11 +99,11 @@ export default class OneSignal {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
 
-    const isIdentifierAuthHashDefined = options && options.identifierAuthHash;
-    const isEmailAuthHashDefined      = options && options.emailAuthHash;
+    const isIdentifierAuthHashDefined = options && !!options.identifierAuthHash;
+    const isEmailAuthHashDefined      = options && !!options.emailAuthHash;
 
     const authHash = isIdentifierAuthHashDefined ? options.identifierAuthHash :
-    (isEmailAuthHashDefined ? options.emailAuthHash : null);
+    (isEmailAuthHashDefined ? options.emailAuthHash : undefined);
 
     if (!!authHash) {
       if (isIdentifierAuthHashDefined && isEmailAuthHashDefined) {
