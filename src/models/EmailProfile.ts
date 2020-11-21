@@ -17,7 +17,7 @@ export class EmailProfile implements Serializable {
    */
   public identifierAuthHash: string | null | undefined;
 
-  constructor(emailId?: string, emailAddress?: string, identifierAuthHash?: string) {
+  constructor(emailId?: string | null, emailAddress?: string, identifierAuthHash?: string) {
     this.emailId = emailId;
     this.emailAddress = emailAddress;
     this.identifierAuthHash = identifierAuthHash;
