@@ -55,8 +55,8 @@ import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfo
 import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
-import { OutcomeAttributionType, SentUniqueOutcome } from "./models/Outcomes";
-import { DelayedPromptType, AppUserConfigNotifyButton } from './models/Prompts';
+import { OutcomeAttributionType } from "./models/Outcomes";
+import { AppUserConfigNotifyButton } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 
 export default class OneSignal {
