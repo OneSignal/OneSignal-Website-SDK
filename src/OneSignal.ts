@@ -92,26 +92,45 @@ export default class OneSignal {
    * @PublicApi
    */
   static async setEmail(email: string, options?: SetEmailOptions): Promise<string> {
-    if (!email)
+    if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
-    if (!isValidEmail(email))
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
-    // identifierAuthHash is expected to be a 64 character SHA-256 hex hash
-    if (options && options.identifierAuthHash && options.identifierAuthHash.length !== 64) {
-      throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
     }
-    await awaitOneSignalInitAndSupported();
+    if (!isValidEmail(email)) {
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
+    }
+
+    const isIdentifierAuthHashDefined = options && options.identifierAuthHash;
+    const isEmailAuthHashDefined      = options && options.emailAuthHash;
+
+    const authHash = isIdentifierAuthHashDefined ? options.identifierAuthHash :
+    (isEmailAuthHashDefined ? options.emailAuthHash : null);
+
+    if (!!authHash) {
+      if (isIdentifierAuthHashDefined && isEmailAuthHashDefined) {
+        Log.error("Both `emailAuthHash` and `identifierAuthHash` provided.");
+        throw new InvalidArgumentError('options', InvalidArgumentReason.Malformed);
+      }
+      // identifierAuthHash / emailAuthHash are expected to be a 64 character SHA-256 hex hash
+      const isIdentifierAuthHashMalformed = isIdentifierAuthHashDefined && options.identifierAuthHash.length !== 64;
+      const isEmailAuthHashIsMalformed    = isEmailAuthHashDefined && options.emailAuthHash.length !== 64;
+
+      if ( isIdentifierAuthHashMalformed ) {
+        throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
+      }
+
+      if ( isEmailAuthHashIsMalformed ) {
+        throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
+      }
+    }
+
     logMethodCall('setEmail', email, options);
+    await awaitOneSignalInitAndSupported();
 
     const appConfig = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
     const existingEmailProfile = await Database.getEmailProfile();
 
-    const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email);
-
-    if (options && options.identifierAuthHash) {
-      newEmailProfile.identifierAuthHash = options.identifierAuthHash;
-    }
+    const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email, authHash);
 
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
     if (isExistingEmailSaved) {
