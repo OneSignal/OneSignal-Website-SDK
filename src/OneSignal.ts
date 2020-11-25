@@ -91,7 +91,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async setEmail(email: string, options?: SetEmailOptions): Promise<string> {
+  static async setEmail(email: string, options?: SetEmailOptions): Promise<string|null> {
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -131,8 +131,8 @@ export default class OneSignal {
     const existingEmailProfile = await Database.getEmailProfile();
 
     const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email, authHash);
-
     const isExistingEmailSaved = !!existingEmailProfile.emailId;
+
     if (isExistingEmailSaved) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
       newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
@@ -149,35 +149,34 @@ export default class OneSignal {
       );
     }
 
+    // If we are subscribed to web push
     const isExistingPushRecordSaved = deviceId;
-    if (
-      /* If we are subscribed to web push */
-      isExistingPushRecordSaved &&
-      (
-        /* And if we previously saved an email ID and it's different from the new returned ID */
-        (
-          !isExistingEmailSaved ||
-          existingEmailProfile.emailId !== newEmailProfile.emailId
-        ) ||
-        /* Or if we previously saved an email and the email changed */
-        (
-          !existingEmailProfile.emailAddress ||
-          newEmailProfile.emailAddress !== existingEmailProfile.emailAddress
-        )
-      )
-    ) {
-      // Then update the push device record with a reference to the new email ID and email address
-      await OneSignalApi.updatePlayer(
-        appConfig.appId,
-        deviceId,
-        {
-          parent_player_id: newEmailProfile.emailId,
-          email: newEmailProfile.emailAddress
-        }
-      );
+    // And if we previously saved an email ID and it's different from the new returned ID
+    const emailPreviouslySavedAndDifferent = !isExistingEmailSaved ||
+      existingEmailProfile.emailId !== newEmailProfile.emailId;
+    // Or if we previously saved an email and the email changed
+    const emailPreviouslySavedAndChanged = !existingEmailProfile.emailAddress ||
+      newEmailProfile.emailAddress !== existingEmailProfile.emailAddress;
+
+    if (!!deviceId && isExistingPushRecordSaved && (emailPreviouslySavedAndDifferent || emailPreviouslySavedAndChanged))
+      {
+        const authHash = await OneSignal.database.getExternalUserIdAuthHash();
+        // Then update the push device record with a reference to the new email ID and email address
+        await OneSignalApi.updatePlayer(
+          appConfig.appId,
+          deviceId,
+          {
+            parent_player_id: newEmailProfile.emailId,
+            email: newEmailProfile.emailAddress,
+            external_user_id_auth: authHash
+          }
+        );
     }
 
-    await Database.setEmailProfile(newEmailProfile);
+    // email record update / create call returned successfully
+    if (!!newEmailProfile.emailId) {
+      await Database.setEmailProfile(newEmailProfile);
+    }
     return newEmailProfile.emailId;
   }
 
