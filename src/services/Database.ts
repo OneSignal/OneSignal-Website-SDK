@@ -213,14 +213,27 @@ export default class Database {
     return await this.get<string>("Ids", "externalUserId");
   }
 
-  async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
-    const emptyString: string = "";
-    const externalIdToSave = Utils.getValueOrDefault(externalUserId, emptyString);
-    if (externalIdToSave === emptyString) {
-      await this.remove("Ids", "externalUserId");
-    } else {
-      await this.put("Ids", { type: "externalUserId", id: externalIdToSave });
-    }
+  async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
+    return await this.get<string>("Ids", "externalUserIdAuthHash");
+  }
+
+  async setExternalUserId(externalUserId: string | null, authHash: string | null):
+    Promise<void> {
+      const emptyString: string = "";
+      const externalIdToSave = Utils.getValueOrDefault(externalUserId, emptyString);
+      const authHashToSave   = Utils.getValueOrDefault(authHash, emptyString);
+
+      if (externalIdToSave === emptyString) {
+        await this.remove("Ids", "externalUserId");
+      } else {
+        await this.put("Ids", { type: "externalUserId", id: externalIdToSave });
+      }
+
+      if (authHashToSave === emptyString) {
+        await this.remove("Ids", "externalUserIdAuthHash");
+      } else {
+        await this.put("Ids", { type: "externalUserIdAuthHash", id: authHashToSave });
+      }
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
@@ -511,6 +524,10 @@ export default class Database {
     return await Database.singletonInstance.getExternalUserId();
   }
 
+  static async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
+    return await Database.singletonInstance.getExternalUserIdAuthHash();
+  }
+
   static async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
     return await Database.singletonInstance.getLastNotificationClicked(appId);
   }
@@ -539,8 +556,9 @@ export default class Database {
     return await Database.singletonInstance.getNotificationReceivedById(notificationId);
   }
 
-  static async setExternalUserId(externalUserId: string | undefined | null): Promise<void> {
-    await Database.singletonInstance.setExternalUserId(externalUserId);
+  static async setExternalUserId(externalUserId?: string | null, authHash?: string | null):
+  Promise<void> {
+    await Database.singletonInstance.setExternalUserId(externalUserId, authHash);
   }
 
   static async setDeviceId(deviceId: string | null): Promise<void> {
