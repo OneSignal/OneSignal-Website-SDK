@@ -553,10 +553,11 @@ export default class OneSignal {
     if (!isExistingUser) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
-    await Promise.all([
-      OneSignal.database.setExternalUserId(externalUserId),
-      OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash),
-    ]);
+
+    const response = await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash);
+    if (response && response.success) {
+      OneSignal.database.setExternalUserId(externalUserId, authHash);
+    }
   }
 
    /**
