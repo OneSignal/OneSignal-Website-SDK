@@ -26,7 +26,9 @@ test("setExternalUserId - executes after OneSignal is fully initialized", async 
 
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
 
   let isPromiseDone = false;
   const promise = OneSignal.setExternalUserId(externalUserId).then(() => { isPromiseDone = true; });
@@ -45,7 +47,9 @@ test("setExternalUserId - does not execute until user is registered with OneSign
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
   sinonSandbox.stub(OneSignalUtils, "logMethodCall").resolves();
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
 
   let isPromiseDone = false;
   const promise = OneSignal.setExternalUserId(externalUserId).then(() => { isPromiseDone = true; });
@@ -63,7 +67,9 @@ test("setExternalUserId - performs the update if user is registered with OneSign
   sinonSandbox.stub(Utils, "awaitSdkEvent").resolves();
   sinon.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
 
   await OneSignal.setExternalUserId(externalUserId);
   t.is(databaseSpy.calledOnce, true);
@@ -122,7 +128,9 @@ test("removeExternalUserId - executes after OneSignal is fully initialized", asy
 
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
 
   let isPromiseDone = false;
   const promise = OneSignal.removeExternalUserId().then(() => { isPromiseDone = true; });
@@ -139,7 +147,9 @@ test("removeExternalUserId - executes after OneSignal is fully initialized", asy
 test("removeExternalUserId - does not try to remove external user id if not registered with OneSignal", async t => {
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
 
   await OneSignal.removeExternalUserId();
   t.is(databaseSpy.notCalled, true);
@@ -149,7 +159,9 @@ test("removeExternalUserId - does not try to remove external user id if not regi
 test("removeExternalUserId - removes the value", async t => {
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId");
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
 
   await OneSignal.removeExternalUserId();
   t.is(databaseSpy.calledOnce, true);
