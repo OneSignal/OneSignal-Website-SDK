@@ -147,7 +147,8 @@ async function expectPushRecordUpdateRequest(
   pushDevicePlayerId: string,
   newEmailId: string,
   emailAddress: string,
-  newUpdatedPlayerId: string
+  newUpdatedPlayerId: string,
+  externalUserIdAuth?: string | null
 ) {
   nock('https://onesignal.com')
     .put(`/api/v1/players/${pushDevicePlayerId}`)
@@ -158,6 +159,7 @@ async function expectPushRecordUpdateRequest(
           app_id: OneSignal.context.appConfig.appId,
           parent_player_id: newEmailId ? newEmailId : undefined,
           email: emailAddress,
+          external_user_id_auth_hash: externalUserIdAuth
         })
       );
       return { success : true, id : newUpdatedPlayerId };
@@ -171,6 +173,7 @@ interface SetEmailTestData {
   identifierAuthHash: string | undefined;
   existingEmailId: string | null;
   newEmailId: string; /* Returned by the create or update email record call */
+  externalUserIdAuthHash?: string | null;
 }
 
 async function setEmailTest(
@@ -247,6 +250,7 @@ async function setEmailTest(
       testData.newEmailId,
       testData.newEmailAddress,
       Random.getRandomUuid(),
+      testData.externalUserIdAuthHash
     );
   }
 
@@ -323,7 +327,8 @@ test("Existing push subscription, no email, first setEmail call", async t => {
     existingPushDeviceId: Random.getRandomUuid(),
     identifierAuthHash: undefined,
     existingEmailId: null,
-    newEmailId: Random.getRandomUuid()
+    newEmailId: Random.getRandomUuid(),
+    externalUserIdAuthHash: null
   };
   await setEmailTest(t, testData);
 });
@@ -350,6 +355,7 @@ test("Existing push subscription, existing different email, updating setEmail ca
     identifierAuthHash: undefined,
     existingEmailId: Random.getRandomUuid(),
     newEmailId: Random.getRandomUuid(),
+    externalUserIdAuthHash: null
   };
   await setEmailTest(t, testData);
 });
@@ -364,6 +370,7 @@ test(
       identifierAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
       existingEmailId: Random.getRandomUuid(),
       newEmailId: Random.getRandomUuid(),
+      externalUserIdAuthHash: null
     };
     await setEmailTest(t, testData);
 });
