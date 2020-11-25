@@ -6,6 +6,7 @@ import OneSignalUtils from "../../../src/utils/OneSignalUtils";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import * as Utils from "../../../src/utils";
 import Database from "../../../src/services/Database";
+import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const externalUserId = "external_email@example.com";
@@ -67,6 +68,29 @@ test("setExternalUserId - performs the update if user is registered with OneSign
   await OneSignal.setExternalUserId(externalUserId);
   t.is(databaseSpy.calledOnce, true);
   t.is(updateManagerSpy.calledOnce, true);
+});
+
+test("setExternalUserId - throws error if auth hash is not formatted properly", async t => {
+  sinonSandbox.stub(Utils, "awaitSdkEvent").resolves();
+  sinon.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
+  sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
+  sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  await t.throwsAsync(
+    async () => OneSignal.setExternalUserId(externalUserId, "badAuthCode"),
+    { instanceOf: InvalidArgumentError }
+  );
+});
+
+test("setExternalUserId - doesn't throw error if auth hash is formatted properly", async t => {
+  sinonSandbox.stub(Utils, "awaitSdkEvent").resolves();
+  sinon.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(true);
+  sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
+  sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves();
+  await t.notThrows(
+    async () => {
+      OneSignal.setExternalUserId(externalUserId, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    }
+  );
 });
 
 test("getExternalUserId - executes after OneSignal is fully initialized", async t => {
