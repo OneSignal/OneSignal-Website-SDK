@@ -21,6 +21,7 @@ import { Notification } from "./models/Notification";
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import { SendTagsOptions } from './models/SendTagsOptions';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
 import SubscriptionModal from './modules/frames/SubscriptionModal';
@@ -497,9 +498,12 @@ export default class OneSignal {
     }
     // After the user subscribes, he will have a device ID, so get it again
     const { deviceId: newDeviceId } = await Database.getSubscription();
-    await OneSignalApi.updatePlayer(appId, newDeviceId!, {
-      tags: tags
-    });
+    const authHash = await Database.getExternalUserIdAuthHash();
+    const options : SendTagsOptions = { tags };
+    if (!!authHash) {
+      options.external_user_id_auth_hash = authHash;
+    }
+    await OneSignalApi.updatePlayer(appId, newDeviceId!, options);
     executeCallback(callback, tags);
     return tags;
   }
