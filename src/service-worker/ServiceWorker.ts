@@ -381,7 +381,10 @@ export class ServiceWorker {
    * @returns {Promise}
    */
   static async getActiveClients(): Promise<Array<OSWindowClient>> {
-    const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const windowClients: ReadonlyArray<Client> = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
     const activeClients: Array<OSWindowClient> = [];
 
     for (const client of windowClients) {
@@ -432,12 +435,12 @@ export class ServiceWorker {
      * if https -> getActiveClients -> check for the first focused
      * unfortunately, not enough for safari, it always returns false for focused state of a client
      * have to workaround it with messaging to the client.
-     * 
+     *
      * if http, also have to workaround with messaging:
      *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
      */
     if (options.isHttps) {
-      const windowClients: Client[] = await self.clients.matchAll(
+      const windowClients: ReadonlyArray<Client> = await self.clients.matchAll(
         { type: "window", includeUncontrolled: false }
       );
 
@@ -457,7 +460,7 @@ export class ServiceWorker {
 
   static async checkIfAnyClientsFocusedAndUpdateSession(
     event: ExtendableMessageEvent,
-    windowClients: Client[],
+    windowClients: ReadonlyArray<Client>,
     sessionInfo: DeactivateSessionPayload
   ): Promise<void> {
     const timestamp = new Date().getTime();
