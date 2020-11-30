@@ -103,7 +103,7 @@ export default class PermissionManager {
    * standard.
    */
   private getW3cNotificationPermission(): NotificationPermission {
-    return window.Notification.permission as NotificationPermission;
+    return Notification.permission as NotificationPermission;
   }
 
   /**

@@ -333,7 +333,7 @@ export class SubscriptionManager {
     */
     if (
       SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
-      window.Notification.permission === NotificationPermission.Default
+      Notification.permission === NotificationPermission.Default
     ) {
       await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
       const permission = await SubscriptionManager.requestPresubscribeNotificationPermission();
