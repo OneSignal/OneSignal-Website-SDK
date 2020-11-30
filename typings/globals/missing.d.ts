@@ -46,6 +46,7 @@ interface Client {
 
 // Notification.requestPermission - Added in TypeScript 3.0.0
 interface Notification {
+  readonly permission: NotificationPermission;
   requestPermission(callback?: NotificationPermissionCallback): Promise<NotificationPermission>;
 }
 
