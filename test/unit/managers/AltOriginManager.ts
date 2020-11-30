@@ -1,12 +1,25 @@
 import '../../support/polyfills/polyfills';
-import test from "ava";
+import test, { TestInterface } from "ava";
 import AltOriginManager from '../../../src/managers/AltOriginManager';
-import { EnvironmentKind } from '../../../src/models/EnvironmentKind'
+import { EnvironmentKind } from '../../../src/models/EnvironmentKind';
 import sinon from 'sinon';
 import ProxyFrameHost from '../../../src/modules/frames/ProxyFrameHost';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
+import { AppConfig } from '../../../src/models/AppConfig';
 
-test(`should get correct canonical subscription URL for development environment`, async t => {
+interface AltOriginContext {
+  appConfig?: AppConfig;
+  subdomainOneSignalHost?: string;
+  subdomainOsTcHost?: string;
+  stubIsSubscribedToOneSignalImpl: () => boolean;
+  stubIsSubscribedToOsTcImpl: () => boolean;
+  stubIsSubscribedToNoneImpl: () => boolean;
+  stubIsSubscribedToBothImpl: () => boolean;
+}
+
+const testWithAltOriginContext = test as TestInterface<AltOriginContext>;
+
+testWithAltOriginContext(`should get correct canonical subscription URL for development environment`, async t => {
   const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;
@@ -22,9 +35,9 @@ test(`should get correct canonical subscription URL for development environment`
   t.is(devUrls[0].host, new URL('https://test.localhost:3001').host);
 });
 
-test(`should get correct canonical subscription URL for staging environment`, async t => {
+testWithAltOriginContext(`should get correct canonical subscription URL for staging environment`, async t => {
   const stagingDomain = "staging.onesignal.com";
-  (<any>global).__API_ORIGIN__ = stagingDomain; 
+  (<any>global).__API_ORIGIN__ = stagingDomain;
   const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;
@@ -44,7 +57,7 @@ test(`should get correct canonical subscription URL for staging environment`, as
 });
 
 
-test(`should get correct canonical subscription URL when api.staging.onesignal.com is used`, async t => {
+testWithAltOriginContext(`should get correct canonical subscription URL when api.staging.onesignal.com is used`, async t => {
   const stagingDomain = "staging.onesignal.com";
   (<any>global).__API_ORIGIN__ = `api.${stagingDomain}`; 
   const config = TestEnvironment.getFakeAppConfig();
@@ -59,7 +72,7 @@ test(`should get correct canonical subscription URL when api.staging.onesignal.c
   t.is(stagingUrlsOsTcDomain[0].host, new URL(`https://test.${stagingDomain}`).host);
 });
 
-test(`should get correct canonical subscription URL for production environment`, async t => {
+testWithAltOriginContext(`should get correct canonical subscription URL for production environment`, async t => {
   const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;
@@ -70,14 +83,14 @@ test(`should get correct canonical subscription URL for production environment`,
   t.is(prodUrlsOsTcDomain[1].host, new URL('https://test.onesignal.com').host);
 
   config.httpUseOneSignalCom = false;
-  
+
   const prodUrls = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Production);
   t.is(prodUrls.length, 1);
   t.is(prodUrls[0].host, new URL('https://test.os.tc').host);
 });
 
-test(`should get correct canonical subscription URL for production environment with api. prefix`, async t => {
-  (<any>global).__API_ORIGIN__ = `api.onesignal.com`; 
+testWithAltOriginContext(`should get correct canonical subscription URL for production environment with api. prefix`, async t => {
+  (<any>global).__API_ORIGIN__ = `api.onesignal.com`;
   const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;
@@ -88,7 +101,7 @@ test(`should get correct canonical subscription URL for production environment w
   t.is(prodUrlsOsTcDomain[1].host, new URL('https://test.onesignal.com').host);
 
   config.httpUseOneSignalCom = false;
-  
+
   const prodUrls = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Production);
   t.is(prodUrls.length, 1);
   t.is(prodUrls[0].host, new URL('https://test.os.tc').host);
@@ -124,12 +137,14 @@ function setupDiscoverAltOriginTest(t: any) {
       this.url.host === t.context.subdomainOsTcHost) {
       return true;
     } else return false;
-  }
+  };
 }
 
-test(`should discover alt origin to be subdomain.onesignal.com if user is already subscribed there`, async t => {
+testWithAltOriginContext(`should discover alt origin to be subdomain.onesignal.com if user is already subscribed there`, async t => {
   setupDiscoverAltOriginTest(t);
   const { appConfig } = t.context;
+  if (!appConfig) { return; }
+
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToOneSignalImpl);
   const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
@@ -142,9 +157,11 @@ test(`should discover alt origin to be subdomain.onesignal.com if user is alread
   stubLoad.restore();
 });
 
-test(`should discover alt origin to be subdomain.os.tc if user is not subscribed to onesignal.com but is subscribed to os.tc`, async t => {
+testWithAltOriginContext(`should discover alt origin to be subdomain.os.tc if user is not subscribed to onesignal.com but is subscribed to os.tc`, async t => {
   setupDiscoverAltOriginTest(t);
   const { appConfig } = t.context;
+  if (!appConfig) { return; }
+
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToOsTcImpl);
   const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
@@ -157,9 +174,11 @@ test(`should discover alt origin to be subdomain.os.tc if user is not subscribed
   stubLoad.restore();
 });
 
-test(`should discover alt origin to be subdomain.os.tc if user is not subscribed to either onesignal.com or os.tc`, async t => {
+testWithAltOriginContext(`should discover alt origin to be subdomain.os.tc if user is not subscribed to either onesignal.com or os.tc`, async t => {
   setupDiscoverAltOriginTest(t);
   const { appConfig } = t.context;
+  if (!appConfig) { return; }
+
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToNoneImpl);
   const stubRemoveDuplicatedAltOriginSubscription = sinon.stub(AltOriginManager, 'removeDuplicatedAltOriginSubscription').resolves(undefined);
@@ -172,9 +191,11 @@ test(`should discover alt origin to be subdomain.os.tc if user is not subscribed
   stubLoad.restore();
 });
 
-test(`should discover alt origin to be subdomain.os.tc if user is subscribed to both onesignal.com and os.tc`, async t => {
+testWithAltOriginContext(`should discover alt origin to be subdomain.os.tc if user is subscribed to both onesignal.com and os.tc`, async t => {
   setupDiscoverAltOriginTest(t);
   const { appConfig } = t.context;
+  if (!appConfig) { return; }
+
   const stubLoad = sinon.stub(ProxyFrameHost.prototype, 'load').resolves(undefined);
   const stubIsSubscribed = sinon.stub(ProxyFrameHost.prototype, 'isSubscribed').callsFake(t.context.stubIsSubscribedToBothImpl);
   const stubUnsubscribeFromPush = sinon.stub(ProxyFrameHost.prototype, 'unsubscribeFromPush').resolves(undefined);
