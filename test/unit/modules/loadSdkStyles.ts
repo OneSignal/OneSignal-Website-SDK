@@ -1,12 +1,21 @@
 import "../../support/polyfills/polyfills";
-import test from "ava";
+import anyTest, { TestInterface } from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
-import sinon from 'sinon';
+import sinon, { SinonStub } from 'sinon';
 import Bell from "../../../src/bell/Bell";
 import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";
 import MockLauncher from "../../support/mocks/MockLauncher";
 import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
+import { AppConfig } from '../../../src/models/AppConfig';
+
+interface LoadSdkContext {
+  appConfig: AppConfig;
+  loadSdkStylesheet: SinonStub;
+  load: Function;
+}
+
+const test = anyTest as TestInterface<LoadSdkContext>;
 
 test.beforeEach(t => {
   const appConfig = TestEnvironment.getFakeAppConfig();
