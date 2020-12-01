@@ -1,17 +1,17 @@
 import '../../support/polyfills/polyfills';
-import test from 'ava';
+import anyTest, { TestInterface } from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
-import MainHelper from '../../../src/helpers/MainHelper';
-import sinon from 'sinon';
-import SubscriptionHelper from '../../../src/helpers/SubscriptionHelper';
-import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
-import { AppConfig } from '../../../src/models/AppConfig';
-
-import Context from '../../../src/models/Context';
-import { PageViewManager } from '../../../src/managers/PageViewManager';
 import Postmam from '../../../src/Postmam';
-import { contains } from '../../../src/utils';
+
+interface PostmamContext{
+  originalMessageChannel: MessageChannel;
+  expectedSafeHttpOrigins: string[];
+  expectedSafeHttpsOrigins: string[];
+  expectedSafeHttpOriginsForIrregularSubdomains: string[];
+  expectedSafeHttpOriginsForReallyIrregularSubdomains: string[];
+}
+
+const test = anyTest as TestInterface<PostmamContext>;
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
