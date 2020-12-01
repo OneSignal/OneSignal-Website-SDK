@@ -6,6 +6,7 @@ export class MockEvent implements Event {
   readonly bubbles: boolean = true;
   cancelBubble: boolean = false;
   readonly cancelable: boolean = true;
+  readonly composed: boolean = false;
   readonly currentTarget: EventTarget | null = null;
   readonly defaultPrevented: boolean = false;
   readonly eventPhase: number = 0;
@@ -19,6 +20,10 @@ export class MockEvent implements Event {
 
   constructor(typeArg: string, _eventInitDict?: EventInit) {
     this.type = typeArg;
+  }
+
+  composedPath(): EventTarget[] {
+    return [];
   }
 
   deepPath(): EventTarget[] {
