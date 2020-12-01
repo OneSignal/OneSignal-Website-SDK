@@ -5,7 +5,7 @@ import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
 export class MockServiceWorkerContainer implements ServiceWorkerContainer {
   controller: ServiceWorker | null;
   oncontrollerchange: ((this: ServiceWorkerContainer, ev: Event) => any) | null;
-  onmessage: ((this: ServiceWorkerContainer, ev: ServiceWorkerMessageEvent) => any) | null;
+  onmessage: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
   onmessageerror: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
   readonly ready: Promise<ServiceWorkerRegistration>;
 

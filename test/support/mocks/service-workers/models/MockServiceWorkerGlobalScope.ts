@@ -23,6 +23,7 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
   readonly console: Console;
   readonly indexedDB: IDBFactory;
   readonly isSecureContext: boolean;
+  readonly origin: string;
   readonly location: WorkerLocation;
   readonly msIndexedDB: IDBFactory;
   readonly navigator: WorkerNavigator = new MockWorkerNavigator(
@@ -33,22 +34,29 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
       "Gecko",
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36"
     );
+  readonly serviceWorker: ServiceWorker;
+  readonly crypto: Crypto;
 
-
+  onlanguagechange: ((this: WorkerGlobalScope, ev: Event) => any) | null = null;
+  onoffline: ((this: WorkerGlobalScope, ev: Event) => any) | null = null;
   onactivate: ((this: ServiceWorkerGlobalScope, ev: ExtendableEvent) => any) | null = null;
   onerror: ((this: WorkerGlobalScope, ev: ErrorEvent) => any) | null = null;
   onfetch: ((this: ServiceWorkerGlobalScope, ev: FetchEvent) => any) | null = null;
   oninstall: ((this: ServiceWorkerGlobalScope, ev: ExtendableEvent) => any) | null = null;
   onmessage: ((this: ServiceWorkerGlobalScope, ev: ExtendableMessageEvent) => any) | null = null;
+  ononline: ((this: WorkerGlobalScope, ev: Event) => any) | null = null;
   onmessageerror: ((this: ServiceWorkerGlobalScope, ev: MessageEvent) => any) | null = null;
   onnotificationclick: ((this: ServiceWorkerGlobalScope, ev: NotificationEvent) => any) | null = null;
   onnotificationclose: ((this: ServiceWorkerGlobalScope, ev: NotificationEvent) => any) | null = null;
+  onrejectionhandled: ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any) | null = null;
   onpush: ((this: ServiceWorkerGlobalScope, ev: PushEvent) => any) | null = null;
   onpushsubscriptionchange: ((this: ServiceWorkerGlobalScope, ev: PushSubscriptionChangeEvent) => any) | null = null;
   onsync: ((this: ServiceWorkerGlobalScope, ev: SyncEvent) => any) | null = null;
+  onunhandledrejection: ((this: WorkerGlobalScope, ev: PromiseRejectionEvent) => any) | null = null;
+  queueMicrotask(callback: VoidFunction): void {}
 
   readonly performance: Performance;
-  readonly self: WorkerGlobalScope;
+  readonly self: WorkerGlobalScope & typeof globalThis;
 
   addEventListener<K extends keyof ServiceWorkerGlobalScopeEventMap>(type: K, listener: (this: ServiceWorkerGlobalScope, ev: ServiceWorkerGlobalScopeEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
   addEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | AddEventListenerOptions): void;

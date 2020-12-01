@@ -2,32 +2,49 @@
 // NOTE: permission & requestPermission should be static however this was defined wrong in TS 2.x
 //       This ws later fixed in newer TypeScript versions
 export default class MockNotification implements Notification {
-  readonly body: string | null;
+  readonly body: string;
   readonly data: any;
   readonly dir: NotificationDirection;
-  readonly icon: string | null;
-  readonly lang: string | null;
+  readonly icon: string;
+  readonly image: string;
+  readonly renotify: boolean;
+  readonly requireInteraction: boolean;
+  readonly vibrate: number[];
+  readonly silent: boolean;
+  readonly timestamp: number;
+  readonly lang: string;
+  readonly actions: NotificationAction[];
+  readonly badge: string;
   onclick: ((this: Notification, ev: Event) => any) | null;
   onclose: ((this: Notification, ev: Event) => any) | null;
   onerror: ((this: Notification, ev: Event) => any) | null;
   onshow: ((this: Notification, ev: Event) => any) | null;
   readonly permission: NotificationPermission;
-  readonly tag: string | null;
+  readonly tag: string;
   readonly title: string;
 
   constructor(title: string, options?: NotificationOptions) {
     this.title = title;
     this.data = options && options.data;
 
-    this.body = null;
+    this.body = "";
     this.dir = "auto";
-    this.icon = null;
-    this.lang = null;
+    this.icon = "";
+    this.image = "";
+    this.badge = "";
+    this.lang = "";
+    this.renotify = false;
+    this.requireInteraction = false;
+    this.silent = false;
+    this.timestamp = 0;
+    this.vibrate = [];
+    this.actions = [];
+    this.actions = [];
     this.onclick = null;
     this.onclose = null;
     this.onerror = null;
     this.onshow = null;
-    this.tag = null;
+    this.tag = "";
     this.permission = "granted";
   }
 

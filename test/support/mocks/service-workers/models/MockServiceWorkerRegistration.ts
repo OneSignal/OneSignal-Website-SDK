@@ -8,6 +8,8 @@ export class MockServiceWorkerRegistration implements ServiceWorkerRegistration 
   readonly pushManager: PushManager;
   readonly sync: SyncManager;
   readonly waiting: ServiceWorker | null;
+  navigationPreload: NavigationPreloadManager;
+  updateViaCache: ServiceWorkerUpdateViaCache;
 
   constructor() {
     this.active = null;

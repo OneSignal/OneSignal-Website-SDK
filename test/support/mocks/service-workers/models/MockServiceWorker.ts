@@ -22,7 +22,7 @@ export class MockServiceWorker implements ServiceWorker {
     throw new NotImplementedError();
   }
 
-  postMessage(_message: any, _transfer?: any[]): void {
+  postMessage(message: any, transfer: Array<Transferable> | PostMessageOptions): void {
     throw new NotImplementedError();
   }
 
