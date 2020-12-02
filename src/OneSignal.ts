@@ -587,10 +587,8 @@ export default class OneSignal {
       Log.warn("User is not subscribed, cannot remove external user id.");
       return;
     }
-    await Promise.all([
-      OneSignal.database.setExternalUserId(undefined),
-      OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined),
-    ]);
+    await OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined),
+    await OneSignal.database.setExternalUserId(undefined);
   }
 
   /**

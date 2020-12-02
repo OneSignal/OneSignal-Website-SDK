@@ -116,6 +116,11 @@ export class UpdateManager {
   public async sendExternalUserIdUpdate(externalUserId: string | undefined | null, authHash?: string | null )
   :Promise<any> {
     const deviceId: string = await this.getDeviceId();
+
+    if (!authHash) {
+      authHash = await Database.getExternalUserIdAuthHash();
+    }
+
     const payload = {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
