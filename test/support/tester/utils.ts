@@ -14,7 +14,11 @@ export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;
 }
 
-export function stubMessageChannel(t: ExecutionContext) {
+interface StubMessageChannelContext {
+  originalMessageChannel?: MessageChannel;
+}
+
+export function stubMessageChannel(t: ExecutionContext<StubMessageChannelContext>) {
   // Stub MessageChannel
   const fakeClass = class Test { };
   t.context.originalMessageChannel = (global as any).MessageChannel;
