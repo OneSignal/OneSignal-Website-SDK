@@ -6,13 +6,14 @@ import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { EmailProfile } from './models/EmailProfile';
 import OneSignalApiSW from "./OneSignalApiSW";
 import OneSignalApiShared from "./OneSignalApiShared";
+import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
 
 export default class OneSignalApi {
   static getPlayer(appId: string, playerId: string) {
     return OneSignalApiShared.getPlayer(appId, playerId);
   }
 
-  static updatePlayer(appId: string, playerId: string, options?: Object) {
+  static updatePlayer(appId: string, playerId: string, options?: UpdatePlayerOptions) {
     return OneSignalApiShared.updatePlayer(appId, playerId, options);
   }
 

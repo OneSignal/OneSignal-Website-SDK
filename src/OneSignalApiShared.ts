@@ -7,6 +7,7 @@ import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
 import Log from "./libraries/Log";
+import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {
@@ -15,7 +16,7 @@ export default class OneSignalApiShared {
     return OneSignalApiBase.get(`players/${playerId}?app_id=${appId}`);
   }
 
-  static updatePlayer(appId: string, playerId: string, options?: Object) {
+  static updatePlayer(appId: string, playerId: string, options?: UpdatePlayerOptions) {
     Utils.enforceAppId(appId);
     Utils.enforcePlayerId(playerId);
     return OneSignalApiBase.put(`players/${playerId}`, { app_id: appId, ...options });
