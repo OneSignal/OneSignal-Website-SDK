@@ -21,7 +21,7 @@ import { Notification } from "./models/Notification";
 import { NotificationActionButton } from './models/NotificationActionButton';
 import { NotificationPermission } from './models/NotificationPermission';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
-import { SendTagsOptions } from './models/SendTagsOptions';
+import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
 import SubscriptionModal from './modules/frames/SubscriptionModal';
@@ -486,10 +486,12 @@ export default class OneSignal {
 
     const emailProfile = await Database.getEmailProfile();
     if (emailProfile.emailId) {
-      await OneSignalApi.updatePlayer(appId, emailProfile.emailId, {
-        tags: tags,
-        identifier_auth_hash: emailProfile.identifierAuthHash,
-      });
+      const emailOptions : UpdatePlayerOptions = {
+        tags,
+        identifier_auth_hash: emailProfile.identifierAuthHash
+      };
+
+      await OneSignalApi.updatePlayer(appId, emailProfile.emailId, emailOptions);
     }
 
     const { deviceId } = await Database.getSubscription();
@@ -499,7 +501,8 @@ export default class OneSignal {
     // After the user subscribes, he will have a device ID, so get it again
     const { deviceId: newDeviceId } = await Database.getSubscription();
     const authHash = await Database.getExternalUserIdAuthHash();
-    const options : SendTagsOptions = { tags };
+    const options : UpdatePlayerOptions = { tags };
+
     if (!!authHash) {
       options.external_user_id_auth_hash = authHash;
     }
@@ -662,10 +665,17 @@ export default class OneSignal {
       Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
-    subscription.optedOut = !newSubscription;
-    await OneSignalApi.updatePlayer(appId, deviceId, {
+    const options : UpdatePlayerOptions = {
       notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
-    });
+    };
+
+    const authHash = await Database.getExternalUserIdAuthHash();
+    if (!!authHash) {
+      options.external_user_id_auth_hash = authHash;
+    }
+
+    subscription.optedOut = !newSubscription;
+    await OneSignalApi.updatePlayer(appId, deviceId, options);
     await Database.setSubscription(subscription);
     EventHelper.onInternalSubscriptionSet(subscription.optedOut);
     EventHelper.checkAndTriggerSubscriptionChanged();
