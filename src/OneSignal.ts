@@ -169,7 +169,7 @@ export default class OneSignal {
           {
             parent_player_id: newEmailProfile.emailId,
             email: newEmailProfile.emailAddress,
-            external_user_id_auth: authHash
+            external_user_id_auth_hash: authHash
           }
         );
     }
