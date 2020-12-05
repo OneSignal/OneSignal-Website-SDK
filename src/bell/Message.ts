@@ -66,7 +66,7 @@ export default class Message extends AnimatedElement {
 
   enqueue(message: string) {
     this.queued.push(decodeHtmlEntities(message));
-    return new Promise((resolve) => {
+    return new Promise<void>(resolve => {
       if (this.bell.badge.shown) {
         this.bell.badge.hide()
           .then(() => this.bell.badge.increment())

@@ -213,7 +213,7 @@ export default class Bell {
         return;
       }
 
-      new Promise(resolve => {
+      new Promise<void>(resolve => {
         // If a message is being shown
         if (this.message.queued.length > 0) {
           return this.message.dequeue().then((msg: any) => {

@@ -33,7 +33,7 @@ export function removeDomElement(selector: string) {
  * Helper method for public APIs that waits until OneSignal is initialized, rejects if push notifications are
  * not supported, and wraps these tasks in a Promise.
  */
-export async function awaitOneSignalInitAndSupported(): Promise<object> {
+export async function awaitOneSignalInitAndSupported(): Promise<object|void> {
   return new Promise(resolve => {
     if (!OneSignal.initialized)
       OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
@@ -288,7 +288,7 @@ export function unsubscribeFromPush() {
                        });
   } else {
     if (isUsingSubscriptionWorkaround()) {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, (reply: any) => {
           Log.debug("Unsubscribe from push succesfully remotely executed.");

@@ -67,7 +67,7 @@ test(
       }
     };
 
-    const testPromise = new Promise(resolve => {
+    const testPromise = new Promise<void>(resolve => {
       workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, () => {
         resolve();
       });

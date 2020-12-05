@@ -300,7 +300,7 @@ export class ServiceWorkerManager {
     const preInstallWorkerState = await this.getActiveState();
     await this.installAlternatingWorker();
 
-    await new Promise(async resolve => {
+    await new Promise<void>(async resolve => {
       const postInstallWorkerState = await this.getActiveState();
       Log.debug(
         "installWorker - Comparing pre and post states",
