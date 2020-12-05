@@ -231,7 +231,7 @@ export default class Bell {
         })
         .then(() => {
           this.hovering = false;
-        })
+        });
     });
 
     OneSignal.emitter.on(Bell.EVENTS.HOVERED, () => {

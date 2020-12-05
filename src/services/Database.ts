@@ -151,13 +151,14 @@ export default class Database {
         OneSignalUtils.isUsingSubscriptionWorkaround() &&
         SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT, 
-          [{table: table, keypath: keypath}], 
+          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT,
+          [{ table: table, keypath: keypath }],
           (reply: any) => {
             if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
               resolve();
             } else {
-              reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}), but did not get success response.`);
+              reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}),`+
+              `but did not get success response.`);
             }
           }
         );
@@ -185,7 +186,8 @@ export default class Database {
             if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
               resolve();
             } else {
-              reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}), but did not get success response.`);
+              reject(`(Database) Attempted remote IndexedDB `+
+              `remove(${table}, ${keypath}), but did not get success response.`);
             }
           }
         );
