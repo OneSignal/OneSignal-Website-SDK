@@ -381,7 +381,10 @@ export class ServiceWorker {
    * @returns {Promise}
    */
   static async getActiveClients(): Promise<Array<OSWindowClient>> {
-    const windowClients: Client[] = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const windowClients: ReadonlyArray<Client> = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
     const activeClients: Array<OSWindowClient> = [];
 
     for (const client of windowClients) {
@@ -437,7 +440,7 @@ export class ServiceWorker {
      *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
      */
     if (options.isHttps) {
-      const windowClients: Client[] = await self.clients.matchAll(
+      const windowClients: ReadonlyArray<Client> = await self.clients.matchAll(
         { type: "window", includeUncontrolled: false }
       );
 
@@ -457,7 +460,7 @@ export class ServiceWorker {
 
   static async checkIfAnyClientsFocusedAndUpdateSession(
     event: ExtendableMessageEvent,
-    windowClients: Client[],
+    windowClients: ReadonlyArray<Client>,
     sessionInfo: DeactivateSessionPayload
   ): Promise<void> {
     const timestamp = new Date().getTime();

@@ -13,6 +13,7 @@ export default class MockNotification implements Notification {
   readonly silent: boolean;
   readonly timestamp: number;
   readonly lang: string;
+  readonly actions: NotificationAction[];
   readonly badge: string;
   onclick: ((this: Notification, ev: Event) => any) | null;
   onclose: ((this: Notification, ev: Event) => any) | null;
@@ -25,7 +26,7 @@ export default class MockNotification implements Notification {
   constructor(title: string, options?: NotificationOptions) {
     this.title = title;
     this.data = options && options.data;
-
+    this.actions = [];
     this.body = "";
     this.dir = "auto";
     this.icon = "";

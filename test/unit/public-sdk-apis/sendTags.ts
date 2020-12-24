@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test, { ExecutionContext } from "ava";
+import anyTest, { ExecutionContext, TestInterface } from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/OneSignal';
 import nock from 'nock';
@@ -11,6 +11,16 @@ const EMAIL_ID = "dafb31e3-19a5-473c-b319-62082bd696fb";
 const EMAIL = "test@example.com";
 const EMAIL_AUTH_HASH = "email-auth-hash";
 const DEVICE_ID = "55b9bc29-5f07-48b9-b85d-7e6efe2396fb";
+
+interface SendTagsContext {
+  simpleTags: Object;
+  sentTags  : Object;
+  expectedTags: Object;
+  expectedTagsUnsent: string[];
+  tagsToCheckDeepEqual: Object;
+}
+
+const test = anyTest as TestInterface<SendTagsContext>;
 
 test.beforeEach(t => {
   t.context.simpleTags = {
@@ -57,7 +67,7 @@ test.beforeEach(t => {
 });
 
 async function expectPushRecordTagUpdateRequest(
-  t: ExecutionContext,
+  t: ExecutionContext<SendTagsContext>,
   pushDevicePlayerId: string,
   identifierAuthHash: string | undefined,
 ) {

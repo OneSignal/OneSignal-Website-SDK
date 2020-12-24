@@ -56,7 +56,7 @@ export class MockServiceWorkerGlobalScope implements ServiceWorkerGlobalScope {
   queueMicrotask(callback: VoidFunction): void {}
 
   readonly performance: Performance;
-  readonly self: WorkerGlobalScope;
+  readonly self: WorkerGlobalScope & typeof globalThis;
 
   addEventListener<K extends keyof ServiceWorkerGlobalScopeEventMap>(type: K, listener: (this: ServiceWorkerGlobalScope, ev: ServiceWorkerGlobalScopeEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
   addEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | AddEventListenerOptions): void;
