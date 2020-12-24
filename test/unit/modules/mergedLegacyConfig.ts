@@ -1,10 +1,15 @@
 import '../../support/polyfills/polyfills';
-import test from 'ava';
-import InitHelper from '../../../src/helpers/InitHelper';
-import { AppConfig, ServerAppConfig, ConfigIntegrationKind } from '../../../src/models/AppConfig';
+import anyTest, { TestInterface } from 'ava';
+import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/models/AppConfig';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import OneSignal from '../../../src/OneSignal';
 import ConfigManager from '../../../src/managers/ConfigManager';
+
+interface ConfigContext {
+  overrideServerConfig: ServerAppConfig;
+}
+
+const test = anyTest as TestInterface<ConfigContext>;
 
 test.beforeEach(t => {
   t.context.overrideServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);

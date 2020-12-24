@@ -46,6 +46,7 @@ interface Client {
 
 // Notification.requestPermission - Added in TypeScript 3.0.0
 interface Notification {
+  readonly permission: NotificationPermission;
   requestPermission(callback?: NotificationPermissionCallback): Promise<NotificationPermission>;
 }
 
@@ -69,7 +70,6 @@ interface SafariRemoteNotification {
 }
 
 interface Window {
-  // TODO: "Notification" should be used over "window.Notification". Do so when updating to TS 3
   Notification: Notification;
   safari: {
     pushNotification: SafariRemoteNotification
