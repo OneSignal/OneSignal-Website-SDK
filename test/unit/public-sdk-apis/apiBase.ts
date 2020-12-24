@@ -98,14 +98,14 @@ test("OneSignalApiBase.call should add a custom header", async t => {
       //   }
       // })
       .reply(function(_uri: string, _requestBody: any) {
-        // @ts-ignore 
+        // @ts-ignore
         console.log('headers:', this.req.headers);
         resolve();
-        return {success: true, id: playerId};
+        return { success: true, id: playerId };
       });
     await OneSignalApiBase.get(`players/${playerId}?app_id=${appId}`);
   });
-  
+
   try {
     await promise;
     t.pass();
