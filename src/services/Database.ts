@@ -147,7 +147,7 @@ export default class Database {
    * @param keypath
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
-    await new Promise(async (resolve, reject) => {
+    await new Promise<void>(async (resolve, reject) => {
       if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         OneSignalUtils.isUsingSubscriptionWorkaround() &&
         SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
@@ -180,7 +180,7 @@ export default class Database {
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       OneSignalUtils.isUsingSubscriptionWorkaround() &&
       SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,
           [{ table: table, keypath: keypath }],
