@@ -14,7 +14,7 @@ export class MockServiceWorkerContainer implements ServiceWorkerContainer {
 
   constructor() {
     this.serviceWorkerRegistration = null;
-    this.ready = new Promise(resolve => (resolve()));
+    this.ready = new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
     this.controller = null;
     this.oncontrollerchange = null;
     this.onmessage = null;

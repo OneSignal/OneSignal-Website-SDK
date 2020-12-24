@@ -21,7 +21,7 @@ test(`timeoutPromise should reject after the specified amount of time`, async t 
 
 test(`timeoutPromise should resolve target promise if its faster`, async t => {
   try {
-    await timeoutPromise(new Promise(resolve => {
+    await timeoutPromise(new Promise<void>(resolve => {
       resolve();
     }), 15 /* Timeout immediately for test */);
     t.pass("Target promise successfully execited.");

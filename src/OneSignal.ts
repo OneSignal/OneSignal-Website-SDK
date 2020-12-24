@@ -406,7 +406,7 @@ export default class OneSignal {
    */
   static async registerForPushNotifications(options?: RegisterOptions): Promise<void> {
     if (!OneSignal.initialized) {
-      await new Promise((resolve, _reject) => {
+      await new Promise<void>((resolve, _reject) => {
         OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
           await InitHelper.registerForPushNotifications(options);
           return resolve();
