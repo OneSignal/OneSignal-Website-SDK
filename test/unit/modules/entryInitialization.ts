@@ -187,9 +187,9 @@ class MockOneSignal implements IOneSignal {
   }
 
   // Mocking implementation of sendTags
-  async sendTag(key: string, value: any, _callback?: Action<Object>): Promise<Object> {
+  async sendTag(key: string, value: any, _callback?: Action<Object>): Promise<Object|void> {
     this.lastSendTags[key] = value;
-    return new Promise((resolve, _reject) => {
+    return new Promise<void>((resolve, _reject) => {
       resolve();
     });
   }

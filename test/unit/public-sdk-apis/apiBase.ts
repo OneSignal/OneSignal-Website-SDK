@@ -89,7 +89,7 @@ test("OneSignalApiBase.call should add a custom header", async t => {
 
   const appId = Random.getRandomUuid();
   const playerId = Random.getRandomUuid();
-  const promise = new Promise(async (resolve) => {
+  const promise = new Promise<void>(async resolve => {
     nock('https://onesignal.com')
       .get(`/api/v1/players/${playerId}?app_id=${appId}`)
       // .get(`/api/v1/players/${playerId}?app_id=${appId}`, {

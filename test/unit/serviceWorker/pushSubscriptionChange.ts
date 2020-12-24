@@ -206,7 +206,7 @@ async function setInitialDatabaseState(deviceId?: string, subscriptionToken?: st
 }
 
 async function runPushSubscriptionChange(event: PushSubscriptionChangeEvent): Promise<void> {
-  const testPromise = new Promise(resolve => {
+  const testPromise = new Promise<void>(resolve => {
     self.addEventListener("pushsubscriptionchange", async (evt: PushSubscriptionChangeEvent) => {
       await ServiceWorker.onPushSubscriptionChange(evt);
       resolve();

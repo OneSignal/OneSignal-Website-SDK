@@ -362,7 +362,7 @@ test('device ID is available after register event', async t => {
   const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(pushSubscription);
   const randomPlayerId = Random.getRandomUuid();
 
-  const registerEventPromise = new Promise(resolve => {
+  const registerEventPromise = new Promise<void>(resolve => {
     OneSignal.emitter.on('register', async () => {
       const subscription = await Database.getSubscription();
       t.is(subscription.deviceId, randomPlayerId);
