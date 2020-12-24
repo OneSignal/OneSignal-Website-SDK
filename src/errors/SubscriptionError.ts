@@ -9,18 +9,21 @@ export enum SubscriptionErrorReason {
 
 export default class SubscriptionError extends OneSignalError {
   constructor(reason: SubscriptionErrorReason) {
+    let errorMessage;
     switch (reason) {
       case SubscriptionErrorReason.InvalidSafariSetup:
-        super('The Safari site URL, icon size, or push certificate is invalid, or Safari is in a private session.');
+        errorMessage = `The Safari site URL, icon size, or push certificate ` +
+        `is invalid, or Safari is in a private session.`;
         break;
       case SubscriptionErrorReason.Blocked:
-        super('Notification permissions are blocked.');
+        errorMessage = 'Notification permissions are blocked.';
         break;
       case SubscriptionErrorReason.Dismissed:
-        super('The notification permission prompt was dismissed.');
+        errorMessage = 'The notification permission prompt was dismissed.';
         break;
     }
 
+    super(errorMessage);
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.
      * Same applies to all derived classes.
