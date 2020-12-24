@@ -8,20 +8,22 @@ export enum PushPermissionNotGrantedErrorReason {
 }
 
 export default class PushPermissionNotGrantedError extends OneSignalError {
-  reason: PushPermissionNotGrantedErrorReason;
+  reason!: PushPermissionNotGrantedErrorReason;
 
   constructor(reason: PushPermissionNotGrantedErrorReason) {
+    let errorMessage;
     switch (reason) {
       case PushPermissionNotGrantedErrorReason.Dismissed:
-        super('The user dismissed the permission prompt.');
+        errorMessage = 'The user dismissed the permission prompt.';
         break;
       case PushPermissionNotGrantedErrorReason.Blocked:
-        super('Notification permissions are blocked.');
+        errorMessage = 'Notification permissions are blocked.';
         break;
       case PushPermissionNotGrantedErrorReason.Default:
-        super('Notification permissions have not been granted yet.');
+        errorMessage = 'Notification permissions have not been granted yet.';
         break;
     }
+    super(errorMessage);
 
     this.reason = reason;
 
