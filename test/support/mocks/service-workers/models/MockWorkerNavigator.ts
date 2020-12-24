@@ -5,7 +5,7 @@ export class MockWorkerNavigator implements WorkerNavigator {
     public readonly appVersion: string,
     public readonly platform: string,
     public readonly product: string,
-    public readonly userAgent: string,
+    public readonly userAgent: string
   ) {
   }
 

@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 import test from "ava";
 import AltOriginManager from '../../../src/managers/AltOriginManager';
-import { EnvironmentKind } from '../../../src/models/EnvironmentKind'
+import { EnvironmentKind } from '../../../src/models/EnvironmentKind';
 import sinon from 'sinon';
 import ProxyFrameHost from '../../../src/modules/frames/ProxyFrameHost';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
@@ -24,7 +24,7 @@ test(`should get correct canonical subscription URL for development environment`
 
 test(`should get correct canonical subscription URL for staging environment`, async t => {
   const stagingDomain = "staging.onesignal.com";
-  (<any>global).__API_ORIGIN__ = stagingDomain; 
+  (<any>global).__API_ORIGIN__ = stagingDomain;
   const config = TestEnvironment.getFakeAppConfig();
   config.subdomain = 'test';
   config.httpUseOneSignalCom = true;
@@ -70,7 +70,7 @@ test(`should get correct canonical subscription URL for production environment`,
   t.is(prodUrlsOsTcDomain[1].host, new URL('https://test.onesignal.com').host);
 
   config.httpUseOneSignalCom = false;
-  
+
   const prodUrls = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Production);
   t.is(prodUrls.length, 1);
   t.is(prodUrls[0].host, new URL('https://test.os.tc').host);
@@ -88,7 +88,7 @@ test(`should get correct canonical subscription URL for production environment w
   t.is(prodUrlsOsTcDomain[1].host, new URL('https://test.onesignal.com').host);
 
   config.httpUseOneSignalCom = false;
-  
+
   const prodUrls = AltOriginManager.getCanonicalSubscriptionUrls(config, EnvironmentKind.Production);
   t.is(prodUrls.length, 1);
   t.is(prodUrls[0].host, new URL('https://test.os.tc').host);
@@ -124,7 +124,7 @@ function setupDiscoverAltOriginTest(t: any) {
       this.url.host === t.context.subdomainOsTcHost) {
       return true;
     } else return false;
-  }
+  };
 }
 
 test(`should discover alt origin to be subdomain.onesignal.com if user is already subscribed there`, async t => {
