@@ -432,7 +432,7 @@ export class ServiceWorker {
      * if https -> getActiveClients -> check for the first focused
      * unfortunately, not enough for safari, it always returns false for focused state of a client
      * have to workaround it with messaging to the client.
-     * 
+     *
      * if http, also have to workaround with messaging:
      *   SW to iframe -> iframe to page -> page to iframe -> iframe to SW
      */
