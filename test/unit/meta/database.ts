@@ -5,7 +5,6 @@ import Database from '../../../src/services/Database';
 import Random from '../../support/tester/Random';
 import { isNullOrUndefined } from "../../support/tester/utils";
 import { initializeNewSession, Session } from "../../../src/models/Session";
-import { NotificationClicked } from "../../../src/models/Notification";
 
 test(`database should not be shared across service worker test environment initializations`, async t => {
   let firstAppId;

@@ -1,28 +1,54 @@
-import { Categories } from './Tags';
+import { TagCategory } from './Tags';
 
 export enum DelayedPromptType {
   Native = "native",
-  Slidedown = "slidedown"
+  Push = "push", // push only
+  Category  = "category",
+  Sms         = "sms",
+  Email       = "email",
+  SmsAndEmail = "smsAndEmail"
+
 }
 
 interface BasePromptOptions {
   enabled: boolean;
 }
 
+// TO DO: consider renaming to NativePromptOptions or something similar
 export interface DelayedPromptOptions extends BasePromptOptions {
   autoPrompt?: boolean;
   timeDelay?: number;
   pageViews?: number;
 }
 
-export interface CategorySlidedownOptions extends DelayedPromptOptions {
-  categories?: Categories;
+export interface SlidedownOptions {
+  prompts : SlidedownPromptOptions[];
 }
 
-export interface SlidedownPermissionMessageOptions extends CategorySlidedownOptions {
-  actionMessage: string;
-  acceptButtonText: string;
-  cancelButtonText: string;
+export interface SlidedownPromptOptions {
+  type              : DelayedPromptType;
+  text              : SlidedownTextOptions;
+  autoPrompt       ?: boolean; // TO DO: should this be required?
+  delay            ?: SlidedownDelayOptions;
+  icon             ?: string; // url
+  categories       ?: TagCategory[];
+}
+
+export interface SlidedownTextOptions {
+  actionMessage         : string;
+  acceptButtonText      : string;
+  cancelButtonText      : string;
+  negativeUpdateButton ?: string;
+  positiveUpdateButton ?: string;
+  updateMessage        ?: string;
+  confirmMessage       ?: string;
+  smsLabel             ?: string;
+  emailLabel           ?: string;
+}
+
+export interface SlidedownDelayOptions {
+  pageViews: number;
+  timeDelay: number;
 }
 
 export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
@@ -69,7 +95,7 @@ export interface AppUserConfigPromptOptions {
   cancelButtonText?: string;
   showCredit?: string;
   native?: DelayedPromptOptions;
-  slidedown?: SlidedownPermissionMessageOptions;
+  slidedown?: SlidedownOptions;
   fullscreen?: FullscreenPermissionMessageOptions;
   customlink?: AppUserConfigCustomLinkOptions;
 }

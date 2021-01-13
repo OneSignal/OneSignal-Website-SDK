@@ -1,18 +1,20 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import Slidedown from '../../../src/slidedown/Slidedown';
-import { SlidedownPermissionMessageOptions } from '../../../src/models/Prompts';
+import { SlidedownPromptOptions, DelayedPromptType } from '../../../src/models/Prompts';
 import "../../support/polyfills/polyfills";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { setUserAgent } from '../../support/tester/browser';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
-const options: SlidedownPermissionMessageOptions = {
-  actionMessage : '',
-  acceptButtonText : '',
-  cancelButtonText : '',
-  enabled : true
+const options: SlidedownPromptOptions = {
+  type: DelayedPromptType.Push,
+  text: {
+    actionMessage: '',
+    acceptButtonText: '',
+    cancelButtonText: ''
+  }
 };
 
 test.beforeEach(async () => {
@@ -31,7 +33,7 @@ test.afterEach(function () {
  */
 test('slidedown: uses chrome by default on mac', async t => {
   setUserAgent(BrowserUserAgent.ChromeMacSupported);
-  const slidedown = new Slidedown(options);
+  const slidedown = new Slidedown(options); // to do: update
 
   slidedown.notificationIcons = { chrome: "http://url.com" };
   const icon = slidedown.getPlatformNotificationIcon();

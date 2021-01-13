@@ -5,6 +5,7 @@ import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { AppUserConfig } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
 import { ConfigHelper } from '../../../src/helpers/ConfigHelper';
+import { DelayedPromptType } from '../../../src/models/Prompts';
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
@@ -29,9 +30,7 @@ test('promptOptions 1 - autoRegister = true backwards compatibility for custom i
   t.is(finalPromptOptions!.native!.enabled, true);
   t.is(finalPromptOptions!.native!.autoPrompt, true);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, false);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
-
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -53,9 +52,7 @@ test('promptOptions 2 - autoRegister = true backwards compatibility for custom i
   t.is(finalPromptOptions!.native!.enabled, false);
   t.is(finalPromptOptions!.native!.autoPrompt, false);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
-
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -75,10 +72,8 @@ test('promptOptions 3 - autoRegister = false backwards compatibility for custom 
 
   t.is(finalPromptOptions!.native!.enabled, false);
   t.is(finalPromptOptions!.native!.autoPrompt, false);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, false);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
 
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
   t.is(finalPromptOptions!.autoPrompt, false);
 });
 
@@ -90,7 +85,15 @@ test(`promptOptions 4 - autoRegister = true backwards compatibility for custom i
   };
   (fakeUserConfig as any).promptOptions = {
     slidedown: {
-      enabled: true,
+      prompts: [{
+        type: DelayedPromptType.Push,
+        autoPrompt: false,
+        text: {
+          actionMessage: '',
+          acceptButtonText: '',
+          cancelButtonText: ''
+        }
+      }]
     }
   };
 
@@ -103,10 +106,8 @@ test(`promptOptions 4 - autoRegister = true backwards compatibility for custom i
 
   t.is(finalPromptOptions!.native!.enabled, true);
   t.is(finalPromptOptions!.native!.autoPrompt, true);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
 
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -132,10 +133,8 @@ test(`promptOptions 5 - autoRegister backwards compatibility for custom integrat
 
   t.is(finalPromptOptions!.native!.enabled, false);
   t.is(finalPromptOptions!.native!.autoPrompt, false);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
 
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -147,8 +146,15 @@ test(`promptOptions 6 - autoRegister = true backwards compatibility for custom i
   };
   (fakeUserConfig as any).promptOptions = {
     slidedown: {
-      enabled: true,
-      autoPrompt: false,
+      prompts: [{
+        type: DelayedPromptType.Push,
+        autoPrompt: false,
+        text: {
+          actionMessage: '',
+          acceptButtonText: '',
+          cancelButtonText: ''
+        }
+      }]
     }
   };
 
@@ -162,10 +168,8 @@ test(`promptOptions 6 - autoRegister = true backwards compatibility for custom i
 
   t.is(finalPromptOptions!.native!.enabled, true);
   t.is(finalPromptOptions!.native!.autoPrompt, true);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
 
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -192,10 +196,8 @@ test(`promptOptions 7 - autoRegister = true backwards compatibility for custom i
 
   t.is(finalPromptOptions!.native!.enabled, false);
   t.is(finalPromptOptions!.native!.autoPrompt, false);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
 
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -211,8 +213,15 @@ test(`promptOptions 8 - autoRegister = true backwards compatibility for custom i
       autoPrompt: true,
     },
     slidedown: {
-      enabled: true,
-      autoPrompt: false,
+      prompts: [{
+        type: DelayedPromptType.Push,
+        autoPrompt: false,
+        text: {
+          actionMessage: '',
+          acceptButtonText: '',
+          cancelButtonText: ''
+        }
+      }]
     }
   };
 
@@ -226,9 +235,7 @@ test(`promptOptions 8 - autoRegister = true backwards compatibility for custom i
   t.is(finalPromptOptions!.native!.enabled, true);
   t.is(finalPromptOptions!.native!.autoPrompt, true);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
-
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -244,8 +251,15 @@ test(`promptOptions 9 - autoRegister= true backwards compatibility for custom in
       autoPrompt: false,
     },
     slidedown: {
-      enabled: true,
-      autoPrompt: false,
+      prompts: [{
+        type: DelayedPromptType.Push,
+        autoPrompt: false,
+        text: {
+          actionMessage: '',
+          acceptButtonText: '',
+          cancelButtonText: ''
+        }
+      }]
     }
   };
 
@@ -260,9 +274,7 @@ test(`promptOptions 9 - autoRegister= true backwards compatibility for custom in
   t.is(finalPromptOptions!.native!.enabled, true);
   t.is(finalPromptOptions!.native!.autoPrompt, true);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
-
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 
@@ -278,8 +290,15 @@ test(`promptOptions 10 - autoRegister backwards compatibility for custom integra
       autoPrompt: false,
     },
     slidedown: {
-      enabled: true,
-      autoPrompt: false,
+      prompts: [{
+        type: DelayedPromptType.Push,
+        autoPrompt: false,
+        text: {
+          actionMessage: '',
+          acceptButtonText: '',
+          cancelButtonText: ''
+        }
+      }]
     }
   };
 
@@ -294,9 +313,7 @@ test(`promptOptions 10 - autoRegister backwards compatibility for custom integra
   t.is(finalPromptOptions!.native!.enabled, false);
   t.is(finalPromptOptions!.native!.autoPrompt, false);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
-
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
   t.is(finalPromptOptions!.autoPrompt, true);
 });
 

@@ -3,9 +3,10 @@ import {
   AppUserConfigPromptOptions,
   CustomLinkStyle,
   CustomLinkSize,
-  AppUserConfigNotifyButton
+  AppUserConfigNotifyButton,
+  SlidedownPromptOptions,
+  SlidedownOptions,
 } from './Prompts';
-import { Categories } from "../models/Tags";
 
 export interface AppConfig {
   /**
@@ -124,6 +125,18 @@ export interface AppUserConfigWebhooks {
   'notification.dismissed': string | undefined;
 }
 
+export interface ServerSlidedownConfigVersion1 {
+  enabled: boolean;
+  autoPrompt: boolean;
+  pageViews?: number;
+  timeDelay?: number;
+  acceptButton: string;
+  cancelButton: string;
+  actionMessage: string;
+  customizeTextEnabled: boolean;
+  categories?: any;
+}
+
 export interface ServerAppConfigPrompt {
   native: {
     enabled: boolean;
@@ -167,17 +180,7 @@ export interface ServerAppConfigPrompt {
     hideWhenSubscribed: boolean;
     customizeTextEnabled: boolean;
   };
-  slidedown: {
-    enabled: boolean;
-    autoPrompt: boolean;
-    pageViews?: number;
-    timeDelay?: number;
-    acceptButton: string;
-    cancelButton: string;
-    actionMessage: string;
-    customizeTextEnabled: boolean;
-    categories?: Categories;
-  };
+  slidedown: SlidedownOptions | ServerSlidedownConfigVersion1;
   fullscreen: {
     title: string;
     caption: string;
@@ -209,6 +212,7 @@ export interface ServerAppConfigPrompt {
 export interface ServerAppConfig {
   success: boolean;
   app_id: string;
+  version: number;
   features: {
     metrics: {
       enable: boolean;

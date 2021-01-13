@@ -42,9 +42,11 @@ export default class TagUtils {
     }
 
     static markAllTagsAsSpecified(categoryArray: TagCategory[], checked: boolean): void {
-        categoryArray.forEach(category => {
-            category.checked = checked;
-        });
+        if (categoryArray) {
+            categoryArray.forEach(category => {
+                category.checked = checked;
+            });
+        }
     }
 
     static isTagObjectEmpty(tags: TagsObjectForApi | TagsObjectWithBoolean): boolean {
@@ -85,9 +87,9 @@ export default class TagUtils {
         return tagValue;
     }
 
-    static limitCategoriesToMaxCount(categories: Categories, max: number): Categories {
-        const categoriesCopy = deepCopy(categories);
-        categoriesCopy.tags = categories.tags.slice(0, max);
-        return categoriesCopy;
+    static limitCategoriesToMaxCount(tagCategories: TagCategory[], max: number): TagCategory[] {
+        let tagCategoriesCopy = deepCopy(tagCategories);
+        tagCategoriesCopy = tagCategories.slice(0, max);
+        return tagCategoriesCopy;
     }
 }
