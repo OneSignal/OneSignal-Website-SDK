@@ -10,6 +10,7 @@ interface TagsObject<T> {
 export type TagsObjectWithBoolean = TagsObject<boolean>;
 export type TagsObjectForApi = TagsObject<PossibleTagValueValues>;
 
+// deprecating in config schema version 2+
 export interface Categories {
     positiveUpdateButton: string;
     negativeUpdateButton: string;

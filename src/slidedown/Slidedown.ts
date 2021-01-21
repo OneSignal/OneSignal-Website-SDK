@@ -16,7 +16,7 @@ import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
 import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
-import { Categories } from '../../src/models/Tags';
+import { TagCategory } from '../../src/models/Tags';
 import Log from '../../src/libraries/Log';
 import { getSlidedownElement } from './SlidedownElement';
 
