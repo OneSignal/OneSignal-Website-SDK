@@ -1,18 +1,21 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import Slidedown from '../../../src/slidedown/Slidedown';
-import { SlidedownPermissionMessageOptions } from '../../../src/models/Prompts';
+import { SlidedownPromptOptions, DelayedPromptType } from '../../../src/models/Prompts';
 import "../../support/polyfills/polyfills";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { setUserAgent } from '../../support/tester/browser';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
-const options: SlidedownPermissionMessageOptions = {
-  actionMessage : '',
-  acceptButtonText : '',
-  cancelButtonText : '',
-  enabled : true
+const options: SlidedownPromptOptions = {
+  type: DelayedPromptType.Push,
+  text: {
+    actionMessage: '',
+    acceptButton: '',
+    cancelButton: ''
+  },
+  autoPrompt: true
 };
 
 test.beforeEach(async () => {
