@@ -1,8 +1,13 @@
-import { Categories } from './Tags';
+import { TagCategory } from './Tags';
 
 export enum DelayedPromptType {
-  Native = "native",
-  Slidedown = "slidedown"
+  Native      = "native",     // native push
+  Push        = "push",       // slidedown w/ push only
+  Category    = "category",   // slidedown w/ push + categories
+  Sms         = "sms",        // sms only
+  Email       = "email",      // email only
+  SmsAndEmail = "smsAndEmail" // sms and email only
+
 }
 
 interface BasePromptOptions {
@@ -15,14 +20,34 @@ export interface DelayedPromptOptions extends BasePromptOptions {
   pageViews?: number;
 }
 
-export interface CategorySlidedownOptions extends DelayedPromptOptions {
-  categories?: Categories;
+export interface SlidedownOptions {
+  prompts : SlidedownPromptOptions[];
 }
 
-export interface SlidedownPermissionMessageOptions extends CategorySlidedownOptions {
-  actionMessage: string;
-  acceptButtonText: string;
-  cancelButtonText: string;
+export interface SlidedownPromptOptions {
+  type              : DelayedPromptType;
+  text              : SlidedownTextOptions;
+  autoPrompt        : boolean;
+  icon             ?: string | null; // url
+  delay            ?: SlidedownDelayOptions;
+  categories       ?: TagCategory[];
+}
+
+export interface SlidedownTextOptions {
+  actionMessage         : string;
+  acceptButton          : string;
+  cancelButton          : string;
+  negativeUpdateButton ?: string;
+  positiveUpdateButton ?: string;
+  updateMessage        ?: string;
+  confirmMessage       ?: string;
+  smsLabel             ?: string;
+  emailLabel           ?: string;
+}
+
+export interface SlidedownDelayOptions {
+  pageViews: number;
+  timeDelay: number;
 }
 
 export interface FullscreenPermissionMessageOptions extends DelayedPromptOptions {
@@ -65,11 +90,13 @@ export interface AppUserConfigPromptOptions {
   exampleNotificationTitleMobile?: string;
   exampleNotificationMessageMobile?: string;
   exampleNotificationCaption?: string;
-  acceptButtonText?: string;
-  cancelButtonText?: string;
+  acceptButton?: string;
+  cancelButton?: string;
+  acceptButtonText?: string;  // legacy
+  cancelButtonText?: string;  // legacy
   showCredit?: string;
   native?: DelayedPromptOptions;
-  slidedown?: SlidedownPermissionMessageOptions;
+  slidedown?: SlidedownOptions;
   fullscreen?: FullscreenPermissionMessageOptions;
   customlink?: AppUserConfigCustomLinkOptions;
 }
