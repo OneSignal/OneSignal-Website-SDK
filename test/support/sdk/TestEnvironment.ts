@@ -41,6 +41,7 @@ import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/
 import { SinonSandbox } from 'sinon';
 import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
 import { getSlidedownElement } from '../../../src/slidedown/SlidedownElement';
+import { DelayedPromptType } from '../../../src/models/Prompts';
 
 // NodeJS.Global
 declare var global: any;
@@ -428,6 +429,7 @@ export class TestEnvironment {
     if (configIntegrationKind === ConfigIntegrationKind.Custom) {
       const customConfigHttps: ServerAppConfig = {
         success: true,
+        version: 2,
         app_id: appId,
         features: {
           restrict_origin: {
@@ -494,12 +496,17 @@ export class TestEnvironment {
                 customizeTextEnabled: true
             },
             slidedown: {
-                enabled: false,
-                autoPrompt: false,
-                acceptButton: "Allow",
-                cancelButton: "No Thanks",
-                actionMessage: "We'd like to send you notifications for the latest news and updates.",
-                customizeTextEnabled: true
+              prompts: [
+                {
+                  type: DelayedPromptType.Push,
+                  autoPrompt: false,
+                  text: {
+                    acceptButton: "Allow",
+                    cancelButton: "No Thanks",
+                    actionMessage: "We'd like to send you notifications for the latest news and updates.",
+                  }
+                }
+              ]
             },
             fullscreen: {
                 enabled: false,
@@ -596,6 +603,7 @@ export class TestEnvironment {
 
     const remoteConfigMockDefaults: ServerAppConfig = {
       success: true,
+      version: 2,
       app_id: appId,
       features: {
         restrict_origin: {
@@ -658,12 +666,17 @@ export class TestEnvironment {
             customizeTextEnabled: true,
           },
           slidedown: {
-            enabled: true,
-            autoPrompt: true,
-            acceptButton: 'Allow',
-            cancelButton: 'No Thanks',
-            actionMessage: "We'd like to send you notifications for the latest news and updates.",
-            customizeTextEnabled: true,
+            prompts: [
+              {
+                type: DelayedPromptType.Push,
+                autoPrompt: true,
+                text: {
+                  acceptButton: "Allow",
+                  cancelButton: "No Thanks",
+                  actionMessage: "We'd like to send you notifications for the latest news and updates.",
+                }
+              }
+            ]
           },
           fullscreen: {
             title: "example.com",
@@ -780,11 +793,17 @@ export class TestEnvironment {
           autoPrompt: false,
         },
         slidedown: {
-          enabled: true,
-          autoPrompt: true,
-          actionMessage: "slidedown action message",
-          acceptButtonText: 'slidedown accept button',
-          cancelButtonText: 'slidedown cancel button',
+          prompts: [
+            {
+              type: DelayedPromptType.Push,
+              autoPrompt: true,
+              text: {
+                acceptButton: "Allow",
+                cancelButton: "No Thanks",
+                actionMessage: "We'd like to send you notifications for the latest news and updates.",
+              }
+            }
+          ]
         },
         fullscreen: {
           enabled: true,
