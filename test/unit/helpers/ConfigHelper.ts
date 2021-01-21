@@ -5,6 +5,12 @@ import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { AppUserConfig } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
 import { ConfigHelper } from '../../../src/helpers/ConfigHelper';
+import { DelayedPromptType } from '../../../src/models/Prompts';
+import { getFinalAppConfig } from '../../../test/support/tester/ConfigHelperTestHelper';
+import sinon, { SinonSandbox } from 'sinon';
+import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
+
+const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
@@ -12,169 +18,149 @@ test.beforeEach(async () => {
   });
 });
 
+test.afterEach(() => {
+  sandbox.restore();
+});
+
 test('promptOptions 1 - autoRegister = true backwards compatibility for custom integration (shows native on HTTPS)',
-  t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
-  };
+  async t => {
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-  );
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.native!.enabled, true);
-  t.is(finalPromptOptions!.native!.autoPrompt, true);
+    t.is(finalPromptOptions?.native?.enabled, true);
+    t.is(finalPromptOptions?.native?.autoPrompt, true);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, false);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
-
-  t.is(finalPromptOptions!.autoPrompt, true);
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
+    t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test('promptOptions 2 - autoRegister = true backwards compatibility for custom integration (shows slidedown on HTTP)',
-  t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
-  };
+  async t => {
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-    true
-  );
+    sandbox.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround").resolves(true);
 
-  t.is(finalPromptOptions!.native!.enabled, false);
-  t.is(finalPromptOptions!.native!.autoPrompt, false);
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.autoPrompt, true);
+    t.is(finalPromptOptions?.native?.enabled, false);
+    t.is(finalPromptOptions?.native?.autoPrompt, false);
+
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
+    t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test('promptOptions 3 - autoRegister = false backwards compatibility for custom integration (no enabled prompts)',
-  t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: false,
-  };
+  async t => {
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig
-  );
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: false,
+    };
 
-  t.is(finalPromptOptions!.native!.enabled, false);
-  t.is(finalPromptOptions!.native!.autoPrompt, false);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, false);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.autoPrompt, false);
+    t.is(finalPromptOptions?.native?.enabled, false);
+    t.is(finalPromptOptions?.native?.autoPrompt, false);
+
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
+    t.is(finalPromptOptions?.autoPrompt, false);
 });
 
 test(`promptOptions 4 - autoRegister = true backwards compatibility for custom integration
-  (ignores config, shows native on HTTPS)`, t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
-  };
-  (fakeUserConfig as any).promptOptions = {
-    slidedown: {
-      enabled: true,
-    }
-  };
+  (ignores config, shows native on HTTPS)`, async t => {
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig
-  );
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
+    (fakeUserConfig as any).promptOptions = {
+      slidedown: {
+        enabled: true,
+      }
+    };
 
-  t.is(finalPromptOptions!.native!.enabled, true);
-  t.is(finalPromptOptions!.native!.autoPrompt, true);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.autoPrompt, true);
+    t.is(finalPromptOptions?.native?.enabled, true);
+    t.is(finalPromptOptions?.native?.autoPrompt, true);
+
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
+    t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test(`promptOptions 5 - autoRegister backwards compatibility for custom integration
-  (ignores config, shows slidedown on HTTP)`, t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
-  };
-  (fakeUserConfig as any).promptOptions = {
-    slidedown: {
-      enabled: true,
-    }
-  };
+  (ignores config, shows slidedown on HTTP)`, async t => {
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-    true
-  );
+    sandbox.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround").resolves(true);
 
-  t.is(finalPromptOptions!.native!.enabled, false);
-  t.is(finalPromptOptions!.native!.autoPrompt, false);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
 
-  t.is(finalPromptOptions!.autoPrompt, true);
+    (fakeUserConfig as any).promptOptions = {
+      slidedown: {
+        enabled: true,
+      }
+    };
+
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
+
+    t.is(finalPromptOptions?.native?.enabled, false);
+    t.is(finalPromptOptions?.native?.autoPrompt, false);
+
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
+    t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test(`promptOptions 6 - autoRegister = true backwards compatibility for custom integration
-  (ignores config, shows native on HTTPS)`, t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
-  };
-  (fakeUserConfig as any).promptOptions = {
-    slidedown: {
-      enabled: true,
-      autoPrompt: false,
-    }
-  };
+  (ignores config, shows native on HTTPS)`, async t => {
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-    false
-  );
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
 
-  t.is(finalPromptOptions!.native!.enabled, true);
-  t.is(finalPromptOptions!.native!.autoPrompt, true);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
+    (fakeUserConfig as any).promptOptions = {
+      slidedown: {
+        enabled: true,
+        autoPrompt: false,
+      }
+    };
 
-  t.is(finalPromptOptions!.autoPrompt, true);
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
+
+    t.is(finalPromptOptions?.native?.enabled, true);
+    t.is(finalPromptOptions?.native?.autoPrompt, true);
+
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
+    t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test(`promptOptions 7 - autoRegister = true backwards compatibility for custom integration
-  (ignores config, shows slidedown on HTTP)`, t => {
+  (ignores config, shows slidedown on HTTP)`, async t => {
+
+  sandbox.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround").resolves(true);
+
   const fakeUserConfig: AppUserConfig = {
     appId: Random.getRandomUuid(),
     autoRegister: true,
   };
+
   (fakeUserConfig as any).promptOptions = {
     slidedown: {
       enabled: true,
@@ -182,122 +168,103 @@ test(`promptOptions 7 - autoRegister = true backwards compatibility for custom i
     }
   };
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-    true
-  );
+  const appConfig = await getFinalAppConfig(fakeUserConfig);
+  const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.native!.enabled, false);
-  t.is(finalPromptOptions!.native!.autoPrompt, false);
-  
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
+  t.is(finalPromptOptions?.native?.enabled, false);
+  t.is(finalPromptOptions?.native?.autoPrompt, false);
 
-  t.is(finalPromptOptions!.autoPrompt, true);
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
+  t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test(`promptOptions 8 - autoRegister = true backwards compatibility for custom integration
-  (ignores config, shows native on HTTPS)`, t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
+  (ignores config, shows native on HTTPS)`, async t => {
+
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
+
+    (fakeUserConfig as any).promptOptions = {
+      native: {
+        enabled: true,
+        autoPrompt: true,
+      },
+      slidedown: {
+        enabled: true,
+        autoPrompt: false,
+      }
   };
-  (fakeUserConfig as any).promptOptions = {
-    native: {
-      enabled: true,
-      autoPrompt: true,
-    },
-    slidedown: {
-      enabled: true,
-      autoPrompt: false,
-    }
-  };
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig
-  );
+  const appConfig = await getFinalAppConfig(fakeUserConfig);
+  const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.native!.enabled, true);
-  t.is(finalPromptOptions!.native!.autoPrompt, true);
+  t.is(finalPromptOptions?.native?.enabled, true);
+  t.is(finalPromptOptions?.native?.autoPrompt, true);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
-
-  t.is(finalPromptOptions!.autoPrompt, true);
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
+  t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test(`promptOptions 9 - autoRegister= true backwards compatibility for custom integration
-  (ignores config, shows native on HTTPS)`, t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
+  (ignores config, shows native on HTTPS)`, async t => {
+
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
+
+    (fakeUserConfig as any).promptOptions = {
+      native: {
+        enabled: true,
+        autoPrompt: false,
+      },
+      slidedown: {
+        enabled: true,
+        autoPrompt: false,
+      }
   };
-  (fakeUserConfig as any).promptOptions = {
-    native: {
-      enabled: true,
-      autoPrompt: false,
-    },
-    slidedown: {
-      enabled: true,
-      autoPrompt: false,
-    }
-  };
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-    false
-  );
+  const appConfig = await getFinalAppConfig(fakeUserConfig);
+  const finalPromptOptions = appConfig.userConfig.promptOptions;
 
-  t.is(finalPromptOptions!.native!.enabled, true);
-  t.is(finalPromptOptions!.native!.autoPrompt, true);
+  t.is(finalPromptOptions?.native?.enabled, true);
+  t.is(finalPromptOptions?.native?.autoPrompt, true);
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, false);
-
-  t.is(finalPromptOptions!.autoPrompt, true);
+  t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, false);
+  t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test(`promptOptions 10 - autoRegister backwards compatibility for custom integration
-  (ignores config, shows slidedown on HTTP)`, t => {
-  const fakeUserConfig: AppUserConfig = {
-    appId: Random.getRandomUuid(),
-    autoRegister: true,
-  };
-  (fakeUserConfig as any).promptOptions = {
-    native: {
-      enabled: true,
-      autoPrompt: false,
-    },
-    slidedown: {
-      enabled: true,
-      autoPrompt: false,
-    }
-  };
+  (ignores config, shows slidedown on HTTP)`, async t => {
 
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
-  const finalPromptOptions = ConfigHelper.injectDefaultsIntoPromptOptions(
-    fakeUserConfig.promptOptions,
-    fakeServerConfig.config.staticPrompts,
-    fakeUserConfig,
-    true
-  );
+    sandbox.stub(OneSignalUtils, "internalIsUsingSubscriptionWorkaround").resolves(true);
 
-  t.is(finalPromptOptions!.native!.enabled, false);
-  t.is(finalPromptOptions!.native!.autoPrompt, false);
+    const fakeUserConfig: AppUserConfig = {
+      appId: Random.getRandomUuid(),
+      autoRegister: true,
+    };
 
-  t.is(finalPromptOptions!.slidedown!.enabled, true);
-  t.is(finalPromptOptions!.slidedown!.autoPrompt, true);
+    (fakeUserConfig as any).promptOptions = {
+      native: {
+        enabled: true,
+        autoPrompt: false,
+      },
+      slidedown: {
+        enabled: true,
+        autoPrompt: false
+      }
+    };
 
-  t.is(finalPromptOptions!.autoPrompt, true);
+    const appConfig = await getFinalAppConfig(fakeUserConfig);
+    const finalPromptOptions = appConfig.userConfig.promptOptions;
+
+    t.is(finalPromptOptions?.native?.enabled, false);
+    t.is(finalPromptOptions?.native?.autoPrompt, false);
+
+    t.is(finalPromptOptions?.slidedown?.prompts[0].autoPrompt, true);
+    t.is(finalPromptOptions?.autoPrompt, true);
 });
 
 test('autoResubscribe - autoRegister backwards compatibility for custom integration 1', t => {
