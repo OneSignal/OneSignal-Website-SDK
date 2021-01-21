@@ -24,46 +24,44 @@
           },
           promptOptions: {
               slidedown: {
-                  autoPrompt: true,
-                  enabled: true,
-                  categories: {
-                      positiveButton: "Howdy, yes",
-                      negativeButton: "Cancel",
-                      tags: [
-                        {
-                            tag: "politics",
-                            label: "Politics",
-                        },
-                        {
-                            tag: "usa_news",
-                            label: "USA News",
-                        },
-                        {
-                            tag: "world_news",
-                            label: "World News",
-                        },
-                        {
-                            tag: "culture",
-                            label: "Culture",
-                        },
-                        {
-                            tag: "technology",
-                            label: "Technology",
-                        },
-                        {
-                            tag: "fashion",
-                            label: "Fashion",
-                        },
-                        {
-                            tag: "art",
-                            label: "Art",
-                        },
-                        {
-                            tag: "long_category",
-                            label: "Very Long Category",
-                        }
-                      ]
-                  }
+                  prompts: [{
+                    type: "category",
+                    autoPrompt: true,
+                    categories: [
+                            {
+                                tag: "politics",
+                                label: "Politics",
+                            },
+                            {
+                                tag: "usa_news",
+                                label: "USA News",
+                            },
+                            {
+                                tag: "world_news",
+                                label: "World News",
+                            },
+                            {
+                                tag: "culture",
+                                label: "Culture",
+                            },
+                            {
+                                tag: "technology",
+                                label: "Technology",
+                            },
+                            {
+                                tag: "fashion",
+                                label: "Fashion",
+                            },
+                            {
+                                tag: "art",
+                                label: "Art",
+                            },
+                            {
+                                tag: "long_category",
+                                label: "Very Long Category",
+                            }
+                        ]
+                  }]
               },
               customlink: {
                 enabled: true, /* Required to use the Custom Link */
