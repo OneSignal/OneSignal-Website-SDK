@@ -20,8 +20,8 @@ interface PromptOptionsPostData {
   exampleNotificationTitle?: string;
   exampleNotificationMessage?: string;
   exampleNotificationCaption?: string;
-  acceptButtonText?: string;
-  cancelButtonText?: string;
+  acceptButton?: string;
+  cancelButton?: string;
   timeout?: number;
 }
 

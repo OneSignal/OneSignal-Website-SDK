@@ -14,8 +14,8 @@ export type TagsObjectForApi = TagsObject<PossibleTagValueValues>;
 export interface Categories {
     positiveUpdateButton: string;
     negativeUpdateButton: string;
-    savingButtonText: string;
-    errorButtonText: string;
+    savingButton: string;
+    errorButton: string;
     updateMessage: string;
     tags: TagCategory[];
 }
