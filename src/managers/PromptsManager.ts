@@ -17,7 +17,7 @@ import {
   DelayedPromptOptions,
   AppUserConfigPromptOptions,
   DelayedPromptType} from '../models/Prompts';
-import { Categories, TagsObjectForApi, TagsObjectWithBoolean } from "../models/Tags";
+import { TagCategory, TagsObjectWithBoolean, TagsObjectForApi } from "../models/Tags";
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
@@ -32,7 +32,7 @@ export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
   isInUpdateMode?: boolean;
-  categoryOptions?: Categories;
+  categories?: TagCategory[];
 }
 
 export class PromptsManager {

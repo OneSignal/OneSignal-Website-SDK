@@ -1,4 +1,4 @@
-import { TagsObjectForApi, TagsObjectWithBoolean, TagCategory, Categories } from '../models/Tags';
+import { TagsObjectForApi, TagsObjectWithBoolean, TagCategory } from '../models/Tags';
 import { deepCopy } from '../../src/utils';
 
 export default class TagUtils {
@@ -85,9 +85,9 @@ export default class TagUtils {
         return tagValue;
     }
 
-    static limitCategoriesToMaxCount(categories: Categories, max: number): Categories {
-        const categoriesCopy = deepCopy(categories);
-        categoriesCopy.tags = categories.tags.slice(0, max);
-        return categoriesCopy;
+    static limitCategoriesToMaxCount(tagCategories: TagCategory[], max: number): TagCategory[] {
+        let tagCategoriesCopy = deepCopy(tagCategories);
+        tagCategoriesCopy = tagCategories.slice(0, max);
+        return tagCategoriesCopy;
     }
 }

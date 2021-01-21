@@ -2,7 +2,7 @@ import test from "ava";
 import TagUtils from '../../../src/utils/TagUtils';
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { TagCategory, TagsObjectForApi, TagsObjectWithBoolean, Categories } from '../../../src/models/Tags';
+import { TagCategory, TagsObjectForApi, TagsObjectWithBoolean } from '../../../src/models/Tags';
 import { deepCopy } from '../../../src/utils';
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -108,31 +108,22 @@ test('check that getCheckedStatusForTagValue defaults undefined tag values to tr
 
 test('check that limitCategoriesToMaxCount returns correct category object', t => {
     const maxCount = 3;
-    const genericCategory: Categories = {
-        positiveUpdateButton: "Accept",
-        negativeUpdateButton: "Deny",
-        savingButtonText: "Save",
-        errorButtonText: "Error",
-        updateMessage: "Update",
-        tags: []
-    };
+    const genericCategory : TagCategory[] = [ { tag: "tag", label: "label" } ];
 
     const categoriesUnderMaxTags = deepCopy(genericCategory);
     const categoriesOverMaxTags = deepCopy(genericCategory);
 
-    categoriesUnderMaxTags.tags = [{ tag: "tag", label: "label" }];
-    categoriesOverMaxTags.tags = [
-        { tag: "tag", label: "label" },
+    categoriesOverMaxTags.push(...[
         { tag: "tag2", label: "label2" },
         { tag: "tag3", label: "label3" },
         { tag: "tag4", label: "label4" },
-    ];
+    ]);
 
     const limitedUnder = TagUtils.limitCategoriesToMaxCount(categoriesUnderMaxTags, maxCount);
     const limitedOver = TagUtils.limitCategoriesToMaxCount(categoriesOverMaxTags, maxCount);
 
-    t.deepEqual(limitedUnder.tags, [{ tag: "tag", label: "label" }]);
-    t.deepEqual(limitedOver.tags, [
+    t.deepEqual(limitedUnder, [{ tag: "tag", label: "label" }]);
+    t.deepEqual(limitedOver, [
         { tag: "tag", label: "label" },
         { tag: "tag2", label: "label2" },
         { tag: "tag3", label: "label3" },
