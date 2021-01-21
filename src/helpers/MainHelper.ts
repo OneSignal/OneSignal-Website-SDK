@@ -2,7 +2,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { AppUserConfigPromptOptions, SlidedownPermissionMessageOptions, CategorySlidedownOptions } from '../models/Prompts';
+import { AppUserConfigPromptOptions, SlidedownOptions, SlidedownPromptOptions } from '../models/Prompts';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
@@ -13,7 +13,6 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../context/shared/utils/Utils";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import SubscriptionHelper from "./SubscriptionHelper";
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 
 export default class MainHelper {
 
@@ -104,47 +103,10 @@ export default class MainHelper {
     return data;
   }
 
-  public static getSlidedownPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
-    SlidedownPermissionMessageOptions {
-
-    if (!promptOptions || !promptOptions.slidedown) {
-      const actionMessage = !!promptOptions ? promptOptions.actionMessage :
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage;
-      const acceptButtonText = !!promptOptions ? promptOptions.acceptButtonText :
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton;
-      const cancelButtonText = !!promptOptions ? promptOptions.cancelButtonText :
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton;
-
-      return {
-        enabled: false,
-        autoPrompt: false,
-        actionMessage,
-        acceptButtonText,
-        cancelButtonText,
-      } as SlidedownPermissionMessageOptions;
+  public static getSlidedownOptions(promptOptions: AppUserConfigPromptOptions):
+    SlidedownOptions {
+      return Utils.getValueOrDefault(promptOptions.slidedown, { prompts: [] });
     }
-
-    // slidedown prompt options are defined
-    const { categories } = promptOptions.slidedown;
-    if (!!categories) {
-      categories.positiveUpdateButton = Utils.getValueOrDefault(categories.positiveUpdateButton,
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton);
-      categories.negativeUpdateButton = Utils.getValueOrDefault(categories.negativeUpdateButton,
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton);
-      categories.updateMessage = Utils.getValueOrDefault(categories.updateMessage,
-        SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage);
-    }
-
-    return {
-      enabled: promptOptions.slidedown.enabled,
-      autoPrompt: promptOptions.slidedown.autoPrompt,
-      actionMessage: promptOptions.slidedown.actionMessage || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-      acceptButtonText: promptOptions.slidedown.acceptButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-      cancelButtonText: promptOptions.slidedown.cancelButtonText || SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
-      categories
-    } as SlidedownPermissionMessageOptions;
-
-  }
 
   static getFullscreenPermissionMessageOptions(promptOptions: AppUserConfigPromptOptions):
     AppUserConfigPromptOptions | null {
@@ -163,8 +125,8 @@ export default class MainHelper {
       exampleNotificationMessageDesktop: promptOptions.fullscreen.message,
       exampleNotificationMessageMobile: promptOptions.fullscreen.message,
       exampleNotificationCaption: promptOptions.fullscreen.caption,
-      acceptButtonText: promptOptions.fullscreen.acceptButton,
-      cancelButtonText: promptOptions.fullscreen.cancelButton,
+      acceptButton: promptOptions.fullscreen.acceptButton,
+      cancelButton: promptOptions.fullscreen.cancelButton,
     };
   }
 
@@ -206,8 +168,8 @@ export default class MainHelper {
         'exampleNotificationTitle',
         'exampleNotificationMessage',
         'exampleNotificationCaption',
-        'acceptButtonText',
-        'cancelButtonText',
+        'acceptButton',
+        'cancelButton',
         'timeout'
       ];
       var hash = {};
