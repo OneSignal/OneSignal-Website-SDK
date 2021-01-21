@@ -3,12 +3,10 @@ import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import InitHelper from "../../../src/helpers/InitHelper";
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";
-import { TestEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
-import { setBrowser } from '../../support/tester/browser';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { stubMessageChannel } from '../../support/tester/utils';
-import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 
-let sandbox: SinonSandbox = sinon.sandbox.create();
+const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize();
