@@ -3,9 +3,10 @@ import {
   AppUserConfigPromptOptions,
   CustomLinkStyle,
   CustomLinkSize,
-  AppUserConfigNotifyButton
+  AppUserConfigNotifyButton,
+  SlidedownOptions,
 } from './Prompts';
-import { Categories } from "../models/Tags";
+import { Categories } from "./Tags";
 
 export interface AppConfig {
   /**
@@ -124,7 +125,22 @@ export interface AppUserConfigWebhooks {
   'notification.dismissed': string | undefined;
 }
 
-export interface ServerAppConfigPrompt {
+// deprecated. TO DO: remove after server config version 2 fully migrated
+export interface SlidedownOptionsVersion1 {
+  enabled: boolean;
+  autoPrompt: boolean;
+  pageViews?: number;
+  timeDelay?: number;
+  acceptButtonText?: string;
+  acceptButton?: string;
+  cancelButtonText?: string;
+  cancelButton?: string;
+  actionMessage: string;
+  customizeTextEnabled: boolean;
+  categories?: Categories;
+}
+
+export interface ServerAppPromptConfig {
   native: {
     enabled: boolean;
     autoPrompt: boolean;
@@ -167,17 +183,7 @@ export interface ServerAppConfigPrompt {
     hideWhenSubscribed: boolean;
     customizeTextEnabled: boolean;
   };
-  slidedown: {
-    enabled: boolean;
-    autoPrompt: boolean;
-    pageViews?: number;
-    timeDelay?: number;
-    acceptButton: string;
-    cancelButton: string;
-    actionMessage: string;
-    customizeTextEnabled: boolean;
-    categories?: Categories;
-  };
+  slidedown: SlidedownOptions;
   fullscreen: {
     title: string;
     caption: string;
@@ -209,6 +215,7 @@ export interface ServerAppConfigPrompt {
 export interface ServerAppConfig {
   success: boolean;
   app_id: string;
+  version: number;
   features: {
     metrics: {
       enable: boolean;
@@ -231,7 +238,7 @@ export interface ServerAppConfig {
      */
     // TODO: origin and siteInfo.proxyOrigin are the same, clean up mixed usage in code
     origin: string;
-    staticPrompts: ServerAppConfigPrompt;
+    staticPrompts: ServerAppPromptConfig;
     autoResubscribe: boolean;
     siteInfo: {
       name: string;
