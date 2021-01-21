@@ -11,7 +11,10 @@ import {
   removeCssClass,
   getDomElementOrStub
 } from '../utils';
-import { SlidedownPermissionMessageOptions } from '../models/Prompts';
+import {
+  SlidedownPromptOptions,
+  DelayedPromptType
+} from '../models/Prompts';
 import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
@@ -19,43 +22,41 @@ import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
 import { TagCategory } from '../../src/models/Tags';
 import Log from '../../src/libraries/Log';
 import { getSlidedownElement } from './SlidedownElement';
+import { Utils } from '../../src/context/shared/utils/Utils';
 
 export default class Slidedown {
-  public options: SlidedownPermissionMessageOptions;
+  public options: SlidedownPromptOptions;
   public notificationIcons: NotificationIcons | null;
+
+  // category slidedown
   public isShowingFailureState: boolean;
+  private tagCategories          : TagCategory[] | undefined;
+  private savingButton           : string = SERVER_CONFIG_DEFAULTS_SLIDEDOWN.savingText;
+  private errorButton            : string = SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton;
+  private updateMessage         ?: string;
+  private positiveUpdateButton  ?: string;
+  private negativeUpdateButton  ?: string;
 
-  private categoryOptions: Categories|undefined;
+  constructor(options: SlidedownPromptOptions) {
+    this.options                    = options;
+    this.options.text.actionMessage = options.text.actionMessage.substring(0, 90);
+    this.options.text.acceptButton  = options.text.acceptButton.substring(0, 16);
+    this.options.text.cancelButton  = options.text.cancelButton.substring(0, 16);
+    this.notificationIcons          = null;
+    this.isShowingFailureState      = false;
 
-  static get EVENTS() {
-    return {
-      ALLOW_CLICK: 'popoverAllowClick',
-      CANCEL_CLICK: 'popoverCancelClick',
-      SHOWN: 'popoverShown',
-      CLOSED: 'popoverClosed',
-    };
-  }
-
-  constructor(options?: SlidedownPermissionMessageOptions) {
-    if (!options) {
-        options = MainHelper.getSlidedownPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
-    }
-    this.options = options;
-    this.categoryOptions = options.categories;
-    this.options.actionMessage = options.actionMessage.substring(0, 90);
-    this.options.acceptButtonText = options.acceptButtonText.substring(0, 16);
-    this.options.cancelButtonText = options.cancelButtonText.substring(0, 16);
-    this.notificationIcons = null;
-    this.isShowingFailureState = false;
-
-    if (!!this.categoryOptions) {
-      this.categoryOptions.positiveUpdateButton = this.categoryOptions.positiveUpdateButton.substring(0, 16),
-      this.categoryOptions.negativeUpdateButton = this.categoryOptions.negativeUpdateButton.substring(0, 16),
-      this.categoryOptions.updateMessage = this.categoryOptions.updateMessage.substring(0, 90),
-
-        // NOTE: will be configurable in the future
-      this.categoryOptions.savingButtonText = SERVER_CONFIG_DEFAULTS_SLIDEDOWN.savingText;
-      this.categoryOptions.errorButtonText = this.categoryOptions.positiveUpdateButton;
+    switch (options.type) {
+      case DelayedPromptType.Category:
+        this.negativeUpdateButton = this.options.text.negativeUpdateButton?.substring(0, 16);
+        this.positiveUpdateButton = this.options.text.positiveUpdateButton?.substring(0, 16);
+        this.updateMessage        = this.options.text.updateMessage?.substring(0, 90);
+        this.tagCategories        = options.categories;
+        this.errorButton          = Utils.getValueOrDefault(this.options.text.positiveUpdateButton,
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton);
+        break;
+      // TO DO: other cases: sms, email, smsAndEmail
+      default:
+        break;
     }
   }
 
@@ -70,12 +71,12 @@ export default class Slidedown {
       if (this.container.className.includes(SLIDEDOWN_CSS_CLASSES.container)) {
           removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
       }
-      const positiveButtonText = isInUpdateMode && !!this.categoryOptions ?
-        this.categoryOptions.positiveUpdateButton : this.options.acceptButtonText;
-      const negativeButtonText = isInUpdateMode && !!this.categoryOptions ?
-        this.categoryOptions.negativeUpdateButton : this.options.cancelButtonText;
-      const messageText = isInUpdateMode && !!this.categoryOptions ?
-        this.categoryOptions.updateMessage : this.options.actionMessage;
+      const positiveButtonText = isInUpdateMode && !!this.tagCategories ?
+        this.positiveUpdateButton : this.options.text.acceptButton;
+      const negativeButtonText = isInUpdateMode && !!this.tagCategories ?
+        this.negativeUpdateButton : this.options.text.cancelButton;
+      const messageText = isInUpdateMode && !!this.tagCategories ?
+        this.updateMessage : this.options.text.actionMessage;
 
       const icon = this.getPlatformNotificationIcon();
       const slidedownElement = getSlidedownElement({
@@ -136,25 +137,24 @@ export default class Slidedown {
    * only used with Category Slidedown
    */
   setSaveState(state: boolean): void {
-    if (!this.categoryOptions) {
+    if (!this.tagCategories) {
       Log.debug("Slidedown private category options are not defined");
       return;
     }
 
     if (state) {
-      // note: savingButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
+      // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.disabled = true;
       this.allowButton.textContent = null;
 
-      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.categoryOptions.savingButtonText));
+      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.savingButton));
       this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
 
       addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
       addCssClass(this.allowButton, 'disabled');
       addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
     } else {
-      // positiveUpdateButton should be defined as written in MainHelper.getSlidedownPermissionMessageOptions
-      this.allowButton.textContent = this.categoryOptions.positiveUpdateButton;
+      this.allowButton.textContent = this.positiveUpdateButton;
       removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
       this.allowButton.disabled = false;
       removeCssClass(this.allowButton, 'disabled');
@@ -163,15 +163,15 @@ export default class Slidedown {
   }
 
   setFailureState(state: boolean): void {
-    if (!this.categoryOptions) {
+    if (!this.tagCategories) {
       Log.debug("Slidedown private category options are not defined");
       return;
     }
 
     if (state) {
-      // note: errorButtonText is hardcoded in constructor. TODO: pull from config & set defaults for future release
+      // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.textContent = null;
-      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.categoryOptions.errorButtonText));
+      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
       this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
 
       addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
@@ -223,6 +223,15 @@ export default class Slidedown {
 
   get slidedownFooter() {
     return getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.footer}`);
+  }
+
+  static get EVENTS() {
+    return {
+      ALLOW_CLICK: 'popoverAllowClick',
+      CANCEL_CLICK: 'popoverCancelClick',
+      SHOWN: 'popoverShown',
+      CLOSED: 'popoverClosed',
+    };
   }
 }
 
