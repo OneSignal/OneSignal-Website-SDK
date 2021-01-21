@@ -17,6 +17,7 @@ import {
 } from "../../support/tester/sinonSandboxUtils";
 import { createSubscription } from "../../support/tester/utils";
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
+import { DelayedPromptType } from '../../../src/models/Prompts';
 
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -49,6 +50,18 @@ test.afterEach(function (_t: ExecutionContext) {
  *     + 2. not-expiring subscription and first page view -> on session
  *       3. second page view -> no requests - TODO
  */
+
+const defaultSlidedownOptions = {
+  prompts: [{
+    type: DelayedPromptType.Push,
+    autoPrompt: true,
+    text: {
+      actionMessage: '',
+      acceptButton: '',
+      cancelButton: ''
+    }
+  }]
+};
 
 test.serial(`HTTPS: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
   click allow => sends player create`, async t => {
@@ -83,10 +96,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const initPromise = OneSignal.init({
       appId,
       promptOptions: {
-        slidedown: {
-          enabled: true,
-          autoPrompt: true,
-        }
+        slidedown: defaultSlidedownOptions,
       },
       autoResubscribe: false,
     });
@@ -122,10 +132,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
   const initPromise = OneSignal.init({
     appId,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions,
     },
     autoResubscribe: false,
   });
@@ -266,10 +273,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is on =>
       appId,
       autoResubscribe: true,
       promptOptions: {
-        slidedown: {
-          enabled: true,
-          autoPrompt: true,
-        }
+        slidedown: defaultSlidedownOptions
       }
     });
     await initPromise;
@@ -303,10 +307,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is off =
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -343,10 +344,7 @@ test.serial(`HTTPS: User opted out => second page view => onSession flag is on =
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -385,10 +383,7 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -420,10 +415,7 @@ test.serial(`HTTPS: User subscribed => first page view => sends on session`, asy
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -465,10 +457,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
     const initPromise = OneSignal.init({
       appId,
       promptOptions: {
-        slidedown: {
-          enabled: true,
-          autoPrompt: true,
-        }
+        slidedown: defaultSlidedownOptions
       },
       autoResubscribe: false,
     });
@@ -503,10 +492,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
   const initPromise = OneSignal.init({
     appId,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     },
     autoResubscribe: false,
   });
@@ -633,10 +619,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is on => 
       appId,
       autoResubscribe: true,
       promptOptions: {
-        slidedown: {
-          enabled: true,
-          autoPrompt: true,
-        }
+        slidedown: defaultSlidedownOptions
       }
     });
     await initPromise;
@@ -670,10 +653,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is off =>
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -710,10 +690,7 @@ test.serial(`HTTP: User opted out => second page view => onSession flag is on =>
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -748,10 +725,7 @@ test.serial(`HTTP: User subscribed => first page view => expiring subscription =
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
@@ -783,10 +757,7 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: {
-        enabled: true,
-        autoPrompt: true,
-      }
+      slidedown: defaultSlidedownOptions
     }
   });
   await initPromise;
