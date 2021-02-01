@@ -801,6 +801,7 @@ async function inspectPushRecordCreationRequest(t: ExecutionContext, requestStub
     "device_type",
     "language",
     "timezone",
+    "timezone_id",
     "device_os",
     "sdk",
     "device_model",
