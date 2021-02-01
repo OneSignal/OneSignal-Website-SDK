@@ -11,6 +11,7 @@ export interface FlattenedDeviceRecord {
   device_type: DeliveryPlatformKind;
   language: string;
   timezone: number;
+  timezone_id: string;
   device_os: number;
   sdk: string;
   notification_types: SubscriptionStateKind | undefined;
@@ -28,6 +29,7 @@ export abstract class DeviceRecord implements Serializable {
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;
   public timezone: number;
+  public timezoneId: string;
   public browserVersion: number;
   public deviceModel: string;
   public sdkVersion: string;
@@ -39,6 +41,7 @@ export abstract class DeviceRecord implements Serializable {
     // this.appId = OneSignal.context.appConfig.appId;
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
+    this.timezoneId = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const browserVersion = parseInt(String(bowser.version), 10);
     this.browserVersion = isNaN(browserVersion) ? -1 : browserVersion;
     this.deviceModel = navigator.platform;
@@ -71,6 +74,7 @@ export abstract class DeviceRecord implements Serializable {
       device_type: this.deliveryPlatform,
       language: this.language,
       timezone: this.timezone,
+      timezone_id: this.timezoneId,
       device_os: this.browserVersion,
       device_model: this.deviceModel,
       sdk: this.sdkVersion,

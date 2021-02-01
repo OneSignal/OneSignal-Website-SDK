@@ -91,6 +91,7 @@ async function expectEmailRecordCreationRequest(
         "device_type",
         "language",
         "timezone",
+        "timezone_id",
         "device_os",
         "sdk",
         "device_model"
@@ -127,6 +128,7 @@ async function expectEmailRecordUpdateRequest(
         "device_type",
         "language",
         "timezone",
+        "timezone_id",
         "device_os",
         "sdk",
         "device_model"
