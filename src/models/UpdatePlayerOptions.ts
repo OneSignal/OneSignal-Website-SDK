@@ -7,7 +7,7 @@ export interface UpdatePlayerOptions {
     web_p256                    ?: string;
     language                    ?: string;
     timezone                    ?: number;
-    timezone_id                    ?: string;
+    timezone_id                 ?: string;
     device_os                   ?: number;
     sdk                         ?: string;
     device_model                ?: string;
