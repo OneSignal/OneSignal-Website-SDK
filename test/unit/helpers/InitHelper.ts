@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import test from 'ava';
+import anyTest, { TestInterface } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import InitHelper from "../../../src/helpers/InitHelper";
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";
@@ -7,6 +7,12 @@ import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { stubMessageChannel } from '../../support/tester/utils';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
+
+interface StubMessageChannelContext {
+  originalMessageChannel?: MessageChannel;
+}
+
+const test = anyTest as TestInterface<StubMessageChannelContext>;
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize();
@@ -18,7 +24,7 @@ test.afterEach(() => {
 });
 
 /** registerForPushNotifications */
-test('registerForPushNotifications: requesting a modal prompt', async (t) => {
+test('registerForPushNotifications: requesting a modal prompt', async t => {
   stubMessageChannel(t);
 
   await InitHelper.registerForPushNotifications({ modalPrompt: true });
@@ -26,7 +32,7 @@ test('registerForPushNotifications: requesting a modal prompt', async (t) => {
   t.not(OneSignal.subscriptionModalHost.modal, undefined);
 });
 
-test('registerForPushNotifications: load fullscreen popup when using subscription workaround', async (t) => {
+test('registerForPushNotifications: load fullscreen popup when using subscription workaround', async t => {
 
   const utilsStub = sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(true);
   const loadStub = sandbox.stub(InitHelper, 'loadSubscriptionPopup').resolves();
@@ -37,31 +43,31 @@ test('registerForPushNotifications: load fullscreen popup when using subscriptio
 });
 
 /** onSdkInitialized */
-test("onSdkInitialized: ensure public sdk initialized triggered", async (t) => {
+test("onSdkInitialized: ensure public sdk initialized triggered", async t => {
   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => { t.pass(); });
   await InitHelper.onSdkInitialized();
 });
 
-test("onSdkInitialized: processes expiring subscriptions", async (t) => {
+test("onSdkInitialized: processes expiring subscriptions", async t => {
   const spy = sandbox.stub(InitHelper, "processExpiringSubscriptions").resolves();
   await InitHelper.onSdkInitialized();
   t.true(spy.calledOnce);
 });
 
-test("onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false", async (t) => {
+test("onSdkInitialized: sends on session update only if both autoPrompt and autoResubscribe are false", async t => {
   const spy = sandbox.stub(OneSignal.context.updateManager, "sendOnSessionUpdate").resolves();
   sandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").resolves(false);
-  
+
   OneSignal.config.userConfig.promptOptions.autoPrompt = false;
   OneSignal.config.userConfig.autoResubscribe = false;
   await InitHelper.onSdkInitialized();
   t.true(spy.calledOnce);
 });
 
-test("onSdkInitialized: does not send on session update", async (t) => {
+test("onSdkInitialized: does not send on session update", async t => {
   const spy = sandbox.stub(OneSignal.context.updateManager, "sendOnSessionUpdate").resolves();
   sandbox.stub(OneSignalUtils, "isUsingSubscriptionWorkaround").resolves(false);
-  
+
   OneSignal.config.userConfig.promptOptions.autoPrompt = true;
   OneSignal.config.userConfig.autoResubscribe = true;
   await InitHelper.onSdkInitialized();
