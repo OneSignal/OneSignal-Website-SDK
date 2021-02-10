@@ -383,7 +383,10 @@ export class SubscriptionManager {
     }
 
     Log.debug('Waiting for the service worker to activate...');
-    const workerRegistration = await navigator.serviceWorker.ready;
+    // TODO: Need to define a getter for this, which can encapsulate a lazy register so we can neven fail here
+    const workerRegistration = await navigator.serviceWorker.getRegistration('/push/onesignal/')
+    if (!workerRegistration)
+      throw "Errror no OneSignl SW!";
     Log.debug('Service worker is ready to continue subscribing.');
 
     return await this.subscribeWithVapidKey(workerRegistration.pushManager, subscriptionStrategy);

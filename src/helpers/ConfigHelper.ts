@@ -515,7 +515,7 @@ export class ConfigHelper {
           ...{
             serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
               ? OneSignal.SERVICE_WORKER_PARAM
-              : { scope: '/' },
+              : { scope: '/push/onesignal/' },
             serviceWorkerPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
                 ? OneSignal.SERVICE_WORKER_PATH
                 : 'OneSignalSDKWorker.js',

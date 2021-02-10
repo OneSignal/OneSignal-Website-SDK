@@ -149,9 +149,11 @@ export class WorkerMessenger {
     }
   }
 
-  public directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
+  public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
-    navigator.serviceWorker!.controller!.postMessage({
+
+    const registration = await navigator.serviceWorker.getRegistration("/push/onesignal/");
+    registration!.active!.postMessage({
       command: command,
       payload: payload
     });
