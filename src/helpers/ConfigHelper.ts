@@ -246,22 +246,22 @@ export class ConfigHelper {
         if (promptOption.type === DelayedPromptType.Category) {
           promptOption.text = {
             ...promptOption.text,
-            positiveUpdateButton: Utils.getValueOrDefault(promptOption.text.positiveUpdateButton,
+            positiveUpdateButton: Utils.getValueOrDefault(promptOption.text?.positiveUpdateButton,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton),
-            negativeUpdateButton: Utils.getValueOrDefault(promptOption.text.negativeUpdateButton,
+            negativeUpdateButton: Utils.getValueOrDefault(promptOption.text?.negativeUpdateButton,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton),
-            updateMessage: Utils.getValueOrDefault(promptOption.text.updateMessage,
+            updateMessage: Utils.getValueOrDefault(promptOption.text?.updateMessage,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage),
           };
         }
 
         promptOption.text = {
           ...promptOption.text,
-          actionMessage: Utils.getValueOrDefault(promptOption?.text?.actionMessage,
+          actionMessage: Utils.getValueOrDefault(promptOption.text?.actionMessage,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage),
-          acceptButton: Utils.getValueOrDefault(promptOption?.text?.acceptButton,
+          acceptButton: Utils.getValueOrDefault(promptOption.text?.acceptButton,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton),
-          cancelButton: Utils.getValueOrDefault(promptOption?.text?.cancelButton,
+          cancelButton: Utils.getValueOrDefault(promptOption.text?.cancelButton,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton)
         };
 
