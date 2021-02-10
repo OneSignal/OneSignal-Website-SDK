@@ -303,6 +303,7 @@ export function unsubscribeFromPush() {
       if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
         return Promise.resolve();
 
+        // TODO: Need to replacment for navigator.serviceWorker.ready
       return navigator.serviceWorker.ready
                       .then(registration => registration.pushManager)
                       .then(pushManager => pushManager.getSubscription())
