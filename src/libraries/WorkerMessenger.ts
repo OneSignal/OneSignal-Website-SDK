@@ -140,11 +140,6 @@ export class WorkerMessenger {
         } as any);
       }
     } else {
-      if (!(await this.isWorkerControllingPage())) {
-        Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", (<ServiceWorkerGlobalScope><any>self).registration);
-      }
-      await this.waitUntilWorkerControlsPage();
-      Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
       this.directPostMessageToSW(command, payload);
     }
   }
@@ -152,6 +147,7 @@ export class WorkerMessenger {
   public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
 
+    // TODO: Access should be centralized into a ServiceWorkerManager where it can register or get current so this is never null.
     const registration = await navigator.serviceWorker.getRegistration("/push/onesignal/");
     registration!.active!.postMessage({
       command: command,
@@ -192,14 +188,12 @@ export class WorkerMessenger {
   private async listenForPage(listenIfPageUncontrolled?: boolean) {
     if (!listenIfPageUncontrolled) {
       if (!(await this.isWorkerControllingPage())) {
-        Log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, (<ServiceWorkerGlobalScope><any>self).registration);
+        Log.debug(`(${location.origin}) [Worker Messenger] OneSignal service worker not registered yet.`);
       }
-      await this.waitUntilWorkerControlsPage();
-      Log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
     }
 
     navigator.serviceWorker.addEventListener('message', this.onPageMessageReceivedFromServiceWorker.bind(this));
-    Log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
+    Log.debug(`(${location.origin}) [Worker Messenger] Now listening for messages.`);
   }
 
   onWorkerMessageReceivedFromPage(event: ServiceWorkerMessageEvent) {
@@ -321,6 +315,7 @@ export class WorkerMessenger {
   async isWorkerControllingPage(): Promise<boolean> {
     const env = SdkEnvironment.getWindowEnv();
 
+    // TODO: Shouldn't have a runtime if, should be the correct implemenation in the correct context.
     if (env === WindowEnvironmentKind.ServiceWorker)
       return !!(<ServiceWorkerGlobalScope><any>self).registration.active;
     else {
@@ -328,33 +323,5 @@ export class WorkerMessenger {
       return workerState === ServiceWorkerActiveState.WorkerA ||
         workerState === ServiceWorkerActiveState.WorkerB;
     }
-  }
-
-  /**
-   * For pages, waits until one of our workers is activated.
-   *
-   * For service workers, waits until the registration is active.
-   */
-  async waitUntilWorkerControlsPage() {
-    return new Promise<void>(async resolve => {
-      if (await this.isWorkerControllingPage())
-        resolve();
-      else {
-        const env = SdkEnvironment.getWindowEnv();
-
-        if (env === WindowEnvironmentKind.ServiceWorker) {
-          self.addEventListener('activate', async (_e: Event) => {
-            if (await this.isWorkerControllingPage())
-              resolve();
-          });
-        }
-        else {
-          navigator.serviceWorker.addEventListener('controllerchange', async (_e: Event) => {
-            if (await this.isWorkerControllingPage())
-              resolve();
-          });
-        }
-      }
-    });
   }
 }
