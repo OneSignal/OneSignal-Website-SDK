@@ -121,6 +121,9 @@ export class ServiceWorkerManager {
     const swFileName = ServiceWorkerManager.activeSwFileName(workerRegistration);
     const workerState = this.swActiveStateByFileName(swFileName);
 
+
+    // TODO: I dont' think we care about this case at all any more. We just want to know if the OneSignal service worker was
+    // registered or not. We don't need to claim the page
     /*
       Our service worker registration can be both active and in the controlling scope of the current
       page, but if the page was hard refreshed to bypass the cache (e.g. Ctrl + Shift + R), a
@@ -131,11 +134,11 @@ export class ServiceWorkerManager {
       navigator.serviceWorker.controller will still be null on the first page visit. So we only
       check if the controller is null for our worker, which we know uses clients.claim().
      */
-    if (!navigator.serviceWorker.controller && (
-      workerState === ServiceWorkerActiveState.WorkerA ||
-      workerState === ServiceWorkerActiveState.WorkerB
-    ))
-      return ServiceWorkerActiveState.Bypassed;
+    // if (!navigator.serviceWorker.controller && (
+    //   workerState === ServiceWorkerActiveState.WorkerA ||
+    //   workerState === ServiceWorkerActiveState.WorkerB
+    // ))
+    //   return ServiceWorkerActiveState.Bypassed;
     return workerState;
   }
 
@@ -298,7 +301,7 @@ export class ServiceWorkerManager {
     }
 
     const preInstallWorkerState = await this.getActiveState();
-    await this.installAlternatingWorker();
+    const swRegistration = await this.installAlternatingWorker();
 
     await new Promise<void>(async resolve => {
       const postInstallWorkerState = await this.getActiveState();
@@ -313,17 +316,21 @@ export class ServiceWorkerManager {
         resolve();
       }
       else {
-        Log.debug("installWorker - Awaiting on navigator.serviceWorker's 'controllerchange' event");
-        navigator.serviceWorker.addEventListener('controllerchange', async e => {
-          const postInstallWorkerState = await this.getActiveState();
-          if (postInstallWorkerState !== preInstallWorkerState &&
-            postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
-            resolve();
-          }
-          else {
-            Log.error("installWorker - SW's 'controllerchange' fired but no state change!");
-          }
-        });
+        resolve(); // TODO: Should we send this bacK? swRegistration.active
+
+        // TODO: We are running "await this.installAlternatingWorker();" above, do we really need to wait for it to "active"?
+        // Log.debug("installWorker - Awaiting on navigator.serviceWorker's 'controllerchange' event");
+
+        // navigator.serviceWorker.addEventListener('controllerchange', async e => {
+        //   const postInstallWorkerState = await this.getActiveState();
+        //   if (postInstallWorkerState !== preInstallWorkerState &&
+        //     postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
+        //     resolve();
+        //   }
+        //   else {
+        //     Log.error("installWorker - SW's 'controllerchange' fired but no state change!");
+        //   }
+        // });
       }
     });
 
@@ -440,7 +447,7 @@ export class ServiceWorkerManager {
    * installed or, for 3rd party workers, the existing worker may be uninstalled
    * before installing ours.
    */
-  private async installAlternatingWorker() {
+  private async installAlternatingWorker(): Promise<ServiceWorkerRegistration> {
     const workerState = await this.getActiveState();
 
     if (workerState === ServiceWorkerActiveState.ThirdParty) {
@@ -454,8 +461,11 @@ export class ServiceWorkerManager {
     const fullWorkerPath = `${workerFullPath}?${installUrlQueryParams}`;
     const scope = `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}`;
     Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath} ${scope}.`);
+
     try {
-      await navigator.serviceWorker.register(fullWorkerPath, { scope });
+      const registration = await navigator.serviceWorker.register(fullWorkerPath, { scope });
+      Log.debug(`[Service Worker Installation] Service worker installed.`);
+      return registration;
     } catch (error) {
       Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);
       // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
@@ -472,6 +482,5 @@ export class ServiceWorkerManager {
 
       throw error;
     }
-    Log.debug(`[Service Worker Installation] Service worker installed.`);
   }
 }
