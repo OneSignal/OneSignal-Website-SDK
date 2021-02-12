@@ -297,35 +297,7 @@ export class ServiceWorkerManager {
       return;
     }
 
-    const preInstallWorkerState = await this.getActiveState();
     await this.installAlternatingWorker();
-
-    await new Promise<void>(async resolve => {
-      const postInstallWorkerState = await this.getActiveState();
-      Log.debug(
-        "installWorker - Comparing pre and post states",
-        preInstallWorkerState,
-        postInstallWorkerState
-      );
-
-      if (preInstallWorkerState !== postInstallWorkerState &&
-          postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
-        resolve();
-      }
-      else {
-        Log.debug("installWorker - Awaiting on navigator.serviceWorker's 'controllerchange' event");
-        navigator.serviceWorker.addEventListener('controllerchange', async e => {
-          const postInstallWorkerState = await this.getActiveState();
-          if (postInstallWorkerState !== preInstallWorkerState &&
-            postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
-            resolve();
-          }
-          else {
-            Log.error("installWorker - SW's 'controllerchange' fired but no state change!");
-          }
-        });
-      }
-    });
 
     if ((await this.getActiveState()) === ServiceWorkerActiveState.WorkerB) {
       // If the worker is Worker B, reinstall Worker A
