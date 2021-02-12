@@ -846,7 +846,7 @@ export default class OneSignal {
   }
 
   public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
-    const config = OneSignal.config!.userConfig.outcomes;
+    const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
       Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
       return;
@@ -872,7 +872,7 @@ export default class OneSignal {
   }
 
   public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
-    const config = OneSignal.config!.userConfig.outcomes;
+    const config = OneSignal.config?.userConfig.outcomes;
     if (!config) {
       Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
       return;
