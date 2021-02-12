@@ -140,8 +140,6 @@ export class WorkerMessenger {
         } as any);
       }
     } else {
-      // TODO:THIS_PR: Might need a replacement for "controllerchange.
-      ///  It isn't clear if browsers will give the message to the SW if done too soon after installing it.
       Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
       this.directPostMessageToSW(command, payload);
     }
@@ -149,18 +147,21 @@ export class WorkerMessenger {
 
   public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload): Promise<void> {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
-    
+
     const serviceWorker = await this.context.serviceWorkerManager.getRegistration();
     if (!serviceWorker) {
-      Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!");
-      return;
-    }
-    if (!serviceWorker.active) {
-      Log.error("`[Worker Messenger] [Page -> SW] ServiceWorker found but it could not get active instance to postMessage!");
+      Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!");
       return;
     }
 
-    serviceWorker.active.postMessage({
+    // ServiceWorker will be in 1 of 3 states; The postMessage payload will still arrive at the SW even if it isn't active
+    const availableWorker = serviceWorker.active || serviceWorker.waiting || serviceWorker.installing;
+    if (!availableWorker) {
+      Log.error("`[Worker Messenger] [Page -> SW] ServiceWorkerRegistration found but it could find an available ServiceWorker instance to postMessage!");
+      return;
+    }
+
+    availableWorker.postMessage({
       command: command,
       payload: payload
     });
