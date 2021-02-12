@@ -147,9 +147,20 @@ export class WorkerMessenger {
     }
   }
 
-  public directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
+  public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload): Promise<void> {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
-    navigator.serviceWorker!.controller!.postMessage({
+    
+    const serviceWorker = await this.context.serviceWorkerManager.getRegistration();
+    if (!serviceWorker) {
+      Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!");
+      return;
+    }
+    if (!serviceWorker.active) {
+      Log.error("`[Worker Messenger] [Page -> SW] ServiceWorker found but it could not get active instance to postMessage!");
+      return;
+    }
+
+    serviceWorker.active.postMessage({
       command: command,
       payload: payload
     });
