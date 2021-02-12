@@ -140,10 +140,8 @@ export class WorkerMessenger {
         } as any);
       }
     } else {
-      if (!(await this.isWorkerControllingPage())) {
-        Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", (<ServiceWorkerGlobalScope><any>self).registration);
-      }
-      await this.waitUntilWorkerControlsPage();
+      // TODO:THIS_PR: Might need a replacement for "controllerchange.
+      ///  It isn't clear if browsers will give the message to the SW if done too soon after installing it.
       Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
       this.directPostMessageToSW(command, payload);
     }
@@ -189,10 +187,6 @@ export class WorkerMessenger {
    */
   private async listenForPage(listenIfPageUncontrolled?: boolean) {
     if (!listenIfPageUncontrolled) {
-      if (!(await this.isWorkerControllingPage())) {
-        Log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, (<ServiceWorkerGlobalScope><any>self).registration);
-      }
-      await this.waitUntilWorkerControlsPage();
       Log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
     }
 
@@ -326,33 +320,5 @@ export class WorkerMessenger {
       return workerState === ServiceWorkerActiveState.WorkerA ||
         workerState === ServiceWorkerActiveState.WorkerB;
     }
-  }
-
-  /**
-   * For pages, waits until one of our workers is activated.
-   *
-   * For service workers, waits until the registration is active.
-   */
-  async waitUntilWorkerControlsPage() {
-    return new Promise<void>(async resolve => {
-      if (await this.isWorkerControllingPage())
-        resolve();
-      else {
-        const env = SdkEnvironment.getWindowEnv();
-
-        if (env === WindowEnvironmentKind.ServiceWorker) {
-          self.addEventListener('activate', async (_e: Event) => {
-            if (await this.isWorkerControllingPage())
-              resolve();
-          });
-        }
-        else {
-          navigator.serviceWorker.addEventListener('controllerchange', async (_e: Event) => {
-            if (await this.isWorkerControllingPage())
-              resolve();
-          });
-        }
-      }
-    });
   }
 }
