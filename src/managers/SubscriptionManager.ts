@@ -639,7 +639,7 @@ export class SubscriptionManager {
         return false;
     }
 
-    const serviceWorkerRegistration = await ServiceWorkerManager.getRegistration();
+    const serviceWorkerRegistration = await this.context.serviceWorkerManager.getRegistration();
     if (!serviceWorkerRegistration)
       return false;
 
@@ -743,7 +743,7 @@ export class SubscriptionManager {
     }
 
     const workerState = await this.context.serviceWorkerManager.getActiveState();
-    const workerRegistration = await ServiceWorkerManager.getRegistration();
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
     const notificationPermission =
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
     const isWorkerActive = (

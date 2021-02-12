@@ -17,6 +17,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
+import PageServiceWorkerHelper from "../helpers/page/ServiceWorkerHelper";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -28,8 +29,8 @@ export class ServiceWorkerManager {
   }
 
   // Gets details on the service-worker (if any) that controls the current page
-  public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    return await ServiceWorkerHelper.getRegistration();
+  public async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
+    return await PageServiceWorkerHelper.getRegistration(this.config.registrationOptions.scope);
   }
 
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
@@ -87,7 +88,7 @@ export class ServiceWorkerManager {
       }
     }
 
-    const workerRegistration = await ServiceWorkerManager.getRegistration();
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {
       /*
         A site may have a service worker nested at /folder1/folder2/folder3, while the user is

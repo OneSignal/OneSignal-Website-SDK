@@ -15,7 +15,6 @@ import LocalStorage from '../utils/LocalStorage';
 import { SessionOrigin } from "../models/Session";
 import MainHelper from "./MainHelper";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 import { Browser } from "../context/browser/models/Browser";
 
@@ -163,7 +162,7 @@ export default class SubscriptionHelper {
   }
 
   static async getRawPushSubscriptionFromServiceWorkerRegistration(): Promise<RawPushSubscription | null> {
-    const registration = await PageServiceWorkerHelper.getRegistration();
+    const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
     if (!registration) {
       return null;
     }

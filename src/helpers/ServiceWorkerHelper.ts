@@ -8,7 +8,6 @@ import Database from "../services/Database";
 import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
 import { NotificationClicked } from "../models/Notification";
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
@@ -17,10 +16,6 @@ import { OSServiceWorkerFields } from "../service-worker/types";
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
-  public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    return await PageServiceWorkerHelper.getRegistration();
-  }
-
   public static getServiceWorkerHref(
     workerState: ServiceWorkerActiveState,
     config: ServiceWorkerManagerConfig): string {
