@@ -96,8 +96,6 @@ export class ServiceWorker {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
-    self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
-    self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
       event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
     });
@@ -996,21 +994,6 @@ export class ServiceWorker {
       Log.warn(`Failed to open the URL '${url}':`, e);
       return null;
     }
-  }
-
-  static onServiceWorkerInstalled(event) {
-    Log.info("Installing service worker...");
-    // At this point, the old service worker is still in control
-    event.waitUntil(self.skipWaiting());
-  }
-
-  /*
-   1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
-   */
-  static onServiceWorkerActivated(event) {
-    // The old service worker is gone now
-    Log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, Utils.getConsoleStyle('bold'));
-    event.waitUntil(self.clients.claim());
   }
 
   static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
