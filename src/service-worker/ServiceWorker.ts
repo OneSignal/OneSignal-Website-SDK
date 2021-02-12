@@ -441,7 +441,7 @@ export class ServiceWorker {
      */
     if (options.isHttps) {
       const windowClients: ReadonlyArray<Client> = await self.clients.matchAll(
-        { type: "window", includeUncontrolled: false }
+        { type: "window", includeUncontrolled: true }
       );
 
       if (options.isSafari) {
