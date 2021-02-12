@@ -764,6 +764,7 @@ export default class OneSignal {
     return await OneSignal.privateGetSubscription(callback);
   }
 
+  // TO DO: consider renaming to something like privateGetNotOptedOutStatus
   static async privateGetSubscription(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('getSubscription', callback);
     const subscription = await Database.getSubscription();
