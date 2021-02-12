@@ -170,7 +170,7 @@ export default class SdkEnvironment {
     }
 
     // Will be null if there was an issue retrieving a status
-    const registrationResult = await ServiceWorkerHelper.getRegistration();
+    const registrationResult = await OneSignal.context.serviceWorkerManager.getRegistration();
     return !registrationResult;
   }
 

@@ -24,7 +24,6 @@ import Log from '../libraries/Log';
 import Environment from '../Environment';
 import Bell from '../bell/Bell';
 import { CustomLink } from '../CustomLink';
-import { ServiceWorkerManager } from "../managers/ServiceWorkerManager";
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
@@ -261,7 +260,7 @@ export default class InitHelper {
       !await SdkEnvironment.isFrameContextInsecure()
     ) {
       try {
-        const registration = await ServiceWorkerManager.getRegistration();
+        const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
         if (registration && registration.active) {
           await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
         }
