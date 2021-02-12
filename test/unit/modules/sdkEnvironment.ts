@@ -106,6 +106,10 @@ test('getIntegration should return Secure in HTTPS top-level frame', async t => 
 });
 
 test('getIntegration should return Secure in HTTPS child frame under top-level HTTPS frame', async t => {
+  const OneSignal: any = await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Http
+  });
+  TestEnvironment.mockInternalOneSignal();
   const browser = await TestEnvironment.stubDomEnvironment();
   browser.reconfigureWindow(window, { top: 'another frame' as any });
   browser.changeURL(window, "https://site.com");

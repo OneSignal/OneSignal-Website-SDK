@@ -57,8 +57,6 @@ test.beforeEach(async function() {
 });
 
 test.afterEach(function () {
-  if (getRegistrationStub.callCount > 0)
-    sandbox.assert.alwaysCalledWithExactly(getRegistrationStub, location.href);
   sandbox.restore();
 });
 
@@ -431,6 +429,6 @@ test('ServiceWorkerManager.getRegistration() handles throws by returning null', 
   getRegistrationStub.returns(new Promise(() => {
     throw new Error("HTTP NOT SUPPORTED");
   }));
-  const result = await ServiceWorkerManager.getRegistration();
+  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
   t.is(result, null);
 });
