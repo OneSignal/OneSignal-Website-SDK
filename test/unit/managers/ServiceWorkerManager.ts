@@ -113,32 +113,6 @@ test('getActiveState() detects a 3rd party worker, a worker that is activated bu
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
 });
 
-test('getActiveState() detects a page loaded by hard-refresh with our service worker as bypassed', async t => {
-  const mockWorkerRegistration = new MockServiceWorkerRegistration();
-  const mockInstallingWorker = new MockServiceWorker();
-  mockInstallingWorker.state = 'activated';
-  mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
-  mockWorkerRegistration.active = mockInstallingWorker;
-
-  getRegistrationStub.resolves(mockWorkerRegistration);
-  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Bypassed);
-});
-
-test('getActiveState() detects an activated third-party service worker not controlling the page as third-party and not bypassed', async t => {
-  const mockWorkerRegistration = new MockServiceWorkerRegistration();
-  const mockInstallingWorker = new MockServiceWorker();
-  mockInstallingWorker.state = 'activated';
-  mockInstallingWorker.scriptURL = 'https://site.com/another-worker.js';
-  mockWorkerRegistration.active = mockInstallingWorker;
-
-  getRegistrationStub.resolves(mockWorkerRegistration);
-  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
-});
-
 test('getActiveState() should detect Akamai akam-sw.js?othersw= when our is contain within', async t => {
   await navigator.serviceWorker.register('/akam-sw.js?othersw=https://domain.com/Worker-A.js?appId=12345');
 

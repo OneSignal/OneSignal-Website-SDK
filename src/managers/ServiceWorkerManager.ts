@@ -121,22 +121,6 @@ export class ServiceWorkerManager {
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
     const swFileName = ServiceWorkerManager.activeSwFileName(workerRegistration);
     const workerState = this.swActiveStateByFileName(swFileName);
-
-    /*
-      Our service worker registration can be both active and in the controlling scope of the current
-      page, but if the page was hard refreshed to bypass the cache (e.g. Ctrl + Shift + R), a
-      service worker will not control the page.
-
-      For a third-party service worker, if it does not call clients.claim(), even if its
-      registration is both active and in the controlling scope of the current page,
-      navigator.serviceWorker.controller will still be null on the first page visit. So we only
-      check if the controller is null for our worker, which we know uses clients.claim().
-     */
-    if (!navigator.serviceWorker.controller && (
-      workerState === ServiceWorkerActiveState.WorkerA ||
-      workerState === ServiceWorkerActiveState.WorkerB
-    ))
-      return ServiceWorkerActiveState.Bypassed;
     return workerState;
   }
 
