@@ -11,9 +11,8 @@
 2. Follow the following instructions (also logged in console)
    - copy `dev-ssl.crt` from container to host with: 
       ```
-      docker cp <containerId>:sdk/express_webpack/certs/dev-ssl.crt .
+      docker cp "$(docker-compose ps -q onesignal-web-sdk-dev)":sdk/express_webpack/certs/dev-ssl.crt .
       ```
-      You can get the container id by running `docker ps`
    - If you're running the container in a VM, get the cert file onto the VM's host (e.g: use `scp`)
    - add cert to keychain (mac OSX): 
       ```
