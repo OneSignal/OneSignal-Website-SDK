@@ -28,16 +28,6 @@ export default class ServiceWorkerHelper {
       workerState === ServiceWorkerActiveState.ThirdParty ||
       workerState === ServiceWorkerActiveState.None)
       workerFullPath = config.workerAPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.Bypassed) {
-      /*
-        if the page is hard refreshed bypassing the cache, no service worker
-        will control the page.
-
-        It doesn't matter if we try to reinstall an existing worker; still no
-        service worker will control the page after installation.
-       */
-      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
 
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
   }
@@ -262,12 +252,6 @@ export enum ServiceWorkerActiveState {
    * No service worker is installed.
    */
   None = 'None',
-  /**
-   * A service worker is active but not controlling the page. This can occur if
-   * the page is hard-refreshed bypassing the cache, which also bypasses service
-   * workers.
-   */
-  Bypassed = 'Bypassed',
   /**
    * Service workers are not supported in this environment. This status is used
    * on HTTP pages where it isn't possible to know whether a service worker is
