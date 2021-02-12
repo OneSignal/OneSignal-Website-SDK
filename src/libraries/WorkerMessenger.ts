@@ -295,30 +295,4 @@ export class WorkerMessenger {
       this.replies.deleteAllListenerRecords();
     }
   }
-
-
-  /*
-    Service worker postMessage() communication relies on the property
-    navigator.serviceWorker.controller to be non-null. The controller property
-    references the active service worker controlling the page. Without this
-    property, there is no service worker to message.
-
-    The controller property is set when a service worker has successfully
-    registered, installed, and activated a worker, and when a page isn't loaded
-    in a hard refresh mode bypassing the cache.
-
-    It's possible for a service worker to take a second page load to be fully
-    activated.
-   */
-  async isWorkerControllingPage(): Promise<boolean> {
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env === WindowEnvironmentKind.ServiceWorker)
-      return !!(<ServiceWorkerGlobalScope><any>self).registration.active;
-    else {
-      const workerState = await this.context.serviceWorkerManager.getActiveState();
-      return workerState === ServiceWorkerActiveState.WorkerA ||
-        workerState === ServiceWorkerActiveState.WorkerB;
-    }
-  }
 }
