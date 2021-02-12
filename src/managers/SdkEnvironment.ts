@@ -182,7 +182,7 @@ export default class SdkEnvironment {
     if (Environment.isBrowser()) {
       return window.location.origin;
     } else if (typeof self !== "undefined" && typeof ServiceWorkerGlobalScope !== "undefined") {
-      return self.registration.scope;
+      return self.location.origin;
     }
     return "Unknown";
   }
