@@ -112,7 +112,7 @@ export default class InitHelper {
     // saves isSubscribed to localStorage. used for require user interaction functionality
     LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
 
-    if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut && !isSubscribed) {
+    if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
       /*
       * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
       * permanent blocks, we want to replace sites automatically showing the native browser request
