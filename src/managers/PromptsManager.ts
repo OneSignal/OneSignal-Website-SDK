@@ -26,6 +26,7 @@ import TaggingContainer from '../slidedown/TaggingContainer';
 import TagUtils from '../utils/TagUtils';
 import LocalStorage from '../utils/LocalStorage';
 import PromptsHelper from '../helpers/PromptsHelper';
+import bowser from "bowser";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -80,6 +81,32 @@ export class PromptsManager {
     }
 
     return true;
+  }
+
+  private shouldForceSlidedownOverNative(): boolean {
+    const { environmentInfo } = OneSignal;
+      const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
+
+      return (
+          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          requiresUserInteraction
+        );
+  }
+
+  public async spawnAutoPrompts() {
+      /*
+      * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+      * permanent blocks, we want to replace sites automatically showing the native browser request
+      * with a slide prompt first.
+      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
+      * It simply wouldn't work to try to show native prompt from script.
+      */
+
+    const forceSlidedownOverNative = this.shouldForceSlidedownOverNative();
+
+    await OneSignal.context.promptsManager.internalShowAutoPrompt({
+      forceSlidedownOverNative,
+    });
   }
 
   public async internalShowAutoPrompt(options: AutoPromptOptions = { force: false, forceSlidedownOverNative: false }

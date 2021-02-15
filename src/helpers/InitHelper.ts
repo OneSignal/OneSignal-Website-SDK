@@ -113,30 +113,9 @@ export default class InitHelper {
     LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
 
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
-      /*
-      * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-      * permanent blocks, we want to replace sites automatically showing the native browser request
-      * with a slide prompt first.
-      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
-      * It simply wouldn't work to try to show native prompt from script.
-      */
-
-     const { environmentInfo } = OneSignal;
-     const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
-
-      const forceSlidedownOverNative =
-        (
-          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
-          requiresUserInteraction
-        );
-      const categoryOptions = OneSignal.context.appConfig.userConfig.promptOptions.slidedown.categories;
-
-      await OneSignal.context.promptsManager.internalShowAutoPrompt({
-        forceSlidedownOverNative,
-        categoryOptions
-      });
-
+      await OneSignal.context.promptsManager.spawnAutoPrompts();
     }
+
     OneSignal._sessionInitAlreadyRunning = false;
     await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
