@@ -15,15 +15,14 @@ import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from '../slided
 import {
   DelayedPromptOptions,
   AppUserConfigPromptOptions,
-  DelayedPromptType} from '../models/Prompts';
-import { TagCategory, TagsObjectWithBoolean, TagsObjectForApi } from "../models/Tags";
+  DelayedPromptType,
+  SlidedownPromptOptions} from '../models/Prompts';
 import TestHelper from '../helpers/TestHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import TaggingContainer from '../slidedown/TaggingContainer';
-import TagUtils from '../utils/TagUtils';
 import LocalStorage from '../utils/LocalStorage';
 import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from "bowser";
@@ -32,7 +31,7 @@ export interface AutoPromptOptions {
   force?: boolean;
   forceSlidedownOverNative?: boolean;
   isInUpdateMode?: boolean;
-  categories?: TagCategory[];
+  slidedownPromptOptions?: SlidedownPromptOptions;
 }
 
 export class PromptsManager {
@@ -128,7 +127,6 @@ export class PromptsManager {
 
     // spawn slidedown prompts
     const prompts = userPromptOptions.slidedown?.prompts;
-
     if (!!prompts && prompts?.length > 0) {
       for (let i=0; i<prompts.length; i++) {
         const promptOptions = prompts[i];
@@ -199,17 +197,13 @@ export class PromptsManager {
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
-    const { isInUpdateMode, categories } = options;
 
     MainHelper.markHttpSlidedownShown();
-
     const sdkStylesLoadResult = await this.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log.debug('Not showing slidedown permission message because styles failed to load.');
       return;
     }
-    const slidedownOptions =
-      MainHelper.getSlidedownOptions(OneSignal.config.userConfig.promptOptions);
 
     if (!this.eventHooksInstalled) {
       this.installEventHooksForSlidedown();
@@ -222,22 +216,18 @@ export class PromptsManager {
   // provided categories, then calls `internalShowSlidedownPrompt`.
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     const prompts = this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
+    const slidedownPromptOptions = options?.slidedownPromptOptions ||
+      PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, DelayedPromptType.Category);
 
-    if (prompts && !PromptsHelper.isCategorySlidedownConfigured(prompts)) {
+    if (!slidedownPromptOptions) {
       Log.error(`OneSignal: no categories to display. Check your configuration on the ` +
         `OneSignal dashboard or your custom code initialization.`);
       return;
     }
 
-    const categorySlidedownOptions = PromptsHelper.getFirstSlidedownPromptOptionsWithType(
-      prompts, DelayedPromptType.Category
-    );
-
-    const tagCategoryArray = categorySlidedownOptions?.categories;
-
     await this.internalShowSlidedownPrompt({
       ...options,
-      categories: tagCategoryArray,
+      slidedownPromptOptions
     });
   }
 
