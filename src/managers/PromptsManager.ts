@@ -36,12 +36,12 @@ export interface AutoPromptOptions {
 }
 
 export class PromptsManager {
-  private isAutoPromptShowing: boolean;
+  private isNativePromptShowing: boolean;
   private context: ContextInterface;
   private eventHooksInstalled: boolean;
 
   constructor(context: ContextInterface) {
-    this.isAutoPromptShowing = false;
+    this.isNativePromptShowing = false;
     this.context = context;
     this.eventHooksInstalled = false;
   }
@@ -94,131 +94,112 @@ export class PromptsManager {
   }
 
   public async spawnAutoPrompts() {
-      /*
-      * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
-      * permanent blocks, we want to replace sites automatically showing the native browser request
-      * with a slide prompt first.
-      * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
-      * It simply wouldn't work to try to show native prompt from script.
-      */
+    // user config prompt options
+    const userPromptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
 
+    /*
+    * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
+    * permanent blocks, we want to replace sites automatically showing the native browser request
+    * with a slide prompt first.
+    * Same for Safari 12.1+ & Firefox 72+. It requires user interaction to request notification permissions.
+    * It simply wouldn't work to try to show native prompt from script.
+    */
     const forceSlidedownOverNative = this.shouldForceSlidedownOverNative();
 
-    await OneSignal.context.promptsManager.internalShowAutoPrompt({
-      forceSlidedownOverNative,
-    });
-  }
+    // show native prompt
+    const nativePromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Native);
+    const isPageViewConditionMetForNative: boolean = this.isPageViewConditionMet(nativePromptOptions);
+    const conditionMetWithNativeOptions = nativePromptOptions.enabled && isPageViewConditionMetForNative;
+    const forceSlidedownWithNativeOptions = forceSlidedownOverNative && conditionMetWithNativeOptions;
 
-  public async internalShowAutoPrompt(options: AutoPromptOptions = { force: false, forceSlidedownOverNative: false }
-    ): Promise<void> {
-      OneSignalUtils.logMethodCall("internalShowAutoPrompt", options);
+    if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
+      this.internalShowDelayedPrompt(DelayedPromptType.Native, nativePromptOptions.timeDelay || 0);
+      return;
+    }
 
-      if (!OneSignal.config || !OneSignal.config.userConfig || !OneSignal.config.userConfig.promptOptions) {
-        Log.error("OneSignal config was not initialized correctly. Aborting.");
-        return;
+    // if slidedown not configured, condition met with native options, & should force slidedown over native:
+    const isPushSlidedownConfigured = !!PromptsHelper.getFirstSlidedownPromptOptionsWithType(
+      userPromptOptions.slidedown?.prompts, DelayedPromptType.Push
+    );
+
+    if (forceSlidedownWithNativeOptions && !isPushSlidedownConfigured) {
+      this.internalShowDelayedPrompt(DelayedPromptType.Push, nativePromptOptions.timeDelay || 0);
+    }
+
+    // spawn slidedown prompts
+    const prompts = userPromptOptions.slidedown?.prompts;
+
+    if (!!prompts && prompts?.length > 0) {
+      for (let i=0; i<prompts.length; i++) {
+        const promptOptions = prompts[i];
+
+        const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, promptOptions.type);
+        const isPageViewConditionMetForSlidedown: boolean = this.isPageViewConditionMet(slidedownPromptOptions);
+        const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
+
+        const options: AutoPromptOptions = {
+          slidedownPromptOptions: promptOptions
+        };
+
+        if (conditionMetWithSlidedownOptions) {
+          this.internalShowDelayedPrompt(promptOptions.type, slidedownPromptOptions.timeDelay || 0, options);
+        }
       }
-      const { forceSlidedownOverNative } = options;
-
-      // user config prompt options
-      const userPromptOptions = OneSignal.config.userConfig.promptOptions;
-
-      if (!userPromptOptions.native.enabled && userPromptOptions.slidedown.prompts.length === 0) {
-        Log.error("No suitable prompt type enabled.");
-        return;
-      }
-
-      const categoryOrPushPromptType = PromptsHelper.isCategorySlidedownConfigured(
-        userPromptOptions?.slidedown?.prompts
-      ) ? DelayedPromptType.Category : DelayedPromptType.Push;
-
-      const nativePromptOptions = this.getDelayedPromptOptions(userPromptOptions, DelayedPromptType.Native);
-      const isPageViewConditionMetForNative: boolean = this.isPageViewConditionMet(nativePromptOptions);
-
-      const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, categoryOrPushPromptType);
-      const isPageViewConditionMetForSlidedown: boolean = this.isPageViewConditionMet(slidedownPromptOptions);
-
-      const conditionMetWithNativeOptions = nativePromptOptions.enabled && isPageViewConditionMetForNative;
-      const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
-      const forceSlidedownWithNativeOptions = forceSlidedownOverNative && conditionMetWithNativeOptions;
-
-      // show native prompt
-      if (conditionMetWithNativeOptions && !forceSlidedownWithNativeOptions) {
-        this.internalShowDelayedPrompt(DelayedPromptType.Native, nativePromptOptions.timeDelay || 0);
-        return;
-      }
-
-      // show slidedown prompt
-      if (conditionMetWithSlidedownOptions || forceSlidedownWithNativeOptions) {
-        const { timeDelay } = conditionMetWithSlidedownOptions ? slidedownPromptOptions : nativePromptOptions;
-        this.internalShowDelayedPrompt(categoryOrPushPromptType, timeDelay || 0, options);
-      }
+    }
   }
 
   public async internalShowDelayedPrompt(type: DelayedPromptType,
       timeDelaySeconds: number,
       options?: AutoPromptOptions
     ): Promise<void> {
-    OneSignalUtils.logMethodCall("internalShowDelayedPrompt");
-    if (typeof timeDelaySeconds !== "number") {
-      Log.error("internalShowDelayedPrompt: timeDelay not a number");
-      return;
-    }
+      OneSignalUtils.logMethodCall("internalShowDelayedPrompt");
+      if (typeof timeDelaySeconds !== "number") {
+        Log.error("internalShowDelayedPrompt: timeDelay not a number");
+        return;
+      }
 
-    const { requiresUserInteraction } = EnvironmentInfoHelper.getEnvironmentInfo();
-    if (requiresUserInteraction && type === DelayedPromptType.Native) {
-      type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed
-    }
+      const { requiresUserInteraction } = EnvironmentInfoHelper.getEnvironmentInfo();
+      if (requiresUserInteraction && type === DelayedPromptType.Native) {
+        type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed
+      }
 
-    if (timeDelaySeconds > 0) {
-      await awaitableTimeout(timeDelaySeconds * 1_000);
-    }
+      if (timeDelaySeconds > 0) {
+        await awaitableTimeout(timeDelaySeconds * 1_000);
+      }
 
-    switch(type){
-      case DelayedPromptType.Native:
-        this.internalShowNativePrompt();
-        break;
-      case DelayedPromptType.Push:
-        this.internalShowSlidedownPrompt(options);
-        break;
-      case DelayedPromptType.Category:
-        this.internalShowCategorySlidedown(options);
-        break;
-      default:
-        Log.error("Invalid Delayed Prompt type");
-    }
+      switch(type){
+        case DelayedPromptType.Native:
+          await this.internalShowNativePrompt();
+          break;
+        case DelayedPromptType.Push:
+          await this.internalShowSlidedownPrompt(options);
+          break;
+        case DelayedPromptType.Category:
+          await this.internalShowCategorySlidedown(options);
+          break;
+        default:
+          Log.error("Invalid Delayed Prompt type");
+      }
   }
 
   public async internalShowNativePrompt(): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowNativePrompt");
 
-    if (this.isAutoPromptShowing) {
+    if (this.isNativePromptShowing) {
       Log.debug("Already showing autoprompt. Abort showing a native prompt.");
       return;
     }
 
-    this.isAutoPromptShowing = true;
+    this.isNativePromptShowing = true;
     MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
-    this.isAutoPromptShowing = false;
+    this.isNativePromptShowing = false;
     TestHelper.markHttpsNativePromptDismissed();
   }
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
-    const { categories, isInUpdateMode } = options;
-
-    if (this.isAutoPromptShowing) {
-      Log.debug("Already showing slidedown. Abort.");
-      return;
-    }
-
-    try {
-      const showPrompt = await this.checkIfAutoPromptShouldBeShown(options);
-      if (!showPrompt) { return; }
-    } catch(e) {
-      Log.warn("checkIfAutoPromptShouldBeShown returned an error", e);
-      return;
-    }
+    const { isInUpdateMode, categories } = options;
 
     MainHelper.markHttpSlidedownShown();
 
@@ -234,41 +215,7 @@ export class PromptsManager {
       this.installEventHooksForSlidedown();
     }
 
-    // TO DO: iterate through each config in slidedownOptions and mount individually...
-    // existing slidedown types: push, category. in current state, if category slidedown
-    // is configured we use that config. in future, we should support both if configured
-    // simultaneously
-    const slidedownPromptOptions = PromptsHelper
-      .getFirstSlidedownPromptOptionsWithType(slidedownOptions.prompts, DelayedPromptType.Category) ||
-      PromptsHelper.getFirstSlidedownPromptOptionsWithType(slidedownOptions.prompts, DelayedPromptType.Push);
-
-    OneSignal.slidedown = new Slidedown(slidedownPromptOptions);
-    try {
-      const { promptOptions } = this.context.appConfig.userConfig;
-      if (PromptsHelper.isCategorySlidedownConfigured(promptOptions?.slidedown?.prompts) && !!categories) {
-        // show slidedown with tagging container
-        await OneSignal.slidedown.create(isInUpdateMode);
-        let tagsForComponent: TagsObjectWithBoolean = {};
-        const taggingContainer = new TaggingContainer();
-
-        if (isInUpdateMode) {
-          taggingContainer.load();
-          // updating. pull remote tags.
-          const existingTags = await OneSignal.getTags() as TagsObjectForApi;
-          this.context.tagManager.storeRemotePlayerTags(existingTags);
-          tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
-        } else {
-          // first subscription
-          TagUtils.markAllTagsAsSpecified(categories, true);
-        }
-        taggingContainer.mount(categories, tagsForComponent);
-      }
-    } catch (e) {
-      Log.error("OneSignal: Attempted to create tagging container with error" , e);
-    }
-
-    await OneSignal.slidedown.create();
-    Log.debug('Showing Slidedown.');
+    await this.context.slidedownManager.createSlidedown(options);
   }
 
   // Wrapper for existing method `internalShowSlidedownPrompt`. Inserts information about
@@ -299,10 +246,11 @@ export class PromptsManager {
     manageNotifyButtonStateWhileSlidedownShows();
 
     OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
-      this.isAutoPromptShowing = true;
+      this.context.slidedownManager.setIsSlidedownShowing(true);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
-      this.isAutoPromptShowing = false;
+      this.context.slidedownManager.setIsSlidedownShowing(false);
+      this.context.slidedownManager.showQueued();
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       const { slidedown } = OneSignal;
@@ -315,15 +263,15 @@ export class PromptsManager {
       const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
 
       if (isPushEnabled) {
-        OneSignal.slidedown.setSaveState(true);
+        slidedown.setSaveState(true);
         // Sync Category Slidedown tags (isInUpdateMode = true)
         try {
           await this.context.tagManager.sendTags(true);
         } catch (e) {
           Log.error("Failed to update tags", e);
           // Display tag update error
-          OneSignal.slidedown.setSaveState(false);
-          OneSignal.slidedown.setFailureState(true);
+          slidedown.setSaveState(false);
+          slidedown.setFailureState(true);
           return;
         }
       } else {
@@ -332,8 +280,10 @@ export class PromptsManager {
         InitHelper.registerForPushNotifications(options);
       }
 
-      if (OneSignal.slidedown) {
-        OneSignal.slidedown.close();
+      if (slidedown) {
+        slidedown.close();
+        // called here for compatibility with unit tests (close function doesn't run fully in test env)
+        slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();
