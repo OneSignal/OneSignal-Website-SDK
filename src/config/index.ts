@@ -1,3 +1,5 @@
+import { DelayedPromptType, SlidedownPromptOptions } from "../../src/models/Prompts";
+
 export const SERVER_CONFIG_DEFAULTS_SESSION = {
   reportingThreshold: 30,
   enableOnSessionForUnsubcribed: false,
@@ -20,4 +22,15 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
     negativeUpdateButton: "Cancel"
   },
   savingText: "Saving...",
+};
+
+export const CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS: SlidedownPromptOptions = {
+  type        : DelayedPromptType.Push,
+  text        : {
+    actionMessage : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
+    acceptButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
+    cancelButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton
+  },
+  autoPrompt  : false, // default to false
+  delay       : SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
 };
