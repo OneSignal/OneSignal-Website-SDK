@@ -82,16 +82,14 @@ export class ServiceWorkerManager {
 
   // Get the file name of the active ServiceWorker
   private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
-    if (!workerRegistration.active)
-      return null;
-
-    const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
+    const serviceWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const workerScriptPath = new URL(serviceWorker.scriptURL).pathname;
     const swFileName = new Path(workerScriptPath).getFileName();
 
     // If the current service worker is Akamai's
     if (swFileName == "akam-sw.js") {
       // Check if its importing a ServiceWorker under it's "othersw" query param
-      const searchParams = new URLSearchParams(new URL(workerRegistration.active.scriptURL).search);
+      const searchParams = new URLSearchParams(new URL(serviceWorker.scriptURL).search);
       const importedSw = searchParams.get("othersw");
       if (importedSw) {
         Log.debug("Found a ServiceWorker under Akamai's akam-sw.js?othersw=", importedSw);
