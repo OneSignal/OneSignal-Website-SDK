@@ -244,11 +244,6 @@ export enum ServiceWorkerActiveState {
    */
   ThirdParty = '3rd Party',
   /**
-   * A service worker is currently installing and we can't determine its final state yet. Wait until
-   * the service worker is finished installing by checking for a controllerchange property..
-   */
-  Installing = 'Installing',
-  /**
    * No service worker is installed.
    */
   None = 'None',
