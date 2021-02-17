@@ -1,7 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
 import sinon from 'sinon';
 import Context from '../../../src/models/Context';
 import { NotificationPermission } from '../../../src/models/NotificationPermission';

@@ -29,8 +29,6 @@ import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
 import LocalStorage from '../utils/LocalStorage';
 
-declare var OneSignal: any;
-
 export interface RegisterOptions extends SubscriptionPopupHostOptions {
   modalPrompt?: boolean;
   httpPermissionRequest?: boolean;

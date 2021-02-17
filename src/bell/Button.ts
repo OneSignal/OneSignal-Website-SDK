@@ -4,8 +4,7 @@ import ActiveAnimatedElement from "./ActiveAnimatedElement";
 import Bell from "./Bell";
 import LimitStore from "../LimitStore";
 import Message from "./Message";
-import OneSignal from '../OneSignal'
-
+import OneSignal from "../../src/OneSignal"
 
 export default class Button extends ActiveAnimatedElement {
 

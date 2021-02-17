@@ -2,7 +2,6 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
-import OneSignal from '../../../../src/OneSignal';
 import Database from '../../../../src/services/Database';
 import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 
@@ -16,6 +15,7 @@ import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
 import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
+import OneSignalClass from '../../../../src/OneSignal';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -195,6 +195,7 @@ test('displayNotification - persistNotification - false', async t => {
 async function setupFakePlayerId(): Promise<string> {
   const subscription: Subscription = new Subscription();
   subscription.deviceId = Random.getRandomUuid();
+  const OneSignal = new OneSignalClass();
   await OneSignal.database.setSubscription(subscription);
   return subscription.deviceId;
 }

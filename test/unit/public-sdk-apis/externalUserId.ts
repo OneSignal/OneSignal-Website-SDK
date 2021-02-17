@@ -1,5 +1,4 @@
 import test from "ava";
-import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonSandbox } from "sinon";
 import Event from "../../../src/Event";
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";

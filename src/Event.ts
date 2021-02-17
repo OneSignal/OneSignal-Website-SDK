@@ -3,7 +3,13 @@ import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import Log from './libraries/Log';
 import Utils from "./context/shared/utils/Utils";
+// import type OneSignalType from "./OneSignal";
 
+// interface OneSignalClass extends OneSignalType {}
+// var OneSignal = {} as OneSignalType;
+
+
+// var gTest : OneSignalClass = {} as OneSignalClass;
 
 const SILENT_EVENTS = [
   'notifyButtonHovering',
@@ -101,7 +107,7 @@ export default class Event {
         // But only if the event matches certain events
         if (Utils.contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
           if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
-            OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
+            (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
               {eventName: eventName, eventData: data});
           } else {
             OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);

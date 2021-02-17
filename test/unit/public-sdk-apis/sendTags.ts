@@ -1,7 +1,6 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { ExecutionContext, TestInterface } from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
 import nock from 'nock';
 import Database from '../../../src/services/Database';
 import { EmailProfile } from '../../../src/models/EmailProfile';

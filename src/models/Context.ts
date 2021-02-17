@@ -16,6 +16,18 @@ import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 import TagManager from '../managers/tagManager/page/TagManager';
 import { ITagManager } from '../managers/tagManager/types';
 
+
+// Works
+// import { OneSignalClass } from '../OneSignal'
+// declare const OneSignal: OneSignalClass;
+
+// Breaks at runtime
+//   -  TypeError: Cannot read property 'isBrowserAndSupportsServiceWorkers' of undefined
+import OneSignal from '../OneSignal'
+
+// import { OneSignal } from '../OneSignal'
+
+
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
   metricsManager: MetricsManager;

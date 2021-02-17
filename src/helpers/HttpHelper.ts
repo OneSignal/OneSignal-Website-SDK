@@ -11,8 +11,6 @@ import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
 import { getConsoleStyle } from '../utils';
 import Log from '../libraries/Log';
 
-declare var OneSignal: any;
-
 export default class HttpHelper {
 
   // Http only - Only called from iframe's init.js

@@ -2,7 +2,6 @@ import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import Database from "../../../src/services/Database";
 import { TestEnvironment, BrowserUserAgent } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
 
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import nock from 'nock';

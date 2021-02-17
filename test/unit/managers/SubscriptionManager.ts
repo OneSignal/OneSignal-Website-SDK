@@ -16,7 +16,6 @@ import { setBrowser } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
-import OneSignal from '../../../src/OneSignal';
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind';

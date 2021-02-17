@@ -1,5 +1,4 @@
 import test, { ExecutionContext } from "ava";
-import OneSignal from "../../../src/OneSignal";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import Context from "../../../src/models/Context";
 import MainHelper from "../../../src/helpers/MainHelper";

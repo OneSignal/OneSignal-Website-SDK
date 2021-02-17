@@ -2,7 +2,6 @@ import test, { ExecutionContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
 
 import MainHelper from "../../../src/helpers/MainHelper";
-import OneSignal from "../../../src/OneSignal";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';

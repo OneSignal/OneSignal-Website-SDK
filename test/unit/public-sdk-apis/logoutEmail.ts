@@ -2,7 +2,6 @@ import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import Database from '../../../src/services/Database';
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
 
 import nock from 'nock';

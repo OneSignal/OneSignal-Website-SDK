@@ -6,8 +6,6 @@ import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { isUsingSubscriptionWorkaround } from '../utils';
 
-declare var OneSignal: any;
-
 export default class TestHelper {
   /**
    * Creates an expiring local storage entry to note that the user does not want to be disturbed.

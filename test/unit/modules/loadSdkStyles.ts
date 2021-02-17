@@ -1,7 +1,6 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { TestInterface } from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonStub } from 'sinon';
 import Bell from "../../../src/bell/Bell";
 import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";

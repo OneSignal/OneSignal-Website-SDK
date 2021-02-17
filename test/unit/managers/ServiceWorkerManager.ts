@@ -15,7 +15,6 @@ import Context from '../../../src/models/Context';
 import SdkEnvironment from "../../../src/managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind";
 
-import OneSignal from '../../../src/OneSignal';
 import Random from '../../support/tester/Random';
 import {
   WorkerMessenger,
@@ -24,6 +23,8 @@ import {
 } from "../../../src/libraries/WorkerMessenger";
 import Event from "../../../src/Event";
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
+import OneSignalClass from '../../../src/OneSignal';
+import LegacyManager from "../../../src/managers/LegacyManager";
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";
 import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
@@ -49,6 +50,12 @@ test.beforeEach(async function() {
 
   await TestEnvironment.stubDomEnvironment();
   getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration').callThrough();
+
+  const OneSignal = new OneSignalClass();
+  LegacyManager.ensureBackwardsCompatibility(OneSignal);
+  // await TestEnvironment.initialize({
+  //   httpOrHttps: HttpHttpsEnvironment.Https
+  // });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
   appConfig.appId = Random.getRandomUuid();
@@ -135,12 +142,14 @@ test('getActiveState() should detect Akamai akam-sw.js as 3rd party if othersw= 
 });
 
 test('notification clicked - While page is opened in background', async t => {
+  console.log("HERE1:OneSignal.context: " + OneSignal.context);
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: {
       pageUrl: "https://localhost:3001/"
     }
   });
+  console.log("HERE2:OneSignal.context: " + OneSignal.context);
 
   const mockInstallingWorker = new MockServiceWorker();
   mockInstallingWorker.state = 'activated';

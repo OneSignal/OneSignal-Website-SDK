@@ -1,5 +1,5 @@
 import "../../support/polyfills/polyfills";
-import OneSignal from "../../../src/OneSignal";
+import OneSignalClass from "../../../src/OneSignal";
 import Random from "../tester/Random";
 import Database from "../../../src/services/Database";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
@@ -332,12 +332,12 @@ export class TestEnvironment {
     return TestEnvironment.stubServiceWorkerEnvironment(config);
   }
 
-  static async initialize(config: TestEnvironmentConfig = {}): Promise<OneSignal> {
+  static async initialize(config: TestEnvironmentConfig = {}): Promise<OneSignalClass> {
     // Erase and reset IndexedDb database name to something random
     Database.resetInstance();
     Database.databaseInstanceName = Random.getRandomString(10);
 
-    global.OneSignal = OneSignal;
+    global.OneSignal ||= new OneSignalClass();
     global.OneSignal.config = config.initOptions ? config.initOptions : {};
     global.OneSignal.initialized = true;
     global.OneSignal.emitter = new Emitter();

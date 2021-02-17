@@ -3,7 +3,9 @@ import test from "ava";
 import Database from "../../../src/services/Database";
 import Macros from "../../support/tester/Macros";
 import {TestEnvironment} from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignalClass from "../../../src/OneSignal";
+
+const OneSignal = new OneSignalClass();
 
 test("url cannot be null",
      Macros.expectInvalidArgumentError,

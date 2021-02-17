@@ -2,7 +2,6 @@ import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
 import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/models/AppConfig';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
 import ConfigManager from '../../../src/managers/ConfigManager';
 
 interface ConfigContext {

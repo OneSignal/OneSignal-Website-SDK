@@ -1,6 +1,5 @@
 import test from "ava";
 import _ from "lodash";
-import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignalApiShared from "../../../src/OneSignalApiShared";

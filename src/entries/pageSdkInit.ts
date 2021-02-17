@@ -4,9 +4,12 @@
  */
 
 import Log from "../libraries/Log";
-import { incrementSdkLoadCount, getSdkLoadCount } from "../utils";
+import { incrementSdkLoadCount, getSdkLoadCount, getConsoleStyle } from "../utils";
 import { ReplayCallsOnOneSignal } from "../utils/ReplayCallsOnOneSignal";
 import { OneSignalStubES6 } from "../utils/OneSignalStubES6";
+import LegacyManager from "src/managers/LegacyManager";
+import SdkEnvironment from "src/managers/SdkEnvironment";
+import bowser from "bowser";
 
 function oneSignalSdkInit() {
   incrementSdkLoadCount();
@@ -22,9 +25,22 @@ function oneSignalSdkInit() {
   // Load OneSignal's web SDK
   const predefinedOneSignal: OneSignalStubES6 | object[] | undefined | null = (<any>window).OneSignal;
 
-  (<any>window).OneSignal = require('../OneSignal').default;
+  setupAndLogOneSignalDefine();
 
   ReplayCallsOnOneSignal.doReplay(predefinedOneSignal);
+}
+
+function setupAndLogOneSignalDefine() {
+  const OneSignalClass = require('../OneSignal').OneSignalClass;
+  (<any>window).OneSignal = new OneSignalClass();
+
+  // TODO: put these setup lines and logs into a function
+  LegacyManager.ensureBackwardsCompatibility(OneSignal);
+
+  Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
+    ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
+  Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
+  Log.debug(`Browser Environment: ${bowser.name} ${bowser.version}`);
 }
 
 // Only if running on page in browser

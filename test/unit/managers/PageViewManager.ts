@@ -1,7 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
 
 import Context from '../../../src/models/Context';
 import Random from '../../support/tester/Random';

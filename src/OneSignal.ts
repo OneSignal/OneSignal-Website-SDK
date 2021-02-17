@@ -60,12 +60,12 @@ import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 
-export default class OneSignal {
+export class OneSignalClass {
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
    */
-  static async setDefaultNotificationUrl(url: string) {
+   async setDefaultNotificationUrl(url: string) {
     if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
@@ -81,7 +81,7 @@ export default class OneSignal {
    * @remarks Either DB value defaultTitle or pageTitle is used when showing a notification title.
    * @PublicApi
    */
-  static async setDefaultTitle(title: string) {
+   async setDefaultTitle(title: string) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultTitle', title);
     const appState = await Database.getAppState();
@@ -92,7 +92,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async setEmail(email: string, options?: SetEmailOptions): Promise<string|null> {
+   async setEmail(email: string, options?: SetEmailOptions): Promise<string|null> {
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -183,8 +183,15 @@ export default class OneSignal {
 
   /**
    * @PublicApi
+   * @deprecated
    */
-  static async logoutEmail() {
+  public async syncHashedEmail(_email: string): Promise<void> {
+  }
+
+  /**
+   * @PublicApi
+   */
+   async logoutEmail() {
     await awaitOneSignalInitAndSupported();
 
     const appConfig = await Database.getAppConfig();
@@ -213,7 +220,7 @@ export default class OneSignal {
    * Returns true if the current browser supports web push.
    * @PublicApi
    */
-  static isPushNotificationsSupported(): boolean {
+   isPushNotificationsSupported(): boolean {
     logMethodCall('isPushNotificationsSupported');
     /*
       Push notification support is checked in the initial entry code. If in an unsupported environment, a stubbed empty
@@ -222,7 +229,7 @@ export default class OneSignal {
     return true;
   }
 
-  static async initializeConfig(options: AppUserConfig) {
+   async initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
@@ -239,7 +246,7 @@ export default class OneSignal {
    * Initializes the SDK, called by the developer.
    * @PublicApi
    */
-  static async init(options: AppUserConfig) {
+   async init(options: AppUserConfig) {
     logMethodCall('init');
 
     await InitHelper.polyfillSafariFetch();
@@ -271,7 +278,7 @@ export default class OneSignal {
     await OneSignal.delayedInit();
   }
 
-  private static async delayedInit(): Promise<void> {
+  private  async delayedInit(): Promise<void> {
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();
@@ -348,7 +355,7 @@ export default class OneSignal {
    * Call after user accepts your user consent agreement
    * @PublicApi
    */
-  public static async provideUserConsent(consent: boolean): Promise<void> {
+  public  async provideUserConsent(consent: boolean): Promise<void> {
     await Database.setProvideUserConsent(consent);
     if (consent && OneSignal.pendingInit)
       await OneSignal.delayedInit();
@@ -358,7 +365,7 @@ export default class OneSignal {
    * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
    * @PublicApi
    */
-  public static async showHttpPermissionRequest(options?: AutoPromptOptions): Promise<any> {
+  public  async showHttpPermissionRequest(options?: AutoPromptOptions): Promise<any> {
     Log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
 
     OneSignal.showHttpPrompt(options).catch(e => Log.info(e));
@@ -368,7 +375,7 @@ export default class OneSignal {
    * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
    * @PublicApi
    */
-  public static async showHttpPrompt(options?: AutoPromptOptions) {
+  public  async showHttpPrompt(options?: AutoPromptOptions) {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
   }
@@ -377,7 +384,7 @@ export default class OneSignal {
    * Shows a native browser prompt.
    * @PublicApi
    */
-  public static async showNativePrompt(): Promise<void> {
+  public  async showNativePrompt(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
@@ -386,12 +393,12 @@ export default class OneSignal {
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */
-  public static async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
+  public  async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
   }
 
-  public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+  public  async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     await OneSignal.context.promptsManager.internalShowCategorySlidedown({
@@ -404,7 +411,7 @@ export default class OneSignal {
    * Prompts the user to subscribe.
    * @PublicApi
    */
-  static async registerForPushNotifications(options?: RegisterOptions): Promise<void> {
+   async registerForPushNotifications(options?: RegisterOptions): Promise<void> {
     if (!OneSignal.initialized) {
       await new Promise<void>((resolve, _reject) => {
         OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
@@ -423,12 +430,12 @@ export default class OneSignal {
    *           has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  public static async getNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
+  public  async getNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
     await awaitOneSignalInitAndSupported();
     return OneSignal.privateGetNotificationPermission(onComplete);
   }
 
-  static async privateGetNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
+   async privateGetNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
     const permission = await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.config!.safariWebId
       );
@@ -442,7 +449,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async getTags(callback?: Action<any>) {
+   async getTags(callback?: Action<any>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getTags', callback);
     const { appId } = await Database.getAppConfig();
@@ -460,7 +467,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendTag(key: string, value: any, callback?: Action<Object>): Promise<Object | null> {
+   async sendTag(key: string, value: any, callback?: Action<Object>): Promise<Object | null> {
     const tag = {} as {[key: string]: any};
     tag[key] = value;
     return await OneSignal.sendTags(tag, callback);
@@ -469,7 +476,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendTags(tags: {[key: string]: any}, callback?: Action<Object>): Promise<Object | null> {
+   async sendTags(tags: {[key: string]: any}, callback?: Action<Object>): Promise<Object | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendTags', tags, callback);
     if (!tags || Object.keys(tags).length === 0) {
@@ -514,14 +521,14 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async deleteTag(tag: string): Promise<Array<string>> {
+   async deleteTag(tag: string): Promise<Array<string>> {
     return await OneSignal.deleteTags([tag]);
   }
 
   /**
    * @PublicApi
    */
-  static async deleteTags(tags: Array<string>, callback?: Action<Array<string>>): Promise<Array<string>> {
+   async deleteTags(tags: Array<string>, callback?: Action<Array<string>>): Promise<Array<string>> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('deleteTags', tags, callback);
     if (!ValidatorUtils.isValidArray(tags))
@@ -546,7 +553,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  public static async setExternalUserId(externalUserId: string | undefined | null , authHash?: string): Promise<void> {
+  public  async setExternalUserId(externalUserId: string | undefined | null , authHash?: string): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
@@ -570,7 +577,7 @@ export default class OneSignal {
    /**
    * @PublicApi
    */
-  public static async getExternalUserId(): Promise<string | undefined | null> {
+  public  async getExternalUserId(): Promise<string | undefined | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("getExternalUserId");
     return await OneSignal.database.getExternalUserId();
@@ -579,7 +586,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  public static async removeExternalUserId(): Promise<void> {
+  public  async removeExternalUserId(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("removeExternalUserId");
     const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
@@ -594,7 +601,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async addListenerForNotificationOpened(callback?: Action<Notification>) {
+   async addListenerForNotificationOpened(callback?: Action<Notification>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
     OneSignal.emitter.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
@@ -609,7 +616,7 @@ export default class OneSignal {
    * @PublicApi
    * @Deprecated
    */
-  static async getIdsAvailable(
+   async getIdsAvailable(
     callback?: Action<{userId: string | undefined | null, registrationId: string | undefined | null}>):
     Promise<{userId: string | undefined | null, registrationId: string | undefined | null}> {
     await awaitOneSignalInitAndSupported();
@@ -629,12 +636,12 @@ export default class OneSignal {
    * @param callback A callback function that will be called when the current subscription status has been obtained.
    * @PublicApi
    */
-  static async isPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
+   async isPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
     return OneSignal.privateIsPushNotificationsEnabled(callback);
   }
 
-  static async privateIsPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
+   async privateIsPushNotificationsEnabled(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('isPushNotificationsEnabled', callback);
 
     const context: Context = OneSignal.context;
@@ -647,7 +654,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async setSubscription(newSubscription: boolean): Promise<void> {
+   async setSubscription(newSubscription: boolean): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('setSubscription', newSubscription);
     const appConfig = await Database.getAppConfig();
@@ -682,13 +689,13 @@ export default class OneSignal {
   /**
    * @PendingPublicApi
    */
-  static async isOptedOut(callback?: Action<boolean | undefined | null>):
+   async isOptedOut(callback?: Action<boolean | undefined | null>):
     Promise<boolean | undefined | null> {
     await awaitOneSignalInitAndSupported();
     return OneSignal.internalIsOptedOut(callback);
   }
 
-  static async internalIsOptedOut(callback?: Action<boolean | undefined | null>):
+   async internalIsOptedOut(callback?: Action<boolean | undefined | null>):
     Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
     const { optedOut } = await Database.getSubscription();
@@ -701,7 +708,7 @@ export default class OneSignal {
    * @private
    * @PendingPublicApi
    */
-  static async optOut(doOptOut: boolean, callback?: Action<void>): Promise<void> {
+   async optOut(doOptOut: boolean, callback?: Action<void>): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('optOut', doOptOut, callback);
     if (!ValidatorUtils.isValidBoolean(doOptOut))
@@ -715,7 +722,7 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal email ID.
    * @PublicApi
    */
-  static async getEmailId(callback?: Action<string | undefined>): Promise<string | null | undefined> {
+   async getEmailId(callback?: Action<string | undefined>): Promise<string | null | undefined> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
@@ -729,7 +736,7 @@ export default class OneSignal {
    * @param callback A function accepting one parameter for the OneSignal user ID.
    * @PublicApi
    */
-  static async getUserId(callback?: Action<string | undefined | null>): Promise<string | undefined | null> {
+   async getUserId(callback?: Action<string | undefined | null>): Promise<string | undefined | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getUserId', callback);
     const subscription = await Database.getSubscription();
@@ -742,7 +749,7 @@ export default class OneSignal {
    * Returns a promise that resolves to the stored push token if one is set; otherwise null.
    * @PublicApi
    */
-  static async getRegistrationId(callback?: Action<string | undefined | null>):
+   async getRegistrationId(callback?: Action<string | undefined | null>):
     Promise<string | undefined | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getRegistrationId', callback);
@@ -759,12 +766,12 @@ export default class OneSignal {
    * @private
    * @PublicApi (given to customers)
    */
-  static async getSubscription(callback?: Action<boolean>): Promise<boolean> {
+   async getSubscription(callback?: Action<boolean>): Promise<boolean> {
     await awaitOneSignalInitAndSupported();
     return await OneSignal.privateGetSubscription(callback);
   }
 
-  static async privateGetSubscription(callback?: Action<boolean>): Promise<boolean> {
+   async privateGetSubscription(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('getSubscription', callback);
     const subscription = await Database.getSubscription();
     const subscriptionStatus = !subscription.optedOut;
@@ -775,7 +782,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendSelfNotification(title: string = 'OneSignal Test Message',
+   async sendSelfNotification(title: string = 'OneSignal Test Message',
                               message: string = 'This is an example notification.',
                               url: string = `${new URL(location.href).origin}?_osp=do_not_open`,
                               icon: URL,
@@ -809,7 +816,7 @@ export default class OneSignal {
    *  OneSignal.push(["functionName", param1, param2]);
    *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
    */
-  static push(item: Function | object[]) {
+   push(item: Function | object[]) {
     ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
@@ -820,7 +827,7 @@ export default class OneSignal {
    * @param listener - Listener to fire when event happens
    * @PublicApi
    */
-  static on(event: string, listener: EventHandler): Emitter {
+   on(event: string, listener: EventHandler): Emitter {
     return this.emitter.on(event, listener);
   }
 
@@ -830,7 +837,7 @@ export default class OneSignal {
    * @param listener - Event listener to remove from the collection for a specified event
    * @PublicApi
    */
-  static off(event: string, listener: EventHandler): Emitter {
+   off(event: string, listener: EventHandler): Emitter {
     return this.emitter.off(event, listener);
   }
 
@@ -841,11 +848,11 @@ export default class OneSignal {
    * @param listener - Listener to fire when event happens
    * @PublicApi
    */
-  static once(event: string, listener: EventHandler): Emitter {
+   once(event: string, listener: EventHandler): Emitter {
     return this.emitter.once(event, listener);
   }
 
-  public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
+  public  async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
     const config = OneSignal.config!.userConfig.outcomes;
     if (!config) {
       Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
@@ -871,7 +878,7 @@ export default class OneSignal {
     });
   }
 
-  public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
+  public  async sendUniqueOutcome(outcomeName: string): Promise<void> {
     const config = OneSignal.config!.userConfig.outcomes;
     if (!config) {
       Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
@@ -906,51 +913,51 @@ export default class OneSignal {
     });
   }
 
-  static __doNotShowWelcomeNotification: boolean;
-  static VERSION = Environment.version();
-  static _VERSION = Environment.version();
-  static sdkEnvironment = SdkEnvironment;
-  static environmentInfo?: EnvironmentInfo;
-  static _notificationOpenedCallbacks = [];
-  static _idsAvailable_callback = [];
-  static _defaultLaunchURL = null;
-  static config: AppConfig | null = null;
-  static _sessionInitAlreadyRunning = false;
-  static _isNotificationEnabledCallback = [];
-  static _subscriptionSet = true;
-  static modalUrl = null;
-  static _windowWidth = 650;
-  static _windowHeight = 568;
-  static _isNewVisitor = false;
-  static _channel = null;
-  static timedLocalStorage = TimedLocalStorage;
-  static initialized = false;
-  static notifyButton: AppUserConfigNotifyButton | null = null;
-  static store = LimitStore;
-  static environment = Environment;
-  static database = Database;
-  static event = Event;
-  static browser = bowser;
-  static slidedown: Slidedown | null = null;
-  static log = Log;
-  static api = OneSignalApi;
-  static indexedDb = IndexedDb;
-  static mainHelper = MainHelper;
-  static subscriptionHelper = SubscriptionHelper;
-  static httpHelper =  HttpHelper;
-  static eventHelper = EventHelper;
-  static initHelper = InitHelper;
-  static testHelper = TestHelper;
-  private static pendingInit: boolean = true;
+   __doNotShowWelcomeNotification: boolean;
+   VERSION = Environment.version();
+   _VERSION = Environment.version();
+   sdkEnvironment = SdkEnvironment;
+   environmentInfo?: EnvironmentInfo;
+   _notificationOpenedCallbacks = [];
+   _idsAvailable_callback = [];
+   _defaultLaunchURL = null;
+   config: AppConfig | null = null;
+   _sessionInitAlreadyRunning = false;
+   _isNotificationEnabledCallback = [];
+   _subscriptionSet = true;
+   modalUrl = null;
+   _windowWidth = 650;
+   _windowHeight = 568;
+   _isNewVisitor = false;
+   _channel = null;
+   timedLocalStorage = TimedLocalStorage;
+   initialized = false;
+   notifyButton: AppUserConfigNotifyButton | null = null;
+   store = LimitStore;
+   environment = Environment;
+   database = Database;
+   event = Event;
+   browser = bowser;
+   slidedown: Slidedown | null = null;
+   log = Log;
+   api = OneSignalApi;
+   indexedDb = IndexedDb;
+   mainHelper = MainHelper;
+   subscriptionHelper = SubscriptionHelper;
+   httpHelper =  HttpHelper;
+   eventHelper = EventHelper;
+   initHelper = InitHelper;
+   testHelper = TestHelper;
+  private  pendingInit: boolean = true;
 
-  static subscriptionPopup: SubscriptionPopup;
-  static subscriptionPopupHost: SubscriptionPopupHost;
-  static subscriptionModal: SubscriptionModal;
-  static subscriptionModalHost: SubscriptionModalHost;
-  static proxyFrameHost: ProxyFrameHost;
-  static proxyFrame: ProxyFrame;
-  static emitter: Emitter = new Emitter();
-  static cache: any = {};
+   subscriptionPopup: SubscriptionPopup;
+   subscriptionPopupHost: SubscriptionPopupHost;
+   subscriptionModal: SubscriptionModal;
+   subscriptionModalHost: SubscriptionModalHost;
+   proxyFrameHost: ProxyFrameHost;
+   proxyFrame: ProxyFrame;
+   emitter: Emitter = new Emitter();
+   cache: any = {};
 
   /**
    * The additional path to the worker file.
@@ -961,8 +968,8 @@ export default class OneSignal {
    * However, the init options 'path' should be used to specify the folder path instead since service workers will not
    * auto-update correctly on HTTPS site load if the config init options 'path' is not set.
    */
-  static SERVICE_WORKER_UPDATER_PATH = 'OneSignalSDKUpdaterWorker.js';
-  static SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';
+   SERVICE_WORKER_UPDATER_PATH = 'OneSignalSDKUpdaterWorker.js';
+   SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';
 
   /**
    * By default, the service worker is expected to be accessible at the root scope. If the service worker is only
@@ -970,33 +977,33 @@ export default class OneSignal {
    * slash). This would allow pages to function correctly as not to block the service worker ready call, which would
    * hang indefinitely if we requested root scope registration but the service was only available in a child scope.
    */
-  static SERVICE_WORKER_PARAM: { scope: string } = {scope: '/'};
-  static _LOGGING = false;
-  static LOGGING = false;
-  static _usingNativePermissionHook = false;
-  static _initCalled = false;
-  static __initAlreadyCalled = false;
-  static context: Context;
-  static checkAndWipeUserSubscription = function () { }
-  static DeviceRecord = DeviceRecord;
-  static EmailDeviceRecord = EmailDeviceRecord;
+   SERVICE_WORKER_PARAM: { scope: string } = {scope: '/'};
+   _LOGGING = false;
+   LOGGING = false;
+   _usingNativePermissionHook = false;
+   _initCalled = false;
+   __initAlreadyCalled = false;
+   context: Context;
+   checkAndWipeUserSubscription = function () { }
+   DeviceRecord = DeviceRecord;
+   EmailDeviceRecord = EmailDeviceRecord;
 
-  static notificationPermission = NotificationPermission;
+   notificationPermission = NotificationPermission;
 
-
-  /**
-   * Used by Rails-side HTTP popup. Must keep the same name.
-   * @InternalApi
-   */
-  static _initHttp = HttpHelper.initHttp;
 
   /**
    * Used by Rails-side HTTP popup. Must keep the same name.
    * @InternalApi
    */
-  static _initPopup = () => OneSignal.subscriptionPopup.subscribe();
+   _initHttp = HttpHelper.initHttp;
 
-  static POSTMAM_COMMANDS = {
+  /**
+   * Used by Rails-side HTTP popup. Must keep the same name.
+   * @InternalApi
+   */
+   _initPopup = () => OneSignal.subscriptionPopup.subscribe();
+
+   POSTMAM_COMMANDS = {
     CONNECTED: 'connect',
     REMOTE_NOTIFICATION_PERMISSION: 'postmam.remoteNotificationPermission',
     REMOTE_DATABASE_GET: 'postmam.remoteDatabaseGet',
@@ -1037,7 +1044,7 @@ export default class OneSignal {
     ARE_YOU_VISIBLE_RESPONSE: 'postmam.areYouVisibleResponse',
   };
 
-  static EVENTS = {
+   EVENTS = {
     /**
      * Occurs when the user clicks the "Continue" or "No Thanks" button on the HTTP popup or HTTPS modal prompt.
      * For HTTP sites (and HTTPS sites using the modal prompt), this event is fired before the native permission
@@ -1108,9 +1115,5 @@ export default class OneSignal {
   };
 }
 
-LegacyManager.ensureBackwardsCompatibility(OneSignal);
-
-Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
-  ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
-Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
-Log.debug(`Browser Environment: ${bowser.name} ${bowser.version}`);
+declare var OneSignal: OneSignalClass;
+export default OneSignal;
