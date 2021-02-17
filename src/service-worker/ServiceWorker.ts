@@ -749,7 +749,7 @@ export class ServiceWorker {
   static async getNotificationUrlToOpen(notification): Promise<string> {
     // Defaults to the URL the service worker was registered
     // TODO: This should be fixed for HTTP sites
-    let launchUrl = self.registration.scope;
+    let launchUrl = location.origin;
 
     // Use the user-provided default URL if one exists
     const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
