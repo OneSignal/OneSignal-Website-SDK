@@ -171,13 +171,8 @@ export class WorkerMessenger {
    * Due to https://github.com/w3c/ServiceWorker/issues/1156, listen() must
    * synchronously add self.addEventListener('message') if we are running in the
    * service worker.
-   *
-   * @param listenIfPageUncontrolled If true, begins listening for service
-   * worker messages even if the service worker does not control this page. This
-   * parameter is set to true on HTTPS iframes expecting service worker messages
-   * that live under an HTTP page.
    */
-  public async listen(listenIfPageUncontrolled?: boolean) {
+  public async listen() {
     if (!Environment.supportsServiceWorkers())
       return;
 
@@ -188,20 +183,13 @@ export class WorkerMessenger {
       Log.debug('[Worker Messenger] Service worker is now listening for messages.');
     }
     else
-      await this.listenForPage(listenIfPageUncontrolled);
+      await this.listenForPage();
   }
 
   /**
    * Listens for messages for the service worker.
-   *
-   * Waits until the service worker is controlling the page before listening for
-   * messages.
    */
-  private async listenForPage(listenIfPageUncontrolled?: boolean) {
-    if (!listenIfPageUncontrolled) {
-      Log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
-    }
-
+  private async listenForPage() {
     navigator.serviceWorker.addEventListener('message', this.onPageMessageReceivedFromServiceWorker.bind(this));
     Log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
   }
