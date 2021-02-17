@@ -1,12 +1,12 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import { Serializable } from '../models/Serializable';
 import Environment from '../Environment';
 import Log from './Log';
 import { ContextSWInterface } from '../models/ContextSW';
+import ServiceWorkerUtilHelper from '../helpers/page/ServiceWorkerUtilHelper';
 
 /**
  * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
@@ -146,20 +146,14 @@ export class WorkerMessenger {
   public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload): Promise<void> {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
 
-    const serviceWorker = await this.context.serviceWorkerManager.getRegistration();
-    if (!serviceWorker) {
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
+    if (!workerRegistration) {
       Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!");
       return;
     }
 
-    // ServiceWorker will be in 1 of 3 states; The postMessage payload will still arrive at the SW even if it isn't active
-    const availableWorker = serviceWorker.active || serviceWorker.waiting || serviceWorker.installing;
-    if (!availableWorker) {
-      Log.error("`[Worker Messenger] [Page -> SW] ServiceWorkerRegistration found but it could find an available ServiceWorker instance to postMessage!");
-      return;
-    }
-
-    availableWorker.postMessage({
+    // The postMessage payload will still arrive at the SW even if it isn't active yet.
+    ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration).postMessage({
       command: command,
       payload: payload
     });
