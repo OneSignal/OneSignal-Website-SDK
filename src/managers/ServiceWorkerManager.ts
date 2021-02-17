@@ -102,13 +102,6 @@ export class ServiceWorkerManager {
        */
       return ServiceWorkerActiveState.None;
     }
-    else if (!workerRegistration.active) {
-      /*
-        Workers that are waiting won't be our service workers, since we use clients.claim() and
-        skipWaiting() to bypass the install and waiting stages.
-       */
-      return ServiceWorkerActiveState.ThirdParty;
-    }
 
     // At this point, there is an active service worker registration controlling this page.
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
