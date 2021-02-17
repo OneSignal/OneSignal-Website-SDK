@@ -77,8 +77,8 @@ export class ServiceWorker {
   }
 
   /**
-   * Allows message passing between this service worker and its controlled clients, or webpages. Controlled
-   * clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
+   * Allows message passing between this service worker and pages on the same domain.
+   * Clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
    * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
    * clients to communicate with the service worker to close all active notifications.
    */
@@ -886,7 +886,7 @@ export class ServiceWorker {
             }
         } else {
           /*
-          We must focus first; once the client navigates away, it may not be to a service worker-controlled page, and
+          We must focus first; once the client navigates away, it may not be on a domain the same domain, and
           the client ID may change, making it unable to focus.
 
           client.navigate() is available on Chrome 49+ and Firefox 50+.
