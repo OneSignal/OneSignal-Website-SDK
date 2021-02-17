@@ -17,7 +17,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
-import PageServiceWorkerHelper from "../helpers/page/ServiceWorkerHelper";
+import ServiceWorkerUtilHelper from "../helpers/page/ServiceWorkerUtilHelper";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -30,7 +30,7 @@ export class ServiceWorkerManager {
 
   // Gets details on the OneSignal service-worker (if any)
   public async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    return await PageServiceWorkerHelper.getRegistration(this.config.registrationOptions.scope);
+    return await ServiceWorkerUtilHelper.getRegistration(this.config.registrationOptions.scope);
   }
 
   public async getActiveState(): Promise<ServiceWorkerActiveState> {

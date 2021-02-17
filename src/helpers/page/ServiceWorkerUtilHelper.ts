@@ -1,6 +1,6 @@
 import Log from "../../libraries/Log";
 
-export default class ServiceWorkerHelper {
+export default class ServiceWorkerUtilHelper {
   // Get the service worker based on a scope as a domain can have none to many service workers.
   static async getRegistration(scope: string): Promise<ServiceWorkerRegistration | null | undefined> {
     try {
