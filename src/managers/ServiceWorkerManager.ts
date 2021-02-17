@@ -102,13 +102,6 @@ export class ServiceWorkerManager {
        */
       return ServiceWorkerActiveState.None;
     }
-    else if (workerRegistration.installing) {
-      /*
-        Workers that are installing block for a while, since we can't use them until they're done
-        installing.
-       */
-      return ServiceWorkerActiveState.Installing;
-    }
     else if (!workerRegistration.active) {
       /*
         Workers that are waiting won't be our service workers, since we use clients.claim() and

@@ -95,17 +95,6 @@ test('getActiveState() detects worker B, even when worker filename uses query pa
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerB);
 });
 
-test('getActiveState() detects an installing worker (not active)', async t => {
-  const mockWorkerRegistration = new MockServiceWorkerRegistration();
-  const mockInstallingWorker = new MockServiceWorker();
-  mockInstallingWorker.state = 'installing';
-  mockWorkerRegistration.installing = mockInstallingWorker;
-
-  getRegistrationStub.resolves(mockWorkerRegistration);
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Installing);
-});
-
 test('getActiveState() detects a 3rd party worker, a worker that is activated but has an unrecognized script URL', async t => {
   await navigator.serviceWorker.register('/Worker-C.js');
 
