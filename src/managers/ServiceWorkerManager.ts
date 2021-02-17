@@ -28,7 +28,7 @@ export class ServiceWorkerManager {
     this.config = config;
   }
 
-  // Gets details on the service-worker (if any) that controls the current page
+  // Gets details on the OneSignal service-worker (if any)
   public async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
     return await PageServiceWorkerHelper.getRegistration(this.config.registrationOptions.scope);
   }
@@ -37,25 +37,6 @@ export class ServiceWorkerManager {
     /*
       Note: This method can only be called on a secure origin. On an insecure
       origin, it'll throw on getRegistration().
-    */
-
-    /*
-      We want to find out if the *current* page is currently controlled by an
-      active service worker.
-
-      There are three ways (sort of) to do this:
-        - getRegistration()
-        - getRegistrations()
-        - navigator.serviceWorker.ready
-
-      We want to use getRegistration(), since it will not return a value if the
-      page is not currently controlled by an active service worker.
-
-      getRegistrations() returns all service worker registrations under the
-      origin (i.e. registrations in nested folders).
-
-      navigator.serviceWorker.ready will hang indefinitely and never resolve if
-      no registration is active.
     */
 
     const integration = await SdkEnvironment.getIntegration();
@@ -90,20 +71,9 @@ export class ServiceWorkerManager {
 
     const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {
-      /*
-        A site may have a service worker nested at /folder1/folder2/folder3, while the user is
-        currently on /folder1. The nested service worker does not control /folder1 though. Although
-        the nested service worker can receive push notifications without issue, it cannot perform
-        other SDK operations like checking whether existing tabs are optn eo the site on /folder1
-        (used to prevent opening unnecessary new tabs on notification click.)
-
-        Because we rely on being able to communicate with the service worker for SDK operations, we
-        only say we're active if the service worker directly controls this page.
-       */
       return ServiceWorkerActiveState.None;
     }
 
-    // At this point, there is an active service worker registration controlling this page.
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
     const swFileName = ServiceWorkerManager.activeSwFileName(workerRegistration);
     const workerState = this.swActiveStateByFileName(swFileName);

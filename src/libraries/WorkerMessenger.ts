@@ -119,12 +119,10 @@ export class WorkerMessenger {
   }
 
   /*
-    For pages:
-
-      Sends a postMessage() to the service worker controlling the page.
-
-      Waits until the service worker is controlling the page before sending the
-      message.
+    If running on a page context:
+      Sends a postMessage() to OneSignal's Serviceworker
+    If running in a ServiceWorker context:
+      Sends a postMessage() to the supplied windowClient
    */
   async unicast(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload, windowClient?: Client) {
     const env = SdkEnvironment.getWindowEnv();
