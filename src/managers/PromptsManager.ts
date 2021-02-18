@@ -45,41 +45,6 @@ export class PromptsManager {
     this.eventHooksInstalled = false;
   }
 
-  private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
-    const wasDismissed      = MainHelper.wasHttpsNativePromptDismissed();
-    const permissionDenied  = await OneSignal.privateGetNotificationPermission() === NotificationPermission.Denied;
-    const isSubscribed      = await OneSignal.privateIsPushNotificationsEnabled();
-    const notOptedOut       = await OneSignal.privateGetSubscription();
-
-    const slidedownType = options.slidedownPromptOptions?.type;
-    const slidedownIsPushDependent = slidedownType === DelayedPromptType.Push ||
-    slidedownType === DelayedPromptType.Category;
-
-    // applies to push slidedown type only
-    if (slidedownType === DelayedPromptType.Push && isSubscribed) {
-        return false;
-    }
-
-    // applies to both push and category slidedown types
-    if (slidedownIsPushDependent) {
-        if (!notOptedOut) {
-            throw new NotSubscribedError(NotSubscribedReason.OptedOut);
-        }
-
-        if (permissionDenied) {
-            Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
-            return false;
-        }
-
-        if (wasDismissed && !options.force && !options.isInUpdateMode) {
-            Log.info(new PermissionMessageDismissedError());
-            return false;
-        }
-    }
-
-    return true;
-  }
-
   private shouldForceSlidedownOverNative(): boolean {
     const { environmentInfo } = OneSignal;
       const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
