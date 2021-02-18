@@ -45,38 +45,36 @@ export class PromptsManager {
     this.eventHooksInstalled = false;
   }
 
-  private async checkIfAutoPromptShouldBeShown(options: AutoPromptOptions = { force: false }): Promise<boolean> {
-    /*
-    Only show the slidedown if:
-    - Notifications aren't already enabled
-    - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
-    */
-    if (this.isAutoPromptShowing) {
-      throw new InvalidStateError(InvalidStateReason.RedundantPermissionMessage, {
-        permissionPromptType: PermissionPromptType.SlidedownPermissionMessage
-      });
+  private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
+    const wasDismissed      = MainHelper.wasHttpsNativePromptDismissed();
+    const permissionDenied  = await OneSignal.privateGetNotificationPermission() === NotificationPermission.Denied;
+    const isSubscribed      = await OneSignal.privateIsPushNotificationsEnabled();
+    const notOptedOut       = await OneSignal.privateGetSubscription();
+
+    const slidedownType = options.slidedownPromptOptions?.type;
+    const slidedownIsPushDependent = slidedownType === DelayedPromptType.Push ||
+    slidedownType === DelayedPromptType.Category;
+
+    // applies to push slidedown type only
+    if (slidedownType === DelayedPromptType.Push && isSubscribed) {
+        return false;
     }
 
-    const doNotPrompt = MainHelper.wasHttpsNativePromptDismissed();
-    if (doNotPrompt && !options.force && !options.isInUpdateMode) {
-      Log.info(new PermissionMessageDismissedError());
-      return false;
-    }
+    // applies to both push and category slidedown types
+    if (slidedownIsPushDependent) {
+        if (!notOptedOut) {
+            throw new NotSubscribedError(NotSubscribedReason.OptedOut);
+        }
 
-    const permission = await OneSignal.privateGetNotificationPermission();
-    if (permission === NotificationPermission.Denied) {
-      Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
-      return false;
-    }
+        if (permissionDenied) {
+            Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
+            return false;
+        }
 
-    const isEnabled = await OneSignal.privateIsPushNotificationsEnabled();
-    if (isEnabled && !options.isInUpdateMode) {
-      throw new AlreadySubscribedError();
-    }
-
-    const notOptedOut = await OneSignal.privateGetSubscription();
-    if (!notOptedOut) {
-      throw new NotSubscribedError(NotSubscribedReason.OptedOut);
+        if (wasDismissed && !options.force && !options.isInUpdateMode) {
+            Log.info(new PermissionMessageDismissedError());
+            return false;
+        }
     }
 
     return true;
