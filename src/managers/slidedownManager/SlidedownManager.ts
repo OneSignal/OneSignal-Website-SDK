@@ -84,6 +84,14 @@ export class SlidedownManager {
     }
 
     public async createSlidedown(options: AutoPromptOptions): Promise<void> {
+        try {
+            const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
+            if (!showPrompt) { return; }
+        } catch (e) {
+            Log.warn("checkIfSlidedownShouldBeShown returned an error", e);
+            return;
+        }
+
         if (this.isSlidedownShowing) {
             // already showing, enqueue
             this.enqueue(options);
