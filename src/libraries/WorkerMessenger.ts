@@ -152,8 +152,14 @@ export class WorkerMessenger {
       return;
     }
 
+    const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    if (!availableWorker) {
+      Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!");
+      return;
+    }
+
     // The postMessage payload will still arrive at the SW even if it isn't active yet.
-    ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration).postMessage({
+    availableWorker.postMessage({
       command: command,
       payload: payload
     });

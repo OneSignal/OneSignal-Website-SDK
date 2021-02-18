@@ -13,11 +13,11 @@ export default class ServiceWorkerUtilHelper {
   }
 
   // A ServiceWorkerRegistration will have a ServiceWorker in 1 of 3 states, get which ever is available.
-  static getAvailableServiceWorker(registration: ServiceWorkerRegistration): ServiceWorker {
+  static getAvailableServiceWorker(registration: ServiceWorkerRegistration): ServiceWorker | null {
     const availableWorker = registration.active || registration.installing || registration.waiting;
-    // This should never throw unless ServiceWorkerRegistration is pointing to a worker that is completely gone.
+    // This never be null unless ServiceWorkerRegistration is pointing to a worker that is completely gone.
     if (!availableWorker) {
-      throw new Error("Could not find an available ServiceWorker instance!");
+      Log.warn("Could not find an available ServiceWorker instance!");
     }
     return availableWorker;
   }

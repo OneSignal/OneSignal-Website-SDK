@@ -83,6 +83,10 @@ export class ServiceWorkerManager {
   // Get the file name of the active ServiceWorker
   private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
     const serviceWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    if (!serviceWorker) {
+      return null;
+    }
+    
     const workerScriptPath = new URL(serviceWorker.scriptURL).pathname;
     const swFileName = new Path(workerScriptPath).getFileName();
 
