@@ -2,29 +2,37 @@ import { DispatchEventUtil } from "../utils/DispatchEventUtil";
 import { MockServiceWorker } from "./MockServiceWorker";
 import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
 
-export class MockServiceWorkerContainer implements ServiceWorkerContainer {
-  controller: ServiceWorker | null;
-  oncontrollerchange: ((this: ServiceWorkerContainer, ev: Event) => any) | null;
+// abstract to indicate this isn't designed to be used directly as part of the tests. (expect for the meta one)
+// This is a generic mock.
+//   - no OneSignal specifics, see MockServiceWorkerContainerWithAPIBan 
+export abstract class MockServiceWorkerContainer implements ServiceWorkerContainer {
+  protected _controller: ServiceWorker | null;
+  get controller(): ServiceWorker | null {
+    return this._controller;
+  }
+
+  get ready(): Promise<ServiceWorkerRegistration> {
+    return new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
+  }
+  
+  set oncontrollerchange(event: ((this: ServiceWorkerContainer, ev: Event) => any) | null) {
+  }
+
   onmessage: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
   onmessageerror: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
-  readonly ready: Promise<ServiceWorkerRegistration>;
 
   private dispatchEventUtil: DispatchEventUtil = new DispatchEventUtil();
   public serviceWorkerRegistration: ServiceWorkerRegistration | null;
 
   constructor() {
     this.serviceWorkerRegistration = null;
-    this.ready = new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
-    this.controller = null;
-    this.oncontrollerchange = null;
+    this._controller = null;
     this.onmessage = null;
     this.onmessageerror = null;
   }
 
   addEventListener<K extends keyof ServiceWorkerContainerEventMap>(type: K, listener: (this: ServiceWorkerContainer, ev: ServiceWorkerContainerEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void {
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void {
     this.dispatchEventUtil.addEventListener(type, listener, options);
   }
 
@@ -51,10 +59,11 @@ export class MockServiceWorkerContainer implements ServiceWorkerContainer {
     const mockSw = new MockServiceWorker();
     mockSw.scriptURL = scriptURL;
     mockSw.state = 'activated';
-    this.controller = mockSw;
+ 
+    this._controller = mockSw;
 
     const swReg = new MockServiceWorkerRegistration();
-    swReg.active = this.controller;
+    swReg.active = this._controller;
     this.serviceWorkerRegistration = swReg;
 
     return this.serviceWorkerRegistration;
