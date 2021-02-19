@@ -385,6 +385,17 @@ test('installWorker() should not install when on an HTTPS site with a subdomain 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Indeterminate);
 });
 
+test('ServiceWorkerManager.getRegistration() returns valid instance when sw is registered', async t => {
+  await navigator.serviceWorker.register('/Worker-A.js');
+  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  t.truthy(result);
+});
+
+test('ServiceWorkerManager.getRegistration() returns undefined when sw is not registered ', async t => {
+  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  t.is(result, undefined);
+});
+
 test('ServiceWorkerManager.getRegistration() handles throws by returning null', async t => {
   getRegistrationStub.restore();
   getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration');
