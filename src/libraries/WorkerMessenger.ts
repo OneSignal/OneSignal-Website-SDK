@@ -1,12 +1,12 @@
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 
 import { Serializable } from '../models/Serializable';
 import Environment from '../Environment';
 import Log from './Log';
 import { ContextSWInterface } from '../models/ContextSW';
+import ServiceWorkerUtilHelper from '../helpers/page/ServiceWorkerUtilHelper';
 
 /**
  * NOTE: This file contains a mix of code that runs in ServiceWorker and Page contexts
@@ -119,12 +119,10 @@ export class WorkerMessenger {
   }
 
   /*
-    For pages:
-
-      Sends a postMessage() to the service worker controlling the page.
-
-      Waits until the service worker is controlling the page before sending the
-      message.
+    If running on a page context:
+      Sends a postMessage() to OneSignal's Serviceworker
+    If running in a ServiceWorker context:
+      Sends a postMessage() to the supplied windowClient
    */
   async unicast(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload, windowClient?: Client) {
     const env = SdkEnvironment.getWindowEnv();
@@ -140,18 +138,28 @@ export class WorkerMessenger {
         } as any);
       }
     } else {
-      if (!(await this.isWorkerControllingPage())) {
-        Log.debug("[Worker Messenger] The page is not controlled by the service worker yet. Waiting...", (<ServiceWorkerGlobalScope><any>self).registration);
-      }
-      await this.waitUntilWorkerControlsPage();
       Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
       this.directPostMessageToSW(command, payload);
     }
   }
 
-  public directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload) {
+  public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload): Promise<void> {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
-    navigator.serviceWorker!.controller!.postMessage({
+
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
+    if (!workerRegistration) {
+      Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!");
+      return;
+    }
+
+    const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    if (!availableWorker) {
+      Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorker to postMessage!");
+      return;
+    }
+
+    // The postMessage payload will still arrive at the SW even if it isn't active yet.
+    availableWorker.postMessage({
       command: command,
       payload: payload
     });
@@ -161,13 +169,8 @@ export class WorkerMessenger {
    * Due to https://github.com/w3c/ServiceWorker/issues/1156, listen() must
    * synchronously add self.addEventListener('message') if we are running in the
    * service worker.
-   *
-   * @param listenIfPageUncontrolled If true, begins listening for service
-   * worker messages even if the service worker does not control this page. This
-   * parameter is set to true on HTTPS iframes expecting service worker messages
-   * that live under an HTTP page.
    */
-  public async listen(listenIfPageUncontrolled?: boolean) {
+  public async listen() {
     if (!Environment.supportsServiceWorkers())
       return;
 
@@ -178,24 +181,13 @@ export class WorkerMessenger {
       Log.debug('[Worker Messenger] Service worker is now listening for messages.');
     }
     else
-      await this.listenForPage(listenIfPageUncontrolled);
+      await this.listenForPage();
   }
 
   /**
    * Listens for messages for the service worker.
-   *
-   * Waits until the service worker is controlling the page before listening for
-   * messages.
    */
-  private async listenForPage(listenIfPageUncontrolled?: boolean) {
-    if (!listenIfPageUncontrolled) {
-      if (!(await this.isWorkerControllingPage())) {
-        Log.debug(`(${location.origin}) [Worker Messenger] The page is not controlled by the service worker yet. Waiting...`, (<ServiceWorkerGlobalScope><any>self).registration);
-      }
-      await this.waitUntilWorkerControlsPage();
-      Log.debug(`(${location.origin}) [Worker Messenger] The page is now controlled by the service worker.`);
-    }
-
+  private async listenForPage() {
     navigator.serviceWorker.addEventListener('message', this.onPageMessageReceivedFromServiceWorker.bind(this));
     Log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
   }
@@ -300,59 +292,5 @@ export class WorkerMessenger {
     } else {
       this.replies.deleteAllListenerRecords();
     }
-  }
-
-
-  /*
-    Service worker postMessage() communication relies on the property
-    navigator.serviceWorker.controller to be non-null. The controller property
-    references the active service worker controlling the page. Without this
-    property, there is no service worker to message.
-
-    The controller property is set when a service worker has successfully
-    registered, installed, and activated a worker, and when a page isn't loaded
-    in a hard refresh mode bypassing the cache.
-
-    It's possible for a service worker to take a second page load to be fully
-    activated.
-   */
-  async isWorkerControllingPage(): Promise<boolean> {
-    const env = SdkEnvironment.getWindowEnv();
-
-    if (env === WindowEnvironmentKind.ServiceWorker)
-      return !!(<ServiceWorkerGlobalScope><any>self).registration.active;
-    else {
-      const workerState = await this.context.serviceWorkerManager.getActiveState();
-      return workerState === ServiceWorkerActiveState.WorkerA ||
-        workerState === ServiceWorkerActiveState.WorkerB;
-    }
-  }
-
-  /**
-   * For pages, waits until one of our workers is activated.
-   *
-   * For service workers, waits until the registration is active.
-   */
-  async waitUntilWorkerControlsPage() {
-    return new Promise<void>(async resolve => {
-      if (await this.isWorkerControllingPage())
-        resolve();
-      else {
-        const env = SdkEnvironment.getWindowEnv();
-
-        if (env === WindowEnvironmentKind.ServiceWorker) {
-          self.addEventListener('activate', async (_e: Event) => {
-            if (await this.isWorkerControllingPage())
-              resolve();
-          });
-        }
-        else {
-          navigator.serviceWorker.addEventListener('controllerchange', async (_e: Event) => {
-            if (await this.isWorkerControllingPage())
-              resolve();
-          });
-        }
-      }
-    });
   }
 }

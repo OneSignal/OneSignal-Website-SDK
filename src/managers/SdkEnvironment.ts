@@ -170,7 +170,7 @@ export default class SdkEnvironment {
     }
 
     // Will be null if there was an issue retrieving a status
-    const registrationResult = await ServiceWorkerHelper.getRegistration();
+    const registrationResult = await OneSignal.context.serviceWorkerManager.getRegistration();
     return !registrationResult;
   }
 
@@ -182,7 +182,7 @@ export default class SdkEnvironment {
     if (Environment.isBrowser()) {
       return window.location.origin;
     } else if (typeof self !== "undefined" && typeof ServiceWorkerGlobalScope !== "undefined") {
-      return self.registration.scope;
+      return self.location.origin;
     }
     return "Unknown";
   }

@@ -8,7 +8,6 @@ import Database from "../services/Database";
 import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
 import { NotificationClicked } from "../models/Notification";
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
@@ -17,10 +16,6 @@ import { OSServiceWorkerFields } from "../service-worker/types";
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
-  public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    return await PageServiceWorkerHelper.getRegistration();
-  }
-
   public static getServiceWorkerHref(
     workerState: ServiceWorkerActiveState,
     config: ServiceWorkerManagerConfig): string {
@@ -33,16 +28,6 @@ export default class ServiceWorkerHelper {
       workerState === ServiceWorkerActiveState.ThirdParty ||
       workerState === ServiceWorkerActiveState.None)
       workerFullPath = config.workerAPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.Bypassed) {
-      /*
-        if the page is hard refreshed bypassing the cache, no service worker
-        will control the page.
-
-        It doesn't matter if we try to reinstall an existing worker; still no
-        service worker will control the page after installation.
-       */
-      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
 
     return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
   }
@@ -259,20 +244,9 @@ export enum ServiceWorkerActiveState {
    */
   ThirdParty = '3rd Party',
   /**
-   * A service worker is currently installing and we can't determine its final state yet. Wait until
-   * the service worker is finished installing by checking for a controllerchange property..
-   */
-  Installing = 'Installing',
-  /**
    * No service worker is installed.
    */
   None = 'None',
-  /**
-   * A service worker is active but not controlling the page. This can occur if
-   * the page is hard-refreshed bypassing the cache, which also bypasses service
-   * workers.
-   */
-  Bypassed = 'Bypassed',
   /**
    * Service workers are not supported in this environment. This status is used
    * on HTTP pages where it isn't possible to know whether a service worker is

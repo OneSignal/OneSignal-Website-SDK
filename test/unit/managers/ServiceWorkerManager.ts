@@ -29,6 +29,7 @@ import { MockServiceWorkerRegistration } from "../../support/mocks/service-worke
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
 import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
 import Environment from '../../../src/Environment';
+import { MockServiceWorkerContainerWithAPIBan } from '../../support/mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan';
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -57,8 +58,6 @@ test.beforeEach(async function() {
 });
 
 test.afterEach(function () {
-  if (getRegistrationStub.callCount > 0)
-    sandbox.assert.alwaysCalledWithExactly(getRegistrationStub, location.href);
   sandbox.restore();
 });
 
@@ -97,46 +96,9 @@ test('getActiveState() detects worker B, even when worker filename uses query pa
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerB);
 });
 
-test('getActiveState() detects an installing worker (not active)', async t => {
-  const mockWorkerRegistration = new MockServiceWorkerRegistration();
-  const mockInstallingWorker = new MockServiceWorker();
-  mockInstallingWorker.state = 'installing';
-  mockWorkerRegistration.installing = mockInstallingWorker;
-
-  getRegistrationStub.resolves(mockWorkerRegistration);
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Installing);
-});
-
 test('getActiveState() detects a 3rd party worker, a worker that is activated but has an unrecognized script URL', async t => {
   await navigator.serviceWorker.register('/Worker-C.js');
 
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
-});
-
-test('getActiveState() detects a page loaded by hard-refresh with our service worker as bypassed', async t => {
-  const mockWorkerRegistration = new MockServiceWorkerRegistration();
-  const mockInstallingWorker = new MockServiceWorker();
-  mockInstallingWorker.state = 'activated';
-  mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
-  mockWorkerRegistration.active = mockInstallingWorker;
-
-  getRegistrationStub.resolves(mockWorkerRegistration);
-  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.Bypassed);
-});
-
-test('getActiveState() detects an activated third-party service worker not controlling the page as third-party and not bypassed', async t => {
-  const mockWorkerRegistration = new MockServiceWorkerRegistration();
-  const mockInstallingWorker = new MockServiceWorker();
-  mockInstallingWorker.state = 'activated';
-  mockInstallingWorker.scriptURL = 'https://site.com/another-worker.js';
-  mockWorkerRegistration.active = mockInstallingWorker;
-
-  getRegistrationStub.resolves(mockWorkerRegistration);
-  sandbox.stub(navigator.serviceWorker, 'controller').resolves(null);
   const manager = LocalHelpers.getServiceWorkerManager();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
 });
@@ -223,12 +185,11 @@ test('installWorker() installs worker A with the correct file name and query par
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
-  t.not(navigator.serviceWorker.controller, null);
-  if (navigator.serviceWorker.controller !== null) {
-    t.true(navigator.serviceWorker.controller.scriptURL.endsWith(
-      `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
-    );
-  }
+
+  const serviceWorker = MockServiceWorkerContainerWithAPIBan.getControllerForTests();
+  t.true(serviceWorker!.scriptURL.endsWith(
+    `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
+  );
 });
 
 test('installWorker() does NOT install ServiceWorker when permission has NOT been granted', async t => {
@@ -241,7 +202,7 @@ test('installWorker() does NOT install ServiceWorker when permission has NOT bee
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
-  t.is(navigator.serviceWorker.controller, null);
+  t.is(MockServiceWorkerContainerWithAPIBan.getControllerForTests(), null);
 });
 
 test('installWorker() installs worker A when a third party service worker exists', async t => {
@@ -424,6 +385,17 @@ test('installWorker() should not install when on an HTTPS site with a subdomain 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.Indeterminate);
 });
 
+test('ServiceWorkerManager.getRegistration() returns valid instance when sw is registered', async t => {
+  await navigator.serviceWorker.register('/Worker-A.js');
+  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  t.truthy(result);
+});
+
+test('ServiceWorkerManager.getRegistration() returns undefined when sw is not registered ', async t => {
+  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
+  t.is(result, undefined);
+});
+
 test('ServiceWorkerManager.getRegistration() handles throws by returning null', async t => {
   getRegistrationStub.restore();
   getRegistrationStub = sandbox.stub(navigator.serviceWorker, 'getRegistration');
@@ -431,6 +403,6 @@ test('ServiceWorkerManager.getRegistration() handles throws by returning null', 
   getRegistrationStub.returns(new Promise(() => {
     throw new Error("HTTP NOT SUPPORTED");
   }));
-  const result = await ServiceWorkerManager.getRegistration();
+  const result = await OneSignal.context.serviceWorkerManager.getRegistration();
   t.is(result, null);
 });

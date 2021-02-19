@@ -19,9 +19,9 @@ export class ContextHelper {
     if (config.userConfig) {
       if (config.userConfig.path) {
         serviceWorkerManagerConfig.workerAPath =
-          new Path(`${config.userConfig.path}${envPrefix}${config.userConfig.serviceWorkerPath}`);
+          new Path(`${config.userConfig.path}${config.userConfig.serviceWorkerPath}`);
         serviceWorkerManagerConfig.workerBPath =
-          new Path(`${config.userConfig.path}${envPrefix}${config.userConfig.serviceWorkerUpdaterPath}`);
+          new Path(`${config.userConfig.path}${config.userConfig.serviceWorkerUpdaterPath}`);
       }
       if (config.userConfig.serviceWorkerParam) {
         serviceWorkerManagerConfig.registrationOptions = config.userConfig.serviceWorkerParam;

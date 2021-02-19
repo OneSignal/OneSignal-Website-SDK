@@ -300,19 +300,22 @@ export function unsubscribeFromPush() {
         });
       });
     } else {
-      if (!navigator.serviceWorker || !navigator.serviceWorker.controller)
-        return Promise.resolve();
-
-      return navigator.serviceWorker.ready
-                      .then(registration => registration.pushManager)
-                      .then(pushManager => pushManager.getSubscription())
-                      .then((subscription: any) => {
-                        if (subscription) {
-                          return subscription.unsubscribe();
-                        } else {
-                          return Promise.resolve();
-                        }
-                      });
+      return OneSignal.context.serviceWorkerManager.getRegistration()
+              .then((serviceWorker : ServiceWorkerRegistration | null | undefined) => {
+                if (!serviceWorker) {
+                  return Promise.resolve();
+                }
+                return serviceWorker
+              })
+              .then(registration => registration.pushManager)
+              .then(pushManager => pushManager.getSubscription())
+              .then((subscription: any) => {
+                if (subscription) {
+                  return subscription.unsubscribe();
+                } else {
+                  return Promise.resolve();
+                }
+              });
     }
   }
 }

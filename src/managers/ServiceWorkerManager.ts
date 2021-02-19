@@ -17,6 +17,7 @@ import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConf
 import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/shared/utils/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from "../models/Session";
+import ServiceWorkerUtilHelper from "../helpers/page/ServiceWorkerUtilHelper";
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -27,34 +28,15 @@ export class ServiceWorkerManager {
     this.config = config;
   }
 
-  // Gets details on the service-worker (if any) that controls the current page
-  public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    return await ServiceWorkerHelper.getRegistration();
+  // Gets details on the OneSignal service-worker (if any)
+  public async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
+    return await ServiceWorkerUtilHelper.getRegistration(this.config.registrationOptions.scope);
   }
 
   public async getActiveState(): Promise<ServiceWorkerActiveState> {
     /*
       Note: This method can only be called on a secure origin. On an insecure
       origin, it'll throw on getRegistration().
-    */
-
-    /*
-      We want to find out if the *current* page is currently controlled by an
-      active service worker.
-
-      There are three ways (sort of) to do this:
-        - getRegistration()
-        - getRegistrations()
-        - navigator.serviceWorker.ready
-
-      We want to use getRegistration(), since it will not return a value if the
-      page is not currently controlled by an active service worker.
-
-      getRegistrations() returns all service worker registrations under the
-      origin (i.e. registrations in nested folders).
-
-      navigator.serviceWorker.ready will hang indefinitely and never resolve if
-      no registration is active.
     */
 
     const integration = await SdkEnvironment.getIntegration();
@@ -87,70 +69,31 @@ export class ServiceWorkerManager {
       }
     }
 
-    const workerRegistration = await ServiceWorkerManager.getRegistration();
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {
-      /*
-        A site may have a service worker nested at /folder1/folder2/folder3, while the user is
-        currently on /folder1. The nested service worker does not control /folder1 though. Although
-        the nested service worker can receive push notifications without issue, it cannot perform
-        other SDK operations like checking whether existing tabs are optn eo the site on /folder1
-        (used to prevent opening unnecessary new tabs on notification click.)
-
-        Because we rely on being able to communicate with the service worker for SDK operations, we
-        only say we're active if the service worker directly controls this page.
-       */
       return ServiceWorkerActiveState.None;
     }
-    else if (workerRegistration.installing) {
-      /*
-        Workers that are installing block for a while, since we can't use them until they're done
-        installing.
-       */
-      return ServiceWorkerActiveState.Installing;
-    }
-    else if (!workerRegistration.active) {
-      /*
-        Workers that are waiting won't be our service workers, since we use clients.claim() and
-        skipWaiting() to bypass the install and waiting stages.
-       */
-      return ServiceWorkerActiveState.ThirdParty;
-    }
 
-    // At this point, there is an active service worker registration controlling this page.
     // We are now; 1. Getting the filename of the SW; 2. Checking if it is ours or a 3rd parties.
     const swFileName = ServiceWorkerManager.activeSwFileName(workerRegistration);
     const workerState = this.swActiveStateByFileName(swFileName);
-
-    /*
-      Our service worker registration can be both active and in the controlling scope of the current
-      page, but if the page was hard refreshed to bypass the cache (e.g. Ctrl + Shift + R), a
-      service worker will not control the page.
-
-      For a third-party service worker, if it does not call clients.claim(), even if its
-      registration is both active and in the controlling scope of the current page,
-      navigator.serviceWorker.controller will still be null on the first page visit. So we only
-      check if the controller is null for our worker, which we know uses clients.claim().
-     */
-    if (!navigator.serviceWorker.controller && (
-      workerState === ServiceWorkerActiveState.WorkerA ||
-      workerState === ServiceWorkerActiveState.WorkerB
-    ))
-      return ServiceWorkerActiveState.Bypassed;
     return workerState;
   }
 
   // Get the file name of the active ServiceWorker
   private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
-    if (!workerRegistration.active)
+    const serviceWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    if (!serviceWorker) {
       return null;
+    }
 
-    const workerScriptPath = new URL(workerRegistration.active.scriptURL).pathname;
+    const workerScriptPath = new URL(serviceWorker.scriptURL).pathname;
     const swFileName = new Path(workerScriptPath).getFileName();
 
     // If the current service worker is Akamai's
     if (swFileName == "akam-sw.js") {
       // Check if its importing a ServiceWorker under it's "othersw" query param
-      const searchParams = new URLSearchParams(new URL(workerRegistration.active.scriptURL).search);
+      const searchParams = new URLSearchParams(new URL(serviceWorker.scriptURL).search);
       const importedSw = searchParams.get("othersw");
       if (importedSw) {
         Log.debug("Found a ServiceWorker under Akamai's akam-sw.js?othersw=", importedSw);
@@ -297,35 +240,7 @@ export class ServiceWorkerManager {
       return;
     }
 
-    const preInstallWorkerState = await this.getActiveState();
     await this.installAlternatingWorker();
-
-    await new Promise<void>(async resolve => {
-      const postInstallWorkerState = await this.getActiveState();
-      Log.debug(
-        "installWorker - Comparing pre and post states",
-        preInstallWorkerState,
-        postInstallWorkerState
-      );
-
-      if (preInstallWorkerState !== postInstallWorkerState &&
-          postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
-        resolve();
-      }
-      else {
-        Log.debug("installWorker - Awaiting on navigator.serviceWorker's 'controllerchange' event");
-        navigator.serviceWorker.addEventListener('controllerchange', async e => {
-          const postInstallWorkerState = await this.getActiveState();
-          if (postInstallWorkerState !== preInstallWorkerState &&
-            postInstallWorkerState !== ServiceWorkerActiveState.Installing) {
-            resolve();
-          }
-          else {
-            Log.error("installWorker - SW's 'controllerchange' fired but no state change!");
-          }
-        });
-      }
-    });
 
     if ((await this.getActiveState()) === ServiceWorkerActiveState.WorkerB) {
       // If the worker is Worker B, reinstall Worker A

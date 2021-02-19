@@ -4,16 +4,17 @@ import { MockServiceWorkerContainer } from "./MockServiceWorkerContainer";
 export class MockServiceWorkerRegistration implements ServiceWorkerRegistration {
   active: ServiceWorker | null;
   installing: ServiceWorker | null;
+  waiting: ServiceWorker | null;
   onupdatefound: ((this: ServiceWorkerRegistration, ev: Event) => any) | null;
   readonly pushManager: PushManager;
   readonly sync: SyncManager;
-  readonly waiting: ServiceWorker | null;
   navigationPreload: NavigationPreloadManager;
   updateViaCache: ServiceWorkerUpdateViaCache;
 
   constructor() {
     this.active = null;
     this.installing = null;
+    this.waiting = null;
     this.pushManager = new MockPushManager();
   }
 

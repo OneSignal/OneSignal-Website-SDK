@@ -7,17 +7,20 @@ import { MockServiceWorkerContainer } from "../../support/mocks/service-workers/
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
 import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 
+class TestMockServiceWorkerContainer extends MockServiceWorkerContainer {
+}
+
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  (global as any).navigator.serviceWorker = new TestMockServiceWorkerContainer();
 });
 
 test('mock service worker browser API properties should exist', async t => {
   t.true(navigator.serviceWorker instanceof MockServiceWorkerContainer);
   t.true(navigator.serviceWorker.getRegistration instanceof Function);
   t.true(navigator.serviceWorker.getRegistrations instanceof Function);
-  t.true(navigator.serviceWorker.ready instanceof Promise);
   t.true(navigator.serviceWorker.register instanceof Function);
   t.true(navigator.serviceWorker.addEventListener instanceof Function);
 });

@@ -277,7 +277,7 @@ test('onNotificationClicked - openWindow', async t => {
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
   await OSServiceWorker.onNotificationClicked(notificationEvent);
 
-  t.true(openWindowMock.calledWithExactly('https://site.com'));
+  t.deepEqual(openWindowMock.getCalls().map(call => call.args[0]), ['https://localhost:3001'])
 });
 
 /*

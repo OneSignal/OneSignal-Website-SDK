@@ -382,9 +382,12 @@ export class SubscriptionManager {
       throw err;
     }
 
-    Log.debug('Waiting for the service worker to activate...');
-    const workerRegistration = await navigator.serviceWorker.ready;
-    Log.debug('Service worker is ready to continue subscribing.');
+    Log.debug('[Subscription Manager] Getting OneSignal service Worker...');
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
+    if (!workerRegistration) {
+      throw new Error("OneSignal service worker not found!");
+    }
+    Log.debug('[Subscription Manager] Service worker is ready to continue subscribing.');
 
     return await this.subscribeWithVapidKey(workerRegistration.pushManager, subscriptionStrategy);
   }
@@ -639,7 +642,7 @@ export class SubscriptionManager {
         return false;
     }
 
-    const serviceWorkerRegistration = await ServiceWorkerManager.getRegistration();
+    const serviceWorkerRegistration = await this.context.serviceWorkerManager.getRegistration();
     if (!serviceWorkerRegistration)
       return false;
 
@@ -743,7 +746,7 @@ export class SubscriptionManager {
     }
 
     const workerState = await this.context.serviceWorkerManager.getActiveState();
-    const workerRegistration = await ServiceWorkerManager.getRegistration();
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
     const notificationPermission =
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
     const isWorkerActive = (
