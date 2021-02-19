@@ -366,15 +366,16 @@ export class ServiceWorkerManager {
       Log.info(`[Service Worker Installation] 3rd party service worker detected.`);
     }
 
-    const workerFullPath = ServiceWorkerHelper.getServiceWorkerHref(workerState, this.config);
-    const installUrlQueryParams = Utils.encodeHashAsUriComponent({
-      appId: this.context.appConfig.appId
-    });
-    const fullWorkerPath = `${workerFullPath}?${installUrlQueryParams}`;
+    const workerHref = ServiceWorkerHelper.getAlternatingServiceWorkerHref(
+      workerState,
+      this.config,
+      this.context.appConfig.appId
+    );
+
     const scope = `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}`;
-    Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath} ${scope}.`);
+    Log.info(`[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`);
     try {
-      await navigator.serviceWorker.register(fullWorkerPath, { scope });
+      await navigator.serviceWorker.register(workerHref, { scope });
     } catch (error) {
       Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);
       // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
@@ -385,7 +386,7 @@ export class ServiceWorkerManager {
       if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup)
         throw error;
 
-      const response = await fetch(fullWorkerPath);
+      const response = await fetch(workerHref);
       if (response.status === 403 || response.status === 404)
         throw new ServiceWorkerRegistrationError(response.status, response.statusText);
 
