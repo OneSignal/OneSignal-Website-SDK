@@ -53,13 +53,12 @@ test('mock push manager should subscribe successfully', async t => {
 
 test('mock push manager should unsubscribe successfully', async t => {
   const registration = await getServiceWorkerRegistration();
-
-  const subscribedSubscription = await registration!.pushManager.subscribe({
+  const subscription = await registration!.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: Random.getRandomUint8Array(64).buffer
   });
-  await subscribedSubscription.unsubscribe();
-  const subscription = await registration!.pushManager.getSubscription();
-  t.is(subscription, null);
-});
+  await subscription.unsubscribe();
 
+  const subscriptionToCheck = await registration!.pushManager.getSubscription();
+  t.is(subscriptionToCheck, null);
+});

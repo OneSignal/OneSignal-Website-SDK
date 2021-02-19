@@ -86,7 +86,7 @@ export class ServiceWorkerManager {
     if (!serviceWorker) {
       return null;
     }
-    
+
     const workerScriptPath = new URL(serviceWorker.scriptURL).pathname;
     const swFileName = new Path(workerScriptPath).getFileName();
 
