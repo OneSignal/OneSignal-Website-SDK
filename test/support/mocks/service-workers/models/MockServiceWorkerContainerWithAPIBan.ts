@@ -10,7 +10,7 @@ export class MockServiceWorkerContainerWithAPIBan extends MockServiceWorkerConta
   constructor() {
     super();
   }
-  
+
   get controller(): ServiceWorker | null {
     throw new Error("Don't use, assumes page control!");
   }

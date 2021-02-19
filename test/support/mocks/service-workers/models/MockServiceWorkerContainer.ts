@@ -4,7 +4,7 @@ import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
 
 // abstract to indicate this isn't designed to be used directly as part of the tests. (expect for the meta one)
 // This is a generic mock.
-//   - no OneSignal specifics, see MockServiceWorkerContainerWithAPIBan 
+//   - no OneSignal specifics, see MockServiceWorkerContainerWithAPIBan
 export abstract class MockServiceWorkerContainer implements ServiceWorkerContainer {
   protected _controller: ServiceWorker | null;
   get controller(): ServiceWorker | null {
