@@ -16,20 +16,30 @@ import { OSServiceWorkerFields } from "../service-worker/types";
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
-  public static getServiceWorkerHref(
+
+  // Get the href of the OneSiganl ServiceWorker that should be installed
+  // If a OneSignal ServiceWorker is already installed we will use an alternating name
+  //   to force an update to the worker.
+  public static getAlternatingServiceWorkerHref(
     workerState: ServiceWorkerActiveState,
-    config: ServiceWorkerManagerConfig): string {
-    let workerFullPath = "";
+    config: ServiceWorkerManagerConfig,
+    appId: string
+    ): string {
+    let workerFullPath: string;
 
     // Determine which worker to install
     if (workerState === ServiceWorkerActiveState.WorkerA)
       workerFullPath = config.workerBPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.WorkerB ||
-      workerState === ServiceWorkerActiveState.ThirdParty ||
-      workerState === ServiceWorkerActiveState.None)
+    else
       workerFullPath = config.workerAPath.getFullPath();
 
-    return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+    return ServiceWorkerHelper.appendServiceWorkerParams(workerFullPath, appId);
+  }
+
+  private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
+    const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+    const appIdHasQueryParam = Utils.encodeHashAsUriComponent({appId});
+    return `${fullPath}?${appIdHasQueryParam}`;
   }
 
   public static async upsertSession(
