@@ -161,8 +161,7 @@ export default class SubscriptionHelper {
     return subscription;
   }
 
-  static async getRawPushSubscriptionFromServiceWorkerRegistration(): Promise<RawPushSubscription | null> {
-    const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
+  static async getRawPushSubscriptionFromServiceWorkerRegistration(registration?: ServiceWorkerRegistration): Promise<RawPushSubscription | null> {
     if (!registration) {
       return null;
     }
@@ -190,7 +189,8 @@ export default class SubscriptionHelper {
     }
 
     if (environmentInfo.isBrowserAndSupportsServiceWorkers) {
-      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration();
+      const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
+      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(registration);
     }
 
     return null;
