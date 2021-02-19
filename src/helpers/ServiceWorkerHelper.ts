@@ -12,6 +12,7 @@ import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
 import { OSServiceWorkerFields } from "../service-worker/types";
+import Utils from "../context/shared/utils/Utils";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -34,6 +35,14 @@ export default class ServiceWorkerHelper {
       workerFullPath = config.workerAPath.getFullPath();
 
     return ServiceWorkerHelper.appendServiceWorkerParams(workerFullPath, appId);
+  }
+
+  public static getPossibleServiceWorkerHrefs(
+    config: ServiceWorkerManagerConfig,
+    appId: string
+    ): string[] {
+    const workerFullPaths = [config.workerAPath.getFullPath(), config.workerBPath.getFullPath()];
+    return workerFullPaths.map((href) => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
   }
 
   private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
