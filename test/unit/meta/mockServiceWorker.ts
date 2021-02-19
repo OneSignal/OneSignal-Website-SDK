@@ -7,10 +7,14 @@ import { MockServiceWorkerContainer } from "../../support/mocks/service-workers/
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
 import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 
+class TestMockServiceWorkerContainer extends MockServiceWorkerContainer {
+}
+
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
+  (global as any).navigator.serviceWorker = new TestMockServiceWorkerContainer();
 });
 
 test('mock service worker browser API properties should exist', async t => {

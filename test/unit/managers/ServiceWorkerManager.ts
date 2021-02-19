@@ -29,6 +29,7 @@ import { MockServiceWorkerRegistration } from "../../support/mocks/service-worke
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
 import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
 import Environment from '../../../src/Environment';
+import { MockServiceWorkerContainerWithAPIBan } from '../../support/mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan';
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
@@ -184,12 +185,11 @@ test('installWorker() installs worker A with the correct file name and query par
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
-  t.not(navigator.serviceWorker.controller, null);
-  if (navigator.serviceWorker.controller !== null) {
-    t.true(navigator.serviceWorker.controller.scriptURL.endsWith(
-      `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
-    );
-  }
+
+  const serviceWorker = MockServiceWorkerContainerWithAPIBan.getControllerForTests();
+  t.true(serviceWorker!.scriptURL.endsWith(
+    `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
+  );
 });
 
 test('installWorker() does NOT install ServiceWorker when permission has NOT been granted', async t => {
@@ -202,7 +202,7 @@ test('installWorker() does NOT install ServiceWorker when permission has NOT bee
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
   await manager.installWorker();
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
-  t.is(navigator.serviceWorker.controller, null);
+  t.is(MockServiceWorkerContainerWithAPIBan.getControllerForTests(), null);
 });
 
 test('installWorker() installs worker A when a third party service worker exists', async t => {

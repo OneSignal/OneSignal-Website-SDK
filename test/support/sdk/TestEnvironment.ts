@@ -22,7 +22,7 @@ import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import { MockServiceWorkerGlobalScope } from "../mocks/service-workers/models/MockServiceWorkerGlobalScope";
 import { MockServiceWorker } from "../mocks/service-workers/models/MockServiceWorker";
 import { MockPushManager } from "../mocks/service-workers/models/MockPushManager";
-import { MockServiceWorkerContainer } from "../mocks/service-workers/models/MockServiceWorkerContainer";
+import { MockServiceWorkerContainerWithAPIBan } from "../mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan";
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
@@ -256,7 +256,7 @@ export class TestEnvironment {
     });
     // Node has its own console; overwriting it will cause issues
     delete (windowDef as any)['console'];
-    (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainer();
+    (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainerWithAPIBan();
     (windowDef as any).localStorage = new DOMStorage(null);
     (windowDef as any).sessionStorage = new DOMStorage(null);
     const { TextEncoder, TextDecoder } = require('text-encoding');
