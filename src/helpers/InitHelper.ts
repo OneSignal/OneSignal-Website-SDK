@@ -260,10 +260,7 @@ export default class InitHelper {
       !await SdkEnvironment.isFrameContextInsecure()
     ) {
       try {
-        const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
-        if (registration && registration.active) {
-          await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
-        }
+        await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
       } catch (e) { 
         Log.error(e);
       }
