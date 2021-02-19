@@ -160,11 +160,16 @@ export class ServiceWorkerManager {
     //   notification permissions are enabled we should install.
     //   This prevents an unnessary install which saves bandwidth
     const workerState = await this.getActiveState();
+    Log.debug("[shouldInstallWorker] workerState", workerState);
     if (workerState === ServiceWorkerActiveState.None || workerState === ServiceWorkerActiveState.ThirdParty) {
       const permission = await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.config!.safariWebId
       );
-      return permission === "granted";
+      const notificationsEnabled = permission === "granted";
+      if (notificationsEnabled) {
+        Log.info("[shouldInstallWorker] Notification Permissions enabled, will install ServiceWorker");
+      }
+      return notificationsEnabled;
     }
 
     // 5. We have a OneSignal ServiceWorker installed, but did the path or scope of the ServiceWorker change?
@@ -291,6 +296,7 @@ export class ServiceWorkerManager {
   }
 
   public async establishServiceWorkerChannel() {
+    Log.debug('establishServiceWorkerChannel');
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
