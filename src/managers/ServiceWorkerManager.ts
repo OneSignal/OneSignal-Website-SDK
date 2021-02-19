@@ -167,8 +167,44 @@ export class ServiceWorkerManager {
       return permission === "granted";
     }
 
-    // 5. We have a OneSignal ServiceWorker installed, is there an update?
+    // 5. We have a OneSignal ServiceWorker installed, but did the path or scope of the ServiceWorker change?
+    if (await this.changedServiceWorkerParams()) {
+      return true;
+    }
+
+    // 6. We have a OneSignal ServiceWorker installed, is there an update?
     return this.workerNeedsUpdate();
+  }
+
+  private async changedServiceWorkerParams(): Promise<boolean> {
+    // 1. No workerRegistration
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
+    if (!workerRegistration) {
+      Log.info("[changedServiceWorkerParams] workerRegistration not found at scope", this.config.registrationOptions.scope);
+      return true;
+    }
+
+    // 2. Different scope
+    const existingSwScope = new URL(workerRegistration.scope).pathname
+    const configuredSwScope = this.config.registrationOptions.scope;
+    if (existingSwScope != configuredSwScope) {
+      Log.info("[changedServiceWorkerParams] ServiceWorker scope changing", { a_old: existingSwScope, b_new: configuredSwScope});
+      return true;
+    }
+
+    // 3. Different href?, asking if (path + filename [A or B] + queryParams) is different
+    const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const serviceWorkerHrefs = ServiceWorkerHelper.getPossibleServiceWorkerHrefs(
+      this.config,
+      this.context.appConfig.appId
+    );
+    // We don't care if the only differences is between OneSignal's A(Woker) vs B(WorkerUpdater) filename.
+    if (serviceWorkerHrefs.indexOf(availableWorker?.scriptURL || "") === -1) {
+      Log.info("[changedServiceWorkerParams] ServiceWorker herf changing:", { a_old: availableWorker?.scriptURL, b_new: serviceWorkerHrefs });
+      return true;
+    }
+
+    return false;
   }
 
   /**
