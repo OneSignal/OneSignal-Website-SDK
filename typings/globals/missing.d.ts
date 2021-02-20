@@ -18,9 +18,8 @@ interface SafariRemoteNotification {
 }
 
 interface Window {
-  Notification: Notification;
-  safari: {
-    pushNotification: SafariRemoteNotification
+  safari?: {
+    pushNotification?: SafariRemoteNotification
   };
 }
 
