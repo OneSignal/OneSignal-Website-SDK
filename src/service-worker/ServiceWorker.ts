@@ -30,7 +30,6 @@ import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 import { DeviceRecord } from '../models/DeviceRecord';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
-declare var Notification: Notification;
 
 /**
  * The main service worker script fetching and displaying notifications to users in the background even when the client
