@@ -491,11 +491,10 @@ export class SubscriptionManager {
           break;
 
         if (existingPushSubscription.options) {
-          Log.debug("[Subscription Manager] An existing push subscription exists and it's options is not null.");
+          Log.debug("[Subscription Manager] PushSubscription exists with options: ", existingPushSubscription.options);
         }
         else {
-          Log.debug('[Subscription Manager] An existing push subscription exists and options is null. ' +
-            'Unsubscribing from push first now.');
+          Log.debug("[Subscription Manager] PushSubscription exists, but w/o options, handle GCM to VAPID migration.");
           /*
             NOTE: Only applies to rare edge case of migrating from senderId to a VAPID subscription
             There isn't a great solution if PushSubscriptionOptions (supported on Chrome 54+) isn't
