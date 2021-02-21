@@ -49,6 +49,8 @@ export type SubscriptionStateServiceWorkerNotIntalled =
   SubscriptionStateKind.ServiceWorkerStatus403 | 
   SubscriptionStateKind.ServiceWorkerStatus404;
 
+export type DoPushSubscribeResult = Promise<[PushSubscription, boolean]>;
+
 export class SubscriptionManager {
   private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
@@ -556,13 +558,10 @@ export class SubscriptionManager {
   }
 
   // Subscribes the ServiceWorker for a pushToken.
-  // If there is an error doing so unsubscribe from existing and try again
-  //    - This handles subscribing to new server VAPID key if it has changed.
-  // return type - [PushSubscription, createdNewPushSubscription(boolean)]
   private static async doPushSubscribe(
     pushManager: PushManager,
     applicationServerKey: ArrayBuffer | undefined)
-    :Promise<[PushSubscription, boolean]> {
+    :DoPushSubscribeResult {
 
     if (!applicationServerKey) {
       throw new Error("Missing required 'applicationServerKey' to subscribe for push notifications!");
@@ -572,28 +571,58 @@ export class SubscriptionManager {
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey
     };
+
     Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     try {
-      const existingSubscription = await pushManager.getSubscription();
-      return [await pushManager.subscribe(subscriptionOptions), !existingSubscription];
-    } catch (e) {
-      if (e.name == "InvalidStateError") {
-        // This exception is thrown if the key for the existing applicationServerKey is different,
-        //    so we must unregister first.
-        // In Chrome, e.message contains will be the following in this case for reference;
-        // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
-        //    to change the applicationServerKey, unsubscribe then resubscribe.
-        Log.warn("[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
-          "unsubscribe and attempting to subscribe with new key.", e);
-        const subscription = await pushManager.getSubscription();
-        if (subscription) {
-          await SubscriptionManager.doPushUnsubscribe(subscription);
-        }
-        return [await pushManager.subscribe(subscriptionOptions), true];
-      }
-      else
-        throw e; // If some other error, bubble the exception up
+      return await SubscriptionManager.doPushManagerSubscribe(pushManager, subscriptionOptions);
+    } catch (error) {
+        return await SubscriptionManager.handlePushManagerSubscribeException(pushManager, subscriptionOptions, error);
     }
+  }
+
+  // InvalidStateError exception is thrown if the key for the existing applicationServerKey is different,
+  //    so we must unregister first.
+  // In Chrome, error.message contains will be the following in this case for reference;
+  // Registration failed - A subscription with a different applicationServerKey (or gcm_sender_id) already exists;
+  //    to change the applicationServerKey, unsubscribe then resubscribe.
+  private static async handlePushManagerSubscribeException(
+    pushManager: PushManager,
+    options: PushSubscriptionOptionsInit,
+    error: Error
+    )
+    :DoPushSubscribeResult {
+      if (error.name != "InvalidStateError") {
+        throw error;
+      }
+
+      Log.warn(
+        "[Subscription Manager] Couldn't re-subscribe due to applicationServerKey changing, " +
+        "unsubscribe and attempting to subscribe with new key.",
+        error
+      );
+      const existingSubscription = await pushManager.getSubscription();
+      if (existingSubscription) {
+        await SubscriptionManager.doPushUnsubscribe(existingSubscription);
+      }
+      return await SubscriptionManager.doPushManagerSubscribe(pushManager, options);
+  }
+
+  private static async doPushManagerSubscribe(
+    pushManager: PushManager,
+    options: PushSubscriptionOptionsInit)
+    :DoPushSubscribeResult {
+    const existingSubscription = await pushManager.getSubscription();
+    const newSubscription = await pushManager.subscribe(options);
+
+    const endPointChanged = existingSubscription?.endpoint !== newSubscription.endpoint;
+    if (endPointChanged) {
+      Log.info(
+        "[SubscriptionManager] PushSubscription endpoint changed.",
+        { a_old: existingSubscription?.endpoint, b_new: newSubscription.endpoint }
+      );
+    }
+
+    return [newSubscription, endPointChanged];
   }
 
   public async isSubscriptionExpiring(): Promise<boolean> {
