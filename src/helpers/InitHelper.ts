@@ -112,7 +112,7 @@ export default class InitHelper {
     LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
 
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
-      await OneSignal.context.promptsManager.spawnAutoPrompts();
+      OneSignal.context.promptsManager.spawnAutoPrompts();
     }
 
     OneSignal._sessionInitAlreadyRunning = false;
