@@ -107,16 +107,20 @@ export default class Slidedown {
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
       this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));
-      Event.trigger(Slidedown.EVENTS.SHOWN);
+      this.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     }
   }
 
+  async triggerSlidedownEvent(eventName: string): Promise<void> {
+    await Event.trigger(eventName);
+  }
+
   async onSlidedownAllowed(_: any): Promise<void> {
-    await Event.trigger(Slidedown.EVENTS.ALLOW_CLICK);
+    await this.triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   onSlidedownCanceled(_: any): void {
-    Event.trigger(Slidedown.EVENTS.CANCEL_CLICK);
+    this.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
   }
 
@@ -128,7 +132,11 @@ export default class Slidedown {
           // Uninstall the event listener for animationend
           removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
           destroyListenerFn();
-          Event.trigger(Slidedown.EVENTS.CLOSED);
+
+          /**
+           * Remember to trigger closed event after invoking close()
+           * This is due to the once() function not running correctly in test environment
+           */
       }
     }, true);
   }
