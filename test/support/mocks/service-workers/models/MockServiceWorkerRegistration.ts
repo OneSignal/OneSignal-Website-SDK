@@ -48,7 +48,7 @@ export class MockServiceWorkerRegistration implements ServiceWorkerRegistration 
 
   async unregister(): Promise<boolean> {
     const container = navigator.serviceWorker as MockServiceWorkerContainer;
-    container.serviceWorkerRegistration = null;
+    container.mockUnregister(new URL(this.scope).pathname);
     this.active = null;
     return true;
   }
