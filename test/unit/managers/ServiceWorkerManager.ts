@@ -264,6 +264,45 @@ test('installWorker() installs Worker B and then A when Worker A is out of date'
   t.is(spy.callCount, 4);
 });
 
+test('installWorker() installs Worker new scope when it changes', async t => {
+  await TestEnvironment.initialize({
+    httpOrHttps: HttpHttpsEnvironment.Https
+  });
+  sandbox.stub(Notification, "permission").value("granted");
+  // We don't want the version number check from "workerNeedsUpdate" interfering with this test.
+  sandbox.stub(ServiceWorkerManager.prototype, <any>"workerNeedsUpdate").resolves(false);
+
+  const serviceWorkerConfig = {
+    workerAPath: new Path('/Worker-A.js'),
+    workerBPath: new Path('/Worker-B.js'),
+    registrationOptions: { scope: '/' }
+  };
+  const manager = new ServiceWorkerManager(OneSignal.context, serviceWorkerConfig);
+
+  // 1. Install ServiceWorker A and assert it was ServiceWorker A
+  await manager.installWorker();
+
+  // 2. Attempt to install again, but with a different scope
+  serviceWorkerConfig.registrationOptions.scope = '/push/onesignal/';
+  const spyRegister = sandbox.spy(navigator.serviceWorker, 'register');
+  await manager.installWorker();
+
+  // 3. Assert we did register our worker under the new scope.
+  const appId = OneSignal.context.appConfig.appId;
+  t.deepEqual(spyRegister.getCalls().map(call => call.args), [
+    [
+      `https://localhost:3001/Worker-B.js?appId=${appId}`,
+      { scope: 'https://localhost:3001/push/onesignal/' }
+    ]
+  ]);
+
+  // 4. Ensure we kept the original ServiceWorker.
+  //   A. Original could contain more than just OneSignal code
+  //   B. New ServiceWorker instance will have it's own pushToken, this may have not been sent onesignal.com yet.
+  const orgRegistration = await navigator.serviceWorker.getRegistration("/");
+  t.is(new URL(orgRegistration!.scope).pathname, "/");
+});
+
 test('Server worker register URL correct when service worker path is a absolute URL', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
