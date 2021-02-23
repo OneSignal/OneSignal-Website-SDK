@@ -48,12 +48,20 @@ test('mock service worker registration should return the registered worker', asy
   t.deepEqual(registrations, [registration]);
 });
 
+test('mock service worker getRegistrations should return multiple registered workers', async t => {
+  const expectedRegistrations = [] as ServiceWorkerRegistration[];
+  expectedRegistrations.push(await navigator.serviceWorker.register('/workerA.js', { scope: '/' }));
+  expectedRegistrations.push(await navigator.serviceWorker.register('/workerB.js', { scope: '/mypath/' }));
+
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  t.deepEqual(registrations, expectedRegistrations);
+});
 
 test('mock service worker unregistration should return no registered workers', async t => {
   await navigator.serviceWorker.register('/worker.js', { scope: '/' });
 
   const initialRegistration = await navigator.serviceWorker.getRegistration();
-  await initialRegistration.unregister();
+  await initialRegistration!.unregister();
 
   const postUnsubscribeRegistration = await navigator.serviceWorker.getRegistration();
   t.is(postUnsubscribeRegistration, undefined);
