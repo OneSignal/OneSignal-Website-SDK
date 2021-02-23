@@ -41,7 +41,23 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
   }
 
   async getRegistration(clientURL?: string): Promise<ServiceWorkerRegistration | undefined> {
-    return this.serviceWorkerRegistrations.get(clientURL || "/");
+    const scope = clientURL || "/";
+
+    // 1. If we find an exact path match
+    let registration = this.serviceWorkerRegistrations.get(scope);
+    if (registration) {
+      return registration;
+    }
+
+    // 2. Match any SW's that are at a higher scope than the one we are querying for as they are under it's control.
+    // WARNING: This mock implementation does not consider which one is correct if more than one applies the scope.
+    this.serviceWorkerRegistrations.forEach((value, key) => {
+      if (scope.startsWith(key)) {
+        registration = value;
+      }
+    });
+
+    return registration;
   }
 
   async getRegistrations(): Promise<ServiceWorkerRegistration[]> {

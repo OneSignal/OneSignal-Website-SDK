@@ -57,6 +57,19 @@ test('mock service worker getRegistrations should return multiple registered wor
   t.deepEqual(registrations, expectedRegistrations);
 });
 
+test('mock service worker getRegistration should return higher path worker', async t => {
+  const expected = await navigator.serviceWorker.register('/workerA.js', { scope: '/' });
+  const actual = await navigator.serviceWorker.getRegistration("/some/scope/");
+  t.deepEqual(actual, expected);
+});
+
+test('mock service worker getRegistration should return specific path if a higher path worker exists too', async t => {
+  const expected = await navigator.serviceWorker.register('/workerB.js', { scope: '/mypath/' });
+  await navigator.serviceWorker.register('/workerA.js', { scope: '/' });
+  const actual = await navigator.serviceWorker.getRegistration("/mypath/");
+  t.deepEqual(actual, expected);
+});
+
 test('mock service worker unregistration should return no registered workers', async t => {
   await navigator.serviceWorker.register('/worker.js', { scope: '/' });
 
