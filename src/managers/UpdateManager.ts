@@ -33,6 +33,7 @@ export class UpdateManager {
     return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
+  // TODO: This only gets called from the subscription manager but that name doesn't indicate that.
   public async sendPlayerUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
     const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
@@ -44,6 +45,7 @@ export class UpdateManager {
     if (!deviceRecord) {
       deviceRecord = await this.createDeviceRecord();
     }
+
     if (this.onSessionSent) {
       await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
         notification_types: SubscriptionStateKind.Subscribed,

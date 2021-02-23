@@ -235,7 +235,9 @@ export class ServiceWorker {
    * notifications.
    */
   static onPushReceived(event: PushEvent): void {
-    Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
+    console.log("console.log - onPushReceived", event);
+    Log.debug("Log.debug - onPushReceived", event);
+    // Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)

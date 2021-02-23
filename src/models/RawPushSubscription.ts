@@ -58,6 +58,7 @@ export class RawPushSubscription implements Serializable {
    *
    * @param pushSubscription A native browser W3C push subscription.
    */
+  // TODO: Cleanup: This should be a constructor instead
   public static setFromW3cSubscription(pushSubscription: PushSubscription): RawPushSubscription {
     const rawPushSubscription = new RawPushSubscription();
 

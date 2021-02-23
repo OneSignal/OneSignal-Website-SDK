@@ -58,10 +58,12 @@ export default class SubscriptionHelper {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {
+          // TODO: Document this flow in the PR
           const rawSubscription = await context.subscriptionManager.subscribe(
             SubscriptionStrategyKind.ResubscribeExisting
           );
           subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
+          
           context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();

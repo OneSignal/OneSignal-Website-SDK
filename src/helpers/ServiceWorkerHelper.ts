@@ -105,6 +105,7 @@ export default class ServiceWorkerHelper {
       existingSession.lastActivatedTimestamp = currentTimestamp;
       existingSession.lastDeactivatedTimestamp = null;
       await Database.upsertSession(existingSession);
+      // TODO: Should we make a player PUT call? There could be something new on the player that could be dropped here...
       return;
     }
 

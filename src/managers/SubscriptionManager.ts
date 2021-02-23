@@ -145,6 +145,7 @@ export class SubscriptionManager {
     pushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,
   ): Promise<Subscription> {
+    Log.debug("registerSubscription", pushSubscription, subscriptionState);
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
       frame. This means it will only have object properties and none of the functions. We have to
@@ -165,6 +166,9 @@ export class SubscriptionManager {
 
     let newDeviceId: string | undefined = undefined;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
+      // TODO: It seems we should force call sendPlayerUpdate if pushSubscription.isNewSubscription? so we don't wait
+      //   for a new session to fire. It tries to do a new session but there is no fallback to just update if it
+      //   shouldn't do  one.
       await this.context.updateManager.sendPlayerUpdate(deviceRecord);
     } else {
       newDeviceId = await this.context.updateManager.sendPlayerCreate(deviceRecord);
@@ -525,6 +529,8 @@ export class SubscriptionManager {
         break;
     }
 
+    // TODO: We need to make sure SubscriptionStrategyKind.ResubscribeExisting is set when service worker scope changes!
+    //       This is so the new ServiceWorker can take over and get pushes.
     // Actually subscribe the user to push
     const [newPushSubscription, isNewSubscription] =
       await SubscriptionManager.doPushSubscribe(pushManager, this.getVapidKeyForBrowser());
@@ -538,6 +544,10 @@ export class SubscriptionManager {
       pushSubscriptionDetails.existingW3cPushSubscription =
         RawPushSubscription.setFromW3cSubscription(existingPushSubscription);
     }
+
+    // TODO: Send push endpoint update to player here?
+    // context.subscriptionManager.registerSubscription(new RawPushSubscription(), subscriptionState);
+
     return pushSubscriptionDetails;
   }
 
