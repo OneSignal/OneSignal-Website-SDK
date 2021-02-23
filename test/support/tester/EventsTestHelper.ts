@@ -11,6 +11,10 @@ export default class EventsTestHelper {
         this.sinonSandbox = sinonSandbox;
     }
 
+    public simulateSlidedownAllow() {
+        OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
+    }
+
     public simulateSlidedownAllowAfterShown() {
         OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
             OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
