@@ -136,35 +136,93 @@ export class ServiceWorkerManager {
   }
 
   private async shouldInstallWorker(): Promise<boolean> {
+    // 1. Does the browser support ServiceWorkers?
     if (!Environment.supportsServiceWorkers())
       return false;
 
+    // 2. Is OneSignal initialized?
     if (!OneSignal.config)
       return false;
 
+    // 3. Will the service worker be installed on os.tc instead of the current domain?
     if (OneSignal.config.subdomain) {
       // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
       // But since safari does not need subscription workaround, installing SW for session tracking.
       if (
-        OneSignal.environmentInfo.browserType !== "safari" && 
+        OneSignal.environmentInfo.browserType !== "safari" &&
           SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host
       ) {
         return false;
       }
     }
 
+    // 4. Is a OneSignal ServiceWorker not installed now?
+    // If not and notification permissions are enabled we should install.
+    // This prevents an unnecessary install of the OneSignal worker which saves bandwidth
     const workerState = await this.getActiveState();
-    // If there isn't a SW or it isn't OneSignal's only install our SW if notification permissions are enabled
-    // This prevents an unnessary install which saves bandwidth
+    Log.debug("[shouldInstallWorker] workerState", workerState);
     if (workerState === ServiceWorkerActiveState.None || workerState === ServiceWorkerActiveState.ThirdParty) {
       const permission = await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.config!.safariWebId
       );
-
-      return permission === "granted";
+      const notificationsEnabled = permission === "granted";
+      if (notificationsEnabled) {
+        Log.info("[shouldInstallWorker] Notification Permissions enabled, will install ServiceWorker");
+      }
+      return notificationsEnabled;
     }
 
+    // 5. We have a OneSignal ServiceWorker installed, but did the path or scope of the ServiceWorker change?
+    if (await this.haveParamsChanged()) {
+      return true;
+    }
+
+    // 6. We have a OneSignal ServiceWorker installed, is there an update?
     return this.workerNeedsUpdate();
+  }
+
+  private async haveParamsChanged(): Promise<boolean> {
+    // 1. No workerRegistration
+    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
+    if (!workerRegistration) {
+      Log.info(
+        "[changedServiceWorkerParams] workerRegistration not found at scope",
+        this.config.registrationOptions.scope
+      );
+      return true;
+    }
+
+    // 2. Different scope
+    const existingSwScope = new URL(workerRegistration.scope).pathname;
+    const configuredSwScope = this.config.registrationOptions.scope;
+    if (existingSwScope != configuredSwScope) {
+      Log.info(
+        "[changedServiceWorkerParams] ServiceWorker scope changing",
+        { a_old: existingSwScope, b_new: configuredSwScope }
+      );
+      return true;
+    }
+
+    // 3. Different href?, asking if (path + filename [A or B] + queryParams) is different
+    const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
+    const serviceWorkerHrefs = ServiceWorkerHelper.getPossibleServiceWorkerHrefs(
+      this.config,
+      this.context.appConfig.appId
+    );
+    // 3.1 If we can't get a scriptURL assume it is different
+    if (!availableWorker?.scriptURL) {
+      return true;
+    }
+    // 3.2 We don't care if the only differences is between OneSignal's A(Worker) vs B(WorkerUpdater) filename.
+    if (serviceWorkerHrefs.indexOf(availableWorker.scriptURL) === -1) {
+      Log.info(
+        "[changedServiceWorkerParams] ServiceWorker href changing:",
+        { a_old: availableWorker?.scriptURL, b_new: serviceWorkerHrefs }
+      );
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -251,6 +309,7 @@ export class ServiceWorkerManager {
   }
 
   public async establishServiceWorkerChannel() {
+    Log.debug('establishServiceWorkerChannel');
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
@@ -362,15 +421,16 @@ export class ServiceWorkerManager {
       Log.info(`[Service Worker Installation] 3rd party service worker detected.`);
     }
 
-    const workerFullPath = ServiceWorkerHelper.getServiceWorkerHref(workerState, this.config);
-    const installUrlQueryParams = Utils.encodeHashAsUriComponent({
-      appId: this.context.appConfig.appId
-    });
-    const fullWorkerPath = `${workerFullPath}?${installUrlQueryParams}`;
+    const workerHref = ServiceWorkerHelper.getAlternatingServiceWorkerHref(
+      workerState,
+      this.config,
+      this.context.appConfig.appId
+    );
+
     const scope = `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}`;
-    Log.info(`[Service Worker Installation] Installing service worker ${fullWorkerPath} ${scope}.`);
+    Log.info(`[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`);
     try {
-      await navigator.serviceWorker.register(fullWorkerPath, { scope });
+      await navigator.serviceWorker.register(workerHref, { scope });
     } catch (error) {
       Log.error(`[Service Worker Installation] Installing service worker failed ${error}`);
       // Try accessing the service worker path directly to find out what the problem is and report it to OneSignal api.
@@ -381,7 +441,7 @@ export class ServiceWorkerManager {
       if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup)
         throw error;
 
-      const response = await fetch(fullWorkerPath);
+      const response = await fetch(workerHref);
       if (response.status === 403 || response.status === 404)
         throw new ServiceWorkerRegistrationError(response.status, response.statusText);
 
