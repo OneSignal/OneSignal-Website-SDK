@@ -239,6 +239,7 @@ export default class Slidedown {
       CANCEL_CLICK: 'popoverCancelClick',
       SHOWN: 'popoverShown',
       CLOSED: 'popoverClosed',
+      QUEUED: 'popoverQueued'
     };
   }
 }
