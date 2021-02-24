@@ -42,6 +42,7 @@ import { SinonSandbox } from 'sinon';
 import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
 import { getSlidedownElement } from '../../../src/slidedown/SlidedownElement';
 import { DelayedPromptType } from '../../../src/models/Prompts';
+import MockNotification from "../mocks/MockNotification";
 
 // NodeJS.Global
 declare var global: any;
@@ -302,16 +303,8 @@ export class TestEnvironment {
   }
 
   static stubNotification(config: TestEnvironmentConfig) {
-    // TODO: Move in MockNotification into class file when updating to TS 3
-    global.Notification = {
-      permission: config.permission ? config.permission: NotificationPermission.Default,
-      maxActions: 2,
-      requestPermission: function(callback?: Function) {
-        if (callback)
-          callback(config.pushIdentifier);
-      }
-    };
-
+    global.Notification = MockNotification;
+    global.Notification.permission =  config.permission ? config.permission: global.Notification.permission;
     // window is only defined in DOM environment (not in SW)
     if (config.environment === "dom") {
       global.window.Notification = global.Notification;

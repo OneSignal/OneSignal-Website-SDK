@@ -1,6 +1,4 @@
 // This is a mock for the w3c Notification
-// NOTE: permission & requestPermission should be static however this was defined wrong in TS 2.x
-//       This ws later fixed in newer TypeScript versions
 export default class MockNotification implements Notification {
   readonly body: string;
   readonly data: any;
@@ -19,9 +17,9 @@ export default class MockNotification implements Notification {
   onclose: ((this: Notification, ev: Event) => any) | null;
   onerror: ((this: Notification, ev: Event) => any) | null;
   onshow: ((this: Notification, ev: Event) => any) | null;
-  readonly permission: NotificationPermission;
   readonly tag: string;
   readonly title: string;
+  static permission: NotificationPermission = "default";
 
   constructor(title: string, options?: NotificationOptions) {
     this.title = title;
@@ -43,7 +41,6 @@ export default class MockNotification implements Notification {
     this.onerror = null;
     this.onshow = null;
     this.tag = "";
-    this.permission = "granted";
   }
 
   addEventListener<K extends keyof NotificationEventMap>(
@@ -83,9 +80,11 @@ export default class MockNotification implements Notification {
     _type: any,
     _listener?: any,
     _options?: boolean | EventListenerOptions): void { }
-
-  requestPermission(_callback?: NotificationPermissionCallback | undefined): Promise<NotificationPermission> {
-    // Defined in TestEnvironment.ts:stubNotification
-    throw new Error("Method not implemented.");
+  
+  static async requestPermission(callback?: NotificationPermissionCallback | undefined): Promise<NotificationPermission> {
+    if (callback) {
+      callback(MockNotification.permission);
+    }
+    return MockNotification.permission;
   }
 }
