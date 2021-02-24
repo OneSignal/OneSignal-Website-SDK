@@ -77,6 +77,7 @@ export class SlidedownManager {
 
     public enqueue(options: AutoPromptOptions): void {
         this.slidedownQueue.push(options);
+        OneSignal.slidedown.triggerSlidedownEvent(Slidedown.EVENTS.QUEUED);
     }
 
     public dequeue(): AutoPromptOptions | undefined {
