@@ -299,7 +299,7 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   // 4. Ensure we kept the original ServiceWorker.
   //   A. Original could contain more than just OneSignal code
   //   B. New ServiceWorker instance will have it's own pushToken, this may have not been sent onesignal.com yet.
-  const orgRegistration = await navigator.serviceWorker.getRegistration("/");
+  const orgRegistration = await navigator.serviceWorker.getRegistration(`${location.origin}/`);
   t.is(new URL(orgRegistration!.scope).pathname, "/");
 });
 

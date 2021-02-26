@@ -31,6 +31,11 @@ export class MockServiceWorkerContainerWithAPIBan extends MockServiceWorkerConta
     if (!clientURL) {
       throw new Error("Must include clientURL to get the SW of the scope we registered, not the current page being viewed.")
     }
+
+    if (!clientURL.startsWith(location.origin)) {
+      throw new Error("Must always use full URL as the HTML <base> tag can change the relative path.");
+    }
+
     return super.getRegistration(clientURL);
   }
 
