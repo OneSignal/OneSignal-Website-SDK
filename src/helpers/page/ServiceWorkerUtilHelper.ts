@@ -1,10 +1,13 @@
 import Log from "../../libraries/Log";
 
 export default class ServiceWorkerUtilHelper {
-  // Get the service worker based on a scope as a domain can have none to many service workers.
+  // Get the service worker based on a relative scope.
+  // A  relative scope is required as a domain can have none to many service workers installed.
   static async getRegistration(scope: string): Promise<ServiceWorkerRegistration | null | undefined> {
     try {
-      return await navigator.serviceWorker.getRegistration(scope);
+      // Adding location.origin to negate the effects of a possible <base> html tag the page may have.
+      const url = location.origin + scope;
+      return await navigator.serviceWorker.getRegistration(url);
     } catch (e) {
       // This could be null in an HTTP context or error if the user doesn't accept cookies
       Log.warn("[Service Worker Status] Error Checking service worker registration", scope, e);
