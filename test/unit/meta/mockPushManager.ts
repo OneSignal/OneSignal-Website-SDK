@@ -8,7 +8,7 @@ import { MockPushManager } from "../../support/mocks/service-workers/models/Mock
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
 
 async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | undefined> {
-  return await navigator.serviceWorker.getRegistration("/");
+  return await navigator.serviceWorker.getRegistration(`${location.origin}/`);
 }
 
 test.beforeEach(async t => {

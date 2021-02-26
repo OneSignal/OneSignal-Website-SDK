@@ -15,7 +15,7 @@ test('mock service worker browser API properties should exist', async t => {
 });
 
 test('mock service worker should not return an existing registration for a clean run', async t => {
-  const registration = await navigator.serviceWorker.getRegistration("/");
+  const registration = await navigator.serviceWorker.getRegistration(`${location.origin}/`);
   t.is(registration, undefined);
 
   const registrations = await navigator.serviceWorker.getRegistrations();
@@ -25,10 +25,10 @@ test('mock service worker should not return an existing registration for a clean
 test('mock service worker unregistration should return no registered workers', async t => {
   await navigator.serviceWorker.register('/worker.js', { scope: '/' });
 
-  const initialRegistration = await navigator.serviceWorker.getRegistration("/");
+  const initialRegistration = await navigator.serviceWorker.getRegistration(`${location.origin}/`);
   await initialRegistration!.unregister();
 
-  const postUnsubscribeRegistration = await navigator.serviceWorker.getRegistration("/");
+  const postUnsubscribeRegistration = await navigator.serviceWorker.getRegistration(`${location.origin}/`);
   t.is(postUnsubscribeRegistration, undefined);
 
   const registrations = await navigator.serviceWorker.getRegistrations();
@@ -59,6 +59,15 @@ test('Should thow when calling navigator.serviceWorker.getRegistration without a
     t.fail("Should have thrown!")
   } catch (e) {
     t.deepEqual(e, new Error("Must include clientURL to get the SW of the scope we registered, not the current page being viewed."));
+  }
+});
+
+test('Should thow when calling navigator.serviceWorker.getRegistration with a relative URL', async t => {
+  try {
+    await navigator.serviceWorker!.getRegistration("/");
+    t.fail("Should have thrown!")
+  } catch (e) {
+    t.deepEqual(e, new Error("Must always use full URL as the HTML <base> tag can change the relative path."));
   }
 });
 
