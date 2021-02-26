@@ -48,6 +48,20 @@ test('mock service worker registration should return the registered worker', asy
   t.deepEqual(registrations, [registration]);
 });
 
+test('mock service worker registration should return registered worker with relative scope', async t => {
+  const scope = '/';
+  await navigator.serviceWorker.register('/worker.js', { scope });
+  const registration = await navigator.serviceWorker.getRegistration(scope);
+  t.truthy(registration);
+});
+
+test('mock service worker registration should return registered worker with full url scope', async t => {
+  const scope = `${location.origin}/`;
+  await navigator.serviceWorker.register('/worker.js', { scope });
+  const registration = await navigator.serviceWorker.getRegistration(scope);
+  t.truthy(registration);
+});
+
 test('mock service worker getRegistrations should return multiple registered workers', async t => {
   const expectedRegistrations = [] as ServiceWorkerRegistration[];
   expectedRegistrations.push(await navigator.serviceWorker.register('/workerA.js', { scope: '/' }));

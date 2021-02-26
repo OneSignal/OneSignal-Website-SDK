@@ -40,8 +40,11 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
     return this.dispatchEventUtil.dispatchEvent(evt);
   }
 
+  // clientURL can be relative or a full URL
   async getRegistration(clientURL?: string): Promise<ServiceWorkerRegistration | undefined> {
-    const scope = clientURL || "/";
+    const scope = clientURL ?
+      clientURL.replace(location.origin, "") : // Turn a possible full URL into a scope
+      "/";
 
     // 1. If we find an exact path match
     let registration = this.serviceWorkerRegistrations.get(scope);
