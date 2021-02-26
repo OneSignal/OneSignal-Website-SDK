@@ -35,66 +35,66 @@ test('mock service worker unregistration should return no registered workers', a
   t.deepEqual(registrations, []);
 });
 
-test('Should thow when calling navigator.serviceWorker.controller', async t => {
+test('Should throw when calling navigator.serviceWorker.controller', async t => {
   try {
     navigator.serviceWorker!.controller;
-    t.fail("Should have thrown!")
+    t.fail("Should have thrown!");
   } catch (e) {
     t.deepEqual(e, new Error("Don't use, assumes page control!"));
   }
 });
 
-test('Should thow when calling navigator.serviceWorker.ready', async t => {
+test('Should throw when calling navigator.serviceWorker.ready', async t => {
   try {
     await navigator.serviceWorker!.ready;
-    t.fail("Should have thrown!")
+    t.fail("Should have thrown!");
   } catch (e) {
     t.deepEqual(e, new Error("Don't use, assumes page control!"));
   }
 });
 
-test('Should thow when calling navigator.serviceWorker.getRegistration without a url', async t => {
+test('Should throw when calling navigator.serviceWorker.getRegistration without a url', async t => {
   try {
     await navigator.serviceWorker!.getRegistration();
-    t.fail("Should have thrown!")
+    t.fail("Should have thrown!");
   } catch (e) {
     t.deepEqual(e, new Error("Must include clientURL to get the SW of the scope we registered, not the current page being viewed."));
   }
 });
 
-test('Should thow when calling navigator.serviceWorker.getRegistration with a relative URL', async t => {
+test('Should throw when calling navigator.serviceWorker.getRegistration with a relative URL', async t => {
   try {
     await navigator.serviceWorker!.getRegistration("/");
-    t.fail("Should have thrown!")
+    t.fail("Should have thrown!");
   } catch (e) {
     t.deepEqual(e, new Error("Must always use full URL as the HTML <base> tag can change the relative path."));
   }
 });
 
-test('Should thow when setting navigator.serviceWorker.oncontrollerchange', async t => {
+test('Should throw when setting navigator.serviceWorker.oncontrollerchange', async t => {
   try {
     navigator.serviceWorker.oncontrollerchange = function(){};
-    t.fail("Should have thrown!")
+    t.fail("Should have thrown!");
   } catch (e) {
     t.deepEqual(e, new Error("Don't use, assumes page control!"));
   }
 });
 
-test('Should thow when setting navigator.serviceWorker.addEventListener(controllerchange, ...)', async t => {
+test('Should throw when setting navigator.serviceWorker.addEventListener(controllerchange, ...)', async t => {
   try {
     navigator.serviceWorker.addEventListener('controllerchange', function(){});
-    t.fail("Should have thrown!")
+    t.fail("Should have thrown!");
   } catch (e) {
     t.deepEqual(e, new Error("Don't use, assumes page control!"));
   }
 });
 
-test('Should not thow when setting navigator.serviceWorker.addEventListener(message, ...)', async t => {
+test('Should not throw when setting navigator.serviceWorker.addEventListener(message, ...)', async t => {
   navigator.serviceWorker.addEventListener('message', function(){});
   t.pass();
 });
 
-test('Should not thow when setting navigator.serviceWorker.addEventListener(messageerror, ...)', async t => {
+test('Should not throw when setting navigator.serviceWorker.addEventListener(messageerror, ...)', async t => {
   navigator.serviceWorker.addEventListener('messageerror', function(){});
   t.pass();
 });
