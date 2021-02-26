@@ -146,36 +146,6 @@ test('displayNotification - persistNotification - force', async t => {
   t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
 });
 
-test('displayNotification - persistNotification - true - Chrome macOS 10.15', async t => {
-  setUserAgent(BrowserUserAgent.ChromeMac10_15);
-
-  await Database.put('Options', { key: 'persistNotification', value: true });
-
-  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
-  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
-});
-
-test('displayNotification - persistNotification - true - Chrome macOS pre-10.15', async t => {
-  setUserAgent(BrowserUserAgent.ChromeMacSupported);
-
-  await Database.put('Options', { key: 'persistNotification', value: true });
-
-  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
-  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, true);
-});
-
-test('displayNotification - persistNotification - true - Opera macOS 10.14', async t => {
-  setUserAgent(BrowserUserAgent.OperaMac10_14);
-
-  await Database.put('Options', { key: 'persistNotification', value: true });
-
-  const showNotificationSpy = sandbox.spy(self.registration, "showNotification");
-  await OSServiceWorker.displayNotification({});
-  t.is(showNotificationSpy.getCall(0).args[1].requireInteraction, false);
-});
-
 test('displayNotification - persistNotification - false', async t => {
   setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
 

@@ -689,31 +689,7 @@ export class ServiceWorker {
       vibrate: notification.vibrate
     };
 
-    notificationOptions = ServiceWorker.fixPlatformSpecificDisplayIssues(notificationOptions);
     return self.registration.showNotification(notification.heading, notificationOptions);
-  }
-
-  /**
-   * Fixes display issue with some notification options causing the notification to never show!
-   * This happens when setting requireInteraction = true on the following platforms;
-   *   * macOS 10.15+ - Chrome based browsers
-   *      - https://bugs.chromium.org/p/chromium/issues/detail?id=1007418
-   *   * macOS 10.14+ - Opera
-   *      - https://forums.opera.com/topic/31334/push-notifications-with-requireinteraction-true-do-not-display-on-macos
-   * @param notificationOptions - Value passed to ServiceWorkerRegistration.prototype.showNotification
-   */
-  static fixPlatformSpecificDisplayIssues(notificationOptions: any): any {
-    const clone = { ...notificationOptions };
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-
-    if (browser.chrome && browser.mac && Utils.isVersionAtLeast(browser.osversion, 10.15)) {
-      clone.requireInteraction = false;
-    }
-    else if (browser.opera && browser.mac && Utils.isVersionAtLeast(browser.osversion, 10.14)) {
-      clone.requireInteraction = false;
-    }
-
-    return clone;
   }
 
   /**
