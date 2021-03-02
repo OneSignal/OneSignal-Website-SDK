@@ -236,7 +236,7 @@ export class PromptsManager {
       if (slidedown) {
         slidedown.close();
         // called here for compatibility with unit tests (close function doesn't run fully in test env)
-        slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+        Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");
       TestHelper.markHttpsNativePromptDismissed();

@@ -107,20 +107,20 @@ export default class Slidedown {
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
       this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));
-      this.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
+      Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     }
   }
 
-  async triggerSlidedownEvent(eventName: string): Promise<void> {
+  static async triggerSlidedownEvent(eventName: string): Promise<void> {
     await Event.trigger(eventName);
   }
 
   async onSlidedownAllowed(_: any): Promise<void> {
-    await this.triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
+    await Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   onSlidedownCanceled(_: any): void {
-    this.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
+    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
   }
 
