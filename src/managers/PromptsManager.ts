@@ -138,6 +138,15 @@ export class PromptsManager {
         case DelayedPromptType.Category:
           await this.internalShowCategorySlidedown(options);
           break;
+        case DelayedPromptType.Sms:
+          await this.internalShowSmsSlidedown(options);
+          break;
+        case DelayedPromptType.Email:
+          await this.internalShowEmailSlidedown(options);
+          break;
+        case DelayedPromptType.SmsAndEmail:
+          await this.internalShowSmsAndEmailSlidedown(options);
+          break;
         default:
           Log.error("Invalid Delayed Prompt type");
       }
@@ -175,16 +184,40 @@ export class PromptsManager {
     await this.context.slidedownManager.createSlidedown(options);
   }
 
-  // Wrapper for existing method `internalShowSlidedownPrompt`. Inserts information about
-  // provided categories, then calls `internalShowSlidedownPrompt`.
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
+    await this.internalShowParticularSlidedown(DelayedPromptType.Category, options);
+  }
+
+  public async internalShowSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowSmsSlidedown");
+    await this.internalShowParticularSlidedown(DelayedPromptType.Sms, options);
+  }
+
+  public async internalShowEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowEmailSlidedown");
+    await this.internalShowParticularSlidedown(DelayedPromptType.Email, options);
+  }
+
+  public async internalShowSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowSmsAndEmailSlidedown");
+    await this.internalShowParticularSlidedown(DelayedPromptType.SmsAndEmail, options);
+  }
+
+  /**
+   * Generalized shower function to show particular slidedown types
+   * @param  {DelayedPromptType} typeToPullFromConfig - slidedown type to look for in config if not passed via `options`
+   * @param  {AutoPromptOptions} options - passed in via another internal function or top level OneSignal slidedown func
+   */
+  public async internalShowParticularSlidedown(typeToPullFromConfig: DelayedPromptType, options?: AutoPromptOptions)
+  : Promise<void> {
     const prompts = this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions = options?.slidedownPromptOptions ||
-      PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, DelayedPromptType.Category);
+      PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
-      Log.error(`OneSignal: no categories to display. Check your configuration on the ` +
-        `OneSignal dashboard or your custom code initialization.`);
+      Log.error(`OneSignal: slidedown of type '${typeToPullFromConfig} couldn't be shown. Check your configuration`+
+        ` on the OneSignal dashboard or your custom code initialization.`);
       return;
     }
 
