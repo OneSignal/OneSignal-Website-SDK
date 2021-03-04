@@ -102,12 +102,12 @@ export class SlidedownManager {
         const slidedownPromptOptions = options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
         OneSignal.slidedown = new Slidedown(slidedownPromptOptions);
         await OneSignal.slidedown.create(options.isInUpdateMode);
-        await this.mountSpecialContainers(options);
+        await this.mountAuxiliaryContainers(options);
         this.setIsSlidedownShowing(true);
         Log.debug('Showing OneSignal Slidedown');
     }
 
-    private async mountSpecialContainers(options: AutoPromptOptions): Promise<void> {
+    private async mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
         switch (options.slidedownPromptOptions?.type) {
             case DelayedPromptType.Category:
                 this.mountTaggingContainer(options);
