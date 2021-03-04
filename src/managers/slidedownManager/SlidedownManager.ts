@@ -14,6 +14,8 @@ import PushPermissionNotGrantedError, {
 } from "../../errors/PushPermissionNotGrantedError";
 import MainHelper from "../../helpers/MainHelper";
 import { NotificationPermission } from "../../models/NotificationPermission";
+import { OneSignalUtils } from "../../utils/OneSignalUtils";
+import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -85,6 +87,7 @@ export class SlidedownManager {
     }
 
     public async createSlidedown(options: AutoPromptOptions): Promise<void> {
+        OneSignalUtils.logMethodCall("createSlidedown");
         try {
             const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
             if (!showPrompt) { return; }
@@ -123,6 +126,7 @@ export class SlidedownManager {
     }
 
     private async mountTaggingContainer(options: AutoPromptOptions): Promise<void> {
+        OneSignalUtils.logMethodCall("mountTaggingContainer");
         try {
             // show slidedown with tagging container
             let tagsForComponent: TagsObjectWithBoolean = {};
@@ -151,6 +155,14 @@ export class SlidedownManager {
     }
 
     private async mountChannelCaptureContainer(options: AutoPromptOptions): Promise<void> {
-        // to do
+        OneSignalUtils.logMethodCall("mountChannelCaptureContainer");
+        try {
+            if (!!options.slidedownPromptOptions) {
+                const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
+                channelCaptureContainer.mount();
+            }
+        } catch (e) {
+            Log.error("OneSignal: Attempted to create channel capture container with error", e);
+        }
     }
 }
