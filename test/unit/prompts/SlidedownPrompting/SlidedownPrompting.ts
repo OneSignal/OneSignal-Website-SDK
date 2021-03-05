@@ -91,7 +91,6 @@ test.serial(`on slidedown dismiss with slidedown queue non-empty, show next slid
     sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
     const eventsHelper = new EventsTestHelper(sinonSandbox);
 
-    // spies
     const enqueueSpy = sinonSandbox.spy(SlidedownManager.prototype, "enqueue");
     const showQueuedSpy = sinonSandbox.spy(SlidedownManager.prototype, "showQueued");
 
@@ -140,7 +139,6 @@ test.serial(`push slidedown and category slidedown configured -> category shown 
     sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
     const eventsHelper = new EventsTestHelper(sinonSandbox);
 
-    // spies
     const enqueueSpy = sinonSandbox.spy(SlidedownManager.prototype, "enqueue");
     const showQueuedSpy = sinonSandbox.spy(SlidedownManager.prototype, "showQueued");
 
