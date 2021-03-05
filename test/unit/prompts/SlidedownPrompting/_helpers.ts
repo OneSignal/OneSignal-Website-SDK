@@ -99,6 +99,8 @@ export const categorySlidedownOptions: SlidedownPromptOptions = {
     ]
 };
 
+/* UNUSED CURRENTLY
+
 export const smsAndEmailOptions: SlidedownPromptOptions = {
     type: DelayedPromptType.SmsAndEmail,
     autoPrompt: true,
@@ -110,3 +112,4 @@ export const smsAndEmailOptions: SlidedownPromptOptions = {
         emailLabel: "Email"
     }
 };
+*/
