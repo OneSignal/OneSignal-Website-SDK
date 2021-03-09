@@ -63,6 +63,10 @@ export class SlidedownManager {
         return true;
     }
 
+    public handleAllowClick(): void {
+        // TO DO:
+    }
+
     public setIsSlidedownShowing(isShowing: boolean): void {
         this.isSlidedownShowing = isShowing;
     }

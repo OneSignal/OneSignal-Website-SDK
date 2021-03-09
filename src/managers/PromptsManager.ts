@@ -239,31 +239,46 @@ export class PromptsManager {
       this.context.slidedownManager.showQueued();
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+      // move into SlidedownManager.handleAllowClick
       const { slidedown } = OneSignal;
       if (slidedown.isShowingFailureState) {
         slidedown.setFailureState(false);
       }
       const tags = TaggingContainer.getValuesFromTaggingContainer();
       this.context.tagManager.storeTagValuesToUpdate(tags);
-      // use local storage permission to get around user-gesture sync requirement
-      const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
 
-      if (isPushEnabled) {
+      const slidedownType = slidedown.options.type;
+
+      if (slidedownType === DelayedPromptType.Push) {
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept, slidedown: true };
+        InitHelper.registerForPushNotifications(options);
+      } else {
         slidedown.setSaveState(true);
-        // Sync Category Slidedown tags (isInUpdateMode = true)
         try {
-          await this.context.tagManager.sendTags(true);
+          switch (slidedownType) {
+            case DelayedPromptType.Category:
+              await this.context.tagManager.sendTags(true);
+              break;
+            case DelayedPromptType.Sms:
+              PromptsHelper.assertSmsInputIsValid();
+              break;
+            case DelayedPromptType.Email:
+              break;
+            case DelayedPromptType.SmsAndEmail:
+              PromptsHelper.assertSmsInputIsValid();
+              // TO DO: send sms email updates
+              break;
+            default:
+              break;
+          }
         } catch (e) {
-          Log.error("Failed to update tags", e);
-          // Display tag update error
+          Log.warn("OneSignal Slidedown failed to update:", e);
+          // Display update error
           slidedown.setSaveState(false);
           slidedown.setFailureState(true);
           return;
         }
-      } else {
-        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = { autoAccept, slidedown: true };
-        InitHelper.registerForPushNotifications(options);
       }
 
       if (slidedown) {
