@@ -142,14 +142,9 @@ export default class Slidedown {
   }
 
   /**
-   * only used with Category Slidedown
+   * To be used with slidedown types other than `push` type
    */
   setSaveState(state: boolean): void {
-    if (!this.tagCategories) {
-      Log.debug("Slidedown private category options are not defined");
-      return;
-    }
-
     if (state) {
       // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.disabled = true;
@@ -171,11 +166,6 @@ export default class Slidedown {
   }
 
   setFailureState(state: boolean): void {
-    if (!this.tagCategories) {
-      Log.debug("Slidedown private category options are not defined");
-      return;
-    }
-
     if (state) {
       // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.textContent = null;
