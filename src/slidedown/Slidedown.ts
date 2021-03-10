@@ -23,6 +23,7 @@ import { TagCategory } from '../../src/models/Tags';
 import Log from '../../src/libraries/Log';
 import { getSlidedownElement } from './SlidedownElement';
 import { Utils } from '../../src/context/shared/utils/Utils';
+import ChannelCaptureContainer from './ChannelCaptureContainer';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
@@ -166,6 +167,7 @@ export default class Slidedown {
   }
 
   setFailureState(state: boolean): void {
+    // general failure state
     if (state) {
       // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.textContent = null;
@@ -180,6 +182,18 @@ export default class Slidedown {
     }
 
     this.isShowingFailureState = state;
+
+    // handle particular failure states
+    switch (this.options.type) {
+      case DelayedPromptType.Sms:
+        ChannelCaptureContainer.setSmsInputError(state);
+        break;
+      case DelayedPromptType.SmsAndEmail:
+        ChannelCaptureContainer.setSmsInputError(state);
+      default:
+        break;
+    }
+
   }
 
   getPlatformNotificationIcon(): string {
