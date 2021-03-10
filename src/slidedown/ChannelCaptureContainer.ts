@@ -1,5 +1,5 @@
-import Log from "src/libraries/Log";
-import { addCssClass, getDomElementOrStub } from "src/utils";
+import Log from "../libraries/Log";
+import { addCssClass, getDomElementOrStub } from "../utils";
 import { DelayedPromptType, SlidedownPromptOptions } from "../models/Prompts";
 import {
     CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
