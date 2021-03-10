@@ -23,6 +23,7 @@ import { TagCategory } from '../models/Tags';
 import { getSlidedownElement } from './SlidedownElement';
 import { Utils } from '../../src/context/shared/utils/Utils';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
+import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
@@ -164,8 +165,13 @@ export default class Slidedown {
       removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
     }
   }
-
-  setFailureState(state: boolean): void {
+  /**
+   * @param  {boolean} state
+   * @param  {InvalidChannelInputField} invalidChannelInput? - for use in Web Prompts only!
+   *    we want the ability to be able to specify which channel input failed validation
+   * @returns void
+   */
+  setFailureState(state: boolean, invalidChannelInput?: InvalidChannelInputField): void {
     // general failure state
     if (state) {
       // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
@@ -178,21 +184,31 @@ export default class Slidedown {
     } else {
       removeDomElement('#onesignal-button-indicator-holder');
       removeCssClass(this.allowButton, 'onesignal-error-state-button');
+
+      if (!(this.options.type in [DelayedPromptType.Push, DelayedPromptType.Category])) {
+        ChannelCaptureContainer.resetInputErrorStates();
+      }
     }
 
     this.isShowingFailureState = state;
 
     // handle particular failure states
-    switch (this.options.type) {
-      case DelayedPromptType.Sms:
-        ChannelCaptureContainer.setSmsInputError(state);
-        break;
-      case DelayedPromptType.SmsAndEmail:
-        ChannelCaptureContainer.setSmsInputError(state);
-      default:
-        break;
+    if (typeof invalidChannelInput !== undefined) {
+      switch (invalidChannelInput) {
+        case InvalidChannelInputField.InvalidSms:
+          ChannelCaptureContainer.showSmsInputError(true);
+          break;
+        case InvalidChannelInputField.InvalidEmail:
+          ChannelCaptureContainer.showEmailInputError(true);
+          break;
+        case InvalidChannelInputField.InvalidEmailAndSms:
+          ChannelCaptureContainer.showSmsInputError(true);
+          ChannelCaptureContainer.showEmailInputError(true);
+          break;
+        default:
+          break;
+        }
     }
-
   }
 
   getPlatformNotificationIcon(): string {

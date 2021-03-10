@@ -26,6 +26,8 @@ import TaggingContainer from '../slidedown/TaggingContainer';
 import LocalStorage from '../utils/LocalStorage';
 import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from "bowser";
+import { ChannelCaptureError, InvalidChannelInputField } from "../errors/ChannelCaptureError";
+import ChannelCaptureContainer from "../slidedown/ChannelCaptureContainer";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -256,17 +258,34 @@ export class PromptsManager {
       } else {
         slidedown.setSaveState(true);
         try {
+          let smsValidationResult, emailValidationResult;
+          const emailValue = ChannelCaptureContainer.getValueFromEmailInput();
+
+          // TO DO: access sms validation directly
+          smsValidationResult = slidedown.channelCaptureContainer.smsInputFieldIsValid;
+          emailValidationResult = ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
+
           switch (slidedownType) {
             case DelayedPromptType.Category:
               await this.context.tagManager.sendTags(true);
               break;
             case DelayedPromptType.Sms:
-              PromptsHelper.assertSmsInputIsValid();
+              if (!smsValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
               break;
             case DelayedPromptType.Email:
+              if (!emailValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
               break;
             case DelayedPromptType.SmsAndEmail:
-              PromptsHelper.assertSmsInputIsValid();
+              const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
+              const bothFieldsInvalid = !smsValidationResult && !emailValidationResult;
+
+              if (bothFieldsInvalid || bothFieldsEmpty) {
+                throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
+              }
+
+              if (!smsValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+              if (!emailValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+
               // TO DO: send sms email updates
               break;
             default:
@@ -276,7 +295,7 @@ export class PromptsManager {
           Log.warn("OneSignal Slidedown failed to update:", e);
           // Display update error
           slidedown.setSaveState(false);
-          slidedown.setFailureState(true);
+          slidedown.setFailureState(true, e.reason);
           return;
         }
       }
