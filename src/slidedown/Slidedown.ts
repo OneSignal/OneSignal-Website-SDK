@@ -54,7 +54,12 @@ export default class Slidedown {
         this.errorButton          = Utils.getValueOrDefault(this.options.text.positiveUpdateButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton);
         break;
-      // TO DO: other cases: sms, email, smsAndEmail
+      case DelayedPromptType.Sms:
+      case DelayedPromptType.Email:
+      case DelayedPromptType.SmsAndEmail:
+        this.errorButton = Utils.getValueOrDefault(this.options.text.acceptButton,
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton);
+        break;
       default:
         break;
     }
