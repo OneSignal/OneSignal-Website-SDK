@@ -28,6 +28,7 @@ import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
 export default class Slidedown {
   public options: SlidedownPromptOptions;
   public notificationIcons: NotificationIcons | null;
+  public channelCaptureContainer: ChannelCaptureContainer | null;
 
   // category slidedown
   public isShowingFailureState: boolean;
@@ -44,6 +45,7 @@ export default class Slidedown {
     this.options.text.acceptButton  = options.text.acceptButton.substring(0, 16);
     this.options.text.cancelButton  = options.text.cancelButton.substring(0, 16);
     this.notificationIcons          = null;
+    this.channelCaptureContainer    = null;
     this.isShowingFailureState      = false;
 
     switch (options.type) {

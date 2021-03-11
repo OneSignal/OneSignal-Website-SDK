@@ -164,6 +164,7 @@ export class SlidedownManager {
             if (!!options.slidedownPromptOptions) {
                 const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
                 channelCaptureContainer.mount();
+                OneSignal.slidedown.channelCaptureContainer = channelCaptureContainer;
             }
         } catch (e) {
             Log.error("OneSignal: Attempted to create channel capture container with error", e);

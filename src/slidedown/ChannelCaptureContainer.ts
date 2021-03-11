@@ -1,5 +1,5 @@
 import Log from "../libraries/Log";
-import { addCssClass, getDomElementOrStub } from "../utils";
+import { addCssClass, getDomElementOrStub, removeCssClass } from "../utils";
 import { DelayedPromptType, SlidedownPromptOptions } from "../models/Prompts";
 import {
     CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
@@ -11,19 +11,14 @@ import {
 export default class ChannelCaptureContainer {
     private promptOptions: SlidedownPromptOptions;
     private smsInputFieldIsValid: boolean = true;
+    private emailInputFieldIsValid: boolean = true;
     private itiOneSignal: any; // iti library initialization return obj
 
     constructor(promptOptions: SlidedownPromptOptions) {
         this.promptOptions = promptOptions;
     }
 
-    public mount(): void {
-        const captureContainer = this.generateHtml();
-        const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
-        body.append(captureContainer);
-        this.initializePhoneInputLibrary();
-    }
-
+    /* P R I V A T E */
     private generateHtml(): Element {
         const captureContainer      = document.createElement("div");
         addCssClass(captureContainer, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.channelCaptureContainer);
@@ -137,30 +132,90 @@ export default class ChannelCaptureContainer {
     }
 
     private initializePhoneInputLibrary(): void {
-        const onesignalSmsInput = document.querySelector("#iti-onesignal-sms-input");
+        const onesignalSmsInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
         if (onesignalSmsInput && !!window.intlTelInput) {
             this.itiOneSignal = window.intlTelInput(onesignalSmsInput, {
                 autoPlaceholder: "off",
                 separateDialCode: true
-            });
-            onesignalSmsInput.addEventListener('keyup', () => {
-                this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
-                    (<HTMLInputElement>onesignalSmsInput).value === "";
-            });
-            // covers case where number is typed, then country is changed
-            onesignalSmsInput.addEventListener('blur', () => {
-                this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
-                    (<HTMLInputElement>onesignalSmsInput).value === "";
             });
         } else {
             Log.error("OneSignal: there was a problem initializing International Telephone Input");
         }
     }
 
-    // static functions
+    private addSmsInputEventListeners(): void {
+        const smsInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
 
+        smsInput.addEventListener('keyup', () => {
+            this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
+                (<HTMLInputElement>smsInput).value === "";
+
+            this.updateValidationOnInputChange(DelayedPromptType.Sms);
+        });
+
+        // handles case where number is typed, then country is changed after
+        smsInput.addEventListener('blur', () => {
+            this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
+                (<HTMLInputElement>smsInput).value === "";
+
+            this.updateValidationOnInputChange(DelayedPromptType.Sms);
+        });
+    }
+
+    private addEmailInputEventListeners(): void {
+        const emailInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
+
+        // TO DO: refactor all this
+        emailInput.addEventListener('keyup', () => {
+            const emailValue = (<HTMLInputElement>emailInput).value;
+            this.emailInputFieldIsValid = ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
+
+            this.updateValidationOnInputChange(DelayedPromptType.Email);
+        });
+    }
+
+    private updateValidationOnInputChange(type: DelayedPromptType): void {
+        if (type === DelayedPromptType.Sms && this.smsInputFieldIsValid) {
+            const smsInputWithValidation = getDomElementOrStub(
+                `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement}`
+            );
+            const smsValidationElement = getDomElementOrStub(
+                `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement}`
+            );
+            removeCssClass(smsInputWithValidation, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput);
+            addCssClass(smsValidationElement,
+                CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden
+                );
+        }
+
+        if (type === DelayedPromptType.Email && this.emailInputFieldIsValid) {
+            const emailInputWithValidation = getDomElementOrStub(
+                `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement}`
+            );
+            const emailValidationElement = getDomElementOrStub(
+                `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement}`
+            );
+            removeCssClass(emailInputWithValidation, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput);
+            addCssClass(emailValidationElement,
+                CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden
+                );
+
+        }
+    }
+
+    /* P U B L I C */
+    public mount(): void {
+        const captureContainer = this.generateHtml();
+        const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
+        body.append(captureContainer);
+        this.initializePhoneInputLibrary();
+        this.addSmsInputEventListeners();
+        this.addEmailInputEventListeners();
+    }
+
+    /* S T A T I C */
     static areBothInputFieldsEmpty(): boolean {
-        const onesignalSmsInput = document.querySelector("#iti-onesignal-sms-input");
+        const onesignalSmsInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
         const smsFieldEmpty = (<HTMLInputElement>onesignalSmsInput).value === "";
         const emailFieldEmpty = ChannelCaptureContainer.getValueFromEmailInput() === "";
         return smsFieldEmpty && emailFieldEmpty;
@@ -217,9 +272,8 @@ export default class ChannelCaptureContainer {
     }
 
     static getValueFromEmailInput(): string | undefined {
-        const selector = `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`;
-        const inputNode: HTMLInputElement | null = document.querySelector(selector);
-        return inputNode?.value;
+        const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
+        return (<HTMLInputElement>inputNode).value;
     }
 
     static validateEmailInputWithReturnVal(emailString?: string): boolean {
@@ -227,14 +281,3 @@ export default class ChannelCaptureContainer {
         return re.test(emailString || '') || emailString === "";
     }
 }
-
-
-/* EXAMPLE
-<div id="channel-capture-container" class="channel-capture-container">
-   <label>Email</label>
-   <input><br>
-   <span>Error Message</span><br>
-   <label>Phone Number</label>
-   <input><br><span>Error Message</span><br>
-</div>
-*/

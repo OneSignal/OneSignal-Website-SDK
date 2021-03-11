@@ -38,14 +38,4 @@ export default class PromptsHelper {
     }
     return false;
   }
-
-  // TO DO: should be given data
-  static validateSmsInputWithReturnVal(): boolean {
-    return window.itiOneSignal.isValid;
-  }
-
-  static validateEmailInputWithReturnVal(emailString?: string): boolean {
-    const re = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
-    return re.test(emailString || '');
-  }
 }
