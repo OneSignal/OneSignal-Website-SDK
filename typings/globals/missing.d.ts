@@ -82,7 +82,7 @@ interface Window {
 
 
 declare var OneSignal: any;
-
+declare var intlTelInput: any;
 
 // These __*__ variables are defined from Webpack to change resulting JS
 declare var __VERSION__: string;
