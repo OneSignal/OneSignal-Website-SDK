@@ -1,7 +1,7 @@
 import sinon, { SinonSandbox } from "sinon";
 import test, { ExecutionContext } from "ava";
 import {
-    TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig
+    HttpHttpsEnvironment, TestEnvironment, TestEnvironmentConfig
 } from '../../../support/sdk/TestEnvironment';
 import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 import { NotificationPermission } from "../../../../src/models/NotificationPermission";
@@ -9,16 +9,7 @@ import { PromptsManager } from '../../../../src/managers/PromptsManager';
 import Slidedown from "../../../../src/slidedown/Slidedown";
 import EventsTestHelper from "../../../support/tester/EventsTestHelper";
 import { SlidedownManager } from "../../../../src/managers/slidedownManager/SlidedownManager";
-import {
-    initWithPromptOptions,
-    pushSlidedownOptions,
-    categorySlidedownOptions,
-    getSubscriptionPromise,
-    getClosedPromiseWithEventCounts,
-    getShownPromiseWithEventCounts,
-    addPromptDelays,
-    setupWithStubs
-} from "./_SlidedownPromptingTestHelpers";
+import { SlidedownPromptingTestHelper } from "./_SlidedownPromptingTestHelpers";
 
 /**
  * PROMPTING LOGIC UNIT TESTS FOR WEB PROMPTS FEATURE
@@ -32,6 +23,10 @@ import {
  */
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
+const testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
+const minimalPushSlidedownOptions = testHelper.getMinimalCategorySlidedownOptions();
+const minimalCategorySlidedownOptions = testHelper.getMinimalCategorySlidedownOptions();
+
 const eventCounts = {
     shown  : 0,
     closed : 0,
@@ -59,27 +54,27 @@ const testConfig: TestEnvironmentConfig = {
 };
 
 test.serial(`singular push slidedown prompts successfully`, async t => {
-    await setupWithStubs(sinonSandbox, testConfig, t);
+    await testHelper.setupWithStubs(testConfig, t);
     const showSlidedownSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowSlidedownPrompt").resolves();
-    await initWithPromptOptions([ pushSlidedownOptions ]);
+    await testHelper.initWithPromptOptions([ minimalPushSlidedownOptions ]);
 
     t.is(showSlidedownSpy.callCount, 1);
 });
 
 test.serial(`singular category slidedown prompts successfully`, async t => {
-    await setupWithStubs(sinonSandbox, testConfig, t);
+    await testHelper.setupWithStubs(testConfig, t);
     const showCatSlidedownSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowCategorySlidedown").resolves();
-    await initWithPromptOptions([ categorySlidedownOptions ]);
+    await testHelper.initWithPromptOptions([ minimalCategorySlidedownOptions ]);
 
     t.is(showCatSlidedownSpy.callCount, 1);
 });
 
 test.serial(`session init 'spawns' as many autoPrompts as configured`, async t => {
-    await setupWithStubs(sinonSandbox, testConfig, t);
+    await testHelper.setupWithStubs(testConfig, t);
     const spawnAutopromptsSpy   = sinonSandbox.spy(PromptsManager.prototype, "spawnAutoPrompts");
     const showDelayedPromptsSpy = sinonSandbox.stub(PromptsManager.prototype, "internalShowDelayedPrompt");
 
-    await initWithPromptOptions([ pushSlidedownOptions, categorySlidedownOptions ]);
+    await testHelper.initWithPromptOptions([ minimalPushSlidedownOptions, minimalCategorySlidedownOptions ]);
 
     t.true(spawnAutopromptsSpy.called);
     t.is(showDelayedPromptsSpy.callCount, 2);
@@ -108,13 +103,13 @@ test.serial(`on slidedown dismiss with slidedown queue non-empty, show next slid
       });
     });
 
-    const subscriptionPromise = getSubscriptionPromise();
-    const closedPromise = getClosedPromiseWithEventCounts(eventCounts);
-    const shownPromise = getShownPromiseWithEventCounts(eventCounts, 2);
+    const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
+    const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
+    const shownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts, 2);
 
-    await initWithPromptOptions([
-        addPromptDelays(pushSlidedownOptions, 1, 0),
-        addPromptDelays(categorySlidedownOptions, 1, 1)
+    await testHelper.initWithPromptOptions([
+        testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
+        testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 1)
     ]);
 
     await queuedPromise;
@@ -156,13 +151,13 @@ test.serial(`push slidedown and category slidedown configured -> category shown 
       });
     });
 
-    const subscriptionPromise = getSubscriptionPromise();
-    const closedPromise = getClosedPromiseWithEventCounts(eventCounts);
-    const shownPromise = getShownPromiseWithEventCounts(eventCounts);
+    const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
+    const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
+    const shownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts);
 
-    await initWithPromptOptions([
-        addPromptDelays(pushSlidedownOptions, 1, 1),
-        addPromptDelays(categorySlidedownOptions, 1, 0)
+    await testHelper.initWithPromptOptions([
+        testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 1),
+        testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 0)
     ]);
 
     await queuedPromise;
