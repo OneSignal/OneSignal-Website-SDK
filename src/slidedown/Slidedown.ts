@@ -181,13 +181,16 @@ export default class Slidedown {
   setFailureState(state: boolean, invalidChannelInput?: InvalidChannelInputField): void {
     // general failure state
     if (state) {
-      // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.textContent = null;
       this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
       this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
 
-      addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
-      addCssClass(this.allowButton, 'onesignal-error-state-button');
+      if (typeof invalidChannelInput === undefined) {
+        // non-web-prompts slidedown type: e.g Category Slidedown update failed
+        addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
+        addCssClass(this.allowButton, 'onesignal-error-state-button');
+      }
+
     } else {
       removeDomElement('#onesignal-button-indicator-holder');
       removeCssClass(this.allowButton, 'onesignal-error-state-button');
