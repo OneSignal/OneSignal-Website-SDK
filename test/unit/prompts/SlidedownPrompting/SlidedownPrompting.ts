@@ -18,7 +18,7 @@ import {
     getShownPromiseWithEventCounts,
     addPromptDelays,
     setupWithStubs
-} from "./_helpers";
+} from "./_SlidedownPromptingTestHelpers";
 
 /**
  * PROMPTING LOGIC UNIT TESTS FOR WEB PROMPTS FEATURE
