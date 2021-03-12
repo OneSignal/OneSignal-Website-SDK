@@ -4,6 +4,12 @@ import OneSignalEvent from "../../../src/Event";
 import { SinonSandbox } from 'sinon';
 import { stubServiceWorkerInstallation } from "../../support/tester/sinonSandboxUtils";
 
+export interface EventCounts {
+    shown : number;
+    closed: number;
+    queued: number;
+}
+
 export default class EventsTestHelper {
     private readonly sinonSandbox: SinonSandbox;
 
@@ -38,6 +44,32 @@ export default class EventsTestHelper {
             this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
                 .resolves({ subscribed: true, isOptedOut: false });
             stubServiceWorkerInstallation(this.sinonSandbox);
+        });
+    }
+
+    // static
+
+    static getShownPromiseWithEventCounts(eventCounts: EventCounts, resolveAfter: number = 0): Promise<void> {
+        return new Promise<void>(resolve => {
+            OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+                eventCounts.shown += 1;
+                if (eventCounts.shown >= resolveAfter) { resolve(); }
+            });
+        });
+    }
+
+    static getClosedPromiseWithEventCounts(eventCounts: EventCounts, resolveAfter: number = 0): Promise<void> {
+        return new Promise<void>(resolve => {
+            OneSignal.on(Slidedown.EVENTS.CLOSED, () => {
+                eventCounts.closed += 1;
+                if (eventCounts.closed >= resolveAfter) { resolve(); }
+            });
+        });
+    }
+
+    static getSubscriptionPromise(): Promise<void> {
+        return new Promise<void>(resolve => {
+            OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => { resolve(); });
         });
     }
 }
