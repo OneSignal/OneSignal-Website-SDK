@@ -10,7 +10,7 @@ cache:
   directories:
     - node_modules
 script:
-  - yarn test:noWatch
+  - yarn test:CI
   - yarn build:prod
   - BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} yarn build:staging
   # thanks to https://graysonkoonce.com/getting-the-current-branch-name-during-a-pull-request-in-travis-ci/
