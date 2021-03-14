@@ -25,6 +25,8 @@ _Tested up to VSCode Version: `1.54.2`_
    - Open "Run and Debug" on the left bar (or Control + Shift + D)
       - Select  "Debug AVA by selected test (w/ quotes)"
 
+![image](https://user-images.githubusercontent.com/645861/111061933-ada31000-845a-11eb-86c9-851ef378c592.png)
+
 If you need to configure any advanced parameters in the test edit `.vscode/launch.json`
 
 ## Testing from CLI
