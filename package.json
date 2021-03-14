@@ -109,7 +109,9 @@
     ],
     "concurrency": 1,
     "serial": true,
-    "powerAssert": true
+    "powerAssert": true,
+    "//": "Long timeout otherwise debugger times out after 10 sec",
+    "timeout": "1000000"
   },
   "nyc": {
     "cache": true,
