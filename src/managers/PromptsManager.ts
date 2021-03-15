@@ -258,33 +258,28 @@ export class PromptsManager {
       } else {
         slidedown.setSaveState(true);
         try {
-          let smsValidationResult, emailValidationResult;
-          const emailValue = ChannelCaptureContainer.getValueFromEmailInput();
-
-          // TO DO: access sms validation directly
-          smsValidationResult = slidedown.channelCaptureContainer.smsInputFieldIsValid;
-          emailValidationResult = ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
+          const { smsInputFieldIsValid, emailInputFieldIsValid } = slidedown.channelCaptureContainer;
 
           switch (slidedownType) {
             case DelayedPromptType.Category:
               await this.context.tagManager.sendTags(true);
               break;
             case DelayedPromptType.Sms:
-              if (!smsValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+              if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
               break;
             case DelayedPromptType.Email:
-              if (!emailValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+              if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
               break;
             case DelayedPromptType.SmsAndEmail:
               const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
-              const bothFieldsInvalid = !smsValidationResult && !emailValidationResult;
+              const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
 
               if (bothFieldsInvalid || bothFieldsEmpty) {
                 throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
               }
 
-              if (!smsValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
-              if (!emailValidationResult) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+              if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+              if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
 
               // TO DO: send sms email updates
               break;
