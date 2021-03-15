@@ -72,19 +72,3 @@ export class SlidedownPromptingTestHelper {
         };
     }
 }
-
-
-/* UNUSED CURRENTLY
-
- const minimalSmsAndEmailOptions: SlidedownPromptOptions = {
-    type: DelayedPromptType.SmsAndEmail,
-    autoPrompt: true,
-    text: {
-        actionMessage: "",
-        acceptButton: "",
-        cancelButton: "",
-        smsLabel: "Sms",
-        emailLabel: "Email"
-    }
-};
-*/
