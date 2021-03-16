@@ -47,3 +47,6 @@ Run these from `Terminal` > `New Terminal` in VSCode.
    - e.g: `yarn test:noWatch test/unit/context/sw/ServiceWorker.ts`
 * Run specific test in a file: `<one of above commands> <path to file> -m "name of test here"`
    - e.g: `yarn test:noWatch test/unit/context/sw/ServiceWorker.ts -m "onPushReceived - Ensure undefined payload does not show"`
+
+![image](https://user-images.githubusercontent.com/645861/111320621-69fc0200-8624-11eb-80cd-bedf8c57a063.png)
+
