@@ -16,6 +16,9 @@ You will need install them again for this environment if you need them._
 
 ![image](https://user-images.githubusercontent.com/645861/111309395-133cfb00-8619-11eb-89ae-4570d2d06097.png)
 
+> _NOTE: VScode Extensions you have already installed won't automatically installed on the dev container you are now running with now.
+You will need install them again for this environment if you need them._
+
 > _NOTE: The "Debug Test" next to "Run Test" does not work here. See "VSCode Debug a specific test" below on an alterative way to do this.
 
 ## VSCode Debug a specific test
