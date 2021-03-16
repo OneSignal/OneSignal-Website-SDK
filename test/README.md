@@ -9,13 +9,14 @@ _Tested up to VSCode Version: `1.54.2` with plugins: Remote Development `0.163.2
    - Restart VSCode
 2. You will be prompted that there is a Dev Container detected, press "reopen in a container"
    - If no prompt, press F1 and enter "Remote-Containers: Open Folder in Container.."
+   > _NOTE: VScode Extensions you have already installed won't automatically installed on the dev container you are now running with now.
+You will need install them again for this environment if you need them._
 3. Install [Testify](https://marketplace.visualstudio.com/items?itemName=felixjb.testify) VS Code Extension
 4. Open a specific test file and scroll to the exact test you want to run and click "Run Test" above it.
 
 ![image](https://user-images.githubusercontent.com/645861/111309395-133cfb00-8619-11eb-89ae-4570d2d06097.png)
 
-> _NOTE: VScode Extensions you have already installed won't automatically installed on the dev container you are now running with now.
-You will need install them again for this environment if you need them._
+> _NOTE: The "Debug Test" next to "Run Test" does not work here. See "VSCode Debug a specific test" below on an alterative way to do this.
 
 ## VSCode Debug a specific test
 _Tested up to VSCode Version: `1.54.2` plugins: Remote Development `0.163.2`_
@@ -49,4 +50,3 @@ Run these from `Terminal` > `New Terminal` in VSCode.
    - e.g: `yarn test:noWatch test/unit/context/sw/ServiceWorker.ts -m "onPushReceived - Ensure undefined payload does not show"`
 
 ![image](https://user-images.githubusercontent.com/645861/111320621-69fc0200-8624-11eb-80cd-bedf8c57a063.png)
-
