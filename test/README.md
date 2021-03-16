@@ -9,6 +9,8 @@ _Tested up to VSCode Version: `1.54.2`_
 3. Install [Testify](https://marketplace.visualstudio.com/items?itemName=felixjb.testify) VS Code Extension
 4. Go to the test file you want to run and click "Run Test" above the name.
 
+![image](https://user-images.githubusercontent.com/645861/111309395-133cfb00-8619-11eb-89ae-4570d2d06097.png)
+
 > _NOTE: VScode Extensions you have already installed won't automatically installed on the dev container you are now running with now.
 You will need install them again for this environment if you need them._
 
