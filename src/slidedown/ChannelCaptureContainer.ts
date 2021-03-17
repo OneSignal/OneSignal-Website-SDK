@@ -7,6 +7,7 @@ import {
     DANGER_ICON,
     SLIDEDOWN_CSS_IDS
 } from "./constants";
+import { ItiScriptURLHashes, ItiScriptURLs } from "./InternationalTelephoneInput";
 
 export default class ChannelCaptureContainer {
     private promptOptions: SlidedownPromptOptions;
@@ -203,14 +204,55 @@ export default class ChannelCaptureContainer {
         }
     }
 
+    private async loadPhoneLibraryScripts(): Promise<void> {
+        const script1 = document.createElement("script");
+        const script2 = document.createElement("script");
+        const link    = document.createElement("link");
+
+        script1.src = ItiScriptURLs.Main;
+        script2.src = ItiScriptURLs.Utils;
+        link.href   = ItiScriptURLs.Stylesheet;
+        link.rel    = "stylesheet";
+
+        script1.integrity = ItiScriptURLHashes.Main;
+        script2.integrity = ItiScriptURLHashes.Utils;
+        link.integrity    = ItiScriptURLHashes.Stylesheet;
+
+        script1.crossOrigin = "anonymous";
+        script2.crossOrigin = "anonymous";
+        link.crossOrigin    = "anonymous";
+
+        document.head.appendChild(script1);
+        document.head.appendChild(script2);
+        document.head.appendChild(link);
+
+        const promise1 = new Promise<void>(resolve => { script1.onload = () => { resolve(); }; });
+        const promise2 = new Promise<void>(resolve => { script2.onload = () => { resolve(); }; });
+
+        await Promise.all([promise1, promise2]);
+    }
+
     /* P U B L I C */
-    public mount(): void {
+    public async mount(): Promise<void> {
+        const isUsingSms = ChannelCaptureContainer.isUsingSmsInputField(this.promptOptions.type);
+        const isUsingEmail = ChannelCaptureContainer.isUsingEmailInputField(this.promptOptions.type);
+
+        if (isUsingSms) {
+            await this.loadPhoneLibraryScripts();
+        }
+
         const captureContainer = this.generateHtml();
         const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
         body.append(captureContainer);
-        this.initializePhoneInputLibrary();
-        this.addSmsInputEventListeners();
-        this.addEmailInputEventListeners();
+
+        if (isUsingSms) {
+            this.initializePhoneInputLibrary();
+            this.addSmsInputEventListeners();
+        }
+
+        if (isUsingEmail) {
+            this.addEmailInputEventListeners();
+        }
     }
 
     /* S T A T I C */
@@ -279,5 +321,13 @@ export default class ChannelCaptureContainer {
     static validateEmailInputWithReturnVal(emailString?: string): boolean {
         const re = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
         return re.test(emailString || '') || emailString === "";
+    }
+
+    static isUsingSmsInputField(type: DelayedPromptType): boolean {
+        return type === DelayedPromptType.Sms || type === DelayedPromptType.SmsAndEmail;
+    }
+
+    static isUsingEmailInputField(type: DelayedPromptType): boolean {
+        return type === DelayedPromptType.Email || type === DelayedPromptType.SmsAndEmail;
     }
 }
