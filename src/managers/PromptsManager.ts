@@ -243,21 +243,17 @@ export class PromptsManager {
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       this.context.slidedownManager.handleAllowClick();
     });
-        const slidedownType: DelayedPromptType = slidedown.options.type;
-
-        if (slidedown.isShowingFailureState) {
+    OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
+      const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
+      switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
           Log.debug("Setting flag to not show the slidedown to the user again.");
           DismissHelper.markHttpsNativePromptDismissed();
-            break;
-            default:
-            break;
-        }
-    });
-    OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      Log.debug("Setting flag to not show the slidedown to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
+          break;
+        default:
+          break;
+      }
     });
   }
 
