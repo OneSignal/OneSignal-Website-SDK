@@ -93,7 +93,7 @@ export class PromptsManager {
     // spawn slidedown prompts
     const prompts = userPromptOptions.slidedown?.prompts;
     if (!!prompts && prompts?.length > 0) {
-      for (let i=0; i<prompts.length; i++) {
+      for (let i = 0; i < prompts.length; i++) {
         const promptOptions = prompts[i];
 
         const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, promptOptions.type);
@@ -298,6 +298,7 @@ export class PromptsManager {
       if (slidedown) {
         slidedown.close();
         // called here for compatibility with unit tests (close function doesn't run fully in test env)
+        // TODO: we should look into whether this is the best place to put it and confirm before requiring it in source
         Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");

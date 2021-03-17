@@ -22,7 +22,7 @@ import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import { MockServiceWorkerGlobalScope } from "../mocks/service-workers/models/MockServiceWorkerGlobalScope";
 import { MockServiceWorker } from "../mocks/service-workers/models/MockServiceWorker";
 import { MockPushManager } from "../mocks/service-workers/models/MockPushManager";
-import { MockServiceWorkerContainer } from "../mocks/service-workers/models/MockServiceWorkerContainer";
+import { MockServiceWorkerContainerWithAPIBan } from "../mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan";
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
 import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
@@ -42,6 +42,7 @@ import { SinonSandbox } from 'sinon';
 import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
 import { getSlidedownElement } from '../../../src/slidedown/SlidedownElement';
 import { DelayedPromptType } from '../../../src/models/Prompts';
+import MockNotification from "../mocks/MockNotification";
 
 // NodeJS.Global
 declare var global: any;
@@ -256,7 +257,7 @@ export class TestEnvironment {
     });
     // Node has its own console; overwriting it will cause issues
     delete (windowDef as any)['console'];
-    (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainer();
+    (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainerWithAPIBan();
     (windowDef as any).localStorage = new DOMStorage(null);
     (windowDef as any).sessionStorage = new DOMStorage(null);
     const { TextEncoder, TextDecoder } = require('text-encoding');
@@ -302,16 +303,8 @@ export class TestEnvironment {
   }
 
   static stubNotification(config: TestEnvironmentConfig) {
-    // TODO: Move in MockNotification into class file when updating to TS 3
-    global.Notification = {
-      permission: config.permission ? config.permission: NotificationPermission.Default,
-      maxActions: 2,
-      requestPermission: function(callback?: Function) {
-        if (callback)
-          callback(config.pushIdentifier);
-      }
-    };
-
+    global.Notification = MockNotification;
+    global.Notification.permission =  config.permission ? config.permission: global.Notification.permission;
     // window is only defined in DOM environment (not in SW)
     if (config.environment === "dom") {
       global.window.Notification = global.Notification;

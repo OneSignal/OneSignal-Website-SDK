@@ -51,11 +51,9 @@ export function stubServiceWorkerInstallation(sinonSandbox: SinonSandbox) {
 
   sinonSandbox.stub(SubscriptionManager.prototype, "subscribeWithVapidKey")
     .resolves(TestEnvironment.getFakeRawPushSubscription());
-  sinonSandbox.stub((global as any).navigator.serviceWorker, "ready")
-    .get(() => new Promise(resolve => { resolve(swRegistration); }));
   sinonSandbox.stub(ServiceWorkerManager.prototype, "getActiveState")
     .resolves(ServiceWorkerActiveState.WorkerA);
-  sinonSandbox.stub(ServiceWorkerManager, "getRegistration")
+  sinonSandbox.stub(ServiceWorkerManager.prototype, "getRegistration")
     .resolves(swRegistration);
   sinonSandbox.stub(WorkerMessenger.prototype, "unicast").resolves();
 }

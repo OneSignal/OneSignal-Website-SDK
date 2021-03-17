@@ -15,7 +15,6 @@ import LocalStorage from '../utils/LocalStorage';
 import { SessionOrigin } from "../models/Session";
 import MainHelper from "./MainHelper";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 import { Browser } from "../context/browser/models/Browser";
 
@@ -162,8 +161,7 @@ export default class SubscriptionHelper {
     return subscription;
   }
 
-  static async getRawPushSubscriptionFromServiceWorkerRegistration(): Promise<RawPushSubscription | null> {
-    const registration = await PageServiceWorkerHelper.getRegistration();
+  static async getRawPushSubscriptionFromServiceWorkerRegistration(registration?: ServiceWorkerRegistration): Promise<RawPushSubscription | null> {
     if (!registration) {
       return null;
     }
@@ -191,7 +189,8 @@ export default class SubscriptionHelper {
     }
 
     if (environmentInfo.isBrowserAndSupportsServiceWorkers) {
-      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration();
+      const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
+      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(registration);
     }
 
     return null;

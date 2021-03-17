@@ -23,7 +23,6 @@ export class MockServiceWorker implements ServiceWorker {
   }
 
   postMessage(message: any, transfer: Array<Transferable> | PostMessageOptions): void {
-    throw new NotImplementedError();
   }
 
   removeEventListener<K extends keyof ServiceWorkerEventMap>(type: K, listener: (this: ServiceWorker, ev: ServiceWorkerEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
