@@ -93,7 +93,7 @@ export class PromptsManager {
     // spawn slidedown prompts
     const prompts = userPromptOptions.slidedown?.prompts;
     if (!!prompts && prompts?.length > 0) {
-      for (let i=0; i<prompts.length; i++) {
+      for (let i = 0; i < prompts.length; i++) {
         const promptOptions = prompts[i];
 
         const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, promptOptions.type);

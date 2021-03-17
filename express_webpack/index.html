@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<script src="/sdks/Dev-OneSignalSDK.js" async=""></script>
+<!-- Some sites use this HTML base tag to change the origin for all relative links.
+    Ensure OneSignal SDK correctly handles this. -->
+<base href="https://www.example.com/">
+<script src="https://localhost:4001/sdks/Dev-OneSignalSDK.js" async=""></script>
 <script>
+    const SERVICE_WORKER_PATH = "push/onesignal/";
+
     function getUrlQueryParam(name) {
         var url = window.location.href;
         // This is just to avoid case sensitiveness
@@ -14,9 +19,14 @@
         if (!results[2]) return '';
         return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
+
     const appId = getUrlQueryParam('app_id');
     var OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
+      OneSignal.SERVICE_WORKER_PARAM = { scope: "/" + SERVICE_WORKER_PATH };
+      OneSignal.SERVICE_WORKER_UPDATER_PATH = SERVICE_WORKER_PATH + "OneSignalSDKUpdaterWorker.js";
+      OneSignal.SERVICE_WORKER_PATH = SERVICE_WORKER_PATH + "OneSignalSDKWorker.js";
+
       OneSignal.init({
           appId,
           notifyButton: {

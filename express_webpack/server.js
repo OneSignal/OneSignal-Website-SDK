@@ -17,11 +17,11 @@ app.get('/', (req, res) => {
 })
 
 app.get('/sdks/:file', (req, res) => {
-    res.sendFile(SDK_FILES+req.params.file);
+    res.sendFile(SDK_FILES + req.params.file);
 });
 
 app.get('/:file', (req, res) => {
-    res.sendFile(SDK_FILES+req.params.file);
+    res.sendFile(req.params.file);
 });
 
 https.createServer(options, app).listen(4001, () => console.log("express_webpack: listening on port 4001 (https)"));

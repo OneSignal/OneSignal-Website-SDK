@@ -8,43 +8,47 @@ import Database from "../services/Database";
 import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
 import { NotificationClicked } from "../models/Notification";
 import { RawPushSubscription } from '../models/RawPushSubscription';
-import PageServiceWorkerHelper from "./page/ServiceWorkerHelper";
 import { OutcomesConfig } from "../models/Outcomes";
 import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
 import { OSServiceWorkerFields } from "../service-worker/types";
+import Utils from "../context/shared/utils/Utils";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
-  public static async getRegistration(): Promise<ServiceWorkerRegistration | null | undefined> {
-    return await PageServiceWorkerHelper.getRegistration();
-  }
 
-  public static getServiceWorkerHref(
+  // Get the href of the OneSiganl ServiceWorker that should be installed
+  // If a OneSignal ServiceWorker is already installed we will use an alternating name
+  //   to force an update to the worker.
+  public static getAlternatingServiceWorkerHref(
     workerState: ServiceWorkerActiveState,
-    config: ServiceWorkerManagerConfig): string {
-    let workerFullPath = "";
+    config: ServiceWorkerManagerConfig,
+    appId: string
+    ): string {
+    let workerFullPath: string;
 
     // Determine which worker to install
     if (workerState === ServiceWorkerActiveState.WorkerA)
       workerFullPath = config.workerBPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.WorkerB ||
-      workerState === ServiceWorkerActiveState.ThirdParty ||
-      workerState === ServiceWorkerActiveState.None)
+    else
       workerFullPath = config.workerAPath.getFullPath();
-    else if (workerState === ServiceWorkerActiveState.Bypassed) {
-      /*
-        if the page is hard refreshed bypassing the cache, no service worker
-        will control the page.
 
-        It doesn't matter if we try to reinstall an existing worker; still no
-        service worker will control the page after installation.
-       */
-      throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
-    }
+    return ServiceWorkerHelper.appendServiceWorkerParams(workerFullPath, appId);
+  }
 
-    return new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+  public static getPossibleServiceWorkerHrefs(
+    config: ServiceWorkerManagerConfig,
+    appId: string
+    ): string[] {
+    const workerFullPaths = [config.workerAPath.getFullPath(), config.workerBPath.getFullPath()];
+    return workerFullPaths.map((href) => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
+  }
+
+  private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
+    const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
+    const appIdHasQueryParam = Utils.encodeHashAsUriComponent({appId});
+    return `${fullPath}?${appIdHasQueryParam}`;
   }
 
   public static async upsertSession(
@@ -259,20 +263,9 @@ export enum ServiceWorkerActiveState {
    */
   ThirdParty = '3rd Party',
   /**
-   * A service worker is currently installing and we can't determine its final state yet. Wait until
-   * the service worker is finished installing by checking for a controllerchange property..
-   */
-  Installing = 'Installing',
-  /**
    * No service worker is installed.
    */
   None = 'None',
-  /**
-   * A service worker is active but not controlling the page. This can occur if
-   * the page is hard-refreshed bypassing the cache, which also bypasses service
-   * workers.
-   */
-  Bypassed = 'Bypassed',
   /**
    * Service workers are not supported in this environment. This status is used
    * on HTTP pages where it isn't possible to know whether a service worker is

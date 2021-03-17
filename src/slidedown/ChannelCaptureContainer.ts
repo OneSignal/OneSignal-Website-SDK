@@ -266,7 +266,7 @@ export default class ChannelCaptureContainer {
         }
     }
 
-    static resetInputErrorStates() {
+    static resetInputErrorStates(): void {
         ChannelCaptureContainer.showEmailInputError(false);
         ChannelCaptureContainer.showSmsInputError(false);
     }

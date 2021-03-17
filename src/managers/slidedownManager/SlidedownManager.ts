@@ -194,12 +194,18 @@ export class SlidedownManager {
             return;
         }
 
-        const slidedownPromptOptions = options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
-        OneSignal.slidedown = new Slidedown(slidedownPromptOptions);
-        await OneSignal.slidedown.create(options.isInUpdateMode);
-        await this.mountAuxiliaryContainers(options);
-        this.setIsSlidedownShowing(true);
-        Log.debug('Showing OneSignal Slidedown');
+        try {
+            this.setIsSlidedownShowing(true);
+            const slidedownPromptOptions = options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
+            OneSignal.slidedown = new Slidedown(slidedownPromptOptions);
+            await OneSignal.slidedown.create(options.isInUpdateMode);
+            await this.mountAuxiliaryContainers(options);
+            Log.debug('Showing OneSignal Slidedown');
+        } catch (e) {
+            Log.error("There was an error showing the OneSignal Slidedown:", e);
+            this.setIsSlidedownShowing(false);
+            OneSignal.slidedown.close();
+        }
     }
 
     private async mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {

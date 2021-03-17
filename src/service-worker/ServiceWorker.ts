@@ -30,7 +30,6 @@ import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 import { DeviceRecord } from '../models/DeviceRecord';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
-declare var Notification: Notification;
 
 /**
  * The main service worker script fetching and displaying notifications to users in the background even when the client
@@ -77,8 +76,8 @@ export class ServiceWorker {
   }
 
   /**
-   * Allows message passing between this service worker and its controlled clients, or webpages. Controlled
-   * clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
+   * Allows message passing between this service worker and pages on the same domain.
+   * Clients include any HTTPS site page, or the nested iFrame pointing to OneSignal on any HTTP site. This allows
    * events like notification dismissed, clicked, and displayed to be fired on the clients. It also allows the
    * clients to communicate with the service worker to close all active notifications.
    */
@@ -96,8 +95,6 @@ export class ServiceWorker {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
-    self.addEventListener('install', ServiceWorker.onServiceWorkerInstalled);
-    self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
       event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
     });
@@ -441,7 +438,7 @@ export class ServiceWorker {
      */
     if (options.isHttps) {
       const windowClients: ReadonlyArray<Client> = await self.clients.matchAll(
-        { type: "window", includeUncontrolled: false }
+        { type: "window", includeUncontrolled: true }
       );
 
       if (options.isSafari) {
@@ -692,31 +689,7 @@ export class ServiceWorker {
       vibrate: notification.vibrate
     };
 
-    notificationOptions = ServiceWorker.fixPlatformSpecificDisplayIssues(notificationOptions);
     return self.registration.showNotification(notification.heading, notificationOptions);
-  }
-
-  /**
-   * Fixes display issue with some notification options causing the notification to never show!
-   * This happens when setting requireInteraction = true on the following platforms;
-   *   * macOS 10.15+ - Chrome based browsers
-   *      - https://bugs.chromium.org/p/chromium/issues/detail?id=1007418
-   *   * macOS 10.14+ - Opera
-   *      - https://forums.opera.com/topic/31334/push-notifications-with-requireinteraction-true-do-not-display-on-macos
-   * @param notificationOptions - Value passed to ServiceWorkerRegistration.prototype.showNotification
-   */
-  static fixPlatformSpecificDisplayIssues(notificationOptions: any): any {
-    const clone = { ...notificationOptions };
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-
-    if (browser.chrome && browser.mac && Utils.isVersionAtLeast(browser.osversion, 10.15)) {
-      clone.requireInteraction = false;
-    }
-    else if (browser.opera && browser.mac && Utils.isVersionAtLeast(browser.osversion, 10.14)) {
-      clone.requireInteraction = false;
-    }
-
-    return clone;
   }
 
   /**
@@ -751,7 +724,7 @@ export class ServiceWorker {
   static async getNotificationUrlToOpen(notification): Promise<string> {
     // Defaults to the URL the service worker was registered
     // TODO: This should be fixed for HTTP sites
-    let launchUrl = self.registration.scope;
+    let launchUrl = location.origin;
 
     // Use the user-provided default URL if one exists
     const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
@@ -888,7 +861,7 @@ export class ServiceWorker {
             }
         } else {
           /*
-          We must focus first; once the client navigates away, it may not be to a service worker-controlled page, and
+          We must focus first; once the client navigates away, it may not be on a domain the same domain, and
           the client ID may change, making it unable to focus.
 
           client.navigate() is available on Chrome 49+ and Firefox 50+.
@@ -996,21 +969,6 @@ export class ServiceWorker {
       Log.warn(`Failed to open the URL '${url}':`, e);
       return null;
     }
-  }
-
-  static onServiceWorkerInstalled(event) {
-    Log.info("Installing service worker...");
-    // At this point, the old service worker is still in control
-    event.waitUntil(self.skipWaiting());
-  }
-
-  /*
-   1/11/16: Enable the waiting service worker to immediately become the active service worker: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting
-   */
-  static onServiceWorkerActivated(event) {
-    // The old service worker is gone now
-    Log.info(`%cOneSignal Service Worker activated (version ${Environment.version()}, ${SdkEnvironment.getWindowEnv().toString()} environment).`, Utils.getConsoleStyle('bold'));
-    event.waitUntil(self.clients.claim());
   }
 
   static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {

@@ -2,29 +2,37 @@ import { DispatchEventUtil } from "../utils/DispatchEventUtil";
 import { MockServiceWorker } from "./MockServiceWorker";
 import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
 
-export class MockServiceWorkerContainer implements ServiceWorkerContainer {
-  controller: ServiceWorker | null;
-  oncontrollerchange: ((this: ServiceWorkerContainer, ev: Event) => any) | null;
+// abstract to indicate this isn't designed to be used directly as part of the tests. (expect for the meta one)
+// This is a generic mock.
+//   - no OneSignal specifics, see MockServiceWorkerContainerWithAPIBan
+export abstract class MockServiceWorkerContainer implements ServiceWorkerContainer {
+  protected _controller: ServiceWorker | null;
+  get controller(): ServiceWorker | null {
+    return this._controller;
+  }
+
+  get ready(): Promise<ServiceWorkerRegistration> {
+    return new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
+  }
+  
+  set oncontrollerchange(event: ((this: ServiceWorkerContainer, ev: Event) => any) | null) {
+  }
+
   onmessage: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
   onmessageerror: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
-  readonly ready: Promise<ServiceWorkerRegistration>;
 
   private dispatchEventUtil: DispatchEventUtil = new DispatchEventUtil();
-  public serviceWorkerRegistration: ServiceWorkerRegistration | null;
+  private serviceWorkerRegistrations: Map<string, ServiceWorkerRegistration>;
 
   constructor() {
-    this.serviceWorkerRegistration = null;
-    this.ready = new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
-    this.controller = null;
-    this.oncontrollerchange = null;
+    this.serviceWorkerRegistrations = new Map();
+    this._controller = null;
     this.onmessage = null;
     this.onmessageerror = null;
   }
 
   addEventListener<K extends keyof ServiceWorkerContainerEventMap>(type: K, listener: (this: ServiceWorkerContainer, ev: ServiceWorkerContainerEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
-  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void {
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void {
     this.dispatchEventUtil.addEventListener(type, listener, options);
   }
 
@@ -32,17 +40,34 @@ export class MockServiceWorkerContainer implements ServiceWorkerContainer {
     return this.dispatchEventUtil.dispatchEvent(evt);
   }
 
-  async getRegistration(_clientURL?: string): Promise<ServiceWorkerRegistration | undefined> {
-    return this.serviceWorkerRegistration || undefined;
+  // clientURL can be relative or a full URL
+  async getRegistration(clientURL?: string): Promise<ServiceWorkerRegistration | undefined> {
+    const scope = clientURL ?
+      clientURL.replace(location.origin, "") : // Turn a possible full URL into a scope
+      "/";
+
+    // 1. If we find an exact path match
+    let registration = this.serviceWorkerRegistrations.get(scope);
+    if (registration) {
+      return registration;
+    }
+
+    // 2. Match any SW's that are at a higher scope than the one we are querying for as they are under it's control.
+    // WARNING: This mock implementation does not consider which one is correct if more than one applies the scope.
+    this.serviceWorkerRegistrations.forEach((value, key) => {
+      if (scope.startsWith(key)) {
+        registration = value;
+      }
+    });
+
+    return registration;
   }
 
   async getRegistrations(): Promise<ServiceWorkerRegistration[]> {
-    if (this.serviceWorkerRegistration)
-      return [this.serviceWorkerRegistration];
-    return [];
+    return Array.from(this.serviceWorkerRegistrations.values());
   }
 
-  async register(scriptURL: string, _options?: RegistrationOptions): Promise<ServiceWorkerRegistration> {
+  async register(scriptURL: string, options?: RegistrationOptions): Promise<ServiceWorkerRegistration> {
     if (scriptURL.startsWith('/')) {
       const fakeScriptUrl = new URL(window.location.toString());
       scriptURL = fakeScriptUrl.origin + scriptURL;
@@ -51,13 +76,31 @@ export class MockServiceWorkerContainer implements ServiceWorkerContainer {
     const mockSw = new MockServiceWorker();
     mockSw.scriptURL = scriptURL;
     mockSw.state = 'activated';
-    this.controller = mockSw;
+
+    this._controller = mockSw;
 
     const swReg = new MockServiceWorkerRegistration();
-    swReg.active = this.controller;
-    this.serviceWorkerRegistration = swReg;
+    swReg.active = this._controller;
 
-    return this.serviceWorkerRegistration;
+    const scope = MockServiceWorkerContainer.getScopeAsPathname(options);
+    this.serviceWorkerRegistrations.set(scope, swReg);
+
+    return swReg;
+  }
+
+  // RegistrationOptions.scope could be falsely or a string in a URL or pathname format.
+  // This will always give us a pathname, defaulting to "/" if falsely.
+  private static getScopeAsPathname(options?: RegistrationOptions): string {
+    if (!options?.scope) {
+      return "/";
+    }
+
+    try {
+      return new URL(options.scope).pathname;
+    } catch(_e) {
+      // Not a valid URL, assuming it's a path
+      return options.scope;
+    }
   }
 
   removeEventListener<K extends keyof ServiceWorkerContainerEventMap>(type: K, listener: (this: ServiceWorkerContainer, ev: ServiceWorkerContainerEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
@@ -68,6 +111,10 @@ export class MockServiceWorkerContainer implements ServiceWorkerContainer {
   }
 
   startMessages(): void {
+  }
+
+  mockUnregister(scope: string) {
+    this.serviceWorkerRegistrations.delete(scope);
   }
 
 }
