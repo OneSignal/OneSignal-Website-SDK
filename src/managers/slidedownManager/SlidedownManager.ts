@@ -16,6 +16,9 @@ import MainHelper from "../../helpers/MainHelper";
 import { NotificationPermission } from "../../models/NotificationPermission";
 import { OneSignalUtils } from "../../utils/OneSignalUtils";
 import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
+import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/ChannelCaptureError";
+import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
+import LocalStorage from "../../utils/LocalStorage";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -63,8 +66,92 @@ export class SlidedownManager {
         return true;
     }
 
-    public handleAllowClick(): void {
-        // TO DO:
+    private registerForPush(): void {
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept, slidedown: true };
+        InitHelper.registerForPushNotifications(options);
+
+    }
+
+    public async handleAllowClick(): Promise<void> {
+        const { slidedown } = OneSignal;
+        const slidedownType: DelayedPromptType = slidedown.options.type;
+
+        if (slidedown.isShowingFailureState) {
+            slidedown.setFailureState(false);
+        }
+
+        let smsInputFieldIsValid, emailInputFieldIsValid;
+
+        if (!!slidedown.channelCaptureContainer) {
+            smsInputFieldIsValid = slidedown.channelCaptureContainer.smsInputFieldIsValid;
+            emailInputFieldIsValid = slidedown.channelCaptureContainer.emailInputFieldIsValid;
+        }
+
+        try {
+            switch (slidedownType) {
+                case DelayedPromptType.Push:
+                    this.registerForPush();
+                    break;
+                case DelayedPromptType.Category:
+                    const tags = TaggingContainer.getValuesFromTaggingContainer();
+                    this.context.tagManager.storeTagValuesToUpdate(tags);
+
+                    const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
+                    if (isPushEnabled) {
+                        slidedown.setSaveState(true);
+                        await this.context.tagManager.sendTags(true);
+                    } else {
+                        this.registerForPush();
+                        // tags are sent on the subscription change event handler
+                    }
+                    break;
+                case DelayedPromptType.Email:
+                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    break;
+                case DelayedPromptType.Sms:
+                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    break;
+                case DelayedPromptType.SmsAndEmail:
+                    const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
+                    const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
+
+                    if (bothFieldsInvalid || bothFieldsEmpty) {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
+                    }
+
+                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+
+                    // TO DO: send sms email updates
+                    break;
+                default:
+                    break;
+            }
+        } catch (e) {
+            Log.warn("OneSignal Slidedown failed to update:", e);
+            // Display update error
+            slidedown.setSaveState(false);
+            slidedown.setFailureState(true, e.reason);
+            return;
+        }
+
+        if (slidedown) {
+            slidedown.close();
+            // called here for compatibility with unit tests (close function doesn't run fully in test env)
+            Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+        }
+
+        // TO DO: clean up a bit
+        switch (slidedownType) {
+            case DelayedPromptType.Push:
+            case DelayedPromptType.Category:
+            Log.debug("Setting flag to not show the slidedown to the user again.");
+            TestHelper.markHttpsNativePromptDismissed();
+            break;
+            default:
+            break;
+        }
     }
 
     public setIsSlidedownShowing(isShowing: boolean): void {
