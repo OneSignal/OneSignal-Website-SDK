@@ -19,6 +19,7 @@ import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
 import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/ChannelCaptureError";
 import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
 import LocalStorage from "../../utils/LocalStorage";
+import DismissHelper from "../../helpers/DismissHelper";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -147,7 +148,7 @@ export class SlidedownManager {
             case DelayedPromptType.Push:
             case DelayedPromptType.Category:
             Log.debug("Setting flag to not show the slidedown to the user again.");
-            TestHelper.markHttpsNativePromptDismissed();
+            DismissHelper.markHttpsNativePromptDismissed();
             break;
             default:
             break;

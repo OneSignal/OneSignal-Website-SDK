@@ -17,7 +17,7 @@ import {
   AppUserConfigPromptOptions,
   DelayedPromptType,
   SlidedownPromptOptions} from '../models/Prompts';
-import TestHelper from '../helpers/TestHelper';
+import DismissHelper from '../helpers/DismissHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
@@ -166,7 +166,7 @@ export class PromptsManager {
     MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
     this.isNativePromptShowing = false;
-    TestHelper.markHttpsNativePromptDismissed();
+    DismissHelper.markHttpsNativePromptDismissed();
   }
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
@@ -249,7 +249,7 @@ export class PromptsManager {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
           Log.debug("Setting flag to not show the slidedown to the user again.");
-            TestHelper.markHttpsNativePromptDismissed();
+          DismissHelper.markHttpsNativePromptDismissed();
             break;
             default:
             break;
