@@ -130,6 +130,7 @@ export default class Slidedown {
   onSlidedownCanceled(_: any): void {
     Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
+    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
   }
 
   close(): void {
