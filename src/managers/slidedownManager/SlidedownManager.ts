@@ -81,11 +81,27 @@ export class SlidedownManager {
             slidedown.setFailureState(false);
         }
 
-        let smsInputFieldIsValid, emailInputFieldIsValid;
+        let smsInputFieldIsValid, emailInputFieldIsValid, isEmailEmpty, isSmsEmpty: boolean;
+        let email, sms: string;
+
+        smsInputFieldIsValid = emailInputFieldIsValid = isEmailEmpty = isSmsEmpty = false;
+        email = sms = "";
 
         if (!!slidedown.channelCaptureContainer) {
+            /**
+             * empty input fields are considered valid since in the case of two input field types present,
+             * we can accept one of the two being left as an empty string.
+             *
+             * thus, we need separate checks for the emptiness properties
+             */
             smsInputFieldIsValid = slidedown.channelCaptureContainer.smsInputFieldIsValid;
             emailInputFieldIsValid = slidedown.channelCaptureContainer.emailInputFieldIsValid;
+            isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+            isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+
+            /** */
+            email = ChannelCaptureContainer.getValueFromEmailInput();
+            sms = ChannelCaptureContainer.getValueFromSmsInput();
         }
 
         try {
@@ -99,6 +115,7 @@ export class SlidedownManager {
 
                     const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
                     if (isPushEnabled) {
+                        // already subscribed, send tags immediately
                         slidedown.setSaveState(true);
                         await this.context.tagManager.sendTags(true);
                     } else {
@@ -107,29 +124,44 @@ export class SlidedownManager {
                     }
                     break;
                 case DelayedPromptType.Email:
-                    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
                     if (!emailInputFieldIsValid || isEmailEmpty) {
                         throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
                     }
+                    this.context.updateManager.updateEmail(email);
                     break;
                 case DelayedPromptType.Sms:
-                    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
                     if (!smsInputFieldIsValid || isSmsEmpty) {
                         throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
                     }
+                    this.context.updateManager.updateSms(sms);
                     break;
                 case DelayedPromptType.SmsAndEmail:
-                    const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
+                    const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
                     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
 
                     if (bothFieldsInvalid || bothFieldsEmpty) {
                         throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
                     }
 
-                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
-                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    /**
+                     * empty is ok (we can accept only one of two input fields), but invalid is not
+                     * at least one field is valid and non-empty
+                     */
+                    if (emailInputFieldIsValid) {
+                        if (!isEmailEmpty) {
+                            this.context.updateManager.updateEmail(email);
+                        }
+                    } else {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    }
 
-                    // TO DO: send sms email updates
+                    if (smsInputFieldIsValid) {
+                        if (!isSmsEmpty) {
+                            this.context.updateManager.updateSms(sms);
+                        }
+                    } else {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    }
                     break;
                 default:
                     break;
