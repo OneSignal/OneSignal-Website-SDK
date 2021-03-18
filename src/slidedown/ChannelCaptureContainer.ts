@@ -8,6 +8,7 @@ import {
     SLIDEDOWN_CSS_IDS
 } from "./constants";
 import { ItiScriptURLHashes, ItiScriptURLs } from "./InternationalTelephoneInput";
+import { } from 'intl-tel-input'; // typings
 
 export default class ChannelCaptureContainer {
     private promptOptions: SlidedownPromptOptions;
