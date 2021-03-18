@@ -120,6 +120,13 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/intl-tel-input@^17.0.1":
+  version "17.0.1"
+  resolved "https://registry.yarnpkg.com/@types/intl-tel-input/-/intl-tel-input-17.0.1.tgz#84923c5c32a4b4a8dc259ece4d39dc90166689b7"
+  integrity sha512-aqs7qd+0ommXfxxlR/Z0WawesXfIWCQy5nwPEqaLyT/oLAFrZlbFIDQYBeaGXliIiC3W/hDfyXExtzBItuMZdw==
+  dependencies:
+    "@types/jquery" "*"
+
 "@types/jquery@*":
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.1.tgz#55758d44d422756d6329cbf54e6d41931d7ba28f"
