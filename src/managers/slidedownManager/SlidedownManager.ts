@@ -71,7 +71,6 @@ export class SlidedownManager {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
         const options: RegisterOptions = { autoAccept, slidedown: true };
         InitHelper.registerForPushNotifications(options);
-
     }
 
     public async handleAllowClick(): Promise<void> {
