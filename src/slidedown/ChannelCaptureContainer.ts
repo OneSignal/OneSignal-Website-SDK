@@ -256,11 +256,6 @@ export default class ChannelCaptureContainer {
     }
 
     /* S T A T I C */
-    static areBothInputFieldsEmpty(): boolean {
-        return ChannelCaptureContainer.isEmailInputFieldEmpty() &&
-            ChannelCaptureContainer.isSmsInputFieldEmpty();
-    }
-
     static isEmailInputFieldEmpty(): boolean {
         return ChannelCaptureContainer.getValueFromEmailInput() === "";
     }
