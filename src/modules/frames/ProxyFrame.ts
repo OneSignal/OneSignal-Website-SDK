@@ -1,6 +1,6 @@
 import Event from '../../Event';
 import InitHelper from '../../helpers/InitHelper';
-import TestHelper from '../../helpers/TestHelper';
+import DismissHelper from '../../helpers/DismissHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
@@ -196,7 +196,7 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onMarkPromptDismissed(message: MessengerMessageEvent) {
     Log.debug('(Reposted from iFrame -> Host) Marking prompt as dismissed.');
-    await TestHelper.markHttpsNativePromptDismissed();
+    await DismissHelper.markHttpsNativePromptDismissed();
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }

@@ -10,7 +10,6 @@ import HttpHelper from './helpers/HttpHelper';
 import InitHelper, { RegisterOptions } from './helpers/InitHelper';
 import MainHelper from './helpers/MainHelper';
 import SubscriptionHelper from './helpers/SubscriptionHelper';
-import TestHelper from './helpers/TestHelper';
 import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
@@ -59,6 +58,7 @@ import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
+import DismissHelper from './helpers/DismissHelper';
 
 export default class OneSignal {
   /**
@@ -941,7 +941,7 @@ export default class OneSignal {
   static httpHelper =  HttpHelper;
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
-  static testHelper = TestHelper;
+  static testHelper = DismissHelper;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;
