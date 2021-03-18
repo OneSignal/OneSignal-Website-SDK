@@ -196,8 +196,9 @@ export default class Slidedown {
       removeDomElement('#onesignal-button-indicator-holder');
       removeCssClass(this.allowButton, 'onesignal-error-state-button');
 
+      // to do: use helper function
       if (!(this.options.type in [DelayedPromptType.Push, DelayedPromptType.Category])) {
-        ChannelCaptureContainer.resetInputErrorStates();
+        ChannelCaptureContainer.resetInputErrorStates(this.options.type);
       }
     }
 

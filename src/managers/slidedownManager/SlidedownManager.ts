@@ -107,10 +107,16 @@ export class SlidedownManager {
                     }
                     break;
                 case DelayedPromptType.Email:
-                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+                    if (!emailInputFieldIsValid || isEmailEmpty) {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    }
                     break;
                 case DelayedPromptType.Sms:
-                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+                    if (!smsInputFieldIsValid || isSmsEmpty) {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    }
                     break;
                 case DelayedPromptType.SmsAndEmail:
                     const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();

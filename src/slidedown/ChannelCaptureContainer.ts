@@ -257,10 +257,17 @@ export default class ChannelCaptureContainer {
 
     /* S T A T I C */
     static areBothInputFieldsEmpty(): boolean {
+        return ChannelCaptureContainer.isEmailInputFieldEmpty() &&
+            ChannelCaptureContainer.isSmsInputFieldEmpty();
+    }
+
+    static isEmailInputFieldEmpty(): boolean {
+        return ChannelCaptureContainer.getValueFromEmailInput() === "";
+    }
+
+    static isSmsInputFieldEmpty(): boolean {
         const onesignalSmsInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-        const smsFieldEmpty = (<HTMLInputElement>onesignalSmsInput).value === "";
-        const emailFieldEmpty = ChannelCaptureContainer.getValueFromEmailInput() === "";
-        return smsFieldEmpty && emailFieldEmpty;
+        return (<HTMLInputElement>onesignalSmsInput).value === "";
     }
 
     static showSmsInputError(state: boolean): void {
@@ -308,9 +315,21 @@ export default class ChannelCaptureContainer {
         }
     }
 
-    static resetInputErrorStates(): void {
-        ChannelCaptureContainer.showEmailInputError(false);
-        ChannelCaptureContainer.showSmsInputError(false);
+    static resetInputErrorStates(type: DelayedPromptType): void {
+        switch (type) {
+            case DelayedPromptType.Sms:
+                ChannelCaptureContainer.showSmsInputError(false);
+                break;
+            case DelayedPromptType.Email:
+                ChannelCaptureContainer.showEmailInputError(false);
+                break;
+            case DelayedPromptType.SmsAndEmail:
+                ChannelCaptureContainer.showSmsInputError(false);
+                ChannelCaptureContainer.showEmailInputError(false);
+                break;
+            default:
+                break;
+        }
     }
 
     static getValueFromEmailInput(): string | undefined {
