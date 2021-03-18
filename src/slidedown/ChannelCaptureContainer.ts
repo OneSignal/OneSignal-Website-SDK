@@ -332,9 +332,14 @@ export default class ChannelCaptureContainer {
         }
     }
 
-    static getValueFromEmailInput(): string | undefined {
+    static getValueFromEmailInput(): string {
         const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
-        return (<HTMLInputElement>inputNode).value;
+        return (<HTMLInputElement>inputNode).value || "";
+    }
+
+    static getValueFromSmsInput(): string {
+        const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
+        return (<HTMLInputElement>inputNode).value || "";
     }
 
     static validateEmailInputWithReturnVal(emailString?: string): boolean {
