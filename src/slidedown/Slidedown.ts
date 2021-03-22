@@ -21,7 +21,7 @@ import { getRetryIndicator } from './RetryIndicator';
 import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
 import { TagCategory } from '../models/Tags';
 import { getSlidedownElement } from './SlidedownElement';
-import { Utils } from '../../src/context/shared/utils/Utils';
+import { Utils } from '../context/shared/utils/Utils';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
 import PromptsHelper from '../helpers/PromptsHelper';
