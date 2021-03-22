@@ -20,6 +20,7 @@ import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/Chan
 import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
 import LocalStorage from "../../utils/LocalStorage";
 import DismissHelper from "../../helpers/DismissHelper";
+import PromptsHelper from "../../helpers/PromptsHelper";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -39,8 +40,12 @@ export class SlidedownManager {
         const notOptedOut = await OneSignal.privateGetSubscription();
 
         const slidedownType = options.slidedownPromptOptions?.type;
-        const slidedownIsPushDependent = slidedownType === DelayedPromptType.Push ||
-            slidedownType === DelayedPromptType.Category;
+
+        let isSlidedownPushDependent;
+
+        if (!!slidedownType) {
+            isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
+        }
 
         // applies to push slidedown type only
         if (slidedownType === DelayedPromptType.Push && isSubscribed) {
@@ -48,7 +53,7 @@ export class SlidedownManager {
         }
 
         // applies to both push and category slidedown types
-        if (slidedownIsPushDependent) {
+        if (isSlidedownPushDependent) {
             if (!notOptedOut) {
                 throw new NotSubscribedError(NotSubscribedReason.OptedOut);
             }
