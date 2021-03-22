@@ -78,7 +78,7 @@ export class SlidedownManager {
         const slidedownType: DelayedPromptType = slidedown.options.type;
 
         if (slidedown.isShowingFailureState) {
-            slidedown.setFailureState(false);
+            slidedown.removeFailureState();
         }
 
         let smsInputFieldIsValid, emailInputFieldIsValid, isEmailEmpty, isSmsEmpty: boolean;
@@ -116,7 +116,7 @@ export class SlidedownManager {
                     const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
                     if (isPushEnabled) {
                         // already subscribed, send tags immediately
-                        slidedown.setSaveState(true);
+                        slidedown.setSaveState();
                         await this.context.tagManager.sendTags(true);
                     } else {
                         this.registerForPush();
@@ -169,8 +169,12 @@ export class SlidedownManager {
         } catch (e) {
             Log.warn("OneSignal Slidedown failed to update:", e);
             // Display update error
-            slidedown.setSaveState(false);
-            slidedown.setFailureState(true, e.reason);
+            slidedown.removeSaveState();
+            slidedown.setFailureState();
+
+            if (e.reason !== undefined) {
+                slidedown.setFailureStateForInvalidChannelInput(e.reason);
+            }
             return;
         }
 
