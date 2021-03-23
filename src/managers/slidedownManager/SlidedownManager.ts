@@ -70,10 +70,9 @@ export class SlidedownManager {
             wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Web);
         }
 
-            if (wasDismissed && !isSubscribed && !options.force) {
-                Log.info(new PermissionMessageDismissedError());
-                return false;
-            }
+        if (wasDismissed && !options.force && !options.isInUpdateMode) {
+            Log.info(new PermissionMessageDismissedError());
+            return false;
         }
 
         return true;
