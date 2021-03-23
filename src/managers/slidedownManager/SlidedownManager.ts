@@ -20,6 +20,8 @@ import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/Chan
 import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
 import LocalStorage from "../../utils/LocalStorage";
 import DismissHelper from "../../helpers/DismissHelper";
+import ConfirmationToast from "../../slidedown/ConfirmationToast";
+import { awaitableTimeout } from "../../utils/AwaitableTimeout";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -180,7 +182,18 @@ export class SlidedownManager {
 
         if (slidedown) {
             slidedown.close();
-            // called here for compatibility with unit tests (close function doesn't run fully in test env)
+
+            // TO DO: fix with helper from other branch
+            if (slidedown.options.type === DelayedPromptType.SmsAndEmail) {
+                const { confirmMessage } = slidedown.options.text;
+                await awaitableTimeout(1000);
+                const confirmationToast = new ConfirmationToast(confirmMessage);
+                await confirmationToast.show();
+                await awaitableTimeout(5000);
+                confirmationToast.close();
+            }
+            await awaitableTimeout(1000);
+
             Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
         }
 
