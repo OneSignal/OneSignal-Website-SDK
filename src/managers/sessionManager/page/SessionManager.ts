@@ -18,7 +18,7 @@ export class SessionManager implements ISessionManager {
     this.context = context;
   }
 
-  async notifySWToUpsertSession(
+  private async notifySWToUpsertSession(
     deviceId: string | undefined,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
@@ -51,7 +51,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async notifySWToDeactivateSession(
+  private  async notifySWToDeactivateSession(
     deviceId: string | undefined,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
@@ -83,7 +83,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async handleVisibilityChange(): Promise<void> {
+  private async handleVisibilityChange(): Promise<void> {
     const visibilityState = document.visibilityState;
 
     const [deviceId, deviceRecord] = await Promise.all([
@@ -126,7 +126,7 @@ export class SessionManager implements ISessionManager {
     Log.warn("Unhandled visibility state happened", visibilityState);
   }
 
-  async handleOnBeforeUnload(): Promise<void> {
+  private async handleOnBeforeUnload(): Promise<void> {
     // don't have much time on before unload
     // have to skip adding device record to the payload
     const isHttps = OneSignalUtils.isHttps();
@@ -148,7 +148,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async handleOnFocus(e: Event): Promise<void> {
+  private async handleOnFocus(e: Event): Promise<void> {
     Log.debug("handleOnFocus", e);
     /**
      * Firefox has 2 focus events with different targets (document and window).
@@ -166,7 +166,7 @@ export class SessionManager implements ISessionManager {
     await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
   }
 
-  async handleOnBlur(e: Event): Promise<void> {
+  private async handleOnBlur(e: Event): Promise<void> {
     Log.debug("handleOnBlur", e);
     /**
      * Firefox has 2 focus events with different targets (document and window).
@@ -184,7 +184,7 @@ export class SessionManager implements ISessionManager {
     await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.Blur);
   }
 
-  async upsertSession(
+  public async upsertSession(
     deviceId: string,
     deviceRecord: PushDeviceRecord,
     sessionOrigin: SessionOrigin
@@ -212,7 +212,7 @@ export class SessionManager implements ISessionManager {
     await sessionPromise;
   }
 
-  setupSessionEventListeners(): void {
+  private setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (
       !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
@@ -249,7 +249,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  setupOnFocusAndOnBlurForSession(): void {
+  private setupOnFocusAndOnBlurForSession(): void {
     Log.debug("setupOnFocusAndOnBlurForSession");
 
     if (!OneSignal.cache.focusHandler) {
@@ -269,7 +269,7 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  static setupSessionEventListenersForHttp(): void {
+  public static setupSessionEventListenersForHttp(): void {
     if (!OneSignal.context || !OneSignal.context.sessionManager) {
       Log.error("OneSignal.context not available for http to setup session event listeners.");
       return;
@@ -279,7 +279,7 @@ export class SessionManager implements ISessionManager {
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  async sendOnSessionUpdateFromPage(deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async sendOnSessionUpdateFromPage(deviceRecord?: PushDeviceRecord): Promise<void> {
     if (this.onSessionSent) {
       return;
     }

@@ -16,7 +16,6 @@ import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { Subscription } from "../models/Subscription";
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from "../models/IntegrationKind";
 import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
@@ -45,8 +44,8 @@ export interface SubscriptionManagerConfig {
   onesignalVapidPublicKey: string;
 }
 
-export type SubscriptionStateServiceWorkerNotIntalled = 
-  SubscriptionStateKind.ServiceWorkerStatus403 | 
+export type SubscriptionStateServiceWorkerNotIntalled =
+  SubscriptionStateKind.ServiceWorkerStatus403 |
   SubscriptionStateKind.ServiceWorkerStatus404;
 
 export class SubscriptionManager {
@@ -241,6 +240,7 @@ export class SubscriptionManager {
    * Called after registering a subscription with OneSignal to associate this subscription with an
    * email record if one exists.
    */
+  // TODO: Move this into UserStateSynchronizer
   public async associateSubscriptionWithEmail(newDeviceId: string) {
     const emailProfile = await Database.getEmailProfile();
     if (!emailProfile.emailId) {
@@ -258,6 +258,7 @@ export class SubscriptionManager {
     );
   }
 
+  // TODO: Move this into UserStateSynchronizer
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
     const { deviceId } = await Database.getSubscription();
     return !!deviceId;
@@ -371,14 +372,14 @@ export class SubscriptionManager {
       if (err instanceof ServiceWorkerRegistrationError) {
         if (err.status === 403) {
           await this.context.subscriptionManager.registerFailedSubscription(
-            SubscriptionStateKind.ServiceWorkerStatus403, 
+            SubscriptionStateKind.ServiceWorkerStatus403,
             this.context);
         } else if (err.status === 404) {
           await this.context.subscriptionManager.registerFailedSubscription(
             SubscriptionStateKind.ServiceWorkerStatus404,
             this.context);
-        } 
-      } 
+        }
+      }
       throw err;
     }
 
@@ -762,7 +763,7 @@ export class SubscriptionManager {
       };
     }
 
-    /* 
+    /*
      * Removing pushSubscription from this method due to inconsistent behavior between browsers.
      * Doesn't matter for re-subscribing, worker is present and active.
      * Previous implementation for reference:

@@ -23,7 +23,6 @@ import { WindowEnvironmentKind } from '../../../src/models/WindowEnvironmentKind
 import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
 import { Subscription } from "../../../src/models/Subscription";
-import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
 
@@ -388,7 +387,7 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
     pushManager: null,
   };
   await TestEnvironment.mockInternalOneSignal();
-  
+
   sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);

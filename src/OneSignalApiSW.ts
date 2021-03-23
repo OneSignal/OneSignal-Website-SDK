@@ -1,7 +1,6 @@
 import { ServerAppConfig } from "./models/AppConfig";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
-import { FlattenedDeviceRecord } from "./models/DeviceRecord";
 import Log from "./libraries/Log";
 import { Utils } from "./context/shared/utils/Utils";
 import { OutcomeAttribution, OutcomeAttributionType } from "./models/Outcomes";
@@ -38,12 +37,13 @@ export class OneSignalApiSW {
     });
   }
 
-  static async updatePlayer(appId: string, playerId: string, options?: Object): Promise<void> {
-    const funcToExecute = async () => {
-      await OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
-    }
-    return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
-  }
+  // TODO: Dead code?
+  // static async updatePlayer(appId: string, playerId: string, options?: Object): Promise<void> {
+  //   const funcToExecute = async () => {
+  //     await OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
+  //   }
+  //   return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
+  // }
 
   public static async updateUserSession(
     userId: string,

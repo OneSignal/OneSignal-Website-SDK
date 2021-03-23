@@ -1,11 +1,8 @@
-import NotImplementedError from '../errors/NotImplementedError';
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { DeviceRecord } from './DeviceRecord';
+import NotImplementedError from "src/errors/NotImplementedError";
+import { DeliveryPlatformKind } from "src/models/DeliveryPlatformKind";
+import { AbstractSubscription } from "./AbstractSubscription";
 
-/**
- * Describes an email device record.
- */
-export class EmailDeviceRecord extends DeviceRecord {
+export class EmailSubscription extends AbstractSubscription {
   /**
    * @param email Omitting this parameter does not void the record's identifier.
    */
@@ -15,7 +12,10 @@ export class EmailDeviceRecord extends DeviceRecord {
     public pushDeviceRecordId?: string | null,
   ) {
     super();
-    this.deliveryPlatform = DeliveryPlatformKind.Email;
+  }
+
+  protected getDeliveryPlatform(): DeliveryPlatformKind {
+    return DeliveryPlatformKind.Email;
   }
 
   serialize() {
@@ -34,5 +34,5 @@ export class EmailDeviceRecord extends DeviceRecord {
     return serializedBundle;
   }
 
-  deserialize(_: object): EmailDeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): EmailSubscription { throw new NotImplementedError(); }
 }

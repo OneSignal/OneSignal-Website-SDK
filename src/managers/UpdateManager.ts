@@ -1,6 +1,5 @@
 import OneSignalApiShared from "../OneSignalApiShared";
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
 import { NotSubscribedError, NotSubscribedReason } from "../errors/NotSubscribedError";
 import MainHelper from '../helpers/MainHelper';
 import Database from "../services/Database";
@@ -82,7 +81,7 @@ export class UpdateManager {
 
     try {
       // Not sending on_session here but from SW instead.
-      
+
       // Not awaiting here on purpose
       this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
@@ -109,7 +108,9 @@ export class UpdateManager {
     }
   }
 
-  public onSessionAlreadyCalled() {
+  // Only used for tests
+  // TODO: Tests should check resulting player update calls instead of checking this var
+  onSessionAlreadyCalled() {
     return this.onSessionSent;
   }
 

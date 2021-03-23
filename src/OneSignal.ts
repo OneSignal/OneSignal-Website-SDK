@@ -42,10 +42,8 @@ import {
   logMethodCall,
 } from './utils';
 import { ValidatorUtils } from './utils/ValidatorUtils';
-import { DeviceRecord } from './models/DeviceRecord';
 import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
-import { EmailDeviceRecord } from './models/EmailDeviceRecord';
 import Emitter, { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
 import ConfigManager from "./managers/ConfigManager";
@@ -978,8 +976,6 @@ export default class OneSignal {
   static __initAlreadyCalled = false;
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
-  static DeviceRecord = DeviceRecord;
-  static EmailDeviceRecord = EmailDeviceRecord;
 
   static notificationPermission = NotificationPermission;
 

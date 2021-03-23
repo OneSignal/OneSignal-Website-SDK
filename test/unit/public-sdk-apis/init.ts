@@ -12,7 +12,6 @@ import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
 import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import { EmailProfile } from "../../../src/models/EmailProfile";
-import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';

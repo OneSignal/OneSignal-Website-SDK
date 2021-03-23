@@ -1,7 +1,6 @@
 import JSONP from 'jsonp';
 import SdkEnvironment from "./managers/SdkEnvironment";
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
-import { DeviceRecord } from './models/DeviceRecord';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import { EmailProfile } from './models/EmailProfile';
 import OneSignalApiSW from "./OneSignalApiSW";
@@ -45,9 +44,10 @@ export default class OneSignalApi {
     }
   }
 
-  static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
-    return await OneSignalApiShared.createUser(deviceRecord);
-  }
+  // Looks to be dead code as OneSignalApiShared.createUser is always called instead
+  // static async createUser(deviceRecord: DeviceRecord): Promise<string | null> {
+  //   return await OneSignalApiShared.createUser(deviceRecord);
+  // }
 
   static async createEmailRecord(
     appConfig: AppConfig,

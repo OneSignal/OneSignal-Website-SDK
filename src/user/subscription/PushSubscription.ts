@@ -1,9 +1,10 @@
 import bowser from 'bowser';
 
-import NotImplementedError from '../errors/NotImplementedError';
-import { RawPushSubscription } from './RawPushSubscription';
-import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
+import { DeliveryPlatformKind } from 'src/models/DeliveryPlatformKind';
+import { RawPushSubscription } from 'src/models/RawPushSubscription';
+import { SubscriptionStateKind } from 'src/models/SubscriptionStateKind';
+import OneSignalUtils from 'src/utils/OneSignalUtils';
+import { AbstractSubscription, FlattenedDeviceRecord } from './AbstractSubscription';
 
 export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
   identifier?: string | null;
@@ -14,7 +15,7 @@ export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
 /**
  * Describes a push notification device record.
  */
-export class PushDeviceRecord extends DeviceRecord {
+export class PushSubscription extends AbstractSubscription {
   public subscription: RawPushSubscription | undefined;
 
   /**
@@ -23,6 +24,25 @@ export class PushDeviceRecord extends DeviceRecord {
   constructor(subscription?: RawPushSubscription) {
     super();
     this.subscription = subscription;
+  }
+
+  isSafari(): boolean {
+    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+  }
+
+  getDeliveryPlatform(): DeliveryPlatformKind {
+    // For testing purposes, allows changing the browser user agent
+    const browser = OneSignalUtils.redetectBrowserUserAgent();
+
+    if (this.isSafari()) {
+      return DeliveryPlatformKind.Safari;
+    } else if (browser.firefox) {
+      return DeliveryPlatformKind.Firefox;
+    } else if (browser.msedge) {
+      return DeliveryPlatformKind.Edge;
+    } else {
+      return DeliveryPlatformKind.ChromeLike;
+    }
   }
 
   serialize(): SerializedPushDeviceRecord {
@@ -44,7 +64,7 @@ export class PushDeviceRecord extends DeviceRecord {
     rawPushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,
   ) {
-    const pushRegistration = new PushDeviceRecord(rawPushSubscription);
+    const pushRegistration = new PushSubscription(rawPushSubscription);
     pushRegistration.appId = appId;
     pushRegistration.subscriptionState = rawPushSubscription ?
       SubscriptionStateKind.Subscribed :
@@ -55,5 +75,5 @@ export class PushDeviceRecord extends DeviceRecord {
     return pushRegistration;
   }
 
-  deserialize(_: object): PushDeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): PushSubscription { throw new NotImplementedError(); }
 }

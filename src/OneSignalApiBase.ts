@@ -7,6 +7,7 @@ import Log from "./libraries/Log";
 type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE";
 
+// This makes the raw HTTP call with the browser's fetch API.
 export class OneSignalApiBase {
   static get(action: string, data?: any, headers?: Headers | undefined) {
     return OneSignalApiBase.call('GET', action, data, headers);

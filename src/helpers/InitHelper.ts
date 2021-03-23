@@ -15,7 +15,6 @@ import OneSignalApiShared from '../OneSignalApiShared';
 import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
@@ -261,7 +260,7 @@ export default class InitHelper {
     ) {
       try {
         await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
-      } catch (e) { 
+      } catch (e) {
         Log.error(e);
       }
     }

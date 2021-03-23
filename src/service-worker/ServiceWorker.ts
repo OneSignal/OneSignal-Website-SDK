@@ -12,7 +12,6 @@ import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import {
   UpsertSessionPayload, DeactivateSessionPayload,
   PageVisibilityRequest, PageVisibilityResponse, SessionStatus
@@ -210,7 +209,7 @@ export class ServiceWorker {
 
         const timestamp = payload.timestamp;
         if (self.clientsStatus.timestamp !== timestamp) { return; }
-        
+
         self.clientsStatus.receivedResponsesCount++;
         if (payload.focused) {
           self.clientsStatus.hasAnyActiveSessions = true;
@@ -354,18 +353,18 @@ export class ServiceWorker {
     if (!hasRequiredParams) {
       return null;
     }
- 
+
     // JSON.stringify() does not include undefined values
     // Our response will not contain those fields here which have undefined values
     const postData = {
-      player_id : deviceId, 
+      player_id : deviceId,
       app_id : appId
     };
-    
+
     Log.debug(`Called %csendConfirmedDelivery(${
       JSON.stringify(notification, null, 4)
     })`, Utils.getConsoleStyle('code'));
-    
+
     return await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
   }
 

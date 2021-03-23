@@ -1,11 +1,7 @@
-import bowser from 'bowser';
-
-import Environment from '../Environment';
-import NotImplementedError from '../errors/NotImplementedError';
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { Serializable } from './Serializable';
-import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { OneSignalUtils } from "../utils/OneSignalUtils";
+import bowser from "bowser";
+import Environment from "src/Environment";
+import { DeliveryPlatformKind } from "src/models/DeliveryPlatformKind";
+import { SubscriptionStateKind } from "src/models/SubscriptionStateKind";
 
 export interface FlattenedDeviceRecord {
   device_type: DeliveryPlatformKind;
@@ -20,12 +16,7 @@ export interface FlattenedDeviceRecord {
   app_id?: string;
 }
 
-/**
- * Describes the fields of a OneSignal "player" device record.
- *
- * This is used when creating or modifying push and email records.
- */
-export abstract class DeviceRecord implements Serializable {
+export abstract class AbstractSubscription {
   public deliveryPlatform: DeliveryPlatformKind;
   public language: string;
   public timezone: number;
@@ -37,8 +28,10 @@ export abstract class DeviceRecord implements Serializable {
   public subscriptionState: SubscriptionStateKind | undefined;
 
   constructor() {
+    // TODO: The generation of these values should be outside of this class
+
     // TODO: Possible implementation for appId initialization
-    // this.appId = OneSignal.context.appConfig.appId;
+    this.appId = OneSignal.context.appConfig.appId;
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
     this.timezoneId = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -50,24 +43,7 @@ export abstract class DeviceRecord implements Serializable {
     // Unimplemented properties are appId, subscriptionState, and subscription
   }
 
-  isSafari(): boolean {
-    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
-  }
-
-  getDeliveryPlatform(): DeliveryPlatformKind {
-    // For testing purposes, allows changing the browser user agent
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-
-    if (this.isSafari()) {
-      return DeliveryPlatformKind.Safari;
-    } else if (browser.firefox) {
-      return DeliveryPlatformKind.Firefox;
-    } else if (browser.msedge) {
-      return DeliveryPlatformKind.Edge;
-    } else {
-      return DeliveryPlatformKind.ChromeLike;
-    }
-  }
+  protected abstract getDeliveryPlatform(): DeliveryPlatformKind;
 
   serialize(): FlattenedDeviceRecord {
     const serializedBundle: FlattenedDeviceRecord = {
@@ -87,6 +63,4 @@ export abstract class DeviceRecord implements Serializable {
 
     return serializedBundle;
   }
-
-  deserialize(_: object): DeviceRecord { throw new NotImplementedError(); }
 }

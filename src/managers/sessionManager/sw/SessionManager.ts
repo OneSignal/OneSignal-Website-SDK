@@ -3,6 +3,7 @@ import { PushDeviceRecord } from "../../../models/PushDeviceRecord";
 import { SessionOrigin } from "../../../models/Session";
 import { ISessionManager } from "../types";
 
+// TODO: We should delete this as it is dead code and don't believe we will ever need this.
 export class SessionManager implements ISessionManager {
   constructor(_context: ContextSWInterface) { }
 
