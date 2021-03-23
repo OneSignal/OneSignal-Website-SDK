@@ -19,7 +19,7 @@ test("Test showHttpPrompt with no params", async t => {
   const appConfig = TestEnvironment.getFakeAppConfig();
   OneSignal.context = new Context(appConfig);
 
-  sinonSandbox.stub(MainHelper, "wasHttpsNativePromptDismissed").resolves(true);
+  sinonSandbox.stub(DismissHelper, "wasPromptOfTypeDismissed").resolves(true);
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
 
   // Ensure both public and private calls work
