@@ -21,9 +21,10 @@ import { getRetryIndicator } from './RetryIndicator';
 import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
 import { TagCategory } from '../models/Tags';
 import { getSlidedownElement } from './SlidedownElement';
-import { Utils } from '../../src/context/shared/utils/Utils';
+import { Utils } from '../context/shared/utils/Utils';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
 import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import PromptsHelper from '../helpers/PromptsHelper';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
@@ -216,8 +217,7 @@ export default class Slidedown {
     removeDomElement('#onesignal-button-indicator-holder');
     removeCssClass(this.allowButton, 'onesignal-error-state-button');
 
-    // to do: use helper function
-    if (!(this.options.type in [DelayedPromptType.Push, DelayedPromptType.Category])) {
+    if (!PromptsHelper.isSlidedownPushDependent(this.options.type)) {
       ChannelCaptureContainer.resetInputErrorStates(this.options.type);
     }
 
