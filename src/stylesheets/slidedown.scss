@@ -19,6 +19,12 @@ $desktop-width: 1024px;
   right: 0;
   -webkit-font-smoothing: initial;
 
+  .toast-text {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+  }
+
   #slidedown-body {
     .channel-capture-container {
       background-color: white;
