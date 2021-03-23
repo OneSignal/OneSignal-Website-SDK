@@ -244,7 +244,7 @@ export class PromptsManager {
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       this.context.slidedownManager.handleAllowClick();
     });
-    OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
+    OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
       switch (type) {
         case DelayedPromptType.Push:
