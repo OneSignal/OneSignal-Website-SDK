@@ -5,14 +5,25 @@ import Database from '../services/Database';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
 import { isUsingSubscriptionWorkaround } from '../utils';
+import { DismissPrompt, DismissCountKey, DismissTimeKey } from '../models/Dismiss';
 
 declare var OneSignal: any;
 
-export default class DismissHelper {
+const DISMISS_TYPE_COUNT_MAP = {
+  [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
+  [DismissPrompt.Web]: DismissCountKey.WebPromptsDismissCount
+};
+
+const DISMISS_TYPE_TIME_MAP = {
+  [DismissPrompt.Push] : DismissTimeKey.OneSignalNotificationPrompt,
+  [DismissPrompt.Web] : DismissTimeKey.OneSignalWebPrompt
+};
+
+export class DismissHelper {
   /**
    * Creates an expiring local storage entry to note that the user does not want to be disturbed.
    */
-  static async markHttpsNativePromptDismissed() {
+  static async markPromptDismissedWithType(type: DismissPrompt) {
     /**
      * Note: LocalStorage is set both on subdomain.onesignal.com and the main site.
      *
@@ -36,7 +47,11 @@ export default class DismissHelper {
         Log.debug("Proxy Frame possibly didn't not receive MARK_PROMPT_DISMISSED message", e || "");
       }
     }
-    let dismissCount = await Database.get<number>('Options', 'promptDismissCount');
+
+    const countKey = DISMISS_TYPE_COUNT_MAP[type];
+    const timeKey  = DISMISS_TYPE_TIME_MAP[type];
+
+    let dismissCount = await Database.get<number>('Options', countKey);
     if (!dismissCount) {
       dismissCount = 0;
     }
@@ -53,10 +68,26 @@ export default class DismissHelper {
     } else if (dismissCount > 2) {
       dismissDays = 30;
     }
-    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the native notification prompt; reprompt after ${dismissDays} days.`);
-    await Database.put('Options', { key: 'promptDismissCount', value: dismissCount });
+    Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the ${type} ` +
+      `notification prompt; reprompt after ${dismissDays} days.`);
+    await Database.put('Options', { key: countKey, value: dismissCount });
 
     const dismissMinutes = dismissDays * 24 * 60;
-    return TimedLocalStorage.setItem('onesignal-notification-prompt', 'dismissed', dismissMinutes);
+    return TimedLocalStorage.setItem(timeKey, 'dismissed', dismissMinutes);
+  }
+
+  /**
+   * Returns true if a LocalStorage entry exists for noting the user dismissed the prompt.
+   */
+  static wasPromptOfTypeDismissed(type: DismissPrompt): boolean {
+    switch (type) {
+      case DismissPrompt.Push:
+        return TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt) === 'dismissed';
+      case DismissPrompt.Web:
+        return TimedLocalStorage.getItem(DismissTimeKey.OneSignalWebPrompt) === 'dismissed';
+      default:
+        break;
+    }
+    return false;
   }
 }

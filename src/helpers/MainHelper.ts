@@ -13,6 +13,7 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../context/shared/utils/Utils";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import SubscriptionHelper from "./SubscriptionHelper";
+import { DismissPrompt, DismissTimeKey } from '../models/Dismiss';
 
 export default class MainHelper {
 
@@ -52,13 +53,6 @@ export default class MainHelper {
     } else {
       return SubscriptionStateKind.MutedByApi;
     }
-  }
-
-  /**
-   * Returns true if a LocalStorage entry exists for noting the user dismissed the native prompt.
-   */
-  static wasHttpsNativePromptDismissed() {
-    return TimedLocalStorage.getItem('onesignal-notification-prompt') === 'dismissed';
   }
 
   /**
