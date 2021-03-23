@@ -17,7 +17,7 @@ import {
   AppUserConfigPromptOptions,
   DelayedPromptType,
   SlidedownPromptOptions} from '../models/Prompts';
-import DismissHelper from '../helpers/DismissHelper';
+import { DismissHelper } from '../helpers/DismissHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
@@ -28,6 +28,7 @@ import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from "bowser";
 import { ChannelCaptureError, InvalidChannelInputField } from "../errors/ChannelCaptureError";
 import ChannelCaptureContainer from "../slidedown/ChannelCaptureContainer";
+import { DismissPrompt } from "../models/Dismiss";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -166,7 +167,7 @@ export class PromptsManager {
     MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
     this.isNativePromptShowing = false;
-    DismissHelper.markHttpsNativePromptDismissed();
+    DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
   }
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
@@ -249,9 +250,11 @@ export class PromptsManager {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
           Log.debug("Setting flag to not show the slidedown to the user again.");
-          DismissHelper.markHttpsNativePromptDismissed();
+          DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
           break;
         default:
+          Log.debug("Setting flag to not show the slidedown to the user again.");
+          DismissHelper.markPromptDismissedWithType(DismissPrompt.Web);
           break;
       }
     });

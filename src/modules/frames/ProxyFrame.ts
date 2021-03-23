@@ -1,6 +1,6 @@
 import Event from '../../Event';
 import InitHelper from '../../helpers/InitHelper';
-import DismissHelper from '../../helpers/DismissHelper';
+import { DismissHelper } from '../../helpers/DismissHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
@@ -14,6 +14,7 @@ import {
 } from "../../models/Session";
 import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
 import { AppConfig } from "../../models/AppConfig";
+import { DismissPrompt } from '../../models/Dismiss';
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
  * into the iFrame URL as subdomain.onesignal.com/webPushIFrame or
@@ -196,7 +197,7 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onMarkPromptDismissed(message: MessengerMessageEvent) {
     Log.debug('(Reposted from iFrame -> Host) Marking prompt as dismissed.');
-    await DismissHelper.markHttpsNativePromptDismissed();
+    await DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }

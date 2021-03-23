@@ -12,17 +12,17 @@ import PermissionMessageDismissedError from "../../errors/PermissionMessageDismi
 import PushPermissionNotGrantedError, {
     PushPermissionNotGrantedErrorReason
 } from "../../errors/PushPermissionNotGrantedError";
-import MainHelper from "../../helpers/MainHelper";
 import { NotificationPermission } from "../../models/NotificationPermission";
 import { OneSignalUtils } from "../../utils/OneSignalUtils";
 import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
 import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/ChannelCaptureError";
 import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
 import LocalStorage from "../../utils/LocalStorage";
-import DismissHelper from "../../helpers/DismissHelper";
+import { DismissHelper } from "../../helpers/DismissHelper";
 import PromptsHelper from "../../helpers/PromptsHelper";
 import ConfirmationToast from "../../slidedown/ConfirmationToast";
 import { awaitableTimeout } from "../../utils/AwaitableTimeout";
+import { DismissPrompt } from "../../models/Dismiss";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -36,10 +36,10 @@ export class SlidedownManager {
     }
 
     private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
-        const wasDismissed = MainHelper.wasHttpsNativePromptDismissed();
         const permissionDenied = await OneSignal.privateGetNotificationPermission() === NotificationPermission.Denied;
         const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
         const notOptedOut = await OneSignal.privateGetSubscription();
+        let wasDismissed;
 
         const slidedownType = options.slidedownPromptOptions?.type;
 
@@ -56,6 +56,8 @@ export class SlidedownManager {
 
         // applies to both push and category slidedown types
         if (isSlidedownPushDependent) {
+            wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
+
             if (!notOptedOut) {
                 throw new NotSubscribedError(NotSubscribedReason.OptedOut);
             }
@@ -64,6 +66,9 @@ export class SlidedownManager {
                 Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
                 return false;
             }
+        } else {
+            wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Web);
+        }
 
             if (wasDismissed && !isSubscribed && !options.force) {
                 Log.info(new PermissionMessageDismissedError());
@@ -202,14 +207,15 @@ export class SlidedownManager {
             Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
         }
 
-        // TO DO: clean up a bit
         switch (slidedownType) {
             case DelayedPromptType.Push:
             case DelayedPromptType.Category:
-            Log.debug("Setting flag to not show the slidedown to the user again.");
-            DismissHelper.markHttpsNativePromptDismissed();
-            break;
+                Log.debug("Setting flag to not show the slidedown to the user again.");
+                DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
+                break;
             default:
+                Log.debug("Setting flag to not show the slidedown to the user again.");
+                DismissHelper.markPromptDismissedWithType(DismissPrompt.Web);
             break;
         }
     }

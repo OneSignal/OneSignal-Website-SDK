@@ -58,7 +58,7 @@ import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
-import DismissHelper from './helpers/DismissHelper';
+import { DismissHelper } from './helpers/DismissHelper';
 
 export default class OneSignal {
   /**
