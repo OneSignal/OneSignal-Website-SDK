@@ -188,8 +188,7 @@ export class SlidedownManager {
         if (slidedown) {
             slidedown.close();
 
-            // TO DO: fix with helper from other branch
-            if (slidedown.options.type === DelayedPromptType.SmsAndEmail) {
+            if (!PromptsHelper.isSlidedownPushDependent(slidedownType)) {
                 const { confirmMessage } = slidedown.options.text;
                 await awaitableTimeout(1000);
                 const confirmationToast = new ConfirmationToast(confirmMessage);
