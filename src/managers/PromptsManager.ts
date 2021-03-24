@@ -105,7 +105,6 @@ export class PromptsManager {
 
         const options: AutoPromptOptions = {
           slidedownPromptOptions: promptOptions,
-          isInUpdateMode: isPushEnabled
         };
 
         if (conditionMetWithSlidedownOptions) {
