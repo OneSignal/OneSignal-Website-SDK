@@ -19,14 +19,16 @@ import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
 import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
-import { TagCategory } from '../../src/models/Tags';
-import Log from '../../src/libraries/Log';
+import { TagCategory } from '../models/Tags';
 import { getSlidedownElement } from './SlidedownElement';
 import { Utils } from '../../src/context/shared/utils/Utils';
+import ChannelCaptureContainer from './ChannelCaptureContainer';
+import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
   public notificationIcons: NotificationIcons | null;
+  public channelCaptureContainer: ChannelCaptureContainer | null;
 
   // category slidedown
   public isShowingFailureState: boolean;
@@ -43,6 +45,7 @@ export default class Slidedown {
     this.options.text.acceptButton  = options.text.acceptButton.substring(0, 16);
     this.options.text.cancelButton  = options.text.cancelButton.substring(0, 16);
     this.notificationIcons          = null;
+    this.channelCaptureContainer    = null;
     this.isShowingFailureState      = false;
 
     switch (options.type) {
@@ -127,6 +130,7 @@ export default class Slidedown {
   onSlidedownCanceled(_: any): void {
     Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
+    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
   }
 
   close(): void {
@@ -147,14 +151,9 @@ export default class Slidedown {
   }
 
   /**
-   * only used with Category Slidedown
+   * To be used with slidedown types other than `push` type
    */
   setSaveState(state: boolean): void {
-    if (!this.tagCategories) {
-      Log.debug("Slidedown private category options are not defined");
-      return;
-    }
-
     if (state) {
       // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.disabled = true;
@@ -174,27 +173,53 @@ export default class Slidedown {
       removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
     }
   }
-
-  setFailureState(state: boolean): void {
-    if (!this.tagCategories) {
-      Log.debug("Slidedown private category options are not defined");
-      return;
-    }
-
+  /**
+   * @param  {boolean} state
+   * @param  {InvalidChannelInputField} invalidChannelInput? - for use in Web Prompts only!
+   *    we want the ability to be able to specify which channel input failed validation
+   * @returns void
+   */
+  setFailureState(state: boolean, invalidChannelInput?: InvalidChannelInputField): void {
+    // general failure state
     if (state) {
-      // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
       this.allowButton.textContent = null;
       this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
       this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
 
-      addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
-      addCssClass(this.allowButton, 'onesignal-error-state-button');
+      if (typeof invalidChannelInput === undefined) {
+        // non-web-prompts slidedown type: e.g Category Slidedown update failed
+        addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
+        addCssClass(this.allowButton, 'onesignal-error-state-button');
+      }
+
     } else {
       removeDomElement('#onesignal-button-indicator-holder');
       removeCssClass(this.allowButton, 'onesignal-error-state-button');
+
+      if (!(this.options.type in [DelayedPromptType.Push, DelayedPromptType.Category])) {
+        ChannelCaptureContainer.resetInputErrorStates();
+      }
     }
 
     this.isShowingFailureState = state;
+
+    // handle particular failure states
+    if (typeof invalidChannelInput !== undefined) {
+      switch (invalidChannelInput) {
+        case InvalidChannelInputField.InvalidSms:
+          ChannelCaptureContainer.showSmsInputError(true);
+          break;
+        case InvalidChannelInputField.InvalidEmail:
+          ChannelCaptureContainer.showEmailInputError(true);
+          break;
+        case InvalidChannelInputField.InvalidEmailAndSms:
+          ChannelCaptureContainer.showSmsInputError(true);
+          ChannelCaptureContainer.showEmailInputError(true);
+          break;
+        default:
+          break;
+        }
+    }
   }
 
   getPlatformNotificationIcon(): string {

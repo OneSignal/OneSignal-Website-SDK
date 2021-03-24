@@ -14,6 +14,12 @@ import PushPermissionNotGrantedError, {
 } from "../../errors/PushPermissionNotGrantedError";
 import MainHelper from "../../helpers/MainHelper";
 import { NotificationPermission } from "../../models/NotificationPermission";
+import { OneSignalUtils } from "../../utils/OneSignalUtils";
+import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
+import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/ChannelCaptureError";
+import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
+import LocalStorage from "../../utils/LocalStorage";
+import DismissHelper from "../../helpers/DismissHelper";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -61,6 +67,93 @@ export class SlidedownManager {
         return true;
     }
 
+    private registerForPush(): void {
+        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const options: RegisterOptions = { autoAccept, slidedown: true };
+        InitHelper.registerForPushNotifications(options);
+    }
+
+    public async handleAllowClick(): Promise<void> {
+        const { slidedown } = OneSignal;
+        const slidedownType: DelayedPromptType = slidedown.options.type;
+
+        if (slidedown.isShowingFailureState) {
+            slidedown.setFailureState(false);
+        }
+
+        let smsInputFieldIsValid, emailInputFieldIsValid;
+
+        if (!!slidedown.channelCaptureContainer) {
+            smsInputFieldIsValid = slidedown.channelCaptureContainer.smsInputFieldIsValid;
+            emailInputFieldIsValid = slidedown.channelCaptureContainer.emailInputFieldIsValid;
+        }
+
+        try {
+            switch (slidedownType) {
+                case DelayedPromptType.Push:
+                    this.registerForPush();
+                    break;
+                case DelayedPromptType.Category:
+                    const tags = TaggingContainer.getValuesFromTaggingContainer();
+                    this.context.tagManager.storeTagValuesToUpdate(tags);
+
+                    const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
+                    if (isPushEnabled) {
+                        slidedown.setSaveState(true);
+                        await this.context.tagManager.sendTags(true);
+                    } else {
+                        this.registerForPush();
+                        // tags are sent on the subscription change event handler
+                    }
+                    break;
+                case DelayedPromptType.Email:
+                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    break;
+                case DelayedPromptType.Sms:
+                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    break;
+                case DelayedPromptType.SmsAndEmail:
+                    const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
+                    const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
+
+                    if (bothFieldsInvalid || bothFieldsEmpty) {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
+                    }
+
+                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+
+                    // TO DO: send sms email updates
+                    break;
+                default:
+                    break;
+            }
+        } catch (e) {
+            Log.warn("OneSignal Slidedown failed to update:", e);
+            // Display update error
+            slidedown.setSaveState(false);
+            slidedown.setFailureState(true, e.reason);
+            return;
+        }
+
+        if (slidedown) {
+            slidedown.close();
+            // called here for compatibility with unit tests (close function doesn't run fully in test env)
+            Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+        }
+
+        // TO DO: clean up a bit
+        switch (slidedownType) {
+            case DelayedPromptType.Push:
+            case DelayedPromptType.Category:
+            Log.debug("Setting flag to not show the slidedown to the user again.");
+            DismissHelper.markHttpsNativePromptDismissed();
+            break;
+            default:
+            break;
+        }
+    }
+
     public setIsSlidedownShowing(isShowing: boolean): void {
         this.isSlidedownShowing = isShowing;
     }
@@ -85,6 +178,7 @@ export class SlidedownManager {
     }
 
     public async createSlidedown(options: AutoPromptOptions): Promise<void> {
+        OneSignalUtils.logMethodCall("createSlidedown");
         try {
             const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
             if (!showPrompt) { return; }
@@ -104,7 +198,7 @@ export class SlidedownManager {
             const slidedownPromptOptions = options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
             OneSignal.slidedown = new Slidedown(slidedownPromptOptions);
             await OneSignal.slidedown.create(options.isInUpdateMode);
-            await this.mountSpecialContainers(options);
+            await this.mountAuxiliaryContainers(options);
             Log.debug('Showing OneSignal Slidedown');
         } catch (e) {
             Log.error("There was an error showing the OneSignal Slidedown:", e);
@@ -113,7 +207,7 @@ export class SlidedownManager {
         }
     }
 
-    private async mountSpecialContainers(options: AutoPromptOptions): Promise<void> {
+    private async mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
         switch (options.slidedownPromptOptions?.type) {
             case DelayedPromptType.Category:
                 this.mountTaggingContainer(options);
@@ -129,6 +223,7 @@ export class SlidedownManager {
     }
 
     private async mountTaggingContainer(options: AutoPromptOptions): Promise<void> {
+        OneSignalUtils.logMethodCall("mountTaggingContainer");
         try {
             // show slidedown with tagging container
             let tagsForComponent: TagsObjectWithBoolean = {};
@@ -157,6 +252,15 @@ export class SlidedownManager {
     }
 
     private async mountChannelCaptureContainer(options: AutoPromptOptions): Promise<void> {
-        // to do
+        OneSignalUtils.logMethodCall("mountChannelCaptureContainer");
+        try {
+            if (!!options.slidedownPromptOptions) {
+                const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
+                channelCaptureContainer.mount();
+                OneSignal.slidedown.channelCaptureContainer = channelCaptureContainer;
+            }
+        } catch (e) {
+            Log.error("OneSignal: Attempted to create channel capture container with error", e);
+        }
     }
 }

@@ -8,7 +8,7 @@ import { isUsingSubscriptionWorkaround } from '../utils';
 
 declare var OneSignal: any;
 
-export default class TestHelper {
+export default class DismissHelper {
   /**
    * Creates an expiring local storage entry to note that the user does not want to be disturbed.
    */

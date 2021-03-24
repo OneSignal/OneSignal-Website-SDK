@@ -17,7 +17,7 @@ import {
   AppUserConfigPromptOptions,
   DelayedPromptType,
   SlidedownPromptOptions} from '../models/Prompts';
-import TestHelper from '../helpers/TestHelper';
+import DismissHelper from '../helpers/DismissHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
@@ -26,6 +26,8 @@ import TaggingContainer from '../slidedown/TaggingContainer';
 import LocalStorage from '../utils/LocalStorage';
 import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from "bowser";
+import { ChannelCaptureError, InvalidChannelInputField } from "../errors/ChannelCaptureError";
+import ChannelCaptureContainer from "../slidedown/ChannelCaptureContainer";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -138,6 +140,15 @@ export class PromptsManager {
         case DelayedPromptType.Category:
           await this.internalShowCategorySlidedown(options);
           break;
+        case DelayedPromptType.Sms:
+          await this.internalShowSmsSlidedown(options);
+          break;
+        case DelayedPromptType.Email:
+          await this.internalShowEmailSlidedown(options);
+          break;
+        case DelayedPromptType.SmsAndEmail:
+          await this.internalShowSmsAndEmailSlidedown(options);
+          break;
         default:
           Log.error("Invalid Delayed Prompt type");
       }
@@ -155,7 +166,7 @@ export class PromptsManager {
     MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
     this.isNativePromptShowing = false;
-    TestHelper.markHttpsNativePromptDismissed();
+    DismissHelper.markHttpsNativePromptDismissed();
   }
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
@@ -175,16 +186,40 @@ export class PromptsManager {
     await this.context.slidedownManager.createSlidedown(options);
   }
 
-  // Wrapper for existing method `internalShowSlidedownPrompt`. Inserts information about
-  // provided categories, then calls `internalShowSlidedownPrompt`.
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
+    await this.internalShowParticularSlidedown(DelayedPromptType.Category, options);
+  }
+
+  public async internalShowSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowSmsSlidedown");
+    await this.internalShowParticularSlidedown(DelayedPromptType.Sms, options);
+  }
+
+  public async internalShowEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowEmailSlidedown");
+    await this.internalShowParticularSlidedown(DelayedPromptType.Email, options);
+  }
+
+  public async internalShowSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("internalShowSmsAndEmailSlidedown");
+    await this.internalShowParticularSlidedown(DelayedPromptType.SmsAndEmail, options);
+  }
+
+  /**
+   * Generalized shower function to show particular slidedown types
+   * @param  {DelayedPromptType} typeToPullFromConfig - slidedown type to look for in config if not passed via `options`
+   * @param  {AutoPromptOptions} options - passed in via another internal function or top level OneSignal slidedown func
+   */
+  public async internalShowParticularSlidedown(typeToPullFromConfig: DelayedPromptType, options?: AutoPromptOptions)
+  : Promise<void> {
     const prompts = this.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
     const slidedownPromptOptions = options?.slidedownPromptOptions ||
-      PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, DelayedPromptType.Category);
+      PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
-      Log.error(`OneSignal: no categories to display. Check your configuration on the ` +
-        `OneSignal dashboard or your custom code initialization.`);
+      Log.error(`OneSignal: slidedown of type '${typeToPullFromConfig} couldn't be shown. Check your configuration`+
+        ` on the OneSignal dashboard or your custom code initialization.`);
       return;
     }
 
@@ -206,45 +241,19 @@ export class PromptsManager {
       this.context.slidedownManager.showQueued();
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      const { slidedown } = OneSignal;
-      if (slidedown.isShowingFailureState) {
-        slidedown.setFailureState(false);
-      }
-      const tags = TaggingContainer.getValuesFromTaggingContainer();
-      this.context.tagManager.storeTagValuesToUpdate(tags);
-      // use local storage permission to get around user-gesture sync requirement
-      const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
-
-      if (isPushEnabled) {
-        slidedown.setSaveState(true);
-        // Sync Category Slidedown tags (isInUpdateMode = true)
-        try {
-          await this.context.tagManager.sendTags(true);
-        } catch (e) {
-          Log.error("Failed to update tags", e);
-          // Display tag update error
-          slidedown.setSaveState(false);
-          slidedown.setFailureState(true);
-          return;
-        }
-      } else {
-        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = { autoAccept, slidedown: true };
-        InitHelper.registerForPushNotifications(options);
-      }
-
-      if (slidedown) {
-        slidedown.close();
-        // called here for compatibility with unit tests (close function doesn't run fully in test env)
-        // TODO: we should look into whether this is the best place to put it and confirm before requiring it in source
-        Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
-      }
-      Log.debug("Setting flag to not show the slidedown to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
+      this.context.slidedownManager.handleAllowClick();
     });
     OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      Log.debug("Setting flag to not show the slidedown to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
+      const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
+      switch (type) {
+        case DelayedPromptType.Push:
+        case DelayedPromptType.Category:
+          Log.debug("Setting flag to not show the slidedown to the user again.");
+          DismissHelper.markHttpsNativePromptDismissed();
+          break;
+        default:
+          break;
+      }
     });
   }
 

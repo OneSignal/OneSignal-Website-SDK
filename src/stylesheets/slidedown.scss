@@ -1,5 +1,15 @@
 $slidedown-transition-duration: 400ms;
 $border-radius: 0.5em;
+$mobile-width: 320px;
+$tablet-width: 768;
+$tablet-width: 768px;
+$desktop-width: 1024px;
+
+@mixin mobile {
+  @media (min-width: #{$mobile-width}) and (max-width: #{$tablet-width - 1px}) {
+    @content;
+  }
+}
 
 #onesignal-slidedown-container, #onesignal-popover-container {
   font-size: 16px;
@@ -8,6 +18,117 @@ $border-radius: 0.5em;
   left: 0;
   right: 0;
   -webkit-font-smoothing: initial;
+
+  #slidedown-body {
+    .channel-capture-container {
+      background-color: white;
+      position: relative;
+      white-space: nowrap;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-top: -10px;
+
+      @include mobile {
+        margin-top: unset;
+      }
+
+      label {
+        display: inline-block;
+        margin-bottom: 4px;
+      }
+
+      .onesignal-error-input {
+        label: {
+          color:#646D74;
+        }
+
+        input {
+          background: #FCECEC;
+          border:1px solid #E54B4D;
+
+          &:focus {
+            background: #FCECEC;
+            border:1px solid #E54B4D;
+          }
+        }
+      }
+
+      input {
+        border: 1px solid #CED3D8;
+        background: #FFFFFF;
+        box-sizing: border-box;
+        border-radius: 4px;
+        height: 36px;
+        width: 356px;
+        font-size: 16px;
+        padding-left: 8px;
+
+        @include mobile {
+          width: 256px;
+        }
+
+        &:focus {
+          background: #E5F2FC;
+          border: 1px solid #1F8FEB;
+        }
+      }
+    }
+
+    /* International Telephone Input Styles */
+    .input-with-validation-element {
+      background-color: white;
+      position: relative;
+      white-space: nowrap;
+      box-sizing: border-box;
+      margin-bottom: 24px;
+
+      p {
+        margin-top: 6px;
+        margin-bottom: 6px;
+      }
+
+      label {
+        color: #051B2C;
+      }
+
+      .iti__dial-code {
+        color: grey;
+      }
+
+      .iti__selected-flag {
+        background-color: transparent;
+        border-radius: 4px;
+
+        &:focus{
+          outline: #0078d1;
+        }
+      }
+
+      .iti__country-list {
+        width: 356px;
+        box-shadow: 0px 1px 4px rgba(5, 27, 44, 0.2);
+        border-radius: 4px;
+        background: #FFFFFF;
+        border: none;
+        line-height: 28px;
+      }
+
+      .iti__country-name {
+        white-space: pre-wrap;
+      }
+
+      .onesignal-validation-element {
+        color: #e54b4d;
+        display: flex;
+
+        img {
+          padding-right: 8px;
+        }
+      }
+    }
+  }
 
   &.slide-down {
     top: 0;
@@ -455,4 +576,8 @@ $border-radius: 0.5em;
   100% {
     transform: translateY(150%);
   }
+}
+
+.onesignal-validation-element-hidden {
+  display: none !important;
 }
