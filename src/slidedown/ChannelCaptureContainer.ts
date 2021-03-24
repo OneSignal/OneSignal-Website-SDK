@@ -10,6 +10,15 @@ import {
 import { ItiScriptURLHashes, ItiScriptURLs } from "./InternationalTelephoneInput";
 import { } from 'intl-tel-input'; // typings
 
+interface TypeSpecificVariablePayload {
+  message: string;
+  domElementType: string;
+  validationElementId: string;
+  inputElementId: string;
+  inputClass: string;
+  wrappingDivId: string;
+}
+
 export default class ChannelCaptureContainer {
   public smsInputFieldIsValid: boolean = true;
   public emailInputFieldIsValid: boolean = true;
@@ -29,20 +38,20 @@ export default class ChannelCaptureContainer {
     switch (this.promptOptions.type) {
       case DelayedPromptType.Sms:
         label = this.promptOptions.text.smsLabel || "Phone Number";
-        smsInputElement = this.getSmsInputWithValidationElement(label);
+        smsInputElement = this.getInputWithValidationElement(DelayedPromptType.Sms, label);
         captureContainer.appendChild(smsInputElement);
         break;
       case DelayedPromptType.Email:
         label = this.promptOptions.text.emailLabel || "Email";
-        emailInputElement = this.getEmailInputWithValidationElement(label);
+        emailInputElement = this.getInputWithValidationElement(DelayedPromptType.Email, label);
         captureContainer.appendChild(emailInputElement);
         break;
       case DelayedPromptType.SmsAndEmail:
         label = this.promptOptions.text.emailLabel || "Email";
-        emailInputElement = this.getEmailInputWithValidationElement(label);
+        emailInputElement = this.getInputWithValidationElement(DelayedPromptType.Email, label);
         captureContainer.appendChild(emailInputElement);
         label = this.promptOptions.text.smsLabel || "Phone Number";
-        smsInputElement = this.getSmsInputWithValidationElement(label);
+        smsInputElement = this.getInputWithValidationElement(DelayedPromptType.Sms, label);
         captureContainer.appendChild(smsInputElement);
         break;
       default:
@@ -64,30 +73,32 @@ export default class ChannelCaptureContainer {
     return wrapperDiv;
   }
 
-  private getSmsInputWithValidationElement(label: string): Element {
-    const labelElement = document.createElement("label");
-    const inputElement = document.createElement("input");
-    const clear         = document.createElement("div");
-    const clear2         = document.createElement("div");
-    const validationElement = this.getValidationElementWithMessage("Please enter a valid phone number");
-    const wrappingDiv  = document.createElement("div");
+  private getInputWithValidationElement(type: DelayedPromptType, label: string): Element {
+    const varPayload = this.getTypeSpecificVariablesForValidationElemGeneration(type); // {message}
+
+    const labelElement      = document.createElement("label");
+    const inputElement      = document.createElement("input");
+    const clear             = document.createElement("div");
+    const clear2            = document.createElement("div");
+    const validationElement = this.getValidationElementWithMessage(varPayload.message);
+    const wrappingDiv       = document.createElement("div");
 
     clear.setAttribute("style", "clear:both");
     clear2.setAttribute("style", "clear:both");
 
     addCssClass(validationElement, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden);
     addCssClass(validationElement, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElement);
-    validationElement.id = CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement;
+    validationElement.id = varPayload.validationElementId;
 
     labelElement.title      = label;
     labelElement.innerText  = label;
 
-    inputElement.type  = "tel";
-    inputElement.id    = CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput;
+    inputElement.type  = varPayload.domElementType;
+    inputElement.id    = varPayload.inputElementId;
 
-    addCssClass(inputElement, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalSmsInput);
+    addCssClass(inputElement, varPayload.inputClass);
     addCssClass(wrappingDiv, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.inputWithValidationElement);
-    wrappingDiv.id = CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement;
+    wrappingDiv.id = varPayload.wrappingDivId;
 
     wrappingDiv.appendChild(labelElement);
     wrappingDiv.appendChild(clear);
@@ -98,39 +109,26 @@ export default class ChannelCaptureContainer {
     return wrappingDiv;
   }
 
-  private getEmailInputWithValidationElement(label: string): Element {
-    const labelElement = document.createElement("label");
-    const inputElement = document.createElement("input");
-    const clear         = document.createElement("div");
-    const clear2         = document.createElement("div");
-    const validationElement = this.getValidationElementWithMessage("Please enter a valid email");
-    const wrappingDiv  = document.createElement("div");
-
-    clear.setAttribute("style", "clear:both");
-    clear2.setAttribute("style", "clear:both");
-
-    addCssClass(validationElement, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden);
-    addCssClass(validationElement, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElement);
-    validationElement.id = CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement;
-
-    labelElement.title      = label;
-    labelElement.innerText  = label;
-
-    inputElement.type  = "email";
-    inputElement.id    = CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput;
-
-    addCssClass(inputElement, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalEmailInput);
-    addCssClass(wrappingDiv, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.inputWithValidationElement);
-    wrappingDiv.id = CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement;
-
-    wrappingDiv.appendChild(labelElement);
-    wrappingDiv.appendChild(clear);
-    wrappingDiv.appendChild(inputElement);
-    wrappingDiv.appendChild(clear2);
-    wrappingDiv.appendChild(validationElement);
-
-    return wrappingDiv;
-
+  private getTypeSpecificVariablesForValidationElemGeneration(type: DelayedPromptType): TypeSpecificVariablePayload {
+    if (type === DelayedPromptType.Email) {
+      return {
+        message: "Please enter a valid email",
+        domElementType: "email",
+        validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement,
+        inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput,
+        inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalEmailInput,
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement
+      };
+    } else if (type === DelayedPromptType.Sms) {
+      return {
+        message: "Please enter a valid phone number",
+        domElementType: "tel",
+        validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement,
+        inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput,
+        inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalSmsInput,
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement
+      };
+    } else throw new Error("invalid channel type for input validation");
   }
 
   private initializePhoneInputLibrary(): void {
