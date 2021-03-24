@@ -26,6 +26,7 @@ import { Subscription } from "../../../src/models/Subscription";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
+import { SubscriptionManagerHelper } from './_SubscriptionManagerHelpers';
 
 const sandbox: SinonSandbox= sinon.sandbox.create();
 
@@ -99,15 +100,8 @@ async function testCase(
   spy.restore();
 }
 
-function generateVapidKeys() {
-  return {
-    uniquePublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
-    sharedPublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer)
-  };
-}
-
 test('uses per-app VAPID public key for Chrome', async t => {
-  const vapidKeys = generateVapidKeys();
+  const vapidKeys = SubscriptionManagerHelper.generateVapidKeys();
   await testCase(
     t,
     BrowserUserAgent.ChromeMacSupported,
@@ -128,7 +122,7 @@ test('uses per-app VAPID public key for Chrome', async t => {
 });
 
 test('uses globally shared VAPID public key for Firefox', async t => {
-  const vapidKeys = generateVapidKeys();
+  const vapidKeys = SubscriptionManagerHelper.generateVapidKeys();
   await testCase(
     t,
     BrowserUserAgent.ChromeMacSupported,
@@ -149,8 +143,8 @@ test('uses globally shared VAPID public key for Firefox', async t => {
 });
 
 test('resubscribe-existing strategy uses new subscription applicationServerKey', async t => {
-  const initialVapidKeys = generateVapidKeys();
-  const subsequentVapidKeys = generateVapidKeys();
+  const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
+  const subsequentVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
 
   const initialSubscriptionOptions: PushSubscriptionOptions = {
     userVisibleOnly: true,
@@ -188,8 +182,8 @@ test('resubscribe-existing strategy uses new subscription applicationServerKey',
 test(
   "resubscribe existing strategy unsubscribes and creates new subscription if existing subscription options are null",
   async t => {
-    const initialVapidKeys = generateVapidKeys();
-    const subsequentVapidKeys = generateVapidKeys();
+    const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
+    const subsequentVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
 
     const initialSubscriptionOptions: PushSubscriptionOptions = {
       userVisibleOnly: true,
@@ -231,7 +225,7 @@ test(
 test(
   "resubscribe existing strategy does not unsubscribes if options are not null",
   async t => {
-    const subsequentVapidKeys = generateVapidKeys();
+    const subsequentVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
     let unsubscribeSpy: sinon.SinonSpy;
 
     await testCase(
@@ -264,12 +258,7 @@ test(
   "null applicationServerKey throws when subscribing",
   async t => {
 
-    const manager = new SubscriptionManager(OneSignal.context, {
-      safariWebId: undefined,
-      appId: Random.getRandomUuid(),
-      vapidPublicKey: <any>undefined, // Forcing vapidPublicKey to undefined to test throwing
-      onesignalVapidPublicKey: generateVapidKeys().sharedPublic
-    } as SubscriptionManagerConfig);
+    const manager = SubscriptionManagerHelper.createMock();
     await t.throwsAsync(manager.subscribe.bind(null, SubscriptionStrategyKind.SubscribeNew),
     { instanceOf: Error });
   }
@@ -343,7 +332,7 @@ test("registerSubscription without an existing subsription sends player create",
 });
 
 test('device ID is available after register event', async t => {
-  const vapidKeys = generateVapidKeys();
+  const vapidKeys = SubscriptionManagerHelper.generateVapidKeys();
 
   await testCase(
     t,
@@ -386,7 +375,7 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
     pushManager: null,
   };
   await TestEnvironment.mockInternalOneSignal();
-  
+
   sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
@@ -398,8 +387,8 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
 test(
   "subscribe new strategy creates new subscription",
   async t => {
-    const initialVapidKeys = generateVapidKeys();
-    const subsequentVapidKeys = generateVapidKeys();
+    const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
+    const subsequentVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
 
     const initialSubscriptionOptions: PushSubscriptionOptions = {
       userVisibleOnly: true,
@@ -436,7 +425,7 @@ test(
 test(
   "subscribe new strategy unsubscribes existing subscription to create new subscription",
   async t => {
-    const subsequentVapidKeys = generateVapidKeys();
+    const subsequentVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
     let unsubscribeSpy: sinon.SinonSpy;
 
     await testCase(
@@ -448,7 +437,7 @@ test(
       async (pushManager, _subscriptionManager) => {
         // Create an initial subscription, so subsequent subscriptions attempt to re-use this initial
         // subscription's options
-        const initialVapidKeys = generateVapidKeys();
+        const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
         const subscriptionOptions: PushSubscriptionOptions = {
           userVisibleOnly: true,
           applicationServerKey: base64ToUint8Array(initialVapidKeys.uniquePublic).buffer,
@@ -469,7 +458,7 @@ test(
 test(
   "subscribing records created at date in UTC",
   async t => {
-    const initialVapidKeys = generateVapidKeys();
+    const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
     const dateString = "February 26, 2018 10:04:24 UTC";
 
     // Set the initial datetime
@@ -515,7 +504,7 @@ async function expirationTestCase(
   env: IntegrationKind,
 ) {
 
-  const initialVapidKeys = generateVapidKeys();
+  const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
 
   // Force service worker active state dependency so test can run
   const stub = sandbox.stub(ServiceWorkerManager.prototype, "getActiveState")
@@ -681,7 +670,7 @@ test(
 test(
   "the subscription expiration time should be recorded",
   async t => {
-    const initialVapidKeys = generateVapidKeys();
+    const initialVapidKeys = SubscriptionManagerHelper.generateVapidKeys();
     const expirationTime = 1519675981599;
 
     await testCase(
