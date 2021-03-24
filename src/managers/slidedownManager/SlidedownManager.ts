@@ -20,6 +20,7 @@ import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/Chan
 import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
 import LocalStorage from "../../utils/LocalStorage";
 import DismissHelper from "../../helpers/DismissHelper";
+import PromptsHelper from "../../helpers/PromptsHelper";
 
 export class SlidedownManager {
     private context: ContextInterface;
@@ -39,16 +40,20 @@ export class SlidedownManager {
         const notOptedOut = await OneSignal.privateGetSubscription();
 
         const slidedownType = options.slidedownPromptOptions?.type;
-        const slidedownIsPushDependent = slidedownType === DelayedPromptType.Push ||
-            slidedownType === DelayedPromptType.Category;
 
         // applies to push slidedown type only
         if (slidedownType === DelayedPromptType.Push && isSubscribed) {
             return false;
         }
 
+        let isSlidedownPushDependent: boolean = false;
+
+        if (!!slidedownType) {
+            isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
+        }
+
         // applies to both push and category slidedown types
-        if (slidedownIsPushDependent) {
+        if (isSlidedownPushDependent) {
             if (!notOptedOut) {
                 throw new NotSubscribedError(NotSubscribedReason.OptedOut);
             }
@@ -107,10 +112,16 @@ export class SlidedownManager {
                     }
                     break;
                 case DelayedPromptType.Email:
-                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+                    if (!emailInputFieldIsValid || isEmailEmpty) {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    }
                     break;
                 case DelayedPromptType.Sms:
-                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+                    if (!smsInputFieldIsValid || isSmsEmpty) {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    }
                     break;
                 case DelayedPromptType.SmsAndEmail:
                     const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
