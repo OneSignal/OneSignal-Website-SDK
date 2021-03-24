@@ -291,7 +291,6 @@ test("registerSubscription with an existing subsription sends player update", as
   );
 
   sandbox.stub(Database, "getSubscription").resolves({ deviceId } as Subscription);
-  sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
@@ -327,7 +326,6 @@ test("registerSubscription without an existing subsription sends player create",
   updateData = Object.assign(updateData, deviceRecord.serialize());
 
   sandbox.stub(Database, "getSubscription").resolves({ } as Subscription);
-  sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
   sandbox.stub(PushDeviceRecord, "createFromPushSubscription").returns(deviceRecord);
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();

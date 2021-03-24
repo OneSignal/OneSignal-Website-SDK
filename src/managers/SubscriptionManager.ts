@@ -49,13 +49,23 @@ export type SubscriptionStateServiceWorkerNotIntalled =
   SubscriptionStateKind.ServiceWorkerStatus403 | 
   SubscriptionStateKind.ServiceWorkerStatus404;
 
+export interface NewPushSubscription {
+  onNewPushSubscription(playerId: string): void;
+}
+
 export class SubscriptionManager {
   private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
+  private newPushSubscriptionListeners : Array<NewPushSubscription>;
 
   constructor(context: ContextSWInterface, config: SubscriptionManagerConfig) {
     this.context = context;
     this.config = config;
+    this.newPushSubscriptionListeners = new Array();
+  }
+
+  addNewPushSubscriptionListener(listener: NewPushSubscription) {
+    this.newPushSubscriptionListeners.push(listener);
   }
 
   static isSafari(): boolean {
@@ -166,9 +176,7 @@ export class SubscriptionManager {
       await this.context.updateManager.sendPlayerUpdate(deviceRecord);
     } else {
       newDeviceId = await this.context.updateManager.sendPlayerCreate(deviceRecord);
-      if (newDeviceId) {
-        await this.associateSubscriptionWithEmail(newDeviceId);
-      }
+      this.fireNewPushSubscriptionListeners(newDeviceId);
     }
 
     const subscription = await Database.getSubscription();
@@ -193,6 +201,15 @@ export class SubscriptionManager {
       OneSignal._sessionInitAlreadyRunning = false;
     }
     return subscription;
+  }
+
+  private fireNewPushSubscriptionListeners(playerId?: string): void {
+    if (!playerId)
+      return;
+
+    this.newPushSubscriptionListeners.forEach(listener => {
+      listener.onNewPushSubscription(playerId);
+    });
   }
 
   /**
@@ -237,26 +254,7 @@ export class SubscriptionManager {
     return NotificationPermission[results];
   }
 
-  /**
-   * Called after registering a subscription with OneSignal to associate this subscription with an
-   * email record if one exists.
-   */
-  public async associateSubscriptionWithEmail(newDeviceId: string) {
-    const emailProfile = await Database.getEmailProfile();
-    if (!emailProfile.emailId) {
-      return;
-    }
 
-    // Update the push device record with a reference to the new email ID and email address
-    await OneSignalApiShared.updatePlayer(
-      this.config.appId,
-      newDeviceId,
-      {
-        parent_player_id: emailProfile.emailId,
-        email: emailProfile.emailAddress
-      }
-    );
-  }
 
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
     const { deviceId } = await Database.getSubscription();
