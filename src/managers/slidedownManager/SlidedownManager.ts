@@ -41,15 +41,15 @@ export class SlidedownManager {
 
         const slidedownType = options.slidedownPromptOptions?.type;
 
-        let isSlidedownPushDependent;
-
-        if (!!slidedownType) {
-            isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
-        }
-
         // applies to push slidedown type only
         if (slidedownType === DelayedPromptType.Push && isSubscribed) {
             return false;
+        }
+
+        let isSlidedownPushDependent: boolean = false;
+
+        if (!!slidedownType) {
+            isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
         }
 
         // applies to both push and category slidedown types
