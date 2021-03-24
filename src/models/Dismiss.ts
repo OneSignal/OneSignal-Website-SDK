@@ -4,7 +4,7 @@ export enum DismissPrompt {
 }
 
 export enum DismissCountKey {
-PromptDismissCount = 'promptDismissCount', // legacy. applies to 'push' and 'category' slidedown types + native
+  PromptDismissCount = 'promptDismissCount', // legacy. applies to 'push' and 'category' slidedown types + native
   WebPromptsDismissCount = 'webPromptsDismissCount' // applies to all new slidedown types (e.g: smsAndEmail)
 }
 
