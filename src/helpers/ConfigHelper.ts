@@ -261,7 +261,9 @@ export class ConfigHelper {
           acceptButton: Utils.getValueOrDefault(promptOption.text?.acceptButton,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton),
           cancelButton: Utils.getValueOrDefault(promptOption.text?.cancelButton,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton)
+            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton),
+          confirmMessage: Utils.getValueOrDefault(promptOption.text?.confirmMessage,
+            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage)
         };
 
         promptOption.autoPrompt = Utils.getValueOrDefault(promptOption.autoPrompt, true);

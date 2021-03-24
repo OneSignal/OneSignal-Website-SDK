@@ -22,6 +22,7 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
     negativeUpdateButton: "Cancel"
   },
   savingText: "Saving...",
+  confirmMessage: "Thank You!"
 };
 
 export const CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS: SlidedownPromptOptions = {
