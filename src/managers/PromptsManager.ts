@@ -256,7 +256,7 @@ export class PromptsManager {
           break;
         default:
           Log.debug("Setting flag to not show the slidedown to the user again.");
-          DismissHelper.markPromptDismissedWithType(DismissPrompt.Web);
+          DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
           break;
       }
     });

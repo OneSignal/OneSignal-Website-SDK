@@ -72,7 +72,7 @@ export class SlidedownManager {
         return false;
       }
     } else {
-      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Web);
+      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.NonPush);
 
       if (wasDismissed && !options.force && !options.isInUpdateMode) {
         Log.info(new PermissionMessageDismissedError());
@@ -218,7 +218,7 @@ export class SlidedownManager {
         break;
       default:
         Log.debug("Setting flag to not show the slidedown to the user again.");
-        DismissHelper.markPromptDismissedWithType(DismissPrompt.Web);
+        DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
       break;
     }
   }

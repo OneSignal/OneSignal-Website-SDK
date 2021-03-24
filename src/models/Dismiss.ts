@@ -1,6 +1,6 @@
 export enum DismissPrompt {
   Push = 'push',
-  Web  = 'web' // (non-push)
+  NonPush  = 'nonPush'
 }
 
 export enum DismissCountKey {
