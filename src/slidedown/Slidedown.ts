@@ -138,7 +138,7 @@ export default class Slidedown {
     addCssClass(this.container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
     once(this.dialog, 'animationend', (event: any, destroyListenerFn: () => void) => {
       if (event.target === this.dialog &&
-          (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
+        (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
           // Uninstall the event listener for animationend
           removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
           destroyListenerFn();

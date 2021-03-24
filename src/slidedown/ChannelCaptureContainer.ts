@@ -306,42 +306,42 @@ export default class ChannelCaptureContainer {
   }
 
   static resetInputErrorStates(type: DelayedPromptType): void {
-      switch (type) {
-          case DelayedPromptType.Sms:
-              ChannelCaptureContainer.showSmsInputError(false);
-              break;
-          case DelayedPromptType.Email:
-              ChannelCaptureContainer.showEmailInputError(false);
-              break;
-          case DelayedPromptType.SmsAndEmail:
-              ChannelCaptureContainer.showSmsInputError(false);
-              ChannelCaptureContainer.showEmailInputError(false);
-              break;
-          default:
-              break;
-      }
+    switch (type) {
+      case DelayedPromptType.Sms:
+        ChannelCaptureContainer.showSmsInputError(false);
+        break;
+      case DelayedPromptType.Email:
+        ChannelCaptureContainer.showEmailInputError(false);
+        break;
+      case DelayedPromptType.SmsAndEmail:
+        ChannelCaptureContainer.showSmsInputError(false);
+        ChannelCaptureContainer.showEmailInputError(false);
+        break;
+      default:
+        break;
+    }
   }
 
   static getValueFromEmailInput(): string {
-      const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
-      return (<HTMLInputElement>inputNode).value || "";
+    const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
+    return (<HTMLInputElement>inputNode).value || "";
   }
 
   static getValueFromSmsInput(): string {
-      const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-      return (<HTMLInputElement>inputNode).value || "";
+    const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
+    return (<HTMLInputElement>inputNode).value || "";
   }
 
   static validateEmailInputWithReturnVal(emailString?: string): boolean {
-      const re = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
-      return re.test(emailString || '') || emailString === "";
+    const re = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    return re.test(emailString || '') || emailString === "";
   }
 
   static isUsingSmsInputField(type: DelayedPromptType): boolean {
-      return type === DelayedPromptType.Sms || type === DelayedPromptType.SmsAndEmail;
+    return type === DelayedPromptType.Sms || type === DelayedPromptType.SmsAndEmail;
   }
 
   static isUsingEmailInputField(type: DelayedPromptType): boolean {
-      return type === DelayedPromptType.Email || type === DelayedPromptType.SmsAndEmail;
+    return type === DelayedPromptType.Email || type === DelayedPromptType.SmsAndEmail;
   }
 }
