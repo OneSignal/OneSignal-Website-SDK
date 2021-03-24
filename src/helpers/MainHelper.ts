@@ -2,8 +2,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { AppUserConfigPromptOptions, SlidedownOptions, SlidedownPromptOptions } from '../models/Prompts';
-import TimedLocalStorage from '../modules/TimedLocalStorage';
+import { AppUserConfigPromptOptions, SlidedownOptions } from '../models/Prompts';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { NotificationPermission } from "../models/NotificationPermission";
@@ -13,7 +12,6 @@ import { PermissionUtils } from "../utils/PermissionUtils";
 import { Utils } from "../context/shared/utils/Utils";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import SubscriptionHelper from "./SubscriptionHelper";
-import { DismissPrompt, DismissTimeKey } from '../models/Dismiss';
 
 export default class MainHelper {
 

@@ -101,8 +101,11 @@ export class PromptsManager {
         const isPageViewConditionMetForSlidedown: boolean = this.isPageViewConditionMet(slidedownPromptOptions);
         const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
 
+        const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
+
         const options: AutoPromptOptions = {
-          slidedownPromptOptions: promptOptions
+          slidedownPromptOptions: promptOptions,
+          isInUpdateMode: isPushEnabled
         };
 
         if (conditionMetWithSlidedownOptions) {
