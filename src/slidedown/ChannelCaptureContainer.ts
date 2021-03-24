@@ -251,13 +251,6 @@ export default class ChannelCaptureContainer {
   }
 
   /* S T A T I C */
-  static areBothInputFieldsEmpty(): boolean {
-    const onesignalSmsInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-    const smsFieldEmpty = (<HTMLInputElement>onesignalSmsInput).value === "";
-    const emailFieldEmpty = ChannelCaptureContainer.getValueFromEmailInput() === "";
-    return smsFieldEmpty && emailFieldEmpty;
-  }
-
   static isEmailInputFieldEmpty(): boolean {
     return ChannelCaptureContainer.getValueFromEmailInput() === "";
   }
@@ -314,24 +307,29 @@ export default class ChannelCaptureContainer {
 
   static resetInputErrorStates(type: DelayedPromptType): void {
     switch (type) {
-        case DelayedPromptType.Sms:
-            ChannelCaptureContainer.showSmsInputError(false);
-            break;
-        case DelayedPromptType.Email:
-            ChannelCaptureContainer.showEmailInputError(false);
-            break;
-        case DelayedPromptType.SmsAndEmail:
-            ChannelCaptureContainer.showSmsInputError(false);
-            ChannelCaptureContainer.showEmailInputError(false);
-            break;
-        default:
-            break;
+      case DelayedPromptType.Sms:
+        ChannelCaptureContainer.showSmsInputError(false);
+        break;
+      case DelayedPromptType.Email:
+        ChannelCaptureContainer.showEmailInputError(false);
+        break;
+      case DelayedPromptType.SmsAndEmail:
+        ChannelCaptureContainer.showSmsInputError(false);
+        ChannelCaptureContainer.showEmailInputError(false);
+        break;
+      default:
+        break;
     }
   }
 
-  static getValueFromEmailInput(): string | undefined {
+  static getValueFromEmailInput(): string {
     const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
-    return (<HTMLInputElement>inputNode).value;
+    return (<HTMLInputElement>inputNode).value || "";
+  }
+
+  static getValueFromSmsInput(): string {
+    const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
+    return (<HTMLInputElement>inputNode).value || "";
   }
 
   static validateEmailInputWithReturnVal(emailString?: string): boolean {

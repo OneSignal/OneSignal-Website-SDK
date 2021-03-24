@@ -41,15 +41,15 @@ export class SlidedownManager {
 
         const slidedownType = options.slidedownPromptOptions?.type;
 
-        // applies to push slidedown type only
-        if (slidedownType === DelayedPromptType.Push && isSubscribed) {
-            return false;
-        }
-
         let isSlidedownPushDependent: boolean = false;
 
         if (!!slidedownType) {
             isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
+        }
+
+        // applies to push slidedown type only
+        if (slidedownType === DelayedPromptType.Push && isSubscribed) {
+            return false;
         }
 
         // applies to both push and category slidedown types
@@ -83,14 +83,30 @@ export class SlidedownManager {
         const slidedownType: DelayedPromptType = slidedown.options.type;
 
         if (slidedown.isShowingFailureState) {
-            slidedown.setFailureState(false);
+            slidedown.removeFailureState();
         }
 
-        let smsInputFieldIsValid, emailInputFieldIsValid;
+        let smsInputFieldIsValid, emailInputFieldIsValid, isEmailEmpty, isSmsEmpty: boolean;
+        let email, sms: string;
+
+        smsInputFieldIsValid = emailInputFieldIsValid = isEmailEmpty = isSmsEmpty = false;
+        email = sms = "";
 
         if (!!slidedown.channelCaptureContainer) {
+            /**
+             * empty input fields are considered valid since in the case of two input field types present,
+             * we can accept one of the two being left as an empty string.
+             *
+             * thus, we need separate checks for the emptiness properties
+             */
             smsInputFieldIsValid = slidedown.channelCaptureContainer.smsInputFieldIsValid;
             emailInputFieldIsValid = slidedown.channelCaptureContainer.emailInputFieldIsValid;
+            isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+            isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+
+            /** */
+            email = ChannelCaptureContainer.getValueFromEmailInput();
+            sms = ChannelCaptureContainer.getValueFromSmsInput();
         }
 
         try {
@@ -104,7 +120,8 @@ export class SlidedownManager {
 
                     const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
                     if (isPushEnabled) {
-                        slidedown.setSaveState(true);
+                        // already subscribed, send tags immediately
+                        slidedown.setSaveState();
                         await this.context.tagManager.sendTags(true);
                     } else {
                         this.registerForPush();
@@ -112,29 +129,44 @@ export class SlidedownManager {
                     }
                     break;
                 case DelayedPromptType.Email:
-                    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
                     if (!emailInputFieldIsValid || isEmailEmpty) {
                         throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
                     }
+                    this.context.updateManager.updateEmail(email);
                     break;
                 case DelayedPromptType.Sms:
-                    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
                     if (!smsInputFieldIsValid || isSmsEmpty) {
                         throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
                     }
+                    this.context.updateManager.updateSms(sms);
                     break;
                 case DelayedPromptType.SmsAndEmail:
-                    const bothFieldsEmpty = ChannelCaptureContainer.areBothInputFieldsEmpty();
+                    const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
                     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
 
                     if (bothFieldsInvalid || bothFieldsEmpty) {
                         throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
                     }
 
-                    if (!smsInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
-                    if (!emailInputFieldIsValid) throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    /**
+                     * empty is ok (we can accept only one of two input fields), but invalid is not
+                     * at least one field is valid and non-empty
+                     */
+                    if (emailInputFieldIsValid) {
+                        if (!isEmailEmpty) {
+                            this.context.updateManager.updateEmail(email);
+                        }
+                    } else {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+                    }
 
-                    // TO DO: send sms email updates
+                    if (smsInputFieldIsValid) {
+                        if (!isSmsEmpty) {
+                            this.context.updateManager.updateSms(sms);
+                        }
+                    } else {
+                        throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+                    }
                     break;
                 default:
                     break;
@@ -142,8 +174,12 @@ export class SlidedownManager {
         } catch (e) {
             Log.warn("OneSignal Slidedown failed to update:", e);
             // Display update error
-            slidedown.setSaveState(false);
-            slidedown.setFailureState(true, e.reason);
+            slidedown.removeSaveState();
+            slidedown.setFailureState();
+
+            if (e.reason !== undefined) {
+                slidedown.setFailureStateForInvalidChannelInput(e.reason);
+            }
             return;
         }
 

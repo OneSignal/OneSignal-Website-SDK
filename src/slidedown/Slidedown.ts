@@ -154,73 +154,74 @@ export default class Slidedown {
   /**
    * To be used with slidedown types other than `push` type
    */
-  setSaveState(state: boolean): void {
-    if (state) {
-      // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.disabled = true;
-      this.allowButton.textContent = null;
+  setSaveState(): void {
+    // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
+    this.allowButton.disabled = true;
+    this.allowButton.textContent = null;
 
-      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.savingButton));
-      this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
+    this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.savingButton));
+    this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
 
-      addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
-      addCssClass(this.allowButton, 'disabled');
-      addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
-    } else {
-      this.allowButton.textContent = this.positiveUpdateButton;
-      removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
-      this.allowButton.disabled = false;
-      removeCssClass(this.allowButton, 'disabled');
-      removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
-    }
+    addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
+    addCssClass(this.allowButton, 'disabled');
+    addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
   }
+
   /**
-   * @param  {boolean} state
+   * To be used with slidedown types other than `push` type
+   */
+  removeSaveState(): void {
+    this.allowButton.textContent = this.positiveUpdateButton;
+    removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
+    this.allowButton.disabled = false;
+    removeCssClass(this.allowButton, 'disabled');
+    removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
+  }
+
+  /**
    * @param  {InvalidChannelInputField} invalidChannelInput? - for use in Web Prompts only!
    *    we want the ability to be able to specify which channel input failed validation
    * @returns void
    */
-  setFailureState(state: boolean, invalidChannelInput?: InvalidChannelInputField): void {
-    // general failure state
-    if (state) {
-      this.allowButton.textContent = null;
-      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
+  setFailureState(): void {
+    this.allowButton.textContent = null;
+    this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
+
+    if (this.options.type === DelayedPromptType.Category) {
       this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
-
-      if (typeof invalidChannelInput === undefined) {
-        // non-web-prompts slidedown type: e.g Category Slidedown update failed
-        addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
-        addCssClass(this.allowButton, 'onesignal-error-state-button');
-      }
-
-    } else {
-      removeDomElement('#onesignal-button-indicator-holder');
-      removeCssClass(this.allowButton, 'onesignal-error-state-button');
-
-      if (!PromptsHelper.isSlidedownPushDependent(this.options.type)) {
-        ChannelCaptureContainer.resetInputErrorStates(this.options.type);
-      }
+      addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
+      addCssClass(this.allowButton, 'onesignal-error-state-button');
     }
 
-    this.isShowingFailureState = state;
+    this.isShowingFailureState = true;
+  }
 
-    // handle particular failure states
-    if (typeof invalidChannelInput !== undefined) {
-      switch (invalidChannelInput) {
-        case InvalidChannelInputField.InvalidSms:
-          ChannelCaptureContainer.showSmsInputError(true);
-          break;
-        case InvalidChannelInputField.InvalidEmail:
-          ChannelCaptureContainer.showEmailInputError(true);
-          break;
-        case InvalidChannelInputField.InvalidEmailAndSms:
-          ChannelCaptureContainer.showSmsInputError(true);
-          ChannelCaptureContainer.showEmailInputError(true);
-          break;
-        default:
-          break;
-        }
+  setFailureStateForInvalidChannelInput(invalidChannelInput: InvalidChannelInputField): void {
+    switch (invalidChannelInput) {
+      case InvalidChannelInputField.InvalidSms:
+        ChannelCaptureContainer.showSmsInputError(true);
+        break;
+      case InvalidChannelInputField.InvalidEmail:
+        ChannelCaptureContainer.showEmailInputError(true);
+        break;
+      case InvalidChannelInputField.InvalidEmailAndSms:
+        ChannelCaptureContainer.showSmsInputError(true);
+        ChannelCaptureContainer.showEmailInputError(true);
+        break;
+      default:
+        break;
+      }
+  }
+
+  removeFailureState(): void {
+    removeDomElement('#onesignal-button-indicator-holder');
+    removeCssClass(this.allowButton, 'onesignal-error-state-button');
+
+    if (!PromptsHelper.isSlidedownPushDependent(this.options.type)) {
+      ChannelCaptureContainer.resetInputErrorStates(this.options.type);
     }
+
+    this.isShowingFailureState = false;
   }
 
   getPlatformNotificationIcon(): string {
