@@ -40,6 +40,6 @@ export default class PromptsHelper {
   }
 
   static isSlidedownPushDependent(slidedownType: DelayedPromptType): boolean {
-  return slidedownType === DelayedPromptType.Push || slidedownType === DelayedPromptType.Category;
+    return slidedownType === DelayedPromptType.Push || slidedownType === DelayedPromptType.Category;
   }
 }
