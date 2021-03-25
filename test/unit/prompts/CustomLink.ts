@@ -6,7 +6,7 @@ import CustomLink from '../../../src/CustomLink';
 import OneSignalUtils from '../../../src/utils/OneSignalUtils';
 import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/utils';
-import MainHelper from "../../../src/helpers/MainHelper";
+import { DismissHelper } from '../../../src/helpers/DismissHelper';
 
 let sandbox: SinonSandbox = sinon.sandbox.create();
 let config: AppUserConfigCustomLinkOptions;
@@ -239,7 +239,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
   const subscriptionSpy = sandbox.stub(OneSignal, 'setSubscription').resolves();
   sandbox.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround').returns(false);
   // TODO: why is this called in custom link
-  sandbox.stub(MainHelper, 'wasHttpsNativePromptDismissed').returns(false);
+  sandbox.stub(DismissHelper, 'wasPromptOfTypeDismissed').returns(false);
   sandbox.stub(OneSignal, 'internalIsOptedOut').returns(true);
   sandbox.stub(OneSignal.context.subscriptionManager, 'getSubscriptionState').returns({
     subscribed: true,

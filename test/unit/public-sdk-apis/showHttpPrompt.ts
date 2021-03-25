@@ -2,8 +2,8 @@ import test, { ExecutionContext } from "ava";
 import OneSignal from "../../../src/OneSignal";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import Context from "../../../src/models/Context";
-import MainHelper from "../../../src/helpers/MainHelper";
 import sinon, { SinonSandbox } from 'sinon';
+import { DismissHelper } from "../../../src/helpers/DismissHelper";
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -16,7 +16,7 @@ test("Test showHttpPrompt with no params", async t => {
   const appConfig = TestEnvironment.getFakeAppConfig();
   OneSignal.context = new Context(appConfig);
 
-  sinonSandbox.stub(MainHelper, "wasHttpsNativePromptDismissed").resolves(true);
+  sinonSandbox.stub(DismissHelper, "wasPromptOfTypeDismissed").resolves(true);
   sinonSandbox.stub(OneSignal, "privateIsPushNotificationsEnabled").resolves(false);
 
   // Ensure both public and private calls work
