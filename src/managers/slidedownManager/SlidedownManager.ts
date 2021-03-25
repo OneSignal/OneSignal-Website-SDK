@@ -68,14 +68,14 @@ export class SlidedownManager {
       }
 
       if (wasDismissed && !options.force && !options.isInUpdateMode) {
-        Log.info(new PermissionMessageDismissedError());
+        Log.info(new PermissionMessageDismissedError(slidedownType));
         return false;
       }
     } else {
       wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.NonPush);
 
       if (wasDismissed && !options.force && !options.isInUpdateMode) {
-        Log.info(new PermissionMessageDismissedError());
+        Log.info(new PermissionMessageDismissedError(slidedownType));
         return false;
       }
     }
