@@ -12,10 +12,10 @@ import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
 import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import { EmailProfile } from "../../../src/models/EmailProfile";
-import { EmailDeviceRecord } from "../../../src/models/EmailDeviceRecord";
 import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
+import { FlattenedDeviceRecord } from "../../../src/models/DeviceRecord";
 
 let sinonSandbox: SinonSandbox = sinon.sandbox.create();
 let initTestHelper = new InitTestHelper(sinonSandbox);
@@ -88,8 +88,8 @@ test("email session should be updated on first page view", async t => {
   t.true(onSessionStub.calledOnce);
   t.is(onSessionStub.getCall(0).args.length, 2);
   t.is(onSessionStub.getCall(0).args[0], testEmailProfile.emailId);
-  const emailDeviceRecord = onSessionStub.getCall(0).args[1] as EmailDeviceRecord;
-  t.is(emailDeviceRecord.appId, OneSignal.context.appConfig.appId);
+  const emailDeviceRecord = onSessionStub.getCall(0).args[1] as FlattenedDeviceRecord;
+  t.is(emailDeviceRecord.app_id, OneSignal.context.appConfig.appId);
 });
 
 

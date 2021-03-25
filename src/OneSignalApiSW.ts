@@ -1,7 +1,6 @@
 import { ServerAppConfig } from "./models/AppConfig";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import { SubscriptionStateKind } from "./models/SubscriptionStateKind";
-import { FlattenedDeviceRecord } from "./models/DeviceRecord";
 import Log from "./libraries/Log";
 import { Utils } from "./context/shared/utils/Utils";
 import { OutcomeAttribution, OutcomeAttributionType } from "./models/Outcomes";
@@ -44,23 +43,6 @@ export class OneSignalApiSW {
     }
     return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
   }
-
-  public static async updateUserSession(
-    userId: string,
-    serializedDeviceRecord: FlattenedDeviceRecord,
-  ): Promise<string> {
-    const funcToExecute = async () => {
-      const response = await OneSignalApiBase.post(
-        `players/${userId}/on_session`, serializedDeviceRecord);
-      if (response.id) {
-        // A new user ID can be returned
-        return response.id;
-      } else {
-        return userId;
-      }
-    };
-    return await Utils.enforceAppIdAndPlayerId(serializedDeviceRecord.app_id, userId, funcToExecute);
-  };
 
   public static async sendSessionDuration(
     appId: string, deviceId: string, sessionDuration: number, deviceType: number, attribution: OutcomeAttribution

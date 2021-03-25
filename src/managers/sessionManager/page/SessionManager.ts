@@ -305,7 +305,7 @@ export class SessionManager implements ISessionManager {
     }
 
     try {
-      const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId!, deviceRecord);
+      const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId!, deviceRecord.serialize());
       this.onSessionSent = true;
 
       // If the returned player id is different, save the new id.

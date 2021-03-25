@@ -1,5 +1,5 @@
 import { AppConfig } from './models/AppConfig';
-import { DeviceRecord } from './models/DeviceRecord';
+import { DeviceRecord, FlattenedDeviceRecord } from './models/DeviceRecord';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
 import { EmailProfile } from './models/EmailProfile';
 import { EmailDeviceRecord } from './models/EmailDeviceRecord';
@@ -116,13 +116,12 @@ export default class OneSignalApiShared {
 
   static async updateUserSession(
     userId: string,
-    deviceRecord: DeviceRecord,
+    deviceRecord: FlattenedDeviceRecord,
   ): Promise<string> {
     try {
-      const serializedDeviceRecord = deviceRecord.serialize();
-      Utils.enforceAppId(serializedDeviceRecord.app_id);
+      Utils.enforceAppId(deviceRecord.app_id);
       Utils.enforcePlayerId(userId);
-      const response = await OneSignalApiBase.post(`players/${userId}/on_session`, serializedDeviceRecord);
+      const response = await OneSignalApiBase.post(`players/${userId}/on_session`, deviceRecord);
       if (response.id) {
         // A new user ID can be returned
         return response.id;

@@ -369,7 +369,7 @@ export default class InitHelper {
         emailDeviceRecord.appId = context.appConfig.appId;
         await OneSignalApiShared.updateUserSession(
           emailProfile.emailId,
-          emailDeviceRecord
+          emailDeviceRecord.serialize()
         );
       }
     }

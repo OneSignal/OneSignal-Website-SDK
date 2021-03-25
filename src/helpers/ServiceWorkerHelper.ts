@@ -13,6 +13,7 @@ import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
 import { OSServiceWorkerFields } from "../service-worker/types";
 import Utils from "../context/shared/utils/Utils";
+import OneSignalApiShared from "../OneSignalApiShared";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -191,7 +192,7 @@ export default class ServiceWorkerHelper {
       }
     }
 
-    const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+    const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
     // If the returned player id is different, save the new id to indexed db and update session
     if (newPlayerId !== deviceId) {
       session.deviceId = newPlayerId;
