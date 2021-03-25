@@ -11,12 +11,12 @@ declare var OneSignal: any;
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
-  [DismissPrompt.NonPush]: DismissCountKey.WebPromptsDismissCount
+  [DismissPrompt.NonPush]: DismissCountKey.NonPushPromptsDismissCount
 };
 
 const DISMISS_TYPE_TIME_MAP = {
   [DismissPrompt.Push] : DismissTimeKey.OneSignalNotificationPrompt,
-  [DismissPrompt.NonPush] : DismissTimeKey.OneSignalWebPrompt
+  [DismissPrompt.NonPush] : DismissTimeKey.OneSignalNonPushPrompt
 };
 
 export class DismissHelper {
@@ -84,7 +84,7 @@ export class DismissHelper {
       case DismissPrompt.Push:
         return TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt) === 'dismissed';
       case DismissPrompt.NonPush:
-        return TimedLocalStorage.getItem(DismissTimeKey.OneSignalWebPrompt) === 'dismissed';
+        return TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt) === 'dismissed';
       default:
         break;
     }
