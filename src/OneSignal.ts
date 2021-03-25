@@ -400,6 +400,27 @@ export default class OneSignal {
     });
   }
 
+  public static async showSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowSmsSlidedown({
+      ...options,
+    });
+  }
+
+  public static async showEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowEmailSlidedown({
+      ...options,
+    });
+  }
+
+  public static async showSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
+      ...options,
+    });
+  }
+
   /**
    * Prompts the user to subscribe.
    * @PublicApi
