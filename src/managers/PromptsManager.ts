@@ -17,7 +17,7 @@ import {
   AppUserConfigPromptOptions,
   DelayedPromptType} from '../models/Prompts';
 import { TagCategory, TagsObjectWithBoolean, TagsObjectForApi } from "../models/Tags";
-import TestHelper from '../helpers/TestHelper';
+import { DismissHelper } from '../helpers/DismissHelper';
 import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
@@ -26,6 +26,7 @@ import TaggingContainer from '../slidedown/TaggingContainer';
 import TagUtils from '../utils/TagUtils';
 import LocalStorage from '../utils/LocalStorage';
 import PromptsHelper from '../helpers/PromptsHelper';
+import { DismissPrompt } from "../models/Dismiss";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -173,7 +174,7 @@ export class PromptsManager {
     MainHelper.markHttpSlidedownShown();
     await InitHelper.registerForPushNotifications();
     this.isAutoPromptShowing = false;
-    TestHelper.markHttpsNativePromptDismissed();
+    DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
   }
 
   public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
@@ -309,11 +310,11 @@ export class PromptsManager {
         OneSignal.slidedown.close();
       }
       Log.debug("Setting flag to not show the slidedown to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
+          DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
     });
     OneSignal.emitter.once(Slidedown.EVENTS.CANCEL_CLICK, () => {
       Log.debug("Setting flag to not show the slidedown to the user again.");
-      TestHelper.markHttpsNativePromptDismissed();
+          DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
     });
   }
 
