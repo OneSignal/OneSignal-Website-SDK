@@ -1,12 +1,20 @@
 import { ExecutionContext } from "ava";
 import { TestEnvironmentConfig, TestEnvironment } from "../../../support/sdk/TestEnvironment";
 import { stubServiceWorkerInstallation } from "../../../support/tester/sinonSandboxUtils";
-import { SlidedownPromptOptions, AppUserConfigPromptOptions, DelayedPromptType } from "../../../../src/models/Prompts";
+import { SlidedownPromptOptions, DelayedPromptType } from "../../../../src/models/Prompts";
 import Random from "../../../support/tester/Random";
 import { SinonSandbox } from "sinon";
+import { EventCounts } from "../../../support/tester/EventsTestHelper";
+import { CHANNEL_CAPTURE_CONTAINER_CSS_IDS } from "../../../../src/slidedown/constants";
 
 /** HELPERS */
 const appId = Random.getRandomUuid();
+
+const minimalText = {
+    actionMessage: "",
+    acceptButton: "",
+    cancelButton: ""
+};
 
 export class SlidedownPromptingTestHelper {
     private sinonSandbox;
@@ -46,11 +54,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.Push,
             autoPrompt: true,
-            text: {
-                actionMessage: "",
-                acceptButton: "",
-                cancelButton: ""
-            }
+            text: minimalText
         };
     }
 
@@ -58,11 +62,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.Category,
             autoPrompt: true,
-            text: {
-                actionMessage: "",
-                acceptButton: "",
-                cancelButton: ""
-            },
+            text: minimalText,
             categories: [
                 {
                     tag: "myTag",
@@ -70,5 +70,40 @@ export class SlidedownPromptingTestHelper {
                 }
             ]
         };
+    }
+
+    public getMinimalSmsAndEmailOptions(): SlidedownPromptOptions {
+        return {
+            type: DelayedPromptType.SmsAndEmail,
+            autoPrompt: true,
+            text: minimalText
+        };
+    }
+
+    public getMinimalSmsOptions(): SlidedownPromptOptions {
+        return {
+            type: DelayedPromptType.Sms,
+            autoPrompt: true,
+            text: minimalText
+        };
+    }
+
+    public getMinimalEmailOptions(): SlidedownPromptOptions {
+        return {
+            type: DelayedPromptType.Email,
+            autoPrompt: true,
+            text: minimalText
+        };
+    }
+
+    public inputEmail(email: string) {
+        const onesignalEmailInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
+        (<HTMLInputElement>onesignalEmailInput).value = email;
+    }
+
+    static resetEventCounts(counts: EventCounts): void {
+        counts.shown  = 0;
+        counts.closed = 0;
+        counts.queued = 0;
     }
 }
