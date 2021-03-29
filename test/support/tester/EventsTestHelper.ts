@@ -4,6 +4,11 @@ import OneSignalEvent from "../../../src/Event";
 import { SinonSandbox } from 'sinon';
 import { stubServiceWorkerInstallation } from "../../support/tester/sinonSandboxUtils";
 
+/**
+ * I M P O R T A N T
+ * To correctly test the EventCount values, remember to call the
+ * corresponding `get*PromiseWithEventCounts` EventsTestHelper function in the test
+ */
 export interface EventCounts {
     shown : number;
     closed: number;
@@ -29,7 +34,9 @@ export default class EventsTestHelper {
 
     public simulateSlidedownDismissAfterShown() {
         OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+            // must emit both events to mimick behavior in `Slidedown.onSlidedownCanceled`
             OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
+            Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
         });
     }
 
