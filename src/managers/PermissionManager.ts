@@ -148,8 +148,7 @@ export default class PermissionManager {
             (
               this.isCurrentFrameContextCrossOrigin() ||
               await SdkEnvironment.isFrameContextInsecure() ||
-              OneSignalUtils.isUsingSubscriptionWorkaround() ||
-              SdkEnvironment.isInsecureOrigin()
+              OneSignalUtils.isUsingSubscriptionWorkaround()
             )
            );
   }
