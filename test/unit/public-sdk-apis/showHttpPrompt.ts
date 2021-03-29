@@ -2,8 +2,8 @@ import test, { ExecutionContext } from "ava";
 import OneSignal from "../../../src/OneSignal";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import Context from "../../../src/models/Context";
-import MainHelper from "../../../src/helpers/MainHelper";
 import sinon, { SinonSandbox } from 'sinon';
+import { DismissHelper } from "../../../src/helpers/DismissHelper";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -11,9 +11,6 @@ test.afterEach(function (_t: ExecutionContext) {
   sinonSandbox.restore();
 });
 
-test.todo("fix test");
-
-/*
 test("Test showHttpPrompt with no params", async t => {
   await TestEnvironment.initialize();
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -24,8 +21,7 @@ test("Test showHttpPrompt with no params", async t => {
 
   // Ensure both public and private calls work
   await OneSignal.showHttpPrompt();
-  await OneSignal.context.promptsManager.internalShowAutoPrompt();
+  await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
   // Pass if we did not throw
   t.pass();
 });
-*/
