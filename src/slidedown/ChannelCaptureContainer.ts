@@ -33,6 +33,7 @@ export default class ChannelCaptureContainer {
   private generateHtml(): Element {
     const captureContainer      = document.createElement("div");
     addCssClass(captureContainer, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.channelCaptureContainer);
+    captureContainer.id = CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.channelCaptureContainer;
     let label, smsInputElement, emailInputElement;
 
     switch (this.promptOptions.type) {
@@ -148,7 +149,7 @@ export default class ChannelCaptureContainer {
 
     smsInput.addEventListener('keyup', () => {
       this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
-        (<HTMLInputElement>smsInput).value === "";
+        (<HTMLInputElement>smsInput)?.value === "";
 
       this.updateValidationOnSmsInputChange();
     });
@@ -156,7 +157,7 @@ export default class ChannelCaptureContainer {
     // handles case where number is typed, then country is changed after
     smsInput.addEventListener('blur', () => {
       this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
-        (<HTMLInputElement>smsInput).value === "";
+        (<HTMLInputElement>smsInput)?.value === "";
 
       this.updateValidationOnSmsInputChange();
     });
@@ -166,7 +167,7 @@ export default class ChannelCaptureContainer {
     const emailInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
 
     emailInput.addEventListener('keyup', () => {
-      const emailValue = (<HTMLInputElement>emailInput).value;
+      const emailValue = (<HTMLInputElement>emailInput)?.value;
       this.emailInputFieldIsValid = ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
 
       this.updateValidationOnEmailInputChange();
@@ -238,7 +239,7 @@ export default class ChannelCaptureContainer {
 
     const captureContainer = this.generateHtml();
     const body = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.body}`);
-    body.append(captureContainer);
+    body.appendChild(captureContainer);
 
     if (isUsingSms) {
       this.initializePhoneInputLibrary();
@@ -257,7 +258,7 @@ export default class ChannelCaptureContainer {
 
   static isSmsInputFieldEmpty(): boolean {
     const onesignalSmsInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-    return (<HTMLInputElement>onesignalSmsInput).value === "";
+    return (<HTMLInputElement>onesignalSmsInput)?.value === "";
   }
 
   static showSmsInputError(state: boolean): void {
@@ -300,8 +301,8 @@ export default class ChannelCaptureContainer {
       validationElement.classList.remove(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden);
       inputElement.classList.add(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput);
     } else {
-      validationElement.classList.add(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput);
-      inputElement.classList.remove(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden);
+      validationElement.classList.add(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalValidationElementHidden);
+      inputElement.classList.remove(CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalErrorInput);
     }
   }
 
@@ -324,12 +325,12 @@ export default class ChannelCaptureContainer {
 
   static getValueFromEmailInput(): string {
     const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
-    return (<HTMLInputElement>inputNode).value || "";
+    return (<HTMLInputElement>inputNode)?.value || "";
   }
 
   static getValueFromSmsInput(): string {
     const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-    return (<HTMLInputElement>inputNode).value || "";
+    return (<HTMLInputElement>inputNode)?.value || "";
   }
 
   static validateEmailInputWithReturnVal(emailString?: string): boolean {
