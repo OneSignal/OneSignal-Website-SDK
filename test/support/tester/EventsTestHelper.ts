@@ -3,6 +3,7 @@ import { SubscriptionManager } from '../../../src/managers/SubscriptionManager';
 import OneSignalEvent from "../../../src/Event";
 import { SinonSandbox } from 'sinon';
 import { stubServiceWorkerInstallation } from "../../support/tester/sinonSandboxUtils";
+import ConfirmationToast from "../../../src/slidedown/ConfirmationToast";
 
 /**
  * I M P O R T A N T
@@ -70,6 +71,22 @@ export default class EventsTestHelper {
             OneSignal.on(Slidedown.EVENTS.CLOSED, () => {
                 eventCounts.closed += 1;
                 if (eventCounts.closed >= resolveAfter) { resolve(); }
+            });
+        });
+    }
+
+    static getToastShownPromise(): Promise<void> {
+        return new Promise<void>(resolve => {
+            OneSignal.on(ConfirmationToast.EVENTS.SHOWN, () => {
+                resolve();
+            });
+        });
+    }
+
+    static getToastClosedPromise(): Promise<void> {
+        return new Promise<void>(resolve => {
+            OneSignal.on(ConfirmationToast.EVENTS.CLOSED, () => {
+                resolve();
             });
         });
     }
