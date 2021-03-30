@@ -204,6 +204,7 @@ export class SlidedownManager {
         await confirmationToast.show();
         await awaitableTimeout(5000);
         confirmationToast.close();
+        ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
       }
       await awaitableTimeout(1000);
 
