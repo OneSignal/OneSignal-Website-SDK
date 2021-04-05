@@ -71,6 +71,15 @@
                                 label: "Very Long Category",
                             }
                         ]
+                  },
+                  {
+                      type: "sms"
+                  },
+                  {
+                      type: "email"
+                  },
+                  {
+                      type: "smsAndEmail"
                   }]
               },
               customlink: {
@@ -119,6 +128,25 @@
             OneSignal.showCategorySlidedown();
         })
     }
+
+    function showSmsSlidedown() {
+        OneSignal.push(function() {
+            OneSignal.showSmsSlidedown();
+        })
+    }
+
+    function showEmailSlidedown() {
+        OneSignal.push(function() {
+            OneSignal.showEmailSlidedown();
+        })
+    }
+
+    function showSmsAndEmailSlidedown() {
+        OneSignal.push(function() {
+            OneSignal.showSmsAndEmailSlidedown();
+        })
+    }
+
   </script>
 <head>
     <meta charset="utf-8">
@@ -141,6 +169,9 @@
     <br />
     <br />
     <button onclick="javascript:showCategorySlidedown();">Show Category Slidedown</button>
+    <button onclick="javascript:showSmsSlidedown();">Show Sms Slidedown</button>
+    <button onclick="javascript:showEmailSlidedown();">Show Email Slidedown</button>
+    <button onclick="javascript:showSmsAndEmailSlidedown();">Show Sms & Email Slidedown</button>
     <br />
     <br />
     <div class='onesignal-customlink-container'></div>
