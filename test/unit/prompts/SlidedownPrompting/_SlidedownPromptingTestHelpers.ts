@@ -76,11 +76,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.SmsAndEmail,
             autoPrompt: true,
-            text: {
-                actionMessage: "",
-                acceptButton: "",
-                cancelButton: ""
-            }
+            text: minimalText
         };
     }
 

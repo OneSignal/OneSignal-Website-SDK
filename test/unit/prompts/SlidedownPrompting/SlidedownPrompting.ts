@@ -142,7 +142,6 @@ test("correct number of slidedowns are enqueued: once", async t => {
     const queuedPromise = new Promise<void>(resolve => {
       OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
         eventCounts.queued+=1;
-        // all slidedowns have been enqueued by this point
         if (eventCounts.queued === 1) {
             resolve();
         }
@@ -166,7 +165,6 @@ test("correct number of slidedowns are enqueued: twice", async t => {
     const queuedPromise = new Promise<void>(resolve => {
       OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
         eventCounts.queued+=1;
-        // all slidedowns have been enqueued by this point
         if (eventCounts.queued === 2) {
             resolve();
         }
@@ -195,16 +193,13 @@ test("on slidedown dismiss with slidedown queue non-empty, show next slidedown",
     const queuedPromise = new Promise<void>(resolve => {
       OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
         eventCounts.queued+=1;
-        // all slidedowns have been enqueued by this point
         if (eventCounts.queued === 1) {
-            eventsHelper.simulateNativeAllowAfterShown();
             eventsHelper.simulateSlidedownAllow();
             resolve();
         }
       });
     });
 
-    const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
     const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
     const shownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts, 2);
 
@@ -214,7 +209,6 @@ test("on slidedown dismiss with slidedown queue non-empty, show next slidedown",
     ]);
 
     await queuedPromise;
-    await subscriptionPromise;
     await closedPromise;
     await shownPromise;
 

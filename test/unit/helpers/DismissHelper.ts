@@ -15,17 +15,6 @@ import { SlidedownManager } from "../../../src/managers/slidedownManager/Slidedo
 import TimedLocalStorage from "../../../src/modules/TimedLocalStorage";
 import { DismissTimeKey } from "../../../src/models/Dismiss";
 
-/**
- * PROMPTING LOGIC UNIT TESTS FOR WEB PROMPTS FEATURE
- * Tests prompting behavior of things like
- *  - showing multiple slidedowns
- *  - slidedown queues
- *  - slidedown configuration
- *  - slidedown behavior
- *  - slidedown manager behavior
- *  - ...etc
- */
-
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
 const minimalPushSlidedownOptions = testHelper.getMinimalPushSlidedownOptions();
@@ -57,7 +46,7 @@ const testConfig: TestEnvironmentConfig = {
     stubSetTimeout: true
 };
 
-test("on push slidedown dismiss, not shown, mark push prompt as dismissed", async t => {
+test("push slidedown shown, on dismiss, mark push prompt as dismissed", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
@@ -66,22 +55,20 @@ test("on push slidedown dismiss, not shown, mark push prompt as dismissed", asyn
 
   const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
 
-
   await testHelper.initWithPromptOptions([
       testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
   ]);
 
   await closedPromise;
-  const pushDismissed =    await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt);
+  const pushDismissed    = await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt);
   const nonPushDismissed = await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt);
 
-  t.is(eventCounts.shown, 0);
   t.is(dismissSpy.callCount, 1);
   t.is(pushDismissed, "dismissed");
   t.is(nonPushDismissed, null);
 });
 
-test("on push slidedown allow, shown, mark push prompt as dismissed", async t => {
+test("on push slidedown shown, allow, mark push prompt as dismissed", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
@@ -106,7 +93,7 @@ test("on push slidedown allow, shown, mark push prompt as dismissed", async t =>
   t.is(nonPushDismissed, null);
 });
 
-test("on non-push slidedown dismiss, not shown, mark non-push prompt as dismissed", async t => {
+test("on non-push slidedown dismiss, mark non-push prompt as dismissed", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
