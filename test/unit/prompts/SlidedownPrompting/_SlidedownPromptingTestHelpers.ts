@@ -100,10 +100,4 @@ export class SlidedownPromptingTestHelper {
         const onesignalEmailInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
         (<HTMLInputElement>onesignalEmailInput).value = email;
     }
-
-    static resetEventCounts(counts: EventCounts): void {
-        counts.shown  = 0;
-        counts.closed = 0;
-        counts.queued = 0;
-    }
 }

@@ -86,15 +86,10 @@ const testConfig: TestEnvironmentConfig = {
     stubSetTimeout: true
 };
 
-const eventCounts = {
-  shown: 0,
-  closed: 0,
-  queued: 0
-};
-
 test("submit email with bad input throws error and shows validation message", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sandbox, testConfig, t);
-  const slidedownShownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts);
+  const eventsHelper = new EventsTestHelper(sandbox);
+  const slidedownShownPromise = eventsHelper.getShownPromiseWithEventCounts();
   const setFailureStateSpy = sandbox.stub(Slidedown.prototype, "setFailureState");
   const slidedownCloseSpy  = sandbox.stub(Slidedown.prototype, "close");
 

@@ -18,82 +18,88 @@ export interface EventCounts {
 
 export default class EventsTestHelper {
     private readonly sinonSandbox: SinonSandbox;
+    public eventCounts: EventCounts;
 
     constructor(sinonSandbox: SinonSandbox) {
         this.sinonSandbox = sinonSandbox;
+        this.eventCounts = {
+          shown: 0,
+          closed: 0,
+          queued: 0
+        };
     }
 
-    public simulateSlidedownAllow() {
-        OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
-    }
+    public getShownPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
+      return new Promise<void>(resolve => {
+          OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+              this.eventCounts.shown += 1;
+              if (this.eventCounts.shown >= resolveAfter) { resolve(); }
+          });
+      });
+  }
 
-    public simulateSlidedownAllowAfterShown() {
-        OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-            OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
-        });
-    }
+  public getClosedPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
+      return new Promise<void>(resolve => {
+          OneSignal.on(Slidedown.EVENTS.CLOSED, () => {
+              this.eventCounts.closed += 1;
+              if (this.eventCounts.closed >= resolveAfter) { resolve(); }
+          });
+      });
+  }
 
-    public simulateSlidedownDismissAfterShown() {
-        OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-            // must emit both events to mimick behavior in `Slidedown.onSlidedownCanceled`
-            OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
-            Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
-        });
-    }
+  public simulateNativeAllowAfterShown() {
+    OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
+        this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
+            .resolves({ subscribed: true, isOptedOut: false });
+        stubServiceWorkerInstallation(this.sinonSandbox);
+    });
+  }
 
-    public simulateSlidedownCloseAfterAllow() {
-        OneSignal.on(Slidedown.EVENTS.ALLOW_CLICK, () => {
-            OneSignalEvent.trigger(Slidedown.EVENTS.CLOSED);
-        });
-    }
+  /* S T A T I C */
 
-    public simulateNativeAllowAfterShown() {
-        OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
-            this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
-                .resolves({ subscribed: true, isOptedOut: false });
-            stubServiceWorkerInstallation(this.sinonSandbox);
-        });
-    }
+  static simulateSlidedownAllow() {
+      OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
+  }
 
-    // static
+  static simulateSlidedownAllowAfterShown() {
+      OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+          OneSignalEvent.trigger(Slidedown.EVENTS.ALLOW_CLICK);
+      });
+  }
 
-    static getShownPromiseWithEventCounts(eventCounts: EventCounts, resolveAfter: number = 0): Promise<void> {
-        return new Promise<void>(resolve => {
-            OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-                eventCounts.shown += 1;
-                if (eventCounts.shown >= resolveAfter) { resolve(); }
-            });
-        });
-    }
+  static simulateSlidedownDismissAfterShown() {
+      OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+          // must emit both events to mimick behavior in `Slidedown.onSlidedownCanceled`
+          OneSignalEvent.trigger(Slidedown.EVENTS.CANCEL_CLICK);
+          Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
+      });
+  }
 
-    static getClosedPromiseWithEventCounts(eventCounts: EventCounts, resolveAfter: number = 0): Promise<void> {
-        return new Promise<void>(resolve => {
-            OneSignal.on(Slidedown.EVENTS.CLOSED, () => {
-                eventCounts.closed += 1;
-                if (eventCounts.closed >= resolveAfter) { resolve(); }
-            });
-        });
-    }
+  static simulateSlidedownCloseAfterAllow() {
+      OneSignal.on(Slidedown.EVENTS.ALLOW_CLICK, () => {
+          OneSignalEvent.trigger(Slidedown.EVENTS.CLOSED);
+      });
+  }
 
-    static getToastShownPromise(): Promise<void> {
-        return new Promise<void>(resolve => {
-            OneSignal.on(ConfirmationToast.EVENTS.SHOWN, () => {
-                resolve();
-            });
-        });
-    }
+  static getToastShownPromise(): Promise<void> {
+      return new Promise<void>(resolve => {
+          OneSignal.on(ConfirmationToast.EVENTS.SHOWN, () => {
+              resolve();
+          });
+      });
+  }
 
-    static getToastClosedPromise(): Promise<void> {
-        return new Promise<void>(resolve => {
-            OneSignal.on(ConfirmationToast.EVENTS.CLOSED, () => {
-                resolve();
-            });
-        });
-    }
+  static getToastClosedPromise(): Promise<void> {
+      return new Promise<void>(resolve => {
+          OneSignal.on(ConfirmationToast.EVENTS.CLOSED, () => {
+              resolve();
+          });
+      });
+  }
 
-    static getSubscriptionPromise(): Promise<void> {
-        return new Promise<void>(resolve => {
-            OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => { resolve(); });
-        });
-    }
+  static getSubscriptionPromise(): Promise<void> {
+      return new Promise<void>(resolve => {
+          OneSignal.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => { resolve(); });
+      });
+  }
 }

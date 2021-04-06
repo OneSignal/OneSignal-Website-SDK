@@ -73,7 +73,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const eventsHelper = new EventsTestHelper(sinonSandbox);
-    eventsHelper.simulateSlidedownAllowAfterShown();
+    EventsTestHelper.simulateSlidedownAllowAfterShown();
     eventsHelper.simulateNativeAllowAfterShown();
 
     const initializePromise = new Promise<void>(resolve => {
@@ -116,8 +116,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
-  const eventsHelper = new EventsTestHelper(sinonSandbox);
-  eventsHelper.simulateSlidedownDismissAfterShown();
+  EventsTestHelper.simulateSlidedownDismissAfterShown();
 
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 
@@ -434,7 +433,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
 
     const eventsHelper = new EventsTestHelper(sinonSandbox);
-    eventsHelper.simulateSlidedownAllowAfterShown();
+    EventsTestHelper.simulateSlidedownAllowAfterShown();
     eventsHelper.simulateNativeAllowAfterShown();
 
     const initializePromise = new Promise<void>(resolve => {
@@ -477,7 +476,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
-  new EventsTestHelper(sinonSandbox).simulateSlidedownDismissAfterShown();
+  EventsTestHelper.simulateSlidedownDismissAfterShown();
 
   const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
 

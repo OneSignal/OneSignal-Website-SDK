@@ -7,7 +7,7 @@ import {
   HttpHttpsEnvironment,
   TestEnvironment
 } from "../../support/sdk/TestEnvironment";
-import EventsTestHelper, { EventCounts } from "../../support/tester/EventsTestHelper";
+import EventsTestHelper from "../../support/tester/EventsTestHelper";
 import { mockGetIcon } from "../../support/tester/utils";
 import { SlidedownPromptingTestHelper } from "../prompts/SlidedownPrompting/_SlidedownPromptingTestHelpers";
 import { DismissHelper } from "../../../src/helpers/DismissHelper";
@@ -20,12 +20,6 @@ const testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
 const minimalPushSlidedownOptions = testHelper.getMinimalPushSlidedownOptions();
 const minimalSmsAndEmailOptions = testHelper.getMinimalSmsAndEmailOptions();
 
-const eventCounts = {
-    shown  : 0,
-    closed : 0,
-    queued : 0
-} as EventCounts;
-
 test.beforeEach(() => {
     mockGetIcon();
 });
@@ -35,7 +29,6 @@ test.afterEach(function (_t: ExecutionContext) {
     OneSignal._initCalled = false;
     OneSignal.__initAlreadyCalled = false;
     OneSignal._sessionInitAlreadyRunning = false;
-    SlidedownPromptingTestHelper.resetEventCounts(eventCounts);
 });
 
 const testConfig: TestEnvironmentConfig = {
@@ -51,9 +44,9 @@ test("push slidedown shown, on dismiss, mark push prompt as dismissed", async t 
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
   const dismissSpy = sinonSandbox.spy(DismissHelper, "markPromptDismissedWithType");
-  eventsHelper.simulateSlidedownDismissAfterShown();
+  EventsTestHelper.simulateSlidedownDismissAfterShown();
 
-  const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
+  const closedPromise = eventsHelper.getClosedPromiseWithEventCounts();
 
   await testHelper.initWithPromptOptions([
       testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
@@ -73,10 +66,10 @@ test("on push slidedown shown, allow, mark push prompt as dismissed", async t =>
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
   const dismissSpy = sinonSandbox.spy(DismissHelper, "markPromptDismissedWithType");
-  eventsHelper.simulateSlidedownAllowAfterShown();
+  EventsTestHelper.simulateSlidedownAllowAfterShown();
 
-  const shownPromise  = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts);
-  const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
+  const shownPromise  = eventsHelper.getShownPromiseWithEventCounts();
+  const closedPromise = eventsHelper.getClosedPromiseWithEventCounts();
 
   await testHelper.initWithPromptOptions([
       testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
@@ -87,7 +80,7 @@ test("on push slidedown shown, allow, mark push prompt as dismissed", async t =>
   const pushDismissed =    await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt);
   const nonPushDismissed = await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt);
 
-  t.is(eventCounts.shown, 1);
+  t.is(eventsHelper.eventCounts.shown, 1);
   t.is(dismissSpy.callCount, 1);
   t.is(pushDismissed, "dismissed");
   t.is(nonPushDismissed, null);
@@ -98,10 +91,10 @@ test("on non-push slidedown dismiss, mark non-push prompt as dismissed", async t
   sinonSandbox.stub(SlidedownManager.prototype as any, "checkIfSlidedownShouldBeShown").resolves(true);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
   const dismissSpy = sinonSandbox.spy(DismissHelper, "markPromptDismissedWithType");
-  eventsHelper.simulateSlidedownDismissAfterShown();
+  EventsTestHelper.simulateSlidedownDismissAfterShown();
 
-  const shownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts, 1);
-  const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
+  const shownPromise = eventsHelper.getShownPromiseWithEventCounts(1);
+  const closedPromise = eventsHelper.getClosedPromiseWithEventCounts();
 
 
   await testHelper.initWithPromptOptions([
@@ -113,7 +106,7 @@ test("on non-push slidedown dismiss, mark non-push prompt as dismissed", async t
   const pushDismissed =    await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNotificationPrompt);
   const nonPushDismissed = await TimedLocalStorage.getItem(DismissTimeKey.OneSignalNonPushPrompt);
 
-  t.is(eventCounts.shown, 1);
+  t.is(eventsHelper.eventCounts.shown, 1);
   t.is(dismissSpy.callCount, 1);
   t.is(pushDismissed, null);
   t.is(nonPushDismissed, "dismissed");

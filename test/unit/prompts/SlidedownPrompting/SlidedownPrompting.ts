@@ -7,11 +7,12 @@ import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 import { NotificationPermission } from "../../../../src/models/NotificationPermission";
 import { PromptsManager } from '../../../../src/managers/PromptsManager';
 import Slidedown from "../../../../src/slidedown/Slidedown";
-import EventsTestHelper, { EventCounts } from "../../../support/tester/EventsTestHelper";
+import EventsTestHelper from "../../../support/tester/EventsTestHelper";
 import { SlidedownManager } from "../../../../src/managers/slidedownManager/SlidedownManager";
 import { SlidedownPromptingTestHelper } from "./_SlidedownPromptingTestHelpers";
 import { mockGetIcon } from "../../../support/tester/utils";
 import ConfirmationToast from "../../../../src/slidedown/ConfirmationToast";
+import { stubServiceWorkerInstallation } from "../../../support/tester/sinonSandboxUtils";
 
 /**
  * PROMPTING LOGIC UNIT TESTS FOR WEB PROMPTS FEATURE
@@ -32,12 +33,6 @@ const minimalSmsSlidedownOptions = testHelper.getMinimalSmsOptions();
 const minimalEmailSlidedownOptions = testHelper.getMinimalEmailOptions();
 const minimalSmsAndEmailOptions = testHelper.getMinimalSmsAndEmailOptions();
 
-const eventCounts = {
-  shown  : 0,
-  closed : 0,
-  queued : 0
-} as EventCounts;
-
 test.beforeEach(() => {
   mockGetIcon();
 });
@@ -47,7 +42,6 @@ test.afterEach(function (_t: ExecutionContext) {
   OneSignal._initCalled = false;
   OneSignal.__initAlreadyCalled = false;
   OneSignal._sessionInitAlreadyRunning = false;
-  SlidedownPromptingTestHelper.resetEventCounts(eventCounts);
 });
 
 const testConfig: TestEnvironmentConfig = {
@@ -138,11 +132,11 @@ test("session init 'spawns' as many autoPrompts as configured: 3", async t => {
 test("correct number of slidedowns are enqueued: once", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   const enqueueSpy = sinonSandbox.spy(SlidedownManager.prototype, "enqueue");
-
+  const eventsHelper = new EventsTestHelper(sinonSandbox);
   const queuedPromise = new Promise<void>(resolve => {
     OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
-      eventCounts.queued+=1;
-      if (eventCounts.queued === 1) {
+      eventsHelper.eventCounts.queued+=1;
+      if (eventsHelper.eventCounts.queued === 1) {
         resolve();
       }
     });
@@ -161,11 +155,12 @@ test("correct number of slidedowns are enqueued: once", async t => {
 test("correct number of slidedowns are enqueued: twice", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   const enqueueSpy = sinonSandbox.spy(SlidedownManager.prototype, "enqueue");
+  const eventsHelper = new EventsTestHelper(sinonSandbox);
 
   const queuedPromise = new Promise<void>(resolve => {
     OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
-      eventCounts.queued+=1;
-      if (eventCounts.queued === 2) {
+      eventsHelper.eventCounts.queued+=1;
+      if (eventsHelper.eventCounts.queued === 2) {
         resolve();
       }
     });
@@ -192,16 +187,16 @@ test("on slidedown dismiss with slidedown queue non-empty, show next slidedown",
 
   const queuedPromise = new Promise<void>(resolve => {
     OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
-      eventCounts.queued+=1;
-      if (eventCounts.queued === 1) {
-          eventsHelper.simulateSlidedownAllow();
+      eventsHelper.eventCounts.queued+=1;
+      if (eventsHelper.eventCounts.queued === 1) {
+          EventsTestHelper.simulateSlidedownAllow();
           resolve();
       }
     });
   });
 
-  const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
-  const shownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts, 2);
+  const closedPromise = eventsHelper.getClosedPromiseWithEventCounts();
+  const shownPromise = eventsHelper.getShownPromiseWithEventCounts(2);
 
   await testHelper.initWithPromptOptions([
       testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
@@ -212,32 +207,30 @@ test("on slidedown dismiss with slidedown queue non-empty, show next slidedown",
   await closedPromise;
   await shownPromise;
 
-  t.is(eventCounts.shown, 2);
+  t.is(eventsHelper.eventCounts.shown, 2);
   t.is(enqueueSpy.callCount, 1);
   t.is(showQueuedSpy.callCount, 1);
 });
 
 test("push & cat slidedowns configured -> cat shown first -> push slidedown not shown", async t => {
   await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
+  stubServiceWorkerInstallation(sinonSandbox);
   const eventsHelper = new EventsTestHelper(sinonSandbox);
   const enqueueSpy = sinonSandbox.spy(SlidedownManager.prototype, "enqueue");
   const showQueuedSpy = sinonSandbox.spy(SlidedownManager.prototype, "showQueued");
 
   const queuedPromise = new Promise<void>(resolve => {
     OneSignal.on(Slidedown.EVENTS.QUEUED, () => {
-      eventCounts.queued+=1;
-      // all slidedowns have been enqueued by this point
-      if (eventCounts.queued === 1) {
-        eventsHelper.simulateNativeAllowAfterShown();
-        eventsHelper.simulateSlidedownAllow();
+      eventsHelper.eventCounts.queued+=1;
+      if (eventsHelper.eventCounts.queued === 1) {
+        EventsTestHelper.simulateSlidedownAllow();
         resolve();
       }
     });
   });
 
-  const subscriptionPromise = EventsTestHelper.getSubscriptionPromise();
-  const closedPromise = EventsTestHelper.getClosedPromiseWithEventCounts(eventCounts);
-  const shownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts, 1);
+  const closedPromise = eventsHelper.getClosedPromiseWithEventCounts();
+  const shownPromise = eventsHelper.getShownPromiseWithEventCounts(1);
 
   await testHelper.initWithPromptOptions([
     testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 0),
@@ -245,11 +238,10 @@ test("push & cat slidedowns configured -> cat shown first -> push slidedown not 
   ]);
 
   await queuedPromise;
-  await subscriptionPromise;
   await closedPromise;
   await shownPromise;
 
-  t.is(eventCounts.shown, 1);
+  t.is(eventsHelper.eventCounts.shown, 1);
   t.is(enqueueSpy.callCount, 1);
   t.is(showQueuedSpy.callCount, 1);
 });
@@ -261,7 +253,7 @@ test("confirmation toast shown and closed after allow", async t => {
   const toastShownSpy = sinonSandbox.spy(ConfirmationToast.prototype, "show");
   const toastCloseSpy = sinonSandbox.spy(ConfirmationToast.prototype, "close");
 
-  const slidedownShownPromise = EventsTestHelper.getShownPromiseWithEventCounts(eventCounts, 1);
+  const slidedownShownPromise = eventsHelper.getShownPromiseWithEventCounts(1);
   const toastShownPromise = EventsTestHelper.getToastShownPromise();
   const toastClosePromise = EventsTestHelper.getToastClosedPromise();
 
@@ -273,7 +265,7 @@ test("confirmation toast shown and closed after allow", async t => {
 
   // simulate typing in a valid email
   testHelper.inputEmail("rodrigo@onesignal.com");
-  eventsHelper.simulateSlidedownAllow();
+  EventsTestHelper.simulateSlidedownAllow();
 
   await toastShownPromise;
   await toastClosePromise;
