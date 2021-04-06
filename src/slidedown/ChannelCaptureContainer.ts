@@ -92,6 +92,7 @@ export default class ChannelCaptureContainer {
 
     labelElement.title      = label;
     labelElement.innerText  = label;
+    labelElement.htmlFor    = varPayload.inputElementId;
 
     inputElement.type  = varPayload.domElementType;
     inputElement.id    = varPayload.inputElementId;
