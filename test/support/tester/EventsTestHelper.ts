@@ -47,7 +47,7 @@ export default class EventsTestHelper {
       });
   }
 
-  public simulateNativeAllowAfterShown() {
+  public simulateSubscribingAfterNativeAllow() {
     OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
         this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
             .resolves({ subscribed: true, isOptedOut: false });
