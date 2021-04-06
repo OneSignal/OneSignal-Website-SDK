@@ -83,10 +83,17 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "showHttpPrompt");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "registerForPushNotifications");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "showHttpPermissionRequest");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "showNativePrompt");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "showSlidedownPrompt");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "showCategorySlidedown");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "showSmsSlidedown");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "showEmailSlidedown");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "showSmsAndEmailSlidedown");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getNotificationPermission");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setDefaultTitle");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setDefaultNotificationUrl");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "syncHashedEmail");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "getIdsAvailable");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getTags");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "sendTag");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "sendTags");
@@ -152,11 +159,17 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "showHttpPrompt");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "registerForPushNotifications");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "showHttpPermissionRequest");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "showNativePrompt");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "showSlidedownPrompt");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "showCategorySlidedown");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "showSmsSlidedown");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "showEmailSlidedown");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "showSmsAndEmailSlidedown");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getNotificationPermission");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "isPushNotificationsEnabled");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setDefaultTitle");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setDefaultNotificationUrl");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "syncHashedEmail");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "getIdsAvailable");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getTags");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "sendTag");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "sendTags");
@@ -258,7 +271,8 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using p
   await sendTagsPromise;
 });
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with expected params with a function", async t => {
+test(`Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with ` +
+  `expected params with a function`, async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does, taking in any predefined window.OneSignal
   const oneSignalStub = new OneSignalStubES6([() => {
     (<any>global).OneSignal.sendTag("key", "value");
@@ -275,7 +289,8 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with e
   t.deepEqual(mockOneSignal.lastSendTags, { key: "value" });
 });
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with expected params using push with params list", async t => {
+test(`Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with ` +
+  `expected params using push with params list`, async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6([["sendTag", "key1", "value2"]]);
 
