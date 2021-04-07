@@ -116,7 +116,6 @@ export default class Slidedown {
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
       this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));
-      Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     }
   }
 
