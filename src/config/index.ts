@@ -32,6 +32,6 @@ export const CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS: SlidedownPromptOptions = {
     acceptButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
     cancelButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton
   },
-  autoPrompt  : false, // default to false
+  autoPrompt  : true,
   delay       : SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
 };
