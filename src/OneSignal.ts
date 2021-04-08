@@ -58,7 +58,6 @@ import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
-import { DismissHelper } from './helpers/DismissHelper';
 
 export default class OneSignal {
   /**
@@ -785,6 +784,7 @@ export default class OneSignal {
     return await OneSignal.privateGetSubscription(callback);
   }
 
+  // TO DO: consider renaming to something like privateGetOptedStatus
   static async privateGetSubscription(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('getSubscription', callback);
     const subscription = await Database.getSubscription();
@@ -961,7 +961,6 @@ export default class OneSignal {
   static httpHelper =  HttpHelper;
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
-  static testHelper = DismissHelper;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;

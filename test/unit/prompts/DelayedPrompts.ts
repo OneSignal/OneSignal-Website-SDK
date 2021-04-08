@@ -13,14 +13,10 @@ import {
 import LocalStorage from '../../../src/utils/LocalStorage';
 import { PromptsManager } from '../../../src/managers/PromptsManager';
 import InitHelper from '../../../src/helpers/InitHelper';
+import { DelayedPromptType } from "../../../src/models/Prompts";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const appId = Random.getRandomUuid();
-
-enum DelayedPromptType {
-    Native = "native",
-    Slidedown = "slidedown"
-}
 
 test.afterEach(function (_t: ExecutionContext) {
     sinonSandbox.restore();
