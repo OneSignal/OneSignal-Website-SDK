@@ -5,7 +5,6 @@ import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import { AppUserConfig } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
 import { ConfigHelper } from '../../../src/helpers/ConfigHelper';
-import { DelayedPromptType } from '../../../src/models/Prompts';
 import { getFinalAppConfig } from '../../../test/support/tester/ConfigHelperTestHelper';
 import sinon, { SinonSandbox } from 'sinon';
 import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';

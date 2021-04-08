@@ -1,15 +1,7 @@
 import Log from "../libraries/Log";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import { ContextInterface } from "../models/Context";
-import { NotSubscribedError, NotSubscribedReason } from "../errors/NotSubscribedError";
 import MainHelper from '../helpers/MainHelper';
-import AlreadySubscribedError from '../errors/AlreadySubscribedError';
-import PermissionMessageDismissedError from '../errors/PermissionMessageDismissedError';
-import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
-import { PermissionPromptType } from '../models/PermissionPromptType';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import { NotificationPermission } from '../models/NotificationPermission';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from '../slidedown/Slidedown';
 import {
@@ -18,14 +10,12 @@ import {
   DelayedPromptType,
   SlidedownPromptOptions} from '../models/Prompts';
 import { DismissHelper } from '../helpers/DismissHelper';
-import InitHelper, { RegisterOptions } from '../helpers/InitHelper';
+import InitHelper from '../helpers/InitHelper';
 import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from "bowser";
-import { ChannelCaptureError, InvalidChannelInputField } from "../errors/ChannelCaptureError";
-import ChannelCaptureContainer from "../slidedown/ChannelCaptureContainer";
 import { DismissPrompt } from "../models/Dismiss";
 
 export interface AutoPromptOptions {
@@ -98,8 +88,6 @@ export class PromptsManager {
         const slidedownPromptOptions = this.getDelayedPromptOptions(userPromptOptions, promptOptions.type);
         const isPageViewConditionMetForSlidedown: boolean = this.isPageViewConditionMet(slidedownPromptOptions);
         const conditionMetWithSlidedownOptions = slidedownPromptOptions.enabled && isPageViewConditionMetForSlidedown;
-
-        const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
 
         const options: AutoPromptOptions = {
           slidedownPromptOptions: promptOptions,
