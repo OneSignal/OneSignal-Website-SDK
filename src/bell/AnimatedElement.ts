@@ -32,17 +32,19 @@ export default class AnimatedElement {
     if (!this.hidden) {
       return Promise.resolve(this);
     }
-    else return new Promise((resolve) => {
+    else { return new Promise(resolve => {
       this.state = 'showing';
       OneSignalEvent.trigger(AnimatedElement.EVENTS.SHOWING, this);
       const element = this.element;
       if (!element) {
         Log.error(`(show) could not find animated element with selector ${this.selector}`)
       } else {
-        if (this.hideClass)
+        if (this.hideClass) {
           removeCssClass(element, this.hideClass);
-        if (this.showClass)
+        }
+        if (this.showClass) {
           addCssClass(element, this.showClass);
+        }
       }
 
       if (this.targetTransitionEvents.length == 0) {
@@ -64,6 +66,7 @@ export default class AnimatedElement {
         }, true);
       }
     });
+    }
   }
 
   /**
@@ -74,17 +77,19 @@ export default class AnimatedElement {
     if (!this.shown) {
       return Promise.resolve(this);
     }
-    else return new Promise((resolve) => {
+    else { return new Promise(resolve => {
       this.state = 'hiding';
       OneSignalEvent.trigger(AnimatedElement.EVENTS.HIDING, this);
       const element = this.element;
       if (!element) {
         Log.error(`(hide) could not find animated element with selector ${this.selector}`)
       } else {
-        if (this.showClass)
+        if (this.showClass) {
           removeCssClass(element, this.showClass);
-        if (this.hideClass)
+        }
+        if (this.hideClass) {
           addCssClass(element, this.hideClass);
+        }
       }
 
       if (this.targetTransitionEvents.length == 0) {
@@ -106,6 +111,7 @@ export default class AnimatedElement {
         }, true);
       }
     });
+    }
   }
 
   /**
@@ -113,15 +119,17 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   waitUntilShown() {
-    if (this.state === 'shown')
+    if (this.state === 'shown') {
       return Promise.resolve(this);
-    else return new Promise((resolve) => {
-      OneSignal.emitter.once(AnimatedElement.EVENTS.SHOWN, (event) => {
+    }
+    else { return new Promise(resolve => {
+      OneSignal.emitter.once(AnimatedElement.EVENTS.SHOWN,event => {
         if (event === this) {
           return resolve(this);
         }
       });
     });
+    }
   }
 
   /**
@@ -129,15 +137,17 @@ export default class AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   waitUntilHidden() {
-    if (this.state === 'hidden')
+    if (this.state === 'hidden') {
       return Promise.resolve(this);
-    else return new Promise((resolve) => {
-      OneSignal.emitter.once(AnimatedElement.EVENTS.HIDDEN, (event) => {
+    }
+    else { return new Promise(resolve => {
+      OneSignal.emitter.once(AnimatedElement.EVENTS.HIDDEN,event => {
         if (event === this) {
           return resolve(this);
         }
       });
     });
+    }
   }
 
   static get EVENTS() {

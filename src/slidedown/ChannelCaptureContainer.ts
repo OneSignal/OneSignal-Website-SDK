@@ -119,7 +119,7 @@ export default class ChannelCaptureContainer {
         validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement,
         inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput,
         inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalEmailInput,
-        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement,
       };
     } else if (type === DelayedPromptType.Sms) {
       return {
@@ -128,7 +128,7 @@ export default class ChannelCaptureContainer {
         validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement,
         inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput,
         inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalSmsInput,
-        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement,
       };
     } else throw new Error("invalid channel type for input validation");
   }
@@ -138,7 +138,7 @@ export default class ChannelCaptureContainer {
     if (onesignalSmsInput && !!window.intlTelInput) {
       this.itiOneSignal = window.intlTelInput(onesignalSmsInput, {
         autoPlaceholder: "off",
-        separateDialCode: true
+        separateDialCode: true,
       });
     } else {
       Log.error("OneSignal: there was a problem initializing International Telephone Input");

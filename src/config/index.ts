@@ -8,7 +8,7 @@ export const SERVER_CONFIG_DEFAULTS_SESSION = {
 
 export const SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS = {
   pageViews: 1,
-  timeDelay: 0
+  timeDelay: 0,
 };
 
 export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
@@ -19,10 +19,10 @@ export const SERVER_CONFIG_DEFAULTS_SLIDEDOWN = {
   categoryDefaults: {
     updateMessage: "Update your push notification subscription preferences.",
     positiveUpdateButton: "Save Preferences",
-    negativeUpdateButton: "Cancel"
+    negativeUpdateButton: "Cancel",
   },
   savingText: "Saving...",
-  confirmMessage: "Thank You!"
+  confirmMessage: "Thank You!",
 };
 
 export const CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS: SlidedownPromptOptions = {
@@ -30,8 +30,8 @@ export const CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS: SlidedownPromptOptions = {
   text        : {
     actionMessage : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
     acceptButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-    cancelButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton
+    cancelButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
   },
   autoPrompt  : false, // default to false
-  delay       : SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS
+  delay       : SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
 };

@@ -12,8 +12,9 @@ export default class Path {
   private readonly path: string;
 
   constructor(path: string) {
-    if (!path)
+    if (!path) {
       throw new InvalidArgumentError('path', InvalidArgumentReason.Empty);
+    }
     this.path = path.trim();
   }
 

@@ -4,7 +4,7 @@ import { OutcomesConfig } from "./Outcomes";
 export enum SessionStatus {
   Active = "active",
   Inactive = "inactive",
-  Expired = "expired"
+  Expired = "expired",
 }
 
 export enum SessionOrigin {

@@ -107,7 +107,7 @@ test('getIntegration should return Secure in HTTPS top-level frame', async t => 
 
 test('getIntegration should return Secure in HTTPS child frame under top-level HTTPS frame', async t => {
   const OneSignal: any = await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
   const browser = await TestEnvironment.stubDomEnvironment();
@@ -138,7 +138,7 @@ test(
 
 test('getIntegration should return InsecureProxy in HTTP top-level frame using proxy origin', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
 
@@ -167,7 +167,7 @@ test('getIntegration should return InsecureProxy in HTTPS child frame under top-
 test('getIntegration should return InsecureProxy in HTTP top-level frame for not localhost and allowLocalhostAsSecureOrigin = true',
   async t => {
   const OneSignal: any = await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
   const browser = await TestEnvironment.stubDomEnvironment();
@@ -180,7 +180,7 @@ test('getIntegration should return InsecureProxy in HTTP top-level frame for not
 test('getIntegration should return InsecureProxy in HTTP top-level frame for 127.0.0.1 and allowLocalhostAsSecureOrigin not present',
   async t => {
   const OneSignal: any = await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
   const browser = await TestEnvironment.stubDomEnvironment();
@@ -193,7 +193,7 @@ test('getIntegration should return InsecureProxy in HTTP top-level frame for 127
 test('getIntegration should return Secure in HTTP top-level frame for 127.0.0.1 and allowLocalhostAsSecureOrigin = true',
   async t => {
   const OneSignal: any = await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
   const browser = await TestEnvironment.stubDomEnvironment();
@@ -206,7 +206,7 @@ test('getIntegration should return Secure in HTTP top-level frame for 127.0.0.1 
 test('getIntegration should return InsecureProxy in HTTP top-level frame for localhost and allowLocalhostAsSecureOrigin not present',
   async t => {
   const OneSignal: any = await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
   OneSignal.config.userConfig.allowLocalhostAsSecureOrigin = undefined;
@@ -216,7 +216,7 @@ test('getIntegration should return InsecureProxy in HTTP top-level frame for loc
 test('getIntegration should return Secure in HTTP top-level frame for localhost and allowLocalhostAsSecureOrigin = true',
   async t => {
   const OneSignal: any = await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   TestEnvironment.mockInternalOneSignal();
   OneSignal.config.userConfig.allowLocalhostAsSecureOrigin = true;

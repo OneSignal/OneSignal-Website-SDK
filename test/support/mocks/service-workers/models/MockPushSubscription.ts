@@ -57,16 +57,19 @@ export class MockPushSubscription implements PushSubscription {
     this.pushManager = pushManager;
 
     let applicationServerKey: ArrayBuffer | null;
-    if (options.applicationServerKey instanceof ArrayBuffer)
+    if (options.applicationServerKey instanceof ArrayBuffer) {
       applicationServerKey = options.applicationServerKey;
-    else if (options.applicationServerKey instanceof String)
+    }
+    else if (options.applicationServerKey instanceof String) {
       applicationServerKey = MockPushSubscription.str2ab(options.applicationServerKey);
-    else
+ }
+    else {
       throw new Error("Mock not implemented type options.applicationServerKey");
+ }
 
     this.options = {
       applicationServerKey: applicationServerKey,
-      userVisibleOnly: options.userVisibleOnly || true
+      userVisibleOnly: options.userVisibleOnly || true,
     };
 
     if (!options.applicationServerKey) {
@@ -112,7 +115,7 @@ export class MockPushSubscription implements PushSubscription {
   toJSON(): any {
     return {
       endpoint: this.endpoint,
-      options: this.options
+      options: this.options,
     };
   }
 

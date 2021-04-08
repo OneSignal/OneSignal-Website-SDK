@@ -16,7 +16,7 @@ test.beforeEach(async () => {
   const options = {
     httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: userConfig,
-    addPrompts: true
+    addPrompts: true,
   };
   await TestEnvironment.stubDomEnvironment(options);
   await TestEnvironment.initialize(options);

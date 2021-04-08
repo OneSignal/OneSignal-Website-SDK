@@ -6,13 +6,13 @@ export function setUserAgent(userAgent: BrowserUserAgent) {
       value: userAgent,
       configurable: true,
       enumerable: true,
-      writable: true
+      writable: true,
   });
   Object.defineProperty(navigator, 'platform', {
       value: "MacIntel",
       configurable: true,
       enumerable: true,
-      writable: true
+      writable: true,
   });
 }
 

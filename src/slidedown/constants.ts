@@ -15,15 +15,15 @@ export const SLIDEDOWN_CSS_CLASSES = {
   message: 'slidedown-body-message',
   defaultIcon: 'default-icon',
   loadingContainer: "onesignal-loading-container",
-  clearfix: "clearfix"
+  clearfix: "clearfix",
 };
 
 export const TOAST_CLASSES = {
-  toastText: 'onesignal-toast-text'
+  toastText: 'onesignal-toast-text',
 };
 
 export const TOAST_IDS = {
-  toastText: 'onesignal-toast-text'
+  toastText: 'onesignal-toast-text',
 };
 
 export const SLIDEDOWN_CSS_IDS = {
@@ -42,7 +42,7 @@ export const SLIDEDOWN_BUTTON_CLASSES = {
   alignRight: 'align-right',
   primary: 'primary',
   secondary: 'secondary',
-  slidedownButton: 'slidedown-button'
+  slidedownButton: 'slidedown-button',
 };
 
 export const TAGGING_CONTAINER_CSS_CLASSES = {
@@ -52,7 +52,7 @@ export const TAGGING_CONTAINER_CSS_CLASSES = {
   checkmark: "onesignal-checkmark",
   taggingContainer: "tagging-container",
   taggingContainerCol: "tagging-container-col",
-  loadingMessage: "onesignal-loading-message"
+  loadingMessage: "onesignal-loading-message",
 };
 
 export const TAGGING_CONTAINER_CSS_IDS = {
@@ -91,11 +91,11 @@ export const DANGER_ICON = `data:image/svg+xml;charset=UTF-8,%3csvg width='16' h
 
 export const COLORS = {
   greyLoadingIndicator: "#95A1AC",
-  whiteLoadingIndicator: "#FFFFFF"
+  whiteLoadingIndicator: "#FFFFFF",
 };
 
 export const TAGGING_CONTAINER_STRINGS = {
-  fetchingPreferences : "Fetching your preferences"
+  fetchingPreferences : "Fetching your preferences",
 };
 
 

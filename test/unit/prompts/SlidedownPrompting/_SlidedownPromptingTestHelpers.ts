@@ -13,7 +13,7 @@ const appId = Random.getRandomUuid();
 const minimalText = {
     actionMessage: "",
     acceptButton: "",
-    cancelButton: ""
+    cancelButton: "",
 };
 
 export class SlidedownPromptingTestHelper {
@@ -35,9 +35,9 @@ export class SlidedownPromptingTestHelper {
             autoResubscribe: false,
             promptOptions:{
                 slidedown: {
-                    prompts
-                }
-            }
+                    prompts,
+                },
+            },
         });
     }
 
@@ -45,7 +45,7 @@ export class SlidedownPromptingTestHelper {
         : SlidedownPromptOptions {
             options.delay = {
                 timeDelay,
-                pageViews
+                pageViews,
             };
             return options;
     }
@@ -54,7 +54,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.Push,
             autoPrompt: true,
-            text: minimalText
+            text: minimalText,
         };
     }
 
@@ -66,9 +66,9 @@ export class SlidedownPromptingTestHelper {
             categories: [
                 {
                     tag: "myTag",
-                    label: "myLabel"
-                }
-            ]
+                    label: "myLabel",
+                },
+            ],
         };
     }
 
@@ -76,7 +76,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.SmsAndEmail,
             autoPrompt: true,
-            text: minimalText
+            text: minimalText,
         };
     }
 
@@ -84,7 +84,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.Sms,
             autoPrompt: true,
-            text: minimalText
+            text: minimalText,
         };
     }
 
@@ -92,7 +92,7 @@ export class SlidedownPromptingTestHelper {
         return {
             type: DelayedPromptType.Email,
             autoPrompt: true,
-            text: minimalText
+            text: minimalText,
         };
     }
 

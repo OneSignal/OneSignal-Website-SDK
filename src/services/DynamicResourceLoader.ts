@@ -4,7 +4,7 @@ import Environment from '../Environment';
 
 export const enum ResourceType {
   Stylesheet,
-  Script
+  Script,
 }
 
 export const enum ResourceLoadState {
@@ -15,7 +15,7 @@ export const enum ResourceLoadState {
   /**
    * The remote resource failed to be loaded (e.g. not found or network offline).
    */
-  Failed
+  Failed,
 }
 
 interface DynamicResourceLoaderCache {

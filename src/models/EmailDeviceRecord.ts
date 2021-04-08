@@ -12,7 +12,7 @@ export class EmailDeviceRecord extends DeviceRecord {
   constructor(
     public email?: string | null,
     public identifierAuthHash?: string | null,
-    public pushDeviceRecordId?: string | null,
+    public pushDeviceRecordId?: string | null
   ) {
     super();
     this.deliveryPlatform = DeliveryPlatformKind.Email;

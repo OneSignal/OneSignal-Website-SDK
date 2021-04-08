@@ -35,7 +35,7 @@ export class EmailProfile implements Serializable {
     return new EmailProfile(
       bundle.emailId,
       bundle.emailAddress,
-      bundle.identifierAuthHash,
+      bundle.identifierAuthHash
     );
   }
 }

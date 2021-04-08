@@ -292,8 +292,9 @@ export class ServiceWorker {
    */
   static async executeWebhooks(event: string, notification: any): Promise<Response | null> {
     const webhookTargetUrl = await Database.get<string>('Options', `webhooks.${event}`);
-    if (!webhookTargetUrl)
+    if (!webhookTargetUrl) {
       return null;
+    }
 
     const { deviceId } = await Database.getSubscription();
     const isServerCorsEnabled = await Database.get<boolean>('Options', 'webhooks.cors');
@@ -310,7 +311,7 @@ export class ServiceWorker {
       content: notification.content,
       url: notification.url,
       icon: notification.icon,
-      data: notification.data
+      data: notification.data,
     };
     const fetchOptions: RequestInit = {
       method: 'post',
@@ -322,7 +323,7 @@ export class ServiceWorker {
       fetchOptions.mode = 'cors';
       fetchOptions.headers = {
         'X-OneSignal-Event': event,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
     }
     Log.debug(
@@ -338,12 +339,14 @@ export class ServiceWorker {
    * @returns {Promise}
    */
   static async sendConfirmedDelivery(notification: any): Promise<Response | null> {
-    if (!notification)
+    if (!notification) {
       return null;
+    }
 
     // Received receipts enabled?
-    if (notification.rr !== "y")
+    if (notification.rr !== "y") {
       return null;
+    }
 
     const appId = await ServiceWorker.getAppId();
     const { deviceId } = await Database.getSubscription();
@@ -359,7 +362,7 @@ export class ServiceWorker {
     // Our response will not contain those fields here which have undefined values
     const postData = {
       player_id : deviceId, 
-      app_id : appId
+      app_id : appId,
     };
     
     Log.debug(`Called %csendConfirmedDelivery(${
@@ -380,7 +383,7 @@ export class ServiceWorker {
   static async getActiveClients(): Promise<Array<OSWindowClient>> {
     const windowClients: ReadonlyArray<Client> = await self.clients.matchAll({
       type: 'window',
-      includeUncontrolled: true
+      includeUncontrolled: true,
     });
     const activeClients: Array<OSWindowClient> = [];
 
@@ -524,7 +527,7 @@ export class ServiceWorker {
       image: rawNotification.image,
       tag: rawNotification.tag,
       badge: rawNotification.badge,
-      vibrate: rawNotification.vibrate
+      vibrate: rawNotification.vibrate,
     };
 
     // Add action buttons
@@ -535,7 +538,7 @@ export class ServiceWorker {
                                     action: rawButton.i,
                                     title: rawButton.n,
                                     icon: rawButton.p,
-                                    url: rawButton.u
+                                    url: rawButton.u,
                                   });
       }
     }
@@ -618,8 +621,9 @@ export class ServiceWorker {
     extra.persistNotification = persistNotification !== false;
 
     // Allow overriding some values
-    if (!overrides)
+    if (!overrides) {
       overrides = {};
+    }
     notification = {...notification, ...overrides};
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
@@ -686,7 +690,7 @@ export class ServiceWorker {
       long to pause. For example [300, 100, 400] would vibrate 300ms,
       pause 100ms, then vibrate 400ms.
        */
-      vibrate: notification.vibrate
+      vibrate: notification.vibrate,
     };
 
     return self.registration.showNotification(notification.heading, notificationOptions);
@@ -728,8 +732,9 @@ export class ServiceWorker {
 
     // Use the user-provided default URL if one exists
     const { defaultNotificationUrl: dbDefaultNotificationUrl } = await Database.getAppState();
-    if (dbDefaultNotificationUrl)
+    if (dbDefaultNotificationUrl) {
       launchUrl = dbDefaultNotificationUrl;
+    }
 
     // If the user clicked an action button, use the URL provided by the action button
     // Unless the action button URL is null
@@ -764,19 +769,22 @@ export class ServiceWorker {
     const notificationData = event.notification.data;
 
     // Chrome 48+: Get the action button that was clicked
-    if (event.action)
+    if (event.action) {
       notificationData.action = event.action;
+    }
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
 
     const matchPreference = await Database.get<string>('Options', 'notificationClickHandlerMatch');
-    if (matchPreference)
+    if (matchPreference) {
       notificationClickHandlerMatch = matchPreference;
+    }
 
     const actionPreference = await this.database.get<string>('Options', 'notificationClickHandlerAction');
-    if (actionPreference)
+    if (actionPreference) {
       notificationClickHandlerAction = actionPreference;
+    }
 
     const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
@@ -791,7 +799,7 @@ export class ServiceWorker {
       timestamp: new Date().getTime(),
     }
     Log.info("NotificationClicked", notificationClicked);
-    saveNotificationClickedPromise = (async (notificationClicked) => {
+    saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
         if (existingSession && existingSession.status === SessionStatus.Active) {
@@ -854,8 +862,9 @@ export class ServiceWorker {
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
           ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notificationData, client);
             try {
-              if (client instanceof WindowClient)
+              if (client instanceof WindowClient) {
                 await client.focus();
+              }
             } catch (e) {
               Log.error("Failed to focus:", client, e);
             }
@@ -869,8 +878,9 @@ export class ServiceWorker {
           if (client['isSubdomainIframe']) {
             try {
               Log.debug('Client is subdomain iFrame. Attempting to focus() client.');
-              if (client instanceof WindowClient)
+              if (client instanceof WindowClient) {
                 await client.focus();
+              }
             } catch (e) {
               Log.error("Failed to focus:", client, e);
             }
@@ -885,8 +895,9 @@ export class ServiceWorker {
           else if (client instanceof WindowClient && client.navigate) {
             try {
               Log.debug('Client is standard HTTPS site. Attempting to focus() client.');
-              if (client instanceof WindowClient)
+              if (client instanceof WindowClient) {
                 await client.focus();
+              }
             } catch (e) {
               Log.error("Failed to focus:", client, e);
             }
@@ -946,15 +957,17 @@ export class ServiceWorker {
         app_id: appId,
         player_id: deviceId,
         opened: true,
-        device_type: deviceType
+        device_type: deviceType,
       });
     }
-    else
+    else {
       console.error("No app Id, skipping OneSignal API call for notification open!");
+    }
 
     await ServiceWorker.executeWebhooks('notification.clicked', notificationData);
-    if (onesignalRestPromise)
+    if (onesignalRestPromise) {
       await onesignalRestPromise;
+    }
   }
 
   /**

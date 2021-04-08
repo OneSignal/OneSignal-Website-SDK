@@ -15,14 +15,14 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
   public log = {
     setLevel: (level: string): void => {
       this.currentLogLevel = level;
-    }
+    },
   };
 
   private static FUNCTION_LIST_TO_STUB = [
     "on",
     "off",
     "once",
-    "push"
+    "push",
   ];
 
   private static FUNCTION_LIST_WITH_PROMISE_TO_STUB = [
@@ -62,7 +62,7 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
     "provideUserConsent",
     "isOptedOut",
     "getEmailId",
-    "sendOutcome"
+    "sendOutcome",
   ];
 
   public abstract isPushNotificationsSupported(): boolean;
@@ -79,8 +79,9 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
 
   private setupStubFunctions(stubList: Array<string>, stubFunction: Function, omitStubsFor: Array<string>) {
     for(const functionName of stubList) {
-      if (omitStubsFor.indexOf(functionName) > -1)
+      if (omitStubsFor.indexOf(functionName) > -1) {
         continue;
+      }
 
       const functionNameWithStub =
         (...args: any[]): any => {

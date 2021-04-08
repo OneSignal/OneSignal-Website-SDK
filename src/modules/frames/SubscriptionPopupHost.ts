@@ -50,7 +50,7 @@ export default class SubscriptionPopupHost implements Disposable {
       ...MainHelper.getPromptOptionsPostHash(),
       ...{
         promptType: 'popup',
-        parentHostname: encodeURIComponent(location.hostname)
+        parentHostname: encodeURIComponent(location.hostname),
       },
     };
     if (this.options.autoAccept) {

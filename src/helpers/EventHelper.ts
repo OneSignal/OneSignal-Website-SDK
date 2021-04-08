@@ -107,15 +107,16 @@ export default class EventHelper {
         Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
           title: title,
           message: message,
-          url: url
+          url: url,
         });
       }
     }
   }
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
-    if (!OneSignal.config.userConfig.notifyButton)
+    if (!OneSignal.config.userConfig.notifyButton) {
       return;
+    }
 
     const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
     if (displayPredicate && typeof displayPredicate === "function" && OneSignal.notifyButton) {

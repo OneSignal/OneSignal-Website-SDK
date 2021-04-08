@@ -8,7 +8,7 @@ import { isUsingSubscriptionWorkaround } from '../../../src/utils';
 test(`can simulate HTTPS site`, async t => {
   await TestEnvironment.initialize({
     initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   t.false(isUsingSubscriptionWorkaround());
 });
@@ -16,8 +16,8 @@ test(`can simulate HTTPS site`, async t => {
 test(`can simulate HTTP site`, async t => {
   await TestEnvironment.initialize({
     initOptions: {
-      subdomain: 'testSubdomain'
-    }
+      subdomain: 'testSubdomain',
+    },
   });
   t.true(isUsingSubscriptionWorkaround());
 });

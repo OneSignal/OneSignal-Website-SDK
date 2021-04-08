@@ -28,10 +28,12 @@ export default class Badge extends ActiveAnimatedElement {
     if (!isNaN(this.content as any)) {
       let badgeNumber = +this.content; // Coerce to int
       badgeNumber -= 1;
-      if (badgeNumber > 0)
+      if (badgeNumber > 0) {
         this.content = badgeNumber.toString();
-      else
+      }
+      else {
         this.content = '';
+      }
     }
   }
 }

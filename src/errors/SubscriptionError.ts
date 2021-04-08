@@ -4,7 +4,7 @@ import OneSignalError from "./OneSignalError";
 export enum SubscriptionErrorReason {
   InvalidSafariSetup,
   Blocked,
-  Dismissed
+  Dismissed,
 }
 
 export default class SubscriptionError extends OneSignalError {

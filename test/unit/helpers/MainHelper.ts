@@ -13,7 +13,7 @@ let sinonSandbox: SinonSandbox;
 test.beforeEach(async () => {
   sinonSandbox = sinon.sandbox.create();
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   // Required for sessionContext, not async

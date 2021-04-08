@@ -193,7 +193,7 @@ export default class IndexedDb {
         request.onsuccess = () => {
           resolve(key);
         };
-        request.onerror = (e) => {
+        request.onerror =e => {
           Log.error('Database PUT Transaction Error:', e);
           reject(e);
         };
@@ -219,7 +219,7 @@ export default class IndexedDb {
         request.onsuccess = () => {
           resolve(key);
         };
-        request.onerror = (e) => {
+        request.onerror =e => {
           Log.error('Database REMOVE Transaction Error:', e);
           reject(e);
         };

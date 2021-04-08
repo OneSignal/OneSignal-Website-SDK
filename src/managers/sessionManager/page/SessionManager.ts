@@ -88,7 +88,7 @@ export class SessionManager implements ISessionManager {
 
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
+      MainHelper.createDeviceRecord(this.context.appConfig.appId, true),
     ]);
 
     if (visibilityState === "visible") {
@@ -115,7 +115,7 @@ export class SessionManager implements ISessionManager {
       // TODO: (iryna) need to send deactivate from here?
       const [deviceId, deviceRecord] = await Promise.all([
         MainHelper.getDeviceId(),
-        MainHelper.createDeviceRecord(this.context.appConfig.appId)
+        MainHelper.createDeviceRecord(this.context.appConfig.appId),
       ]);
 
       await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
@@ -160,7 +160,7 @@ export class SessionManager implements ISessionManager {
     }
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
+      MainHelper.createDeviceRecord(this.context.appConfig.appId, true),
     ]);
 
     await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
@@ -178,7 +178,7 @@ export class SessionManager implements ISessionManager {
     }
     const [deviceId, deviceRecord] = await Promise.all([
       MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+      MainHelper.createDeviceRecord(this.context.appConfig.appId),
     ]);
 
     await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.Blur);
@@ -240,7 +240,7 @@ export class SessionManager implements ISessionManager {
 
     if (!OneSignal.cache.isBeforeUnloadEventSetup) {
       // tracks closing of a tab / reloading / navigating away
-      window.addEventListener("beforeunload", (e) => {
+      window.addEventListener("beforeunload",e => {
         this.handleOnBeforeUnload();
         // deleting value to not show confirmation dialog
         delete e.returnValue;

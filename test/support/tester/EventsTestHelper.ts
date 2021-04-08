@@ -25,7 +25,7 @@ export default class EventsTestHelper {
         this.eventCounts = {
           shown: 0,
           closed: 0,
-          queued: 0
+          queued: 0,
         };
     }
 

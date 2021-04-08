@@ -27,7 +27,7 @@ test.beforeEach(async () => {
   const options = {
     httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: userConfig,
-    addPrompts: true
+    addPrompts: true,
   };
   await TestEnvironment.stubDomEnvironment(options);
   await TestEnvironment.initialize(options);
@@ -83,7 +83,7 @@ const testConfig: TestEnvironmentConfig = {
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Default,
     pushIdentifier: 'granted',
-    stubSetTimeout: true
+    stubSetTimeout: true,
 };
 
 test("submit email with bad input throws error and shows validation message", async t => {

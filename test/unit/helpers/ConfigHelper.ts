@@ -13,7 +13,7 @@ const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 });
 
@@ -86,7 +86,7 @@ test(`promptOptions 4 - autoRegister = true backwards compatibility for custom i
     (fakeUserConfig as any).promptOptions = {
       slidedown: {
         enabled: true,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -112,7 +112,7 @@ test(`promptOptions 5 - autoRegister backwards compatibility for custom integrat
     (fakeUserConfig as any).promptOptions = {
       slidedown: {
         enabled: true,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -137,7 +137,7 @@ test(`promptOptions 6 - autoRegister = true backwards compatibility for custom i
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -164,7 +164,7 @@ test(`promptOptions 7 - autoRegister = true backwards compatibility for custom i
     slidedown: {
       enabled: true,
       autoPrompt: false,
-    }
+    },
   };
 
   const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -193,7 +193,7 @@ test(`promptOptions 8 - autoRegister = true backwards compatibility for custom i
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
   };
 
   const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -222,7 +222,7 @@ test(`promptOptions 9 - autoRegister= true backwards compatibility for custom in
       slidedown: {
         enabled: true,
         autoPrompt: false,
-      }
+      },
   };
 
   const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -252,8 +252,8 @@ test(`promptOptions 10 - autoRegister backwards compatibility for custom integra
       },
       slidedown: {
         enabled: true,
-        autoPrompt: false
-      }
+        autoPrompt: false,
+      },
     };
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);
@@ -299,7 +299,7 @@ test('autoResubscribe - autoRegister backwards compatibility for custom integrat
   const fakeUserConfig: AppUserConfig = {
     appId: Random.getRandomUuid(),
     autoRegister: false,
-    autoResubscribe: true
+    autoResubscribe: true,
   };
 
   const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);

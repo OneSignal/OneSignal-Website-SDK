@@ -36,7 +36,7 @@ class LocalHelpers {
     return new ServiceWorkerManager(OneSignal.context, {
       workerAPath: new Path('/Worker-A.js'),
       workerBPath: new Path('/Worker-B.js'),
-      registrationOptions: { scope: '/' }
+      registrationOptions: { scope: '/' },
     });
   }
 }
@@ -128,8 +128,8 @@ test('notification clicked - While page is opened in background', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https,
     initOptions: {
-      pageUrl: "https://localhost:3001/"
-    }
+      pageUrl: "https://localhost:3001/",
+    },
   });
 
   const mockInstallingWorker = new MockServiceWorker();
@@ -146,8 +146,9 @@ test('notification clicked - While page is opened in background', async t => {
   OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
   sandbox.stub(Event, 'trigger').callsFake(function(event: string) {
-    if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
+    if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED) {
       t.pass();
+    }
   });
 
   // Add addListenerForNotificationOpened so service worker fires event instead of storing it
@@ -155,13 +156,14 @@ test('notification clicked - While page is opened in background', async t => {
   manager.establishServiceWorkerChannel();
 
   const listeners = workerMessageReplyBuffer.findListenersForMessage(WorkerMessengerCommand.NotificationClicked);
-  for (const listenerRecord of listeners)
+  for (const listenerRecord of listeners) {
     listenerRecord.callback.apply(null, ['test']);
+  }
 });
 
 test('getActiveState() returns an indeterminate status for insecure HTTP pages', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
 
   const manager = LocalHelpers.getServiceWorkerManager();
@@ -176,7 +178,7 @@ test('getActiveState() returns an indeterminate status for insecure HTTP pages',
 
 test('installWorker() installs worker A with the correct file name and query parameter when no service worker exists', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
@@ -194,7 +196,7 @@ test('installWorker() installs worker A with the correct file name and query par
 
 test('installWorker() does NOT install ServiceWorker when permission has NOT been granted', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const manager = LocalHelpers.getServiceWorkerManager();
@@ -207,7 +209,7 @@ test('installWorker() does NOT install ServiceWorker when permission has NOT bee
 
 test('installWorker() installs worker A when a third party service worker exists', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
@@ -222,14 +224,14 @@ test('installWorker() installs worker A when a third party service worker exists
 
 test('installWorker() installs Worker B and then A when Worker A is out of date', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
     workerAPath: new Path('/Worker-A.js'),
     workerBPath: new Path('/Worker-B.js'),
-    registrationOptions: { scope: '/' }
+    registrationOptions: { scope: '/' },
   });
 
   // 1. Install ServiceWorker A and assert it was ServiceWorker A
@@ -266,7 +268,7 @@ test('installWorker() installs Worker B and then A when Worker A is out of date'
 
 test('installWorker() installs Worker new scope when it changes', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, "permission").value("granted");
   // We don't want the version number check from "workerNeedsUpdate" interfering with this test.
@@ -275,7 +277,7 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   const serviceWorkerConfig = {
     workerAPath: new Path('/Worker-A.js'),
     workerBPath: new Path('/Worker-B.js'),
-    registrationOptions: { scope: '/' }
+    registrationOptions: { scope: '/' },
   };
   const manager = new ServiceWorkerManager(OneSignal.context, serviceWorkerConfig);
 
@@ -292,8 +294,8 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   t.deepEqual(spyRegister.getCalls().map(call => call.args), [
     [
       `https://localhost:3001/Worker-B.js?appId=${appId}`,
-      { scope: 'https://localhost:3001/push/onesignal/' }
-    ]
+      { scope: 'https://localhost:3001/push/onesignal/' },
+    ],
   ]);
 
   // 4. Ensure we kept the original ServiceWorker.
@@ -305,14 +307,14 @@ test('installWorker() installs Worker new scope when it changes', async t => {
 
 test('Server worker register URL correct when service worker path is a absolute URL', async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
     workerAPath: new Path(`${location.origin}/Worker-A.js`),
     workerBPath: new Path(`${location.origin}/Worker-B.js`),
-    registrationOptions: { scope: '/' }
+    registrationOptions: { scope: '/' },
   });
 
   const serviceWorkerStub = sandbox.spy(navigator.serviceWorker, 'register');
@@ -327,7 +329,7 @@ test('Server worker register URL correct when service worker path is a absolute 
 
 test("Service worker failed to install due to 404 on host page. Send notification to OneSignal api", async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
@@ -338,8 +340,8 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
     workerAPath: new Path(workerPath),
     workerBPath: new Path(workerPath),
     registrationOptions: {
-      scope: '/'
-    }
+      scope: '/',
+    },
   });
 
   const origin = "https://onesignal.com";
@@ -350,7 +352,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
     .reply(404,  (_uri: string, _requestBody: any) => {
       return {
         status: 404,
-        statusText: "404 Not Found"
+        statusText: "404 Not Found",
       };
   });
 
@@ -364,7 +366,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
 
 test("Service worker failed to install in popup. No handling.", async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
@@ -375,8 +377,8 @@ test("Service worker failed to install in popup. No handling.", async t => {
     workerAPath: new Path(workerPath),
     workerBPath: new Path(workerPath),
     registrationOptions: {
-      scope: '/'
-    }
+      scope: '/',
+    },
   });
 
   const origin = "https://onesignal.com";
@@ -387,7 +389,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
     .reply(404,  (_uri: string, _requestBody: any) => {
       return {
         status: 404,
-        statusText: "404 Not Found"
+        statusText: "404 Not Found",
       };
   });
 
@@ -412,9 +414,9 @@ test('installWorker() should not install when on an HTTPS site with a subdomain 
     overrideServerConfig: {
       config: {
         subdomain: subdomain,
-        siteInfo: { proxyOriginEnabled: true, proxyOrigin: subdomain }
-      }
-    }
+        siteInfo: { proxyOriginEnabled: true, proxyOrigin: subdomain },
+      },
+    },
   };
   TestEnvironment.mockInternalOneSignal(testConfig);
 

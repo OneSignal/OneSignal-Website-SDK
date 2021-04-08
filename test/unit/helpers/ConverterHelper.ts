@@ -13,7 +13,7 @@ const sandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 });
 
@@ -25,7 +25,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
       autoRegister: false,
-      autoResubscribe: true
+      autoResubscribe: true,
     };
 
     (fakeUserConfig as any).promptOptions = {
@@ -35,7 +35,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
       slidedown: {
         autoPrompt: true,
         enabled: true,
-      }
+      },
     };
     const appConfig = await getFinalAppConfig(fakeUserConfig);
     const promptOptions = appConfig.userConfig.promptOptions?.slidedown?.prompts[0];
@@ -50,7 +50,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
       autoRegister: false,
-      autoResubscribe: true
+      autoResubscribe: true,
     };
 
     (fakeUserConfig as any).promptOptions = {
@@ -63,7 +63,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
         actionMessage: "Custom message",
         acceptButtonText: "Custom accept button",
         cancelButtonText: "Custom cancel button",
-      }
+      },
     };
     const appConfig = await getFinalAppConfig(fakeUserConfig);
     const promptOptions = appConfig.userConfig.promptOptions?.slidedown?.prompts[0];
@@ -79,7 +79,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
       autoRegister: false,
-      autoResubscribe: true
+      autoResubscribe: true,
     };
 
     (fakeUserConfig as any).promptOptions = {
@@ -89,7 +89,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
       slidedown: {
         autoPrompt: true,
         enabled: true,
-      }
+      },
     };
     const appConfig = await getFinalAppConfig(fakeUserConfig);
     const promptOptions = appConfig.userConfig.promptOptions?.slidedown?.prompts[0];
@@ -107,14 +107,14 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
       autoRegister: false,
-      autoResubscribe: true
+      autoResubscribe: true,
     };
 
     (fakeUserConfig as any).promptOptions = {
       slidedown: {
         autoPrompt: true,
         enabled: true,
-      }
+      },
     };
     const appConfig = await getFinalAppConfig(fakeUserConfig);
     const promptOptions = appConfig.userConfig.promptOptions?.slidedown?.prompts[0];
@@ -147,9 +147,9 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
                     tag: "usa_news",
                     label: "USA News",
                 },
-              ]
-          }
-      }
+              ],
+          },
+      },
     };
     const appConfig = await getFinalAppConfig(fakeUserConfig);
     const promptOptions = appConfig.userConfig.promptOptions?.slidedown?.prompts[0];
@@ -167,7 +167,7 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
     const fakeUserConfig: AppUserConfig = {
       appId: Random.getRandomUuid(),
       autoRegister: false,
-      autoResubscribe: true
+      autoResubscribe: true,
     };
 
     (fakeUserConfig as any).promptOptions = {
@@ -183,11 +183,11 @@ test("supports version 0 of config schema (converts to version 2)", async t => {
                 text: {
                     acceptButton: "Category Accept",
                     cancelButton: "Category Cancel",
-                    actionMessage: "Category Action Message"
+                    actionMessage: "Category Action Message",
                 },
-                categories: [{ tag: "Tag", label: "Label" }]
-            }]
-      }
+                categories: [{ tag: "Tag", label: "Label" }],
+            }],
+      },
     } as AppUserConfigPromptOptions;
 
     const appConfig = await getFinalAppConfig(fakeUserConfig);

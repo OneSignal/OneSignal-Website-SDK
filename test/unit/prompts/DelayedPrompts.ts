@@ -36,7 +36,7 @@ test.afterEach(function (_t: ExecutionContext) {
 const testConfig: TestEnvironmentConfig = {
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
-    permission: NotificationPermission.Default
+    permission: NotificationPermission.Default,
 };
 
 test.serial(`Delayed Prompt: delayed prompt is shown after 1 page view if configured so`, async t => {
@@ -109,7 +109,7 @@ async function initWithDelayedOptions(type: DelayedPromptType, timeDelay: number
     return OneSignal.init({
         appId,
         autoResubscribe: true,
-        promptOptions
+        promptOptions,
     });
 }
 
@@ -124,7 +124,7 @@ function getPromptOptions(
             enabled: true,
             autoPrompt: true,
             timeDelay,
-            pageViews
-        }
+            pageViews,
+        },
     };
 }

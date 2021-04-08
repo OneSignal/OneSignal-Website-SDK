@@ -70,7 +70,7 @@ test('check that getCheckedTagCategories returns correct tagCategory list', t =>
     const configuredCategories: TagCategory[] = [
         { tag: "tag1", label: "label1" },
         { tag: "tag2", label: "label2" },
-        { tag: "tag3", label: "label3" }
+        { tag: "tag3", label: "label3" },
     ];
 
     const existingPlayerTags: TagsObjectWithBoolean = { tag1: true, tag2: false, tag3: true };
@@ -78,7 +78,7 @@ test('check that getCheckedTagCategories returns correct tagCategory list', t =>
     t.deepEqual(checked, [
         { tag: "tag1", label: "label1", checked: true },
         { tag: "tag2", label: "label2", checked: false },
-        { tag: "tag3", label: "label3", checked: true }
+        { tag: "tag3", label: "label3", checked: true },
     ]);
 });
 
@@ -86,7 +86,7 @@ test('check that getCheckedTagCategories defaults values to true if not an exist
     const configuredCategories: TagCategory[] = [
         { tag: "tag1", label: "label1" },
         { tag: "tag2", label: "label2" },
-        { tag: "tag3", label: "label3" }
+        { tag: "tag3", label: "label3" },
     ];
 
     const existingPlayerTags: TagsObjectWithBoolean = { tag1: false };
@@ -94,7 +94,7 @@ test('check that getCheckedTagCategories defaults values to true if not an exist
     t.deepEqual(checked, [
         { tag: "tag1", label: "label1", checked: false },
         { tag: "tag2", label: "label2", checked: true },
-        { tag: "tag3", label: "label3", checked: true }
+        { tag: "tag3", label: "label3", checked: true },
     ]);
 });
 

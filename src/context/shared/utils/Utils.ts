@@ -16,8 +16,9 @@ export class Utils {
    * Returns true if match is in string; otherwise, returns false.
    */
   public static contains(indexOfAble: IndexOfAble | null | undefined, match: string) {
-    if (!indexOfAble)
+    if (!indexOfAble) {
       return false;
+    }
     return indexOfAble.indexOf(match) !== -1;
   }
 

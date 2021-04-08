@@ -43,7 +43,7 @@ test.beforeEach(t => {
     'object.empty': {},
     'object.one': JSON.stringify({ key: 'value' } ) ,
     'object.multi': JSON.stringify({ a: 1, b: 2, c: 3 }),
-    'object.nested': JSON.stringify({ a0: 1, b0: { a1: 1, b1: 1 }, c0: { a1: 1, b1: { a2: 1, b2: { a3: 1 } } } })
+    'object.nested': JSON.stringify({ a0: 1, b0: { a1: 1, b1: 1 }, c0: { a1: 1, b1: { a2: 1, b2: { a3: 1 } } } }),
   };
 
   t.context.expectedTags = {
@@ -57,7 +57,7 @@ test.beforeEach(t => {
     "array.nested": "[0, [1], [[2]]]",
     "object.one": '{"key":"value"}',
     "object.multi": '{"a":1,"b":2,"c":3}',
-    "object.nested": '{"a0":1,"b0":{"a1":1,"b1":1},"c0":{"a1":1,"b1":{"a2":1,"b2":{"a3":1}}}}'
+    "object.nested": '{"a0":1,"b0":{"a1":1,"b1":1},"c0":{"a1":1,"b1":{"a2":1,"b2":{"a3":1}}}}',
   };
 
   t.context.expectedTagsUnsent = ['null', 'undefined', 'array.empty', 'object.empty'];
@@ -69,7 +69,7 @@ test.beforeEach(t => {
 async function expectPushRecordTagUpdateRequest(
   t: ExecutionContext<SendTagsContext>,
   pushDevicePlayerId: string,
-  identifierAuthHash: string | undefined,
+  identifierAuthHash: string | undefined
 ) {
   nock('https://onesignal.com')
     .put(`/api/v1/players/${pushDevicePlayerId}`)

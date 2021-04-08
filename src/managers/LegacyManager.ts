@@ -9,7 +9,7 @@ export default class LegacyManager {
   static promiseStub() {
     return {
       then: LegacyManager.promiseStub,
-      catch: LegacyManager.promiseStub
+      catch: LegacyManager.promiseStub,
     }
   }
 

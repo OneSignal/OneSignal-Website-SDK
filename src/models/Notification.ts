@@ -36,13 +36,13 @@ export class Notification {
       body = 'Mock notification body',
       url = "https://onesignal.com?_osp=do_not_open",
       icon = "https://onesignal.com/images/notification_logo.png",
-      data = {}
+      data = {},
     } = {}) {
         return new Notification(title, {
             icon: icon,
             body: body,
             url: url,
-            data: data
+            data: data,
         })
     }
 
@@ -57,7 +57,7 @@ export class Notification {
             data: payload.custom.a,
             url: payload.custom.u,
             icon: payload.icon,
-            tag: payload.tag
+            tag: payload.tag,
         });
 
         // Add action buttons
@@ -68,7 +68,7 @@ export class Notification {
                     action: rawButton.i,
                     title: rawButton.n,
                     icon: rawButton.p,
-                    url: rawButton.u
+                    url: rawButton.u,
                 });
             }
         }

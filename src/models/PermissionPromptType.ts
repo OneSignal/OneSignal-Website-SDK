@@ -18,5 +18,5 @@ export enum PermissionPromptType {
   /**
    * The "notify button".
    */
-  SubscriptionBell = <any>'subscription bell'
+  SubscriptionBell = <any>'subscription bell',
 }

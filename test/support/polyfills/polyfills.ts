@@ -12,10 +12,12 @@ global.fetch = fetch;
 
 global.btoa = function(str: string | Buffer) {
   let buffer;
-  if (str instanceof Buffer)
+  if (str instanceof Buffer) {
     buffer = str;
-  else
+  }
+  else {
     buffer = new Buffer(str.toString(), 'binary');
+  }
 
   return buffer.toString('base64');
 };
@@ -29,8 +31,9 @@ export function addServiceWorkerGlobalScopeToGlobal(serviceWorkerGlobalScope: Se
   const props = Object.getOwnPropertyNames(MockServiceWorkerGlobalScope.prototype);
   for(const propName of props) {
     // Do NOT replace any existing stubs or default NodeJS global methods
-    if (!!global[propName])
+    if (!!global[propName]) {
       continue;
+    }
 
     // Add method to NodeJS global
     global[propName] = (<any>serviceWorkerGlobalScope)[propName];

@@ -68,8 +68,9 @@ export default class Emitter {
         }
       }
 
-      if (listeners.length === 0)
+      if (listeners.length === 0) {
         this.removeAllListeners(event);
+      }
     }
 
     return this;
@@ -80,10 +81,12 @@ export default class Emitter {
    */
   public removeAllListeners(event?: string): Emitter {
     try {
-      if (event)
+      if (event) {
         delete this._events[event];
-      else
+      }
+      else {
         this._events = {};
+      }
 
     } catch(e) {}
 
@@ -120,8 +123,9 @@ export default class Emitter {
    */
   public numberOfListeners(event: string): number {
     const listeners = this.listeners(event);
-    if (listeners)
+    if (listeners) {
       return listeners.length;
+    }
     return 0;
   }
 
@@ -137,8 +141,9 @@ export default class Emitter {
     if (listeners !== undefined) {
       listeners = listeners.slice(0);
       const len = listeners.length;
-      for (let i = 0; i < len; i += 1)
+      for (let i = 0; i < len; i += 1) {
         await (listeners[i] as Function).apply(this, args);
+      }
     }
 
     return this;

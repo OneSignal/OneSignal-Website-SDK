@@ -11,12 +11,12 @@ declare var OneSignal: any;
 
 const DISMISS_TYPE_COUNT_MAP = {
   [DismissPrompt.Push]: DismissCountKey.PromptDismissCount,
-  [DismissPrompt.NonPush]: DismissCountKey.NonPushPromptsDismissCount
+  [DismissPrompt.NonPush]: DismissCountKey.NonPushPromptsDismissCount,
 };
 
 const DISMISS_TYPE_TIME_MAP = {
   [DismissPrompt.Push] : DismissTimeKey.OneSignalNotificationPrompt,
-  [DismissPrompt.NonPush] : DismissTimeKey.OneSignalNonPushPrompt
+  [DismissPrompt.NonPush] : DismissTimeKey.OneSignalNonPushPrompt,
 };
 
 export class DismissHelper {

@@ -7,7 +7,7 @@ import timemachine from "timemachine";
 
 test("should not throw and return null if LocalStorage is not supported", async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   delete (window as any).localStorage;
   t.deepEqual(window.localStorage, undefined);
@@ -17,12 +17,12 @@ test("should not throw and return null if LocalStorage is not supported", async 
 
 test("should set and get item without expiration", async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   TimedLocalStorage.setItem("my-key", "my-value");
   t.deepEqual(TimedLocalStorage.getItem("my-key"), "my-value");
   timemachine.config({
-    timestamp: new Date().getTime() + 1000 * 60 * 60 * 24 * 9999
+    timestamp: new Date().getTime() + 1000 * 60 * 60 * 24 * 9999,
   });
   t.deepEqual(TimedLocalStorage.getItem("my-key"), "my-value");
   timemachine.reset();
@@ -30,7 +30,7 @@ test("should set and get item without expiration", async t => {
 
 test("should set and get complex item without expiration", async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   const hash = {
     number: 4,
@@ -40,7 +40,7 @@ test("should set and get complex item without expiration", async t => {
       moreText: "text",
     },
     true: true,
-    false: false
+    false: false,
   };
   TimedLocalStorage.setItem("my-key", hash, 3);
   t.deepEqual(TimedLocalStorage.getItem("my-key"), hash);
@@ -48,16 +48,16 @@ test("should set and get complex item without expiration", async t => {
 
 test("should set and get item with expiration", async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   TimedLocalStorage.setItem("my-key", "my-value", 3);
   t.deepEqual(TimedLocalStorage.getItem("my-key"), "my-value");
   timemachine.config({
-    timestamp: new Date().getTime() + 1000 * 60 * 2
+    timestamp: new Date().getTime() + 1000 * 60 * 2,
   });
   t.deepEqual(TimedLocalStorage.getItem("my-key"), "my-value");
   timemachine.config({
-    timestamp: new Date().getTime() + 1000 * 60 * 3
+    timestamp: new Date().getTime() + 1000 * 60 * 3,
   });
   t.deepEqual(TimedLocalStorage.getItem("my-key"), null);
   timemachine.reset();

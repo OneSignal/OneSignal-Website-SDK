@@ -80,12 +80,12 @@ export enum ConfigIntegrationKind {
 
 export enum NotificationClickMatchBehavior {
   Exact = 'exact',
-  Origin = 'origin'
+  Origin = 'origin',
 }
 
 export enum NotificationClickActionBehavior {
   Navigate = 'navigate',
-  Focus = 'focus'
+  Focus = 'focus',
 }
 
 export interface AppUserConfig {

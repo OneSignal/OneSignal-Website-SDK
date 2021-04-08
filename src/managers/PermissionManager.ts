@@ -40,8 +40,9 @@ export default class PermissionManager {
    */
   public async getNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
     const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
-    if (await this.isPermissionEnvironmentAmbiguous(reportedPermission))
+    if (await this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
       return await this.getInterpretedAmbiguousPermission(reportedPermission);
+    }
     return reportedPermission;
   }
 
@@ -69,12 +70,14 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   public async getReportedNotificationPermission(safariWebId?: string): Promise<NotificationPermission>{
-    if (bowser.safari)
+    if (bowser.safari) {
       return PermissionManager.getSafariNotificationPermission(safariWebId);
+    }
 
     // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
-    if (OneSignalUtils.isUsingSubscriptionWorkaround())
+    if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
       return await this.getOneSignalSubdomainNotificationPermission(safariWebId);
+    }
     else {
       const reportedPermission: NotificationPermission = this.getW3cNotificationPermission();
 
@@ -92,8 +95,9 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   private static getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
-    if (safariWebId)
+    if (safariWebId) {
       return window.safari.pushNotification.permission(safariWebId).permission as NotificationPermission;
+    }
     throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
   }
 

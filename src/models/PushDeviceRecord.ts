@@ -42,7 +42,7 @@ export class PushDeviceRecord extends DeviceRecord {
   public static createFromPushSubscription(
     appId: string,
     rawPushSubscription: RawPushSubscription,
-    subscriptionState?: SubscriptionStateKind,
+    subscriptionState?: SubscriptionStateKind
   ) {
     const pushRegistration = new PushDeviceRecord(rawPushSubscription);
     pushRegistration.appId = appId;

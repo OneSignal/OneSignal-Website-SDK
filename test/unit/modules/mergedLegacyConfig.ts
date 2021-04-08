@@ -26,7 +26,7 @@ test('should assign the default service worker file path if not provided', async
 test('should not overwrite a provided service worker file path', async t => {
   const result = new ConfigManager().getMergedConfig(
     {
-      path: '/existing-path'
+      path: '/existing-path',
     },
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
@@ -45,10 +45,10 @@ test('should not overwrite a provided service worker registration params', async
   await TestEnvironment.initialize({
     initOptions: {
       httpPermissionRequest: {
-        enable: true
-      }
+        enable: true,
+      },
     },
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
 
   OneSignal.SERVICE_WORKER_PARAM = { scope: 'customValue' };
@@ -72,10 +72,10 @@ test('should not overwrite a provided service worker A filename', async t => {
   await TestEnvironment.initialize({
     initOptions: {
       httpPermissionRequest: {
-        enable: true
-      }
+        enable: true,
+      },
     },
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
 
   OneSignal.SERVICE_WORKER_PATH = 'CustomWorkerA.js';
@@ -99,10 +99,10 @@ test('should not overwrite a provided service worker B filename', async t => {
   await TestEnvironment.initialize({
     initOptions: {
       httpPermissionRequest: {
-        enable: true
-      }
+        enable: true,
+      },
     },
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
   OneSignal.SERVICE_WORKER_UPDATER_PATH = 'CustomWorkerB.js';
 
@@ -117,10 +117,10 @@ test("should not use server's subdomain if subdomain not specified in user confi
   await TestEnvironment.initialize({
     initOptions: {
       httpPermissionRequest: {
-        enable: true
-      }
+        enable: true,
+      },
     },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const serverConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
@@ -136,10 +136,10 @@ test("should use server's subdomain if subdomain not specified in user config bu
   await TestEnvironment.initialize({
     initOptions: {
       httpPermissionRequest: {
-        enable: true
-      }
+        enable: true,
+      },
     },
-    httpOrHttps: HttpHttpsEnvironment.Http
+    httpOrHttps: HttpHttpsEnvironment.Http,
   });
 
   const serverConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
@@ -153,7 +153,7 @@ test('should not overwrite provided subdomain', async t => {
   serverConfig.config.subdomain = 'test-subdomain';
   const result = new ConfigManager().getMergedConfig(
     {
-      subdomainName: 'test-subdomain'
+      subdomainName: 'test-subdomain',
     },
     serverConfig
   );
@@ -172,7 +172,7 @@ test('should overwrite provided safari web ID', async t => {
   serverConfig.config.safari_web_id = 'web.onesignal.auto.01ea4289-b460-45e4-8d90-838752554827';
   const result = new ConfigManager().getMergedConfig(
     {
-      safari_web_id: 'web.onesignal.auto.01ea4289-b460-45e4-8d90-838752551111'
+      safari_web_id: 'web.onesignal.auto.01ea4289-b460-45e4-8d90-838752551111',
     } as any,
     serverConfig
   );

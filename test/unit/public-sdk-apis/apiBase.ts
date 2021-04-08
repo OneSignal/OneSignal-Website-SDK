@@ -12,32 +12,32 @@ function mockGetPlayers(): nock.Scope {
   return nock('https://onesignal.com')
     .persist()
     .get(`/api/v1/players`)
-    .reply(200, { "success": true, "id": Random.getRandomUuid() });
+    .reply(200, { success: true, id: Random.getRandomUuid() });
 }
 
 function mockPostPlayers(): nock.Scope {
   return nock('https://onesignal.com')
     .post(`/api/v1/players`)
-    .reply(200, { "success": true, "id": Random.getRandomUuid() });
+    .reply(200, { success: true, id: Random.getRandomUuid() });
 }
 
 function mockPutPlayers(): nock.Scope {
   return nock('https://onesignal.com')
     .put(`/api/v1/players`)
-    .reply(200, { "success": true, "id": Random.getRandomUuid() });
+    .reply(200, { success: true, id: Random.getRandomUuid() });
 }
 
 function mockDeletePlayers(): nock.Scope {
   return nock('https://onesignal.com')
     .delete(`/api/v1/players`)
-    .reply(200, { "success": true, "id": Random.getRandomUuid() });
+    .reply(200, { success: true, id: Random.getRandomUuid() });
 }
 
 test.beforeEach(async () => {
   nock.disableNetConnect();
   nock('https://onesignal.com')
     .get(`/api/v1/notifications`)
-    .reply(200, { "success": true, "id": Random.getRandomUuid() });
+    .reply(200, { success: true, id: Random.getRandomUuid() });
 });
 
 test.afterEach(() => {

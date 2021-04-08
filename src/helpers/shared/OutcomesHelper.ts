@@ -115,7 +115,7 @@ export default class OutcomesHelper {
     await Database.put("SentUniqueOutcome", {
       outcomeName,
       notificationIds,
-      sentDuringSession: timestamp
+      sentDuringSession: timestamp,
     });
   }
 
@@ -201,7 +201,7 @@ export default class OutcomesHelper {
       if (clickedNotifications.length > 0) {
         return {
           type: OutcomeAttributionType.Direct,
-          notificationIds: [clickedNotifications[0].notificationId]
+          notificationIds: [clickedNotifications[0].notificationId],
         };
       }
     }
@@ -251,7 +251,7 @@ export default class OutcomesHelper {
     if (config.unattributed && config.unattributed.enabled) {
       return {
         type: OutcomeAttributionType.Unattributed,
-        notificationIds: []
+        notificationIds: [],
       };
     }
 

@@ -22,7 +22,7 @@ export class MockPushManager implements PushManager {
         // Simulate browser throwing if you don't unsubscribe first if applicationServerKey has changed.
         throw {
           name: "InvalidStateError",
-          message: "Can not change keys without calling unsubscribe first!"
+          message: "Can not change keys without calling unsubscribe first!",
         };
       }
     }

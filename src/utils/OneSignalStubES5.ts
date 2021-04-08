@@ -44,15 +44,18 @@ export class OneSignalStubES5 extends OneSignalStub<OneSignalStubES5> {
 
   // Safely does NOT create a Promise if running on old ES5 browsers and it wasn't polyfilled.
   private static newPromiseIfDefined<T>(executor: PromiseExecutor<T>): Promise<T> {
-    if (typeof(Promise) === "undefined")
+    if (typeof(Promise) === "undefined") {
       return <any>undefined;
-    else
+    }
+    else {
       return new Promise<T>(executor);
+    }
   }
 
   private playPushes(toProcessArray?: PossiblePredefinedOneSignal) {
-    if (!toProcessArray)
+    if (!toProcessArray) {
       return;
+    }
 
     for (const item of toProcessArray) {
       try {

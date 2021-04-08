@@ -49,7 +49,7 @@ const testConfig: TestEnvironmentConfig = {
   integration: ConfigIntegrationKind.Custom,
   permission: NotificationPermission.Default,
   pushIdentifier: 'granted',
-  stubSetTimeout: true
+  stubSetTimeout: true,
 };
 
 test("singular push slidedown prompts successfully", async t => {
@@ -122,7 +122,7 @@ test("session init 'spawns' as many autoPrompts as configured: 3", async t => {
   await testHelper.initWithPromptOptions([
     minimalPushSlidedownOptions,
     minimalCategorySlidedownOptions,
-    minimalSmsAndEmailOptions
+    minimalSmsAndEmailOptions,
   ]);
 
   t.true(spawnAutopromptsSpy.called);
@@ -169,7 +169,7 @@ test("correct number of slidedowns are enqueued: twice", async t => {
   await testHelper.initWithPromptOptions([
     testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 0),
     testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
-    testHelper.addPromptDelays(minimalSmsAndEmailOptions, 1, 0)
+    testHelper.addPromptDelays(minimalSmsAndEmailOptions, 1, 0),
   ]);
 
   await queuedPromise;
@@ -200,7 +200,7 @@ test("on slidedown dismiss with slidedown queue non-empty, show next slidedown",
 
   await testHelper.initWithPromptOptions([
       testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 0),
-      testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 1)
+      testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 1),
   ]);
 
   await queuedPromise;
@@ -234,7 +234,7 @@ test("push & cat slidedowns configured -> cat shown first -> push slidedown not 
 
   await testHelper.initWithPromptOptions([
     testHelper.addPromptDelays(minimalCategorySlidedownOptions, 1, 0),
-    testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 1)
+    testHelper.addPromptDelays(minimalPushSlidedownOptions, 1, 1),
   ]);
 
   await queuedPromise;

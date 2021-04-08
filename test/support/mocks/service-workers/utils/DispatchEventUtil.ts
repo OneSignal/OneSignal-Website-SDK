@@ -8,32 +8,38 @@ export class DispatchEventUtil {
     listener: EventListener | EventListenerObject | null,
     _options?: boolean | AddEventListenerOptions
   ): void {
-    if (!listener)
+    if (!listener) {
       return;
+    }
 
     if (this.listeners.has(type)) {
       const handlers = this.listeners.get(type);
-      if (!handlers)
+      if (!handlers) {
         throw `Missing listeners for type '${type}'`;
+      }
 
       handlers.push(listener);
       this.listeners.set(type, handlers);
     }
-    else
+    else {
       this.listeners.set(type, [listener]);
+    }
   }
 
   public dispatchEvent(evt: Event): boolean {
     const handlers = this.listeners.get(evt.type);
-    if (!handlers)
+    if (!handlers) {
       return false;
+    }
 
     for (const handler of handlers) {
       const eventListenerObj = (<EventListenerObject>handler).handleEvent;
-      if (eventListenerObj)
+      if (eventListenerObj) {
         eventListenerObj(evt);
-      else
+      }
+      else {
         (<EventHandler>handler)(evt);
+      }
     }
     return true;
   }
@@ -43,15 +49,18 @@ export class DispatchEventUtil {
     listener?: EventListener | EventListenerObject | null,
     _options?: EventListenerOptions | boolean
   ): void {
-    if (!listener)
+    if (!listener) {
       return;
+    }
 
-    if (!this.listeners.has(type))
+    if (!this.listeners.has(type)) {
       return;
+    }
 
     const handlers = this.listeners.get(type);
-    if (!handlers)
+    if (!handlers) {
       throw `Missing listeners for type '${type}'`;
+    }
 
     const index = handlers.indexOf(listener);
     if (index > -1) {

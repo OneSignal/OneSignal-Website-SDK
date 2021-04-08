@@ -108,15 +108,15 @@ export class ConverterHelper {
                   // categories-specific...
                   positiveUpdateButton,
                   negativeUpdateButton,
-                  updateMessage:  slidedownConfig?.categories?.updateMessage
+                  updateMessage:  slidedownConfig?.categories?.updateMessage,
                 },
                 delay: {
                   pageViews: slidedownConfig.pageViews,
-                  timeDelay: slidedownConfig.timeDelay
+                  timeDelay: slidedownConfig.timeDelay,
                 },
-                categories: slidedownConfig?.categories?.tags
-            }
-        ]
+                categories: slidedownConfig?.categories?.tags,
+            },
+        ],
     } as SlidedownOptions;
   }
 
@@ -131,7 +131,7 @@ export class ConverterHelper {
       const version0Keys = [
         'acceptButtonText',
         'cancelButtonText',
-        'actionMessage'
+        'actionMessage',
       ];
 
       for (let i = 0; i < version0Keys.length; i++) {
@@ -181,7 +181,7 @@ export class ConverterHelper {
                 'cancelButtonText',
                 'actionMessage',
                 'customizeTextEnabled',
-                'categories'
+                'categories',
             ];
 
             for (let i = 0; i < version1Keys.length; i++) {

@@ -42,8 +42,8 @@ test.afterEach(function () {
 function mockOneSignalPushEvent(data: object): MockPushEvent {
   const payloadTemplate = {
     custom: {
-      i: Random.getRandomUuid()
-    }
+      i: Random.getRandomUuid(),
+    },
   };
 
   const payload = { ...payloadTemplate, ...data };
@@ -186,7 +186,7 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
         app_id: appConfig.appId,
         opened: true,
         player_id: playerId,
-        device_type: 5
+        device_type: 5,
       });
       return { success: true };
     });

@@ -46,7 +46,7 @@ export default class Bell {
       SUBSCRIBE_CLICK: 'notifyButtonSubscribeClick',
       UNSUBSCRIBE_CLICK: 'notifyButtonUnsubscribeClick',
       HOVERING: 'notifyButtonHovering',
-      HOVERED: 'notifyButtonHover'
+      HOVERED: 'notifyButtonHover',
     };
   }
 
@@ -65,8 +65,8 @@ export default class Bell {
         default: 'Allow',
         chrome: 'Allow',
         firefox: 'Always Receive Notifications',
-        safari: 'Allow'
-      }
+        safari: 'Allow',
+      },
     }
   }
 
@@ -89,8 +89,9 @@ export default class Bell {
       this._launcher = launcher;
     }
 
-    if (!this.options.enable)
+    if (!this.options.enable) {
       return;
+    }
 
     this.validateOptions(this.options);
     this.state = Bell.STATES.UNINITIALIZED;
@@ -122,16 +123,21 @@ export default class Bell {
   }
 
   private validateOptions(options: AppUserConfigNotifyButton) {
-    if (!options.size || !contains(['small', 'medium', 'large'], options.size))
+    if (!options.size || !contains(['small', 'medium', 'large'], options.size)) {
       throw new Error(`Invalid size ${options.size} for notify button. Choose among 'small', 'medium', or 'large'.`);
-    if (!options.position || !contains(['bottom-left', 'bottom-right'], options.position))
+    }
+    if (!options.position || !contains(['bottom-left', 'bottom-right'], options.position)) {
       throw new Error(`Invalid position ${options.position} for notify button. Choose either 'bottom-left', or 'bottom-right'.`);
-    if (!options.theme || !contains(['default', 'inverse'], options.theme))
+    }
+    if (!options.theme || !contains(['default', 'inverse'], options.theme)) {
       throw new Error(`Invalid theme ${options.theme} for notify button. Choose either 'default', or 'inverse'.`);
-    if (!options.showLauncherAfter || options.showLauncherAfter < 0)
+    }
+    if (!options.showLauncherAfter || options.showLauncherAfter < 0) {
       throw new Error(`Invalid delay duration of ${this.options.showLauncherAfter} for showing the notify button. Choose a value above 0.`);
-    if (!options.showBadgeAfter || options.showBadgeAfter < 0)
+    }
+    if (!options.showBadgeAfter || options.showBadgeAfter < 0) {
       throw new Error(`Invalid delay duration of ${this.options.showBadgeAfter} for showing the notify button's badge. Choose a value above 0.`);
+    }
   }
 
   private setDefaultTextOptions(text: Partial<BellText>): BellText {
@@ -299,7 +305,7 @@ export default class Bell {
       });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED,state => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -349,8 +355,9 @@ export default class Bell {
   }
 
   async create() {
-    if (!this.options.enable)
+    if (!this.options.enable) {
       return;
+    }
 
     const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
@@ -406,7 +413,7 @@ export default class Bell {
       .then(() => OneSignal.getSubscription())
       .then((isNotOptedOut: boolean) => {
         if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
-          return MainHelper.getNotificationIcons().then((icons) => {
+          return MainHelper.getNotificationIcons().then(icons => {
             this.dialog.notificationIcons = icons;
           });
         } else return nothing();
@@ -549,8 +556,9 @@ export default class Bell {
 
   addCssToHead(id: string, css: string) {
     let existingStyleDom = document.getElementById(id);
-    if (existingStyleDom)
+    if (existingStyleDom) {
       return;
+    }
     let styleDom = document.createElement('style');
     styleDom.id = id;
     styleDom.type = 'text/css';
@@ -564,7 +572,7 @@ export default class Bell {
   updateState() {
     Promise.all([
       OneSignal.privateIsPushNotificationsEnabled(),
-      OneSignal.privateGetNotificationPermission()
+      OneSignal.privateGetNotificationPermission(),
     ])
     .then(([isEnabled, permission]) => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
@@ -598,32 +606,37 @@ export default class Bell {
   }
 
   get launcher() {
-    if (!this._launcher)
+    if (!this._launcher) {
       this._launcher = new Launcher(this);
+    }
     return this._launcher;
   }
 
   get button() {
-    if (!this._button)
+    if (!this._button) {
       this._button = new Button(this);
+    }
     return this._button;
   }
 
   get badge() {
-    if (!this._badge)
+    if (!this._badge) {
       this._badge = new Badge();
+    }
     return this._badge;
   }
 
   get message() {
-    if (!this._message)
+    if (!this._message) {
       this._message = new Message(this);
+    }
     return this._message;
   }
 
   get dialog() {
-    if (!this._dialog)
+    if (!this._dialog) {
       this._dialog = new Dialog(this);
+    }
     return this._dialog;
   }
 

@@ -66,8 +66,9 @@ export default class OneSignal {
    * @PublicApi
    */
   static async setDefaultNotificationUrl(url: string) {
-    if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
+    if (!ValidatorUtils.isValidUrl(url, { allowNull: true })) {
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
+    }
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);
     const appState = await Database.getAppState();
@@ -169,7 +170,7 @@ export default class OneSignal {
           {
             parent_player_id: newEmailProfile.emailId,
             email: newEmailProfile.emailAddress,
-            external_user_id_auth_hash: authHash
+            external_user_id_auth_hash: authHash,
           }
         );
     }
@@ -277,8 +278,9 @@ export default class OneSignal {
     OneSignal.context.workerMessenger.listen();
 
     async function __init() {
-      if (OneSignal.__initAlreadyCalled)
+      if (OneSignal.__initAlreadyCalled) {
         return;
+      }
 
       OneSignal.__initAlreadyCalled = true;
 
@@ -296,8 +298,9 @@ export default class OneSignal {
          * perfectly, while causing errors and preventing web push from working
          * on the HTTP site.
          */
-        if (!OneSignal.config || !OneSignal.config.subdomain)
+        if (!OneSignal.config || !OneSignal.config.subdomain) {
           throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
+        }
 
         /**
          * We'll need to set up page activity tracking events on the main page but we can do so
@@ -325,21 +328,25 @@ export default class OneSignal {
 
       await InitHelper.initSaveState();
       await InitHelper.saveInitOptions();
-      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
+      if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe) {
         await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
-      else
+      }
+      else {
         await InitHelper.internalInit();
+      }
     }
 
-    if (document.readyState === 'complete' || document.readyState === 'interactive')
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
       await __init();
+    }
     else {
       Log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
         ' initialization...');
       window.addEventListener('DOMContentLoaded', () => { __init(); });
       document.onreadystatechange = () => {
-        if (document.readyState === 'complete' || document.readyState === 'interactive')
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
           __init();
+        }
       };
     }
   }
@@ -350,8 +357,9 @@ export default class OneSignal {
    */
   public static async provideUserConsent(consent: boolean): Promise<void> {
     await Database.setProvideUserConsent(consent);
-    if (consent && OneSignal.pendingInit)
+    if (consent && OneSignal.pendingInit) {
       await OneSignal.delayedInit();
+    }
   }
 
   /**
@@ -396,7 +404,7 @@ export default class OneSignal {
     const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     await OneSignal.context.promptsManager.internalShowCategorySlidedown({
       ...options,
-      isInUpdateMode: isPushEnabled
+      isInUpdateMode: isPushEnabled,
     });
   }
 
@@ -433,8 +441,9 @@ export default class OneSignal {
           return resolve();
         });
       });
-    } else
+    } else {
       return await InitHelper.registerForPushNotifications(options);
+    }
   }
 
   /**
@@ -454,8 +463,9 @@ export default class OneSignal {
         OneSignal.config!.safariWebId
       );
 
-    if (onComplete)
+    if (onComplete) {
       onComplete(permission);
+    }
 
     return permission;
   }
@@ -500,8 +510,9 @@ export default class OneSignal {
     }
     // Our backend considers false as removing a tag, so convert false -> "false" to allow storing as a value
     Object.keys(tags).forEach(key => {
-      if (tags[key] === false)
+      if (tags[key] === false) {
         tags[key] = "false";
+      }
     });
     const { appId } = await Database.getAppConfig();
 
@@ -509,7 +520,7 @@ export default class OneSignal {
     if (emailProfile.emailId) {
       const emailOptions : UpdatePlayerOptions = {
         tags,
-        identifier_auth_hash: emailProfile.identifierAuthHash
+        identifier_auth_hash: emailProfile.identifierAuthHash,
       };
 
       await OneSignalApi.updatePlayer(appId, emailProfile.emailId, emailOptions);
@@ -545,8 +556,9 @@ export default class OneSignal {
   static async deleteTags(tags: Array<string>, callback?: Action<Array<string>>): Promise<Array<string>> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('deleteTags', tags, callback);
-    if (!ValidatorUtils.isValidArray(tags))
+    if (!ValidatorUtils.isValidArray(tags)) {
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Malformed);
+    }
     if (tags.length === 0) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
@@ -638,7 +650,7 @@ export default class OneSignal {
     const { deviceId, subscriptionToken } = await Database.getSubscription();
     const bundle = {
       userId: deviceId,
-      registrationId: subscriptionToken
+      registrationId: subscriptionToken,
     };
     executeCallback(callback, bundle);
     return bundle;
@@ -675,17 +687,19 @@ export default class OneSignal {
     const { appId } = appConfig;
     const subscription = await Database.getSubscription();
     const { deviceId } = subscription;
-    if (!appConfig.appId)
+    if (!appConfig.appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!ValidatorUtils.isValidBoolean(newSubscription))
+    }
+    if (!ValidatorUtils.isValidBoolean(newSubscription)) {
       throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
+    }
     if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return;
     }
     const options : UpdatePlayerOptions = {
-      notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
+      notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription),
     };
 
     const authHash = await Database.getExternalUserIdAuthHash();
@@ -725,8 +739,9 @@ export default class OneSignal {
   static async optOut(doOptOut: boolean, callback?: Action<void>): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('optOut', doOptOut, callback);
-    if (!ValidatorUtils.isValidBoolean(doOptOut))
+    if (!ValidatorUtils.isValidBoolean(doOptOut)) {
       throw new InvalidArgumentError('doOptOut', InvalidArgumentReason.Malformed);
+    }
     await OneSignal.setSubscription(!doOptOut);
     executeCallback(callback);
   }
@@ -807,14 +822,18 @@ export default class OneSignal {
     logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
     const appConfig = await Database.getAppConfig();
     const subscription = await Database.getSubscription();
-    if (!appConfig.appId)
+    if (!appConfig.appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!(await OneSignal.isPushNotificationsEnabled()))
+    }
+    if (!(await OneSignal.isPushNotificationsEnabled())) {
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
-    if (!ValidatorUtils.isValidUrl(url))
+    }
+    if (!ValidatorUtils.isValidUrl(url)) {
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
-    if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
+    }
+    if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true })) {
       throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
+    }
 
     if (subscription.deviceId) {
       await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], { en : title }, { en : message },
@@ -889,7 +908,7 @@ export default class OneSignal {
     await outcomesHelper.send({
       type: outcomeAttribution.type,
       notificationIds: outcomeAttribution.notificationIds,
-      weight: outcomeWeight
+      weight: outcomeWeight,
     });
   }
 

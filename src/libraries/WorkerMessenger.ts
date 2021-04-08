@@ -52,10 +52,12 @@ export class WorkerMessengerReplyBuffer {
     const record: WorkerMessengerReplyBufferRecord = {callback, onceListenerOnly};
 
     const replies = this.replies[command.toString()];
-    if (replies)
+    if (replies) {
       replies.push(record);
-    else
+    }
+    else {
       this.replies[command.toString()] = [record];
+    }
   }
 
   public findListenersForMessage(command: WorkerMessengerCommand): WorkerMessengerReplyBufferRecord[] {
@@ -72,8 +74,9 @@ export class WorkerMessengerReplyBuffer {
 
   public deleteListenerRecord(command: WorkerMessengerCommand, targetRecord: object) {
     const listenersForCommand = this.replies[command.toString()];
-    if (listenersForCommand == null)
+    if (listenersForCommand == null) {
       return;
+    }
 
     for (let listenerRecordIndex = listenersForCommand.length - 1; listenerRecordIndex >= 0; listenerRecordIndex--) {
       const listenerRecord = listenersForCommand[listenerRecordIndex];
@@ -105,15 +108,16 @@ export class WorkerMessenger {
    * Broadcasts a message from a service worker to all clients, including uncontrolled clients.
    */
   async broadcast(command: WorkerMessengerCommand, payload: WorkerMessengerPayload) {
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker)
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
       return;
+    }
 
     const clients = await (<ServiceWorkerGlobalScope><any>self).clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of clients) {
       Log.debug(`[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${client.url}.`);
       client.postMessage({
         command: command,
-        payload: payload
+        payload: payload,
       });
     }
   }
@@ -134,7 +138,7 @@ export class WorkerMessenger {
         Log.debug(`[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${windowClient.url}.`)
         windowClient.postMessage({
           command: command,
-          payload: payload
+          payload: payload,
         } as any);
       }
     } else {
@@ -161,7 +165,7 @@ export class WorkerMessenger {
     // The postMessage payload will still arrive at the SW even if it isn't active yet.
     availableWorker.postMessage({
       command: command,
-      payload: payload
+      payload: payload,
     });
   }
 
@@ -171,8 +175,9 @@ export class WorkerMessenger {
    * service worker.
    */
   public async listen() {
-    if (!Environment.supportsServiceWorkers())
+    if (!Environment.supportsServiceWorkers()) {
       return;
+    }
 
     const env = SdkEnvironment.getWindowEnv();
 
@@ -180,8 +185,9 @@ export class WorkerMessenger {
       self.addEventListener('message', this.onWorkerMessageReceivedFromPage.bind(this));
       Log.debug('[Worker Messenger] Service worker is now listening for messages.');
     }
-    else
+    else {
       await this.listenForPage();
+    }
   }
 
   /**

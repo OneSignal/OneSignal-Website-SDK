@@ -31,7 +31,7 @@ const sandbox: SinonSandbox= sinon.sandbox.create();
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   TestEnvironment.mockInternalOneSignal();
@@ -58,7 +58,7 @@ async function testCase(
     pushManager: PushManager,
     spy: sinon.SinonSpy,
     subscriptionManager: SubscriptionManager
-  ) => Promise<void>,
+  ) => Promise<void>
 ) {
 
   // Set the user agent, which determines which vapid key we use
@@ -69,7 +69,7 @@ async function testCase(
     safariWebId: undefined,
     appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
-    onesignalVapidPublicKey: sharedVapidPublicKey
+    onesignalVapidPublicKey: sharedVapidPublicKey,
   } as SubscriptionManagerConfig);
 
   // Register a mock service worker to access push subscription
@@ -102,7 +102,7 @@ async function testCase(
 function generateVapidKeys() {
   return {
     uniquePublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
-    sharedPublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer)
+    sharedPublic: arrayBufferToBase64(Random.getRandomUint8Array(64).buffer),
   };
 }
 
@@ -119,7 +119,7 @@ test('uses per-app VAPID public key for Chrome', async t => {
       const expectedSubscriptionOptions: PushSubscriptionOptions = {
         userVisibleOnly: true,
         // Verify using unique per-app VAPID key
-        applicationServerKey: base64ToUint8Array(vapidKeys.uniquePublic).buffer
+        applicationServerKey: base64ToUint8Array(vapidKeys.uniquePublic).buffer,
       };
 
       t.true(pushManagerSubscribeSpy.getCall(0).calledWithExactly(expectedSubscriptionOptions));
@@ -140,7 +140,7 @@ test('uses globally shared VAPID public key for Firefox', async t => {
       const expectedSubscriptionOptions: PushSubscriptionOptions = {
         userVisibleOnly: true,
         // Verify using shared VAPID key
-        applicationServerKey: base64ToUint8Array(vapidKeys.sharedPublic).buffer
+        applicationServerKey: base64ToUint8Array(vapidKeys.sharedPublic).buffer,
       };
 
       t.true(pushManagerSubscribeSpy.getCall(0).calledWithExactly(expectedSubscriptionOptions));
@@ -268,7 +268,7 @@ test(
       safariWebId: undefined,
       appId: Random.getRandomUuid(),
       vapidPublicKey: <any>undefined, // Forcing vapidPublicKey to undefined to test throwing
-      onesignalVapidPublicKey: generateVapidKeys().sharedPublic
+      onesignalVapidPublicKey: generateVapidKeys().sharedPublic,
     } as SubscriptionManagerConfig);
     await t.throwsAsync(manager.subscribe.bind(null, SubscriptionStrategyKind.SubscribeNew),
     { instanceOf: Error });
@@ -322,7 +322,7 @@ test("registerSubscription without an existing subsription sends player create",
     pushSubscription
   );
   let updateData: any = {
-    notification_types: SubscriptionStateKind.Subscribed
+    notification_types: SubscriptionStateKind.Subscribed,
   }
   updateData = Object.assign(updateData, deviceRecord.serialize());
 
@@ -476,7 +476,7 @@ test(
 
     // Set the initial datetime
     timemachine.config({
-      timestamp: dateString
+      timestamp: dateString,
     });
 
     const initialSubscriptionOptions: PushSubscriptionOptions = {
@@ -514,7 +514,7 @@ async function expirationTestCase(
   subscriptionExpirationTime: number,
   expirationCheckTime: number,
   skipCreationDateSet: boolean,
-  env: IntegrationKind,
+  env: IntegrationKind
 ) {
 
   const initialVapidKeys = generateVapidKeys();
@@ -526,7 +526,7 @@ async function expirationTestCase(
 
   // Set the initial datetime, which is used internally for the subscription created at
   timemachine.config({
-    timestamp: subscriptionCreationTime
+    timestamp: subscriptionCreationTime,
   });
 
   await testCase(
@@ -546,7 +546,7 @@ async function expirationTestCase(
       }
 
       timemachine.config({
-        timestamp: expirationCheckTime
+        timestamp: expirationCheckTime,
       });
 
       const isExpiring = await subscriptionManager.isSubscriptionExpiring();
@@ -598,7 +598,7 @@ test(
       subscriptionExpirationTime,
       newTimeBeforeMidpoint,
       false,
-      IntegrationKind.Secure,
+      IntegrationKind.Secure
     );
   }
 );
@@ -618,7 +618,7 @@ test(
       subscriptionExpirationTime,
       newTimeAfterMidpoint,
       false,
-      IntegrationKind.Secure,
+      IntegrationKind.Secure
     );
   }
 );
@@ -638,7 +638,7 @@ test(
       subscriptionExpirationTime,
       newTimeAfterMidpoint,
       false,
-      IntegrationKind.Secure,
+      IntegrationKind.Secure
     );
   }
 );
@@ -657,7 +657,7 @@ test(
       subscriptionExpirationTime,
       subscriptionCreationTime,
       true,
-      IntegrationKind.Secure,
+      IntegrationKind.Secure
     );
   }
 );
@@ -675,7 +675,7 @@ test(
       null,
       subscriptionCreationTime,
       false,
-      IntegrationKind.Secure,
+      IntegrationKind.Secure
     );
   }
 );
@@ -716,7 +716,7 @@ test(
       subscriptionCreationTime + THIRTY_DAYS_MS,
       subscriptionCreationTime + THIRTY_DAYS_MS - 10,
       false,
-      IntegrationKind.InsecureProxy,
+      IntegrationKind.InsecureProxy
     );
   }
 );

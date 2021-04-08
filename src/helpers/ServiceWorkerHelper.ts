@@ -29,10 +29,12 @@ export default class ServiceWorkerHelper {
     let workerFullPath: string;
 
     // Determine which worker to install
-    if (workerState === ServiceWorkerActiveState.WorkerA)
+    if (workerState === ServiceWorkerActiveState.WorkerA) {
       workerFullPath = config.workerBPath.getFullPath();
-    else
+    }
+    else {
       workerFullPath = config.workerAPath.getFullPath();
+    }
 
     return ServiceWorkerHelper.appendServiceWorkerParams(workerFullPath, appId);
   }
@@ -42,7 +44,7 @@ export default class ServiceWorkerHelper {
     appId: string
     ): string[] {
     const workerFullPaths = [config.workerAPath.getFullPath(), config.workerBPath.getFullPath()];
-    return workerFullPaths.map((href) => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
+    return workerFullPaths.map(href => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
   }
 
   private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
@@ -198,7 +200,7 @@ export default class ServiceWorkerHelper {
       await Promise.all([
         Database.setDeviceId(newPlayerId),
         Database.upsertSession(session),
-        Database.resetSentUniqueOutcomes()
+        Database.resetSentUniqueOutcomes(),
       ]);
     }
   }
@@ -227,7 +229,7 @@ export default class ServiceWorkerHelper {
 
     await Promise.all([
       Database.cleanupCurrentSession(),
-      Database.removeAllNotificationClicked()
+      Database.removeAllNotificationClicked(),
     ]);
     Log.debug(
       "Finalize session finished",
@@ -271,7 +273,7 @@ export enum ServiceWorkerActiveState {
    * on HTTP pages where it isn't possible to know whether a service worker is
    * installed or not or in any of the other states.
    */
-  Indeterminate = 'Indeterminate'
+  Indeterminate = 'Indeterminate',
 }
 
 export interface ServiceWorkerManagerConfig {

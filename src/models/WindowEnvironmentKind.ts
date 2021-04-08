@@ -32,5 +32,5 @@ export enum WindowEnvironmentKind {
   /**
    * An unknown window context type not matching any of the above.
    */
-  Unknown = 'Unknown'
+  Unknown = 'Unknown',
 }

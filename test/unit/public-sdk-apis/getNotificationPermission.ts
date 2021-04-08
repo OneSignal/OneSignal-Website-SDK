@@ -7,7 +7,7 @@ import Random from "../../support/tester/Random";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();

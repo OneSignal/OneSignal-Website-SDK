@@ -29,7 +29,7 @@ export enum IntegrationConfigurationKind {
   /**
    * Configuration comes from user-provided JavaScript code only.
    */
-  JavaScript
+  JavaScript,
 }
 
 export interface IntegrationCapabilities {
@@ -43,8 +43,9 @@ export class ConfigHelper {
   public static async getAppConfig(userConfig: AppUserConfig,
     downloadServerAppConfig: (appId: string) => Promise<ServerAppConfig>): Promise<AppConfig> {
     try {
-      if (!userConfig || !userConfig.appId || !OneSignalUtils.isValidUuid(userConfig.appId))
+      if (!userConfig || !userConfig.appId || !OneSignalUtils.isValidUuid(userConfig.appId)) {
         throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
+      }
 
       const serverConfig = await downloadServerAppConfig(userConfig.appId);
       ConverterHelper.upgradeConfigToVersionTwo(userConfig);
@@ -54,10 +55,12 @@ export class ConfigHelper {
     }
     catch (e) {
       if (e) {
-        if (e.code === 1)
+        if (e.code === 1) {
           throw new SdkInitError(SdkInitErrorKind.InvalidAppId);
-        else if (e.code === 2)
+        }
+        else if (e.code === 2) {
           throw new SdkInitError(SdkInitErrorKind.AppNotConfiguredForWebPush);
+ }
       }
       throw e;
     }
@@ -71,7 +74,7 @@ export class ConfigHelper {
           !Utils.contains(window.location.hostname, ".onesignal.com") &&
           !this.doesCurrentOriginMatchConfigOrigin(appConfig.origin)) {
           throw new SdkInitError(SdkInitErrorKind.WrongSiteUrl, {
-            siteUrl: appConfig.origin
+            siteUrl: appConfig.origin,
           });
         }
       }
@@ -122,7 +125,7 @@ export class ConfigHelper {
       restrictedOriginEnabled: serverConfig.features.restrict_origin && serverConfig.features.restrict_origin.enable,
       metrics: {
         enable: serverConfig.features.metrics.enable,
-        mixpanelReportingToken: serverConfig.features.metrics.mixpanel_reporting_token
+        mixpanelReportingToken: serverConfig.features.metrics.mixpanel_reporting_token,
       },
       safariWebId: serverConfig.config.safari_web_id,
       vapidPublicKey: serverConfig.config.vapid_public_key,
@@ -141,13 +144,14 @@ export class ConfigHelper {
       enableSessionDuration: Utils.valueOrDefault(
         serverConfig.features.web_on_focus_enabled,
         SERVER_CONFIG_DEFAULTS_SESSION.enableOnFocus
-      )
+      ),
     };
   }
 
   public static getConfigIntegrationKind(serverConfig: ServerAppConfig): ConfigIntegrationKind {
-    if (serverConfig.config.integration)
+    if (serverConfig.config.integration) {
       return serverConfig.config.integration.kind;
+    }
     return ConfigIntegrationKind.Custom;
   }
 
@@ -165,7 +169,7 @@ export class ConfigHelper {
       color: {
         button: "",
         text: "",
-      }
+      },
     };
 
     if (!serverConfig || !serverConfig.config ||
@@ -205,7 +209,7 @@ export class ConfigHelper {
     promptOptions: AppUserConfigPromptOptions | undefined,
     defaultsFromServer: ServerAppPromptConfig,
     wholeUserConfig: AppUserConfig,
-    isUsingSubscriptionWorkaround: boolean = false,
+    isUsingSubscriptionWorkaround: boolean = false
   ): AppUserConfigPromptOptions | undefined {
 
     let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
@@ -235,7 +239,7 @@ export class ConfigHelper {
           text: Utils.getValueOrDefault(customlinkUser.color ? customlinkUser.color.text : undefined,
             customlinkDefaults.color.text),
         },
-      }
+      },
     };
 
     if (promptOptionsConfig.slidedown) {
@@ -263,7 +267,7 @@ export class ConfigHelper {
           cancelButton: Utils.getValueOrDefault(promptOption.text?.cancelButton,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton),
           confirmMessage: Utils.getValueOrDefault(promptOption.text?.confirmMessage,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage)
+            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage),
         };
 
         // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
@@ -273,7 +277,7 @@ export class ConfigHelper {
           pageViews: Utils.getValueOrDefault(promptOption.delay?.pageViews,
             SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
           timeDelay: Utils.getValueOrDefault(promptOption.delay?.timeDelay,
-            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay)
+            SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay),
         };
 
         if (promptOption.categories) {
@@ -303,7 +307,7 @@ export class ConfigHelper {
         enabled: false,
         autoPrompt: false,
         pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
+        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
       };
     }
 
@@ -353,12 +357,12 @@ export class ConfigHelper {
       pageViews: Utils.getValueOrDefault(staticPrompts.native.pageViews,
           SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews),
       timeDelay: Utils.getValueOrDefault(staticPrompts.native.timeDelay,
-          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay)
+          SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay),
     } : {
       enabled: false,
       autoPrompt: false,
       pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews,
-      timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay
+      timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
     };
 
     const { prompts } = staticPrompts.slidedown;
@@ -367,7 +371,7 @@ export class ConfigHelper {
       autoPrompt: native.autoPrompt || PromptsHelper.isSlidedownAutoPromptConfigured(prompts),
       native,
       slidedown: {
-        prompts
+        prompts,
       },
       fullscreen: {
         enabled: staticPrompts.fullscreen.enabled,
@@ -387,7 +391,7 @@ export class ConfigHelper {
     configIntegrationKind: ConfigIntegrationKind,
     userConfig: AppUserConfig,
     serverConfig: ServerAppConfig,
-    isUsingSubscriptionWorkaround: boolean = false,
+    isUsingSubscriptionWorkaround: boolean = false
   ): AppUserConfig {
     const integrationCapabilities = this.getIntegrationCapabilities(configIntegrationKind);
     switch (integrationCapabilities.configuration) {
@@ -409,7 +413,7 @@ export class ConfigHelper {
             disable: !serverConfig.config.welcomeNotification.enable,
             title: serverConfig.config.welcomeNotification.title,
             message: serverConfig.config.welcomeNotification.message,
-            url: serverConfig.config.welcomeNotification.url
+            url: serverConfig.config.welcomeNotification.url,
           },
           notifyButton: {
             enable: serverConfig.config.staticPrompts.bell.enabled,
@@ -428,7 +432,7 @@ export class ConfigHelper {
             offset: {
               bottom: `${serverConfig.config.staticPrompts.bell.offset.bottom}px`,
               left: `${serverConfig.config.staticPrompts.bell.offset.left}px`,
-              right: `${serverConfig.config.staticPrompts.bell.offset.right}px`
+              right: `${serverConfig.config.staticPrompts.bell.offset.right}px`,
             },
             colors: {
               'circle.background': serverConfig.config.staticPrompts.bell.color.main,
@@ -482,7 +486,7 @@ export class ConfigHelper {
               influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
             },
             unattributed: serverConfig.config.outcomes.unattributed,
-          }
+          },
         };
       case IntegrationConfigurationKind.JavaScript:
         /*
@@ -507,7 +511,7 @@ export class ConfigHelper {
             serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
                 ? OneSignal.SERVICE_WORKER_UPDATER_PATH
                 : 'OneSignalSDKUpdaterWorker.js',
-            path: !!userConfig.path ? userConfig.path : '/'
+            path: !!userConfig.path ? userConfig.path : '/',
           },
           outcomes: {
             direct: serverConfig.config.outcomes.direct,
@@ -518,7 +522,7 @@ export class ConfigHelper {
               influencedNotificationsLimit: serverConfig.config.outcomes.indirect.notification_attribution.limit,
             },
             unattributed: serverConfig.config.outcomes.unattributed,
-          }
+          },
         };
 
         if (userConfig.hasOwnProperty("autoResubscribe")) {

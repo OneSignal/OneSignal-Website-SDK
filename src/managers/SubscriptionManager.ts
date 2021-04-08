@@ -100,8 +100,9 @@ export class SubscriptionManager {
           Subscribing is only possible on the top-level frame, so there's no permission ambiguity
           here.
         */
-        if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied)
+        if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied) {
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
+        }
 
         if (SubscriptionManager.isSafari()) {
           rawPushSubscription = await this.subscribeSafari();
@@ -141,7 +142,7 @@ export class SubscriptionManager {
    */
   public async registerSubscription(
     pushSubscription: RawPushSubscription,
-    subscriptionState?: SubscriptionStateKind,
+    subscriptionState?: SubscriptionStateKind
   ): Promise<Subscription> {
     /*
       This may be called after the RawPushSubscription has been serialized across a postMessage
@@ -212,7 +213,7 @@ export class SubscriptionManager {
         const { deviceId } = await Database.getSubscription();
 
         await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-          notification_types: SubscriptionStateKind.MutedByApi
+          notification_types: SubscriptionStateKind.MutedByApi,
         });
 
         await Database.put('Options', { key: 'optedOut', value: true });
@@ -253,7 +254,7 @@ export class SubscriptionManager {
       newDeviceId,
       {
         parent_player_id: emailProfile.emailId,
-        email: emailProfile.emailAddress
+        email: emailProfile.emailAddress,
       }
     );
   }
@@ -269,7 +270,7 @@ export class SubscriptionManager {
         `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
         this.config.safariWebId,
         {
-          app_id: this.config.appId
+          app_id: this.config.appId,
         },
         response => {
           if ((response as any).deviceToken) {
@@ -346,8 +347,9 @@ export class SubscriptionManager {
         prompt, because going from "default" permissions to "default"
         permissions isn't a change. We specifically broadcast "default" to "default" changes.
        */
-      if (permission === NotificationPermission.Default)
+      if (permission === NotificationPermission.Default) {
         await PermissionUtils.triggerNotificationPermissionChanged(true);
+      }
 
       // If the user did not grant push permissions, throw and exit
       switch (permission) {
@@ -487,8 +489,9 @@ export class SubscriptionManager {
     /* Depending on the subscription strategy, handle existing subscription in various ways */
     switch (subscriptionStrategy) {
       case SubscriptionStrategyKind.ResubscribeExisting:
-        if (!existingPushSubscription)
+        if (!existingPushSubscription) {
           break;
+        }
 
         if (existingPushSubscription.options) {
           Log.debug("[Subscription Manager] An existing push subscription exists and it's options is not null.");
@@ -571,7 +574,7 @@ export class SubscriptionManager {
 
     const subscriptionOptions: PushSubscriptionOptionsInit = {
       userVisibleOnly: true,
-      applicationServerKey: applicationServerKey
+      applicationServerKey: applicationServerKey,
     };
     Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     try {
@@ -592,8 +595,9 @@ export class SubscriptionManager {
         }
         return [await pushManager.subscribe(subscriptionOptions), true];
       }
-      else
-        throw e; // If some other error, bubble the exception up
+      else {
+        throw e;
+      } // If some other error, bubble the exception up
     }
   }
 
@@ -643,22 +647,26 @@ export class SubscriptionManager {
     }
 
     const serviceWorkerRegistration = await this.context.serviceWorkerManager.getRegistration();
-    if (!serviceWorkerRegistration)
+    if (!serviceWorkerRegistration) {
       return false;
+    }
 
     // It's possible to get here in Safari 11.1+ version
     //   since they released support for service workers but not push api.
-    if (!serviceWorkerRegistration.pushManager)
+    if (!serviceWorkerRegistration.pushManager) {
       return false;
+    }
 
     const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
     // Not subscribed to web push
-    if (!pushSubscription)
+    if (!pushSubscription) {
       return false;
+    }
 
     // No push subscription expiration time
-    if (!pushSubscription.expirationTime)
+    if (!pushSubscription.expirationTime) {
       return false;
+    }
 
     let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
 
@@ -696,7 +704,7 @@ export class SubscriptionManager {
         const { optedOut } = await Database.getSubscription();
         return {
           subscribed: !!pushSubscription,
-          optedOut: !!optedOut
+          optedOut: !!optedOut,
         };
       default:
         /* Regular browser window environments */

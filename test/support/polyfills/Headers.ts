@@ -6,11 +6,13 @@ const normalizeValue = v => typeof v === 'string' ? v : String(v)
 const isIterable = o => o != null && typeof o[Symbol.iterator] === 'function'
 
 function normalizeName(name) {
-  if (typeof name !== 'string')
+  if (typeof name !== 'string') {
     name = String(name)
+  }
 
-  if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name))
+  if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
     throw new TypeError('Invalid character in header field name')
+  }
 
   return name.toLowerCase()
 }
@@ -26,13 +28,17 @@ export default class Headers {
   constructor(headers) {
     map.set(this, Object.create(null))
 
-    if ( isIterable(headers) )
-      for (let [name, value] of headers)
+    if ( isIterable(headers) ) {
+      for (let [name, value] of headers) {
         this.append(name, value)
+      }
+    }
 
-    else if ( headers )
-      for (let name of Object.keys(headers))
+    else if ( headers ) {
+      for (let name of Object.keys(headers)) {
         this.append(name, headers[name])
+      }
+ }
   }
 
 
@@ -49,8 +55,9 @@ export default class Headers {
     name = normalizeName(name)
     value = normalizeValue(value)
 
-    if (!map[name])
+    if (!map[name]) {
       map[name] = []
+    }
 
     map[name].push(value)
   }
@@ -75,8 +82,9 @@ export default class Headers {
   *entries() {
     let map = wm(this)
 
-    for (let name in map)
+    for (let name in map) {
       yield [name, map[name].join(',')]
+    }
   }
 
 
@@ -111,8 +119,9 @@ export default class Headers {
    * @return  Iterator
    */
   *keys() {
-    for (let [name] of this)
+    for (let [name] of this) {
       yield name
+    }
   }
 
 
@@ -134,8 +143,9 @@ export default class Headers {
    * @return  Iterator
    */
   *values() {
-    for (let [name, value] of this)
+    for (let [name, value] of this) {
       yield value
+    }
   }
 
 

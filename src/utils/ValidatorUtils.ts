@@ -9,17 +9,20 @@ export interface ValidatorOptions {
 
 export class ValidatorUtils {
   static isValidUrl(url: any, options?: ValidatorOptions) {
-    if (options && options.allowNull && url === null)
+    if (options && options.allowNull && url === null) {
         return true;
-    else if (options && options.allowEmpty && (url === null || url === undefined))
+    }
+    else if (options && options.allowEmpty && (url === null || url === undefined)) {
       return true;
+ }
     else {
       try {
         const parsedUrl = new URL(url);
         if (options && options.requireHttps) {
           return parsedUrl.protocol === 'https:';
-        } else
+        } else {
           return true;
+        }
       } catch (e) {
         return false;
       }
@@ -27,19 +30,24 @@ export class ValidatorUtils {
   }
 
   static isValidBoolean(bool: any, options?: ValidatorOptions) {
-    if (options && options.allowNull && bool === null)
+    if (options && options.allowNull && bool === null) {
       return true;
-    else
+    }
+    else {
       return bool === true || bool === false;
+    }
   }
 
   static isValidArray(array: any, options?: ValidatorOptions) {
-    if (options && options.allowNull && array === null)
+    if (options && options.allowNull && array === null) {
       return true;
-    else if (options && options.allowEmpty && (array === null || array === undefined))
+    }
+    else if (options && options.allowEmpty && (array === null || array === undefined)) {
       return true;
-    else
+ }
+    else {
       return array instanceof Array;
+ }
   }
 }
 

@@ -35,7 +35,7 @@ test.afterEach(function (_t: ExecutionContext) {
 test("correct degree of persistNotification setting should be stored", async t => {
   await TestEnvironment.initialize({
     initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -71,7 +71,7 @@ test("correct degree of persistNotification setting should be stored", async t =
 test("email session should be updated on first page view", async t => {
   const testEmailProfile: EmailProfile = new EmailProfile(
     Random.getRandomUuid(),
-    "test@example.com",
+    "test@example.com"
   );
 
   await TestEnvironment.initialize();
@@ -98,7 +98,7 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
     initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
-    stubSetTimeout: true
+    stubSetTimeout: true,
   };
   await TestEnvironment.initialize(testConfig);
 
@@ -106,8 +106,9 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
 
   let delayInit = true;
   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function() {
-    if (delayInit)
+    if (delayInit) {
       t.fail();
+    }
   });
 
   TestEnvironment.mockInternalOneSignal();
@@ -117,7 +118,7 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
   sinonSandbox.stub(OneSignalApiBase, "post").resolves({success: true, id: Random.getRandomUuid()});
   await OneSignal.init({
     appId: Random.getRandomUuid(),
-    requiresUserPrivacyConsent: true
+    requiresUserPrivacyConsent: true,
   });
 
   delayInit = false;
@@ -130,7 +131,7 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
     initOptions: { },
     httpOrHttps: HttpHttpsEnvironment.Https,
     pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
-    stubSetTimeout: true
+    stubSetTimeout: true,
   };
   await TestEnvironment.initialize(testConfig);
 
@@ -138,10 +139,12 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
 
   let delayInit = true;
   OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, function() {
-    if (delayInit)
+    if (delayInit) {
       t.fail();
-    else
+    }
+    else {
       t.pass();
+    }
   });
   // Don't need to mock create call, autoRegister not settable with TypicalSite
 
@@ -149,7 +152,7 @@ test("Test OneSignal.init, TypicalSite, with requiresUserPrivacyConsent", async 
   assertInit.setupEnsureInitEventFires(t);
   await OneSignal.init({
     appId: Random.getRandomUuid(),
-    requiresUserPrivacyConsent: true
+    requiresUserPrivacyConsent: true,
   });
 
   delayInit = false;
@@ -161,7 +164,7 @@ test("Test OneSignal.init, No app id or wrong format of app id", async t => {
   const testConfig = {
     initOptions: {},
     httpOrHttps: HttpHttpsEnvironment.Https,
-    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint
+    pushIdentifier: (await TestEnvironment.getFakePushSubscription()).endpoint,
   };
   await TestEnvironment.initialize(testConfig);
   OneSignal.initialized = false;

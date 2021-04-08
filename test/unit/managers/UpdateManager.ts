@@ -21,7 +21,7 @@ const sandbox: SinonSandbox = sinon.sandbox.create();
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https,
-    permission: NotificationPermission.Granted
+    permission: NotificationPermission.Granted,
   });
   TestEnvironment.mockInternalOneSignal();
 });

@@ -114,7 +114,7 @@ export class RawPushSubscription implements Serializable {
       w3cAuth: this.w3cAuth,
       safariDeviceToken: this.safariDeviceToken,
       existingPushSubscription: this.existingW3cPushSubscription ? this.existingW3cPushSubscription.serialize() : null,
-      existingSafariDeviceToken: this.existingSafariDeviceToken
+      existingSafariDeviceToken: this.existingSafariDeviceToken,
     };
 
     return serializedBundle;

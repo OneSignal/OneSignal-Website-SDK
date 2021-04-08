@@ -14,7 +14,7 @@ import Random from '../../support/tester/Random';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -24,40 +24,40 @@ test.beforeEach(async t => {
 
 test('should not collect pageviews if system clock is out of sync', async t => {
   timemachine.config({
-    dateString: "February 8 2018"
+    dateString: "February 8 2018",
   });
   t.true(OneSignal.context.metricsManager.shouldCollectPageView());
 
   // Anything before February 8th 2018 shouldn't be collecting data
   timemachine.config({
-    dateString: "February 8 2017"
+    dateString: "February 8 2017",
   });
   t.false(OneSignal.context.metricsManager.shouldCollectPageView());
 
   timemachine.config({
-    dateString: "February 7 2018"
+    dateString: "February 7 2018",
   });
   t.false(OneSignal.context.metricsManager.shouldCollectPageView());
 
   timemachine.config({
-    dateString: "January 5 2018"
+    dateString: "January 5 2018",
   });
   t.false(OneSignal.context.metricsManager.shouldCollectPageView());
 
   timemachine.config({
-    dateString: "February 9 1980"
+    dateString: "February 9 1980",
   });
   t.false(OneSignal.context.metricsManager.shouldCollectPageView());
 
   // Feb 9th should be okay
   timemachine.config({
-    dateString: "February 9 2018"
+    dateString: "February 9 2018",
   });
   t.true(OneSignal.context.metricsManager.shouldCollectPageView());
 
   // Feb 11th should not be okay
   timemachine.config({
-    dateString: "February 11 2018"
+    dateString: "February 11 2018",
   });
   t.false(OneSignal.context.metricsManager.shouldCollectPageView());
 });

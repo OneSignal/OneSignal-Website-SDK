@@ -92,7 +92,7 @@ export default class Slidedown {
         messageText,
         icon,
         positiveButtonText,
-        negativeButtonText
+        negativeButtonText,
       });
 
       const slidedownContainer = document.createElement("div");
@@ -270,7 +270,7 @@ export default class Slidedown {
       CANCEL_CLICK: 'popoverCancelClick',
       SHOWN: 'popoverShown',
       CLOSED: 'popoverClosed',
-      QUEUED: 'popoverQueued'
+      QUEUED: 'popoverQueued',
     };
   }
 }

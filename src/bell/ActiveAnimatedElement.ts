@@ -38,17 +38,19 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (!this.inactive || !this.shown) {
       return Promise.resolve(this);
     }
-    else return new Promise((resolve) => {
+    else { return new Promise(resolve => {
       this.activeState = 'activating';
       OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
       const element = this.element;
       if (!element) {
         Log.error("Could not find active animated element");
       } else {
-        if (this.inactiveClass)
+        if (this.inactiveClass) {
           removeCssClass(element, this.inactiveClass);
-        if (this.activeClass)
+        }
+        if (this.activeClass) {
           addCssClass(element, this.activeClass);
+        }
       }
 
       if (this.shown) {
@@ -78,6 +80,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         return resolve(this);
       }
     });
+    }
   }
 
   /**
@@ -88,17 +91,19 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (!this.active) {
       return Promise.resolve(this);
     }
-    else return new Promise((resolve) => {
+    else { return new Promise(resolve => {
       this.activeState = 'inactivating';
       OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
       const element = this.element;
       if (!element) {
         Log.error("Could not find active animated element");
       } else {
-        if (this.activeClass)
+        if (this.activeClass) {
           removeCssClass(element, this.activeClass);
-        if (this.inactiveClass)
+        }
+        if (this.inactiveClass) {
           addCssClass(element, this.inactiveClass);
+        }
       }
       
       if (this.shown) {
@@ -127,6 +132,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
         return resolve(this);
       }
     });
+    }
   }
 
   /**
@@ -134,15 +140,17 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   waitUntilActive() {
-    if (this.active)
+    if (this.active) {
       return Promise.resolve(this);
-    else return new Promise((resolve) => {
-      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE, (event) => {
+    }
+    else { return new Promise(resolve => {
+      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE,event => {
         if (event === this) {
           return resolve(this);
         }
       });
     });
+    }
   }
 
   /**
@@ -150,15 +158,17 @@ export default class ActiveAnimatedElement extends AnimatedElement {
    * @returns {Promise} Returns a promise that is resolved with this element when it has completed its transition.
    */
   waitUntilInactive() {
-    if (this.inactive)
+    if (this.inactive) {
       return Promise.resolve(this);
-    else return new Promise((resolve) => {
-      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.INACTIVE, (event) => {
+    }
+    else { return new Promise(resolve => {
+      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.INACTIVE,event => {
         if (event === this) {
           return resolve(this);
         }
       });
     });
+    }
   }
 
   static get EVENTS() {
@@ -169,7 +179,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
       ACTIVE: 'activeAnimatedElementActive',
       INACTIVATING: 'activeAnimatedElementInactivating',
       INACTIVE: 'activeAnimatedElementInactive',
-      }
+      },
     };
   }
 

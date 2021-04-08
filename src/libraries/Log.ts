@@ -48,11 +48,11 @@ export default class Log {
     }
 
     const methods = {
-      "log": "debug",
-      "trace": "trace",
-      "info": "info",
-      "warn": "warn",
-      "error": "error"
+      log: "debug",
+      trace: "trace",
+      info: "info",
+      warn: "warn",
+      error: "error",
     };
     for (const nativeMethod of Object.keys(methods)) {
       const nativeMethodExists = typeof console[nativeMethod] !== "undefined";

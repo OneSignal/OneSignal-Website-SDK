@@ -21,7 +21,7 @@ const SILENT_EVENTS = [
   'activeAnimatedElementInactive',
   'dbRetrieved',
   'dbSet',
-  'testEvent'
+  'testEvent',
   ];
 
 const RETRIGGER_REMOTE_EVENTS = [
@@ -43,13 +43,13 @@ const RETRIGGER_REMOTE_EVENTS = [
   'permissionPromptDisplay',
   'testWouldDisplay',
   'testInitOptionDisabled',
-  'popupWindowTimeout'
+  'popupWindowTimeout',
 ];
 
 const LEGACY_EVENT_MAP = {
-  'notificationPermissionChange': 'onesignal.prompt.native.permissionchanged',
-  'subscriptionChange': 'onesignal.subscription.changed',
-  'customPromptClick': 'onesignal.prompt.custom.clicked',
+  notificationPermissionChange: 'onesignal.prompt.native.permissionchanged',
+  subscriptionChange: 'onesignal.subscription.changed',
+  customPromptClick: 'onesignal.prompt.custom.clicked',
 };
 
 export default class Event {
@@ -78,10 +78,12 @@ export default class Event {
     // Actually fire the event that can be listened to via OneSignal.on()
     if (Environment.isBrowser()) {
       if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
-        if (OneSignal.initialized)
+        if (OneSignal.initialized) {
           return;
-        else
+        }
+        else {
           OneSignal.initialized = true;
+        }
       }
       await OneSignal.emitter.emit(eventName, data);
     }
@@ -119,7 +121,7 @@ export default class Event {
    */
   static _triggerLegacy(eventName: string, data: any) {
     const event = new CustomEvent(eventName, {
-      bubbles: true, cancelable: true, detail: data
+      bubbles: true, cancelable: true, detail: data,
     });
     // Fire the event that listeners can listen to via 'window.addEventListener()'
     window.dispatchEvent(event);

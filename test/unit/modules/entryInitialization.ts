@@ -296,8 +296,9 @@ class MockOneSignalWithPromiseControl {
 
   async sendTag(_key: string, _value: any, _callback?: Action<Object>): Promise<Object> {
     return new Promise((resolve, reject) => {
-      if (this.resolveValue)
+      if (this.resolveValue) {
         resolve(this.resolveValue);
+      }
       if (this.rejectValue) {
         reject(this.rejectValue);
       }
@@ -366,7 +367,7 @@ class MockOneSignalWithPublicProperties {
   public log = {
     setLevel: (level: string): void => {
       this.currentLogLevel = level;
-    }
+    },
   };
 }
 

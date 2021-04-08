@@ -35,10 +35,12 @@ export function removeDomElement(selector: string) {
  */
 export async function awaitOneSignalInitAndSupported(): Promise<object|void> {
   return new Promise(resolve => {
-    if (!OneSignal.initialized)
+    if (!OneSignal.initialized) {
       OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
-    else
+    }
+    else {
       resolve();
+    }
   });
 }
 
@@ -119,8 +121,9 @@ export function clearDomElementChildren(targetSelectorOrElement: Element | strin
       targetSelectorOrElement.removeChild(targetSelectorOrElement.firstChild);
     }
   }
-  else
+  else {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+ }
 }
 
 export function addCssClass(targetSelectorOrElement: Element | string, cssClass: string) {
@@ -191,7 +194,7 @@ export function getConsoleStyle(style: string) {
  * @returns {Promise} Returns a promise that resolves when the timeout is complete.
  */
 export function delay(durationMs: number) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(resolve, durationMs)
   });
 }
@@ -206,10 +209,12 @@ export function timeoutPromise(promise: Promise<any>, milliseconds: number): Pro
 
 export function when(condition: Action<boolean>, promiseIfTrue: Promise<any> | undefined,
   promiseIfFalse: Promise<any> | undefined) {
-  if (promiseIfTrue === undefined)
+  if (promiseIfTrue === undefined) {
     promiseIfTrue = nothing();
-  if (promiseIfFalse === undefined)
+  }
+  if (promiseIfFalse === undefined) {
     promiseIfFalse = nothing();
+  }
   return (condition ? promiseIfTrue : promiseIfFalse);
 }
 
@@ -262,7 +267,7 @@ export function wipeIndexedDb() {
   return Promise.all([
     Database.remove('Ids'),
     Database.remove('NotificationOpened'),
-    Database.remove('Options')
+    Database.remove('Options'),
   ]);
 }
 
@@ -344,13 +349,15 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
   if (typeof targetSelectorOrElement === 'string') {
     let els = document.querySelectorAll(targetSelectorOrElement);
     if (els.length > 0) {
-      for (let i = 0; i < els.length; i++)
+      for (let i = 0; i < els.length; i++) {
         once(els[i], event, task);
+      }
     }
   }
   else if (isArray(targetSelectorOrElement)) {
-    for (let i = 0; i < (targetSelectorOrElement as string[]).length; i++)
+    for (let i = 0; i < (targetSelectorOrElement as string[]).length; i++) {
       once((targetSelectorOrElement as string[])[i], event, task);
+    }
   }
   else if (typeof targetSelectorOrElement === 'object') {
     var taskWrapper = (function () {
@@ -367,8 +374,9 @@ export function once(targetSelectorOrElement: string | string[] | Element | Docu
     })();
     (targetSelectorOrElement as Element | Document).addEventListener(event, taskWrapper);
   }
-  else
+  else {
     throw new Error(`${targetSelectorOrElement} must be a CSS selector string or DOM Element object.`);
+ }
 }
 
 /**
@@ -396,13 +404,16 @@ export function incrementSdkLoadCount() {
 }
 
 export function getPlatformNotificationIcon(notificationIcons: NotificationIcons | null): string {
-  if (!notificationIcons)
+  if (!notificationIcons) {
     return 'default-icon';
+  }
 
-  if (bowser.safari && notificationIcons.safari)
+  if (bowser.safari && notificationIcons.safari) {
     return notificationIcons.safari;
-  else if (bowser.firefox && notificationIcons.firefox)
+  }
+  else if (bowser.firefox && notificationIcons.firefox) {
     return notificationIcons.firefox;
+ }
 
   return notificationIcons.chrome ||
     notificationIcons.firefox ||

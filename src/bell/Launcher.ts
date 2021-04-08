@@ -52,7 +52,7 @@ export default class Launcher extends ActiveAnimatedElement {
       return this;
     }
     else {
-      return await new Promise((resolve) => {
+      return await new Promise(resolve => {
         // Once the launcher has finished shrinking down
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);

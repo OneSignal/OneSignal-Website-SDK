@@ -58,9 +58,9 @@ const defaultSlidedownOptions = {
     text: {
       actionMessage: '',
       acceptButton: '',
-      cancelButton: ''
-    }
-  }]
+      cancelButton: '',
+    },
+  }],
 };
 
 test.serial(`HTTPS: User not subscribed and not opted out => first page view => slidedown's autoPrompt is on =>
@@ -69,7 +69,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
       pushIdentifier: 'granted',
-      stubSetTimeout: true
+      stubSetTimeout: true,
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const eventsHelper = new EventsTestHelper(sinonSandbox);
@@ -112,7 +112,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
     pushIdentifier: 'granted',
-    stubSetTimeout: true
+    stubSetTimeout: true,
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -146,7 +146,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Granted
+      permission: NotificationPermission.Granted,
     };
 
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -191,7 +191,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Default
+      permission: NotificationPermission.Default,
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -224,7 +224,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       integration: ConfigIntegrationKind.Custom,
 
       pushIdentifier: 'granted',
-      permission: NotificationPermission.Granted
+      permission: NotificationPermission.Granted,
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -252,7 +252,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is on =>
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
       permission: NotificationPermission.Granted,
-      pushIdentifier: 'granted'
+      pushIdentifier: 'granted',
     };
 
     const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
@@ -272,8 +272,8 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is on =>
       appId,
       autoResubscribe: true,
       promptOptions: {
-        slidedown: defaultSlidedownOptions
-      }
+        slidedown: defaultSlidedownOptions,
+      },
     });
     await initPromise;
     t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -285,7 +285,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is off =
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
@@ -306,8 +306,8 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is off =
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -320,7 +320,7 @@ test.serial(`HTTPS: User opted out => second page view => onSession flag is on =
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
@@ -343,8 +343,8 @@ test.serial(`HTTPS: User opted out => second page view => onSession flag is on =
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   await initializePromise;
@@ -356,7 +356,7 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -382,8 +382,8 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -395,7 +395,7 @@ test.serial(`HTTPS: User subscribed => first page view => sends on session`, asy
     httpOrHttps: HttpHttpsEnvironment.Https,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -414,8 +414,8 @@ test.serial(`HTTPS: User subscribed => first page view => sends on session`, asy
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -428,7 +428,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
       httpOrHttps: HttpHttpsEnvironment.Https,
       integration: ConfigIntegrationKind.Custom,
       pushIdentifier: 'granted',
-      stubSetTimeout: true
+      stubSetTimeout: true,
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
 
@@ -456,7 +456,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
     const initPromise = OneSignal.init({
       appId,
       promptOptions: {
-        slidedown: defaultSlidedownOptions
+        slidedown: defaultSlidedownOptions,
       },
       autoResubscribe: false,
     });
@@ -472,7 +472,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
     httpOrHttps: HttpHttpsEnvironment.Http,
     integration: ConfigIntegrationKind.Custom,
     pushIdentifier: 'granted',
-    stubSetTimeout: true
+    stubSetTimeout: true,
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -491,7 +491,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
   const initPromise = OneSignal.init({
     appId,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
+      slidedown: defaultSlidedownOptions,
     },
     autoResubscribe: false,
   });
@@ -507,7 +507,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Granted
+      permission: NotificationPermission.Granted,
     };
 
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -538,7 +538,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
     const testConfig: TestEnvironmentConfig = {
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
-      permission: NotificationPermission.Default
+      permission: NotificationPermission.Default,
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -570,7 +570,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => n
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
       pushIdentifier: 'granted',
-      permission: NotificationPermission.Granted
+      permission: NotificationPermission.Granted,
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
@@ -598,7 +598,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is on => 
       httpOrHttps: HttpHttpsEnvironment.Http,
       integration: ConfigIntegrationKind.Custom,
       permission: NotificationPermission.Granted,
-      pushIdentifier: 'granted'
+      pushIdentifier: 'granted',
     };
 
     const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
@@ -618,8 +618,8 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is on => 
       appId,
       autoResubscribe: true,
       promptOptions: {
-        slidedown: defaultSlidedownOptions
-      }
+        slidedown: defaultSlidedownOptions,
+      },
     });
     await initPromise;
     t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -631,7 +631,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is off =>
     httpOrHttps: HttpHttpsEnvironment.Http,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
@@ -652,8 +652,8 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is off =>
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -666,7 +666,7 @@ test.serial(`HTTP: User opted out => second page view => onSession flag is on =>
     httpOrHttps: HttpHttpsEnvironment.Http,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
@@ -689,8 +689,8 @@ test.serial(`HTTP: User opted out => second page view => onSession flag is on =>
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   await initializePromise;
@@ -702,7 +702,7 @@ test.serial(`HTTP: User subscribed => first page view => expiring subscription =
     httpOrHttps: HttpHttpsEnvironment.Http,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -724,8 +724,8 @@ test.serial(`HTTP: User subscribed => first page view => expiring subscription =
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -737,7 +737,7 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
     httpOrHttps: HttpHttpsEnvironment.Http,
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Granted,
-    pushIdentifier: 'granted'
+    pushIdentifier: 'granted',
   };
 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
@@ -756,8 +756,8 @@ test.serial(`HTTP: User subscribed => first page view => sends on session`, asyn
     appId,
     autoResubscribe: true,
     promptOptions: {
-      slidedown: defaultSlidedownOptions
-    }
+      slidedown: defaultSlidedownOptions,
+    },
   });
   await initPromise;
   t.is(OneSignal.context.pageViewManager.getPageViewCount(), 1);
@@ -776,7 +776,7 @@ async function inspectPushRecordCreationRequest(t: ExecutionContext, requestStub
     "sdk",
     "device_model",
     "identifier",
-    "notification_types"
+    "notification_types",
   ];
   t.is(requestStub.callCount, 1);
   t.not(requestStub.getCall(0), null);

@@ -46,9 +46,9 @@ export default class RemoteFrame implements Disposable {
       siteName: initOptions.siteName,
       metrics: {
         enable: false,
-        mixpanelReportingToken: null
+        mixpanelReportingToken: null,
       },
-      userConfig: {}
+      userConfig: {},
     };
   }
 

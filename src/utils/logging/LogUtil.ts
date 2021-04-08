@@ -3,14 +3,15 @@ import {InvalidArgumentError} from "../../errors/InvalidArgumentError";
 
 enum LogStyle {
     PlainText,
-    Label
+    Label,
 }
 
 class LogUtil {
 
     private static getModuleName(module) {
-        if (!module)
+        if (!module) {
             throw new InvalidArgumentError('module', module);
+        }
         if (typeof module === 'string') {
             return module;
         } else if (module.constructor && module.constructor.name) {
@@ -47,7 +48,7 @@ class LogUtil {
             `%c`,
             LogUtil.getStyle(LogStyle.Label),
             LogUtil.getStyle(LogStyle.PlainText),
-            ...message
+            ...message,
         ]
     }
 }

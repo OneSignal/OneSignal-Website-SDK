@@ -12,7 +12,7 @@ class TestMockServiceWorkerContainer extends MockServiceWorkerContainer {
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   (global as any).navigator.serviceWorker = new TestMockServiceWorkerContainer();
 });

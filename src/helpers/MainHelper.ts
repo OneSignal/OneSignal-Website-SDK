@@ -75,7 +75,7 @@ export default class MainHelper {
       await PermissionUtils.triggerNotificationPermissionChanged();
       await Database.put('Options', {
         key: 'notificationPermission',
-        value: currentPermission
+        value: currentPermission,
       });
     }
   }
@@ -142,7 +142,7 @@ export default class MainHelper {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',
         exampleNotificationMessageDesktop: 'exampleNotificationMessage',
         exampleNotificationTitleMobile: 'exampleNotificationTitle',
-        exampleNotificationMessageMobile: 'exampleNotificationMessage'
+        exampleNotificationMessageMobile: 'exampleNotificationMessage',
       };
       for (let legacyParamKey of Object.keys(legacyParams)) {
         let legacyParamValue = legacyParams[legacyParamKey];
@@ -162,7 +162,7 @@ export default class MainHelper {
         'exampleNotificationCaption',
         'acceptButton',
         'cancelButton',
-        'timeout'
+        'timeout',
       ];
       var hash = {};
       for (var i = 0; i < allowedPromptOptions.length; i++) {
@@ -179,7 +179,7 @@ export default class MainHelper {
 
   static triggerCustomPromptClicked(clickResult) {
     Event.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
-      result: clickResult
+      result: clickResult,
     });
   }
 

@@ -20,7 +20,7 @@ export class EnvironmentInfoHelper {
             isBrowserAndSupportsServiceWorkers: this.supportsServiceWorkers(),
             requiresUserInteraction: this.requiresUserInteraction(),
             osVersion: this.getOsVersion(),
-            canTalkToServiceWorker: this.canTalkToServiceWorker()
+            canTalkToServiceWorker: this.canTalkToServiceWorker(),
         };
     }
 

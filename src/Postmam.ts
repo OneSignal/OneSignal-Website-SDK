@@ -99,11 +99,11 @@ export default class Postmam {
       id: messageId,
       command: messageCommand,
       data: messageData,
-      source: messageSource
+      source: messageSource,
     };
     let messageBundleWithReply = {
       reply: this.reply.bind(this, messageBundle),
-      ...messageBundle
+      ...messageBundle,
     };
     if (this.replies.hasOwnProperty(messageId)) {
       Log.info('(Postmam) This message is a reply.');
@@ -158,7 +158,7 @@ export default class Postmam {
     this.messagePort.addEventListener('message', this.onMessageReceived.bind(this), false);
     this.messagePort.start();
     this.windowReference.postMessage({
-      handshake: Postmam.HANDSHAKE_MESSAGE
+      handshake: Postmam.HANDSHAKE_MESSAGE,
     }, this.sendToOrigin, [this.channel.port2]);
   }
 
@@ -178,11 +178,11 @@ export default class Postmam {
       id: messageId,
       command: messageCommand,
       data: messageData,
-      source: messageSource
+      source: messageSource,
     };
     let messageBundleWithReply = {
       reply: this.reply.bind(this, messageBundle),
-      ...messageBundle
+      ...messageBundle,
     };
     if (this.replies.hasOwnProperty(messageId)) {
       let replyFn = this.replies[messageId].bind(window);
@@ -201,7 +201,7 @@ export default class Postmam {
       command: originalMessageBundle.command,
       data: data,
       source: SdkEnvironment.getWindowEnv().toString(),
-      isReply: true
+      isReply: true,
     };
     if (typeof onReply === 'function') {
       this.replies[messageBundle.id] = onReply;
@@ -224,7 +224,7 @@ export default class Postmam {
       id: OneSignalUtils.getRandomUuid(),
       command: command,
       data: data,
-      source: SdkEnvironment.getWindowEnv().toString()
+      source: SdkEnvironment.getWindowEnv().toString(),
     };
     if (typeof onReply === 'function') {
       this.replies[messageBundle.id] = onReply;
@@ -247,7 +247,7 @@ export default class Postmam {
       id: OneSignalUtils.getRandomUuid(),
       command: command,
       data: data,
-      source: SdkEnvironment.getWindowEnv().toString()
+      source: SdkEnvironment.getWindowEnv().toString(),
     };
     if (typeof onReply === 'function') {
       this.replies[messageBundle.id] = onReply;

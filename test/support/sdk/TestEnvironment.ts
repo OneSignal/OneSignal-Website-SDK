@@ -55,7 +55,7 @@ export interface ServiceWorkerTestEnvironment extends ServiceWorkerGlobalScope {
 
 export enum HttpHttpsEnvironment {
   Http = "Http",
-  Https = "Https"
+  Https = "Https",
 }
 
 export enum BrowserUserAgent {
@@ -106,7 +106,7 @@ export enum BrowserUserAgent {
   SamsungBrowserSupported = "Mozilla/5.0 (Linux; Android 6.0.1; SAMSUNG SM-N910F Build/MMB29M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/44.0.2403.133 Mobile Safari/537.36",
   SamsungBrowserUnsupported = "Mozilla/5.0 (Linux; Android 6.0.1; SAMSUNG SM-N910F Build/MMB29M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/3.0 Chrome/44.0.2403.133 Mobile Safari/537.36",
   UcBrowserSupported = "Mozilla/5.0 (Linux; U; Android 9; en-US; LM-G710 Build/PKQ1.181105.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.108 UCBrowser/12.9.10.1159 Mobile Safari/537.36",
-  UcBrowserUnsupported = "Mozilla/5.0 (Linux; U; Android 6.0.1; zh-CN; F5121 Build/34.0.A.1.247) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/40.0.2214.89 UCBrowser/11.5.1.944 Mobile Safari/537.36"
+  UcBrowserUnsupported = "Mozilla/5.0 (Linux; U; Android 6.0.1; zh-CN; F5121 Build/34.0.A.1.247) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/40.0.2214.89 UCBrowser/11.5.1.944 Mobile Safari/537.36",
 }
 
 export interface TestEnvironmentConfig {
@@ -174,13 +174,14 @@ export class TestEnvironment {
     return {
       abort: function () {
         clearTimeout(timeout);
-      }
+      },
     };
   }
 
   static stubServiceWorkerEnvironment(config?: TestEnvironmentConfig): Promise<ServiceWorkerGlobalScope> {
-    if (!config)
+    if (!config) {
       config = {};
+    }
     // Service workers have a ServiceWorkerGlobalScope set to the 'self' variable, not window
     const serviceWorkerScope = new MockServiceWorkerGlobalScope();
 
@@ -242,7 +243,7 @@ export class TestEnvironment {
         userAgent: config && config.userAgent ? config.userAgent : BrowserUserAgent.Default,
         features: {
           FetchExternalResources: ["script", "frame", "iframe", "link", "img"],
-          ProcessExternalResources: ['script']
+          ProcessExternalResources: ['script'],
         },
         resourceLoader: TestEnvironment.onVirtualDomResourceRequested,
         done: (err: any, window: Window) => {
@@ -252,7 +253,7 @@ export class TestEnvironment {
           } else {
             resolve(window);
           }
-        }
+        },
       });
     });
     // Node has its own console; overwriting it will cause issues
@@ -283,8 +284,8 @@ export class TestEnvironment {
       location: {
         get origin() {
           throw new Error("SecurityError: Permission denied to access property 'origin' on cross-origin object");
-        }
-      }
+        },
+      },
     } as any : windowDef;
     jsdom.reconfigureWindow(windowDef, { top: topWindow });
     Object.assign(global, windowDef);
@@ -360,7 +361,7 @@ export class TestEnvironment {
   static async getFakePushSubscription(): Promise<PushSubscription> {
     return await new MockPushManager().subscribe({
       userVisibleOnly: true,
-      applicationServerKey: Random.getRandomUint8Array(65).buffer
+      applicationServerKey: Random.getRandomUint8Array(65).buffer,
     });
   }
 
@@ -402,7 +403,7 @@ export class TestEnvironment {
       origin: 'https://example.com',
       metrics: {
         enable: true,
-        mixpanelReportingToken: 'mixpanel-token'
+        mixpanelReportingToken: 'mixpanel-token',
       },
       enableOnSession: true,
       safariWebId: undefined,
@@ -426,14 +427,14 @@ export class TestEnvironment {
         app_id: appId,
         features: {
           restrict_origin: {
-            enable: true
+            enable: true,
           },
           metrics: {
             enable: true,
-            mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673"
+            mixpanel_reporting_token: "7c2582e45a6ecf1501aa3ca7887f3673",
           },
           web_on_focus_enabled: true,
-          session_threshold: 30
+          session_threshold: 30,
         },
         config: {
           autoResubscribe: true,
@@ -442,10 +443,10 @@ export class TestEnvironment {
             origin: "https://localhost:3001",
             proxyOrigin: undefined,
             defaultIconUrl: null,
-            proxyOriginEnabled: true
+            proxyOriginEnabled: true,
           },
           integration: {
-            kind: ConfigIntegrationKind.Custom
+            kind: ConfigIntegrationKind.Custom,
           },
           staticPrompts: {
             native: {
@@ -457,36 +458,36 @@ export class TestEnvironment {
               size: "large",
               color: {
                 main: "red",
-                accent: "white"
+                accent: "white",
               },
               dialog: {
                 main: {
                   title: "Manage Notifications",
                   subscribeButton: "Subscribe",
-                  unsubscribeButton: "Unsubscribe"
+                  unsubscribeButton: "Unsubscribe",
                 },
                 blocked: {
                   title: "Unblock Notifications",
-                  message: "Click here to learn how to unblock notifications."
-                }
+                  message: "Click here to learn how to unblock notifications.",
+                },
               },
                 offset: {
                   left: 0,
                     right: 0,
-                    bottom: 0
+                    bottom: 0,
                 },
                 message: {
                     subscribing: "Thanks for subscribing!",
-                    unsubscribing: "You won't receive notifications again"
+                    unsubscribing: "You won't receive notifications again",
                 },
                 tooltip: {
                     blocked: "You've blocked notifications",
                     subscribed: "You're subscribed to notifications",
-                    unsubscribed: "Subscribe to notifications"
+                    unsubscribed: "Subscribe to notifications",
                 },
                 location: "bottom-right",
                 hideWhenSubscribed: false,
-                customizeTextEnabled: true
+                customizeTextEnabled: true,
             },
             slidedown: {
               prompts: [
@@ -497,9 +498,9 @@ export class TestEnvironment {
                     acceptButton: "Allow",
                     cancelButton: "No Thanks",
                     actionMessage: "We'd like to send you notifications for the latest news and updates.",
-                  }
-                }
-              ]
+                  },
+                },
+              ],
             },
             fullscreen: {
                 enabled: false,
@@ -510,7 +511,7 @@ export class TestEnvironment {
                 cancelButton: "No Thanks",
                 actionMessage: "We'd like to send you notifications for the latest news and updates.",
                 autoAcceptTitle: "Click Allow",
-                customizeTextEnabled: true
+                customizeTextEnabled: true,
             },
             customlink: {
               enabled: false,
@@ -518,32 +519,32 @@ export class TestEnvironment {
               size: "medium",
               color: {
                 button: "#e54b4d",
-                text: "#ffffff"
+                text: "#ffffff",
               },
               text: {
                 subscribe: "Subscribe to push notifications",
                 unsubscribe: "Unsubscribe from push notifications",
-                explanation: ""
+                explanation: "",
               },
-              unsubscribeEnabled: true
+              unsubscribeEnabled: true,
             },
           },
           webhooks: {
-            enable: false
+            enable: false,
           },
           serviceWorker: {
             customizationEnabled: false,
             path: "/",
             workerName: "OneSignalSDKWorker.js",
             registrationScope: "/",
-            updaterWorkerName: "OneSignalSDKUpdaterWorker.js"
+            updaterWorkerName: "OneSignalSDKUpdaterWorker.js",
           },
           welcomeNotification: {
             enable: true,
             url: "https://localhost:3001/?_osp=do_not_open",
             title: "localhost https",
             message: "Thanks for subscribing!",
-            urlEnabled: false
+            urlEnabled: false,
           },
           vapid_public_key: "BDPplk0FjgsEPIG7Gi2-zbjpBGgM_RJ4c99tWbNvxv7VSKIUV1KA7UUaRsTuBpcTEuaPMjvz_kd8rZuQcgMepng",
           onesignal_vapid_public_key: "BMzCIzYqtgz2Bx7S6aPVK6lDWets7kGm-pgo2H4RixFikUaNIoPqjPBBOEWMAfeFjuT9mAvbe-lckGi6vvNEiW0",
@@ -557,15 +558,15 @@ export class TestEnvironment {
               enabled: true,
               notification_attribution: {
                 limit: 5,
-                minutes_since_displayed: 60
-              }
+                minutes_since_displayed: 60,
+              },
             },
             unattributed: {
               enabled: true,
-            }
-          }
+            },
+          },
         },
-        "generated_at": 1531177265
+        generated_at: 1531177265,
       };
       if (isHttps) {
         return customConfigHttps;
@@ -581,16 +582,16 @@ export class TestEnvironment {
             origin: "http://localhost:3000",
             proxyOrigin: "helloworld123",
             defaultIconUrl: null,
-            proxyOriginEnabled: true
+            proxyOriginEnabled: true,
           },
           welcomeNotification: {
             enable: true,
             url: "http://localhost:3000/?_osp=do_not_open",
             title: "localhost http",
             message: "Thanks for subscribing!",
-            urlEnabled: false
+            urlEnabled: false,
           },
-        }
+        },
       }
     }
 
@@ -604,13 +605,13 @@ export class TestEnvironment {
         },
         metrics: {
           enable: true,
-          mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673'
+          mixpanel_reporting_token: '7c2582e45a6ecf1501aa3ca7887f3673',
         },
         email: {
           require_auth: true,
         },
         web_on_focus_enabled: true,
-        session_threshold: 30
+        session_threshold: 30,
       },
       config: {
         origin: "https://example.com",
@@ -667,9 +668,9 @@ export class TestEnvironment {
                   acceptButton: "Allow",
                   cancelButton: "No Thanks",
                   actionMessage: "We'd like to send you notifications for the latest news and updates.",
-                }
-              }
-            ]
+                },
+              },
+            ],
           },
           fullscreen: {
             title: "example.com",
@@ -696,14 +697,14 @@ export class TestEnvironment {
               explanation: "Get updates from all sorts of things that matter to you",
             },
             unsubscribeEnabled: true,
-          }
+          },
         },
         siteInfo: {
           name: 'My Website',
           origin: 'https://www.site.com',
           proxyOrigin: undefined,
           defaultIconUrl: 'https://onesignal.com/images/notification_logo.png',
-          proxyOriginEnabled: false
+          proxyOriginEnabled: false,
         },
         webhooks: {
           enable: false,
@@ -713,33 +714,33 @@ export class TestEnvironment {
           notificationDisplayedHook: undefined,
         },
         integration: {
-          kind: configIntegrationKind
+          kind: configIntegrationKind,
         },
         serviceWorker: {
           path: undefined,
           workerName: undefined,
           registrationScope: undefined,
           updaterWorkerName: undefined,
-          customizationEnabled: true
+          customizationEnabled: true,
         },
         setupBehavior: {
-          allowLocalhostAsSecureOrigin: false
+          allowLocalhostAsSecureOrigin: false,
         },
         welcomeNotification: {
           url: undefined,
           title: undefined,
           enable: false,
           message: undefined,
-          urlEnabled: undefined
+          urlEnabled: undefined,
         },
         notificationBehavior: {
           click: {
             match: NotificationClickMatchBehavior.Exact,
-            action: NotificationClickActionBehavior.Navigate
+            action: NotificationClickActionBehavior.Navigate,
           },
           display: {
-            persist: false
-          }
+            persist: false,
+          },
         },
         vapid_public_key: 'BLJozaErc0QXdS7ykMyqniAcvfmdoziwfoSN-Mde_OckAbN_XrOC9Zt2Sfz4pD0UnYT5w3frWjF2iTTtjqEBgbE',
         onesignal_vapid_public_key:
@@ -753,15 +754,15 @@ export class TestEnvironment {
             enabled: true,
             notification_attribution: {
               minutes_since_displayed: 60,
-              limit: 5
-            }
+              limit: 5,
+            },
           },
           unattributed: {
             enabled: true,
-          }
-        }
+          },
+        },
       },
-      generated_at: 1511912065
+      generated_at: 1511912065,
     };
 
     return deepmerge(
@@ -794,9 +795,9 @@ export class TestEnvironment {
                 acceptButton: "Allow",
                 cancelButton: "No Thanks",
                 actionMessage: "We'd like to send you notifications for the latest news and updates.",
-              }
-            }
-          ]
+              },
+            },
+          ],
         },
         fullscreen: {
           enabled: true,
@@ -805,7 +806,7 @@ export class TestEnvironment {
           cancelButton: 'fullscreencancel button',
           title: 'fullscreen notification title',
           message: 'fullscreen notification message',
-          caption: 'fullscreen notification caption'
+          caption: 'fullscreen notification caption',
         }, 
         customlink: {
           enabled: false,
@@ -827,7 +828,7 @@ export class TestEnvironment {
         disable: false,
         title: 'Welcome notification title',
         message: 'Welcome notification message',
-        url: 'https://fake-config.com/welcome'
+        url: 'https://fake-config.com/welcome',
       },
       notifyButton: {
         enable: true,
@@ -837,7 +838,7 @@ export class TestEnvironment {
         offset: {
           bottom: '1px',
           left: '1px',
-          right: '1px'
+          right: '1px',
         },
         colors: {
           'circle.background': '1',
@@ -927,7 +928,7 @@ export class TestEnvironment {
     return {
       sendTagsSpy,
       createPlayerPostStub,
-      onSessionStub
+      onSessionStub,
     };
   }
 }

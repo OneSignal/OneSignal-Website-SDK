@@ -47,7 +47,7 @@ export class OneSignalApiSW {
 
   public static async updateUserSession(
     userId: string,
-    serializedDeviceRecord: FlattenedDeviceRecord,
+    serializedDeviceRecord: FlattenedDeviceRecord
   ): Promise<string> {
     const funcToExecute = async () => {
       const response = await OneSignalApiBase.post(

@@ -26,8 +26,9 @@ export class InvalidStateError extends OneSignalError {
         break;
       case InvalidStateReason.RedundantPermissionMessage:
         let extraInfo = '';
-        if (extra && extra.permissionPromptType)
+        if (extra && extra.permissionPromptType) {
           extraInfo = `(${PermissionPromptType[extra.permissionPromptType]})`;
+        }
         errorMessage = `Another permission message ${extraInfo} is being displayed.`;
         break;
       case InvalidStateReason.PushPermissionAlreadyGranted:

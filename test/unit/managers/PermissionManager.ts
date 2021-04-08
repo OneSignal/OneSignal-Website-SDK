@@ -11,7 +11,7 @@ import SdkEnvironment from '../../../src/managers/SdkEnvironment';
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   const appConfig = TestEnvironment.getFakeAppConfig();
@@ -82,7 +82,7 @@ test('should detect an insecure top-level frame', async t => {
 
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Http,
-    initializeAsIframe: false
+    initializeAsIframe: false,
   });
   t.true(SdkEnvironment.isInsecureOrigin());
 });
@@ -96,7 +96,7 @@ test('should detect a cross-origin frame-context', async t => {
   // The test initializer will construct window.top as an inaccessible cross-origin frame
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https,
-    initializeAsIframe: true
+    initializeAsIframe: true,
   });
   t.true(permissionManager.isCurrentFrameContextCrossOrigin());
 });

@@ -105,12 +105,15 @@ export class ServiceWorkerManager {
 
   // Check if the ServiceWorker file name is ours or a third party's
   private swActiveStateByFileName(fileName: string | null): ServiceWorkerActiveState {
-    if (!fileName)
+    if (!fileName) {
       return ServiceWorkerActiveState.None;
-    if (fileName == this.config.workerAPath.getFileName())
+    }
+    if (fileName == this.config.workerAPath.getFileName()) {
       return ServiceWorkerActiveState.WorkerA;
-    if (fileName == this.config.workerBPath.getFileName())
+    }
+    if (fileName == this.config.workerBPath.getFileName()) {
       return  ServiceWorkerActiveState.WorkerB;
+    }
     return ServiceWorkerActiveState.ThirdParty;
   }
 
@@ -137,12 +140,14 @@ export class ServiceWorkerManager {
 
   private async shouldInstallWorker(): Promise<boolean> {
     // 1. Does the browser support ServiceWorkers?
-    if (!Environment.supportsServiceWorkers())
+    if (!Environment.supportsServiceWorkers()) {
       return false;
+    }
 
     // 2. Is OneSignal initialized?
-    if (!OneSignal.config)
+    if (!OneSignal.config) {
       return false;
+    }
 
     // 3. Will the service worker be installed on os.tc instead of the current domain?
     if (OneSignal.config.subdomain) {
@@ -335,8 +340,9 @@ export class ServiceWorkerManager {
           }
         });
       }
-      else
+      else {
         clickedListenerCallbackCount = OneSignal.emitter.numberOfListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED);
+      }
 
       if (clickedListenerCallbackCount === 0) {
         /*
@@ -367,8 +373,9 @@ export class ServiceWorkerManager {
         }
         await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
       }
-      else
+      else {
         Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+      }
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
@@ -438,12 +445,14 @@ export class ServiceWorkerManager {
       // If we are inside the popup and service worker fails to register, it's not developer's fault.
       // No need to report it to the api then.
       const env = SdkEnvironment.getWindowEnv();
-      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup)
+      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
         throw error;
+      }
 
       const response = await fetch(workerHref);
-      if (response.status === 403 || response.status === 404)
+      if (response.status === 403 || response.status === 404) {
         throw new ServiceWorkerRegistrationError(response.status, response.statusText);
+      }
 
       throw error;
     }

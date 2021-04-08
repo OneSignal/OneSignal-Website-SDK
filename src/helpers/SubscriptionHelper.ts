@@ -48,10 +48,12 @@ export default class SubscriptionHelper {
     }
 
     if (typeof OneSignal !== "undefined") {
-      if (OneSignal._isRegisteringForPush)
+      if (OneSignal._isRegisteringForPush) {
         return null;
-      else
+      }
+      else {
         OneSignal._isRegisteringForPush = true;
+      }
     }
 
     switch (SdkEnvironment.getWindowEnv()) {
@@ -99,7 +101,7 @@ export default class SubscriptionHelper {
                 clicks out of the popup back to the parent page */
                 (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
                   permission: NotificationPermission.Denied,
-                  forceUpdatePermission: false
+                  forceUpdatePermission: false,
                 });
                 break;
               case PushPermissionNotGrantedErrorReason.Dismissed:
@@ -108,7 +110,7 @@ export default class SubscriptionHelper {
                 change, but we still want to be notified about it */
                 (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
                   permission: NotificationPermission.Default,
-                  forceUpdatePermission: true
+                  forceUpdatePermission: true,
                 });
                 break;
             }
@@ -126,7 +128,7 @@ export default class SubscriptionHelper {
         OneSignal.subscriptionPopup.message(
           OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION,
           {
-            rawPushSubscription: rawSubscription.serialize()
+            rawPushSubscription: rawSubscription.serialize(),
           },
           (message: any) => {
             if (message.data.progress === true) {
@@ -141,13 +143,15 @@ export default class SubscriptionHelper {
         );
         break;
       default:
-        if (typeof OneSignal !== "undefined")
+        if (typeof OneSignal !== "undefined") {
           OneSignal._isRegisteringForPush = false;
+        }
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
 
-    if (typeof OneSignal !== "undefined")
+    if (typeof OneSignal !== "undefined") {
       OneSignal._isRegisteringForPush = false;
+    }
 
     return subscription;
   }

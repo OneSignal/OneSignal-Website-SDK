@@ -28,5 +28,6 @@ function oneSignalSdkInit() {
 }
 
 // Only if running on page in browser
-if (typeof window !== "undefined")
+if (typeof window !== "undefined") {
   oneSignalSdkInit();
+}

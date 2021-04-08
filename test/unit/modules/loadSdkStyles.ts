@@ -34,8 +34,8 @@ test("should call loadSdkStylesheet if notify button is used", async t => {
     userConfig: {
       notifyButton: {
         enable: true,
-      }
-    }
+      },
+    },
   };
   await TestEnvironment.initialize(testConfig);
   TestEnvironment.mockInternalOneSignal(testConfig);
@@ -50,7 +50,7 @@ test("should call loadSdkStylesheet if notify button is used", async t => {
 test("should call loadSdkStylesheet if slidedown permission message is used", async t => {
   await TestEnvironment.initialize({
     initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   TestEnvironment.mockInternalOneSignal();
   try {
@@ -67,7 +67,7 @@ test("loadIfNew called twice should not load the same stylesheet or script more 
 
   await TestEnvironment.initialize({
     initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   const dynamicResourceLoader = new DynamicResourceLoader();
   const resourceLoadAttempts = [];
@@ -87,7 +87,7 @@ test("loadIfNew called twice should not load the same stylesheet or script more 
 test("load successfully fetches and installs stylesheet", async t => {
   await TestEnvironment.initialize({
     initOptions: {},
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   await DynamicResourceLoader.load(ResourceType.Stylesheet, new URL('https://test.node/styles/test.css'));
   // Check that the stylesheet is actually loaded into <head>
@@ -99,7 +99,7 @@ test("load successfully fetches and installs stylesheet", async t => {
 test("load successfully fetches and executes script", async t => {
   await TestEnvironment.initialize({
     initOptions: { },
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
   await DynamicResourceLoader.load(ResourceType.Script, new URL('https://test.node/scripts/test.js'));
   // Check that the script is actually loaded

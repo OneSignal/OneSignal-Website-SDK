@@ -6,7 +6,7 @@ export enum DelayedPromptType {
   Category    = "category",   // slidedown w/ push + categories
   Sms         = "sms",        // sms only
   Email       = "email",      // email only
-  SmsAndEmail = "smsAndEmail" // sms and email only
+  SmsAndEmail = "smsAndEmail", // sms and email only
 
 }
 

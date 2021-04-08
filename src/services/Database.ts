@@ -17,7 +17,7 @@ import Log from "../libraries/Log";
 import { SentUniqueOutcome } from '../models/Outcomes';
 
 enum DatabaseEventName {
-  SET
+  SET,
 }
 
 interface DatabaseResult {
@@ -65,31 +65,42 @@ export default class Database {
   static applyDbResultFilter(table: OneSignalDbTable, key?: string, result?: DatabaseResult) {
     switch (table) {
       case "Options":
-        if (result && key)
+        if (result && key) {
           return result.value;
-        else if (result && !key)
+        }
+        else if (result && !key) {
           return result;
-        else
+ }
+        else {
           return null;
+ }
       case "Ids":
-        if (result && key)
+        if (result && key) {
           return result.id;
-        else if (result && !key)
+        }
+        else if (result && !key) {
           return result;
-        else
+ }
+        else {
           return null;
+ }
       case "NotificationOpened":
-        if (result && key)
+        if (result && key) {
           return { data: result.data, timestamp: result.timestamp };
-        else if (result && !key)
+        }
+        else if (result && !key) {
           return result;
-        else
+ }
+        else {
           return null;
+ }
       default:
-        if (result)
+        if (result) {
           return result;
-        else
+        }
+        else {
           return null;
+        }
     }
   }
 
@@ -112,7 +123,7 @@ export default class Database {
       return await new Promise<T>(async resolve => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
           table: table,
-          key: key
+          key: key,
         }], (reply: any) => {
           const result = reply.data[0];
           resolve(result);
@@ -129,7 +140,7 @@ export default class Database {
     if (this.shouldUsePostmam()) {
       return await new Promise<T[]>(async resolve => {
         OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, {
-          table: table
+          table: table,
         }, (reply: any) => {
           const result = reply.data;
           resolve(result);
@@ -237,16 +248,21 @@ export default class Database {
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
-    if (appConfig.appId)
+    if (appConfig.appId) {
       await this.put("Ids", { type: "appId", id: appConfig.appId });
-    if (appConfig.subdomain)
+    }
+    if (appConfig.subdomain) {
       await this.put("Options", { key: "subdomain", value: appConfig.subdomain });
-    if (appConfig.httpUseOneSignalCom === true)
+    }
+    if (appConfig.httpUseOneSignalCom === true) {
       await this.put("Options", { key: "httpUseOneSignalCom", value: true });
-    else if (appConfig.httpUseOneSignalCom === false)
+    }
+    else if (appConfig.httpUseOneSignalCom === false) {
       await this.put("Options", { key: "httpUseOneSignalCom", value: false });
-    if (appConfig.vapidPublicKey)
+ }
+    if (appConfig.vapidPublicKey) {
       await this.put("Options", { key: "vapidPublicKey", value: appConfig.vapidPublicKey });
+    }
   }
 
   async getAppState(): Promise<AppState> {
@@ -259,12 +275,15 @@ export default class Database {
   }
 
   async setAppState(appState: AppState) {
-    if (appState.defaultNotificationUrl)
+    if (appState.defaultNotificationUrl) {
       await this.put("Options", { key: "defaultUrl", value: appState.defaultNotificationUrl });
-    if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
+    }
+    if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "") {
       await this.put("Options", { key: "defaultTitle", value: appState.defaultNotificationTitle });
-    if (appState.lastKnownPushEnabled != null)
+    }
+    if (appState.lastKnownPushEnabled != null) {
       await this.put("Options", { key: "isPushEnabled", value: appState.lastKnownPushEnabled });
+    }
     if (appState.clickedNotifications) {
       const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
       for (const url of clickedNotificationUrls) {
@@ -273,7 +292,7 @@ export default class Database {
           await this.put("NotificationOpened", {
             url: url,
             data: (notificationDetails as any).data,
-            timestamp: (notificationDetails as any).timestamp
+            timestamp: (notificationDetails as any).timestamp,
           });
         } else if (notificationDetails === null) {
           // If we get an object like:
@@ -293,10 +312,12 @@ export default class Database {
   }
 
    async setServiceWorkerState(state: ServiceWorkerState) {
-    if (state.workerVersion)
+    if (state.workerVersion) {
       await this.put("Ids", { type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion });
-    if (state.updaterWorkerVersion)
+    }
+    if (state.updaterWorkerVersion) {
       await this.put("Ids", { type: "WORKER2_ONE_SIGNAL_SW_VERSION", id: state.updaterWorkerVersion });
+    }
   }
 
   async getSubscription(): Promise<Subscription> {
@@ -451,7 +472,7 @@ export default class Database {
       Database.singletonInstance.remove("Options"),
       Database.singletonInstance.remove("NotificationReceived"),
       Database.singletonInstance.remove("NotificationClicked"),
-      Database.singletonInstance.remove("SentUniqueOutcome")
+      Database.singletonInstance.remove("SentUniqueOutcome"),
     ]);
   }
 

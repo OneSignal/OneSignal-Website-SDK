@@ -33,16 +33,16 @@ test.beforeEach(async() => {
 
   oldSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
-    applicationServerKey: Random.getRandomUint8Array(65).buffer
+    applicationServerKey: Random.getRandomUint8Array(65).buffer,
   });
 
   newSubscription = await new MockPushManager().subscribe({
     userVisibleOnly: true,
-    applicationServerKey: Random.getRandomUint8Array(65).buffer
+    applicationServerKey: Random.getRandomUint8Array(65).buffer,
   });
 
   await TestEnvironment.initializeForServiceWorker({
-    url: new URL(`https://site.com/service-worker.js?appId=${appId}`)
+    url: new URL(`https://site.com/service-worker.js?appId=${appId}`),
   });
 
   setBrowser(BrowserUserAgent.ChromeMacSupported);

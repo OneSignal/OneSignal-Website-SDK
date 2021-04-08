@@ -4,5 +4,5 @@ export enum Browser {
     Chrome = "chrome",
     Opera = "opera",
     Edge = "edge",
-    Other = "other"
+    Other = "other",
 }

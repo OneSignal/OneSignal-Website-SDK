@@ -5,7 +5,7 @@ export enum NotSubscribedReason {
   Unknown,
   NoDeviceId,
   NoEmailSet,
-  OptedOut
+  OptedOut,
 }
 
 export class NotSubscribedError extends OneSignalError {

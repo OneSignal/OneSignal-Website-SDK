@@ -29,7 +29,7 @@ export default class Message extends AnimatedElement {
     return {
       TIP: 'tip', // Appears on button hover, disappears on button endhover
       MESSAGE: 'message', // Appears manually for a specified duration, site visitor cannot control its display. Messages override tips
-      QUEUED: 'queued' // This message was a user-queued message
+      QUEUED: 'queued', // This message was a user-queued message
     };
   }
 
@@ -55,12 +55,15 @@ export default class Message extends AnimatedElement {
   }
 
   getTipForState(): string {
-    if (this.bell.state === Bell.STATES.UNSUBSCRIBED)
+    if (this.bell.state === Bell.STATES.UNSUBSCRIBED) {
       return this.bell.options.text['tip.state.unsubscribed'];
-    else if (this.bell.state === Bell.STATES.SUBSCRIBED)
+    }
+    else if (this.bell.state === Bell.STATES.SUBSCRIBED) {
       return this.bell.options.text['tip.state.subscribed'];
-    else if (this.bell.state === Bell.STATES.BLOCKED)
+ }
+    else if (this.bell.state === Bell.STATES.BLOCKED) {
       return this.bell.options.text['tip.state.blocked'];
+ }
     return "";
   }
 
@@ -74,8 +77,9 @@ export default class Message extends AnimatedElement {
           .then(resolve);
       } else {
         this.bell.badge.increment();
-        if (this.bell.initialized)
+        if (this.bell.initialized) {
           this.bell.badge.show().then(resolve)
+        }
         else resolve();
       }
     });
@@ -83,7 +87,7 @@ export default class Message extends AnimatedElement {
 
   dequeue(message: string) {
     let dequeuedMessage = this.queued.pop(message);
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.bell.badge.shown) {
         this.bell.badge.hide()
           .then(() => this.bell.badge.decrement())

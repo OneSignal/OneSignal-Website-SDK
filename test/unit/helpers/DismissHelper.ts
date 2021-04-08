@@ -36,7 +36,7 @@ const testConfig: TestEnvironmentConfig = {
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Default,
     pushIdentifier: 'granted',
-    stubSetTimeout: true
+    stubSetTimeout: true,
 };
 
 test("push slidedown shown, on dismiss, mark push prompt as dismissed", async t => {

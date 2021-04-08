@@ -68,25 +68,31 @@ export default class Dialog extends AnimatedElement {
         }
 
         let buttonHtml = '';
-        if (this.bell.state !== Bell.STATES.SUBSCRIBED)
+        if (this.bell.state !== Bell.STATES.SUBSCRIBED) {
           buttonHtml = `<button type="button" class="action" id="${this.subscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.subscribe']}</button>`;
-        else
+        }
+        else {
           buttonHtml = `<button type="button" class="action" id="${this.unsubscribeButtonSelectorId}">${this.bell.options.text['dialog.main.button.unsubscribe']}</button>`;
+        }
 
         contents = `<h1>${this.bell.options.text['dialog.main.title']}</h1><div class="divider"></div><div class="push-notification">${notificationIconHtml}<div class="push-notification-text-container"><div class="push-notification-text push-notification-text-short"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div><div class="push-notification-text"></div><div class="push-notification-text push-notification-text-medium"></div></div></div><div class="action-container">${buttonHtml}</div>${footer}`;
       }
       else if (this.bell.state === Bell.STATES.BLOCKED) {
         let imageUrl = null;
         if (bowser.chrome) {
-          if (!bowser.mobile && !bowser.tablet)
+          if (!bowser.mobile && !bowser.tablet) {
             imageUrl = '/bell/chrome-unblock.jpg';
+          }
         }
-        else if (bowser.firefox)
+        else if (bowser.firefox) {
           imageUrl = '/bell/firefox-unblock.jpg';
-        else if (bowser.safari)
+ }
+        else if (bowser.safari) {
           imageUrl = '/bell/safari-unblock.jpg';
-        else if (bowser.msedge)
+ }
+        else if (bowser.msedge) {
           imageUrl = '/bell/edge-unblock.png';
+ }
 
         let instructionsHtml = '';
         if (imageUrl) {

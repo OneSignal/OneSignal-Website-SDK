@@ -8,7 +8,7 @@ import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 });
 
@@ -22,8 +22,9 @@ test('can customize initialization options', async t => {
     fakeServerConfig
   );
 
-  for (const userConfigKey in Object.keys(fakeUserConfig))
+  for (const userConfigKey in Object.keys(fakeUserConfig)) {
     t.deepEqual(fakeMergedConfig.userConfig[userConfigKey], fakeUserConfig[userConfigKey]);
+  }
 });
 
 test('should use server-provided subdomain if enabled', async t => {
@@ -130,12 +131,12 @@ test('should initialize custom link config for custom code setup with incorrect 
       size: "medium",
       color: {
         button: "#e54b4d",
-        text: "#ffffff"
+        text: "#ffffff",
       },
       text: {
         subscribe: "Subscribe to push notifications",
         unsubscribe: "Unsubscribe from push notifications",
-        explanation: ""
+        explanation: "",
       },
       unsubscribeEnabled: true,
     };

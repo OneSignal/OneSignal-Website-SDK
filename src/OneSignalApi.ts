@@ -30,13 +30,16 @@ export default class OneSignalApi {
       return await new Promise<ServerAppConfig>((resolve, reject) => {
         // Due to CloudFlare's algorithms, the .js extension is required for proper caching. Don't remove it!
         OneSignalApi.jsonpLib(`${SdkEnvironment.getOneSignalApiUrl().toString()}/sync/${appId}/web`,(err, data) => {
-          if (err)
+          if (err) {
             reject(err);
+          }
           else {
-            if (data.success)
+            if (data.success) {
               resolve(data);
-            else // For JSONP, we return a 200 even for errors, there's a success: false param
+            }
+            else { // For JSONP, we return a 200 even for errors, there's a success: false param
               reject(data);
+            }
           }
         });
       });
@@ -71,7 +74,7 @@ export default class OneSignalApi {
 
   static async updateUserSession(
     userId: string,
-    deviceRecord: DeviceRecord,
+    deviceRecord: DeviceRecord
   ): Promise<string> {
     return await OneSignalApiShared.updateUserSession(userId, deviceRecord);
   }

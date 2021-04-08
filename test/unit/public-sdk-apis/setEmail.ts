@@ -48,7 +48,7 @@ test("setEmail should reject an empty or invalid emails", async t => {
 test("setEmail should not accept an email auth SHA-256 hex hash not 64 characters long", async t => {
   try {
     await OneSignal.setEmail("test@example.com", {
-      identifierAuthHash: "12345"
+      identifierAuthHash: "12345",
     });
     t.fail('expected exception not caught');
   } catch (e) {
@@ -85,7 +85,7 @@ async function expectEmailRecordCreationRequest(
         app_id: OneSignal.context.appConfig.appId,
         identifier: emailAddress,
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
-        identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
+        identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined,
       };
       const anyValues = [
         "device_type",
@@ -94,7 +94,7 @@ async function expectEmailRecordCreationRequest(
         "timezone_id",
         "device_os",
         "sdk",
-        "device_model"
+        "device_model",
       ];
       const parsedRequestBody = JSON.parse(requestBody);
       for (const sameValueKey of Object.keys(sameValues)) {
@@ -122,7 +122,7 @@ async function expectEmailRecordUpdateRequest(
         app_id: OneSignal.context.appConfig.appId,
         identifier: emailAddress,
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
-        identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
+        identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined,
       };
       const anyValues = [
         "device_type",
@@ -131,7 +131,7 @@ async function expectEmailRecordUpdateRequest(
         "timezone_id",
         "device_os",
         "sdk",
-        "device_model"
+        "device_model",
       ];
       const parsedRequestBody = JSON.parse(requestBody);
       for (const sameValueKey of Object.keys(sameValues)) {
@@ -161,7 +161,7 @@ async function expectPushRecordUpdateRequest(
           app_id: OneSignal.context.appConfig.appId,
           parent_player_id: newEmailId ? newEmailId : undefined,
           email: emailAddress,
-          external_user_id_auth_hash: externalUserIdAuth
+          external_user_id_auth_hash: externalUserIdAuth,
         })
       );
       return { success : true, id : newUpdatedPlayerId };
@@ -279,7 +279,7 @@ test("No push subscription, no email, first setEmail call", async t => {
     existingPushDeviceId: null,
     identifierAuthHash: undefined,
     existingEmailId: null,
-    newEmailId: Random.getRandomUuid()
+    newEmailId: Random.getRandomUuid(),
   };
   await setEmailTest(t, testData);
 });
@@ -305,7 +305,7 @@ test("No push subscription, existing identical email, refreshing setEmail call",
     existingPushDeviceId: null,
     identifierAuthHash: undefined,
     existingEmailId: emailId,
-    newEmailId: emailId
+    newEmailId: emailId,
   };
   await setEmailTest(t, testData);
 });
@@ -317,7 +317,7 @@ test("No push subscription, existing different email, updating setEmail call", a
     existingPushDeviceId: null,
     identifierAuthHash: undefined,
     existingEmailId: Random.getRandomUuid(),
-    newEmailId: Random.getRandomUuid()
+    newEmailId: Random.getRandomUuid(),
   };
   await setEmailTest(t, testData);
 });
@@ -330,7 +330,7 @@ test("Existing push subscription, no email, first setEmail call", async t => {
     identifierAuthHash: undefined,
     existingEmailId: null,
     newEmailId: Random.getRandomUuid(),
-    externalUserIdAuthHash: null
+    externalUserIdAuthHash: null,
   };
   await setEmailTest(t, testData);
 });
@@ -343,7 +343,7 @@ test("Existing push subscription, existing identical email, refreshing setEmail 
     existingPushDeviceId: Random.getRandomUuid(),
     identifierAuthHash: undefined,
     existingEmailId: emailId,
-    newEmailId: emailId
+    newEmailId: emailId,
   };
   await setEmailTest(t, testData);
 });
@@ -357,7 +357,7 @@ test("Existing push subscription, existing different email, updating setEmail ca
     identifierAuthHash: undefined,
     existingEmailId: Random.getRandomUuid(),
     newEmailId: Random.getRandomUuid(),
-    externalUserIdAuthHash: null
+    externalUserIdAuthHash: null,
   };
   await setEmailTest(t, testData);
 });
@@ -372,7 +372,7 @@ test(
       identifierAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
       existingEmailId: Random.getRandomUuid(),
       newEmailId: Random.getRandomUuid(),
-      externalUserIdAuthHash: null
+      externalUserIdAuthHash: null,
     };
     await setEmailTest(t, testData);
 });

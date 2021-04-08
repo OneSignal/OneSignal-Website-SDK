@@ -8,7 +8,7 @@ export enum SdkInitErrorKind {
   WrongSiteUrl,
   MultipleInitialization,
   MissingSafariWebId,
-  Unknown
+  Unknown,
 }
 
 export class SdkInitError extends OneSignalError {

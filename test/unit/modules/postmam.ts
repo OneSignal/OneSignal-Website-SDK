@@ -15,7 +15,7 @@ const test = anyTest as TestInterface<PostmamContext>;
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   // Stub MessageChannel
@@ -27,12 +27,12 @@ test.beforeEach(async t => {
     'http://site.com',
     'http://www.site.com',
     'https://site.com',
-    'https://www.site.com'
+    'https://www.site.com',
   ];
 
   t.context.expectedSafeHttpsOrigins = [
     'https://site.com',
-    'https://www.site.com'
+    'https://www.site.com',
   ];
 
   t.context.expectedSafeHttpOriginsForIrregularSubdomains = [
@@ -80,7 +80,7 @@ test('should generate correct safe HTTP site origins for varying inputs of the s
     'http://site.com',
     'http://site.com/',
     'http://www.site.com',
-    'http://www.site.com/'
+    'http://www.site.com/',
   ];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
     const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);
@@ -95,7 +95,7 @@ test('should generate correct safe HTTPS site origins for varying inputs of the 
     'https://site.com',
     'https://site.com/',
     'https://www.site.com',
-    'https://www.site.com/'
+    'https://www.site.com/',
   ];
   for (const dashboardConfigSiteOrigin of dashboardConfigSiteOrigins) {
     const postmam = new Postmam(window, dashboardConfigSiteOrigin, dashboardConfigSiteOrigin);

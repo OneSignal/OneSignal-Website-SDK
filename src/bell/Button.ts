@@ -17,7 +17,7 @@ export default class Button extends ActiveAnimatedElement {
 
     this.bell = bell;
     this.events = {
-      mouse: 'bell.launcher.button.mouse'
+      mouse: 'bell.launcher.button.mouse',
     };
 
     const element = this.element;

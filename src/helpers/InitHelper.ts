@@ -215,7 +215,7 @@ export default class InitHelper {
     await Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
     await Database.put('Options', {
       key: 'notificationPermission',
-      value: notificationPermission
+      value: notificationPermission,
     });
   }
 
@@ -333,11 +333,11 @@ export default class InitHelper {
         // If both bell and notifyButton, notifyButton's options take precedence
         OneSignal.config.userConfig.bell = {
           ...OneSignal.config.userConfig.bell,
-          ...OneSignal.config.userConfig.notifyButton
+          ...OneSignal.config.userConfig.notifyButton,
         };
         OneSignal.config.userConfig.notifyButton = {
           ...OneSignal.config.userConfig.notifyButton,
-          ...OneSignal.config.userConfig.bell
+          ...OneSignal.config.userConfig.bell,
         };
       }
 
@@ -401,7 +401,7 @@ export default class InitHelper {
     opPromises.push(
       Database.put('Options', {
         key: 'persistNotification',
-        value: persistNotification != null ? persistNotification : true
+        value: persistNotification != null ? persistNotification : true,
       })
     );
 
@@ -423,7 +423,7 @@ export default class InitHelper {
       opPromises.push(
         Database.put('Options', {
           key: 'notificationClickHandlerMatch',
-          value: OneSignal.config.userConfig.notificationClickHandlerMatch
+          value: OneSignal.config.userConfig.notificationClickHandlerMatch,
         })
       );
     } else {
@@ -434,7 +434,7 @@ export default class InitHelper {
       opPromises.push(
         Database.put('Options', {
           key: 'notificationClickHandlerAction',
-          value: OneSignal.config.userConfig.notificationClickHandlerAction
+          value: OneSignal.config.userConfig.notificationClickHandlerAction,
         })
       );
     } else {
@@ -480,8 +480,9 @@ export default class InitHelper {
   }
 
   public static errorIfInitAlreadyCalled() {
-    if (OneSignal._initCalled)
+    if (OneSignal._initCalled) {
       throw new SdkInitError(SdkInitErrorKind.MultipleInitialization);
+    }
     OneSignal._initCalled = true;
   }
 }

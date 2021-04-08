@@ -13,15 +13,15 @@ const options: SlidedownPromptOptions = {
   text: {
     actionMessage: '',
     acceptButton: '',
-    cancelButton: ''
+    cancelButton: '',
   },
-  autoPrompt: true
+  autoPrompt: true,
 };
 
 test.beforeEach(async () => {
   (global as any).BrowserUserAgent = BrowserUserAgent;
   await TestEnvironment.stubDomEnvironment({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 });
 

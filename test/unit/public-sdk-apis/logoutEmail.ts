@@ -49,7 +49,7 @@ async function logoutEmailTest(
     testData.existingPushDeviceId,
     testData.emailDeviceId,
     testData.identifierAuthHash,
-    Random.getRandomUuid(),
+    Random.getRandomUuid()
   );
 
   await OneSignal.logoutEmail();
@@ -70,10 +70,10 @@ async function expectEmailLogoutRequest(
         JSON.stringify({
           app_id: OneSignal.context.appConfig.appId,
           parent_player_id: emailId ? emailId : undefined,
-          identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
+          identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined,
         })
       );
-      return { "success":true, "id": newUpdatedPlayerId };
+      return { success:true, id: newUpdatedPlayerId };
     });
 }
 

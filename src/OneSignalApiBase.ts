@@ -50,10 +50,11 @@ export class OneSignalApiBase {
     const contents: RequestInit = {
       method: method || 'NO_METHOD_SPECIFIED',
       headers: callHeaders,
-      cache: 'no-cache'
+      cache: 'no-cache',
     };
-    if (data)
+    if (data) {
       contents.body = JSON.stringify(data);
+    }
 
     let status: number;
     return fetch(SdkEnvironment.getOneSignalApiUrl(undefined, action).toString() + '/' + action, contents)
@@ -62,8 +63,9 @@ export class OneSignalApiBase {
           return response.json();
         })
         .then(json => {
-          if (status >= 200 && status < 300)
+          if (status >= 200 && status < 300) {
             return json;
+          }
           else {
             let error = OneSignalApiBase.identifyError(json);
             if (error === 'no-user-id-error') {

@@ -13,7 +13,7 @@ async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 
   await navigator.serviceWorker.register('/worker.js');
@@ -39,7 +39,7 @@ test('mock push manager should subscribe successfully', async t => {
 
   const subscriptionOptions: PushSubscriptionOptions = {
     userVisibleOnly: true,
-    applicationServerKey: Random.getRandomUint8Array(64).buffer
+    applicationServerKey: Random.getRandomUint8Array(64).buffer,
   };
   const subscription = await registration!.pushManager.subscribe(subscriptionOptions);
 
@@ -55,7 +55,7 @@ test('mock push manager should unsubscribe successfully', async t => {
   const registration = await getServiceWorkerRegistration();
   const subscription = await registration!.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: Random.getRandomUint8Array(64).buffer
+    applicationServerKey: Random.getRandomUint8Array(64).buffer,
   });
   await subscription.unsubscribe();
 

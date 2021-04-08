@@ -5,7 +5,7 @@ import { MockServiceWorkerContainerWithAPIBan } from "../../support/mocks/servic
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
+    httpOrHttps: HttpHttpsEnvironment.Https,
   });
 });
 

@@ -9,7 +9,7 @@ abstract class MetricEvent {
     return {
       origin: location.origin,
       url: location.href,
-      sdkVersion: Environment.version()
+      sdkVersion: Environment.version(),
     }
   }
 }
@@ -21,7 +21,7 @@ abstract class MetricEngagement {
 
 export enum ApiUsageMetricKind {
   HttpPermissionRequest = 'HttpPermissionRequest',
-  SyncHashedEmail = 'SyncHashedEmail'
+  SyncHashedEmail = 'SyncHashedEmail',
 }
 
 export class ApiUsageMetricEvent extends MetricEvent {
@@ -36,7 +36,7 @@ export class ApiUsageMetricEvent extends MetricEvent {
   getPropertiesAsJson() {
     return {
       api: this.apiName.toString(),
-      ...super.getPropertiesAsJson()
+      ...super.getPropertiesAsJson(),
     };
   }
 }
@@ -60,7 +60,7 @@ export class PageViewMetricEngagement extends MetricEngagement {
       $add: {
 
       },
-      $ignore_time: true
+      $ignore_time: true,
     };
 
     payload[`$add`][`pageview_${this.getDateUtc()}`] = 1;
@@ -95,8 +95,8 @@ export default class MetricsManager {
       event: event.getEventName(),
       properties: {
         token: this.mixpanelReportingToken,
-        ...event.getPropertiesAsJson()
-      }
+        ...event.getPropertiesAsJson(),
+      },
     };
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
