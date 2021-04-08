@@ -266,6 +266,7 @@ export class ConfigHelper {
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage)
         };
 
+        // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
         promptOption.autoPrompt = Utils.getValueOrDefault(promptOption.autoPrompt, true);
 
         promptOption.delay = {
