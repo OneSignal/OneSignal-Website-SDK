@@ -1,5 +1,36 @@
 $slidedown-transition-duration: 400ms;
 $border-radius: 0.5em;
+$mobile-width: 320px;
+$tablet-width: 768px;
+$desktop-width: 1024px;
+
+@mixin mobile {
+  @media (min-width: #{$mobile-width}) and (max-width: #{$tablet-width - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$tablet-width}) and (max-width: #{$desktop-width - 1px}) {
+    @content;
+  }
+}
+
+.iti--container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+  @include mobile {
+    z-index: 2258594001 !important;
+  }
+
+  @include tablet {
+    z-index: 2258594001 !important;
+  }
+
+  .iti__country.iti__highlight {
+    background-color: #e5f2fc;
+  }
+}
 
 #onesignal-slidedown-container, #onesignal-popover-container {
   font-size: 16px;
@@ -8,6 +39,142 @@ $border-radius: 0.5em;
   left: 0;
   right: 0;
   -webkit-font-smoothing: initial;
+
+  .onesignal-toast-text {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #slidedown-body {
+    .channel-capture-container {
+      background-color: white;
+      position: relative;
+      white-space: nowrap;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-top: -10px;
+
+      @include mobile {
+        margin-top: 10px;
+        display: block;
+      }
+
+      @include tablet {
+        align-items: flex-start;
+      }
+
+      label {
+        display: inline-block;
+        margin-bottom: 4px;
+      }
+
+      .onesignal-error-input {
+        label: {
+          color:#646D74;
+        }
+
+        input {
+          background: #FCECEC;
+          border:1px solid #E54B4D;
+
+          &:focus {
+            background: #FCECEC;
+            border:1px solid #E54B4D;
+          }
+        }
+      }
+
+      input {
+        border: 1px solid #CED3D8;
+        background: #FFFFFF;
+        box-sizing: border-box;
+        border-radius: 4px;
+        height: 36px;
+        width: 356px;
+        font-size: 16px;
+        padding-left: 8px;
+
+        @include mobile {
+          width: 100%;
+        }
+
+        &:focus {
+          background: #E5F2FC;
+          border: 1px solid #1F8FEB;
+        }
+      }
+    }
+
+    /* International Telephone Input Styles */
+    .input-with-validation-element {
+      background-color: white;
+      position: relative;
+      white-space: nowrap;
+      box-sizing: border-box;
+      margin-bottom: 24px;
+
+      p {
+        margin-top: 6px;
+        margin-bottom: 6px;
+      }
+
+      label {
+        color: #051B2C;
+      }
+
+      @include tablet {
+        margin-left: 16px;
+      }
+
+      .iti {
+        @include mobile {
+          display: block;
+        }
+      }
+
+      .iti__dial-code {
+        color: grey;
+      }
+
+      .iti__selected-flag {
+        background-color: transparent;
+        border-radius: 4px;
+
+        &:focus{
+          outline: #0078d1;
+        }
+      }
+
+      .iti__country-list {
+        width: 356px;
+        box-shadow: 0px 1px 4px rgba(5, 27, 44, 0.2);
+        border-radius: 4px;
+        background: #FFFFFF;
+        border: none;
+        line-height: 28px;
+      }
+
+      .iti__country-name {
+        white-space: pre-wrap;
+      }
+
+      .iti__country.iti__highlight {
+        background-color: #e5f2fc;
+      }
+
+      .onesignal-validation-element {
+        color: #e54b4d;
+        display: flex;
+
+        img {
+          padding-right: 8px;
+        }
+      }
+    }
+  }
 
   &.slide-down {
     top: 0;
@@ -94,6 +261,8 @@ $border-radius: 0.5em;
     }
 
     #onesignal-slidedown-dialog, #onesignal-popover-dialog {
+      border-bottom-left-radius: unset;
+      border-bottom-right-radius: unset;
       width: 100%;
 
       -webkit-animation-name: slideUpEnter;
@@ -220,6 +389,7 @@ $border-radius: 0.5em;
     margin: 0 auto;
     box-shadow: 0 1px 6px rgba(5,27,44,.06), 0 2px 32px rgba(5,27,44,.16) !important;
     background: white !important;
+    color: #051b2c;
     padding: 1.5em 1.5em;
     border-bottom-left-radius: $border-radius;
     border-bottom-right-radius: $border-radius;
@@ -322,7 +492,7 @@ $border-radius: 0.5em;
 
         &.onesignal-error-state-button {
           padding: 0.75em 1em;
-          background: #E54A4D;
+          background: #0078d1;
           transition: linear 75ms;
           align-items: center;
 
@@ -455,4 +625,8 @@ $border-radius: 0.5em;
   100% {
     transform: translateY(150%);
   }
+}
+
+.onesignal-validation-element-hidden {
+  display: none !important;
 }

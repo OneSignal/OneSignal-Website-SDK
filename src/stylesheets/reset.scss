@@ -22,25 +22,21 @@
 /* == BLANKET RESET RULES == */
 
 /* HTML 4.01 */
-.onesignal-reset, .onesignal-reset h1, .onesignal-reset h2, .onesignal-reset h3, .onesignal-reset h4, .onesignal-reset h5, .onesignal-reset h6, .onesignal-reset p, .onesignal-reset td, .onesignal-reset dl, .onesignal-reset tr, .onesignal-reset dt, .onesignal-reset ol, .onesignal-reset form, .onesignal-reset select, .onesignal-reset option, .onesignal-reset pre, .onesignal-reset div, .onesignal-reset table, .onesignal-reset th, .onesignal-reset tbody, .onesignal-reset tfoot, .onesignal-reset caption, .onesignal-reset thead, .onesignal-reset ul, .onesignal-reset li, .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset dd, .onesignal-reset fieldset, .onesignal-reset li, .onesignal-reset iframe, .onesignal-reset strong, .onesignal-reset legend, .onesignal-reset em, .onesignal-reset summary, .onesignal-reset cite, .onesignal-reset span, .onesignal-reset input, .onesignal-reset sup, .onesignal-reset label, .onesignal-reset dfn, .onesignal-reset object, .onesignal-reset big, .onesignal-reset q, .onesignal-reset samp, .onesignal-reset acronym, .onesignal-reset small, .onesignal-reset img, .onesignal-reset strike, .onesignal-reset code, .onesignal-reset sub, .onesignal-reset ins, .onesignal-reset textarea, .onesignal-reset button, .onesignal-reset var, .onesignal-reset a, .onesignal-reset abbr, .onesignal-reset applet, .onesignal-reset del, .onesignal-reset kbd, .onesignal-reset tt, .onesignal-reset b, .onesignal-reset i, .onesignal-reset hr,
+.onesignal-reset:not([class^="iti"]), .onesignal-reset h1, .onesignal-reset h2, .onesignal-reset h3, .onesignal-reset h4, .onesignal-reset h5, .onesignal-reset h6, .onesignal-reset p, .onesignal-reset td, .onesignal-reset dl, .onesignal-reset tr, .onesignal-reset dt, .onesignal-reset ol, .onesignal-reset form, .onesignal-reset select, .onesignal-reset option, .onesignal-reset pre, .onesignal-reset div:not([class^="iti"]), .onesignal-reset table, .onesignal-reset th, .onesignal-reset tbody, .onesignal-reset tfoot, .onesignal-reset caption, .onesignal-reset thead, .onesignal-reset ul:not([class^="iti"]), .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset dd, .onesignal-reset fieldset, .onesignal-reset li:not([class^="iti"]), .onesignal-reset iframe, .onesignal-reset strong, .onesignal-reset legend, .onesignal-reset em, .onesignal-reset summary, .onesignal-reset cite, .onesignal-reset span:not([class^="iti"]), .onesignal-reset input:not([class^="iti"]), .onesignal-reset sup, .onesignal-reset label, .onesignal-reset dfn, .onesignal-reset object, .onesignal-reset big, .onesignal-reset q, .onesignal-reset samp, .onesignal-reset acronym, .onesignal-reset small, .onesignal-reset img, .onesignal-reset strike, .onesignal-reset code, .onesignal-reset sub, .onesignal-reset ins, .onesignal-reset textarea, .onesignal-reset button, .onesignal-reset var, .onesignal-reset a, .onesignal-reset abbr, .onesignal-reset applet, .onesignal-reset del, .onesignal-reset kbd, .onesignal-reset tt, .onesignal-reset b, .onesignal-reset i, .onesignal-reset hr,
 .onesignal-reset article, .onesignal-reset aside, .onesignal-reset figure, .onesignal-reset figcaption, .onesignal-reset footer, .onesignal-reset header, .onesignal-reset menu, .onesignal-reset nav, .onesignal-reset section, .onesignal-reset time, .onesignal-reset mark, .onesignal-reset audio, .onesignal-reset video, .onesignal-reset abbr, .onesignal-reset address, .onesignal-reset area, .onesignal-reset blockquote, .onesignal-reset canvas, .onesignal-reset caption, .onesignal-reset cite, .onesignal-reset code, .onesignal-reset colgroup, .onesignal-reset col, .onesignal-reset datalist, .onesignal-reset fieldset, .onesignal-reset main, .onesignal-reset map, .onesignal-reset meta, .onesignal-reset optgroup, .onesignal-reset output, .onesignal-reset progress {
     background-attachment: scroll ;
     background-color: transparent ;
     background-image: none ; /* This rule affects the use of pngfix JavaScript http://dillerdesign.com/experiment/DD_BelatedPNG for IE6, which is used to force the browser to recognise alpha-transparent PNGs files that replace the IE6 lack of PNG transparency. (The rule overrides the VML image that is used to replace the given CSS background-image). If you don't know what that means, then you probably haven't used the pngfix script, and this comment may be ignored :) */
     background-position: 0 0 ;
     background-repeat: repeat ;
-    border-color: black ;
-    border-color: currentColor ; /* `border-color` should match font color. Modern browsers (incl. IE9) allow the use of "currentColor" to match the current font 'color' value <http://www.w3.org/TR/css3-color/#currentcolor>. For older browsers, a default of 'black' is given before this rule. Guideline to support older browsers: if you haven't already declared a border-color for an element, be sure to do so, e.g. when you first declare the border-width. */
-    border-radius: 0 ;
-    border-style: none ;
-    border-width: medium ;
+    border: inherit;
     bottom: auto ;
     clear: none ;
     clip: auto ;
     color: inherit ;
     counter-increment: none ;
     counter-reset: none ;
-    cursor: auto ;
+    cursor: inherit ;
     direction: inherit ;
     display: inline ;
     float: none ;
@@ -49,7 +45,6 @@
     font-style: inherit ;
     font-variant: normal ;
     font-weight: inherit ;
-    height: auto ;
     left: auto ;
     letter-spacing: normal ;
     line-height: inherit ;
@@ -77,7 +72,7 @@
     unicode-bidi: normal ;
     vertical-align: baseline ;
     visibility: inherit ;
-    white-space: normal ;
+    white-space: inherit ;
     width: auto ;
     word-spacing: normal ;
     z-index: auto ;
@@ -163,7 +158,7 @@
 /* == BLOCK-LEVEL == */
 /* Actually, some of these should be inline-block and other values, but block works fine */
 /* HTML 4.01 */
-.onesignal-reset, .onesignal-reset h3, .onesignal-reset h5, .onesignal-reset p, .onesignal-reset h1, .onesignal-reset dl, .onesignal-reset dt, .onesignal-reset h6, .onesignal-reset ol, .onesignal-reset form, .onesignal-reset option, .onesignal-reset pre, .onesignal-reset div, .onesignal-reset h2, .onesignal-reset caption, .onesignal-reset h4, .onesignal-reset ul, .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset dd, .onesignal-reset fieldset, .onesignal-reset hr,
+.onesignal-reset:not([class^="iti"]), .onesignal-reset h3, .onesignal-reset h5, .onesignal-reset p, .onesignal-reset h1, .onesignal-reset dl, .onesignal-reset dt, .onesignal-reset h6, .onesignal-reset ol, .onesignal-reset form, .onesignal-reset option, .onesignal-reset pre, .onesignal-reset div:not([class^="iti"]), .onesignal-reset h2, .onesignal-reset caption, .onesignal-reset h4, .onesignal-reset ul:not([class^="iti"]), .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset dd, .onesignal-reset fieldset, .onesignal-reset hr,
 .onesignal-reset article, .onesignal-reset dialog, .onesignal-reset figure, .onesignal-reset footer, .onesignal-reset header, .onesignal-reset hgroup, .onesignal-reset menu, .onesignal-reset nav, .onesignal-reset section, .onesignal-reset audio, .onesignal-reset video, .onesignal-reset address, .onesignal-reset blockquote, .onesignal-reset colgroup, .onesignal-reset main, .onesignal-reset progress, .onesignal-reset summary {
     display: block ;
 }
@@ -227,11 +222,11 @@
 /* == SPECIFIC ELEMENTS == */
 /* Some of these are browser defaults; some are just useful resets */
 
-.onesignal-reset ol, .onesignal-reset ul {
+.onesignal-reset ol, .onesignal-reset ul:not([class^="iti"]) {
     margin: 1em 0 ;
 }
 
-.onesignal-reset ul li, .onesignal-reset ul ul li, .onesignal-reset ul ul ul li, .onesignal-reset ol li, .onesignal-reset ol ol li, .onesignal-reset ol ol ol li, .onesignal-reset ul ol ol li, .onesignal-reset ul ul ol li, .onesignal-reset ol ul ul li, .onesignal-reset ol ol ul li {
+.onesignal-reset ul li:not([class^="iti"]), .onesignal-reset ul ul li, .onesignal-reset ul ul ul li, .onesignal-reset ol li, .onesignal-reset ol ol li, .onesignal-reset ol ol ol li, .onesignal-reset ul ol ol li, .onesignal-reset ul ul ol li, .onesignal-reset ol ul ul li, .onesignal-reset ol ol ul li {
     list-style-position: inside ;
     margin-top: .08em ;
 }
@@ -246,7 +241,7 @@
     list-style-type: none ;
 }
 
-.onesignal-reset ul, .onesignal-reset menu {
+.onesignal-reset ul:not([class^="iti"]), .onesignal-reset menu {
     list-style-type: disc ;
 }
 
@@ -262,7 +257,7 @@
     list-style-type: square ;
 }
 
-.onesignal-reset li {
+.onesignal-reset li:not([class^="iti"]) {
     display: list-item ;
     /* Fixes IE7 issue with positioning of nested bullets */
     min-height: auto ;
@@ -327,7 +322,7 @@
     margin-right: 5px ;
 }
 
-.onesignal-reset input[type=hidden] {
+.onesignal-reset input[type=hidden]:not([class^="iti"]) {
     display: none ;
 }
 
