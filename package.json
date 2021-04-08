@@ -44,6 +44,7 @@
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
+    "@ava/typescript": "^1.1.1",
     "@types/body-parser": "latest",
     "@types/chai": "latest",
     "@types/core-js": "latest",
@@ -82,6 +83,7 @@
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
     "typescript": "^4.1.2",
+    "ts-node": "^9.1.1",
     "tslint": "^5.10.0",
     "tslint-eslint-rules": "^5.2.0",
     "uglifyjs-webpack-plugin": "^1.2.4",
@@ -90,11 +92,17 @@
     "webpack-cli": "^2.0.13"
   },
   "ava": {
+    "extensions": [
+			"ts"
+		],
+		"require": [
+			"ts-node/register/transpile-only"
+		],
     "files": [
-      "build/ts-to-es6/test/unit/**/*.js"
+      "test/unit/**/*.ts"
     ],
     "source": [
-      "build/ts-to-es6/src/**/*.js"
+      "src/**/*.ts"
     ],
     "concurrency": 1,
     "serial": true,
