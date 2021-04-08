@@ -1,9 +1,10 @@
+import { DelayedPromptType } from "../models/Prompts";
 import OneSignalError from "./OneSignalError";
 
 
 export default class PermissionMessageDismissedError extends OneSignalError {
-  constructor() {
-    super('The permission message was previously dismissed.');
+  constructor(type?: DelayedPromptType) {
+    super(`The permission message of type ${type || 'unknown'} was previously dismissed.`);
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.
