@@ -18,6 +18,14 @@ export const SLIDEDOWN_CSS_CLASSES = {
   clearfix: "clearfix"
 };
 
+export const TOAST_CLASSES = {
+  toastText: 'onesignal-toast-text'
+};
+
+export const TOAST_IDS = {
+  toastText: 'onesignal-toast-text'
+};
+
 export const SLIDEDOWN_CSS_IDS = {
   allowButton: "onesignal-slidedown-allow-button",
   body: "slidedown-body",
