@@ -3,6 +3,7 @@
   "defaultSeverity": "error",
   "jsRules": {},
   "rules": {
+    "no-unused-declaration": true,
     "arrow-parens": [true, "ban-single-arg-parens"],
     "class-name": true,
     "curly": [true, "ignore-same-line"],
