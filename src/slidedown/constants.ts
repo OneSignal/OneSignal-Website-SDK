@@ -19,7 +19,11 @@ export const SLIDEDOWN_CSS_CLASSES = {
 };
 
 export const TOAST_CLASSES = {
-  toastText: 'toast-text'
+  toastText: 'onesignal-toast-text'
+};
+
+export const TOAST_IDS = {
+  toastText: 'onesignal-toast-text'
 };
 
 export const SLIDEDOWN_CSS_IDS = {

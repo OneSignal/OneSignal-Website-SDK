@@ -204,6 +204,7 @@ export class SlidedownManager {
         await confirmationToast.show();
         await awaitableTimeout(5000);
         confirmationToast.close();
+        ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
       }
       await awaitableTimeout(1000);
 
@@ -269,6 +270,7 @@ export class SlidedownManager {
       await OneSignal.slidedown.create(options.isInUpdateMode);
       await this.mountAuxiliaryContainers(options);
       Log.debug('Showing OneSignal Slidedown');
+      Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     } catch (e) {
       Log.error("There was an error showing the OneSignal Slidedown:", e);
       this.setIsSlidedownShowing(false);

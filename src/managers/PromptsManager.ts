@@ -190,7 +190,7 @@ export class PromptsManager {
   }
 
   public async internalShowCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
-    OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
+    OneSignalUtils.logMethodCall("internalShowCategorySlidedown");
     await this.internalShowParticularSlidedown(DelayedPromptType.Category, options);
   }
 

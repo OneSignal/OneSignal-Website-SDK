@@ -6,7 +6,7 @@ import {
   removeDomElement,
   getDomElementOrStub
 } from '../utils';
-import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, TOAST_CLASSES } from "./constants";
+import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, TOAST_CLASSES, TOAST_IDS } from "./constants";
 
 export default class ConfirmationToast {
   private message: string;
@@ -27,6 +27,7 @@ export default class ConfirmationToast {
 
     // Insert the container
     slidedownContainer.id = SLIDEDOWN_CSS_IDS.container;
+    toastElement.id = TOAST_IDS.toastText;
     addCssClass(toastElement, TOAST_CLASSES.toastText);
     addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.container);
     addCssClass(slidedownContainer, SLIDEDOWN_CSS_CLASSES.reset);
