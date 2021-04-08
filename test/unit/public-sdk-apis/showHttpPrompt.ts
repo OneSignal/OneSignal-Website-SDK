@@ -5,7 +5,7 @@ import Context from "../../../src/models/Context";
 import sinon, { SinonSandbox } from 'sinon';
 import { DismissHelper } from "../../../src/helpers/DismissHelper";
 
-let sinonSandbox: SinonSandbox = sinon.sandbox.create();
+const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
 test.afterEach(function (_t: ExecutionContext) {
   sinonSandbox.restore();

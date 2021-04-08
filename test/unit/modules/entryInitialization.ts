@@ -271,7 +271,8 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using p
   await sendTagsPromise;
 });
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with expected params with a function", async t => {
+test(`Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with ` +
+  `expected params with a function`, async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does, taking in any predefined window.OneSignal
   const oneSignalStub = new OneSignalStubES6([() => {
     (<any>global).OneSignal.sendTag("key", "value");
@@ -288,7 +289,8 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with e
   t.deepEqual(mockOneSignal.lastSendTags, { key: "value" });
 });
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with expected params using push with params list", async t => {
+test(`Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with ` +
+  `expected params using push with params list`, async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6([["sendTag", "key1", "value2"]]);
 
