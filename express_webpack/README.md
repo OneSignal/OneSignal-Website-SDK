@@ -98,3 +98,12 @@ Check the network tab in the browser dev tools to see what origin the SDK is usi
 
 ### Map files aren't working correctly
 The source map files let tools (e.g: the browser dev tools Source tab) map between the emitted JS code and the TypeScript source. If you notice the debugger acting up (e.g: breakpoints don't hit or set correctly) chances are the problem is with your map files. Make sure you remove the `$PREFIX` var from the `publish.sh` script for all `.map` files. Rebuild.
+
+### Sass build error
+If you get the error `Node Sass could not find a binding for your current environment: Linux 64-bit with Node.js 12.` try running the following:
+
+```
+npm rebuild node-sass
+```
+
+from *inside* the docker container shell.
