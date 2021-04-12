@@ -29,6 +29,7 @@
     "build:prod": "ENV=production yarn transpile:sources && ENV=production yarn bundle-sw && ENV=production yarn bundle-sdk && ENV=production yarn bundle-page-sdk-es6 && bundlesize && ENV=production build/scripts/publish.sh",
     "test": "ENV=development yarn transpile:tests && yarn run ava --verbose --color --watch",
     "test:noWatch": "ENV=development yarn transpile:tests && ava --verbose --color --watch=false",
+    "test:CI": "ENV=development yarn transpile:tests && ava --config ava-ci-config.js --verbose --color --watch=false",
     "publish": "yarn clean && yarn build:prod && yarn",
     "build:dev-dev": "./build/scripts/build.sh -f development -t development",
     "build:dev-prod": "./build/scripts/build.sh -f development -t production",
@@ -44,6 +45,7 @@
   "author": "OneSignal",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
+    "@ava/typescript": "^1.1.1",
     "@types/body-parser": "latest",
     "@types/chai": "latest",
     "@types/core-js": "latest",
@@ -82,6 +84,7 @@
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
     "typescript": "^4.1.2",
+    "ts-node": "^9.1.1",
     "tslint": "^5.10.0",
     "tslint-eslint-rules": "^5.2.0",
     "uglifyjs-webpack-plugin": "^1.2.4",
@@ -90,11 +93,17 @@
     "webpack-cli": "^2.0.13"
   },
   "ava": {
+    "extensions": [
+			"ts"
+		],
+		"require": [
+			"ts-node/register/transpile-only"
+		],
     "files": [
-      "build/ts-to-es6/test/unit/**/*.js"
+      "test/unit/**/*.ts"
     ],
     "source": [
-      "build/ts-to-es6/src/**/*.js"
+      "src/**/*.ts"
     ],
     "concurrency": 1,
     "serial": true,
