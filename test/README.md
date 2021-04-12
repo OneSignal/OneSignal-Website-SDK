@@ -1,18 +1,37 @@
 # Running WebSDK Test Suite
 
 ## Overview
-This repo's build and test environment is designed to run inside of a docker container. Ensure you have [Docker Desktop](https://www.docker.com/products/docker-desktop) and [VSCode](https://code.visualstudio.com/) installed before preceding. For details on how VSCode works with Docker see their [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers) page.
+Tests are built to run with the [AVA test runner](https://github.com/avajs/ava) with Node.js. The test suite can be run via docker or directly on your machine as we will cover both options below.
 
-## VSCode Run a specific test
-_Tested up to VSCode Version: `1.54.2` with plugins: Remote Development `0.163.2`, and Testify `1.8.0`_
-1. Install the ["Remote Development"](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) VS Code Extension
-   - Restart VSCode
-2. You will be prompted that there is a Dev Container detected, press "reopen in a container"
+## Requirements
+1. Install [VSCode](https://code.visualstudio.com/)
+2. Follow option 1 OR option 2 below
+
+### Option 1 - Run locally
+> Recommend for macOS or if you haven't used or setup docker before.
+
+1. Install the specific version of Node.js defined in `.travis.yml` in this repo.
+
+### Option 2 - Run with Docker
+> NOT Recommend for macOS due to performance issues, about 10x slower.
+Recommend for Linux or Windows 10 (w/ WSL2) and have worked with docker before.
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop).
+2. Install the ["Remote Development"](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) VS Code Extension
+   - For details on how VSCode works with Docker see their [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers) page.
+3. Restart VSCode
+4. You will be prompted that there is a Dev Container detected, press "reopen in a container"
    - If no prompt, press F1 and enter "Remote-Containers: Open Folder in Container.."
    > _NOTE: VScode Extensions you have already installed won't automatically installed on the dev container you are now running with now.
 You will need install them again for this environment if you need them._
-3. Install [Testify](https://marketplace.visualstudio.com/items?itemName=felixjb.testify) VS Code Extension
-4. Open a specific test file and scroll to the exact test you want to run and click "Run Test" above it.
+
+### Install VS Code Extension Testify
+1. Install [Testify](https://marketplace.visualstudio.com/items?itemName=felixjb.testify) VS Code Extension
+
+## VSCode Run a specific test
+_Tested up to VSCode Version: `1.54.2` with plugins: Remote Development `0.163.2`, and Testify `1.8.0`_
+
+1. Open a specific test file and scroll to the exact test you want to run and click "Run Test" above it.
 
 ![image](https://user-images.githubusercontent.com/645861/111309395-133cfb00-8619-11eb-89ae-4570d2d06097.png)
 
@@ -38,7 +57,7 @@ If you need to configure any advanced parameters in the test edit `.vscode/launc
 ## Run tests from CLI
 > If you want to attach a debugger see "VSCode Debug a specific test" above as attaching a debugger is about 2x slower from the terminal.
 
-> Since this project uses docker as the development environment we need to run our tests inside of the docker container.
+> If you are using Docker as the development environment make sure you are using tests inside of the docker container.
 The VSCode "Remote Development" extension automatically detects from the `.devcontainer` folder in this repo so any terminals you open in VSCode will automatically run inside the container.
 
 Run these from `Terminal` > `New Terminal` in VSCode.
