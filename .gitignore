@@ -6,7 +6,7 @@ build/bundles
 build/releases
 build/size-analysis.html
 /config.json
-.vscode/
+
 
 .DS_STORE
 *.pem
@@ -15,7 +15,8 @@ build/size-analysis.html
 yarn-error.log
 dist/Dev-OneSignalSDK.js
 dist/Dev-OneSignalSDK.js.map
-.vscode/
+.vscode/**
+!.vscode/launch.json
 
 coverage
 .nyc_output
