@@ -19,6 +19,7 @@ import { ISlidedownManager } from '../managers/slidedownManager/types';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
 import { ChannelManager } from '../managers/ChannelManager';
 import Database from '../services/Database';
+import { PageFocusManager } from '../page/PageFocusManager';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -26,6 +27,7 @@ export interface ContextInterface extends ContextSWInterface {
   environmentInfo?: EnvironmentInfo;
   tagManager: ITagManager;
   slidedownManager: ISlidedownManager;
+  pageFocusManager: PageFocusManager;
 }
 
 export default class Context implements ContextInterface {
@@ -44,6 +46,7 @@ export default class Context implements ContextInterface {
   public tagManager: ITagManager;
   public slidedownManager: ISlidedownManager;
   public channelManager: ChannelManager;
+  public pageFocusManager: PageFocusManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -56,7 +59,8 @@ export default class Context implements ContextInterface {
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);
-    this.sessionManager = new SessionManager(this);
+    this.pageFocusManager = new PageFocusManager(this);
+    this.sessionManager = new SessionManager(this, this.pageFocusManager);
     this.tagManager = new TagManager(this);
     this.slidedownManager = new SlidedownManager(this);
     this.promptsManager = new PromptsManager(this);

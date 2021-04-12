@@ -1,8 +1,4 @@
 import { ContextInterface } from "../models/Context";
-import { WorkerMessengerCommand } from "../libraries/WorkerMessenger";
-import { DeactivateSessionPayload, SessionOrigin } from "../models/Session";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import MainHelper from "../helpers/MainHelper";
 import Log from "../libraries/Log";
 
 /** Provides an event interface that fires on page focus events, includes:
@@ -10,30 +6,36 @@ import Log from "../libraries/Log";
   2. Page is backgrounded
   3. Page is unloaded
 */
-// TODO: Code was moved from SessionManager needs:
-// 1. To rename notifySWToDeactivateSession calls and make it a public event interface
-// 2. Implement this into OneSignal.ts and ChannelManager
+
+export interface PageFocusChanged {
+  onPageBackgrounded(): void;
+  onPageForegrounded(): void;
+  onPageUnloaded(): void;
+}
+
 export class PageFocusManager {
   private context: ContextInterface;
+  private pageFocusChangedListeners: Array<PageFocusChanged>;
 
   constructor(context: ContextInterface) {
     this.context = context;
+    this.pageFocusChangedListeners = new Array();
+  }
+
+  public addPageFocusChangedListener(pageFocusChanged: PageFocusChanged) {
+    this.pageFocusChangedListeners.push(pageFocusChanged);
+    this.setupSessionEventListeners();
   }
 
   async handleVisibilityChange(): Promise<void> {
     const visibilityState = document.visibilityState;
-
-    const [deviceId, deviceRecord] = await Promise.all([
-      MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
-    ]);
 
     if (visibilityState === "visible") {
       this.setupOnFocusAndOnBlurForSession();
 
       Log.debug("handleVisibilityChange", "visible", `hasFocus: ${document.hasFocus()}`);
       if (document.hasFocus()) {
-        await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.VisibilityVisible);
+        this.pageFocusChangedListeners.forEach(listener => { listener.onPageForegrounded(); });
       }
       return;
     }
@@ -49,13 +51,7 @@ export class PageFocusManager {
         OneSignal.cache.isBlurEventSetup = false;
       }
 
-      // TODO: (iryna) need to send deactivate from here?
-      const [deviceId, deviceRecord] = await Promise.all([
-        MainHelper.getDeviceId(),
-        MainHelper.createDeviceRecord(this.context.appConfig.appId)
-      ]);
-
-      await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.VisibilityHidden);
+      this.pageFocusChangedListeners.forEach(listener => { listener.onPageBackgrounded(); });
       return;
     }
 
@@ -64,25 +60,7 @@ export class PageFocusManager {
   }
 
   async handleOnBeforeUnload(): Promise<void> {
-    // don't have much time on before unload
-    // have to skip adding device record to the payload
-    const isHttps = OneSignalUtils.isHttps();
-    const payload: DeactivateSessionPayload = {
-      sessionThreshold: this.context.appConfig.sessionThreshold!,
-      enableSessionDuration: this.context.appConfig.enableSessionDuration!,
-      sessionOrigin: SessionOrigin.BeforeUnload,
-      isHttps,
-      isSafari: OneSignalUtils.isSafari(),
-      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
-    };
-
-    if (isHttps) {
-      Log.debug("Notify SW to deactivate session (beforeunload)");
-      this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
-    } else {
-      Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
-      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
-    }
+    this.pageFocusChangedListeners.forEach(listener => { listener.onPageUnloaded(); });
   }
 
   async handleOnFocus(e: Event): Promise<void> {
@@ -95,12 +73,8 @@ export class PageFocusManager {
     if (e.target !== window) {
       return;
     }
-    const [deviceId, deviceRecord] = await Promise.all([
-      MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
-    ]);
 
-    await this.notifySWToUpsertSession(deviceId, deviceRecord, SessionOrigin.Focus);
+    this.pageFocusChangedListeners.forEach(listener => { listener.onPageForegrounded(); });
   }
 
   async handleOnBlur(e: Event): Promise<void> {
@@ -113,15 +87,11 @@ export class PageFocusManager {
     if (e.target !== window) {
       return;
     }
-    const [deviceId, deviceRecord] = await Promise.all([
-      MainHelper.getDeviceId(),
-      MainHelper.createDeviceRecord(this.context.appConfig.appId)
-    ]);
 
-    await this.notifySWToDeactivateSession(deviceId, deviceRecord, SessionOrigin.Blur);
+    this.pageFocusChangedListeners.forEach(listener => { listener.onPageBackgrounded(); });
   }
 
-  setupSessionEventListeners(): void {
+  private setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (
       !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
@@ -176,14 +146,5 @@ export class PageFocusManager {
       window.addEventListener("blur", OneSignal.cache.blurHandler, true);
       OneSignal.cache.isBlurEventSetup = true;
     }
-  }
-
-  static setupSessionEventListenersForHttp(): void {
-    if (!OneSignal.context || !OneSignal.context.sessionManager) {
-      Log.error("OneSignal.context not available for http to setup session event listeners.");
-      return;
-    }
-
-    OneSignal.context.sessionManager.setupSessionEventListeners();
   }
 }

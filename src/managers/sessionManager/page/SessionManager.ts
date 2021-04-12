@@ -9,21 +9,36 @@ import { SubscriptionStateKind } from "../../../models/SubscriptionStateKind";
 import OneSignalApiShared from "../../../OneSignalApiShared";
 import Database from "../../../services/Database";
 import { ISessionManager } from "../types";
+import { PageFocusChanged, PageFocusManager } from "../../../page/PageFocusManager";
 
-export class SessionManager implements ISessionManager {
+export class SessionManager implements ISessionManager, PageFocusChanged {
   private context: ContextInterface;
   private onSessionSent: boolean = false;
+  private pageFocusManager: PageFocusManager;
 
-  constructor(context: ContextInterface) {
+  constructor(context: ContextInterface, pageFocusManager: PageFocusManager) {
     this.context = context;
+    this.pageFocusManager = pageFocusManager;
   }
 
-  async notifySWToUpsertSession(
-    deviceId: string | undefined,
-    deviceRecord: PushDeviceRecord,
-    sessionOrigin: SessionOrigin
-  ): Promise<void> {
+  async onPageBackgrounded(): Promise<void> {
+    await this.notifySWToDeactivateSession(SessionOrigin.VisibilityHidden);
+  }
+
+  async onPageForegrounded(): Promise<void> {
+    await this.notifySWToUpsertSession(SessionOrigin.VisibilityVisible);
+  }
+
+  async onPageUnloaded(): Promise<void> {
+    await this.notifySWToDeactivateSession(SessionOrigin.BeforeUnload);
+  }
+
+  async notifySWToUpsertSession(sessionOrigin: SessionOrigin): Promise<void> {
     const isHttps = OneSignalUtils.isHttps();
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId, true)
+    ]);
 
     const payload: UpsertSessionPayload = {
       deviceId,
@@ -51,11 +66,12 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async notifySWToDeactivateSession(
-    deviceId: string | undefined,
-    deviceRecord: PushDeviceRecord,
-    sessionOrigin: SessionOrigin
-  ): Promise<void> {
+  async notifySWToDeactivateSession(sessionOrigin: SessionOrigin): Promise<void> {
+    const [deviceId, deviceRecord] = await Promise.all([
+      MainHelper.getDeviceId(),
+      MainHelper.createDeviceRecord(this.context.appConfig.appId)
+    ]);
+
     const isHttps = OneSignalUtils.isHttps();
     const payload: DeactivateSessionPayload = {
       deviceId,
@@ -83,12 +99,9 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  async upsertSession(
-    deviceId: string,
-    deviceRecord: PushDeviceRecord,
-    sessionOrigin: SessionOrigin
-  ): Promise<void> {
-    const sessionPromise = this.notifySWToUpsertSession(deviceId, deviceRecord, sessionOrigin);
+  // Upsert session to SW and broadcast global SESSION_STARTED event
+  async upsertSession(sessionOrigin: SessionOrigin): Promise<void> {
+    const sessionPromise = this.notifySWToUpsertSession(sessionOrigin);
 
     if (
       this.context.environmentInfo.isBrowserAndSupportsServiceWorkers ||
@@ -97,9 +110,6 @@ export class SessionManager implements ISessionManager {
       if (!this.context.environmentInfo.canTalkToServiceWorker) {
         this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
         OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
-      } else {
-        // TODO: This doesn't seem right, why setup the listeners so late from an upsertSession event non the less.
-        this.setupSessionEventListeners();
       }
     } else if (
       !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
@@ -112,6 +122,7 @@ export class SessionManager implements ISessionManager {
     await sessionPromise;
   }
 
+  // TODO: Why not always send through SW? Logic is duplicated here (with onSessionSent) and is different than the SW's
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
   async sendOnSessionUpdateFromPage(deviceRecord?: PushDeviceRecord): Promise<void> {
     if (this.onSessionSent) {
@@ -151,5 +162,18 @@ export class SessionManager implements ISessionManager {
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
+  }
+
+  setupSessionEventListenersForHttp(): void {
+    this.pageFocusManager.addPageFocusChangedListener(this);
+  }
+
+  public static setupSessionEventListenersForHttp(): void {
+    if (!OneSignal.context || !OneSignal.context.sessionManager) {
+      Log.error("OneSignal.context not available for http to setup session event listeners.");
+      return;
+    }
+
+    OneSignal.context.sessionManager.setupSessionEventListeners();
   }
 }
