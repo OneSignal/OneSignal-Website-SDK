@@ -293,7 +293,7 @@ export default class InitHelper {
     return true;
   }
 
-  public static async registerSubscriptionInProxyFrame(context: ContextInterface): Promise<Subscription> {
+  public static async registerSubscriptionInProxyFrame(context: ContextInterface): Promise<void> {
     const newSubscription = await new Promise<Subscription>(resolve => {
       context.workerMessenger.once(WorkerMessengerCommand.SubscribeNew, subscription => {
         resolve(Subscription.deserialize(subscription));
@@ -301,7 +301,6 @@ export default class InitHelper {
       context.workerMessenger.unicast(WorkerMessengerCommand.SubscribeNew, context.appConfig);
     });
     Log.debug("Finished registering brand new subscription:", newSubscription);
-    return newSubscription;
   }
 
   public static async doInitialize(): Promise<void> {
