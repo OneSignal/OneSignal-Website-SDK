@@ -90,8 +90,9 @@ test("submit email with bad input throws error and shows validation message", as
   await TestEnvironment.setupOneSignalPageWithStubs(sandbox, testConfig, t);
   const eventsHelper = new EventsTestHelper(sandbox);
   const slidedownShownPromise = eventsHelper.getShownPromiseWithEventCounts();
-  const setFailureStateSpy = sandbox.stub(Slidedown.prototype, "setFailureState");
-  const slidedownCloseSpy  = sandbox.stub(Slidedown.prototype, "close");
+  const allowClickHandlingPromise = eventsHelper.getAllowClickHandlingPromise();
+  const setFailureStateStub = sandbox.stub(Slidedown.prototype, "setFailureState");
+  const slidedownCloseSpy  = sandbox.spy(Slidedown.prototype, "close");
 
   await testHelper.initWithPromptOptions([
       testHelper.addPromptDelays(minimalEmailSlidedownOptions, 1, 0),
@@ -114,9 +115,11 @@ test("submit email with bad input throws error and shows validation message", as
   allowClickEvent.initEvent('click', true, true);
   acceptButtonElem?.dispatchEvent(allowClickEvent);
 
-  t.true(ChannelCaptureContainerHelper.isEmailValidationElementShowing());
-  t.true(setFailureStateSpy.calledOnce);
+  await allowClickHandlingPromise;
+
+  t.true(setFailureStateStub.calledOnce);
   t.false(slidedownCloseSpy.called);
+  t.true(ChannelCaptureContainerHelper.isEmailValidationElementShowing());
 });
 
 /* note: above test wasn't implemented similarly for sms since validation ocurrs at the 3rd party SDK level via ITI*/
