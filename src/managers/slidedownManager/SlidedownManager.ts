@@ -35,6 +35,8 @@ export class SlidedownManager {
     this.isSlidedownShowing = false;
   }
 
+  /* P R I V A T E */
+
   private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
     const permissionDenied = await OneSignal.privateGetNotificationPermission() === NotificationPermission.Denied;
     const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
@@ -89,6 +91,157 @@ export class SlidedownManager {
     InitHelper.registerForPushNotifications(options);
   }
 
+  private async handleAllowForCategoryType(): Promise<void> {
+    const tags = TaggingContainer.getValuesFromTaggingContainer();
+    this.context.tagManager.storeTagValuesToUpdate(tags);
+
+    const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
+    if (isPushEnabled) {
+      // already subscribed, send tags immediately
+      OneSignal.slidedown.setSaveState();
+      await this.context.tagManager.sendTags(true);
+    } else {
+      this.registerForPush();
+      // tags are sent on the subscription change event handler
+    }
+  }
+
+  private async handleAllowForEmailType(): Promise<void> {
+    const emailInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
+    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+
+    if (!emailInputFieldIsValid || isEmailEmpty) {
+      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+    }
+
+    const email = ChannelCaptureContainer.getValueFromEmailInput();
+    this.context.updateManager.updateEmail(email);
+  }
+
+  private async handleAllowForSmsType(): Promise<void> {
+    const smsInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
+    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+
+    if (!smsInputFieldIsValid || isSmsEmpty) {
+      throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+    }
+
+    const sms = ChannelCaptureContainer.getValueFromSmsInput();
+    this.context.updateManager.updateSms(sms);
+  }
+
+  private async handleAllowForSmsAndEmailType(): Promise<void> {
+    const smsInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
+    const emailInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
+    /**
+     * empty input fields are considered valid since in the case of two input field types present,
+     * we can accept one of the two being left as an empty string.
+     *
+     * thus, we need separate checks for the emptiness properties
+     */
+    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+
+    const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
+    const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
+
+    if (bothFieldsInvalid || bothFieldsEmpty) {
+      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
+    }
+
+    const email = ChannelCaptureContainer.getValueFromEmailInput();
+    const sms = ChannelCaptureContainer.getValueFromSmsInput();
+
+    /**
+     * empty is ok (we can accept only one of two input fields), but invalid is not
+     * at least one field is valid and non-empty
+     */
+    if (emailInputFieldIsValid) {
+      if (!isEmailEmpty) {
+        this.context.updateManager.updateEmail(email);
+      }
+    } else {
+      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
+    }
+
+    if (smsInputFieldIsValid) {
+      if (!isSmsEmpty) {
+        this.context.updateManager.updateSms(sms);
+      }
+    } else {
+      throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
+    }
+  }
+
+  private async showConfirmationToast(): Promise<void> {
+    const { confirmMessage } = OneSignal.slidedown.options.text;
+    await awaitableTimeout(1000);
+    const confirmationToast = new ConfirmationToast(confirmMessage);
+    await confirmationToast.show();
+    await awaitableTimeout(5000);
+    confirmationToast.close();
+    ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
+  }
+
+  private async mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
+    switch (options.slidedownPromptOptions?.type) {
+      case DelayedPromptType.Category:
+        this.mountTaggingContainer(options);
+        break;
+      case DelayedPromptType.Email:
+      case DelayedPromptType.Sms:
+      case DelayedPromptType.SmsAndEmail:
+        await this.mountChannelCaptureContainer(options);
+        break;
+      default:
+        break;
+    }
+  }
+
+  private async mountTaggingContainer(options: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("mountTaggingContainer");
+    try {
+      // show slidedown with tagging container
+      let tagsForComponent: TagsObjectWithBoolean = {};
+      const taggingContainer = new TaggingContainer();
+      const categories = options.slidedownPromptOptions?.categories;
+
+      if (!categories) {
+        throw new Error("Categories not defined");
+      }
+
+      if (options.isInUpdateMode) {
+        taggingContainer.load();
+        // updating. pull remote tags.
+        const existingTags = await OneSignal.getTags() as TagsObjectForApi;
+        this.context.tagManager.storeRemotePlayerTags(existingTags);
+        tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
+      } else {
+        // first subscription
+        TagUtils.markAllTagsAsSpecified(categories, true);
+      }
+
+      taggingContainer.mount(categories, tagsForComponent);
+    } catch (e) {
+      Log.error("OneSignal: Attempted to create tagging container with error", e);
+    }
+  }
+
+  private async mountChannelCaptureContainer(options: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("mountChannelCaptureContainer");
+    try {
+      if (!!options.slidedownPromptOptions) {
+        const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
+        channelCaptureContainer.mount();
+        OneSignal.slidedown.channelCaptureContainer = channelCaptureContainer;
+      }
+    } catch (e) {
+      Log.error("OneSignal: Attempted to create channel capture container with error", e);
+    }
+  }
+
+  /* P U B L I C */
+
   public async handleAllowClick(): Promise<void> {
     const { slidedown } = OneSignal;
     const slidedownType: DelayedPromptType = slidedown.options.type;
@@ -97,87 +250,22 @@ export class SlidedownManager {
       slidedown.removeFailureState();
     }
 
-    let smsInputFieldIsValid, emailInputFieldIsValid, isEmailEmpty, isSmsEmpty: boolean;
-    let email, sms: string;
-
-    smsInputFieldIsValid = emailInputFieldIsValid = isEmailEmpty = isSmsEmpty = false;
-    email = sms = "";
-
-    if (!!slidedown.channelCaptureContainer) {
-      /**
-       * empty input fields are considered valid since in the case of two input field types present,
-       * we can accept one of the two being left as an empty string.
-       *
-       * thus, we need separate checks for the emptiness properties
-       */
-      smsInputFieldIsValid = slidedown.channelCaptureContainer.smsInputFieldIsValid;
-      emailInputFieldIsValid = slidedown.channelCaptureContainer.emailInputFieldIsValid;
-      isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
-      isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
-
-      /** */
-      email = ChannelCaptureContainer.getValueFromEmailInput();
-      sms = ChannelCaptureContainer.getValueFromSmsInput();
-    }
-
     try {
       switch (slidedownType) {
         case DelayedPromptType.Push:
           this.registerForPush();
           break;
         case DelayedPromptType.Category:
-          const tags = TaggingContainer.getValuesFromTaggingContainer();
-          this.context.tagManager.storeTagValuesToUpdate(tags);
-
-          const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
-          if (isPushEnabled) {
-            // already subscribed, send tags immediately
-            slidedown.setSaveState();
-            await this.context.tagManager.sendTags(true);
-          } else {
-            this.registerForPush();
-            // tags are sent on the subscription change event handler
-          }
+          await this.handleAllowForCategoryType();
           break;
         case DelayedPromptType.Email:
-          if (!emailInputFieldIsValid || isEmailEmpty) {
-            throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
-          }
-          this.context.updateManager.updateEmail(email);
+          await this.handleAllowForEmailType();
           break;
         case DelayedPromptType.Sms:
-          if (!smsInputFieldIsValid || isSmsEmpty) {
-            throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
-          }
-          this.context.updateManager.updateSms(sms);
+          await this.handleAllowForSmsType();
           break;
         case DelayedPromptType.SmsAndEmail:
-          const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
-          const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
-
-          if (bothFieldsInvalid || bothFieldsEmpty) {
-            throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
-          }
-
-          /**
-           * empty is ok (we can accept only one of two input fields), but invalid is not
-           * at least one field is valid and non-empty
-           */
-          if (emailInputFieldIsValid) {
-            if (!isEmailEmpty) {
-              this.context.updateManager.updateEmail(email);
-            }
-          } else {
-            throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
-          }
-
-          if (smsInputFieldIsValid) {
-            if (!isSmsEmpty) {
-              this.context.updateManager.updateSms(sms);
-            }
-          } else {
-            throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
-          }
+          await this.handleAllowForSmsAndEmailType();
           break;
         default:
           break;
@@ -198,14 +286,9 @@ export class SlidedownManager {
       slidedown.close();
 
       if (!PromptsHelper.isSlidedownPushDependent(slidedownType)) {
-        const { confirmMessage } = slidedown.options.text;
-        await awaitableTimeout(1000);
-        const confirmationToast = new ConfirmationToast(confirmMessage);
-        await confirmationToast.show();
-        await awaitableTimeout(5000);
-        confirmationToast.close();
-        ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
+        this.showConfirmationToast();
       }
+      // timeout to allow slidedown close animation to finish in case another slidedown is queued
       await awaitableTimeout(1000);
 
       Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
@@ -275,63 +358,6 @@ export class SlidedownManager {
       Log.error("There was an error showing the OneSignal Slidedown:", e);
       this.setIsSlidedownShowing(false);
       OneSignal.slidedown.close();
-    }
-  }
-
-  private async mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
-    switch (options.slidedownPromptOptions?.type) {
-      case DelayedPromptType.Category:
-        this.mountTaggingContainer(options);
-        break;
-      case DelayedPromptType.Email:
-      case DelayedPromptType.Sms:
-      case DelayedPromptType.SmsAndEmail:
-        await this.mountChannelCaptureContainer(options);
-        break;
-      default:
-        break;
-    }
-  }
-
-  private async mountTaggingContainer(options: AutoPromptOptions): Promise<void> {
-    OneSignalUtils.logMethodCall("mountTaggingContainer");
-    try {
-      // show slidedown with tagging container
-      let tagsForComponent: TagsObjectWithBoolean = {};
-      const taggingContainer = new TaggingContainer();
-      const categories = options.slidedownPromptOptions?.categories;
-
-      if (!categories) {
-        throw new Error("Categories not defined");
-      }
-
-      if (options.isInUpdateMode) {
-        taggingContainer.load();
-        // updating. pull remote tags.
-        const existingTags = await OneSignal.getTags() as TagsObjectForApi;
-        this.context.tagManager.storeRemotePlayerTags(existingTags);
-        tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
-      } else {
-        // first subscription
-        TagUtils.markAllTagsAsSpecified(categories, true);
-      }
-
-      taggingContainer.mount(categories, tagsForComponent);
-    } catch (e) {
-      Log.error("OneSignal: Attempted to create tagging container with error", e);
-    }
-  }
-
-  private async mountChannelCaptureContainer(options: AutoPromptOptions): Promise<void> {
-    OneSignalUtils.logMethodCall("mountChannelCaptureContainer");
-    try {
-      if (!!options.slidedownPromptOptions) {
-        const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
-        channelCaptureContainer.mount();
-        OneSignal.slidedown.channelCaptureContainer = channelCaptureContainer;
-      }
-    } catch (e) {
-      Log.error("OneSignal: Attempted to create channel capture container with error", e);
     }
   }
 }
