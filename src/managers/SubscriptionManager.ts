@@ -45,27 +45,17 @@ export interface SubscriptionManagerConfig {
   onesignalVapidPublicKey: string;
 }
 
-export type SubscriptionStateServiceWorkerNotIntalled = 
-  SubscriptionStateKind.ServiceWorkerStatus403 | 
+export type SubscriptionStateServiceWorkerNotIntalled =
+  SubscriptionStateKind.ServiceWorkerStatus403 |
   SubscriptionStateKind.ServiceWorkerStatus404;
-
-export interface NewPushSubscription {
-  onNewPushSubscription(playerId: string): void;
-}
 
 export class SubscriptionManager {
   private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
-  private newPushSubscriptionListeners : Array<NewPushSubscription>;
 
   constructor(context: ContextSWInterface, config: SubscriptionManagerConfig) {
     this.context = context;
     this.config = config;
-    this.newPushSubscriptionListeners = new Array();
-  }
-
-  addNewPushSubscriptionListener(listener: NewPushSubscription) {
-    this.newPushSubscriptionListeners.push(listener);
   }
 
   static isSafari(): boolean {
@@ -149,67 +139,15 @@ export class SubscriptionManager {
    * an identifier, and a new device record will be created if the identifier didn't exist. These
    * records are marked with a special subscription state for tracking purposes.
    */
+  // TODO: Everything that calls this should just call context.channelManager.onPushToken directly
   public async registerSubscription(
     pushSubscription: RawPushSubscription,
     subscriptionState?: SubscriptionStateKind,
   ): Promise<Subscription> {
-    /*
-      This may be called after the RawPushSubscription has been serialized across a postMessage
-      frame. This means it will only have object properties and none of the functions. We have to
-      recreate the RawPushSubscription.
-
-      Keep in mind pushSubscription can be null in cases where resubscription isn't possible
-      (blocked permission).
-    */
-    if (pushSubscription) {
-      pushSubscription = RawPushSubscription.deserialize(pushSubscription);
-    }
-
-    const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
-      this.config.appId,
+    return await this.context.channelManager.onPushToken(
       pushSubscription,
       subscriptionState
     );
-
-    let newDeviceId: string | undefined = undefined;
-    if (await this.isAlreadyRegisteredWithOneSignal()) {
-      await this.context.updateManager.sendPlayerUpdate(deviceRecord);
-    } else {
-      newDeviceId = await this.context.updateManager.sendPlayerCreate(deviceRecord);
-      this.fireNewPushSubscriptionListeners(newDeviceId);
-    }
-
-    const subscription = await Database.getSubscription();
-    subscription.deviceId = newDeviceId;
-    subscription.optedOut = false;
-    if (pushSubscription) {
-      if (SubscriptionManager.isSafari()) {
-        subscription.subscriptionToken = pushSubscription.safariDeviceToken;
-      } else {
-        subscription.subscriptionToken = pushSubscription.w3cEndpoint ? pushSubscription.w3cEndpoint.toString() : null;
-      }
-    } else {
-      subscription.subscriptionToken = null;
-    }
-    await Database.setSubscription(subscription);
-
-    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-      Event.trigger(OneSignal.EVENTS.REGISTERED);
-    }
-
-    if (typeof OneSignal !== "undefined") {
-      OneSignal._sessionInitAlreadyRunning = false;
-    }
-    return subscription;
-  }
-
-  private fireNewPushSubscriptionListeners(playerId?: string): void {
-    if (!playerId)
-      return;
-
-    this.newPushSubscriptionListeners.forEach(listener => {
-      listener.onNewPushSubscription(playerId);
-    });
   }
 
   /**
