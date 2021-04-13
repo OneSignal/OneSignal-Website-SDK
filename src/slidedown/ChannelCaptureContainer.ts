@@ -202,6 +202,10 @@ export default class ChannelCaptureContainer {
   }
 
   private async loadPhoneLibraryScripts(): Promise<void> {
+    if (OneSignal._didLoadITILibrary) {
+      return;
+    }
+
     const script1 = document.createElement("script");
     const script2 = document.createElement("script");
     const link    = document.createElement("link");
@@ -227,6 +231,8 @@ export default class ChannelCaptureContainer {
     const promise2 = new Promise<void>(resolve => { script2.onload = () => { resolve(); }; });
 
     await Promise.all([promise1, promise2]);
+
+    OneSignal._didLoadITILibrary = true;
   }
 
   /* P U B L I C */

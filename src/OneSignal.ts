@@ -946,6 +946,7 @@ export default class OneSignal {
   static _channel = null;
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
+  static _didLoadITILibrary = false;
   static notifyButton: AppUserConfigNotifyButton | null = null;
   static store = LimitStore;
   static environment = Environment;
