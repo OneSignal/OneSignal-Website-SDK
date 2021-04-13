@@ -258,8 +258,7 @@ export default class ChannelCaptureContainer {
   }
 
   static isSmsInputFieldEmpty(): boolean {
-    const onesignalSmsInput = document.querySelector(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-    return (<HTMLInputElement>onesignalSmsInput)?.value === "";
+    return ChannelCaptureContainer.getValueFromSmsInput() === "";
   }
 
   static showSmsInputError(state: boolean): void {
