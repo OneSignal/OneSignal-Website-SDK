@@ -1124,6 +1124,7 @@ export default class OneSignal {
      */
     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
     TEST_WOULD_DISPLAY: 'testWouldDisplay',
+    TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
     POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
     SESSION_STARTED: "os.sessionStarted",
   };

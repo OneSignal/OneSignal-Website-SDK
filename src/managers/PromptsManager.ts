@@ -17,6 +17,7 @@ import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from "bowser";
 import { DismissPrompt } from "../models/Dismiss";
+import OneSignalEvent from "../Event";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -232,7 +233,8 @@ export class PromptsManager {
       this.context.slidedownManager.showQueued();
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
-      this.context.slidedownManager.handleAllowClick();
+      await this.context.slidedownManager.handleAllowClick();
+      OneSignalEvent.trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
