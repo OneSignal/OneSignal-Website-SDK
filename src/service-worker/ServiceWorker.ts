@@ -28,6 +28,7 @@ import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import { NotificationReceived, NotificationClicked } from "../models/Notification";
 import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 import { DeviceRecord } from '../models/DeviceRecord';
+import { SessionTimeManager } from "../managers/sessionManager/SessionTimeManager";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -404,10 +405,11 @@ export class ServiceWorker {
 
   static async updateSessionBasedOnHasActive(
     event: ExtendableMessageEvent,
-    hasAnyActiveSessions: boolean, options: DeactivateSessionPayload
+    hasAnyActiveSessions: boolean,
+    options: DeactivateSessionPayload
   ) {
     if (hasAnyActiveSessions) {
-      await ServiceWorkerHelper.upsertSession(
+      await SessionTimeManager.upsertSession(
         options.sessionThreshold,
         options.enableSessionDuration,
         options.deviceRecord!,
@@ -416,7 +418,7 @@ export class ServiceWorker {
         options.outcomesConfig
       );
     } else {
-      const cancelableFinalize = await ServiceWorkerHelper.deactivateSession(
+      const cancelableFinalize = await SessionTimeManager.deactivateSession(
         options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig
       );
       if (cancelableFinalize) {
