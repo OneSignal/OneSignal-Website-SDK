@@ -3,7 +3,6 @@ import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNot
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import EventHelper from './EventHelper';
 import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import { Subscription } from '../models/Subscription';
 import { NotificationPermission } from '../models/NotificationPermission';
 import { RawPushSubscription } from '../models/RawPushSubscription';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
@@ -19,14 +18,13 @@ import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
 import { Browser } from "../context/browser/models/Browser";
 
 export default class SubscriptionHelper {
-  public static async registerForPush(): Promise<Subscription | null> {
+  public static async registerForPush(): Promise<void> {
     const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
-    return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
+    await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
   }
 
-  public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {
+  public static async internalRegisterForPush(isPushEnabled: boolean): Promise<void> {
     const context: ContextSWInterface = OneSignal.context;
-    let subscription: Subscription | null = null;
 
     /*
       Within the same page navigation (the same session), do not register for
@@ -44,12 +42,12 @@ export default class SubscriptionHelper {
       } else {
         Log.error("Should have been impossible to have push as enabled but no device id.");
       }
-      return null;
+      return;
     }
 
     if (typeof OneSignal !== "undefined") {
       if (OneSignal._isRegisteringForPush)
-        return null;
+        return;
       else
         OneSignal._isRegisteringForPush = true;
     }
@@ -61,7 +59,7 @@ export default class SubscriptionHelper {
           const rawSubscription = await context.subscriptionManager.subscribe(
             SubscriptionStrategyKind.ResubscribeExisting
           );
-          subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
+          await context.subscriptionManager.registerSubscription(rawSubscription);
           context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
@@ -119,7 +117,7 @@ export default class SubscriptionHelper {
           */
           if (windowCreator) {
             window.close();
-            return null;
+            return;
           }
         }
 
@@ -148,8 +146,6 @@ export default class SubscriptionHelper {
 
     if (typeof OneSignal !== "undefined")
       OneSignal._isRegisteringForPush = false;
-
-    return subscription;
   }
 
   static getRawPushSubscriptionForSafari(safariWebId: string): RawPushSubscription {
