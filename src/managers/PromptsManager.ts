@@ -199,6 +199,8 @@ export class PromptsManager {
    * Generalized shower function to show particular slidedown types
    * @param  {DelayedPromptType} typeToPullFromConfig - slidedown type to look for in config if not passed via `options`
    * @param  {AutoPromptOptions} options - passed in via another internal function or top level OneSignal slidedown func
+   *
+   * If present, `options.slidedownPromptOptions` overrides `typeToPullFromConfig`
    */
   public async internalShowParticularSlidedown(typeToPullFromConfig: DelayedPromptType, options?: AutoPromptOptions)
   : Promise<void> {
