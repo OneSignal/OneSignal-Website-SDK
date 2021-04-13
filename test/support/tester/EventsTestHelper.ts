@@ -17,25 +17,25 @@ export interface EventCounts {
 }
 
 export default class EventsTestHelper {
-    private readonly sinonSandbox: SinonSandbox;
-    public eventCounts: EventCounts;
+  private readonly sinonSandbox: SinonSandbox;
+  public eventCounts: EventCounts;
 
-    constructor(sinonSandbox: SinonSandbox) {
-        this.sinonSandbox = sinonSandbox;
-        this.eventCounts = {
-          shown: 0,
-          closed: 0,
-          queued: 0
-        };
-    }
+  constructor(sinonSandbox: SinonSandbox) {
+      this.sinonSandbox = sinonSandbox;
+      this.eventCounts = {
+        shown: 0,
+        closed: 0,
+        queued: 0
+      };
+  }
 
-    public getShownPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
-      return new Promise<void>(resolve => {
-          OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
-              this.eventCounts.shown += 1;
-              if (this.eventCounts.shown >= resolveAfter) { resolve(); }
-          });
-      });
+  public getShownPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
+    return new Promise<void>(resolve => {
+        OneSignal.on(Slidedown.EVENTS.SHOWN, () => {
+            this.eventCounts.shown += 1;
+            if (this.eventCounts.shown >= resolveAfter) { resolve(); }
+        });
+    });
   }
 
   public getClosedPromiseWithEventCounts(resolveAfter: number = 0): Promise<void> {
@@ -45,6 +45,14 @@ export default class EventsTestHelper {
               if (this.eventCounts.closed >= resolveAfter) { resolve(); }
           });
       });
+  }
+
+  public getAllowClickHandlingPromise(): Promise<void> {
+    return new Promise<void>(resolve => {
+      OneSignal.on(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING, () => {
+        resolve();
+      });
+    });
   }
 
   public simulateSubscribingAfterNativeAllow() {
