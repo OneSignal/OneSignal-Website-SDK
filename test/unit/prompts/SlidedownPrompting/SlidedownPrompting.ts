@@ -273,5 +273,3 @@ test("confirmation toast shown and closed after allow", async t => {
   t.is(toastShownSpy.callCount, 1);
   t.is(toastCloseSpy.callCount, 1);
 });
-
-test.todo(`multiple slidedowns of same type with different options are shown with respective config`);
