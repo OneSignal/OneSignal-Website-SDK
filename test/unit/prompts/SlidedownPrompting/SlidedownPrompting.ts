@@ -54,7 +54,7 @@ const testConfig: TestEnvironmentConfig = {
 
 test("singular push slidedown prompts successfully", async t => {
   await testHelper.setupWithStubs(testConfig, t);
-  const showSlidedownSpy = sinonSandbox.spy(PromptsManager.prototype, "internalShowSlidedownPrompt");
+  const showSlidedownSpy = sinonSandbox.spy(PromptsManager.prototype as any, "internalShowSlidedownPrompt");
   await testHelper.initWithPromptOptions([ minimalPushSlidedownOptions ]);
 
   t.is(showSlidedownSpy.callCount, 1);

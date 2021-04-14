@@ -4,6 +4,7 @@ import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import Context from "../../../src/models/Context";
 import sinon, { SinonSandbox } from 'sinon';
 import { DismissHelper } from "../../../src/helpers/DismissHelper";
+import { DelayedPromptType } from "../../../src/models/Prompts";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -21,7 +22,7 @@ test("Test showHttpPrompt with no params", async t => {
 
   // Ensure both public and private calls work
   await OneSignal.showHttpPrompt();
-  await OneSignal.context.promptsManager.internalShowSlidedownPrompt();
+  await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push);
   // Pass if we did not throw
   t.pass();
 });
