@@ -16,6 +16,33 @@ import { NewPushSubscription, SubscriptionManager } from "./SubscriptionManager"
  * Shared (used by page & SW)
  */
 
+
+// Option 1 - Interface each channel (push, email, ect) implements.
+interface ChannelManagerSubscription {
+  onIdentifier(identifier: string): void;
+  onSessionNew(): void; // REST API /on_session
+  onSessionEnd(): void; // REST API /on_focus
+  setExternalUserId(): void;
+  setTags(): void;
+  setSubscription(): void; // notification_types
+}
+// ChannelManagerPush, ChannelManagerEmail
+// Con - Seems like we are just wrapping a large chunk of our OneSignal class with this.
+
+// Option 2 - Modular features that broadcast events (Listener pattern)
+//   1. Small interfaces provided by each feature.
+///    - TagManager, SessionManager, ExternalUserIdManger, PushSubscriptionManager, EmailSubscriptionManager, etc
+//   2. A OSPlayerManager (one for push, email, etc) that implements listener interfaces that these provide.
+
+// Option 3 - Option 2 above plus OSPlayerManager is also closed for modification (the "O" of the SOLID principle)
+//   1. OSPlayerProperty interface - Define a property name and provide a listener interface for updates.
+//   2. Example we would have a class called OSPlayerPropertyTag.
+//     - a. This would implement; OSPlayerProperty (to use with OSPlayerManager), TagManagerListener (to get tag updates)
+//     - b. It would implement OSPlayerProperty which requires a addListener method
+//     - c. Call OSPlayerManager.registerProperty(OSPlayerProperty) to register it.
+//     - d. When TagManager.setTag("key", "value") is called it fires a change to listeners (OSPlayerPropertyTag) which
+//          formats the tags then broadcasts JSON which is picked up by OSPlayerManager since it was registered to it.
+
 type PushDeviceRecordFunction = (pushDeviceRecord: SerializedPushDeviceRecord) => void;
 
 export class ChannelManager implements NewPushSubscription, SessionEvent {
