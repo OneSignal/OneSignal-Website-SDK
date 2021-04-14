@@ -192,6 +192,7 @@ export default class MainHelper {
     }
   }
 
+  // Creates a PushDeviceRecord and Subscribes browser for push (if includeSubscription is true)
   static async createDeviceRecord(
     appId: string, includeSubscription: boolean = false): Promise<PushDeviceRecord> {
     let subscription: RawPushSubscription | undefined;
