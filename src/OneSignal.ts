@@ -56,7 +56,7 @@ import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
-import { AppUserConfigNotifyButton } from './models/Prompts';
+import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 
 export default class OneSignal {
@@ -387,7 +387,7 @@ export default class OneSignal {
    */
   public static async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
+    await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
   }
 
   public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
