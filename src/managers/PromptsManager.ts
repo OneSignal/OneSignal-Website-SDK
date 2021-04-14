@@ -159,7 +159,7 @@ export class PromptsManager {
     DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
   }
 
-  public async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
+  private async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
 
     MainHelper.markHttpSlidedownShown();

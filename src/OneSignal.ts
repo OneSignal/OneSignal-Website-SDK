@@ -368,8 +368,7 @@ export default class OneSignal {
    * @PublicApi
    */
   public static async showHttpPrompt(options?: AutoPromptOptions) {
-    await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
+    await OneSignal.showSlidedownPrompt(options);
   }
 
   /**
