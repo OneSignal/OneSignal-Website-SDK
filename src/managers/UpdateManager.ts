@@ -11,6 +11,14 @@ import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
 import { logMethodCall } from '../utils';
 
+// TODO: This class contains session logic, why isn't these lines of code in SessionManager?
+//       - Both UpdateManager & SessionManager track onSessionSent on their own,
+//         only SessionManager should.
+// TODO: This class assumes it is running on a **page** but it has some entries points
+//  from the ServiceWorker that should be cleaned up in some way.
+// These depend on the page:
+//  * pageViewManager
+//  * sessionManager
 export class UpdateManager {
   private context: ContextSWInterface;
 
@@ -54,6 +62,9 @@ export class UpdateManager {
     }
   }
 
+  // TODO: Why doesn't the SessionManager have this method instead?
+  // TODO: Does the SW ever call this method?
+  //        Yes, if it receives a subscribe message from the page (ServiceWorker.ts:setupMessageListeners) or a Browser event (ServiceWorker.ts:onPushSubscriptionChange)
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
   public async sendOnSessionUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
     if (this.onSessionSent) {
@@ -82,30 +93,13 @@ export class UpdateManager {
 
     try {
       // Not sending on_session here but from SW instead.
-      
+
       // Not awaiting here on purpose
+      // TODO: ServiceWorker can execute this line of code but should it?
       this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
-    }
-  }
-
-  public async sendPlayerCreate(deviceRecord: PushDeviceRecord): Promise<string | undefined> {
-    try {
-      const deviceId = await OneSignalApiShared.createUser(deviceRecord);
-      if (deviceId) {
-        Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
-        this.onSessionSent = true;
-        // Not awaiting here on purpose
-        this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerCreate);
-        return deviceId;
-      }
-      Log.error(`Failed to create user.`);
-      return undefined;
-    } catch(e) {
-      Log.error(`Failed to create user. Error "${e.message}" ${e.stack}`);
-      return undefined;
     }
   }
 

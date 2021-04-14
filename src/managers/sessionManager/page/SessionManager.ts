@@ -11,6 +11,11 @@ import Database from "../../../services/Database";
 import { ISessionManager } from "../types";
 import { PageFocusChanged, PageFocusManager } from "../../../page/PageFocusManager";
 
+// SessionManager needs to be two different things;
+//  1. SessionClient - Which just talks to the SW based on page events
+//  2. SessionController
+//     - We don't have a definition for "Controller" but since we have a "Manager" today I want to make this different.
+
 export class SessionManager implements ISessionManager, PageFocusChanged {
   private context: ContextInterface;
   private onSessionSent: boolean = false;

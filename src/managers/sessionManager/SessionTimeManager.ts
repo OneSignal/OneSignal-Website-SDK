@@ -8,7 +8,17 @@ import { initializeNewSession, Session, SessionOrigin, SessionStatus } from "../
 import OneSignalApiSW from "../../OneSignalApiSW";
 import Database from "../../services/Database";
 
+export interface SessionEvent {
+  onSessionNew(deviceRecord: SerializedPushDeviceRecord): void;
+  onSessionEnd(): void;
+}
+
 export class SessionTimeManager {
+  private static sessionEventListeners: Array<SessionEvent> = new Array();
+
+  public static addSessionEventListener(listener: SessionEvent) {
+    SessionTimeManager.sessionEventListeners.push(listener);
+  }
 
   // TODO: This should be moved out into SessionController or SessionManager
   public static async upsertSession(
@@ -145,7 +155,7 @@ export class SessionTimeManager {
       return;
     }
 
-    // TODO: Broadcast onNewSession so ChannelManager can pick it up.
+    SessionTimeManager.sessionEventListeners.forEach(listener => { listener.onSessionNew(deviceRecord); });
   }
 
   public static async finalizeSession(
@@ -161,6 +171,10 @@ export class SessionTimeManager {
       Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
       const attribution = await OutcomesHelper.getAttribution(outcomesConfig);
       Log.debug("send on_focus with attribution", attribution);
+      // TODO: Broadcast onSessionEnd
+
+      SessionTimeManager.sessionEventListeners.forEach(listener => { listener.onSessionEnd(); });
+      // TODO: Move this into ChannelManager in onSessionEnd response.
       await OneSignalApiSW.sendSessionDuration(
         session.appId,
         session.deviceId,

@@ -109,6 +109,8 @@ export class ServiceWorker {
       const payload = data.payload;
 
       switch(data.command) {
+        // TODO: ServiceWorker.debounceRefreshSession should really be moved into it's own class,
+        //   with or used by SessionController or SessionManager
         case WorkerMessengerCommand.SessionUpsert:
           Log.debug("[Service Worker] Received SessionUpsert", payload);
           ServiceWorker.debounceRefreshSession(event, payload as UpsertSessionPayload);

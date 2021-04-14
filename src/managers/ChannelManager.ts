@@ -63,7 +63,7 @@ export class ChannelManager implements NewPushSubscription, SessionEvent {
       }
 
       if (newDeviceId) {
-        this.onNewPushSubscription(newDeviceId);
+        this.onNewPushSubscriptionId(newDeviceId);
       }
 
       // Update subscription model
@@ -86,7 +86,26 @@ export class ChannelManager implements NewPushSubscription, SessionEvent {
       return subscription;
   }
 
-  private onNewPushSubscription(playerId: string): void {
+  private async sendPlayerCreate(deviceRecord: PushDeviceRecord): Promise<string | undefined> {
+    try {
+      const deviceId = await OneSignalApiShared.createUser(deviceRecord);
+      if (deviceId) {
+        Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
+        this.onSessionSent = true;
+        // Not awaiting here on purpose
+        // TODO: Make on_session call directly.
+        this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerCreate);
+        return deviceId;
+      }
+      Log.error(`Failed to create user.`);
+      return undefined;
+    } catch(e) {
+      Log.error(`Failed to create user. Error "${e.message}" ${e.stack}`);
+      return undefined;
+    }
+  }
+
+  private onNewPushSubscriptionId(playerId: string): void {
     this.associateSubscriptionWithEmail(playerId);
   }
 
@@ -94,7 +113,8 @@ export class ChannelManager implements NewPushSubscription, SessionEvent {
    * Called after registering a subscription with OneSignal to associate this subscription with an
    * email record if one exists.
    */
-  public async associateSubscriptionWithEmail(newDeviceId: string) {
+  // TODO: This should happen internally, through addDeviceRecord
+  private async associateSubscriptionWithEmail(newDeviceId: string) {
     const emailProfile = await this.database.getEmailProfile();
     if (!emailProfile.emailId) {
       return;
@@ -110,4 +130,87 @@ export class ChannelManager implements NewPushSubscription, SessionEvent {
       }
     );
   }
+
+  // TODO: This should be something SessionManger broadcasts?
+  // TODO: Do we even want the SessionManager to give us a PushDeviceRecord at all?
+  // Sends an on_session REST API for the pushDeviceRecord as well an on_session for email if it exists.
+  // args - pushDeviceRecord - These params will be send into a on_session REST API call.
+  async onSessionNew(serializedPushDeviceRecord: SerializedPushDeviceRecord): Promise<void> {
+    await this.createOrOnSession(serializedPushDeviceRecord);
+  }
+
+  onPushDeviceRecord(pushDeviceRecord: SerializedPushDeviceRecord): void {
+    this.onPushDeviceRecordPromiseResolver?.(pushDeviceRecord);
+    // TODO: How to handle making an update call here if the push token changed?
+    //    1. Should the params let us know if there "refresh" event a changed push token?
+    //    2. If the above didn't trigger an on_session call?
+  }
+
+  // Call to add an Email device record
+  // This takes care of making REST API calls to create or update.
+  // It takes care of associating with the push record.
+  private addSecondaryDeviceRecord(deviceRecord: SerializedPushDeviceRecord): void {
+  }
+
+  // Called a new session is detected, however if done before we ever got a DeviceRecord wait for it.
+  //   - This prevents making an update + on_session call with the same data back-to-back
+  // If this is a new record make a player create, if existing make an on_session call for it as well as any
+  // secondary subscriptions.
+  private async createOrOnSession(pushDeviceRecord?: SerializedPushDeviceRecord): Promise<void> {
+    const pushDeviceRecordFromAddDevice = await this.onPushDeviceRecordPromise;
+    const lastestPushDeviceRecord = pushDeviceRecord || pushDeviceRecordFromAddDevice;
+
+    // TODO: Call create or on_session for push player
+    // this.sendOnSessionForPush(...);
+
+
+    // TODO: Call on_session for secondary device records, if:
+    //   1. We did an on_session for push
+    //   2. We have a player_id for secondary devices.
+  }
+
+  private async sendOnSessionForPush(
+    deviceRecord: SerializedPushDeviceRecord,
+    deviceId: string,
+    session: Session) : Promise<void> {
+
+    // TODO: ServiceWorker used to account for getting a push token.
+    //       Do we even need keep doing this?, as we wait for onPushDeviceRecord now too.
+    // if (!deviceRecord.identifier) {
+    //   const subscription = await self.registration.pushManager.getSubscription()
+    //   if (subscription) {
+    //     const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
+    //     const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
+    //     deviceRecord.identifier = fullDeviceRecord.identifier;
+    //   }
+    // }
+
+    const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId, deviceRecord);
+    // If the returned player id is different, save the new id to indexed db and update session
+    if (newPlayerId !== deviceId) {
+      session.deviceId = newPlayerId;
+      await Promise.all([
+        Database.setDeviceId(newPlayerId),
+        Database.upsertSession(session),
+        Database.resetSentUniqueOutcomes()
+      ]);
+    }
+  }
+
+  // TODO: Add on_focus
+  //   omit outcomes for secondary channels
+  onSessionEnd(): void {
+    throw new Error("Method not implemented.");
+  }
+
+  // Both OneSignalApiShared & OneSignalSW have updateUserSession
+
+  // From SW:
+  //     ServiceWorkerHelper.sendOnSessionCallIfNecessary
+
+  // From page:
+  //     OneSignal.emitter.on(OneSignal.EVENTS.SESSION_STARTED,
+  //                          sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager));
+
+
 }
