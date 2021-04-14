@@ -2,8 +2,7 @@ import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateErr
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { AppUserConfigPromptOptions, SlidedownOptions, SlidedownPromptOptions } from '../models/Prompts';
-import TimedLocalStorage from '../modules/TimedLocalStorage';
+import { AppUserConfigPromptOptions, SlidedownOptions } from '../models/Prompts';
 import Log from '../libraries/Log';
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { NotificationPermission } from "../models/NotificationPermission";
@@ -52,13 +51,6 @@ export default class MainHelper {
     } else {
       return SubscriptionStateKind.MutedByApi;
     }
-  }
-
-  /**
-   * Returns true if a LocalStorage entry exists for noting the user dismissed the native prompt.
-   */
-  static wasHttpsNativePromptDismissed() {
-    return TimedLocalStorage.getItem('onesignal-notification-prompt') === 'dismissed';
   }
 
   /**

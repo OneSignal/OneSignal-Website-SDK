@@ -10,7 +10,6 @@ import HttpHelper from './helpers/HttpHelper';
 import InitHelper, { RegisterOptions } from './helpers/InitHelper';
 import MainHelper from './helpers/MainHelper';
 import SubscriptionHelper from './helpers/SubscriptionHelper';
-import TestHelper from './helpers/TestHelper';
 import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
@@ -57,7 +56,7 @@ import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
 import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
-import { AppUserConfigNotifyButton } from './models/Prompts';
+import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 
 export default class OneSignal {
@@ -369,8 +368,7 @@ export default class OneSignal {
    * @PublicApi
    */
   public static async showHttpPrompt(options?: AutoPromptOptions) {
-    await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
+    await OneSignal.showSlidedownPrompt(options);
   }
 
   /**
@@ -388,7 +386,7 @@ export default class OneSignal {
    */
   public static async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowSlidedownPrompt(options);
+    await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
   }
 
   public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
@@ -397,6 +395,27 @@ export default class OneSignal {
     await OneSignal.context.promptsManager.internalShowCategorySlidedown({
       ...options,
       isInUpdateMode: isPushEnabled
+    });
+  }
+
+  public static async showSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowSmsSlidedown({
+      ...options,
+    });
+  }
+
+  public static async showEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowEmailSlidedown({
+      ...options,
+    });
+  }
+
+  public static async showSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
+      ...options,
     });
   }
 
@@ -764,6 +783,7 @@ export default class OneSignal {
     return await OneSignal.privateGetSubscription(callback);
   }
 
+  // TO DO: consider renaming to something like privateGetOptedStatus
   static async privateGetSubscription(callback?: Action<boolean>): Promise<boolean> {
     logMethodCall('getSubscription', callback);
     const subscription = await Database.getSubscription();
@@ -925,6 +945,7 @@ export default class OneSignal {
   static _channel = null;
   static timedLocalStorage = TimedLocalStorage;
   static initialized = false;
+  static _didLoadITILibrary = false;
   static notifyButton: AppUserConfigNotifyButton | null = null;
   static store = LimitStore;
   static environment = Environment;
@@ -940,7 +961,6 @@ export default class OneSignal {
   static httpHelper =  HttpHelper;
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
-  static testHelper = TestHelper;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;
@@ -1103,6 +1123,7 @@ export default class OneSignal {
      */
     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
     TEST_WOULD_DISPLAY: 'testWouldDisplay',
+    TEST_FINISHED_ALLOW_CLICK_HANDLING: 'testFinishedAllowClickHandling',
     POPUP_WINDOW_TIMEOUT: 'popupWindowTimeout',
     SESSION_STARTED: "os.sessionStarted",
   };

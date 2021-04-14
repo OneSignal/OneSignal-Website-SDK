@@ -9,14 +9,13 @@ import Utils from "../context/shared/utils/Utils";
 import {
   SERVER_CONFIG_DEFAULTS_SESSION,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
-  SERVER_CONFIG_DEFAULTS_SLIDEDOWN
+  SERVER_CONFIG_DEFAULTS_SLIDEDOWN,
+  CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS
 } from "../config";
 import {
   AppUserConfigCustomLinkOptions,
   AppUserConfigPromptOptions,
   DelayedPromptType,
-  SlidedownPromptOptions,
-  SlidedownDelayOptions,
 } from '../models/Prompts';
 import TagUtils from '../../src/utils/TagUtils';
 import PromptsHelper from './PromptsHelper';
@@ -246,25 +245,28 @@ export class ConfigHelper {
         if (promptOption.type === DelayedPromptType.Category) {
           promptOption.text = {
             ...promptOption.text,
-            positiveUpdateButton: Utils.getValueOrDefault(promptOption.text.positiveUpdateButton,
+            positiveUpdateButton: Utils.getValueOrDefault(promptOption.text?.positiveUpdateButton,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.positiveUpdateButton),
-            negativeUpdateButton: Utils.getValueOrDefault(promptOption.text.negativeUpdateButton,
+            negativeUpdateButton: Utils.getValueOrDefault(promptOption.text?.negativeUpdateButton,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.negativeUpdateButton),
-            updateMessage: Utils.getValueOrDefault(promptOption.text.updateMessage,
+            updateMessage: Utils.getValueOrDefault(promptOption.text?.updateMessage,
               SERVER_CONFIG_DEFAULTS_SLIDEDOWN.categoryDefaults.updateMessage),
           };
         }
 
         promptOption.text = {
           ...promptOption.text,
-          actionMessage: Utils.getValueOrDefault(promptOption?.text?.actionMessage,
+          actionMessage: Utils.getValueOrDefault(promptOption.text?.actionMessage,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage),
-          acceptButton: Utils.getValueOrDefault(promptOption?.text?.acceptButton,
+          acceptButton: Utils.getValueOrDefault(promptOption.text?.acceptButton,
             SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton),
-          cancelButton: Utils.getValueOrDefault(promptOption?.text?.cancelButton,
-            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton)
+          cancelButton: Utils.getValueOrDefault(promptOption.text?.cancelButton,
+            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton),
+          confirmMessage: Utils.getValueOrDefault(promptOption.text?.confirmMessage,
+            SERVER_CONFIG_DEFAULTS_SLIDEDOWN.confirmMessage)
         };
 
+        // default autoPrompt to true iff slidedown config exists but omitted the autoPrompt setting
         promptOption.autoPrompt = Utils.getValueOrDefault(promptOption.autoPrompt, true);
 
         promptOption.delay = {
@@ -284,24 +286,7 @@ export class ConfigHelper {
 
     } else {
       promptOptionsConfig.slidedown = { prompts: [] };
-
-      const delayOptions : SlidedownDelayOptions = {
-        timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
-        pageViews: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.pageViews
-      };
-
-      const defaultSlidedownOptions : SlidedownPromptOptions = {
-        type        : DelayedPromptType.Push,
-        text        : {
-          actionMessage : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.actionMessage,
-          acceptButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.acceptButton,
-          cancelButton  : SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton
-        },
-        autoPrompt  : false, // default to false
-        delay       : delayOptions
-      };
-
-      promptOptionsConfig.slidedown.prompts = [defaultSlidedownOptions];
+      promptOptionsConfig.slidedown.prompts = [ CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS ];
     }
 
     if (promptOptionsConfig.native) {

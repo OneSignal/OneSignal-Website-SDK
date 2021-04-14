@@ -19,14 +19,17 @@ import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
 import { getLoadingIndicatorWithColor } from './LoadingIndicator';
 import { getRetryIndicator } from './RetryIndicator';
 import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from "./constants";
-import { TagCategory } from '../../src/models/Tags';
-import Log from '../../src/libraries/Log';
+import { TagCategory } from '../models/Tags';
 import { getSlidedownElement } from './SlidedownElement';
-import { Utils } from '../../src/context/shared/utils/Utils';
+import { Utils } from '../context/shared/utils/Utils';
+import ChannelCaptureContainer from './ChannelCaptureContainer';
+import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import PromptsHelper from '../helpers/PromptsHelper';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
   public notificationIcons: NotificationIcons | null;
+  public channelCaptureContainer: ChannelCaptureContainer | null;
 
   // category slidedown
   public isShowingFailureState: boolean;
@@ -43,6 +46,7 @@ export default class Slidedown {
     this.options.text.acceptButton  = options.text.acceptButton.substring(0, 16);
     this.options.text.cancelButton  = options.text.cancelButton.substring(0, 16);
     this.notificationIcons          = null;
+    this.channelCaptureContainer    = null;
     this.isShowingFailureState      = false;
 
     switch (options.type) {
@@ -54,7 +58,12 @@ export default class Slidedown {
         this.errorButton          = Utils.getValueOrDefault(this.options.text.positiveUpdateButton,
           SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton);
         break;
-      // TO DO: other cases: sms, email, smsAndEmail
+      case DelayedPromptType.Sms:
+      case DelayedPromptType.Email:
+      case DelayedPromptType.SmsAndEmail:
+        this.errorButton = Utils.getValueOrDefault(this.options.text.acceptButton,
+          SERVER_CONFIG_DEFAULTS_SLIDEDOWN.errorButton);
+        break;
       default:
         break;
     }
@@ -107,81 +116,111 @@ export default class Slidedown {
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
       this.cancelButton.addEventListener('click', this.onSlidedownCanceled.bind(this));
-      Event.trigger(Slidedown.EVENTS.SHOWN);
     }
   }
 
+  static async triggerSlidedownEvent(eventName: string): Promise<void> {
+    await Event.trigger(eventName);
+  }
+
   async onSlidedownAllowed(_: any): Promise<void> {
-    await Event.trigger(Slidedown.EVENTS.ALLOW_CLICK);
+    await Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.ALLOW_CLICK);
   }
 
   onSlidedownCanceled(_: any): void {
-    Event.trigger(Slidedown.EVENTS.CANCEL_CLICK);
+    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CANCEL_CLICK);
     this.close();
+    Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.CLOSED);
   }
 
   close(): void {
     addCssClass(this.container, SLIDEDOWN_CSS_CLASSES.closeSlidedown);
     once(this.dialog, 'animationend', (event: any, destroyListenerFn: () => void) => {
       if (event.target === this.dialog &&
-          (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
+        (event.animationName === 'slideDownExit' || event.animationName === 'slideUpExit')) {
           // Uninstall the event listener for animationend
           removeDomElement(`#${SLIDEDOWN_CSS_IDS.container}`);
           destroyListenerFn();
-          Event.trigger(Slidedown.EVENTS.CLOSED);
+
+          /**
+           * Remember to trigger closed event after invoking close()
+           * This is due to the once() function not running correctly in test environment
+           */
       }
     }, true);
   }
 
   /**
-   * only used with Category Slidedown
+   * To be used with slidedown types other than `push` type
    */
-  setSaveState(state: boolean): void {
-    if (!this.tagCategories) {
-      Log.debug("Slidedown private category options are not defined");
-      return;
-    }
+  setSaveState(): void {
+    // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
+    this.allowButton.disabled = true;
+    this.allowButton.textContent = null;
 
-    if (state) {
-      // note: savingButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.disabled = true;
-      this.allowButton.textContent = null;
+    this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.savingButton));
+    this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
 
-      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.savingButton));
-      this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
-
-      addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
-      addCssClass(this.allowButton, 'disabled');
-      addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
-    } else {
-      this.allowButton.textContent = this.positiveUpdateButton;
-      removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
-      this.allowButton.disabled = false;
-      removeCssClass(this.allowButton, 'disabled');
-      removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
-    }
+    addDomElement(this.buttonIndicatorHolder,'beforeend', getLoadingIndicatorWithColor(COLORS.whiteLoadingIndicator));
+    addCssClass(this.allowButton, 'disabled');
+    addCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
   }
 
-  setFailureState(state: boolean): void {
-    if (!this.tagCategories) {
-      Log.debug("Slidedown private category options are not defined");
-      return;
-    }
+  /**
+   * To be used with slidedown types other than `push` type
+   */
+  removeSaveState(): void {
+    this.allowButton.textContent = this.positiveUpdateButton;
+    removeDomElement(`#${SLIDEDOWN_CSS_CLASSES.buttonIndicatorHolder}`);
+    this.allowButton.disabled = false;
+    removeCssClass(this.allowButton, 'disabled');
+    removeCssClass(this.allowButton, SLIDEDOWN_CSS_CLASSES.savingStateButton);
+  }
 
-    if (state) {
-      // note: errorButton is hardcoded in constructor. TODO: pull from config & set defaults for future release
-      this.allowButton.textContent = null;
-      this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
+  /**
+   * @param  {InvalidChannelInputField} invalidChannelInput? - for use in Web Prompts only!
+   *    we want the ability to be able to specify which channel input failed validation
+   * @returns void
+   */
+  setFailureState(): void {
+    this.allowButton.textContent = null;
+    this.allowButton.insertAdjacentElement('beforeend', this.getTextSpan(this.errorButton));
+
+    if (this.options.type === DelayedPromptType.Category) {
       this.allowButton.insertAdjacentElement('beforeend', this.getIndicatorHolder());
-
       addDomElement(this.buttonIndicatorHolder, 'beforeend', getRetryIndicator());
       addCssClass(this.allowButton, 'onesignal-error-state-button');
-    } else {
-      removeDomElement('#onesignal-button-indicator-holder');
-      removeCssClass(this.allowButton, 'onesignal-error-state-button');
     }
 
-    this.isShowingFailureState = state;
+    this.isShowingFailureState = true;
+  }
+
+  setFailureStateForInvalidChannelInput(invalidChannelInput: InvalidChannelInputField): void {
+    switch (invalidChannelInput) {
+      case InvalidChannelInputField.InvalidSms:
+        ChannelCaptureContainer.showSmsInputError(true);
+        break;
+      case InvalidChannelInputField.InvalidEmail:
+        ChannelCaptureContainer.showEmailInputError(true);
+        break;
+      case InvalidChannelInputField.InvalidEmailAndSms:
+        ChannelCaptureContainer.showSmsInputError(true);
+        ChannelCaptureContainer.showEmailInputError(true);
+        break;
+      default:
+        break;
+      }
+  }
+
+  removeFailureState(): void {
+    removeDomElement('#onesignal-button-indicator-holder');
+    removeCssClass(this.allowButton, 'onesignal-error-state-button');
+
+    if (!PromptsHelper.isSlidedownPushDependent(this.options.type)) {
+      ChannelCaptureContainer.resetInputErrorStates(this.options.type);
+    }
+
+    this.isShowingFailureState = false;
   }
 
   getPlatformNotificationIcon(): string {
@@ -231,6 +270,7 @@ export default class Slidedown {
       CANCEL_CLICK: 'popoverCancelClick',
       SHOWN: 'popoverShown',
       CLOSED: 'popoverClosed',
+      QUEUED: 'popoverQueued'
     };
   }
 }
