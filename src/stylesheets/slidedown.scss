@@ -319,6 +319,7 @@ $desktop-width: 1024px;
 
       &:checked ~ .onesignal-checkmark:after {
         display: block;
+        box-sizing: content-box;
       }
     }
 
@@ -356,6 +357,7 @@ $desktop-width: 1024px;
         width: 0.33em;
         height: 0.66em;
         border: solid white;
+        box-sizing: content-box;
         border-width: 0 3px 3px 0;
         -webkit-transform: rotate(45deg);
         -ms-transform: rotate(45deg);
