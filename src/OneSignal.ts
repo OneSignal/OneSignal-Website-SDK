@@ -58,6 +58,7 @@ import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
+import { AuthHashOptionsValidatorHelper } from './helpers/page/AuthHashOptionsValidatorHelper';
 
 export default class OneSignal {
   /**
@@ -99,29 +100,10 @@ export default class OneSignal {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
 
-    const isIdentifierAuthHashDefined = options && !!options.identifierAuthHash;
-    const isEmailAuthHashDefined      = options && !!options.emailAuthHash;
-
-    const authHash = isIdentifierAuthHashDefined ? options.identifierAuthHash :
-      (isEmailAuthHashDefined ? options.emailAuthHash : undefined);
-
-    if (!!authHash) {
-      if (isIdentifierAuthHashDefined && isEmailAuthHashDefined) {
-        Log.error("Both `emailAuthHash` and `identifierAuthHash` provided.");
-        throw new InvalidArgumentError('options', InvalidArgumentReason.Malformed);
-      }
-      // identifierAuthHash / emailAuthHash are expected to be a 64 character SHA-256 hex hash
-      const isIdentifierAuthHashMalformed = isIdentifierAuthHashDefined && options.identifierAuthHash.length !== 64;
-      const isEmailAuthHashIsMalformed    = isEmailAuthHashDefined && options.emailAuthHash.length !== 64;
-
-      if ( isIdentifierAuthHashMalformed ) {
-        throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
-      }
-
-      if ( isEmailAuthHashIsMalformed ) {
-        throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
-      }
-    }
+    const authHash = AuthHashOptionsValidatorHelper.throwIfInvalidAuthHashOptions(
+      options,
+      ["identifierAuthHash", "emailAuthHash"]
+    );
 
     logMethodCall('setEmail', email, options);
     await awaitOneSignalInitAndSupported();
@@ -518,11 +500,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
-    if (!!authHash) {
-      if ( authHash.length !== 64 ) {
-        throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
-      }
-    }
+    AuthHashOptionsValidatorHelper.throwIfInvalidAuthHash(authHash, "authHash");
 
     const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!isExistingUser) {
