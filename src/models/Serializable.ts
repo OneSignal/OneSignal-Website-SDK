@@ -1,3 +1,9 @@
+export type SerializeReturnType = object | string | number | boolean;
+
 export interface Serializable {
-  serialize(): object | string | number | boolean;
+  serialize(): SerializeReturnType;
+}
+
+export interface SerializableGeneric<T> {
+  serialize(): T;
 }
