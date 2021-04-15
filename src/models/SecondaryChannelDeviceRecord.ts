@@ -3,14 +3,14 @@ import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { DeviceRecord } from './DeviceRecord';
 
 /**
- * Describes an email device record.
+ * Describes an secondary channel device record, such as an email.
  */
 export class SecondaryChannelDeviceRecord extends DeviceRecord {
   /**
-   * @param email Omitting this parameter does not void the record's identifier.
+   * @param identifier Omitting this parameter does not void the record's identifier.
    */
   constructor(
-    public email?: string | null,
+    public identifier?: string | null,
     public identifierAuthHash?: string | null,
     public pushDeviceRecordId?: string | null,
   ) {
@@ -21,8 +21,8 @@ export class SecondaryChannelDeviceRecord extends DeviceRecord {
   serialize() {
     const serializedBundle: any = super.serialize();
 
-    if (this.email) {
-      serializedBundle.identifier = this.email;
+    if (this.identifier) {
+      serializedBundle.identifier = this.identifier;
     }
     if (this.identifierAuthHash) {
       serializedBundle.identifier_auth_hash = this.identifierAuthHash;

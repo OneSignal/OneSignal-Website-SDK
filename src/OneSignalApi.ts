@@ -3,10 +3,11 @@ import SdkEnvironment from "./managers/SdkEnvironment";
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
-import { EmailProfile } from './models/EmailProfile';
+import { SecondaryChannelProfile } from './models/SecondaryChannelProfile';
 import OneSignalApiSW from "./OneSignalApiSW";
 import OneSignalApiShared from "./OneSignalApiShared";
 import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
+import { EmailProfile } from './models/EmailProfile';
 
 export default class OneSignalApi {
   static getPlayer(appId: string, playerId: string) {
@@ -51,7 +52,7 @@ export default class OneSignalApi {
 
   static async createEmailRecord(
     appConfig: AppConfig,
-    emailProfile: EmailProfile,
+    emailProfile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     return await OneSignalApiShared.createEmailRecord(appConfig, emailProfile, pushDeviceRecordId);
@@ -59,7 +60,7 @@ export default class OneSignalApi {
 
   static async updateEmailRecord(
     appConfig: AppConfig,
-    emailProfile: EmailProfile,
+    emailProfile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     return await OneSignalApiShared.updateEmailRecord(appConfig, emailProfile, pushDeviceRecordId);

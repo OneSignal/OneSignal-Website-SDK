@@ -1,4 +1,4 @@
-import { SecondaryChannelProfile } from './SecondaryChannelProfile';
+import { SecondaryChannelProfileSerializable } from './SecondaryChannelProfile';
 
 export interface BundleTypeEmail {
   emailId?: string;
@@ -6,7 +6,7 @@ export interface BundleTypeEmail {
   identifierAuthHash: string;
 }
 
-export class EmailProfile extends SecondaryChannelProfile<BundleTypeEmail> {
+export class EmailProfile extends SecondaryChannelProfileSerializable<BundleTypeEmail> {
 
   constructor(emailId?: string | null, emailAddress?: string, identifierAuthHash?: string) {
     super();

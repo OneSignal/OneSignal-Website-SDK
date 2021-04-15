@@ -1,13 +1,14 @@
 import { AppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
-import { EmailProfile } from './models/EmailProfile';
+import { SecondaryChannelProfile } from './models/SecondaryChannelProfile';
 import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
 import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
 import Log from "./libraries/Log";
 import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
+import { EmailProfile } from './models/EmailProfile';
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {
@@ -56,7 +57,7 @@ export default class OneSignalApiShared {
 
   static async createEmailRecord(
     appConfig: AppConfig,
-    emailProfile: EmailProfile,
+    emailProfile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);
@@ -78,7 +79,7 @@ export default class OneSignalApiShared {
 
   static async updateEmailRecord(
     appConfig: AppConfig,
-    emailProfile: EmailProfile,
+    emailProfile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);

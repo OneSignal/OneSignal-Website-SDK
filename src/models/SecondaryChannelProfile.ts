@@ -1,6 +1,6 @@
 import { SerializableGeneric } from "./Serializable";
 
-export abstract class SecondaryChannelProfile<BundleType> implements SerializableGeneric<BundleType> {
+export abstract class SecondaryChannelProfile {
  /**
   * The OneSignal playerId UUID provided by the OneSignal REST API when it is created
   */
@@ -13,6 +13,8 @@ export abstract class SecondaryChannelProfile<BundleType> implements Serializabl
   * The SHA-256 hash of the app's auth key and plain text identifier in hex format.
   */
  public identifierAuthHash: string | null | undefined;
+}
 
+export abstract class SecondaryChannelProfileSerializable<BundleType> extends SecondaryChannelProfile implements SerializableGeneric<BundleType> {
  abstract serialize(): BundleType;
 }
