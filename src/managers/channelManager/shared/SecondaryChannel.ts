@@ -11,5 +11,5 @@ export interface SecondaryChannelWithControllerEvents {
   onFocus(): void;
 
   setTags(tags: {[key: string]: any}): void;
-  setExternalUserId(id: string): void;
+  setExternalUserId(id: string, authHash?: string): Promise<void>;
 }

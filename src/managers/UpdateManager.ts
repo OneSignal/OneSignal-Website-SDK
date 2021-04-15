@@ -83,7 +83,7 @@ export class UpdateManager {
 
     try {
       // Not sending on_session here but from SW instead.
-      
+
       // Not awaiting here on purpose
       this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
@@ -126,6 +126,11 @@ export class UpdateManager {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
     } as UpdatePlayerExternalUserId;
+
+    await this.context.secondaryChannelManager.controller.setExternalUserId(
+      payload.external_user_id,
+      payload.external_user_id_auth_hash
+    );
 
     return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
   }

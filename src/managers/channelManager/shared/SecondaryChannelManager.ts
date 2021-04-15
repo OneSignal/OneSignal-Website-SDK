@@ -3,10 +3,14 @@ import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelEmail } from "./SecondaryChannelEmail";
 import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelProfileProviderEmail } from "./SecondaryChannelProfileProviderEmail";
+import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 
 export class SecondaryChannelManager {
 
   private _secondaryChannelController: SecondaryChannelController;
+  public get controller() : SecondaryChannelController {
+    return this._secondaryChannelController;
+  }
 
   private _email: SecondaryChannelEmail;
   public get email() : SecondaryChannel {
@@ -16,9 +20,11 @@ export class SecondaryChannelManager {
   constructor() {
     this._secondaryChannelController = new SecondaryChannelController();
 
+    const emailProfileProvider = new SecondaryChannelProfileProviderEmail();
     this._email = new SecondaryChannelEmail(
       this._secondaryChannelController,
-      new SecondaryChannelIdentifierUpdater(new SecondaryChannelProfileProviderEmail())
+      new SecondaryChannelIdentifierUpdater(emailProfileProvider),
+      new SecondaryChannelExternalUserIdUpdater(emailProfileProvider)
     );
   }
 }

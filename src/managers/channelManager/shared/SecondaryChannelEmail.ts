@@ -1,15 +1,18 @@
 import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
 import OneSignalApi from "../../../OneSignalApi";
+import OneSignalApiShared from "../../../OneSignalApiShared";
 import Database from "../../../services/Database";
 import { SecondaryChannel, SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
 import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
+import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithControllerEvents {
 
   constructor(
     readonly secondaryChannelController: SecondaryChannelController,
-    readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater
+    readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
+    readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater
     ) {
     secondaryChannelController.registerChannel(this);
   }
@@ -72,8 +75,9 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   setTags(tags: any): void {
     throw new Error("Method not implemented.");
   }
-  setExternalUserId(id: string) {
-    throw new Error("Method not implemented.");
+
+  async setExternalUserId(id: string, authHash?: string): Promise<void> {
+    await this.secondaryChannelExternalUserIdUpdater.setExternalUserId(id, authHash);
   }
 
 }
