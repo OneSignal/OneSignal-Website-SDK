@@ -55,21 +55,21 @@ export default class OneSignalApiShared {
     return null;
   }
 
-  static async createEmailRecord(
+  static async createSecondaryChannelRecord(
     appConfig: AppConfig,
-    emailProfile: SecondaryChannelProfile,
+    profile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);
 
-    const emailRecord = new SecondaryChannelDeviceRecord(
-      emailProfile.identifier,
-      emailProfile.identifierAuthHash,
+    const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
+      profile.identifier,
+      profile.identifierAuthHash,
       pushDeviceRecordId
     );
 
-    emailRecord.appId = appConfig.appId;
-    const response = await OneSignalApiBase.post(`players`, emailRecord.serialize());
+    secondaryChannelRecord.appId = appConfig.appId;
+    const response = await OneSignalApiBase.post(`players`, secondaryChannelRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {
@@ -77,22 +77,22 @@ export default class OneSignalApiShared {
     }
   }
 
-  static async updateEmailRecord(
+  static async updateSecondaryChannelRecord(
     appConfig: AppConfig,
-    emailProfile: SecondaryChannelProfile,
+    profile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);
-    Utils.enforcePlayerId(emailProfile.playerId);
+    Utils.enforcePlayerId(profile.playerId);
 
-    const emailRecord = new SecondaryChannelDeviceRecord(
-      emailProfile.identifier,
-      emailProfile.identifierAuthHash,
+    const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
+      profile.identifier,
+      profile.identifierAuthHash,
       pushDeviceRecordId
     );
 
-    emailRecord.appId = appConfig.appId;
-    const response = await OneSignalApiBase.put(`players/${emailProfile.playerId}`, emailRecord.serialize());
+    secondaryChannelRecord.appId = appConfig.appId;
+    const response = await OneSignalApiBase.put(`players/${profile.playerId}`, secondaryChannelRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {

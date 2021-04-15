@@ -24,14 +24,14 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
 
     if (isExistingEmailSaved) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
-      newEmailProfile.playerId = await OneSignalApi.updateEmailRecord(
+      newEmailProfile.playerId = await OneSignalApi.updateSecondaryChannelRecord(
         appConfig,
         newEmailProfile,
         deviceId
       );
     } else {
       // Otherwise, make a POST call to create a new email record
-      newEmailProfile.playerId = await OneSignalApi.createEmailRecord(
+      newEmailProfile.playerId = await OneSignalApi.createSecondaryChannelRecord(
         appConfig,
         newEmailProfile,
         deviceId
