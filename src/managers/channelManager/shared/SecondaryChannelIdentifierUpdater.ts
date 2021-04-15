@@ -2,6 +2,7 @@ import OneSignalApi from "../../../OneSignalApi";
 import Database from "../../../services/Database";
 import { SecondaryChannelProfileProvider } from "./SecondaryChannelProfileProvider";
 
+// Creates / updates the identifier for a Secondary Channel and persists to storage.
 export class SecondaryChannelIdentifierUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProvider) {
   }
@@ -9,32 +10,32 @@ export class SecondaryChannelIdentifierUpdater {
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
     const appConfig = await Database.getAppConfig();
     const { deviceId } = await Database.getSubscription();
-    const existingEmailProfile = await this.profileProvider.getProfile();
+    const existingProfile = await this.profileProvider.getProfile();
 
-    const newEmailProfile = this.profileProvider.newProfile(existingEmailProfile.playerId, identifier, authHash);
-    const isExistingEmailSaved = !!existingEmailProfile.playerId;
+    const newProfile = this.profileProvider.newProfile(existingProfile.playerId, identifier, authHash);
+    const isExisting = !!existingProfile.playerId;
 
-    if (isExistingEmailSaved) {
-      // If we already have a saved email player ID, make a PUT call to update the existing email record
-      newEmailProfile.playerId = await OneSignalApi.updateSecondaryChannelRecord(
+    if (isExisting) {
+      // If we already have a saved a player ID, make a PUT call to update the existing record
+      newProfile.playerId = await OneSignalApi.updateSecondaryChannelRecord(
         appConfig,
-        newEmailProfile,
+        newProfile,
         deviceId
       );
     } else {
-      // Otherwise, make a POST call to create a new email record
-      newEmailProfile.playerId = await OneSignalApi.createSecondaryChannelRecord(
+      // Otherwise, make a POST call to create a new record
+      newProfile.playerId = await OneSignalApi.createSecondaryChannelRecord(
         appConfig,
-        newEmailProfile,
+        newProfile,
         deviceId
       );
     }
 
-     // email record update / create call returned successfully
-     if (!!newEmailProfile.playerId) {
-       await this.profileProvider.setProfile(newEmailProfile);
+     // Record update / create call, save to storage
+     if (!!newProfile.playerId) {
+       await this.profileProvider.setProfile(newProfile);
      }
 
-     return newEmailProfile.playerId;
+     return newProfile.playerId;
   }
 }
