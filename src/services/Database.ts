@@ -8,7 +8,7 @@ import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
-import { EmailProfile } from "../models/EmailProfile";
+import { BundleTypeEmail, EmailProfile } from "../models/EmailProfile";
 import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
@@ -352,7 +352,7 @@ export default class Database {
   }
 
   async getEmailProfile(): Promise<EmailProfile> {
-    const profileJson = await this.get<string>("Ids", "emailProfile");
+    const profileJson = await this.get<BundleTypeEmail>("Ids", "emailProfile");
     if (profileJson) {
       return EmailProfile.deserialize(profileJson);
     } else {
