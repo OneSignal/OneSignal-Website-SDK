@@ -15,7 +15,7 @@ import OneSignalApiShared from '../OneSignalApiShared';
 import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
+import { SecondaryChannelDeviceRecord } from '../models/SecondaryChannelDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
@@ -365,7 +365,7 @@ export default class InitHelper {
     if (context.pageViewManager.isFirstPageView()) {
       const emailProfile = await Database.getEmailProfile();
       if (emailProfile.playerId) {
-        const emailDeviceRecord = new EmailDeviceRecord(emailProfile.identifier, emailProfile.identifierAuthHash);
+        const emailDeviceRecord = new SecondaryChannelDeviceRecord(emailProfile.identifier, emailProfile.identifierAuthHash);
         emailDeviceRecord.appId = context.appConfig.appId;
         await OneSignalApiShared.updateUserSession(
           emailProfile.playerId,

@@ -5,7 +5,7 @@ import { DeviceRecord } from './DeviceRecord';
 /**
  * Describes an email device record.
  */
-export class EmailDeviceRecord extends DeviceRecord {
+export class SecondaryChannelDeviceRecord extends DeviceRecord {
   /**
    * @param email Omitting this parameter does not void the record's identifier.
    */
@@ -34,5 +34,5 @@ export class EmailDeviceRecord extends DeviceRecord {
     return serializedBundle;
   }
 
-  deserialize(_: object): EmailDeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): SecondaryChannelDeviceRecord { throw new NotImplementedError(); }
 }
