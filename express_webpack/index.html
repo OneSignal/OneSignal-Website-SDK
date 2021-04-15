@@ -153,6 +153,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OneSignal WebSDK Sandbox</title>
     <link rel="shortcut icon" href="#">
+    <script>
+        addEventListener("load", () => {
+          new PerformanceObserver((list) => {
+              list.getEntries().forEach((entry) => {
+                if (entry.hadRecentInput) return;
+                console.log('layout-shift detected', {entry});
+              });
+          }).observe({type: "layout-shift", buffered: true});
+        });
+    </script>
 </head>
 <body>
     <h1>OneSignal WebSDK Sandbox</h1>
