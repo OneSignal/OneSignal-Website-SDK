@@ -139,7 +139,7 @@ export default class OneSignal {
     const emailProfile = await Database.getEmailProfile();
     const { deviceId } = await Database.getSubscription();
 
-    if (!emailProfile.emailId) {
+    if (!emailProfile.playerId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return;
     }
@@ -453,13 +453,13 @@ export default class OneSignal {
     const { appId } = await Database.getAppConfig();
 
     const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.emailId) {
+    if (emailProfile.playerId) {
       const emailOptions : UpdatePlayerOptions = {
         tags,
         identifier_auth_hash: emailProfile.identifierAuthHash
       };
 
-      await OneSignalApi.updatePlayer(appId, emailProfile.emailId, emailOptions);
+      await OneSignalApi.updatePlayer(appId, emailProfile.playerId, emailOptions);
     }
 
     const { deviceId } = await Database.getSubscription();
@@ -687,7 +687,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
-    const emailId = emailProfile.emailId;
+    const emailId = emailProfile.playerId;
     executeCallback(callback, emailId);
     return emailId;
   }

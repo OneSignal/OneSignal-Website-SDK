@@ -19,19 +19,19 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     const { deviceId } = await Database.getSubscription();
     const existingEmailProfile = await Database.getEmailProfile();
 
-    const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, identifier, authHash);
-    const isExistingEmailSaved = !!existingEmailProfile.emailId;
+    const newEmailProfile = new EmailProfile(existingEmailProfile.playerId, identifier, authHash);
+    const isExistingEmailSaved = !!existingEmailProfile.playerId;
 
     if (isExistingEmailSaved) {
       // If we already have a saved email player ID, make a PUT call to update the existing email record
-      newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
+      newEmailProfile.playerId = await OneSignalApi.updateEmailRecord(
         appConfig,
         newEmailProfile,
         deviceId
       );
     } else {
       // Otherwise, make a POST call to create a new email record
-      newEmailProfile.emailId = await OneSignalApi.createEmailRecord(
+      newEmailProfile.playerId = await OneSignalApi.createEmailRecord(
         appConfig,
         newEmailProfile,
         deviceId
@@ -42,10 +42,10 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
      const isExistingPushRecordSaved = deviceId;
      // And if we previously saved an email ID and it's different from the new returned ID
      const emailPreviouslySavedAndDifferent = !isExistingEmailSaved ||
-       existingEmailProfile.emailId !== newEmailProfile.emailId;
+       existingEmailProfile.playerId !== newEmailProfile.playerId;
      // Or if we previously saved an email and the email changed
-     const emailPreviouslySavedAndChanged = !existingEmailProfile.emailAddress ||
-       newEmailProfile.emailAddress !== existingEmailProfile.emailAddress;
+     const emailPreviouslySavedAndChanged = !existingEmailProfile.identifier ||
+       newEmailProfile.identifier !== existingEmailProfile.identifier;
 
      if (!!deviceId && isExistingPushRecordSaved && (emailPreviouslySavedAndDifferent || emailPreviouslySavedAndChanged))
        {
@@ -55,19 +55,19 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
            appConfig.appId,
            deviceId,
            {
-             parent_player_id: newEmailProfile.emailId,
-             email: newEmailProfile.emailAddress,
+             parent_player_id: newEmailProfile.playerId,
+             email: newEmailProfile.identifier,
              external_user_id_auth_hash: authHash
            }
          );
      }
 
      // email record update / create call returned successfully
-     if (!!newEmailProfile.emailId) {
+     if (!!newEmailProfile.playerId) {
        await Database.setEmailProfile(newEmailProfile);
      }
 
-     return newEmailProfile.emailId;
+     return newEmailProfile.playerId;
   }
 
   onSession(): void {

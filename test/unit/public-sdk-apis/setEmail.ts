@@ -186,7 +186,7 @@ async function setEmailTest(
 
   if (testData.existingEmailAddress) {
     const emailProfile = await Database.getEmailProfile();
-    emailProfile.emailAddress = testData.existingEmailAddress;
+    emailProfile.identifier = testData.existingEmailAddress;
     await Database.setEmailProfile(emailProfile);
   }
 
@@ -206,7 +206,7 @@ async function setEmailTest(
 
   if (testData.existingEmailId) {
     const emailProfile = await Database.getEmailProfile();
-    emailProfile.emailId = testData.existingEmailId;
+    emailProfile.playerId = testData.existingEmailId;
     await Database.setEmailProfile(emailProfile);
   }
 
@@ -267,9 +267,9 @@ async function setEmailTest(
   const finalEmailProfile = await Database.getEmailProfile();
 
   t.deepEqual(finalPushDeviceId, testData.existingPushDeviceId ? testData.existingPushDeviceId : null);
-  t.deepEqual(finalEmailProfile.emailAddress, testData.newEmailAddress);
+  t.deepEqual(finalEmailProfile.identifier, testData.newEmailAddress);
   t.deepEqual(finalEmailProfile.identifierAuthHash, testData.identifierAuthHash);
-  t.deepEqual(finalEmailProfile.emailId, testData.newEmailId);
+  t.deepEqual(finalEmailProfile.playerId, testData.newEmailId);
 }
 
 test("No push subscription, no email, first setEmail call", async t => {

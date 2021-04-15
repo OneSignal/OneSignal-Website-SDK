@@ -87,7 +87,7 @@ test("email session should be updated on first page view", async t => {
   await InitHelper.updateEmailSessionCount();
   t.true(onSessionStub.calledOnce);
   t.is(onSessionStub.getCall(0).args.length, 2);
-  t.is(onSessionStub.getCall(0).args[0], testEmailProfile.emailId);
+  t.is(onSessionStub.getCall(0).args[0], testEmailProfile.playerId);
   const emailDeviceRecord = onSessionStub.getCall(0).args[1] as EmailDeviceRecord;
   t.is(emailDeviceRecord.appId, OneSignal.context.appConfig.appId);
 });
