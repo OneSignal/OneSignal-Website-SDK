@@ -10,6 +10,7 @@ import Utils from "../context/shared/utils/Utils";
 import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
 import { logMethodCall } from '../utils';
+import { UpdatePlayerExternalUserId } from "../models/UpdatePlayerOptions";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -124,7 +125,7 @@ export class UpdateManager {
     const payload = {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
-    };
+    } as UpdatePlayerExternalUserId;
 
     return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
   }
