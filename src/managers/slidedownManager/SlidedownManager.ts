@@ -51,13 +51,17 @@ export class SlidedownManager {
       isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
     }
 
-    // applies to push slidedown type only
-    if (slidedownType === DelayedPromptType.Push && isSubscribed) {
-      return false;
-    }
-
     // applies to both push and category slidedown types
     if (isSlidedownPushDependent) {
+      if (isSubscribed) {
+        // applies to category slidedown type only
+        if (options.isInUpdateMode) {
+          return true;
+        }
+
+        return false;
+      }
+
       wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
       if (!notOptedOut) {
