@@ -57,6 +57,7 @@ export default class EventsTestHelper {
 
   public simulateSubscribingAfterNativeAllow() {
     OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
+        this.sinonSandbox.stub(OneSignal, "privateGetSubscription").resolves(true);
         this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
             .resolves({ subscribed: true, isOptedOut: false });
         stubServiceWorkerInstallation(this.sinonSandbox);
