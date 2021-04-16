@@ -9,6 +9,7 @@ import { ServerAppConfig } from '../../../src/models/AppConfig';
 import Random from "../../support/tester/Random";
 import { Subscription } from "../../../src/models/Subscription";
 import { ExecutionContext } from 'ava';
+import Database from '../../../src/services/Database';
 
 export function isNullOrUndefined<T>(value: T | null | undefined): boolean {
   return typeof value === 'undefined' || value === null;
@@ -111,4 +112,11 @@ export function createSubscription(playerId?: string): Subscription {
   subscription.subscriptionToken = "some_token";
   subscription.createdAt = new Date(2017, 11, 13, 2, 3, 4, 0).getTime();
   return subscription;
+}
+
+export async function setupFakePlayerId(): Promise<string> {
+  const subscription: Subscription = new Subscription();
+  subscription.deviceId = Random.getRandomUuid();
+  await Database.setSubscription(subscription);
+  return subscription.deviceId;
 }

@@ -16,6 +16,7 @@ import { Subscription } from '../../../../src/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
 import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
+import { setupFakePlayerId } from '../../../support/tester/utils';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -161,13 +162,6 @@ test('displayNotification - persistNotification - false', async t => {
  /***************************************************
  * onNotificationClicked()
  ****************************************************/
-
-async function setupFakePlayerId(): Promise<string> {
-  const subscription: Subscription = new Subscription();
-  subscription.deviceId = Random.getRandomUuid();
-  await OneSignal.database.setSubscription(subscription);
-  return subscription.deviceId;
-}
 
 function mockNotificationNotificationEventInit(id: string): NotificationEventInit {
   const notificationOptions: NotificationOptions = { data: { id: id } };
