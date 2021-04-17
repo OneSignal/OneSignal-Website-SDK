@@ -16,7 +16,7 @@ test.beforeEach(async _t => {
 test("setExternalUserId after email, makes PUT call to update Email record", async t => {
   // 1. Nock out email create
   const emailPostNock = NockOneSignalHelper.nockPlayerPost();
-  await OneSignal.setEmail("test@test.com");
+  await OneSignal.setEmail(TEST_EMAIL_ADDRESS);
   const emailPlayerId = (await emailPostNock.result).response.body.id;
 
   // 2. Create a push player id in the DB
@@ -27,18 +27,18 @@ test("setExternalUserId after email, makes PUT call to update Email record", asy
 
   // 4. Call OneSignal.setExternalUserId and ensure email is updated
   const externalUserIdUpdateOnEmail = NockOneSignalHelper.nockPlayerPut(emailPlayerId);
-  const testExternalUserId = "myExtId";
-  await OneSignal.setExternalUserId(testExternalUserId);
+  await OneSignal.setExternalUserId(TEST_EXTERNAL_USER_ID);
 
   t.deepEqual(
-    (await externalUserIdUpdateOnEmail.result).request.body, {
+    (await externalUserIdUpdateOnEmail.result).request.body,
+    {
       app_id: OneSignal.context.appConfig.appId,
-      external_user_id: testExternalUserId
+      external_user_id: TEST_EXTERNAL_USER_ID
     }
   );
 });
 
-test("setExternalUserId before email, should make PUT call on email player_id with external_user_id", async t => {
+test("setExternalUserId before email, makes PUT call to update Email record", async t => {
   // 1. Create a push player id in the DB
   const pushPlayerId = await setupFakePlayerId();
 
@@ -46,7 +46,7 @@ test("setExternalUserId before email, should make PUT call on email player_id wi
   NockOneSignalHelper.nockPlayerPut(pushPlayerId);
 
   // 3. Call OneSignal.setExternalUserId
-   OneSignal.setExternalUserId(TEST_EXTERNAL_USER_ID);
+  OneSignal.setExternalUserId(TEST_EXTERNAL_USER_ID);
 
   // 4. Nock out parent_player_id update for push player, ignore it
   // TODO: This is repeated again here. Can we just ignore all player PUT requests to the push player?
