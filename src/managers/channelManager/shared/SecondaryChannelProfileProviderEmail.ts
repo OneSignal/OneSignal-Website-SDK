@@ -1,8 +1,9 @@
 import { EmailProfile } from "../../../models/EmailProfile";
 import Database from "../../../services/Database";
-import { SecondaryChannelProfileProvider } from "./SecondaryChannelProfileProvider";
+import { SecondaryChannelProfileProviderBase } from "./SecondaryChannelProfileProviderBase";
 
-export class SecondaryChannelProfileProviderEmail implements SecondaryChannelProfileProvider {
+export class SecondaryChannelProfileProviderEmail extends SecondaryChannelProfileProviderBase {
+
   newProfile(playerId?: string | null, identifier?: string, identifierAuthHash?: string): EmailProfile {
     return new EmailProfile(playerId, identifier, identifierAuthHash);
   }
@@ -13,5 +14,6 @@ export class SecondaryChannelProfileProviderEmail implements SecondaryChannelPro
 
   async setProfile(profile: EmailProfile): Promise<void> {
     await Database.setEmailProfile(profile);
+    await super.setProfile(profile);
   }
 }
