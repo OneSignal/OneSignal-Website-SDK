@@ -2,7 +2,7 @@
 //   Example: OneSignal.ts as a consumer.
 export interface SecondaryChannel {
   setIdentifier(identifier: string, authHash?: string): Promise<string | null>;
-  logout(): void;
+  logout(): Promise<boolean>;
 }
 
 // Interface that the SecondaryChannelController will interface with

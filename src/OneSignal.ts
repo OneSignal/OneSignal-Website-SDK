@@ -116,27 +116,7 @@ export default class OneSignal {
    */
   static async logoutEmail() {
     await awaitOneSignalInitAndSupported();
-
-    const appConfig = await Database.getAppConfig();
-    const emailProfile = await Database.getEmailProfile();
-    const { deviceId } = await Database.getSubscription();
-
-    if (!emailProfile.playerId) {
-      Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
-      return;
-    }
-
-    if (!deviceId) {
-      Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return;
-    }
-
-    if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
-      Log.warn("Failed to logout email.");
-      return;
-    }
-
-    await Database.setEmailProfile(new EmailProfile());
+    return await this.context.secondaryChannelManager.email.logout();
   }
 
   /**

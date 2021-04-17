@@ -1,3 +1,6 @@
+import { NotSubscribedError, NotSubscribedReason } from "../../../errors/NotSubscribedError";
+import Log from "../../../libraries/Log";
+import { EmailProfile } from "../../../models/EmailProfile";
 import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
 import OneSignalApi from "../../../OneSignalApi";
 import OneSignalApiShared from "../../../OneSignalApiShared";
@@ -17,8 +20,28 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     secondaryChannelController.registerChannel(this);
   }
 
-  logout(): void {
-    throw new Error("Method not implemented.");
+  async logout(): Promise<boolean> {
+    const { deviceId } = await Database.getSubscription();
+    if (!deviceId) {
+      Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+      return false;
+    }
+
+    const emailProfile = await Database.getEmailProfile();
+    if (!emailProfile.playerId) {
+      Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
+      return false;
+    }
+
+    const appConfig = await Database.getAppConfig();
+
+    if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
+      Log.warn("Failed to logout email.");
+      return false;
+    }
+
+    await Database.setEmailProfile(new EmailProfile());
+    return true;
   }
 
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
