@@ -4,17 +4,17 @@ import nock, { Interceptor } from "nock";
 
 type NockResultFunction = (result: NockRequestResult) => void;
 
-interface NockRequest {
+export interface NockRequest {
   body: any;
   url: string;
 }
 
-interface NockResponse {
+export interface NockResponse {
   status: number;
   body: any;
 }
 
-interface NockRequestResult {
+export interface NockRequestResult {
   request: NockRequest;
   response: NockResponse;
 }
