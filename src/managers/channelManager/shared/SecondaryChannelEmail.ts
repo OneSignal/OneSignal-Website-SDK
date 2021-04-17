@@ -8,6 +8,7 @@ import Database from "../../../services/Database";
 import { SecondaryChannel, SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
 import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
+import { SecondaryChannelExternalTagsUpdater } from "./SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithControllerEvents {
@@ -15,7 +16,8 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   constructor(
     readonly secondaryChannelController: SecondaryChannelController,
     readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
-    readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater
+    readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater,
+    readonly secondaryChannelExternalTagsUpdater: SecondaryChannelExternalTagsUpdater
     ) {
     secondaryChannelController.registerChannel(this);
   }
@@ -95,8 +97,8 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   onFocus(): void {
     throw new Error("Method not implemented.");
   }
-  setTags(tags: any): void {
-    throw new Error("Method not implemented.");
+  async setTags(tags: any): Promise<void> {
+    await this.secondaryChannelExternalTagsUpdater.sendTags(tags);
   }
 
   async setExternalUserId(id: string, authHash?: string): Promise<void> {

@@ -414,15 +414,7 @@ export default class OneSignal {
     });
     const { appId } = await Database.getAppConfig();
 
-    const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.playerId) {
-      const emailOptions : UpdatePlayerOptions = {
-        tags,
-        identifier_auth_hash: emailProfile.identifierAuthHash
-      };
-
-      await OneSignalApi.updatePlayer(appId, emailProfile.playerId, emailOptions);
-    }
+    this.context.secondaryChannelManager.controller.setTags(tags);
 
     const { deviceId } = await Database.getSubscription();
     if (!deviceId) {

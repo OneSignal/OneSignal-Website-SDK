@@ -3,6 +3,7 @@ import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelEmail } from "./SecondaryChannelEmail";
 import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelProfileProviderEmail } from "./SecondaryChannelProfileProviderEmail";
+import { SecondaryChannelExternalTagsUpdater } from "./SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 
 export class SecondaryChannelManager {
@@ -24,7 +25,8 @@ export class SecondaryChannelManager {
     this._email = new SecondaryChannelEmail(
       this._secondaryChannelController,
       new SecondaryChannelIdentifierUpdater(emailProfileProvider),
-      new SecondaryChannelExternalUserIdUpdater(emailProfileProvider)
+      new SecondaryChannelExternalUserIdUpdater(emailProfileProvider),
+      new SecondaryChannelExternalTagsUpdater(emailProfileProvider)
     );
   }
 }

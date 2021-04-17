@@ -19,7 +19,8 @@ export class SecondaryChannelController {
   onFocus(): void {
   }
 
-  setTags(tags: {[key: string]: any}): void {
+  async setTags(tags: {[key: string]: any}): Promise<void> {
+    await Promise.all(this._channels.map(channel => channel.setTags(tags) ));
   }
 
   async setExternalUserId(id: string, authHash?: string): Promise<void> {

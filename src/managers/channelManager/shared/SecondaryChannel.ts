@@ -10,6 +10,6 @@ export interface SecondaryChannelWithControllerEvents {
   onSession(): void;
   onFocus(): void;
 
-  setTags(tags: {[key: string]: any}): void;
+  setTags(tags: {[key: string]: any}): Promise<void>;
   setExternalUserId(id: string, authHash?: string): Promise<void>;
 }
