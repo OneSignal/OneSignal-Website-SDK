@@ -4,6 +4,9 @@ import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
 import { setupFakePlayerId } from "../../support/tester/utils";
 
+const TEST_EXTERNAL_USER_ID = "myExtId";
+const TEST_EMAIL_ADDRESS = "test@test.com";
+
 test.beforeEach(async _t => {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
@@ -32,5 +35,32 @@ test("setExternalUserId after email, makes PUT call to update Email record", asy
       app_id: OneSignal.context.appConfig.appId,
       external_user_id: testExternalUserId
     }
+  );
+});
+
+test("setExternalUserId before email, should make PUT call on email player_id with external_user_id", async t => {
+  // 1. Create a push player id in the DB
+  const pushPlayerId = await setupFakePlayerId();
+
+  // 2. Nock out push player set external user id, ignore it
+  NockOneSignalHelper.nockPlayerPut(pushPlayerId);
+
+  // 3. Call OneSignal.setExternalUserId
+   OneSignal.setExternalUserId(TEST_EXTERNAL_USER_ID);
+
+  // 4. Nock out parent_player_id update for push player, ignore it
+  // TODO: This is repeated again here. Can we just ignore all player PUT requests to the push player?
+  NockOneSignalHelper.nockPlayerPut(pushPlayerId);
+
+  // 5. Call OneSignal.setEmail and get the returned playerId from the POST call.
+  const emailPostNock = NockOneSignalHelper.nockPlayerPost();
+  OneSignal.setEmail(TEST_EMAIL_ADDRESS);
+  const emailPlayerId = (await emailPostNock.result).response.body.id;
+
+  // 6. Await for the follow up PUT call to set external_user_id on email, ensure it was sent.
+  const emailPutResult = await NockOneSignalHelper.nockPlayerPut(emailPlayerId).result;
+  t.is(
+    emailPutResult.request.body.external_user_id,
+    TEST_EXTERNAL_USER_ID
   );
 });
