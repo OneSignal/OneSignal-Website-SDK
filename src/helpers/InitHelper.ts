@@ -359,22 +359,6 @@ export default class InitHelper {
     }
   }
 
-  public static async updateEmailSessionCount() {
-    const context: ContextInterface = OneSignal.context;
-    /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
-    if (context.pageViewManager.isFirstPageView()) {
-      const emailProfile = await Database.getEmailProfile();
-      if (emailProfile.playerId) {
-        const emailDeviceRecord = new SecondaryChannelDeviceRecord(emailProfile.identifier, emailProfile.identifierAuthHash);
-        emailDeviceRecord.appId = context.appConfig.appId;
-        await OneSignalApiShared.updateUserSession(
-          emailProfile.playerId,
-          emailDeviceRecord
-        );
-      }
-    }
-  }
-
   protected static async showPromptsFromWebConfigEditor() {
     const config: AppConfig = OneSignal.config;
     if (config.userConfig.promptOptions) {

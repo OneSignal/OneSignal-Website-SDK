@@ -10,9 +10,6 @@ import nock from 'nock';
 import Random from "../../support/tester/Random";
 import OneSignalApiBase from "../../../src/OneSignalApiBase";
 import { SdkInitError } from "../../../src/errors/SdkInitError";
-import OneSignalApiShared from "../../../src/OneSignalApiShared";
-import { EmailProfile } from "../../../src/models/EmailProfile";
-import { SecondaryChannelDeviceRecord } from "../../../src/models/SecondaryChannelDeviceRecord";
 import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';
@@ -67,31 +64,6 @@ test("correct degree of persistNotification setting should be stored", async t =
     t.is(persistNotification, true);
   }
 });
-
-test("email session should be updated on first page view", async t => {
-  const testEmailProfile: EmailProfile = new EmailProfile(
-    Random.getRandomUuid(),
-    "test@example.com",
-  );
-
-  await TestEnvironment.initialize();
-  TestEnvironment.mockInternalOneSignal();
-
-  // Ensure this is true, that way email on_session gets run
-  OneSignal.context.pageViewManager.setPageViewCount(1);
-  t.true(OneSignal.context.pageViewManager.isFirstPageView());
-
-  await Database.setEmailProfile(testEmailProfile);
-
-  const onSessionStub = sinonSandbox.stub(OneSignalApiShared, "updateUserSession").resolves();
-  await InitHelper.updateEmailSessionCount();
-  t.true(onSessionStub.calledOnce);
-  t.is(onSessionStub.getCall(0).args.length, 2);
-  t.is(onSessionStub.getCall(0).args[0], testEmailProfile.playerId);
-  const emailDeviceRecord = onSessionStub.getCall(0).args[1] as SecondaryChannelDeviceRecord;
-  t.is(emailDeviceRecord.appId, OneSignal.context.appConfig.appId);
-});
-
 
 test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => {
   const testConfig = {
