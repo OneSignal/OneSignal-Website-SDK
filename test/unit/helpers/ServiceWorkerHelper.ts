@@ -7,6 +7,7 @@ import ServiceWorkerHelper from "../../../src/helpers/ServiceWorkerHelper";
 import { initializeNewSession, Session, SessionOrigin } from "../../../src/models/Session";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
+import Database from "../../../src/services/Database";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -14,6 +15,7 @@ test.beforeEach(async t => {
     permission: NotificationPermission.Granted
   });
   TestEnvironment.mockInternalOneSignal();
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
 });
 
 test("sendOnSessionCallIfNecessary, for push player", async t => {
@@ -52,6 +54,56 @@ test("sendOnSessionCallIfNecessary, for push player", async t => {
       identifier: rawSubscription.w3cEndpoint!.toString(),
       web_auth: rawSubscription.w3cAuth,
       web_p256: rawSubscription.w3cP256dh,
+      sdk: '1',
+      timezone: 0,
+      timezone_id: 'UTC',
+    }
+  );
+});
+
+const TEST_EMAIL = "test@test.com";
+
+test("sendOnSessionCallIfNecessary, for email player", async t => {
+  // 1.1 Nock out email create
+  const emailPostNock = NockOneSignalHelper.nockPlayerPost();
+  await OneSignal.setEmail(TEST_EMAIL);
+  const emailPlayerId = (await emailPostNock.result).response.body.id;
+  // 1.2 Create a push player id in the DB
+  const pushPlayerId = await setupFakePlayerId();
+
+  // 2. Setup a raw subscription, push record, and session
+  const rawSubscription = TestEnvironment.getFakeRawPushSubscription();
+  const pushDeviceRecord = new PushDeviceRecord(rawSubscription);
+  pushDeviceRecord.appId = OneSignal.config.appId;
+  const session: Session = initializeNewSession(
+    { deviceId: pushPlayerId, appId: pushDeviceRecord.appId!, deviceType: DeliveryPlatformKind.ChromeLike }
+  );
+
+  // 3.1 Nock out push player on session, not testing push in this test so ignore it.
+  NockOneSignalHelper.nockPlayerOnSession(pushPlayerId);
+  // 3.2 Nock out Email player on session before the network call is made.
+  const onSessionNockPromise = NockOneSignalHelper.nockPlayerOnSession(emailPlayerId);
+
+  // 4. Kick off on_session call.
+  //    NOTE: This is ALWAYS expects a push player record by pre-existing design.
+  await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+    SessionOrigin.PlayerOnSession,
+    pushDeviceRecord.serialize(),
+    pushPlayerId,
+    session
+  );
+
+  // 5. Ensure the correct params were sent in the network call.
+  t.is((await onSessionNockPromise.result).request.url, `/api/v1/players/${emailPlayerId}/on_session`);
+  t.deepEqual(
+    (await onSessionNockPromise.result).request.body,
+    {
+      app_id: OneSignal.config.appId,
+      device_model: '',
+      device_os: -1,
+      device_type: DeliveryPlatformKind.Email,
+      language: 'en',
+      identifier: TEST_EMAIL,
       sdk: '1',
       timezone: 0,
       timezone_id: 'UTC',

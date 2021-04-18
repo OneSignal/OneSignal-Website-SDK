@@ -13,6 +13,7 @@ import OutcomesHelper from './shared/OutcomesHelper';
 import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
 import { OSServiceWorkerFields } from "../service-worker/types";
 import Utils from "../context/shared/utils/Utils";
+import { SecondaryChannelManager } from "../managers/channelManager/shared/SecondaryChannelManager";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -137,7 +138,7 @@ export default class ServiceWorkerHelper {
      */
     if (existingSession.status === SessionStatus.Inactive) {
       return cancelableTimeout(
-        () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig), 
+        () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig),
         thresholdInSeconds
       );
     }
@@ -160,7 +161,7 @@ export default class ServiceWorkerHelper {
     existingSession.status = SessionStatus.Inactive;
 
     const cancelableFinalize = cancelableTimeout(
-      () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig), 
+      () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig),
       thresholdInSeconds
     );
 
@@ -201,6 +202,11 @@ export default class ServiceWorkerHelper {
         Database.resetSentUniqueOutcomes()
       ]);
     }
+
+    // There isn't a OneSignal Global context to pull from so creating a new
+    //   SecondaryChannelManager instance.
+    const secondaryChannelManager = new SecondaryChannelManager();
+    await secondaryChannelManager.controller.onSession();
   }
 
   public static async finalizeSession(
