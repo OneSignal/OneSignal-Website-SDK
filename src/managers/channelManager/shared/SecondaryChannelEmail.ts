@@ -3,13 +3,13 @@ import Log from "../../../libraries/Log";
 import { EmailProfile } from "../../../models/EmailProfile";
 import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
 import OneSignalApi from "../../../OneSignalApi";
-import OneSignalApiShared from "../../../OneSignalApiShared";
 import Database from "../../../services/Database";
 import { SecondaryChannel, SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
 import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelExternalTagsUpdater } from "./SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
+import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithControllerEvents {
 
@@ -17,7 +17,8 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     readonly secondaryChannelController: SecondaryChannelController,
     readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
     readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater,
-    readonly secondaryChannelExternalTagsUpdater: SecondaryChannelExternalTagsUpdater
+    readonly secondaryChannelExternalTagsUpdater: SecondaryChannelExternalTagsUpdater,
+    readonly secondaryChannelSessionUpdater: SecondaryChannelSessionUpdater
     ) {
     secondaryChannelController.registerChannel(this);
   }
@@ -91,8 +92,8 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     }
   }
 
-  onSession(): void {
-    throw new Error("Method not implemented.");
+  async onSession(): Promise<void> {
+    await this.secondaryChannelSessionUpdater.sendOnSession();
   }
   onFocus(): void {
     throw new Error("Method not implemented.");

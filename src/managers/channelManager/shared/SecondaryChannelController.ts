@@ -13,8 +13,8 @@ export class SecondaryChannelController {
   }
 
   // Common things all Secondary channels will handle
-  onSession(): void {
-    // TODO: Run through channel list, call .onSession on each
+  async onSession(): Promise<void> {
+    await Promise.all(this._channels.map(channel => channel.onSession() ));
   }
   onFocus(): void {
   }

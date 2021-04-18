@@ -5,6 +5,7 @@ import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierU
 import { SecondaryChannelProfileProviderEmail } from "./SecondaryChannelProfileProviderEmail";
 import { SecondaryChannelExternalTagsUpdater } from "./SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
+import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 
 export class SecondaryChannelManager {
 
@@ -26,7 +27,8 @@ export class SecondaryChannelManager {
       this._secondaryChannelController,
       new SecondaryChannelIdentifierUpdater(emailProfileProvider),
       new SecondaryChannelExternalUserIdUpdater(emailProfileProvider),
-      new SecondaryChannelExternalTagsUpdater(emailProfileProvider)
+      new SecondaryChannelExternalTagsUpdater(emailProfileProvider),
+      new SecondaryChannelSessionUpdater(emailProfileProvider)
     );
   }
 }
