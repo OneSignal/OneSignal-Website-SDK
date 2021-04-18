@@ -1,10 +1,12 @@
 import test from "ava";
-import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
-
-// manually create and restore the sandbox
-const sandbox: SinonSandbox = sinon.sandbox.create();
+import { setupFakePlayerId } from "../../support/tester/utils";
+import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
+import ServiceWorkerHelper from "../../../src/helpers/ServiceWorkerHelper";
+import { initializeNewSession, Session, SessionOrigin } from "../../../src/models/Session";
+import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
+import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({
@@ -14,8 +16,47 @@ test.beforeEach(async t => {
   TestEnvironment.mockInternalOneSignal();
 });
 
-test.afterEach(function () {
-  sandbox.restore();
+test("sendOnSessionCallIfNecessary, for push player", async t => {
+  // 1. Create a push player id in the DB
+  const pushPlayerId = await setupFakePlayerId();
+
+  // 2. Setup a raw subscription, push record, and session
+  const rawSubscription = TestEnvironment.getFakeRawPushSubscription();
+  const pushDeviceRecord = new PushDeviceRecord(rawSubscription);
+  pushDeviceRecord.appId = OneSignal.config.appId;
+  const session: Session = initializeNewSession(
+    { deviceId: pushPlayerId, appId: pushDeviceRecord.appId!, deviceType: DeliveryPlatformKind.ChromeLike }
+  );
+
+  // 3. Nock out push player on session before the network call is made.
+  const onSessionNockPromise = NockOneSignalHelper.nockPlayerOnSession(pushPlayerId);
+
+  // 4. Kick off on_session call
+  await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+    SessionOrigin.PlayerOnSession,
+    pushDeviceRecord.serialize(),
+    pushPlayerId,
+    session
+  );
+
+  // 5. Ensure the correct params were sent in the network call.
+  t.is((await onSessionNockPromise.result).request.url, `/api/v1/players/${pushPlayerId}/on_session`);
+  t.deepEqual(
+    (await onSessionNockPromise.result).request.body,
+    {
+      app_id: OneSignal.config.appId,
+      device_model: '',
+      device_os: -1,
+      device_type: DeliveryPlatformKind.ChromeLike,
+      language: 'en',
+      identifier: rawSubscription.w3cEndpoint!.toString(),
+      web_auth: rawSubscription.w3cAuth,
+      web_p256: rawSubscription.w3cP256dh,
+      sdk: '1',
+      timezone: 0,
+      timezone_id: 'UTC',
+    }
+  );
 });
 
 // const sessionThresholdInSeconds = 5;
