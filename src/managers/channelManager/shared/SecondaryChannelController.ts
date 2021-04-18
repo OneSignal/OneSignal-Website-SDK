@@ -16,7 +16,8 @@ export class SecondaryChannelController {
   async onSession(): Promise<void> {
     await Promise.all(this._channels.map(channel => channel.onSession() ));
   }
-  onFocus(): void {
+  async onFocus(sessionDuration: number): Promise<void>  {
+    await Promise.all(this._channels.map(channel => channel.onFocus(sessionDuration) ));
   }
 
   async setTags(tags: {[key: string]: any}): Promise<void> {

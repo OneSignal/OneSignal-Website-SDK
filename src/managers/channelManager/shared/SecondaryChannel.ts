@@ -8,7 +8,7 @@ export interface SecondaryChannel {
 // Interface that the SecondaryChannelController will interface with
 export interface SecondaryChannelWithControllerEvents {
   onSession(): Promise<void>;
-  onFocus(): void;
+  onFocus(sessionDuration: number): Promise<void>;
 
   setTags(tags: {[key: string]: any}): Promise<void>;
   setExternalUserId(id: string, authHash?: string): Promise<void>;

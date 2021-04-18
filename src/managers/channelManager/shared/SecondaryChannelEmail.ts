@@ -9,6 +9,7 @@ import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelExternalTagsUpdater } from "./SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
+import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithControllerEvents {
@@ -18,7 +19,8 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
     readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater,
     readonly secondaryChannelExternalTagsUpdater: SecondaryChannelExternalTagsUpdater,
-    readonly secondaryChannelSessionUpdater: SecondaryChannelSessionUpdater
+    readonly secondaryChannelSessionUpdater: SecondaryChannelSessionUpdater,
+    readonly secondaryChannelFocusUpdater: SecondaryChannelFocusUpdater,
     ) {
     secondaryChannelController.registerChannel(this);
   }
@@ -95,8 +97,8 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   async onSession(): Promise<void> {
     await this.secondaryChannelSessionUpdater.sendOnSession();
   }
-  onFocus(): void {
-    throw new Error("Method not implemented.");
+  async onFocus(sessionDuration: number): Promise<void> {
+    await this.secondaryChannelFocusUpdater.sendOnFocus(sessionDuration);
   }
   async setTags(tags: any): Promise<void> {
     await this.secondaryChannelExternalTagsUpdater.sendTags(tags);

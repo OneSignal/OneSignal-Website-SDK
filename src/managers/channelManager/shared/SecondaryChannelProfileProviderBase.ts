@@ -1,3 +1,4 @@
+import { DeliveryPlatformKind } from "../../../models/DeliveryPlatformKind";
 import { PlayerIdAwaitable } from "../../../models/PlayerIdAwaitable";
 import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
 import { SecondaryChannelProfileProvider } from "./SecondaryChannelProfileProvider";
@@ -7,6 +8,8 @@ type PendingGetPlayerIdResolver = (playerId: string) => void;
 export abstract class SecondaryChannelProfileProviderBase
   implements SecondaryChannelProfileProvider, PlayerIdAwaitable {
   private _pendingGetPlayerIdResolvers: Array<PendingGetPlayerIdResolver> = new Array();
+
+  abstract readonly deviceType: DeliveryPlatformKind;
 
   abstract newProfile(
     playerId?: string | null,
