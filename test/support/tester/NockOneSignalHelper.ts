@@ -50,4 +50,16 @@ export class NockOneSignalHelper {
       },
     });
   }
+
+  static nockPlayerOnSession(id: string, returnId?: string): NockScopeWithResultPromise {
+    return NockHelper.nockBase({
+      method: "post",
+      baseUrl: "https://onesignal.com",
+      path: `/api/v1/players/${id}/on_session`,
+      reply: {
+        status: 200,
+        body: { success : true, id: returnId }
+      },
+    });
+  }
 }
