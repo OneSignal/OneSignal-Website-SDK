@@ -18,6 +18,10 @@ test.beforeEach(async t => {
   await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
 });
 
+/**
+ * START: SW on_session tests
+ */
+
 test("sendOnSessionCallIfNecessary, for push player", async t => {
   // 1. Create a push player id in the DB
   const pushPlayerId = await setupFakePlayerId();
@@ -107,6 +111,46 @@ test("sendOnSessionCallIfNecessary, for email player", async t => {
       sdk: '1',
       timezone: 0,
       timezone_id: 'UTC',
+    }
+  );
+});
+
+/**
+ * END: SW on_session tests
+ */
+
+
+ test("finalizeSession, for push player", async t => {
+  // 1. Create a push player id in the DB
+  const pushPlayerId = await setupFakePlayerId();
+
+  // 2. Setup a push record and session
+  const pushDeviceRecord = new PushDeviceRecord();
+  pushDeviceRecord.appId = OneSignal.config.appId;
+  const session = initializeNewSession(
+    { deviceId: pushPlayerId, appId: pushDeviceRecord.appId!, deviceType: DeliveryPlatformKind.ChromeLike }
+  );
+
+  // 3. Nock out push player on_focus before the network call is made.
+  const onSessionNockPromise = NockOneSignalHelper.nockPlayerOnFocus(pushPlayerId);
+
+  // 4. Kick off on_focus call
+  await ServiceWorkerHelper.finalizeSession(
+    session,
+    true,
+    OneSignal.context.appConfig.userConfig.outcomes,
+  );
+
+  // 5. Ensure the correct url and params were sent in the network call.
+  t.is((await onSessionNockPromise.result).request.url, `/api/v1/players/${pushPlayerId}/on_focus`);
+  t.deepEqual(
+    (await onSessionNockPromise.result).request.body,
+    {
+      app_id: OneSignal.config.appId,
+      device_type: DeliveryPlatformKind.ChromeLike,
+      state: 'ping',
+      type: 1,
+      active_time: 0,
     }
   );
 });

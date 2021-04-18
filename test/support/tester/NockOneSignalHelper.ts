@@ -62,4 +62,16 @@ export class NockOneSignalHelper {
       },
     });
   }
+
+  static nockPlayerOnFocus(id: string): NockScopeWithResultPromise {
+    return NockHelper.nockBase({
+      method: "post",
+      baseUrl: "https://onesignal.com",
+      path: `/api/v1/players/${id}/on_focus`,
+      reply: {
+        status: 200,
+        body: { success : true }
+      },
+    });
+  }
 }
