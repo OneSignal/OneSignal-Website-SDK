@@ -1,7 +1,7 @@
-import { UpdatePlayerOptions } from "../../../models/UpdatePlayerOptions";
-import OneSignalApi from "../../../OneSignalApi";
-import Database from "../../../services/Database";
-import { SecondaryChannelProfileProviderBase } from "./SecondaryChannelProfileProviderBase";
+import { UpdatePlayerOptions } from "../../../../models/UpdatePlayerOptions";
+import OneSignalApi from "../../../../OneSignalApi";
+import Database from "../../../../services/Database";
+import { SecondaryChannelProfileProviderBase } from "../SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelExternalTagsUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {

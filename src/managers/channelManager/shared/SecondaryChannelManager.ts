@@ -1,9 +1,9 @@
 import { SecondaryChannel } from "./SecondaryChannel";
 import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelEmail } from "./SecondaryChannelEmail";
-import { SecondaryChannelIdentifierUpdater } from "./SecondaryChannelIdentifierUpdater";
+import { SecondaryChannelIdentifierUpdater } from "./updaters/SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelProfileProviderEmail } from "./SecondaryChannelProfileProviderEmail";
-import { SecondaryChannelExternalTagsUpdater } from "./SecondaryChannelTagsUpdater";
+import { SecondaryChannelExternalTagsUpdater } from "./updaters/SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
