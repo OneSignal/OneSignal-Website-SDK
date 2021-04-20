@@ -427,6 +427,7 @@ $desktop-width: 1024px;
     .slidedown-body-message, .popover-body-message {
       box-sizing: border-box;
       padding: 0 0 0 1em;
+      font-weight: 400;
       float: left;
       width: calc(100% - 80px);
       line-height: 1.45em;
