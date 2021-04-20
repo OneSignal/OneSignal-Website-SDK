@@ -29,14 +29,18 @@
     background-image: none ; /* This rule affects the use of pngfix JavaScript http://dillerdesign.com/experiment/DD_BelatedPNG for IE6, which is used to force the browser to recognise alpha-transparent PNGs files that replace the IE6 lack of PNG transparency. (The rule overrides the VML image that is used to replace the given CSS background-image). If you don't know what that means, then you probably haven't used the pngfix script, and this comment may be ignored :) */
     background-position: 0 0 ;
     background-repeat: repeat ;
-    border: inherit;
+    border-color: black ;
+    border-color: currentColor ; /* `border-color` should match font color. Modern browsers (incl. IE9) allow the use of "currentColor" to match the current font 'color' value <http://www.w3.org/TR/css3-color/#currentcolor>. For older browsers, a default of 'black' is given before this rule. Guideline to support older browsers: if you haven't already declared a border-color for an element, be sure to do so, e.g. when you first declare the border-width. */
+    border-radius: 0 ;
+    border-style: none ;
+    border-width: medium ;
     bottom: auto ;
     clear: none ;
     clip: auto ;
     color: inherit ;
     counter-increment: none ;
     counter-reset: none ;
-    cursor: inherit ;
+    cursor: auto ;
     direction: inherit ;
     display: inline ;
     float: none ;
@@ -72,7 +76,7 @@
     unicode-bidi: normal ;
     vertical-align: baseline ;
     visibility: inherit ;
-    white-space: inherit ;
+    white-space: normal ;
     width: auto ;
     word-spacing: normal ;
     z-index: auto ;
