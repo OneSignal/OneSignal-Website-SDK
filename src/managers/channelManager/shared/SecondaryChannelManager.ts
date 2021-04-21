@@ -10,22 +10,15 @@ import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessi
 
 export class SecondaryChannelManager {
 
-  private _secondaryChannelController: SecondaryChannelController;
-  public get controller() : SecondaryChannelController {
-    return this._secondaryChannelController;
-  }
-
-  private _email: SecondaryChannelEmail;
-  public get email() : SecondaryChannel {
-    return this._email;
-  }
+  public readonly controller: SecondaryChannelController;
+  public readonly email: SecondaryChannel;
 
   constructor() {
-    this._secondaryChannelController = new SecondaryChannelController();
+    this.controller = new SecondaryChannelController();
 
     const emailProfileProvider = new SecondaryChannelProfileProviderEmail();
-    this._email = new SecondaryChannelEmail(
-      this._secondaryChannelController,
+    this.email = new SecondaryChannelEmail(
+      this.controller,
       new SecondaryChannelIdentifierUpdater(emailProfileProvider),
       new SecondaryChannelExternalUserIdUpdater(emailProfileProvider),
       new SecondaryChannelExternalTagsUpdater(emailProfileProvider),
