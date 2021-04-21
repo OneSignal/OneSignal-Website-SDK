@@ -7,7 +7,7 @@ type PendingGetPlayerIdResolver = (playerId: string) => void;
 
 export abstract class SecondaryChannelProfileProviderBase
   implements SecondaryChannelProfileProvider, PlayerIdAwaitable {
-  private _pendingGetPlayerIdResolvers: Array<PendingGetPlayerIdResolver> = new Array();
+  private _pendingGetPlayerIdResolvers: PendingGetPlayerIdResolver[] = [];
 
   abstract readonly deviceType: DeliveryPlatformKind;
 
@@ -25,7 +25,7 @@ export abstract class SecondaryChannelProfileProviderBase
 
     const playerId = profile.playerId;
     this._pendingGetPlayerIdResolvers.map(resolve => { resolve(playerId); } );
-    this._pendingGetPlayerIdResolvers = new Array();
+    this._pendingGetPlayerIdResolvers = [];
   }
 
   /*
