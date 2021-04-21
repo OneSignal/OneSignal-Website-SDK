@@ -6,10 +6,13 @@ export interface BundleTypeEmail {
   identifierAuthHash: string;
 }
 
-export class EmailProfile extends SecondaryChannelProfileSerializable<BundleTypeEmail> {
+export class EmailProfile implements SecondaryChannelProfileSerializable<BundleTypeEmail> {
+
+  playerId: string | null | undefined;
+  identifier: string | null | undefined;
+  identifierAuthHash: string | null | undefined;
 
   constructor(emailId?: string | null, emailAddress?: string, identifierAuthHash?: string) {
-    super();
     this.playerId = emailId;
     this.identifier = emailAddress;
     this.identifierAuthHash = identifierAuthHash;
