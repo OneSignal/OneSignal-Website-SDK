@@ -1,11 +1,12 @@
 import { SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
 
+// TODO: Change "controller" to "synchronizer". Both SecondaryChannelWithControllerEvents and this class
 export class SecondaryChannelController {
 
-  private _channels: Array<SecondaryChannelWithControllerEvents>;
+  private _channels: SecondaryChannelWithControllerEvents[];
 
   constructor() {
-    this._channels = new Array();
+    this._channels = [];
   }
 
   registerChannel(channel: SecondaryChannelWithControllerEvents) {
