@@ -3,7 +3,7 @@ import OneSignalApi from "../../../../OneSignalApi";
 import Database from "../../../../services/Database";
 import { SecondaryChannelProfileProviderBase } from "../SecondaryChannelProfileProviderBase";
 
-export class SecondaryChannelExternalTagsUpdater {
+export class SecondaryChannelTagsUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {
   }
 

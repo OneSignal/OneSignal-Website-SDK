@@ -7,7 +7,7 @@ import Database from "../../../services/Database";
 import { SecondaryChannel, SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
 import { SecondaryChannelController } from "./SecondaryChannelController";
 import { SecondaryChannelIdentifierUpdater } from "./updaters/SecondaryChannelIdentifierUpdater";
-import { SecondaryChannelExternalTagsUpdater } from "./updaters/SecondaryChannelTagsUpdater";
+import { SecondaryChannelTagsUpdater } from "./updaters/SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
@@ -18,7 +18,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     readonly secondaryChannelController: SecondaryChannelController,
     readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
     readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater,
-    readonly secondaryChannelExternalTagsUpdater: SecondaryChannelExternalTagsUpdater,
+    readonly secondaryChannelTagsUpdater: SecondaryChannelTagsUpdater,
     readonly secondaryChannelSessionUpdater: SecondaryChannelSessionUpdater,
     readonly secondaryChannelFocusUpdater: SecondaryChannelFocusUpdater,
     ) {
@@ -101,7 +101,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     await this.secondaryChannelFocusUpdater.sendOnFocus(sessionDuration);
   }
   async setTags(tags: any): Promise<void> {
-    await this.secondaryChannelExternalTagsUpdater.sendTags(tags);
+    await this.secondaryChannelTagsUpdater.sendTags(tags);
   }
 
   async setExternalUserId(id: string, authHash?: string): Promise<void> {
