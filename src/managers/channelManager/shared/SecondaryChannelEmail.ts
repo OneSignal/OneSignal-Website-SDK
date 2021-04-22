@@ -48,7 +48,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   }
 
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
-    const profileProvider = this.secondaryChannelIdentifierUpdater.profileProvider;
+    const { profileProvider } = this.secondaryChannelIdentifierUpdater;
     const existingEmailProfile = await profileProvider.getProfile();
     const newEmailSubscriptionId = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
 
@@ -95,9 +95,11 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   async onSession(): Promise<void> {
     await this.secondaryChannelSessionUpdater.sendOnSession();
   }
+
   async onFocus(sessionDuration: number): Promise<void> {
     await this.secondaryChannelFocusUpdater.sendOnFocus(sessionDuration);
   }
+
   async setTags(tags: TagsObject<any>): Promise<void> {
     await this.secondaryChannelTagsUpdater.sendTags(tags);
   }

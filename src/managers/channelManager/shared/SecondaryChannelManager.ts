@@ -9,7 +9,6 @@ import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessi
 import { SecondaryChannelProfileProviderEmail } from "./providers/SecondaryChannelProfileProviderEmail";
 
 export class SecondaryChannelManager {
-
   public readonly synchronizer: SecondaryChannelSynchronizer;
   public readonly email: SecondaryChannel;
 
