@@ -5,7 +5,6 @@ import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile
 import OneSignalApi from "../../../OneSignalApi";
 import Database from "../../../services/Database";
 import { SecondaryChannel, SecondaryChannelWithSynchronizerEvents } from "./SecondaryChannel";
-import { SecondaryChannelSynchronizer } from "./SecondaryChannelSynchronizer";
 import { SecondaryChannelIdentifierUpdater } from "./updaters/SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelTagsUpdater } from "./updaters/SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
@@ -16,15 +15,12 @@ import { TagsObject } from "../../../models/Tags";
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithSynchronizerEvents {
 
   constructor(
-    readonly secondaryChannelSynchronizer: SecondaryChannelSynchronizer,
     readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
     readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater,
     readonly secondaryChannelTagsUpdater: SecondaryChannelTagsUpdater,
     readonly secondaryChannelSessionUpdater: SecondaryChannelSessionUpdater,
     readonly secondaryChannelFocusUpdater: SecondaryChannelFocusUpdater,
-    ) {
-    secondaryChannelSynchronizer.registerChannel(this);
-  }
+    ) {}
 
   async logout(): Promise<boolean> {
     // TODO: Explain that email has a REST API logout with parent_player_id

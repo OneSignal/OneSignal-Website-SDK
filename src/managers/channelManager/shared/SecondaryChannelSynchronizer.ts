@@ -2,7 +2,6 @@ import { TagsObject } from "../../../models/Tags";
 import { SecondaryChannelWithSynchronizerEvents } from "./SecondaryChannel";
 
 export class SecondaryChannelSynchronizer {
-
   private _channels: SecondaryChannelWithSynchronizerEvents[];
 
   constructor() {
