@@ -23,38 +23,40 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     ) {}
 
   async logout(): Promise<boolean> {
-    // TODO: Explain that email has a REST API logout with parent_player_id
-    const { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
-      Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return false;
-    }
-
+    // 1. Check if we have an registered email to logout to begin with.
     const emailProfile = await Database.getEmailProfile();
     if (!emailProfile.subscriptionId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return false;
     }
 
-    const appConfig = await Database.getAppConfig();
+    // 2. Logout only applies if we a de-linking email from a push record.
+    const { deviceId } = await Database.getSubscription();
+    if (!deviceId) {
+      Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
+      return false;
+    }
 
+    // 3. Make logout email REST API call
+    const appConfig = await Database.getAppConfig();
     if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
       Log.warn("Failed to logout email.");
       return false;
     }
 
+    // 4. If above is successful clear the email profile.
     await Database.setEmailProfile(new EmailProfile());
     return true;
   }
 
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
     const { profileProvider } = this.secondaryChannelIdentifierUpdater;
-    const existingEmailProfile = await profileProvider.getProfile();
+    const emailProfileBefore = await profileProvider.getProfile();
     const newEmailSubscriptionId = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
 
     if (newEmailSubscriptionId) {
-      const newEmailProfile = profileProvider.newProfile(newEmailSubscriptionId, identifier);
-      await this.updatePushPlayersRelationToEmailPlayer(existingEmailProfile, newEmailProfile);
+      const emailProfileAfter = profileProvider.newProfile(newEmailSubscriptionId, identifier);
+      await this.updatePushPlayersRelationToEmailPlayer(emailProfileBefore, emailProfileAfter);
     }
 
     return newEmailSubscriptionId;
