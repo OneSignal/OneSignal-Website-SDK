@@ -4,8 +4,7 @@ import Database from "../../../../services/Database";
 import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelSessionUpdater {
-  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {
-  }
+  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
 
   async sendOnSession(): Promise<void> {
     const profile = await this.profileProvider.getProfile();

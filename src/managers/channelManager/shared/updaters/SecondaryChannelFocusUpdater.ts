@@ -3,8 +3,7 @@ import Database from "../../../../services/Database";
 import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelFocusUpdater {
-  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {
-  }
+  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
 
   async sendOnFocus(sessionDuration: number): Promise<void> {
     const profile = await this.profileProvider.getProfile();

@@ -4,8 +4,7 @@ import { SecondaryChannelProfileProvider } from "../providers/SecondaryChannelPr
 
 // Creates / updates the identifier for a Secondary Channel and persists to storage.
 export class SecondaryChannelIdentifierUpdater {
-  constructor(readonly profileProvider: SecondaryChannelProfileProvider) {
-  }
+  constructor(readonly profileProvider: SecondaryChannelProfileProvider) {}
 
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
     const appConfig = await Database.getAppConfig();

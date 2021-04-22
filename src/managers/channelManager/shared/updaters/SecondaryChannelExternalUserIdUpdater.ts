@@ -4,8 +4,7 @@ import Database from "../../../../services/Database";
 import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelExternalUserIdUpdater {
-  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {
-  }
+  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
 
   async setExternalUserId(id: string, authHash?: string): Promise<void> {
     // We wait until we have a subscriptionId. We do this instead of an early return

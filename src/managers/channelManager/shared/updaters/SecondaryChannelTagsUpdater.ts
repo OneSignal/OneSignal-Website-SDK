@@ -5,8 +5,7 @@ import Database from "../../../../services/Database";
 import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelTagsUpdater {
-  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {
-  }
+  constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
 
   async sendTags(tags: TagsObject<any>): Promise<void> {
     // We wait until we have a subscriptionId. We do this instead of an early return
