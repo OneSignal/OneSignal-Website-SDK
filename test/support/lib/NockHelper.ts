@@ -33,6 +33,12 @@ interface NockOptions {
   method: NockInterceptMethods;
 }
 
+/**
+ * This NockHelper class makes it easy to use nock as Promise to await on it and get it's request and response.
+ * This is helpful for doing a end-to-end test from a public OneSignal method to a network call.
+ * Due note that using a nock may not be the best approach vs a more isolated test directly on a Manager class
+ *  for example.
+ */
 export class NockHelper {
   /**
    * Provides an an interface to the nock library that allows awaiting on a response to get it's

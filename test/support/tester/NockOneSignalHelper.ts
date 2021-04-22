@@ -27,6 +27,11 @@ export interface NockScopeWithResultPromisePlayerPost extends NockScopeWithResul
 }
 
 export class NockOneSignalHelper {
+  /**
+   * Call this before a /players POST REST API call to mock it out and capture it's request and response.
+   * @returns {NockScopeWithResultPromisePlayerPost} This is a typed response where you can await for a
+   *   playerId to be returned.
+   */
   static nockPlayerPost(): NockScopeWithResultPromisePlayerPost {
     return NockHelper.nockBase({
       method: "post",
@@ -39,6 +44,11 @@ export class NockOneSignalHelper {
     });
   }
 
+  /**
+   * Call this before a /players PUT REST API call to mock it out and capture it's request and response.
+   * @param {string} id The OneSignal playerId you are expecting to be updated.
+   * @returns {NockScopeWithResultPromise} This is a typed response where you can await on.
+   */
   static nockPlayerPut(id: string): NockScopeWithResultPromise {
     return NockHelper.nockBase({
       method: "put",
@@ -51,6 +61,13 @@ export class NockOneSignalHelper {
     });
   }
 
+  /**
+   * Call this before a /players/{id}/on_session POST REST API call to mock it out and
+   * capture it's request and response.
+   * @param {string} id The OneSignal playerId you are expecting to be updated.
+   * @param {string} returnId Optional playerId if you want to simulate onesignal.com giving you a new one.
+   * @returns {NockScopeWithResultPromise} This is a typed response where you can await on.
+   */
   static nockPlayerOnSession(id: string, returnId?: string): NockScopeWithResultPromise {
     return NockHelper.nockBase({
       method: "post",
@@ -63,6 +80,12 @@ export class NockOneSignalHelper {
     });
   }
 
+    /**
+   * Call this before a /players/{id}/on_focus POST REST API call to mock it out and
+   * capture it's request and response.
+   * @param {string} id The OneSignal playerId you are expecting to be updated.
+   * @returns {NockScopeWithResultPromise} This is a typed response where you can await on.
+   */
   static nockPlayerOnFocus(id: string): NockScopeWithResultPromise {
     return NockHelper.nockBase({
       method: "post",
