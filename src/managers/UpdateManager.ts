@@ -127,6 +127,7 @@ export class UpdateManager {
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
     } as UpdatePlayerExternalUserId;
 
+    // 1. Update any secondary channels such as email with external_user_id
     // Not awaiting as this may never complete, as promise only completes if we have a player record for each channel.
     /* tslint:disable:no-floating-promises */
     this.context.secondaryChannelManager.synchronizer.setExternalUserId(
@@ -135,6 +136,7 @@ export class UpdateManager {
     );
     /* tslint:enable:no-floating-promises */
 
+    // 2. Update push player with external_user_id
     return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
   }
 
