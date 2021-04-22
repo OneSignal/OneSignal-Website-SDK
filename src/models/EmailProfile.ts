@@ -1,12 +1,12 @@
 import { SecondaryChannelProfileSerializable } from './SecondaryChannelProfile';
 
-export interface BundleTypeEmail {
+export interface BundleEmail {
   emailId?: string;
   emailAddress: string;
   identifierAuthHash: string;
 }
 
-export class EmailProfile implements SecondaryChannelProfileSerializable<BundleTypeEmail> {
+export class EmailProfile implements SecondaryChannelProfileSerializable<BundleEmail> {
 
   subscriptionId: string | null | undefined;
   identifier: string | null | undefined;
@@ -18,15 +18,15 @@ export class EmailProfile implements SecondaryChannelProfileSerializable<BundleT
     this.identifierAuthHash = identifierAuthHash;
   }
 
-  serialize(): BundleTypeEmail {
+  serialize(): BundleEmail {
     return {
       identifierAuthHash: this.identifierAuthHash,
       emailAddress: this.identifier,
       emailId: this.subscriptionId,
-    } as BundleTypeEmail;
+    } as BundleEmail;
   }
 
-  static deserialize(bundle: BundleTypeEmail): EmailProfile {
+  static deserialize(bundle: BundleEmail): EmailProfile {
     return new EmailProfile(
       bundle.emailId,
       bundle.emailAddress,
