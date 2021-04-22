@@ -8,12 +8,12 @@ export interface BundleTypeEmail {
 
 export class EmailProfile implements SecondaryChannelProfileSerializable<BundleTypeEmail> {
 
-  playerId: string | null | undefined;
+  subscriptionId: string | null | undefined;
   identifier: string | null | undefined;
   identifierAuthHash: string | null | undefined;
 
   constructor(emailId?: string | null, emailAddress?: string, identifierAuthHash?: string) {
-    this.playerId = emailId;
+    this.subscriptionId = emailId;
     this.identifier = emailAddress;
     this.identifierAuthHash = identifierAuthHash;
   }
@@ -22,7 +22,7 @@ export class EmailProfile implements SecondaryChannelProfileSerializable<BundleT
     return {
       identifierAuthHash: this.identifierAuthHash,
       emailAddress: this.identifier,
-      emailId: this.playerId,
+      emailId: this.subscriptionId,
     } as BundleTypeEmail;
   }
 

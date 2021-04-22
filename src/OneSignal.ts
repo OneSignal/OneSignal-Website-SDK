@@ -637,7 +637,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
-    const emailId = emailProfile.playerId;
+    const emailId = emailProfile.subscriptionId;
     executeCallback(callback, emailId);
     return emailId;
   }

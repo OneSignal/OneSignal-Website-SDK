@@ -12,19 +12,19 @@ export class SecondaryChannelIdentifierUpdater {
     const { deviceId } = await Database.getSubscription();
     const existingProfile = await this.profileProvider.getProfile();
 
-    const newProfile = this.profileProvider.newProfile(existingProfile.playerId, identifier, authHash);
-    const isExisting = !!existingProfile.playerId;
+    const newProfile = this.profileProvider.newProfile(existingProfile.subscriptionId, identifier, authHash);
+    const isExisting = !!existingProfile.subscriptionId;
 
     if (isExisting) {
       // If we already have a saved a player ID, make a PUT call to update the existing record
-      newProfile.playerId = await OneSignalApi.updateSecondaryChannelRecord(
+      newProfile.subscriptionId = await OneSignalApi.updateSecondaryChannelRecord(
         appConfig,
         newProfile,
         deviceId
       );
     } else {
       // Otherwise, make a POST call to create a new record
-      newProfile.playerId = await OneSignalApi.createSecondaryChannelRecord(
+      newProfile.subscriptionId = await OneSignalApi.createSecondaryChannelRecord(
         appConfig,
         newProfile,
         deviceId
@@ -32,10 +32,10 @@ export class SecondaryChannelIdentifierUpdater {
     }
 
      // Record update / create call, save to storage
-     if (!!newProfile.playerId) {
+     if (!!newProfile.subscriptionId) {
        await this.profileProvider.setProfile(newProfile);
      }
 
-     return newProfile.playerId;
+     return newProfile.subscriptionId;
   }
 }

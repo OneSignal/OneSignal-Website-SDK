@@ -4,7 +4,7 @@ export interface SecondaryChannelProfile {
  /**
   * The OneSignal playerId UUID provided by the OneSignal REST API when it is created
   */
- playerId: string | null | undefined;
+ subscriptionId: string | null | undefined;
  /**
   * This is channel + platform specific identifier. Example: An email address or a push token
   */

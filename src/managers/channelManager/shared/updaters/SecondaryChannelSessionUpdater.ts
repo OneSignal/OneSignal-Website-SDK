@@ -10,7 +10,7 @@ export class SecondaryChannelSessionUpdater {
   async sendOnSession(): Promise<void> {
     const profile = await this.profileProvider.getProfile();
     // If we haven't created an email record yet then there isn't an on session event to track.
-    if (!profile.playerId) {
+    if (!profile.subscriptionId) {
       return;
     }
 
@@ -21,11 +21,14 @@ export class SecondaryChannelSessionUpdater {
     const appConfig = await Database.getAppConfig();
     secondaryChannelRecord.appId = appConfig.appId;
 
-    const newPlayerId = await OneSignalApiShared.updateUserSession(profile.playerId, secondaryChannelRecord);
+    const newSubscriptionId = await OneSignalApiShared.updateUserSession(
+      profile.subscriptionId,
+      secondaryChannelRecord
+    );
 
-    // If on_session gave us a new playerId store the updated value
-    if (newPlayerId !== profile.playerId ) {
-      profile.playerId = newPlayerId;
+    // If on_session gave us a new subscriptionId store the updated value
+    if (newSubscriptionId !== profile.subscriptionId ) {
+      profile.subscriptionId = newSubscriptionId;
       await this.profileProvider.setProfile(profile);
     }
   }

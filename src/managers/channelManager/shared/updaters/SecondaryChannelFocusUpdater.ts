@@ -9,7 +9,7 @@ export class SecondaryChannelFocusUpdater {
   async sendOnFocus(sessionDuration: number): Promise<void> {
     const profile = await this.profileProvider.getProfile();
     // If we haven't created a secondary device record yet then there isn't an on focus event to track.
-    if (!profile.playerId) {
+    if (!profile.subscriptionId) {
       return;
     }
 
@@ -23,6 +23,6 @@ export class SecondaryChannelFocusUpdater {
       active_time: sessionDuration,
       device_type: this.profileProvider.deviceType,
     };
-    await OneSignalApiBase.post(`players/${profile.playerId}/on_focus`, payload);
+    await OneSignalApiBase.post(`players/${profile.subscriptionId}/on_focus`, payload);
   }
 }

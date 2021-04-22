@@ -1,46 +1,46 @@
 import { DeliveryPlatformKind } from "../../../models/DeliveryPlatformKind";
-import { PlayerIdAwaitable } from "../../../models/PlayerIdAwaitable";
+import { SubscriptionIdAwaitable } from "../../../models/SubscriptionIdAwaitable";
 import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
 import { SecondaryChannelProfileProvider } from "./SecondaryChannelProfileProvider";
 
-type PendingGetPlayerIdResolver = (playerId: string) => void;
+type PendingGetSubscriptionIdResolver = (subscriptionId: string) => void;
 
 export abstract class SecondaryChannelProfileProviderBase
-  implements SecondaryChannelProfileProvider, PlayerIdAwaitable {
-  private _pendingGetPlayerIdResolvers: PendingGetPlayerIdResolver[] = [];
+  implements SecondaryChannelProfileProvider, SubscriptionIdAwaitable {
+  private _pendingGetSubscriptionIdResolvers: PendingGetSubscriptionIdResolver[] = [];
 
   abstract readonly deviceType: DeliveryPlatformKind;
 
   abstract newProfile(
-    playerId?: string | null,
+    subscriptionId?: string | null,
     identifier?: string,
     identifierAuthHash?: string
   ): SecondaryChannelProfile;
 
   abstract getProfile(): Promise<SecondaryChannelProfile>;
   async setProfile(profile: SecondaryChannelProfile): Promise<void> {
-    if (!profile.playerId) {
+    if (!profile.subscriptionId) {
       return;
     }
 
-    const playerId = profile.playerId;
-    this._pendingGetPlayerIdResolvers.map(resolve => { resolve(playerId); } );
-    this._pendingGetPlayerIdResolvers = [];
+    const subscriptionId = profile.subscriptionId;
+    this._pendingGetSubscriptionIdResolvers.map(resolve => { resolve(subscriptionId); } );
+    this._pendingGetSubscriptionIdResolvers = [];
   }
 
   /*
-   * Awaitable until we can guarantee a playerId is available
+   * Awaitable until we can guarantee a subscriptionId is available
    */
-  async getPlayerId(): Promise<string> {
-    // 1. If we already have a stored playerId return it now.
+  async getSubscriptionId(): Promise<string> {
+    // 1. If we already have a stored subscriptionId return it now.
     const profile = await this.getProfile();
-    if (profile.playerId) {
-      return profile.playerId;
+    if (profile.subscriptionId) {
+      return profile.subscriptionId;
     }
 
     // 2. If we don't, create a Promise and store it's resolve so we can fire it later.
-    return new Promise((resolve: PendingGetPlayerIdResolver) => {
-      this._pendingGetPlayerIdResolvers.push(resolve);
+    return new Promise((resolve: PendingGetSubscriptionIdResolver) => {
+      this._pendingGetSubscriptionIdResolvers.push(resolve);
     });
   }
 }

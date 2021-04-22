@@ -26,6 +26,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   }
 
   async logout(): Promise<boolean> {
+    // TODO: Explain that email has a REST API logout with parent_player_id
     const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
@@ -33,7 +34,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     }
 
     const emailProfile = await Database.getEmailProfile();
-    if (!emailProfile.playerId) {
+    if (!emailProfile.subscriptionId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
       return false;
     }
@@ -52,14 +53,14 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
     const profileProvider = this.secondaryChannelIdentifierUpdater.profileProvider;
     const existingEmailProfile = await profileProvider.getProfile();
-    const newEmailPlayerId = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
+    const newEmailSubscriptionId = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
 
-    if (newEmailPlayerId) {
-      const newEmailProfile = profileProvider.newProfile(newEmailPlayerId, identifier);
+    if (newEmailSubscriptionId) {
+      const newEmailProfile = profileProvider.newProfile(newEmailSubscriptionId, identifier);
       await this.updatePushPlayersRelationToEmailPlayer(existingEmailProfile, newEmailProfile);
     }
 
-    return newEmailPlayerId;
+    return newEmailSubscriptionId;
   }
 
   private async updatePushPlayersRelationToEmailPlayer(
@@ -70,9 +71,9 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     // If we are subscribed to web push
     const isExistingPushRecordSaved = deviceId;
     // And if we previously saved an email ID and it's different from the new returned ID
-    const isExistingEmailSaved = !!existingEmailProfile.playerId;
+    const isExistingEmailSaved = !!existingEmailProfile.subscriptionId;
     const emailPreviouslySavedAndDifferent = !isExistingEmailSaved ||
-      existingEmailProfile.playerId !== newEmailProfile.playerId;
+      existingEmailProfile.subscriptionId !== newEmailProfile.subscriptionId;
     // Or if we previously saved an email and the email changed
     const emailPreviouslySavedAndChanged = !existingEmailProfile.identifier ||
       newEmailProfile.identifier !== existingEmailProfile.identifier;
@@ -86,7 +87,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
           appConfig.appId,
           deviceId,
           {
-            parent_player_id: newEmailProfile.playerId,
+            parent_player_id: newEmailProfile.subscriptionId,
             email: newEmailProfile.identifier,
             external_user_id_auth_hash: authHash
           }

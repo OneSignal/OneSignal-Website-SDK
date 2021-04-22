@@ -6,8 +6,8 @@ import { SecondaryChannelProfileProviderBase } from "./SecondaryChannelProfilePr
 export class SecondaryChannelProfileProviderEmail extends SecondaryChannelProfileProviderBase {
   deviceType = DeliveryPlatformKind.Email;
 
-  newProfile(playerId?: string | null, identifier?: string, identifierAuthHash?: string): EmailProfile {
-    return new EmailProfile(playerId, identifier, identifierAuthHash);
+  newProfile(subscriptionId?: string | null, identifier?: string, identifierAuthHash?: string): EmailProfile {
+    return new EmailProfile(subscriptionId, identifier, identifierAuthHash);
   }
 
   async getProfile(): Promise<EmailProfile> {

@@ -26,7 +26,7 @@ async function logoutEmailTest(
   /* If an existing email device ID is set, create a fake one here */
   if (testData.emailDeviceId) {
     const emailProfile = await Database.getEmailProfile();
-    emailProfile.playerId = testData.emailDeviceId;
+    emailProfile.subscriptionId = testData.emailDeviceId;
     await Database.setEmailProfile(emailProfile);
   }
 
@@ -88,7 +88,7 @@ test("logoutEmail returns if not subscribed to web push", async t => {
 
   // Confirm email details have not been erased
   const emailProfile = await Database.getEmailProfile();
-  t.deepEqual(emailProfile.playerId, testData.emailDeviceId);
+  t.deepEqual(emailProfile.subscriptionId, testData.emailDeviceId);
   t.deepEqual(emailProfile.identifierAuthHash, testData.identifierAuthHash);
 });
 
@@ -106,6 +106,6 @@ test("logoutEmail calls POST email_logout and clears local data", async t => {
   t.deepEqual(finalPushDeviceId, testData.existingPushDeviceId ? testData.existingPushDeviceId : null);
   t.deepEqual(finalEmailProfile.identifier, undefined);
   t.deepEqual(finalEmailProfile.identifierAuthHash, undefined);
-  t.deepEqual(finalEmailProfile.playerId, undefined);
+  t.deepEqual(finalEmailProfile.subscriptionId, undefined);
 });
 

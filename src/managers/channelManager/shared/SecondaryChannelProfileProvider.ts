@@ -5,7 +5,7 @@ import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile
 // * Get existing from storage
 // * Save to storage
 export interface SecondaryChannelProfileProvider {
-  newProfile(playerId?: string | null, identifier?: string, identifierAuthHash?: string): SecondaryChannelProfile;
+  newProfile(subscriptionId?: string | null, identifier?: string, identifierAuthHash?: string): SecondaryChannelProfile;
   getProfile(): Promise<SecondaryChannelProfile>;
   setProfile(profile: SecondaryChannelProfile): Promise<void>;
 }

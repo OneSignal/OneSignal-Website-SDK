@@ -8,7 +8,7 @@ export class SecondaryChannelTagsUpdater {
   }
 
   async sendTags(tags: {[key: string]: any}): Promise<void> {
-    const playerId = await this.profileProvider.getPlayerId();
+    const subscriptionId = await this.profileProvider.getSubscriptionId();
     const { appId } = await Database.getAppConfig();
     const identifierAuthHash = (await this.profileProvider.getProfile()).identifierAuthHash;
 
@@ -17,6 +17,6 @@ export class SecondaryChannelTagsUpdater {
       identifier_auth_hash: identifierAuthHash
     };
 
-    await OneSignalApi.updatePlayer(appId, playerId, payload);
+    await OneSignalApi.updatePlayer(appId, subscriptionId, payload);
   }
 }

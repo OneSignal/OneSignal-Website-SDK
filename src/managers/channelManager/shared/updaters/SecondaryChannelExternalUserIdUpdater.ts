@@ -8,7 +8,8 @@ export class SecondaryChannelExternalUserIdUpdater {
   }
 
   async setExternalUserId(id: string, authHash?: string): Promise<void> {
-    const playerId = await this.profileProvider.getPlayerId();
+    const subscriptionId = await this.profileProvider.getSubscriptionId();
+
     const { appId } = await Database.getAppConfig();
     const payload = {
       external_user_id: id,
@@ -17,7 +18,7 @@ export class SecondaryChannelExternalUserIdUpdater {
 
     await OneSignalApiShared.updatePlayer(
       appId,
-      playerId,
+      subscriptionId,
       payload
     );
   }
