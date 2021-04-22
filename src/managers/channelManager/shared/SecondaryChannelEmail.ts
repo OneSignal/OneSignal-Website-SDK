@@ -11,6 +11,7 @@ import { SecondaryChannelTagsUpdater } from "./updaters/SecondaryChannelTagsUpda
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
 import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
+import { TagsObject } from "../../../models/Tags";
 
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithControllerEvents {
 
@@ -101,7 +102,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
   async onFocus(sessionDuration: number): Promise<void> {
     await this.secondaryChannelFocusUpdater.sendOnFocus(sessionDuration);
   }
-  async setTags(tags: any): Promise<void> {
+  async setTags(tags: TagsObject<any>): Promise<void> {
     await this.secondaryChannelTagsUpdater.sendTags(tags);
   }
 

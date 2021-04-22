@@ -1,3 +1,4 @@
+import { TagsObject } from "../../../models/Tags";
 import { SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
 
 // TODO: Change "controller" to "synchronizer". Both SecondaryChannelWithControllerEvents and this class
@@ -21,7 +22,7 @@ export class SecondaryChannelController {
     await Promise.all(this._channels.map(channel => channel.onFocus(sessionDuration) ));
   }
 
-  async setTags(tags: {[key: string]: any}): Promise<void> {
+  async setTags(tags: TagsObject<any>): Promise<void> {
     await Promise.all(this._channels.map(channel => channel.setTags(tags) ));
   }
 

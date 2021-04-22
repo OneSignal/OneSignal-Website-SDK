@@ -59,6 +59,7 @@ import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 import { AuthHashOptionsValidatorHelper } from './helpers/page/AuthHashOptionsValidatorHelper';
+import { TagsObject } from './models/Tags';
 
 export default class OneSignal {
   /**
@@ -399,7 +400,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendTags(tags: {[key: string]: any}, callback?: Action<Object>): Promise<Object | null> {
+  static async sendTags(tags: TagsObject<any>, callback?: Action<Object>): Promise<Object | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendTags', tags, callback);
     if (!tags || Object.keys(tags).length === 0) {
