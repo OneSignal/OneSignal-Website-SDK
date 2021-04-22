@@ -3,7 +3,7 @@ import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { DeviceRecord } from './DeviceRecord';
 
 /**
- * Describes an secondary channel device record, such as an email.
+ * Describes a secondary channel device record, such as an email.
  */
 export class SecondaryChannelDeviceRecord extends DeviceRecord {
   /**
