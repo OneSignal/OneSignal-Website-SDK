@@ -60,10 +60,9 @@ export default class OneSignalApi {
 
   static async updateSecondaryChannelRecord(
     appConfig: AppConfig,
-    profile: SecondaryChannelProfile,
-    pushDeviceRecordId?: string
-  ): Promise<string | null> {
-    return await OneSignalApiShared.updateSecondaryChannelRecord(appConfig, profile, pushDeviceRecordId);
+    profile: SecondaryChannelProfile
+  ): Promise<void> {
+    await OneSignalApiShared.updateSecondaryChannelRecord(appConfig, profile);
   }
 
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {

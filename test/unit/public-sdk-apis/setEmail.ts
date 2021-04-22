@@ -311,13 +311,14 @@ test("No push subscription, existing identical email, refreshing setEmail call",
 });
 
 test("No push subscription, existing different email, updating setEmail call", async t => {
+  const existingEmailId = Random.getRandomUuid();
   const testData: SetEmailTestData = {
     existingEmailAddress: "existing-different-email-address@example.com",
     newEmailAddress: "test@example.com",
     existingPushDeviceId: null,
     identifierAuthHash: undefined,
-    existingEmailId: Random.getRandomUuid(),
-    newEmailId: Random.getRandomUuid()
+    existingEmailId: existingEmailId,
+    newEmailId: existingEmailId
   };
   await setEmailTest(t, testData);
 });
@@ -337,42 +338,41 @@ test("Existing push subscription, no email, first setEmail call", async t => {
 
 test("Existing push subscription, existing identical email, refreshing setEmail call", async t => {
   const emailId = Random.getRandomUuid();
-  const testData: SetEmailTestData = {
+  const testData = {
     existingEmailAddress: "test@example.com",
     newEmailAddress: "test@example.com",
-    existingPushDeviceId: Random.getRandomUuid(),
     identifierAuthHash: undefined,
     existingEmailId: emailId,
     newEmailId: emailId
-  };
+  } as SetEmailTestData;
   await setEmailTest(t, testData);
 });
 
 
 test("Existing push subscription, existing different email, updating setEmail call", async t => {
-  const testData: SetEmailTestData = {
+  const existingEmailId = Random.getRandomUuid();
+  const testData = {
     existingEmailAddress: "existing-different-email@example.com",
     newEmailAddress: "test@example.com",
-    existingPushDeviceId: Random.getRandomUuid(),
     identifierAuthHash: undefined,
-    existingEmailId: Random.getRandomUuid(),
-    newEmailId: Random.getRandomUuid(),
+    existingEmailId: existingEmailId,
+    newEmailId: existingEmailId,
     externalUserIdAuthHash: null
-  };
+  } as SetEmailTestData;
   await setEmailTest(t, testData);
 });
 
 test(
   "Existing push subscription, existing identical email, with identifierAuthHash, refreshing setEmail call",
   async t => {
-    const testData: SetEmailTestData = {
+    const existingEmailId = Random.getRandomUuid();
+    const testData = {
       existingEmailAddress: "existing-different-email@example.com",
       newEmailAddress: "test@example.com",
-      existingPushDeviceId: Random.getRandomUuid(),
       identifierAuthHash: "432B5BE752724550952437FAED4C8E2798E9D0AF7AACEFE73DEA923A14B94799",
-      existingEmailId: Random.getRandomUuid(),
-      newEmailId: Random.getRandomUuid(),
+      existingEmailId: existingEmailId,
+      newEmailId: existingEmailId,
       externalUserIdAuthHash: null
-    };
+    } as SetEmailTestData;
     await setEmailTest(t, testData);
 });
