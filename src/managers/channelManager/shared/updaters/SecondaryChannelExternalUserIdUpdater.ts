@@ -1,7 +1,7 @@
 import { UpdatePlayerExternalUserId } from "../../../../models/UpdatePlayerOptions";
 import OneSignalApiShared from "../../../../OneSignalApiShared";
 import Database from "../../../../services/Database";
-import { SecondaryChannelProfileProviderBase } from "../SecondaryChannelProfileProviderBase";
+import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelExternalUserIdUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {

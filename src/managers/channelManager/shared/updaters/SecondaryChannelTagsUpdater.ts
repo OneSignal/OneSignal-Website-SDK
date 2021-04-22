@@ -2,7 +2,7 @@ import { TagsObject } from "../../../../models/Tags";
 import { UpdatePlayerOptions } from "../../../../models/UpdatePlayerOptions";
 import OneSignalApi from "../../../../OneSignalApi";
 import Database from "../../../../services/Database";
-import { SecondaryChannelProfileProviderBase } from "../SecondaryChannelProfileProviderBase";
+import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelTagsUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {

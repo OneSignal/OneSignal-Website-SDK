@@ -1,6 +1,6 @@
-import { DeliveryPlatformKind } from "../../../models/DeliveryPlatformKind";
-import { EmailProfile } from "../../../models/EmailProfile";
-import Database from "../../../services/Database";
+import { DeliveryPlatformKind } from "../../../../models/DeliveryPlatformKind";
+import { EmailProfile } from "../../../../models/EmailProfile";
+import Database from "../../../../services/Database";
 import { SecondaryChannelProfileProviderBase } from "./SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelProfileProviderEmail extends SecondaryChannelProfileProviderBase {

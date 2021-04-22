@@ -1,6 +1,6 @@
-import { DeliveryPlatformKind } from "../../../models/DeliveryPlatformKind";
-import { SubscriptionIdAwaitable } from "../../../models/SubscriptionIdAwaitable";
-import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
+import { DeliveryPlatformKind } from "../../../../models/DeliveryPlatformKind";
+import { SecondaryChannelProfile } from "../../../../models/SecondaryChannelProfile";
+import { SubscriptionIdAwaitable } from "../../../../models/SubscriptionIdAwaitable";
 import { SecondaryChannelProfileProvider } from "./SecondaryChannelProfileProvider";
 
 type PendingGetSubscriptionIdResolver = (subscriptionId: string) => void;

@@ -1,6 +1,6 @@
 import OneSignalApi from "../../../../OneSignalApi";
 import Database from "../../../../services/Database";
-import { SecondaryChannelProfileProvider } from "../SecondaryChannelProfileProvider";
+import { SecondaryChannelProfileProvider } from "../providers/SecondaryChannelProfileProvider";
 
 // Creates / updates the identifier for a Secondary Channel and persists to storage.
 export class SecondaryChannelIdentifierUpdater {
