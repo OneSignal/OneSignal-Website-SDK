@@ -318,6 +318,6 @@ export class SessionManager implements ISessionManager {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
 
-    await this.context.secondaryChannelManager.controller.onSession();
+    await this.context.secondaryChannelManager.synchronizer.onSession();
   }
 }

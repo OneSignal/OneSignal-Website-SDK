@@ -1,16 +1,15 @@
 import { TagsObject } from "../../../models/Tags";
-import { SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
+import { SecondaryChannelWithSynchronizerEvents } from "./SecondaryChannel";
 
-// TODO: Change "controller" to "synchronizer". Both SecondaryChannelWithControllerEvents and this class
-export class SecondaryChannelController {
+export class SecondaryChannelSynchronizer {
 
-  private _channels: SecondaryChannelWithControllerEvents[];
+  private _channels: SecondaryChannelWithSynchronizerEvents[];
 
   constructor() {
     this._channels = [];
   }
 
-  registerChannel(channel: SecondaryChannelWithControllerEvents) {
+  registerChannel(channel: SecondaryChannelWithSynchronizerEvents) {
     this._channels.push(channel);
   }
 

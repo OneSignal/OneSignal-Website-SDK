@@ -1,5 +1,5 @@
 import { SecondaryChannel } from "./SecondaryChannel";
-import { SecondaryChannelController } from "./SecondaryChannelController";
+import { SecondaryChannelSynchronizer } from "./SecondaryChannelSynchronizer";
 import { SecondaryChannelEmail } from "./SecondaryChannelEmail";
 import { SecondaryChannelIdentifierUpdater } from "./updaters/SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelProfileProviderEmail } from "./SecondaryChannelProfileProviderEmail";
@@ -10,15 +10,15 @@ import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessi
 
 export class SecondaryChannelManager {
 
-  public readonly controller: SecondaryChannelController;
+  public readonly synchronizer: SecondaryChannelSynchronizer;
   public readonly email: SecondaryChannel;
 
   constructor() {
-    this.controller = new SecondaryChannelController();
+    this.synchronizer = new SecondaryChannelSynchronizer();
 
     const emailProfileProvider = new SecondaryChannelProfileProviderEmail();
     this.email = new SecondaryChannelEmail(
-      this.controller,
+      this.synchronizer,
       new SecondaryChannelIdentifierUpdater(emailProfileProvider),
       new SecondaryChannelExternalUserIdUpdater(emailProfileProvider),
       new SecondaryChannelTagsUpdater(emailProfileProvider),

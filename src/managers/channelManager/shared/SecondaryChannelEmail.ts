@@ -4,8 +4,8 @@ import { EmailProfile } from "../../../models/EmailProfile";
 import { SecondaryChannelProfile } from "../../../models/SecondaryChannelProfile";
 import OneSignalApi from "../../../OneSignalApi";
 import Database from "../../../services/Database";
-import { SecondaryChannel, SecondaryChannelWithControllerEvents } from "./SecondaryChannel";
-import { SecondaryChannelController } from "./SecondaryChannelController";
+import { SecondaryChannel, SecondaryChannelWithSynchronizerEvents } from "./SecondaryChannel";
+import { SecondaryChannelSynchronizer } from "./SecondaryChannelSynchronizer";
 import { SecondaryChannelIdentifierUpdater } from "./updaters/SecondaryChannelIdentifierUpdater";
 import { SecondaryChannelTagsUpdater } from "./updaters/SecondaryChannelTagsUpdater";
 import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
@@ -13,17 +13,17 @@ import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUp
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 import { TagsObject } from "../../../models/Tags";
 
-export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithControllerEvents {
+export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithSynchronizerEvents {
 
   constructor(
-    readonly secondaryChannelController: SecondaryChannelController,
+    readonly secondaryChannelSynchronizer: SecondaryChannelSynchronizer,
     readonly secondaryChannelIdentifierUpdater: SecondaryChannelIdentifierUpdater,
     readonly secondaryChannelExternalUserIdUpdater: SecondaryChannelExternalUserIdUpdater,
     readonly secondaryChannelTagsUpdater: SecondaryChannelTagsUpdater,
     readonly secondaryChannelSessionUpdater: SecondaryChannelSessionUpdater,
     readonly secondaryChannelFocusUpdater: SecondaryChannelFocusUpdater,
     ) {
-    secondaryChannelController.registerChannel(this);
+    secondaryChannelSynchronizer.registerChannel(this);
   }
 
   async logout(): Promise<boolean> {

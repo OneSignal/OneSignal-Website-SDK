@@ -415,7 +415,7 @@ export default class OneSignal {
     });
     const { appId } = await Database.getAppConfig();
 
-    this.context.secondaryChannelManager.controller.setTags(tags);
+    this.context.secondaryChannelManager.synchronizer.setTags(tags);
 
     const { deviceId } = await Database.getSubscription();
     if (!deviceId) {

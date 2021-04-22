@@ -206,7 +206,7 @@ export default class ServiceWorkerHelper {
     // There isn't a OneSignal Global context to pull from so creating a new
     //   SecondaryChannelManager instance.
     const secondaryChannelManager = new SecondaryChannelManager();
-    await secondaryChannelManager.controller.onSession();
+    await secondaryChannelManager.synchronizer.onSession();
   }
 
   public static async finalizeSession(
@@ -232,7 +232,7 @@ export default class ServiceWorkerHelper {
       // There isn't a OneSignal Global context to pull from so creating a new
       //   SecondaryChannelManager instance.
       const secondaryChannelManager = new SecondaryChannelManager();
-      await secondaryChannelManager.controller.onFocus(session.accumulatedDuration);
+      await secondaryChannelManager.synchronizer.onFocus(session.accumulatedDuration);
     }
 
     await Promise.all([

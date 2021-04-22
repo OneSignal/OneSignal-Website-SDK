@@ -8,8 +8,8 @@ export interface SecondaryChannel {
   logout(): Promise<boolean>;
 }
 
-// Interface that the SecondaryChannelController will interface with
-export interface SecondaryChannelWithControllerEvents {
+// Interface that the SecondaryChannelSynchronizer will interface with
+export interface SecondaryChannelWithSynchronizerEvents {
   onSession(): Promise<void>;
   onFocus(sessionDuration: number): Promise<void>;
 

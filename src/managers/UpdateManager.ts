@@ -129,7 +129,7 @@ export class UpdateManager {
 
     // Not awaiting as this may never complete, as promise only completes if we have a player record for each channel.
     /* tslint:disable:no-floating-promises */
-    this.context.secondaryChannelManager.controller.setExternalUserId(
+    this.context.secondaryChannelManager.synchronizer.setExternalUserId(
       payload.external_user_id,
       payload.external_user_id_auth_hash
     );
