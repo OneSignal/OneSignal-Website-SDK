@@ -44,7 +44,7 @@ import { ValidatorUtils } from './utils/ValidatorUtils';
 import { DeviceRecord } from './models/DeviceRecord';
 import TimedLocalStorage from './modules/TimedLocalStorage';
 import { EmailProfile } from './models/EmailProfile';
-import { EmailDeviceRecord } from './models/EmailDeviceRecord';
+import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
 import Emitter, { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
 import ConfigManager from "./managers/ConfigManager";
@@ -58,6 +58,8 @@ import OutcomesHelper from "./helpers/shared/OutcomesHelper";
 import { OutcomeAttributionType } from "./models/Outcomes";
 import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
+import { AuthHashOptionsValidatorHelper } from './helpers/page/AuthHashOptionsValidatorHelper';
+import { TagsObject } from './models/Tags';
 
 export default class OneSignal {
   /**
@@ -99,85 +101,15 @@ export default class OneSignal {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
 
-    const isIdentifierAuthHashDefined = options && !!options.identifierAuthHash;
-    const isEmailAuthHashDefined      = options && !!options.emailAuthHash;
-
-    const authHash = isIdentifierAuthHashDefined ? options.identifierAuthHash :
-      (isEmailAuthHashDefined ? options.emailAuthHash : undefined);
-
-    if (!!authHash) {
-      if (isIdentifierAuthHashDefined && isEmailAuthHashDefined) {
-        Log.error("Both `emailAuthHash` and `identifierAuthHash` provided.");
-        throw new InvalidArgumentError('options', InvalidArgumentReason.Malformed);
-      }
-      // identifierAuthHash / emailAuthHash are expected to be a 64 character SHA-256 hex hash
-      const isIdentifierAuthHashMalformed = isIdentifierAuthHashDefined && options.identifierAuthHash.length !== 64;
-      const isEmailAuthHashIsMalformed    = isEmailAuthHashDefined && options.emailAuthHash.length !== 64;
-
-      if ( isIdentifierAuthHashMalformed ) {
-        throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
-      }
-
-      if ( isEmailAuthHashIsMalformed ) {
-        throw new InvalidArgumentError('options.emailAuthHash', InvalidArgumentReason.Malformed);
-      }
-    }
+    const authHash = AuthHashOptionsValidatorHelper.throwIfInvalidAuthHashOptions(
+      options,
+      ["identifierAuthHash", "emailAuthHash"]
+    );
 
     logMethodCall('setEmail', email, options);
     await awaitOneSignalInitAndSupported();
 
-    const appConfig = await Database.getAppConfig();
-    const { deviceId } = await Database.getSubscription();
-    const existingEmailProfile = await Database.getEmailProfile();
-
-    const newEmailProfile = new EmailProfile(existingEmailProfile.emailId, email, authHash);
-    const isExistingEmailSaved = !!existingEmailProfile.emailId;
-
-    if (isExistingEmailSaved) {
-      // If we already have a saved email player ID, make a PUT call to update the existing email record
-      newEmailProfile.emailId = await OneSignalApi.updateEmailRecord(
-        appConfig,
-        newEmailProfile,
-        deviceId
-      );
-    } else {
-      // Otherwise, make a POST call to create a new email record
-      newEmailProfile.emailId = await OneSignalApi.createEmailRecord(
-        appConfig,
-        newEmailProfile,
-        deviceId
-      );
-    }
-
-    // If we are subscribed to web push
-    const isExistingPushRecordSaved = deviceId;
-    // And if we previously saved an email ID and it's different from the new returned ID
-    const emailPreviouslySavedAndDifferent = !isExistingEmailSaved ||
-      existingEmailProfile.emailId !== newEmailProfile.emailId;
-    // Or if we previously saved an email and the email changed
-    const emailPreviouslySavedAndChanged = !existingEmailProfile.emailAddress ||
-      newEmailProfile.emailAddress !== existingEmailProfile.emailAddress;
-
-    if (!!deviceId && isExistingPushRecordSaved && (emailPreviouslySavedAndDifferent || emailPreviouslySavedAndChanged))
-      {
-        const authHash = await OneSignal.database.getExternalUserIdAuthHash();
-        // Then update the push device record with a reference to the new email ID and email address
-        await OneSignalApi.updatePlayer(
-          appConfig.appId,
-          deviceId,
-          {
-            parent_player_id: newEmailProfile.emailId,
-            email: newEmailProfile.emailAddress,
-            external_user_id_auth_hash: authHash
-          }
-        );
-    }
-
-    // email record update / create call returned successfully
-    if (!!newEmailProfile.emailId) {
-      await Database.setEmailProfile(newEmailProfile);
-    }
-    return newEmailProfile.emailId;
+    return await this.context.secondaryChannelManager.email.setIdentifier(email, authHash);
   }
 
   /**
@@ -185,27 +117,7 @@ export default class OneSignal {
    */
   static async logoutEmail() {
     await awaitOneSignalInitAndSupported();
-
-    const appConfig = await Database.getAppConfig();
-    const emailProfile = await Database.getEmailProfile();
-    const { deviceId } = await Database.getSubscription();
-
-    if (!emailProfile.emailId) {
-      Log.warn(new NotSubscribedError(NotSubscribedReason.NoEmailSet));
-      return;
-    }
-
-    if (!deviceId) {
-      Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return;
-    }
-
-    if (!await OneSignalApi.logoutEmail(appConfig, emailProfile, deviceId)) {
-      Log.warn("Failed to logout email.");
-      return;
-    }
-
-    await Database.setEmailProfile(new EmailProfile());
+    return await this.context.secondaryChannelManager.email.logout();
   }
 
   /**
@@ -488,7 +400,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async sendTags(tags: {[key: string]: any}, callback?: Action<Object>): Promise<Object | null> {
+  static async sendTags(tags: TagsObject<any>, callback?: Action<Object>): Promise<Object | null> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('sendTags', tags, callback);
     if (!tags || Object.keys(tags).length === 0) {
@@ -503,15 +415,7 @@ export default class OneSignal {
     });
     const { appId } = await Database.getAppConfig();
 
-    const emailProfile = await Database.getEmailProfile();
-    if (emailProfile.emailId) {
-      const emailOptions : UpdatePlayerOptions = {
-        tags,
-        identifier_auth_hash: emailProfile.identifierAuthHash
-      };
-
-      await OneSignalApi.updatePlayer(appId, emailProfile.emailId, emailOptions);
-    }
+    this.context.secondaryChannelManager.synchronizer.setTags(tags);
 
     const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
@@ -569,11 +473,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
-    if (!!authHash) {
-      if ( authHash.length !== 64 ) {
-        throw new InvalidArgumentError('options.identifierAuthHash', InvalidArgumentReason.Malformed);
-      }
-    }
+    AuthHashOptionsValidatorHelper.throwIfInvalidAuthHash(authHash, "authHash");
 
     const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!isExistingUser) {
@@ -738,7 +638,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getEmailId', callback);
     const emailProfile = await Database.getEmailProfile();
-    const emailId = emailProfile.emailId;
+    const emailId = emailProfile.subscriptionId;
     executeCallback(callback, emailId);
     return emailId;
   }
@@ -999,7 +899,7 @@ export default class OneSignal {
   static context: Context;
   static checkAndWipeUserSubscription = function () { }
   static DeviceRecord = DeviceRecord;
-  static EmailDeviceRecord = EmailDeviceRecord;
+  static SecondaryChannelDeviceRecord = SecondaryChannelDeviceRecord;
 
   static notificationPermission = NotificationPermission;
 

@@ -1,37 +1,32 @@
+import { SecondaryChannelProfileSerializable } from './SecondaryChannelProfile';
 
-import { Serializable } from './Serializable';
+export interface BundleEmail {
+  emailId?: string;
+  emailAddress: string;
+  identifierAuthHash: string;
+}
 
+export class EmailProfile implements SecondaryChannelProfileSerializable<BundleEmail> {
 
-export class EmailProfile implements Serializable {
-  /**
-   * The OneSignal email player ID obtained after creating an email device record with the plain
-   * text email address.
-   */
-  public emailId: string | null | undefined;
-  /**
-   * The plain text email address.
-   */
-  public emailAddress: string | null | undefined;
-  /**
-   * The SHA-256 hash of the app's auth key and plain text email address in hex format.
-   */
-  public identifierAuthHash: string | null | undefined;
+  subscriptionId: string | null | undefined;
+  identifier: string | null | undefined;
+  identifierAuthHash: string | null | undefined;
 
   constructor(emailId?: string | null, emailAddress?: string, identifierAuthHash?: string) {
-    this.emailId = emailId;
-    this.emailAddress = emailAddress;
+    this.subscriptionId = emailId;
+    this.identifier = emailAddress;
     this.identifierAuthHash = identifierAuthHash;
   }
 
-  serialize() {
+  serialize(): BundleEmail {
     return {
       identifierAuthHash: this.identifierAuthHash,
-      emailAddress: this.emailAddress,
-      emailId: this.emailId,
-    };
+      emailAddress: this.identifier,
+      emailId: this.subscriptionId,
+    } as BundleEmail;
   }
 
-  static deserialize(bundle: any): EmailProfile {
+  static deserialize(bundle: BundleEmail): EmailProfile {
     return new EmailProfile(
       bundle.emailId,
       bundle.emailAddress,

@@ -15,7 +15,7 @@ import OneSignalApiShared from '../OneSignalApiShared';
 import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { EmailDeviceRecord } from '../models/EmailDeviceRecord';
+import { SecondaryChannelDeviceRecord } from '../models/SecondaryChannelDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
@@ -355,22 +355,6 @@ export default class InitHelper {
       } else {
         OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);
         OneSignal.notifyButton.create();
-      }
-    }
-  }
-
-  public static async updateEmailSessionCount() {
-    const context: ContextInterface = OneSignal.context;
-    /* Both HTTP and HTTPS pages can update email session by API request without origin/push feature restrictions */
-    if (context.pageViewManager.isFirstPageView()) {
-      const emailProfile = await Database.getEmailProfile();
-      if (emailProfile.emailId) {
-        const emailDeviceRecord = new EmailDeviceRecord(emailProfile.emailAddress, emailProfile.identifierAuthHash);
-        emailDeviceRecord.appId = context.appConfig.appId;
-        await OneSignalApiShared.updateUserSession(
-          emailProfile.emailId,
-          emailDeviceRecord
-        );
       }
     }
   }

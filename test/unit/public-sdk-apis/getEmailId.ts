@@ -15,6 +15,6 @@ test("getEmailId should return the correct string", async t => {
   const emailIdByCallback = await new Promise(resolve => {
     OneSignal.getEmailId(resolve)
   });
-  t.is(emailIdByPromise, emailProfile.emailId);
-  t.is(emailIdByCallback, emailProfile.emailId);
+  t.is(emailIdByPromise, emailProfile.subscriptionId);
+  t.is(emailIdByCallback, emailProfile.subscriptionId);
 });

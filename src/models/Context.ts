@@ -17,6 +17,7 @@ import TagManager from '../managers/tagManager/page/TagManager';
 import { ITagManager } from '../managers/tagManager/types';
 import { ISlidedownManager } from '../managers/slidedownManager/types';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
+import { SecondaryChannelManager } from '../managers/channelManager/shared/SecondaryChannelManager';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -41,6 +42,7 @@ export default class Context implements ContextInterface {
   public sessionManager: ISessionManager;
   public tagManager: ITagManager;
   public slidedownManager: ISlidedownManager;
+  public secondaryChannelManager: SecondaryChannelManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -59,5 +61,6 @@ export default class Context implements ContextInterface {
     this.promptsManager = new PromptsManager(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
     this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
+    this.secondaryChannelManager = new SecondaryChannelManager();
   }
 }

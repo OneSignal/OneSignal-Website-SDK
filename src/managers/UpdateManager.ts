@@ -10,6 +10,7 @@ import Utils from "../context/shared/utils/Utils";
 import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
 import { logMethodCall } from '../utils';
+import { UpdatePlayerExternalUserId } from "../models/UpdatePlayerOptions";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -82,7 +83,7 @@ export class UpdateManager {
 
     try {
       // Not sending on_session here but from SW instead.
-      
+
       // Not awaiting here on purpose
       this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
@@ -124,8 +125,18 @@ export class UpdateManager {
     const payload = {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
-    };
+    } as UpdatePlayerExternalUserId;
 
+    // 1. Update any secondary channels such as email with external_user_id
+    // Not awaiting as this may never complete, as promise only completes if we have a player record for each channel.
+    /* tslint:disable:no-floating-promises */
+    this.context.secondaryChannelManager.synchronizer.setExternalUserId(
+      payload.external_user_id,
+      payload.external_user_id_auth_hash
+    );
+    /* tslint:enable:no-floating-promises */
+
+    // 2. Update push player with external_user_id
     return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
   }
 

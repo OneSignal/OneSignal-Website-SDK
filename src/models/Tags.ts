@@ -4,7 +4,7 @@ export interface TagCategory {
     checked?: boolean;
 }
 type PossibleTagValueValues = "0" | "1";
-interface TagsObject<T> {
+export interface TagsObject<T> {
     [key: string]: T;
 }
 export type TagsObjectWithBoolean = TagsObject<boolean>;

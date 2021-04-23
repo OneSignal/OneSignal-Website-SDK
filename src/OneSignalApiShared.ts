@@ -1,13 +1,14 @@
 import { AppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
-import { EmailProfile } from './models/EmailProfile';
-import { EmailDeviceRecord } from './models/EmailDeviceRecord';
+import { SecondaryChannelProfile } from './models/SecondaryChannelProfile';
+import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
 import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";
 import Log from "./libraries/Log";
 import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
+import { EmailProfile } from './models/EmailProfile';
 
 export default class OneSignalApiShared {
   static getPlayer(appId: string, playerId: string) {
@@ -54,21 +55,21 @@ export default class OneSignalApiShared {
     return null;
   }
 
-  static async createEmailRecord(
+  static async createSecondaryChannelRecord(
     appConfig: AppConfig,
-    emailProfile: EmailProfile,
+    profile: SecondaryChannelProfile,
     pushDeviceRecordId?: string
   ): Promise<string | null> {
     Utils.enforceAppId(appConfig.appId);
 
-    const emailRecord = new EmailDeviceRecord(
-      emailProfile.emailAddress,
-      emailProfile.identifierAuthHash,
+    const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
+      profile.identifier,
+      profile.identifierAuthHash,
       pushDeviceRecordId
     );
 
-    emailRecord.appId = appConfig.appId;
-    const response = await OneSignalApiBase.post(`players`, emailRecord.serialize());
+    secondaryChannelRecord.appId = appConfig.appId;
+    const response = await OneSignalApiBase.post(`players`, secondaryChannelRecord.serialize());
     if (response && response.success) {
       return response.id;
     } else {
@@ -76,27 +77,25 @@ export default class OneSignalApiShared {
     }
   }
 
-  static async updateEmailRecord(
+  /**
+   * Make a PUT call to update the secondary channel's identifier.
+   * @param {AppConfig} appConfig - This contains an appId which will be included
+   * @param {SecondaryChannelProfile} profile - This the profile we will be using fields from to include in the update
+   */
+  static async updateSecondaryChannelRecord(
     appConfig: AppConfig,
-    emailProfile: EmailProfile,
-    pushDeviceRecordId?: string
-  ): Promise<string | null> {
+    profile: SecondaryChannelProfile
+  ): Promise<void> {
     Utils.enforceAppId(appConfig.appId);
-    Utils.enforcePlayerId(emailProfile.emailId);
+    Utils.enforcePlayerId(profile.subscriptionId);
 
-    const emailRecord = new EmailDeviceRecord(
-      emailProfile.emailAddress,
-      emailProfile.identifierAuthHash,
-      pushDeviceRecordId
+    const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
+      profile.identifier,
+      profile.identifierAuthHash
     );
 
-    emailRecord.appId = appConfig.appId;
-    const response = await OneSignalApiBase.put(`players/${emailProfile.emailId}`, emailRecord.serialize());
-    if (response && response.success) {
-      return response.id;
-    } else {
-      return null;
-    }
+    secondaryChannelRecord.appId = appConfig.appId;
+    await OneSignalApiBase.put(`players/${profile.subscriptionId}`, secondaryChannelRecord.serialize());
   }
 
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {
@@ -104,7 +103,7 @@ export default class OneSignalApiShared {
     Utils.enforcePlayerId(deviceId);
     const response = await OneSignalApiBase.post(`players/${deviceId}/email_logout`, {
       app_id: appConfig.appId,
-      parent_player_id: emailProfile.emailId,
+      parent_player_id: emailProfile.subscriptionId,
       identifier_auth_hash: emailProfile.identifierAuthHash ? emailProfile.identifierAuthHash : undefined
     });
     if (response && response.success) {
