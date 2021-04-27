@@ -95,12 +95,16 @@ export default class Launcher extends ActiveAnimatedElement {
   }
 
   scaleDown() {
-      return this.element.style.transform = 'scale(0.95)';
+      if (this.element)
+        this.element.style.transform = 'scale(0.95)';
+      return;
   }
 
 
   scaleBack() {
-      return this.element.style.transform = '';
+      if (this.element)
+        this.element.style.transform = '';
+      return;
   }
 
   inactivate() {
