@@ -96,7 +96,7 @@ export default class Launcher extends ActiveAnimatedElement {
 
   scaleDown() {
       if (this.element)
-        this.element.style.transform = 'scale(0.95)';
+        this.element.style.transform = 'scale(0.5)';
       return;
   }
 
