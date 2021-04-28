@@ -116,25 +116,25 @@ export class SlidedownManager {
 
   private async handleAllowForEmailType(): Promise<void> {
     const emailInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
-    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
+    const isEmailEmpty = OneSignal.slidedown.channelCaptureContainer.isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
     }
 
-    const email = ChannelCaptureContainer.getValueFromEmailInput();
+    const email = OneSignal.slidedown.channelCaptureContainer.getValueFromEmailInput();
     this.updateEmail(email);
   }
 
   private async handleAllowForSmsType(): Promise<void> {
     const smsInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
-    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+    const isSmsEmpty = OneSignal.slidedown.channelCaptureContainer.isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
 
-    const sms = ChannelCaptureContainer.getValueFromSmsInput();
+    const sms = OneSignal.slidedown.channelCaptureContainer.getValueFromSmsInput();
     this.updateSMS(sms);
   }
 
@@ -147,8 +147,8 @@ export class SlidedownManager {
      *
      * thus, we need separate checks for the emptiness properties
      */
-    const isEmailEmpty = ChannelCaptureContainer.isEmailInputFieldEmpty();
-    const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
+    const isEmailEmpty = OneSignal.slidedown.channelCaptureContainer.isEmailInputFieldEmpty();
+    const isSmsEmpty = OneSignal.slidedown.channelCaptureContainer.isSmsInputFieldEmpty();
 
     const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
@@ -157,8 +157,8 @@ export class SlidedownManager {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
     }
 
-    const email = ChannelCaptureContainer.getValueFromEmailInput();
-    const sms = ChannelCaptureContainer.getValueFromSmsInput();
+    const email = OneSignal.slidedown.channelCaptureContainer.getValueFromEmailInput();
+    const sms = OneSignal.slidedown.channelCaptureContainer.getValueFromSmsInput();
 
     /**
      * empty is ok (we can accept only one of two input fields), but invalid is not
