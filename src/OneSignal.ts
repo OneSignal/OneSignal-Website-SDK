@@ -670,6 +670,20 @@ export default class OneSignal {
     return emailId;
   }
 
+    /**
+   * Returns a promise that resolves to the stored OneSignal SMS ID if one is set; otherwise undefined.
+   * @param callback A function accepting one parameter for the OneSignal SMS ID.
+   * @PublicApi
+   */
+     static async getSMSId(callback?: Action<string | undefined>): Promise<string | null | undefined> {
+      await awaitOneSignalInitAndSupported();
+      logMethodCall('getSMSId', callback);
+      const profile = await Database.getSMSProfile();
+      const { subscriptionId } = profile;
+      executeCallback(callback, subscriptionId);
+      return subscriptionId;
+    }
+
   /**
    * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
    * @param callback A function accepting one parameter for the OneSignal user ID.
