@@ -10,12 +10,12 @@ export class SecondaryChannelDeviceRecord extends DeviceRecord {
    * @param identifier Omitting this parameter does not void the record's identifier.
    */
   constructor(
+    public deliveryPlatform: DeliveryPlatformKind,
     public identifier?: string | null,
     public identifierAuthHash?: string | null,
     public pushDeviceRecordId?: string | null,
   ) {
     super();
-    this.deliveryPlatform = DeliveryPlatformKind.Email;
   }
 
   serialize() {
