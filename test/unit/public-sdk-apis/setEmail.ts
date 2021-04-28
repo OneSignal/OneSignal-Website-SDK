@@ -124,21 +124,9 @@ async function expectEmailRecordUpdateRequest(
         device_player_id: pushDevicePlayerId ? pushDevicePlayerId : undefined,
         identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
       };
-      const anyValues = [
-        "device_type",
-        "language",
-        "timezone",
-        "timezone_id",
-        "device_os",
-        "sdk",
-        "device_model"
-      ];
       const parsedRequestBody = JSON.parse(requestBody);
       for (const sameValueKey of Object.keys(sameValues)) {
         t.deepEqual(parsedRequestBody[sameValueKey], sameValues[sameValueKey]);
-      }
-      for (const anyValueKey of anyValues) {
-        t.not(parsedRequestBody[anyValueKey], undefined);
       }
       return { success : true, id : newUpdatedEmailId };
     });
