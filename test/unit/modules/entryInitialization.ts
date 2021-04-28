@@ -106,13 +106,16 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getSubscription");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "sendSelfNotification");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setEmail");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber")
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "logoutEmail");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "logoutSMS");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "removeExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "isOptedOut");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getEmailId");
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "getSMSId");
 });
 
 
@@ -182,13 +185,16 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getSubscription");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "sendSelfNotification");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setEmail");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber")
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "logoutEmail");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "logoutSMS");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "removeExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "isOptedOut");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getEmailId");
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "getSMSId");
 });
 
 // Creating an object like OneSignal, but with only the methods we need to mock

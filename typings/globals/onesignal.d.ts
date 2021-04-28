@@ -9,6 +9,10 @@ interface SetEmailOptions {
   emailAuthHash?: string; // backwards compatibility
 }
 
+interface SetSMSOptions {
+  identifierAuthHash?: string;
+}
+
 interface PushSubscriptionState {
   subscribed: boolean;
   optedOut: boolean;

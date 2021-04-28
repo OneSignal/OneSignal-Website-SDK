@@ -15,6 +15,7 @@ import OneSignalUtils from "../utils/OneSignalUtils";
 import Utils from "../context/shared/utils/Utils";
 import Log from "../libraries/Log";
 import { SentUniqueOutcome } from '../models/Outcomes';
+import { BundleSMS, SMSProfile } from "../models/SMSProfile";
 
 enum DatabaseEventName {
   SET
@@ -366,6 +367,21 @@ export default class Database {
     }
   }
 
+  async getSMSProfile(): Promise<SMSProfile> {
+    const profileJson = await this.get<BundleSMS>("Ids", "smsProfile");
+    if (profileJson) {
+      return SMSProfile.deserialize(profileJson);
+    } else {
+      return new SMSProfile();
+    }
+  }
+
+  async setSMSProfile(profile: SMSProfile): Promise<void> {
+    if (profile) {
+      await this.put("Ids", { type: "smsProfile", id: profile.serialize() });
+    }
+  }
+
   async setProvideUserConsent(consent: boolean): Promise<void> {
     await this.put("Options", { key: "userConsent", value: consent });
   }
@@ -478,6 +494,14 @@ export default class Database {
 
   static async getEmailProfile(): Promise<EmailProfile> {
     return await Database.singletonInstance.getEmailProfile();
+  }
+
+  static async setSMSProfile(smsProfile: SMSProfile) {
+    return await Database.singletonInstance.setSMSProfile(smsProfile);
+  }
+
+  static async getSMSProfile(): Promise<SMSProfile> {
+    return await Database.singletonInstance.getSMSProfile();
   }
 
   static async setSubscription(subscription: Subscription) {

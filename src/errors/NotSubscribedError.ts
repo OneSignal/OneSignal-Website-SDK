@@ -5,6 +5,7 @@ export enum NotSubscribedReason {
   Unknown,
   NoDeviceId,
   NoEmailSet,
+  NoSMSSet,
   OptedOut
 }
 
@@ -19,6 +20,9 @@ export class NotSubscribedError extends OneSignalError {
         break;
       case NotSubscribedReason.NoEmailSet:
         errorMessage = 'No email is currently set.';
+        break;
+      case NotSubscribedReason.NoSMSSet:
+        errorMessage = 'No sms is currently set.';
         break;
       case NotSubscribedReason.OptedOut:
         errorMessage = `The user has manually opted out of receiving of notifications. ` +

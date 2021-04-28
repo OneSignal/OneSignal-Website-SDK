@@ -115,9 +115,36 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
+  static async setSMSNumber(smsNumber: string, options?: SetSMSOptions): Promise<string | null> {
+    if (!smsNumber) {
+      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
+    }
+
+    const authHash = AuthHashOptionsValidatorHelper.throwIfInvalidAuthHashOptions(
+      options,
+      ["identifierAuthHash"]
+    );
+
+    logMethodCall('setSMSNumber', smsNumber, options);
+    await awaitOneSignalInitAndSupported();
+
+    return await this.context.secondaryChannelManager.sms.setIdentifier(smsNumber, authHash);
+  }
+
+  /**
+   * @PublicApi
+   */
   static async logoutEmail() {
     await awaitOneSignalInitAndSupported();
     return await this.context.secondaryChannelManager.email.logout();
+  }
+
+  /**
+   * @PublicApi
+   */
+  static async logoutSMS() {
+    await awaitOneSignalInitAndSupported();
+    return await this.context.secondaryChannelManager.sms.logout();
   }
 
   /**
@@ -642,6 +669,20 @@ export default class OneSignal {
     executeCallback(callback, emailId);
     return emailId;
   }
+
+    /**
+   * Returns a promise that resolves to the stored OneSignal SMS ID if one is set; otherwise undefined.
+   * @param callback A function accepting one parameter for the OneSignal SMS ID.
+   * @PublicApi
+   */
+     static async getSMSId(callback?: Action<string | undefined>): Promise<string | null | undefined> {
+      await awaitOneSignalInitAndSupported();
+      logMethodCall('getSMSId', callback);
+      const profile = await Database.getSMSProfile();
+      const { subscriptionId } = profile;
+      executeCallback(callback, subscriptionId);
+      return subscriptionId;
+    }
 
   /**
    * Returns a promise that resolves to the stored OneSignal user ID if one is set; otherwise null.
