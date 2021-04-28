@@ -55,13 +55,16 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
     "getSubscription",
     "sendSelfNotification",
     "setEmail",
+    "setSMSNumber",
     "logoutEmail",
+    "logoutSMS",
     "setExternalUserId",
     "removeExternalUserId",
     "getExternalUserId",
     "provideUserConsent",
     "isOptedOut",
     "getEmailId",
+    "getSMSId",
     "sendOutcome"
   ];
 
