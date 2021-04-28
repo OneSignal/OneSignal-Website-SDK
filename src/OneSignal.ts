@@ -140,6 +140,14 @@ export default class OneSignal {
   }
 
   /**
+   * @PublicApi
+   */
+  static async logoutSMS() {
+    await awaitOneSignalInitAndSupported();
+    return await this.context.secondaryChannelManager.sms.logout();
+  }
+
+  /**
    * Returns true if the current browser supports web push.
    * @PublicApi
    */
