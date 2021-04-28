@@ -258,7 +258,6 @@ export default class ChannelCaptureContainer {
     }
   }
 
-  /* S T A T I C */
   isEmailInputFieldEmpty(): boolean {
     return this.getValueFromEmailInput() === "";
   }
@@ -267,6 +266,16 @@ export default class ChannelCaptureContainer {
     return this.getValueFromSmsInput() === "";
   }
 
+  getValueFromEmailInput(): string {
+    const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
+    return (<HTMLInputElement>inputNode)?.value || "";
+  }
+
+  getValueFromSmsInput(): string {
+    return this.itiOneSignal.getNumber(intlTelInputUtils.numberFormat.E164) || "";
+  }
+
+  /* S T A T I C */
   static showSmsInputError(state: boolean): void {
     const validationElement = document.querySelector(
       `#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement}`
@@ -327,15 +336,6 @@ export default class ChannelCaptureContainer {
       default:
         break;
     }
-  }
-
-  getValueFromEmailInput(): string {
-    const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
-    return (<HTMLInputElement>inputNode)?.value || "";
-  }
-
-  getValueFromSmsInput(): string {
-    return this.itiOneSignal.getNumber(intlTelInputUtils.numberFormat.E164) || "";
   }
 
   static validateEmailInputWithReturnVal(emailString?: string): boolean {
