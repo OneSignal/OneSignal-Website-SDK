@@ -50,21 +50,6 @@ export default class OneSignalApi {
     return await OneSignalApiShared.createUser(deviceRecord);
   }
 
-  static async createSecondaryChannelRecord(
-    appConfig: AppConfig,
-    profile: SecondaryChannelProfile,
-    pushDeviceRecordId?: string
-  ): Promise<string | null> {
-    return await OneSignalApiShared.createSecondaryChannelRecord(appConfig, profile, pushDeviceRecordId);
-  }
-
-  static async updateSecondaryChannelRecord(
-    appConfig: AppConfig,
-    profile: SecondaryChannelProfile
-  ): Promise<void> {
-    await OneSignalApiShared.updateSecondaryChannelRecord(appConfig, profile);
-  }
-
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {
     return await OneSignalApiShared.logoutEmail(appConfig, emailProfile, deviceId);
   }

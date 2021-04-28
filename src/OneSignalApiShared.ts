@@ -55,49 +55,6 @@ export default class OneSignalApiShared {
     return null;
   }
 
-  static async createSecondaryChannelRecord(
-    appConfig: AppConfig,
-    profile: SecondaryChannelProfile,
-    pushDeviceRecordId?: string
-  ): Promise<string | null> {
-    Utils.enforceAppId(appConfig.appId);
-
-    const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
-      profile.identifier,
-      profile.identifierAuthHash,
-      pushDeviceRecordId
-    );
-
-    secondaryChannelRecord.appId = appConfig.appId;
-    const response = await OneSignalApiBase.post(`players`, secondaryChannelRecord.serialize());
-    if (response && response.success) {
-      return response.id;
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Make a PUT call to update the secondary channel's identifier.
-   * @param {AppConfig} appConfig - This contains an appId which will be included
-   * @param {SecondaryChannelProfile} profile - This the profile we will be using fields from to include in the update
-   */
-  static async updateSecondaryChannelRecord(
-    appConfig: AppConfig,
-    profile: SecondaryChannelProfile
-  ): Promise<void> {
-    Utils.enforceAppId(appConfig.appId);
-    Utils.enforcePlayerId(profile.subscriptionId);
-
-    const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
-      profile.identifier,
-      profile.identifierAuthHash
-    );
-
-    secondaryChannelRecord.appId = appConfig.appId;
-    await OneSignalApiBase.put(`players/${profile.subscriptionId}`, secondaryChannelRecord.serialize());
-  }
-
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {
     Utils.enforceAppId(appConfig.appId);
     Utils.enforcePlayerId(deviceId);

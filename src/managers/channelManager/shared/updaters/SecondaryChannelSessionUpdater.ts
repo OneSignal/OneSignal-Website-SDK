@@ -14,6 +14,7 @@ export class SecondaryChannelSessionUpdater {
     }
 
     const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
+      this.profileProvider.deviceType,
       profile.identifier,
       profile.identifierAuthHash
     );
