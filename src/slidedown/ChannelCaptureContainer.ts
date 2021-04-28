@@ -259,12 +259,12 @@ export default class ChannelCaptureContainer {
   }
 
   /* S T A T I C */
-  static isEmailInputFieldEmpty(): boolean {
-    return ChannelCaptureContainer.getValueFromEmailInput() === "";
+  isEmailInputFieldEmpty(): boolean {
+    return this.getValueFromEmailInput() === "";
   }
 
-  static isSmsInputFieldEmpty(): boolean {
-    return ChannelCaptureContainer.getValueFromSmsInput() === "";
+  isSmsInputFieldEmpty(): boolean {
+    return this.getValueFromSmsInput() === "";
   }
 
   static showSmsInputError(state: boolean): void {
@@ -329,14 +329,13 @@ export default class ChannelCaptureContainer {
     }
   }
 
-  static getValueFromEmailInput(): string {
+  getValueFromEmailInput(): string {
     const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
     return (<HTMLInputElement>inputNode)?.value || "";
   }
 
-  static getValueFromSmsInput(): string {
-    const inputNode = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
-    return (<HTMLInputElement>inputNode)?.value || "";
+  getValueFromSmsInput(): string {
+    return this.itiOneSignal.getNumber(intlTelInputUtils.numberFormat.E164) || "";
   }
 
   static validateEmailInputWithReturnVal(emailString?: string): boolean {
