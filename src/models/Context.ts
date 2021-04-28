@@ -49,6 +49,7 @@ export default class Context implements ContextInterface {
     if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
       this.environmentInfo = OneSignal.environmentInfo;
     }
+    this.secondaryChannelManager = new SecondaryChannelManager();
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
     this.pageViewManager = new PageViewManager();
@@ -57,10 +58,9 @@ export default class Context implements ContextInterface {
     this.updateManager = new UpdateManager(this);
     this.sessionManager = new SessionManager(this);
     this.tagManager = new TagManager(this);
-    this.slidedownManager = new SlidedownManager(this);
+    this.slidedownManager = new SlidedownManager(this, this.secondaryChannelManager);
     this.promptsManager = new PromptsManager(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
     this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
-    this.secondaryChannelManager = new SecondaryChannelManager();
   }
 }

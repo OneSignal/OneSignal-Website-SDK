@@ -23,13 +23,17 @@ import PromptsHelper from "../../helpers/PromptsHelper";
 import ConfirmationToast from "../../slidedown/ConfirmationToast";
 import { awaitableTimeout } from "../../utils/AwaitableTimeout";
 import { DismissPrompt } from "../../models/Dismiss";
+import { SecondaryChannelManager } from "../channelManager/shared/SecondaryChannelManager";
 
 export class SlidedownManager {
   private context: ContextInterface;
   private slidedownQueue: AutoPromptOptions[];
   private isSlidedownShowing: boolean;
 
-  constructor(context: ContextInterface) {
+  constructor(
+    context: ContextInterface,
+    private readonly secondaryChannelManager: SecondaryChannelManager
+    ) {
     this.context = context;
     this.slidedownQueue = [];
     this.isSlidedownShowing = false;
@@ -119,7 +123,7 @@ export class SlidedownManager {
     }
 
     const email = ChannelCaptureContainer.getValueFromEmailInput();
-    this.context.updateManager.updateEmail(email);
+    this.updateEmail(email);
   }
 
   private async handleAllowForSmsType(): Promise<void> {
@@ -131,7 +135,7 @@ export class SlidedownManager {
     }
 
     const sms = ChannelCaptureContainer.getValueFromSmsInput();
-    this.context.updateManager.updateSms(sms);
+    this.updateSMS(sms);
   }
 
   private async handleAllowForSmsAndEmailType(): Promise<void> {
@@ -162,7 +166,7 @@ export class SlidedownManager {
      */
     if (emailInputFieldIsValid) {
       if (!isEmailEmpty) {
-        this.context.updateManager.updateEmail(email);
+        this.updateEmail(email);
       }
     } else {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
@@ -170,11 +174,19 @@ export class SlidedownManager {
 
     if (smsInputFieldIsValid) {
       if (!isSmsEmpty) {
-        this.context.updateManager.updateSms(sms);
+        this.updateSMS(sms);
       }
     } else {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
+  }
+
+  private updateEmail(email: string): void {
+    this.secondaryChannelManager.email.setIdentifier(email);
+  }
+
+  private updateSMS(sms: string): void {
+    this.secondaryChannelManager.sms.setIdentifier(sms);
   }
 
   private async showConfirmationToast(): Promise<void> {

@@ -185,12 +185,4 @@ export class UpdateManager {
     }
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
-
-  public async updateEmail(email: string) {
-    // to do
-  }
-
-  public async updateSms(smsNumber: string) {
-    // to do
-  }
 }
