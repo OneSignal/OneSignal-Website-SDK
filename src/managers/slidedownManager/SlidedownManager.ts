@@ -129,12 +129,12 @@ export class SlidedownManager {
   private async handleAllowForSmsType(): Promise<void> {
     const smsInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
     const isSmsEmpty = ChannelCaptureContainer.isSmsInputFieldEmpty();
-    const sms = ChannelCaptureContainer.getValueFromSmsInput();
 
-    if (!sms || !smsInputFieldIsValid || isSmsEmpty) {
+    if (!smsInputFieldIsValid || isSmsEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
 
+    const sms = ChannelCaptureContainer.getValueFromSmsInput();
     this.updateSMS(sms);
   }
 
