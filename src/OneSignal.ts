@@ -115,6 +115,25 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
+  static async setSMSNumber(smsNumber: string, options?: SetSMSOptions): Promise<string | null> {
+    if (!smsNumber) {
+      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
+    }
+
+    const authHash = AuthHashOptionsValidatorHelper.throwIfInvalidAuthHashOptions(
+      options,
+      ["identifierAuthHash"]
+    );
+
+    logMethodCall('setSMSNumber', smsNumber, options);
+    await awaitOneSignalInitAndSupported();
+
+    return await this.context.secondaryChannelManager.sms.setIdentifier(smsNumber, authHash);
+  }
+
+  /**
+   * @PublicApi
+   */
   static async logoutEmail() {
     await awaitOneSignalInitAndSupported();
     return await this.context.secondaryChannelManager.email.logout();
