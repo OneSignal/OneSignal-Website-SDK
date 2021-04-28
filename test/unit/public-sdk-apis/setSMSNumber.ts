@@ -1,0 +1,90 @@
+import test from "ava";
+import { InvalidArgumentError } from "../../../src/errors/InvalidArgumentError";
+import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
+import Database from "../../../src/services/Database";
+import { TestEnvironment } from "../../support/sdk/TestEnvironment";
+import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
+import { setupFakePlayerId } from "../../support/tester/utils";
+
+const TEST_SMS_NUMBER = "+1112223333";
+
+test.beforeEach(async _t => {
+  await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
+});
+
+test("setSMSNumber, makes POST call to create SMS record, w/o push player", async t => {
+  // 1. Nock out SMS create
+  const smsPostNock = NockOneSignalHelper.nockPlayerPost();
+  await OneSignal.setSMSNumber(TEST_SMS_NUMBER);
+
+  // 2. Ensure player create with correct params was made
+  t.deepEqual(
+    (await smsPostNock.result).request.body,
+    {
+      app_id: OneSignal.context.appConfig.appId,
+      device_model: '',
+      device_os: -1,
+      device_type: DeliveryPlatformKind.SMS,
+      identifier: TEST_SMS_NUMBER,
+      language: 'en',
+      sdk: '1',
+      timezone: 0,
+      timezone_id: 'UTC',
+    }
+  );
+});
+
+test("setSMSNumber, makes POST call to create SMS record, w/ push player", async t => {
+  // 1. Create a push player id in the DB
+  const pushPlayerId = await setupFakePlayerId();
+
+  // 2. Nock out SMS create
+  const smsPostNock = NockOneSignalHelper.nockPlayerPost();
+  await OneSignal.setSMSNumber(TEST_SMS_NUMBER);
+
+  // 3. Ensure player create with correct params was made
+  t.deepEqual(
+    (await smsPostNock.result).request.body,
+    {
+      app_id: OneSignal.context.appConfig.appId,
+      device_model: '',
+      device_os: -1,
+      device_player_id: pushPlayerId,
+      device_type: DeliveryPlatformKind.SMS,
+      identifier: TEST_SMS_NUMBER,
+      language: 'en',
+      sdk: '1',
+      timezone: 0,
+      timezone_id: 'UTC',
+    }
+  );
+});
+
+test("setSMSNumber, throws on null", async t => {
+  await t.throwsAsync(
+    async () => {
+      await OneSignal.setSMSNumber(null);
+    },
+    { instanceOf: InvalidArgumentError }
+  );
+});
+
+test("setSMSNumber, throws on undefined", async t => {
+  await t.throwsAsync(
+    async () => {
+      await OneSignal.setSMSNumber();
+    },
+    { instanceOf: InvalidArgumentError }
+  );
+});
+
+test("setSMSNumber, throws on empty string", async t => {
+  await t.throwsAsync(
+    async () => {
+      await OneSignal.setSMSNumber("");
+    },
+    { instanceOf: InvalidArgumentError }
+  );
+});
