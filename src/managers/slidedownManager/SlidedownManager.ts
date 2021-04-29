@@ -302,7 +302,7 @@ export class SlidedownManager {
       slidedown.close();
 
       if (!PromptsHelper.isSlidedownPushDependent(slidedownType)) {
-        this.showConfirmationToast();
+        await this.showConfirmationToast();
       }
       // timeout to allow slidedown close animation to finish in case another slidedown is queued
       await awaitableTimeout(1000);
