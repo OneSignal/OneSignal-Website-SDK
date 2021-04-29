@@ -24,6 +24,9 @@ import ConfirmationToast from "../../slidedown/ConfirmationToast";
 import { awaitableTimeout } from "../../utils/AwaitableTimeout";
 import { DismissPrompt } from "../../models/Dismiss";
 import { SecondaryChannelManager } from "../channelManager/shared/SecondaryChannelManager";
+import Database from "../../services/Database";
+import AlreadySubscribedError from "../../errors/AlreadySubscribedError";
+import ExistingChannelError from "../../errors/ExistingChannelError";
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -63,6 +66,7 @@ export class SlidedownManager {
           return true;
         }
 
+        Log.info(new AlreadySubscribedError());
         return false;
       }
 
@@ -83,6 +87,27 @@ export class SlidedownManager {
       }
     } else {
       wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.NonPush);
+
+      if (!options.force) {
+        const smsSubscribed = !!(await Database.getSMSProfile()).subscriptionId;
+        const emailSubscribed = !!(await Database.getEmailProfile()).subscriptionId;
+        const bothSubscribed = smsSubscribed && emailSubscribed;
+
+        if (smsSubscribed && (slidedownType === DelayedPromptType.Sms)) {
+          Log.info(new ExistingChannelError(DelayedPromptType.Sms));
+          return false;
+        }
+
+        if (emailSubscribed && (slidedownType === DelayedPromptType.Email)) {
+          Log.info(new ExistingChannelError(DelayedPromptType.Email));
+          return false;
+        }
+
+        if (bothSubscribed && (slidedownType === DelayedPromptType.SmsAndEmail)) {
+          Log.info(new ExistingChannelError(DelayedPromptType.SmsAndEmail));
+          return false;
+        }
+      }
 
       if (wasDismissed && !options.force && !options.isInUpdateMode) {
         Log.info(new PermissionMessageDismissedError(slidedownType));
