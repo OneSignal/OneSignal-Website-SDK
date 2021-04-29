@@ -11,6 +11,7 @@ import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
 import { logMethodCall } from '../utils';
 import { UpdatePlayerExternalUserId } from "../models/UpdatePlayerOptions";
+import { ExternalUserIdHelper } from "../helpers/shared/ExternalUserIdHelper";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -93,6 +94,7 @@ export class UpdateManager {
   }
 
   public async sendPlayerCreate(deviceRecord: PushDeviceRecord): Promise<string | undefined> {
+    await ExternalUserIdHelper.addExternalUserIdToDeviceRecord(deviceRecord);
     try {
       const deviceId = await OneSignalApiShared.createUser(deviceRecord);
       if (deviceId) {

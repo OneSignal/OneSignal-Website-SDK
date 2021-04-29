@@ -18,6 +18,8 @@ export interface FlattenedDeviceRecord {
   device_model: string;
   // TODO: Make it a required parameter
   app_id?: string;
+  external_user_id?: string;
+  external_user_id_auth_hash?: string;
 }
 
 /**
@@ -35,6 +37,8 @@ export abstract class DeviceRecord implements Serializable {
   public sdkVersion: string;
   public appId: string | undefined;
   public subscriptionState: SubscriptionStateKind | undefined;
+  public externalUserId?: string;
+  public externalUserIdAuthHash?: string;
 
   constructor() {
     // TODO: Possible implementation for appId initialization
@@ -83,6 +87,14 @@ export abstract class DeviceRecord implements Serializable {
 
     if (this.appId) {
       serializedBundle.app_id = this.appId;
+    }
+
+    if (this.externalUserId) {
+      serializedBundle.external_user_id = this.externalUserId;
+    }
+
+    if (this.externalUserIdAuthHash) {
+      serializedBundle.external_user_id_auth_hash = this.externalUserIdAuthHash;
     }
 
     return serializedBundle;
