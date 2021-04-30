@@ -210,7 +210,7 @@ export class PromptsManager {
       PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
-      Log.error(`OneSignal: slidedown of type '${typeToPullFromConfig} couldn't be shown. Check your configuration`+
+      Log.error(`OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration`+
         ` on the OneSignal dashboard or your custom code initialization.`);
       return;
     }
