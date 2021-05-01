@@ -80,14 +80,7 @@ export class SlidedownManager {
         Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
         return false;
       }
-
-      if (wasDismissed && !options.force && !options.isInUpdateMode) {
-        Log.info(new PermissionMessageDismissedError(slidedownType));
-        return false;
-      }
     } else {
-      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.NonPush);
-
       if (!options.force) {
         const smsSubscribed = !!(await Database.getSMSProfile()).subscriptionId;
         const emailSubscribed = !!(await Database.getEmailProfile()).subscriptionId;
@@ -109,10 +102,12 @@ export class SlidedownManager {
         }
       }
 
-      if (wasDismissed && !options.force && !options.isInUpdateMode) {
-        Log.info(new PermissionMessageDismissedError(slidedownType));
-        return false;
-      }
+      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.NonPush);
+    }
+
+    if (wasDismissed && !options.force && !options.isInUpdateMode) {
+      Log.info(new PermissionMessageDismissedError(slidedownType));
+      return false;
     }
 
     return true;
