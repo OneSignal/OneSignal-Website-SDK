@@ -534,13 +534,8 @@ export default class OneSignal {
   public static async removeExternalUserId(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("removeExternalUserId");
-    const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!isExistingUser) {
-      Log.warn("User is not subscribed, cannot remove external user id.");
-      return;
-    }
-    await OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined),
-    await OneSignal.database.setExternalUserId(undefined);
+
+    await OneSignal.privateSetExternalUserId(undefined);
   }
 
   /**
