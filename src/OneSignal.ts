@@ -500,6 +500,13 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
+    await OneSignal.privateSetExternalUserId(externalUserId, authHash);
+  }
+
+  private static async privateSetExternalUserId(
+    externalUserId: string | undefined | null,
+    authHash?: string,
+  ): Promise<void> {
     AuthHashOptionsValidatorHelper.throwIfInvalidAuthHash(authHash, "authHash");
 
     await OneSignal.database.setExternalUserId(externalUserId, authHash);

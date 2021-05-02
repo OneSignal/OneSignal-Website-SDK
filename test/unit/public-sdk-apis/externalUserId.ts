@@ -42,6 +42,21 @@ test("setExternalUserId - executes after OneSignal is fully initialized", async 
   t.is(updateManagerSpy.calledOnce, true);
 });
 
+test("setExternalUserId - saves external user id to DB before awaiting for push registration", async t => {
+  const awaitSdkEventSpy = sinonSandbox.stub(Utils, "awaitSdkEvent");
+  sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
+  const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
+  sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
+
+  const promise = (OneSignal as any).privateSetExternalUserId(externalUserId);
+  t.is(databaseSpy.calledOnce, true);
+
+  awaitSdkEventSpy.resolves();
+  await promise;
+});
+
 test("setExternalUserId - does not execute until user is registered with OneSignal", async t => {
   const awaitSdkEventSpy = sinonSandbox.stub(Utils, "awaitSdkEvent");
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
