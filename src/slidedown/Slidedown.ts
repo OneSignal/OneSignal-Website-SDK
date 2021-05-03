@@ -87,7 +87,8 @@ export default class Slidedown {
       const messageText = isInUpdateMode && !!this.tagCategories ?
         this.updateMessage : this.options.text.actionMessage;
 
-      const icon = this.getPlatformNotificationIcon();
+      // use the prompt-specific icon OR the app default icon
+      const icon = this.options.icon || this.getPlatformNotificationIcon();
       const slidedownElement = getSlidedownElement({
         messageText,
         icon,
