@@ -87,3 +87,23 @@ test("setExternalUserId before email, includes external_user_id in POST create c
     TEST_EXTERNAL_USER_ID
   );
 });
+
+test("setExternalUserId after email, w/o push player, makes PUT call to update Email record", async t => {
+  // 1. Nock out email create
+  const emailPostNock = NockOneSignalHelper.nockPlayerPost();
+  await OneSignal.setEmail(TEST_EMAIL_ADDRESS);
+  const emailPlayerId = (await emailPostNock.result).response.body.id;
+
+  // 2. Call OneSignal.setExternalUserId
+  const externalUserIdUpdateOnEmail = NockOneSignalHelper.nockPlayerPut(emailPlayerId);
+  await OneSignal.setExternalUserId(TEST_EXTERNAL_USER_ID);
+
+  // 3. Ensure we made a PUT call and it includes the external_user_id we just set above.
+  t.deepEqual(
+    (await externalUserIdUpdateOnEmail.result).request.body,
+    {
+      app_id: OneSignal.context.appConfig.appId,
+      external_user_id: TEST_EXTERNAL_USER_ID
+    }
+  );
+});
