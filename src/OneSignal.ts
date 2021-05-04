@@ -440,23 +440,8 @@ export default class OneSignal {
       if (tags[key] === false)
         tags[key] = "false";
     });
-    const { appId } = await Database.getAppConfig();
 
-    this.context.secondaryChannelManager.synchronizer.setTags(tags);
-
-    const { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
-      await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
-    }
-    // After the user subscribes, he will have a device ID, so get it again
-    const { deviceId: newDeviceId } = await Database.getSubscription();
-    const authHash = await Database.getExternalUserIdAuthHash();
-    const options : UpdatePlayerOptions = { tags };
-
-    if (!!authHash) {
-      options.external_user_id_auth_hash = authHash;
-    }
-    await OneSignalApi.updatePlayer(appId, newDeviceId!, options);
+    await this.context.updateManager.sendTagsUpdate(tags);
     executeCallback(callback, tags);
     return tags;
   }
