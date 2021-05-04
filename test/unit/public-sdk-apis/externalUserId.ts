@@ -7,6 +7,7 @@ import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import * as Utils from "../../../src/utils";
 import Database from "../../../src/services/Database";
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
+import OneSignalApiShared from "../../../src/OneSignalApiShared";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const externalUserId = "external_email@example.com";
@@ -162,19 +163,15 @@ test("removeExternalUserId - executes after OneSignal is fully initialized", asy
 test("removeExternalUserId - removes value from local db, before checking if registered with OneSignal", async t => {
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  // In order to test the state at this point, we reject to short circuit when the src calls this.
-  sinonSandbox.stub(Utils, "awaitSdkEvent").rejects();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate");
+  const updatePlayerSpy = sinonSandbox.stub(OneSignalApiShared, "updatePlayer");
 
   // Call public method, we need to catch due to the short circuit note above.
-  try {
-    await OneSignal.removeExternalUserId();
-  } catch(_e) {}
+  await OneSignal.removeExternalUserId();
 
   // Ensure we saved the value to DB to clear it.
   t.true(databaseSpy.called);
   // Ensure we didn't try to make a REST call if the player is not registered.
-  t.false(updateManagerSpy.called);
+  t.false(updatePlayerSpy.called);
 });
 
 test("removeExternalUserId - removes the value", async t => {

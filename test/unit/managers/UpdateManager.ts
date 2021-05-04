@@ -193,8 +193,8 @@ test("sendPlayerCreate, includes external_user_id when calling createUser", asyn
 test("sendExternalUserIdUpdate makes an api call with the provided external user id", async t => {
   const deviceId = Random.getRandomUuid();
   const externalUserId = "external_email@example.com";
-  
-  sandbox.stub(OneSignal.context.updateManager, "getDeviceId").resolves(deviceId);
+
+  sandbox.stub(Database, "getSubscription").resolves({ deviceId });
   const updatePlayerSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
   await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId);
 
