@@ -11,7 +11,7 @@ import {
   SlidedownPromptOptions} from '../models/Prompts';
 import { DismissHelper } from '../helpers/DismissHelper';
 import InitHelper from '../helpers/InitHelper';
-import { SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
+import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from '../config/index';
 import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
 import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import PromptsHelper from '../helpers/PromptsHelper';
@@ -162,6 +162,10 @@ export class PromptsManager {
   private async internalShowSlidedownPrompt(options: AutoPromptOptions = { force: false }): Promise<void> {
     OneSignalUtils.logMethodCall("internalShowSlidedownPrompt");
 
+    if (!options.slidedownPromptOptions) {
+      options.slidedownPromptOptions = CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
+    }
+
     MainHelper.markHttpSlidedownShown();
     const sdkStylesLoadResult = await this.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
@@ -210,9 +214,14 @@ export class PromptsManager {
       PromptsHelper.getFirstSlidedownPromptOptionsWithType(prompts, typeToPullFromConfig);
 
     if (!slidedownPromptOptions) {
-      Log.error(`OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration`+
-        ` on the OneSignal dashboard or your custom code initialization.`);
-      return;
+      if (typeToPullFromConfig !== DelayedPromptType.Push) {
+        Log.error(`OneSignal: slidedown of type '${typeToPullFromConfig}' couldn't be shown. Check your configuration`+
+          ` on the OneSignal dashboard or your custom code initialization.`);
+        return;
+      } else {
+        Log.warn(`The OneSignal 'push' slidedown will be shown with default text settings.` +
+          ` To customize, see the OneSignal documentation.`);
+      }
     }
 
     await this.internalShowSlidedownPrompt({
