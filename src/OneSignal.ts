@@ -500,17 +500,23 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall("setExternalUserId");
 
+    await OneSignal.privateSetExternalUserId(externalUserId, authHash);
+  }
+
+  private static async privateSetExternalUserId(
+    externalUserId: string | undefined | null,
+    authHash?: string,
+  ): Promise<void> {
     AuthHashOptionsValidatorHelper.throwIfInvalidAuthHash(authHash, "authHash");
+
+    await OneSignal.database.setExternalUserId(externalUserId, authHash);
 
     const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!isExistingUser) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
     }
 
-    const response = await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash);
-    if (response && response.success) {
-      OneSignal.database.setExternalUserId(externalUserId, authHash);
-    }
+    await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash);
   }
 
    /**
@@ -528,13 +534,8 @@ export default class OneSignal {
   public static async removeExternalUserId(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     logMethodCall("removeExternalUserId");
-    const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!isExistingUser) {
-      Log.warn("User is not subscribed, cannot remove external user id.");
-      return;
-    }
-    await OneSignal.context.updateManager.sendExternalUserIdUpdate(undefined),
-    await OneSignal.database.setExternalUserId(undefined);
+
+    await OneSignal.privateSetExternalUserId(undefined);
   }
 
   /**

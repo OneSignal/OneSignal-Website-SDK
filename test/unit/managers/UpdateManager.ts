@@ -14,6 +14,7 @@ import { NotificationPermission } from "../../../src/models/NotificationPermissi
 import {
   markUserAsSubscribed, stubServiceWorkerInstallation 
 } from "../../support/tester/sinonSandboxUtils";
+import { DeviceRecord } from "../../../src/models/DeviceRecord";
 
 // manually create and restore the sandbox
 const sandbox: SinonSandbox = sinon.sandbox.create();
@@ -176,6 +177,17 @@ test("sendPlayerCreate returns user id", async t => {
   await OneSignal.context.updateManager.sendPlayerCreate(deviceRecord);
   t.is(onCreateSpy.called, true);
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), true);
+});
+
+test("sendPlayerCreate, includes external_user_id when calling createUser", async t => {
+  const EXTERNAL_USER_ID_TEST_VALUE = '1234';
+  sandbox.stub(Database, "getExternalUserId").resolves(EXTERNAL_USER_ID_TEST_VALUE);
+  const onCreateSpy = sandbox.stub(OneSignalApiShared, "createUser").resolves(Random.getRandomUuid());
+
+  await OneSignal.context.updateManager.sendPlayerCreate(new PushDeviceRecord());
+
+  const deviceRecordSet: DeviceRecord = onCreateSpy.getCall(0).args[0];
+  t.is(deviceRecordSet.externalUserId, EXTERNAL_USER_ID_TEST_VALUE);
 });
 
 test("sendExternalUserIdUpdate makes an api call with the provided external user id", async t => {

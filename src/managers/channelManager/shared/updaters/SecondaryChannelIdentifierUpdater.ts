@@ -1,3 +1,4 @@
+import { ExternalUserIdHelper } from "../../../../helpers/shared/ExternalUserIdHelper";
 import { SecondaryChannelDeviceRecord } from "../../../../models/SecondaryChannelDeviceRecord";
 import OneSignalApi from "../../../../OneSignalApi";
 import Database from "../../../../services/Database";
@@ -31,6 +32,8 @@ export class SecondaryChannelIdentifierUpdater {
         deviceId,
       );
       deviceRecord.appId = appConfig.appId;
+      await ExternalUserIdHelper.addExternalUserIdToDeviceRecord(deviceRecord);
+
       newProfile.subscriptionId = await OneSignalApi.createUser(deviceRecord);
     }
 

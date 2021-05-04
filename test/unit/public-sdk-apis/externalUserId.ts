@@ -42,6 +42,21 @@ test("setExternalUserId - executes after OneSignal is fully initialized", async 
   t.is(updateManagerSpy.calledOnce, true);
 });
 
+test("setExternalUserId - saves external user id to DB before awaiting for push registration", async t => {
+  const awaitSdkEventSpy = sinonSandbox.stub(Utils, "awaitSdkEvent");
+  sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
+  const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
+  sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
+    success: true
+  });
+
+  const promise = (OneSignal as any).privateSetExternalUserId(externalUserId);
+  t.is(databaseSpy.calledOnce, true);
+
+  awaitSdkEventSpy.resolves();
+  await promise;
+});
+
 test("setExternalUserId - does not execute until user is registered with OneSignal", async t => {
   const awaitSdkEventSpy = sinonSandbox.stub(Utils, "awaitSdkEvent");
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
@@ -144,16 +159,22 @@ test("removeExternalUserId - executes after OneSignal is fully initialized", asy
   t.is(updateManagerSpy.calledOnce, true);
 });
 
-test("removeExternalUserId - does not try to remove external user id if not registered with OneSignal", async t => {
+test("removeExternalUserId - removes value from local db, before checking if registered with OneSignal", async t => {
   sinonSandbox.stub(OneSignal.context.subscriptionManager, "isAlreadyRegisteredWithOneSignal").resolves(false);
   const databaseSpy = sinonSandbox.stub(OneSignal.database, "setExternalUserId").resolves();
-  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate").resolves({
-    success: true
-  });
+  // In order to test the state at this point, we reject to short circuit when the src calls this.
+  sinonSandbox.stub(Utils, "awaitSdkEvent").rejects();
+  const updateManagerSpy = sinonSandbox.stub(OneSignal.context.updateManager, "sendExternalUserIdUpdate");
 
-  await OneSignal.removeExternalUserId();
-  t.is(databaseSpy.notCalled, true);
-  t.is(updateManagerSpy.notCalled, true);
+  // Call public method, we need to catch due to the short circuit note above.
+  try {
+    await OneSignal.removeExternalUserId();
+  } catch(_e) {}
+
+  // Ensure we saved the value to DB to clear it.
+  t.true(databaseSpy.called);
+  // Ensure we didn't try to make a REST call if the player is not registered.
+  t.false(updateManagerSpy.called);
 });
 
 test("removeExternalUserId - removes the value", async t => {
