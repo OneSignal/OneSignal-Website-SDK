@@ -364,7 +364,7 @@ test.serial(`HTTPS: User subscribed => first page view => expiring subscription 
   // Using spy instead of stub here is intended. Spy does callThrough, i.e. executes underlying function, by default
   //  while stub prevents the actual execution.
   // Workaround with stubs would be `sinon.stub(object, "method", object.method);`
-  const playerUpdateStub = sinonSandbox.spy(UpdateManager.prototype, "sendPlayerUpdate");
+  const playerUpdateStub = sinonSandbox.spy(UpdateManager.prototype, "sendPushDeviceRecordUpdate");
   await markUserAsSubscribed(sinonSandbox, playerId, true);
   stubServiceWorkerInstallation(sinonSandbox);
 

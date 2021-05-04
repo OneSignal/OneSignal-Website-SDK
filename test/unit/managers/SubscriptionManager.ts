@@ -295,7 +295,7 @@ test("registerSubscription with an existing subsription sends player update", as
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
-  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerUpdate");
+  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
   const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
 
   await subscriptionManager.registerSubscription(pushSubscription)
@@ -332,7 +332,7 @@ test("registerSubscription without an existing subsription sends player create",
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
-  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerUpdate");
+  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
   const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
 
   await subscriptionManager.registerSubscription(pushSubscription)
@@ -370,7 +370,7 @@ test('device ID is available after register event', async t => {
     });
   });
 
-  const playerUpdateStub = sandbox.stub(OneSignal.context.updateManager, "sendPlayerUpdate").resolves();
+  const playerUpdateStub = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate").resolves();
   const playerCreateStub = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate").resolves(randomPlayerId);
 
   await OneSignal.context.subscriptionManager.registerSubscription(rawPushSubscription);
@@ -388,7 +388,7 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
     pushManager: null,
   };
   await TestEnvironment.mockInternalOneSignal();
-  
+
   sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);

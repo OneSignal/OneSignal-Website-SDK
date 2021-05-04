@@ -31,18 +31,18 @@ test.afterEach(function () {
   sandbox.restore();
 });
 
-test("sendPlayerUpdate doesn't do anything for new users", async t => {
+test("sendPushDeviceRecordUpdate doesn't do anything for new users", async t => {
   sandbox.stub(Database, "getSubscription").resolves({ deviceId: undefined });
   const playerUpdateAPISpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
   const onSessionSpy = sandbox.stub(OneSignal.context.sessionManager, "upsertSession");
 
-  await OneSignal.context.updateManager.sendPlayerUpdate();
+  await OneSignal.context.updateManager.sendPushDeviceRecordUpdate();
 
   t.is(playerUpdateAPISpy.called, false);
   t.is(onSessionSpy.called, false);
 });
 
-test("sendPlayerUpdate sends on_session if on_session hasn't been sent before", async t => {
+test("sendPushDeviceRecordUpdate sends on_session if on_session hasn't been sent before", async t => {
   markUserAsSubscribed(sandbox);
   stubServiceWorkerInstallation(sandbox);
 
@@ -54,15 +54,15 @@ test("sendPlayerUpdate sends on_session if on_session hasn't been sent before", 
 
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), false);
 
-  await OneSignal.context.updateManager.sendPlayerUpdate();
+  await OneSignal.context.updateManager.sendPushDeviceRecordUpdate();
 
   t.is(playerUpdateAPISpy.called, false);
   t.is(onSessionSpy.callCount, 1);
 });
 
-test("sendPlayerUpdate sends playerUpdate if on_session has already been sent", async t => {
+test("sendPushDeviceRecordUpdate sends playerUpdate if on_session has already been sent", async t => {
   sandbox.stub(Database, "getSubscription").resolves({ deviceId: Random.getRandomUuid() });
-  
+
   OneSignal.context.pageViewManager.setPageViewCount(2);
   OneSignal.context.updateManager = new UpdateManager(OneSignal.context);
 
@@ -71,7 +71,7 @@ test("sendPlayerUpdate sends playerUpdate if on_session has already been sent", 
   const playerUpdateAPISpy = sandbox.stub(OneSignalApiShared, "updatePlayer").resolves();
   const onSessionSpy = sandbox.stub(OneSignal.context.sessionManager, "upsertSession").resolves();
 
-  await OneSignal.context.updateManager.sendPlayerUpdate();
+  await OneSignal.context.updateManager.sendPushDeviceRecordUpdate();
 
   t.is(playerUpdateAPISpy.calledOnce, true);
   t.is(onSessionSpy.called, false);
@@ -79,7 +79,7 @@ test("sendPlayerUpdate sends playerUpdate if on_session has already been sent", 
 
 test("sendOnSessionUpdate doesn't trigger on_session call if already did so", async t => {
   sandbox.stub(Database, "getSubscription").resolves({ deviceId: Random.getRandomUuid() });
-  
+
   OneSignal.context.pageViewManager.setPageViewCount(2);
   OneSignal.context.updateManager = new UpdateManager(OneSignal.context);
   const onSessionSpy = sandbox.stub(OneSignal.context.sessionManager, "upsertSession");
@@ -193,8 +193,8 @@ test("sendPlayerCreate, includes external_user_id when calling createUser", asyn
 test("sendExternalUserIdUpdate makes an api call with the provided external user id", async t => {
   const deviceId = Random.getRandomUuid();
   const externalUserId = "external_email@example.com";
-  
-  sandbox.stub(OneSignal.context.updateManager, "getDeviceId").resolves(deviceId);
+
+  sandbox.stub(Database, "getSubscription").resolves({ deviceId });
   const updatePlayerSpy = sandbox.stub(OneSignalApiShared, "updatePlayer");
   await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId);
 

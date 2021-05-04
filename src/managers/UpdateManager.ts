@@ -9,8 +9,8 @@ import { ContextSWInterface } from '../models/ContextSW';
 import Utils from "../context/shared/utils/Utils";
 import { SessionOrigin } from "../models/Session";
 import { OutcomeRequestData } from "../models/OutcomeRequestData";
-import { logMethodCall } from '../utils';
-import { UpdatePlayerExternalUserId } from "../models/UpdatePlayerOptions";
+import { awaitSdkEvent, logMethodCall } from '../utils';
+import { UpdatePlayerExternalUserId, UpdatePlayerOptions } from "../models/UpdatePlayerOptions";
 import { ExternalUserIdHelper } from "../helpers/shared/ExternalUserIdHelper";
 
 export class UpdateManager {
@@ -21,6 +21,10 @@ export class UpdateManager {
   constructor(context: ContextSWInterface) {
     this.context = context;
     this.onSessionSent = context.pageViewManager.getPageViewCount() > 1;
+  }
+
+  private async isDeviceIdAvailable(): Promise<boolean> {
+    return (await Database.getSubscription()).deviceId != null;
   }
 
   private async getDeviceId(): Promise<string> {
@@ -35,7 +39,7 @@ export class UpdateManager {
     return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
-  public async sendPlayerUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async sendPushDeviceRecordUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
     const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
       Log.debug("Not sending the update because user is not registered with OneSignal (no device id)");
@@ -118,16 +122,14 @@ export class UpdateManager {
 
   public async sendExternalUserIdUpdate(externalUserId: string | undefined | null, authHash?: string | null )
   :Promise<any> {
-    const deviceId: string = await this.getDeviceId();
-
     if (!authHash) {
       authHash = await Database.getExternalUserIdAuthHash();
     }
 
-    const payload = {
+    const payload: UpdatePlayerExternalUserId = {
       external_user_id: Utils.getValueOrDefault(externalUserId, ""),
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
-    } as UpdatePlayerExternalUserId;
+    };
 
     // 1. Update any secondary channels such as email with external_user_id
     // Not awaiting as this may never complete, as promise only completes if we have a player record for each channel.
@@ -139,7 +141,24 @@ export class UpdateManager {
     /* tslint:enable:no-floating-promises */
 
     // 2. Update push player with external_user_id
-    return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
+    const pushUpdatePromise = this.sendPushPlayerUpdate(payload);
+    if (await this.isDeviceIdAvailable()) {
+      await pushUpdatePromise;
+    }
+  }
+
+  // Send REST API payload to update the push player record.
+  // Await until we have a push playerId, which is require to make a PUT call.
+  private async sendPushPlayerUpdate(payload: UpdatePlayerOptions): Promise<void> {
+    let { deviceId } = await Database.getSubscription();
+    if (!deviceId) {
+      await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
+      ({ deviceId } = await Database.getSubscription());
+    }
+
+    if (deviceId) {
+      return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
+    }
   }
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {

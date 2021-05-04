@@ -163,7 +163,7 @@ export class SubscriptionManager {
 
     let newDeviceId: string | undefined = undefined;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
-      await this.context.updateManager.sendPlayerUpdate(deviceRecord);
+      await this.context.updateManager.sendPushDeviceRecordUpdate(deviceRecord);
     } else {
       newDeviceId = await this.context.updateManager.sendPlayerCreate(deviceRecord);
       if (newDeviceId) {

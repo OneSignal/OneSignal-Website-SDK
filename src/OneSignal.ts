@@ -508,14 +508,7 @@ export default class OneSignal {
     authHash?: string,
   ): Promise<void> {
     AuthHashOptionsValidatorHelper.throwIfInvalidAuthHash(authHash, "authHash");
-
     await OneSignal.database.setExternalUserId(externalUserId, authHash);
-
-    const isExistingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!isExistingUser) {
-      await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
-    }
-
     await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash);
   }
 
