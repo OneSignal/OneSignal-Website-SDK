@@ -35,7 +35,7 @@ export class UpdateManager {
     return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
-  public async sendPlayerUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async sendPushDeviceRecordUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
     const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
       Log.debug("Not sending the update because user is not registered with OneSignal (no device id)");
