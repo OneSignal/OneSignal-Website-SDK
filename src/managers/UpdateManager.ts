@@ -12,6 +12,7 @@ import { OutcomeRequestData } from "../models/OutcomeRequestData";
 import { awaitSdkEvent, logMethodCall } from '../utils';
 import { UpdatePlayerExternalUserId, UpdatePlayerOptions } from "../models/UpdatePlayerOptions";
 import { ExternalUserIdHelper } from "../helpers/shared/ExternalUserIdHelper";
+import { TagsObject } from "../models/Tags";
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -142,6 +143,21 @@ export class UpdateManager {
 
     // 2. Update push player with external_user_id
     const pushUpdatePromise = this.sendPushPlayerUpdate(payload);
+    if (await this.isDeviceIdAvailable()) {
+      await pushUpdatePromise;
+    }
+  }
+
+  public async sendTagsUpdate(tags: TagsObject<any>): Promise<void> {
+    this.context.secondaryChannelManager.synchronizer.setTags(tags);
+
+    const options: UpdatePlayerOptions = { tags };
+    const authHash = await Database.getExternalUserIdAuthHash();
+    if (!!authHash) {
+      options.external_user_id_auth_hash = authHash;
+    }
+
+    const pushUpdatePromise = this.sendPushPlayerUpdate(options);
     if (await this.isDeviceIdAvailable()) {
       await pushUpdatePromise;
     }
