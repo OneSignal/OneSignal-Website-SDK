@@ -148,9 +148,15 @@ export default class ChannelCaptureContainer {
   private addSmsInputEventListeners(): void {
     const smsInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput}`);
 
-    smsInput.addEventListener('keyup', () => {
+    smsInput.addEventListener('keyup', event => {
       this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
         (<HTMLInputElement>smsInput)?.value === "";
+
+      // enter key
+      if (event.keyCode === 13) {
+        // Trigger the button element with a click
+        document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
+      }
 
       this.updateValidationOnSmsInputChange();
     });
@@ -167,9 +173,15 @@ export default class ChannelCaptureContainer {
   private addEmailInputEventListeners(): void {
     const emailInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
 
-    emailInput.addEventListener('keyup', () => {
+    emailInput.addEventListener('keyup', event => {
       const emailValue = (<HTMLInputElement>emailInput)?.value;
       this.emailInputFieldIsValid = ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
+
+      // enter key
+      if (event.keyCode === 13) {
+        // Trigger the button element with a click
+        document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
+      }
 
       this.updateValidationOnEmailInputChange();
     });
