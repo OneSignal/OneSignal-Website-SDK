@@ -17,6 +17,7 @@ interface TypeSpecificVariablePayload {
   inputElementId: string;
   inputClass: string;
   wrappingDivId: string;
+  tabIndex: number;
 }
 
 export default class ChannelCaptureContainer {
@@ -95,8 +96,9 @@ export default class ChannelCaptureContainer {
     labelElement.innerText  = label;
     labelElement.htmlFor    = varPayload.inputElementId;
 
-    inputElement.type  = varPayload.domElementType;
-    inputElement.id    = varPayload.inputElementId;
+    inputElement.type     = varPayload.domElementType;
+    inputElement.id       = varPayload.inputElementId;
+    inputElement.tabIndex = varPayload.tabIndex;
 
     addCssClass(inputElement, varPayload.inputClass);
     addCssClass(wrappingDiv, CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.inputWithValidationElement);
@@ -119,7 +121,8 @@ export default class ChannelCaptureContainer {
         validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailValidationElement,
         inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput,
         inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalEmailInput,
-        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.emailInputWithValidationElement,
+        tabIndex: 1,
       };
     } else if (type === DelayedPromptType.Sms) {
       return {
@@ -128,7 +131,8 @@ export default class ChannelCaptureContainer {
         validationElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsValidationElement,
         inputElementId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalSmsInput,
         inputClass: CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES.onesignalSmsInput,
-        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement
+        wrappingDivId: CHANNEL_CAPTURE_CONTAINER_CSS_IDS.smsInputWithValidationElement,
+        tabIndex: 2
       };
     } else throw new Error("invalid channel type for input validation");
   }
@@ -152,8 +156,7 @@ export default class ChannelCaptureContainer {
       this.smsInputFieldIsValid = this.itiOneSignal.isValidNumber() ||
         (<HTMLInputElement>smsInput)?.value === "";
 
-      // enter key
-      if (event.keyCode === 13) {
+      if (event.key === "Enter") {
         // Trigger the button element with a click
         document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
       }
@@ -177,8 +180,7 @@ export default class ChannelCaptureContainer {
       const emailValue = (<HTMLInputElement>emailInput)?.value;
       this.emailInputFieldIsValid = ChannelCaptureContainer.validateEmailInputWithReturnVal(emailValue);
 
-      // enter key
-      if (event.keyCode === 13) {
+      if (event.key === "Enter") {
         // Trigger the button element with a click
         document.getElementById(SLIDEDOWN_CSS_IDS.allowButton)?.click();
       }
