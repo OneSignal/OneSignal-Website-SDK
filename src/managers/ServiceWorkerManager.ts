@@ -10,7 +10,7 @@ import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import Event from '../Event';
 import ProxyFrame from '../modules/frames/ProxyFrame';
-import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError"
+import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConfig }
   from "../helpers/ServiceWorkerHelper";

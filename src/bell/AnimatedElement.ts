@@ -1,5 +1,5 @@
 import { addCssClass, removeCssClass, contains, once } from '../utils';
-import OneSignalEvent from '../Event'
+import OneSignalEvent from '../Event';
 import Log from '../libraries/Log';
 import OneSignal from '../OneSignal';
 

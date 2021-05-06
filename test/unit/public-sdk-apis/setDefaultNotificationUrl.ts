@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test from "ava";
 import Database from "../../../src/services/Database";
 import Macros from "../../support/tester/Macros";
-import {TestEnvironment} from "../../support/sdk/TestEnvironment";
+import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 
 test("url cannot be null",

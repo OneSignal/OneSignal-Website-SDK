@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import OneSignalError from "../../../src/errors/OneSignalError";
-import {throws} from "../../support/tester/asyncFunctions";
+import { throws } from "../../support/tester/asyncFunctions";
 
 
 test(`custom error thrown from sync function`, async t => {

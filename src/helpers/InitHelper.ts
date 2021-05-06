@@ -11,11 +11,9 @@ import { getConsoleStyle, once, triggerNotificationPermissionChanged } from '../
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import OneSignalApiShared from '../OneSignalApiShared';
 import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { SecondaryChannelDeviceRecord } from '../models/SecondaryChannelDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";

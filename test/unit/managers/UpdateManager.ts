@@ -1,5 +1,4 @@
 import test from "ava";
-import nock from "nock";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
 import { UpdateManager } from "../../../src/managers/UpdateManager";
@@ -9,7 +8,6 @@ import OneSignalApiShared from "../../../src/OneSignalApiShared";
 import MainHelper from "../../../src/helpers/MainHelper";
 import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
-import { Subscription } from '../../../src/models/Subscription';
 import { NotificationPermission } from "../../../src/models/NotificationPermission";
 import {
   markUserAsSubscribed, stubServiceWorkerInstallation 

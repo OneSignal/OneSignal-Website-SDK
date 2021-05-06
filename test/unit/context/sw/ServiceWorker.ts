@@ -2,7 +2,6 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
-import OneSignal from '../../../../src/OneSignal';
 import Database from '../../../../src/services/Database';
 import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 

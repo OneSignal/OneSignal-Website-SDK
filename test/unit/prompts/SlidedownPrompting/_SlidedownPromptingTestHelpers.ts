@@ -4,7 +4,6 @@ import { stubServiceWorkerInstallation } from "../../../support/tester/sinonSand
 import { SlidedownPromptOptions, DelayedPromptType } from "../../../../src/models/Prompts";
 import Random from "../../../support/tester/Random";
 import { SinonSandbox } from "sinon";
-import { EventCounts } from "../../../support/tester/EventsTestHelper";
 import { CHANNEL_CAPTURE_CONTAINER_CSS_IDS } from "../../../../src/slidedown/constants";
 
 /** HELPERS */

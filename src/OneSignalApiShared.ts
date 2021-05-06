@@ -1,8 +1,6 @@
 import { AppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
 import { OneSignalApiErrorKind, OneSignalApiError } from './errors/OneSignalApiError';
-import { SecondaryChannelProfile } from './models/SecondaryChannelProfile';
-import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
 import { OutcomeRequestData } from "./models/OutcomeRequestData";
 import OneSignalApiBase from "./OneSignalApiBase";
 import Utils from "./context/shared/utils/Utils";

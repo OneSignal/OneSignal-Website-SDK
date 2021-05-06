@@ -2,7 +2,7 @@ import bowser from 'bowser';
 
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import {addDomElement, clearDomElementChildren, getPlatformNotificationIcon} from '../utils';
+import { addDomElement, clearDomElementChildren, getPlatformNotificationIcon } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 

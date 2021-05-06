@@ -5,7 +5,6 @@ import Event from "../../../src/Event";
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import * as Utils from "../../../src/utils";
-import Database from "../../../src/services/Database";
 import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import OneSignalApiShared from "../../../src/OneSignalApiShared";
 

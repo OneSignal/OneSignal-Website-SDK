@@ -2,7 +2,6 @@ import bowser from "bowser";
 
 import Environment from "../Environment";
 import { WorkerMessenger, WorkerMessengerCommand, WorkerMessengerMessage } from "../libraries/WorkerMessenger";
-import SdkEnvironment from "../managers/SdkEnvironment";
 import ContextSW from "../models/ContextSW";
 import OneSignalApiBase from "../OneSignalApiBase";
 import OneSignalApiSW from "../OneSignalApiSW";

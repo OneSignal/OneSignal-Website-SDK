@@ -34,7 +34,6 @@ import Database from './services/Database';
 import IndexedDb from './services/IndexedDb';
 import {
   awaitOneSignalInitAndSupported,
-  awaitSdkEvent,
   executeCallback,
   getConsoleStyle,
   isValidEmail,
@@ -43,7 +42,6 @@ import {
 import { ValidatorUtils } from './utils/ValidatorUtils';
 import { DeviceRecord } from './models/DeviceRecord';
 import TimedLocalStorage from './modules/TimedLocalStorage';
-import { EmailProfile } from './models/EmailProfile';
 import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
 import Emitter, { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';

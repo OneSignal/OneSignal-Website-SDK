@@ -1,4 +1,4 @@
-import Sinon, { SinonSandbox } from "sinon";
+import { SinonSandbox } from "sinon";
 import { CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES } from "../../../../src/slidedown/constants";
 import ChannelCaptureContainer from "../../../../src/slidedown/ChannelCaptureContainer";

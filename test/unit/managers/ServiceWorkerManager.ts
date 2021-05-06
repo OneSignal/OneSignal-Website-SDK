@@ -3,7 +3,7 @@ import '../../support/polyfills/polyfills';
 import test from 'ava';
 import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from "nock";
-import { ServiceWorkerManager} from '../../../src/managers/ServiceWorkerManager';
+import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
 import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
 import Path from '../../../src/models/Path';
 import {

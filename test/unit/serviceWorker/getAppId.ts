@@ -1,11 +1,9 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
-import { setUserAgent } from '../../support/tester/browser';
-import { BrowserUserAgent, TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
+import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 
 import Database from '../../../src/services/Database';
-import { AppConfig } from '../../../src/models/AppConfig';
 import Random from '../../support/tester/Random';
 
 

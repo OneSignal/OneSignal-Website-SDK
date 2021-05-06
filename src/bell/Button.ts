@@ -1,10 +1,10 @@
-import {removeDomElement, addDomElement, isUsingSubscriptionWorkaround} from "../utils";
+import { removeDomElement, addDomElement, isUsingSubscriptionWorkaround } from "../utils";
 import Event from "../Event";
 import ActiveAnimatedElement from "./ActiveAnimatedElement";
 import Bell from "./Bell";
 import LimitStore from "../LimitStore";
 import Message from "./Message";
-import OneSignal from '../OneSignal'
+import OneSignal from '../OneSignal';
 
 
 export default class Button extends ActiveAnimatedElement {

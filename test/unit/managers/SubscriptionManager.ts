@@ -1,6 +1,6 @@
 import '../../support/polyfills/polyfills';
 
-import test, { ThrowsExpectation, ExecutionContext } from 'ava';
+import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import timemachine from 'timemachine';
 

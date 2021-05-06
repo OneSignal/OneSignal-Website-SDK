@@ -1,7 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
-import SubscriptionHelper from "../../../src/helpers/SubscriptionHelper";
 import { isUsingSubscriptionWorkaround } from '../../../src/utils';
 
 

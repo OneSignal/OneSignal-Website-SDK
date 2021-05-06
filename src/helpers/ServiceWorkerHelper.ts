@@ -2,7 +2,6 @@ import { OneSignalApiSW } from "../OneSignalApiSW";
 import Log from "../libraries/sw/Log";
 import Path from "../models/Path";
 import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../models/Session";
-import { InvalidStateError, InvalidStateReason } from "../errors/InvalidStateError";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
 import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";

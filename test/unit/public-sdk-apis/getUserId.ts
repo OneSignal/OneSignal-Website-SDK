@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import {TestEnvironment} from "../../support/sdk/TestEnvironment";
+import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 import { Subscription } from '../../../src/models/Subscription';
 
