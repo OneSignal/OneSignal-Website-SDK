@@ -908,14 +908,14 @@ export default class OneSignal {
    * slash). This would allow pages to function correctly as not to block the service worker ready call, which would
    * hang indefinitely if we requested root scope registration but the service was only available in a child scope.
    */
-  static SERVICE_WORKER_PARAM: { scope: string } = {scope: '/'};
+  static SERVICE_WORKER_PARAM: { scope: string } = { scope: '/' };
   static _LOGGING = false;
   static LOGGING = false;
   static _usingNativePermissionHook = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
   static context: Context;
-  static checkAndWipeUserSubscription = function () { }
+  static checkAndWipeUserSubscription = function () { };
   static DeviceRecord = DeviceRecord;
   static SecondaryChannelDeviceRecord = SecondaryChannelDeviceRecord;
 

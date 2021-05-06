@@ -42,12 +42,12 @@ export default class ServiceWorkerHelper {
     appId: string
     ): string[] {
     const workerFullPaths = [config.workerAPath.getFullPath(), config.workerBPath.getFullPath()];
-    return workerFullPaths.map((href) => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
+    return workerFullPaths.map(href => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
   }
 
   private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdHasQueryParam = Utils.encodeHashAsUriComponent({appId});
+    const appIdHasQueryParam = Utils.encodeHashAsUriComponent({ appId });
     return `${fullPath}?${appIdHasQueryParam}`;
   }
 
@@ -114,7 +114,7 @@ export default class ServiceWorkerHelper {
     // TODO: Or couple with periodic ping for better results.
     await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig);
 
-    const session = initializeNewSession({deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type});
+    const session = initializeNewSession({ deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type });
     await Database.upsertSession(session);
     await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
   }
@@ -183,7 +183,7 @@ export default class ServiceWorkerHelper {
     }
 
     if (!deviceRecord.identifier) {
-      const subscription = await self.registration.pushManager.getSubscription()
+      const subscription = await self.registration.pushManager.getSubscription();
       if (subscription) {
         const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
         const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();

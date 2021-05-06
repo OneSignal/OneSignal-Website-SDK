@@ -50,7 +50,7 @@ export default class SubscriptionModalHost implements Disposable {
   }
 
   createHiddenSubscriptionDomModal(url) {
-    let iframeContainer = document.createElement('div');
+    const iframeContainer = document.createElement('div');
     iframeContainer.setAttribute('id', 'OneSignal-iframe-modal');
     iframeContainer.setAttribute('style', 'display:none !important');
     iframeContainer.innerHTML = '<div id="notif-permission" style="background: rgba(0, 0, 0, 0.7); position: fixed;' +
@@ -58,11 +58,11 @@ export default class SubscriptionModalHost implements Disposable {
       ' align-items: center; justify-content: center;"></div>';
     document.body.appendChild(iframeContainer);
 
-    let iframeContainerStyle = document.createElement('style');
+    const iframeContainerStyle = document.createElement('style');
     iframeContainerStyle.innerHTML = `@media (max-width: 560px) { .OneSignal-permission-iframe { width: 100%; height: 100%;} }`;
     document.getElementsByTagName('head')[0].appendChild(iframeContainerStyle);
 
-    let iframe = document.createElement("iframe");
+    const iframe = document.createElement("iframe");
     iframe.className = "OneSignal-permission-iframe";
     iframe.setAttribute('frameborder', '0');
     iframe.width = OneSignal._windowWidth.toString();

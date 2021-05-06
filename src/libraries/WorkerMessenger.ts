@@ -49,7 +49,7 @@ export class WorkerMessengerReplyBuffer {
   }
 
   public addListener(command: WorkerMessengerCommand, callback: Function, onceListenerOnly: boolean) {
-    const record: WorkerMessengerReplyBufferRecord = {callback, onceListenerOnly};
+    const record: WorkerMessengerReplyBufferRecord = { callback, onceListenerOnly };
 
     const replies = this.replies[command.toString()];
     if (replies)
@@ -131,14 +131,14 @@ export class WorkerMessenger {
       if (!windowClient) {
         throw new InvalidArgumentError('windowClient', InvalidArgumentReason.Empty);
       } else {
-        Log.debug(`[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${windowClient.url}.`)
+        Log.debug(`[Worker Messenger] [SW -> Page] Unicasting '${command.toString()}' to window client ${windowClient.url}.`);
         windowClient.postMessage({
           command: command,
           payload: payload
         } as any);
       }
     } else {
-      Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`)
+      Log.debug(`[Worker Messenger] [Page -> SW] Unicasting '${command.toString()}' to service worker.`);
       this.directPostMessageToSW(command, payload);
     }
   }
@@ -213,7 +213,7 @@ export class WorkerMessenger {
 
     Log.debug(`[Worker Messenger] Service worker received message:`, event.data);
 
-    for (let listenerRecord of listenerRecords) {
+    for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
         listenersToRemove.push(listenerRecord);
       }
@@ -223,7 +223,7 @@ export class WorkerMessenger {
       const listenerRecord = listenersToRemove[i];
       this.replies.deleteListenerRecord(data.command, listenerRecord);
     }
-    for (let listenerRecord of listenersToCall) {
+    for (const listenerRecord of listenersToCall) {
       listenerRecord.callback.apply(null, [data.payload]);
     }
   }
@@ -249,7 +249,7 @@ export class WorkerMessenger {
 
     Log.debug(`[Worker Messenger] Page received message:`, event.data);
 
-    for (let listenerRecord of listenerRecords) {
+    for (const listenerRecord of listenerRecords) {
       if (listenerRecord.onceListenerOnly) {
         listenersToRemove.push(listenerRecord);
       }
@@ -259,7 +259,7 @@ export class WorkerMessenger {
       const listenerRecord = listenersToRemove[i];
       this.replies.deleteListenerRecord(data.command, listenerRecord);
     }
-    for (let listenerRecord of listenersToCall) {
+    for (const listenerRecord of listenersToCall) {
       listenerRecord.callback.apply(null, [data.payload]);
     }
   }

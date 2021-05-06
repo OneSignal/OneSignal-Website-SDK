@@ -40,8 +40,8 @@ export class OneSignalApiSW {
 
   static async updatePlayer(appId: string, playerId: string, options?: Object): Promise<void> {
     const funcToExecute = async () => {
-      await OneSignalApiBase.put(`players/${playerId}`, {app_id: appId, ...options});
-    }
+      await OneSignalApiBase.put(`players/${playerId}`, { app_id: appId, ...options });
+    };
     return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
   }
 
@@ -60,7 +60,7 @@ export class OneSignalApiSW {
       }
     };
     return await Utils.enforceAppIdAndPlayerId(serializedDeviceRecord.app_id, userId, funcToExecute);
-  };
+  }
 
   public static async sendSessionDuration(
     appId: string, deviceId: string, sessionDuration: number, deviceType: number, attribution: OutcomeAttribution
@@ -86,7 +86,7 @@ export class OneSignalApiSW {
           break;
       }
       await OneSignalApiBase.post(`players/${deviceId}/on_focus`, payload);
-    }
+    };
     Utils.enforceAppIdAndPlayerId(appId, deviceId, funcToExecute);
   }
 }

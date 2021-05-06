@@ -47,9 +47,9 @@ const RETRIGGER_REMOTE_EVENTS = [
 ];
 
 const LEGACY_EVENT_MAP = {
-  'notificationPermissionChange': 'onesignal.prompt.native.permissionchanged',
-  'subscriptionChange': 'onesignal.subscription.changed',
-  'customPromptClick': 'onesignal.prompt.custom.clicked',
+  notificationPermissionChange: 'onesignal.prompt.native.permissionchanged',
+  subscriptionChange: 'onesignal.subscription.changed',
+  customPromptClick: 'onesignal.prompt.custom.clicked',
 };
 
 export default class Event {
@@ -62,7 +62,7 @@ export default class Event {
    */
   static async trigger(eventName: string, data?: any, remoteTriggerEnv: string | null = null) {
     if (!Utils.contains(SILENT_EVENTS, eventName)) {
-      let displayData = data;
+      const displayData = data;
       let env = Utils.capitalize(SdkEnvironment.getWindowEnv().toString());
       if (remoteTriggerEnv) {
         env = `${env} ⬸ ${Utils.capitalize(remoteTriggerEnv)}`;
@@ -86,7 +86,7 @@ export default class Event {
       await OneSignal.emitter.emit(eventName, data);
     }
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
-      let legacyEventName = LEGACY_EVENT_MAP[eventName];
+      const legacyEventName = LEGACY_EVENT_MAP[eventName];
       Event._triggerLegacy(legacyEventName, data);
     }
 
@@ -102,7 +102,7 @@ export default class Event {
         if (Utils.contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
           if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
             OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
-              {eventName: eventName, eventData: data});
+              { eventName: eventName, eventData: data });
           } else {
             OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);
           }

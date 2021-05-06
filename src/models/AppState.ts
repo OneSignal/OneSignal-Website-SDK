@@ -2,7 +2,7 @@ import { Notification } from "./Notification";
 import { Timestamp } from "./Timestamp";
 
 export interface ClickedNotifications {
-    [key: string]: [Notification, Timestamp]
+    [key: string]: [Notification, Timestamp];
 }
 
 class AppState {

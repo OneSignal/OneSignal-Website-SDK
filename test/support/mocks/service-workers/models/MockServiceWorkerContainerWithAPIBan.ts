@@ -29,7 +29,7 @@ export class MockServiceWorkerContainerWithAPIBan extends MockServiceWorkerConta
 
   async getRegistration(clientURL?: string): Promise<ServiceWorkerRegistration | undefined> {
     if (!clientURL) {
-      throw new Error("Must include clientURL to get the SW of the scope we registered, not the current page being viewed.")
+      throw new Error("Must include clientURL to get the SW of the scope we registered, not the current page being viewed.");
     }
 
     if (!clientURL.startsWith(location.origin)) {

@@ -120,17 +120,17 @@ function setupDiscoverAltOriginTest(t: any) {
     if (this.url.host === t.context.subdomainOneSignalHost) {
       return true;
     } else return false;
-  }
+  };
 
   t.context.stubIsSubscribedToOsTcImpl = async function() {
     if (this.url.host === t.context.subdomainOsTcHost) {
       return true;
     } else return false;
-  }
+  };
 
   t.context.stubIsSubscribedToNoneImpl = async function() {
     return false;
-  }
+  };
 
   t.context.stubIsSubscribedToBothImpl = async function() {
     if (this.url.host === t.context.subdomainOneSignalHost ||

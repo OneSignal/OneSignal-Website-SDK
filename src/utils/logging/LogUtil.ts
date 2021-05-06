@@ -48,7 +48,7 @@ class LogUtil {
             LogUtil.getStyle(LogStyle.Label),
             LogUtil.getStyle(LogStyle.PlainText),
             ...message
-        ]
+        ];
     }
 }
 

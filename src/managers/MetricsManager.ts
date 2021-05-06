@@ -10,7 +10,7 @@ abstract class MetricEvent {
       origin: location.origin,
       url: location.href,
       sdkVersion: Environment.version()
-    }
+    };
   }
 }
 
@@ -118,7 +118,7 @@ export default class MetricsManager {
       $token: this.mixpanelReportingToken,
       $distinct_id: engagement.getProfileName(),
     };
-    queryParamsData = {...queryParamsData, ...engagement.getOperationData()};
+    queryParamsData = { ...queryParamsData, ...engagement.getOperationData() };
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
     const requestOptions: RequestInit = {

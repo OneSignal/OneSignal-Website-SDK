@@ -95,7 +95,7 @@ export class ServiceWorker {
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
     self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
-      event.waitUntil(ServiceWorker.onPushSubscriptionChange(event))
+      event.waitUntil(ServiceWorker.onPushSubscriptionChange(event));
     });
 
 
@@ -243,9 +243,9 @@ export class ServiceWorker {
               const notificationReceivedPromises: Promise<void>[] = [];
               const appId = await Database.get<string>("Ids", "appId");
 
-              for (let rawNotification of notifications) {
+              for (const rawNotification of notifications) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
-                let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
+                const notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
                 const notificationReceived: NotificationReceived = {
                   notificationId: notification.id,
@@ -261,7 +261,7 @@ export class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => {
-                        return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e))
+                        return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e));
                       })
                       .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif)
                       .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e)));
@@ -279,7 +279,7 @@ export class ServiceWorker {
                 return undefined;
               }
             })
-    )
+    );
   }
 
   /**
@@ -482,7 +482,7 @@ export class ServiceWorker {
       await ServiceWorker.updateSessionBasedOnHasActive(event,
         self.clientsStatus.hasAnyActiveSessions, sessionInfo);
       self.clientsStatus = undefined;
-    }
+    };
     const getClientStatusesCancelable = cancelableTimeout(updateOnHasActive, 0.5);
     self.cancel = getClientStatusesCancelable.cancel;
     event.waitUntil(getClientStatusesCancelable.promise);
@@ -512,7 +512,7 @@ export class ServiceWorker {
    * @param rawNotification The raw notification JSON returned from OneSignal's server.
    */
   static buildStructuredNotificationObject(rawNotification) {
-    let notification: any = {
+    const notification: any = {
       id: rawNotification.custom.i,
       heading: rawNotification.title,
       content: rawNotification.alert,
@@ -529,7 +529,7 @@ export class ServiceWorker {
     // Add action buttons
     if (rawNotification.o) {
       notification.buttons = [];
-      for (let rawButton of rawNotification.o) {
+      for (const rawButton of rawNotification.o) {
         notification.buttons.push({
                                     action: rawButton.i,
                                     title: rawButton.n,
@@ -550,7 +550,7 @@ export class ServiceWorker {
   static ensureImageResourceHttps(imageUrl) {
     if (imageUrl) {
       try {
-        let parsedImageUrl = new URL(imageUrl);
+        const parsedImageUrl = new URL(imageUrl);
         if (parsedImageUrl.hostname === 'localhost' ||
             parsedImageUrl.hostname.indexOf('192.168') !== -1 ||
             parsedImageUrl.hostname === '127.0.0.1' ||
@@ -562,10 +562,10 @@ export class ServiceWorker {
             parsedImageUrl.hostname === 'i2.wp.com' ||
             parsedImageUrl.hostname === 'i3.wp.com') {
           /* Their site already uses Jetpack, just make sure Jetpack is HTTPS */
-          return `https://${parsedImageUrl.hostname}${parsedImageUrl.pathname}`
+          return `https://${parsedImageUrl.hostname}${parsedImageUrl.pathname}`;
         }
         /* HTTPS origin hosts can be used by prefixing the hostname with ssl: */
-        let replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
+        const replacedImageUrl = parsedImageUrl.host + parsedImageUrl.pathname;
         return `https://i0.wp.com/${replacedImageUrl}`;
       } catch (e) { }
     } else return null;
@@ -583,7 +583,7 @@ export class ServiceWorker {
         notification.image = ServiceWorker.ensureImageResourceHttps(notification.image);
       }
       if (notification.buttons && notification.buttons.length > 0) {
-        for (let button of notification.buttons) {
+        for (const button of notification.buttons) {
           if (button.icon) {
             button.icon = ServiceWorker.ensureImageResourceHttps(button.icon);
           }
@@ -619,11 +619,11 @@ export class ServiceWorker {
     // Allow overriding some values
     if (!overrides)
       overrides = {};
-    notification = {...notification, ...overrides};
+    notification = { ...notification, ...overrides };
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
 
-    let notificationOptions = {
+    const notificationOptions = {
       body: notification.content,
       icon: notification.icon,
       /*
@@ -708,9 +708,9 @@ export class ServiceWorker {
    */
   static onNotificationClosed(event) {
     Log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
-    let notification = event.notification.data;
+    const notification = event.notification.data;
 
-    ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => Log.error(e))
+    ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => Log.error(e));
     event.waitUntil(
         ServiceWorker.executeWebhooks('notification.dismissed', notification)
     );
@@ -734,7 +734,7 @@ export class ServiceWorker {
     // Unless the action button URL is null
     if (notification.action) {
       // Find the URL tied to the action button that was clicked
-      for (let button of notification.buttons) {
+      for (const button of notification.buttons) {
         if (button.action === notification.action &&
             button.url &&
             button.url !== '') {
@@ -788,9 +788,9 @@ export class ServiceWorker {
       appId,
       url: launchUrl,
       timestamp: new Date().getTime(),
-    }
+    };
     Log.info("NotificationClicked", notificationClicked);
-    saveNotificationClickedPromise = (async (notificationClicked) => {
+    saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
         if (existingSession && existingSession.status === SessionStatus.Active) {
@@ -878,7 +878,7 @@ export class ServiceWorker {
               await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
               ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.RedirectPage, launchUrl, client);
             } else {
-              Log.debug('Not navigating because link is special.')
+              Log.debug('Not navigating because link is special.');
             }
           }
           else if (client instanceof WindowClient && client.navigate) {
@@ -891,11 +891,11 @@ export class ServiceWorker {
             }
             try {
               if (notificationOpensLink) {
-                Log.debug(`Redirecting HTTPS site to (${launchUrl}).`)
+                Log.debug(`Redirecting HTTPS site to (${launchUrl}).`);
                 await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
                 await client.navigate(launchUrl);
               } else {
-                Log.debug('Not navigating because link is special.')
+                Log.debug('Not navigating because link is special.');
               }
             } catch (e) {
               Log.error("Failed to navigate:", client, launchUrl, e);

@@ -328,7 +328,7 @@ export class ServiceWorkerManager {
               OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
               OneSignal.EVENTS.NOTIFICATION_CLICKED,
               (reply: any) => {
-                let callbackCount: number = reply.data;
+                const callbackCount: number = reply.data;
                 resolve(callbackCount);
               }
             );

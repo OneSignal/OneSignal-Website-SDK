@@ -20,5 +20,5 @@ test(`custom error thrown from down-emitted "async" function`, async t => {
 
     https://gist.github.com/jasonpang/ae41a814e99f21238c302bf2a4da0df5
    */
-  await throws(t, async () => { throw new OneSignalError('my message')}, OneSignalError);
+  await throws(t, async () => { throw new OneSignalError('my message'); }, OneSignalError);
 });

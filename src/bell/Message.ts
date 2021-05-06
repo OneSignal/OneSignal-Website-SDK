@@ -75,21 +75,21 @@ export default class Message extends AnimatedElement {
       } else {
         this.bell.badge.increment();
         if (this.bell.initialized)
-          this.bell.badge.show().then(resolve)
+          this.bell.badge.show().then(resolve);
         else resolve();
       }
     });
   }
 
   dequeue(message: string) {
-    let dequeuedMessage = this.queued.pop(message);
-    return new Promise((resolve) => {
+    const dequeuedMessage = this.queued.pop(message);
+    return new Promise(resolve => {
       if (this.bell.badge.shown) {
         this.bell.badge.hide()
           .then(() => this.bell.badge.decrement())
           .then((numMessagesLeft: number) => {
             if (numMessagesLeft > 0) {
-              return this.bell.badge.show()
+              return this.bell.badge.show();
             } else {
               return Promise.resolve(this);
             }

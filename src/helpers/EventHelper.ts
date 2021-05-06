@@ -68,8 +68,8 @@ export default class EventHelper {
       const { deviceId } = await Database.getSubscription();
       const { appId } = await Database.getAppConfig();
 
-      let welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
-      let welcome_notification_disabled =
+      const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
+      const welcome_notification_disabled =
         welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
       let title =
         welcome_notification_opts !== undefined &&
@@ -84,8 +84,8 @@ export default class EventHelper {
           welcome_notification_opts['message'].length > 0
           ? welcome_notification_opts['message']
           : 'Thanks for subscribing!';
-      let unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
-      let url =
+      const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
+      const url =
         welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
           ? welcome_notification_opts['url']
           : unopenableWelcomeNotificationUrl;

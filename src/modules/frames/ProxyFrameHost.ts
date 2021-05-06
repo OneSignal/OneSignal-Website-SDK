@@ -28,7 +28,7 @@ export default class ProxyFrameHost implements Disposable {
     promise: Promise<void>,
     resolver: Function,
     rejector: Function
-  }
+  };
 
   /**
    * How long to wait to load the proxy frame before timing out.
@@ -139,13 +139,13 @@ export default class ProxyFrameHost implements Disposable {
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
-    let {eventName, eventData} = (message.data as any);
+    const { eventName, eventData } = (message.data as any);
     Event.trigger(eventName, eventData, message.source);
     return false;
   }
 
   onRemoteNotificationPermissionChanged(message: MessengerMessageEvent) {
-    let {forceUpdatePermission} = (message.data as any);
+    const { forceUpdatePermission } = (message.data as any);
     triggerNotificationPermissionChanged(forceUpdatePermission);
     return false;
   }
@@ -204,7 +204,7 @@ export default class ProxyFrameHost implements Disposable {
   }
 
   onAreYouVisibleRequest(event: {data: PageVisibilityRequest}) {
-    Log.debug("onAreYouVisibleRequest page", event)
+    Log.debug("onAreYouVisibleRequest page", event);
     const response = {
       timestamp: event.data.timestamp,
       focused: document.hasFocus(),

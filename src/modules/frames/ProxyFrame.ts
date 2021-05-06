@@ -76,7 +76,7 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   retriggerRemoteEvent(eventName: string, eventData: any) {
-    this.messenger.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, {eventName, eventData});
+    this.messenger.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT, { eventName, eventData });
   }
 
   async onMessengerConnect(_: MessengerMessageEvent) {
@@ -101,7 +101,7 @@ export default class ProxyFrame extends RemoteFrame {
     // 3/30/16: For HTTP sites, put the host page URL as default URL if one doesn't exist already
     const defaultUrl = await Database.get('Options', 'defaultUrl');
     if (!defaultUrl) {
-      await Database.put('Options', {key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin});
+      await Database.put('Options', { key: 'defaultUrl', value: new URL(OneSignal.config.pageUrl).origin });
     }
 
     /**
@@ -140,8 +140,8 @@ export default class ProxyFrame extends RemoteFrame {
     // 'someId'}, {table: 'Ids', keys: 'someId'}]
     const retrievals: Array<{table: OneSignalDbTable, key: string}> = message.data;
     const retrievalOpPromises = [];
-    for (let retrieval of retrievals) {
-      const {table, key} = retrieval;
+    for (const retrieval of retrievals) {
+      const { table, key } = retrieval;
       retrievalOpPromises.push(Database.get(table, key));
     }
     const results = await Promise.all(retrievalOpPromises);
@@ -161,9 +161,9 @@ export default class ProxyFrame extends RemoteFrame {
     // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
     const insertions: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
-    let insertionOpPromises = [];
-    for (let insertion of insertions) {
-      let {table, keypath} = insertion;
+    const insertionOpPromises = [];
+    for (const insertion of insertions) {
+      const { table, keypath } = insertion;
       insertionOpPromises.push(Database.put(table, keypath));
     }
     await Promise.all(insertionOpPromises);
@@ -175,9 +175,9 @@ export default class ProxyFrame extends RemoteFrame {
     // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
     const removals: Array<{table: OneSignalDbTable, keypath: any}> = message.data;
-    let removalOpPromises = [];
-    for (let removal of removals) {
-      let {table, keypath} = removal;
+    const removalOpPromises = [];
+    for (const removal of removals) {
+      const { table, keypath } = removal;
       removalOpPromises.push(Database.remove(table, keypath));
     }
     await Promise.all(removalOpPromises);

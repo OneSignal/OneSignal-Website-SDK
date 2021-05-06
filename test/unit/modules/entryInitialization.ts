@@ -106,7 +106,7 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getSubscription");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "sendSelfNotification");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setEmail");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber")
+  assertES5PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "logoutEmail");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "logoutSMS");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setExternalUserId");
@@ -185,7 +185,7 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getSubscription");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "sendSelfNotification");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setEmail");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber")
+  assertES6PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "logoutEmail");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "logoutSMS");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setExternalUserId");

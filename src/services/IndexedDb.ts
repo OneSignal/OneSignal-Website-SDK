@@ -143,12 +143,12 @@ export default class IndexedDb {
     } else {
       // Return all values in table
       return await new Promise((resolve, reject) => {
-        let jsonResult: {[key: string]: any} = {};
-        let cursor = database.transaction(table).objectStore(table).openCursor();
+        const jsonResult: {[key: string]: any} = {};
+        const cursor = database.transaction(table).objectStore(table).openCursor();
         cursor.onsuccess = (event: any) => {
           const cursorResult: IDBCursorWithValue = event.target.result;
           if (cursorResult) {
-            let cursorResultKey: string = cursorResult.key as string;
+            const cursorResultKey: string = cursorResult.key as string;
             jsonResult[cursorResultKey] = cursorResult.value;
             cursorResult.continue();
           } else {
@@ -165,7 +165,7 @@ export default class IndexedDb {
   public async getAll<T>(table: string): Promise<T[]> {
     return await new Promise<T[]>(async (resolve, reject) => {
       const database = await this.ensureDatabaseOpen();
-      let cursor = database.transaction(table).objectStore(table).openCursor();
+      const cursor = database.transaction(table).objectStore(table).openCursor();
       const result: T[] = [];
       cursor.onsuccess = (event: any) => {
         const cursorResult: IDBCursorWithValue = event.target.result;
@@ -189,11 +189,11 @@ export default class IndexedDb {
     await this.ensureDatabaseOpen();
     return await new Promise((resolve, reject) => {
       try {
-        let request = this.database!.transaction([table], 'readwrite').objectStore(table).put(key);
+        const request = this.database!.transaction([table], 'readwrite').objectStore(table).put(key);
         request.onsuccess = () => {
           resolve(key);
         };
-        request.onerror = (e) => {
+        request.onerror = e => {
           Log.error('Database PUT Transaction Error:', e);
           reject(e);
         };
@@ -219,7 +219,7 @@ export default class IndexedDb {
         request.onsuccess = () => {
           resolve(key);
         };
-        request.onerror = (e) => {
+        request.onerror =e => {
           Log.error('Database REMOVE Transaction Error:', e);
           reject(e);
         };

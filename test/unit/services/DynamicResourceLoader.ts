@@ -27,7 +27,7 @@ test(`concurrent loadIfNew calls that load a failed response all reject`, async 
     promises.push(resourceLoader.loadIfNew(ResourceType.Stylesheet, new URL('https://test.node/codes/500')));
   }
   const results = await Promise.all(promises);
-  for (let result of results) {
+  for (const result of results) {
     t.is(result, ResourceLoadState.Failed);
   }
 });

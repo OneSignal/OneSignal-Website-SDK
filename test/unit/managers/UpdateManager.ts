@@ -88,7 +88,7 @@ test("sendOnSessionUpdate doesn't trigger on_session call if already did so", as
 });
 
 test("sendOnSessionUpdate doesn't trigger for a new user", async t => {
-  sandbox.stub(Database, "getSubscription").resolves({deviceId: undefined});
+  sandbox.stub(Database, "getSubscription").resolves({ deviceId: undefined });
   const onSessionSpy = sandbox.stub(OneSignal.context.sessionManager, "upsertSession");
 
   t.is(OneSignal.context.updateManager.onSessionAlreadyCalled(), false);

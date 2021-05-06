@@ -89,26 +89,26 @@ export default class Postmam {
       return;
     }
     //Log.debug(`(Postmam) (onWindowPostMessageReceived) (${SdkEnvironment.getWindowEnv().toString()}):`, e);
-    let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
+    const { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emitter.emit('connect');
       this.isConnected = true;
       return;
     }
-    let messageBundle = {
+    const messageBundle = {
       id: messageId,
       command: messageCommand,
       data: messageData,
       source: messageSource
     };
-    let messageBundleWithReply = {
+    const messageBundleWithReply = {
       reply: this.reply.bind(this, messageBundle),
       ...messageBundle
     };
     if (this.replies.hasOwnProperty(messageId)) {
       Log.info('(Postmam) This message is a reply.');
-      let replyFn = this.replies[messageId].bind(window);
-      let replyFnReturnValue = replyFn(messageBundleWithReply);
+      const replyFn = this.replies[messageId].bind(window);
+      const replyFnReturnValue = replyFn(messageBundleWithReply);
       if (replyFnReturnValue === false) {
         delete this.replies[messageId];
       }
@@ -168,25 +168,25 @@ export default class Postmam {
       Log.debug(`(${SdkEnvironment.getWindowEnv().toString()}) Received an empty Postmam message:`, e);
       return;
     }
-    let { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
+    const { id: messageId, command: messageCommand, data: messageData, source: messageSource } = e.data;
     if (messageCommand === Postmam.CONNECTED_MESSAGE) {
       this.emitter.emit('connect');
       this.isConnected = true;
       return;
     }
-    let messageBundle = {
+    const messageBundle = {
       id: messageId,
       command: messageCommand,
       data: messageData,
       source: messageSource
     };
-    let messageBundleWithReply = {
+    const messageBundleWithReply = {
       reply: this.reply.bind(this, messageBundle),
       ...messageBundle
     };
     if (this.replies.hasOwnProperty(messageId)) {
-      let replyFn = this.replies[messageId].bind(window);
-      let replyFnReturnValue = replyFn(messageBundleWithReply);
+      const replyFn = this.replies[messageId].bind(window);
+      const replyFnReturnValue = replyFn(messageBundleWithReply);
       if (replyFnReturnValue === false) {
         delete this.replies[messageId];
       }
@@ -240,7 +240,7 @@ export default class Postmam {
       throw new Error("(Postmam) Postmam command must not be empty.");
     }
     if (typeof data === 'function') {
-      Log.debug('You passed a function to data, did you mean to pass null?')
+      Log.debug('You passed a function to data, did you mean to pass null?');
       return;
     }
     const messageBundle = {

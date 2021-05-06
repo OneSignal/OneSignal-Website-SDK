@@ -298,7 +298,7 @@ test("registerSubscription with an existing subsription sends player update", as
   const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
   const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
 
-  await subscriptionManager.registerSubscription(pushSubscription)
+  await subscriptionManager.registerSubscription(pushSubscription);
 
   t.is(playerUpdateSpy.calledOnce, true);
   t.is(playerCreateSpy.notCalled, true);
@@ -323,7 +323,7 @@ test("registerSubscription without an existing subsription sends player create",
   );
   let updateData: any = {
     notification_types: SubscriptionStateKind.Subscribed
-  }
+  };
   updateData = Object.assign(updateData, deviceRecord.serialize());
 
   sandbox.stub(Database, "getSubscription").resolves({ } as Subscription);
@@ -335,7 +335,7 @@ test("registerSubscription without an existing subsription sends player create",
   const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
   const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
 
-  await subscriptionManager.registerSubscription(pushSubscription)
+  await subscriptionManager.registerSubscription(pushSubscription);
 
   t.is(playerUpdateSpy.notCalled, true);
   t.is(playerCreateSpy.calledOnce, true);
@@ -429,7 +429,7 @@ test(
         t.deepEqual(calledSubscriptionOptions, subsequentSubscriptionOptions);
 
         const subsequentSubscription = await pushManager.getSubscription();
-        t.notDeepEqual(initialSubscription, subsequentSubscription)
+        t.notDeepEqual(initialSubscription, subsequentSubscription);
       }
     );
   }
