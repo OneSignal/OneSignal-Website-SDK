@@ -31,7 +31,7 @@ export async function markUserAsSubscribed(
   sinonSandbox.stub(Database, "getSubscription").resolves(subscription);
 
   sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
-    .resolves({subscribed: true, isOptedOut: false});
+    .resolves({ subscribed: true, isOptedOut: false });
   
   if (expired) {
     sinonSandbox.stub(InitHelper, "processExpiringSubscriptions").resolves(true);

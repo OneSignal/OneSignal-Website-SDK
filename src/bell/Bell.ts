@@ -67,7 +67,7 @@ export default class Bell {
         firefox: 'Always Receive Notifications',
         safari: 'Allow'
       }
-    }
+    };
   }
 
   constructor(config: Partial<AppUserConfigNotifyButton>, launcher?: Launcher) {
@@ -105,7 +105,7 @@ export default class Bell {
       this.dialog.show()
         .then(() => {
           once(document, 'click', (e: Event, destroyEventListener: Function) => {
-            let wasDialogClicked = this.dialog.element.contains(e.target);
+            const wasDialogClicked = this.dialog.element.contains(e.target);
             if (wasDialogClicked) {
             } else {
               destroyEventListener();
@@ -150,7 +150,7 @@ export default class Bell {
       'dialog.main.button.unsubscribe': text['dialog.main.button.unsubscribe'] || 'UNSUBSCRIBE',
       'dialog.blocked.title': text['dialog.blocked.title'] || 'Unblock Notifications',
       'dialog.blocked.message': text['dialog.blocked.message'] || 'Follow these instructions to allow notifications:',
-    }
+    };
     return finalText;
   }
 
@@ -293,13 +293,13 @@ export default class Bell {
         } else if (permission === NotificationPermission.Denied) {
           bellState = Bell.STATES.BLOCKED;
         } else {
-          bellState = Bell.STATES.UNSUBSCRIBED
+          bellState = Bell.STATES.UNSUBSCRIBED;
         }
         this.setState(bellState, this._ignoreSubscriptionState);
       });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED, (state) => {
+    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED,state => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -331,17 +331,17 @@ export default class Bell {
       if (container) {
         addCssClass(container, 'onesignal-bell-container-bottom-right');
       }
-      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right')
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right');
     }
     else {
       throw new Error('Invalid OneSignal notify button position ' + this.options.position);
     }
 
     if (this.options.theme === 'default') {
-      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-default')
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-default');
     }
     else if (this.options.theme === 'inverse') {
-      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse')
+      addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse');
     }
     else {
       throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
@@ -391,7 +391,7 @@ export default class Bell {
     const doNotPrompt = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
-    let resizeTo = (isPushEnabled ? 'small' : (this.options.size || this.DEFAULT_SIZE));
+    const resizeTo = (isPushEnabled ? 'small' : (this.options.size || this.DEFAULT_SIZE));
     await this.launcher.resize(resizeTo);
 
     this.addDefaultClasses();
@@ -406,7 +406,7 @@ export default class Bell {
       .then(() => OneSignal.getSubscription())
       .then((isNotOptedOut: boolean) => {
         if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
-          return MainHelper.getNotificationIcons().then((icons) => {
+          return MainHelper.getNotificationIcons().then(icons => {
             this.dialog.notificationIcons = icons;
           });
         } else return nothing();
@@ -440,9 +440,9 @@ export default class Bell {
 
   patchSafariSvgFilterBug() {
     if (!(bowser.safari && Number(bowser.version) >= 9.1)) {
-      let bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
-      let badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
-      let dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
+      const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
+      const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
+      const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
       this.graphic.setAttribute('style', `filter: ${bellShadow}; -webkit-filter: ${bellShadow};`);
       this.badge.element.setAttribute('style', `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`);
       this.dialog.element.setAttribute('style', `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`);
@@ -453,7 +453,7 @@ export default class Bell {
   }
 
   applyOffsetIfSpecified() {
-    let offset = this.options.offset;
+    const offset = this.options.offset;
     if (offset) {
       const element = this.launcher.element as HTMLElement;
 
@@ -483,13 +483,13 @@ export default class Bell {
 
   setCustomColorsIfSpecified() {
     // Some common vars first
-    let dialogButton = this.dialog.element.querySelector('button.action');
-    let pulseRing = this.button.element.querySelector('.pulse-ring');
+    const dialogButton = this.dialog.element.querySelector('button.action');
+    const pulseRing = this.button.element.querySelector('.pulse-ring');
     // Reset added styles first
     this.graphic.querySelector('.background').style.cssText = '';
-    let foregroundElements = this.graphic.querySelectorAll('.foreground');
+    const foregroundElements = this.graphic.querySelectorAll('.foreground');
     for (let i = 0; i < foregroundElements.length; i++) {
-      let element = foregroundElements[i];
+      const element = foregroundElements[i];
       element.style.cssText = '';
     }
     this.graphic.querySelector('.stroke').style.cssText = '';
@@ -504,14 +504,14 @@ export default class Bell {
 
     // Set new styles
     if (this.options.colors) {
-      let colors = this.options.colors;
+      const colors = this.options.colors;
       if (colors['circle.background']) {
         this.graphic.querySelector('.background').style.cssText += `fill: ${colors['circle.background']}`;
       }
       if (colors['circle.foreground']) {
-        let foregroundElements = this.graphic.querySelectorAll('.foreground');
+        const foregroundElements = this.graphic.querySelectorAll('.foreground');
         for (let i = 0; i < foregroundElements.length; i++) {
-          let element = foregroundElements[i];
+          const element = foregroundElements[i];
           element.style.cssText += `fill: ${colors['circle.foreground']}`;
         }
         this.graphic.querySelector('.stroke').style.cssText += `stroke: ${colors['circle.foreground']}`;
@@ -548,10 +548,10 @@ export default class Bell {
   }
 
   addCssToHead(id: string, css: string) {
-    let existingStyleDom = document.getElementById(id);
+    const existingStyleDom = document.getElementById(id);
     if (existingStyleDom)
       return;
-    let styleDom = document.createElement('style');
+    const styleDom = document.createElement('style');
     styleDom.id = id;
     styleDom.type = 'text/css';
     styleDom.appendChild(document.createTextNode(css));
@@ -579,10 +579,10 @@ export default class Bell {
    * @param newState One of ['subscribed', 'unsubscribed'].
    */
   setState(newState: BellState, silent = false) {
-    let lastState = this.state;
+    const lastState = this.state;
     this.state = newState;
     if (lastState !== newState && !silent) {
-      OneSignalEvent.trigger(Bell.EVENTS.STATE_CHANGED, {from: lastState, to: newState});
+      OneSignalEvent.trigger(Bell.EVENTS.STATE_CHANGED, { from: lastState, to: newState });
       // Update anything that should be changed here in the new state
     }
 

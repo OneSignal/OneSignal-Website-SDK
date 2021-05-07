@@ -37,12 +37,12 @@ export class OneSignalApiBase {
       }
     }
 
-    let callHeaders: any = new Headers();
+    const callHeaders: any = new Headers();
     callHeaders.append("Origin", SdkEnvironment.getOrigin());
     callHeaders.append('SDK-Version', `onesignal/web/${Environment.version()}`);
     callHeaders.append('Content-Type', 'application/json;charset=UTF-8');
     if (headers) {
-      for (let key of Object.keys(headers)) {
+      for (const key of Object.keys(headers)) {
         callHeaders.append(key, headers[key]);
       }
     }
@@ -65,7 +65,7 @@ export class OneSignalApiBase {
           if (status >= 200 && status < 300)
             return json;
           else {
-            let error = OneSignalApiBase.identifyError(json);
+            const error = OneSignalApiBase.identifyError(json);
             if (error === 'no-user-id-error') {
               // TODO: This returns undefined
             } else {
@@ -83,7 +83,7 @@ export class OneSignalApiBase {
     if (!error || !error.errors) {
       return 'no-error';
     }
-    let errors = error.errors;
+    const errors = error.errors;
     if (Utils.contains(errors, 'No user with this id found') ||
         Utils.contains(errors, 'Could not find app_id for given player id.')) {
       return 'no-user-id-error';

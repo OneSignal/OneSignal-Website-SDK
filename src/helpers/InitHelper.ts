@@ -11,11 +11,9 @@ import { getConsoleStyle, once, triggerNotificationPermissionChanged } from '../
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
 import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import OneSignalApiShared from '../OneSignalApiShared';
 import { ContextInterface } from '../models/Context';
 import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { SecondaryChannelDeviceRecord } from '../models/SecondaryChannelDeviceRecord';
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from '../models/IntegrationKind';
 import { Subscription } from "../models/Subscription";
@@ -379,7 +377,7 @@ export default class InitHelper {
   }
 
   public static async saveInitOptions() {
-    let opPromises: Promise<any>[] = [];
+    const opPromises: Promise<any>[] = [];
 
     const persistNotification = OneSignal.config.userConfig.persistNotification;
     opPromises.push(
@@ -389,7 +387,7 @@ export default class InitHelper {
       })
     );
 
-    let webhookOptions = OneSignal.config.userConfig.webhooks;
+    const webhookOptions = OneSignal.config.userConfig.webhooks;
     ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(event => {
       if (webhookOptions && webhookOptions[event]) {
         opPromises.push(Database.put('Options', { key: `webhooks.${event}`, value: webhookOptions[event] }));

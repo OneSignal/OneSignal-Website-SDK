@@ -20,7 +20,7 @@ test.afterEach(function () {
   sandbox.restore();
 });
 
-test('registerForPushNotifications: before OneSignal.initialized', async (t) => {
+test('registerForPushNotifications: before OneSignal.initialized', async t => {
   (global as any).OneSignal.initialized = false;
   (global as any).OneSignal._initCalled = false;
 
@@ -34,7 +34,7 @@ test('registerForPushNotifications: before OneSignal.initialized', async (t) => 
   t.is(spy.calledOnce, true);
 });
 
-test('registerForPushNotifications: after OneSignal.initialized', async (t) => {
+test('registerForPushNotifications: after OneSignal.initialized', async t => {
   (global as any).OneSignal.initialized = true;
   (global as any).OneSignal._initCalled = false;
 

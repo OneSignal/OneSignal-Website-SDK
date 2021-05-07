@@ -1,4 +1,3 @@
-import { SerializedPushDeviceRecord } from './PushDeviceRecord';
 import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { SubscriptionStateKind } from 'src/models/SubscriptionStateKind';
 

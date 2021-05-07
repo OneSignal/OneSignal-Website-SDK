@@ -95,7 +95,7 @@ export class Utils {
     const keys = Object.keys(hash);
     for (var key of keys) {
       const value = hash[key];
-      uriComponent += `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+      uriComponent += `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     }
     return uriComponent;
   }
@@ -103,7 +103,7 @@ export class Utils {
   public static timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<TimeoutError | any> {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
-        reject(new TimeoutError())
+        reject(new TimeoutError());
       }, milliseconds);
     });
     return Promise.race([promise, timeoutPromise]);

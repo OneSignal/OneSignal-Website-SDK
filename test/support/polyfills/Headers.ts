@@ -1,18 +1,18 @@
-'use strict'
+'use strict';
 
-const map = new WeakMap
-const wm = o => map.get(o)
-const normalizeValue = v => typeof v === 'string' ? v : String(v)
-const isIterable = o => o != null && typeof o[Symbol.iterator] === 'function'
+const map = new WeakMap;
+const wm = o => map.get(o);
+const normalizeValue = v => typeof v === 'string' ? v : String(v);
+const isIterable = o => o != null && typeof o[Symbol.iterator] === 'function';
 
 function normalizeName(name) {
   if (typeof name !== 'string')
-    name = String(name)
+    name = String(name);
 
   if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name))
-    throw new TypeError('Invalid character in header field name')
+    throw new TypeError('Invalid character in header field name');
 
-  return name.toLowerCase()
+  return name.toLowerCase();
 }
 
 export default class Headers {
@@ -24,15 +24,15 @@ export default class Headers {
    * @return  Void
    */
   constructor(headers) {
-    map.set(this, Object.create(null))
+    map.set(this, Object.create(null));
 
     if ( isIterable(headers) )
-      for (let [name, value] of headers)
-        this.append(name, value)
+      for (const [name, value] of headers)
+        this.append(name, value);
 
     else if ( headers )
-      for (let name of Object.keys(headers))
-        this.append(name, headers[name])
+      for (const name of Object.keys(headers))
+        this.append(name, headers[name]);
   }
 
 
@@ -44,15 +44,15 @@ export default class Headers {
    * @return  Void
    */
   append(name, value) {
-    let map = wm(this)
+    const map = wm(this);
 
-    name = normalizeName(name)
-    value = normalizeValue(value)
+    name = normalizeName(name);
+    value = normalizeValue(value);
 
     if (!map[name])
-      map[name] = []
+      map[name] = [];
 
-    map[name].push(value)
+    map[name].push(value);
   }
 
 
@@ -63,7 +63,7 @@ export default class Headers {
    * @return  Void
    */
   delete(name) {
-    delete wm(this)[normalizeName(name)]
+    delete wm(this)[normalizeName(name)];
   }
 
 
@@ -73,10 +73,10 @@ export default class Headers {
    * @return  Iterator
    */
   *entries() {
-    let map = wm(this)
+    const map = wm(this);
 
-    for (let name in map)
-      yield [name, map[name].join(',')]
+    for (const name in map)
+      yield [name, map[name].join(',')];
   }
 
 
@@ -87,10 +87,10 @@ export default class Headers {
    * @return  Mixed
    */
   get(name) {
-    let map = wm(this)
-    name = normalizeName(name)
+    const map = wm(this);
+    name = normalizeName(name);
 
-    return map[name] ? map[name][0] : null
+    return map[name] ? map[name][0] : null;
   }
 
 
@@ -101,7 +101,7 @@ export default class Headers {
    * @return  Boolean
    */
   has(name) {
-    return normalizeName(name) in wm(this)
+    return normalizeName(name) in wm(this);
   }
 
 
@@ -111,8 +111,8 @@ export default class Headers {
    * @return  Iterator
    */
   *keys() {
-    for (let [name] of this)
-      yield name
+    for (const [name] of this)
+      yield name;
   }
 
 
@@ -124,7 +124,7 @@ export default class Headers {
    * @return  Void
    */
   set(name, value) {
-    wm(this)[normalizeName(name)] = [normalizeValue(value)]
+    wm(this)[normalizeName(name)] = [normalizeValue(value)];
   }
 
 
@@ -134,8 +134,8 @@ export default class Headers {
    * @return  Iterator
    */
   *values() {
-    for (let [name, value] of this)
-      yield value
+    for (const [name, value] of this)
+      yield value;
   }
 
 
@@ -146,7 +146,7 @@ export default class Headers {
    * @return  Iterator
    */
   [Symbol.iterator]() {
-    return this.entries()
+    return this.entries();
   }
 
 
@@ -157,8 +157,8 @@ export default class Headers {
    * @return  String  [Object Headers]
    */
   get [Symbol.toStringTag]() {
-    return 'Headers'
+    return 'Headers';
   }
 }
 
-module.exports = Headers
+module.exports = Headers;

@@ -240,7 +240,7 @@ export class SessionManager implements ISessionManager {
 
     if (!OneSignal.cache.isBeforeUnloadEventSetup) {
       // tracks closing of a tab / reloading / navigating away
-      window.addEventListener("beforeunload", (e) => {
+      window.addEventListener("beforeunload", e => {
         this.handleOnBeforeUnload();
         // deleting value to not show confirmation dialog
         delete e.returnValue;

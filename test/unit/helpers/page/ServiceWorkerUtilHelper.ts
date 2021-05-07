@@ -8,27 +8,27 @@ test('getAvailableServiceWorker() - returns instance - when only active', async 
   const serviceWorkerRegistration = new MockServiceWorkerRegistration();
   serviceWorkerRegistration.active = new MockServiceWorker();
 
-  t.truthy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration))
+  t.truthy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration));
 });
 
 test('getAvailableServiceWorker() - returns instance - when only waiting', async t => {
   const serviceWorkerRegistration = new MockServiceWorkerRegistration();
   serviceWorkerRegistration.waiting = new MockServiceWorker();
 
-  t.truthy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration))
+  t.truthy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration));
 });
 
 test('getAvailableServiceWorker() - returns instance - when only installing', async t => {
   const serviceWorkerRegistration = new MockServiceWorkerRegistration();
   serviceWorkerRegistration.installing = new MockServiceWorker();
 
-  t.truthy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration))
+  t.truthy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration));
 });
 
 
 test('getAvailableServiceWorker() - returns null - when no ServiceWorker', async t => {
   const serviceWorkerRegistration = new MockServiceWorkerRegistration();
-  t.falsy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration))
+  t.falsy(ServiceWorkerUtilHelper.getAvailableServiceWorker(serviceWorkerRegistration));
 });
 
 // See test/unit/manager/ServiceWorkerManager.ts for other tests that cover this class

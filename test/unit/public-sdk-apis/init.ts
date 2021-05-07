@@ -86,7 +86,7 @@ test("Test OneSignal.init, Custom, with requiresUserPrivacyConsent", async t => 
 
   const assertInit = new AssertInitSDK();
   assertInit.setupEnsureInitEventFires(t);
-  sinonSandbox.stub(OneSignalApiBase, "post").resolves({success: true, id: Random.getRandomUuid()});
+  sinonSandbox.stub(OneSignalApiBase, "post").resolves({ success: true, id: Random.getRandomUuid() });
   await OneSignal.init({
     appId: Random.getRandomUuid(),
     requiresUserPrivacyConsent: true

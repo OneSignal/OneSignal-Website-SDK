@@ -38,7 +38,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (!this.inactive || !this.shown) {
       return Promise.resolve(this);
     }
-    else return new Promise((resolve) => {
+    else return new Promise(resolve => {
       this.activeState = 'activating';
       OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.ACTIVATING, this);
       const element = this.element;
@@ -56,7 +56,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            Log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`)
+            Log.debug(`Element did not completely activate (state: ${this.state}, activeState: ${this.activeState}).`);
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
             if (event.target === this.element &&
@@ -88,7 +88,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (!this.active) {
       return Promise.resolve(this);
     }
-    else return new Promise((resolve) => {
+    else return new Promise(resolve => {
       this.activeState = 'inactivating';
       OneSignalEvent.trigger(ActiveAnimatedElement.EVENTS.INACTIVATING, this);
       const element = this.element;
@@ -106,7 +106,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            Log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`)
+            Log.debug(`Element did not completely inactivate (state: ${this.state}, activeState: ${this.activeState}).`);
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
             if (event.target === this.element &&
@@ -136,8 +136,8 @@ export default class ActiveAnimatedElement extends AnimatedElement {
   waitUntilActive() {
     if (this.active)
       return Promise.resolve(this);
-    else return new Promise((resolve) => {
-      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE, (event) => {
+    else return new Promise(resolve => {
+      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE, event => {
         if (event === this) {
           return resolve(this);
         }
@@ -152,8 +152,8 @@ export default class ActiveAnimatedElement extends AnimatedElement {
   waitUntilInactive() {
     if (this.inactive)
       return Promise.resolve(this);
-    else return new Promise((resolve) => {
-      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.INACTIVE, (event) => {
+    else return new Promise(resolve => {
+      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.INACTIVE, event => {
         if (event === this) {
           return resolve(this);
         }

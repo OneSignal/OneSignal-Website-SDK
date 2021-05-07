@@ -52,13 +52,13 @@ export default class Launcher extends ActiveAnimatedElement {
       return this;
     }
     else {
-      return await new Promise((resolve) => {
+      return await new Promise(resolve => {
         // Once the launcher has finished shrinking down
         if (this.targetTransitionEvents.length == 0) {
           return resolve(this);
         } else {
           var timerId = setTimeout(() => {
-            Log.debug(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`)
+            Log.debug(`Launcher did not completely resize (state: ${this.state}, activeState: ${this.activeState}).`);
           }, this.transitionCheckTimeout);
           once(this.element, 'transitionend', (event: Event, destroyListenerFn: Function) => {
             if (event.target === this.element &&

@@ -8,7 +8,7 @@ import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
 import { hasCssClass } from '../../../src/utils';
 import { DismissHelper } from '../../../src/helpers/DismissHelper';
 
-let sandbox: SinonSandbox = sinon.sandbox.create();
+const sandbox: SinonSandbox = sinon.sandbox.create();
 let config: AppUserConfigCustomLinkOptions;
 
 const stateSubscribedClass = "state-subscribed";
@@ -264,7 +264,7 @@ test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. opted o
 });
 
 test('customlink: subscribe: clicked: unsubscribed -> subscribed. https. never subscribed.', async t => {
-  TestEnvironment.overrideEnvironmentInfo({requiresUserInteraction: false});
+  TestEnvironment.overrideEnvironmentInfo({ requiresUserInteraction: false });
 
   sandbox.stub(OneSignal, 'privateIsPushNotificationsEnabled').returns(false);
   sandbox.stub(OneSignal, 'internalIsOptedOut').returns(false);

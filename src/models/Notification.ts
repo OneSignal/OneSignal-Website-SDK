@@ -24,7 +24,7 @@ export class Notification {
         this.url = options.url;
         this.icon = options.icon;
         this.image = options.image;
-        this.tag = options.tag
+        this.tag = options.tag;
         this.requireInteraction = options.requireInteraction;
         this.renotify = options.renotify;
         this.actions = options.actions;
@@ -43,7 +43,7 @@ export class Notification {
             body: body,
             url: url,
             data: data
-        })
+        });
     }
 
     static createFromPushPayload(payload: any): Notification {
@@ -63,7 +63,7 @@ export class Notification {
         // Add action buttons
         if (payload.o) {
             notification.actions = [];
-            for (let rawButton of payload.o) {
+            for (const rawButton of payload.o) {
                 notification.actions.push({
                     action: rawButton.i,
                     title: rawButton.n,

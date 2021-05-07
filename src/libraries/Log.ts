@@ -22,7 +22,7 @@ export default class Log {
     } catch (e) {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
       return false;
-    };
+    }
   }
 
   public static setLevel(level: string) {
@@ -37,7 +37,7 @@ export default class Log {
     } catch (e) {
       /* LocalStorage may not be accessible on browser profiles that restrict 3rd party cookies */
       return;
-    };
+    }
   }
 
   public static createProxyMethods() {
@@ -48,11 +48,11 @@ export default class Log {
     }
 
     const methods = {
-      "log": "debug",
-      "trace": "trace",
-      "info": "info",
-      "warn": "warn",
-      "error": "error"
+      log: "debug",
+      trace: "trace",
+      info: "info",
+      warn: "warn",
+      error: "error"
     };
     for (const nativeMethod of Object.keys(methods)) {
       const nativeMethodExists = typeof console[nativeMethod] !== "undefined";

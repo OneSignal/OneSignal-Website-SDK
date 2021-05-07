@@ -37,7 +37,7 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
       if (!startedExecution) {
         resolve();
       }
-    }
+    };
   });
 
   if (!clearTimeoutHandle) {
@@ -45,11 +45,11 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
     return {
       promise,
       cancel: doNothing,
-    }
+    };
   }
 
   return {
     promise,
     cancel: clearTimeoutHandle,
-  }
+  };
 }

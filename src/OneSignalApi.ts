@@ -3,7 +3,6 @@ import SdkEnvironment from "./managers/SdkEnvironment";
 import { AppConfig, ServerAppConfig } from './models/AppConfig';
 import { DeviceRecord } from './models/DeviceRecord';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
-import { SecondaryChannelProfile } from './models/SecondaryChannelProfile';
 import OneSignalApiSW from "./OneSignalApiSW";
 import OneSignalApiShared from "./OneSignalApiShared";
 import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';

@@ -33,7 +33,7 @@ export class Subscription implements Serializable {
       optedOut: this.optedOut,
       createdAt: this.createdAt,
       expirationTime: this.expirationTime,
-    }
+    };
   }
 
   static deserialize(bundle: any): Subscription {

@@ -2,7 +2,7 @@ import bowser from 'bowser';
 
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import {addDomElement, clearDomElementChildren, getPlatformNotificationIcon} from '../utils';
+import { addDomElement, clearDomElementChildren, getPlatformNotificationIcon } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 
@@ -60,11 +60,11 @@ export default class Dialog extends AnimatedElement {
         this.bell.state === Bell.STATES.UNSUBSCRIBED && currentSetSubscription === false) {
 
         let notificationIconHtml = '';
-        let imageUrl = getPlatformNotificationIcon(this.notificationIcons);
+        const imageUrl = getPlatformNotificationIcon(this.notificationIcons);
         if (imageUrl != 'default-icon') {
-          notificationIconHtml = `<div class="push-notification-icon"><img src="${imageUrl}"></div>`
+          notificationIconHtml = `<div class="push-notification-icon"><img src="${imageUrl}"></div>`;
         } else {
-          notificationIconHtml = `<div class="push-notification-icon push-notification-icon-default"></div>`
+          notificationIconHtml = `<div class="push-notification-icon push-notification-icon-default"></div>`;
         }
 
         let buttonHtml = '';

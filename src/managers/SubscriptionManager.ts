@@ -2,7 +2,6 @@ import bowser from "bowser";
 
 import Database from "../services/Database";
 import OneSignalApiShared from "../OneSignalApiShared";
-import { ServiceWorkerManager } from "./ServiceWorkerManager";
 import Environment from "../Environment";
 import Event from "../Event";
 import Log from "../libraries/Log";

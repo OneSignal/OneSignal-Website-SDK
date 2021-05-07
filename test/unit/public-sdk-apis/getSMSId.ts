@@ -1,5 +1,5 @@
 import test from "ava";
-import  {TestEnvironment } from "../../support/sdk/TestEnvironment";
+import  { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 
 import { SMSProfile } from "../../../src/models/SMSProfile";

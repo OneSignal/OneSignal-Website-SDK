@@ -565,7 +565,7 @@ export class TestEnvironment {
             }
           }
         },
-        "generated_at": 1531177265
+        generated_at: 1531177265
       };
       if (isHttps) {
         return customConfigHttps;
@@ -591,7 +591,7 @@ export class TestEnvironment {
             urlEnabled: false
           },
         }
-      }
+      };
     }
 
     const remoteConfigMockDefaults: ServerAppConfig = {

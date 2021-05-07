@@ -196,7 +196,7 @@ export default class SubscriptionPopupHost implements Disposable {
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
-    let {eventName, eventData} = (message.data as any);
+    const { eventName, eventData } = (message.data as any);
     Event.trigger(eventName, eventData, message.source);
     return false;
   }

@@ -2,7 +2,6 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
-import OneSignal from '../../../../src/OneSignal';
 import Database from '../../../../src/services/Database';
 import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
 
@@ -241,7 +240,7 @@ test('onNotificationClicked - openWindow', async t => {
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
   await OSServiceWorker.onNotificationClicked(notificationEvent);
 
-  t.deepEqual(openWindowMock.getCalls().map(call => call.args[0]), ['https://localhost:3001'])
+  t.deepEqual(openWindowMock.getCalls().map(call => call.args[0]), ['https://localhost:3001']);
 });
 
 /*

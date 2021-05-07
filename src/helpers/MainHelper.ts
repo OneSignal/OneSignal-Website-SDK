@@ -123,11 +123,11 @@ export default class MainHelper {
   }
 
   static getPromptOptionsQueryString() {
-    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
+    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     let promptOptionsStr = '';
     if (promptOptions) {
-      let hash = MainHelper.getPromptOptionsPostHash();
-      for (let key of Object.keys(hash)) {
+      const hash = MainHelper.getPromptOptionsPostHash();
+      for (const key of Object.keys(hash)) {
         var value = hash[key];
         promptOptionsStr += '&' + key + '=' + value;
       }
@@ -136,7 +136,7 @@ export default class MainHelper {
   }
 
   static getPromptOptionsPostHash() {
-    let promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
+    const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     if (promptOptions) {
       var legacyParams = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',
@@ -144,8 +144,8 @@ export default class MainHelper {
         exampleNotificationTitleMobile: 'exampleNotificationTitle',
         exampleNotificationMessageMobile: 'exampleNotificationMessage'
       };
-      for (let legacyParamKey of Object.keys(legacyParams)) {
-        let legacyParamValue = legacyParams[legacyParamKey];
+      for (const legacyParamKey of Object.keys(legacyParams)) {
+        const legacyParamValue = legacyParams[legacyParamKey];
         if (promptOptions[legacyParamKey]) {
           promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
         }

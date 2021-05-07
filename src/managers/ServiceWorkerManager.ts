@@ -10,7 +10,7 @@ import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import Event from '../Event';
 import ProxyFrame from '../modules/frames/ProxyFrame';
-import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError"
+import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError";
 import OneSignalUtils from "../utils/OneSignalUtils";
 import ServiceWorkerHelper, { ServiceWorkerActiveState, ServiceWorkerManagerConfig }
   from "../helpers/ServiceWorkerHelper";
@@ -328,7 +328,7 @@ export class ServiceWorkerManager {
               OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
               OneSignal.EVENTS.NOTIFICATION_CLICKED,
               (reply: any) => {
-                let callbackCount: number = reply.data;
+                const callbackCount: number = reply.data;
                 resolve(callbackCount);
               }
             );

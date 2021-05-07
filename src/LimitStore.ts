@@ -43,7 +43,7 @@ export default class LimitStore {
   }
 
   static isEmpty(key) {
-    let values = LimitStore.get(key);
+    const values = LimitStore.get(key);
     return values[0] === null && values[1] === null;
   }
 }

@@ -73,7 +73,7 @@ async function expectEmailLogoutRequest(
           identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
         })
       );
-      return { "success":true, "id": newUpdatedPlayerId };
+      return { success: true, id: newUpdatedPlayerId };
     });
 }
 
@@ -82,7 +82,7 @@ test("logoutEmail returns if not subscribed to web push", async t => {
     existingPushDeviceId: null,
     emailDeviceId: Random.getRandomUuid(),
     identifierAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
-  }
+  };
 
   await logoutEmailTest(t, testData);
 
@@ -97,7 +97,7 @@ test("logoutEmail calls POST email_logout and clears local data", async t => {
     existingPushDeviceId: Random.getRandomUuid(),
     emailDeviceId: Random.getRandomUuid(),
     identifierAuthHash: "b812f8616dff8ee2c7a4b308ef16e2da36928cfa80249f7c61d36d43f0a521e7",
-  }
+  };
   await logoutEmailTest(t, testData);
 
   // Confirm email details have been erased
