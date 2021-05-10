@@ -10,29 +10,39 @@ $customlink-base-font-size: 15px;
 $customlink-base-padding-horizontal: 16px;
 $customlink-base-padding-vertical: 8px;
 
+.onesignal-customlink-container {
+  &.hide {
+    display: none;
+  }
+  min-height: 6em;
+}
+
 .onesignal-customlink-subscribe {
   display: inline-block;
   transition: all 0.1s;
-  font-family: "Open Sans", Arial, Helvetica, sans-serif;
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  &:hover {
+    filter: brightness(0.9);
+  }
+
+  &.state-subscribed {
+    opacity: 0.8;
+  }
 
   &.onesignal-reset {
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: inline-block;
     transition: all 0.1s;
-    font-family: "Open Sans", Arial, Helvetica, sans-serif;
   }
-  &.state-subscribed.hide {
-    display: none;
-  }
+
   &.button {
-    text-transform: uppercase;
     touch-action: manipulation;
-    font-weight: 600;
+    font-weight: 600px;
     border-radius: 4px;
-    box-shadow: 1px 1px 1px grey;
     cursor: pointer;
     &:hover, &:focus, &:active {
       text-decoration: none;
-      box-shadow: 2px 3px 4px grey;
     }
     &.state-subscribed {
       text-transform: none;
@@ -91,10 +101,6 @@ $customlink-base-padding-vertical: 8px;
     transition: all 0.1s;
     font-family: "Proxima-Nova", "Proxima Nova", "Open Sans", Arial, Helvetica, sans-serif;
     margin-bottom: 12px;
-  }
-
-  &.state-subscribed.hide {
-    display: none;
   }
 
   @each $size-name, $size-amount in $customlink-sizes {
