@@ -21,11 +21,11 @@ import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import Environment from '../Environment';
 import Bell from '../bell/Bell';
-import { CustomLink } from '../CustomLink';
 import SubscriptionPopupHost from "../modules/frames/SubscriptionPopupHost";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { DeprecatedApiError, DeprecatedApiReason } from "../errors/DeprecatedApiError";
 import LocalStorage from '../utils/LocalStorage';
+import { CustomLinkManager } from '../managers/CustomLinkManager';
 
 declare var OneSignal: any;
 
@@ -360,7 +360,7 @@ export default class InitHelper {
   protected static async showPromptsFromWebConfigEditor() {
     const config: AppConfig = OneSignal.config;
     if (config.userConfig.promptOptions) {
-      await CustomLink.initialize(config.userConfig.promptOptions.customlink);
+      await new CustomLinkManager(config.userConfig.promptOptions.customlink).initialize();
     }
   }
 
