@@ -90,6 +90,10 @@ export default class EventsTestHelper {
       });
   }
 
+  static async simulateSubscriptionChanged(to: boolean) {
+    await OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
+  }
+
   static getToastShownPromise(): Promise<void> {
       return new Promise<void>(resolve => {
           OneSignal.on(ConfirmationToast.EVENTS.SHOWN, () => {
