@@ -23,7 +23,7 @@ export class CustomLinkManager {
 
     Log.info("OneSignal: initializing customlink");
 
-    if (!this.config?.unsubscribeEnabled && await this.isPushEnabled()) {
+    if (!this.config?.unsubscribeEnabled && await CustomLinkManager.isPushEnabled()) {
       this.hideCustomLinkContainers();
       return;
     }
@@ -57,7 +57,7 @@ export class CustomLinkManager {
         addCssClass(explanation, this.config.size);
       }
 
-      if (await this.isPushEnabled()) {
+      if (await CustomLinkManager.isPushEnabled()) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
@@ -86,7 +86,7 @@ export class CustomLinkManager {
         addCssClass(subscribeButton, this.config.style);
       }
 
-      if (await this.isPushEnabled()) {
+      if (await CustomLinkManager.isPushEnabled()) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
@@ -128,23 +128,23 @@ export class CustomLinkManager {
   }
 
   private async handleClick(element: HTMLElement): Promise<void> {
-    if (await this.isPushEnabled()) {
+    if (await CustomLinkManager.isPushEnabled()) {
       await OneSignal.setSubscription(false);
       await this.setTextFromPushStatus(element);
     } else {
-      if (!await this.isOptedOut()) {
+      if (!await CustomLinkManager.isOptedOut()) {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
         const options: RegisterOptions = { autoAccept };
         await OneSignal.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
-        if (!this.config?.unsubscribeEnabled && await this.isPushEnabled()) {
+        if (!this.config?.unsubscribeEnabled && await CustomLinkManager.isPushEnabled()) {
           this.hideCustomLinkContainers();
         }
         return;
       }
       await OneSignal.setSubscription(true);
       // once subscribed, prevent unsubscribe by hiding customlinks
-      if (!this.config?.unsubscribeEnabled && await this.isPushEnabled()) {
+      if (!this.config?.unsubscribeEnabled && await CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();
       }
     }
@@ -152,13 +152,13 @@ export class CustomLinkManager {
 
   private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this.config?.text?.subscribe) {
-      if (!await this.isPushEnabled()) {
+      if (!await CustomLinkManager.isPushEnabled()) {
         element.textContent = this.config.text.subscribe;
       }
     }
 
     if (this.config?.text?.unsubscribe) {
-      if (await this.isPushEnabled()) {
+      if (await CustomLinkManager.isPushEnabled()) {
         element.textContent = this.config.text.unsubscribe;
       }
     }
@@ -177,16 +177,16 @@ export class CustomLinkManager {
     }
   }
 
-  private async isPushEnabled(): Promise<boolean> {
-    return await OneSignal.privateIsPushNotificationsEnabled();
-  }
-
-  private async isOptedOut(): Promise<boolean> {
-    return await OneSignal.internalIsOptedOut();
-  }
-
   get customlinkContainerElements(): HTMLElement[] {
     const containers = document.querySelectorAll<HTMLElement>(CUSTOM_LINK_CSS_SELECTORS.containerSelector);
     return Array.prototype.slice.call(containers);
+  }
+
+  static async isPushEnabled(): Promise<boolean> {
+    return await OneSignal.privateIsPushNotificationsEnabled();
+  }
+
+  static async isOptedOut(): Promise<boolean> {
+    return await OneSignal.internalIsOptedOut();
   }
 }
