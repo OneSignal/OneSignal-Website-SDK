@@ -120,3 +120,9 @@ export async function setupFakePlayerId(): Promise<string> {
   await Database.setSubscription(subscription);
   return subscription.deviceId;
 }
+
+export function simulateEventOfTypeOnElement(type: string, element: Element | null): void {
+  const event = document.createEvent("Event");
+  event.initEvent(type, true, true);
+  element?.dispatchEvent(event);
+}

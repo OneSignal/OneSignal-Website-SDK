@@ -15,7 +15,6 @@ import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior,
   NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind }
   from '../../../src/models/AppConfig';
 import Context from "../../../src/models/Context";
-import CustomLink from "../../../src/CustomLink";
 import Emitter from '../../../src/libraries/Emitter';
 import ConfigManager from '../../../src/managers/ConfigManager';
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
@@ -43,6 +42,7 @@ import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager
 import { getSlidedownElement } from '../../../src/slidedown/SlidedownElement';
 import { DelayedPromptType } from '../../../src/models/Prompts';
 import MockNotification from "../mocks/MockNotification";
+import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/slidedown/constants";
 
 // NodeJS.Global
 declare var global: any;
@@ -228,9 +228,8 @@ export class TestEnvironment {
 
     if (config.addPrompts) {
       html = `<!doctype html><html><head>\
-      <div class="${CustomLink.containerClass}"></div>\
-      <div class="${CustomLink.containerClass}"></div>\
-      <button class="${CustomLink.subscribeClass}"></button>\
+      <div class="${CUSTOM_LINK_CSS_CLASSES.containerClass}"></div>\
+      <div class="${CUSTOM_LINK_CSS_CLASSES.containerClass}"></div>\
       </head><body>\
         ${getSlidedownElement({}).outerHTML}</div></body></html>`;
     }

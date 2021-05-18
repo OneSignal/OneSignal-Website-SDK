@@ -4,11 +4,11 @@ import OneSignalApiShared from '../OneSignalApiShared';
 import Database from '../services/Database';
 import { ContextSWInterface } from "../models/ContextSW";
 import Log from '../libraries/Log';
-import { CustomLink } from "../CustomLink";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { BrowserUtils } from "../utils/BrowserUtils";
 import PromptsHelper from './PromptsHelper';
 import LocalStorage from '../utils/LocalStorage';
+import { CustomLinkManager } from '../managers/CustomLinkManager';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -132,7 +132,7 @@ export default class EventHelper {
 
   private static async onSubscriptionChanged_updateCustomLink() {
     if (OneSignal.config.userConfig.promptOptions) {
-      await CustomLink.initialize(OneSignal.config.userConfig.promptOptions.customlink);
+      new CustomLinkManager(OneSignal.config.userConfig.promptOptions.customlink).initialize();
     }
   }
 

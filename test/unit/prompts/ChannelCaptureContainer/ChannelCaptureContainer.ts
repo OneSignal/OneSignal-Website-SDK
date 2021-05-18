@@ -17,6 +17,7 @@ import EventsTestHelper from '../../../support/tester/EventsTestHelper';
 import { ConfigIntegrationKind } from '../../../../src/models/AppConfig';
 import { NotificationPermission } from '../../../../src/models/NotificationPermission';
 import Slidedown from '../../../../src/slidedown/Slidedown';
+import { simulateEventOfTypeOnElement } from '../../../support/tester/utils';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
@@ -103,17 +104,13 @@ test("submit email with bad input throws error and shows validation message", as
   // simulate typing in an valid email
   testHelper.inputEmail("rodrigo@com");
   const emailInput = getDomElementOrStub(`#${CHANNEL_CAPTURE_CONTAINER_CSS_IDS.onesignalEmailInput}`);
-  const emailInputKeyupEvent = document.createEvent("Event");
-  emailInputKeyupEvent.initEvent('keyup', true, true);
-  emailInput.dispatchEvent(emailInputKeyupEvent);
+  simulateEventOfTypeOnElement('keyup', emailInput);
 
   // simulate trying to click allow button
   const acceptButtonElem = document.querySelector(
     `#${SLIDEDOWN_CSS_IDS.allowButton}`
   );
-  const allowClickEvent = document.createEvent("Event");
-  allowClickEvent.initEvent('click', true, true);
-  acceptButtonElem?.dispatchEvent(allowClickEvent);
+  simulateEventOfTypeOnElement('click', acceptButtonElem);
 
   await allowClickHandlingPromise;
 

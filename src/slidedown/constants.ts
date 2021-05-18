@@ -118,3 +118,23 @@ export const CHANNEL_CAPTURE_CONTAINER_CSS_IDS = {
   onesignalSmsValidationElement   : 'onesignal-sms-validation-element',
   onesignalEmailValidationElement : 'onesignal-email-validation-element',
 };
+
+const STATE = {
+  subscribed  : "state-subscribed",
+  unsubscribed: "state-unsubscribed",
+};
+
+export const CUSTOM_LINK_CSS_CLASSES = {
+  containerClass   : "onesignal-customlink-container",
+  subscribeClass   : "onesignal-customlink-subscribe",
+  explanationClass : "onesignal-customlink-explanation",
+  resetClass       : "onesignal-reset",
+  hide             : "hide",
+  state            : STATE,
+};
+
+export const CUSTOM_LINK_CSS_SELECTORS = {
+  containerSelector   : `.${CUSTOM_LINK_CSS_CLASSES.containerClass}`,
+  subscribeSelector   : `.${CUSTOM_LINK_CSS_CLASSES.subscribeClass}`,
+  explanationSelector : `.${CUSTOM_LINK_CSS_CLASSES.explanationClass}`,
+};
