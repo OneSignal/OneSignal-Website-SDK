@@ -94,16 +94,29 @@ export default class Launcher extends ActiveAnimatedElement {
     this.wasInactive = false;
   }
 
+  scaleDown() {
+      if (this.element)
+        this.element.style.transform = 'scale(0.5)';
+      return;
+  }
+
+
+  scaleBack() {
+      if (this.element)
+        this.element.style.transform = '';
+      return;
+  }
+
   inactivate() {
     return this.bell.message.hide()
       .then(() => {
         if (this.bell.badge.content.length > 0) {
           return this.bell.badge.hide()
-            .then(() => Promise.all([super.inactivate(), this.resize('small')]))
+            .then(() => Promise.all([super.inactivate(), this.scaleDown()]))
             .then(() => this.bell.badge.show());
         }
         else {
-          return Promise.all([super.inactivate(), this.resize('small')]);
+          return Promise.all([super.inactivate(), this.scaleDown()]);
         }
       });
   }
@@ -111,10 +124,10 @@ export default class Launcher extends ActiveAnimatedElement {
   activate() {
     if (this.bell.badge.content.length > 0) {
       return this.bell.badge.hide()
-        .then(() => Promise.all([super.activate(), this.resize(this.bell.options.size)]));
+        .then(() => Promise.all([super.activate(), this.scaleBack()]));
     }
     else {
-      return Promise.all([super.activate(), this.resize(this.bell.options.size)]);
+      return Promise.all([super.activate(), this.scaleBack()]);
     }
   }
 }
