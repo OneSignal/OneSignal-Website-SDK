@@ -91,6 +91,7 @@ export class ServiceWorker {
    * Service worker entry point.
    */
   static run() {
+    self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
@@ -968,6 +969,20 @@ export class ServiceWorker {
       Log.warn(`Failed to open the URL '${url}':`, e);
       return null;
     }
+  }
+
+  /**
+   * Fires when the ServiceWorker can control pages.
+   * REQUIRED: AMP WebPush (amp-web-push v0.1) requires clients.claim()
+   *    - It depends on ServiceWorker having full control of the iframe,
+   *      requirement could be lifted by AMP in the future however.
+   *    - Without this the AMP symptom is the subscribe button does not update
+   *      right after accepting the notification permission from the pop-up.
+   * @param event
+   */
+  static onServiceWorkerActivated(event: ExtendableEvent) {
+    Log.info(`OneSignal Service Worker activated (version ${Environment.version()})`);
+    event.waitUntil(self.clients.claim());
   }
 
   static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
