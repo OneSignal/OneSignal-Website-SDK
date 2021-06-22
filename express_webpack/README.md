@@ -21,6 +21,10 @@
 3. Make sure the common name (e.g: localhost, texas, oregon, etc...) maps to the correct IP in your `/etc/hosts` file
 4. Visit [https://localhost:4001?app_id=](https://localhost:4001?app_id=) and insert your app id as a URL query parameter
 
+#### AMP Sandbox
+Visit [https://localhost:4001/amp?app_id=](https://localhost:4001/amp?app_id=) and insert your app id as a URL query parameter
+
+
 ### Build Instructions
 First: get a shell inside the container: `docker-compose exec onesignal-web-sdk-dev bash`
 
