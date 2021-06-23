@@ -27,8 +27,11 @@ import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
 import { NotificationReceived, NotificationClicked } from "../models/Notification";
 import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 import { DeviceRecord } from '../models/DeviceRecord';
+import { awaitableTimeout } from "../utils/AwaitableTimeout";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
+
+const MAX_CONFIRMED_DELIVERY_DELAY = 25;
 
 /**
  * The main service worker script fetching and displaying notifications to users in the background even when the client
@@ -354,18 +357,19 @@ export class ServiceWorker {
     if (!hasRequiredParams) {
       return null;
     }
- 
+
     // JSON.stringify() does not include undefined values
     // Our response will not contain those fields here which have undefined values
     const postData = {
-      player_id : deviceId, 
+      player_id : deviceId,
       app_id : appId
     };
-    
+
     Log.debug(`Called %csendConfirmedDelivery(${
       JSON.stringify(notification, null, 4)
     })`, Utils.getConsoleStyle('code'));
-    
+
+    await awaitableTimeout(Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000));
     return await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
   }
 
