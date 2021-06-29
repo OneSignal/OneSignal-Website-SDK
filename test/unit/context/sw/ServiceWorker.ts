@@ -16,6 +16,7 @@ import { MockPushEvent } from '../../../support/mocks/service-workers/models/Moc
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
 import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 import { setupFakePlayerId } from '../../../support/tester/utils';
+import * as awaitableTimeout from '../../../../src/utils/AwaitableTimeout';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -24,7 +25,6 @@ const appConfig = TestEnvironment.getFakeAppConfig();
 
 test.beforeEach(async function() {
   sandbox = sinon.sandbox.create();
-  
   await TestEnvironment.initializeForServiceWorker();
 
   await Database.setAppConfig(appConfig);
@@ -291,6 +291,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
  }
 
  test('sendConfirmedDelivery - notification is null - feature flag is y', async t => {
+   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
    const notificationId = null;
    const notificationPutCall = mockNotificationPutCall(notificationId);
    await fakeSetSubscription();
@@ -300,6 +301,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is y', async t => {
+  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = mockNotificationPutCall(notificationId);
   await fakeSetSubscription();
@@ -309,6 +311,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is n', async t => {
+  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = mockNotificationPutCall(notificationId);
   await fakeSetSubscription();
@@ -318,6 +321,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is undefined', async t => {
+  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = mockNotificationPutCall(notificationId);
   await fakeSetSubscription();
@@ -327,6 +331,7 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is null', async t => {
+  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
   const notificationPutCall = mockNotificationPutCall(notificationId);
   await fakeSetSubscription();
