@@ -3,7 +3,7 @@ import TaggingContainer from "../../slidedown/TaggingContainer";
 import TagUtils from "../../utils/TagUtils";
 import { ContextInterface } from "../../models/Context";
 import { DelayedPromptType } from "../../models/Prompts";
-import Slidedown from "../../slidedown/Slidedown";
+import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from "../../slidedown/Slidedown";
 import { AutoPromptOptions } from "../PromptsManager";
 import Log from "../../libraries/Log";
 import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from "../../config";
@@ -375,6 +375,8 @@ export class SlidedownManager {
       Log.warn("checkIfSlidedownShouldBeShown returned an error", e);
       return;
     }
+
+    manageNotifyButtonStateWhileSlidedownShows();
 
     if (this.isSlidedownShowing) {
       // already showing, enqueue

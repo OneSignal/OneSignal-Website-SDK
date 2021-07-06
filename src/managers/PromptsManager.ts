@@ -3,7 +3,7 @@ import OneSignalUtils from "../utils/OneSignalUtils";
 import { ContextInterface } from "../models/Context";
 import MainHelper from '../helpers/MainHelper';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
-import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from '../slidedown/Slidedown';
+import Slidedown from '../slidedown/Slidedown';
 import {
   DelayedPromptOptions,
   AppUserConfigPromptOptions,
@@ -232,7 +232,6 @@ export class PromptsManager {
 
   public installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
-    manageNotifyButtonStateWhileSlidedownShows();
 
     OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.context.slidedownManager.setIsSlidedownShowing(true);
