@@ -338,4 +338,15 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
 
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: null });
   t.false(notificationPutCall.isDone());
+
+ // checks `device_type` is being sent: helpful in reducing lookup time for outcome events on backend
+ test('sendConfirmedDelivery - sends device_type', async t => {
+  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
+  await fakeSetSubscription();
+  const notificationId = Random.getRandomUuid();
+  const notificationNock = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
+
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: 'y' });
+  const requestBody = (await notificationNock.result).request.body;
+  t.is(requestBody.device_type, 5); // 5 = chrome like
  });
