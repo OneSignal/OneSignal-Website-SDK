@@ -362,7 +362,8 @@ export class ServiceWorker {
     // Our response will not contain those fields here which have undefined values
     const postData = {
       player_id : deviceId,
-      app_id : appId
+      app_id : appId,
+      device_type: DeviceRecord.prototype.getDeliveryPlatform()
     };
 
     Log.debug(`Called %csendConfirmedDelivery(${
