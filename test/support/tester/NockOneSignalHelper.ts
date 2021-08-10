@@ -27,6 +27,30 @@ export interface NockScopeWithResultPromisePlayerPost extends NockScopeWithResul
 }
 
 export class NockOneSignalHelper {
+  static nockNotificationPut(notificationId?: string): NockScopeWithResultPromise {
+    return NockHelper.nockBase({
+      method: "put",
+      baseUrl: "https://onesignal.com",
+      path: `/api/v1/notifications/${notificationId}`,
+      reply: {
+        status: 200,
+        body: { success: true }
+      }
+    });
+  }
+
+  static nockNotificationConfirmedDelivery(notificationId?: string): NockScopeWithResultPromise {
+    return NockHelper.nockBase({
+      method: "put",
+      baseUrl: "https://onesignal.com",
+      path: `/api/v1/notifications/${notificationId}/report_received`,
+      reply: {
+        status: 200,
+        body: { success: true }
+      }
+    });
+  }
+
   /**
    * Call this before a /players POST REST API call to mock it out and capture it's request and response.
    * @returns {NockScopeWithResultPromisePlayerPost} This is a typed response where you can await for a
