@@ -17,6 +17,7 @@ import { MockPushMessageData } from '../../../support/mocks/service-workers/mode
 import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
 import { setupFakePlayerId } from '../../../support/tester/utils';
 import * as awaitableTimeout from '../../../../src/utils/AwaitableTimeout';
+import { NockOneSignalHelper } from '../../../../test/support/tester/NockOneSignalHelper';
 
 declare var self: MockServiceWorkerGlobalScope;
 
@@ -115,7 +116,7 @@ test('onPushReceived - Ensure display when only required values', async t => {
  * displayNotification()
  ****************************************************/
 
-  
+
 // Start - displayNotification - persistNotification
 test('displayNotification - persistNotification - true', async t => {
   setUserAgent(BrowserUserAgent.ChromeWindowsSupported);
@@ -172,22 +173,20 @@ test('onNotificationClicked - notification click sends PUT api/v1/notification',
   const playerId = await setupFakePlayerId();
   const notificationId = Random.getRandomUuid();
 
-  const notificationPutCall = nock("https://onesignal.com")
-    .put(`/api/v1/notifications/${notificationId}`)
-    .reply(200, (_uri: string, requestBody: string) => {
-      t.deepEqual(JSON.parse(requestBody), {
-        app_id: appConfig.appId,
-        opened: true,
-        player_id: playerId,
-        device_type: 5
-      });
-      return { success: true };
-    });
+  const notificationPutNock = NockOneSignalHelper.nockNotificationPut(notificationId);
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
   await OSServiceWorker.onNotificationClicked(notificationEvent);
 
-  t.true(notificationPutCall.isDone());
+  const { request } = (await notificationPutNock.result);
+
+  t.true(notificationPutNock.nockScope.isDone());
+  t.deepEqual(request.body, {
+    app_id: appConfig.appId,
+    opened: true,
+    player_id: playerId,
+    device_type: 5
+  });
 });
 
 test('onNotificationClicked - notification click count omitted when appId is null', async t => {
@@ -199,27 +198,17 @@ test('onNotificationClicked - notification click count omitted when appId is nul
 
   const notificationId = Random.getRandomUuid();
 
-  const notificationPutCall = nock("https://onesignal.com")
-    .put(`/api/v1/notifications/${notificationId}`)
-    .reply(200);
+  const notificationPutCall = NockOneSignalHelper.nockNotificationPut(notificationId);
 
   const notificationEvent = mockNotificationNotificationEventInit(notificationId);
   await OSServiceWorker.onNotificationClicked(notificationEvent);
 
-  t.false(notificationPutCall.isDone());
+  t.false(notificationPutCall.nockScope.isDone());
 });
-
-function addNotificationPutNock(notificationId: string) {
-  nock("https://onesignal.com")
-    .put(`/api/v1/notifications/${notificationId}`)
-    .reply(200, (_uri: string, _requestBody: string) => {
-      return { success: true };
-    });
-}
 
 test('onNotificationClicked - sends webhook', async t => {
   const notificationId = Random.getRandomUuid();
-  addNotificationPutNock(notificationId);
+  NockOneSignalHelper.nockNotificationPut(notificationId);
 
   const executeWebhooksSpy = sandbox.stub(OSServiceWorker, "executeWebhooks");
 
@@ -233,7 +222,7 @@ test('onNotificationClicked - sends webhook', async t => {
 
 test('onNotificationClicked - openWindow', async t => {
   const notificationId = Random.getRandomUuid();
-  addNotificationPutNock(notificationId);
+  NockOneSignalHelper.nockNotificationPut(notificationId);
 
   const openWindowMock = sandbox.stub(self.clients, "openWindow");
 
@@ -272,15 +261,8 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
 });
 
 /***************************************************
- * sendConfirmedDelivery() 
+ * sendConfirmedDelivery()
  ****************************************************/
-
- // HELPER: mocks the call to the notifications report_received endpoint
- function mockNotificationPutCall(notificationId: string | null) {
-  return nock("https://onesignal.com")
-    .put(`/api/v1/notifications/${notificationId}/report_received`)
-    .reply(200, { success: true });
- }
 
  // HELPER: sets a fake subscription
  async function fakeSetSubscription(){
@@ -290,52 +272,64 @@ test('onNotificationClicked - notification PUT Before openWindow', async t => {
   await Database.setSubscription(subscription);
  }
 
- test('sendConfirmedDelivery - notification is null - feature flag is y', async t => {
+ test('sendConfirmedDelivery - notification is undefined - feature flag is y', async t => {
    sandbox.stub(awaitableTimeout, 'awaitableTimeout');
-   const notificationId = null;
-   const notificationPutCall = mockNotificationPutCall(notificationId);
+   const notificationId = undefined;
+   const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
    await fakeSetSubscription();
 
    await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
-   t.false(notificationPutCall.isDone());
+   t.false(notificationPutCall.nockScope.isDone());
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is y', async t => {
   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
-  const notificationPutCall = mockNotificationPutCall(notificationId);
+  const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "y" });
-  t.true(notificationPutCall.isDone());
+  t.true(notificationPutCall.nockScope.isDone());
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is n', async t => {
   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
-  const notificationPutCall = mockNotificationPutCall(notificationId);
+  const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: "n" });
-  t.false(notificationPutCall.isDone());
+  t.false(notificationPutCall.nockScope.isDone());
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is undefined', async t => {
   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
-  const notificationPutCall = mockNotificationPutCall(notificationId);
+  const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId });
-  t.false(notificationPutCall.isDone());
+  t.false(notificationPutCall.nockScope.isDone());
  });
 
  test('sendConfirmedDelivery - notification is valid - feature flag is null', async t => {
   sandbox.stub(awaitableTimeout, 'awaitableTimeout');
   const notificationId = Random.getRandomUuid();
-  const notificationPutCall = mockNotificationPutCall(notificationId);
+  const notificationPutCall = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
   await fakeSetSubscription();
 
   await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: null });
-  t.false(notificationPutCall.isDone());
+  t.false(notificationPutCall.nockScope.isDone());
+ });
+
+ // checks `device_type` is being sent: helpful in reducing lookup time for outcome events on backend
+ test('sendConfirmedDelivery - sends device_type', async t => {
+  sandbox.stub(awaitableTimeout, 'awaitableTimeout');
+  await fakeSetSubscription();
+  const notificationId = Random.getRandomUuid();
+  const notificationNock = NockOneSignalHelper.nockNotificationConfirmedDelivery(notificationId);
+
+  await OSServiceWorker.sendConfirmedDelivery({ id: notificationId, rr: 'y' });
+  const requestBody = (await notificationNock.result).request.body;
+  t.is(requestBody.device_type, 5); // 5 = chrome like
  });
