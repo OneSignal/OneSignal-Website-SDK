@@ -498,15 +498,9 @@ export class ConfigHelper {
             isUsingSubscriptionWorkaround
           ),
           ...{
-            serviceWorkerParam: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PARAM
-              ? OneSignal.SERVICE_WORKER_PARAM
-              : { scope: '/' },
-            serviceWorkerPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_PATH
-                ? OneSignal.SERVICE_WORKER_PATH
-                : 'OneSignalSDKWorker.js',
-            serviceWorkerUpdaterPath: typeof OneSignal !== 'undefined' && !!OneSignal.SERVICE_WORKER_UPDATER_PATH
-                ? OneSignal.SERVICE_WORKER_UPDATER_PATH
-                : 'OneSignalSDKUpdaterWorker.js',
+            serviceWorkerParam: userConfig.serviceWorkerParam || OneSignal.SERVICE_WORKER_PARAM,
+            serviceWorkerPath: userConfig.serviceWorkerPath || OneSignal.SERVICE_WORKER_PATH,
+            serviceWorkerUpdaterPath: userConfig.serviceWorkerUpdaterPath || OneSignal.SERVICE_WORKER_UPDATER_PATH,
             path: !!userConfig.path ? userConfig.path : '/'
           },
           outcomes: {
