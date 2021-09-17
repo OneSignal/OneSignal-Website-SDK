@@ -489,6 +489,20 @@ export class ConfigHelper {
           Ignores dashboard configuration and uses code-based configuration only.
           Except injecting some default values for prompts.
         */
+        const isTopLevelServiceWorkerParamDefined = typeof OneSignal !== 'undefined' &&
+          !!OneSignal.SERVICE_WORKER_PARAM;
+        const isTopLevelServiceWorkerPathDefined = typeof OneSignal !== 'undefined' &&
+          !!OneSignal.SERVICE_WORKER_PATH;
+        const isTopLevelServiceWorkerUpdaterPathDefined = typeof OneSignal !== 'undefined' &&
+          !!OneSignal.SERVICE_WORKER_UPDATER_PATH;
+
+        const fallbackServiceWorkerParam = isTopLevelServiceWorkerParamDefined ?
+          OneSignal.SERVICE_WORKER_PARAM : { scope: '/' };
+        const fallbackServiceWorkerPath = isTopLevelServiceWorkerPathDefined ?
+          OneSignal.SERVICE_WORKER_PATH : 'OneSignalSDKWorker.js';
+        const fallbackServiceWorkerUpdaterPath = isTopLevelServiceWorkerUpdaterPathDefined ?
+          OneSignal.SERVICE_WORKER_UPDATER_PATH : 'OneSignalSDKUpdaterWorker.js';
+
         const config = {
           ...userConfig,
           promptOptions: this.injectDefaultsIntoPromptOptions(
@@ -498,9 +512,12 @@ export class ConfigHelper {
             isUsingSubscriptionWorkaround
           ),
           ...{
-            serviceWorkerParam: userConfig.serviceWorkerParam || OneSignal.SERVICE_WORKER_PARAM,
-            serviceWorkerPath: userConfig.serviceWorkerPath || OneSignal.SERVICE_WORKER_PATH,
-            serviceWorkerUpdaterPath: userConfig.serviceWorkerUpdaterPath || OneSignal.SERVICE_WORKER_UPDATER_PATH,
+            serviceWorkerParam: !!userConfig.serviceWorkerParam ?
+              userConfig.serviceWorkerParam : fallbackServiceWorkerParam,
+            serviceWorkerPath: !!userConfig.serviceWorkerPath ?
+              userConfig.serviceWorkerPath : fallbackServiceWorkerPath,
+            serviceWorkerUpdaterPath: !!userConfig.serviceWorkerUpdaterPath ?
+              userConfig.serviceWorkerUpdaterPath : fallbackServiceWorkerUpdaterPath,
             path: !!userConfig.path ? userConfig.path : '/'
           },
           outcomes: {
