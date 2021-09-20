@@ -23,14 +23,20 @@ test('should assign the default service worker file path if not provided', async
   t.is(result.userConfig.path, '/');
 });
 
-test('should not overwrite a provided service worker file path', async t => {
+test('should not overwrite a provided service worker parameters', async t => {
   const result = new ConfigManager().getMergedConfig(
     {
-      path: '/existing-path'
+      path: '/existing-path',
+      serviceWorkerParam: { scope: '/existing-path' },
+      serviceWorkerPath: '/existing-path/OneSignalSDKWorker.js',
+      serviceWorkerUpdaterPath: '/existing-path/OneSignalSDKUpdaterWorker.js'
     },
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
   t.is(result.userConfig.path, '/existing-path');
+  t.deepEqual(result.userConfig.serviceWorkerParam, { scope: '/existing-path' });
+  t.is(result.userConfig.serviceWorkerPath, '/existing-path/OneSignalSDKWorker.js');
+  t.is(result.userConfig.serviceWorkerUpdaterPath, '/existing-path/OneSignalSDKUpdaterWorker.js');
 });
 
 test('should assign the default service worker registration params if not provided', async t => {
