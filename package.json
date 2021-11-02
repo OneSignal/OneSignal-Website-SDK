@@ -37,7 +37,7 @@
     "build:dev-stag": "./build/scripts/build.sh -f development -t staging"
   },
   "config": {
-    "sdkVersion": "151508"
+    "sdkVersion": "151509"
   },
   "repository": {
     "type": "git",
