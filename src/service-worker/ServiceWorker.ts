@@ -196,6 +196,7 @@ export class ServiceWorker {
       const context = new ContextSW(appConfig);
       const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
       const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
+      await Database.put('Ids', { type: 'appId', id: appId });
       ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
@@ -245,7 +246,7 @@ export class ServiceWorker {
               //Display push notifications in the order we received them
               const notificationEventPromiseFns = [];
               const notificationReceivedPromises: Promise<void>[] = [];
-              const appId = await Database.get<string>("Ids", "appId");
+              const appId = await ServiceWorker.getAppId();
 
               for (const rawNotification of notifications) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
@@ -785,7 +786,7 @@ export class ServiceWorker {
 
     const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
-    const appId = await Database.get<string>("Ids", "appId");
+    const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
     let saveNotificationClickedPromise: Promise<void> | undefined;
