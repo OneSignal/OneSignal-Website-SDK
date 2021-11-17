@@ -34,9 +34,6 @@ export class ReplayCallsOnOneSignal {
     if (stubOneSignal.SERVICE_WORKER_PATH)
       OneSignal.SERVICE_WORKER_PATH = stubOneSignal.SERVICE_WORKER_PATH;
 
-    if (stubOneSignal.SERVICE_WORKER_UPDATER_PATH)
-      OneSignal.SERVICE_WORKER_UPDATER_PATH = stubOneSignal.SERVICE_WORKER_UPDATER_PATH;
-
     if (stubOneSignal.currentLogLevel)
       OneSignal.log.setLevel(stubOneSignal.currentLogLevel);
 
