@@ -256,15 +256,7 @@ export enum ServiceWorkerActiveState {
   /**
    * OneSignalSDKWorker.js, or the equivalent custom file name, is active.
    */
-  WorkerA = 'Worker A (Main)',
-  /**
-   * OneSignalSDKUpdaterWorker.js, or the equivalent custom file name, is
-   * active.
-   *
-   * We no longer need to use this filename. We can update Worker A by appending
-   * a random query parameter to A.
-   */
-  WorkerB = 'Worker B (Updater)',
+  OneSignalWorker = 'OneSignal Worker',
   /**
    * A service worker is active, but it is neither OneSignalSDKWorker.js nor
    * OneSignalSDKUpdaterWorker.js (or the equivalent custom file names as
@@ -287,12 +279,7 @@ export interface ServiceWorkerManagerConfig {
   /**
    * The path and filename of the "main" worker (e.g. '/OneSignalSDKWorker.js');
    */
-  workerAPath: Path;
-  /**
-   * The path and filename to the "alternate" worker, used to update an existing
-   * service worker. (e.g. '/OneSignalSDKUpdaterWorer.js')
-   */
-  workerBPath: Path;
+  workerPath: Path;
   /**
    * Describes how much of the origin the service worker controls.
    * This is currently always "/".

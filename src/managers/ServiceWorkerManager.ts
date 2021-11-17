@@ -104,13 +104,11 @@ export class ServiceWorkerManager {
   }
 
   // Check if the ServiceWorker file name is ours or a third party's
-  private swActiveStateByFileName(fileName: string | null): ServiceWorkerActiveState {
+  private swActiveStateByFileName(fileName?: string | null): ServiceWorkerActiveState {
     if (!fileName)
       return ServiceWorkerActiveState.None;
-    if (fileName == this.config.workerAPath.getFileName())
-      return ServiceWorkerActiveState.WorkerA;
-    if (fileName == this.config.workerBPath.getFileName())
-      return  ServiceWorkerActiveState.WorkerB;
+    if (fileName == this.config.workerPath.getFileName())
+      return ServiceWorkerActiveState.OneSignalWorker;
     return ServiceWorkerActiveState.ThirdParty;
   }
 
