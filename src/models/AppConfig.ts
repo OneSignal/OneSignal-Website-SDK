@@ -95,7 +95,6 @@ export interface AppUserConfig {
   autoResubscribe?: boolean;
   path?: string;
   serviceWorkerPath?: string;
-  serviceWorkerUpdaterPath?: string;
   serviceWorkerParam?: any;
   subdomainName?: string;
   promptOptions?: AppUserConfigPromptOptions;
@@ -261,7 +260,6 @@ export interface ServerAppConfig {
       path?: string;
       workerName?: string;
       registrationScope?: string;
-      updaterWorkerName?: string;
       customizationEnabled: boolean;
     };
     setupBehavior?: {
