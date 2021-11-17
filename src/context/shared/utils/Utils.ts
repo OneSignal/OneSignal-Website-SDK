@@ -46,7 +46,7 @@ export class Utils {
    * @param object
    */
   public static trimUndefined(object: any) {
-    for (var property in object) {
+    for (const property in object) {
       if (object.hasOwnProperty(property)) {
         if (object[property] === undefined) {
           delete object[property];
@@ -90,10 +90,17 @@ export class Utils {
     }, 4);
   }
 
+  /**
+   * Used for generating query params
+   *  e.g: -> hash = { appId } // with appId = '1234'
+   *       -> returns "appId=1234"
+   * @param  {any} hash
+   * @returns string
+   */
   public static encodeHashAsUriComponent(hash: any): string {
     let uriComponent = '';
     const keys = Object.keys(hash);
-    for (var key of keys) {
+    for (const key of keys) {
       const value = hash[key];
       uriComponent += `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     }

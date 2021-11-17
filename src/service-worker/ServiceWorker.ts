@@ -181,12 +181,12 @@ export class ServiceWorker {
       Log.debug('[Service Worker] Received AMP subscription state message.');
       const pushSubscription = await self.registration.pushManager.getSubscription();
       if (!pushSubscription) {
-        ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, false);
+        await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, false);
       } else {
         const permission = await self.registration.pushManager.permissionState(pushSubscription.options);
         const { optedOut } = await Database.getSubscription();
         const isSubscribed = !!pushSubscription && permission === "granted" && optedOut !== true;
-        ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, isSubscribed);
+        await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, isSubscribed);
       }
     });
     ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, async () => {

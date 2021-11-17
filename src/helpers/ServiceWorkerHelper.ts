@@ -239,9 +239,8 @@ export enum ServiceWorkerActiveState {
    */
   OneSignalWorker = 'OneSignal Worker',
   /**
-   * A service worker is active, but it is neither OneSignalSDKWorker.js nor
-   * OneSignalSDKUpdaterWorker.js (or the equivalent custom file names as
-   * provided by user config).
+   * A service worker is active, but it is not OneSignalSDKWorker.js
+   * (or the equivalent custom file names as provided by user config).
    */
   ThirdParty = '3rd Party',
   /**

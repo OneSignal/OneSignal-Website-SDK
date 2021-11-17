@@ -110,7 +110,6 @@ export default class RemoteFrame implements Disposable {
   }
 
   async subscribe() {
-    // Do not register OneSignalSDKUpdaterWorker.js for HTTP popup sites; the file does not exist
     const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     const windowCreator = opener || parent;
 
