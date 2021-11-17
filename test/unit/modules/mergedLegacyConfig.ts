@@ -29,14 +29,12 @@ test('should not overwrite a provided service worker parameters', async t => {
       path: '/existing-path',
       serviceWorkerParam: { scope: '/existing-path' },
       serviceWorkerPath: '/existing-path/OneSignalSDKWorker.js',
-      serviceWorkerUpdaterPath: '/existing-path/OneSignalSDKUpdaterWorker.js'
     },
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
   t.is(result.userConfig.path, '/existing-path');
   t.deepEqual(result.userConfig.serviceWorkerParam, { scope: '/existing-path' });
   t.is(result.userConfig.serviceWorkerPath, '/existing-path/OneSignalSDKWorker.js');
-  t.is(result.userConfig.serviceWorkerUpdaterPath, '/existing-path/OneSignalSDKUpdaterWorker.js');
 });
 
 test('should assign the default service worker registration params if not provided', async t => {
@@ -90,33 +88,6 @@ test('should not overwrite a provided service worker A filename', async t => {
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
   t.is(result.userConfig.serviceWorkerPath, 'CustomWorkerA.js');
-});
-
-test('should assign the default service worker B filename if not provided', async t => {
-
-  const result = new ConfigManager().getMergedConfig(
-    {},
-    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
-  );
-  t.is(result.userConfig.serviceWorkerUpdaterPath, 'OneSignalSDKUpdaterWorker.js');
-});
-
-test('should not overwrite a provided service worker B filename', async t => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true
-      }
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http
-  });
-  OneSignal.SERVICE_WORKER_UPDATER_PATH = 'CustomWorkerB.js';
-
-  const result = new ConfigManager().getMergedConfig(
-    {},
-    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
-  );
-  t.is(result.userConfig.serviceWorkerUpdaterPath, 'CustomWorkerB.js');
 });
 
 test("should not use server's subdomain if subdomain not specified in user config on HTTPS site", async t => {

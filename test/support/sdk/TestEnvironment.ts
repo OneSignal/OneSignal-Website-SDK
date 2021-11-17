@@ -535,7 +535,6 @@ export class TestEnvironment {
             path: "/",
             workerName: "OneSignalSDKWorker.js",
             registrationScope: "/",
-            updaterWorkerName: "OneSignalSDKUpdaterWorker.js"
           },
           welcomeNotification: {
             enable: true,
@@ -718,7 +717,6 @@ export class TestEnvironment {
           path: undefined,
           workerName: undefined,
           registrationScope: undefined,
-          updaterWorkerName: undefined,
           customizationEnabled: true
         },
         setupBehavior: {
@@ -776,7 +774,6 @@ export class TestEnvironment {
       autoResubscribe: true,
       path: '/fake-page',
       serviceWorkerPath: 'fakeWorkerName.js',
-      serviceWorkerUpdaterPath: 'fakeUpdaterWorkerName.js',
       serviceWorkerParam: { scope: '/fake-page' },
       subdomainName: 'fake-subdomain',
       promptOptions: {
