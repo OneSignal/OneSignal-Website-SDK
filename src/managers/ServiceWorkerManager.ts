@@ -203,19 +203,20 @@ export class ServiceWorkerManager {
 
     // 3. Different href?, asking if (path + filename [A or B] + queryParams) is different
     const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
-    const serviceWorkerHrefs = ServiceWorkerHelper.getPossibleServiceWorkerHrefs(
+    const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
-      this.context.appConfig.appId
+      this.context.appConfig.appId,
+      Environment.version()
     );
     // 3.1 If we can't get a scriptURL assume it is different
     if (!availableWorker?.scriptURL) {
       return true;
     }
-    // 3.2 We don't care if the only differences is between OneSignal's A(Worker) vs B(WorkerUpdater) filename.
-    if (serviceWorkerHrefs.indexOf(availableWorker.scriptURL) === -1) {
+    // 3.2 If the new serviceWorkerHref (page-env SDK version as query param) is different than existing worker URL
+    if (serviceWorkerHref !== availableWorker.scriptURL) {
       Log.info(
         "[changedServiceWorkerParams] ServiceWorker href changing:",
-        { a_old: availableWorker?.scriptURL, b_new: serviceWorkerHrefs }
+        { a_old: availableWorker?.scriptURL, b_new: serviceWorkerHref }
       );
       return true;
     }

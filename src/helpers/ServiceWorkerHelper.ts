@@ -17,38 +17,19 @@ import { SecondaryChannelManager } from "../managers/channelManager/shared/Secon
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
-
-  // Get the href of the OneSiganl ServiceWorker that should be installed
-  // If a OneSignal ServiceWorker is already installed we will use an alternating name
-  //   to force an update to the worker.
-  public static getAlternatingServiceWorkerHref(
-    workerState: ServiceWorkerActiveState,
+  public static getServiceWorkerHref(
     config: ServiceWorkerManagerConfig,
-    appId: string
+    appId: string,
+    sdkVersion: number
     ): string {
-    let workerFullPath: string;
-
-    // Determine which worker to install
-    if (workerState === ServiceWorkerActiveState.WorkerA)
-      workerFullPath = config.workerBPath.getFullPath();
-    else
-      workerFullPath = config.workerAPath.getFullPath();
-
-    return ServiceWorkerHelper.appendServiceWorkerParams(workerFullPath, appId);
+    return ServiceWorkerHelper.appendServiceWorkerParams(config.workerPath.getFullPath(), appId, sdkVersion);
   }
 
-  public static getPossibleServiceWorkerHrefs(
-    config: ServiceWorkerManagerConfig,
-    appId: string
-    ): string[] {
-    const workerFullPaths = [config.workerAPath.getFullPath(), config.workerBPath.getFullPath()];
-    return workerFullPaths.map(href => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
-  }
-
-  private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
+  private static appendServiceWorkerParams(workerFullPath: string, appId: string, sdkVersion: number): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdHasQueryParam = Utils.encodeHashAsUriComponent({ appId });
-    return `${fullPath}?${appIdHasQueryParam}`;
+    const appIdAsQueryParam      = Utils.encodeHashAsUriComponent({ appId });
+    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({ sdkVersion });
+    return `${fullPath}?${appIdAsQueryParam}?${sdkVersionAsQueryParam}`;
   }
 
   public static async upsertSession(
