@@ -899,7 +899,6 @@ export default class OneSignal {
    * However, the init options 'path' should be used to specify the folder path instead since service workers will not
    * auto-update correctly on HTTPS site load if the config init options 'path' is not set.
    */
-  static SERVICE_WORKER_UPDATER_PATH = 'OneSignalSDKUpdaterWorker.js';
   static SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';
 
   /**
