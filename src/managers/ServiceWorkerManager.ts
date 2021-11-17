@@ -81,7 +81,7 @@ export class ServiceWorkerManager {
   }
 
   // Get the file name of the active ServiceWorker
-  private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
+  private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null | undefined {
     const serviceWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
     if (!serviceWorker) {
       return null;
@@ -128,7 +128,7 @@ export class ServiceWorkerManager {
         this.context.workerMessenger.once(WorkerMessengerCommand.WorkerVersion, workerVersion => {
           resolve(workerVersion);
         });
-        this.context.workerMessenger.unicast(WorkerMessengerCommand.WorkerVersion);
+        await this.context.workerMessenger.unicast(WorkerMessengerCommand.WorkerVersion);
       }
     });
   }
@@ -201,7 +201,7 @@ export class ServiceWorkerManager {
       return true;
     }
 
-    // 3. Different href?, asking if (path + filename [A or B] + queryParams) is different
+    // 3. Different href?, asking if (path + filename + queryParams) is different
     const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
     const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
@@ -253,9 +253,9 @@ export class ServiceWorkerManager {
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, async data => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      await Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
@@ -308,7 +308,7 @@ export class ServiceWorkerManager {
         await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
       }
       else
-        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+        await Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
@@ -321,14 +321,14 @@ export class ServiceWorkerManager {
       }
     });
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, data => {
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+    workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, async data => {
+      await Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
 
     const isHttps = OneSignalUtils.isHttps();
     const isSafari = OneSignalUtils.isSafari();
 
-    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (incomingPayload: PageVisibilityRequest) => {
+    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, async (incomingPayload: PageVisibilityRequest) => {
       // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
       // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
       if (isHttps && isSafari) {
@@ -336,7 +336,7 @@ export class ServiceWorkerManager {
           timestamp: incomingPayload.timestamp,
           focused: document.hasFocus(),
         };
-        workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
+        await workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
       } else {
         const httpPayload: PageVisibilityRequest = { timestamp: incomingPayload.timestamp };
         const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;

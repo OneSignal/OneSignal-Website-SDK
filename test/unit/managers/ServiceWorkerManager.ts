@@ -25,7 +25,9 @@ import {
 import Event from "../../../src/Event";
 import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
 import OneSignalUtils from "../../../src/utils/OneSignalUtils";
-import { MockServiceWorkerRegistration } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
+import {
+  MockServiceWorkerRegistration
+} from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
 import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
 import Environment from '../../../src/Environment';
