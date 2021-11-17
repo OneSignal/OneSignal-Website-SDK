@@ -392,7 +392,7 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
   sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
-  sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.WorkerA);
+  sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.OneSignalWorker);
 
   t.is(await OneSignal.context.subscriptionManager.isSubscriptionExpiring(), false);
 });
@@ -521,7 +521,7 @@ async function expirationTestCase(
 
   // Force service worker active state dependency so test can run
   const stub = sandbox.stub(ServiceWorkerManager.prototype, "getActiveState")
-    .resolves(ServiceWorkerActiveState.WorkerA);
+    .resolves(ServiceWorkerActiveState.OneSignalWorker);
   const integrationStub = sandbox.stub(SdkEnvironment, "getIntegration").resolves(env);
 
   // Set the initial datetime, which is used internally for the subscription created at

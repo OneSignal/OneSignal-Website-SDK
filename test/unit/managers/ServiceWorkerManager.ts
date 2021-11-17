@@ -36,8 +36,7 @@ import { MockServiceWorkerContainerWithAPIBan } from '../../support/mocks/servic
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {
     return new ServiceWorkerManager(OneSignal.context, {
-      workerAPath: new Path('/Worker-A.js'),
-      workerBPath: new Path('/Worker-B.js'),
+      workerPath: new Path('/Worker.js'),
       registrationOptions: { scope: '/' }
     });
   }
@@ -70,46 +69,33 @@ test('getActiveState() detects no installed worker', async t => {
 });
 
 test('getActiveState() detects worker A, case sensitive', async t => {
-  await navigator.serviceWorker.register('/Worker-A.js');
+  await navigator.serviceWorker.register('/Worker.js');
 
   const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
-});
-
-test('getActiveState() detects worker B, case sensitive', async t => {
-  await navigator.serviceWorker.register('/Worker-B.js');
-
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerB);
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 });
 
 test('getActiveState() detects worker A, even when worker filename uses query parameters', async t => {
-  await navigator.serviceWorker.register('/Worker-A.js?appId=12345');
+  await navigator.serviceWorker.register('/Worker.js?appId=12345');
 
   const manager = LocalHelpers.getServiceWorkerManager();
 
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 });
 
-test('getActiveState() detects worker B, even when worker filename uses query parameters', async t => {
-  await navigator.serviceWorker.register('/Worker-B.js?appId=12345');
+test('getActiveState() detects a 3rd party worker, a worker that is activated but has an unrecognized script URL',
+  async t => {
+    await navigator.serviceWorker.register('/Worker-C.js');
 
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerB);
-});
-
-test('getActiveState() detects a 3rd party worker, a worker that is activated but has an unrecognized script URL', async t => {
-  await navigator.serviceWorker.register('/Worker-C.js');
-
-  const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
+    const manager = LocalHelpers.getServiceWorkerManager();
+    t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
 });
 
 test('getActiveState() should detect Akamai akam-sw.js?othersw= when our is contain within', async t => {
-  await navigator.serviceWorker.register('/akam-sw.js?othersw=https://domain.com/Worker-A.js?appId=12345');
+  await navigator.serviceWorker.register('/akam-sw.js?othersw=https://domain.com/Worker.js?appId=12345');
 
   const manager = LocalHelpers.getServiceWorkerManager();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 });
 
 test('getActiveState() should detect Akamai akam-sw.js as 3rd party if no othersw=', async t => {
@@ -136,7 +122,7 @@ test('notification clicked - While page is opened in background', async t => {
 
   const mockInstallingWorker = new MockServiceWorker();
   mockInstallingWorker.state = 'activated';
-  mockInstallingWorker.scriptURL = 'https://site.com/Worker-A.js';
+  mockInstallingWorker.scriptURL = 'https://site.com/Worker.js';
   const mockWorkerRegistration = new MockServiceWorkerRegistration();
   mockWorkerRegistration.active = mockInstallingWorker;
 
@@ -176,22 +162,23 @@ test('getActiveState() returns an indeterminate status for insecure HTTP pages',
  ***************************************************
  */
 
-test('installWorker() installs worker A with the correct file name and query parameter when no service worker exists', async t => {
-  await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https
-  });
-  sandbox.stub(Notification, <any>"permission").value("granted");
+test('installWorker() installs worker A with the correct file name and query parameter when no service worker exists',
+  async t => {
+    await TestEnvironment.initialize({
+      httpOrHttps: HttpHttpsEnvironment.Https
+    });
+    sandbox.stub(Notification, <any>"permission").value("granted");
 
-  const manager = LocalHelpers.getServiceWorkerManager();
+    const manager = LocalHelpers.getServiceWorkerManager();
 
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
-  await manager.installWorker();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+    t.is(await manager.getActiveState(), ServiceWorkerActiveState.None);
+    await manager.installWorker();
+    t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 
-  const serviceWorker = MockServiceWorkerContainerWithAPIBan.getControllerForTests();
-  t.true(serviceWorker!.scriptURL.endsWith(
-    `/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`)
-  );
+    const serviceWorker = MockServiceWorkerContainerWithAPIBan.getControllerForTests();
+    t.true(serviceWorker!.scriptURL.endsWith(
+      `/Worker.js?appId=${OneSignal.context.appConfig.appId}?sdkVersion=1`)
+    );
 });
 
 test('installWorker() does NOT install ServiceWorker when permission has NOT been granted', async t => {
@@ -219,26 +206,25 @@ test('installWorker() installs worker A when a third party service worker exists
 
   t.is(await manager.getActiveState(), ServiceWorkerActiveState.ThirdParty);
   await manager.installWorker();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 });
 
-test('installWorker() installs Worker B and then A when Worker A is out of date', async t => {
+test('installWorker() installs worker 1 -> simulate SDK upgrade -> install worker 2', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
-    workerAPath: new Path('/Worker-A.js'),
-    workerBPath: new Path('/Worker-B.js'),
+    workerPath: new Path('/Worker.js'),
     registrationOptions: { scope: '/' }
   });
 
   // 1. Install ServiceWorker A and assert it was ServiceWorker A
   await manager.installWorker();
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 
-  // 2. Simulate an upgraded page SDK 
+  // 2. Simulate an upgraded page SDK
   const envVerStub = sandbox.stub(Environment, "version").returns(2);
   const spy = sandbox.spy(navigator.serviceWorker, 'register');
 
@@ -247,23 +233,24 @@ test('installWorker() installs Worker B and then A when Worker A is out of date'
 
   const appConfig = OneSignal.context.appConfig;
   const registerOptions =  { scope: `${location.origin}/` };
-  const serviceWorkerAPath = `${location.origin}/Worker-A.js?appId=${appConfig.appId}`;
-  const serviceWorkerBPath = `${location.origin}/Worker-B.js?appId=${appConfig.appId}`;
+  const serviceWorker2Path = `${location.origin}/Worker.js?appId=${appConfig.appId}?sdkVersion=2`;
 
-  // 4. Ensure we installed ServiceWorker B, followed by an immediate install of A to switch back.
-  t.true(spy.getCall(0).calledWithExactly(serviceWorkerBPath, registerOptions));
-  t.true(spy.getCall(1).calledWithExactly(serviceWorkerAPath, registerOptions));
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
+  // 4. Ensure we installed ServiceWorker 2
+  let spyCall = spy.getCall(0);
+  t.true(spyCall.calledWithExactly(serviceWorker2Path, registerOptions));
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
 
   // 5. Ensure a 2nd upgrade is handled corretly in the same way
   envVerStub.returns(3);
   await manager.installWorker();
-  t.true(spy.getCall(2).calledWithExactly(serviceWorkerBPath, registerOptions));
-  t.true(spy.getCall(3).calledWithExactly(serviceWorkerAPath, registerOptions));
-  t.is(await manager.getActiveState(), ServiceWorkerActiveState.WorkerA);
 
-  // 6. Ensure we did not call more than 4 times
-  t.is(spy.callCount, 4);
+  const serviceWorker3Path = serviceWorker2Path.replace(/2$/, "3");
+  spyCall = spy.getCall(1);
+  t.true(spyCall.calledWithExactly(serviceWorker3Path, registerOptions));
+  t.is(await manager.getActiveState(), ServiceWorkerActiveState.OneSignalWorker);
+
+  // 6. Ensure we did not call more than 2 times
+  t.is(spy.callCount, 2);
 });
 
 test('installWorker() installs Worker new scope when it changes', async t => {
@@ -275,13 +262,12 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   sandbox.stub(ServiceWorkerManager.prototype, <any>"workerNeedsUpdate").resolves(false);
 
   const serviceWorkerConfig = {
-    workerAPath: new Path('/Worker-A.js'),
-    workerBPath: new Path('/Worker-B.js'),
+    workerPath: new Path('/Worker.js'),
     registrationOptions: { scope: '/' }
   };
   const manager = new ServiceWorkerManager(OneSignal.context, serviceWorkerConfig);
 
-  // 1. Install ServiceWorker A and assert it was ServiceWorker A
+  // 1. Install ServiceWorker
   await manager.installWorker();
 
   // 2. Attempt to install again, but with a different scope
@@ -293,7 +279,7 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   const appId = OneSignal.context.appConfig.appId;
   t.deepEqual(spyRegister.getCalls().map(call => call.args), [
     [
-      `https://localhost:3001/Worker-B.js?appId=${appId}`,
+      `https://localhost:3001/Worker.js?appId=${appId}?sdkVersion=1`,
       { scope: 'https://localhost:3001/push/onesignal/' }
     ]
   ]);
@@ -305,15 +291,14 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   t.is(new URL(orgRegistration!.scope).pathname, "/");
 });
 
-test('Server worker register URL correct when service worker path is a absolute URL', async t => {
+test('Service worker register URL correct when service worker path is an absolute URL', async t => {
   await TestEnvironment.initialize({
     httpOrHttps: HttpHttpsEnvironment.Https
   });
   sandbox.stub(Notification, <any>"permission").value("granted");
 
   const manager = new ServiceWorkerManager(OneSignal.context, {
-    workerAPath: new Path(`${location.origin}/Worker-A.js`),
-    workerBPath: new Path(`${location.origin}/Worker-B.js`),
+    workerPath: new Path(`${location.origin}/Worker.js`),
     registrationOptions: { scope: '/' }
   });
 
@@ -321,7 +306,7 @@ test('Server worker register URL correct when service worker path is a absolute 
   await manager.installWorker();
 
   sandbox.assert.alwaysCalledWithExactly(serviceWorkerStub,
-    `${location.origin}/Worker-A.js?appId=${OneSignal.context.appConfig.appId}`,
+    `${location.origin}/Worker.js?appId=${OneSignal.context.appConfig.appId}?sdkVersion=1`,
     { scope: `${location.origin}/` }
   );
   t.pass();
@@ -337,8 +322,7 @@ test("Service worker failed to install due to 404 on host page. Send notificatio
 
   const workerPath = "Worker-does-not-exist.js";
   const manager = new ServiceWorkerManager(context, {
-    workerAPath: new Path(workerPath),
-    workerBPath: new Path(workerPath),
+    workerPath: new Path(workerPath),
     registrationOptions: {
       scope: '/'
     }
@@ -374,8 +358,7 @@ test("Service worker failed to install in popup. No handling.", async t => {
 
   const workerPath = "Worker-does-not-exist.js";
   const manager = new ServiceWorkerManager(context, {
-    workerAPath: new Path(workerPath),
-    workerBPath: new Path(workerPath),
+    workerPath: new Path(workerPath),
     registrationOptions: {
       scope: '/'
     }
@@ -427,7 +410,7 @@ test('installWorker() should not install when on an HTTPS site with a subdomain 
 });
 
 test('ServiceWorkerManager.getRegistration() returns valid instance when sw is registered', async t => {
-  await navigator.serviceWorker.register('/Worker-A.js');
+  await navigator.serviceWorker.register('/Worker.js');
   const result = await OneSignal.context.serviceWorkerManager.getRegistration();
   t.truthy(result);
 });

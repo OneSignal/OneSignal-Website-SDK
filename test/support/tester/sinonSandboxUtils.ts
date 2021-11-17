@@ -52,7 +52,7 @@ export function stubServiceWorkerInstallation(sinonSandbox: SinonSandbox) {
   sinonSandbox.stub(SubscriptionManager.prototype, "subscribeWithVapidKey")
     .resolves(TestEnvironment.getFakeRawPushSubscription());
   sinonSandbox.stub(ServiceWorkerManager.prototype, "getActiveState")
-    .resolves(ServiceWorkerActiveState.WorkerA);
+    .resolves(ServiceWorkerActiveState.OneSignalWorker);
   sinonSandbox.stub(ServiceWorkerManager.prototype, "getRegistration")
     .resolves(swRegistration);
   sinonSandbox.stub(WorkerMessenger.prototype, "unicast").resolves();
