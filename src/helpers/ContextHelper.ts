@@ -11,17 +11,14 @@ export class ContextHelper {
 
     const envPrefix = SdkEnvironment.getBuildEnvPrefix();
     const serviceWorkerManagerConfig = {
-      workerAPath: new Path(`/${envPrefix}OneSignalSDKWorker.js`),
-      workerBPath: new Path(`/${envPrefix}OneSignalSDKUpdaterWorker.js`),
+      workerPath: new Path(`/${envPrefix}OneSignalSDKWorker.js`),
       registrationOptions: { scope: '/' }
     };
 
     if (config.userConfig) {
       if (config.userConfig.path) {
-        serviceWorkerManagerConfig.workerAPath =
+        serviceWorkerManagerConfig.workerPath =
           new Path(`${config.userConfig.path}${config.userConfig.serviceWorkerPath}`);
-        serviceWorkerManagerConfig.workerBPath =
-          new Path(`${config.userConfig.path}${config.userConfig.serviceWorkerUpdaterPath}`);
       }
       if (config.userConfig.serviceWorkerParam) {
         serviceWorkerManagerConfig.registrationOptions = config.userConfig.serviceWorkerParam;

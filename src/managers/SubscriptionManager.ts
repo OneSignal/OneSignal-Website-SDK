@@ -634,9 +634,7 @@ export class SubscriptionManager {
 
   private async isSubscriptionExpiringForSecureIntegration(): Promise<boolean> {
     const serviceWorkerState = await this.context.serviceWorkerManager.getActiveState();
-    if (!(
-      serviceWorkerState === ServiceWorkerActiveState.WorkerA ||
-      serviceWorkerState === ServiceWorkerActiveState.WorkerB)) {
+    if (!(serviceWorkerState === ServiceWorkerActiveState.OneSignalWorker)) {
         /* If the service worker isn't activated, there's no subscription to look for */
         return false;
     }
@@ -748,10 +746,7 @@ export class SubscriptionManager {
     const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
     const notificationPermission =
       await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);
-    const isWorkerActive = (
-      workerState === ServiceWorkerActiveState.WorkerA ||
-      workerState === ServiceWorkerActiveState.WorkerB
-    );
+    const isWorkerActive = (workerState === ServiceWorkerActiveState.OneSignalWorker);
 
     if (!workerRegistration) {
       /* You can't be subscribed without a service worker registration */
@@ -761,7 +756,7 @@ export class SubscriptionManager {
       };
     }
 
-    /* 
+    /*
      * Removing pushSubscription from this method due to inconsistent behavior between browsers.
      * Doesn't matter for re-subscribing, worker is present and active.
      * Previous implementation for reference:

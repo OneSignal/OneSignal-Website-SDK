@@ -81,7 +81,7 @@ export class ServiceWorkerManager {
   }
 
   // Get the file name of the active ServiceWorker
-  private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null {
+  private static activeSwFileName(workerRegistration: ServiceWorkerRegistration): string | null | undefined {
     const serviceWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
     if (!serviceWorker) {
       return null;
@@ -104,13 +104,11 @@ export class ServiceWorkerManager {
   }
 
   // Check if the ServiceWorker file name is ours or a third party's
-  private swActiveStateByFileName(fileName: string | null): ServiceWorkerActiveState {
+  private swActiveStateByFileName(fileName?: string | null): ServiceWorkerActiveState {
     if (!fileName)
       return ServiceWorkerActiveState.None;
-    if (fileName == this.config.workerAPath.getFileName())
-      return ServiceWorkerActiveState.WorkerA;
-    if (fileName == this.config.workerBPath.getFileName())
-      return  ServiceWorkerActiveState.WorkerB;
+    if (fileName == this.config.workerPath.getFileName())
+      return ServiceWorkerActiveState.OneSignalWorker;
     return ServiceWorkerActiveState.ThirdParty;
   }
 
@@ -130,7 +128,7 @@ export class ServiceWorkerManager {
         this.context.workerMessenger.once(WorkerMessengerCommand.WorkerVersion, workerVersion => {
           resolve(workerVersion);
         });
-        this.context.workerMessenger.unicast(WorkerMessengerCommand.WorkerVersion);
+        await this.context.workerMessenger.unicast(WorkerMessengerCommand.WorkerVersion);
       }
     });
   }
@@ -203,21 +201,22 @@ export class ServiceWorkerManager {
       return true;
     }
 
-    // 3. Different href?, asking if (path + filename [A or B] + queryParams) is different
+    // 3. Different href?, asking if (path + filename + queryParams) is different
     const availableWorker = ServiceWorkerUtilHelper.getAvailableServiceWorker(workerRegistration);
-    const serviceWorkerHrefs = ServiceWorkerHelper.getPossibleServiceWorkerHrefs(
+    const serviceWorkerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
-      this.context.appConfig.appId
+      this.context.appConfig.appId,
+      Environment.version()
     );
     // 3.1 If we can't get a scriptURL assume it is different
     if (!availableWorker?.scriptURL) {
       return true;
     }
-    // 3.2 We don't care if the only differences is between OneSignal's A(Worker) vs B(WorkerUpdater) filename.
-    if (serviceWorkerHrefs.indexOf(availableWorker.scriptURL) === -1) {
+    // 3.2 If the new serviceWorkerHref (page-env SDK version as query param) is different than existing worker URL
+    if (serviceWorkerHref !== availableWorker.scriptURL) {
       Log.info(
         "[changedServiceWorkerParams] ServiceWorker href changing:",
-        { a_old: availableWorker?.scriptURL, b_new: serviceWorkerHrefs }
+        { a_old: availableWorker?.scriptURL, b_new: serviceWorkerHref }
       );
       return true;
     }
@@ -249,73 +248,14 @@ export class ServiceWorkerManager {
     return false;
   }
 
-  /**
-   * Installs a newer version of the OneSignal service worker.
-   *
-   * We have a couple different models of installing service workers:
-   *
-   * a) Originally, we provided users with two worker files:
-   * OneSignalSDKWorker.js and OneSignalSDKUpdaterWorker.js. Two workers were
-   * provided so each could be swapped with the other when the worker needed to
-   * update. The contents of both workers were identical; only the filenames
-   * were different, which is enough to update the worker.
-   *
-   * b) With AMP web push, users are to specify only the first worker file
-   * OneSignalSDKWorker.js, with an app ID parameter ?appId=12345. AMP web push
-   * is vendor agnostic and doesn't know about OneSignal, so all relevant
-   * information has to be passed to the service worker, which is the only
-   * vendor-specific file. So the service worker being installed is always
-   * OneSignalSDKWorker.js?appId=12345 and never OneSignalSDKUpdaterWorker.js.
-   * If AMP web push sees another worker like OneSignalSDKUpdaterWorker.js, or
-   * even the same OneSignalSDKWorker.js without the app ID query parameter, the
-   * user is considered unsubscribed.
-   *
-   * c) Due to b's restriction, we must always install
-   * OneSignalSDKWorker.js?appId=xxx. We also have to appropriately handle
-   * legacy cases:
-   *
-   *    c-1) Where developers have OneSignalSDKWorker.js or
-   *    OneSignalSDKUpdaterWorker.js alternatingly installed
-   *
-   *    c-2) Where developers running progressive web apps force-register
-   *    OneSignalSDKWorker.js
-   *
-   * Actually, users can customize the file names of Worker A / Worker B, but
-   * it's up to them to be consistent with their naming. For AMP web push, users
-   * can specify the full string to expect for the service worker. They can add
-   * additional query parameters, but this must then stay consistent.
-   *
-   * Installation Procedure
-   * ----------------------
-   *
-   * Worker A is always installed. If Worker A is already installed, Worker B is
-   * installed first, and then Worker A is installed again. This is necessary
-   * because AMP web push requires Worker A to be installed for the user to be
-   * considered subscribed.
-   */
-  public async installWorker() {
-    if (!await this.shouldInstallWorker()) {
-      return;
-    }
-
-    await this.installAlternatingWorker();
-
-    if ((await this.getActiveState()) === ServiceWorkerActiveState.WorkerB) {
-      // If the worker is Worker B, reinstall Worker A
-      await this.installAlternatingWorker();
-    }
-
-    await this.establishServiceWorkerChannel();
-  }
-
   public async establishServiceWorkerChannel() {
     Log.debug('establishServiceWorkerChannel');
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, async data => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      await Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
@@ -368,7 +308,7 @@ export class ServiceWorkerManager {
         await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
       }
       else
-        Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+        await Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
@@ -381,14 +321,14 @@ export class ServiceWorkerManager {
       }
     });
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, data => {
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+    workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, async data => {
+      await Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
 
     const isHttps = OneSignalUtils.isHttps();
     const isSafari = OneSignalUtils.isSafari();
 
-    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, (incomingPayload: PageVisibilityRequest) => {
+    workerMessenger.on(WorkerMessengerCommand.AreYouVisible, async (incomingPayload: PageVisibilityRequest) => {
       // For https sites in Chrome and Firefox service worker (SW) can get correct value directly.
       // For Safari, unfortunately, we need this messaging workaround because SW always gets false.
       if (isHttps && isSafari) {
@@ -396,7 +336,7 @@ export class ServiceWorkerManager {
           timestamp: incomingPayload.timestamp,
           focused: document.hasFocus(),
         };
-        workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
+        await workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
       } else {
         const httpPayload: PageVisibilityRequest = { timestamp: incomingPayload.timestamp };
         const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
@@ -408,23 +348,60 @@ export class ServiceWorkerManager {
   }
 
   /**
-   * Installs the OneSignal service worker.
+   * Installs a newer version of the OneSignal service worker.
    *
-   * Depending on the existing worker, the alternate swap worker may be
-   * installed or, for 3rd party workers, the existing worker may be uninstalled
-   * before installing ours.
+   * We have a couple different models of installing service workers:
+   *
+   * a) Originally, we provided users with two worker files:
+   * OneSignalSDKWorker.js and OneSignalSDKUpdaterWorker.js. Two workers were
+   * provided so each could be swapped with the other when the worker needed to
+   * update. The contents of both workers were identical; only the filenames
+   * were different, which is enough to update the worker.
+   *
+   * Starting with version 151510, the need for two files is no longer required.
+   * We are able to update the worker automatically by always passing in the sdk
+   * version as a query parameter. This is enough for the browser to detect a
+   * change and re-install the worker.
+   *
+   * b) With AMP web push, users specify the worker file OneSignalSDKWorker.js
+   * with an app ID parameter ?appId=12345. AMP web push
+   * is vendor agnostic and doesn't know about OneSignal, so all relevant
+   * information has to be passed to the service worker, which is the only
+   * vendor-specific file.
+   *
+   * If AMP web push sees another worker like OneSignalSDKUpdaterWorker.js (deprecated), or
+   * even the same OneSignalSDKWorker.js without the app ID query parameter, the
+   * user is considered unsubscribed.
+   *
+   * c) Due to b's restriction, we must always install
+   * OneSignalSDKWorker.js?appId=xxx. We also have to appropriately handle the
+   * legacy case:
+   *
+   *    c-1) Where developers running progressive web apps force-register
+   *    OneSignalSDKWorker.js
+   *
+   * Actually, users can customize the file names of the Service Worker but
+   * it's up to them to be consistent with their naming. For AMP web push, users
+   * can specify the full string to expect for the service worker. They can add
+   * additional query parameters, but this must then stay consistent.
    */
-  private async installAlternatingWorker() {
+
+  public async installWorker() {
+    console.log("Installing worker...");
+    if (!await this.shouldInstallWorker()) {
+      return;
+    }
+
     const workerState = await this.getActiveState();
 
     if (workerState === ServiceWorkerActiveState.ThirdParty) {
       Log.info(`[Service Worker Installation] 3rd party service worker detected.`);
     }
 
-    const workerHref = ServiceWorkerHelper.getAlternatingServiceWorkerHref(
-      workerState,
+    const workerHref = ServiceWorkerHelper.getServiceWorkerHref(
       this.config,
-      this.context.appConfig.appId
+      this.context.appConfig.appId,
+      Environment.version(),
     );
 
     const scope = `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}`;
@@ -448,5 +425,7 @@ export class ServiceWorkerManager {
       throw error;
     }
     Log.debug(`[Service Worker Installation] Service worker installed.`);
+
+    await this.establishServiceWorkerChannel();
   }
 }

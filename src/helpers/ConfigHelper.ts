@@ -401,7 +401,6 @@ export class ConfigHelper {
           autoResubscribe: serverConfig.config.autoResubscribe,
           path: serverConfig.config.serviceWorker.path,
           serviceWorkerPath: serverConfig.config.serviceWorker.workerName,
-          serviceWorkerUpdaterPath: serverConfig.config.serviceWorker.updaterWorkerName,
           serviceWorkerParam: { scope: serverConfig.config.serviceWorker.registrationScope },
           subdomainName: serverConfig.config.siteInfo.proxyOrigin,
           promptOptions: this.getPromptOptionsForDashboardConfiguration(serverConfig),
@@ -493,15 +492,11 @@ export class ConfigHelper {
           !!OneSignal.SERVICE_WORKER_PARAM;
         const isTopLevelServiceWorkerPathDefined = typeof OneSignal !== 'undefined' &&
           !!OneSignal.SERVICE_WORKER_PATH;
-        const isTopLevelServiceWorkerUpdaterPathDefined = typeof OneSignal !== 'undefined' &&
-          !!OneSignal.SERVICE_WORKER_UPDATER_PATH;
 
         const fallbackServiceWorkerParam = isTopLevelServiceWorkerParamDefined ?
           OneSignal.SERVICE_WORKER_PARAM : { scope: '/' };
         const fallbackServiceWorkerPath = isTopLevelServiceWorkerPathDefined ?
           OneSignal.SERVICE_WORKER_PATH : 'OneSignalSDKWorker.js';
-        const fallbackServiceWorkerUpdaterPath = isTopLevelServiceWorkerUpdaterPathDefined ?
-          OneSignal.SERVICE_WORKER_UPDATER_PATH : 'OneSignalSDKUpdaterWorker.js';
 
         const config = {
           ...userConfig,
@@ -516,8 +511,6 @@ export class ConfigHelper {
               userConfig.serviceWorkerParam : fallbackServiceWorkerParam,
             serviceWorkerPath: !!userConfig.serviceWorkerPath ?
               userConfig.serviceWorkerPath : fallbackServiceWorkerPath,
-            serviceWorkerUpdaterPath: !!userConfig.serviceWorkerUpdaterPath ?
-              userConfig.serviceWorkerUpdaterPath : fallbackServiceWorkerUpdaterPath,
             path: !!userConfig.path ? userConfig.path : '/'
           },
           outcomes: {

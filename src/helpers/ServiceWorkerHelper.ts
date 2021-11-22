@@ -17,38 +17,19 @@ import { SecondaryChannelManager } from "../managers/channelManager/shared/Secon
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 export default class ServiceWorkerHelper {
-
-  // Get the href of the OneSiganl ServiceWorker that should be installed
-  // If a OneSignal ServiceWorker is already installed we will use an alternating name
-  //   to force an update to the worker.
-  public static getAlternatingServiceWorkerHref(
-    workerState: ServiceWorkerActiveState,
+  public static getServiceWorkerHref(
     config: ServiceWorkerManagerConfig,
-    appId: string
+    appId: string,
+    sdkVersion: number
     ): string {
-    let workerFullPath: string;
-
-    // Determine which worker to install
-    if (workerState === ServiceWorkerActiveState.WorkerA)
-      workerFullPath = config.workerBPath.getFullPath();
-    else
-      workerFullPath = config.workerAPath.getFullPath();
-
-    return ServiceWorkerHelper.appendServiceWorkerParams(workerFullPath, appId);
+    return ServiceWorkerHelper.appendServiceWorkerParams(config.workerPath.getFullPath(), appId, sdkVersion);
   }
 
-  public static getPossibleServiceWorkerHrefs(
-    config: ServiceWorkerManagerConfig,
-    appId: string
-    ): string[] {
-    const workerFullPaths = [config.workerAPath.getFullPath(), config.workerBPath.getFullPath()];
-    return workerFullPaths.map(href => ServiceWorkerHelper.appendServiceWorkerParams(href, appId));
-  }
-
-  private static appendServiceWorkerParams(workerFullPath: string, appId: string): string {
+  private static appendServiceWorkerParams(workerFullPath: string, appId: string, sdkVersion: number): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdHasQueryParam = Utils.encodeHashAsUriComponent({ appId });
-    return `${fullPath}?${appIdHasQueryParam}`;
+    const appIdAsQueryParam      = Utils.encodeHashAsUriComponent({ appId });
+    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({ sdkVersion });
+    return `${fullPath}?${appIdAsQueryParam}?${sdkVersionAsQueryParam}`;
   }
 
   public static async upsertSession(
@@ -256,19 +237,10 @@ export enum ServiceWorkerActiveState {
   /**
    * OneSignalSDKWorker.js, or the equivalent custom file name, is active.
    */
-  WorkerA = 'Worker A (Main)',
+  OneSignalWorker = 'OneSignal Worker',
   /**
-   * OneSignalSDKUpdaterWorker.js, or the equivalent custom file name, is
-   * active.
-   *
-   * We no longer need to use this filename. We can update Worker A by appending
-   * a random query parameter to A.
-   */
-  WorkerB = 'Worker B (Updater)',
-  /**
-   * A service worker is active, but it is neither OneSignalSDKWorker.js nor
-   * OneSignalSDKUpdaterWorker.js (or the equivalent custom file names as
-   * provided by user config).
+   * A service worker is active, but it is not OneSignalSDKWorker.js
+   * (or the equivalent custom file names as provided by user config).
    */
   ThirdParty = '3rd Party',
   /**
@@ -287,12 +259,7 @@ export interface ServiceWorkerManagerConfig {
   /**
    * The path and filename of the "main" worker (e.g. '/OneSignalSDKWorker.js');
    */
-  workerAPath: Path;
-  /**
-   * The path and filename to the "alternate" worker, used to update an existing
-   * service worker. (e.g. '/OneSignalSDKUpdaterWorer.js')
-   */
-  workerBPath: Path;
+  workerPath: Path;
   /**
    * Describes how much of the origin the service worker controls.
    * This is currently always "/".

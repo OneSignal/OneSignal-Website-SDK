@@ -17,7 +17,7 @@ export default class Path {
     this.path = path.trim();
   }
 
-  getQueryString(): string {
+  getQueryString(): string | null {
     // If there are no ? characters, return null
     // If there are multiple ?, return the substring starting after the first ? all the way to the end
     const indexOfDelimiter = this.path.indexOf('?');
@@ -37,12 +37,12 @@ export default class Path {
     return this.path.split(Path.QUERY_STRING)[0];
   }
 
-  getFileName(): string {
-    return this.getWithoutQueryString().split('\\').pop().split('/').pop();
+  getFileName(): string | undefined {
+    return this.getWithoutQueryString().split('\\').pop()?.split('/').pop();
   }
 
-  getFileNameWithQuery(): string {
-    return this.path.split('\\').pop().split('/').pop();
+  getFileNameWithQuery(): string | undefined {
+    return this.path.split('\\').pop()?.split('/').pop();
   }
 
   getFullPath() {
