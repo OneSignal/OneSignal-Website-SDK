@@ -4,6 +4,7 @@ import { ResourceLoadState } from "../services/DynamicResourceLoader";
 import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from "../slidedown/constants";
 import { addCssClass } from "../utils";
 import { AppUserConfigCustomLinkOptions } from "../models/Prompts";
+import LocalStorage from "../utils/LocalStorage";
 
 export class CustomLinkManager {
   private config: AppUserConfigCustomLinkOptions | undefined;
@@ -23,7 +24,7 @@ export class CustomLinkManager {
 
     Log.info("OneSignal: initializing customlink");
 
-    if (!this.config?.unsubscribeEnabled && await CustomLinkManager.isPushEnabled()) {
+    if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
       this.hideCustomLinkContainers();
       return;
     }
@@ -57,7 +58,7 @@ export class CustomLinkManager {
         addCssClass(explanation, this.config.size);
       }
 
-      if (await CustomLinkManager.isPushEnabled()) {
+      if (CustomLinkManager.isPushEnabled()) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
@@ -86,7 +87,7 @@ export class CustomLinkManager {
         addCssClass(subscribeButton, this.config.style);
       }
 
-      if (await CustomLinkManager.isPushEnabled()) {
+      if (CustomLinkManager.isPushEnabled()) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
@@ -128,23 +129,23 @@ export class CustomLinkManager {
   }
 
   private async handleClick(element: HTMLElement): Promise<void> {
-    if (await CustomLinkManager.isPushEnabled()) {
+    if (CustomLinkManager.isPushEnabled()) {
       await OneSignal.setSubscription(false);
       await this.setTextFromPushStatus(element);
     } else {
-      if (!await CustomLinkManager.isOptedOut()) {
+      if (!CustomLinkManager.isOptedOut()) {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
         const options: RegisterOptions = { autoAccept };
         await OneSignal.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
-        if (!this.config?.unsubscribeEnabled && await CustomLinkManager.isPushEnabled()) {
+        if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
           this.hideCustomLinkContainers();
         }
         return;
       }
       await OneSignal.setSubscription(true);
       // once subscribed, prevent unsubscribe by hiding customlinks
-      if (!this.config?.unsubscribeEnabled && await CustomLinkManager.isPushEnabled()) {
+      if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();
       }
     }
@@ -152,13 +153,13 @@ export class CustomLinkManager {
 
   private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this.config?.text?.subscribe) {
-      if (!await CustomLinkManager.isPushEnabled()) {
+      if (!CustomLinkManager.isPushEnabled()) {
         element.textContent = this.config.text.subscribe;
       }
     }
 
     if (this.config?.text?.unsubscribe) {
-      if (await CustomLinkManager.isPushEnabled()) {
+      if (CustomLinkManager.isPushEnabled()) {
         element.textContent = this.config.text.unsubscribe;
       }
     }
@@ -182,11 +183,11 @@ export class CustomLinkManager {
     return Array.prototype.slice.call(containers);
   }
 
-  static async isPushEnabled(): Promise<boolean> {
-    return await OneSignal.privateIsPushNotificationsEnabled();
+  static isPushEnabled(): boolean {
+    return LocalStorage.getIsPushNotificationsEnabled();
   }
 
-  static async isOptedOut(): Promise<boolean> {
-    return await OneSignal.internalIsOptedOut();
+  static isOptedOut(): boolean {
+    return LocalStorage.getIsOptedOut();
   }
 }
