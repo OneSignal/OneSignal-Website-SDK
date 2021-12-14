@@ -387,11 +387,11 @@ export class ServiceWorkerManager {
    */
 
   public async installWorker() {
-    console.log("Installing worker...");
     if (!await this.shouldInstallWorker()) {
       return;
     }
 
+    Log.info("Installing worker...");
     const workerState = await this.getActiveState();
 
     if (workerState === ServiceWorkerActiveState.ThirdParty) {
