@@ -1,11 +1,12 @@
 import { SlidedownHtmlProps } from "./types";
-import { DEFAULT_ICON, SLIDEDOWN_CSS_IDS, SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_BUTTON_CLASSES } from "./constants";
+import { SLIDEDOWN_CSS_IDS, SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_BUTTON_CLASSES } from "./constants";
 import { addCssClass } from '../../src/utils';
+import { DEFAULT_BELL_ICON } from "../../src/svg/bell";
 
 export function getSlidedownElement(dialogProps: SlidedownHtmlProps): Element {
     const { icon, messageText, positiveButtonText, negativeButtonText } = dialogProps;
 
-    const finalIcon = icon === SLIDEDOWN_CSS_CLASSES.defaultIcon ? DEFAULT_ICON : icon;
+    const finalIcon = icon === SLIDEDOWN_CSS_CLASSES.defaultIcon ? DEFAULT_BELL_ICON : icon;
     const finalIconClass = icon === SLIDEDOWN_CSS_CLASSES.defaultIcon ? SLIDEDOWN_CSS_CLASSES.defaultIcon : '';
 
     const normalSlidedown   = document.createElement("div");

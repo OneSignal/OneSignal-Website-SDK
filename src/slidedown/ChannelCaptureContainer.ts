@@ -4,11 +4,11 @@ import { DelayedPromptType, SlidedownPromptOptions } from "../models/Prompts";
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
-  DANGER_ICON,
   SLIDEDOWN_CSS_IDS
 } from "./constants";
 import { ItiScriptURLHashes, ItiScriptURLs } from "./InternationalTelephoneInput";
 import { } from 'intl-tel-input'; // typings
+import { DANGER_ICON } from "../../src/svg/danger";
 
 interface TypeSpecificVariablePayload {
   message: string;
