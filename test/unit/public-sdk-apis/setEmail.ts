@@ -8,6 +8,7 @@ import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import nock from 'nock';
 import Random from "../../support/tester/Random";
 import { setUserAgent } from "../../support/tester/browser";
+import { awaitSubscriptionChangeEvent } from "../../support/tester/ChannelSubscriptionChangeEventHelper";
 
 test.beforeEach(async _t => {
   await TestEnvironment.initialize();
@@ -363,4 +364,23 @@ test(
       externalUserIdAuthHash: null
     } as SetEmailTestData;
     await setEmailTest(t, testData);
+});
+
+test(
+  "Setting email causes 'emailSubscriptionChanged' event to fire with email identifier in event callback",
+  async t => {
+    const fakeUuid = Random.getRandomUuid();
+    await expectEmailRecordCreationRequest(
+      t,
+      "example@domain.com",
+      null,
+      null,
+      fakeUuid
+    );
+    const subscriptionChangeEventPromise = awaitSubscriptionChangeEvent("emailSubscriptionChanged");
+
+    setUserAgent(BrowserUserAgent.FirefoxMacSupported);
+    await OneSignal.setEmail("example@domain.com");
+    const event = await subscriptionChangeEventPromise as {email: string};
+    t.is(event["email"], "example@domain.com");
 });
