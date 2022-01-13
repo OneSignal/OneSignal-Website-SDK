@@ -1,3 +1,4 @@
+import { SecondaryChannelProfile } from "../../../../models/SecondaryChannelProfile";
 import { ExternalUserIdHelper } from "../../../../helpers/shared/ExternalUserIdHelper";
 import { SecondaryChannelDeviceRecord } from "../../../../models/SecondaryChannelDeviceRecord";
 import OneSignalApi from "../../../../OneSignalApi";
@@ -8,7 +9,7 @@ import { SecondaryChannelProfileProvider } from "../providers/SecondaryChannelPr
 export class SecondaryChannelIdentifierUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProvider) {}
 
-  async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
+  async setIdentifier(identifier: string, authHash?: string): Promise<SecondaryChannelProfile> {
     const appConfig = await Database.getAppConfig();
     const existingProfile = await this.profileProvider.getProfile();
     const newProfile = this.profileProvider.newProfile(existingProfile.subscriptionId, identifier, authHash);
@@ -42,6 +43,6 @@ export class SecondaryChannelIdentifierUpdater {
        await this.profileProvider.setProfile(newProfile);
      }
 
-     return newProfile.subscriptionId;
+     return newProfile;
   }
 }
