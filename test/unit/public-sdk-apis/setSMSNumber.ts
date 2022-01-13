@@ -5,6 +5,7 @@ import Database from "../../../src/services/Database";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
 import { setupFakePlayerId } from "../../support/tester/utils";
+import { awaitSubscriptionChangeEvent } from "../../support/tester/ChannelSubscriptionChangeEventHelper";
 
 const TEST_SMS_NUMBER = "+1112223333";
 
@@ -87,4 +88,13 @@ test("setSMSNumber, throws on empty string", async t => {
     },
     { instanceOf: InvalidArgumentError }
   );
+});
+
+test(
+  "Setting SMS causes 'smsSubscriptionChanged' event to fire with sms identifier in event callback", async t => {
+    const subscriptionChangeEventPromise = awaitSubscriptionChangeEvent("smsSubscriptionChanged");
+    NockOneSignalHelper.nockPlayerPost();
+    await OneSignal.setSMSNumber(TEST_SMS_NUMBER);
+    const event = await subscriptionChangeEventPromise as {sms: string};
+      t.is(event["sms"], TEST_SMS_NUMBER);
 });

@@ -8,6 +8,8 @@ import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
 import nock from 'nock';
 import Random from "../../support/tester/Random";
 import { setUserAgent } from "../../support/tester/browser";
+import { awaitSubscriptionChangeEvent } from "../../support/tester/ChannelSubscriptionChangeEventHelper";
+import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
 
 test.beforeEach(async _t => {
   await TestEnvironment.initialize();
@@ -203,7 +205,7 @@ async function setEmailTest(
 
   if (isUpdateRequest) {
     // Means we're making a PUT call to /players/<id>
-    expectEmailRecordUpdateRequest(
+    await expectEmailRecordUpdateRequest(
       t,
       testData.existingEmailId,
       testData.newEmailAddress,
@@ -213,7 +215,7 @@ async function setEmailTest(
     );
   } else {
     // Means we're making a POST call to /players
-    expectEmailRecordCreationRequest(
+    await expectEmailRecordCreationRequest(
       t,
       testData.newEmailAddress,
       testData.existingPushDeviceId,
@@ -234,7 +236,7 @@ async function setEmailTest(
         - We're subscribed to web push (existing player ID)
         - The email ID or plain text email address changes from what we have saved, or if neither was ever saved
     */
-    expectPushRecordUpdateRequest(
+    await expectPushRecordUpdateRequest(
       t,
       testData.existingPushDeviceId,
       testData.newEmailId,
@@ -274,7 +276,7 @@ test("No push subscription, no email, first setEmail call", async t => {
 
 test("No push subscription, no email, first setEmail call, test email id return", async t => {
   const fakeUuid = Random.getRandomUuid();
-  expectEmailRecordCreationRequest(
+  await expectEmailRecordCreationRequest(
     t,
     "example@domain.com",
     null,
@@ -363,4 +365,15 @@ test(
       externalUserIdAuthHash: null
     } as SetEmailTestData;
     await setEmailTest(t, testData);
+});
+
+test(
+  "Setting email causes 'emailSubscriptionChanged' event to fire with email identifier in event callback",
+  async t => {
+    NockOneSignalHelper.nockPlayerPost();
+    const subscriptionChangeEventPromise = awaitSubscriptionChangeEvent("emailSubscriptionChanged");
+
+    await OneSignal.setEmail("example@domain.com");
+    const event = await subscriptionChangeEventPromise as {email: string};
+    t.is(event["email"], "example@domain.com");
 });
