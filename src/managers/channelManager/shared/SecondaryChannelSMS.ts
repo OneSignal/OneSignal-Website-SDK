@@ -9,6 +9,7 @@ import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUp
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 import { TagsObject } from "../../../models/Tags";
 import { SMSProfile } from "../../../models/SMSProfile";
+import Event from "../../../Event";
 
 export class SecondaryChannelSMS implements SecondaryChannel, SecondaryChannelWithSynchronizerEvents {
 
@@ -33,8 +34,12 @@ export class SecondaryChannelSMS implements SecondaryChannel, SecondaryChannelWi
     return true;
   }
 
-  async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
-    return await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
+  async setIdentifier(identifier: string, authHash?: string): Promise<string | null | undefined> {
+    const profile = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
+    await Event.trigger(OneSignal.EVENTS.SMS_SUBSCRIPTION_CHANGED, {
+      sms: profile.identifier
+    });
+    return profile.subscriptionId;
   }
 
   async onSession(): Promise<void> {

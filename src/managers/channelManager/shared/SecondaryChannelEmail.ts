@@ -11,6 +11,7 @@ import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChann
 import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 import { TagsObject } from "../../../models/Tags";
+import Event from "../../../Event";
 
 export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannelWithSynchronizerEvents {
 
@@ -49,20 +50,25 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
     return true;
   }
 
-  async setIdentifier(identifier: string, authHash?: string): Promise<string | null> {
+  async setIdentifier(identifier: string, authHash?: string): Promise<string | null | undefined> {
     const { profileProvider } = this.secondaryChannelIdentifierUpdater;
     const emailProfileBefore = await profileProvider.getProfile();
-    const newEmailSubscriptionId = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
+    const profile = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
 
+    const newEmailSubscriptionId = profile.subscriptionId;
     if (newEmailSubscriptionId) {
       const emailProfileAfter = profileProvider.newProfile(newEmailSubscriptionId, identifier);
       await this.updatePushPlayersRelationToEmailPlayer(emailProfileBefore, emailProfileAfter);
     }
 
+    await Event.trigger(OneSignal.EVENTS.EMAIL_SUBSCRIPTION_CHANGED, {
+      email: profile.identifier
+    });
+
     return newEmailSubscriptionId;
   }
 
-  private async updatePushPlayersRelationToEmailPlayer(
+   private async updatePushPlayersRelationToEmailPlayer(
     existingEmailProfile: SecondaryChannelProfile,
     newEmailProfile: SecondaryChannelProfile): Promise<void> {
 
