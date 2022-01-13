@@ -1036,6 +1036,14 @@ export default class OneSignal {
      */
     PERMISSION_PROMPT_DISPLAYED: 'permissionPromptDisplay',
     /**
+     * Occurs when the email subscription changes
+     */
+    EMAIL_SUBSCRIPTION_CHANGED: 'emailSubscriptionChanged',
+    /**
+     * Occurs when the SMS subscription changes
+     */
+    SMS_SUBSCRIPTION_CHANGED: 'smsSubscriptionChanged',
+    /**
      * For internal testing only. Used for all sorts of things.
      */
     TEST_INIT_OPTION_DISABLED: 'testInitOptionDisabled',
