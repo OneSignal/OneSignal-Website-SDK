@@ -379,7 +379,7 @@ export default class OneSignal {
    *           has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  public static async getNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
+  public static async getNotificationPermission(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
     await awaitOneSignalInitAndSupported();
     return OneSignal.privateGetNotificationPermission(onComplete);
   }
