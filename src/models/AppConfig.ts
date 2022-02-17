@@ -54,11 +54,6 @@ export interface AppConfig {
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
-
-  /**
-   * Describes whether Confirmed Delivery should be active
-   */
-  receiveReceiptsEnable?: boolean;
   sessionThreshold?: number;
 
   siteName: string;
