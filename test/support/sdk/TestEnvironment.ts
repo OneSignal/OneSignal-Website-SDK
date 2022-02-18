@@ -123,6 +123,7 @@ export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
   overrideServerConfig?: RecursivePartial<ServerAppConfig>;
   stubSetTimeout?: boolean;
+  clientSidePropSyncOnExternalId?: boolean;
 }
 
 /**
