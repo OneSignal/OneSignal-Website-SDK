@@ -9,7 +9,9 @@ const TEST_EMAIL_ADDRESS = "test@test.com";
 
 test.beforeEach(async _t => {
   await TestEnvironment.initialize();
-  TestEnvironment.mockInternalOneSignal();
+  TestEnvironment.mockInternalOneSignal({
+    clientSidePropSyncOnExternalId: true
+  });
   await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
 });
 
