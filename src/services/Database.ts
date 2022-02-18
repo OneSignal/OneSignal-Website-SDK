@@ -218,7 +218,7 @@ export default class Database {
     return await this.get<string>("Ids", "externalUserIdAuthHash");
   }
 
-  async setExternalUserId(externalUserId: string | null, authHash: string | null):
+  async setExternalUserId(externalUserId?: string | null, authHash?: string | null):
     Promise<void> {
       const emptyString: string = "";
       const externalIdToSave = Utils.getValueOrDefault(externalUserId, emptyString);
