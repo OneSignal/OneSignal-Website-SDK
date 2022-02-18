@@ -54,13 +54,13 @@ export interface AppConfig {
   userConfig: AppUserConfig;
   // TODO: Cleanup: pageUrl is also on AppUserConfig
   pageUrl?: string;
-
   /**
-   * Describes whether Confirmed Delivery should be active
+   * Describes whether we should turn off client-side property syncing
+   * when we have an external user ID
    */
-  receiveReceiptsEnable?: boolean;
-  sessionThreshold?: number;
+  clientSidePropSyncOnExternalId?: boolean;
 
+  sessionThreshold?: number;
   siteName: string;
 }
 
@@ -228,6 +228,7 @@ export interface ServerAppConfig {
     };
     enable_on_session?: boolean;
     receive_receipts_enable?: boolean;
+    client_side_player_property_syncing_on_external_user_id?: boolean;
     web_on_focus_enabled: boolean;
     session_threshold: number;
   };

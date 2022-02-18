@@ -129,7 +129,10 @@ export class ConfigHelper {
       onesignalVapidPublicKey: serverConfig.config.onesignal_vapid_public_key,
       userConfig: mergedUserConfig,
       // default confirmed deliveries feature to off
-      receiveReceiptsEnable: serverConfig.features.receive_receipts_enable || false,
+      clientSidePropSyncOnExternalId: Utils.valueOrDefault(
+        serverConfig.features.client_side_player_property_syncing_on_external_user_id,
+        true
+      ),
       enableOnSession: Utils.valueOrDefault(
         serverConfig.features.enable_on_session,
         SERVER_CONFIG_DEFAULTS_SESSION.enableOnSessionForUnsubcribed
