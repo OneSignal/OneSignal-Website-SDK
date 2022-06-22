@@ -366,7 +366,10 @@ export default class InitHelper {
 
   public static async installNativePromptPermissionChangedHook() {
     try {
-      if (navigator.permissions) {
+      if (navigator.permissions && !(bowser.firefox && Number(bowser.version) <= 45)) {
+        OneSignal._usingNativePermissionHook = true;
+        // If the browser natively supports hooking the subscription prompt permission change event,
+        // use it instead of our SDK method.
         const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
         permissionStatus.onchange = function() {
           triggerNotificationPermissionChanged();
