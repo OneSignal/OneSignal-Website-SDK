@@ -91,7 +91,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async setEmail(email: string, options?: SetEmailOptions): Promise<string|null> {
+  static async setEmail(email: string, options?: SetEmailOptions): Promise<string|null|undefined> {
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -113,7 +113,7 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  static async setSMSNumber(smsNumber: string, options?: SetSMSOptions): Promise<string | null> {
+  static async setSMSNumber(smsNumber: string, options?: SetSMSOptions): Promise<string|null|undefined> {
     if (!smsNumber) {
       throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
     }
@@ -379,9 +379,10 @@ export default class OneSignal {
    *           has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  public static async getNotificationPermission(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
-    await awaitOneSignalInitAndSupported();
-    return OneSignal.privateGetNotificationPermission(onComplete);
+  public static async getNotificationPermission(onComplete?: Action<NotificationPermission>):
+    Promise<NotificationPermission> {
+      await awaitOneSignalInitAndSupported();
+      return OneSignal.privateGetNotificationPermission(onComplete);
   }
 
   static async privateGetNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {

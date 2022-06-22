@@ -76,7 +76,7 @@ test(`called with an old and new subscription successfully updates the subscript
   let subscription = await Database.getSubscription();
   t.deepEqual(subscription.deviceId, existingDeviceId);
   t.deepEqual(subscription.subscriptionToken, oldSubscription.endpoint);
-  
+
   const event = new MockPushSubscriptionChangeEvent();
   event.oldSubscription = oldSubscription;
   event.newSubscription = newSubscription;
