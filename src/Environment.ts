@@ -1,6 +1,7 @@
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import bowser from 'bowser';
+import { supportsVapidPush } from './context/browser/utils/BrowserSupportsPush';
 
 export default class Environment {
   /**
@@ -12,6 +13,10 @@ export default class Environment {
 
   public static isSafari(): boolean {
     return Environment.isBrowser() && bowser.safari;
+  }
+
+  public static isNonVapidSafari(): boolean {
+    return this.isSafari() && !supportsVapidPush();
   }
 
   public static version() {
