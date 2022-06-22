@@ -34,6 +34,7 @@ declare var OneSignal: any;
 // These __*__ variables are defined from Webpack to change resulting JS
 declare var __VERSION__: string;
 declare var __BUILD_TYPE__: string;
+declare var __NO_DEV_PORT__: string;
 declare var __BUILD_ORIGIN__: string;
 declare var __API_TYPE__: string;
 declare var __API_ORIGIN__: string;
