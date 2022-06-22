@@ -33,7 +33,7 @@ export class OneSignalShimLoader {
 
     switch(__BUILD_TYPE__){
       case "development":
-        return `${protocol}://${buildOrigin}:${port}/sdks/Dev-`;
+        return __NO_DEV_PORT__ ? `${protocol}://${buildOrigin}/sdks/Dev-` : `${protocol}://${buildOrigin}:${port}/sdks/Dev-`;
       case "staging":
         return `https://${buildOrigin}/sdks/Staging-`;
       default:

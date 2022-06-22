@@ -289,7 +289,7 @@ export default class SdkEnvironment {
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        origin = `${protocol}://${buildOrigin}:${port}`;
+        origin = __NO_DEV_PORT__ ? `${protocol}://${buildOrigin}` : `${protocol}://${buildOrigin}:${port}`;
         break;
       case EnvironmentKind.Staging:
         origin = `https://${buildOrigin}`;
