@@ -2,8 +2,8 @@
 ## WebSDK Sandbox Environment
 ### Run Instructions
 1. `docker-compose up`
-   - If SSL certs need to be created, this will be done for you automatically with the common name default setting `texas` and alternative DNS names (this can be customized in `certs/gen-cert.sh`):
-      - localhost
+   - If SSL certs need to be created, this will be done for you automatically with the common name default setting `localhost` and alternative DNS names (this can be customized in `certs/gen-cert.sh`):
+      - texas
       - california
       - oregon
       - washington
@@ -74,6 +74,8 @@ All builds default to `https` unless `--http` is passed to the end of the build 
 **SDK**: SDK files will automatically be fetched from the 4000s ports depending on the HTTP/S setting
    - HTTP: `4000`
    - HTTPS: `4001`
+
+Use the **`--no-port`** build flag to build without a port number. This is useful when using a reverse proxy like [ngrok](https://ngrok.com/) to serve your localhost environment on the web.
 
 **API**: dev-environment API calls will be made to the `3001` port (e.g: `<custom-origin>:3001`)
 
