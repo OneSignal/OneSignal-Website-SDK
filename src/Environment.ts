@@ -39,7 +39,8 @@ export default class Environment {
       const languageSubtags = languageTag.split('-');
       if (languageSubtags[0] == 'zh') {
         // The language is zh-?
-        // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional); OneSignal only supports these two Chinese variants
+        // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional);
+        // OneSignal only supports these two Chinese variants
         for (const traditionalSubtag of Environment.TRADITIONAL_CHINESE_LANGUAGE_TAG) {
           if (languageSubtags.indexOf(traditionalSubtag) !== -1) {
             return 'zh-Hant';
