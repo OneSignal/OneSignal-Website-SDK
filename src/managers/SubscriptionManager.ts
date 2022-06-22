@@ -36,16 +36,18 @@ export interface SubscriptionManagerConfig {
   appId: string;
   /**
    * The VAPID public key to use for Chrome-like browsers, including Opera and Yandex browser.
+   * As of Safari 16, VAPID is now used as well
    */
   vapidPublicKey: string;
   /**
-   * A globally shared VAPID public key to use for the Firefox browser, which does not use VAPID for authentication but for application identification and uses a single
+   * A globally shared VAPID public key to use for the Firefox browser, which does not use VAPID for
+   * authentication but for application identification and uses a single
    */
   onesignalVapidPublicKey: string;
 }
 
-export type SubscriptionStateServiceWorkerNotIntalled = 
-  SubscriptionStateKind.ServiceWorkerStatus403 | 
+export type SubscriptionStateServiceWorkerNotIntalled =
+  SubscriptionStateKind.ServiceWorkerStatus403 |
   SubscriptionStateKind.ServiceWorkerStatus404;
 
 export class SubscriptionManager {
@@ -212,9 +214,11 @@ export class SubscriptionManager {
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
         const { deviceId } = await Database.getSubscription();
 
-        await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-          notification_types: SubscriptionStateKind.MutedByApi
-        });
+        if (!!deviceId) {
+          await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
+            notification_types: SubscriptionStateKind.MutedByApi
+          });
+        }
 
         await Database.put('Options', { key: 'optedOut', value: true });
       } else {
@@ -232,10 +236,10 @@ export class SubscriptionManager {
    * window.Notification.requestPermission: The callback was deprecated since Gecko 46 in favor of a Promise
    */
   public static async requestNotificationPermission(): Promise<NotificationPermission> {
-    const results = await window.Notification.requestPermission();
+    const result = await window.Notification.requestPermission();
     // TODO: Clean up our custom NotificationPermission enum
     //         in favor of TS union type NotificationPermission instead of converting
-    return NotificationPermission[results];
+    return NotificationPermission[result];
   }
 
   /**
@@ -265,21 +269,23 @@ export class SubscriptionManager {
   }
 
   private subscribeSafariPromptPermission(): Promise<string | null> {
-    return new Promise<string>(resolve => {
-      window.safari.pushNotification.requestPermission(
-        `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
-        this.config.safariWebId,
-        {
-          app_id: this.config.appId
-        },
-        response => {
-          if ((response as any).deviceToken) {
-            resolve((response as any).deviceToken.toLowerCase());
-          } else {
-            resolve(null);
+    return new Promise<string | null>(resolve => {
+      if (this.config.safariWebId) {
+        window.safari?.pushNotification?.requestPermission(
+          `${SdkEnvironment.getOneSignalApiUrl().toString()}/safari`,
+          this.config.safariWebId,
+          {
+            app_id: this.config.appId
+          },
+          (response: () => void) => {
+            if ((response as any).deviceToken) {
+              resolve((response as any).deviceToken.toLowerCase());
+            } else {
+              resolve(null);
+            }
           }
-        }
-      );
+        );
+      }
     });
   }
 
@@ -288,11 +294,10 @@ export class SubscriptionManager {
     if (!this.config.safariWebId) {
       throw new SdkInitError(SdkInitErrorKind.MissingSafariWebId);
     }
+    const safariPermission = window.safari?.pushNotification?.permission(this.config.safariWebId);
+    pushSubscriptionDetails.existingSafariDeviceToken = safariPermission?.deviceToken;
 
-    const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(this.config.safariWebId);
-    pushSubscriptionDetails.existingSafariDeviceToken = existingDeviceToken;
-
-    if (!existingDeviceToken) {
+    if (!safariPermission?.deviceToken) {
       /*
         We're about to show the Safari native permission request. It can fail for a number of
         reasons, e.g.:
@@ -336,8 +341,8 @@ export class SubscriptionManager {
       SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       Notification.permission === NotificationPermission.Default
     ) {
-      await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
       const permission = await SubscriptionManager.requestPresubscribeNotificationPermission();
+      await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
 
       /*
         Notification permission changes are already broadcast by the page's
@@ -372,14 +377,14 @@ export class SubscriptionManager {
       if (err instanceof ServiceWorkerRegistrationError) {
         if (err.status === 403) {
           await this.context.subscriptionManager.registerFailedSubscription(
-            SubscriptionStateKind.ServiceWorkerStatus403, 
+            SubscriptionStateKind.ServiceWorkerStatus403,
             this.context);
         } else if (err.status === 404) {
           await this.context.subscriptionManager.registerFailedSubscription(
             SubscriptionStateKind.ServiceWorkerStatus404,
             this.context);
-        } 
-      } 
+        }
+      }
       throw err;
     }
 
@@ -729,11 +734,11 @@ export class SubscriptionManager {
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
     const { deviceId, optedOut } = await Database.getSubscription();
 
-    if (Environment.isNonVapidSafari()) {
-      const subscriptionState: SafariRemoteNotificationPermission =
-        window.safari.pushNotification.permission(this.config.safariWebId);
+    if (Environment.isNonVapidSafari() && this.config.safariWebId) {
+      const subscriptionState: SafariRemoteNotificationPermission | undefined =
+        window.safari?.pushNotification?.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(
-        subscriptionState.permission === "granted" &&
+        subscriptionState?.permission === "granted" &&
         subscriptionState.deviceToken &&
         deviceId
       );
@@ -802,7 +807,8 @@ export class SubscriptionManager {
   }
 
   /**
-   * Broadcasting to the server the fact user tried to subscribe but there was an error during service worker registration.
+   * Broadcasting to the server the fact user tried to subscribe but there was an error during service
+   * worker registration.
    * Do it only once for the first page view.
    * @param subscriptionState Describes what went wrong with the service worker installation.
    */

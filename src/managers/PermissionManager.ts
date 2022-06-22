@@ -94,8 +94,9 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   private static getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
-    if (safariWebId)
-      return window.safari.pushNotification.permission(safariWebId).permission as NotificationPermission;
+    if (safariWebId) {
+      return window.safari?.pushNotification?.permission(safariWebId).permission as NotificationPermission;
+    }
     throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
   }
 
