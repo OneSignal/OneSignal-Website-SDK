@@ -67,7 +67,7 @@ test(`called with an old and new subscription successfully updates the subscript
     It's going to fail due to the blocked permission, so let's simulate that here.
    */
   sinonSandbox
-    .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+    .stub(SubscriptionManager.prototype, 'subscribeFromWorkerWithVapid')
     .throws('some-error');
 
   await setInitialDatabaseState(existingDeviceId, oldSubscription.endpoint);
@@ -154,7 +154,7 @@ test(
   `and updates existing device record to clear subscription`,
   async t => {
     sinonSandbox
-      .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+      .stub(SubscriptionManager.prototype, 'subscribeFromWorkerWithVapid')
       .throws('some-error');
 
     await setInitialDatabaseState(existingDeviceId, oldSubscription.endpoint);
@@ -177,7 +177,7 @@ test(
 test(`called without an existing device ID, without old and new subscription, custom resubscription fails ` +
 `and local data is cleared`, async t => {
   sinonSandbox
-    .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+    .stub(SubscriptionManager.prototype, 'subscribeFromWorkerWithVapid')
     .throws('some-error');
 
   // Before pushsubscriptionchange

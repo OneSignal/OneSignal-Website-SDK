@@ -83,7 +83,7 @@ export class SubscriptionManager {
 
     switch (env) {
       case WindowEnvironmentKind.ServiceWorker:
-        rawPushSubscription = await this.subscribeFcmFromWorker(subscriptionStrategy);
+        rawPushSubscription = await this.subscribeFromWorkerWithVapid(subscriptionStrategy);
         break;
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
@@ -115,7 +115,7 @@ export class SubscriptionManager {
           }
 
         } else {
-          rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
+          rawPushSubscription = await this.subscribeFromPageWithVapid(subscriptionStrategy);
         }
         break;
       default:
@@ -319,7 +319,7 @@ export class SubscriptionManager {
     return pushSubscriptionDetails;
   }
 
-  private async subscribeFcmFromPage(
+  private async subscribeFromPageWithVapid(
     subscriptionStrategy: SubscriptionStrategyKind
   ): Promise<RawPushSubscription> {
     /*
@@ -393,7 +393,7 @@ export class SubscriptionManager {
     return await this.subscribeWithVapidKey(workerRegistration.pushManager, subscriptionStrategy);
   }
 
-  public async subscribeFcmFromWorker(
+  public async subscribeFromWorkerWithVapid(
     subscriptionStrategy: SubscriptionStrategyKind
   ): Promise<RawPushSubscription> {
     /*
