@@ -365,14 +365,20 @@ export default class InitHelper {
   }
 
   public static async installNativePromptPermissionChangedHook() {
-    if (navigator.permissions && !(bowser.firefox && Number(bowser.version) <= 45)) {
-      OneSignal._usingNativePermissionHook = true;
-      // If the browser natively supports hooking the subscription prompt permission change event,
-      // use it instead of our SDK method
-      const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
-      permissionStatus.onchange = function() {
-        triggerNotificationPermissionChanged();
-      };
+    try {
+      if (navigator.permissions && !(bowser.firefox && Number(bowser.version) <= 45)) {
+        OneSignal._usingNativePermissionHook = true;
+        // If the browser natively supports hooking the subscription prompt permission change event,
+        // use it instead of our SDK method.
+        const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+        permissionStatus.onchange = function() {
+          triggerNotificationPermissionChanged();
+        };
+      }
+    } catch (e) {
+      // navigator.permissions.query({ name: 'notifications' }) currently not supported on Safari 16 (beta)
+      // as of June 2022
+      Log.warn(`Could not install native prompt permission change hook w/ error: ${e}`);
     }
   }
 
