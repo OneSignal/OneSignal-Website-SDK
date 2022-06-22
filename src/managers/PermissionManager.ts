@@ -1,9 +1,9 @@
 import OneSignalUtils from '../utils/OneSignalUtils';
-import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
+import Environment from '../../src/Environment';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -69,8 +69,10 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   public async getReportedNotificationPermission(safariWebId?: string): Promise<NotificationPermission>{
-    if (bowser.safari)
+    if (Environment.isNonVapidSafari()) {
+      // Safari <16
       return PermissionManager.getSafariNotificationPermission(safariWebId);
+    }
 
     // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
     if (OneSignalUtils.isUsingSubscriptionWorkaround())
