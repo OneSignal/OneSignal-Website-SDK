@@ -11,6 +11,7 @@ const apiOrigin = process.env.API_ORIGIN || "localhost";
 const isProdBuild = process.env.ENV === "production";
 const nodeEnv = isProdBuild ? "production" : "development";
 const isHttps = process.env.HTTPS;
+const noDevPort = process.env.NO_DEV_PORT;
 const tests = process.env.TESTS;
 const sdkVersion = process.env.npm_package_config_sdkVersion;
 
@@ -24,6 +25,7 @@ async function getWebpackPlugins() {
       __API_TYPE__: JSON.stringify(apiEnv),
       __API_ORIGIN__: JSON.stringify(apiOrigin),
       __IS_HTTPS__: isHttps === "true",
+      __NO_DEV_PORT__: noDevPort === "true",
       __TEST__: !!tests,
       __VERSION__: sdkVersion,
       __LOGGING__: env === "development",

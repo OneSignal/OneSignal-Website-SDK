@@ -31,6 +31,10 @@ case $key in
     HTTPS=false
     shift # past argument
     ;;
+    --no-port)
+    NO_DEV_PORT=true
+    shift # past argument
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -43,6 +47,8 @@ API_ORIGIN=${API_ORIGIN:-"onesignal.com"}
 ENV=${ENV:-"development"}
 API=${API:-"production"}
 HTTPS=${HTTPS:-true}
+NO_DEV_PORT=${NO_DEV_PORT:-false}
+
 
 if [ "$ENV" = "staging" ]; then
     API="staging"
@@ -55,12 +61,15 @@ echo "API_ORIGIN = ${API_ORIGIN}"
 echo "HTTPS = ${HTTPS}"
 echo "ENV = ${ENV}"
 echo "API = ${API}"
+echo "NO_DEV_PORT = ${NO_DEV_PORT}"
 echo "Unknown options -> ${POSITIONAL}"
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
+# build local SW file for dev env
+./build/scripts/buildServiceWorker.sh $BUILD_ORIGIN
 
-ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn transpile:sources
-ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn bundle-sw
-ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn bundle-sdk
-ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS yarn bundle-page-sdk-es6
-ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS ./build/scripts/publish.sh
+ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT yarn transpile:sources
+ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT yarn bundle-sw
+ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT yarn bundle-sdk
+ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT yarn bundle-page-sdk-es6
+ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT ./build/scripts/publish.sh
