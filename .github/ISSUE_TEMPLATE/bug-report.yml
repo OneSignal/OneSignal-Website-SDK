@@ -30,7 +30,7 @@ body:
         - Opera
         - Brave
         - Other
-      validations:
+    validations:
       required: true
   - type: input
     id: operating-system
