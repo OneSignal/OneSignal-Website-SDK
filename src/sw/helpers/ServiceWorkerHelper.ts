@@ -1,18 +1,19 @@
-import { OneSignalApiSW } from "../OneSignalApiSW";
-import Log from "../libraries/sw/Log";
-import Path from "../models/Path";
-import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../models/Session";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import Database from "../services/Database";
-import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
-import { NotificationClicked } from "../models/Notification";
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { OutcomesConfig } from "../models/Outcomes";
-import OutcomesHelper from './shared/OutcomesHelper';
-import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
-import { OSServiceWorkerFields } from "../service-worker/types";
-import Utils from "../context/shared/utils/Utils";
-import { SecondaryChannelManager } from "../managers/channelManager/shared/SecondaryChannelManager";
+import Log from "../libraries/Log";
+import { OneSignalUtils } from "../../shared/utils/OneSignalUtils";
+import Database from "../../shared/services/Database";
+import { SerializedPushDeviceRecord, PushDeviceRecord } from "../../shared/models/PushDeviceRecord";
+import { OutcomesConfig } from "../../shared/models/Outcomes";
+import { cancelableTimeout, CancelableTimeoutPromise } from './CancelableTimeout';
+import Utils from "../../shared/context/Utils";
+import OutcomesHelper from "../../shared/helpers/OutcomesHelper";
+import { SecondaryChannelManager } from "../../shared/managers/channelManager/SecondaryChannelManager";
+import { OSServiceWorkerFields } from "../serviceWorker/types";
+import { Session } from "inspector";
+import { NotificationClicked } from "../../page/models/Notification";
+import { SessionOrigin, initializeNewSession, SessionStatus } from "../../shared/models/Session";
+import OneSignalApiSW from "../../shared/api/OneSignalApiSW";
+import Path from "../../shared/models/Path";
+import { RawPushSubscription } from "../../shared/models/RawPushSubscription";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
