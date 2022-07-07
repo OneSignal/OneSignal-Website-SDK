@@ -1,13 +1,13 @@
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import { setupFakePlayerId } from "../../support/tester/utils";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
-import ServiceWorkerHelper from "../../../src/helpers/ServiceWorkerHelper";
-import { initializeNewSession, Session, SessionOrigin } from "../../../src/models/Session";
-import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
-import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
-import Database from "../../../src/services/Database";
+import ServiceWorkerHelper from "../../../src/shared/helpers/ServiceWorkerHelper";
+import { PushDeviceRecord } from "../../../src/shared/models/PushDeviceRecord";
+import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
+import Database from "../../../src/shared/services/Database";
+import { initializeNewSession, Session, SessionOrigin } from "../../../src/shared/models/Session";
 
 test.beforeEach(async t => {
   await TestEnvironment.initialize({

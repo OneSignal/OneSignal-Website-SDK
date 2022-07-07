@@ -1,18 +1,18 @@
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment, HttpHttpsEnvironment } from "../../support/sdk/TestEnvironment";
-import { UpdateManager } from "../../../src/managers/UpdateManager";
-import Database from "../../../src/services/Database";
+import { UpdateManager } from "../../../src/shared/managers/UpdateManager";
+import Database from "../../../src/shared/services/Database";
 import Random from "../../support/tester/Random";
-import OneSignalApiShared from "../../../src/OneSignalApiShared";
-import MainHelper from "../../../src/helpers/MainHelper";
-import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind";
-import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import { SubscriptionStateKind } from "../../../src/shared/models/SubscriptionStateKind";
+import { PushDeviceRecord } from "../../../src/shared/models/PushDeviceRecord";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import {
-  markUserAsSubscribed, stubServiceWorkerInstallation 
+  markUserAsSubscribed, stubServiceWorkerInstallation
 } from "../../support/tester/sinonSandboxUtils";
-import { DeviceRecord } from "../../../src/models/DeviceRecord";
+import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
+import OneSignalApiShared from "../../../src/shared/api/OneSignalApiShared";
+import MainHelper from "../../../src/shared/helpers/MainHelper";
 
 // manually create and restore the sandbox
 const sandbox: SinonSandbox = sinon.sandbox.create();

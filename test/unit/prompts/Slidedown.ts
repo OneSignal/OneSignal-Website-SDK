@@ -1,7 +1,7 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import Slidedown from '../../../src/slidedown/Slidedown';
-import { SlidedownPromptOptions, DelayedPromptType } from '../../../src/models/Prompts';
+import Slidedown from '../../../src/page/slidedown/Slidedown';
+import { SlidedownPromptOptions, DelayedPromptType } from '../../../src/shared/models/Prompts';
 import "../../support/polyfills/polyfills";
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import { setUserAgent } from '../../support/tester/browser';

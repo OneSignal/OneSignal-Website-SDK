@@ -1,16 +1,15 @@
 import test from "ava";
-import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonSandbox } from "sinon";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignalApiShared from "../../../src/OneSignalApiShared";
-import { OutcomeRequestData } from "../../../src/models/OutcomeRequestData";
-import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
-import { SubscriptionStateKind } from "../../../src/models/SubscriptionStateKind";
-import MainHelper from "../../../src/helpers/MainHelper";
-import Log from "../../../src/libraries/Log";
-import Database from "../../../src/services/Database";
+import { OutcomeRequestData } from "../../../src/page/models/OutcomeRequestData";
+import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
+import { SubscriptionStateKind } from "../../../src/shared/models/SubscriptionStateKind";
+import Log from "../../../src/shared/libraries/Log";
+import Database from "../../../src/shared/services/Database";
 import timemachine from "timemachine";
 import OutcomeTestHelper from '../../support/tester/OutcomeTestHelper';
+import OneSignalApiShared from "../../../src/shared/api/OneSignalApiShared";
+import MainHelper from "../../../src/shared/helpers/MainHelper";
 
 const OUTCOME_WEIGHT = 55.6;
 const OUTCOME_NAME = "test_outcome";

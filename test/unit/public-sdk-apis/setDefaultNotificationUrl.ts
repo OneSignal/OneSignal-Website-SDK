@@ -1,9 +1,9 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import Database from "../../../src/services/Database";
+import Database from "../../../src/shared/services/Database";
 import Macros from "../../support/tester/Macros";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/OneSignal/OneSignalDeprecated";
 
 test("url cannot be null",
      Macros.expectInvalidArgumentError,

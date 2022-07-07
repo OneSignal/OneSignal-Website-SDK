@@ -1,11 +1,11 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { ExecutionContext, TestInterface } from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
+import OneSignal from '../../../src/OneSignal/OneSignalDeprecated';
 import nock from 'nock';
-import Database from '../../../src/services/Database';
-import { EmailProfile } from '../../../src/models/EmailProfile';
-import { Subscription } from '../../../src/models/Subscription';
+import Database from '../../../src/shared/services/Database';
+import { EmailProfile } from '../../../src/shared/models/EmailProfile';
+import { Subscription } from '../../../src/shared/models/Subscription';
 
 const EMAIL_ID = "dafb31e3-19a5-473c-b319-62082bd696fb";
 const EMAIL = "test@example.com";

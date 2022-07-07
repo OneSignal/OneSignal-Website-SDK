@@ -1,13 +1,13 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { TestInterface } from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/OneSignal/OneSignalDeprecated";
 import sinon, { SinonStub } from 'sinon';
-import Bell from "../../../src/bell/Bell";
-import { InvalidStateError, InvalidStateReason } from "../../../src/errors/InvalidStateError";
+import Bell from "../../../src/page/bell/Bell";
 import MockLauncher from "../../support/mocks/MockLauncher";
-import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
-import { AppConfig } from '../../../src/models/AppConfig';
+import { DynamicResourceLoader, ResourceType, ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
+import { InvalidStateError, InvalidStateReason } from "../../../src/shared/errors/InvalidStateError";
+import { AppConfig } from "../../../src/shared/models/AppConfig";
 
 interface LoadSdkContext {
   appConfig: AppConfig;

@@ -3,35 +3,35 @@ import '../../support/polyfills/polyfills';
 import test from 'ava';
 import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import nock from "nock";
-import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
-import { ServiceWorkerActiveState } from '../../../src/helpers/ServiceWorkerHelper';
-import Path from '../../../src/models/Path';
+import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorkerManager';
+import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWorkerHelper';
 import {
   HttpHttpsEnvironment,
   TestEnvironment,
   TestEnvironmentConfig
 } from '../../support/sdk/TestEnvironment';
-import Context from '../../../src/models/Context';
-import SdkEnvironment from "../../../src/managers/SdkEnvironment";
-import { WindowEnvironmentKind } from "../../../src/models/WindowEnvironmentKind";
+import Context from '../../../src/page/models/Context';
+import SdkEnvironment from "../../../src/shared/managers/SdkEnvironment";
+import { WindowEnvironmentKind } from "../../../src/shared/models/WindowEnvironmentKind";
 
-import OneSignal from '../../../src/OneSignal';
+import OneSignal from '../../../src/OneSignal/OneSignalDeprecated';
 import Random from '../../support/tester/Random';
 import {
   WorkerMessenger,
   WorkerMessengerCommand,
   WorkerMessengerReplyBuffer
-} from "../../../src/libraries/WorkerMessenger";
-import Event from "../../../src/Event";
-import { ServiceWorkerRegistrationError } from '../../../src/errors/ServiceWorkerRegistrationError';
-import OneSignalUtils from "../../../src/utils/OneSignalUtils";
+} from "../../../src/shared/libraries/WorkerMessenger";
+import Event from "../../../src/shared/services/Event";
+import { ServiceWorkerRegistrationError } from '../../../src/shared/errors/ServiceWorkerRegistrationError';
+import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import {
   MockServiceWorkerRegistration
 } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
 import { MockServiceWorker } from "../../support/mocks/service-workers/models/MockServiceWorker";
-import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
-import Environment from '../../../src/Environment';
+import { ConfigIntegrationKind } from "../../../src/shared/models/AppConfig";
+import Environment from '../../../src/shared/helpers/Environment';
 import { MockServiceWorkerContainerWithAPIBan } from '../../support/mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan';
+import Path from '../../../src/shared/models/Path';
 
 class LocalHelpers {
   static getServiceWorkerManager(): ServiceWorkerManager {

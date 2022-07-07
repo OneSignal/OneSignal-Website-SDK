@@ -1,7 +1,7 @@
 import "../../support/polyfills/polyfills";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/libraries/WorkerMessenger';
-import ContextSW from '../../../src/models/ContextSW';
+import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/shared/libraries/WorkerMessenger';
+import ContextSW from '../../../src/shared/models/ContextSW';
 import test from "ava";
 import Random from "../../support/tester/Random";
 

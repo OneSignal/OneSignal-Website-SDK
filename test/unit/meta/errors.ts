@@ -1,6 +1,6 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import OneSignalError from "../../../src/errors/OneSignalError";
+import OneSignalError from "../../../src/shared/errors/OneSignalError";
 import { throws } from "../../support/tester/asyncFunctions";
 
 

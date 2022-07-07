@@ -1,10 +1,10 @@
 import { ExecutionContext } from "ava";
 import { TestEnvironmentConfig, TestEnvironment } from "../../../support/sdk/TestEnvironment";
 import { stubServiceWorkerInstallation } from "../../../support/tester/sinonSandboxUtils";
-import { SlidedownPromptOptions, DelayedPromptType } from "../../../../src/models/Prompts";
 import Random from "../../../support/tester/Random";
 import { SinonSandbox } from "sinon";
-import { CHANNEL_CAPTURE_CONTAINER_CSS_IDS } from "../../../../src/slidedown/constants";
+import { CHANNEL_CAPTURE_CONTAINER_CSS_IDS } from "../../../../src/shared/slidedown/constants";
+import { SlidedownPromptOptions, DelayedPromptType } from "../../../../src/shared/models/Prompts";
 
 /** HELPERS */
 const appId = Random.getRandomUuid();

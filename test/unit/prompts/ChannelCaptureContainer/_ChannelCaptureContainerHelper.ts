@@ -1,7 +1,7 @@
 import { SinonSandbox } from "sinon";
 import { CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
-  CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES } from "../../../../src/slidedown/constants";
-import ChannelCaptureContainer from "../../../../src/slidedown/ChannelCaptureContainer";
+  CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES } from "../../../../src/shared/slidedown/constants";
+import ChannelCaptureContainer from "../../../../src/page/slidedown/ChannelCaptureContainer";
 
 export class ChannelCaptureContainerHelper {
   static stubScriptLoading(sandbox: SinonSandbox): void {

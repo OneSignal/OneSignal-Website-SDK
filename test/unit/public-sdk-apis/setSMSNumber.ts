@@ -1,7 +1,7 @@
 import test from "ava";
-import { InvalidArgumentError } from "../../../src/errors/InvalidArgumentError";
-import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
-import Database from "../../../src/services/Database";
+import { InvalidArgumentError } from "../../../src/shared/errors/InvalidArgumentError";
+import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
+import Database from "../../../src/shared/services/Database";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
 import { setupFakePlayerId } from "../../support/tester/utils";

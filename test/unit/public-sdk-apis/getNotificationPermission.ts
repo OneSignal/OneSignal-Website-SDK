@@ -1,8 +1,8 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from "../../../src/OneSignal";
-import Context from '../../../src/models/Context';
+import OneSignal from "../../../src/OneSignal/OneSignalDeprecated";
+import Context from '../../../src/page/models/Context';
 import Random from "../../support/tester/Random";
 
 test.beforeEach(async t => {

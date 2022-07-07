@@ -1,9 +1,8 @@
 import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
-import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind, ServerAppConfig } from '../../../src/shared/models/AppConfig';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
-import ConfigManager from '../../../src/managers/ConfigManager';
+import ConfigManager from '../../../src/page/managers/ConfigManager';
 
 interface ConfigContext {
   overrideServerConfig: ServerAppConfig;

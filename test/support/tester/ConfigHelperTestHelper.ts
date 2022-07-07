@@ -1,5 +1,5 @@
-import { ConfigHelper } from "../../../src/helpers/ConfigHelper";
-import { AppConfig, ConfigIntegrationKind, ServerAppConfig } from "../../../src/models/AppConfig";
+import { ConfigHelper } from "../../../src/shared/helpers/ConfigHelper";
+import { AppConfig, ConfigIntegrationKind, ServerAppConfig } from "../../../src/shared/models/AppConfig";
 import { TestEnvironment } from "../sdk/TestEnvironment";
 
 /**

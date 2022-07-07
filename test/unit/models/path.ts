@@ -1,6 +1,5 @@
 import test from "ava";
-import Path from '../../../src/models/Path';
-
+import Path from "../../../src/shared/models/Path";
 
 test(`should return correct components for a simple web path`, async t => {
   const path = new Path('/web-folder/assets/service-worker.js');

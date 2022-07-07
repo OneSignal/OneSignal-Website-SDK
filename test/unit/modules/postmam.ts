@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 import anyTest, { TestInterface } from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import Postmam from '../../../src/Postmam';
+import Postmam from '../../../src/shared/services/Postmam';
 
 interface PostmamContext{
   originalMessageChannel: MessageChannel;
