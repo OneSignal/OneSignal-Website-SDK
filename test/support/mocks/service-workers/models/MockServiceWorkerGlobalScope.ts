@@ -2,7 +2,7 @@ import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
 import { MockWorkerNavigator } from "./MockWorkerNavigator";
 import { DispatchEventUtil } from "../utils/DispatchEventUtil";
 import { MockClients } from "./MockClients";
-import NotImplementedError from "../../../../../src/errors/NotImplementedError";
+import NotImplementedError from "../../../../../src/shared/errors/NotImplementedError";
 
 
 /**

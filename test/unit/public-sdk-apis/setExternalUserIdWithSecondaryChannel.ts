@@ -1,5 +1,5 @@
 import test from "ava";
-import Database from "../../../src/services/Database";
+import Database from "../../../src/shared/services/Database";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
 import { setupFakePlayerId } from "../../support/tester/utils";

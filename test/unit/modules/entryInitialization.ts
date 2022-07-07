@@ -1,17 +1,17 @@
 import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import { HttpHttpsEnvironment, TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { OneSignalStubES5 } from "../../../src/utils/OneSignalStubES5";
-import { OneSignalStubES6 } from "../../../src/utils/OneSignalStubES6";
+import { OneSignalStubES5 } from "../../../src/page/utils/OneSignalStubES5";
+import { OneSignalStubES6 } from "../../../src/page/utils/OneSignalStubES6";
 
 import  '../../support/sdk/TestEnvironment';
-import { ReplayCallsOnOneSignal } from "../../../src/utils/ReplayCallsOnOneSignal";
-import { ProcessOneSignalPushCalls } from '../../../src/utils/ProcessOneSignalPushCalls';
-import { OneSignalShimLoader } from "../../../src/utils/OneSignalShimLoader";
+import { ReplayCallsOnOneSignal } from "../../../src/page/utils/ReplayCallsOnOneSignal";
+import { ProcessOneSignalPushCalls } from '../../../src/page/utils/ProcessOneSignalPushCalls';
+import { OneSignalShimLoader } from "../../../src/page/utils/OneSignalShimLoader";
 import { SinonSandbox } from "sinon";
 import sinon from 'sinon';
-import Log from "../../../src/libraries/Log";
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
+import Log from "../../../src/sw/libraries/Log";
 
 let sandbox: SinonSandbox;
 

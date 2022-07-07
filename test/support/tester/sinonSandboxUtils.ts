@@ -1,19 +1,19 @@
 import { SinonSandbox } from "sinon";
 
 import { createSubscription } from "../../support/tester/utils";
-import Database from "../../../src/services/Database";
-import InitHelper from "../../../src/helpers/InitHelper";
+import Database from "../../../src/shared/services/Database";
+import InitHelper from "../../../src/shared/helpers/InitHelper";
 import {
   MockServiceWorkerRegistration
 } from "../../support/mocks/service-workers/models/MockServiceWorkerRegistration";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import PermissionManager from "../../../src/managers/PermissionManager";
-import { ServiceWorkerActiveState } from "../../../src/helpers/ServiceWorkerHelper";
-import { ServiceWorkerManager } from "../../../src/managers/ServiceWorkerManager";
-import { Subscription } from "../../../src/models/Subscription";
-import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
+import PermissionManager from "../../../src/shared/managers/PermissionManager";
+import { ServiceWorkerActiveState } from "../../../src/shared/helpers/ServiceWorkerHelper";
+import { ServiceWorkerManager } from "../../../src/shared/managers/ServiceWorkerManager";
+import { Subscription } from "../../../src/shared/models/Subscription";
+import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { WorkerMessenger } from "../../../src/libraries/WorkerMessenger";
+import { WorkerMessenger } from "../../../src/shared/libraries/WorkerMessenger";
 
 export async function markUserAsOptedOut(sinonSandbox: SinonSandbox, playerId?: string) {
   const subscription = new Subscription();

@@ -4,20 +4,20 @@ import sinon, { SinonSandbox, SinonStub } from 'sinon';
 import {
   TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig
 } from '../../support/sdk/TestEnvironment';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import { UpdateManager } from '../../../src/managers/UpdateManager';
-import { PageViewManager } from "../../../src/managers/PageViewManager";
-import { SubscriptionManager } from "../../../src/managers/SubscriptionManager";
-import InitHelper from "../../../src/helpers/InitHelper";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
+import { UpdateManager } from '../../../src/shared/managers/UpdateManager';
+import { PageViewManager } from "../../../src/shared/managers/PageViewManager";
+import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
+import InitHelper from "../../../src/shared/helpers/InitHelper";
 import {
   markUserAsOptedOut, markUserAsSubscribed, markUserAsSubscribedOnHttp,
   stubServiceWorkerInstallation
 } from "../../support/tester/sinonSandboxUtils";
 import { createSubscription } from "../../support/tester/utils";
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
-import { DelayedPromptType } from '../../../src/models/Prompts';
+import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();

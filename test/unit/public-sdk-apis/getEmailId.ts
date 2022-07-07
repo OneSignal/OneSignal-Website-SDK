@@ -3,7 +3,7 @@ import test from "ava";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import OneSignal from "../../../src/OneSignal";
 
-import { EmailProfile } from "../../../src/models/EmailProfile";
+import { EmailProfile } from "../../../src/shared/models/EmailProfile";
 import Random from "../../support/tester/Random";
 
 

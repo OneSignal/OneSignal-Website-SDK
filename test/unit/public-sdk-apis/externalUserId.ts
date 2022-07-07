@@ -1,12 +1,11 @@
 import test from "ava";
-import OneSignal from "../../../src/OneSignal";
 import sinon, { SinonSandbox } from "sinon";
-import Event from "../../../src/Event";
-import OneSignalUtils from "../../../src/utils/OneSignalUtils";
+import Event from "../../../src/shared/services/Event";
+import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import * as Utils from "../../../src/utils";
-import { InvalidArgumentError } from '../../../src/errors/InvalidArgumentError';
-import OneSignalApiShared from "../../../src/OneSignalApiShared";
+import * as Utils from "../../../src/shared/utils/utils";
+import { InvalidArgumentError } from '../../../src/shared/errors/InvalidArgumentError';
+import OneSignalApiShared from "../../../src/shared/api/OneSignalApiShared";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const externalUserId = "external_email@example.com";

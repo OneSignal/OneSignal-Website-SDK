@@ -1,4 +1,4 @@
-import Launcher from "../../../src/bell/Launcher";
+import Launcher from "../../../src/page/bell/Launcher";
 
 
 export default class MockLauncher extends Launcher {

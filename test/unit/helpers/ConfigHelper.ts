@@ -1,13 +1,13 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
-import { AppUserConfig } from '../../../src/models/AppConfig';
+import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
+import { AppUserConfig } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { ConfigHelper } from '../../../src/helpers/ConfigHelper';
+import { ConfigHelper } from '../../../src/shared/helpers/ConfigHelper';
 import { getFinalAppConfig } from '../../../test/support/tester/ConfigHelperTestHelper';
 import sinon, { SinonSandbox } from 'sinon';
-import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
+import { OneSignalUtils } from '../../../src/shared/utils/OneSignalUtils';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 
