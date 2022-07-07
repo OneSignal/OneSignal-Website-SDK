@@ -1,4 +1,4 @@
-import Log from "../../libraries/Log";
+import Log from "../libraries/Log";
 
 export default class ServiceWorkerUtilHelper {
   // Get the service worker based on a relative scope.
