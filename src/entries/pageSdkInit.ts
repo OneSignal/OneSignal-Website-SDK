@@ -3,10 +3,10 @@
  * Loaded from OneSignalSDK.js only if the browser supports push.
  */
 
-import Log from "../libraries/Log";
-import { incrementSdkLoadCount, getSdkLoadCount } from "../utils";
-import { ReplayCallsOnOneSignal } from "../utils/ReplayCallsOnOneSignal";
-import { OneSignalStubES6 } from "../utils/OneSignalStubES6";
+import { incrementSdkLoadCount, getSdkLoadCount } from "../shared/utils/utils";
+import { ReplayCallsOnOneSignal } from "../page/utils/ReplayCallsOnOneSignal";
+import { OneSignalStubES6 } from "../page/utils/OneSignalStubES6";
+import Log from "../shared/libraries/Log";
 
 function oneSignalSdkInit() {
   incrementSdkLoadCount();
