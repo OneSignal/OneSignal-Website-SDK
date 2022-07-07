@@ -1,63 +1,56 @@
-import bowser from 'bowser';
-import Environment from './Environment';
-import { InvalidArgumentError, InvalidArgumentReason } from './errors/InvalidArgumentError';
-import { InvalidStateError, InvalidStateReason } from './errors/InvalidStateError';
-import { NotSubscribedError, NotSubscribedReason } from './errors/NotSubscribedError';
-import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
-import Event from './Event';
-import EventHelper from './helpers/EventHelper';
-import HttpHelper from './helpers/HttpHelper';
-import InitHelper, { RegisterOptions } from './helpers/InitHelper';
-import MainHelper from './helpers/MainHelper';
-import SubscriptionHelper from './helpers/SubscriptionHelper';
-import LimitStore from './LimitStore';
-import AltOriginManager from './managers/AltOriginManager';
-import LegacyManager from './managers/LegacyManager';
-import SdkEnvironment from './managers/SdkEnvironment';
-import { AppConfig, AppUserConfig } from './models/AppConfig';
-import Context from './models/Context';
-import { Notification } from "./models/Notification";
-import { NotificationActionButton } from './models/NotificationActionButton';
-import { NotificationPermission } from './models/NotificationPermission';
-import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
-import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
-import ProxyFrame from './modules/frames/ProxyFrame';
-import ProxyFrameHost from './modules/frames/ProxyFrameHost';
-import SubscriptionModal from './modules/frames/SubscriptionModal';
-import SubscriptionModalHost from './modules/frames/SubscriptionModalHost';
-import SubscriptionPopup from './modules/frames/SubscriptionPopup';
-import SubscriptionPopupHost from './modules/frames/SubscriptionPopupHost';
-import OneSignalApi from './OneSignalApi';
-import Slidedown from './slidedown/Slidedown';
-import Database from './services/Database';
+import bowser from "bowser";
+import { AuthHashOptionsValidatorHelper } from "./page/helpers/AuthHashOptionsValidatorHelper";
+import { EnvironmentInfoHelper } from "./page/helpers/EnvironmentInfoHelper";
+import AltOriginManager from "./page/managers/AltOriginManager";
+import ConfigManager from "./page/managers/ConfigManager";
+import LegacyManager from "./page/managers/LegacyManager";
+import { AutoPromptOptions } from "./page/managers/PromptsManager";
+import Context from "./page/models/Context";
+import { EnvironmentInfo } from "./page/models/EnvironmentInfo";
+import { NotificationActionButton } from "./page/models/NotificationActionButton";
+import { SecondaryChannelDeviceRecord } from "./shared/models/SecondaryChannelDeviceRecord";
+import { TagsObject } from "./page/models/Tags";
+import ProxyFrame from "./page/modules/frames/ProxyFrame";
+import ProxyFrameHost from "./page/modules/frames/ProxyFrameHost";
+import SubscriptionModal from "./page/modules/frames/SubscriptionModal";
+import SubscriptionModalHost from "./page/modules/frames/SubscriptionModalHost";
+import SubscriptionPopup from "./page/modules/frames/SubscriptionPopup";
+import SubscriptionPopupHost from "./page/modules/frames/SubscriptionPopupHost";
+import TimedLocalStorage from "./page/modules/TimedLocalStorage";
+import Slidedown from "./page/slidedown/Slidedown";
+import { ProcessOneSignalPushCalls } from "./page/utils/ProcessOneSignalPushCalls";
+import { ValidatorUtils } from "./page/utils/ValidatorUtils";
+import OneSignalApi from "./shared/api/OneSignalApi";
+import { InvalidArgumentError, InvalidArgumentReason } from "./shared/errors/InvalidArgumentError";
+import { InvalidStateError, InvalidStateReason } from "./shared/errors/InvalidStateError";
+import { NotSubscribedError, NotSubscribedReason } from "./shared/errors/NotSubscribedError";
+import { SdkInitError, SdkInitErrorKind } from "./shared/errors/SdkInitError";
+import Environment from "./shared/helpers/Environment";
+import EventHelper from "./shared/helpers/EventHelper";
+import HttpHelper from "./shared/helpers/HttpHelper";
+import InitHelper, { RegisterOptions } from "./shared/helpers/InitHelper";
+import MainHelper from "./shared/helpers/MainHelper";
+import OutcomesHelper from "./shared/helpers/OutcomesHelper";
+import SubscriptionHelper from "./shared/helpers/SubscriptionHelper";
+import Emitter, { EventHandler } from "./shared/libraries/Emitter";
+import Log from "./shared/libraries/Log";
+import SdkEnvironment from "./shared/managers/SdkEnvironment";
+import { SessionManager } from "./shared/managers/sessionManager/SessionManager";
+import { AppUserConfig, AppConfig } from "./shared/models/AppConfig";
+import { DeviceRecord } from "./shared/models/DeviceRecord";
+import { NotificationPermission } from "./shared/models/NotificationPermission";
+import { OutcomeAttributionType } from "./shared/models/Outcomes";
+import { DelayedPromptType, AppUserConfigNotifyButton } from "./shared/models/Prompts";
+import { UpdatePlayerOptions } from "./shared/models/UpdatePlayerOptions";
+import { WindowEnvironmentKind } from "./shared/models/WindowEnvironmentKind";
+import Database from "./shared/services/Database";
+import IndexedDb from "./shared/services/IndexedDb";
+import LimitStore from "./shared/services/LimitStore";
+import LocalStorage from "./shared/utils/LocalStorage";
+import OneSignalUtils from "./shared/utils/OneSignalUtils";
+import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "./shared/utils/utils";
+import OneSignalEvent from "./shared/services/Event";
 
-import IndexedDb from './services/IndexedDb';
-import {
-  awaitOneSignalInitAndSupported,
-  executeCallback,
-  getConsoleStyle,
-  isValidEmail,
-  logMethodCall,
-} from './utils';
-import { ValidatorUtils } from './utils/ValidatorUtils';
-import { DeviceRecord } from './models/DeviceRecord';
-import TimedLocalStorage from './modules/TimedLocalStorage';
-import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
-import Emitter, { EventHandler } from './libraries/Emitter';
-import Log from './libraries/Log';
-import ConfigManager from "./managers/ConfigManager";
-import OneSignalUtils from "./utils/OneSignalUtils";
-import { ProcessOneSignalPushCalls } from "./utils/ProcessOneSignalPushCalls";
-import { AutoPromptOptions } from "./managers/PromptsManager";
-import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
-import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
-import { SessionManager } from './managers/sessionManager/page/SessionManager';
-import OutcomesHelper from "./helpers/shared/OutcomesHelper";
-import { OutcomeAttributionType } from "./models/Outcomes";
-import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
-import LocalStorage from './utils/LocalStorage';
-import { AuthHashOptionsValidatorHelper } from './helpers/page/AuthHashOptionsValidatorHelper';
-import { TagsObject } from './models/Tags';
 
 export default class OneSignal {
   /**
@@ -262,7 +255,7 @@ export default class OneSignal {
       await InitHelper.initSaveState();
       await InitHelper.saveInitOptions();
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
-        await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+        await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
       else
         await InitHelper.internalInit();
     }
@@ -868,7 +861,7 @@ export default class OneSignal {
   static store = LimitStore;
   static environment = Environment;
   static database = Database;
-  static event = Event;
+  static event = OneSignalEvent;
   static browser = bowser;
   static slidedown: Slidedown | null = null;
   static log = Log;
