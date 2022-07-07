@@ -1,33 +1,36 @@
 import bowser from "bowser";
 
-import Environment from "../Environment";
-import { WorkerMessenger, WorkerMessengerCommand, WorkerMessengerMessage } from "../libraries/WorkerMessenger";
-import ContextSW from "../models/ContextSW";
-import OneSignalApiBase from "../OneSignalApiBase";
-import OneSignalApiSW from "../OneSignalApiSW";
-import Database from "../services/Database";
+import Environment from "../../shared/helpers/Environment";
+import ContextSW from "../../shared/models/ContextSW";
+import Database from "../../shared/services/Database";
 
-import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
-import { RawPushSubscription } from "../models/RawPushSubscription";
-import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
-import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import {
-  UpsertSessionPayload, DeactivateSessionPayload,
-  PageVisibilityRequest, PageVisibilityResponse, SessionStatus
-} from "../models/Session";
-import Log from "../libraries/sw/Log";
-import { ConfigHelper } from "../helpers/ConfigHelper";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import { Utils } from "../context/shared/utils/Utils";
+import { UnsubscriptionStrategy } from "../../shared/models/UnsubscriptionStrategy";
+import { SubscriptionStateKind } from "../../shared/models/SubscriptionStateKind";
+import { SubscriptionStrategyKind } from "../../shared/models/SubscriptionStrategyKind";
+import { PushDeviceRecord } from "../../shared/models/PushDeviceRecord";
+import Log from "../libraries/Log";
+import { ConfigHelper } from "../../shared/helpers/ConfigHelper";
+import { OneSignalUtils } from "../../shared/utils/OneSignalUtils";
+import { Utils } from "../../shared/context/Utils";
 import {
   OSWindowClient, OSServiceWorkerFields
 } from "./types";
-import ServiceWorkerHelper from "../helpers/ServiceWorkerHelper";
-import { NotificationReceived, NotificationClicked } from "../models/Notification";
-import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
-import { DeviceRecord } from '../models/DeviceRecord';
-import { awaitableTimeout } from "../utils/AwaitableTimeout";
+import ServiceWorkerHelper from "../../shared/helpers/ServiceWorkerHelper";
+import { cancelableTimeout } from "../helpers/CancelableTimeout";
+import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
+import { NotificationReceived, NotificationClicked } from "../../shared/models/Notification";
+import {
+  UpsertSessionPayload,
+  DeactivateSessionPayload,
+  PageVisibilityResponse,
+  PageVisibilityRequest,
+  SessionStatus
+} from "../../shared/models/Session";
+import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
+import OneSignalApiSW from "../../../src/shared/api/OneSignalApiSW";
+import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from "../../../src/shared/libraries/WorkerMessenger";
+import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
+import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
