@@ -1,7 +1,7 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
-import { isPushNotificationsSupported } from "../../../src/context/browser/utils/BrowserSupportsPush";
+import { isPushNotificationsSupported } from "../../../src/page/utils/BrowserSupportsPush";
 import sinon from 'sinon';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 

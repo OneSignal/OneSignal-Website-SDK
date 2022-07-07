@@ -1,8 +1,8 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import ConfirmationToast from '../../../src/slidedown/ConfirmationToast';
-import { TOAST_IDS } from '../../../src/slidedown/constants';
-import { getDomElementOrStub } from '../../../src/utils';
+import ConfirmationToast from '../../../src/page/slidedown/ConfirmationToast';
+import { TOAST_IDS } from '../../../src/shared/slidedown/constants';
+import { getDomElementOrStub } from '../../../src/shared/utils/utils';
 import { BrowserUserAgent, TestEnvironment, HttpHttpsEnvironment } from '../../../test/support/sdk/TestEnvironment';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();

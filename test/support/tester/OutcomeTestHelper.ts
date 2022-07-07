@@ -1,7 +1,7 @@
-import { NotificationReceived, NotificationClicked } from '../../../src/models/Notification';
 import Random from '../../support/tester/Random';
-import Database from '../../../src/services/Database';
-import { initializeNewSession, Session } from '../../../src/models/Session';
+import Database from '../../../src/shared/services/Database';
+import { initializeNewSession, Session } from '../../../src/shared/models/Session';
+import { NotificationClicked, NotificationReceived } from '../../../src/shared/models/Notification';
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 

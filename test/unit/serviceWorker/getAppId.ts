@@ -1,9 +1,9 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import { ServiceWorker } from '../../../src/service-worker/ServiceWorker';
+import { ServiceWorker } from '../../../src/sw/serviceWorker/ServiceWorker';
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 
-import Database from '../../../src/services/Database';
+import Database from '../../../src/shared/services/Database';
 import Random from '../../support/tester/Random';
 
 

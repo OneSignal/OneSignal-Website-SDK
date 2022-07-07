@@ -1,8 +1,8 @@
 import test from "ava";
-import { SessionManager } from "../../../src/managers/sessionManager/page/SessionManager";
-import { DeliveryPlatformKind } from "../../../src/models/DeliveryPlatformKind";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import Database from "../../../src/services/Database";
+import { DeliveryPlatformKind } from "../../../src/shared/models/DeliveryPlatformKind";
+import { SessionManager } from "../../../src/shared/managers/sessionManager/SessionManager";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
+import Database from "../../../src/shared/services/Database";
 import { HttpHttpsEnvironment, TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { NockOneSignalHelper } from "../../support/tester/NockOneSignalHelper";
 import { setupFakePlayerId } from "../../support/tester/utils";

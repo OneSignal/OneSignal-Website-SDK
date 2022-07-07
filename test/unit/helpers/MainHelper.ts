@@ -1,12 +1,10 @@
 import test, { ExecutionContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
-
-import MainHelper from "../../../src/helpers/MainHelper";
-import OneSignal from "../../../src/OneSignal";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
-import { SubscriptionStateKind } from '../../../src/models/SubscriptionStateKind';
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
+import { SubscriptionStateKind } from '../../../src/shared/models/SubscriptionStateKind';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { OneSignalUtils } from '../../../src/utils/OneSignalUtils';
+import { OneSignalUtils } from '../../../src/shared/utils/OneSignalUtils';
+import MainHelper from "../../../src/shared/helpers/MainHelper";
 
 let sinonSandbox: SinonSandbox;
 

@@ -1,48 +1,48 @@
 import "../../support/polyfills/polyfills";
-import OneSignal from "../../../src/OneSignal";
 import Random from "../tester/Random";
-import Database from "../../../src/services/Database";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import Database from "../../../src/shared/services/Database";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import jsdom from 'jsdom';
 // @ts-ignore
 import DOMStorage from "dom-storage";
 // @ts-ignore
 import fetch from "node-fetch";
 
-import SdkEnvironment from '../../../src/managers/SdkEnvironment';
-import { TestEnvironmentKind } from '../../../src/models/TestEnvironmentKind';
+import SdkEnvironment from '../../../src/shared/managers/SdkEnvironment';
+import { TestEnvironmentKind } from '../../../src/shared/models/TestEnvironmentKind';
 import { AppConfig, ServerAppConfig, NotificationClickMatchBehavior,
   NotificationClickActionBehavior, AppUserConfig, ConfigIntegrationKind }
-  from '../../../src/models/AppConfig';
-import Context from "../../../src/models/Context";
-import Emitter from '../../../src/libraries/Emitter';
-import ConfigManager from '../../../src/managers/ConfigManager';
-import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
+  from '../../../src/shared/models/AppConfig';
+import Context from "../../../src/page/models/Context";
+import Emitter from '../../../src/shared/libraries/Emitter';
 import { MockServiceWorkerGlobalScope } from "../mocks/service-workers/models/MockServiceWorkerGlobalScope";
 import { MockServiceWorker } from "../mocks/service-workers/models/MockServiceWorker";
 import { MockPushManager } from "../mocks/service-workers/models/MockPushManager";
 import { MockServiceWorkerContainerWithAPIBan } from "../mocks/service-workers/models/MockServiceWorkerContainerWithAPIBan";
 import { addServiceWorkerGlobalScopeToGlobal } from "../polyfills/polyfills";
 import deepmerge = require("deepmerge");
-import { RecursivePartial } from '../../../src/context/shared/utils/Utils';
-import { EnvironmentInfo } from  '../../../src/context/browser/models/EnvironmentInfo';
-import { EnvironmentInfoHelper } from '../../../src/context/browser/helpers/EnvironmentInfoHelper';
+import { RecursivePartial } from '../../../src/shared/context/Utils';
+import { EnvironmentInfo } from  '../../../src/page/models/EnvironmentInfo';
+import { EnvironmentInfoHelper } from '../../../src/page/helpers/EnvironmentInfoHelper';
 import { ExecutionContext } from 'ava';
 import {
   InitTestHelper,
   stubMessageChannel,
   mockIframeMessaging,
   mockGetIcon } from '../tester/utils';
-import OneSignalApiBase from '../../../src/OneSignalApiBase';
-import { SessionManager } from '../../../src/managers/sessionManager/page/SessionManager';
-import TagManager from '../../../src/managers/tagManager/page/TagManager';
-import { DynamicResourceLoader, ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
+import { SessionManager } from '../../../src/shared/managers/sessionManager/SessionManager';
+import TagManager from '../../../src/page/managers/tagManager/TagManager';
+import { DynamicResourceLoader, ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
 import { SinonSandbox } from 'sinon';
-import { ServiceWorkerManager } from '../../../src/managers/ServiceWorkerManager';
-import { getSlidedownElement } from '../../../src/slidedown/SlidedownElement';
-import { DelayedPromptType } from '../../../src/models/Prompts';
+import { ServiceWorkerManager } from '../../../src/shared/managers/ServiceWorkerManager';
+import { getSlidedownElement } from '../../../src/page/slidedown/SlidedownElement';
+import { DelayedPromptType } from '../../../src/shared/models/Prompts';
 import MockNotification from "../mocks/MockNotification";
-import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/slidedown/constants";
+import ConfigManager from "../../../src/page/managers/ConfigManager";
+import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
+import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
+import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
+import OneSignal from "../../../src/OneSignal";
 
 // NodeJS.Global
 declare var global: any;

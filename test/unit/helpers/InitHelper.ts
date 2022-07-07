@@ -1,8 +1,8 @@
 import "../../support/polyfills/polyfills";
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import InitHelper from "../../../src/helpers/InitHelper";
-import OneSignalUtils from "../../../src/utils/OneSignalUtils";
+import InitHelper from "../../../src/shared/helpers/InitHelper";
+import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import { TestEnvironment } from '../../support/sdk/TestEnvironment';
 import { stubMessageChannel } from '../../support/tester/utils';
 
