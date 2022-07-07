@@ -1,6 +1,6 @@
-import Emitter, { EventHandler } from "src/libraries/Emitter";
-import { AppUserConfig } from "../AppConfig";
-import { LogLevel } from "../LogLevel";
+import Emitter, { EventHandler } from "../shared/libraries/Emitter";
+import { AppUserConfig } from "../shared/models/AppConfig";
+import { LogLevel } from "../page/models/LogLevel";
 import { NotificationsNamespace } from "./NotificationsNamespace";
 import { SlidedownNamespace } from "./SlidedownNamespace";
 import { User } from "./User";
