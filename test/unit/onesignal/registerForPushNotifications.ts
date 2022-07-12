@@ -2,8 +2,8 @@ import "../../support/polyfills/polyfills";
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import InitHelper from "../../../src/helpers/InitHelper";
-import Event from '../../../src/Event';
+import InitHelper from "../../../src/shared/helpers/InitHelper";
+import Event from '../../../src/shared/services/Event';
 
 let sandbox: SinonSandbox;
 

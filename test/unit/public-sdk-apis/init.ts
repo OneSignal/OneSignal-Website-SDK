@@ -1,15 +1,15 @@
 import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import sinon, { SinonSandbox } from 'sinon';
-import Database from "../../../src/services/Database";
+import Database from "../../../src/shared/services/Database";
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import Context from '../../../src/models/Context';
-import InitHelper from '../../../src/helpers/InitHelper';
-import { AppConfig } from '../../../src/models/AppConfig';
+import Context from '../../../src/page/models/Context';
+import InitHelper from '../../../src/shared/helpers/InitHelper';
+import { AppConfig } from '../../../src/shared/models/AppConfig';
 import nock from 'nock';
 import Random from "../../support/tester/Random";
-import OneSignalApiBase from "../../../src/OneSignalApiBase";
-import { SdkInitError } from "../../../src/errors/SdkInitError";
+import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
+import { SdkInitError } from "../../../src/shared/errors/SdkInitError";
 import {
   InitTestHelper, AssertInitSDK
 } from '../../support/tester/utils';

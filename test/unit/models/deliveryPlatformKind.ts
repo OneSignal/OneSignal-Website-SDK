@@ -1,5 +1,5 @@
 import test from "ava";
-import { DeliveryPlatformKind } from '../../../src/models/DeliveryPlatformKind';
+import { DeliveryPlatformKind } from '../../../src/shared/models/DeliveryPlatformKind';
 
 
 test(`delivery platform constants should be correct`, async t => {

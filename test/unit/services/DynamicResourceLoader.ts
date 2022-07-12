@@ -1,6 +1,6 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
-import { DynamicResourceLoader, ResourceType, ResourceLoadState } from "../../../src/services/DynamicResourceLoader";
+import { DynamicResourceLoader, ResourceType, ResourceLoadState } from "../../../src/page/services/DynamicResourceLoader";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 
 

@@ -2,8 +2,8 @@ import test, { ExecutionContext } from 'ava';
 import sinon, { SinonSandbox, SinonSpy } from 'sinon';
 import nock from 'nock';
 
-import Database from '../../../../src/services/Database';
-import { ServiceWorker as OSServiceWorker } from "../../../../src/service-worker/ServiceWorker";
+import Database from '../../../../src/shared/services/Database';
+import { ServiceWorker as OSServiceWorker } from "../../../../src/sw/serviceWorker/ServiceWorker";
 
 import { TestEnvironment, BrowserUserAgent } from "../../../support/sdk/TestEnvironment";
 import { setUserAgent } from '../../../support/tester/browser';
@@ -11,12 +11,12 @@ import Random from '../../../support/tester/Random';
 import { MockServiceWorkerGlobalScope }
   from '../../../support/mocks/service-workers/models/MockServiceWorkerGlobalScope';
 import MockNotification from '../../../support/mocks/MockNotification';
-import { Subscription } from '../../../../src/models/Subscription';
+import { Subscription } from '../../../../src/shared/models/Subscription';
 import { MockPushEvent } from '../../../support/mocks/service-workers/models/MockPushEvent';
 import { MockPushMessageData } from '../../../support/mocks/service-workers/models/MockPushMessageData';
-import OneSignalUtils from '../../../../src/utils/OneSignalUtils';
+import OneSignalUtils from '../../../../src/shared/utils/OneSignalUtils';
 import { setupFakePlayerId } from '../../../support/tester/utils';
-import * as awaitableTimeout from '../../../../src/utils/AwaitableTimeout';
+import * as awaitableTimeout from '../../../../src/shared/utils/AwaitableTimeout';
 import { NockOneSignalHelper } from '../../../../test/support/tester/NockOneSignalHelper';
 
 declare var self: MockServiceWorkerGlobalScope;

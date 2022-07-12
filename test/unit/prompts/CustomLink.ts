@@ -1,16 +1,16 @@
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
-import OneSignalUtils from '../../../src/utils/OneSignalUtils';
-import { ResourceLoadState } from '../../../src/services/DynamicResourceLoader';
-import { hasCssClass } from '../../../src/utils';
-import { DismissHelper } from '../../../src/helpers/DismissHelper';
-import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from '../../../src/slidedown/constants';
-import { CustomLinkManager } from '../../../src/managers/CustomLinkManager';
+import { AppUserConfigCustomLinkOptions } from '../../../src/shared/models/Prompts';
+import OneSignalUtils from '../../../src/shared/utils/OneSignalUtils';
+import { ResourceLoadState } from '../../../src/page/services/DynamicResourceLoader';
+import { hasCssClass } from '../../../src/shared/utils/utils';
+import { DismissHelper } from '../../../src/shared/helpers/DismissHelper';
+import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from '../../../src/shared/slidedown/constants';
+import { CustomLinkManager } from '../../../src/shared/managers/CustomLinkManager';
 import EventsTestHelper from '../../support/tester/EventsTestHelper';
 import { simulateEventOfTypeOnElement } from '../../support/tester/utils';
-import PermissionManager from '../../../src/managers/PermissionManager';
+import PermissionManager from '../../../src/shared/managers/PermissionManager';
 
 const sandbox: SinonSandbox = sinon.sandbox.create();
 let config: AppUserConfigCustomLinkOptions;

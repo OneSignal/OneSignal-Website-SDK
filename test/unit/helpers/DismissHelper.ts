@@ -1,7 +1,7 @@
 import sinon, { SinonSandbox } from "sinon";
 import test, { ExecutionContext } from "ava";
-import { ConfigIntegrationKind } from "../../../src/models/AppConfig";
-import { NotificationPermission } from "../../../src/models/NotificationPermission";
+import { ConfigIntegrationKind } from "../../../src/shared/models/AppConfig";
+import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import {
   TestEnvironmentConfig,
   HttpHttpsEnvironment,
@@ -10,12 +10,12 @@ import {
 import EventsTestHelper from "../../support/tester/EventsTestHelper";
 import { mockGetIcon } from "../../support/tester/utils";
 import { SlidedownPromptingTestHelper } from "../prompts/SlidedownPrompting/_SlidedownPromptingTestHelpers";
-import { DismissHelper } from "../../../src/helpers/DismissHelper";
-import { SlidedownManager } from "../../../src/managers/slidedownManager/SlidedownManager";
-import TimedLocalStorage from "../../../src/modules/TimedLocalStorage";
-import { DismissTimeKey } from "../../../src/models/Dismiss";
-import Slidedown from "../../../src/slidedown/Slidedown";
-import { AutoPromptOptions } from "../../../src/managers/PromptsManager";
+import { DismissHelper } from "../../../src/shared/helpers/DismissHelper";
+import { SlidedownManager } from "../../../src/page/managers/slidedownManager/SlidedownManager";
+import { DismissTimeKey } from "../../../src/page/models/Dismiss";
+import Slidedown from "../../../src/page/slidedown/Slidedown";
+import { AutoPromptOptions } from "../../../src/page/managers/PromptsManager";
+import TimedLocalStorage from "../../../src/page/modules/TimedLocalStorage";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
