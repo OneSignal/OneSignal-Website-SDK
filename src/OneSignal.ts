@@ -910,7 +910,6 @@ export default class OneSignal {
   static SERVICE_WORKER_PARAM: { scope: string } = { scope: '/' };
   static _LOGGING = false;
   static LOGGING = false;
-  static _usingNativePermissionHook = false;
   static _initCalled = false;
   static __initAlreadyCalled = false;
   static context: Context;
