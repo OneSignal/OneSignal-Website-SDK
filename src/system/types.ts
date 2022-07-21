@@ -13,6 +13,8 @@ export type Delta = {
   timestamp: number;
 };
 
+type User = any;
+
 export type ObservableSlimChange = {
   type: "add" | "update" | "delete";
   property: string;
@@ -28,6 +30,12 @@ export type Operation = {
   model: Model;
   delta: object;
   success?: boolean;
+};
+
+export type Request = {
+  operation: Operation
+  user: User;
+  httpMethod: "POST" | "PUT" | "DELETE" | "GET"
 };
 
 export interface SessionModel {
@@ -46,3 +54,11 @@ export interface SubscriptionsModel {
 export interface ConfigModel {
   [key: string]: any;
 }
+
+export type RequestArgs = {
+  action: string,
+  data: object,
+  headers?: Headers
+};
+
+export type Headers = any[] & {[key: string]: any};
