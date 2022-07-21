@@ -7,6 +7,7 @@
   "rules": {
     "no-constant-condition": true,
     "prefer-const": true,
+    "prefer-for-of": false,
     "semicolon": [true, "always", "ignore-bound-class-methods"],
     "indent": [true, "spaces", 2],
     "max-line-length": [true, 120],

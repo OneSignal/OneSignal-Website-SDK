@@ -5,10 +5,12 @@
   "dependencies": {
     "@types/intl-tel-input": "^17.0.1",
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
+    "fast-deep-equal": "^3.1.3",
     "jsdom": "^9.12.0",
     "jsonp": "github:OneSignal/jsonp#onesignal",
     "node-sass": "^4.9.0",
     "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
+    "observable-slim": "^0.1.6",
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
     "tslib": "^1.9.0",
@@ -84,10 +86,10 @@
     "svgo": "^0.7.2",
     "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
-    "typescript": "^4.1.2",
     "ts-node": "^9.1.1",
     "tslint": "^6.1.3",
     "tslint-eslint-rules": "^5.2.0",
+    "typescript": "^4.1.2",
     "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^4.3.0",
     "webpack-bundle-analyzer": "^3.3.2",
@@ -95,11 +97,11 @@
   },
   "ava": {
     "extensions": [
-			"ts"
-		],
-		"require": [
-			"ts-node/register/transpile-only"
-		],
+      "ts"
+    ],
+    "require": [
+      "ts-node/register/transpile-only"
+    ],
     "files": [
       "test/unit/**/*.ts"
     ],
