@@ -69,11 +69,17 @@ export default class OperationRepo extends Subscribable<Operation> {
     }
   }
 
+  private async getCachedOperations(): Promise<void> {
+    const cachedOps: Operation[] = await this.oneSignal.system.operationCache.getAll();
+    this.operationQueue.unshift(...cachedOps || []);
+  }
+
   private async processOperationQueue(): Promise<void> {
     if (!this.onlineStatus) {
       return;
     }
 
+    await this.getCachedOperations();
     if (!this.operationQueue.size) {
       return;
     }
