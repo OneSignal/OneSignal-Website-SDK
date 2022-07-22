@@ -11,7 +11,7 @@ import Utils from '../context/Utils';
 import Database from '../services/Database';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
-import Event from '../services/Event';
+import OneSignalEvent from '../services/OneSignalEvent';
 
 export default class MainHelper {
 
@@ -178,7 +178,7 @@ export default class MainHelper {
   }
 
   static triggerCustomPromptClicked(clickResult) {
-    Event.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
+    OneSignalEvent.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
       result: clickResult
     });
   }

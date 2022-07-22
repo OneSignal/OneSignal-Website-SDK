@@ -1,5 +1,5 @@
 import { removeDomElement, addDomElement, isUsingSubscriptionWorkaround } from "../../shared/utils/utils";
-import Event from "../../shared/services/Event";
+import OneSignalEvent from "../../shared/services/OneSignalEvent";
 import ActiveAnimatedElement from "./ActiveAnimatedElement";
 import Bell from "./Bell";
 import LimitStore from "../../shared/services/LimitStore";
@@ -54,14 +54,14 @@ export default class Button extends ActiveAnimatedElement {
 
   onHovering() {
     if (LimitStore.isEmpty(this.events.mouse) || LimitStore.getLast(this.events.mouse) === 'out') {
-      Event.trigger(Bell.EVENTS.HOVERING);
+      OneSignalEvent.trigger(Bell.EVENTS.HOVERING);
     }
     LimitStore.put(this.events.mouse, 'over');
   }
 
   onHovered() {
     LimitStore.put(this.events.mouse, 'out');
-    Event.trigger(Bell.EVENTS.HOVERED);
+    OneSignalEvent.trigger(Bell.EVENTS.HOVERED);
   }
 
   onTap() {
@@ -76,8 +76,8 @@ export default class Button extends ActiveAnimatedElement {
   }
 
   onClick() {
-    Event.trigger(Bell.EVENTS.BELL_CLICK);
-    Event.trigger(Bell.EVENTS.LAUNCHER_CLICK);
+    OneSignalEvent.trigger(Bell.EVENTS.BELL_CLICK);
+    OneSignalEvent.trigger(Bell.EVENTS.LAUNCHER_CLICK);
 
     if (this.bell.message.shown && this.bell.message.contentType == Message.TYPES.MESSAGE) {
       // A message is being shown, it'll disappear soon

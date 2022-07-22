@@ -1,4 +1,4 @@
-import Event from '../../../shared/services/Event';
+import OneSignalEvent from '../../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../../shared/managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../../shared/services/Postmam';
@@ -34,7 +34,7 @@ export default class ProxyFrame extends RemoteFrame {
    */
   initialize(): Promise<void> {
     const promise = super.initialize();
-    Event.trigger('httpInitialize');
+    OneSignalEvent.trigger('httpInitialize');
     return promise;
   }
 

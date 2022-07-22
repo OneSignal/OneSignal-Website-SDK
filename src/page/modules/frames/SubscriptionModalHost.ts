@@ -1,4 +1,4 @@
-import Event from '../../../shared/services/Event';
+import OneSignalEvent from '../../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../../shared/managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../../shared/services/Postmam';
@@ -95,7 +95,7 @@ export default class SubscriptionModalHost implements Disposable {
 
   onModalLoaded(_: MessengerMessageEvent) {
     this.showSubscriptionDomModal();
-    Event.trigger('modalLoaded');
+    OneSignalEvent.trigger('modalLoaded');
   }
 
   async onModalAccepted(_: MessengerMessageEvent) {

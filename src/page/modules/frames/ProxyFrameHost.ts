@@ -1,5 +1,5 @@
 import Environment from '../../../shared/helpers/Environment';
-import Event from '../../../shared/services/Event';
+import OneSignalEvent from '../../../shared/services/OneSignalEvent';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../../shared/services/Postmam';
 import { timeoutPromise, triggerNotificationPermissionChanged, deepCopy } from '../../../shared/utils/utils';
@@ -140,7 +140,7 @@ export default class ProxyFrameHost implements Disposable {
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
     const { eventName, eventData } = (message.data as any);
-    Event.trigger(eventName, eventData, message.source);
+    OneSignalEvent.trigger(eventName, eventData, message.source);
     return false;
   }
 

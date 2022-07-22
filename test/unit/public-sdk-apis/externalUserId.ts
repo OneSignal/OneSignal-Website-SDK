@@ -1,6 +1,6 @@
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
-import Event from "../../../src/shared/services/Event";
+import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
 import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import * as Utils from "../../../src/shared/utils/utils";
@@ -33,7 +33,7 @@ test("setExternalUserId - executes after OneSignal is fully initialized", async 
   const promise = OneSignal.setExternalUserId(externalUserId).then(() => { isPromiseDone = true; });
   t.is(isPromiseDone, false);
 
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
 
   t.is(isPromiseDone, true);
@@ -123,7 +123,7 @@ test("getExternalUserId - executes after OneSignal is fully initialized", async 
   const promise = OneSignal.getExternalUserId().then(() => { isPromiseDone = true; });
   t.is(isPromiseDone, false);
 
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
 
   t.is(isPromiseDone, true);
@@ -150,7 +150,7 @@ test("removeExternalUserId - executes after OneSignal is fully initialized", asy
   const promise = OneSignal.removeExternalUserId().then(() => { isPromiseDone = true; });
   t.is(isPromiseDone, false);
 
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
 
   t.is(isPromiseDone, true);

@@ -1,5 +1,5 @@
 import { addCssClass, removeCssClass, contains, once } from '../../shared/utils/utils';
-import OneSignalEvent from '../../shared/services/Event';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Log from '../../shared/libraries/Log';
 
 export default class AnimatedElement {
