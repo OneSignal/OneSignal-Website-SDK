@@ -21,7 +21,7 @@ import {
   WorkerMessengerCommand,
   WorkerMessengerReplyBuffer
 } from "../../../src/shared/libraries/WorkerMessenger";
-import Event from "../../../src/shared/services/Event";
+import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
 import { ServiceWorkerRegistrationError } from '../../../src/shared/errors/ServiceWorkerRegistrationError';
 import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import {
@@ -133,7 +133,7 @@ test('notification clicked - While page is opened in background', async t => {
   const workerMessageReplyBuffer = new WorkerMessengerReplyBuffer();
   OneSignal.context.workerMessenger = new WorkerMessenger(OneSignal.context, workerMessageReplyBuffer);
 
-  sandbox.stub(Event, 'trigger').callsFake(function(event: string) {
+  sandbox.stub(OneSignalEvent, 'trigger').callsFake(function(event: string) {
     if (event === OneSignal.EVENTS.NOTIFICATION_CLICKED)
       t.pass();
   });

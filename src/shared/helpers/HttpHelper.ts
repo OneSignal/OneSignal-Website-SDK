@@ -7,7 +7,7 @@ import Log from '../libraries/Log';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import { getConsoleStyle } from '../utils/utils';
-import Event from '../services/Event';
+import OneSignalEvent from '../services/OneSignalEvent';
 
 declare var OneSignal: any;
 
@@ -37,7 +37,7 @@ export default class HttpHelper {
          * OneSignal.modalPostmam, which don't exist anymore.
          */
         LegacyManager.ensureBackwardsCompatibility(OneSignal);
-        Event.trigger('httpInitialize');
+        OneSignalEvent.trigger('httpInitialize');
         break;
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         OneSignal.subscriptionModal = new SubscriptionModal(options);
@@ -62,7 +62,7 @@ export default class HttpHelper {
          * OneSignal.modalPostmam, which don't exist anymore.
          */
         LegacyManager.ensureBackwardsCompatibility(OneSignal);
-        Event.trigger('httpInitialize');
+        OneSignalEvent.trigger('httpInitialize');
         break;
       default:
         Log.error("Unsupported HTTP initialization branch.");

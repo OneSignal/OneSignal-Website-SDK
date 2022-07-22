@@ -1,5 +1,5 @@
 import Database from "../services/Database";
-import Event from '../services/Event';
+import OneSignalEvent from '../services/OneSignalEvent';
 
 export class PermissionUtils {
 
@@ -25,7 +25,7 @@ export class PermissionUtils {
     }
 
     await Database.put('Options', { key: 'notificationPermission', value: newPermission });
-    Event.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, { to: newPermission });
+    OneSignalEvent.trigger(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, { to: newPermission });
     PermissionUtils.executing = false;
   }
 }

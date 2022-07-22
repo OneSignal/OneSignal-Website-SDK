@@ -1,6 +1,6 @@
 import bowser from 'bowser';
 
-import Event from '../../shared/services/Event';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import MainHelper from '../../shared/helpers/MainHelper';
 import {
   addCssClass,
@@ -118,7 +118,7 @@ export default class Slidedown {
   }
 
   static async triggerSlidedownEvent(eventName: string): Promise<void> {
-    await Event.trigger(eventName);
+    await OneSignalEvent.trigger(eventName);
   }
 
   async onSlidedownAllowed(_: any): Promise<void> {

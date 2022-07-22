@@ -3,7 +3,7 @@ import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import InitHelper from "../../../src/shared/helpers/InitHelper";
-import Event from '../../../src/shared/services/Event';
+import OneSignalEvent from '../../../src/shared/services/OneSignalEvent';
 
 let sandbox: SinonSandbox;
 
@@ -28,7 +28,7 @@ test('registerForPushNotifications: before OneSignal.initialized', async t => {
   const promise = OneSignal.registerForPushNotifications();
 
   t.is(spy.notCalled, true);
-  Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   await promise;
   t.is(OneSignal.initialized, true);
   t.is(spy.calledOnce, true);

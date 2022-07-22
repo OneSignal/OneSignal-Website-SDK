@@ -1,5 +1,5 @@
 import bowser from "bowser";
-import Event from "../../shared/services/Event";
+import OneSignalEvent from "../../shared/services/OneSignalEvent";
 import { ResourceLoadState } from "../services/DynamicResourceLoader";
 import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../../shared/config/constants";
 import { DismissHelper } from "../../shared/helpers/DismissHelper";
@@ -238,7 +238,7 @@ export class PromptsManager {
     });
     OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this.context.slidedownManager.handleAllowClick();
-      Event.trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
+      OneSignalEvent.trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;

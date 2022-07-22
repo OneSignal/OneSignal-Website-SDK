@@ -2,7 +2,7 @@ import bowser from "bowser";
 
 import Database from "../services/Database";
 import Environment from "../helpers/Environment";
-import Event from "../services/Event";
+import OneSignalEvent from "../services/OneSignalEvent";
 import { ServiceWorkerActiveState } from "../helpers/ServiceWorkerHelper";
 import SdkEnvironment from "./SdkEnvironment";
 
@@ -180,7 +180,7 @@ export class SubscriptionManager {
     await Database.setSubscription(subscription);
 
     if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker) {
-      Event.trigger(OneSignal.EVENTS.REGISTERED);
+      OneSignalEvent.trigger(OneSignal.EVENTS.REGISTERED);
     }
 
     if (typeof OneSignal !== "undefined") {
@@ -300,7 +300,7 @@ export class SubscriptionManager {
         We'll show the permissionPromptDisplay event if the Safari user isn't already subscribed,
         otherwise an already subscribed Safari user would not see the permission request again.
        */
-      Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
     }
     const deviceToken = await this.subscribeSafariPromptPermission();
     PermissionUtils.triggerNotificationPermissionChanged();
@@ -329,7 +329,7 @@ export class SubscriptionManager {
       SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       Notification.permission === NotificationPermission.Default
     ) {
-      await Event.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
+      await OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
       const permission = await SubscriptionManager.requestPresubscribeNotificationPermission();
 
       /*

@@ -1,6 +1,6 @@
 import bowser from 'bowser';
 
-import Event from '../../shared/services/Event';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../shared/managers/SdkEnvironment';
 import { addDomElement, clearDomElementChildren, getPlatformNotificationIcon } from '../../shared/utils/utils';
 import AnimatedElement from './AnimatedElement';
@@ -114,7 +114,7 @@ export default class Dialog extends AnimatedElement {
             a notification shown in this resubscription case.
            */
           OneSignal.__doNotShowWelcomeNotification = false;
-          Event.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
+          OneSignalEvent.trigger(Bell.EVENTS.SUBSCRIBE_CLICK);
         });
       }
       if (this.unsubscribeButton) {
