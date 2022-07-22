@@ -24,7 +24,7 @@ import LocalStorage from '../utils/LocalStorage';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { getConsoleStyle, once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
-import Event from '../services/Event';
+import OneSignalEvent from '../services/OneSignalEvent';
 import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 
 declare var OneSignal: any;
@@ -114,7 +114,7 @@ export default class InitHelper {
     }
 
     OneSignal._sessionInitAlreadyRunning = false;
-    await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
+    await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED);
   }
 
   public static async registerForPushNotifications(options: RegisterOptions = {}): Promise<void> {
@@ -186,7 +186,7 @@ export default class InitHelper {
       await OneSignal.context.updateManager.sendOnSessionUpdate();
     }
 
-    await Event.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
+    await OneSignalEvent.trigger(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC);
   }
 
   public static async loadSubscriptionPopup(options?: SubscriptionPopupHostOptions) {

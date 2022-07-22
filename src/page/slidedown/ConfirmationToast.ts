@@ -1,5 +1,5 @@
 import bowser from 'bowser';
-import Event from '../../shared/services/Event';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
   addCssClass,
   once,
@@ -46,7 +46,7 @@ export default class ConfirmationToast {
   }
 
   static async triggerSlidedownEvent(eventName: string): Promise<void> {
-    await Event.trigger(eventName);
+    await OneSignalEvent.trigger(eventName);
   }
 
   close(): void {

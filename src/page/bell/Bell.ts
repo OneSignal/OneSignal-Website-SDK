@@ -1,6 +1,6 @@
 import bowser from 'bowser';
 import { NotificationPermission } from "../../shared/models/NotificationPermission";
-import OneSignalEvent from '../../shared/services/Event';
+import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import {
   addCssClass, addDomElement, contains, decodeHtmlEntities, delay, nothing, once,

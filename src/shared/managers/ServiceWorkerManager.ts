@@ -8,7 +8,7 @@ import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import NotImplementedError from '../errors/NotImplementedError';
 import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
-import Event from '../services/Event';
+import OneSignalEvent from '../services/OneSignalEvent';
 import ProxyFrame from '../../page/modules/frames/ProxyFrame';
 import ServiceWorkerRegistrationError from "../errors/ServiceWorkerRegistrationError";
 import OneSignalUtils from "../utils/OneSignalUtils";
@@ -255,7 +255,7 @@ export class ServiceWorkerManager {
 
     workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, async data => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      await Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
@@ -308,7 +308,7 @@ export class ServiceWorkerManager {
         await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
       }
       else
-        await Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+        await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
@@ -322,7 +322,7 @@ export class ServiceWorkerManager {
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, async data => {
-      await Event.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
     });
 
     const isHttps = OneSignalUtils.isHttps();

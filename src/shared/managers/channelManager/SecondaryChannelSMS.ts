@@ -7,7 +7,7 @@ import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUp
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 import { TagsObject } from "../../../page/models/Tags";
 import { SMSProfile } from "../../models/SMSProfile";
-import Event from "../../services/Event";
+import OneSignalEvent from "../../services/OneSignalEvent";
 import { NotSubscribedError, NotSubscribedReason } from "../../errors/NotSubscribedError";
 import Log from "../../libraries/Log";
 
@@ -36,7 +36,7 @@ export class SecondaryChannelSMS implements SecondaryChannel, SecondaryChannelWi
 
   async setIdentifier(identifier: string, authHash?: string): Promise<string | null | undefined> {
     const profile = await this.secondaryChannelIdentifierUpdater.setIdentifier(identifier, authHash);
-    await Event.trigger(OneSignal.EVENTS.SMS_SUBSCRIPTION_CHANGED, {
+    await OneSignalEvent.trigger(OneSignal.EVENTS.SMS_SUBSCRIPTION_CHANGED, {
       sms: profile.identifier
     });
     return profile.subscriptionId;
