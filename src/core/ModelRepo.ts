@@ -18,6 +18,7 @@ interface StringIndexable {
 }
 
 export default class ModelRepo extends Subscribable<Delta> {
+  // these properties are publically accessible but should not be mutated directly (use set)
   public session: SessionModel = {};
   public identity: IdentityModel = {};
   public properties: PropertiesModel = {};
@@ -41,7 +42,6 @@ export default class ModelRepo extends Subscribable<Delta> {
    *  * observers will trigger writes to cache immediately upon object mutation (see `createObserver`)
    */
   public async setup(): Promise<void> {
-    console.log("setting up");
     // ES5 limitation: object properties must be known at creation time
     // TO DO: full model must be stored (e.g: with null values for empty props)
     this._session = await this.modelCache.get(Model.Session); // might need to pull from session service
@@ -72,7 +72,6 @@ export default class ModelRepo extends Subscribable<Delta> {
      * @param {function} observer - the observer callback
      */
     return ObservableSlim.create(target, true, async (changes: ObservableSlimChange[]) => {
-      console.log("Observed change");
       changes.forEach(change => {
         if (equal(change.previousValue, change.newValue)) {
           return;
@@ -86,6 +85,40 @@ export default class ModelRepo extends Subscribable<Delta> {
         };
         this.broadcast(delta);
       });
+    });
+  }
+
+  /**
+   * Changes to model properties must be set via this function in order to trigger cache sync
+   * @param  {Model} model
+   * @param  {T} object
+   * @returns void
+   */
+  public set<T extends StringIndexable>(model: Model, object: T): void {
+    let targetModel: StringIndexable; // to store reference to model to be changed
+
+    switch (model) {
+      case Model.Session:
+        targetModel = this.session;
+        break;
+      case Model.Identity:
+        targetModel = this.identity;
+        break;
+      case Model.Properties:
+        targetModel = this.properties;
+        break;
+      case Model.Subscriptions:
+        targetModel = this.subscriptions;
+        break;
+      case Model.Config:
+        targetModel = this.config;
+        break;
+      default:
+        break;
+    }
+
+    Object.keys(object).forEach(key => {
+      targetModel[key] = object[key];
     });
   }
 }
