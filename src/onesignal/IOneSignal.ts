@@ -13,8 +13,8 @@ export default interface IOneSignal {
   setPrivacyConsent: (privacyConsent: boolean) => void;
   getPrivacyConsent: () => void;
 
-  login: (externalId: string, authHash?: string) => Promise<User>;
-  loginGuest: () => Promise<User>;
+  login: (externalId: string, token?: JsonWebKey) => User;
+  loginGuest: () => User;
   onLoginConflict: (callback: (local: User, remote: User) => User) => void;
 
   on: (event: string, listener: EventHandler) => Emitter; // private

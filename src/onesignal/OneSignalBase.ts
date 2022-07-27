@@ -1,6 +1,13 @@
 import { CoreModule } from "../core/CoreModule";
+import { NotificationsNamespace } from "./temp/NotificationsNamespace";
+import { SlidedownNamespace } from "./temp/SlidedownNamespace";
+import { User } from "./temp/User";
 
 export default class OneSignalBase {
+  public user?: User;
+  public notifications: NotificationsNamespace;
+  public slidedown: SlidedownNamespace;
+
   protected core: CoreModule;
 
   /* singleton pattern */
