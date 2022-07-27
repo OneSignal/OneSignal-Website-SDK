@@ -1,11 +1,11 @@
-import Emitter, { EventHandler } from "src/libraries/Emitter";
-import { AppUserConfig } from "../AppConfig";
-import { LogLevel } from "../LogLevel";
-import { NotificationsNamespace } from "./NotificationsNamespace";
-import { SlidedownNamespace } from "./SlidedownNamespace";
-import { User } from "./User";
+import Emitter, { EventHandler } from "../shared/libraries/Emitter";
+import { AppUserConfig } from "../shared/models/AppConfig";
+import { LogLevel } from "./temp/LogLevel";
+import { NotificationsNamespace } from "./temp/NotificationsNamespace";
+import { SlidedownNamespace } from "./temp/SlidedownNamespace";
+import { User } from "./temp/User";
 
-interface OneSignal {
+export default interface IOneSignal {
   init: (config: AppUserConfig) => void;
   setAppId: (appId: string) => void;
   setLogLevel: (logLevel: LogLevel) => void;
