@@ -3,49 +3,60 @@ import { AppUserConfig } from "../shared/models/AppConfig";
 import OneSignalProtected from "./OneSignalProtected";
 import { LogLevel } from "./temp/LogLevel";
 import { User } from "./temp/User";
+import { PublicApi } from "./PublicApiDecorator";
 
 export default class OneSignal extends OneSignalProtected implements IOneSignal {
   constructor() {
     super();
   }
 
-  init(config: AppUserConfig): void {
+  @PublicApi()
+  public init(config: AppUserConfig): void {
 
   }
 
-  setAppId(appId: string): void {
+  @PublicApi()
+  public setAppId(appId: string): void {
 
   }
 
-  setLogLevel(logLevel: LogLevel): void {
+  @PublicApi()
+  public setLogLevel(logLevel: LogLevel): void {
 
   }
 
-  setRequiresPrivacyConsent(privacyConsentRequired: boolean): void {
+  @PublicApi()
+  public setRequiresPrivacyConsent(privacyConsentRequired: boolean): void {
 
   }
 
-  setPrivacyConsent(privacyConsent: boolean): void {
+  @PublicApi()
+  public setPrivacyConsent(privacyConsent: boolean): void {
 
   }
 
-  getPrivacyConsent(): void {
+  @PublicApi()
+  public getPrivacyConsent(): void {
 
   }
 
-  login(externalId: string, authHash?: string): User {
+  @PublicApi()
+  public login(externalId: string, authHash?: string): User {
 
   }
 
-  loginGuest(): User {
+  @PublicApi()
+  public loginGuest(): User {
 
   }
 
-  onLoginConflict(callback: (local: User, remote: User) => User): void {
+  @PublicApi()
+  public onLoginConflict(callback: (local: User, remote: User) => User): void {
 
   }
 
-  on(event: string, listener: EventHandler): Emitter {
+  @PublicApi()
+  public on(event: string, listener: EventHandler): Emitter {
 
   }
 }
