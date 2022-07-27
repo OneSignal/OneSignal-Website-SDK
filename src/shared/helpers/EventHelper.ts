@@ -8,7 +8,7 @@ import BrowserUtils from '../utils/BrowserUtils';
 import LocalStorage from '../utils/LocalStorage';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import PromptsHelper from './PromptsHelper';
-import Event from "../services/Event";
+import OneSignalEvent from "../services/OneSignalEvent";
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -104,7 +104,7 @@ export default class EventHelper {
           { __isOneSignalWelcomeNotification: true },
           undefined
         );
-        Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
+        OneSignalEvent.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
           title: title,
           message: message,
           url: url
@@ -137,7 +137,7 @@ export default class EventHelper {
   }
 
   static triggerSubscriptionChanged(to) {
-    Event.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
+    OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
   }
 
   /**
@@ -174,7 +174,7 @@ export default class EventHelper {
         const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
         if (minutesSinceNotificationClicked > 5) return;
       }
-      Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
+      OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
     }
 
     const appState = await Database.getAppState();

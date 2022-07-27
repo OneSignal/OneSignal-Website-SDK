@@ -1,4 +1,4 @@
-import Event from '../../../shared/services/Event';
+import OneSignalEvent from '../../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../../shared/managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../../shared/services/Postmam';
@@ -147,7 +147,7 @@ export default class SubscriptionPopupHost implements Disposable {
 
   async onPopupLoaded(_: MessengerMessageEvent) {
     this.loadPromise.resolver();
-    Event.trigger('popupLoad');
+    OneSignalEvent.trigger('popupLoad');
   }
 
   async onPopupAccepted(_: MessengerMessageEvent) {
@@ -160,7 +160,7 @@ export default class SubscriptionPopupHost implements Disposable {
 
   async onPopupClosing(_: MessengerMessageEvent) {
     Log.info('Popup window is closing, running cleanup events.');
-    Event.trigger(OneSignal.EVENTS.POPUP_CLOSING);
+    OneSignalEvent.trigger(OneSignal.EVENTS.POPUP_CLOSING);
     this.dispose();
   }
 
@@ -173,7 +173,7 @@ export default class SubscriptionPopupHost implements Disposable {
 
   async onWindowTimeout(_: MessengerMessageEvent) {
     Log.debug(SdkEnvironment.getWindowEnv().toString() + " Popup window timed out and was closed.");
-    Event.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
+    OneSignalEvent.trigger(OneSignal.EVENTS.POPUP_WINDOW_TIMEOUT);
   }
 
   async onFinishingRegistrationRemotely(message: MessengerMessageEvent) {
@@ -197,7 +197,7 @@ export default class SubscriptionPopupHost implements Disposable {
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
     const { eventName, eventData } = (message.data as any);
-    Event.trigger(eventName, eventData, message.source);
+    OneSignalEvent.trigger(eventName, eventData, message.source);
     return false;
   }
 

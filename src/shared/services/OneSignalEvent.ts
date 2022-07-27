@@ -52,7 +52,7 @@ const LEGACY_EVENT_MAP: {[key: string]: string } = {
   customPromptClick: 'onesignal.prompt.custom.clicked',
 };
 
-export default class Event {
+export default class OneSignalEvent {
 
   /**
    * Triggers the specified event with optional custom data.
@@ -88,7 +88,7 @@ export default class Event {
     }
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       const legacyEventName = LEGACY_EVENT_MAP[eventName];
-      Event._triggerLegacy(legacyEventName, data);
+      OneSignalEvent._triggerLegacy(legacyEventName, data);
     }
 
     // If this event was triggered in an iFrame or Popup environment, also trigger it on the host page

@@ -8,7 +8,7 @@ import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChann
 import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
 import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
 import { TagsObject } from "../../../page/models/Tags";
-import Event from "../../services/Event";
+import OneSignalEvent from "../../services/OneSignalEvent";
 import { SecondaryChannelProfile } from "../../../page/models/SecondaryChannelProfile";
 import { NotSubscribedError, NotSubscribedReason } from "../../errors/NotSubscribedError";
 import Log from "../../libraries/Log";
@@ -61,7 +61,7 @@ export class SecondaryChannelEmail implements SecondaryChannel, SecondaryChannel
       await this.updatePushPlayersRelationToEmailPlayer(emailProfileBefore, emailProfileAfter);
     }
 
-    await Event.trigger(OneSignal.EVENTS.EMAIL_SUBSCRIPTION_CHANGED, {
+    await OneSignalEvent.trigger(OneSignal.EVENTS.EMAIL_SUBSCRIPTION_CHANGED, {
       email: profile.identifier
     });
 

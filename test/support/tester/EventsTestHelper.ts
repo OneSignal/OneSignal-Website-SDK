@@ -1,6 +1,6 @@
 import Slidedown from "../../../src/page/slidedown/Slidedown";
 import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
-import OneSignalEvent from "../../../src/shared/services/Event";
+import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
 import { SinonSandbox } from 'sinon';
 import { stubServiceWorkerInstallation } from "../../support/tester/sinonSandboxUtils";
 import ConfirmationToast from "../../../src/page/slidedown/ConfirmationToast";
