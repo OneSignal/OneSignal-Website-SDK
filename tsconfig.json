@@ -7,6 +7,7 @@
     }
   },
   "compilerOptions": {
+    "experimentalDecorators": true,
     "strictNullChecks": true,
     "checkJs": true,
     "noImplicitAny": true,
@@ -14,7 +15,8 @@
     "noUnusedParameters": true,
     "strictPropertyInitialization": true,
     "strictFunctionTypes": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "experimentalDecorators": true
   },
   "include": [
     "src/**/*",

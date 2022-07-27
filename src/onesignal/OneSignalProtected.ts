@@ -1,5 +1,4 @@
 import bowser from "bowser";
-import OneSignal from "ServiceWorker";
 import { EnvironmentInfoHelper } from "../page/helpers/EnvironmentInfoHelper";
 import AltOriginManager from "../page/managers/AltOriginManager";
 import ConfigManager from "../page/managers/ConfigManager";
@@ -8,21 +7,35 @@ import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
 import EventHelper from "../shared/helpers/EventHelper";
 import InitHelper from "../shared/helpers/InitHelper";
 import MainHelper from "../shared/helpers/MainHelper";
+import Emitter, { EventHandler } from "../shared/libraries/Emitter";
 import Log from "../shared/libraries/Log";
 import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
-import { AppConfig, AppUserConfig } from "../shared/models/AppConfig";
+import { AppUserConfig } from "../shared/models/AppConfig";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
 import Database from "../shared/services/Database";
+import OneSignalEvent from "../shared/services/OneSignalEvent";
 import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { getConsoleStyle } from "../shared/utils/utils";
 import OneSignalBase from "./OneSignalBase";
 
 export default class OneSignalProtected extends OneSignalBase {
-  private pendingInit: boolean = true;
+  protected _pendingInit: boolean = true;
+  protected _initAlreadyCalled: boolean = false;
 
   constructor() {
     super();
+  }
+
+  /**
+   * Used to subscribe to OneSignal events such as "subscriptionChange"
+   * Fires each time the event occurs
+   * @param event - Event name to subscribe to
+   * @param listener - Listener to fire when event happens
+   * @PublicApi
+   */
+  protected on(event: string, listener: EventHandler): Emitter {
+    return this.emitter.on(event, listener);
   }
 
   protected async internalInit(options: AppUserConfig) {
@@ -47,7 +60,7 @@ export default class OneSignalProtected extends OneSignalBase {
     if (this.config.userConfig.requiresUserPrivacyConsent) {
       const providedConsent = await Database.getProvideUserConsent();
       if (!providedConsent) {
-        this.pendingInit = true;
+        this._pendingInit = true;
         return;
       }
     }
@@ -56,15 +69,15 @@ export default class OneSignalProtected extends OneSignalBase {
   }
 
   protected async delayedInit() {
-    this.pendingInit = false;
+    this._pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
-    this.context.workerMessenger.listen();
+    this.context?.workerMessenger.listen();
 
     const _init = async () => {
-      if (this.__initAlreadyCalled)
+      if (this._initAlreadyCalled)
         return;
 
-      this.__initAlreadyCalled = true;
+      this._initAlreadyCalled = true;
 
       this.emitter.on(this.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED,
         EventHelper.onNotificationPermissionChange);
@@ -101,29 +114,29 @@ export default class OneSignalProtected extends OneSignalBase {
         this.proxyFrameHost = await AltOriginManager.discoverAltOrigin(this.config);
       }
 
-      window.addEventListener('focus', () => {
+      window.addEventListener('focus', async () => {
         // Checks if permission changed every time a user focuses on the page,
         //     since a user has to click out of and back on the page to check permissions
-        MainHelper.checkAndTriggerNotificationPermissionChanged();
+        await MainHelper.checkAndTriggerNotificationPermissionChanged();
       });
 
       await InitHelper.initSaveState();
       await InitHelper.saveInitOptions();
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.CustomIframe)
-        await Event.trigger(this.EVENTS.SDK_INITIALIZED);
+        await OneSignalEvent.trigger(this.EVENTS.SDK_INITIALIZED);
       else
         await InitHelper.internalInit();
-    }
+    };
 
     if (document.readyState === 'complete' || document.readyState === 'interactive')
       await _init();
     else {
       Log.debug('OneSignal: Waiting for DOMContentLoaded or readyStateChange event before continuing' +
         ' initialization...');
-      window.addEventListener('DOMContentLoaded', () => { _init(); });
-      document.onreadystatechange = () => {
+      window.addEventListener('DOMContentLoaded', async () => { await _init(); });
+      document.onreadystatechange = async () => {
         if (document.readyState === 'complete' || document.readyState === 'interactive')
-          _init();
+          await _init();
       };
     }
   }

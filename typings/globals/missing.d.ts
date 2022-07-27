@@ -28,7 +28,7 @@ interface Window {
  */
 
 
-declare var OneSignal: any;
+// declare var OneSignal: any;
 
 
 // These __*__ variables are defined from Webpack to change resulting JS
