@@ -46,9 +46,9 @@ export default class ModelRepo extends Subscribable<Delta> {
     // TO DO: full model must be stored (e.g: with null values for empty props)
     this._session = await this.modelCache.get(Model.Session); // might need to pull from session service
     this._identity = await this.modelCache.get(Model.Identity);
-    this._properties = await this.modelCache.get(Model.Properties); // might need to pull from remote
+    this._properties = await this.modelCache.get(Model.Properties);
     this._subscriptions = await this.modelCache.get(Model.Subscriptions);
-    this._config = await this.modelCache.get(Model.Config);
+    this._config = await this.modelCache.get(Model.Config); // might need to pull from remote
 
     this.session = this.createObserver(this._session, Model.Session);
     this.identity = this.createObserver(this._identity, Model.Identity);

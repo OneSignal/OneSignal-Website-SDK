@@ -87,3 +87,57 @@ export type DeltaAggregator = {
   [Model.Session]: SessionModel,
   [Model.Subscriptions]: SubscriptionsModel
 };
+
+export type IdentityObject = {
+  onesignal_id: string;
+  external_id?: string;
+  [key: string]: string | undefined;
+};
+
+export type PropertiesObject = {
+  tags?: {[key: string]: string};
+  language?: string;
+  timezone_id?: string;
+  lat?: number;
+  long?: number;
+  country?: string;
+  first_active?: number;
+  last_active?: number;
+  ip?: string;
+};
+
+enum SubscriptionType {
+  iOS = "iOS",
+  Android = "Android",
+  FireOS = "FireOS",
+  ChromeExtension = "ChromeExtension",
+  ChromePush = "ChromePush",
+  WindowPush = "WindowPush",
+  SafariPush = "SafariPush",
+  SafariLegacyPush = "SafariLegacyPush",
+  FirefoxPush = "FirefoxPush",
+  HuaweiPush = "HuaweiPush",
+  macOSPush = "macOSPush",
+  AlexaPush = "AlexaPush",
+  Email = "Email",
+  SMS = "SMS",
+}
+
+type SubscriptionsObject = {
+  id: string;
+  type: SubscriptionType;
+  token?: string; // maps to legacy player.identifier
+  enabled?: boolean;
+  notification_types?: number;
+  session_time?: number;
+  session_counts?: number;
+  sdk?: string;
+  device_model?: string;
+  device_os?: string;
+  rooted?: boolean;
+  test_type?: number;
+  app_version?: string;
+  net_type?: number;
+  web_auth?: string;
+  web_p256?: string;
+};
