@@ -4,12 +4,11 @@ import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
 import ProxyFrameHost from "../page/modules/frames/ProxyFrameHost";
 import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCalls";
 import Emitter from "../shared/libraries/Emitter";
-import Log from "../shared/libraries/Log";
 import { AppConfig } from "../shared/models/AppConfig";
-import { NotificationsNamespace } from "./temp/NotificationsNamespace";
+import { NotificationsNamespace } from "./notifications/NotificationsNamespace";
 import ONESIGNAL_EVENTS from "./temp/OneSignalEvents";
-import { SlidedownNamespace } from "./temp/SlidedownNamespace";
-import { User } from "./temp/User";
+import { SlidedownNamespace } from "./slidedown/SlidedownNamespace";
+import User from "./user/User";
 
 export default class OneSignalBase {
   public user?: User;
@@ -19,9 +18,6 @@ export default class OneSignalBase {
   protected config?: AppConfig;
   protected context?: Context;
   protected core: CoreModule;
-  protected static log: Log;
-
-  protected requiresPrivacyConsent?: boolean;
 
   protected proxyFrameHost?: ProxyFrameHost;
   protected environmentInfo?: EnvironmentInfo;
@@ -30,7 +26,7 @@ export default class OneSignalBase {
 
   /* singleton pattern */
   private static instance: OneSignalBase;
-  protected static getInstance(): OneSignalBase {
+  public static getInstance(): OneSignalBase {
     if (!OneSignalBase.instance) {
       OneSignalBase.instance = new OneSignalBase();
     }
