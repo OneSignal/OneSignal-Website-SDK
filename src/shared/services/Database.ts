@@ -379,6 +379,10 @@ export default class Database {
     }
   }
 
+  async setRequiresPrivacyConsent(requiresConsent: boolean): Promise<void> {
+    await this.put("Options", { key: "requiresConsent", value: requiresConsent });
+  }
+
   async setProvideUserConsent(consent: boolean): Promise<void> {
     await this.put("Options", { key: "userConsent", value: consent });
   }
@@ -515,6 +519,10 @@ export default class Database {
 
   static async getProvideUserConsent(): Promise<boolean> {
     return await Database.singletonInstance.getProvideUserConsent();
+  }
+
+  static async setRequiresPrivacyConsent(requiresConsent: boolean): Promise<void> {
+    return await Database.singletonInstance.setRequiresPrivacyConsent(requiresConsent);
   }
 
   static async setServiceWorkerState(workerState: ServiceWorkerState) {

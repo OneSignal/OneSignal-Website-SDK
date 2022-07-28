@@ -1,7 +1,7 @@
 import { AppUserConfig } from "../shared/models/AppConfig";
 import OneSignalProtected from "./OneSignalProtected";
 import { LogLevel } from "./temp/LogLevel";
-import { User } from "./temp/User";
+import { IUser } from "./temp/IUser";
 import { PublicApi } from "./PublicApiDecorator";
 import Database from "../shared/services/Database";
 import Log from "../shared/libraries/Log";
@@ -55,7 +55,7 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
   }
 
   @PublicApi()
-  public onLoginConflict(callback: (local: User, remote: User) => User): void {
+  public onLoginConflict(callback: (local: IUser, remote: IUser) => IUser): void {
 
   }
 }

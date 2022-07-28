@@ -2,7 +2,7 @@
 
 import { Subscriptions } from "./Subscriptions";
 
-export interface User {
+export default interface IUser {
   // user model
   addAlias: (label: string, id: string) => void;
   addAliases: (aliases: {label: string, id: string}[]) => void;
