@@ -16,7 +16,6 @@ type NotificationEventObject = any;
 export class NotificationsNamespace {
   constructor(private context: Context) {}
 
-
   public async getPermissionStatus(): Promise<NotificationPermission> {
     await awaitOneSignalInitAndSupported();
     return await this.context.permissionManager.getNotificationPermission(this.context.appConfig.safariWebId);

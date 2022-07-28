@@ -11,7 +11,7 @@ import Emitter, { EventHandler } from "../shared/libraries/Emitter";
 import Log from "../shared/libraries/Log";
 import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
-import { AppUserConfig } from "../shared/models/AppConfig";
+import { AppConfig, AppUserConfig } from "../shared/models/AppConfig";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
 import Database from "../shared/services/Database";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
@@ -41,7 +41,9 @@ export default class OneSignalProtected extends OneSignalBase {
   protected async internalInit(options: AppUserConfig) {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
-    await this.initializeConfig(options);
+
+    const config = await this.initializeConfig(options);
+    await this.initContext(config);
 
     if (!this.config) {
       throw new Error("OneSignal config not initialized!");
@@ -141,7 +143,7 @@ export default class OneSignalProtected extends OneSignalBase {
     }
   }
 
-  async initializeConfig(options: AppUserConfig) {
+  async initializeConfig(options: AppUserConfig): Promise<AppConfig> {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
@@ -152,5 +154,6 @@ export default class OneSignalProtected extends OneSignalBase {
 
     this.context = new Context(appConfig);
     this.config = this.context.appConfig;
+    return appConfig;
   }
 }

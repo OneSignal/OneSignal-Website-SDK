@@ -1,10 +1,10 @@
 import { AppUserConfig } from "../shared/models/AppConfig";
 import OneSignalProtected from "./OneSignalProtected";
 import { LogLevel } from "./temp/LogLevel";
-import { IUser } from "./temp/IUser";
 import { PublicApi } from "./PublicApiDecorator";
 import Database from "../shared/services/Database";
 import Log from "../shared/libraries/Log";
+import User from "./user/User";
 
 export default class OneSignal extends OneSignalProtected implements IOneSignal {
   constructor() {
@@ -29,7 +29,6 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
 
   @PublicApi()
   public setRequiresPrivacyConsent(privacyConsentRequired: boolean): void {
-    this.requiresPrivacyConsent = privacyConsentRequired;
   }
 
   @PublicApi()
@@ -55,7 +54,7 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
   }
 
   @PublicApi()
-  public onLoginConflict(callback: (local: IUser, remote: IUser) => IUser): void {
+  public onLoginConflict(callback: (local: User, remote: User) => User): void {
 
   }
 }
