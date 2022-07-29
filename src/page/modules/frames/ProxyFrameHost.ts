@@ -6,6 +6,7 @@ import { timeoutPromise, triggerNotificationPermissionChanged, deepCopy } from '
 import { ServiceWorkerActiveState } from "../../../shared/helpers/ServiceWorkerHelper";
 import { PageVisibilityRequest } from '../../../shared/models/Session';
 import Log from '../../../shared/libraries/Log';
+import OneSignal from '../../../onesignal/OneSignal';
 
 interface Reply {
   data: any;
@@ -166,7 +167,7 @@ export default class ProxyFrameHost implements Disposable {
   onGetEventListenerCount(message: MessengerMessageEvent) {
     const eventName: string = message.data;
     Log.debug('(Reposted from iFrame -> Host) Getting event listener count for ', eventName);
-    message.reply(OneSignal.emitter.numberOfListeners(eventName));
+    message.reply(OneSignal.getInstance().emitter.numberOfListeners(eventName));
     return false;
   }
 

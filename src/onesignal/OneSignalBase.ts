@@ -14,9 +14,9 @@ export default class OneSignalBase {
   public user?: User;
   public notifications?: NotificationsNamespace;
   public slidedown?: SlidedownNamespace;
+  public context?: Context;
 
   protected config?: AppConfig;
-  protected context?: Context;
   protected core: CoreModule;
 
   private contextPromise: Promise<void>;
@@ -24,20 +24,11 @@ export default class OneSignalBase {
 
   protected proxyFrameHost?: ProxyFrameHost;
   protected environmentInfo?: EnvironmentInfo;
-  protected emitter: Emitter = new Emitter();
   protected EVENTS: {[key: string]: string} = ONESIGNAL_EVENTS;
-
-  /* singleton pattern */
-  private static instance: OneSignalBase;
-  public static getInstance(): OneSignalBase {
-    if (!OneSignalBase.instance) {
-      OneSignalBase.instance = new OneSignalBase();
-    }
-    return OneSignalBase.instance;
-  }
+  public emitter: Emitter = new Emitter();
 
   protected constructor() {
-    this.core = new CoreModule();
+    this.core = CoreModule.getInstance();
     this.contextPromise = new Promise<void>(resolve => {
       this.contextResolver = resolve;
     });

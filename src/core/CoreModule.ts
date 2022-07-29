@@ -11,12 +11,22 @@ import OperationRepo from "./OperationRepo";
  */
 
 export class CoreModule {
-  private modelRepo: ModelRepo;
-  private operationRepo: OperationRepo;
+  public modelRepo: ModelRepo;
+  public operationRepo: OperationRepo;
+
   private modelCache: ModelCache;
   private operationCache: OperationCache;
 
-  constructor() {
+  /* singleton pattern */
+  private static instance: CoreModule;
+  public static getInstance(): CoreModule {
+    if (!CoreModule.instance) {
+      CoreModule.instance = new CoreModule();
+    }
+    return CoreModule.instance;
+  }
+
+  protected constructor() {
     this.modelCache = new ModelCache();
     this.modelRepo = new ModelRepo(this.modelCache);
     this.operationCache = new OperationCache();
@@ -24,11 +34,7 @@ export class CoreModule {
     new HydratorBus(this.modelRepo, this.operationRepo);
   }
 
-  public async setup(): Promise<void> {
-    await this.modelRepo.setup();
-  }
-
-  public async getCachedConfig(): Promise<AppConfig> {
-    return await this.modelRepo.getCachedConfig();
+  public async initialize(): Promise<void> {
+    await this.modelRepo.initialize();
   }
 }

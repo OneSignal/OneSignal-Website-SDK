@@ -45,7 +45,7 @@ export default class InitHelper {
     await OneSignal.context.serviceWorkerManager.installWorker();
 
     const sessionManager = OneSignal.context.sessionManager;
-    OneSignal.emitter.on(OneSignal.EVENTS.SESSION_STARTED,
+    OneSignal.getInstance().emitter.on(OneSignal.EVENTS.SESSION_STARTED,
       sessionManager.sendOnSessionUpdateFromPage.bind(sessionManager));
     OneSignal.context.pageViewManager.incrementPageViewCount();
 
@@ -341,7 +341,7 @@ export default class InitHelper {
 
       const displayPredicate: () => boolean = OneSignal.config.userConfig.notifyButton.displayPredicate;
       if (displayPredicate && typeof displayPredicate === 'function') {
-        OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
+        OneSignal.getInstance().emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
           const predicateValue = await Promise.resolve(OneSignal.config.userConfig.notifyButton.displayPredicate());
           if (predicateValue !== false) {
             OneSignal.notifyButton = new Bell(OneSignal.config.userConfig.notifyButton);

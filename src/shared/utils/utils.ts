@@ -8,6 +8,7 @@ import { Utils } from "../context/Utils";
 import bowser from 'bowser';
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
+import OneSignal from '../../onesignal/OneSignal';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -36,7 +37,7 @@ export function removeDomElement(selector: string) {
 export async function awaitOneSignalInitAndSupported(): Promise<object|void> {
   return new Promise(resolve => {
     if (!OneSignal.initialized)
-      OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
+      OneSignal.getInstance().emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
     else
       resolve();
   });
@@ -383,7 +384,7 @@ export function getSdkLoadCount() {
 
 export async function awaitSdkEvent(eventName: string) {
   return await new Promise(resolve => {
-    OneSignal.emitter.once(eventName, (event: Event) => {
+    OneSignal.getInstance().emitter.once(eventName, (event: Event) => {
       resolve(event);
     });
   });

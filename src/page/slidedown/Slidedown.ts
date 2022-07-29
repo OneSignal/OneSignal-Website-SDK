@@ -22,6 +22,7 @@ import ChannelCaptureContainer from './ChannelCaptureContainer';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import { SlidedownPromptOptions, DelayedPromptType } from '../../shared/models/Prompts';
 import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import OneSignal from '../../onesignal/OneSignal';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
@@ -283,7 +284,7 @@ export function manageNotifyButtonStateWhileSlidedownShows(): void {
         OneSignal.notifyButton.launcher.hide();
       });
   }
-  OneSignal.emitter.once(Slidedown.EVENTS.CLOSED, () => {
+  OneSignal.getInstance().emitter.once(Slidedown.EVENTS.CLOSED, () => {
     if (OneSignal.notifyButton &&
       OneSignal.notifyButton.options.enable) {
       OneSignal.notifyButton.launcher.show();

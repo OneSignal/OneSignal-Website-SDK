@@ -16,6 +16,7 @@ import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from '../../shared/models/Prompts';
+import OneSignal from '../../onesignal/OneSignal';
 
 var logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -155,10 +156,10 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignal.getInstance().emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
-      OneSignal.setSubscription(true)
+      OneSignal.getInstance().notifications?.disable(false)
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
           return this.dialog.hide();
@@ -177,9 +178,9 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignal.getInstance().emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
-      OneSignal.setSubscription(false)
+      OneSignal.getInstance().notifications?.disable(true)
         .then(() => {
           this.dialog.unsubscribeButton.disabled = false;
           return this.dialog.hide();
@@ -197,7 +198,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERING, () => {
+    OneSignal.getInstance().emitter.on(Bell.EVENTS.HOVERING, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -235,7 +236,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.HOVERED, () => {
+    OneSignal.getInstance().emitter.on(Bell.EVENTS.HOVERED, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -274,7 +275,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async isSubscribed => {
+    OneSignal.getInstance().emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async isSubscribed => {
       if (isSubscribed == true) {
         if (this.badge.shown && this.options.prenotify) {
           this.badge.hide();
@@ -298,7 +299,7 @@ export default class Bell {
       });
     });
 
-    OneSignal.emitter.on(Bell.EVENTS.STATE_CHANGED,state => {
+    OneSignal.getInstance().emitter.on(Bell.EVENTS.STATE_CHANGED,state => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -311,7 +312,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, () => {
+    OneSignal.getInstance().emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, () => {
       this.updateState();
     });
 

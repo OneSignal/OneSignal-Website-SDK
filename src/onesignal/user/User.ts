@@ -1,35 +1,44 @@
+import { CoreModule } from "../../core/CoreModule";
 import { InvalidArgumentError, InvalidArgumentReason } from "../../shared/errors/InvalidArgumentError";
-import { awaitOneSignalInitAndSupported, isValidEmail } from "../../shared/utils/utils";
+import { isValidEmail } from "../../shared/utils/utils";
 import { PublicApi } from "../PublicApiDecorator";
 import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {
   private subscriptions?: Subscriptions;
-  constructor() {}
 
-  @PublicApi()
-  static addAlias(label: string, id: string): void {
-
+  constructor() {
+    this.core = CoreModule.getInstance();
   }
-  @PublicApi()
-  static addAliases(aliases: { label: string; id: string; }[]): void {
 
-  }
   @PublicApi()
-  static removeAlias(label: string, id: string): void {
+  public addAlias(label: string, id: string): void {
+    this.addAliases([{ label, id }]);
+  }
 
-  }
   @PublicApi()
-  static removeAliases(aliases: { label: string; id: string; }[]): void {
+  public addAliases(aliases: { label: string; id: string; }[]): void {
+    aliases.forEach(alias => {
+      this.core.modelRepo.identity = { ...this.core.modelRepo.identity, ...alias };
+    });
+  }
 
-  }
   @PublicApi()
-  static updateAlias(label: string, id: string, newId: string): void {
+  public removeAlias(label: string): void {
+    this.removeAliases([label]);
+  }
 
-  }
   @PublicApi()
-  static async addEmail(email: string): Promise<void> {
-    await awaitOneSignalInitAndSupported();
+  public removeAliases(aliases: string[]): void {
+    aliases.forEach(alias => {
+      if (this.core.modelRepo.identity) {
+        delete this.core.modelRepo.identity[alias];
+      }
+    });
+  }
+
+  @PublicApi()
+  public async addEmail(email: string): Promise<void> {
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -39,39 +48,47 @@ export default class User {
 
   }
   @PublicApi()
-  static addSms(sms: string): void {
+  public addSms(sms: string): void {
 
   }
   @PublicApi()
-  static removeEmail(): void {
+  public removeEmail(): void {
 
   }
   @PublicApi()
-  static removeSms(): void {
+  public removeSms(): void {
 
   }
   @PublicApi()
-  static addTag(key: string, value: string | number | boolean): void {
+  public addTag(key: string, value: string | number | boolean): void {
 
   }
   @PublicApi()
-  static addTags(tags: { key: string; value: string | number | boolean; }[]): void {
+  public addTags(tags: {[key: string]: string}): void {
+    this.core.modelRepo.properties = { ...this.core.modelRepo.properties, tags };
+  }
+
+  @PublicApi()
+  public removeTag(tag: string): void {
+    this.removeTags([tag]);
+  }
+
+  @PublicApi()
+  public removeTags(tags: string[]): void {
+    tags.forEach(tag => {
+      if (this.core.modelRepo.properties?.tags?.[tag]) {
+        delete this.core.modelRepo.properties.tags[tag];
+      }
+    });
+  }
+
+  @PublicApi()
+  public sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): void {
 
   }
-  @PublicApi()
-  static removeTag(tag: string): void {
 
-  }
   @PublicApi()
-  static removeTags(tags: string[]): void {
-
-  }
-  @PublicApi()
-  static sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): void {
-
-  }
-  @PublicApi()
-  static sendUniqueOutcome(outcomeName: string): void {
+  public sendUniqueOutcome(outcomeName: string): void {
 
   }
 }

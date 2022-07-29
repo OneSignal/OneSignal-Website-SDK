@@ -12,6 +12,7 @@ import { SentUniqueOutcome } from '../../../src/shared/models/Outcomes';
 import OutcomeTestHelper from '../../support/tester/OutcomeTestHelper';
 import OneSignalApiShared from "../../../src/shared/api/OneSignalApiShared";
 import MainHelper from "../../../src/shared/helpers/MainHelper";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const OUTCOME_NAME = "test_outcome";
@@ -48,7 +49,7 @@ test("reporting outcome requires the sdk to be initialized", async t => {
   const sendOutcomePromise = OneSignal.sendUniqueOutcome(OUTCOME_NAME);
   t.is(apiSpy.callCount, 0);
 
-  OneSignal.emitter.emit(OneSignal.EVENTS.SDK_INITIALIZED);
+  OneSignal.getInstance().emitter.emit(OneSignal.EVENTS.SDK_INITIALIZED);
   await sendOutcomePromise;
 
   t.is(apiSpy.callCount, 1);

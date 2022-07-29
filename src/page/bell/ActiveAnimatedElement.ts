@@ -1,3 +1,4 @@
+import OneSignal from '../../onesignal/OneSignal';
 import Log from '../../shared/libraries/Log';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import { addCssClass, contains, once, removeCssClass } from '../../shared/utils/utils';
@@ -136,7 +137,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.active)
       return Promise.resolve(this);
     else return new Promise(resolve => {
-      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE, event => {
+      OneSignal.getInstance().emitter.once(ActiveAnimatedElement.EVENTS.ACTIVE, event => {
         if (event === this) {
           return resolve(this);
         }
@@ -152,7 +153,7 @@ export default class ActiveAnimatedElement extends AnimatedElement {
     if (this.inactive)
       return Promise.resolve(this);
     else return new Promise(resolve => {
-      OneSignal.emitter.once(ActiveAnimatedElement.EVENTS.INACTIVE, event => {
+      OneSignal.getInstance().emitter.once(ActiveAnimatedElement.EVENTS.INACTIVE, event => {
         if (event === this) {
           return resolve(this);
         }

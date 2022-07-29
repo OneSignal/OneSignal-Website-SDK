@@ -4,6 +4,7 @@ import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
 import { SinonSandbox } from 'sinon';
 import { stubServiceWorkerInstallation } from "../../support/tester/sinonSandboxUtils";
 import ConfirmationToast from "../../../src/page/slidedown/ConfirmationToast";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 /**
  * I M P O R T A N T
@@ -56,7 +57,7 @@ export default class EventsTestHelper {
   }
 
   public simulateSubscribingAfterNativeAllow() {
-    OneSignal.emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
+    OneSignal.getInstance().emitter.on(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
         this.sinonSandbox.stub(OneSignal, "privateGetSubscription").resolves(true);
         this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
             .resolves({ subscribed: true, isOptedOut: false });

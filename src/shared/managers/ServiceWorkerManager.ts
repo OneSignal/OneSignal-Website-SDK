@@ -18,6 +18,7 @@ import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from '../models/Session';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
+import OneSignal from '../../onesignal/OneSignal';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -276,7 +277,7 @@ export class ServiceWorkerManager {
         });
       }
       else
-        clickedListenerCallbackCount = OneSignal.emitter.numberOfListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED);
+        clickedListenerCallbackCount = OneSignal.getInstance().emitter.numberOfListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED);
 
       if (clickedListenerCallbackCount === 0) {
         /*

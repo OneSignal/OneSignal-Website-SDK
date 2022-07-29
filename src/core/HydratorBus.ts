@@ -1,6 +1,6 @@
 import ModelRepo from "./ModelRepo";
 import OperationRepo from "./OperationRepo";
-import { ConfigModel, IdentityModel, Model, PropertiesModel, SessionModel, SubscriptionsModel } from "./types";
+import { ConfigModel, IdentityModel, Model, UserProperties, SessionModel, SubscriptionsModel } from "./types";
 
 type ServerResponse = object;
 
@@ -20,7 +20,7 @@ export class HydratorBus {
   }
 
   private hydrateProperties(res: ServerResponse): void {
-    this.modelRepo.set<PropertiesModel>(Model.Properties, res);
+    this.modelRepo.set<UserProperties>(Model.Properties, res);
   }
 
   private hydrateSession(res: ServerResponse): void {

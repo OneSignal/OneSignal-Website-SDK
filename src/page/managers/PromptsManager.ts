@@ -14,6 +14,7 @@ import { EnvironmentInfoHelper } from "../helpers/EnvironmentInfoHelper";
 import { ContextInterface } from "../models/Context";
 import { DismissPrompt } from "../models/Dismiss";
 import Slidedown from "../slidedown/Slidedown";
+import OneSignal from "../../onesignal/OneSignal";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -229,18 +230,18 @@ export class PromptsManager {
   public installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
 
-    OneSignal.emitter.on(Slidedown.EVENTS.SHOWN, () => {
+    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.context.slidedownManager.setIsSlidedownShowing(true);
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.CLOSED, () => {
+    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this.context.slidedownManager.setIsSlidedownShowing(false);
       this.context.slidedownManager.showQueued();
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this.context.slidedownManager.handleAllowClick();
       OneSignalEvent.trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
-    OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
+    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
       const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
       switch (type) {
         case DelayedPromptType.Push:

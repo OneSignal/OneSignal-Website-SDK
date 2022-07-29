@@ -332,7 +332,7 @@ export class TestEnvironment {
     global.OneSignal = OneSignal;
     global.OneSignal.config = config.initOptions ? config.initOptions : {};
     global.OneSignal.initialized = true;
-    global.OneSignal.emitter = new Emitter();
+    global.OneSignal.getInstance().emitter = new Emitter();
     SdkEnvironment.getTestEnv = () => TestEnvironmentKind.UnitTesting;
     await TestEnvironment.stubDomEnvironment(config);
     TestEnvironment.stubNotifyButtonTransitionEvents();

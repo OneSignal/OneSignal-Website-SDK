@@ -3,7 +3,7 @@ import {
   IdentityModel,
   Model,
   ObservableSlimChange,
-  PropertiesModel,
+  UserProperties,
   SessionModel,
   SubscriptionsModel
 } from "./types";
@@ -21,13 +21,13 @@ export default class ModelRepo extends Subscribable<Delta> {
   // these properties are publically accessible but should not be mutated directly (use set)
   public session?: SessionModel = {};
   public identity?: IdentityModel = {};
-  public properties?: PropertiesModel = {};
+  public properties?: UserProperties = {};
   public subscriptions?: SubscriptionsModel = {};
   public config?: AppConfig;
 
   private _session?: SessionModel = {};
   private _identity?: IdentityModel = {};
-  private _properties?: PropertiesModel = {};
+  private _properties?: UserProperties = {};
   private _subscriptions?: SubscriptionsModel = {};
   private _config?: AppConfig;
 
@@ -42,7 +42,7 @@ export default class ModelRepo extends Subscribable<Delta> {
    *  - observers will trigger writes to cache immediately upon object mutation (see `createObserver`)
    * @returns Promise<AppConfig>
    */
-  public async setup(): Promise<void> {
+  public async initialize(): Promise<void> {
     // ES5 limitation: object properties must be known at creation time
     // TO DO: full model must be stored (e.g: with null values for empty props)
     this._session = await this.modelCache.get(Model.Session); // might need to pull from session service

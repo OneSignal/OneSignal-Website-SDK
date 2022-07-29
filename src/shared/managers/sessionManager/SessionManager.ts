@@ -9,6 +9,7 @@ import { SessionOrigin, UpsertSessionPayload, DeactivateSessionPayload } from ".
 import MainHelper from "../../helpers/MainHelper";
 import Log from "../../libraries/Log";
 import OneSignalApiShared from "../../api/OneSignalApiShared";
+import OneSignal from "../../../onesignal/OneSignal";
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
@@ -197,7 +198,7 @@ export class SessionManager implements ISessionManager {
     ) {
       if (!this.context.environmentInfo.canTalkToServiceWorker) {
         this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
-        OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+        OneSignal.getInstance().emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
       } else {
         this.setupSessionEventListeners();
       }
@@ -206,7 +207,7 @@ export class SessionManager implements ISessionManager {
       !this.context.environmentInfo.isUsingSubscriptionWorkaround
     ) {
       this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
-      OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+      OneSignal.getInstance().emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
 
     await sessionPromise;

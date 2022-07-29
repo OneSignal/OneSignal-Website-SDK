@@ -5,6 +5,7 @@ import LocalStorage from "../utils/LocalStorage";
 import { RegisterOptions } from "../helpers/InitHelper";
 import Log from "../libraries/Log";
 import { AppUserConfigCustomLinkOptions } from "../models/Prompts";
+import OneSignal from "../../onesignal/OneSignal";
 
 export class CustomLinkManager {
   private config: AppUserConfigCustomLinkOptions | undefined;
@@ -130,7 +131,7 @@ export class CustomLinkManager {
 
   private async handleClick(element: HTMLElement): Promise<void> {
     if (CustomLinkManager.isPushEnabled()) {
-      await OneSignal.setSubscription(false);
+      await OneSignal.getInstance().notifications?.disable(true);
       await this.setTextFromPushStatus(element);
     } else {
       if (!CustomLinkManager.isOptedOut()) {
@@ -143,7 +144,7 @@ export class CustomLinkManager {
         }
         return;
       }
-      await OneSignal.setSubscription(true);
+      await OneSignal.getInstance().notifications?.disable(false);
       // once subscribed, prevent unsubscribe by hiding customlinks
       if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();

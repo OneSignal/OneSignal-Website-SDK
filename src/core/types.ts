@@ -54,12 +54,6 @@ export interface IdentityModel {
   arr?: string[];
   [key: string]: any;
 }
-export interface PropertiesModel {
-  foo?: string;
-  hello?: string;
-  arr?: string[];
-  [key: string]: any;
-}
 export interface SubscriptionsModel {
   foo?: string;
   hello?: string;
@@ -78,7 +72,7 @@ export type Headers = any[] & {[key: string]: any};
 export type DeltaAggregator = {
   [Model.Config]: AppConfig,
   [Model.Identity]: IdentityModel,
-  [Model.Properties]: PropertiesModel,
+  [Model.Properties]: UserProperties,
   [Model.Session]: SessionModel,
   [Model.Subscriptions]: SubscriptionsModel
 };
@@ -89,7 +83,7 @@ export type IdentityObject = {
   [key: string]: string | undefined;
 };
 
-export type PropertiesObject = {
+export type UserProperties = {
   tags?: {[key: string]: string};
   language?: string;
   timezone_id?: string;

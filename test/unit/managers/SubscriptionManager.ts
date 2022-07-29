@@ -25,6 +25,7 @@ import { MockPushManager } from "../../support/mocks/service-workers/models/Mock
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
 import ServiceWorkerRegistrationError from '../../../src/shared/errors/ServiceWorkerRegistrationError';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
+import OneSignal from '../../../src/onesignal/OneSignal';
 
 const sandbox: SinonSandbox= sinon.sandbox.create();
 
@@ -362,7 +363,7 @@ test('device ID is available after register event', async t => {
   const randomPlayerId = Random.getRandomUuid();
 
   const registerEventPromise = new Promise<void>(resolve => {
-    OneSignal.emitter.on('register', async () => {
+    OneSignal.getInstance().emitter.on('register', async () => {
       const subscription = await Database.getSubscription();
       t.is(subscription.deviceId, randomPlayerId);
       resolve();

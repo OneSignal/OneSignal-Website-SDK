@@ -5,6 +5,7 @@ import Postmam from '../../../shared/services/Postmam';
 import MainHelper from '../../../shared/helpers/MainHelper';
 import SubscriptionHelper from '../../../shared/helpers/SubscriptionHelper';
 import Log from '../../../shared/libraries/Log';
+import OneSignal from '../../../onesignal/OneSignal';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -105,7 +106,7 @@ export default class SubscriptionModalHost implements Disposable {
     MainHelper.triggerCustomPromptClicked('granted');
     Log.debug('Calling setSubscription(true)');
     await SubscriptionHelper.registerForPush();
-    await OneSignal.setSubscription(true);
+    await OneSignal.getInstance().notifications?.disable(false);
   }
 
   onModalRejected(_: MessengerMessageEvent) {

@@ -11,11 +11,21 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
     super();
   }
 
+  /* singleton pattern */
+  private static instance: OneSignal;
+  public static getInstance(): OneSignal {
+    if (!OneSignal.instance) {
+      OneSignal.instance = new OneSignal();
+    }
+    return OneSignal.instance;
+  }
+
+
   @PublicApi()
   public async init(userConfig: AppUserConfig): Promise<void> {
-    await this.core.setup(); // gets cached config from database
+    await this.core.initialize(); // gets cached config from database
     let appConfig: AppConfig;
-    const cachedConfig = this.core.getCachedConfig();
+    const cachedConfig = this.core.modelRepo.getCachedConfig();
 
     if (true /* cached config is stale */) {
       appConfig = await this.initializeConfig(userConfig);
@@ -44,8 +54,9 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
   @PublicApi()
   public async setPrivacyConsent(privacyConsent: boolean): Promise<void> {
     await Database.setProvideUserConsent(privacyConsent);
-    if (privacyConsent && this._pendingInit)
-      await this.delayedInit();
+    if (privacyConsent && this._pendingInit) {
+      await this.delayedInit(this.config);
+    }
   }
 
   @PublicApi()
@@ -55,7 +66,7 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
 
   @PublicApi()
   public login(externalId: string, token?: JsonWebKey): void {
-
+    this.user = new User();
   }
 
   @PublicApi()

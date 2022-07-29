@@ -4,6 +4,7 @@ import ActiveAnimatedElement from "./ActiveAnimatedElement";
 import Bell from "./Bell";
 import LimitStore from "../../shared/services/LimitStore";
 import Message from "./Message";
+import OneSignal from "../../onesignal/OneSignal";
 
 
 export default class Button extends ActiveAnimatedElement {
@@ -96,7 +97,7 @@ export default class Button extends ActiveAnimatedElement {
         // The user is actually subscribed, register him for notifications
         OneSignal.registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
-        OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
+        OneSignal.getInstance().emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message.display(
             Message.TYPES.MESSAGE, this.bell.options.text['message.action.subscribed'], Message.TIMEOUT
           ).then(() => {

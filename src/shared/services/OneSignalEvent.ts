@@ -3,6 +3,7 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Utils from "../context/Utils";
 import Log from '../libraries/Log';
+import OneSignal from '../../onesignal/OneSignal';
 
 
 const SILENT_EVENTS = [
@@ -84,7 +85,7 @@ export default class OneSignalEvent {
         else
           OneSignal.initialized = true;
       }
-      await OneSignal.emitter.emit(eventName, data);
+      await OneSignal.getInstance().emitter.emit(eventName, data);
     }
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       const legacyEventName = LEGACY_EVENT_MAP[eventName];
