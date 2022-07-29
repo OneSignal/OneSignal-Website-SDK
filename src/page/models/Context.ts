@@ -18,6 +18,7 @@ import { SecondaryChannelManager } from '../../shared/managers/channelManager/Se
 import { AppConfig } from '../../shared/models/AppConfig';
 import MetricsManager from '../managers/MetricsManager';
 import { PromptsManager } from '../managers/PromptsManager';
+import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -29,7 +30,7 @@ export interface ContextInterface extends ContextSWInterface {
 
 export default class Context implements ContextInterface {
   public appConfig: AppConfig;
-  public environmentInfo?: EnvironmentInfo;
+  public environmentInfo: EnvironmentInfo;
   public dynamicResourceLoader: DynamicResourceLoader;
   public subscriptionManager: SubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
@@ -46,9 +47,7 @@ export default class Context implements ContextInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
-      this.environmentInfo = OneSignal.environmentInfo;
-    }
+    this.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
     this.secondaryChannelManager = new SecondaryChannelManager();
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);

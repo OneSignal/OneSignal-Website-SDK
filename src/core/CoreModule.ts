@@ -1,3 +1,4 @@
+import { AppConfig } from "../shared/models/AppConfig";
 import ModelCache from "./cache/ModelCache";
 import OperationCache from "./cache/OperationCache";
 import { HydratorBus } from "./HydratorBus";
@@ -25,5 +26,9 @@ export class CoreModule {
 
   public async setup(): Promise<void> {
     await this.modelRepo.setup();
+  }
+
+  public getCachedConfig(): AppConfig {
+    return this.modelRepo.config;
   }
 }

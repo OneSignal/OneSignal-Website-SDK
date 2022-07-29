@@ -1,5 +1,4 @@
 import {
-  ConfigModel,
   Delta,
   IdentityModel,
   Model,
@@ -12,6 +11,7 @@ import ObservableSlim from 'observable-slim';
 import Subscribable from "./utils/Subscribable";
 import equal from 'fast-deep-equal/es6';
 import ModelCache from "./cache/ModelCache";
+import { AppConfig } from "../shared/models/AppConfig";
 
 interface StringIndexable {
   [key: string]: any;
@@ -19,27 +19,28 @@ interface StringIndexable {
 
 export default class ModelRepo extends Subscribable<Delta> {
   // these properties are publically accessible but should not be mutated directly (use set)
-  public session: SessionModel = {};
-  public identity: IdentityModel = {};
-  public properties: PropertiesModel = {};
-  public subscriptions: SubscriptionsModel = {};
-  public config: ConfigModel = {};
+  public session?: SessionModel = {};
+  public identity?: IdentityModel = {};
+  public properties?: PropertiesModel = {};
+  public subscriptions?: SubscriptionsModel = {};
+  public config?: AppConfig;
 
-  private _session: SessionModel = {};
-  private _identity: IdentityModel = {};
-  private _properties: PropertiesModel = {};
-  private _subscriptions: SubscriptionsModel = {};
-  private _config: ConfigModel = {};
+  private _session?: SessionModel = {};
+  private _identity?: IdentityModel = {};
+  private _properties?: PropertiesModel = {};
+  private _subscriptions?: SubscriptionsModel = {};
+  private _config?: AppConfig;
 
   constructor(private modelCache: ModelCache) {
     super();
   }
 
   /**
+   * Loads models from cache
    * IMPORTANT: Must be called after instantiation to complete setup process
-   *  * loads models from cache
-   *  * creates Proxy observers assigned to public top-level class model properties
-   *  * observers will trigger writes to cache immediately upon object mutation (see `createObserver`)
+   *  - creates Proxy observers assigned to public top-level class model properties
+   *  - observers will trigger writes to cache immediately upon object mutation (see `createObserver`)
+   * @returns Promise<AppConfig>
    */
   public async setup(): Promise<void> {
     // ES5 limitation: object properties must be known at creation time
@@ -48,13 +49,17 @@ export default class ModelRepo extends Subscribable<Delta> {
     this._identity = await this.modelCache.get(Model.Identity);
     this._properties = await this.modelCache.get(Model.Properties);
     this._subscriptions = await this.modelCache.get(Model.Subscriptions);
-    this._config = await this.modelCache.get(Model.Config); // might need to pull from remote
+    this._config = this.getCachedConfig();
 
-    this.session = this.createObserver(this._session, Model.Session);
-    this.identity = this.createObserver(this._identity, Model.Identity);
-    this.properties = this.createObserver(this._properties, Model.Properties);
-    this.subscriptions = this.createObserver(this._subscriptions, Model.Subscriptions);
-    this.config = this.createObserver(this._config, Model.Config);
+    this.session = this.createObserver(Model.Session, this._session);
+    this.identity = this.createObserver(Model.Identity, this._identity);
+    this.properties = this.createObserver(Model.Properties, this._properties);
+    this.subscriptions = this.createObserver(Model.Subscriptions, this._subscriptions);
+    this.config = this.createObserver(Model.Config, this._config);
+  }
+
+  public async getCachedConfig(): Promise<AppConfig> {
+    return await this.modelCache.get(Model.Config);
   }
 
   /**
@@ -65,7 +70,7 @@ export default class ModelRepo extends Subscribable<Delta> {
    * @param  {Model} model - the model the change corresponds to
    * @returns object
    */
-  private createObserver(target: object, model: Model): object {
+  private createObserver<T>(model: Model, target?: object): T {
     /**
      * @param {object} target - the object we want to observe
      * @param {boolean} delay - if true, observed changes are batched every 10ms
@@ -85,7 +90,7 @@ export default class ModelRepo extends Subscribable<Delta> {
         };
         this.broadcast(delta);
       });
-    });
+    }) as unknown as T;
   }
 
   /**
@@ -95,7 +100,7 @@ export default class ModelRepo extends Subscribable<Delta> {
    * @returns void
    */
   public set<T extends StringIndexable>(model: Model, object: T): void {
-    let targetModel: StringIndexable; // to store reference to model to be changed
+    let targetModel: StringIndexable | undefined; // to store reference to model to be changed
 
     switch (model) {
       case Model.Session:
@@ -118,7 +123,9 @@ export default class ModelRepo extends Subscribable<Delta> {
     }
 
     Object.keys(object).forEach(key => {
-      targetModel[key] = object[key];
+      if (!!targetModel) {
+        targetModel[key] = object[key];
+      }
     });
   }
 }

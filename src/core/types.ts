@@ -1,3 +1,5 @@
+import { AppConfig } from "../shared/models/AppConfig";
+
 export enum Model {
   Identity = "identity",
   Properties = "properties",
@@ -65,13 +67,6 @@ export interface SubscriptionsModel {
   [key: string]: any;
 }
 
-export interface ConfigModel {
-  foo?: string;
-  hello?: string;
-  arr?: string[];
-  [key: string]: any;
-}
-
 export type RequestArgs = {
   action: string,
   data: object,
@@ -81,7 +76,7 @@ export type RequestArgs = {
 export type Headers = any[] & {[key: string]: any};
 
 export type DeltaAggregator = {
-  [Model.Config]: ConfigModel,
+  [Model.Config]: AppConfig,
   [Model.Identity]: IdentityModel,
   [Model.Properties]: PropertiesModel,
   [Model.Session]: SessionModel,

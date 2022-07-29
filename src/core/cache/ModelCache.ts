@@ -8,9 +8,9 @@ export default class ModelCache {
     console.log("saving in database");
   }
 
-  async get(model: Model): Promise<object> {
+  async get<T>(model: Model): Promise<T> {
     return {
       foo: 'bar'
-    };
+    } as unknown as T;
   }
 }

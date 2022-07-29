@@ -49,7 +49,7 @@ export default class OneSignalBase {
    * @param  {AppConfig} config
    * @returns Promise
    */
-  protected async initContext(config: AppConfig): Promise<void> {
+  protected initContext(config: AppConfig): void {
     this.context = new Context(config);
     this.contextResolver();
   }

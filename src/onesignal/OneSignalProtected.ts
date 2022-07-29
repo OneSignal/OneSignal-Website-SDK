@@ -38,18 +38,15 @@ export default class OneSignalProtected extends OneSignalBase {
     return this.emitter.on(event, listener);
   }
 
-  protected async internalInit(options: AppUserConfig) {
+  protected async internalInit(appConfig: AppConfig) {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
 
-    const config = await this.initializeConfig(options);
-    await this.initContext(config);
-
-    if (!this.config) {
+    if (!appConfig) {
       throw new Error("OneSignal config not initialized!");
     }
 
-    if (bowser.safari && !this.config.safariWebId) {
+    if (bowser.safari && !appConfig.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't
@@ -59,7 +56,7 @@ export default class OneSignalProtected extends OneSignalBase {
       return;
     }
 
-    if (this.config.userConfig.requiresUserPrivacyConsent) {
+    if (appConfig.userConfig.requiresUserPrivacyConsent) {
       const providedConsent = await Database.getProvideUserConsent();
       if (!providedConsent) {
         this._pendingInit = true;
@@ -67,12 +64,11 @@ export default class OneSignalProtected extends OneSignalBase {
       }
     }
 
-    await this.delayedInit();
+    await this.delayedInit(appConfig);
   }
 
-  protected async delayedInit() {
+  protected async delayedInit(appConfig: AppConfig) {
     this._pendingInit = false;
-    // Ignore Promise as doesn't return until the service worker becomes active.
     this.context?.workerMessenger.listen();
 
     const _init = async () => {
@@ -95,7 +91,7 @@ export default class OneSignalProtected extends OneSignalBase {
          * perfectly, while causing errors and preventing web push from working
          * on the HTTP site.
          */
-        if (!this.config || !this.config.subdomain)
+        if (!appConfig || !appConfig.subdomain)
           throw new SdkInitError(SdkInitErrorKind.MissingSubdomain);
 
         /**
@@ -113,7 +109,7 @@ export default class OneSignalProtected extends OneSignalBase {
          * good thing! We don't want to access IndexedDb before we know which
          * origin to store data on.
          */
-        this.proxyFrameHost = await AltOriginManager.discoverAltOrigin(this.config);
+        this.proxyFrameHost = await AltOriginManager.discoverAltOrigin(appConfig);
       }
 
       window.addEventListener('focus', async () => {
@@ -146,14 +142,6 @@ export default class OneSignalProtected extends OneSignalBase {
   async initializeConfig(options: AppUserConfig): Promise<AppConfig> {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
-
-    // TODO: environmentInfo is explicitly dependent on existence of this.config. Needs refactor.
-    // Workaround to temp assign config so that it can be used in context.
-    this.config = appConfig;
-    this.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
-
-    this.context = new Context(appConfig);
-    this.config = this.context.appConfig;
     return appConfig;
   }
 }
