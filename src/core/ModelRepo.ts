@@ -49,7 +49,7 @@ export default class ModelRepo extends Subscribable<Delta> {
     this._identity = await this.modelCache.get(Model.Identity);
     this._properties = await this.modelCache.get(Model.Properties);
     this._subscriptions = await this.modelCache.get(Model.Subscriptions);
-    this._config = this.getCachedConfig();
+    this._config = await this.getCachedConfig();
 
     this.session = this.createObserver(Model.Session, this._session);
     this.identity = this.createObserver(Model.Identity, this._identity);

@@ -62,7 +62,7 @@ export default class OneSignal extends OneSignalProtected implements IOneSignal 
   public loginGuest(): void {
 
   }
- 
+
   @PublicApi()
   public onLoginConflict(callback: (local: User, remote: User) => User): void {
 

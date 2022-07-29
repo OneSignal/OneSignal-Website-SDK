@@ -4,7 +4,7 @@ import { PublicApi } from "../PublicApiDecorator";
 import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {
-  private subscriptions: Subscriptions;
+  private subscriptions?: Subscriptions;
   constructor() {}
 
   @PublicApi()

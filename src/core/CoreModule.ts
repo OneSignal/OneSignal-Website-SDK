@@ -28,7 +28,7 @@ export class CoreModule {
     await this.modelRepo.setup();
   }
 
-  public getCachedConfig(): AppConfig {
-    return this.modelRepo.config;
+  public async getCachedConfig(): Promise<AppConfig> {
+    return await this.modelRepo.getCachedConfig();
   }
 }
