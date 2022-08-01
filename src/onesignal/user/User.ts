@@ -5,6 +5,7 @@ import { PublicApi } from "../PublicApiDecorator";
 import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {
+  private core: CoreModule;
   private subscriptions?: Subscriptions;
 
   constructor() {
