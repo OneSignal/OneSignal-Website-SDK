@@ -28,6 +28,7 @@ export type Delta = {
 };
 
 export type Operation = {
+  operationId: string; // unique id for this operation uuidv4
   model: Model;
   delta: object;
   success?: boolean;

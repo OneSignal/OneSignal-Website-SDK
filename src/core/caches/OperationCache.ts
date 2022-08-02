@@ -10,4 +10,10 @@ export default class OperationCache {
   static async getAll(): Promise<Operation[]> {
     return Database.get("Operations");
   }
+
+  static async delete(operationId: string): Promise<void> {
+    const operations: Operation[] = await OperationCache.getAll();
+    const newOperations = operations.filter(operation => operation.operationId !== operationId);
+    await Database.put("Operations", newOperations);
+  }
 }

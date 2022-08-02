@@ -8,7 +8,6 @@ const OPERATIONS_BATCH_PROCESSING_TIME = 5;
 
 export default class OperationRepo extends Subscribable<Operation> {
   public deltaQueue: Delta[] = [];
-  private operationQueue: Operation[] = [];
   private onlineStatus: boolean = true;
 
   constructor(private modelRepo: ModelRepo) {
@@ -51,17 +50,13 @@ export default class OperationRepo extends Subscribable<Operation> {
       if (Object.keys(delta).length) {
 
         const newOperation: Operation = {
+          operationId: (Math.random() + 1).toString(12).substr(2), // random string
           model: key,
           delta: delta,
         };
-        this.operationQueue.push(newOperation);
+        OperationCache.put(newOperation);
       }
     }
-  }
-
-  private async getCachedOperations(): Promise<void> {
-    const cachedOps: Operation[] = await OperationCache.getAll();
-    this.operationQueue.unshift(...cachedOps || []);
   }
 
   private async processOperationQueue(): Promise<void> {
@@ -69,16 +64,22 @@ export default class OperationRepo extends Subscribable<Operation> {
       return;
     }
 
-    await this.getCachedOperations();
-    if (!this.operationQueue.length) {
+    const operations = await OperationCache.getAll();
+    if (!operations.length) {
       return;
     }
 
-    while(this.operationQueue.length > 0) {
-      const operation = this.operationQueue.shift();
+    while(operations.length > 0) {
+      const operation = operations.shift();
       /*
       const res = RequestService.request(operation);
       this.broadcast(res);
+
+      if (res.success) {
+        OperationCache.delete(operation.operationId);
+      } else {
+        // retry logic
+      }
       */
     }
   }
