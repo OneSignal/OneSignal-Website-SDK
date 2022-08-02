@@ -1,5 +1,6 @@
+import { SubscriptionsCollection } from "../../onesignal/subscriptions/SubscriptionsCollection";
 import { AppConfig } from "../../shared/models/AppConfig";
-import { IdentityModel, SubscriptionsModel, UserProperties } from "../types";
+import { IdentityModel, UserProperties } from "../types";
 
 /**
  * Purpose here is to provide dummy objects for use in the absence of a model
@@ -14,7 +15,7 @@ const identity: IdentityModel = {
 
 const properties: UserProperties = {};
 
-const subscriptions: SubscriptionsModel[] = [];
+const subscriptions: SubscriptionsCollection = {};
 
 const config: AppConfig = {
   appId: "",

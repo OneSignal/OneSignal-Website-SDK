@@ -4,7 +4,6 @@ import {
   Model,
   ObservableSlimChange,
   UserProperties,
-  SubscriptionsModel
 } from "./types";
 import ObservableSlim from 'observable-slim';
 import Subscribable from "./utils/Subscribable";
@@ -13,6 +12,7 @@ import ModelCache from "./caches/ModelCache";
 import { AppConfig } from "../shared/models/AppConfig";
 import Utils from "../shared/context/Utils";
 import DEFAULT_MODELS from "./utils/DefaultModelObjects";
+import { SubscriptionsCollection } from "../onesignal/subscriptions/SubscriptionsCollection";
 
 interface StringIndexable {
   [key: string]: any;
@@ -22,12 +22,12 @@ export default class ModelRepo extends Subscribable<Delta> {
   // these properties are publically accessible but should not be mutated directly (use set)
   public identity?: IdentityModel;
   public properties?: UserProperties;
-  public subscriptions?: SubscriptionsModel[];
+  public subscriptions?: SubscriptionsCollection;
   public config?: AppConfig;
 
   private _identity?: IdentityModel;
   private _properties?: UserProperties;
-  private _subscriptions?: SubscriptionsModel[];
+  private _subscriptions?: SubscriptionsCollection;
   private _config?: AppConfig;
 
   constructor() {

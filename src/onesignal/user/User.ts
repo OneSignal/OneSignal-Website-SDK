@@ -2,6 +2,8 @@ import { CoreModule } from "../../core/CoreModule";
 import { InvalidArgumentError, InvalidArgumentReason } from "../../shared/errors/InvalidArgumentError";
 import { isValidEmail } from "../../shared/utils/utils";
 import { PublicApi } from "../PublicApiDecorator";
+import FutureSubscription from "../subscriptions/FutureSubscription";
+import { FutureSubscription, SubscriptionType } from "../subscriptions/SubscriptionModel";
 import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {
@@ -40,9 +42,13 @@ export default class User {
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
+
     if (!isValidEmail(email)) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
+
+    const emailSubscription = new FutureSubscription(SubscriptionType.Email, email);
+    this.core.modelRepo.subscriptions?.email?.push(emailSubscription);
   }
 
   @PublicApi()
@@ -51,12 +57,12 @@ export default class User {
   }
 
   @PublicApi()
-  public removeEmail(): void {
+  public removeEmail(email: string): void {
 
   }
 
   @PublicApi()
-  public removeSms(): void {
+  public removeSms(smsNumber: string): void {
 
   }
 
