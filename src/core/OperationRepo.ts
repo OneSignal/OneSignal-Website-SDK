@@ -1,7 +1,6 @@
 import { Delta, DeltaAggregator, Model, Operation } from "./types";
 import Subscribable from "./utils/Subscribable";
-import { EnhancedSet } from "./utils/EnhancedSet";
-import OperationCache from "./cache/OperationCache";
+import OperationCache from "./caches/OperationCache";
 import ModelRepo from "./ModelRepo";
 
 const DELTAS_BATCH_PROCESSING_TIME = 1;
@@ -9,10 +8,10 @@ const OPERATIONS_BATCH_PROCESSING_TIME = 5;
 
 export default class OperationRepo extends Subscribable<Operation> {
   public deltaQueue: Delta[] = [];
-  private operationQueue: EnhancedSet<Operation> = new EnhancedSet();
+  private operationQueue: Operation[] = [];
   private onlineStatus: boolean = true;
 
-  constructor(private modelRepo: ModelRepo, private operationCache: OperationCache) {
+  constructor(private modelRepo: ModelRepo) {
     super();
 
     setInterval(this.processDeltaQueue.bind(this), DELTAS_BATCH_PROCESSING_TIME * 1_000);
@@ -55,13 +54,13 @@ export default class OperationRepo extends Subscribable<Operation> {
           model: key,
           delta: delta,
         };
-        this.operationQueue.add(newOperation);
+        this.operationQueue.push(newOperation);
       }
     }
   }
 
   private async getCachedOperations(): Promise<void> {
-    const cachedOps: Operation[] = await this.operationCache.getAll();
+    const cachedOps: Operation[] = await OperationCache.getAll();
     this.operationQueue.unshift(...cachedOps || []);
   }
 
@@ -71,11 +70,11 @@ export default class OperationRepo extends Subscribable<Operation> {
     }
 
     await this.getCachedOperations();
-    if (!this.operationQueue.size) {
+    if (!this.operationQueue.length) {
       return;
     }
 
-    while(this.operationQueue.size > 0) {
+    while(this.operationQueue.length > 0) {
       const operation = this.operationQueue.shift();
       /*
       const res = RequestService.request(operation);
@@ -89,7 +88,6 @@ export default class OperationRepo extends Subscribable<Operation> {
       [Model.Config]: {},
       [Model.Identity]: {},
       [Model.Properties]: {},
-      [Model.Session]: {},
       [Model.Subscriptions]: {}
     };
   }

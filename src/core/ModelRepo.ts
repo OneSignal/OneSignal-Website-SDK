@@ -9,7 +9,7 @@ import {
 import ObservableSlim from 'observable-slim';
 import Subscribable from "./utils/Subscribable";
 import equal from 'fast-deep-equal/es6';
-import ModelCache from "./cache/ModelCache";
+import ModelCache from "./caches/ModelCache";
 import { AppConfig } from "../shared/models/AppConfig";
 import Utils from "../shared/context/Utils";
 import DEFAULT_MODELS from "./utils/DefaultModelObjects";
@@ -30,7 +30,7 @@ export default class ModelRepo extends Subscribable<Delta> {
   private _subscriptions?: SubscriptionsModel[];
   private _config?: AppConfig;
 
-  constructor(private modelCache: ModelCache) {
+  constructor() {
     super();
   }
 
@@ -45,11 +45,11 @@ export default class ModelRepo extends Subscribable<Delta> {
     // ES5 limitation: object properties must be known at creation time
     // for ObservableSlim to work as expected
     this._identity = Utils.getValueOrDefault(
-      (await this.modelCache.get(Model.Identity)), DEFAULT_MODELS.identity);
+      (await ModelCache.get(Model.Identity)), DEFAULT_MODELS.identity);
     this._properties = Utils.getValueOrDefault(
-      (await this.modelCache.get(Model.Properties)), DEFAULT_MODELS.properties);
+      (await ModelCache.get(Model.Properties)), DEFAULT_MODELS.properties);
     this._subscriptions = Utils.getValueOrDefault(
-      (await this.modelCache.get(Model.Subscriptions)), DEFAULT_MODELS.subscriptions);
+      (await ModelCache.get(Model.Subscriptions)), DEFAULT_MODELS.subscriptions);
     this._config = Utils.getValueOrDefault(
       (await this.getCachedConfig()), DEFAULT_MODELS.config);
 
@@ -60,7 +60,7 @@ export default class ModelRepo extends Subscribable<Delta> {
   }
 
   public async getCachedConfig(): Promise<AppConfig> {
-    return await this.modelCache.get(Model.Config);
+    return await ModelCache.get(Model.Config);
   }
 
   /**
@@ -82,6 +82,8 @@ export default class ModelRepo extends Subscribable<Delta> {
         if (equal(change.previousValue, change.newValue)) {
           return;
         }
+
+        ModelCache.put(model, change.property, change.newValue);
 
         const delta: Delta = {
           model,

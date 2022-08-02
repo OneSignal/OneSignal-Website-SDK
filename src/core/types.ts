@@ -48,10 +48,10 @@ export type RequestArgs = {
 export type Headers = any[] & {[key: string]: any};
 
 export type DeltaAggregator = {
-  [Model.Config]: AppConfig,
-  [Model.Identity]: IdentityModel,
-  [Model.Properties]: UserProperties,
-  [Model.Subscriptions]: SubscriptionsModel[]
+  [Model.Config]: {[key: string]: any},
+  [Model.Identity]: {[key: string]: any},
+  [Model.Properties]: {[key: string]: any},
+  [Model.Subscriptions]: {[key: string]: any}
 };
 
 export type IdentityModel = {

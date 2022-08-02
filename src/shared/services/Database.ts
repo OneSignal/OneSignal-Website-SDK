@@ -28,8 +28,17 @@ interface DatabaseResult {
   timestamp: any;
 }
 
-export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
-  "NotificationOpened" | "NotificationReceived" | "NotificationClicked" | "SentUniqueOutcome";
+export type OneSignalDbTable =
+  "Options" |
+  "Ids" |
+  "NotificationOpened" |
+  "Sessions" |
+  "NotificationOpened" |
+  "NotificationReceived" |
+  "NotificationClicked" |
+  "SentUniqueOutcome" |
+  "Models" |
+  "Operations";
 
 export default class Database {
 
@@ -468,7 +477,9 @@ export default class Database {
       Database.singletonInstance.remove("Options"),
       Database.singletonInstance.remove("NotificationReceived"),
       Database.singletonInstance.remove("NotificationClicked"),
-      Database.singletonInstance.remove("SentUniqueOutcome")
+      Database.singletonInstance.remove("SentUniqueOutcome"),
+      Database.singletonInstance.remove("Models"),
+      Database.singletonInstance.remove("Operations"),
     ]);
   }
 

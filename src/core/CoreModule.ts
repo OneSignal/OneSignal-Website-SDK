@@ -1,5 +1,5 @@
-import ModelCache from "./cache/ModelCache";
-import OperationCache from "./cache/OperationCache";
+import ModelCache from "./caches/ModelCache";
+import OperationCache from "./caches/OperationCache";
 import { HydratorBus } from "./HydratorBus";
 import ModelRepo from "./ModelRepo";
 import OperationRepo from "./OperationRepo";
@@ -13,14 +13,9 @@ export class CoreModule {
   public modelRepo: ModelRepo;
   public operationRepo: OperationRepo;
 
-  private modelCache: ModelCache;
-  private operationCache: OperationCache;
-
   constructor() {
-    this.modelCache = new ModelCache();
-    this.modelRepo = new ModelRepo(this.modelCache);
-    this.operationCache = new OperationCache();
-    this.operationRepo = new OperationRepo(this.modelRepo, this.operationCache);
+    this.modelRepo = new ModelRepo();
+    this.operationRepo = new OperationRepo(this.modelRepo);
     new HydratorBus(this.modelRepo, this.operationRepo);
   }
 
