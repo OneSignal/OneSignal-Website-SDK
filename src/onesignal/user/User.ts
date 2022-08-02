@@ -3,7 +3,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from "../../shared/errors
 import { isValidEmail } from "../../shared/utils/utils";
 import { PublicApi } from "../PublicApiDecorator";
 import FutureSubscription from "../subscriptions/FutureSubscription";
-import { FutureSubscription, SubscriptionType } from "../subscriptions/SubscriptionModel";
+import { SubscriptionType } from "../subscriptions/SubscriptionModel";
 import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {

@@ -19,7 +19,7 @@ interface StringIndexable {
 }
 
 export default class ModelRepo extends Subscribable<Delta> {
-  // these properties are publically accessible but should not be mutated directly (use set)
+  // these properties are publically accessible but should not be re-assigned, only mutated
   public identity?: IdentityModel;
   public properties?: UserProperties;
   public subscriptions?: SubscriptionsCollection;
@@ -29,6 +29,8 @@ export default class ModelRepo extends Subscribable<Delta> {
   private _properties?: UserProperties;
   private _subscriptions?: SubscriptionsCollection;
   private _config?: AppConfig;
+
+  private isUpdatingFromHydrator?: boolean;
 
   constructor() {
     super();
@@ -78,12 +80,17 @@ export default class ModelRepo extends Subscribable<Delta> {
      * @param {function} observer - the observer callback
      */
     return ObservableSlim.create(target, true, async (changes: ObservableSlimChange[]) => {
-      changes.forEach(change => {
+      changes.forEach(async change => {
         if (equal(change.previousValue, change.newValue)) {
           return;
         }
 
-        ModelCache.put(model, change.property, change.newValue);
+        await ModelCache.put(model, change.property, change.newValue);
+
+        if (this.isUpdatingFromHydrator) {
+          this.isUpdatingFromHydrator = false;
+          return;
+        }
 
         const delta: Delta = {
           model,
@@ -91,6 +98,7 @@ export default class ModelRepo extends Subscribable<Delta> {
           newValue: change.newValue,
           timestamp: Date.now()
         };
+
         this.broadcast(delta);
       });
     }) as unknown as T;
@@ -102,7 +110,8 @@ export default class ModelRepo extends Subscribable<Delta> {
    * @param  {T} object
    * @returns void
    */
-  public set<T extends StringIndexable>(model: Model, object: T): void {
+  public set<T extends StringIndexable>(model: Model, object: T, fromHydrator?: boolean): void {
+    this.isUpdatingFromHydrator = fromHydrator;
     let targetModel: StringIndexable | undefined; // to store reference to model to be changed
 
     switch (model) {
