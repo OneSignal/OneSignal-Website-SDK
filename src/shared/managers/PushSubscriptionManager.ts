@@ -47,7 +47,7 @@ export type SubscriptionStateServiceWorkerNotIntalled =
   SubscriptionStateKind.ServiceWorkerStatus403 |
   SubscriptionStateKind.ServiceWorkerStatus404;
 
-export class SubscriptionManager {
+export class PushSubscriptionManager {
   private context: ContextSWInterface;
   private config: SubscriptionManagerConfig;
 
@@ -101,7 +101,7 @@ export class SubscriptionManager {
         if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
 
-        if (SubscriptionManager.isSafari()) {
+        if (PushSubscriptionManager.isSafari()) {
           rawPushSubscription = await this.subscribeSafari();
           /* Now that permissions have been granted, install the service worker */
           Log.info("Installing SW on Safari");
@@ -173,7 +173,7 @@ export class SubscriptionManager {
     subscription.deviceId = newDeviceId;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (SubscriptionManager.isSafari()) {
+      if (PushSubscriptionManager.isSafari()) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
         subscription.subscriptionToken = pushSubscription.w3cEndpoint ? pushSubscription.w3cEndpoint.toString() : null;
@@ -199,7 +199,7 @@ export class SubscriptionManager {
    * querying our server for an updated service worker every 24 hours.
    */
   private static async requestPresubscribeNotificationPermission(): Promise<NotificationPermission> {
-    return await SubscriptionManager.requestNotificationPermission();
+    return await PushSubscriptionManager.requestNotificationPermission();
   }
 
   public async unsubscribe(strategy: UnsubscriptionStrategy) {
@@ -334,7 +334,7 @@ export class SubscriptionManager {
       Notification.permission === NotificationPermission.Default
     ) {
       await OneSignalEvent.trigger(OneSignal.EVENTS.PERMISSION_PROMPT_DISPLAYED);
-      const permission = await SubscriptionManager.requestPresubscribeNotificationPermission();
+      const permission = await PushSubscriptionManager.requestPresubscribeNotificationPermission();
 
       /*
         Notification permission changes are already broadcast by the page's
@@ -511,23 +511,23 @@ export class SubscriptionManager {
           */
 
           /* We're unsubscribing, so we want to store the created at timestamp */
-          await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
+          await PushSubscriptionManager.doPushUnsubscribe(existingPushSubscription);
         }
         break;
       case SubscriptionStrategyKind.SubscribeNew:
         /* Since we want a new subscription every time with this strategy, just unsubscribe. */
         if (existingPushSubscription) {
-          await SubscriptionManager.doPushUnsubscribe(existingPushSubscription);
+          await PushSubscriptionManager.doPushUnsubscribe(existingPushSubscription);
         }
         break;
     }
 
     // Actually subscribe the user to push
     const [newPushSubscription, isNewSubscription] =
-      await SubscriptionManager.doPushSubscribe(pushManager, this.getVapidKeyForBrowser());
+      await PushSubscriptionManager.doPushSubscribe(pushManager, this.getVapidKeyForBrowser());
 
     // Update saved create and expired times
-    await SubscriptionManager.updateSubscriptionTime(isNewSubscription, newPushSubscription.expirationTime);
+    await PushSubscriptionManager.updateSubscriptionTime(isNewSubscription, newPushSubscription.expirationTime);
 
     // Create our own custom object from the browser's native PushSubscription object
     const pushSubscriptionDetails = RawPushSubscription.setFromW3cSubscription(newPushSubscription);
@@ -586,7 +586,7 @@ export class SubscriptionManager {
           "unsubscribe and attempting to subscribe with new key.", e);
         const subscription = await pushManager.getSubscription();
         if (subscription) {
-          await SubscriptionManager.doPushUnsubscribe(subscription);
+          await PushSubscriptionManager.doPushUnsubscribe(subscription);
         }
         return [await pushManager.subscribe(subscriptionOptions), true];
       }
@@ -680,7 +680,7 @@ export class SubscriptionManager {
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
     /* Safari should always return Secure because HTTP doesn't apply on Safari */
-    if (SubscriptionManager.isSafari()) {
+    if (PushSubscriptionManager.isSafari()) {
       return this.getSubscriptionStateForSecure();
     }
 
@@ -726,7 +726,7 @@ export class SubscriptionManager {
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
     const { deviceId, optedOut } = await Database.getSubscription();
 
-    if (SubscriptionManager.isSafari()) {
+    if (PushSubscriptionManager.isSafari()) {
       const subscriptionState: SafariRemoteNotificationPermission =
         window.safari.pushNotification.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(

@@ -9,7 +9,7 @@ import { ServiceWorkerActiveState } from '../../../src/shared/helpers/ServiceWor
 import { TestEnvironment, HttpHttpsEnvironment, BrowserUserAgent } from '../../support/sdk/TestEnvironment';
 import Database from '../../../src/shared/services/Database';
 import Context from '../../../src/page/models/Context';
-import { SubscriptionManager, SubscriptionManagerConfig } from '../../../src/shared/managers/SubscriptionManager';
+import { PushSubscriptionManager, SubscriptionManagerConfig } from '../../../src/shared/managers/PushSubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/shared/utils/Encoding';
 import Random from '../../support/tester/Random';
 import { setBrowser } from '../../support/tester/browser';
@@ -53,11 +53,11 @@ async function testCase(
   sharedVapidPublicKey: string,
   subscriptionStrategy: SubscriptionStrategyKind,
   onBeforeSubscriptionManagerSubscribe:
-    (pushManager: PushManager, subscriptionManager: SubscriptionManager) => Promise<void>,
+    (pushManager: PushManager, subscriptionManager: PushSubscriptionManager) => Promise<void>,
   onPushManagerSubscribed: (
     pushManager: PushManager,
     spy: sinon.SinonSpy,
-    subscriptionManager: SubscriptionManager
+    subscriptionManager: PushSubscriptionManager
   ) => Promise<void>,
 ) {
 
@@ -65,7 +65,7 @@ async function testCase(
   setBrowser(browser);
 
   // Create our subscription manager, which is what we're testing
-  const manager = new SubscriptionManager(OneSignalPublic.context, {
+  const manager = new PushSubscriptionManager(OneSignalPublic.context, {
     safariWebId: undefined,
     appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
@@ -264,7 +264,7 @@ test(
   "null applicationServerKey throws when subscribing",
   async t => {
 
-    const manager = new SubscriptionManager(OneSignalPublic.context, {
+    const manager = new PushSubscriptionManager(OneSignalPublic.context, {
       safariWebId: undefined,
       appId: Random.getRandomUuid(),
       vapidPublicKey: <any>undefined, // Forcing vapidPublicKey to undefined to test throwing
@@ -292,7 +292,7 @@ test("registerSubscription with an existing subsription sends player update", as
 
   sandbox.stub(Database, "getSubscription").resolves({ deviceId } as Subscription);
   sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
-  sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+  sandbox.stub(PushSubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
   const playerUpdateSpy = sandbox.stub(OneSignalPublic.context.updateManager, "sendPushDeviceRecordUpdate");
@@ -329,7 +329,7 @@ test("registerSubscription without an existing subsription sends player create",
   sandbox.stub(Database, "getSubscription").resolves({ } as Subscription);
   sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
   sandbox.stub(PushDeviceRecord, "createFromPushSubscription").returns(deviceRecord);
-  sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+  sandbox.stub(PushSubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
   const playerUpdateSpy = sandbox.stub(OneSignalPublic.context.updateManager, "sendPushDeviceRecordUpdate");
@@ -734,7 +734,7 @@ test(
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error403);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(PushSubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
@@ -760,7 +760,7 @@ test(
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error403);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(PushSubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
@@ -786,7 +786,7 @@ test(
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error404);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(PushSubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
@@ -812,7 +812,7 @@ test(
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error404);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(PushSubscriptionManager, "isSafari").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");

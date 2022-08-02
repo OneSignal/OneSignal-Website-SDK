@@ -1,5 +1,3 @@
-import { AppConfig } from "../shared/models/AppConfig";
-
 export enum Model {
   Identity = "identity",
   Properties = "properties",

@@ -1,6 +1,6 @@
 import { WorkerMessenger } from '../libraries/WorkerMessenger';
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
+import { PushSubscriptionManager } from '../managers/PushSubscriptionManager';
 import { AppConfig } from './AppConfig';
 import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
@@ -17,7 +17,7 @@ import { SecondaryChannelManager } from '../managers/channelManager/SecondaryCha
 
 export interface ContextSWInterface {
   appConfig: AppConfig;
-  subscriptionManager: SubscriptionManager;
+  subscriptionManager: PushSubscriptionManager;
   serviceWorkerManager: ServiceWorkerManager;
   pageViewManager: PageViewManager;
   sessionManager: ISessionManager;
@@ -29,7 +29,7 @@ export interface ContextSWInterface {
 
 export default class ContextSW implements ContextSWInterface {
   public appConfig: AppConfig;
-  public subscriptionManager: SubscriptionManager;
+  public subscriptionManager: PushSubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
   public pageViewManager: PageViewManager;
   public sessionManager: ISessionManager;

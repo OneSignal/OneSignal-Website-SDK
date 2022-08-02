@@ -9,7 +9,7 @@ import Random from "../../support/tester/Random";
 import { NotificationPermission } from "../../../src/shared/models/NotificationPermission";
 import { UpdateManager } from '../../../src/shared/managers/UpdateManager';
 import { PageViewManager } from "../../../src/shared/managers/PageViewManager";
-import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
+import { PushSubscriptionManager } from "../../../src/shared/managers/PushSubscriptionManager";
 import InitHelper from "../../../src/shared/helpers/InitHelper";
 import {
   markUserAsOptedOut, markUserAsSubscribed, markUserAsSubscribedOnHttp,
@@ -118,7 +118,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   EventsTestHelper.simulateSlidedownDismissAfterShown();
 
-  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
 
   const initializePromise = new Promise<void>(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -194,7 +194,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       permission: NotificationPermission.Default
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
-    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+    const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
     const initializePromise = new Promise<void>(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
@@ -227,7 +227,7 @@ test.serial(`HTTPS: User not subscribed and not opted out => first page view => 
       permission: NotificationPermission.Granted
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
-    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+    const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
 
     const initializePromise = new Promise<void>(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -291,7 +291,7 @@ test.serial(`HTTPS: User opted out => first page view => onSession flag is off =
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
   serverAppConfig.features.enable_on_session = false;
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t, serverAppConfig);
-  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
   await markUserAsOptedOut(sinonSandbox, playerId);
 
   const initializePromise = new Promise<void>(resolve => {
@@ -326,7 +326,7 @@ test.serial(`HTTPS: User opted out => second page view => onSession flag is on =
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!);
   serverAppConfig.features.enable_on_session = true;
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t, serverAppConfig);
-  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
   await markUserAsOptedOut(sinonSandbox, playerId);
 
   sinonSandbox.stub(PageViewManager.prototype, "getPageViewCount").resolves(2);
@@ -478,7 +478,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => s
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
   EventsTestHelper.simulateSlidedownDismissAfterShown();
 
-  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
 
   const initializePromise = new Promise<void>(resolve => {
     OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -513,7 +513,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
     stubServiceWorkerInstallation(sinonSandbox);
 
-    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+    const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
 
     const initializePromise = new Promise<void>(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -541,7 +541,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => a
       permission: NotificationPermission.Default
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
-    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+    const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
     const initializePromise = new Promise<void>(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
         t.is(stubs.onSessionStub.callCount, 0);
@@ -573,7 +573,7 @@ test.serial(`HTTP: User not subscribed and not opted out => first page view => n
       permission: NotificationPermission.Granted
     };
     const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t);
-    const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+    const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
 
     const initializePromise = new Promise<void>(resolve => {
       OneSignal.on(OneSignal.EVENTS.SDK_INITIALIZED_PUBLIC, () => {
@@ -637,7 +637,7 @@ test.serial(`HTTP: User opted out => first page view => onSession flag is off =>
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
   serverAppConfig.features.enable_on_session = false;
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t, serverAppConfig);
-  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
   await markUserAsOptedOut(sinonSandbox, playerId);
 
   const initializePromise = new Promise<void>(resolve => {
@@ -672,7 +672,7 @@ test.serial(`HTTP: User opted out => second page view => onSession flag is on =>
   const serverAppConfig = TestEnvironment.getFakeServerAppConfig(testConfig.integration!, false);
   serverAppConfig.features.enable_on_session = true;
   const stubs = await TestEnvironment.setupOneSignalPageWithStubs(sinonSandbox, testConfig, t, serverAppConfig);
-  const subscribeSpy = sinonSandbox.spy(SubscriptionManager.prototype, "subscribe");
+  const subscribeSpy = sinonSandbox.spy(PushSubscriptionManager.prototype, "subscribe");
   await markUserAsOptedOut(sinonSandbox, playerId);
 
   sinonSandbox.stub(PageViewManager.prototype, "getPageViewCount").resolves(2);

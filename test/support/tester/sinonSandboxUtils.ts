@@ -11,7 +11,7 @@ import PermissionManager from "../../../src/shared/managers/PermissionManager";
 import { ServiceWorkerActiveState } from "../../../src/shared/helpers/ServiceWorkerHelper";
 import { ServiceWorkerManager } from "../../../src/shared/managers/ServiceWorkerManager";
 import { Subscription } from "../../../src/shared/models/Subscription";
-import { SubscriptionManager } from "../../../src/shared/managers/SubscriptionManager";
+import { PushSubscriptionManager } from "../../../src/shared/managers/PushSubscriptionManager";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import { WorkerMessenger } from "../../../src/shared/libraries/WorkerMessenger";
 
@@ -30,7 +30,7 @@ export async function markUserAsSubscribed(
   const subscription = createSubscription(playerId);
   sinonSandbox.stub(Database, "getSubscription").resolves(subscription);
 
-  sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
+  sinonSandbox.stub(PushSubscriptionManager.prototype, "getSubscriptionState")
     .resolves({ subscribed: true, isOptedOut: false });
   
   if (expired) {
@@ -49,7 +49,7 @@ export async function markUserAsSubscribedOnHttp(
 export function stubServiceWorkerInstallation(sinonSandbox: SinonSandbox) {
   const swRegistration = new MockServiceWorkerRegistration();
 
-  sinonSandbox.stub(SubscriptionManager.prototype, "subscribeWithVapidKey")
+  sinonSandbox.stub(PushSubscriptionManager.prototype, "subscribeWithVapidKey")
     .resolves(TestEnvironment.getFakeRawPushSubscription());
   sinonSandbox.stub(ServiceWorkerManager.prototype, "getActiveState")
     .resolves(ServiceWorkerActiveState.OneSignalWorker);

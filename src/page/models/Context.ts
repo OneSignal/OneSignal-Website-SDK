@@ -1,6 +1,6 @@
 import { WorkerMessenger } from '../../shared/libraries/WorkerMessenger';
 import { ServiceWorkerManager } from '../../shared/managers/ServiceWorkerManager';
-import { SubscriptionManager } from '../../shared/managers/SubscriptionManager';
+import { PushSubscriptionManager } from '../../shared/managers/PushSubscriptionManager';
 import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
 import { PageViewManager } from '../../shared/managers/PageViewManager';
 import PermissionManager from '../../shared/managers/PermissionManager';
@@ -33,7 +33,7 @@ export default class Context implements ContextInterface {
   public appConfig: AppConfig;
   public environmentInfo: EnvironmentInfo;
   public dynamicResourceLoader: DynamicResourceLoader;
-  public subscriptionManager: SubscriptionManager;
+  public subscriptionManager: PushSubscriptionManager;
   public serviceWorkerManager: ServiceWorkerManager;
   public workerMessenger: WorkerMessenger;
   public pageViewManager: PageViewManager;

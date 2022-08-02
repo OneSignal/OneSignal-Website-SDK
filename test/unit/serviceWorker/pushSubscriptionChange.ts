@@ -9,7 +9,7 @@ import { BrowserUserAgent, TestEnvironment } from '../../support/sdk/TestEnviron
 import Database from '../../../src/shared/services/Database';
 import { ConfigIntegrationKind } from '../../../src/shared/models/AppConfig';
 import Random from "../../support/tester/Random";
-import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
+import { PushSubscriptionManager } from '../../../src/shared/managers/PushSubscriptionManager';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
 import {
@@ -67,7 +67,7 @@ test(`called with an old and new subscription successfully updates the subscript
     It's going to fail due to the blocked permission, so let's simulate that here.
    */
   sinonSandbox
-    .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+    .stub(PushSubscriptionManager.prototype, 'subscribeFcmFromWorker')
     .throws('some-error');
 
   await setInitialDatabaseState(existingDeviceId, oldSubscription.endpoint);
@@ -154,7 +154,7 @@ test(
   `and updates existing device record to clear subscription`,
   async t => {
     sinonSandbox
-      .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+      .stub(PushSubscriptionManager.prototype, 'subscribeFcmFromWorker')
       .throws('some-error');
 
     await setInitialDatabaseState(existingDeviceId, oldSubscription.endpoint);
@@ -177,7 +177,7 @@ test(
 test(`called without an existing device ID, without old and new subscription, custom resubscription fails ` +
 `and local data is cleared`, async t => {
   sinonSandbox
-    .stub(SubscriptionManager.prototype, 'subscribeFcmFromWorker')
+    .stub(PushSubscriptionManager.prototype, 'subscribeFcmFromWorker')
     .throws('some-error');
 
   // Before pushsubscriptionchange

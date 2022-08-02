@@ -64,6 +64,7 @@ export default class User {
   public addTag(key: string, value: string): void {
     this.addTags({ [key]: value });
   }
+
   @PublicApi()
   public addTags(tags: {[key: string]: string}): void {
     this.core.modelRepo.properties = { ...this.core.modelRepo.properties, tags };

@@ -1,5 +1,5 @@
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import { SubscriptionManager, SubscriptionManagerConfig } from '../managers/SubscriptionManager';
+import { PushSubscriptionManager, SubscriptionManagerConfig } from '../managers/PushSubscriptionManager';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { ContextSWInterface } from "../models/ContextSW";
 import { AppConfig } from '../models/AppConfig';
@@ -27,7 +27,7 @@ export class ContextHelper {
     return new ServiceWorkerManager(context, serviceWorkerManagerConfig);
   }
 
-  public static getSubscriptionManager(context: ContextSWInterface): SubscriptionManager {
+  public static getSubscriptionManager(context: ContextSWInterface): PushSubscriptionManager {
     const config: AppConfig = context.appConfig;
     const subscriptionManagerConfig: SubscriptionManagerConfig = {
       safariWebId: config.safariWebId,
@@ -35,7 +35,7 @@ export class ContextHelper {
       vapidPublicKey: config.vapidPublicKey,
       onesignalVapidPublicKey: config.onesignalVapidPublicKey,
     };
-    return new SubscriptionManager(context, subscriptionManagerConfig);
+    return new PushSubscriptionManager(context, subscriptionManagerConfig);
   }
 }
 

@@ -1,5 +1,5 @@
 import Slidedown from "../../../src/page/slidedown/Slidedown";
-import { SubscriptionManager } from '../../../src/shared/managers/SubscriptionManager';
+import { PushSubscriptionManager } from '../../../src/shared/managers/PushSubscriptionManager';
 import OneSignalEvent from "../../../src/shared/services/OneSignalEvent";
 import { SinonSandbox } from 'sinon';
 import { stubServiceWorkerInstallation } from "../../support/tester/sinonSandboxUtils";
@@ -59,7 +59,7 @@ export default class EventsTestHelper {
   public simulateSubscribingAfterNativeAllow() {
     OneSignalPublic.emitter.on(OneSignalPublic.EVENTS.PERMISSION_PROMPT_DISPLAYED, () => {
         this.sinonSandbox.stub(OneSignalPublic, "privateGetSubscription").resolves(true);
-        this.sinonSandbox.stub(SubscriptionManager.prototype, "getSubscriptionState")
+        this.sinonSandbox.stub(PushSubscriptionManager.prototype, "getSubscriptionState")
             .resolves({ subscribed: true, isOptedOut: false });
         stubServiceWorkerInstallation(this.sinonSandbox);
     });

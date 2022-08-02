@@ -2,7 +2,7 @@ import OneSignalEvent from '../../../shared/services/OneSignalEvent';
 import SdkEnvironment from '../../../shared/managers/SdkEnvironment';
 import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../../shared/services/Postmam';
-import { SubscriptionManager } from '../../../shared/managers/SubscriptionManager';
+import { PushSubscriptionManager } from '../../../shared/managers/PushSubscriptionManager';
 import Context from '../../models/Context';
 import EventHelper from '../../../shared/helpers/EventHelper';
 import MainHelper from '../../../shared/helpers/MainHelper';
@@ -187,7 +187,7 @@ export default class SubscriptionPopupHost implements Disposable {
       this.messenger.stopPostMessageReceive();
     }
 
-    const subscriptionManager: SubscriptionManager = OneSignal.context.subscriptionManager;
+    const subscriptionManager: PushSubscriptionManager = OneSignal.context.subscriptionManager;
     await subscriptionManager.registerSubscription(rawPushSubscription);
 
     await EventHelper.checkAndTriggerSubscriptionChanged();
