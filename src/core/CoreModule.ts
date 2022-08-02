@@ -1,4 +1,3 @@
-import { AppConfig } from "../shared/models/AppConfig";
 import ModelCache from "./cache/ModelCache";
 import OperationCache from "./cache/OperationCache";
 import { HydratorBus } from "./HydratorBus";
@@ -17,16 +16,7 @@ export class CoreModule {
   private modelCache: ModelCache;
   private operationCache: OperationCache;
 
-  /* singleton pattern */
-  private static instance: CoreModule;
-  public static getInstance(): CoreModule {
-    if (!CoreModule.instance) {
-      CoreModule.instance = new CoreModule();
-    }
-    return CoreModule.instance;
-  }
-
-  protected constructor() {
+  constructor() {
     this.modelCache = new ModelCache();
     this.modelRepo = new ModelRepo(this.modelCache);
     this.operationCache = new OperationCache();

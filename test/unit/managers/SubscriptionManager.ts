@@ -25,7 +25,7 @@ import { MockPushManager } from "../../support/mocks/service-workers/models/Mock
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
 import ServiceWorkerRegistrationError from '../../../src/shared/errors/ServiceWorkerRegistrationError';
 import { RawPushSubscription } from '../../../src/shared/models/RawPushSubscription';
-import OneSignal from '../../../src/onesignal/OneSignal';
+import OneSignalPublic from '../../../src/onesignal/OneSignalPublic';
 
 const sandbox: SinonSandbox= sinon.sandbox.create();
 
@@ -65,7 +65,7 @@ async function testCase(
   setBrowser(browser);
 
   // Create our subscription manager, which is what we're testing
-  const manager = new SubscriptionManager(OneSignal.context, {
+  const manager = new SubscriptionManager(OneSignalPublic.context, {
     safariWebId: undefined,
     appId: Random.getRandomUuid(),
     vapidPublicKey: vapidPublicKey,
@@ -74,7 +74,7 @@ async function testCase(
 
   // Register a mock service worker to access push subscription
   await navigator.serviceWorker.register('/worker.js');
-  const registration: any = await OneSignal.context.serviceWorkerManager.getRegistration();
+  const registration: any = await OneSignalPublic.context.serviceWorkerManager.getRegistration();
 
   // There should be no existing subscription
   const existingSubscription = await registration.pushManager.getSubscription();
@@ -264,7 +264,7 @@ test(
   "null applicationServerKey throws when subscribing",
   async t => {
 
-    const manager = new SubscriptionManager(OneSignal.context, {
+    const manager = new SubscriptionManager(OneSignalPublic.context, {
       safariWebId: undefined,
       appId: Random.getRandomUuid(),
       vapidPublicKey: <any>undefined, // Forcing vapidPublicKey to undefined to test throwing
@@ -278,7 +278,7 @@ test(
 test("registerSubscription with an existing subsription sends player update", async t => {
   TestEnvironment.mockInternalOneSignal();
 
-  const subscriptionManager = OneSignal.context.subscriptionManager;
+  const subscriptionManager = OneSignalPublic.context.subscriptionManager;
   const deviceId = OneSignalUtils.getRandomUuid();
   const pushSubscription: RawPushSubscription = new RawPushSubscription();
   pushSubscription.w3cAuth = "7QdgQYTjZIeiCuLgopqeww";
@@ -286,7 +286,7 @@ test("registerSubscription with an existing subsription sends player update", as
   pushSubscription.w3cEndpoint = new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh");
 
   const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
-    OneSignal.config.appId,
+    OneSignalPublic.config.appId,
     RawPushSubscription.deserialize(pushSubscription)
   );
 
@@ -295,8 +295,8 @@ test("registerSubscription with an existing subsription sends player update", as
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
-  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
-  const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
+  const playerUpdateSpy = sandbox.stub(OneSignalPublic.context.updateManager, "sendPushDeviceRecordUpdate");
+  const playerCreateSpy = sandbox.stub(OneSignalPublic.context.updateManager, "sendPlayerCreate");
 
   await subscriptionManager.registerSubscription(pushSubscription);
 
@@ -310,7 +310,7 @@ test("registerSubscription with an existing subsription sends player update", as
 test("registerSubscription without an existing subsription sends player create", async t => {
   TestEnvironment.mockInternalOneSignal();
 
-  const subscriptionManager = OneSignal.context.subscriptionManager;
+  const subscriptionManager = OneSignalPublic.context.subscriptionManager;
   const deviceId = OneSignalUtils.getRandomUuid();
   const pushSubscription = {
     w3cAuth: "7QdgQYTjZIeiCuLgopqeww",
@@ -318,7 +318,7 @@ test("registerSubscription without an existing subsription sends player create",
     w3cEndpoint: new URL("https://fcm.googleapis.com/fcm/send/c8rEdO3xSaQ:APA91bH51jGBPBVSxoZVLq-xwen6oHYmGVpyjR8qG_869A-skv1a5G9PQ5g2S5O8ujJ2y8suHaPF0psX5590qrZj_WnWbVfx2q4u2Vm6_Ofq-QGBDcomRziLzTn6uWU9wbrrmL6L5YBh"),
   } as any;
   const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
-    OneSignal.config.appId,
+    OneSignalPublic.config.appId,
     pushSubscription
   );
   let updateData: any = {
@@ -332,8 +332,8 @@ test("registerSubscription without an existing subsription sends player create",
   sandbox.stub(SubscriptionManager, "isSafari").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
-  const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
-  const playerCreateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate");
+  const playerUpdateSpy = sandbox.stub(OneSignalPublic.context.updateManager, "sendPushDeviceRecordUpdate");
+  const playerCreateSpy = sandbox.stub(OneSignalPublic.context.updateManager, "sendPlayerCreate");
 
   await subscriptionManager.registerSubscription(pushSubscription);
 
@@ -357,23 +357,23 @@ test('device ID is available after register event', async t => {
     null
   );
 
-  const serviceWorkerRegistration = await OneSignal.context.serviceWorkerManager.getRegistration();
+  const serviceWorkerRegistration = await OneSignalPublic.context.serviceWorkerManager.getRegistration();
   const pushSubscription = await serviceWorkerRegistration.pushManager.getSubscription();
   const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(pushSubscription);
   const randomPlayerId = Random.getRandomUuid();
 
   const registerEventPromise = new Promise<void>(resolve => {
-    OneSignal.getInstance().emitter.on('register', async () => {
+    OneSignalPublic.emitter.on('register', async () => {
       const subscription = await Database.getSubscription();
       t.is(subscription.deviceId, randomPlayerId);
       resolve();
     });
   });
 
-  const playerUpdateStub = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate").resolves();
-  const playerCreateStub = sandbox.stub(OneSignal.context.updateManager, "sendPlayerCreate").resolves(randomPlayerId);
+  const playerUpdateStub = sandbox.stub(OneSignalPublic.context.updateManager, "sendPushDeviceRecordUpdate").resolves();
+  const playerCreateStub = sandbox.stub(OneSignalPublic.context.updateManager, "sendPlayerCreate").resolves(randomPlayerId);
 
-  await OneSignal.context.subscriptionManager.registerSubscription(rawPushSubscription);
+  await OneSignalPublic.context.subscriptionManager.registerSubscription(rawPushSubscription);
   t.is(playerUpdateStub.calledOnce, false);
   t.is(playerCreateStub.calledOnce, true);
   await registerEventPromise;
@@ -392,9 +392,9 @@ test('safari 11.1+ with service worker but not pushManager', async t => {
   sandbox.stub(SdkEnvironment, "getIntegration").returns(IntegrationKind.Secure);
   sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.ServiceWorker);
   sandbox.stub(navigator.serviceWorker, "getRegistration").returns(serviceWorkerRegistration);
-  sandbox.stub(OneSignal.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.OneSignalWorker);
+  sandbox.stub(OneSignalPublic.context.serviceWorkerManager, "getActiveState").returns(ServiceWorkerActiveState.OneSignalWorker);
 
-  t.is(await OneSignal.context.subscriptionManager.isSubscriptionExpiring(), false);
+  t.is(await OneSignalPublic.context.subscriptionManager.isSubscriptionExpiring(), false);
 });
 
 test(
@@ -723,7 +723,7 @@ test(
 
 test(
   "Service worker failed to install due to 403. Send a notification for the first user's session.", async t => {
-    const context: Context = OneSignal.context;
+    const context: Context = OneSignalPublic.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
@@ -749,7 +749,7 @@ test(
 
 test(
   "Service worker failed to install due to 403. Not the first user's session, do not send a notification.", async t => {
-    const context: Context = OneSignal.context;
+    const context: Context = OneSignalPublic.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
@@ -775,7 +775,7 @@ test(
 
 test(
   "Service worker failed to install due to 404. Send a notification for the first user's session.", async t => {
-    const context: Context = OneSignal.context;
+    const context: Context = OneSignalPublic.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;
@@ -801,7 +801,7 @@ test(
 
 test(
   "Service worker failed to install due to 404. Not the first user's session, do not send a notification.", async t => {
-    const context: Context = OneSignal.context;
+    const context: Context = OneSignalPublic.context;
     const serviceWorkerManager = context.serviceWorkerManager;
     const subscriptionManager = context.subscriptionManager;
     const pageViewManager = context.pageViewManager;

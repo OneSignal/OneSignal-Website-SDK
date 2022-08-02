@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import Database from '../../../src/shared/services/Database';
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/onesignal/OneSignal";
+import OneSignalPublic from "../../../src/onesignal/OneSignalPublic";
 import { Subscription } from '../../../src/shared/models/Subscription';
 
 import nock from 'nock';
@@ -21,7 +21,7 @@ async function logoutEmailTest(
 ) {
   await TestEnvironment.initialize();
   TestEnvironment.mockInternalOneSignal();
-  await Database.put('Ids', { type: 'appId', id: OneSignal.context.appConfig.appId });
+  await Database.put('Ids', { type: 'appId', id: OneSignalPublic.context.appConfig.appId });
 
   /* If an existing email device ID is set, create a fake one here */
   if (testData.emailDeviceId) {
@@ -52,7 +52,7 @@ async function logoutEmailTest(
     Random.getRandomUuid(),
   );
 
-  await OneSignal.logoutEmail();
+  await OneSignalPublic.logoutEmail();
 }
 
 async function expectEmailLogoutRequest(
@@ -68,7 +68,7 @@ async function expectEmailLogoutRequest(
       t.deepEqual(
         requestBody,
         JSON.stringify({
-          app_id: OneSignal.context.appConfig.appId,
+          app_id: OneSignalPublic.context.appConfig.appId,
           parent_player_id: emailId ? emailId : undefined,
           identifier_auth_hash: identifierAuthHash ? identifierAuthHash : undefined
         })

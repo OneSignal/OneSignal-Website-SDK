@@ -1,81 +1,49 @@
-import { AppConfig, AppUserConfig } from "../shared/models/AppConfig";
-import OneSignalProtected from "./OneSignalProtected";
+import { AppUserConfig } from "../shared/models/AppConfig";
+import { NotificationsNamespace } from "./notifications/NotificationsNamespace";
+import OneSignalPublic from "./OneSignalPublic";
 import { LogLevel } from "./temp/LogLevel";
-import { PublicApi } from "./PublicApiDecorator";
-import Database from "../shared/services/Database";
-import Log from "../shared/libraries/Log";
 import User from "./user/User";
 
-export default class OneSignal extends OneSignalProtected implements IOneSignal {
-  constructor() {
-    super();
+export class OneSignal {
+  static oneSignal: OneSignalPublic;
+  static user: User;
+  static notifications: NotificationsNamespace;
+
+  static async init(userConfig: AppUserConfig): Promise<void> {
+    this.oneSignal = new OneSignalPublic();
+    this.notifications = this.oneSignal.notifications as NotificationsNamespace;
+    await this.oneSignal.init(userConfig);
   }
 
-  /* singleton pattern */
-  private static instance: OneSignal;
-  public static getInstance(): OneSignal {
-    if (!OneSignal.instance) {
-      OneSignal.instance = new OneSignal();
-    }
-    return OneSignal.instance;
+  static async setAppId(appId: string): Promise<void> {
+    await this.oneSignal.init({ appId });
   }
 
-
-  @PublicApi()
-  public async init(userConfig: AppUserConfig): Promise<void> {
-    await this.core.initialize(); // gets cached config from database
-    let appConfig: AppConfig;
-    const cachedConfig = this.core.modelRepo.getCachedConfig();
-
-    if (true /* cached config is stale */) {
-      appConfig = await this.initializeConfig(userConfig);
-    } else {
-      appConfig = cachedConfig;
-    }
-    this.initContext(appConfig);
-
-    await this.internalInit(appConfig);
+  static setLogLevel(logLevel: LogLevel): void {
+    this.oneSignal.setLogLevel(logLevel);
   }
 
-  @PublicApi()
-  public async setAppId(appId: string): Promise<void> {
-    await this.init({ appId });
+  static setRequiresPrivacyConsent(privacyConsentRequired: boolean): void {
+    this.oneSignal.setRequiresPrivacyConsent(privacyConsentRequired);
   }
 
-  @PublicApi()
-  public setLogLevel(logLevel: LogLevel): void {
-    Log.setLevel(logLevel);
+  static async setPrivacyConsent(privacyConsent: boolean): Promise<void> {
+    await this.oneSignal.setPrivacyConsent(privacyConsent);
   }
 
-  @PublicApi()
-  public setRequiresPrivacyConsent(privacyConsentRequired: boolean): void {
+  static async getPrivacyConsent(): Promise<boolean> {
+    return this.oneSignal.getPrivacyConsent();
   }
 
-  @PublicApi()
-  public async setPrivacyConsent(privacyConsent: boolean): Promise<void> {
-    await Database.setProvideUserConsent(privacyConsent);
-    if (privacyConsent && this._pendingInit) {
-      await this.delayedInit(this.config);
-    }
+  static login(externalId: string, token?: JsonWebKey): void {
+    this.oneSignal.login(externalId, token);
   }
 
-  @PublicApi()
-  public async getPrivacyConsent(): Promise<boolean> {
-    return await Database.getProvideUserConsent();
+  static loginGuest(): void {
+    this.oneSignal.loginGuest();
   }
 
-  @PublicApi()
-  public login(externalId: string, token?: JsonWebKey): void {
-    this.user = new User();
-  }
-
-  @PublicApi()
-  public loginGuest(): void {
-
-  }
-
-  @PublicApi()
-  public onLoginConflict(callback: (local: User, remote: User) => User): void {
-
+  static onLoginConflict(callback: (local: User, remote: User) => User): void {
+    this.oneSignal.onLoginConflict(callback);
   }
 }

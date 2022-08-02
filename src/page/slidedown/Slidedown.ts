@@ -22,7 +22,7 @@ import ChannelCaptureContainer from './ChannelCaptureContainer';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import { SlidedownPromptOptions, DelayedPromptType } from '../../shared/models/Prompts';
 import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
-import OneSignal from '../../onesignal/OneSignal';
+import OneSignalPublic from '../../onesignal/OneSignalPublic';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
@@ -275,19 +275,19 @@ export default class Slidedown {
 }
 
 export function manageNotifyButtonStateWhileSlidedownShows(): void {
-  const notifyButton = OneSignal.notifyButton;
+  const notifyButton = OneSignalPublic.notifyButton;
   if (notifyButton &&
     notifyButton.options.enable &&
-    OneSignal.notifyButton.launcher.state !== 'hidden') {
-    OneSignal.notifyButton.launcher.waitUntilShown()
+    OneSignalPublic.notifyButton.launcher.state !== 'hidden') {
+    OneSignalPublic.notifyButton.launcher.waitUntilShown()
       .then(() => {
-        OneSignal.notifyButton.launcher.hide();
+        OneSignalPublic.notifyButton.launcher.hide();
       });
   }
-  OneSignal.getInstance().emitter.once(Slidedown.EVENTS.CLOSED, () => {
-    if (OneSignal.notifyButton &&
-      OneSignal.notifyButton.options.enable) {
-      OneSignal.notifyButton.launcher.show();
+  OneSignalPublic.emitter.once(Slidedown.EVENTS.CLOSED, () => {
+    if (OneSignalPublic.notifyButton &&
+      OneSignalPublic.notifyButton.options.enable) {
+      OneSignalPublic.notifyButton.launcher.show();
     }
   });
 }

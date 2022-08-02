@@ -18,7 +18,7 @@ import { ContextSWInterface } from '../models/ContextSW';
 import { Utils } from "../context/Utils";
 import { PageVisibilityRequest, PageVisibilityResponse } from '../models/Session';
 import ServiceWorkerUtilHelper from '../../sw/helpers/ServiceWorkerUtilHelper';
-import OneSignal from '../../onesignal/OneSignal';
+import OneSignalPublic from '../../onesignal/OneSignalPublic';
 
 export class ServiceWorkerManager {
   private context: ContextSWInterface;
@@ -53,13 +53,13 @@ export class ServiceWorkerManager {
         case WindowEnvironmentKind.CustomIframe:
           /* Both these top-ish frames will need to ask the proxy frame to access the service worker
           registration */
-          const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
+          const proxyFrameHost: ProxyFrameHost = OneSignalPublic.proxyFrameHost;
           if (!proxyFrameHost) {
             /* On init, this function may be called. Return a null state for now */
             return ServiceWorkerActiveState.Indeterminate;
           } else {
             return await proxyFrameHost.runCommand<ServiceWorkerActiveState>(
-              OneSignal.POSTMAM_COMMANDS.SERVICE_WORKER_STATE
+              OneSignalPublic.POSTMAM_COMMANDS.SERVICE_WORKER_STATE
             );
           }
         case WindowEnvironmentKind.OneSignalSubscriptionPopup:
@@ -116,13 +116,13 @@ export class ServiceWorkerManager {
   public async getWorkerVersion(): Promise<number> {
     return new Promise<number>(async resolve => {
       if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
-        const proxyFrameHost: ProxyFrameHost = OneSignal.proxyFrameHost;
+        const proxyFrameHost: ProxyFrameHost = OneSignalPublic.proxyFrameHost;
         if (!proxyFrameHost) {
           /* On init, this function may be called. Return a null state for now */
           resolve(NaN);
         } else {
           const proxyWorkerVersion =
-            await proxyFrameHost.runCommand<number>(OneSignal.POSTMAM_COMMANDS.GET_WORKER_VERSION);
+            await proxyFrameHost.runCommand<number>(OneSignalPublic.POSTMAM_COMMANDS.GET_WORKER_VERSION);
           resolve(proxyWorkerVersion);
         }
       } else {
@@ -140,15 +140,15 @@ export class ServiceWorkerManager {
       return false;
 
     // 2. Is OneSignal initialized?
-    if (!OneSignal.config)
+    if (!OneSignalPublic.config)
       return false;
 
     // 3. Will the service worker be installed on os.tc instead of the current domain?
-    if (OneSignal.config.subdomain) {
+    if (OneSignalPublic.config.subdomain) {
       // No, if configured to use our subdomain (AKA HTTP setup) AND this is on their page (HTTP or HTTPS).
       // But since safari does not need subscription workaround, installing SW for session tracking.
       if (
-        OneSignal.environmentInfo.browserType !== "safari" &&
+        OneSignalPublic.environmentInfo.browserType !== "safari" &&
           SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.Host
       ) {
         return false;
@@ -161,8 +161,8 @@ export class ServiceWorkerManager {
     const workerState = await this.getActiveState();
     Log.debug("[shouldInstallWorker] workerState", workerState);
     if (workerState === ServiceWorkerActiveState.None || workerState === ServiceWorkerActiveState.ThirdParty) {
-      const permission = await OneSignal.context.permissionManager.getNotificationPermission(
-        OneSignal.config!.safariWebId
+      const permission = await OneSignalPublic.context.permissionManager.getNotificationPermission(
+        OneSignalPublic.config!.safariWebId
       );
       const notificationsEnabled = permission === "granted";
       if (notificationsEnabled) {
@@ -256,18 +256,18 @@ export class ServiceWorkerManager {
 
     workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, async data => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      await OneSignalEvent.trigger(OneSignalPublic.EVENTS.NOTIFICATION_DISPLAYED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {
       let clickedListenerCallbackCount: number;
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame) {
         clickedListenerCallbackCount = await new Promise<number>(resolve => {
-          const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
+          const proxyFrame: ProxyFrame = OneSignalPublic.proxyFrame;
           if (proxyFrame) {
             proxyFrame.messenger.message(
-              OneSignal.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
-              OneSignal.EVENTS.NOTIFICATION_CLICKED,
+              OneSignalPublic.POSTMAM_COMMANDS.GET_EVENT_LISTENER_COUNT,
+              OneSignalPublic.EVENTS.NOTIFICATION_CLICKED,
               (reply: any) => {
                 const callbackCount: number = reply.data;
                 resolve(callbackCount);
@@ -277,7 +277,7 @@ export class ServiceWorkerManager {
         });
       }
       else
-        clickedListenerCallbackCount = OneSignal.getInstance().emitter.numberOfListeners(OneSignal.EVENTS.NOTIFICATION_CLICKED);
+        clickedListenerCallbackCount = OneSignalPublic.emitter.numberOfListeners(OneSignalPublic.EVENTS.NOTIFICATION_CLICKED);
 
       if (clickedListenerCallbackCount === 0) {
         /*
@@ -309,21 +309,21 @@ export class ServiceWorkerManager {
         await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
       }
       else
-        await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);
+        await OneSignalEvent.trigger(OneSignalPublic.EVENTS.NOTIFICATION_CLICKED, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.RedirectPage, data => {
       Log.debug(
         `${SdkEnvironment.getWindowEnv().toString()} Picked up command.redirect to ${data}, forwarding to host page.`
       );
-      const proxyFrame: ProxyFrame = OneSignal.proxyFrame;
+      const proxyFrame: ProxyFrame = OneSignalPublic.proxyFrame;
       if (proxyFrame) {
-        proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
+        proxyFrame.messenger.message(OneSignalPublic.POSTMAM_COMMANDS.SERVICEWORKER_COMMAND_REDIRECT, data);
       }
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationDismissed, async data => {
-      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_DISMISSED, data);
+      await OneSignalEvent.trigger(OneSignalPublic.EVENTS.NOTIFICATION_DISMISSED, data);
     });
 
     const isHttps = OneSignalUtils.isHttps();
@@ -340,9 +340,9 @@ export class ServiceWorkerManager {
         await workerMessenger.directPostMessageToSW(WorkerMessengerCommand.AreYouVisibleResponse, payload);
       } else {
         const httpPayload: PageVisibilityRequest = { timestamp: incomingPayload.timestamp };
-        const proxyFrame: ProxyFrame | undefined = OneSignal.proxyFrame;
+        const proxyFrame: ProxyFrame | undefined = OneSignalPublic.proxyFrame;
         if (proxyFrame) {
-          proxyFrame.messenger.message(OneSignal.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
+          proxyFrame.messenger.message(OneSignalPublic.POSTMAM_COMMANDS.ARE_YOU_VISIBLE_REQUEST, httpPayload);
         }
       }
     });

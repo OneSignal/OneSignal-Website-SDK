@@ -4,8 +4,7 @@ import Emitter, { EventHandler } from "../../shared/libraries/Emitter";
 import { DelayedPromptType } from "../../shared/models/Prompts";
 
 export class SlidedownNamespace {
-  constructor(private context: Context) {
-  }
+  constructor(private context: Context) {}
 
   public async promptPush(options?: AutoPromptOptions): Promise<void> {
     await this.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);

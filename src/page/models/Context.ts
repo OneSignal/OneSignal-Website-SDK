@@ -19,6 +19,7 @@ import { AppConfig } from '../../shared/models/AppConfig';
 import MetricsManager from '../managers/MetricsManager';
 import { PromptsManager } from '../managers/PromptsManager';
 import { EnvironmentInfoHelper } from '../helpers/EnvironmentInfoHelper';
+import OneSignalError from '../../shared/errors/OneSignalError';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;

@@ -5,7 +5,7 @@ import LocalStorage from "../utils/LocalStorage";
 import { RegisterOptions } from "../helpers/InitHelper";
 import Log from "../libraries/Log";
 import { AppUserConfigCustomLinkOptions } from "../models/Prompts";
-import OneSignal from "../../onesignal/OneSignal";
+import OneSignalPublic from "../../onesignal/OneSignalPublic";
 
 export class CustomLinkManager {
   private config: AppUserConfigCustomLinkOptions | undefined;
@@ -107,7 +107,7 @@ export class CustomLinkManager {
   }
 
   private async loadSdkStyles(): Promise<boolean> {
-    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+    const sdkStylesLoadResult = await OneSignalPublic.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
         Log.debug('Not initializing custom link button because styles failed to load.');
         return false;
@@ -131,20 +131,20 @@ export class CustomLinkManager {
 
   private async handleClick(element: HTMLElement): Promise<void> {
     if (CustomLinkManager.isPushEnabled()) {
-      await OneSignal.getInstance().notifications?.disable(true);
+      await OneSignalPublic.notifications?.disable(true);
       await this.setTextFromPushStatus(element);
     } else {
       if (!CustomLinkManager.isOptedOut()) {
-        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
+        const autoAccept = !OneSignalPublic.environmentInfo.requiresUserInteraction;
         const options: RegisterOptions = { autoAccept };
-        await OneSignal.registerForPushNotifications(options);
+        await OneSignalPublic.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
         if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
           this.hideCustomLinkContainers();
         }
         return;
       }
-      await OneSignal.getInstance().notifications?.disable(false);
+      await OneSignalPublic.notifications?.disable(false);
       // once subscribed, prevent unsubscribe by hiding customlinks
       if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();

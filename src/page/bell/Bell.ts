@@ -16,7 +16,7 @@ import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from '../../shared/models/Prompts';
-import OneSignal from '../../onesignal/OneSignal';
+import OneSignalPublic from '../../onesignal/OneSignalPublic';
 
 var logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -156,10 +156,10 @@ export default class Bell {
 
   private installEventHooks() {
     // Install event hooks
-    OneSignal.getInstance().emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
+    OneSignalPublic.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
-      OneSignal.getInstance().notifications?.disable(false)
+      OneSignalPublic.notifications?.disable(false)
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
           return this.dialog.hide();
@@ -178,9 +178,9 @@ export default class Bell {
         });
     });
 
-    OneSignal.getInstance().emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
+    OneSignalPublic.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
-      OneSignal.getInstance().notifications?.disable(true)
+      OneSignalPublic.notifications?.disable(true)
         .then(() => {
           this.dialog.unsubscribeButton.disabled = false;
           return this.dialog.hide();
@@ -198,7 +198,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.getInstance().emitter.on(Bell.EVENTS.HOVERING, () => {
+    OneSignalPublic.emitter.on(Bell.EVENTS.HOVERING, () => {
       this.hovering = true;
       this.launcher.activateIfInactive();
 
@@ -236,7 +236,7 @@ export default class Bell {
         });
     });
 
-    OneSignal.getInstance().emitter.on(Bell.EVENTS.HOVERED, () => {
+    OneSignalPublic.emitter.on(Bell.EVENTS.HOVERED, () => {
       // If a message is displayed (and not a tip), don't control it. Visitors have no control over messages
       if (this.message.contentType === Message.TYPES.MESSAGE) {
         return;
@@ -275,7 +275,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.getInstance().emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async isSubscribed => {
+    OneSignalPublic.emitter.on(OneSignalPublic.EVENTS.SUBSCRIPTION_CHANGED, async isSubscribed => {
       if (isSubscribed == true) {
         if (this.badge.shown && this.options.prenotify) {
           this.badge.hide();
@@ -286,7 +286,7 @@ export default class Bell {
         }
       }
 
-      OneSignal.getNotificationPermission((permission: NotificationPermission) => {
+      OneSignalPublic.getNotificationPermission((permission: NotificationPermission) => {
         let bellState: BellState;
         if (isSubscribed) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -299,7 +299,7 @@ export default class Bell {
       });
     });
 
-    OneSignal.getInstance().emitter.on(Bell.EVENTS.STATE_CHANGED,state => {
+    OneSignalPublic.emitter.on(Bell.EVENTS.STATE_CHANGED,state => {
       if (!this.launcher.element) {
         // Notify button doesn't exist
         return;
@@ -312,7 +312,7 @@ export default class Bell {
       }
     });
 
-    OneSignal.getInstance().emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, () => {
+    OneSignalPublic.emitter.on(OneSignalPublic.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, () => {
       this.updateState();
     });
 
@@ -352,7 +352,7 @@ export default class Bell {
     if (!this.options.enable)
       return;
 
-    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+    const sdkStylesLoadResult = await OneSignalPublic.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
       Log.debug('Not showing notify button because styles failed to load.');
       return;
@@ -386,8 +386,8 @@ export default class Bell {
     // Add visual elements
     addDomElement(this.button.selector, 'beforeend', logoSvg);
 
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-    const notOptedOut = await OneSignal.getSubscription();
+    const isPushEnabled = await OneSignalPublic.isPushNotificationsEnabled();
+    const notOptedOut = await OneSignalPublic.getSubscription();
     const doNotPrompt = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
@@ -403,7 +403,7 @@ export default class Bell {
     Log.info('Showing the notify button.');
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
-      .then(() => OneSignal.getSubscription())
+      .then(() => OneSignalPublic.getSubscription())
       .then((isNotOptedOut: boolean) => {
         if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
           return MainHelper.getNotificationIcons().then(icons => {
@@ -416,7 +416,7 @@ export default class Bell {
         if (isUsingSubscriptionWorkaround() &&
           notOptedOut &&
           doNotPrompt !== true && !isPushEnabled &&
-          (OneSignal.config.userConfig.promptOptions.autoPrompt === true) &&
+          (OneSignalPublic.config.userConfig.promptOptions.autoPrompt === true) &&
           !MainHelper.isHttpPromptAlreadyShown()
         ) {
           Log.debug('Not showing notify button because slidedown will be shown.');
@@ -429,7 +429,7 @@ export default class Bell {
         return delay(this.options.showBadgeAfter || 0);
       })
       .then(() => {
-        if (this.options.prenotify && !isPushEnabled && OneSignal._isNewVisitor) {
+        if (this.options.prenotify && !isPushEnabled && OneSignalPublic._isNewVisitor) {
           return this.message.enqueue(this.options.text['message.prenotify'])
                      .then(() => this.badge.show());
         }
@@ -563,8 +563,8 @@ export default class Bell {
    */
   updateState() {
     Promise.all([
-      OneSignal.privateIsPushNotificationsEnabled(),
-      OneSignal.privateGetNotificationPermission()
+      OneSignalPublic.privateIsPushNotificationsEnabled(),
+      OneSignalPublic.privateGetNotificationPermission()
     ])
     .then(([isEnabled, permission]) => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);

@@ -5,7 +5,7 @@ import Postmam from '../../../shared/services/Postmam';
 import MainHelper from '../../../shared/helpers/MainHelper';
 import SubscriptionHelper from '../../../shared/helpers/SubscriptionHelper';
 import Log from '../../../shared/libraries/Log';
-import OneSignal from '../../../onesignal/OneSignal';
+import OneSignalPublic from '../../../onesignal/OneSignalPublic';
 
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
@@ -36,8 +36,8 @@ export default class SubscriptionModalHost implements Disposable {
    * forever for the first handshake message.
    */
   async load(): Promise<void> {
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-    const notificationPermission = await OneSignal.getNotificationPermission();
+    const isPushEnabled = await OneSignalPublic.isPushNotificationsEnabled();
+    const notificationPermission = await OneSignalPublic.getNotificationPermission();
     this.url = SdkEnvironment.getOneSignalApiUrl();
     this.url.pathname = 'webPushModal';
     this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;
@@ -64,8 +64,8 @@ export default class SubscriptionModalHost implements Disposable {
     const iframe = document.createElement("iframe");
     iframe.className = "OneSignal-permission-iframe";
     iframe.setAttribute('frameborder', '0');
-    iframe.width = OneSignal._windowWidth.toString();
-    iframe.height = OneSignal._windowHeight.toString();
+    iframe.width = OneSignalPublic._windowWidth.toString();
+    iframe.height = OneSignalPublic._windowHeight.toString();
     iframe.src = url;
 
     document.getElementById("notif-permission").appendChild(iframe);
@@ -88,10 +88,10 @@ export default class SubscriptionModalHost implements Disposable {
     this.messenger = new Postmam(this.modal, this.url.origin, this.url.origin);
     this.messenger.startPostMessageReceive();
 
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_LOADED, this.onModalLoaded.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, this.onModalAccepted.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, this.onModalRejected.bind(this));
-    this.messenger.once(OneSignal.POSTMAM_COMMANDS.POPUP_CLOSING, this.onModalClosing.bind(this));
+    this.messenger.once(OneSignalPublic.POSTMAM_COMMANDS.MODAL_LOADED, this.onModalLoaded.bind(this));
+    this.messenger.once(OneSignalPublic.POSTMAM_COMMANDS.MODAL_PROMPT_ACCEPTED, this.onModalAccepted.bind(this));
+    this.messenger.once(OneSignalPublic.POSTMAM_COMMANDS.MODAL_PROMPT_REJECTED, this.onModalRejected.bind(this));
+    this.messenger.once(OneSignalPublic.POSTMAM_COMMANDS.POPUP_CLOSING, this.onModalClosing.bind(this));
   }
 
   onModalLoaded(_: MessengerMessageEvent) {
@@ -101,17 +101,17 @@ export default class SubscriptionModalHost implements Disposable {
 
   async onModalAccepted(_: MessengerMessageEvent) {
     Log.debug('User accepted the HTTPS modal prompt.', location.origin);
-    OneSignal._sessionInitAlreadyRunning = false;
+    OneSignalPublic._sessionInitAlreadyRunning = false;
     this.dispose();
     MainHelper.triggerCustomPromptClicked('granted');
     Log.debug('Calling setSubscription(true)');
     await SubscriptionHelper.registerForPush();
-    await OneSignal.getInstance().notifications?.disable(false);
+    await OneSignalPublic.notifications?.disable(false);
   }
 
   onModalRejected(_: MessengerMessageEvent) {
     Log.debug('User rejected the HTTPS modal prompt.');
-    OneSignal._sessionInitAlreadyRunning = false;
+    OneSignalPublic._sessionInitAlreadyRunning = false;
     this.dispose();
     MainHelper.triggerCustomPromptClicked('denied');
   }

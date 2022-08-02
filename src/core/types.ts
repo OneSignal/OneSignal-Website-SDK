@@ -5,7 +5,6 @@ export enum Model {
   Properties = "properties",
   Subscriptions = "subscriptions",
   Config = "config",
-  Session = "session"
 }
 
 type User = any;
@@ -40,27 +39,6 @@ export type Request = {
   httpMethod: "POST" | "PUT" | "DELETE" | "GET"
 };
 
-export interface IdentityModel {}
-
-export interface SessionModel {
-  foo?: string;
-  hello?: string;
-  arr?: string[];
-  [key: string]: any;
-}
-export interface IdentityModel {
-  foo?: string;
-  hello?: string;
-  arr?: string[];
-  [key: string]: any;
-}
-export interface SubscriptionsModel {
-  foo?: string;
-  hello?: string;
-  arr?: string[];
-  [key: string]: any;
-}
-
 export type RequestArgs = {
   action: string,
   data: object,
@@ -73,11 +51,10 @@ export type DeltaAggregator = {
   [Model.Config]: AppConfig,
   [Model.Identity]: IdentityModel,
   [Model.Properties]: UserProperties,
-  [Model.Session]: SessionModel,
-  [Model.Subscriptions]: SubscriptionsModel
+  [Model.Subscriptions]: SubscriptionsModel[]
 };
 
-export type IdentityObject = {
+export type IdentityModel = {
   onesignal_id: string;
   external_id?: string;
   [key: string]: string | undefined;
@@ -112,7 +89,7 @@ enum SubscriptionType {
   SMS = "SMS",
 }
 
-type SubscriptionsObject = {
+export type SubscriptionsModel = {
   id: string;
   type: SubscriptionType;
   token?: string; // maps to legacy player.identifier

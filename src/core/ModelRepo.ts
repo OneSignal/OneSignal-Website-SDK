@@ -4,7 +4,6 @@ import {
   Model,
   ObservableSlimChange,
   UserProperties,
-  SessionModel,
   SubscriptionsModel
 } from "./types";
 import ObservableSlim from 'observable-slim';
@@ -12,6 +11,8 @@ import Subscribable from "./utils/Subscribable";
 import equal from 'fast-deep-equal/es6';
 import ModelCache from "./cache/ModelCache";
 import { AppConfig } from "../shared/models/AppConfig";
+import Utils from "../shared/context/Utils";
+import DEFAULT_MODELS from "./utils/DefaultModelObjects";
 
 interface StringIndexable {
   [key: string]: any;
@@ -19,16 +20,14 @@ interface StringIndexable {
 
 export default class ModelRepo extends Subscribable<Delta> {
   // these properties are publically accessible but should not be mutated directly (use set)
-  public session?: SessionModel = {};
-  public identity?: IdentityModel = {};
-  public properties?: UserProperties = {};
-  public subscriptions?: SubscriptionsModel = {};
+  public identity?: IdentityModel;
+  public properties?: UserProperties;
+  public subscriptions?: SubscriptionsModel[];
   public config?: AppConfig;
 
-  private _session?: SessionModel = {};
-  private _identity?: IdentityModel = {};
-  private _properties?: UserProperties = {};
-  private _subscriptions?: SubscriptionsModel = {};
+  private _identity?: IdentityModel;
+  private _properties?: UserProperties;
+  private _subscriptions?: SubscriptionsModel[];
   private _config?: AppConfig;
 
   constructor(private modelCache: ModelCache) {
@@ -44,14 +43,16 @@ export default class ModelRepo extends Subscribable<Delta> {
    */
   public async initialize(): Promise<void> {
     // ES5 limitation: object properties must be known at creation time
-    // TO DO: full model must be stored (e.g: with null values for empty props)
-    this._session = await this.modelCache.get(Model.Session); // might need to pull from session service
-    this._identity = await this.modelCache.get(Model.Identity);
-    this._properties = await this.modelCache.get(Model.Properties);
-    this._subscriptions = await this.modelCache.get(Model.Subscriptions);
-    this._config = await this.getCachedConfig();
+    // for ObservableSlim to work as expected
+    this._identity = Utils.getValueOrDefault(
+      (await this.modelCache.get(Model.Identity)), DEFAULT_MODELS.identity);
+    this._properties = Utils.getValueOrDefault(
+      (await this.modelCache.get(Model.Properties)), DEFAULT_MODELS.properties);
+    this._subscriptions = Utils.getValueOrDefault(
+      (await this.modelCache.get(Model.Subscriptions)), DEFAULT_MODELS.subscriptions);
+    this._config = Utils.getValueOrDefault(
+      (await this.getCachedConfig()), DEFAULT_MODELS.config);
 
-    this.session = this.createObserver(Model.Session, this._session);
     this.identity = this.createObserver(Model.Identity, this._identity);
     this.properties = this.createObserver(Model.Properties, this._properties);
     this.subscriptions = this.createObserver(Model.Subscriptions, this._subscriptions);
@@ -103,9 +104,6 @@ export default class ModelRepo extends Subscribable<Delta> {
     let targetModel: StringIndexable | undefined; // to store reference to model to be changed
 
     switch (model) {
-      case Model.Session:
-        targetModel = this.session;
-        break;
       case Model.Identity:
         targetModel = this.identity;
         break;
@@ -122,6 +120,8 @@ export default class ModelRepo extends Subscribable<Delta> {
         break;
     }
 
+    // Proxy observer does not trigger on nested objects
+    // We need to change each property individually
     Object.keys(object).forEach(key => {
       if (!!targetModel) {
         targetModel[key] = object[key];

@@ -42,7 +42,7 @@ import ConfigManager from "../../../src/page/managers/ConfigManager";
 import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
-import OneSignal from "../../../src/onesignal/OneSignal";
+import OneSignalPublic from "../../../src/onesignal/OneSignalPublic";
 
 // NodeJS.Global
 declare var global: any;
@@ -324,15 +324,15 @@ export class TestEnvironment {
     return TestEnvironment.stubServiceWorkerEnvironment(config);
   }
 
-  static async initialize(config: TestEnvironmentConfig = {}): Promise<OneSignal> {
+  static async initialize(config: TestEnvironmentConfig = {}): Promise<OneSignalPublic> {
     // Erase and reset IndexedDb database name to something random
     Database.resetInstance();
     Database.databaseInstanceName = Random.getRandomString(10);
 
-    global.OneSignal = OneSignal;
+    global.OneSignal = OneSignalPublic;
     global.OneSignal.config = config.initOptions ? config.initOptions : {};
     global.OneSignal.initialized = true;
-    global.OneSignal.getInstance().emitter = new Emitter();
+    global.OneSignalPublic.emitter = new Emitter();
     SdkEnvironment.getTestEnv = () => TestEnvironmentKind.UnitTesting;
     await TestEnvironment.stubDomEnvironment(config);
     TestEnvironment.stubNotifyButtonTransitionEvents();
@@ -385,10 +385,10 @@ export class TestEnvironment {
     };
 
     const fakeMergedConfig: AppConfig = TestEnvironment.getFakeMergedConfig(config);
-    OneSignal.config = fakeMergedConfig;
-    OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
-    OneSignal.context = new Context(fakeMergedConfig);
-    OneSignal.config = fakeMergedConfig;
+    OneSignalPublic.config = fakeMergedConfig;
+    OneSignalPublic.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
+    OneSignalPublic.context = new Context(fakeMergedConfig);
+    OneSignalPublic.config = fakeMergedConfig;
   }
 
   static getFakeAppConfig(appId: string = APP_ID): AppConfig {
@@ -896,8 +896,8 @@ export class TestEnvironment {
     await TestEnvironment.initialize(testConfig);
     new InitTestHelper(sinonSandbox).mockBasicInitEnv(testConfig, customServerAppConfig);
 
-    OneSignal.initialized = false;
-    OneSignal.__doNotShowWelcomeNotification = true;
+    OneSignalPublic.initialized = false;
+    OneSignalPublic.__doNotShowWelcomeNotification = true;
 
     // non-returnable stubs
     sinonSandbox.stub(window.Notification, "permission").value(testConfig.permission || "default");

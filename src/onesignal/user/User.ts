@@ -5,12 +5,9 @@ import { PublicApi } from "../PublicApiDecorator";
 import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {
-  private core: CoreModule;
   private subscriptions?: Subscriptions;
 
-  constructor() {
-    this.core = CoreModule.getInstance();
-  }
+  constructor(private core: CoreModule) {}
 
   @PublicApi()
   public addAlias(label: string, id: string): void {
@@ -46,23 +43,26 @@ export default class User {
     if (!isValidEmail(email)) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
-
   }
+
   @PublicApi()
   public addSms(sms: string): void {
 
   }
+
   @PublicApi()
   public removeEmail(): void {
 
   }
+
   @PublicApi()
   public removeSms(): void {
 
   }
-  @PublicApi()
-  public addTag(key: string, value: string | number | boolean): void {
 
+  @PublicApi()
+  public addTag(key: string, value: string): void {
+    this.addTags({ [key]: value });
   }
   @PublicApi()
   public addTags(tags: {[key: string]: string}): void {

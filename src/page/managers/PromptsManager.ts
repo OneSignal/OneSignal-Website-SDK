@@ -14,7 +14,7 @@ import { EnvironmentInfoHelper } from "../helpers/EnvironmentInfoHelper";
 import { ContextInterface } from "../models/Context";
 import { DismissPrompt } from "../models/Dismiss";
 import Slidedown from "../slidedown/Slidedown";
-import OneSignal from "../../onesignal/OneSignal";
+import OneSignalPublic from "../../onesignal/OneSignalPublic";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -35,7 +35,7 @@ export class PromptsManager {
   }
 
   private shouldForceSlidedownOverNative(): boolean {
-    const { environmentInfo } = OneSignal;
+    const { environmentInfo } = OneSignalPublic;
       const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
 
       return (
@@ -46,7 +46,7 @@ export class PromptsManager {
 
   public async spawnAutoPrompts() {
     // user config prompt options
-    const userPromptOptions: AppUserConfigPromptOptions = OneSignal.config.userConfig.promptOptions;
+    const userPromptOptions: AppUserConfigPromptOptions = OneSignalPublic.config.userConfig.promptOptions;
 
     /*
     * Chrome 63 on Android permission prompts are permanent without a dismiss option. To avoid
@@ -230,19 +230,19 @@ export class PromptsManager {
   public installEventHooksForSlidedown(): void {
     this.eventHooksInstalled = true;
 
-    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.SHOWN, () => {
+    OneSignalPublic.emitter.on(Slidedown.EVENTS.SHOWN, () => {
       this.context.slidedownManager.setIsSlidedownShowing(true);
     });
-    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.CLOSED, () => {
+    OneSignalPublic.emitter.on(Slidedown.EVENTS.CLOSED, () => {
       this.context.slidedownManager.setIsSlidedownShowing(false);
       this.context.slidedownManager.showQueued();
     });
-    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
+    OneSignalPublic.emitter.on(Slidedown.EVENTS.ALLOW_CLICK, async () => {
       await this.context.slidedownManager.handleAllowClick();
-      OneSignalEvent.trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
+      OneSignalEvent.trigger(OneSignalPublic.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
-    OneSignal.getInstance().emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
+    OneSignalPublic.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
+      const { type } = OneSignalPublic.slidedown.options as SlidedownPromptOptions;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:

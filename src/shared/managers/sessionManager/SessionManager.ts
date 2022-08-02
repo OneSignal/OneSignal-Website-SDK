@@ -9,7 +9,7 @@ import { SessionOrigin, UpsertSessionPayload, DeactivateSessionPayload } from ".
 import MainHelper from "../../helpers/MainHelper";
 import Log from "../../libraries/Log";
 import OneSignalApiShared from "../../api/OneSignalApiShared";
-import OneSignal from "../../../onesignal/OneSignal";
+import OneSignalPublic from "../../../onesignal/OneSignalPublic";
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
@@ -45,7 +45,7 @@ export class SessionManager implements ISessionManager {
     } else if (this.context.environmentInfo.canTalkToServiceWorker &&
         this.context.environmentInfo.isUsingSubscriptionWorkaround) {
       Log.debug("Notify iframe to notify SW to upsert session");
-      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
+      await OneSignalPublic.proxyFrameHost.runCommand(OneSignalPublic.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
     } else { // http w/o our iframe
       // we probably shouldn't even be here
       Log.debug("Notify upsert: do nothing");
@@ -77,7 +77,7 @@ export class SessionManager implements ISessionManager {
     } else if (this.context.environmentInfo.canTalkToServiceWorker &&
         this.context.environmentInfo.isUsingSubscriptionWorkaround) {
       Log.debug("Notify SW to deactivate session");
-      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+      await OneSignalPublic.proxyFrameHost.runCommand(OneSignalPublic.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     } else { // http w/o our iframe
       // we probably shouldn't even be here
       Log.debug("Notify deactivate: do nothing");
@@ -104,13 +104,13 @@ export class SessionManager implements ISessionManager {
 
     if (visibilityState === "hidden") {
       Log.debug("handleVisibilityChange", "hidden");
-      if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
-        window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
-        OneSignal.cache.isFocusEventSetup = false;
+      if (OneSignalPublic.cache.focusHandler && OneSignalPublic.cache.isFocusEventSetup) {
+        window.removeEventListener("focus", OneSignalPublic.cache.focusHandler, true);
+        OneSignalPublic.cache.isFocusEventSetup = false;
       }
-      if (OneSignal.cache.blurHandler && OneSignal.cache.isBlurEventSetup) {
-        window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
-        OneSignal.cache.isBlurEventSetup = false;
+      if (OneSignalPublic.cache.blurHandler && OneSignalPublic.cache.isBlurEventSetup) {
+        window.removeEventListener("blur", OneSignalPublic.cache.blurHandler, true);
+        OneSignalPublic.cache.isBlurEventSetup = false;
       }
 
       // TODO: (iryna) need to send deactivate from here?
@@ -145,7 +145,7 @@ export class SessionManager implements ISessionManager {
       this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
     } else {
       Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
-      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+      await OneSignalPublic.proxyFrameHost.runCommand(OneSignalPublic.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     }
   }
 
@@ -198,7 +198,7 @@ export class SessionManager implements ISessionManager {
     ) {
       if (!this.context.environmentInfo.canTalkToServiceWorker) {
         this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
-        OneSignal.getInstance().emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+        OneSignalPublic.emitter.emit(OneSignalPublic.EVENTS.SESSION_STARTED);
       } else {
         this.setupSessionEventListeners();
       }
@@ -207,7 +207,7 @@ export class SessionManager implements ISessionManager {
       !this.context.environmentInfo.isUsingSubscriptionWorkaround
     ) {
       this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
-      OneSignal.getInstance().emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
+      OneSignalPublic.emitter.emit(OneSignalPublic.EVENTS.SESSION_STARTED);
     }
 
     await sessionPromise;
@@ -233,50 +233,50 @@ export class SessionManager implements ISessionManager {
     this.setupOnFocusAndOnBlurForSession();
 
     // To make sure we add these event listeners only once.
-    if (!OneSignal.cache.isVisibilityChangeEventSetup) {
+    if (!OneSignalPublic.cache.isVisibilityChangeEventSetup) {
       // tracks switching to a different tab, fully covering page with another window, screen lock/unlock
       document.addEventListener("visibilitychange", this.handleVisibilityChange.bind(this), true);
-      OneSignal.cache.isVisibilityChangeEventSetup = true;
+      OneSignalPublic.cache.isVisibilityChangeEventSetup = true;
     }
 
-    if (!OneSignal.cache.isBeforeUnloadEventSetup) {
+    if (!OneSignalPublic.cache.isBeforeUnloadEventSetup) {
       // tracks closing of a tab / reloading / navigating away
       window.addEventListener("beforeunload", e => {
         this.handleOnBeforeUnload();
         // deleting value to not show confirmation dialog
         delete e.returnValue;
       }, true);
-      OneSignal.cache.isBeforeUnloadEventSetup = true;
+      OneSignalPublic.cache.isBeforeUnloadEventSetup = true;
     }
   }
 
   setupOnFocusAndOnBlurForSession(): void {
     Log.debug("setupOnFocusAndOnBlurForSession");
 
-    if (!OneSignal.cache.focusHandler) {
-      OneSignal.cache.focusHandler = this.handleOnFocus.bind(this);
+    if (!OneSignalPublic.cache.focusHandler) {
+      OneSignalPublic.cache.focusHandler = this.handleOnFocus.bind(this);
     }
-    if (!OneSignal.cache.isFocusEventSetup) {
-      window.addEventListener("focus", OneSignal.cache.focusHandler, true);
-      OneSignal.cache.isFocusEventSetup = true;
+    if (!OneSignalPublic.cache.isFocusEventSetup) {
+      window.addEventListener("focus", OneSignalPublic.cache.focusHandler, true);
+      OneSignalPublic.cache.isFocusEventSetup = true;
     }
 
-    if (!OneSignal.cache.blurHandler) {
-      OneSignal.cache.blurHandler = this.handleOnBlur.bind(this);
+    if (!OneSignalPublic.cache.blurHandler) {
+      OneSignalPublic.cache.blurHandler = this.handleOnBlur.bind(this);
     }
-    if (!OneSignal.cache.isBlurEventSetup) {
-      window.addEventListener("blur", OneSignal.cache.blurHandler, true);
-      OneSignal.cache.isBlurEventSetup = true;
+    if (!OneSignalPublic.cache.isBlurEventSetup) {
+      window.addEventListener("blur", OneSignalPublic.cache.blurHandler, true);
+      OneSignalPublic.cache.isBlurEventSetup = true;
     }
   }
 
   static setupSessionEventListenersForHttp(): void {
-    if (!OneSignal.context || !OneSignal.context.sessionManager) {
+    if (!OneSignalPublic.context || !OneSignalPublic.context.sessionManager) {
       Log.error("OneSignal.context not available for http to setup session event listeners.");
       return;
     }
 
-    OneSignal.context.sessionManager.setupSessionEventListeners();
+    OneSignalPublic.context.sessionManager.setupSessionEventListeners();
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
@@ -301,7 +301,7 @@ export class SessionManager implements ISessionManager {
     }
 
     if (deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
-      OneSignal.config.enableOnSession !== true) {
+      OneSignalPublic.config.enableOnSession !== true) {
       return;
     }
 

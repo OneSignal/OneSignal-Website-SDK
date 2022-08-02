@@ -8,7 +8,7 @@ import { Utils } from "../context/Utils";
 import bowser from 'bowser';
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
-import OneSignal from '../../onesignal/OneSignal';
+import OneSignalPublic from '../../onesignal/OneSignalPublic';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -36,8 +36,8 @@ export function removeDomElement(selector: string) {
  */
 export async function awaitOneSignalInitAndSupported(): Promise<object|void> {
   return new Promise(resolve => {
-    if (!OneSignal.initialized)
-      OneSignal.getInstance().emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, resolve);
+    if (!OneSignalPublic.initialized)
+      OneSignalPublic.emitter.once(OneSignalPublic.EVENTS.SDK_INITIALIZED, resolve);
     else
       resolve();
   });
@@ -293,9 +293,9 @@ export function unsubscribeFromPush() {
     if (isUsingSubscriptionWorkaround()) {
       return new Promise<void>((resolve, reject) => {
         Log.debug("Unsubscribe from push got called, and we're going to remotely execute it in HTTPS iFrame.");
-        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, (reply: any) => {
+        OneSignalPublic.proxyFrameHost.message(OneSignalPublic.POSTMAM_COMMANDS.UNSUBSCRIBE_FROM_PUSH, null, (reply: any) => {
           Log.debug("Unsubscribe from push succesfully remotely executed.");
-          if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
+          if (reply.data === OneSignalPublic.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
             resolve();
           } else {
             reject('Failed to remotely unsubscribe from push.');
@@ -303,7 +303,7 @@ export function unsubscribeFromPush() {
         });
       });
     } else {
-      return OneSignal.context.serviceWorkerManager.getRegistration()
+      return OneSignalPublic.context.serviceWorkerManager.getRegistration()
               .then((serviceWorker : ServiceWorkerRegistration | null | undefined) => {
                 if (!serviceWorker) {
                   return Promise.resolve();
@@ -384,7 +384,7 @@ export function getSdkLoadCount() {
 
 export async function awaitSdkEvent(eventName: string) {
   return await new Promise(resolve => {
-    OneSignal.getInstance().emitter.once(eventName, (event: Event) => {
+    OneSignalPublic.emitter.once(eventName, (event: Event) => {
       resolve(event);
     });
   });

@@ -1,7 +1,7 @@
 import { addCssClass, removeCssClass, contains, once } from '../../shared/utils/utils';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import Log from '../../shared/libraries/Log';
-import OneSignal from '../../onesignal/OneSignal';
+import OneSignalPublic from '../../onesignal/OneSignalPublic';
 
 export default class AnimatedElement {
 
@@ -116,7 +116,7 @@ export default class AnimatedElement {
     if (this.state === 'shown')
       return Promise.resolve(this);
     else return new Promise(resolve => {
-      OneSignal.getInstance().emitter.once(AnimatedElement.EVENTS.SHOWN, event => {
+      OneSignalPublic.emitter.once(AnimatedElement.EVENTS.SHOWN, event => {
         if (event === this) {
           return resolve(this);
         }
@@ -132,7 +132,7 @@ export default class AnimatedElement {
     if (this.state === 'hidden')
       return Promise.resolve(this);
     else return new Promise(resolve => {
-      OneSignal.getInstance().emitter.once(AnimatedElement.EVENTS.HIDDEN, event => {
+      OneSignalPublic.emitter.once(AnimatedElement.EVENTS.HIDDEN, event => {
         if (event === this) {
           return resolve(this);
         }

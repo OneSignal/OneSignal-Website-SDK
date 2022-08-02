@@ -3,7 +3,7 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import Utils from "../context/Utils";
 import Log from '../libraries/Log';
-import OneSignal from '../../onesignal/OneSignal';
+import OneSignalPublic from '../../onesignal/OneSignalPublic';
 
 
 const SILENT_EVENTS = [
@@ -79,13 +79,13 @@ export default class OneSignalEvent {
 
     // Actually fire the event that can be listened to via OneSignal.on()
     if (Environment.isBrowser()) {
-      if (eventName === OneSignal.EVENTS.SDK_INITIALIZED) {
-        if (OneSignal.initialized)
+      if (eventName === OneSignalPublic.EVENTS.SDK_INITIALIZED) {
+        if (OneSignalPublic.initialized)
           return;
         else
-          OneSignal.initialized = true;
+          OneSignalPublic.initialized = true;
       }
-      await OneSignal.getInstance().emitter.emit(eventName, data);
+      await OneSignalPublic.emitter.emit(eventName, data);
     }
     if (LEGACY_EVENT_MAP.hasOwnProperty(eventName)) {
       const legacyEventName = LEGACY_EVENT_MAP[eventName];
@@ -103,10 +103,10 @@ export default class OneSignalEvent {
         // But only if the event matches certain events
         if (Utils.contains(RETRIGGER_REMOTE_EVENTS, eventName)) {
           if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
-            OneSignal.subscriptionPopup.message(OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
+            OneSignalPublic.subscriptionPopup.message(OneSignalPublic.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
               { eventName: eventName, eventData: data });
           } else {
-            OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);
+            OneSignalPublic.proxyFrame.retriggerRemoteEvent(eventName, data);
           }
         }
       }

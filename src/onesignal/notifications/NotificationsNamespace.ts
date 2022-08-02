@@ -1,4 +1,3 @@
-import OneSignal from "../../OneSignalDeprecated";
 import Context from "../../page/models/Context";
 import { NotificationActionButton } from "../../page/models/NotificationActionButton";
 import { isPushNotificationsSupported } from "../../page/utils/BrowserSupportsPush";
@@ -9,7 +8,8 @@ import { InvalidStateError, InvalidStateReason } from "../../shared/errors/Inval
 import { NotSubscribedError, NotSubscribedReason } from "../../shared/errors/NotSubscribedError";
 import EventHelper from "../../shared/helpers/EventHelper";
 import Database from "../../shared/services/Database";
-import { awaitOneSignalInitAndSupported, logMethodCall } from "../../shared/utils/utils";
+import { awaitOneSignalInitAndSupported } from "../../shared/utils/utils";
+import { isPushNotificationsEnabled } from "./helpers";
 
 type NotificationEventObject = any;
 
@@ -62,7 +62,7 @@ export class NotificationsNamespace {
 
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!(await OneSignal.isPushNotificationsEnabled()))
+    if (!(await isPushNotificationsEnabled()))
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     if (!ValidatorUtils.isValidUrl(url))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);

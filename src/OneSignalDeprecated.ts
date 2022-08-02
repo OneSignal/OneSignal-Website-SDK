@@ -208,10 +208,10 @@ class OneSignal {
 
       OneSignal.__initAlreadyCalled = true;
 
-      OneSignal.getInstance().emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED,
+      OneSignalPublic.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED,
         EventHelper.onNotificationPermissionChange);
-      OneSignal.getInstance().emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
-      OneSignal.getInstance().emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
+      OneSignalPublic.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, EventHelper._onSubscriptionChanged);
+      OneSignalPublic.emitter.on(OneSignal.EVENTS.SDK_INITIALIZED, InitHelper.onSdkInitialized);
 
       if (OneSignalUtils.isUsingSubscriptionWorkaround()) {
         /**
@@ -230,7 +230,7 @@ class OneSignal {
          * only after the main initialization in the iframe is successful and a new session
          * is initiated.
          */
-        OneSignal.getInstance().emitter.on(
+        OneSignalPublic.emitter.on(
           OneSignal.EVENTS.SESSION_STARTED, SessionManager.setupSessionEventListenersForHttp
         );
 
@@ -353,7 +353,7 @@ class OneSignal {
   static async registerForPushNotifications(options?: RegisterOptions): Promise<void> {
     if (!OneSignal.initialized) {
       await new Promise<void>((resolve, _reject) => {
-        OneSignal.getInstance().emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
+        OneSignalPublic.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
           await InitHelper.registerForPushNotifications(options);
           return resolve();
         });
@@ -510,7 +510,7 @@ class OneSignal {
   static async addListenerForNotificationOpened(callback?: Action<Notification>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
-    OneSignal.getInstance().emitter.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
+    OneSignalPublic.emitter.once(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification => {
       executeCallback(callback, notification);
     });
     if (OneSignal.config) {

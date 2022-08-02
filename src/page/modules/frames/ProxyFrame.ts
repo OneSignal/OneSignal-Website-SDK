@@ -13,6 +13,7 @@ import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
 import Log from '../../../shared/libraries/Log';
 import { AppConfig } from '../../../shared/models/AppConfig';
+import OneSignalPublic from '../../../onesignal/OneSignalPublic';
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
  * into the iFrame URL as subdomain.onesignal.com/webPushIFrame or
@@ -218,7 +219,7 @@ export default class ProxyFrame extends RemoteFrame {
         and the server side.
       */
       // Set a flag remotely to prevent notifications from being sent
-      await OneSignal.getInstance().notifications?.disable(true);
+      await OneSignalPublic.notifications?.disable(true);
       // Orphan the subscription by removing data stored about it
       // This causes our SDK to think we're no longer subscribed on this frame
       await OneSignal.database.rebuild();
