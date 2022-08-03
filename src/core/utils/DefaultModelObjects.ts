@@ -8,6 +8,8 @@ import { IdentityModel, UserProperties } from "../types";
  * must be known at creation time.
  */
 
+// TO DO: fill out with dummy data
+
 const identity: IdentityModel = {
   onesignal_id: "",
   external_id: undefined,

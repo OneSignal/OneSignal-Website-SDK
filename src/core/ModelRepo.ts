@@ -18,50 +18,48 @@ interface StringIndexable {
 }
 
 export default class ModelRepo extends Subscribable<Delta> {
-  private initializedPromise: Promise<void>;
-
-  private _identity?: IdentityModel;
-  private _properties?: UserProperties;
-  private _subscriptions?: SubscriptionsCollection;
-  private _config?: AppConfig;
-
-  // these public readonly properties should not be re-assigned, only nested mutations should be allowed
-  // to set the entire property, use `set` function
   readonly identity: IdentityModel;
   readonly properties: UserProperties;
   readonly subscriptions: SubscriptionsCollection;
   readonly config: AppConfig;
 
+  private initializedPromise: Promise<void>;
   private identityPromise?: Promise<IdentityModel>;
   private propertiesPromise?: Promise<UserProperties>;
   private subscriptionsPromise?: Promise<SubscriptionsCollection>;
   private configPromise?: Promise<AppConfig>;
 
-  private isUpdatingFromHydrator?: boolean;
-
   private identityPromiseResolver: (value: IdentityModel | PromiseLike<IdentityModel>) => void = () => {};
   private propertiesPromiseResolver: (value: UserProperties | PromiseLike<UserProperties>) => void = () => {};
   private subscriptionsPromiseResolver:
-    (value: SubscriptionsCollection | PromiseLike<SubscriptionsCollection>) => void = () => {};
+  (value: SubscriptionsCollection | PromiseLike<SubscriptionsCollection>) => void = () => {};
   private configPromiseResolver: (value: AppConfig | PromiseLike<AppConfig>) => void = () => {};
+
+  private isUpdatingFromHydrator?: boolean;
 
   constructor() {
     super();
     this.initializedPromise = new Promise<void>(async resolve => {
-      // ES5 limitation: object properties must be known at creation time
-      // for ObservableSlim to work as expected
-      this._identity = await ModelCache.get(Model.Identity) || DEFAULT_MODELS.identity;
-      this._properties = await ModelCache.get(Model.Properties) || DEFAULT_MODELS.properties;
-      this._subscriptions = await ModelCache.get(Model.Subscriptions) || DEFAULT_MODELS.subscriptions;
-      this._config = await this.getCachedConfig() || DEFAULT_MODELS.config;
+      /**
+       * load cached models
+       * ES5 limitation: object properties must be known at creation time
+       * for ObservableSlim to work as expected
+       */
+      const cachedIdentity: IdentityModel = await ModelCache.get(Model.Identity) || DEFAULT_MODELS.identity;
+      const cachedProperties: UserProperties = await ModelCache.get(Model.Properties) || DEFAULT_MODELS.properties;
+      const cachedSubscriptions: SubscriptionsCollection =
+        await ModelCache.get(Model.Subscriptions) || DEFAULT_MODELS.subscriptions;
+      const cachedConfig: AppConfig = await this.getCachedConfig() || DEFAULT_MODELS.config;
 
-      this.identityPromiseResolver(this.createObserver(Model.Identity, this._identity));
-      this.propertiesPromiseResolver(this.createObserver(Model.Properties, this._properties));
-      this.subscriptionsPromiseResolver(this.createObserver(Model.Subscriptions, this._subscriptions));
-      this.configPromiseResolver(this.createObserver(Model.Config, this._config));
+      // resolve respective promises with observable slim proxies
+      this.identityPromiseResolver(this.createObserver(Model.Identity, cachedIdentity));
+      this.propertiesPromiseResolver(this.createObserver(Model.Properties, cachedProperties));
+      this.subscriptionsPromiseResolver(this.createObserver(Model.Subscriptions, cachedSubscriptions));
+      this.configPromiseResolver(this.createObserver(Model.Config, cachedConfig));
       resolve();
     });
 
+    // initialize promises that will be resolved after models are loaded from cache
     this.identityPromise = new Promise<IdentityModel>(resolve => {
       this.identityPromiseResolver = resolve;
     });
@@ -75,6 +73,12 @@ export default class ModelRepo extends Subscribable<Delta> {
       this.configPromiseResolver = resolve;
     });
 
+    /**
+     * we copy references to the promises which will resolve to the respective models (with observer proxies)
+     * we do this to maintain the readonly nature of the models
+     * this allows us to trigger model changes by mutating the models but not reassigning
+     * them and hence replacing/breaking the observable slim proxy
+     */
     this.identity = this.identityPromise as unknown as IdentityModel;
     this.properties = this.propertiesPromise as unknown as UserProperties;
     this.subscriptions = this.subscriptionsPromise as unknown as SubscriptionsCollection;
@@ -136,14 +140,15 @@ export default class ModelRepo extends Subscribable<Delta> {
   }
 
   /**
-   * Changes to model properties must be set via this function in order to trigger cache sync
+   * Since we cannot re-assign the models due to breaking the observable proxy, we need to mutate them
    * @param  {Model} model
    * @param  {T} object
+   * @param {boolean} fromHydrator - if true, we are updating from hydrator and won't broadcast to ops repo
    * @returns void
    */
   public set<T extends StringIndexable>(model: Model, object: T, fromHydrator?: boolean): void {
     this.isUpdatingFromHydrator = fromHydrator;
-    let targetModel: StringIndexable | undefined; // to store reference to model to be changed
+    let targetModel: StringIndexable; // to store reference to model to be changed
 
     switch (model) {
       case Model.Identity:
