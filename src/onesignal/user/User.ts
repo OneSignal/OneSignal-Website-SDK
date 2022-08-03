@@ -4,11 +4,8 @@ import { isValidEmail } from "../../shared/utils/utils";
 import { PublicApi } from "../PublicApiDecorator";
 import FutureSubscription from "../subscriptions/FutureSubscription";
 import { SubscriptionType } from "../subscriptions/SubscriptionModel";
-import { Subscriptions } from "../temp/Subscriptions";
 
 export default class User {
-  private subscriptions?: Subscriptions;
-
   constructor(private core: CoreModule) {}
 
   @PublicApi()
@@ -19,7 +16,7 @@ export default class User {
   @PublicApi()
   public addAliases(aliases: { label: string; id: string; }[]): void {
     aliases.forEach(alias => {
-      this.core.modelRepo.identity = { ...this.core.modelRepo.identity, ...alias };
+      this.core.modelRepo.identity[alias.label] = alias.id;
     });
   }
 
@@ -48,7 +45,7 @@ export default class User {
     }
 
     const emailSubscription = new FutureSubscription(SubscriptionType.Email, email);
-    this.core.modelRepo.subscriptions?.email?.push(emailSubscription);
+    this.core.modelRepo.subscriptions.email?.push(emailSubscription);
   }
 
   @PublicApi()
@@ -73,7 +70,7 @@ export default class User {
 
   @PublicApi()
   public addTags(tags: {[key: string]: string}): void {
-    this.core.modelRepo.properties = { ...this.core.modelRepo.properties, tags };
+    this.core.modelRepo.properties.tags = { ...this.core.modelRepo.properties.tags, ...tags };
   }
 
   @PublicApi()

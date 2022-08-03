@@ -10,7 +10,6 @@ import Subscribable from "./utils/Subscribable";
 import equal from 'fast-deep-equal/es6';
 import ModelCache from "./caches/ModelCache";
 import { AppConfig } from "../shared/models/AppConfig";
-import Utils from "../shared/context/Utils";
 import DEFAULT_MODELS from "./utils/DefaultModelObjects";
 import { SubscriptionsCollection } from "../onesignal/subscriptions/SubscriptionsCollection";
 
@@ -19,21 +18,67 @@ interface StringIndexable {
 }
 
 export default class ModelRepo extends Subscribable<Delta> {
-  // these properties are publically accessible but should not be re-assigned, only mutated
-  public identity?: IdentityModel;
-  public properties?: UserProperties;
-  public subscriptions?: SubscriptionsCollection;
-  public config?: AppConfig;
+  private initializedPromise: Promise<void>;
 
   private _identity?: IdentityModel;
   private _properties?: UserProperties;
   private _subscriptions?: SubscriptionsCollection;
   private _config?: AppConfig;
 
+  // these public readonly properties should not be re-assigned, only nested mutations should be allowed
+  // to set the entire property, use `set` function
+  readonly identity: IdentityModel;
+  readonly properties: UserProperties;
+  readonly subscriptions: SubscriptionsCollection;
+  readonly config: AppConfig;
+
+  private identityPromise?: Promise<IdentityModel>;
+  private propertiesPromise?: Promise<UserProperties>;
+  private subscriptionsPromise?: Promise<SubscriptionsCollection>;
+  private configPromise?: Promise<AppConfig>;
+
   private isUpdatingFromHydrator?: boolean;
+
+  private identityPromiseResolver: (value: IdentityModel | PromiseLike<IdentityModel>) => void = () => {};
+  private propertiesPromiseResolver: (value: UserProperties | PromiseLike<UserProperties>) => void = () => {};
+  private subscriptionsPromiseResolver:
+    (value: SubscriptionsCollection | PromiseLike<SubscriptionsCollection>) => void = () => {};
+  private configPromiseResolver: (value: AppConfig | PromiseLike<AppConfig>) => void = () => {};
 
   constructor() {
     super();
+    this.initializedPromise = new Promise<void>(async resolve => {
+      // ES5 limitation: object properties must be known at creation time
+      // for ObservableSlim to work as expected
+      this._identity = await ModelCache.get(Model.Identity) || DEFAULT_MODELS.identity;
+      this._properties = await ModelCache.get(Model.Properties) || DEFAULT_MODELS.properties;
+      this._subscriptions = await ModelCache.get(Model.Subscriptions) || DEFAULT_MODELS.subscriptions;
+      this._config = await this.getCachedConfig() || DEFAULT_MODELS.config;
+
+      this.identityPromiseResolver(this.createObserver(Model.Identity, this._identity));
+      this.propertiesPromiseResolver(this.createObserver(Model.Properties, this._properties));
+      this.subscriptionsPromiseResolver(this.createObserver(Model.Subscriptions, this._subscriptions));
+      this.configPromiseResolver(this.createObserver(Model.Config, this._config));
+      resolve();
+    });
+
+    this.identityPromise = new Promise<IdentityModel>(resolve => {
+      this.identityPromiseResolver = resolve;
+    });
+    this.propertiesPromise = new Promise<UserProperties>(resolve => {
+      this.propertiesPromiseResolver = resolve;
+    });
+    this.subscriptionsPromise = new Promise<SubscriptionsCollection>(resolve => {
+      this.subscriptionsPromiseResolver = resolve;
+    });
+    this.configPromise = new Promise<AppConfig>(resolve => {
+      this.configPromiseResolver = resolve;
+    });
+
+    this.identity = this.identityPromise as unknown as IdentityModel;
+    this.properties = this.propertiesPromise as unknown as UserProperties;
+    this.subscriptions = this.subscriptionsPromise as unknown as SubscriptionsCollection;
+    this.config = this.configPromise as unknown as AppConfig;
   }
 
   /**
@@ -44,21 +89,7 @@ export default class ModelRepo extends Subscribable<Delta> {
    * @returns Promise<AppConfig>
    */
   public async initialize(): Promise<void> {
-    // ES5 limitation: object properties must be known at creation time
-    // for ObservableSlim to work as expected
-    this._identity = Utils.getValueOrDefault(
-      (await ModelCache.get(Model.Identity)), DEFAULT_MODELS.identity);
-    this._properties = Utils.getValueOrDefault(
-      (await ModelCache.get(Model.Properties)), DEFAULT_MODELS.properties);
-    this._subscriptions = Utils.getValueOrDefault(
-      (await ModelCache.get(Model.Subscriptions)), DEFAULT_MODELS.subscriptions);
-    this._config = Utils.getValueOrDefault(
-      (await this.getCachedConfig()), DEFAULT_MODELS.config);
-
-    this.identity = this.createObserver(Model.Identity, this._identity);
-    this.properties = this.createObserver(Model.Properties, this._properties);
-    this.subscriptions = this.createObserver(Model.Subscriptions, this._subscriptions);
-    this.config = this.createObserver(Model.Config, this._config);
+    await this.initializedPromise;
   }
 
   public async getCachedConfig(): Promise<AppConfig> {
