@@ -1,6 +1,8 @@
+import { SubscriptionsCollection } from "../onesignal/subscriptions/SubscriptionsCollection";
+import { AppConfig } from "../shared/models/AppConfig";
 import ModelRepo from "./ModelRepo";
 import OperationRepo from "./OperationRepo";
-import { ConfigModel, IdentityModel, Model, UserProperties, SessionModel, SubscriptionsModel } from "./types";
+import { IdentityModel, Model, UserProperties } from "./types";
 
 type ServerResponse = object;
 
@@ -23,15 +25,11 @@ export class HydratorBus {
     this.modelRepo.set<UserProperties>(Model.Properties, res);
   }
 
-  private hydrateSession(res: ServerResponse): void {
-    this.modelRepo.set<SessionModel>(Model.Session, res);
-  }
-
   private hydrateConfig(res: ServerResponse): void {
-    this.modelRepo.set<ConfigModel>(Model.Config, res);
+    this.modelRepo.set<AppConfig>(Model.Config, res);
   }
 
   private hydrateSubscriptions(res: ServerResponse): void {
-    this.modelRepo.set<SubscriptionsModel>(Model.Subscriptions, res);
+    this.modelRepo.set<SubscriptionsCollection>(Model.Subscriptions, res);
   }
 }

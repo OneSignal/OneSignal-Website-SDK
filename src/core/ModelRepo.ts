@@ -10,7 +10,6 @@ import Subscribable from "./utils/Subscribable";
 import equal from 'fast-deep-equal/es6';
 import ModelCache from "./caches/ModelCache";
 import { AppConfig } from "../shared/models/AppConfig";
-import DEFAULT_MODELS from "./utils/DefaultModelObjects";
 import { SubscriptionsCollection } from "../onesignal/subscriptions/SubscriptionsCollection";
 
 interface StringIndexable {
@@ -23,81 +22,18 @@ export default class ModelRepo extends Subscribable<Delta> {
   readonly subscriptions: SubscriptionsCollection;
   readonly config: AppConfig;
 
-  private initializedPromise: Promise<void>;
-  private identityPromise?: Promise<IdentityModel>;
-  private propertiesPromise?: Promise<UserProperties>;
-  private subscriptionsPromise?: Promise<SubscriptionsCollection>;
-  private configPromise?: Promise<AppConfig>;
-
-  private identityPromiseResolver: (value: IdentityModel | PromiseLike<IdentityModel>) => void = () => {};
-  private propertiesPromiseResolver: (value: UserProperties | PromiseLike<UserProperties>) => void = () => {};
-  private subscriptionsPromiseResolver:
-  (value: SubscriptionsCollection | PromiseLike<SubscriptionsCollection>) => void = () => {};
-  private configPromiseResolver: (value: AppConfig | PromiseLike<AppConfig>) => void = () => {};
-
   private isUpdatingFromHydrator?: boolean;
 
-  constructor() {
+  constructor(private modelCache: ModelCache) {
     super();
-    this.initializedPromise = new Promise<void>(async resolve => {
-      /**
-       * load cached models
-       * ES5 limitation: object properties must be known at creation time
-       * for ObservableSlim to work as expected
-       */
-      const cachedIdentity: IdentityModel = await ModelCache.get(Model.Identity) || DEFAULT_MODELS.identity;
-      const cachedProperties: UserProperties = await ModelCache.get(Model.Properties) || DEFAULT_MODELS.properties;
-      const cachedSubscriptions: SubscriptionsCollection =
-        await ModelCache.get(Model.Subscriptions) || DEFAULT_MODELS.subscriptions;
-      const cachedConfig: AppConfig = await this.getCachedConfig() || DEFAULT_MODELS.config;
-
-      // resolve respective promises with observable slim proxies
-      this.identityPromiseResolver(this.createObserver(Model.Identity, cachedIdentity));
-      this.propertiesPromiseResolver(this.createObserver(Model.Properties, cachedProperties));
-      this.subscriptionsPromiseResolver(this.createObserver(Model.Subscriptions, cachedSubscriptions));
-      this.configPromiseResolver(this.createObserver(Model.Config, cachedConfig));
-      resolve();
-    });
-
-    // initialize promises that will be resolved after models are loaded from cache
-    this.identityPromise = new Promise<IdentityModel>(resolve => {
-      this.identityPromiseResolver = resolve;
-    });
-    this.propertiesPromise = new Promise<UserProperties>(resolve => {
-      this.propertiesPromiseResolver = resolve;
-    });
-    this.subscriptionsPromise = new Promise<SubscriptionsCollection>(resolve => {
-      this.subscriptionsPromiseResolver = resolve;
-    });
-    this.configPromise = new Promise<AppConfig>(resolve => {
-      this.configPromiseResolver = resolve;
-    });
-
-    /**
-     * we copy references to the promises which will resolve to the respective models (with observer proxies)
-     * we do this to maintain the readonly nature of the models
-     * this allows us to trigger model changes by mutating the models but not reassigning
-     * them and hence replacing/breaking the observable slim proxy
-     */
-    this.identity = this.identityPromise as unknown as IdentityModel;
-    this.properties = this.propertiesPromise as unknown as UserProperties;
-    this.subscriptions = this.subscriptionsPromise as unknown as SubscriptionsCollection;
-    this.config = this.configPromise as unknown as AppConfig;
-  }
-
-  /**
-   * Loads models from cache
-   * IMPORTANT: Must be called after instantiation to complete setup process
-   *  - creates Proxy observers assigned to public top-level class model properties
-   *  - observers will trigger writes to cache immediately upon object mutation (see `createObserver`)
-   * @returns Promise<AppConfig>
-   */
-  public async initialize(): Promise<void> {
-    await this.initializedPromise;
+    this.identity = this.createObserver(Model.Identity, modelCache.identity);
+    this.properties = this.createObserver(Model.Properties, modelCache.properties);
+    this.subscriptions = this.createObserver(Model.Subscriptions, modelCache.subscriptions);
+    this.config = this.createObserver(Model.Config, modelCache.config);
   }
 
   public async getCachedConfig(): Promise<AppConfig> {
-    return await ModelCache.get(Model.Config);
+    return await this.modelCache.get(Model.Config);
   }
 
   /**
@@ -120,7 +56,7 @@ export default class ModelRepo extends Subscribable<Delta> {
           return;
         }
 
-        await ModelCache.put(model, change.property, change.newValue);
+        await this.modelCache.put(model, change.property, change.newValue);
 
         if (this.isUpdatingFromHydrator) {
           this.isUpdatingFromHydrator = false;
@@ -136,7 +72,7 @@ export default class ModelRepo extends Subscribable<Delta> {
 
         this.broadcast(delta);
       });
-    }) as unknown as T;
+    });
   }
 
   /**

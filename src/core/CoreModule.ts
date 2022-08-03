@@ -1,5 +1,5 @@
+import OneSignalError from "../shared/errors/OneSignalError";
 import ModelCache from "./caches/ModelCache";
-import OperationCache from "./caches/OperationCache";
 import { HydratorBus } from "./HydratorBus";
 import ModelRepo from "./ModelRepo";
 import OperationRepo from "./OperationRepo";
@@ -10,16 +10,18 @@ import OperationRepo from "./OperationRepo";
  */
 
 export class CoreModule {
-  public modelRepo: ModelRepo;
-  public operationRepo: OperationRepo;
+  public modelCache: ModelCache;
+  public modelRepo?: ModelRepo;
+  public operationRepo?: OperationRepo;
 
   constructor() {
-    this.modelRepo = new ModelRepo();
-    this.operationRepo = new OperationRepo(this.modelRepo);
-    new HydratorBus(this.modelRepo, this.operationRepo);
-  }
-
-  public async initialize(): Promise<void> {
-    await this.modelRepo.initialize();
+    this.modelCache = new ModelCache();
+    this.modelCache.load().then(() => {
+      this.modelRepo = new ModelRepo(this.modelCache);
+      this.operationRepo = new OperationRepo(this.modelRepo);
+      new HydratorBus(this.modelRepo, this.operationRepo);
+    }).catch(e => {
+      throw new OneSignalError(`Could not load CoreModule: ${e}`);
+    });
   }
 }

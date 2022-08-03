@@ -14,9 +14,8 @@ export default class OneSignalPublic extends OneSignalProtected implements IOneS
 
   @PublicApi()
   public async init(userConfig: AppUserConfig): Promise<void> {
-    await this.core.initialize(); // gets cached config from database
     let appConfig: AppConfig;
-    const cachedConfig = this.core.modelRepo.getCachedConfig();
+    const cachedConfig = this.core.modelCache.config;
 
     if (true /* cached config is stale */) {
       appConfig = await this.initializeConfig(userConfig);
