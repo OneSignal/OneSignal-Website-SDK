@@ -2,7 +2,6 @@ import { SubscriptionsCollection } from "../../onesignal/subscriptions/Subscript
 import { AppConfig } from "../../shared/models/AppConfig";
 import Database from "../../shared/services/Database";
 import { IdentityModel, Model, UserProperties } from "../types";
-import DEFAULT_MODELS from "../utils/DefaultModelObjects";
 
 export default class ModelCache {
   public identity?: IdentityModel;
@@ -13,10 +12,10 @@ export default class ModelCache {
   constructor() {}
 
   async load(): Promise<void> {
-    this.identity = await this.get<IdentityModel>(Model.Identity) || DEFAULT_MODELS.identity;
-    this.properties = await this.get<UserProperties>(Model.Properties) || DEFAULT_MODELS.properties;
-    this.subscriptions = await this.get<SubscriptionsCollection>(Model.Subscriptions) || DEFAULT_MODELS.subscriptions;
-    this.config = await this.get<AppConfig>(Model.Config) || DEFAULT_MODELS.config;
+    this.identity = await this.get<IdentityModel>(Model.Identity);
+    this.properties = await this.get<UserProperties>(Model.Properties);
+    this.subscriptions = await this.get<SubscriptionsCollection>(Model.Subscriptions);
+    this.config = await this.get<AppConfig>(Model.Config);
   }
 
   async put(model: Model, property: string, value: object): Promise<void> {
