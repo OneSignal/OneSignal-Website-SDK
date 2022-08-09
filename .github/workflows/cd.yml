@@ -1,0 +1,39 @@
+name: Build SDK Files & S3 Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test_build_deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: "[Setup] Install dependencies"
+        run: yarn
+      - name: "[Test] Run all tests"
+        run: yarn test:CI
+      - name: "[Build] Staging"
+        env:
+          STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
+        run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} yarn build:staging
+      - name: "[Build] Production"
+        run: yarn build:prod
+      - name: "[Deploy] Upload SDK Files to S3"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: ./build/scripts/s3-simple-upload-all.sh build/releases s3://onesignal-build/websdk/${{ github.sha }}
+      - name: "[Deploy] Upload AMP SDK Files to S3"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: ./build/scripts/s3-simple-upload-all.sh build/amp s3://onesignal-build/websdk/${{ github.sha }}
