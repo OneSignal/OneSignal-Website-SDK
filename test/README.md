@@ -10,7 +10,7 @@ Tests are built to run with the [AVA test runner](https://github.com/avajs/ava) 
 ### Option 1 - Run locally
 > Recommend for macOS or if you haven't used or setup docker before.
 
-1. Install the specific version of Node.js defined in `.travis.yml` in this repo.
+1. Install the specific version of Node.js defined in the Github Actions `ci.yml` in this repo.
 
 ### Option 2 - Run with Docker
 > NOT Recommend for macOS due to performance issues, about 10x slower.
