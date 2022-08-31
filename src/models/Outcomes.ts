@@ -7,7 +7,7 @@ export interface OutcomesServerConfig {
     notification_attribution: {
       minutes_since_displayed: number;
       limit: number;
-    }
+    };
   };
   unattributed: {
     enabled: boolean;

@@ -1,18 +1,24 @@
-import OneSignalApiShared from "../OneSignalApiShared";
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import { NotSubscribedError, NotSubscribedReason } from "../errors/NotSubscribedError";
+import OneSignalApiShared from '../OneSignalApiShared';
+import {SubscriptionStateKind} from '../models/SubscriptionStateKind';
+import {PushDeviceRecord} from '../models/PushDeviceRecord';
+import {
+  NotSubscribedError,
+  NotSubscribedReason,
+} from '../errors/NotSubscribedError';
 import MainHelper from '../helpers/MainHelper';
-import Database from "../services/Database";
-import Log from "../libraries/Log";
-import { ContextSWInterface } from '../models/ContextSW';
-import Utils from "../context/shared/utils/Utils";
-import { SessionOrigin } from "../models/Session";
-import { OutcomeRequestData } from "../models/OutcomeRequestData";
-import { awaitSdkEvent, logMethodCall } from '../utils';
-import { UpdatePlayerExternalUserId, UpdatePlayerOptions } from "../models/UpdatePlayerOptions";
-import { ExternalUserIdHelper } from "../helpers/shared/ExternalUserIdHelper";
-import { TagsObject } from "../models/Tags";
+import Database from '../services/Database';
+import Log from '../libraries/Log';
+import {ContextSWInterface} from '../models/ContextSW';
+import Utils from '../context/shared/utils/Utils';
+import {SessionOrigin} from '../models/Session';
+import {OutcomeRequestData} from '../models/OutcomeRequestData';
+import {awaitSdkEvent, logMethodCall} from '../utils';
+import {
+  UpdatePlayerExternalUserId,
+  UpdatePlayerOptions,
+} from '../models/UpdatePlayerOptions';
+import {ExternalUserIdHelper} from '../helpers/shared/ExternalUserIdHelper';
+import {TagsObject} from '../models/Tags';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -29,7 +35,7 @@ export class UpdateManager {
   }
 
   private async getDeviceId(): Promise<string> {
-    const { deviceId } = await Database.getSubscription();
+    const {deviceId} = await Database.getSubscription();
     if (!deviceId) {
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     }
@@ -40,10 +46,15 @@ export class UpdateManager {
     return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
-  public async sendPushDeviceRecordUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
-    const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+  public async sendPushDeviceRecordUpdate(
+    deviceRecord?: PushDeviceRecord,
+  ): Promise<void> {
+    const existingUser =
+      await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      Log.debug("Not sending the update because user is not registered with OneSignal (no device id)");
+      Log.debug(
+        'Not sending the update because user is not registered with OneSignal (no device id)',
+      );
       return;
     }
 
@@ -52,17 +63,23 @@ export class UpdateManager {
       deviceRecord = await this.createDeviceRecord();
     }
     if (this.onSessionSent) {
-      await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-        notification_types: SubscriptionStateKind.Subscribed,
-        ...deviceRecord.serialize(),
-      });
+      await OneSignalApiShared.updatePlayer(
+        this.context.appConfig.appId,
+        deviceId,
+        {
+          notification_types: SubscriptionStateKind.Subscribed,
+          ...deviceRecord.serialize(),
+        },
+      );
     } else {
       await this.sendOnSessionUpdate(deviceRecord);
     }
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  public async sendOnSessionUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async sendOnSessionUpdate(
+    deviceRecord?: PushDeviceRecord,
+  ): Promise<void> {
     if (this.onSessionSent) {
       return;
     }
@@ -71,9 +88,12 @@ export class UpdateManager {
       return;
     }
 
-    const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
+    const existingUser =
+      await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (!existingUser) {
-      Log.debug("Not sending the on session because user is not registered with OneSignal (no device id)");
+      Log.debug(
+        'Not sending the on session because user is not registered with OneSignal (no device id)',
+      );
       return;
     }
 
@@ -82,8 +102,10 @@ export class UpdateManager {
       deviceRecord = await this.createDeviceRecord();
     }
 
-    if (deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
-      OneSignal.config.enableOnSession !== true) {
+    if (
+      deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
+      OneSignal.config.enableOnSession !== true
+    ) {
       return;
     }
 
@@ -91,27 +113,43 @@ export class UpdateManager {
       // Not sending on_session here but from SW instead.
 
       // Not awaiting here on purpose
-      this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
+      this.context.sessionManager.upsertSession(
+        deviceId,
+        deviceRecord,
+        SessionOrigin.PlayerOnSession,
+      );
       this.onSessionSent = true;
-    } catch(e) {
-      Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
+    } catch (e) {
+      Log.error(
+        `Failed to update user session. Error "${e.message}" ${e.stack}`,
+      );
     }
   }
 
-  public async sendPlayerCreate(deviceRecord: PushDeviceRecord): Promise<string | undefined> {
+  public async sendPlayerCreate(
+    deviceRecord: PushDeviceRecord,
+  ): Promise<string | undefined> {
     await ExternalUserIdHelper.addExternalUserIdToDeviceRecord(deviceRecord);
     try {
       const deviceId = await OneSignalApiShared.createUser(deviceRecord);
       if (deviceId) {
-        Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
+        Log.info(
+          'Subscribed to web push and registered with OneSignal',
+          deviceRecord,
+          deviceId,
+        );
         this.onSessionSent = true;
         // Not awaiting here on purpose
-        this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerCreate);
+        this.context.sessionManager.upsertSession(
+          deviceId,
+          deviceRecord,
+          SessionOrigin.PlayerCreate,
+        );
         return deviceId;
       }
       Log.error(`Failed to create user.`);
       return undefined;
-    } catch(e) {
+    } catch (e) {
       Log.error(`Failed to create user. Error "${e.message}" ${e.stack}`);
       return undefined;
     }
@@ -121,15 +159,17 @@ export class UpdateManager {
     return this.onSessionSent;
   }
 
-  public async sendExternalUserIdUpdate(externalUserId: string | undefined | null, authHash?: string | null )
-  :Promise<any> {
+  public async sendExternalUserIdUpdate(
+    externalUserId: string | undefined | null,
+    authHash?: string | null,
+  ): Promise<any> {
     if (!authHash) {
       authHash = await Database.getExternalUserIdAuthHash();
     }
 
     const payload: UpdatePlayerExternalUserId = {
-      external_user_id: Utils.getValueOrDefault(externalUserId, ""),
-      external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
+      external_user_id: Utils.getValueOrDefault(externalUserId, ''),
+      external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined),
     };
 
     // 1. Update any secondary channels such as email with external_user_id
@@ -137,7 +177,7 @@ export class UpdateManager {
     /* tslint:disable:no-floating-promises */
     this.context.secondaryChannelManager.synchronizer.setExternalUserId(
       payload.external_user_id,
-      payload.external_user_id_auth_hash
+      payload.external_user_id_auth_hash,
     );
     /* tslint:enable:no-floating-promises */
 
@@ -151,7 +191,7 @@ export class UpdateManager {
   public async sendTagsUpdate(tags: TagsObject<any>): Promise<void> {
     this.context.secondaryChannelManager.synchronizer.setTags(tags);
 
-    const options: UpdatePlayerOptions = { tags };
+    const options: UpdatePlayerOptions = {tags};
     const authHash = await Database.getExternalUserIdAuthHash();
     if (!!authHash) {
       options.external_user_id_auth_hash = authHash;
@@ -165,20 +205,31 @@ export class UpdateManager {
 
   // Send REST API payload to update the push player record.
   // Await until we have a push playerId, which is require to make a PUT call.
-  private async sendPushPlayerUpdate(payload: UpdatePlayerOptions): Promise<void> {
-    let { deviceId } = await Database.getSubscription();
+  private async sendPushPlayerUpdate(
+    payload: UpdatePlayerOptions,
+  ): Promise<void> {
+    let {deviceId} = await Database.getSubscription();
     if (!deviceId) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
-      ({ deviceId } = await Database.getSubscription());
+      ({deviceId} = await Database.getSubscription());
     }
 
     if (deviceId) {
-      return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
+      return await OneSignalApiShared.updatePlayer(
+        this.context.appConfig.appId,
+        deviceId,
+        payload,
+      );
     }
   }
 
-  public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
-    logMethodCall("sendOutcomeDirect");
+  public async sendOutcomeDirect(
+    appId: string,
+    notificationIds: string[],
+    outcomeName: string,
+    value?: number,
+  ) {
+    logMethodCall('sendOutcomeDirect');
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
@@ -193,8 +244,13 @@ export class UpdateManager {
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
 
-  public async sendOutcomeInfluenced(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
-    logMethodCall("sendOutcomeInfluenced");
+  public async sendOutcomeInfluenced(
+    appId: string,
+    notificationIds: string[],
+    outcomeName: string,
+    value?: number,
+  ) {
+    logMethodCall('sendOutcomeInfluenced');
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,
@@ -209,8 +265,12 @@ export class UpdateManager {
     await OneSignalApiShared.sendOutcome(outcomeRequestData);
   }
 
-  public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
-    logMethodCall("sendOutcomeUnattributed");
+  public async sendOutcomeUnattributed(
+    appId: string,
+    outcomeName: string,
+    value?: number,
+  ) {
+    logMethodCall('sendOutcomeUnattributed');
     const deviceRecord = await this.createDeviceRecord();
     const outcomeRequestData: OutcomeRequestData = {
       app_id: appId,

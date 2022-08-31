@@ -1,22 +1,25 @@
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {PushPermissionNotGrantedErrorReason} from '../errors/PushPermissionNotGrantedError';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
 import EventHelper from './EventHelper';
-import { InvalidStateError, InvalidStateReason } from '../errors/InvalidStateError';
-import { Subscription } from '../models/Subscription';
-import { NotificationPermission } from '../models/NotificationPermission';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
+import {
+  InvalidStateError,
+  InvalidStateReason,
+} from '../errors/InvalidStateError';
+import {Subscription} from '../models/Subscription';
+import {NotificationPermission} from '../models/NotificationPermission';
+import {RawPushSubscription} from '../models/RawPushSubscription';
+import {SubscriptionStrategyKind} from '../models/SubscriptionStrategyKind';
 import Log from '../libraries/Log';
-import { ContextSWInterface } from '../models/ContextSW';
+import {ContextSWInterface} from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { PermissionUtils } from "../utils/PermissionUtils";
+import {PermissionUtils} from '../utils/PermissionUtils';
 import LocalStorage from '../utils/LocalStorage';
-import { SessionOrigin } from "../models/Session";
-import MainHelper from "./MainHelper";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
-import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
-import { Browser } from "../context/browser/models/Browser";
+import {SessionOrigin} from '../models/Session';
+import MainHelper from './MainHelper';
+import {PushDeviceRecord} from '../models/PushDeviceRecord';
+import {EnvironmentInfo} from '../context/browser/models/EnvironmentInfo';
+import {Browser} from '../context/browser/models/Browser';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -24,7 +27,9 @@ export default class SubscriptionHelper {
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
   }
 
-  public static async internalRegisterForPush(isPushEnabled: boolean): Promise<Subscription | null> {
+  public static async internalRegisterForPush(
+    isPushEnabled: boolean,
+  ): Promise<Subscription | null> {
     const context: ContextSWInterface = OneSignal.context;
     let subscription: Subscription | null = null;
 
@@ -35,23 +40,30 @@ export default class SubscriptionHelper {
       not subscribed, subscribe.
     */
     if (isPushEnabled && !context.pageViewManager.isFirstPageView()) {
-      Log.debug('Not registering for push because the user is subscribed and this is not the first page view.');
-      Log.debug("But we want to rekindle their session.");
+      Log.debug(
+        'Not registering for push because the user is subscribed and this is not the first page view.',
+      );
+      Log.debug('But we want to rekindle their session.');
       const deviceId = await MainHelper.getDeviceId();
       if (deviceId) {
-        const deviceRecord: PushDeviceRecord = await MainHelper.createDeviceRecord(OneSignal.config.appId, true);
-        await OneSignal.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PageRefresh);
+        const deviceRecord: PushDeviceRecord =
+          await MainHelper.createDeviceRecord(OneSignal.config.appId, true);
+        await OneSignal.context.sessionManager.upsertSession(
+          deviceId,
+          deviceRecord,
+          SessionOrigin.PageRefresh,
+        );
       } else {
-        Log.error("Should have been impossible to have push as enabled but no device id.");
+        Log.error(
+          'Should have been impossible to have push as enabled but no device id.',
+        );
       }
       return null;
     }
 
-    if (typeof OneSignal !== "undefined") {
-      if (OneSignal._isRegisteringForPush)
-        return null;
-      else
-        OneSignal._isRegisteringForPush = true;
+    if (typeof OneSignal !== 'undefined') {
+      if (OneSignal._isRegisteringForPush) return null;
+      else OneSignal._isRegisteringForPush = true;
     }
 
     switch (SdkEnvironment.getWindowEnv()) {
@@ -59,9 +71,11 @@ export default class SubscriptionHelper {
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
         try {
           const rawSubscription = await context.subscriptionManager.subscribe(
-            SubscriptionStrategyKind.ResubscribeExisting
+            SubscriptionStrategyKind.ResubscribeExisting,
           );
-          subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
+          subscription = await context.subscriptionManager.registerSubscription(
+            rawSubscription,
+          );
           context.pageViewManager.incrementPageViewCount();
           await PermissionUtils.triggerNotificationPermissionChanged();
           await EventHelper.checkAndTriggerSubscriptionChanged();
@@ -82,7 +96,9 @@ export default class SubscriptionHelper {
 
         try {
           /* If the user doesn't grant permissions, a PushPermissionNotGrantedError will be thrown here. */
-          rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+          rawSubscription = await context.subscriptionManager.subscribe(
+            SubscriptionStrategyKind.SubscribeNew,
+          );
 
           // Update the permission to granted
           await context.permissionManager.updateStoredPermission();
@@ -97,19 +113,27 @@ export default class SubscriptionHelper {
                 /* Force update false, because the iframe installs a native
                 permission change handler that will be triggered when the user
                 clicks out of the popup back to the parent page */
-                (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
-                  permission: NotificationPermission.Denied,
-                  forceUpdatePermission: false
-                });
+                (OneSignal.subscriptionPopup as any).message(
+                  OneSignal.POSTMAM_COMMANDS
+                    .REMOTE_NOTIFICATION_PERMISSION_CHANGED,
+                  {
+                    permission: NotificationPermission.Denied,
+                    forceUpdatePermission: false,
+                  },
+                );
                 break;
               case PushPermissionNotGrantedErrorReason.Dismissed:
                 /* Force update true because default permissions (before
                 prompting) -> default permissions (after prompting) isn't a
                 change, but we still want to be notified about it */
-                (OneSignal.subscriptionPopup as any).message(OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION_CHANGED, {
-                  permission: NotificationPermission.Default,
-                  forceUpdatePermission: true
-                });
+                (OneSignal.subscriptionPopup as any).message(
+                  OneSignal.POSTMAM_COMMANDS
+                    .REMOTE_NOTIFICATION_PERMISSION_CHANGED,
+                  {
+                    permission: NotificationPermission.Default,
+                    forceUpdatePermission: true,
+                  },
+                );
                 break;
             }
           }
@@ -126,42 +150,51 @@ export default class SubscriptionHelper {
         OneSignal.subscriptionPopup.message(
           OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION,
           {
-            rawPushSubscription: rawSubscription.serialize()
+            rawPushSubscription: rawSubscription.serialize(),
           },
           (message: any) => {
             if (message.data.progress === true) {
-              Log.debug('Got message from host page that remote reg. is in progress, closing popup.');
+              Log.debug(
+                'Got message from host page that remote reg. is in progress, closing popup.',
+              );
               if (windowCreator) {
                 window.close();
               }
             } else {
-              Log.debug('Got message from host page that remote reg. could not be finished.');
+              Log.debug(
+                'Got message from host page that remote reg. could not be finished.',
+              );
             }
-          }
+          },
         );
         break;
       default:
-        if (typeof OneSignal !== "undefined")
+        if (typeof OneSignal !== 'undefined')
           OneSignal._isRegisteringForPush = false;
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
 
-    if (typeof OneSignal !== "undefined")
+    if (typeof OneSignal !== 'undefined')
       OneSignal._isRegisteringForPush = false;
 
     return subscription;
   }
 
-  static getRawPushSubscriptionForSafari(safariWebId: string): RawPushSubscription {
+  static getRawPushSubscriptionForSafari(
+    safariWebId: string,
+  ): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
-    const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(safariWebId);
+    const {deviceToken: existingDeviceToken} =
+      window.safari.pushNotification.permission(safariWebId);
     subscription.existingSafariDeviceToken = existingDeviceToken;
 
     return subscription;
   }
 
-  static async getRawPushSubscriptionFromServiceWorkerRegistration(registration?: ServiceWorkerRegistration): Promise<RawPushSubscription | null> {
+  static async getRawPushSubscriptionFromServiceWorkerRegistration(
+    registration?: ServiceWorkerRegistration,
+  ): Promise<RawPushSubscription | null> {
     if (!registration) {
       return null;
     }
@@ -178,8 +211,9 @@ export default class SubscriptionHelper {
   }
 
   static async getRawPushSubscription(
-    environmentInfo: EnvironmentInfo, safariWebId: string
-  ):Promise<RawPushSubscription | null> {
+    environmentInfo: EnvironmentInfo,
+    safariWebId: string,
+  ): Promise<RawPushSubscription | null> {
     if (environmentInfo.browserType === Browser.Safari) {
       return SubscriptionHelper.getRawPushSubscriptionForSafari(safariWebId);
     }
@@ -189,8 +223,11 @@ export default class SubscriptionHelper {
     }
 
     if (environmentInfo.isBrowserAndSupportsServiceWorkers) {
-      const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
-      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(registration);
+      const registration =
+        await OneSignal.context.serviceWorkerManager.getRegistration();
+      return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(
+        registration,
+      );
     }
 
     return null;

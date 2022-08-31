@@ -2,10 +2,10 @@ import bowser from 'bowser';
 
 import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { Serializable } from './Serializable';
-import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { OneSignalUtils } from "../utils/OneSignalUtils";
+import {DeliveryPlatformKind} from './DeliveryPlatformKind';
+import {Serializable} from './Serializable';
+import {SubscriptionStateKind} from './SubscriptionStateKind';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
 
 export interface FlattenedDeviceRecord {
   device_type: DeliveryPlatformKind;
@@ -55,7 +55,11 @@ export abstract class DeviceRecord implements Serializable {
   }
 
   isSafari(): boolean {
-    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+    return (
+      bowser.safari &&
+      window.safari !== undefined &&
+      window.safari.pushNotification !== undefined
+    );
   }
 
   getDeliveryPlatform(): DeliveryPlatformKind {
@@ -100,5 +104,7 @@ export abstract class DeviceRecord implements Serializable {
     return serializedBundle;
   }
 
-  deserialize(_: object): DeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): DeviceRecord {
+    throw new NotImplementedError();
+  }
 }

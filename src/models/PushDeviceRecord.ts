@@ -1,9 +1,9 @@
 import bowser from 'bowser';
 
 import NotImplementedError from '../errors/NotImplementedError';
-import { RawPushSubscription } from './RawPushSubscription';
-import { SubscriptionStateKind } from './SubscriptionStateKind';
-import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
+import {RawPushSubscription} from './RawPushSubscription';
+import {SubscriptionStateKind} from './SubscriptionStateKind';
+import {DeviceRecord, FlattenedDeviceRecord} from './DeviceRecord';
 
 export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
   identifier?: string | null;
@@ -29,9 +29,11 @@ export class PushDeviceRecord extends DeviceRecord {
     const serializedBundle: SerializedPushDeviceRecord = super.serialize();
 
     if (this.subscription) {
-      serializedBundle.identifier = bowser.safari ?
-        this.subscription.safariDeviceToken :
-        this.subscription.w3cEndpoint ? this.subscription.w3cEndpoint.toString() : null;
+      serializedBundle.identifier = bowser.safari
+        ? this.subscription.safariDeviceToken
+        : this.subscription.w3cEndpoint
+        ? this.subscription.w3cEndpoint.toString()
+        : null;
       serializedBundle.web_auth = this.subscription.w3cAuth;
       serializedBundle.web_p256 = this.subscription.w3cP256dh;
     }
@@ -46,14 +48,16 @@ export class PushDeviceRecord extends DeviceRecord {
   ) {
     const pushRegistration = new PushDeviceRecord(rawPushSubscription);
     pushRegistration.appId = appId;
-    pushRegistration.subscriptionState = rawPushSubscription ?
-      SubscriptionStateKind.Subscribed :
-      SubscriptionStateKind.NotSubscribed;
+    pushRegistration.subscriptionState = rawPushSubscription
+      ? SubscriptionStateKind.Subscribed
+      : SubscriptionStateKind.NotSubscribed;
     if (subscriptionState) {
       pushRegistration.subscriptionState = subscriptionState;
     }
     return pushRegistration;
   }
 
-  deserialize(_: object): PushDeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): PushDeviceRecord {
+    throw new NotImplementedError();
+  }
 }

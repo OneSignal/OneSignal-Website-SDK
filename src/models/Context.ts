@@ -1,23 +1,23 @@
-import { WorkerMessenger } from '../libraries/WorkerMessenger';
-import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
-import { SubscriptionManager } from '../managers/SubscriptionManager';
-import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { AppConfig } from './AppConfig';
-import { PageViewManager } from '../managers/PageViewManager';
+import {WorkerMessenger} from '../libraries/WorkerMessenger';
+import {ServiceWorkerManager} from '../managers/ServiceWorkerManager';
+import {SubscriptionManager} from '../managers/SubscriptionManager';
+import {DynamicResourceLoader} from '../services/DynamicResourceLoader';
+import {AppConfig} from './AppConfig';
+import {PageViewManager} from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
 import MetricsManager from '../managers/MetricsManager';
-import { ContextSWInterface } from "./ContextSW";
-import ContextHelper from "../helpers/ContextHelper";
-import { UpdateManager } from "../managers/UpdateManager";
-import { PromptsManager } from "../managers/PromptsManager";
-import { ISessionManager } from "../managers/sessionManager/types";
-import { SessionManager } from "../managers/sessionManager/page/SessionManager";
-import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
+import {ContextSWInterface} from './ContextSW';
+import ContextHelper from '../helpers/ContextHelper';
+import {UpdateManager} from '../managers/UpdateManager';
+import {PromptsManager} from '../managers/PromptsManager';
+import {ISessionManager} from '../managers/sessionManager/types';
+import {SessionManager} from '../managers/sessionManager/page/SessionManager';
+import {EnvironmentInfo} from '../context/browser/models/EnvironmentInfo';
 import TagManager from '../managers/tagManager/page/TagManager';
-import { ITagManager } from '../managers/tagManager/types';
-import { ISlidedownManager } from '../managers/slidedownManager/types';
-import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
-import { SecondaryChannelManager } from '../managers/channelManager/shared/SecondaryChannelManager';
+import {ITagManager} from '../managers/tagManager/types';
+import {ISlidedownManager} from '../managers/slidedownManager/types';
+import {SlidedownManager} from '../managers/slidedownManager/SlidedownManager';
+import {SecondaryChannelManager} from '../managers/channelManager/shared/SecondaryChannelManager';
 
 export interface ContextInterface extends ContextSWInterface {
   dynamicResourceLoader: DynamicResourceLoader;
@@ -46,7 +46,7 @@ export default class Context implements ContextInterface {
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
-    if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
+    if (typeof OneSignal !== 'undefined' && !!OneSignal.environmentInfo) {
       this.environmentInfo = OneSignal.environmentInfo;
     }
     this.secondaryChannelManager = new SecondaryChannelManager();
@@ -58,9 +58,15 @@ export default class Context implements ContextInterface {
     this.updateManager = new UpdateManager(this);
     this.sessionManager = new SessionManager(this);
     this.tagManager = new TagManager(this);
-    this.slidedownManager = new SlidedownManager(this, this.secondaryChannelManager);
+    this.slidedownManager = new SlidedownManager(
+      this,
+      this.secondaryChannelManager,
+    );
     this.promptsManager = new PromptsManager(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
-    this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);
+    this.metricsManager = new MetricsManager(
+      appConfig.metrics.enable,
+      appConfig.metrics.mixpanelReportingToken,
+    );
   }
 }

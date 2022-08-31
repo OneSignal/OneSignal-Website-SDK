@@ -1,6 +1,5 @@
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
 import SdkEnvironment from './SdkEnvironment';
-
 
 /**
  * Creates method proxies for once-supported methods.
@@ -9,7 +8,7 @@ export default class LegacyManager {
   static promiseStub() {
     return {
       then: LegacyManager.promiseStub,
-      catch: LegacyManager.promiseStub
+      catch: LegacyManager.promiseStub,
     };
   }
 
@@ -21,12 +20,20 @@ export default class LegacyManager {
 
   static environmentPolyfill(oneSignal) {
     oneSignal.environment = {};
-    oneSignal.environment.getEnv = function () { return ''; };
+    oneSignal.environment.getEnv = function () {
+      return '';
+    };
     oneSignal.environment.isPopup = function () {
-      return SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalSubscriptionPopup;
+      return (
+        SdkEnvironment.getWindowEnv() ===
+        WindowEnvironmentKind.OneSignalSubscriptionPopup
+      );
     };
     oneSignal.environment.isIframe = function () {
-      return SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.OneSignalProxyFrame;
+      return (
+        SdkEnvironment.getWindowEnv() ===
+        WindowEnvironmentKind.OneSignalProxyFrame
+      );
     };
   }
 

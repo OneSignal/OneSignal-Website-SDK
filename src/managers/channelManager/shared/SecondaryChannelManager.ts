@@ -1,14 +1,14 @@
-import { SecondaryChannel } from "./SecondaryChannel";
-import { SecondaryChannelSynchronizer } from "./SecondaryChannelSynchronizer";
-import { SecondaryChannelEmail } from "./SecondaryChannelEmail";
-import { SecondaryChannelIdentifierUpdater } from "./updaters/SecondaryChannelIdentifierUpdater";
-import { SecondaryChannelTagsUpdater } from "./updaters/SecondaryChannelTagsUpdater";
-import { SecondaryChannelExternalUserIdUpdater } from "./updaters/SecondaryChannelExternalUserIdUpdater";
-import { SecondaryChannelFocusUpdater } from "./updaters/SecondaryChannelFocusUpdater";
-import { SecondaryChannelSessionUpdater } from "./updaters/SecondaryChannelSessionUpdater";
-import { SecondaryChannelProfileProviderEmail } from "./providers/SecondaryChannelProfileProviderEmail";
-import { SecondaryChannelProfileProviderSMS } from "./providers/SecondaryChannelProfileProviderSMS";
-import { SecondaryChannelSMS } from "./SecondaryChannelSMS";
+import {SecondaryChannel} from './SecondaryChannel';
+import {SecondaryChannelSynchronizer} from './SecondaryChannelSynchronizer';
+import {SecondaryChannelEmail} from './SecondaryChannelEmail';
+import {SecondaryChannelIdentifierUpdater} from './updaters/SecondaryChannelIdentifierUpdater';
+import {SecondaryChannelTagsUpdater} from './updaters/SecondaryChannelTagsUpdater';
+import {SecondaryChannelExternalUserIdUpdater} from './updaters/SecondaryChannelExternalUserIdUpdater';
+import {SecondaryChannelFocusUpdater} from './updaters/SecondaryChannelFocusUpdater';
+import {SecondaryChannelSessionUpdater} from './updaters/SecondaryChannelSessionUpdater';
+import {SecondaryChannelProfileProviderEmail} from './providers/SecondaryChannelProfileProviderEmail';
+import {SecondaryChannelProfileProviderSMS} from './providers/SecondaryChannelProfileProviderSMS';
+import {SecondaryChannelSMS} from './SecondaryChannelSMS';
 
 export class SecondaryChannelManager {
   public readonly synchronizer: SecondaryChannelSynchronizer;

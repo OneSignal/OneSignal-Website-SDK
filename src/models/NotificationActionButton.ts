@@ -1,5 +1,3 @@
-
-
 export class NotificationActionButton {
   /**
    * Any unique identifier to represent which button was clicked. This is typically passed back to the service worker
@@ -20,6 +18,5 @@ export class NotificationActionButton {
    */
   public url: URL;
 
-  constructor() {
-  }
+  constructor() {}
 }

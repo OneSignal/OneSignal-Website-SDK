@@ -1,11 +1,10 @@
-
 /**
  * Source: https://github.com/pazguille/emitter-es6
  */
 
 export type EventHandler = (...args: any[]) => any;
 export type OnceEventHandler = {
-  listener: EventHandler
+  listener: EventHandler;
 };
 
 interface ListenerMap {
@@ -20,7 +19,6 @@ interface ListenerMap {
  * var emitter = new Emitter();
  */
 export default class Emitter {
-
   private _events: ListenerMap;
 
   constructor() {
@@ -62,14 +60,16 @@ export default class Emitter {
 
     if (listeners !== undefined) {
       for (let j = 0; j < listeners.length; j += 1) {
-        if (listeners[j] === listener || (listeners[j] as OnceEventHandler).listener === listener) {
+        if (
+          listeners[j] === listener ||
+          (listeners[j] as OnceEventHandler).listener === listener
+        ) {
           listeners.splice(j, 1);
           break;
         }
       }
 
-      if (listeners.length === 0)
-        this.removeAllListeners(event);
+      if (listeners.length === 0) this.removeAllListeners(event);
     }
 
     return this;
@@ -80,12 +80,9 @@ export default class Emitter {
    */
   public removeAllListeners(event?: string): Emitter {
     try {
-      if (event)
-        delete this._events[event];
-      else
-        this._events = {};
-
-    } catch(e) {}
+      if (event) delete this._events[event];
+      else this._events = {};
+    } catch (e) {}
 
     return this;
   }
@@ -100,7 +97,9 @@ export default class Emitter {
    * @example
    * me.listeners('ready');
    */
-  public listeners(event: string): (EventHandler | OnceEventHandler)[] | undefined {
+  public listeners(
+    event: string,
+  ): (EventHandler | OnceEventHandler)[] | undefined {
     try {
       return this._events[event];
     } catch (e) {
@@ -120,8 +119,7 @@ export default class Emitter {
    */
   public numberOfListeners(event: string): number {
     const listeners = this.listeners(event);
-    if (listeners)
-      return listeners.length;
+    if (listeners) return listeners.length;
     return 0;
   }
 
@@ -143,5 +141,4 @@ export default class Emitter {
 
     return this;
   }
-
 }

@@ -1,5 +1,3 @@
-import { ProxyFrameInitOptions } from './ProxyFrameInitOptions';
+import {ProxyFrameInitOptions} from './ProxyFrameInitOptions';
 
-export interface SubscriptionPopupInitOptions extends ProxyFrameInitOptions {
-
-}
+export interface SubscriptionPopupInitOptions extends ProxyFrameInitOptions {}

@@ -1,7 +1,7 @@
-import { SecondaryChannelDeviceRecord } from "../../../../models/SecondaryChannelDeviceRecord";
-import OneSignalApiShared from "../../../../OneSignalApiShared";
-import Database from "../../../../services/Database";
-import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
+import {SecondaryChannelDeviceRecord} from '../../../../models/SecondaryChannelDeviceRecord';
+import OneSignalApiShared from '../../../../OneSignalApiShared';
+import Database from '../../../../services/Database';
+import {SecondaryChannelProfileProviderBase} from '../providers/SecondaryChannelProfileProviderBase';
 
 export class SecondaryChannelSessionUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
@@ -16,18 +16,18 @@ export class SecondaryChannelSessionUpdater {
     const secondaryChannelRecord = new SecondaryChannelDeviceRecord(
       this.profileProvider.deviceType,
       profile.identifier,
-      profile.identifierAuthHash
+      profile.identifierAuthHash,
     );
     const appConfig = await Database.getAppConfig();
     secondaryChannelRecord.appId = appConfig.appId;
 
     const newSubscriptionId = await OneSignalApiShared.updateUserSession(
       profile.subscriptionId,
-      secondaryChannelRecord
+      secondaryChannelRecord,
     );
 
     // If on_session gave us a new subscriptionId store the updated value
-    if (newSubscriptionId !== profile.subscriptionId ) {
+    if (newSubscriptionId !== profile.subscriptionId) {
       profile.subscriptionId = newSubscriptionId;
       await this.profileProvider.setProfile(profile);
     }

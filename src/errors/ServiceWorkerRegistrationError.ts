@@ -3,7 +3,7 @@ import OneSignalError from './OneSignalError';
 export class ServiceWorkerRegistrationError extends OneSignalError {
   public readonly status: number;
   public readonly statusText: string;
-  
+
   constructor(status: number, statusText: string) {
     super(`Registration of a Service Worker failed.`);
     this.status = status;

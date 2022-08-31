@@ -1,6 +1,6 @@
 import NotImplementedError from '../errors/NotImplementedError';
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { DeviceRecord } from './DeviceRecord';
+import {DeliveryPlatformKind} from './DeliveryPlatformKind';
+import {DeviceRecord} from './DeviceRecord';
 
 /**
  * Describes a secondary channel device record, such as an email.
@@ -34,5 +34,7 @@ export class SecondaryChannelDeviceRecord extends DeviceRecord {
     return serializedBundle;
   }
 
-  deserialize(_: object): SecondaryChannelDeviceRecord { throw new NotImplementedError(); }
+  deserialize(_: object): SecondaryChannelDeviceRecord {
+    throw new NotImplementedError();
+  }
 }

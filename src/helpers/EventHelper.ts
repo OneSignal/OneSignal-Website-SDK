@@ -2,13 +2,13 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import OneSignalApiShared from '../OneSignalApiShared';
 import Database from '../services/Database';
-import { ContextSWInterface } from "../models/ContextSW";
+import {ContextSWInterface} from '../models/ContextSW';
 import Log from '../libraries/Log';
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import { BrowserUtils } from "../utils/BrowserUtils";
+import {OneSignalUtils} from '../utils/OneSignalUtils';
+import {BrowserUtils} from '../utils/BrowserUtils';
 import PromptsHelper from './PromptsHelper';
 import LocalStorage from '../utils/LocalStorage';
-import { CustomLinkManager } from '../managers/CustomLinkManager';
+import {CustomLinkManager} from '../managers/CustomLinkManager';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -22,18 +22,19 @@ export default class EventHelper {
   static async checkAndTriggerSubscriptionChanged() {
     OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: ContextSWInterface = OneSignal.context;
-    const subscriptionState = await context.subscriptionManager.getSubscriptionState();
+    const subscriptionState =
+      await context.subscriptionManager.getSubscriptionState();
     const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     const appState = await Database.getAppState();
-    const { lastKnownPushEnabled } = appState;
-    const didStateChange = (
-      lastKnownPushEnabled === null ||
-      isPushEnabled !== lastKnownPushEnabled
-    );
+    const {lastKnownPushEnabled} = appState;
+    const didStateChange =
+      lastKnownPushEnabled === null || isPushEnabled !== lastKnownPushEnabled;
     if (!didStateChange) return;
     Log.info(
       `The user's subscription state changed from ` +
-        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
+        `${
+          lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled
+        } ⟶ ${subscriptionState.subscribed}`,
     );
     LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
@@ -41,52 +42,70 @@ export default class EventHelper {
     EventHelper.triggerSubscriptionChanged(isPushEnabled);
   }
 
-  static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
-    EventHelper.onSubscriptionChanged_showWelcomeNotification(newSubscriptionState);
-    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(newSubscriptionState);
+  static async _onSubscriptionChanged(
+    newSubscriptionState: boolean | undefined,
+  ) {
+    EventHelper.onSubscriptionChanged_showWelcomeNotification(
+      newSubscriptionState,
+    );
+    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(
+      newSubscriptionState,
+    );
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
     EventHelper.onSubscriptionChanged_updateCustomLink();
   }
 
-  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed: boolean | undefined) {
+  private static async onSubscriptionChanged_sendCategorySlidedownTags(
+    isSubscribed: boolean | undefined,
+  ) {
     if (isSubscribed !== true) {
       return;
     }
 
-    const prompts = OneSignal.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
+    const prompts =
+      OneSignal.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
     if (PromptsHelper.isCategorySlidedownConfigured(prompts)) {
       await OneSignal.context.tagManager.sendTags(false);
     }
   }
 
-  private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
+  private static async onSubscriptionChanged_showWelcomeNotification(
+    isSubscribed: boolean | undefined,
+  ) {
     if (OneSignal.__doNotShowWelcomeNotification) {
-      Log.debug('Not showing welcome notification because user has previously subscribed.');
+      Log.debug(
+        'Not showing welcome notification because user has previously subscribed.',
+      );
       return;
     }
     if (isSubscribed === true) {
-      const { deviceId } = await Database.getSubscription();
-      const { appId } = await Database.getAppConfig();
+      const {deviceId} = await Database.getSubscription();
+      const {appId} = await Database.getAppConfig();
 
-      const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
+      const welcome_notification_opts =
+        OneSignal.config.userConfig.welcomeNotification;
       const welcome_notification_disabled =
-        welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
+        welcome_notification_opts !== undefined &&
+        welcome_notification_opts['disable'] === true;
       let title =
         welcome_notification_opts !== undefined &&
-          welcome_notification_opts['title'] !== undefined &&
-          welcome_notification_opts['title'] !== null
+        welcome_notification_opts['title'] !== undefined &&
+        welcome_notification_opts['title'] !== null
           ? welcome_notification_opts['title']
           : '';
       let message =
         welcome_notification_opts !== undefined &&
-          welcome_notification_opts['message'] !== undefined &&
-          welcome_notification_opts['message'] !== null &&
-          welcome_notification_opts['message'].length > 0
+        welcome_notification_opts['message'] !== undefined &&
+        welcome_notification_opts['message'] !== null &&
+        welcome_notification_opts['message'].length > 0
           ? welcome_notification_opts['message']
           : 'Thanks for subscribing!';
-      const unopenableWelcomeNotificationUrl = new URL(location.href).origin + '?_osp=do_not_open';
+      const unopenableWelcomeNotificationUrl =
+        new URL(location.href).origin + '?_osp=do_not_open';
       const url =
-        welcome_notification_opts && welcome_notification_opts['url'] && welcome_notification_opts['url'].length > 0
+        welcome_notification_opts &&
+        welcome_notification_opts['url'] &&
+        welcome_notification_opts['url'].length > 0
           ? welcome_notification_opts['url']
           : unopenableWelcomeNotificationUrl;
       title = BrowserUtils.decodeHtmlEntities(title);
@@ -97,34 +116,42 @@ export default class EventHelper {
         OneSignalApiShared.sendNotification(
           appId,
           [deviceId],
-          { en: title },
-          { en: message },
+          {en: title},
+          {en: message},
           url,
           null,
-          { __isOneSignalWelcomeNotification: true },
-          undefined
+          {__isOneSignalWelcomeNotification: true},
+          undefined,
         );
         Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
           title: title,
           message: message,
-          url: url
+          url: url,
         });
       }
     }
   }
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
-    if (!OneSignal.config.userConfig.notifyButton)
-      return;
+    if (!OneSignal.config.userConfig.notifyButton) return;
 
-    const displayPredicate = OneSignal.config.userConfig.notifyButton.displayPredicate;
-    if (displayPredicate && typeof displayPredicate === "function" && OneSignal.notifyButton) {
+    const displayPredicate =
+      OneSignal.config.userConfig.notifyButton.displayPredicate;
+    if (
+      displayPredicate &&
+      typeof displayPredicate === 'function' &&
+      OneSignal.notifyButton
+    ) {
       const predicateResult = await displayPredicate();
       if (predicateResult !== false) {
-        Log.debug('Showing notify button because display predicate returned true.');
+        Log.debug(
+          'Showing notify button because display predicate returned true.',
+        );
         OneSignal.notifyButton.launcher.show();
       } else {
-        Log.debug('Hiding notify button because display predicate returned false.');
+        Log.debug(
+          'Hiding notify button because display predicate returned false.',
+        );
         OneSignal.notifyButton.launcher.hide();
       }
     }
@@ -132,7 +159,9 @@ export default class EventHelper {
 
   private static async onSubscriptionChanged_updateCustomLink() {
     if (OneSignal.config.userConfig.promptOptions) {
-      new CustomLinkManager(OneSignal.config.userConfig.promptOptions.customlink).initialize();
+      new CustomLinkManager(
+        OneSignal.config.userConfig.promptOptions.customlink,
+      ).initialize();
     }
   }
 
@@ -168,10 +197,11 @@ export default class EventHelper {
         "timestamp": 1490998270607
       }
       */
-      const { data: notification, timestamp } = clickedNotificationInfo;
+      const {data: notification, timestamp} = clickedNotificationInfo;
 
       if (timestamp) {
-        const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
+        const minutesSinceNotificationClicked =
+          (Date.now() - timestamp) / 1000 / 60;
         if (minutesSinceNotificationClicked > 5) return;
       }
       Event.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
@@ -187,13 +217,19 @@ export default class EventHelper {
        Otherwise, the default behavior is to only provide a retroactive notification.clicked event if this page's URL exactly
        matches the notification's URL.
     */
-    const notificationClickHandlerMatch = await Database.get<string>('Options', 'notificationClickHandlerMatch');
+    const notificationClickHandlerMatch = await Database.get<string>(
+      'Options',
+      'notificationClickHandlerMatch',
+    );
     if (notificationClickHandlerMatch === 'origin') {
-      for (const clickedNotificationUrl of Object.keys(appState.clickedNotifications)) {
+      for (const clickedNotificationUrl of Object.keys(
+        appState.clickedNotifications,
+      )) {
         // Using notificationClickHandlerMatch: 'origin', as long as the notification's URL's origin matches our current tab's origin,
         // fire the clicked event
         if (new URL(clickedNotificationUrl).origin === location.origin) {
-          const clickedNotification = appState.clickedNotifications[clickedNotificationUrl];
+          const clickedNotification =
+            appState.clickedNotifications[clickedNotificationUrl];
           await fireEventWithNotification(clickedNotification);
         }
       }
@@ -210,7 +246,8 @@ export default class EventHelper {
         await fireEventWithNotification(pageClickedNotifications);
       } else if (!pageClickedNotifications && url.endsWith('/')) {
         var urlWithoutTrailingSlash = url.substring(0, url.length - 1);
-        pageClickedNotifications = appState.clickedNotifications[urlWithoutTrailingSlash];
+        pageClickedNotifications =
+          appState.clickedNotifications[urlWithoutTrailingSlash];
         if (pageClickedNotifications) {
           await fireEventWithNotification(pageClickedNotifications);
         }

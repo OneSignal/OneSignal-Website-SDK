@@ -1,18 +1,29 @@
-import { OneSignalApiSW } from "../OneSignalApiSW";
-import Log from "../libraries/sw/Log";
-import Path from "../models/Path";
-import { Session, initializeNewSession, SessionOrigin, SessionStatus } from "../models/Session";
-import { OneSignalUtils } from "../utils/OneSignalUtils";
-import Database from "../services/Database";
-import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
-import { NotificationClicked } from "../models/Notification";
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { OutcomesConfig } from "../models/Outcomes";
+import {OneSignalApiSW} from '../OneSignalApiSW';
+import Log from '../libraries/sw/Log';
+import Path from '../models/Path';
+import {
+  Session,
+  initializeNewSession,
+  SessionOrigin,
+  SessionStatus,
+} from '../models/Session';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
+import Database from '../services/Database';
+import {
+  SerializedPushDeviceRecord,
+  PushDeviceRecord,
+} from '../models/PushDeviceRecord';
+import {NotificationClicked} from '../models/Notification';
+import {RawPushSubscription} from '../models/RawPushSubscription';
+import {OutcomesConfig} from '../models/Outcomes';
 import OutcomesHelper from './shared/OutcomesHelper';
-import { cancelableTimeout, CancelableTimeoutPromise } from './sw/CancelableTimeout';
-import { OSServiceWorkerFields } from "../service-worker/types";
-import Utils from "../context/shared/utils/Utils";
-import { SecondaryChannelManager } from "../managers/channelManager/shared/SecondaryChannelManager";
+import {
+  cancelableTimeout,
+  CancelableTimeoutPromise,
+} from './sw/CancelableTimeout';
+import {OSServiceWorkerFields} from '../service-worker/types';
+import Utils from '../context/shared/utils/Utils';
+import {SecondaryChannelManager} from '../managers/channelManager/shared/SecondaryChannelManager';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -20,30 +31,41 @@ export default class ServiceWorkerHelper {
   public static getServiceWorkerHref(
     config: ServiceWorkerManagerConfig,
     appId: string,
-    sdkVersion: number
-    ): string {
-    return ServiceWorkerHelper.appendServiceWorkerParams(config.workerPath.getFullPath(), appId, sdkVersion);
+    sdkVersion: number,
+  ): string {
+    return ServiceWorkerHelper.appendServiceWorkerParams(
+      config.workerPath.getFullPath(),
+      appId,
+      sdkVersion,
+    );
   }
 
-  private static appendServiceWorkerParams(workerFullPath: string, appId: string, sdkVersion: number): string {
+  private static appendServiceWorkerParams(
+    workerFullPath: string,
+    appId: string,
+    sdkVersion: number,
+  ): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdAsQueryParam      = Utils.encodeHashAsUriComponent({ appId });
-    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({ sdkVersion });
+    const appIdAsQueryParam = Utils.encodeHashAsUriComponent({appId});
+    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({sdkVersion});
     return `${fullPath}?${appIdAsQueryParam}?${sdkVersionAsQueryParam}`;
   }
 
   public static async upsertSession(
-    sessionThresholdInSeconds: number, sendOnFocusEnabled: boolean,
-    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin,
-    outcomesConfig: OutcomesConfig
+    sessionThresholdInSeconds: number,
+    sendOnFocusEnabled: boolean,
+    deviceRecord: SerializedPushDeviceRecord,
+    deviceId: string | undefined,
+    sessionOrigin: SessionOrigin,
+    outcomesConfig: OutcomesConfig,
   ): Promise<void> {
     if (!deviceId) {
-      Log.error("No deviceId provided for new session.");
+      Log.error('No deviceId provided for new session.');
       return;
     }
 
     if (!deviceRecord.app_id) {
-      Log.error("No appId provided for new session.");
+      Log.error('No appId provided for new session.');
       return;
     }
 
@@ -51,35 +73,46 @@ export default class ServiceWorkerHelper {
 
     if (!existingSession) {
       const appId = deviceRecord.app_id;
-      const session: Session = initializeNewSession(
-        { deviceId, appId, deviceType:deviceRecord.device_type }
-      );
+      const session: Session = initializeNewSession({
+        deviceId,
+        appId,
+        deviceType: deviceRecord.device_type,
+      });
 
       // if there is a record about a clicked notification in our database, attribute session to it.
-      const clickedNotification: NotificationClicked | null = await Database.getLastNotificationClicked(appId);
+      const clickedNotification: NotificationClicked | null =
+        await Database.getLastNotificationClicked(appId);
       if (clickedNotification) {
         session.notificationId = clickedNotification.notificationId;
       }
 
       await Database.upsertSession(session);
-      await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
+      await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+        sessionOrigin,
+        deviceRecord,
+        deviceId,
+        session,
+      );
       return;
     }
 
     if (existingSession.status === SessionStatus.Active) {
-      Log.debug("Session already active", existingSession);
+      Log.debug('Session already active', existingSession);
       return;
     }
 
     if (!existingSession.lastDeactivatedTimestamp) {
-      Log.debug("Session is in invalid state", existingSession);
+      Log.debug('Session is in invalid state', existingSession);
       // TODO: possibly recover by re-starting session if deviceId is present?
       return;
     }
 
     const currentTimestamp = new Date().getTime();
-    const timeSinceLastDeactivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
-      currentTimestamp, existingSession.lastDeactivatedTimestamp);
+    const timeSinceLastDeactivatedInSeconds: number =
+      ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+        currentTimestamp,
+        existingSession.lastDeactivatedTimestamp,
+      );
 
     if (timeSinceLastDeactivatedInSeconds <= sessionThresholdInSeconds) {
       existingSession.status = SessionStatus.Active;
@@ -93,21 +126,35 @@ export default class ServiceWorkerHelper {
 
     // TODO: Possibly check that it's not unreasonably long.
     // TODO: Or couple with periodic ping for better results.
-    await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig);
+    await ServiceWorkerHelper.finalizeSession(
+      existingSession,
+      sendOnFocusEnabled,
+      outcomesConfig,
+    );
 
-    const session = initializeNewSession({ deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type });
+    const session = initializeNewSession({
+      deviceId,
+      appId: deviceRecord.app_id,
+      deviceType: deviceRecord.device_type,
+    });
     await Database.upsertSession(session);
-    await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
+    await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+      sessionOrigin,
+      deviceRecord,
+      deviceId,
+      session,
+    );
   }
 
   public static async deactivateSession(
-    thresholdInSeconds: number, sendOnFocusEnabled: boolean,
-    outcomesConfig: OutcomesConfig
+    thresholdInSeconds: number,
+    sendOnFocusEnabled: boolean,
+    outcomesConfig: OutcomesConfig,
   ): Promise<CancelableTimeoutPromise | undefined> {
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      Log.debug("No active session found. Cannot deactivate.");
+      Log.debug('No active session found. Cannot deactivate.');
       return undefined;
     }
 
@@ -118,8 +165,13 @@ export default class ServiceWorkerHelper {
      */
     if (existingSession.status === SessionStatus.Inactive) {
       return cancelableTimeout(
-        () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig),
-        thresholdInSeconds
+        () =>
+          ServiceWorkerHelper.finalizeSession(
+            existingSession,
+            sendOnFocusEnabled,
+            outcomesConfig,
+          ),
+        thresholdInSeconds,
       );
     }
 
@@ -128,21 +180,31 @@ export default class ServiceWorkerHelper {
      * For anything but active, logging a warning and doing early return.
      */
     if (existingSession.status !== SessionStatus.Active) {
-      Log.warn(`Session in invalid state ${existingSession.status}. Cannot deactivate.`);
+      Log.warn(
+        `Session in invalid state ${existingSession.status}. Cannot deactivate.`,
+      );
       return undefined;
     }
 
     const currentTimestamp = new Date().getTime();
-    const timeSinceLastActivatedInSeconds: number = ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
-      currentTimestamp, existingSession.lastActivatedTimestamp);
+    const timeSinceLastActivatedInSeconds: number =
+      ServiceWorkerHelper.timeInSecondsBetweenTimestamps(
+        currentTimestamp,
+        existingSession.lastActivatedTimestamp,
+      );
 
     existingSession.lastDeactivatedTimestamp = currentTimestamp;
     existingSession.accumulatedDuration += timeSinceLastActivatedInSeconds;
     existingSession.status = SessionStatus.Inactive;
 
     const cancelableFinalize = cancelableTimeout(
-      () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig),
-      thresholdInSeconds
+      () =>
+        ServiceWorkerHelper.finalizeSession(
+          existingSession,
+          sendOnFocusEnabled,
+          outcomesConfig,
+        ),
+      thresholdInSeconds,
     );
 
     await Database.upsertSession(existingSession);
@@ -156,30 +218,39 @@ export default class ServiceWorkerHelper {
    * since player#create call updates last_session field on player.
    */
   public static async sendOnSessionCallIfNecessary(
-    sessionOrigin: SessionOrigin, deviceRecord: SerializedPushDeviceRecord,
-    deviceId: string, session: Session
+    sessionOrigin: SessionOrigin,
+    deviceRecord: SerializedPushDeviceRecord,
+    deviceId: string,
+    session: Session,
   ) {
     if (sessionOrigin === SessionOrigin.PlayerCreate) {
       return;
     }
 
     if (!deviceRecord.identifier) {
-      const subscription = await self.registration.pushManager.getSubscription();
+      const subscription =
+        await self.registration.pushManager.getSubscription();
       if (subscription) {
-        const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
-        const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
+        const rawPushSubscription =
+          RawPushSubscription.setFromW3cSubscription(subscription);
+        const fullDeviceRecord = new PushDeviceRecord(
+          rawPushSubscription,
+        ).serialize();
         deviceRecord.identifier = fullDeviceRecord.identifier;
       }
     }
 
-    const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
+    const newPlayerId = await OneSignalApiSW.updateUserSession(
+      deviceId,
+      deviceRecord,
+    );
     // If the returned player id is different, save the new id to indexed db and update session
     if (newPlayerId !== deviceId) {
       session.deviceId = newPlayerId;
       await Promise.all([
         Database.setDeviceId(newPlayerId),
         Database.upsertSession(session),
-        Database.resetSentUniqueOutcomes()
+        Database.resetSentUniqueOutcomes(),
       ]);
     }
 
@@ -190,42 +261,51 @@ export default class ServiceWorkerHelper {
   }
 
   public static async finalizeSession(
-    session: Session, sendOnFocusEnabled: boolean, outcomesConfig: OutcomesConfig
+    session: Session,
+    sendOnFocusEnabled: boolean,
+    outcomesConfig: OutcomesConfig,
   ): Promise<void> {
     Log.debug(
-      "Finalize session",
+      'Finalize session',
       `started: ${new Date(session.startTimestamp)}`,
-      `duration: ${session.accumulatedDuration}s`
+      `duration: ${session.accumulatedDuration}s`,
     );
 
     if (sendOnFocusEnabled) {
-      Log.debug(`send on_focus reporting session duration -> ${session.accumulatedDuration}s`);
+      Log.debug(
+        `send on_focus reporting session duration -> ${session.accumulatedDuration}s`,
+      );
       const attribution = await OutcomesHelper.getAttribution(outcomesConfig);
-      Log.debug("send on_focus with attribution", attribution);
+      Log.debug('send on_focus with attribution', attribution);
       await OneSignalApiSW.sendSessionDuration(
         session.appId,
         session.deviceId,
         session.accumulatedDuration,
         session.deviceType,
-        attribution
+        attribution,
       );
       // There isn't a OneSignal Global context to pull from so creating a new
       //   SecondaryChannelManager instance.
       const secondaryChannelManager = new SecondaryChannelManager();
-      await secondaryChannelManager.synchronizer.onFocus(session.accumulatedDuration);
+      await secondaryChannelManager.synchronizer.onFocus(
+        session.accumulatedDuration,
+      );
     }
 
     await Promise.all([
       Database.cleanupCurrentSession(),
-      Database.removeAllNotificationClicked()
+      Database.removeAllNotificationClicked(),
     ]);
     Log.debug(
-      "Finalize session finished",
-      `started: ${new Date(session.startTimestamp)}`
+      'Finalize session finished',
+      `started: ${new Date(session.startTimestamp)}`,
     );
   }
 
-  static timeInSecondsBetweenTimestamps(timestamp1: number, timestamp2: number): number {
+  static timeInSecondsBetweenTimestamps(
+    timestamp1: number,
+    timestamp2: number,
+  ): number {
     if (timestamp1 <= timestamp2) {
       return 0;
     }
@@ -252,7 +332,7 @@ export enum ServiceWorkerActiveState {
    * on HTTP pages where it isn't possible to know whether a service worker is
    * installed or not or in any of the other states.
    */
-  Indeterminate = 'Indeterminate'
+  Indeterminate = 'Indeterminate',
 }
 
 export interface ServiceWorkerManagerConfig {
@@ -264,5 +344,5 @@ export interface ServiceWorkerManagerConfig {
    * Describes how much of the origin the service worker controls.
    * This is currently always "/".
    */
-  registrationOptions: { scope: string };
+  registrationOptions: {scope: string};
 }
