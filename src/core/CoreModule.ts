@@ -1,29 +1,37 @@
-import OneSignalError from "../shared/errors/OneSignalError";
-import ModelCache from "./caches/ModelCache";
-import { HydratorBus } from "./HydratorBus";
-import ModelRepo from "./ModelRepo";
-import OperationRepo from "./OperationRepo";
+import ModelCache from "./caching/ModelCache";
+import { ModelRepo } from "./modelRepo/ModelRepo";
+import { OperationRepo } from "./operationRepo/OperationRepo";
+import { OSModelStoreFactory } from "./modelRepo/OSModelStoreFactory";
+import Log from "../libraries/Log";
 
-/**
- * @class CoreModule
- * Initializes core module class instances.
- */
-
-export class CoreModule {
-  public modelCache: ModelCache;
+export default class CoreModule {
   public modelRepo?: ModelRepo;
   public operationRepo?: OperationRepo;
+  public initPromise: Promise<void>;
+
+  private modelCache: ModelCache;
+  private initResolver: () => void = () => null;
 
   constructor() {
-    this.modelCache = new ModelCache();
-    this.modelCache.load().then(() => {
-      this.modelRepo = new ModelRepo(this.modelCache);
-      this.operationRepo = new OperationRepo(this.modelRepo);
-      new HydratorBus(this.modelRepo, this.operationRepo);
-
-      // TO DO: resolve a promise we can await on to block initialization.
-    }).catch(e => {
-      throw new OneSignalError(`Could not load CoreModule: ${e}`);
+    this.initPromise = new Promise<void>(resolve => {
+      this.initResolver = resolve;
     });
+
+    this.modelCache = new ModelCache();
+    this.modelCache
+      .load(ModelRepo.supportedModels)
+      .then(allCachedOSModels => {
+        const modelStores = OSModelStoreFactory.build(allCachedOSModels);
+        this.modelRepo = new ModelRepo(this.modelCache, modelStores);
+        this.operationRepo = new OperationRepo(this.modelRepo);
+        this.initResolver();
+      }
+    ).catch(e => {
+      Log.error(e);
+    });
+  }
+
+  public async init(){
+    await this.initPromise;
   }
 }
