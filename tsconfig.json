@@ -14,7 +14,7 @@
     "noUnusedParameters": true,
     "strictPropertyInitialization": true,
     "strictFunctionTypes": true,
-    "baseUrl": "."
+    "baseUrl": ".",
   },
   "include": [
     "src/**/*",
