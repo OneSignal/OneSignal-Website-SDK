@@ -13,6 +13,7 @@
     "trailing-comma": [false],
     "no-void-expression": true,
     "no-floating-promises": true,
+    "prefer-for-of": false,
 
     // Not enforcing curlt until "multi-or-nest" is supported
     //    - https://github.com/buzinas/tslint-eslint-rules/issues/205
