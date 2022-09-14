@@ -2,7 +2,7 @@ import ModelCache from "./caching/ModelCache";
 import { ModelRepo } from "./modelRepo/ModelRepo";
 import { OperationRepo } from "./operationRepo/OperationRepo";
 import { OSModelStoreFactory } from "./modelRepo/OSModelStoreFactory";
-import Log from "../libraries/Log";
+import Log from "../shared/libraries/Log";
 
 export default class CoreModule {
   public modelRepo?: ModelRepo;
