@@ -1,9 +1,9 @@
 
 import { OSModel } from "../modelRepo/OSModel";
-import Database from "../../services/Database";
 import EncodedModel from "./EncodedModel";
 import { StringIndexable } from "../models/StringIndexable";
 import { ModelName, SupportedModel } from "../models/SupportedModels";
+import Database from "../../shared/services/Database";
 
 export default class ModelCache {
   /**

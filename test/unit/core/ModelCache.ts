@@ -1,11 +1,11 @@
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
 import test from 'ava';
 import ModelCache from "../../../src/core/caching/ModelCache";
-import Database from "../../../src/services/Database";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { IdentityModel } from "../../../src/core/models/IdentityModel";
 import { SubscriptionType, SupportedSubscription } from "../../../src/core/models/SubscriptionModels";
 import { ModelName } from "../../../src/core/models/SupportedModels";
+import Database from "../../../src/shared/services/Database";
 
 const MODEL_ID = '0000000000';
 const MODEL_ID_2 = '1111111111';

@@ -1,4 +1,4 @@
-import Log from "../libraries/Log";
+import Log from "../shared/libraries/Log";
 import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
 import { OSModelStoresMap } from "./models/OSModelStoresMap";

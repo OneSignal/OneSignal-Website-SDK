@@ -1,4 +1,4 @@
-import { NotificationActionButton } from "../NotificationActionButton";
+import { NotificationActionButton } from "../../page/models/NotificationActionButton";
 
 type NotificationEventObject = any;
 

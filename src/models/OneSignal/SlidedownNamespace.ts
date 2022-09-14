@@ -1,4 +1,4 @@
-import { AutoPromptOptions } from "src/managers/PromptsManager";
+import { AutoPromptOptions } from "../../page/managers/PromptsManager";
 
 type SlidedownEventObject = any; // TO DO
 
