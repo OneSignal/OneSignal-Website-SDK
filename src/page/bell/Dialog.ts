@@ -118,7 +118,7 @@ export default class Dialog extends AnimatedElement {
         });
       }
       if (this.unsubscribeButton) {
-        this.unsubscribeButton.addEventListener('click', () => Event.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK));
+        this.unsubscribeButton.addEventListener('click', () => OneSignalEvent.trigger(Bell.EVENTS.UNSUBSCRIBE_CLICK));
       }
       this.bell.setCustomColorsIfSpecified();
     });
