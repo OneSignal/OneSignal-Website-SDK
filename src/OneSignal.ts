@@ -49,8 +49,7 @@ import LimitStore from "./shared/services/LimitStore";
 import LocalStorage from "./shared/utils/LocalStorage";
 import OneSignalUtils from "./shared/utils/OneSignalUtils";
 import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "./shared/utils/utils";
-import OneSignalEvent from "./shared/services/Event";
-
+import OneSignalEvent from "./shared/services/OneSignalEvent";
 
 export default class OneSignal {
   /**
