@@ -23,5 +23,7 @@ jobs:
       - name: "[Test] Run linters"
         continue-on-error: true
         run: yarn lint
-      - name: "[Test] Run all tests"
+      - name: "[Test] Run all legacy ava tests"
         run: yarn test:CI
+      - name: "[Test] Run all jest tests"
+        run: yarn jest
