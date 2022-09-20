@@ -1,10 +1,10 @@
-import {SerializedPushDeviceRecord} from './PushDeviceRecord';
-import {OutcomesConfig} from './Outcomes';
+import { SerializedPushDeviceRecord } from "./PushDeviceRecord";
+import { OutcomesConfig } from "./Outcomes";
 
 export enum SessionStatus {
-  Active = 'active',
-  Inactive = 'inactive',
-  Expired = 'expired',
+  Active = "active",
+  Inactive = "inactive",
+  Expired = "expired"
 }
 
 export enum SessionOrigin {
@@ -31,11 +31,7 @@ export interface Session {
   lastActivatedTimestamp: number;
 }
 
-type NewSessionOptions = Partial<Session> & {
-  deviceId: string;
-  appId: string;
-  deviceType: number;
-};
+type NewSessionOptions = Partial<Session> & {deviceId: string; appId: string, deviceType: number;};
 
 interface BaseSessionPayload {
   deviceId?: string;
@@ -63,11 +59,11 @@ export interface PageVisibilityResponse extends PageVisibilityRequest {
   focused: boolean;
 }
 
-export const ONESIGNAL_SESSION_KEY = 'oneSignalSession';
+export const ONESIGNAL_SESSION_KEY = "oneSignalSession";
 
 export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
-  const sessionKey = (options && options.sessionKey) || ONESIGNAL_SESSION_KEY;
+  const sessionKey = options && options.sessionKey || ONESIGNAL_SESSION_KEY;
   const notificationId = (options && options.notificationId) || null;
 
   return {

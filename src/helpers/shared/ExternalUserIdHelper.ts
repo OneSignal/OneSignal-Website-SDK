@@ -1,10 +1,8 @@
-import {DeviceRecord} from '../../models/DeviceRecord';
-import Database from '../../services/Database';
+import { DeviceRecord } from "../../models/DeviceRecord";
+import Database from "../../services/Database";
 
 export class ExternalUserIdHelper {
-  static async addExternalUserIdToDeviceRecord(
-    deviceRecord: DeviceRecord,
-  ): Promise<void> {
+  static async addExternalUserIdToDeviceRecord(deviceRecord: DeviceRecord): Promise<void> {
     const externalUserId = await Database.getExternalUserId();
     if (!externalUserId) {
       return;

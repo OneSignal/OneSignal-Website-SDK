@@ -6,5 +6,5 @@ export const enum SubscribeResubscribe {
   /**
    * Describes the intention to resubscribe an existing push subscription with the same settings.
    */
-  Resubscribe,
+  Resubscribe
 }

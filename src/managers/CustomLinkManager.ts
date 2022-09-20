@@ -1,13 +1,10 @@
-import {RegisterOptions} from '../helpers/InitHelper';
-import Log from '../libraries/Log';
-import {ResourceLoadState} from '../services/DynamicResourceLoader';
-import {
-  CUSTOM_LINK_CSS_CLASSES,
-  CUSTOM_LINK_CSS_SELECTORS,
-} from '../slidedown/constants';
-import {addCssClass} from '../utils';
-import {AppUserConfigCustomLinkOptions} from '../models/Prompts';
-import LocalStorage from '../utils/LocalStorage';
+import { RegisterOptions } from "../helpers/InitHelper";
+import Log from "../libraries/Log";
+import { ResourceLoadState } from "../services/DynamicResourceLoader";
+import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from "../slidedown/constants";
+import { addCssClass } from "../utils";
+import { AppUserConfigCustomLinkOptions } from "../models/Prompts";
+import LocalStorage from "../utils/LocalStorage";
 
 export class CustomLinkManager {
   private config: AppUserConfigCustomLinkOptions | undefined;
@@ -25,14 +22,14 @@ export class CustomLinkManager {
       return;
     }
 
-    Log.info('OneSignal: initializing customlink');
+    Log.info("OneSignal: initializing customlink");
 
     if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
       this.hideCustomLinkContainers();
       return;
     }
     // traditional for-loop required here to avoid layout shift
-    for (let i = 0; i < this.customlinkContainerElements.length; i++) {
+    for (let i=0; i<this.customlinkContainerElements.length; i++) {
       await this.injectMarkup(this.customlinkContainerElements[i]);
     }
   }
@@ -47,14 +44,12 @@ export class CustomLinkManager {
 
   private async mountExplanationNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      Log.error("CustomLink: required property 'text' is missing in the config");
       return;
     }
 
     if (this.config.text.explanation) {
-      const explanation = document.createElement('p');
+      const explanation = document.createElement("p");
       explanation.textContent = this.config.text.explanation;
       addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.resetClass);
       addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.explanationClass);
@@ -75,14 +70,12 @@ export class CustomLinkManager {
 
   private async mountSubscriptionNode(element: HTMLElement): Promise<void> {
     if (!this.config?.text) {
-      Log.error(
-        "CustomLink: required property 'text' is missing in the config",
-      );
+      Log.error("CustomLink: required property 'text' is missing in the config");
       return;
     }
 
     if (this.config.text.subscribe) {
-      const subscribeButton = document.createElement('button');
+      const subscribeButton = document.createElement("button");
       addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.resetClass);
       addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.subscribeClass);
 
@@ -97,17 +90,14 @@ export class CustomLinkManager {
       if (CustomLinkManager.isPushEnabled()) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
-        addCssClass(
-          subscribeButton,
-          CUSTOM_LINK_CSS_CLASSES.state.unsubscribed,
-        );
+        addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
       }
 
       this.setCustomColors(subscribeButton);
       await this.setTextFromPushStatus(subscribeButton);
 
-      subscribeButton.addEventListener('click', async () => {
-        Log.info('CustomLink: subscribe clicked');
+      subscribeButton.addEventListener("click", async () => {
+        Log.info("CustomLink: subscribe clicked");
         await this.handleClick(subscribeButton);
       });
 
@@ -116,13 +106,10 @@ export class CustomLinkManager {
   }
 
   private async loadSdkStyles(): Promise<boolean> {
-    const sdkStylesLoadResult =
-      await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
+    const sdkStylesLoadResult = await OneSignal.context.dynamicResourceLoader.loadSdkStylesheet();
     if (sdkStylesLoadResult !== ResourceLoadState.Loaded) {
-      Log.debug(
-        'Not initializing custom link button because styles failed to load.',
-      );
-      return false;
+        Log.debug('Not initializing custom link button because styles failed to load.');
+        return false;
     }
     return true;
   }
@@ -136,9 +123,9 @@ export class CustomLinkManager {
    * @returns void
    */
   private hideCustomLinkContainers(): void {
-    this.customlinkContainerElements.forEach((element) => {
-      this.hideElement(element);
-    });
+      this.customlinkContainerElements.forEach(element => {
+        this.hideElement(element);
+      });
   }
 
   private async handleClick(element: HTMLElement): Promise<void> {
@@ -148,23 +135,17 @@ export class CustomLinkManager {
     } else {
       if (!CustomLinkManager.isOptedOut()) {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = {autoAccept};
+        const options: RegisterOptions = { autoAccept };
         await OneSignal.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
-        if (
-          !this.config?.unsubscribeEnabled &&
-          CustomLinkManager.isPushEnabled()
-        ) {
+        if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
           this.hideCustomLinkContainers();
         }
         return;
       }
       await OneSignal.setSubscription(true);
       // once subscribed, prevent unsubscribe by hiding customlinks
-      if (
-        !this.config?.unsubscribeEnabled &&
-        CustomLinkManager.isPushEnabled()
-      ) {
+      if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();
       }
     }
@@ -189,18 +170,16 @@ export class CustomLinkManager {
       return;
     }
 
-    if (this.config?.style === 'button' && this.config?.color.button) {
+    if (this.config?.style === "button" && this.config?.color.button) {
       element.style.backgroundColor = this.config?.color.button;
       element.style.color = this.config?.color.text;
-    } else if (this.config?.style === 'link') {
+    } else if (this.config?.style === "link") {
       element.style.color = this.config?.color.text;
     }
   }
 
   get customlinkContainerElements(): HTMLElement[] {
-    const containers = document.querySelectorAll<HTMLElement>(
-      CUSTOM_LINK_CSS_SELECTORS.containerSelector,
-    );
+    const containers = document.querySelectorAll<HTMLElement>(CUSTOM_LINK_CSS_SELECTORS.containerSelector);
     return Array.prototype.slice.call(containers);
   }
 

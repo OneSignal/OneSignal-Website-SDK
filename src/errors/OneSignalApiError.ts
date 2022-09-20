@@ -1,7 +1,8 @@
-import OneSignalError from './OneSignalError';
+import OneSignalError from "./OneSignalError";
+
 
 export enum OneSignalApiErrorKind {
-  MissingAppId,
+  MissingAppId
 }
 
 export class OneSignalApiError extends OneSignalError {

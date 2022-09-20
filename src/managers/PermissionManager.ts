@@ -1,10 +1,7 @@
 import OneSignalUtils from '../utils/OneSignalUtils';
 import bowser from 'bowser';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-import {NotificationPermission} from '../models/NotificationPermission';
+import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
+import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
 
@@ -13,6 +10,7 @@ import LocalStorage from '../utils/LocalStorage';
  * across Safari, Chrome, and Firefox.
  */
 export default class PermissionManager {
+
   static get STORED_PERMISSION_KEY() {
     return 'storedNotificationPermission';
   }
@@ -40,12 +38,8 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission
    * state on Safari.
    */
-  public async getNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
-    const reportedPermission = await this.getReportedNotificationPermission(
-      safariWebId,
-    );
+  public async getNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
+    const reportedPermission = await this.getReportedNotificationPermission(safariWebId);
     if (await this.isPermissionEnvironmentAmbiguous(reportedPermission))
       return await this.getInterpretedAmbiguousPermission(reportedPermission);
     return reportedPermission;
@@ -74,20 +68,15 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  public async getReportedNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
+  public async getReportedNotificationPermission(safariWebId?: string): Promise<NotificationPermission>{
     if (bowser.safari)
       return PermissionManager.getSafariNotificationPermission(safariWebId);
 
     // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
     if (OneSignalUtils.isUsingSubscriptionWorkaround())
-      return await this.getOneSignalSubdomainNotificationPermission(
-        safariWebId,
-      );
+      return await this.getOneSignalSubdomainNotificationPermission(safariWebId);
     else {
-      const reportedPermission: NotificationPermission =
-        this.getW3cNotificationPermission();
+      const reportedPermission: NotificationPermission = this.getW3cNotificationPermission();
 
       if (await this.isPermissionEnvironmentAmbiguous(reportedPermission)) {
         return await this.getInterpretedAmbiguousPermission(reportedPermission);
@@ -102,12 +91,9 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  private static getSafariNotificationPermission(
-    safariWebId?: string,
-  ): NotificationPermission {
+  private static getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
     if (safariWebId)
-      return window.safari.pushNotification.permission(safariWebId)
-        .permission as NotificationPermission;
+      return window.safari.pushNotification.permission(safariWebId).permission as NotificationPermission;
     throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
   }
 
@@ -126,17 +112,15 @@ export default class PermissionManager {
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
-  public async getOneSignalSubdomainNotificationPermission(
-    safariWebId?: string,
-  ): Promise<NotificationPermission> {
-    return new Promise<NotificationPermission>((resolve) => {
+  public async getOneSignalSubdomainNotificationPermission(safariWebId?: string): Promise<NotificationPermission> {
+    return new Promise<NotificationPermission>(resolve => {
       OneSignal.proxyFrameHost.message(
         OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
-        {safariWebId: safariWebId},
+        { safariWebId: safariWebId },
         (reply: any) => {
           const remoteNotificationPermission = reply.data;
           resolve(remoteNotificationPermission);
-        },
+        }
       );
     });
   }
@@ -154,20 +138,19 @@ export default class PermissionManager {
    *
    *   - And the current frame context is either a cross-origin iframe or insecure
    */
-  public async isPermissionEnvironmentAmbiguous(
-    permission: NotificationPermission,
-  ): Promise<boolean> {
+  public async isPermissionEnvironmentAmbiguous(permission: NotificationPermission): Promise<boolean> {
     // For testing purposes, allows changing the browser user agent
     const browser = OneSignalUtils.redetectBrowserUserAgent();
 
-    return (
-      !browser.safari &&
-      !browser.firefox &&
-      permission === NotificationPermission.Denied &&
-      (this.isCurrentFrameContextCrossOrigin() ||
-        (await SdkEnvironment.isFrameContextInsecure()) ||
-        OneSignalUtils.isUsingSubscriptionWorkaround())
-    );
+    return (!browser.safari &&
+            !browser.firefox &&
+            permission === NotificationPermission.Denied &&
+            (
+              this.isCurrentFrameContextCrossOrigin() ||
+              await SdkEnvironment.isFrameContextInsecure() ||
+              OneSignalUtils.isUsingSubscriptionWorkaround()
+            )
+           );
   }
 
   /**
@@ -190,7 +173,8 @@ export default class PermissionManager {
       return true;
     }
 
-    return window.top !== window && topFrameOrigin !== window.location.origin;
+    return window.top !== window &&
+           topFrameOrigin !== window.location.origin;
   }
 
   /**
@@ -205,9 +189,7 @@ export default class PermissionManager {
    * @param reportedPermission The notification permission as reported by the
    * browser without any modifications.
    */
-  public async getInterpretedAmbiguousPermission(
-    reportedPermission: NotificationPermission,
-  ) {
+  public async getInterpretedAmbiguousPermission(reportedPermission: NotificationPermission) {
     switch (reportedPermission) {
       case NotificationPermission.Denied:
         const storedPermission = this.getStoredPermission();

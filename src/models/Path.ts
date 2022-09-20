@@ -1,7 +1,4 @@
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
+import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 
 /**
  * Represents a normalized path.

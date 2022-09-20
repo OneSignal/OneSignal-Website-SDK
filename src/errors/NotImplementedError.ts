@@ -1,4 +1,5 @@
-import OneSignalError from './OneSignalError';
+import OneSignalError from "./OneSignalError";
+
 
 export default class NotImplementedError extends OneSignalError {
   constructor() {

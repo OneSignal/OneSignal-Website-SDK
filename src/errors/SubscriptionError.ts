@@ -1,9 +1,10 @@
-import OneSignalError from './OneSignalError';
+import OneSignalError from "./OneSignalError";
+
 
 export enum SubscriptionErrorReason {
   InvalidSafariSetup,
   Blocked,
-  Dismissed,
+  Dismissed
 }
 
 export default class SubscriptionError extends OneSignalError {
@@ -11,9 +12,8 @@ export default class SubscriptionError extends OneSignalError {
     let errorMessage;
     switch (reason) {
       case SubscriptionErrorReason.InvalidSafariSetup:
-        errorMessage =
-          `The Safari site URL, icon size, or push certificate ` +
-          `is invalid, or Safari is in a private session.`;
+        errorMessage = `The Safari site URL, icon size, or push certificate ` +
+        `is invalid, or Safari is in a private session.`;
         break;
       case SubscriptionErrorReason.Blocked:
         errorMessage = 'Notification permissions are blocked.';

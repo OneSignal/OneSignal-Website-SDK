@@ -1,22 +1,20 @@
-import {DeliveryPlatformKind} from '../../../../models/DeliveryPlatformKind';
-import {SecondaryChannelProfile} from '../../../../models/SecondaryChannelProfile';
-import {SubscriptionIdAwaitable} from '../../../../models/SubscriptionIdAwaitable';
-import {SecondaryChannelProfileProvider} from './SecondaryChannelProfileProvider';
+import { DeliveryPlatformKind } from "../../../../models/DeliveryPlatformKind";
+import { SecondaryChannelProfile } from "../../../../models/SecondaryChannelProfile";
+import { SubscriptionIdAwaitable } from "../../../../models/SubscriptionIdAwaitable";
+import { SecondaryChannelProfileProvider } from "./SecondaryChannelProfileProvider";
 
 type PendingGetSubscriptionIdResolver = (subscriptionId: string) => void;
 
 export abstract class SecondaryChannelProfileProviderBase
-  implements SecondaryChannelProfileProvider, SubscriptionIdAwaitable
-{
-  private _pendingGetSubscriptionIdResolvers: PendingGetSubscriptionIdResolver[] =
-    [];
+  implements SecondaryChannelProfileProvider, SubscriptionIdAwaitable {
+  private _pendingGetSubscriptionIdResolvers: PendingGetSubscriptionIdResolver[] = [];
 
   abstract readonly deviceType: DeliveryPlatformKind;
 
   abstract newProfile(
     subscriptionId?: string | null,
     identifier?: string,
-    identifierAuthHash?: string,
+    identifierAuthHash?: string
   ): SecondaryChannelProfile;
 
   abstract getProfile(): Promise<SecondaryChannelProfile>;
@@ -26,9 +24,7 @@ export abstract class SecondaryChannelProfileProviderBase
     }
 
     const subscriptionId = profile.subscriptionId;
-    this._pendingGetSubscriptionIdResolvers.map((resolve) => {
-      resolve(subscriptionId);
-    });
+    this._pendingGetSubscriptionIdResolvers.map(resolve => { resolve(subscriptionId); } );
     this._pendingGetSubscriptionIdResolvers = [];
   }
 

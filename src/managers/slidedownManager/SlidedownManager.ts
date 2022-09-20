@@ -1,40 +1,32 @@
-import {TagsObjectForApi, TagsObjectWithBoolean} from '../../models/Tags';
-import TaggingContainer from '../../slidedown/TaggingContainer';
-import TagUtils from '../../utils/TagUtils';
-import {ContextInterface} from '../../models/Context';
-import {DelayedPromptType} from '../../models/Prompts';
-import Slidedown, {
-  manageNotifyButtonStateWhileSlidedownShows,
-} from '../../slidedown/Slidedown';
-import {AutoPromptOptions} from '../PromptsManager';
-import Log from '../../libraries/Log';
-import {CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS} from '../../config';
-import {
-  NotSubscribedError,
-  NotSubscribedReason,
-} from '../../errors/NotSubscribedError';
-import PermissionMessageDismissedError from '../../errors/PermissionMessageDismissedError';
+import { TagsObjectForApi, TagsObjectWithBoolean } from "../../models/Tags";
+import TaggingContainer from "../../slidedown/TaggingContainer";
+import TagUtils from "../../utils/TagUtils";
+import { ContextInterface } from "../../models/Context";
+import { DelayedPromptType } from "../../models/Prompts";
+import Slidedown, { manageNotifyButtonStateWhileSlidedownShows } from "../../slidedown/Slidedown";
+import { AutoPromptOptions } from "../PromptsManager";
+import Log from "../../libraries/Log";
+import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from "../../config";
+import { NotSubscribedError, NotSubscribedReason } from "../../errors/NotSubscribedError";
+import PermissionMessageDismissedError from "../../errors/PermissionMessageDismissedError";
 import PushPermissionNotGrantedError, {
-  PushPermissionNotGrantedErrorReason,
-} from '../../errors/PushPermissionNotGrantedError';
-import {NotificationPermission} from '../../models/NotificationPermission';
-import {OneSignalUtils} from '../../utils/OneSignalUtils';
-import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
-import {
-  ChannelCaptureError,
-  InvalidChannelInputField,
-} from '../../errors/ChannelCaptureError';
-import InitHelper, {RegisterOptions} from '../../helpers/InitHelper';
-import LocalStorage from '../../utils/LocalStorage';
-import {DismissHelper} from '../../helpers/DismissHelper';
-import PromptsHelper from '../../helpers/PromptsHelper';
-import ConfirmationToast from '../../slidedown/ConfirmationToast';
-import {awaitableTimeout} from '../../utils/AwaitableTimeout';
-import {DismissPrompt} from '../../models/Dismiss';
-import {SecondaryChannelManager} from '../channelManager/shared/SecondaryChannelManager';
-import Database from '../../services/Database';
-import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
-import ExistingChannelError from '../../errors/ExistingChannelError';
+  PushPermissionNotGrantedErrorReason
+} from "../../errors/PushPermissionNotGrantedError";
+import { NotificationPermission } from "../../models/NotificationPermission";
+import { OneSignalUtils } from "../../utils/OneSignalUtils";
+import ChannelCaptureContainer from "../../slidedown/ChannelCaptureContainer";
+import { ChannelCaptureError, InvalidChannelInputField } from "../../errors/ChannelCaptureError";
+import InitHelper, { RegisterOptions } from "../../helpers/InitHelper";
+import LocalStorage from "../../utils/LocalStorage";
+import { DismissHelper } from "../../helpers/DismissHelper";
+import PromptsHelper from "../../helpers/PromptsHelper";
+import ConfirmationToast from "../../slidedown/ConfirmationToast";
+import { awaitableTimeout } from "../../utils/AwaitableTimeout";
+import { DismissPrompt } from "../../models/Dismiss";
+import { SecondaryChannelManager } from "../channelManager/shared/SecondaryChannelManager";
+import Database from "../../services/Database";
+import AlreadySubscribedError from "../../errors/AlreadySubscribedError";
+import ExistingChannelError from "../../errors/ExistingChannelError";
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -43,8 +35,8 @@ export class SlidedownManager {
 
   constructor(
     context: ContextInterface,
-    private readonly secondaryChannelManager: SecondaryChannelManager,
-  ) {
+    private readonly secondaryChannelManager: SecondaryChannelManager
+    ) {
     this.context = context;
     this.slidedownQueue = [];
     this.isSlidedownShowing = false;
@@ -52,12 +44,8 @@ export class SlidedownManager {
 
   /* P R I V A T E */
 
-  private async checkIfSlidedownShouldBeShown(
-    options: AutoPromptOptions,
-  ): Promise<boolean> {
-    const permissionDenied =
-      (await OneSignal.privateGetNotificationPermission()) ===
-      NotificationPermission.Denied;
+  private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
+    const permissionDenied = await OneSignal.privateGetNotificationPermission() === NotificationPermission.Denied;
     const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
     const notOptedOut = await OneSignal.privateGetSubscription();
     let wasDismissed: boolean;
@@ -67,8 +55,7 @@ export class SlidedownManager {
     let isSlidedownPushDependent: boolean = false;
 
     if (!!slidedownType) {
-      isSlidedownPushDependent =
-        PromptsHelper.isSlidedownPushDependent(slidedownType);
+      isSlidedownPushDependent = PromptsHelper.isSlidedownPushDependent(slidedownType);
     }
 
     // applies to both push and category slidedown types
@@ -90,39 +77,32 @@ export class SlidedownManager {
       }
 
       if (permissionDenied) {
-        Log.info(
-          new PushPermissionNotGrantedError(
-            PushPermissionNotGrantedErrorReason.Blocked,
-          ),
-        );
+        Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
         return false;
       }
     } else {
       if (!options.force) {
         const smsSubscribed = !!(await Database.getSMSProfile()).subscriptionId;
-        const emailSubscribed = !!(await Database.getEmailProfile())
-          .subscriptionId;
+        const emailSubscribed = !!(await Database.getEmailProfile()).subscriptionId;
         const bothSubscribed = smsSubscribed && emailSubscribed;
 
-        if (smsSubscribed && slidedownType === DelayedPromptType.Sms) {
+        if (smsSubscribed && (slidedownType === DelayedPromptType.Sms)) {
           Log.info(new ExistingChannelError(DelayedPromptType.Sms));
           return false;
         }
 
-        if (emailSubscribed && slidedownType === DelayedPromptType.Email) {
+        if (emailSubscribed && (slidedownType === DelayedPromptType.Email)) {
           Log.info(new ExistingChannelError(DelayedPromptType.Email));
           return false;
         }
 
-        if (bothSubscribed && slidedownType === DelayedPromptType.SmsAndEmail) {
+        if (bothSubscribed && (slidedownType === DelayedPromptType.SmsAndEmail)) {
           Log.info(new ExistingChannelError(DelayedPromptType.SmsAndEmail));
           return false;
         }
       }
 
-      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(
-        DismissPrompt.NonPush,
-      );
+      wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.NonPush);
     }
 
     if (wasDismissed && !options.force && !options.isInUpdateMode) {
@@ -135,7 +115,7 @@ export class SlidedownManager {
 
   private registerForPush(): void {
     const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-    const options: RegisterOptions = {autoAccept, slidedown: true};
+    const options: RegisterOptions = { autoAccept, slidedown: true };
     InitHelper.registerForPushNotifications(options);
   }
 
@@ -155,64 +135,50 @@ export class SlidedownManager {
   }
 
   private async handleAllowForEmailType(): Promise<void> {
-    const emailInputFieldIsValid =
-      OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
-    const isEmailEmpty =
-      OneSignal.slidedown.channelCaptureContainer.isEmailInputFieldEmpty();
+    const emailInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
+    const isEmailEmpty = OneSignal.slidedown.channelCaptureContainer.isEmailInputFieldEmpty();
 
     if (!emailInputFieldIsValid || isEmailEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmail);
     }
 
-    const email =
-      OneSignal.slidedown.channelCaptureContainer.getValueFromEmailInput();
+    const email = OneSignal.slidedown.channelCaptureContainer.getValueFromEmailInput();
     this.updateEmail(email);
   }
 
   private async handleAllowForSmsType(): Promise<void> {
-    const smsInputFieldIsValid =
-      OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
-    const isSmsEmpty =
-      OneSignal.slidedown.channelCaptureContainer.isSmsInputFieldEmpty();
+    const smsInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
+    const isSmsEmpty = OneSignal.slidedown.channelCaptureContainer.isSmsInputFieldEmpty();
 
     if (!smsInputFieldIsValid || isSmsEmpty) {
       throw new ChannelCaptureError(InvalidChannelInputField.InvalidSms);
     }
 
-    const sms =
-      OneSignal.slidedown.channelCaptureContainer.getValueFromSmsInput();
+    const sms = OneSignal.slidedown.channelCaptureContainer.getValueFromSmsInput();
     this.updateSMS(sms);
   }
 
   private async handleAllowForSmsAndEmailType(): Promise<void> {
-    const smsInputFieldIsValid =
-      OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
-    const emailInputFieldIsValid =
-      OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
+    const smsInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.smsInputFieldIsValid;
+    const emailInputFieldIsValid = OneSignal.slidedown.channelCaptureContainer.emailInputFieldIsValid;
     /**
      * empty input fields are considered valid since in the case of two input field types present,
      * we can accept one of the two being left as an empty string.
      *
      * thus, we need separate checks for the emptiness properties
      */
-    const isEmailEmpty =
-      OneSignal.slidedown.channelCaptureContainer.isEmailInputFieldEmpty();
-    const isSmsEmpty =
-      OneSignal.slidedown.channelCaptureContainer.isSmsInputFieldEmpty();
+    const isEmailEmpty = OneSignal.slidedown.channelCaptureContainer.isEmailInputFieldEmpty();
+    const isSmsEmpty = OneSignal.slidedown.channelCaptureContainer.isSmsInputFieldEmpty();
 
     const bothFieldsEmpty = isEmailEmpty && isSmsEmpty;
     const bothFieldsInvalid = !smsInputFieldIsValid && !emailInputFieldIsValid;
 
     if (bothFieldsInvalid || bothFieldsEmpty) {
-      throw new ChannelCaptureError(
-        InvalidChannelInputField.InvalidEmailAndSms,
-      );
+      throw new ChannelCaptureError(InvalidChannelInputField.InvalidEmailAndSms);
     }
 
-    const email =
-      OneSignal.slidedown.channelCaptureContainer.getValueFromEmailInput();
-    const sms =
-      OneSignal.slidedown.channelCaptureContainer.getValueFromSmsInput();
+    const email = OneSignal.slidedown.channelCaptureContainer.getValueFromEmailInput();
+    const sms = OneSignal.slidedown.channelCaptureContainer.getValueFromSmsInput();
 
     /**
      * empty is ok (we can accept only one of two input fields), but invalid is not
@@ -244,7 +210,7 @@ export class SlidedownManager {
   }
 
   private async showConfirmationToast(): Promise<void> {
-    const {confirmMessage} = OneSignal.slidedown.options.text;
+    const { confirmMessage } = OneSignal.slidedown.options.text;
     await awaitableTimeout(1000);
     const confirmationToast = new ConfirmationToast(confirmMessage);
     await confirmationToast.show();
@@ -253,9 +219,7 @@ export class SlidedownManager {
     ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.CLOSED);
   }
 
-  private async mountAuxiliaryContainers(
-    options: AutoPromptOptions,
-  ): Promise<void> {
+  private async mountAuxiliaryContainers(options: AutoPromptOptions): Promise<void> {
     switch (options.slidedownPromptOptions?.type) {
       case DelayedPromptType.Category:
         this.mountTaggingContainer(options);
@@ -270,10 +234,8 @@ export class SlidedownManager {
     }
   }
 
-  private async mountTaggingContainer(
-    options: AutoPromptOptions,
-  ): Promise<void> {
-    OneSignalUtils.logMethodCall('mountTaggingContainer');
+  private async mountTaggingContainer(options: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("mountTaggingContainer");
     try {
       // show slidedown with tagging container
       let tagsForComponent: TagsObjectWithBoolean = {};
@@ -281,13 +243,13 @@ export class SlidedownManager {
       const categories = options.slidedownPromptOptions?.categories;
 
       if (!categories) {
-        throw new Error('Categories not defined');
+        throw new Error("Categories not defined");
       }
 
       if (options.isInUpdateMode) {
         taggingContainer.load();
         // updating. pull remote tags.
-        const existingTags = (await OneSignal.getTags()) as TagsObjectForApi;
+        const existingTags = await OneSignal.getTags() as TagsObjectForApi;
         this.context.tagManager.storeRemotePlayerTags(existingTags);
         tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
       } else {
@@ -297,37 +259,27 @@ export class SlidedownManager {
 
       taggingContainer.mount(categories, tagsForComponent);
     } catch (e) {
-      Log.error(
-        'OneSignal: Attempted to create tagging container with error',
-        e,
-      );
+      Log.error("OneSignal: Attempted to create tagging container with error", e);
     }
   }
 
-  private async mountChannelCaptureContainer(
-    options: AutoPromptOptions,
-  ): Promise<void> {
-    OneSignalUtils.logMethodCall('mountChannelCaptureContainer');
+  private async mountChannelCaptureContainer(options: AutoPromptOptions): Promise<void> {
+    OneSignalUtils.logMethodCall("mountChannelCaptureContainer");
     try {
       if (!!options.slidedownPromptOptions) {
-        const channelCaptureContainer = new ChannelCaptureContainer(
-          options.slidedownPromptOptions,
-        );
+        const channelCaptureContainer = new ChannelCaptureContainer(options.slidedownPromptOptions);
         channelCaptureContainer.mount();
         OneSignal.slidedown.channelCaptureContainer = channelCaptureContainer;
       }
     } catch (e) {
-      Log.error(
-        'OneSignal: Attempted to create channel capture container with error',
-        e,
-      );
+      Log.error("OneSignal: Attempted to create channel capture container with error", e);
     }
   }
 
   /* P U B L I C */
 
   public async handleAllowClick(): Promise<void> {
-    const {slidedown} = OneSignal;
+    const { slidedown } = OneSignal;
     const slidedownType: DelayedPromptType = slidedown.options.type;
 
     if (slidedown.isShowingFailureState) {
@@ -355,7 +307,7 @@ export class SlidedownManager {
           break;
       }
     } catch (e) {
-      Log.warn('OneSignal Slidedown failed to update:', e);
+      Log.warn("OneSignal Slidedown failed to update:", e);
       // Display update error
       slidedown.removeSaveState();
       slidedown.setFailureState();
@@ -381,13 +333,13 @@ export class SlidedownManager {
     switch (slidedownType) {
       case DelayedPromptType.Push:
       case DelayedPromptType.Category:
-        Log.debug('Setting flag to not show the slidedown to the user again.');
+        Log.debug("Setting flag to not show the slidedown to the user again.");
         DismissHelper.markPromptDismissedWithType(DismissPrompt.Push);
         break;
       default:
-        Log.debug('Setting flag to not show the slidedown to the user again.');
+        Log.debug("Setting flag to not show the slidedown to the user again.");
         DismissHelper.markPromptDismissedWithType(DismissPrompt.NonPush);
-        break;
+      break;
     }
   }
 
@@ -415,14 +367,12 @@ export class SlidedownManager {
   }
 
   public async createSlidedown(options: AutoPromptOptions): Promise<void> {
-    OneSignalUtils.logMethodCall('createSlidedown');
+    OneSignalUtils.logMethodCall("createSlidedown");
     try {
       const showPrompt = await this.checkIfSlidedownShouldBeShown(options);
-      if (!showPrompt) {
-        return;
-      }
+      if (!showPrompt) { return; }
     } catch (e) {
-      Log.warn('checkIfSlidedownShouldBeShown returned an error', e);
+      Log.warn("checkIfSlidedownShouldBeShown returned an error", e);
       return;
     }
 
@@ -436,15 +386,14 @@ export class SlidedownManager {
 
     try {
       this.setIsSlidedownShowing(true);
-      const slidedownPromptOptions =
-        options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
+      const slidedownPromptOptions = options.slidedownPromptOptions || CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS;
       OneSignal.slidedown = new Slidedown(slidedownPromptOptions);
       await OneSignal.slidedown.create(options.isInUpdateMode);
       await this.mountAuxiliaryContainers(options);
       Log.debug('Showing OneSignal Slidedown');
       Slidedown.triggerSlidedownEvent(Slidedown.EVENTS.SHOWN);
     } catch (e) {
-      Log.error('There was an error showing the OneSignal Slidedown:', e);
+      Log.error("There was an error showing the OneSignal Slidedown:", e);
       this.setIsSlidedownShowing(false);
       OneSignal.slidedown.close();
     }

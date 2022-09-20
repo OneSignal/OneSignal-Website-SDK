@@ -1,5 +1,5 @@
 import SdkEnvironment from './managers/SdkEnvironment';
-import {WindowEnvironmentKind} from './models/WindowEnvironmentKind';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import bowser from 'bowser';
 
 export default class Environment {
@@ -15,7 +15,7 @@ export default class Environment {
   }
 
   public static version() {
-    return typeof __VERSION__ === 'undefined' ? 1 : Number(__VERSION__);
+    return (typeof __VERSION__ === "undefined" ? 1 : Number(__VERSION__));
   }
 
   public static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
@@ -62,7 +62,8 @@ export default class Environment {
       case WindowEnvironmentKind.ServiceWorker:
         return true;
       default:
-        return typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+        return typeof navigator !== "undefined" &&
+          'serviceWorker' in navigator;
     }
   }
 
@@ -71,8 +72,6 @@ export default class Environment {
     directory.
    */
   public static getSdkStylesVersionHash() {
-    return typeof __SRC_STYLESHEETS_MD5_HASH__ === 'undefined'
-      ? '2'
-      : __SRC_STYLESHEETS_MD5_HASH__;
+    return (typeof __SRC_STYLESHEETS_MD5_HASH__ === "undefined" ? '2' : __SRC_STYLESHEETS_MD5_HASH__);
   }
 }

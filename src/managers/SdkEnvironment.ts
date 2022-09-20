@@ -1,19 +1,16 @@
-import {EnvironmentKind} from '../models/EnvironmentKind';
-import {TestEnvironmentKind} from '../models/TestEnvironmentKind';
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
-import {
-  InvalidArgumentError,
-  InvalidArgumentReason,
-} from '../errors/InvalidArgumentError';
-import {IntegrationKind} from '../models/IntegrationKind';
-import Environment from '../Environment';
-import OneSignalUtils from '../utils/OneSignalUtils';
+import { EnvironmentKind } from '../models/EnvironmentKind';
+import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
+import { IntegrationKind } from "../models/IntegrationKind";
+import Environment from "../Environment";
+import OneSignalUtils from "../utils/OneSignalUtils";
 
 const RESOURCE_HTTP_PORT = 4000;
 const RESOURCE_HTTPS_PORT = 4001;
 const API_URL_PORT = 3001;
 const TURBINE_API_URL_PORT = 18080;
-const TURBINE_ENDPOINTS = ['outcomes', 'on_focus'];
+const TURBINE_ENDPOINTS = ["outcomes", "on_focus"];
 
 declare var self: ServiceWorkerGlobalScope | undefined;
 
@@ -25,15 +22,15 @@ export default class SdkEnvironment {
    * building the SDK.
    */
   public static getBuildEnv(): EnvironmentKind {
-    if (typeof __BUILD_TYPE__ === 'undefined') {
+    if (typeof __BUILD_TYPE__ === "undefined") {
       return EnvironmentKind.Production;
     }
-    switch (__BUILD_TYPE__) {
-      case 'development':
+    switch(__BUILD_TYPE__){
+      case "development":
         return EnvironmentKind.Development;
-      case 'staging':
+      case "staging":
         return EnvironmentKind.Staging;
-      case 'production':
+      case "production":
         return EnvironmentKind.Production;
       default:
         return EnvironmentKind.Production;
@@ -42,19 +39,19 @@ export default class SdkEnvironment {
 
   /**
    * Returns development staging, or production.
-   *
+   * 
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
-    if (typeof __API_TYPE__ === 'undefined') {
+    if (typeof __API_TYPE__ === "undefined") {
       return EnvironmentKind.Production;
     }
-    switch (__API_TYPE__) {
-      case 'development':
+    switch(__API_TYPE__){
+      case "development":
         return EnvironmentKind.Development;
-      case 'staging':
+      case "staging":
         return EnvironmentKind.Staging;
-      case 'production':
+      case "production":
         return EnvironmentKind.Production;
       default:
         return EnvironmentKind.Production;
@@ -87,30 +84,21 @@ export default class SdkEnvironment {
    *
    * @param usingProxyOrigin Using a subdomain of os.tc or onesignal.com for subscribing to push.
    */
-  public static async getIntegration(
-    usingProxyOrigin?: boolean,
-  ): Promise<IntegrationKind> {
+  public static async getIntegration(usingProxyOrigin?: boolean): Promise<IntegrationKind> {
     if (Environment.isSafari()) {
       /* HTTP doesn't apply to Safari sites */
       return IntegrationKind.Secure;
     }
 
-    const isTopFrame = window === window.top;
-    const isHttpsProtocol = window.location.protocol === 'https:';
+    const isTopFrame = (window === window.top);
+    const isHttpsProtocol = window.location.protocol === "https:";
 
     // For convenience, try to look up usingProxyOrigin instead of requiring it to be passed in
     if (usingProxyOrigin === undefined) {
-      if (
-        typeof OneSignal !== 'undefined' &&
-        OneSignal.context &&
-        OneSignal.context.appConfig
-      ) {
-        usingProxyOrigin = !!OneSignal.context.appConfig.subdomain;
+      if (typeof OneSignal !== "undefined" && OneSignal.context && OneSignal.context.appConfig) {
+          usingProxyOrigin = !!OneSignal.context.appConfig.subdomain;
       } else {
-        throw new InvalidArgumentError(
-          'usingProxyOrigin',
-          InvalidArgumentReason.Empty,
-        );
+        throw new InvalidArgumentError("usingProxyOrigin", InvalidArgumentReason.Empty);
       }
     }
 
@@ -124,19 +112,16 @@ export default class SdkEnvironment {
      */
     if (isTopFrame) {
       if (isHttpsProtocol) {
-        return usingProxyOrigin
-          ? IntegrationKind.SecureProxy
-          : IntegrationKind.Secure;
+        return usingProxyOrigin ?
+          IntegrationKind.SecureProxy :
+          IntegrationKind.Secure;
       } else {
         // If localhost and allowLocalhostAsSecureOrigin, it's still considered secure
-        if (
-          OneSignalUtils.isLocalhostAllowedAsSecureOrigin() &&
-          (location.hostname === 'localhost' ||
-            location.hostname === '127.0.0.1')
-        ) {
+        if (OneSignalUtils.isLocalhostAllowedAsSecureOrigin() &&
+          (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
           return IntegrationKind.Secure;
         }
-
+        
         /* The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw
         an initialization error stating a proxy origin is required for HTTP sites. */
         return IntegrationKind.InsecureProxy;
@@ -144,14 +129,13 @@ export default class SdkEnvironment {
     } else {
       if (isHttpsProtocol) {
         /* Check whether any parent frames are insecure */
-        const isFrameContextInsecure =
-          await SdkEnvironment.isFrameContextInsecure();
+        const isFrameContextInsecure = await SdkEnvironment.isFrameContextInsecure();
         if (isFrameContextInsecure) {
           return IntegrationKind.InsecureProxy;
         } else {
-          return usingProxyOrigin
-            ? IntegrationKind.SecureProxy
-            : IntegrationKind.Secure;
+          return usingProxyOrigin ?
+          IntegrationKind.SecureProxy :
+          IntegrationKind.Secure;
         }
       } else {
         /*
@@ -185,61 +169,59 @@ export default class SdkEnvironment {
     }
 
     // Will be null if there was an issue retrieving a status
-    const registrationResult =
-      await OneSignal.context.serviceWorkerManager.getRegistration();
+    const registrationResult = await OneSignal.context.serviceWorkerManager.getRegistration();
     return !registrationResult;
   }
 
   public static isInsecureOrigin() {
-    return window.location.protocol === 'http:';
+    return window.location.protocol === "http:";
   }
 
   static getOrigin(): string {
     if (Environment.isBrowser()) {
       return window.location.origin;
-    } else if (
-      typeof self !== 'undefined' &&
-      typeof ServiceWorkerGlobalScope !== 'undefined'
-    ) {
+    } else if (typeof self !== "undefined" && typeof ServiceWorkerGlobalScope !== "undefined") {
       return self.location.origin;
     }
-    return 'Unknown';
+    return "Unknown";
   }
 
   /**
    * Describes the current frame context.
    */
   public static getWindowEnv(): WindowEnvironmentKind {
-    if (typeof window === 'undefined') {
-      if (
-        typeof self !== 'undefined' &&
-        typeof ServiceWorkerGlobalScope !== 'undefined'
-      ) {
+    if (typeof window === "undefined") {
+      if (typeof self !== "undefined" && typeof ServiceWorkerGlobalScope !== "undefined") {
         return WindowEnvironmentKind.ServiceWorker;
       } else {
         return WindowEnvironmentKind.Unknown;
       }
-    } else {
+    }
+    else {
       // If the window is the root top-most level
       if (window === window.top) {
-        if (
-          location.href.indexOf('initOneSignal') !== -1 ||
+        if (location.href.indexOf("initOneSignal") !== -1 ||
           (location.pathname === '/subscribe' &&
-            location.search === '' &&
-            (location.hostname.endsWith('.onesignal.com') ||
-              location.hostname.endsWith('.os.tc') ||
-              (location.hostname.indexOf('.localhost') !== -1 &&
-                SdkEnvironment.getBuildEnv() === EnvironmentKind.Development)))
+            location.search === '') &&
+          (
+            location.hostname.endsWith('.onesignal.com') ||
+            location.hostname.endsWith('.os.tc') ||
+            (location.hostname.indexOf('.localhost') !== -1 &&
+              SdkEnvironment.getBuildEnv() === EnvironmentKind.Development)
+          )
         ) {
           return WindowEnvironmentKind.OneSignalSubscriptionPopup;
-        } else {
+        }
+        else {
           return WindowEnvironmentKind.Host;
         }
-      } else if (location.pathname === '/webPushIframe') {
+      }
+      else if (location.pathname === '/webPushIframe') {
         return WindowEnvironmentKind.OneSignalProxyFrame;
       } else if (location.pathname === '/webPushModal') {
         return WindowEnvironmentKind.OneSignalSubscriptionModal;
-      } else {
+      }
+      else {
         return WindowEnvironmentKind.CustomIframe;
       }
     }
@@ -251,9 +233,9 @@ export default class SdkEnvironment {
    * This method is overriden when tests are run.
    */
   public static getTestEnv(): TestEnvironmentKind {
-    return typeof __TEST__ === 'undefined'
-      ? TestEnvironmentKind.UnitTesting
-      : TestEnvironmentKind.None;
+    return typeof __TEST__ === "undefined" ?
+      TestEnvironmentKind.UnitTesting :
+      TestEnvironmentKind.None;
   }
 
   /**
@@ -263,9 +245,7 @@ export default class SdkEnvironment {
    * For example, in staging the registered service worker filename is
    * Staging-OneSignalSDKWorker.js.
    */
-  public static getBuildEnvPrefix(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
-  ): string {
+  public static getBuildEnvPrefix(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
     switch (buildEnv) {
       case EnvironmentKind.Development:
         return 'Dev-';
@@ -274,10 +254,7 @@ export default class SdkEnvironment {
       case EnvironmentKind.Production:
         return '';
       default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
   }
 
@@ -285,14 +262,8 @@ export default class SdkEnvironment {
    * Returns the URL object representing the components of OneSignal's API
    * endpoint.
    */
-  public static getOneSignalApiUrl(
-    buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(),
-    action?: string,
-  ): URL {
-    const apiOrigin =
-      typeof __API_ORIGIN__ !== 'undefined'
-        ? __API_ORIGIN__ || 'localhost'
-        : 'localhost';
+  public static getOneSignalApiUrl(buildEnv: EnvironmentKind = SdkEnvironment.getApiEnv(), action?: string): URL {
+    const apiOrigin = (typeof __API_ORIGIN__ !== "undefined") ? __API_ORIGIN__ || "localhost" : "localhost";
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
@@ -305,51 +276,36 @@ export default class SdkEnvironment {
       case EnvironmentKind.Production:
         return new URL('https://onesignal.com/api/v1');
       default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
   }
 
-  public static getOneSignalResourceUrlPath(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
-  ): URL {
-    const buildOrigin =
-      typeof __BUILD_ORIGIN__ !== 'undefined'
-        ? __BUILD_ORIGIN__ || 'localhost'
-        : 'localhost';
-    const isHttps = typeof __IS_HTTPS__ !== 'undefined' ? __IS_HTTPS__ : true;
+  public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
+    const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
+    const isHttps = (typeof __IS_HTTPS__ !== "undefined") ? __IS_HTTPS__ : true;
     let origin: string;
-    const protocol = isHttps ? 'https' : 'http';
+    const protocol = isHttps ? "https" : "http";
     const port = isHttps ? RESOURCE_HTTPS_PORT : RESOURCE_HTTP_PORT;
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
-        origin = __NO_DEV_PORT__
-          ? `${protocol}://${buildOrigin}`
-          : `${protocol}://${buildOrigin}:${port}`;
+        origin = __NO_DEV_PORT__ ? `${protocol}://${buildOrigin}` : `${protocol}://${buildOrigin}:${port}`;
         break;
       case EnvironmentKind.Staging:
         origin = `https://${buildOrigin}`;
         break;
       case EnvironmentKind.Production:
-        origin = 'https://onesignal.com';
+        origin = "https://onesignal.com";
         break;
       default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
 
     return new URL(`${origin}/sdks`);
   }
 
-  public static getOneSignalCssFileName(
-    buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv(),
-  ): string {
-    const baseFileName = 'OneSignalSDKStyles.css';
+  public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {
+    const baseFileName = "OneSignalSDKStyles.css";
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
@@ -359,20 +315,13 @@ export default class SdkEnvironment {
       case EnvironmentKind.Production:
         return baseFileName;
       default:
-        throw new InvalidArgumentError(
-          'buildEnv',
-          InvalidArgumentReason.EnumOutOfRange,
-        );
+        throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
   }
 
   static isTurbineEndpoint(action?: string): boolean {
-    if (!action) {
-      return false;
-    }
+    if (!action) { return false; }
 
-    return TURBINE_ENDPOINTS.some(
-      (turbine_endpoint) => action.indexOf(turbine_endpoint) > -1,
-    );
+    return TURBINE_ENDPOINTS.some(turbine_endpoint => action.indexOf(turbine_endpoint) > -1);
   }
 }

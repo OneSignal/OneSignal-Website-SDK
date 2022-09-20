@@ -1,9 +1,9 @@
-import OneSignalError from './OneSignalError';
+import OneSignalError from "./OneSignalError";
 
 export enum InvalidArgumentReason {
   Empty,
   Malformed,
-  EnumOutOfRange,
+  EnumOutOfRange
 }
 
 export class InvalidArgumentError extends OneSignalError {

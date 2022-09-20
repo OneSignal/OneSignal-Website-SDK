@@ -1,5 +1,6 @@
-import OneSignalError from './OneSignalError';
-import {PermissionPromptType} from '../models/PermissionPromptType';
+import OneSignalError from "./OneSignalError";
+import { PermissionPromptType } from "../models/PermissionPromptType";
+
 
 export enum InvalidStateReason {
   MissingAppId,
@@ -15,16 +16,13 @@ export class InvalidStateError extends OneSignalError {
   description: string;
   reason: InvalidStateReason;
 
-  constructor(
-    reason: InvalidStateReason,
-    extra?: {
-      permissionPromptType: PermissionPromptType;
-    },
-  ) {
+  constructor(reason: InvalidStateReason, extra?: {
+    permissionPromptType: PermissionPromptType
+  }) {
     let errorMessage;
     switch (reason) {
       case InvalidStateReason.MissingAppId:
-        errorMessage = `Missing required app ID.`;
+        errorMessage =`Missing required app ID.`;
         break;
       case InvalidStateReason.RedundantPermissionMessage:
         let extraInfo = '';

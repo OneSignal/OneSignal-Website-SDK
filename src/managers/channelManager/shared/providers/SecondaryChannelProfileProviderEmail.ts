@@ -1,16 +1,12 @@
-import {DeliveryPlatformKind} from '../../../../models/DeliveryPlatformKind';
-import {EmailProfile} from '../../../../models/EmailProfile';
-import Database from '../../../../services/Database';
-import {SecondaryChannelProfileProviderBase} from './SecondaryChannelProfileProviderBase';
+import { DeliveryPlatformKind } from "../../../../models/DeliveryPlatformKind";
+import { EmailProfile } from "../../../../models/EmailProfile";
+import Database from "../../../../services/Database";
+import { SecondaryChannelProfileProviderBase } from "./SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelProfileProviderEmail extends SecondaryChannelProfileProviderBase {
   deviceType = DeliveryPlatformKind.Email;
 
-  newProfile(
-    subscriptionId?: string | null,
-    identifier?: string,
-    identifierAuthHash?: string,
-  ): EmailProfile {
+  newProfile(subscriptionId?: string | null, identifier?: string, identifierAuthHash?: string): EmailProfile {
     return new EmailProfile(subscriptionId, identifier, identifierAuthHash);
   }
 

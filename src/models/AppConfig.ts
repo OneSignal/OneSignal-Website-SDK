@@ -1,4 +1,4 @@
-import {OutcomesConfig, OutcomesServerConfig} from './Outcomes';
+import { OutcomesConfig, OutcomesServerConfig } from "./Outcomes";
 import {
   AppUserConfigPromptOptions,
   CustomLinkStyle,
@@ -6,7 +6,7 @@ import {
   AppUserConfigNotifyButton,
   SlidedownOptions,
 } from './Prompts';
-import {Categories} from './Tags';
+import { Categories } from "./Tags";
 
 export interface AppConfig {
   /**
@@ -69,18 +69,18 @@ export enum ConfigIntegrationKind {
   SquareSpace = 'squarespace',
   Joomla = 'joomla',
   Weebly = 'weebly',
-  Wix = 'wix',
+  Wix = "wix",
   Custom = 'custom',
 }
 
 export enum NotificationClickMatchBehavior {
   Exact = 'exact',
-  Origin = 'origin',
+  Origin = 'origin'
 }
 
 export enum NotificationClickActionBehavior {
   Navigate = 'navigate',
-  Focus = 'focus',
+  Focus = 'focus'
 }
 
 export interface AppUserConfig {
@@ -198,11 +198,11 @@ export interface ServerAppPromptConfig {
       explanation: string;
       subscribe: string;
       unsubscribe: string;
-    };
+    }
     color: {
       button: string;
       text: string;
-    };
+    }
   };
 }
 
@@ -265,7 +265,7 @@ export interface ServerAppConfig {
       title: string | undefined;
       enable: boolean;
       message: string | undefined;
-      urlEnabled: boolean | undefined;
+      urlEnabled: boolean| undefined;
     };
     notificationBehavior?: {
       click: {
@@ -276,12 +276,12 @@ export interface ServerAppConfig {
         persist: boolean;
       };
     };
-    outcomes: OutcomesServerConfig;
+    outcomes: OutcomesServerConfig,
     vapid_public_key: string;
     onesignal_vapid_public_key: string;
     http_use_onesignal_com?: boolean;
     safari_web_id?: string;
-    subdomain: string | undefined;
+    subdomain: string| undefined;
   };
 
   generated_at: number;

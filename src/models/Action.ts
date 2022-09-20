@@ -1,3 +1,4 @@
-interface Action<T> {
+interface Action<T>
+{
   (item: T): void;
 }

@@ -1,13 +1,10 @@
 import TimeoutError from '../../../errors/TimeoutError';
-import {
-  OneSignalApiErrorKind,
-  OneSignalApiError,
-} from '../../../errors/OneSignalApiError';
+import { OneSignalApiErrorKind, OneSignalApiError } from "../../../errors/OneSignalApiError";
 
 type Nullable = undefined | null;
 
 interface IndexOfAble {
-  indexOf(match: string): number;
+  indexOf(match:string): number;
 }
 
 export type RecursivePartial<T> = {
@@ -18,11 +15,9 @@ export class Utils {
   /**
    * Returns true if match is in string; otherwise, returns false.
    */
-  public static contains(
-    indexOfAble: IndexOfAble | null | undefined,
-    match: string,
-  ) {
-    if (!indexOfAble) return false;
+  public static contains(indexOfAble: IndexOfAble | null | undefined, match: string) {
+    if (!indexOfAble)
+      return false;
     return indexOfAble.indexOf(match) !== -1;
   }
 
@@ -74,7 +69,7 @@ export class Utils {
   }
 
   static valueOrDefault<T>(value: T | Nullable, defaultValue: T): T {
-    if (typeof value === 'undefined' || value === null) {
+    if (typeof value === "undefined" || value === null) {
       return defaultValue;
     }
     return value;
@@ -85,17 +80,14 @@ export class Utils {
    * Helps when logging method calls.
    */
   public static stringify(obj: any) {
-    return JSON.stringify(
-      obj,
-      (_, value) => {
-        if (typeof value === 'function') {
-          return '[Function]';
-        } else {
-          return value;
-        }
-      },
-      4,
-    );
+    return JSON.stringify(obj, (_, value) => {
+      if (typeof value === 'function') {
+        return "[Function]";
+      }
+      else {
+        return value;
+      }
+    }, 4);
   }
 
   /**
@@ -115,10 +107,7 @@ export class Utils {
     return uriComponent;
   }
 
-  public static timeoutPromise(
-    promise: Promise<any>,
-    milliseconds: number,
-  ): Promise<TimeoutError | any> {
+  public static timeoutPromise(promise: Promise<any>, milliseconds: number): Promise<TimeoutError | any> {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         reject(new TimeoutError());
@@ -127,10 +116,7 @@ export class Utils {
     return Promise.race([promise, timeoutPromise]);
   }
 
-  public static getValueOrDefault<T>(
-    value: T | undefined | null,
-    defaultValue: T,
-  ): T {
+  public static getValueOrDefault<T>(value: T | undefined | null, defaultValue: T): T {
     if (value !== undefined && value !== null) {
       return value;
     }
@@ -145,13 +131,9 @@ export class Utils {
    * @param padString - String value of length one to pad with.
    * @returns {string} - Resulting string padded
    */
-  public static padStart(
-    str: string,
-    targetLength: number,
-    padString: string,
-  ): string {
+  public static padStart(str: string, targetLength: number, padString: string): string {
     let result = str;
-    while (result.length < targetLength) {
+    while(result.length < targetLength) {
       result = padString + result;
     }
     return result;
@@ -163,13 +145,14 @@ export class Utils {
    * @param version - version number we want to check
    */
   public static parseVersionString(version: string | number): number {
-    const osVersionParts = version.toString().split('.');
-    const majorVersion = Utils.padStart(osVersionParts[0], 2, '0');
+    const osVersionParts = version.toString().split(".");
+    const majorVersion = Utils.padStart(osVersionParts[0], 2, "0");
     let minorVersion: string;
     if (osVersionParts[1]) {
-      minorVersion = Utils.padStart(osVersionParts[1], 2, '0');
-    } else {
-      minorVersion = '00';
+      minorVersion = Utils.padStart(osVersionParts[1], 2, "0");
+    }
+    else {
+      minorVersion = "00";
     }
 
     return Number(`${majorVersion}.${minorVersion}`);
@@ -179,11 +162,7 @@ export class Utils {
    * Gives back the last x number of parts providing a string with a delimiter.
    * Example: lastParts("api.staging.onesignal.com", ".", 3) will return "staging.onesignal.com"
    */
-  public static lastParts(
-    subject: string,
-    delimiter: string,
-    maxParts: number,
-  ): string {
+  public static lastParts(subject: string, delimiter: string, maxParts: number): string {
     const parts = subject.split(delimiter);
     const skipParts = Math.max(parts.length - maxParts, 0);
     return parts.slice(skipParts).join(delimiter);
@@ -191,32 +170,26 @@ export class Utils {
 
   public static enforceAppId(appId: string | undefined | null): void {
     if (!appId) {
-      throw new Error('App id cannot be empty');
+      throw new Error("App id cannot be empty");
     }
   }
 
   public static enforcePlayerId(playerId: string | undefined | null): void {
     if (!playerId) {
-      throw new Error('Player id cannot be empty');
+      throw new Error("Player id cannot be empty");
     }
   }
 
   public static async enforceAppIdAndPlayerId<T>(
-    appId: string | Nullable,
-    playerId: string | Nullable,
-    funcToExecute: () => Promise<T>,
+    appId: string | Nullable, playerId: string | Nullable, funcToExecute: () => Promise<T>
   ): Promise<T> {
     Utils.enforceAppId(appId);
     Utils.enforcePlayerId(playerId);
     try {
       return await funcToExecute();
-    } catch (e) {
-      if (
-        e &&
-        Array.isArray(e.errors) &&
-        e.errors.length > 0 &&
-        Utils.contains(e.errors[0], 'app_id not found')
-      ) {
+    } catch(e) {
+      if (e && Array.isArray(e.errors) && e.errors.length > 0 &&
+        Utils.contains(e.errors[0], "app_id not found")) {
         throw new OneSignalApiError(OneSignalApiErrorKind.MissingAppId);
       } else throw e;
     }
@@ -226,7 +199,7 @@ export class Utils {
     arrayToSort: TObject[],
     predicateForProperty: (obj: TObject) => TProperty,
     descending: boolean = false,
-    doItInPlace: boolean = true,
+    doItInPlace: boolean = true
   ): TObject[] {
     const internalArrayToSort = doItInPlace ? arrayToSort : arrayToSort.slice();
     internalArrayToSort.sort((a: TObject, b: TObject) => {

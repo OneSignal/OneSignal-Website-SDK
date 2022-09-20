@@ -1,4 +1,4 @@
-import {AppConfig} from './AppConfig';
+import { AppConfig } from './AppConfig';
 
 export interface ProxyFrameInitOptions extends AppConfig {
   /**

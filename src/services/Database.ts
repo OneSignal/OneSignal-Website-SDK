@@ -1,27 +1,24 @@
-import Emitter from '../libraries/Emitter';
-import IndexedDb from './IndexedDb';
+import Emitter from "../libraries/Emitter";
+import IndexedDb from "./IndexedDb";
 
-import {AppConfig} from '../models/AppConfig';
-import {AppState, ClickedNotifications} from '../models/AppState';
-import {
-  NotificationReceived,
-  NotificationClicked,
-} from '../models/Notification';
-import {ServiceWorkerState} from '../models/ServiceWorkerState';
-import {Subscription} from '../models/Subscription';
-import {TestEnvironmentKind} from '../models/TestEnvironmentKind';
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
-import {BundleEmail, EmailProfile} from '../models/EmailProfile';
-import {Session, ONESIGNAL_SESSION_KEY} from '../models/Session';
-import SdkEnvironment from '../managers/SdkEnvironment';
-import OneSignalUtils from '../utils/OneSignalUtils';
-import Utils from '../context/shared/utils/Utils';
-import Log from '../libraries/Log';
-import {SentUniqueOutcome} from '../models/Outcomes';
-import {BundleSMS, SMSProfile} from '../models/SMSProfile';
+import { AppConfig } from "../models/AppConfig";
+import { AppState, ClickedNotifications } from "../models/AppState";
+import { NotificationReceived, NotificationClicked } from "../models/Notification";
+import { ServiceWorkerState } from "../models/ServiceWorkerState";
+import { Subscription } from "../models/Subscription";
+import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
+import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
+import { BundleEmail, EmailProfile } from "../models/EmailProfile";
+import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
+import SdkEnvironment from "../managers/SdkEnvironment";
+import OneSignalUtils from "../utils/OneSignalUtils";
+import Utils from "../context/shared/utils/Utils";
+import Log from "../libraries/Log";
+import { SentUniqueOutcome } from '../models/Outcomes';
+import { BundleSMS, SMSProfile } from "../models/SMSProfile";
 
 enum DatabaseEventName {
-  SET,
+  SET
 }
 
 interface DatabaseResult {
@@ -31,17 +28,11 @@ interface DatabaseResult {
   timestamp: any;
 }
 
-export type OneSignalDbTable =
-  | 'Options'
-  | 'Ids'
-  | 'NotificationOpened'
-  | 'Sessions'
-  | 'NotificationOpened'
-  | 'NotificationReceived'
-  | 'NotificationClicked'
-  | 'SentUniqueOutcome';
+export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
+  "NotificationOpened" | "NotificationReceived" | "NotificationClicked" | "SentUniqueOutcome";
 
 export default class Database {
+
   public emitter: Emitter;
   private database: IndexedDb;
 
@@ -63,7 +54,7 @@ export default class Database {
 
   public static get singletonInstance(): Database {
     if (!Database.databaseInstanceName) {
-      Database.databaseInstanceName = 'ONE_SIGNAL_SDK_DB';
+      Database.databaseInstanceName = "ONE_SIGNAL_SDK_DB";
     }
     if (!Database.databaseInstance) {
       Database.databaseInstance = new Database(Database.databaseInstanceName);
@@ -72,37 +63,41 @@ export default class Database {
     return Database.databaseInstance;
   }
 
-  static applyDbResultFilter(
-    table: OneSignalDbTable,
-    key?: string,
-    result?: DatabaseResult,
-  ) {
+  static applyDbResultFilter(table: OneSignalDbTable, key?: string, result?: DatabaseResult) {
     switch (table) {
-      case 'Options':
-        if (result && key) return result.value;
-        else if (result && !key) return result;
-        else return null;
-      case 'Ids':
-        if (result && key) return result.id;
-        else if (result && !key) return result;
-        else return null;
-      case 'NotificationOpened':
+      case "Options":
         if (result && key)
-          return {data: result.data, timestamp: result.timestamp};
-        else if (result && !key) return result;
-        else return null;
+          return result.value;
+        else if (result && !key)
+          return result;
+        else
+          return null;
+      case "Ids":
+        if (result && key)
+          return result.id;
+        else if (result && !key)
+          return result;
+        else
+          return null;
+      case "NotificationOpened":
+        if (result && key)
+          return { data: result.data, timestamp: result.timestamp };
+        else if (result && !key)
+          return result;
+        else
+          return null;
       default:
-        if (result) return result;
-        else return null;
+        if (result)
+          return result;
+        else
+          return null;
     }
   }
 
   private shouldUsePostmam(): boolean {
-    return (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+    return SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       OneSignalUtils.isUsingSubscriptionWorkaround() &&
-      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None
-    );
+      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None;
   }
 
   /**
@@ -115,20 +110,14 @@ export default class Database {
    */
   async get<T>(table: OneSignalDbTable, key?: string): Promise<T> {
     if (this.shouldUsePostmam()) {
-      return await new Promise<T>(async (resolve) => {
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET,
-          [
-            {
-              table: table,
-              key: key,
-            },
-          ],
-          (reply: any) => {
-            const result = reply.data[0];
-            resolve(result);
-          },
-        );
+      return await new Promise<T>(async resolve => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET, [{
+          table: table,
+          key: key
+        }], (reply: any) => {
+          const result = reply.data[0];
+          resolve(result);
+        });
       });
     } else {
       const result = await this.database.get(table, key);
@@ -139,17 +128,13 @@ export default class Database {
 
   public async getAll<T>(table: OneSignalDbTable): Promise<T[]> {
     if (this.shouldUsePostmam()) {
-      return await new Promise<T[]>(async (resolve) => {
-        OneSignal.proxyFrameHost.message(
-          OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL,
-          {
-            table: table,
-          },
-          (reply: any) => {
-            const result = reply.data;
-            resolve(result);
-          },
-        );
+      return await new Promise<T[]>(async resolve => {
+        OneSignal.proxyFrameHost.message(OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_GET_ALL, {
+          table: table
+        }, (reply: any) => {
+          const result = reply.data;
+          resolve(result);
+        });
       });
     } else {
       const result = await this.database.getAll<T>(table);
@@ -164,27 +149,20 @@ export default class Database {
    */
   async put(table: OneSignalDbTable, keypath: any): Promise<void> {
     await new Promise<void>(async (resolve, reject) => {
-      if (
-        SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+      if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
         OneSignalUtils.isUsingSubscriptionWorkaround() &&
-        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None
-      ) {
+        SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT,
-          [{table: table, keypath: keypath}],
+          [{ table: table, keypath: keypath }],
           (reply: any) => {
-            if (
-              reply.data ===
-              OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
-            ) {
+            if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
               resolve();
             } else {
-              reject(
-                `(Database) Attempted remote IndexedDB put(${table}, ${keypath}),` +
-                  `but did not get success response.`,
-              );
+              reject(`(Database) Attempted remote IndexedDB put(${table}, ${keypath}),`+
+              `but did not get success response.`);
             }
-          },
+          }
         );
       } else {
         await this.database.put(table, keypath);
@@ -200,151 +178,109 @@ export default class Database {
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   remove(table: OneSignalDbTable, keypath?: string) {
-    if (
-      SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
+    if (SdkEnvironment.getWindowEnv() !== WindowEnvironmentKind.ServiceWorker &&
       OneSignalUtils.isUsingSubscriptionWorkaround() &&
-      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None
-    ) {
+      SdkEnvironment.getTestEnv() === TestEnvironmentKind.None) {
       return new Promise<void>((resolve, reject) => {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,
-          [{table: table, keypath: keypath}],
+          [{ table: table, keypath: keypath }],
           (reply: any) => {
-            if (
-              reply.data ===
-              OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE
-            ) {
+            if (reply.data === OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE) {
               resolve();
             } else {
-              reject(
-                `(Database) Attempted remote IndexedDB remove(${table}, ${keypath}),` +
-                  `but did not get success response.`,
-              );
+              reject(`(Database) Attempted remote IndexedDB remove(${table}, ${keypath}),`+
+              `but did not get success response.`);
             }
-          },
+          }
         );
       });
-    } else {
+    }
+    else {
       return this.database.remove(table, keypath);
     }
   }
 
   async getAppConfig(): Promise<AppConfig> {
     const config: any = {};
-    const appIdStr: string = await this.get<string>('Ids', 'appId');
+    const appIdStr: string = await this.get<string>("Ids", "appId");
     config.appId = appIdStr;
-    config.subdomain = await this.get<string>('Options', 'subdomain');
-    config.vapidPublicKey = await this.get<string>('Options', 'vapidPublicKey');
+    config.subdomain = await this.get<string>("Options", "subdomain");
+    config.vapidPublicKey = await this.get<string>("Options", "vapidPublicKey");
     return config;
   }
 
   async getExternalUserId(): Promise<string | undefined | null> {
-    return await this.get<string>('Ids', 'externalUserId');
+    return await this.get<string>("Ids", "externalUserId");
   }
 
   async getExternalUserIdAuthHash(): Promise<string | undefined | null> {
-    return await this.get<string>('Ids', 'externalUserIdAuthHash');
+    return await this.get<string>("Ids", "externalUserIdAuthHash");
   }
 
-  async setExternalUserId(
-    externalUserId: string | null,
-    authHash: string | null,
-  ): Promise<void> {
-    const emptyString: string = '';
-    const externalIdToSave = Utils.getValueOrDefault(
-      externalUserId,
-      emptyString,
-    );
-    const authHashToSave = Utils.getValueOrDefault(authHash, emptyString);
+  async setExternalUserId(externalUserId: string | null, authHash: string | null):
+    Promise<void> {
+      const emptyString: string = "";
+      const externalIdToSave = Utils.getValueOrDefault(externalUserId, emptyString);
+      const authHashToSave   = Utils.getValueOrDefault(authHash, emptyString);
 
-    if (externalIdToSave === emptyString) {
-      await this.remove('Ids', 'externalUserId');
-    } else {
-      await this.put('Ids', {type: 'externalUserId', id: externalIdToSave});
-    }
+      if (externalIdToSave === emptyString) {
+        await this.remove("Ids", "externalUserId");
+      } else {
+        await this.put("Ids", { type: "externalUserId", id: externalIdToSave });
+      }
 
-    if (authHashToSave === emptyString) {
-      await this.remove('Ids', 'externalUserIdAuthHash');
-    } else {
-      await this.put('Ids', {
-        type: 'externalUserIdAuthHash',
-        id: authHashToSave,
-      });
-    }
+      if (authHashToSave === emptyString) {
+        await this.remove("Ids", "externalUserIdAuthHash");
+      } else {
+        await this.put("Ids", { type: "externalUserIdAuthHash", id: authHashToSave });
+      }
   }
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
-      await this.put('Ids', {type: 'appId', id: appConfig.appId});
+      await this.put("Ids", { type: "appId", id: appConfig.appId });
     if (appConfig.subdomain)
-      await this.put('Options', {key: 'subdomain', value: appConfig.subdomain});
+      await this.put("Options", { key: "subdomain", value: appConfig.subdomain });
     if (appConfig.httpUseOneSignalCom === true)
-      await this.put('Options', {key: 'httpUseOneSignalCom', value: true});
+      await this.put("Options", { key: "httpUseOneSignalCom", value: true });
     else if (appConfig.httpUseOneSignalCom === false)
-      await this.put('Options', {key: 'httpUseOneSignalCom', value: false});
+      await this.put("Options", { key: "httpUseOneSignalCom", value: false });
     if (appConfig.vapidPublicKey)
-      await this.put('Options', {
-        key: 'vapidPublicKey',
-        value: appConfig.vapidPublicKey,
-      });
+      await this.put("Options", { key: "vapidPublicKey", value: appConfig.vapidPublicKey });
   }
 
   async getAppState(): Promise<AppState> {
     const state = new AppState();
-    state.defaultNotificationUrl = await this.get<string>(
-      'Options',
-      'defaultUrl',
-    );
-    state.defaultNotificationTitle = await this.get<string>(
-      'Options',
-      'defaultTitle',
-    );
-    state.lastKnownPushEnabled = await this.get<boolean>(
-      'Options',
-      'isPushEnabled',
-    );
-    state.clickedNotifications = await this.get<ClickedNotifications>(
-      'NotificationOpened',
-    );
+    state.defaultNotificationUrl = await this.get<string>("Options", "defaultUrl");
+    state.defaultNotificationTitle = await this.get<string>("Options", "defaultTitle");
+    state.lastKnownPushEnabled = await this.get<boolean>("Options", "isPushEnabled");
+    state.clickedNotifications = await this.get<ClickedNotifications>("NotificationOpened");
     return state;
   }
 
   async setAppState(appState: AppState) {
     if (appState.defaultNotificationUrl)
-      await this.put('Options', {
-        key: 'defaultUrl',
-        value: appState.defaultNotificationUrl,
-      });
-    if (
-      appState.defaultNotificationTitle ||
-      appState.defaultNotificationTitle === ''
-    )
-      await this.put('Options', {
-        key: 'defaultTitle',
-        value: appState.defaultNotificationTitle,
-      });
+      await this.put("Options", { key: "defaultUrl", value: appState.defaultNotificationUrl });
+    if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
+      await this.put("Options", { key: "defaultTitle", value: appState.defaultNotificationTitle });
     if (appState.lastKnownPushEnabled != null)
-      await this.put('Options', {
-        key: 'isPushEnabled',
-        value: appState.lastKnownPushEnabled,
-      });
+      await this.put("Options", { key: "isPushEnabled", value: appState.lastKnownPushEnabled });
     if (appState.clickedNotifications) {
-      const clickedNotificationUrls = Object.keys(
-        appState.clickedNotifications,
-      );
+      const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
       for (const url of clickedNotificationUrls) {
         const notificationDetails = appState.clickedNotifications[url];
         if (notificationDetails) {
-          await this.put('NotificationOpened', {
+          await this.put("NotificationOpened", {
             url: url,
             data: (notificationDetails as any).data,
-            timestamp: (notificationDetails as any).timestamp,
+            timestamp: (notificationDetails as any).timestamp
           });
         } else if (notificationDetails === null) {
           // If we get an object like:
           // { "http://site.com/page": null}
           // It means we need to remove that entry
-          await this.remove('NotificationOpened', url);
+          await this.remove("NotificationOpened", url);
         }
       }
     }
@@ -352,41 +288,26 @@ export default class Database {
 
   async getServiceWorkerState(): Promise<ServiceWorkerState> {
     const state = new ServiceWorkerState();
-    state.workerVersion = await this.get<number>(
-      'Ids',
-      'WORKER1_ONE_SIGNAL_SW_VERSION',
-    );
+    state.workerVersion = await this.get<number>("Ids", "WORKER1_ONE_SIGNAL_SW_VERSION");
     return state;
   }
 
-  async setServiceWorkerState(state: ServiceWorkerState) {
+   async setServiceWorkerState(state: ServiceWorkerState) {
     if (state.workerVersion)
-      await this.put('Ids', {
-        type: 'WORKER1_ONE_SIGNAL_SW_VERSION',
-        id: state.workerVersion,
-      });
+      await this.put("Ids", { type: "WORKER1_ONE_SIGNAL_SW_VERSION", id: state.workerVersion });
   }
 
   async getSubscription(): Promise<Subscription> {
     const subscription = new Subscription();
-    subscription.deviceId = await this.get<string>('Ids', 'userId');
-    subscription.subscriptionToken = await this.get<string>(
-      'Ids',
-      'registrationId',
-    );
+    subscription.deviceId = await this.get<string>("Ids", "userId");
+    subscription.subscriptionToken = await this.get<string>("Ids", "registrationId");
 
     // The preferred database key to store our subscription
-    const dbOptedOut = await this.get<boolean>('Options', 'optedOut');
+    const dbOptedOut = await this.get<boolean>("Options", "optedOut");
     // For backwards compatibility, we need to read from this if the above is not found
-    const dbNotOptedOut = await this.get<boolean>('Options', 'subscription');
-    const createdAt = await this.get<number>(
-      'Options',
-      'subscriptionCreatedAt',
-    );
-    const expirationTime = await this.get<number>(
-      'Options',
-      'subscriptionExpirationTime',
-    );
+    const dbNotOptedOut = await this.get<boolean>("Options", "subscription");
+    const createdAt = await this.get<number>("Options", "subscriptionCreatedAt");
+    const expirationTime = await this.get<number>("Options", "subscriptionExpirationTime");
 
     if (dbOptedOut != null) {
       subscription.optedOut = dbOptedOut;
@@ -404,45 +325,32 @@ export default class Database {
   }
 
   async setDeviceId(deviceId: string | null): Promise<void> {
-    await this.put('Ids', {type: 'userId', id: deviceId});
+    await this.put("Ids", { type: "userId", id: deviceId });
   }
 
   async setSubscription(subscription: Subscription) {
     if (subscription.deviceId) {
       await this.setDeviceId(subscription.deviceId);
     }
-    if (typeof subscription.subscriptionToken !== 'undefined') {
+    if (typeof subscription.subscriptionToken !== "undefined") {
       // Allow null subscriptions to be set
-      await this.put('Ids', {
-        type: 'registrationId',
-        id: subscription.subscriptionToken,
-      });
+      await this.put("Ids", { type: "registrationId", id: subscription.subscriptionToken });
     }
-    if (subscription.optedOut != null) {
-      // Checks if null or undefined, allows false
-      await this.put('Options', {
-        key: 'optedOut',
-        value: subscription.optedOut,
-      });
+    if (subscription.optedOut != null) { // Checks if null or undefined, allows false
+      await this.put("Options", { key: "optedOut", value: subscription.optedOut });
     }
     if (subscription.createdAt != null) {
-      await this.put('Options', {
-        key: 'subscriptionCreatedAt',
-        value: subscription.createdAt,
-      });
+      await this.put("Options", { key: "subscriptionCreatedAt", value: subscription.createdAt });
     }
     if (subscription.expirationTime != null) {
-      await this.put('Options', {
-        key: 'subscriptionExpirationTime',
-        value: subscription.expirationTime,
-      });
+      await this.put("Options", { key: "subscriptionExpirationTime", value: subscription.expirationTime });
     } else {
-      await this.remove('Options', 'subscriptionExpirationTime');
+      await this.remove("Options", "subscriptionExpirationTime");
     }
   }
 
   async getEmailProfile(): Promise<EmailProfile> {
-    const profileJson = await this.get<BundleEmail>('Ids', 'emailProfile');
+    const profileJson = await this.get<BundleEmail>("Ids", "emailProfile");
     if (profileJson) {
       return EmailProfile.deserialize(profileJson);
     } else {
@@ -452,15 +360,12 @@ export default class Database {
 
   async setEmailProfile(emailProfile: EmailProfile): Promise<void> {
     if (emailProfile) {
-      await this.put('Ids', {
-        type: 'emailProfile',
-        id: emailProfile.serialize(),
-      });
+      await this.put("Ids", { type: "emailProfile", id: emailProfile.serialize() });
     }
   }
 
   async getSMSProfile(): Promise<SMSProfile> {
-    const profileJson = await this.get<BundleSMS>('Ids', 'smsProfile');
+    const profileJson = await this.get<BundleSMS>("Ids", "smsProfile");
     if (profileJson) {
       return SMSProfile.deserialize(profileJson);
     } else {
@@ -470,57 +375,47 @@ export default class Database {
 
   async setSMSProfile(profile: SMSProfile): Promise<void> {
     if (profile) {
-      await this.put('Ids', {type: 'smsProfile', id: profile.serialize()});
+      await this.put("Ids", { type: "smsProfile", id: profile.serialize() });
     }
   }
 
   async setProvideUserConsent(consent: boolean): Promise<void> {
-    await this.put('Options', {key: 'userConsent', value: consent});
+    await this.put("Options", { key: "userConsent", value: consent });
   }
 
   async getProvideUserConsent(): Promise<boolean> {
-    return await this.get<boolean>('Options', 'userConsent');
+    return await this.get<boolean>("Options", "userConsent");
   }
 
   private async getSession(sessionKey: string): Promise<Session | null> {
-    return await this.get<Session | null>('Sessions', sessionKey);
+    return await this.get<Session | null>("Sessions", sessionKey);
   }
 
   private async setSession(session: Session): Promise<void> {
-    await this.put('Sessions', session);
+    await this.put("Sessions", session);
   }
 
   private async removeSession(sessionKey: string): Promise<void> {
-    await this.remove('Sessions', sessionKey);
+    await this.remove("Sessions", sessionKey);
   }
 
-  async getLastNotificationClicked(
-    appId: string,
-  ): Promise<NotificationClicked | null> {
+  async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
     let allClickedNotifications: NotificationClicked[] = [];
     try {
-      allClickedNotifications = await this.getAll<NotificationClicked>(
-        'NotificationClicked',
-      );
-    } catch (e) {
-      Log.error('Database.getNotificationClickedByUrl', e);
+      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+    } catch(e) {
+      Log.error("Database.getNotificationClickedByUrl", e);
     }
-    const predicate = (notification: NotificationClicked) =>
-      notification.appId === appId;
+    const predicate = (notification: NotificationClicked) => notification.appId === appId;
     return allClickedNotifications.find(predicate) || null;
   }
 
-  async getNotificationClickedByUrl(
-    url: string,
-    appId: string,
-  ): Promise<NotificationClicked | null> {
+  async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
     let allClickedNotifications: NotificationClicked[] = [];
     try {
-      allClickedNotifications = await this.getAll<NotificationClicked>(
-        'NotificationClicked',
-      );
-    } catch (e) {
-      Log.error('Database.getNotificationClickedByUrl', e);
+      allClickedNotifications = await this.getAll<NotificationClicked>("NotificationClicked");
+    } catch(e) {
+      Log.error("Database.getNotificationClickedByUrl", e);
     }
     const predicate = (notification: NotificationClicked) => {
       if (notification.appId !== appId) {
@@ -532,37 +427,27 @@ export default class Database {
     return allClickedNotifications.find(predicate) || null;
   }
 
-  async getNotificationClickedById(
-    notificationId: string,
-  ): Promise<NotificationClicked | null> {
-    return await this.get<NotificationClicked | null>(
-      'NotificationClicked',
-      notificationId,
-    );
+  async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
+    return await this.get<NotificationClicked | null>("NotificationClicked", notificationId);
   }
 
-  async getNotificationReceivedById(
-    notificationId: string,
-  ): Promise<NotificationReceived | null> {
-    return await this.get<NotificationReceived | null>(
-      'NotificationReceived',
-      notificationId,
-    );
+  async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
+    return await this.get<NotificationReceived | null>("NotificationReceived", notificationId);
   }
 
   async removeNotificationClickedById(notificationId: string): Promise<void> {
-    await this.remove('NotificationClicked', notificationId);
+    await this.remove("NotificationClicked", notificationId);
   }
 
   async removeAllNotificationClicked(): Promise<void> {
-    await this.remove('NotificationClicked');
+    await this.remove("NotificationClicked");
   }
 
   async resetSentUniqueOutcomes(): Promise<void> {
-    const outcomes = await this.getAll<SentUniqueOutcome>('SentUniqueOutcome');
-    const promises = outcomes.map((o) => {
+    const outcomes = await this.getAll<SentUniqueOutcome>("SentUniqueOutcome");
+    const promises = outcomes.map(o => {
       o.sentDuringSession = null;
-      return Database.put('SentUniqueOutcome', o);
+      return Database.put("SentUniqueOutcome", o);
     });
     await Promise.all(promises);
   }
@@ -574,21 +459,18 @@ export default class Database {
    */
   static async rebuild() {
     return Promise.all([
-      Database.singletonInstance.remove('Ids'),
-      Database.singletonInstance.remove('NotificationOpened'),
-      Database.singletonInstance.remove('Options'),
-      Database.singletonInstance.remove('NotificationReceived'),
-      Database.singletonInstance.remove('NotificationClicked'),
-      Database.singletonInstance.remove('SentUniqueOutcome'),
+      Database.singletonInstance.remove("Ids"),
+      Database.singletonInstance.remove("NotificationOpened"),
+      Database.singletonInstance.remove("Options"),
+      Database.singletonInstance.remove("NotificationReceived"),
+      Database.singletonInstance.remove("NotificationClicked"),
+      Database.singletonInstance.remove("SentUniqueOutcome")
     ]);
   }
 
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
-    return Database.singletonInstance.emitter.on.apply(
-      Database.singletonInstance.emitter,
-      args,
-    );
+    return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
   }
 
   public static async getCurrentSession(): Promise<Session | null> {
@@ -667,18 +549,12 @@ export default class Database {
     return await Database.singletonInstance.getExternalUserIdAuthHash();
   }
 
-  static async getLastNotificationClicked(
-    appId: string,
-  ): Promise<NotificationClicked | null> {
+  static async getLastNotificationClicked(appId: string): Promise<NotificationClicked | null> {
     return await Database.singletonInstance.getLastNotificationClicked(appId);
   }
 
-  static async removeNotificationClickedById(
-    notificationId: string,
-  ): Promise<void> {
-    return await Database.singletonInstance.removeNotificationClickedById(
-      notificationId,
-    );
+  static async removeNotificationClickedById(notificationId: string): Promise<void> {
+    return await Database.singletonInstance.removeNotificationClickedById(notificationId);
   }
 
   static async removeAllNotificationClicked(): Promise<void> {
@@ -689,40 +565,21 @@ export default class Database {
     return await Database.singletonInstance.resetSentUniqueOutcomes();
   }
 
-  static async getNotificationClickedByUrl(
-    url: string,
-    appId: string,
-  ): Promise<NotificationClicked | null> {
-    return await Database.singletonInstance.getNotificationClickedByUrl(
-      url,
-      appId,
-    );
+  static async getNotificationClickedByUrl(url: string, appId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedByUrl(url, appId);
   }
 
-  static async getNotificationClickedById(
-    notificationId: string,
-  ): Promise<NotificationClicked | null> {
-    return await Database.singletonInstance.getNotificationClickedById(
-      notificationId,
-    );
+  static async getNotificationClickedById(notificationId: string): Promise<NotificationClicked | null> {
+    return await Database.singletonInstance.getNotificationClickedById(notificationId);
   }
 
-  static async getNotificationReceivedById(
-    notificationId: string,
-  ): Promise<NotificationReceived | null> {
-    return await Database.singletonInstance.getNotificationReceivedById(
-      notificationId,
-    );
+  static async getNotificationReceivedById(notificationId: string): Promise<NotificationReceived | null> {
+    return await Database.singletonInstance.getNotificationReceivedById(notificationId);
   }
 
-  static async setExternalUserId(
-    externalUserId?: string | null,
-    authHash?: string | null,
-  ): Promise<void> {
-    await Database.singletonInstance.setExternalUserId(
-      externalUserId,
-      authHash,
-    );
+  static async setExternalUserId(externalUserId?: string | null, authHash?: string | null):
+  Promise<void> {
+    await Database.singletonInstance.setExternalUserId(externalUserId, authHash);
   }
 
   static async setDeviceId(deviceId: string | null): Promise<void> {

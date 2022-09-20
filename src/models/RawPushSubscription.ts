@@ -1,15 +1,15 @@
-import {Serializable} from './Serializable';
+import { Serializable } from './Serializable';
 
 export class RawPushSubscription implements Serializable {
   /**
-   * The GCM/FCM registration token, along with the full URL. Not used for Safari.
-   */
+     * The GCM/FCM registration token, along with the full URL. Not used for Safari.
+     */
   w3cEndpoint: URL | undefined;
   w3cP256dh: string | undefined;
   w3cAuth: string | undefined;
   /**
-   * A Safari-only push subscription device token. Not used for Chrome/Firefox.
-   */
+     * A Safari-only push subscription device token. Not used for Chrome/Firefox.
+     */
   safariDeviceToken: string | undefined;
   /**
    * A full RawPushSubscription object of the existing W3C subscription, if any.
@@ -32,18 +32,12 @@ export class RawPushSubscription implements Serializable {
    */
   public isNewSubscription(): boolean {
     if (this.existingW3cPushSubscription) {
-      if (
-        !!this.existingW3cPushSubscription.w3cEndpoint !== !!this.w3cEndpoint
-      ) {
+      if (!!this.existingW3cPushSubscription.w3cEndpoint !== !!this.w3cEndpoint) {
         return true;
       }
-      if (
-        !!this.existingW3cPushSubscription.w3cEndpoint &&
-        !!this.w3cEndpoint &&
-        this.existingW3cPushSubscription.w3cEndpoint.toString() !==
-          this.w3cEndpoint.toString()
-      ) {
-        return true;
+      if (!!this.existingW3cPushSubscription.w3cEndpoint && !!this.w3cEndpoint && 
+        this.existingW3cPushSubscription.w3cEndpoint.toString() !== this.w3cEndpoint.toString()) {
+          return true;
       }
       if (this.existingW3cPushSubscription.w3cP256dh !== this.w3cP256dh) {
         return true;
@@ -64,9 +58,7 @@ export class RawPushSubscription implements Serializable {
    *
    * @param pushSubscription A native browser W3C push subscription.
    */
-  public static setFromW3cSubscription(
-    pushSubscription: PushSubscription,
-  ): RawPushSubscription {
+  public static setFromW3cSubscription(pushSubscription: PushSubscription): RawPushSubscription {
     const rawPushSubscription = new RawPushSubscription();
 
     if (pushSubscription) {
@@ -90,16 +82,12 @@ export class RawPushSubscription implements Serializable {
 
         if (p256dh) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-          const p256dh_base64encoded = btoa(
-            String.fromCharCode.apply(null, new Uint8Array(p256dh)),
-          );
+          const p256dh_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh)));
           rawPushSubscription.w3cP256dh = p256dh_base64encoded;
         }
         if (auth) {
           // Base64 encode the ArrayBuffer (not URL-Safe, using standard Base64)
-          const auth_base64encoded = btoa(
-            String.fromCharCode.apply(null, new Uint8Array(auth)),
-          );
+          const auth_base64encoded = btoa(String.fromCharCode.apply(null, new Uint8Array(auth)));
           rawPushSubscription.w3cAuth = auth_base64encoded;
         }
       }
@@ -125,10 +113,8 @@ export class RawPushSubscription implements Serializable {
       w3cP256dh: this.w3cP256dh,
       w3cAuth: this.w3cAuth,
       safariDeviceToken: this.safariDeviceToken,
-      existingPushSubscription: this.existingW3cPushSubscription
-        ? this.existingW3cPushSubscription.serialize()
-        : null,
-      existingSafariDeviceToken: this.existingSafariDeviceToken,
+      existingPushSubscription: this.existingW3cPushSubscription ? this.existingW3cPushSubscription.serialize() : null,
+      existingSafariDeviceToken: this.existingSafariDeviceToken
     };
 
     return serializedBundle;
@@ -150,11 +136,9 @@ export class RawPushSubscription implements Serializable {
     subscription.w3cAuth = bundle.w3cAuth;
     subscription.existingW3cPushSubscription = undefined;
     if (bundle.existingW3cPushSubscription) {
-      subscription.existingW3cPushSubscription =
-        RawPushSubscription.deserialize(bundle.existingW3cPushSubscription);
+      subscription.existingW3cPushSubscription = RawPushSubscription.deserialize(bundle.existingW3cPushSubscription);
     } else if (bundle.existingPushSubscription) {
-      subscription.existingW3cPushSubscription =
-        RawPushSubscription.deserialize(bundle.existingPushSubscription);
+      subscription.existingW3cPushSubscription = RawPushSubscription.deserialize(bundle.existingPushSubscription);
     }
     subscription.safariDeviceToken = bundle.safariDeviceToken;
     subscription.existingSafariDeviceToken = bundle.existingSafariDeviceToken;

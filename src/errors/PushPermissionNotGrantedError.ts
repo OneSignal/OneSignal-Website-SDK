@@ -1,9 +1,10 @@
-import OneSignalError from './OneSignalError';
+import OneSignalError from "./OneSignalError";
+
 
 export enum PushPermissionNotGrantedErrorReason {
   Blocked,
   Dismissed,
-  Default,
+  Default
 }
 
 export default class PushPermissionNotGrantedError extends OneSignalError {

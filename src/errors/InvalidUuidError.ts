@@ -1,4 +1,5 @@
-import OneSignalError from './OneSignalError';
+import OneSignalError from "./OneSignalError";
+
 
 export default class InvalidUuidError extends OneSignalError {
   constructor(uuid) {

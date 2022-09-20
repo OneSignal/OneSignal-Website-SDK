@@ -1,10 +1,9 @@
 import OneSignalError from './OneSignalError';
 
+
 export default class AlreadySubscribedError extends OneSignalError {
   constructor() {
-    super(
-      'This operation can only be performed when the user is not subscribed.',
-    );
+    super('This operation can only be performed when the user is not subscribed.');
 
     /**
      * Important! Required to make sure the correct error type is detected during instanceof checks.

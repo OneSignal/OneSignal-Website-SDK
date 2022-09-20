@@ -1,14 +1,15 @@
-import {WorkerMessenger} from '../libraries/WorkerMessenger';
-import {ServiceWorkerManager} from '../managers/ServiceWorkerManager';
-import {SubscriptionManager} from '../managers/SubscriptionManager';
-import {AppConfig} from './AppConfig';
-import {PageViewManager} from '../managers/PageViewManager';
+import { WorkerMessenger } from '../libraries/WorkerMessenger';
+import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
+import { SubscriptionManager } from '../managers/SubscriptionManager';
+import { AppConfig } from './AppConfig';
+import { PageViewManager } from '../managers/PageViewManager';
 import PermissionManager from '../managers/PermissionManager';
-import ContextHelper from '../helpers/ContextHelper';
-import {UpdateManager} from '../managers/UpdateManager';
-import {ISessionManager} from '../managers/sessionManager/types';
-import {SessionManager} from '../managers/sessionManager/sw/SessionManager';
-import {SecondaryChannelManager} from '../managers/channelManager/shared/SecondaryChannelManager';
+import ContextHelper from "../helpers/ContextHelper";
+import { UpdateManager } from "../managers/UpdateManager";
+import { ISessionManager } from "../managers/sessionManager/types";
+import { SessionManager } from "../managers/sessionManager/sw/SessionManager";
+import { SecondaryChannelManager } from '../managers/channelManager/shared/SecondaryChannelManager';
+
 
 // TODO: Ideally this file should only import classes used by ServiceWorker.ts.
 //       Example, ServiceWorkerManager should be remove as it is used by the page / browser,

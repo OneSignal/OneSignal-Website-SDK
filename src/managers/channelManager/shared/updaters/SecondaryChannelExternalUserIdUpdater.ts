@@ -1,7 +1,7 @@
-import {UpdatePlayerExternalUserId} from '../../../../models/UpdatePlayerOptions';
-import OneSignalApiShared from '../../../../OneSignalApiShared';
-import Database from '../../../../services/Database';
-import {SecondaryChannelProfileProviderBase} from '../providers/SecondaryChannelProfileProviderBase';
+import { UpdatePlayerExternalUserId } from "../../../../models/UpdatePlayerOptions";
+import OneSignalApiShared from "../../../../OneSignalApiShared";
+import Database from "../../../../services/Database";
+import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelExternalUserIdUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
@@ -13,12 +13,16 @@ export class SecondaryChannelExternalUserIdUpdater {
     //   - Example if OneSignal.setEmail(""..."") is never called
     const subscriptionId = await this.profileProvider.getSubscriptionId();
 
-    const {appId} = await Database.getAppConfig();
+    const { appId } = await Database.getAppConfig();
     const payload = {
       external_user_id: id,
-      external_user_id_auth_hash: authHash,
+      external_user_id_auth_hash: authHash
     } as UpdatePlayerExternalUserId;
 
-    await OneSignalApiShared.updatePlayer(appId, subscriptionId, payload);
+    await OneSignalApiShared.updatePlayer(
+      appId,
+      subscriptionId,
+      payload
+    );
   }
 }

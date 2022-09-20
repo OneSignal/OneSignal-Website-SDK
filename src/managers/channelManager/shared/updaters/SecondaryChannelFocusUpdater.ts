@@ -1,6 +1,6 @@
-import OneSignalApiBase from '../../../../OneSignalApiBase';
-import Database from '../../../../services/Database';
-import {SecondaryChannelProfileProviderBase} from '../providers/SecondaryChannelProfileProviderBase';
+import OneSignalApiBase from "../../../../OneSignalApiBase";
+import Database from "../../../../services/Database";
+import { SecondaryChannelProfileProviderBase } from "../providers/SecondaryChannelProfileProviderBase";
 
 export class SecondaryChannelFocusUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}
@@ -18,13 +18,10 @@ export class SecondaryChannelFocusUpdater {
     const payload: any = {
       app_id: appConfig.appId,
       type: 1,
-      state: 'ping',
+      state: "ping",
       active_time: sessionDuration,
       device_type: this.profileProvider.deviceType,
     };
-    await OneSignalApiBase.post(
-      `players/${profile.subscriptionId}/on_focus`,
-      payload,
-    );
+    await OneSignalApiBase.post(`players/${profile.subscriptionId}/on_focus`, payload);
   }
 }

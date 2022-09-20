@@ -1,3 +1,4 @@
-interface Func<T, TResult> {
+interface Func<T, TResult>
+{
   (item: T): TResult;
 }

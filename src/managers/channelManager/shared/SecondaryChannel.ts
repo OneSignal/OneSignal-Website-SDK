@@ -1,12 +1,9 @@
-import {TagsObject} from '../../../models/Tags';
+import { TagsObject } from "../../../models/Tags";
 
 // Interface provided outside of this module.
 //   Example: OneSignal.ts as a consumer.
 export interface SecondaryChannel {
-  setIdentifier(
-    identifier: string,
-    authHash?: string,
-  ): Promise<string | null | undefined>;
+  setIdentifier(identifier: string, authHash?: string): Promise<string | null | undefined>;
   logout(): Promise<boolean>;
 }
 

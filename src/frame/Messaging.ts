@@ -15,16 +15,14 @@ export class Messaging {
     POPUP_ACCEPTED: 'postmam.popup.accepted',
     POPUP_REJECTED: 'postmam.popup.canceled',
     POPUP_CLOSING: 'postman.popup.closing',
-    REMOTE_NOTIFICATION_PERMISSION_CHANGED:
-      'postmam.remoteNotificationPermissionChanged',
+    REMOTE_NOTIFICATION_PERMISSION_CHANGED: 'postmam.remoteNotificationPermissionChanged',
     IFRAME_POPUP_INITIALIZE: 'postmam.iframePopupInitialize',
     UNSUBSCRIBE_FROM_PUSH: 'postmam.unsubscribeFromPush',
     SET_SESSION_COUNT: 'postmam.setSessionCount',
     REQUEST_HOST_URL: 'postmam.requestHostUrl',
     WINDOW_TIMEOUT: 'postmam.windowTimeout',
     FINISH_REMOTE_REGISTRATION: 'postmam.finishRemoteRegistration',
-    FINISH_REMOTE_REGISTRATION_IN_PROGRESS:
-      'postmam.finishRemoteRegistrationInProgress',
+    FINISH_REMOTE_REGISTRATION_IN_PROGRESS: 'postmam.finishRemoteRegistrationInProgress',
     POPUP_BEGIN_MESSAGEPORT_COMMS: 'postmam.beginMessagePortComms',
     SERVICEWORKER_COMMAND_REDIRECT: 'postmam.command.redirect',
     MARK_PROMPT_DISMISSED: 'postmam.markPromptDismissed',

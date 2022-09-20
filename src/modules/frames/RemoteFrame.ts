@@ -1,10 +1,13 @@
+
+
+
 import SubscriptionHelper from '../../helpers/SubscriptionHelper';
-import {ProxyFrameInitOptions} from '../../models/ProxyFrameInitOptions';
+import { ProxyFrameInitOptions } from '../../models/ProxyFrameInitOptions';
 import Postmam from '../../Postmam';
 import Context from '../../models/Context';
 import ConfigManager from '../../managers/ConfigManager';
 import LocalStorage from '../../utils/LocalStorage';
-import {EnvironmentInfoHelper} from '../../context/browser/helpers/EnvironmentInfoHelper';
+import { EnvironmentInfoHelper } from "../../context/browser/helpers/EnvironmentInfoHelper";
 
 /*
   These options are passed from the Rails app as plain raw untyped values.
@@ -43,9 +46,9 @@ export default class RemoteFrame implements Disposable {
       siteName: initOptions.siteName,
       metrics: {
         enable: false,
-        mixpanelReportingToken: null,
+        mixpanelReportingToken: null
       },
-      userConfig: {},
+      userConfig: {}
     };
   }
 
@@ -64,14 +67,14 @@ export default class RemoteFrame implements Disposable {
     const creator = window.opener || window.parent;
     if (creator == window) {
       document.write(
-        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`,
+        `<span style='font-size: 14px; color: red; font-family: sans-serif;'>OneSignal: This page cannot be directly opened, and must be opened as a result of a subscription call.</span>`
       );
       return Promise.resolve();
     }
     // The rest of our SDK isn't refactored enough yet to accept typed objects
     // Within this class, we can use them, but when we assign them to
     // OneSignal.config, assign the simple string versions
-    const rasterizedOptions = {...this.options};
+    const rasterizedOptions = { ...this.options };
     rasterizedOptions.appId = rasterizedOptions.appId;
     /* This is necessary, otherwise the subdomain is lost after ConfigManager.getAppConfig */
     (rasterizedOptions as any).subdomainName = rasterizedOptions.subdomain;

@@ -1,10 +1,12 @@
+
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
-import Utils from '../context/shared/utils/Utils';
+import Utils from "../context/shared/utils/Utils";
 
 const DATABASE_VERSION = 3;
 
 export default class IndexedDb {
+
   public emitter: Emitter;
   private database: IDBDatabase | undefined;
   private openLock: Promise<IDBDatabase> | undefined;
@@ -14,7 +16,7 @@ export default class IndexedDb {
   }
 
   private open(databaseName: string): Promise<IDBDatabase> {
-    return new Promise<IDBDatabase>((resolve) => {
+    return new Promise<IDBDatabase>(resolve => {
       let request: IDBOpenDBRequest | undefined = undefined;
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
@@ -54,19 +56,9 @@ export default class IndexedDb {
      */
     event.preventDefault();
     const error = event.target.error;
-    if (
-      Utils.contains(
-        error.message,
-        'The operation failed for reasons unrelated to the database itself and not covered by any other error code',
-      ) ||
-      Utils.contains(
-        error.message,
-        'A mutation operation was attempted on a database that did not allow mutations',
-      )
-    ) {
-      Log.warn(
-        "OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6",
-      );
+    if (Utils.contains(error.message, 'The operation failed for reasons unrelated to the database itself and not covered by any other error code') ||
+      Utils.contains(error.message, 'A mutation operation was attempted on a database that did not allow mutations')) {
+      Log.warn("OneSignal: IndexedDb web storage is not available on this origin since this profile's IndexedDb schema has been upgraded in a newer version of Firefox. See: https://bugzilla.mozilla.org/show_bug.cgi?id=1236557#c6");
     } else {
       Log.warn('OneSignal: Fatal error opening IndexedDb database:', error);
     }
@@ -108,25 +100,23 @@ export default class IndexedDb {
    * Ref: https://developer.mozilla.org/en-US/docs/Web/API/IDBOpenDBRequest/onupgradeneeded
    */
   private onDatabaseUpgradeNeeded(event: IDBVersionChangeEvent): void {
-    Log.debug(
-      'IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).',
-    );
+    Log.debug('IndexedDb: Database is being rebuilt or upgraded (upgradeneeded event).');
     const db = (event.target as IDBOpenDBRequest).result;
     if (event.oldVersion < 1) {
-      db.createObjectStore('Ids', {keyPath: 'type'});
-      db.createObjectStore('NotificationOpened', {keyPath: 'url'});
-      db.createObjectStore('Options', {keyPath: 'key'});
+      db.createObjectStore("Ids", { keyPath: "type" });
+      db.createObjectStore("NotificationOpened", { keyPath: "url" });
+      db.createObjectStore("Options", { keyPath: "key" });
     }
     if (event.oldVersion < 2) {
-      db.createObjectStore('Sessions', {keyPath: 'sessionKey'});
-      db.createObjectStore('NotificationReceived', {keyPath: 'notificationId'});
-      db.createObjectStore('NotificationClicked', {keyPath: 'notificationId'});
+      db.createObjectStore("Sessions", { keyPath: "sessionKey" });
+      db.createObjectStore("NotificationReceived", { keyPath: "notificationId" });
+      db.createObjectStore("NotificationClicked", { keyPath: "notificationId" });
     }
     if (event.oldVersion < 3) {
-      db.createObjectStore('SentUniqueOutcome', {keyPath: 'outcomeName'});
+      db.createObjectStore("SentUniqueOutcome", { keyPath: "outcomeName" });
     }
     // Wrap in conditional for tests
-    if (typeof OneSignal !== 'undefined') {
+    if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
     }
   }
@@ -142,10 +132,7 @@ export default class IndexedDb {
     if (key) {
       // Return a table-key value
       return await new Promise((resolve, reject) => {
-        const request: IDBRequest = database
-          .transaction(table)
-          .objectStore(table)
-          .get(key);
+        const request: IDBRequest = database.transaction(table).objectStore(table).get(key);
         request.onsuccess = () => {
           resolve(request.result);
         };
@@ -157,10 +144,7 @@ export default class IndexedDb {
       // Return all values in table
       return await new Promise((resolve, reject) => {
         const jsonResult: {[key: string]: any} = {};
-        const cursor = database
-          .transaction(table)
-          .objectStore(table)
-          .openCursor();
+        const cursor = database.transaction(table).objectStore(table).openCursor();
         cursor.onsuccess = (event: any) => {
           const cursorResult: IDBCursorWithValue = event.target.result;
           if (cursorResult) {
@@ -181,10 +165,7 @@ export default class IndexedDb {
   public async getAll<T>(table: string): Promise<T[]> {
     return await new Promise<T[]>(async (resolve, reject) => {
       const database = await this.ensureDatabaseOpen();
-      const cursor = database
-        .transaction(table)
-        .objectStore(table)
-        .openCursor();
+      const cursor = database.transaction(table).objectStore(table).openCursor();
       const result: T[] = [];
       cursor.onsuccess = (event: any) => {
         const cursorResult: IDBCursorWithValue = event.target.result;
@@ -208,13 +189,11 @@ export default class IndexedDb {
     await this.ensureDatabaseOpen();
     return await new Promise((resolve, reject) => {
       try {
-        const request = this.database!.transaction([table], 'readwrite')
-          .objectStore(table)
-          .put(key);
+        const request = this.database!.transaction([table], 'readwrite').objectStore(table).put(key);
         request.onsuccess = () => {
           resolve(key);
         };
-        request.onerror = (e) => {
+        request.onerror = e => {
           Log.error('Database PUT Transaction Error:', e);
           reject(e);
         };
@@ -233,16 +212,14 @@ export default class IndexedDb {
     const database = await this.ensureDatabaseOpen();
     return new Promise((resolve, reject) => {
       try {
-        const store = database
-          .transaction([table], 'readwrite')
-          .objectStore(table);
+        const store = database.transaction([table], "readwrite").objectStore(table);
         // If key is present remove a single key from a table.
         // Otherwise wipe the table
         const request = key ? store.delete(key) : store.clear();
         request.onsuccess = () => {
           resolve(key);
         };
-        request.onerror = (e) => {
+        request.onerror =e => {
           Log.error('Database REMOVE Transaction Error:', e);
           reject(e);
         };
