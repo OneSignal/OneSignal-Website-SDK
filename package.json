@@ -35,7 +35,7 @@
     "build:dev-dev": "./build/scripts/build.sh -f development -t development",
     "build:dev-prod": "./build/scripts/build.sh -f development -t production",
     "build:dev-stag": "./build/scripts/build.sh -f development -t staging",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettier --check src",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx; prettier --check src test __test__",
     "jest": "jest --coverage"
   },
   "config": {
