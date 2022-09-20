@@ -1,5 +1,5 @@
-import { SerializedPushDeviceRecord } from './PushDeviceRecord';
-import { OutcomesConfig } from './Outcomes';
+import {SerializedPushDeviceRecord} from './PushDeviceRecord';
+import {OutcomesConfig} from './Outcomes';
 
 export enum SessionStatus {
   Active = 'active',

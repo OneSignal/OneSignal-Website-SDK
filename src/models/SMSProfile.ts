@@ -1,4 +1,4 @@
-import { SecondaryChannelProfileSerializable } from './SecondaryChannelProfile';
+import {SecondaryChannelProfileSerializable} from './SecondaryChannelProfile';
 
 export interface BundleSMS {
   smsId?: string;

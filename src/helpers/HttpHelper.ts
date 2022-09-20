@@ -1,12 +1,12 @@
 import Event from '../Event';
 import LegacyManager from '../managers/LegacyManager';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
 import ProxyFrame from '../modules/frames/ProxyFrame';
-import { RemoteFrameOptions } from '../modules/frames/RemoteFrame';
+import {RemoteFrameOptions} from '../modules/frames/RemoteFrame';
 import SubscriptionModal from '../modules/frames/SubscriptionModal';
 import SubscriptionPopup from '../modules/frames/SubscriptionPopup';
-import { getConsoleStyle } from '../utils';
+import {getConsoleStyle} from '../utils';
 import Log from '../libraries/Log';
 
 declare var OneSignal: any;

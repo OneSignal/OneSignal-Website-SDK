@@ -1,4 +1,4 @@
-import { TagCategory } from './Tags';
+import {TagCategory} from './Tags';
 
 export enum DelayedPromptType {
   Native = 'native', // native push
@@ -126,7 +126,7 @@ export interface AppUserConfigNotifyButton {
   displayPredicate?: Function | null | undefined;
   size?: BellSize;
   position?: BellPosition;
-  offset?: { bottom: string; left: string; right: string };
+  offset?: {bottom: string; left: string; right: string};
   prenotify?: boolean;
   showCredit?: boolean;
   colors?: {

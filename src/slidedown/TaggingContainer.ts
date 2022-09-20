@@ -1,4 +1,4 @@
-import { TagCategory, TagsObjectWithBoolean } from '../models/Tags';
+import {TagCategory, TagsObjectWithBoolean} from '../models/Tags';
 import {
   addDomElement,
   removeDomElement,
@@ -6,7 +6,7 @@ import {
   removeCssClass,
   getDomElementOrStub,
 } from '../utils';
-import { getLoadingIndicatorWithColor } from './LoadingIndicator';
+import {getLoadingIndicatorWithColor} from './LoadingIndicator';
 import {
   SLIDEDOWN_CSS_IDS,
   TAGGING_CONTAINER_CSS_CLASSES,
@@ -121,7 +121,7 @@ export default class TaggingContainer {
   }
 
   private getCategoryLabelElement(tagCategory: TagCategory): Element {
-    const { label } = tagCategory;
+    const {label} = tagCategory;
 
     const labelElement = document.createElement('label');
     const labelSpan = document.createElement('span');

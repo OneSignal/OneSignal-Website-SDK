@@ -2,7 +2,7 @@ import Event from '../../Event';
 import MainHelper from '../../helpers/MainHelper';
 import SubscriptionHelper from '../../helpers/SubscriptionHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import {MessengerMessageEvent} from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import Log from '../../libraries/Log';
 

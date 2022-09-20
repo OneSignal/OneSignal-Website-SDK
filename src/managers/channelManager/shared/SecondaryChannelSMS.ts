@@ -8,13 +8,13 @@ import {
   SecondaryChannel,
   SecondaryChannelWithSynchronizerEvents,
 } from './SecondaryChannel';
-import { SecondaryChannelIdentifierUpdater } from './updaters/SecondaryChannelIdentifierUpdater';
-import { SecondaryChannelTagsUpdater } from './updaters/SecondaryChannelTagsUpdater';
-import { SecondaryChannelExternalUserIdUpdater } from './updaters/SecondaryChannelExternalUserIdUpdater';
-import { SecondaryChannelFocusUpdater } from './updaters/SecondaryChannelFocusUpdater';
-import { SecondaryChannelSessionUpdater } from './updaters/SecondaryChannelSessionUpdater';
-import { TagsObject } from '../../../models/Tags';
-import { SMSProfile } from '../../../models/SMSProfile';
+import {SecondaryChannelIdentifierUpdater} from './updaters/SecondaryChannelIdentifierUpdater';
+import {SecondaryChannelTagsUpdater} from './updaters/SecondaryChannelTagsUpdater';
+import {SecondaryChannelExternalUserIdUpdater} from './updaters/SecondaryChannelExternalUserIdUpdater';
+import {SecondaryChannelFocusUpdater} from './updaters/SecondaryChannelFocusUpdater';
+import {SecondaryChannelSessionUpdater} from './updaters/SecondaryChannelSessionUpdater';
+import {TagsObject} from '../../../models/Tags';
+import {SMSProfile} from '../../../models/SMSProfile';
 import Event from '../../../Event';
 
 export class SecondaryChannelSMS

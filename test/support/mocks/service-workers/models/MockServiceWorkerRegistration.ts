@@ -1,9 +1,7 @@
-import { MockPushManager } from './MockPushManager';
-import { MockServiceWorkerContainer } from './MockServiceWorkerContainer';
+import { MockPushManager } from "./MockPushManager";
+import { MockServiceWorkerContainer } from "./MockServiceWorkerContainer";
 
-export class MockServiceWorkerRegistration
-  implements ServiceWorkerRegistration
-{
+export class MockServiceWorkerRegistration implements ServiceWorkerRegistration {
   active: ServiceWorker | null;
   installing: ServiceWorker | null;
   waiting: ServiceWorker | null;
@@ -24,29 +22,11 @@ export class MockServiceWorkerRegistration
     return new URL(this.active.scriptURL).origin;
   }
 
-  addEventListener<K extends keyof ServiceWorkerRegistrationEventMap>(
-    type: K,
-    listener: (
-      this: ServiceWorkerRegistration,
-      ev: ServiceWorkerRegistrationEventMap[K],
-    ) => any,
-    options?: boolean | AddEventListenerOptions,
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListener | EventListenerObject,
-    options?: boolean | AddEventListenerOptions,
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListener | EventListenerObject | null,
-    options?: boolean | AddEventListenerOptions,
-  ): void;
-  addEventListener(
-    type,
-    listener,
-    options?: boolean | AddEventListenerOptions,
-  ): void {}
+  addEventListener<K extends keyof ServiceWorkerRegistrationEventMap>(type: K, listener: (this: ServiceWorkerRegistration, ev: ServiceWorkerRegistrationEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(type: string, listener: EventListener | EventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
+  addEventListener(type, listener, options?: boolean | AddEventListenerOptions): void {
+  }
 
   dispatchEvent(evt: Event): boolean {
     return false;
@@ -56,34 +36,13 @@ export class MockServiceWorkerRegistration
     return undefined;
   }
 
-  removeEventListener<K extends keyof ServiceWorkerRegistrationEventMap>(
-    type: K,
-    listener: (
-      this: ServiceWorkerRegistration,
-      ev: ServiceWorkerRegistrationEventMap[K],
-    ) => any,
-    options?: boolean | EventListenerOptions,
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListener | EventListenerObject,
-    options?: boolean | EventListenerOptions,
-  ): void;
-  removeEventListener(
-    type: string,
-    listener?: EventListener | EventListenerObject | null,
-    options?: EventListenerOptions | boolean,
-  ): void;
-  removeEventListener(
-    type,
-    listener?,
-    options?: boolean | EventListenerOptions,
-  ): void {}
+  removeEventListener<K extends keyof ServiceWorkerRegistrationEventMap>(type: K, listener: (this: ServiceWorkerRegistration, ev: ServiceWorkerRegistrationEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+  removeEventListener(type: string, listener: EventListener | EventListenerObject, options?: boolean | EventListenerOptions): void;
+  removeEventListener(type: string, listener?: EventListener | EventListenerObject | null, options?: EventListenerOptions | boolean): void;
+  removeEventListener(type, listener?, options?: boolean | EventListenerOptions): void {
+  }
 
-  showNotification(
-    title: string,
-    options?: NotificationOptions,
-  ): Promise<void> {
+  showNotification(title: string, options?: NotificationOptions): Promise<void> {
     return undefined;
   }
 
@@ -97,4 +56,6 @@ export class MockServiceWorkerRegistration
   update(): Promise<void> {
     return undefined;
   }
+
 }
+

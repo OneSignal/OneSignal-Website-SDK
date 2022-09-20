@@ -1,4 +1,4 @@
-import { decodeHtmlEntities, delay, getConsoleStyle, nothing } from '../utils';
+import {decodeHtmlEntities, delay, getConsoleStyle, nothing} from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Bell from './Bell';
 import Log from '../libraries/Log';

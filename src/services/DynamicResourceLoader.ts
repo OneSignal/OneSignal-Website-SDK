@@ -30,7 +30,7 @@ export class DynamicResourceLoader {
 
   getCache(): DynamicResourceLoaderCache {
     // Cache is private; return a cloned copy just for testing
-    return { ...this.cache };
+    return {...this.cache};
   }
 
   async loadSdkStylesheet(): Promise<ResourceLoadState> {

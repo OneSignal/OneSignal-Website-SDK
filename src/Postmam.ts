@@ -2,8 +2,8 @@ import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
 import Emitter from './libraries/Emitter';
 import Log from './libraries/Log';
-import { Utils } from './context/shared/utils/Utils';
-import { OneSignalUtils } from './utils/OneSignalUtils';
+import {Utils} from './context/shared/utils/Utils';
+import {OneSignalUtils} from './utils/OneSignalUtils';
 
 /**
  * Establishes a cross-domain MessageChannel between the current browsing context (this page) and another (an iFrame, popup, or parent page).
@@ -141,7 +141,7 @@ export default class Postmam {
       // Log.debug(`(Postmam) Discarding message because ${e.origin} is not an allowed origin:`, e.data)
       return;
     }
-    var { handshake } = e.data;
+    var {handshake} = e.data;
     if (handshake !== Postmam.HANDSHAKE_MESSAGE) {
       Log.info(
         '(Postmam) Got a postmam message, but not our expected handshake:',

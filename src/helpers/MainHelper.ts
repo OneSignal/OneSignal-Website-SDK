@@ -5,18 +5,15 @@ import {
 import Event from '../Event';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import {
-  AppUserConfigPromptOptions,
-  SlidedownOptions,
-} from '../models/Prompts';
+import {AppUserConfigPromptOptions, SlidedownOptions} from '../models/Prompts';
 import Log from '../libraries/Log';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { NotificationPermission } from '../models/NotificationPermission';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
-import { PermissionUtils } from '../utils/PermissionUtils';
-import { Utils } from '../context/shared/utils/Utils';
-import { RawPushSubscription } from '../models/RawPushSubscription';
+import {SubscriptionStateKind} from '../models/SubscriptionStateKind';
+import {NotificationPermission} from '../models/NotificationPermission';
+import {PushDeviceRecord} from '../models/PushDeviceRecord';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
+import {PermissionUtils} from '../utils/PermissionUtils';
+import {Utils} from '../context/shared/utils/Utils';
+import {RawPushSubscription} from '../models/RawPushSubscription';
 import SubscriptionHelper from './SubscriptionHelper';
 
 export default class MainHelper {
@@ -116,7 +113,7 @@ export default class MainHelper {
   public static getSlidedownOptions(
     promptOptions: AppUserConfigPromptOptions,
   ): SlidedownOptions {
-    return Utils.getValueOrDefault(promptOptions.slidedown, { prompts: [] });
+    return Utils.getValueOrDefault(promptOptions.slidedown, {prompts: []});
   }
 
   static getFullscreenPermissionMessageOptions(

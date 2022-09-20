@@ -1,4 +1,4 @@
-import { base64Encode } from '../utils/Encoding';
+import {base64Encode} from '../utils/Encoding';
 import Environment from '../Environment';
 
 abstract class MetricEvent {
@@ -123,7 +123,7 @@ export default class MetricsManager {
       $token: this.mixpanelReportingToken,
       $distinct_id: engagement.getProfileName(),
     };
-    queryParamsData = { ...queryParamsData, ...engagement.getOperationData() };
+    queryParamsData = {...queryParamsData, ...engagement.getOperationData()};
     const queryParams = base64Encode(JSON.stringify(queryParamsData));
 
     const requestOptions: RequestInit = {

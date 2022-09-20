@@ -1,4 +1,4 @@
-import { OutcomesConfig, OutcomesServerConfig } from './Outcomes';
+import {OutcomesConfig, OutcomesServerConfig} from './Outcomes';
 import {
   AppUserConfigPromptOptions,
   CustomLinkStyle,
@@ -6,7 +6,7 @@ import {
   AppUserConfigNotifyButton,
   SlidedownOptions,
 } from './Prompts';
-import { Categories } from './Tags';
+import {Categories} from './Tags';
 
 export interface AppConfig {
   /**

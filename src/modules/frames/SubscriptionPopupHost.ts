@@ -2,10 +2,10 @@ import Event from '../../Event';
 import EventHelper from '../../helpers/EventHelper';
 import MainHelper from '../../helpers/MainHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import {MessengerMessageEvent} from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import { RawPushSubscription } from '../../models/RawPushSubscription';
-import { SubscriptionManager } from '../../managers/SubscriptionManager';
+import {RawPushSubscription} from '../../models/RawPushSubscription';
+import {SubscriptionManager} from '../../managers/SubscriptionManager';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
 
@@ -223,7 +223,7 @@ export default class SubscriptionPopupHost implements Disposable {
       SdkEnvironment.getWindowEnv().toString() +
         ' Marking current session as a continuing browsing session.',
     );
-    const { sessionCount }: { sessionCount: number } = message.data;
+    const {sessionCount}: {sessionCount: number} = message.data;
     const context: Context = OneSignal.context;
     context.pageViewManager.setPageViewCount(sessionCount);
   }
@@ -243,11 +243,10 @@ export default class SubscriptionPopupHost implements Disposable {
         ' Finishing HTTP popup registration inside the iFrame, sent from popup.',
     );
 
-    message.reply({ progress: true });
+    message.reply({progress: true});
 
-    const {
-      rawPushSubscription,
-    }: { rawPushSubscription: RawPushSubscription } = message.data;
+    const {rawPushSubscription}: {rawPushSubscription: RawPushSubscription} =
+      message.data;
 
     if (this.messenger) {
       this.messenger.stopPostMessageReceive();
@@ -263,7 +262,7 @@ export default class SubscriptionPopupHost implements Disposable {
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
-    const { eventName, eventData } = message.data as any;
+    const {eventName, eventData} = message.data as any;
     Event.trigger(eventName, eventData, message.source);
     return false;
   }

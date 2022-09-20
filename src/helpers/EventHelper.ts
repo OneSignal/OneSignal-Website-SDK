@@ -2,13 +2,13 @@ import Event from '../Event';
 import LimitStore from '../LimitStore';
 import OneSignalApiShared from '../OneSignalApiShared';
 import Database from '../services/Database';
-import { ContextSWInterface } from '../models/ContextSW';
+import {ContextSWInterface} from '../models/ContextSW';
 import Log from '../libraries/Log';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
-import { BrowserUtils } from '../utils/BrowserUtils';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
+import {BrowserUtils} from '../utils/BrowserUtils';
 import PromptsHelper from './PromptsHelper';
 import LocalStorage from '../utils/LocalStorage';
-import { CustomLinkManager } from '../managers/CustomLinkManager';
+import {CustomLinkManager} from '../managers/CustomLinkManager';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -26,7 +26,7 @@ export default class EventHelper {
       await context.subscriptionManager.getSubscriptionState();
     const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
     const appState = await Database.getAppState();
-    const { lastKnownPushEnabled } = appState;
+    const {lastKnownPushEnabled} = appState;
     const didStateChange =
       lastKnownPushEnabled === null || isPushEnabled !== lastKnownPushEnabled;
     if (!didStateChange) return;
@@ -79,8 +79,8 @@ export default class EventHelper {
       return;
     }
     if (isSubscribed === true) {
-      const { deviceId } = await Database.getSubscription();
-      const { appId } = await Database.getAppConfig();
+      const {deviceId} = await Database.getSubscription();
+      const {appId} = await Database.getAppConfig();
 
       const welcome_notification_opts =
         OneSignal.config.userConfig.welcomeNotification;
@@ -116,11 +116,11 @@ export default class EventHelper {
         OneSignalApiShared.sendNotification(
           appId,
           [deviceId],
-          { en: title },
-          { en: message },
+          {en: title},
+          {en: message},
           url,
           null,
-          { __isOneSignalWelcomeNotification: true },
+          {__isOneSignalWelcomeNotification: true},
           undefined,
         );
         Event.trigger(OneSignal.EVENTS.WELCOME_NOTIFICATION_SENT, {
@@ -197,7 +197,7 @@ export default class EventHelper {
         "timestamp": 1490998270607
       }
       */
-      const { data: notification, timestamp } = clickedNotificationInfo;
+      const {data: notification, timestamp} = clickedNotificationInfo;
 
       if (timestamp) {
         const minutesSinceNotificationClicked =

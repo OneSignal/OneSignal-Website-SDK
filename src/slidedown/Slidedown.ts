@@ -11,16 +11,16 @@ import {
   removeCssClass,
   getDomElementOrStub,
 } from '../utils';
-import { SlidedownPromptOptions, DelayedPromptType } from '../models/Prompts';
-import { SERVER_CONFIG_DEFAULTS_SLIDEDOWN } from '../config';
-import { getLoadingIndicatorWithColor } from './LoadingIndicator';
-import { getRetryIndicator } from './RetryIndicator';
-import { SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS } from './constants';
-import { TagCategory } from '../models/Tags';
-import { getSlidedownElement } from './SlidedownElement';
-import { Utils } from '../context/shared/utils/Utils';
+import {SlidedownPromptOptions, DelayedPromptType} from '../models/Prompts';
+import {SERVER_CONFIG_DEFAULTS_SLIDEDOWN} from '../config';
+import {getLoadingIndicatorWithColor} from './LoadingIndicator';
+import {getRetryIndicator} from './RetryIndicator';
+import {SLIDEDOWN_CSS_CLASSES, SLIDEDOWN_CSS_IDS, COLORS} from './constants';
+import {TagCategory} from '../models/Tags';
+import {getSlidedownElement} from './SlidedownElement';
+import {Utils} from '../context/shared/utils/Utils';
 import ChannelCaptureContainer from './ChannelCaptureContainer';
-import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import {InvalidChannelInputField} from '../errors/ChannelCaptureError';
 import PromptsHelper from '../helpers/PromptsHelper';
 
 export default class Slidedown {

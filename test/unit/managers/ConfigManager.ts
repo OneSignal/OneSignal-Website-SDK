@@ -1,123 +1,100 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
-import {
-  TestEnvironment,
-  HttpHttpsEnvironment,
-} from '../../support/sdk/TestEnvironment';
+import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
 import { ConfigIntegrationKind } from '../../../src/models/AppConfig';
 import ConfigManager from '../../../src/managers/ConfigManager';
-import {
-  AppUserConfig,
-  AppConfig,
-  ServerAppConfig,
-} from '../../../src/models/AppConfig';
+import { AppUserConfig, AppConfig, ServerAppConfig } from '../../../src/models/AppConfig';
 import { AppUserConfigCustomLinkOptions } from '../../../src/models/Prompts';
 
 test.beforeEach(async () => {
   await TestEnvironment.initialize({
-    httpOrHttps: HttpHttpsEnvironment.Https,
+    httpOrHttps: HttpHttpsEnvironment.Https
   });
 });
 
-test('can customize initialization options', async (t) => {
+test('can customize initialization options', async t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
-  );
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
 
   const configManager = new ConfigManager();
   const fakeMergedConfig = configManager.getMergedConfig(
     fakeUserConfig,
-    fakeServerConfig,
+    fakeServerConfig
   );
 
   for (const userConfigKey in Object.keys(fakeUserConfig))
-    t.deepEqual(
-      fakeMergedConfig.userConfig[userConfigKey],
-      fakeUserConfig[userConfigKey],
-    );
+    t.deepEqual(fakeMergedConfig.userConfig[userConfigKey], fakeUserConfig[userConfigKey]);
 });
 
-test('should use server-provided subdomain if enabled', async (t) => {
+test('should use server-provided subdomain if enabled', async t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.TypicalSite,
-  );
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.TypicalSite);
   fakeServerConfig.config.integration.kind = ConfigIntegrationKind.TypicalSite;
   fakeServerConfig.config.siteInfo.proxyOriginEnabled = true;
-  fakeServerConfig.config.siteInfo.proxyOrigin = 'some-subdomain';
+  fakeServerConfig.config.siteInfo.proxyOrigin = "some-subdomain";
 
   const configManager = new ConfigManager();
   const fakeMergedConfig = configManager.getMergedConfig(
     fakeUserConfig,
-    fakeServerConfig,
+    fakeServerConfig
   );
 
-  t.deepEqual(fakeMergedConfig.subdomain, 'some-subdomain');
+  t.deepEqual(fakeMergedConfig.subdomain, "some-subdomain");
 });
 
-test('should not use server-provided subdomain if not enabled', async (t) => {
+test('should not use server-provided subdomain if not enabled', async t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.TypicalSite,
-  );
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.TypicalSite);
   fakeServerConfig.config.integration.kind = ConfigIntegrationKind.TypicalSite;
   fakeServerConfig.config.siteInfo.proxyOriginEnabled = false;
-  fakeServerConfig.config.siteInfo.proxyOrigin = 'some-subdomain';
+  fakeServerConfig.config.siteInfo.proxyOrigin = "some-subdomain";
 
   const configManager = new ConfigManager();
   const fakeMergedConfig = configManager.getMergedConfig(
     fakeUserConfig,
-    fakeServerConfig,
+    fakeServerConfig
   );
 
   t.deepEqual(fakeMergedConfig.subdomain, undefined);
 });
 
-test('should initialize custom link config for typical setup', (t) => {
+test('should initialize custom link config for typical setup', t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.TypicalSite,
-  );
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.TypicalSite);
   const configManager = new ConfigManager();
   const fakeMergedConfig = configManager.getMergedConfig(
     fakeUserConfig,
-    fakeServerConfig,
+    fakeServerConfig
   );
 
   const customLinkConfig: AppUserConfigCustomLinkOptions = {
     enabled: true,
-    style: 'button',
-    size: 'medium',
+    style: "button",
+    size: "medium",
     color: {
-      button: '#e54b4d',
-      text: '#ffffff',
+      button: "#e54b4d",
+      text: "#ffffff",
     },
     text: {
-      subscribe: 'Subscribe to push notifications',
-      unsubscribe: 'Unsubscribe from push notifications',
-      explanation: 'Get updates from all sorts of things that matter to you',
+      subscribe: "Subscribe to push notifications",
+      unsubscribe: "Unsubscribe from push notifications",
+      explanation: "Get updates from all sorts of things that matter to you",
     },
     unsubscribeEnabled: true,
   };
   t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
   if (fakeMergedConfig.userConfig.promptOptions) {
-    t.deepEqual(
-      fakeMergedConfig.userConfig.promptOptions.customlink,
-      customLinkConfig,
-    );
+    t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
   }
 });
 
-test('should initialize custom link config for custom code setup with correct user config', (t) => {
+test('should initialize custom link config for custom code setup with correct user config', t => {
   const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
-  );
+  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
   const configManager = new ConfigManager();
   const fakeMergedConfig = configManager.getMergedConfig(
     fakeUserConfig,
-    fakeServerConfig,
+    fakeServerConfig
   );
 
   const promptOptions = fakeUserConfig.promptOptions;
@@ -125,66 +102,57 @@ test('should initialize custom link config for custom code setup with correct us
     throw new Error('promptOptions cannot be null');
   }
 
-  const customLinkConfig: AppUserConfigCustomLinkOptions | undefined =
-    promptOptions.customlink;
+  const customLinkConfig: AppUserConfigCustomLinkOptions | undefined = promptOptions.customlink;
   t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
   if (fakeMergedConfig.userConfig.promptOptions) {
-    t.deepEqual(
-      fakeMergedConfig.userConfig.promptOptions.customlink,
-      customLinkConfig,
-    );
+    t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
   }
 });
 
-test('should initialize custom link config for custom code setup with incorrect user config', (t) => {
-  const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
-  if (fakeUserConfig.promptOptions) {
-    fakeUserConfig.promptOptions.customlink = {
+test('should initialize custom link config for custom code setup with incorrect user config', t => {
+    const fakeUserConfig = TestEnvironment.getFakeAppUserConfig();
+    if (fakeUserConfig.promptOptions) {
+      fakeUserConfig.promptOptions.customlink = {
+        enabled: true,
+      };
+    }
+    const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
+
+    const configManager = new ConfigManager();
+    const fakeMergedConfig = configManager.getMergedConfig(
+      fakeUserConfig,
+      fakeServerConfig
+    );
+  
+    const customLinkConfig: AppUserConfigCustomLinkOptions = {
       enabled: true,
+      style: "button",
+      size: "medium",
+      color: {
+        button: "#e54b4d",
+        text: "#ffffff"
+      },
+      text: {
+        subscribe: "Subscribe to push notifications",
+        unsubscribe: "Unsubscribe from push notifications",
+        explanation: ""
+      },
+      unsubscribeEnabled: true,
     };
-  }
-  const fakeServerConfig = TestEnvironment.getFakeServerAppConfig(
-    ConfigIntegrationKind.Custom,
-  );
-
-  const configManager = new ConfigManager();
-  const fakeMergedConfig = configManager.getMergedConfig(
-    fakeUserConfig,
-    fakeServerConfig,
-  );
-
-  const customLinkConfig: AppUserConfigCustomLinkOptions = {
-    enabled: true,
-    style: 'button',
-    size: 'medium',
-    color: {
-      button: '#e54b4d',
-      text: '#ffffff',
-    },
-    text: {
-      subscribe: 'Subscribe to push notifications',
-      unsubscribe: 'Unsubscribe from push notifications',
-      explanation: '',
-    },
-    unsubscribeEnabled: true,
-  };
-  t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
-  if (fakeMergedConfig.userConfig.promptOptions) {
-    t.deepEqual(
-      fakeMergedConfig.userConfig.promptOptions.customlink,
-      customLinkConfig,
-    );
-  }
+    t.not(fakeMergedConfig.userConfig.promptOptions, undefined);
+    if (fakeMergedConfig.userConfig.promptOptions) {
+      t.deepEqual(fakeMergedConfig.userConfig.promptOptions.customlink, customLinkConfig);
+    }
 });
 
-test('should have enableOnSession flag', (t) => {
+test('should have enableOnSession flag', t => {
   const fakeUserConfig: AppUserConfig = TestEnvironment.getFakeAppUserConfig();
   const fakeServerConfig: ServerAppConfig =
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom);
   const configManager = new ConfigManager();
   const fakeMergedConfig: AppConfig = configManager.getMergedConfig(
     fakeUserConfig,
-    fakeServerConfig,
+    fakeServerConfig
   );
 
   t.not(fakeMergedConfig.enableOnSession, undefined);

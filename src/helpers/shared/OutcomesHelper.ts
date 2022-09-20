@@ -10,8 +10,8 @@ import {
 } from '../../models/Notification';
 import Database from '../../services/Database';
 import Log from '../../libraries/Log';
-import { Utils } from '../../context/shared/utils/Utils';
-import { logMethodCall, awaitOneSignalInitAndSupported } from '../../utils';
+import {Utils} from '../../context/shared/utils/Utils';
+import {logMethodCall, awaitOneSignalInitAndSupported} from '../../utils';
 import OutcomeProps from '../../models/OutcomeProps';
 
 const SEND_OUTCOME = 'sendOutcome';
@@ -167,7 +167,7 @@ export default class OutcomesHelper {
   }
 
   async send(outcomeProps: OutcomeProps): Promise<void> {
-    const { type, notificationIds, weight } = outcomeProps;
+    const {type, notificationIds, weight} = outcomeProps;
 
     switch (type) {
       case OutcomeAttributionType.Direct:

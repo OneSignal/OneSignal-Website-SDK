@@ -1,13 +1,13 @@
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { Utils } from './context/shared/utils/Utils';
+import {Utils} from './context/shared/utils/Utils';
 import {
   OneSignalApiError,
   OneSignalApiErrorKind,
 } from './errors/OneSignalApiError';
 import Log from './libraries/Log';
 
-type Headers = any[] & { [key: string]: any };
+type Headers = any[] & {[key: string]: any};
 type SupportedMethods = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export class OneSignalApiBase {

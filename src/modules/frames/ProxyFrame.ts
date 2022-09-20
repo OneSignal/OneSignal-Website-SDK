@@ -1,11 +1,11 @@
 import Event from '../../Event';
 import InitHelper from '../../helpers/InitHelper';
-import { DismissHelper } from '../../helpers/DismissHelper';
+import {DismissHelper} from '../../helpers/DismissHelper';
 import SdkEnvironment from '../../managers/SdkEnvironment';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import {MessengerMessageEvent} from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
-import Database, { OneSignalDbTable } from '../../services/Database';
-import { unsubscribeFromPush } from '../../utils';
+import Database, {OneSignalDbTable} from '../../services/Database';
+import {unsubscribeFromPush} from '../../utils';
 import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import Log from '../../libraries/Log';
@@ -14,9 +14,9 @@ import {
   DeactivateSessionPayload,
   PageVisibilityResponse,
 } from '../../models/Session';
-import { WorkerMessengerCommand } from '../../libraries/WorkerMessenger';
-import { AppConfig } from '../../models/AppConfig';
-import { DismissPrompt } from '../../models/Dismiss';
+import {WorkerMessengerCommand} from '../../libraries/WorkerMessenger';
+import {AppConfig} from '../../models/AppConfig';
+import {DismissPrompt} from '../../models/Dismiss';
 /**
  * The actual OneSignal proxy frame contents / implementation, that is loaded
  * into the iFrame URL as subdomain.onesignal.com/webPushIFrame or
@@ -216,11 +216,11 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseGet(message: MessengerMessageEvent) {
     // retrievals is an array of key-value pairs e.g. [{table: 'Ids', keys:
     // 'someId'}, {table: 'Ids', keys: 'someId'}]
-    const retrievals: Array<{ table: OneSignalDbTable; key: string }> =
+    const retrievals: Array<{table: OneSignalDbTable; key: string}> =
       message.data;
     const retrievalOpPromises = [];
     for (const retrieval of retrievals) {
-      const { table, key } = retrieval;
+      const {table, key} = retrieval;
       retrievalOpPromises.push(Database.get(table, key));
     }
     const results = await Promise.all(retrievalOpPromises);
@@ -239,11 +239,11 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabasePut(message: MessengerMessageEvent) {
     // insertions is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const insertions: Array<{ table: OneSignalDbTable; keypath: any }> =
+    const insertions: Array<{table: OneSignalDbTable; keypath: any}> =
       message.data;
     const insertionOpPromises = [];
     for (const insertion of insertions) {
-      const { table, keypath } = insertion;
+      const {table, keypath} = insertion;
       insertionOpPromises.push(Database.put(table, keypath));
     }
     await Promise.all(insertionOpPromises);
@@ -254,11 +254,11 @@ export default class ProxyFrame extends RemoteFrame {
   async onRemoteDatabaseRemove(message: MessengerMessageEvent) {
     // removals is an array of key-value pairs e.g. [table: {'Options': keypath: {key: persistNotification, value: '...'}}, {table: 'Ids', keypath: {type: 'userId', id: '...'}]
     // It's formatted that way because our IndexedDB database is formatted that way
-    const removals: Array<{ table: OneSignalDbTable; keypath: any }> =
+    const removals: Array<{table: OneSignalDbTable; keypath: any}> =
       message.data;
     const removalOpPromises = [];
     for (const removal of removals) {
-      const { table, keypath } = removal;
+      const {table, keypath} = removal;
       removalOpPromises.push(Database.remove(table, keypath));
     }
     await Promise.all(removalOpPromises);

@@ -1,4 +1,4 @@
-import { NotificationPermission } from '../models/NotificationPermission';
+import {NotificationPermission} from '../models/NotificationPermission';
 import PermissionManager from '../managers/PermissionManager';
 
 const IS_OPTED_OUT = 'isOptedOut';

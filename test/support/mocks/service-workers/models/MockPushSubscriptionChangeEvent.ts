@@ -1,13 +1,10 @@
-import { MockExtendableEvent } from '../../MockExtendableEvent';
+import { MockExtendableEvent } from "../../MockExtendableEvent";
 
-export class MockPushSubscriptionChangeEvent
-  extends MockExtendableEvent
-  implements PushSubscriptionChangeEvent
-{
+export class MockPushSubscriptionChangeEvent extends MockExtendableEvent implements PushSubscriptionChangeEvent {
   public newSubscription: PushSubscription | null;
   public oldSubscription: PushSubscription | null;
 
-  private static EVENT_TYPE_PUSH_SUBSCRIPTION_CHANGE = 'pushsubscriptionchange';
+  private static EVENT_TYPE_PUSH_SUBSCRIPTION_CHANGE = "pushsubscriptionchange";
 
   public constructor() {
     super(MockPushSubscriptionChangeEvent.EVENT_TYPE_PUSH_SUBSCRIPTION_CHANGE);
@@ -15,5 +12,6 @@ export class MockPushSubscriptionChangeEvent
     this.oldSubscription = null;
   }
 
-  waitUntil(f: Promise<any>): void {}
+  waitUntil(f: Promise<any>): void {
+  }
 }

@@ -1,8 +1,8 @@
 // NOTE: This is used with the OneSignalSDK.js shim
 // Careful if adding imports, ES5 targets can't clean up functions never called.
 
-import { OneSignalStub, PossiblePredefinedOneSignal } from './OneSignalStub';
-import { ProcessOneSignalPushCalls } from './ProcessOneSignalPushCalls';
+import {OneSignalStub, PossiblePredefinedOneSignal} from './OneSignalStub';
+import {ProcessOneSignalPushCalls} from './ProcessOneSignalPushCalls';
 import Log from '../libraries/Log';
 
 // Definition pulled from lib.es2015.promise.d.ts

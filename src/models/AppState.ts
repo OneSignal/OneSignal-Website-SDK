@@ -1,5 +1,5 @@
-import { Notification } from './Notification';
-import { Timestamp } from './Timestamp';
+import {Notification} from './Notification';
+import {Timestamp} from './Timestamp';
 
 export interface ClickedNotifications {
   [key: string]: [Notification, Timestamp];
@@ -18,4 +18,4 @@ class AppState {
   clickedNotifications: ClickedNotifications | undefined;
 }
 
-export { AppState };
+export {AppState};

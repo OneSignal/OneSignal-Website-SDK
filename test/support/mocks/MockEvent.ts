@@ -30,11 +30,16 @@ export class MockEvent implements Event {
     return [];
   }
 
-  initEvent(_type: string, _bubbles?: boolean, _cancelable?: boolean): void {}
+  initEvent(_type: string, _bubbles?: boolean, _cancelable?: boolean): void {
+  }
 
-  preventDefault(): void {}
+  preventDefault(): void {
+  }
 
-  stopImmediatePropagation(): void {}
+  stopImmediatePropagation(): void {
+  }
 
-  stopPropagation(): void {}
+  stopPropagation(): void {
+  }
+
 }

@@ -1,16 +1,13 @@
 import Log from '../libraries/Log';
-import { addCssClass, getDomElementOrStub, removeCssClass } from '../utils';
-import { DelayedPromptType, SlidedownPromptOptions } from '../models/Prompts';
+import {addCssClass, getDomElementOrStub, removeCssClass} from '../utils';
+import {DelayedPromptType, SlidedownPromptOptions} from '../models/Prompts';
 import {
   CHANNEL_CAPTURE_CONTAINER_CSS_CLASSES,
   CHANNEL_CAPTURE_CONTAINER_CSS_IDS,
   DANGER_ICON,
   SLIDEDOWN_CSS_IDS,
 } from './constants';
-import {
-  ItiScriptURLHashes,
-  ItiScriptURLs,
-} from './InternationalTelephoneInput';
+import {ItiScriptURLHashes, ItiScriptURLs} from './InternationalTelephoneInput';
 import {} from 'intl-tel-input'; // typings
 
 interface TypeSpecificVariablePayload {

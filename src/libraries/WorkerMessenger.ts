@@ -3,12 +3,12 @@ import {
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
 
-import { Serializable } from '../models/Serializable';
+import {Serializable} from '../models/Serializable';
 import Environment from '../Environment';
 import Log from './Log';
-import { ContextSWInterface } from '../models/ContextSW';
+import {ContextSWInterface} from '../models/ContextSW';
 import ServiceWorkerUtilHelper from '../helpers/page/ServiceWorkerUtilHelper';
 
 /**
@@ -44,9 +44,7 @@ export interface WorkerMessengerReplyBufferRecord {
 }
 
 export class WorkerMessengerReplyBuffer {
-  private replies: {
-    [index: string]: WorkerMessengerReplyBufferRecord[] | null;
-  };
+  private replies: {[index: string]: WorkerMessengerReplyBufferRecord[] | null};
 
   constructor() {
     this.replies = {};
@@ -136,7 +134,7 @@ export class WorkerMessenger {
 
     const clients = await (<ServiceWorkerGlobalScope>(
       (<any>self)
-    )).clients.matchAll({ type: 'window', includeUncontrolled: true });
+    )).clients.matchAll({type: 'window', includeUncontrolled: true});
     for (const client of clients) {
       Log.debug(
         `[Worker Messenger] [SW -> Page] Broadcasting '${command.toString()}' to window client ${

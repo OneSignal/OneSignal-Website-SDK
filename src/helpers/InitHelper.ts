@@ -1,10 +1,10 @@
 import bowser from 'bowser';
 import Event from '../Event';
 import LimitStore from '../LimitStore';
-import { NotificationPermission } from '../models/NotificationPermission';
+import {NotificationPermission} from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import { AppConfig } from '../models/AppConfig';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {AppConfig} from '../models/AppConfig';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
 import SubscriptionModalHost from '../modules/frames/SubscriptionModalHost';
 import Database from '../services/Database';
 import {
@@ -14,25 +14,25 @@ import {
 } from '../utils';
 import MainHelper from './MainHelper';
 import SubscriptionHelper from './SubscriptionHelper';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
-import { ContextInterface } from '../models/Context';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
-import { DynamicResourceLoader } from '../services/DynamicResourceLoader';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../models/IntegrationKind';
-import { Subscription } from '../models/Subscription';
+import {SdkInitError, SdkInitErrorKind} from '../errors/SdkInitError';
+import {ContextInterface} from '../models/Context';
+import {WorkerMessengerCommand} from '../libraries/WorkerMessenger';
+import {DynamicResourceLoader} from '../services/DynamicResourceLoader';
+import {SubscriptionStrategyKind} from '../models/SubscriptionStrategyKind';
+import {IntegrationKind} from '../models/IntegrationKind';
+import {Subscription} from '../models/Subscription';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
 import Environment from '../Environment';
 import Bell from '../bell/Bell';
 import SubscriptionPopupHost from '../modules/frames/SubscriptionPopupHost';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
 import {
   DeprecatedApiError,
   DeprecatedApiReason,
 } from '../errors/DeprecatedApiError';
 import LocalStorage from '../utils/LocalStorage';
-import { CustomLinkManager } from '../managers/CustomLinkManager';
+import {CustomLinkManager} from '../managers/CustomLinkManager';
 
 declare var OneSignal: any;
 
@@ -234,10 +234,7 @@ export default class InitHelper {
       await OneSignal.privateGetNotificationPermission();
     const isOptedOut = await OneSignal.internalIsOptedOut();
     LimitStore.put('subscription.optedOut', isOptedOut);
-    await Database.put('Options', {
-      key: 'isPushEnabled',
-      value: isPushEnabled,
-    });
+    await Database.put('Options', {key: 'isPushEnabled', value: isPushEnabled});
     await Database.put('Options', {
       key: 'notificationPermission',
       value: notificationPermission,
@@ -470,17 +467,17 @@ export default class InitHelper {
         );
       } else {
         opPromises.push(
-          Database.put('Options', { key: `webhooks.${event}`, value: false }),
+          Database.put('Options', {key: `webhooks.${event}`, value: false}),
         );
       }
     });
     if (webhookOptions && webhookOptions.cors) {
       opPromises.push(
-        Database.put('Options', { key: `webhooks.cors`, value: true }),
+        Database.put('Options', {key: `webhooks.cors`, value: true}),
       );
     } else {
       opPromises.push(
-        Database.put('Options', { key: `webhooks.cors`, value: false }),
+        Database.put('Options', {key: `webhooks.cors`, value: false}),
       );
     }
 
@@ -521,13 +518,13 @@ export default class InitHelper {
   public static async initSaveState(overridingPageTitle?: string) {
     const appId = await MainHelper.getAppId();
     const config: AppConfig = OneSignal.config;
-    await Database.put('Ids', { type: 'appId', id: appId });
+    await Database.put('Ids', {type: 'appId', id: appId});
     const pageTitle: string =
       overridingPageTitle ||
       config.siteName ||
       document.title ||
       'Notification';
-    await Database.put('Options', { key: 'pageTitle', value: pageTitle });
+    await Database.put('Options', {key: 'pageTitle', value: pageTitle});
     Log.info(`OneSignal: Set pageTitle to be '${pageTitle}'.`);
   }
 

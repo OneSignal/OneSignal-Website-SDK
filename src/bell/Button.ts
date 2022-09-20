@@ -38,7 +38,7 @@ export default class Button extends ActiveAnimatedElement {
           this.onHovering();
           this.onTap();
         },
-        { passive: true },
+        {passive: true},
       );
 
       element.addEventListener('mouseenter', () => {
@@ -53,7 +53,7 @@ export default class Button extends ActiveAnimatedElement {
         () => {
           this.onHovered();
         },
-        { passive: true },
+        {passive: true},
       );
 
       element.addEventListener('mousedown', () => {

@@ -1,6 +1,6 @@
 import OneSignalApiBase from '../../../../OneSignalApiBase';
 import Database from '../../../../services/Database';
-import { SecondaryChannelProfileProviderBase } from '../providers/SecondaryChannelProfileProviderBase';
+import {SecondaryChannelProfileProviderBase} from '../providers/SecondaryChannelProfileProviderBase';
 
 export class SecondaryChannelFocusUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}

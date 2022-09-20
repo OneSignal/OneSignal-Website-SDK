@@ -1,4 +1,4 @@
-import { AutoPromptOptions } from '../PromptsManager';
+import {AutoPromptOptions} from '../PromptsManager';
 
 export interface ISlidedownManager {
   setIsSlidedownShowing: (isShowing: boolean) => void;

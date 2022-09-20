@@ -1,10 +1,10 @@
 import Environment from '../Environment';
-import { WorkerMessengerCommand } from '../libraries/WorkerMessenger';
+import {WorkerMessengerCommand} from '../libraries/WorkerMessenger';
 import Path from '../models/Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
-import { IntegrationKind } from '../models/IntegrationKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import {IntegrationKind} from '../models/IntegrationKind';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
 import NotImplementedError from '../errors/NotImplementedError';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import Log from '../libraries/Log';
@@ -16,12 +16,9 @@ import ServiceWorkerHelper, {
   ServiceWorkerActiveState,
   ServiceWorkerManagerConfig,
 } from '../helpers/ServiceWorkerHelper';
-import { ContextSWInterface } from '../models/ContextSW';
-import { Utils } from '../context/shared/utils/Utils';
-import {
-  PageVisibilityRequest,
-  PageVisibilityResponse,
-} from '../models/Session';
+import {ContextSWInterface} from '../models/ContextSW';
+import {Utils} from '../context/shared/utils/Utils';
+import {PageVisibilityRequest, PageVisibilityResponse} from '../models/Session';
 import ServiceWorkerUtilHelper from '../helpers/page/ServiceWorkerUtilHelper';
 
 export class ServiceWorkerManager {
@@ -488,7 +485,7 @@ export class ServiceWorkerManager {
       `[Service Worker Installation] Installing service worker ${workerHref} ${scope}.`,
     );
     try {
-      await navigator.serviceWorker.register(workerHref, { scope });
+      await navigator.serviceWorker.register(workerHref, {scope});
     } catch (error) {
       Log.error(
         `[Service Worker Installation] Installing service worker failed ${error}`,

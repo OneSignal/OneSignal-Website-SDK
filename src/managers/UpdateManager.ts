@@ -1,6 +1,6 @@
 import OneSignalApiShared from '../OneSignalApiShared';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import {SubscriptionStateKind} from '../models/SubscriptionStateKind';
+import {PushDeviceRecord} from '../models/PushDeviceRecord';
 import {
   NotSubscribedError,
   NotSubscribedReason,
@@ -8,17 +8,17 @@ import {
 import MainHelper from '../helpers/MainHelper';
 import Database from '../services/Database';
 import Log from '../libraries/Log';
-import { ContextSWInterface } from '../models/ContextSW';
+import {ContextSWInterface} from '../models/ContextSW';
 import Utils from '../context/shared/utils/Utils';
-import { SessionOrigin } from '../models/Session';
-import { OutcomeRequestData } from '../models/OutcomeRequestData';
-import { awaitSdkEvent, logMethodCall } from '../utils';
+import {SessionOrigin} from '../models/Session';
+import {OutcomeRequestData} from '../models/OutcomeRequestData';
+import {awaitSdkEvent, logMethodCall} from '../utils';
 import {
   UpdatePlayerExternalUserId,
   UpdatePlayerOptions,
 } from '../models/UpdatePlayerOptions';
-import { ExternalUserIdHelper } from '../helpers/shared/ExternalUserIdHelper';
-import { TagsObject } from '../models/Tags';
+import {ExternalUserIdHelper} from '../helpers/shared/ExternalUserIdHelper';
+import {TagsObject} from '../models/Tags';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -35,7 +35,7 @@ export class UpdateManager {
   }
 
   private async getDeviceId(): Promise<string> {
-    const { deviceId } = await Database.getSubscription();
+    const {deviceId} = await Database.getSubscription();
     if (!deviceId) {
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     }
@@ -191,7 +191,7 @@ export class UpdateManager {
   public async sendTagsUpdate(tags: TagsObject<any>): Promise<void> {
     this.context.secondaryChannelManager.synchronizer.setTags(tags);
 
-    const options: UpdatePlayerOptions = { tags };
+    const options: UpdatePlayerOptions = {tags};
     const authHash = await Database.getExternalUserIdAuthHash();
     if (!!authHash) {
       options.external_user_id_auth_hash = authHash;
@@ -208,10 +208,10 @@ export class UpdateManager {
   private async sendPushPlayerUpdate(
     payload: UpdatePlayerOptions,
   ): Promise<void> {
-    let { deviceId } = await Database.getSubscription();
+    let {deviceId} = await Database.getSubscription();
     if (!deviceId) {
       await awaitSdkEvent(OneSignal.EVENTS.REGISTERED);
-      ({ deviceId } = await Database.getSubscription());
+      ({deviceId} = await Database.getSubscription());
     }
 
     if (deviceId) {

@@ -11,11 +11,11 @@ import OneSignalApiBase from '../OneSignalApiBase';
 import OneSignalApiSW from '../OneSignalApiSW';
 import Database from '../services/Database';
 
-import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import {UnsubscriptionStrategy} from '../models/UnsubscriptionStrategy';
+import {RawPushSubscription} from '../models/RawPushSubscription';
+import {SubscriptionStateKind} from '../models/SubscriptionStateKind';
+import {SubscriptionStrategyKind} from '../models/SubscriptionStrategyKind';
+import {PushDeviceRecord} from '../models/PushDeviceRecord';
 import {
   UpsertSessionPayload,
   DeactivateSessionPayload,
@@ -24,18 +24,18 @@ import {
   SessionStatus,
 } from '../models/Session';
 import Log from '../libraries/sw/Log';
-import { ConfigHelper } from '../helpers/ConfigHelper';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
-import { Utils } from '../context/shared/utils/Utils';
-import { OSWindowClient, OSServiceWorkerFields } from './types';
+import {ConfigHelper} from '../helpers/ConfigHelper';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
+import {Utils} from '../context/shared/utils/Utils';
+import {OSWindowClient, OSServiceWorkerFields} from './types';
 import ServiceWorkerHelper from '../helpers/ServiceWorkerHelper';
 import {
   NotificationReceived,
   NotificationClicked,
 } from '../models/Notification';
-import { cancelableTimeout } from '../helpers/sw/CancelableTimeout';
-import { DeviceRecord } from '../models/DeviceRecord';
-import { awaitableTimeout } from '../utils/AwaitableTimeout';
+import {cancelableTimeout} from '../helpers/sw/CancelableTimeout';
+import {DeviceRecord} from '../models/DeviceRecord';
+import {awaitableTimeout} from '../utils/AwaitableTimeout';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -173,7 +173,7 @@ export class ServiceWorker {
         return appId;
       }
     }
-    const { appId } = await Database.getAppConfig();
+    const {appId} = await Database.getAppConfig();
     return appId;
   }
 
@@ -242,7 +242,7 @@ export class ServiceWorker {
             await self.registration.pushManager.permissionState(
               pushSubscription.options,
             );
-          const { optedOut } = await Database.getSubscription();
+          const {optedOut} = await Database.getSubscription();
           const isSubscribed =
             !!pushSubscription && permission === 'granted' && optedOut !== true;
           await ServiceWorker.workerMessenger.broadcast(
@@ -258,7 +258,7 @@ export class ServiceWorker {
         Log.debug('[Service Worker] Received AMP subscribe message.');
         const appId = await ServiceWorker.getAppId();
         const appConfig = await ConfigHelper.getAppConfig(
-          { appId },
+          {appId},
           OneSignalApiSW.downloadServerAppConfig,
         );
         const context = new ContextSW(appConfig);
@@ -269,7 +269,7 @@ export class ServiceWorker {
           await context.subscriptionManager.registerSubscription(
             rawSubscription,
           );
-        await Database.put('Ids', { type: 'appId', id: appId });
+        await Database.put('Ids', {type: 'appId', id: appId});
         ServiceWorker.workerMessenger.broadcast(
           WorkerMessengerCommand.AmpSubscribe,
           subscription.deviceId,
@@ -282,7 +282,7 @@ export class ServiceWorker {
         Log.debug('[Service Worker] Received AMP unsubscribe message.');
         const appId = await ServiceWorker.getAppId();
         const appConfig = await ConfigHelper.getAppConfig(
-          { appId },
+          {appId},
           OneSignalApiSW.downloadServerAppConfig,
         );
         const context = new ContextSW(appConfig);
@@ -319,7 +319,7 @@ export class ServiceWorker {
     );
     ServiceWorker.workerMessenger.on(
       WorkerMessengerCommand.SetLogging,
-      async (payload: { shouldLog: boolean }) => {
+      async (payload: {shouldLog: boolean}) => {
         if (payload.shouldLog) {
           self.shouldLog = true;
         } else {
@@ -423,7 +423,7 @@ export class ServiceWorker {
     );
     if (!webhookTargetUrl) return null;
 
-    const { deviceId } = await Database.getSubscription();
+    const {deviceId} = await Database.getSubscription();
     const isServerCorsEnabled = await Database.get<boolean>(
       'Options',
       'webhooks.cors',
@@ -481,7 +481,7 @@ export class ServiceWorker {
     if (notification.rr !== 'y') return null;
 
     const appId = await ServiceWorker.getAppId();
-    const { deviceId } = await Database.getSubscription();
+    const {deviceId} = await Database.getSubscription();
 
     // app and notification ids are required, decided to exclude deviceId from required params
     // In rare case we don't have it we can still report as confirmed to backend to increment count
@@ -640,13 +640,13 @@ export class ServiceWorker {
       receivedResponsesCount: 0,
       hasAnyActiveSessions: false,
     };
-    const payload: PageVisibilityRequest = { timestamp };
+    const payload: PageVisibilityRequest = {timestamp};
     windowClients.forEach((c) => {
       if (self.clientsStatus) {
         // keeping track of number of sent requests mostly for debugging purposes
         self.clientsStatus.sentRequestsCount++;
       }
-      c.postMessage({ command: WorkerMessengerCommand.AreYouVisible, payload });
+      c.postMessage({command: WorkerMessengerCommand.AreYouVisible, payload});
     });
     const updateOnHasActive = async () => {
       if (!self.clientsStatus) {
@@ -829,7 +829,7 @@ export class ServiceWorker {
 
     // Allow overriding some values
     if (!overrides) overrides = {};
-    notification = { ...notification, ...overrides };
+    notification = {...notification, ...overrides};
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
 
@@ -947,7 +947,7 @@ export class ServiceWorker {
     let launchUrl = location.origin;
 
     // Use the user-provided default URL if one exists
-    const { defaultNotificationUrl: dbDefaultNotificationUrl } =
+    const {defaultNotificationUrl: dbDefaultNotificationUrl} =
       await Database.getAppState();
     if (dbDefaultNotificationUrl) launchUrl = dbDefaultNotificationUrl;
 
@@ -1046,7 +1046,7 @@ export class ServiceWorker {
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
-    const { deviceId } = await Database.getSubscription();
+    const {deviceId} = await Database.getSubscription();
     const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(
       appId,
       deviceId,
@@ -1281,7 +1281,7 @@ export class ServiceWorker {
       return;
     }
     const appConfig = await ConfigHelper.getAppConfig(
-      { appId },
+      {appId},
       OneSignalApiSW.downloadServerAppConfig,
     );
     if (!appConfig) {
@@ -1293,7 +1293,7 @@ export class ServiceWorker {
     // Get our current device ID
     let deviceIdExists: boolean;
     {
-      let { deviceId } = await Database.getSubscription();
+      let {deviceId} = await Database.getSubscription();
       deviceIdExists = !!deviceId;
       if (!deviceIdExists && event.oldSubscription) {
         // We don't have the device ID stored, but we can look it up from our old subscription

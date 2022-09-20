@@ -1,10 +1,10 @@
-import { ServerAppConfig } from './models/AppConfig';
-import { OneSignalApiBase } from './OneSignalApiBase';
-import { SubscriptionStateKind } from './models/SubscriptionStateKind';
-import { FlattenedDeviceRecord } from './models/DeviceRecord';
+import {ServerAppConfig} from './models/AppConfig';
+import {OneSignalApiBase} from './OneSignalApiBase';
+import {SubscriptionStateKind} from './models/SubscriptionStateKind';
+import {FlattenedDeviceRecord} from './models/DeviceRecord';
 import Log from './libraries/Log';
-import { Utils } from './context/shared/utils/Utils';
-import { OutcomeAttribution, OutcomeAttributionType } from './models/Outcomes';
+import {Utils} from './context/shared/utils/Utils';
+import {OutcomeAttribution, OutcomeAttributionType} from './models/Outcomes';
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(

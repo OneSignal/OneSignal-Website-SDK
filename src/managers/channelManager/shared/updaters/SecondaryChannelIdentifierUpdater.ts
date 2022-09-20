@@ -1,9 +1,9 @@
-import { SecondaryChannelProfile } from '../../../../models/SecondaryChannelProfile';
-import { ExternalUserIdHelper } from '../../../../helpers/shared/ExternalUserIdHelper';
-import { SecondaryChannelDeviceRecord } from '../../../../models/SecondaryChannelDeviceRecord';
+import {SecondaryChannelProfile} from '../../../../models/SecondaryChannelProfile';
+import {ExternalUserIdHelper} from '../../../../helpers/shared/ExternalUserIdHelper';
+import {SecondaryChannelDeviceRecord} from '../../../../models/SecondaryChannelDeviceRecord';
 import OneSignalApi from '../../../../OneSignalApi';
 import Database from '../../../../services/Database';
-import { SecondaryChannelProfileProvider } from '../providers/SecondaryChannelProfileProvider';
+import {SecondaryChannelProfileProvider} from '../providers/SecondaryChannelProfileProvider';
 
 // Creates / updates the identifier for a Secondary Channel and persists to storage.
 export class SecondaryChannelIdentifierUpdater {
@@ -32,7 +32,7 @@ export class SecondaryChannelIdentifierUpdater {
       );
     } else {
       // Otherwise, make a POST call to create a new record
-      const { deviceId } = await Database.getSubscription();
+      const {deviceId} = await Database.getSubscription();
       const deviceRecord = new SecondaryChannelDeviceRecord(
         this.profileProvider.deviceType,
         newProfile.identifier,

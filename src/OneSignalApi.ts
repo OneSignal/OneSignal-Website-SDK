@@ -1,12 +1,12 @@
 import JSONP from 'jsonp';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { AppConfig, ServerAppConfig } from './models/AppConfig';
-import { DeviceRecord } from './models/DeviceRecord';
-import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import {AppConfig, ServerAppConfig} from './models/AppConfig';
+import {DeviceRecord} from './models/DeviceRecord';
+import {WindowEnvironmentKind} from './models/WindowEnvironmentKind';
 import OneSignalApiSW from './OneSignalApiSW';
 import OneSignalApiShared from './OneSignalApiShared';
-import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
-import { EmailProfile } from './models/EmailProfile';
+import {UpdatePlayerOptions} from './models/UpdatePlayerOptions';
+import {EmailProfile} from './models/EmailProfile';
 
 export default class OneSignalApi {
   static getPlayer(appId: string, playerId: string) {

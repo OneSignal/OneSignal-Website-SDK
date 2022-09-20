@@ -1,7 +1,7 @@
-import { SecondaryChannelDeviceRecord } from '../../../../models/SecondaryChannelDeviceRecord';
+import {SecondaryChannelDeviceRecord} from '../../../../models/SecondaryChannelDeviceRecord';
 import OneSignalApiShared from '../../../../OneSignalApiShared';
 import Database from '../../../../services/Database';
-import { SecondaryChannelProfileProviderBase } from '../providers/SecondaryChannelProfileProviderBase';
+import {SecondaryChannelProfileProviderBase} from '../providers/SecondaryChannelProfileProviderBase';
 
 export class SecondaryChannelSessionUpdater {
   constructor(readonly profileProvider: SecondaryChannelProfileProviderBase) {}

@@ -1,6 +1,6 @@
 import Environment from './Environment';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import {WindowEnvironmentKind} from './models/WindowEnvironmentKind';
 import Log from './libraries/Log';
 import Utils from './context/shared/utils/Utils';
 
@@ -116,7 +116,7 @@ export default class Event {
           ) {
             OneSignal.subscriptionPopup.message(
               OneSignal.POSTMAM_COMMANDS.REMOTE_RETRIGGER_EVENT,
-              { eventName: eventName, eventData: data },
+              {eventName: eventName, eventData: data},
             );
           } else {
             OneSignal.proxyFrame.retriggerRemoteEvent(eventName, data);

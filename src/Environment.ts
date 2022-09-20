@@ -1,5 +1,5 @@
 import SdkEnvironment from './managers/SdkEnvironment';
-import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import {WindowEnvironmentKind} from './models/WindowEnvironmentKind';
 import bowser from 'bowser';
 
 export default class Environment {

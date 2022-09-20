@@ -9,7 +9,7 @@ export type PossiblePredefinedOneSignal =
 export abstract class OneSignalStub<T> implements IndexableByString<any> {
   public VERSION = typeof __VERSION__ === 'undefined' ? 1 : Number(__VERSION__);
   public SERVICE_WORKER_PATH: string | undefined;
-  public SERVICE_WORKER_PARAM: { scope: string } | undefined;
+  public SERVICE_WORKER_PARAM: {scope: string} | undefined;
 
   [key: string]: any;
 
@@ -105,9 +105,7 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
         return stubFunction(this, functionName, args);
       };
 
-      Object.defineProperty(this, functionName, {
-        value: functionNameWithStub,
-      });
+      Object.defineProperty(this, functionName, {value: functionNameWithStub});
     }
   }
 }

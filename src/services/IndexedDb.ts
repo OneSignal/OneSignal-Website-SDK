@@ -113,21 +113,17 @@ export default class IndexedDb {
     );
     const db = (event.target as IDBOpenDBRequest).result;
     if (event.oldVersion < 1) {
-      db.createObjectStore('Ids', { keyPath: 'type' });
-      db.createObjectStore('NotificationOpened', { keyPath: 'url' });
-      db.createObjectStore('Options', { keyPath: 'key' });
+      db.createObjectStore('Ids', {keyPath: 'type'});
+      db.createObjectStore('NotificationOpened', {keyPath: 'url'});
+      db.createObjectStore('Options', {keyPath: 'key'});
     }
     if (event.oldVersion < 2) {
-      db.createObjectStore('Sessions', { keyPath: 'sessionKey' });
-      db.createObjectStore('NotificationReceived', {
-        keyPath: 'notificationId',
-      });
-      db.createObjectStore('NotificationClicked', {
-        keyPath: 'notificationId',
-      });
+      db.createObjectStore('Sessions', {keyPath: 'sessionKey'});
+      db.createObjectStore('NotificationReceived', {keyPath: 'notificationId'});
+      db.createObjectStore('NotificationClicked', {keyPath: 'notificationId'});
     }
     if (event.oldVersion < 3) {
-      db.createObjectStore('SentUniqueOutcome', { keyPath: 'outcomeName' });
+      db.createObjectStore('SentUniqueOutcome', {keyPath: 'outcomeName'});
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== 'undefined') {
@@ -160,7 +156,7 @@ export default class IndexedDb {
     } else {
       // Return all values in table
       return await new Promise((resolve, reject) => {
-        const jsonResult: { [key: string]: any } = {};
+        const jsonResult: {[key: string]: any} = {};
         const cursor = database
           .transaction(table)
           .objectStore(table)

@@ -1,12 +1,12 @@
 import TimeoutError from './errors/TimeoutError';
 import SdkEnvironment from './managers/SdkEnvironment';
-import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import {WindowEnvironmentKind} from './models/WindowEnvironmentKind';
 import Database from './services/Database';
 import Log from './libraries/Log';
-import { OneSignalUtils } from './utils/OneSignalUtils';
-import { PermissionUtils } from './utils/PermissionUtils';
-import { BrowserUtils } from './utils/BrowserUtils';
-import { Utils } from './context/shared/utils/Utils';
+import {OneSignalUtils} from './utils/OneSignalUtils';
+import {PermissionUtils} from './utils/PermissionUtils';
+import {BrowserUtils} from './utils/BrowserUtils';
+import {Utils} from './context/shared/utils/Utils';
 import bowser from 'bowser';
 
 export function isArray(variable: any) {

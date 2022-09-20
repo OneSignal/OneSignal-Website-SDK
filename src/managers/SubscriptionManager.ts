@@ -5,34 +5,34 @@ import OneSignalApiShared from '../OneSignalApiShared';
 import Environment from '../Environment';
 import Event from '../Event';
 import Log from '../libraries/Log';
-import { ServiceWorkerActiveState } from '../helpers/ServiceWorkerHelper';
+import {ServiceWorkerActiveState} from '../helpers/ServiceWorkerHelper';
 import SdkEnvironment from '../managers/SdkEnvironment';
 
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
-import { NotificationPermission } from '../models/NotificationPermission';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
-import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import { Subscription } from '../models/Subscription';
-import { UnsubscriptionStrategy } from '../models/UnsubscriptionStrategy';
-import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
-import { IntegrationKind } from '../models/IntegrationKind';
+import {NotificationPermission} from '../models/NotificationPermission';
+import {RawPushSubscription} from '../models/RawPushSubscription';
+import {SubscriptionStateKind} from '../models/SubscriptionStateKind';
+import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
+import {Subscription} from '../models/Subscription';
+import {UnsubscriptionStrategy} from '../models/UnsubscriptionStrategy';
+import {PushDeviceRecord} from '../models/PushDeviceRecord';
+import {SubscriptionStrategyKind} from '../models/SubscriptionStrategyKind';
+import {IntegrationKind} from '../models/IntegrationKind';
 import {
   InvalidStateError,
   InvalidStateReason,
 } from '../errors/InvalidStateError';
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
-import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
+import {PushPermissionNotGrantedErrorReason} from '../errors/PushPermissionNotGrantedError';
+import {SdkInitError, SdkInitErrorKind} from '../errors/SdkInitError';
 import SubscriptionError from '../errors/SubscriptionError';
-import { SubscriptionErrorReason } from '../errors/SubscriptionError';
+import {SubscriptionErrorReason} from '../errors/SubscriptionError';
 import ServiceWorkerRegistrationError from '../errors/ServiceWorkerRegistrationError';
 import NotImplementedError from '../errors/NotImplementedError';
 
-import { PermissionUtils } from '../utils/PermissionUtils';
-import { base64ToUint8Array } from '../utils/Encoding';
-import { ContextSWInterface } from '../models/ContextSW';
+import {PermissionUtils} from '../utils/PermissionUtils';
+import {base64ToUint8Array} from '../utils/Encoding';
+import {ContextSWInterface} from '../models/ContextSW';
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -228,7 +228,7 @@ export class SubscriptionManager {
       if (
         SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker
       ) {
-        const { deviceId } = await Database.getSubscription();
+        const {deviceId} = await Database.getSubscription();
 
         await OneSignalApiShared.updatePlayer(
           this.context.appConfig.appId,
@@ -238,7 +238,7 @@ export class SubscriptionManager {
           },
         );
 
-        await Database.put('Options', { key: 'optedOut', value: true });
+        await Database.put('Options', {key: 'optedOut', value: true});
       } else {
         throw new NotImplementedError();
       }
@@ -278,7 +278,7 @@ export class SubscriptionManager {
   }
 
   public async isAlreadyRegisteredWithOneSignal(): Promise<boolean> {
-    const { deviceId } = await Database.getSubscription();
+    const {deviceId} = await Database.getSubscription();
     return !!deviceId;
   }
 
@@ -307,7 +307,7 @@ export class SubscriptionManager {
       throw new SdkInitError(SdkInitErrorKind.MissingSafariWebId);
     }
 
-    const { deviceToken: existingDeviceToken } =
+    const {deviceToken: existingDeviceToken} =
       window.safari.pushNotification.permission(this.config.safariWebId);
     pushSubscriptionDetails.existingSafariDeviceToken = existingDeviceToken;
 
@@ -692,7 +692,7 @@ export class SubscriptionManager {
       case IntegrationKind.InsecureProxy:
         /* If we're in an insecure frame context, check the stored expiration since we can't access
         the actual push subscription. */
-        const { expirationTime } = await Database.getSubscription();
+        const {expirationTime} = await Database.getSubscription();
         if (!expirationTime) {
           /* If an existing subscription does not have a stored expiration time, do not
           treat it as expired. The subscription may have been created before this feature was added,
@@ -729,7 +729,7 @@ export class SubscriptionManager {
     // No push subscription expiration time
     if (!pushSubscription.expirationTime) return false;
 
-    let { createdAt: subscriptionCreatedAt } = await Database.getSubscription();
+    let {createdAt: subscriptionCreatedAt} = await Database.getSubscription();
 
     if (!subscriptionCreatedAt) {
       /* If we don't have a record of when the subscription was created, set it into the future to
@@ -766,7 +766,7 @@ export class SubscriptionManager {
         const pushSubscription = await (<ServiceWorkerGlobalScope>(
           (<any>self)
         )).registration.pushManager.getSubscription();
-        const { optedOut } = await Database.getSubscription();
+        const {optedOut} = await Database.getSubscription();
         return {
           subscribed: !!pushSubscription,
           optedOut: !!optedOut,
@@ -804,7 +804,7 @@ export class SubscriptionManager {
   }
 
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
-    const { deviceId, optedOut } = await Database.getSubscription();
+    const {deviceId, optedOut} = await Database.getSubscription();
 
     if (SubscriptionManager.isSafari()) {
       const subscriptionState: SafariRemoteNotificationPermission =
@@ -867,7 +867,7 @@ export class SubscriptionManager {
 
   private async getSubscriptionStateForInsecure(): Promise<PushSubscriptionState> {
     /* For HTTP, we need to rely on stored values; we never have access to the actual data */
-    const { deviceId, subscriptionToken, optedOut } =
+    const {deviceId, subscriptionToken, optedOut} =
       await Database.getSubscription();
     const notificationPermission =
       await this.context.permissionManager.getNotificationPermission(

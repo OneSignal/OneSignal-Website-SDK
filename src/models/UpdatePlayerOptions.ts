@@ -1,5 +1,5 @@
-import { DeliveryPlatformKind } from './DeliveryPlatformKind';
-import { SubscriptionStateKind } from 'src/models/SubscriptionStateKind';
+import {DeliveryPlatformKind} from './DeliveryPlatformKind';
+import {SubscriptionStateKind} from 'src/models/SubscriptionStateKind';
 
 export interface UpdatePlayerOptions {
   web_auth?: string;

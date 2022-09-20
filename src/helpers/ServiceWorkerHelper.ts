@@ -1,4 +1,4 @@
-import { OneSignalApiSW } from '../OneSignalApiSW';
+import {OneSignalApiSW} from '../OneSignalApiSW';
 import Log from '../libraries/sw/Log';
 import Path from '../models/Path';
 import {
@@ -7,23 +7,23 @@ import {
   SessionOrigin,
   SessionStatus,
 } from '../models/Session';
-import { OneSignalUtils } from '../utils/OneSignalUtils';
+import {OneSignalUtils} from '../utils/OneSignalUtils';
 import Database from '../services/Database';
 import {
   SerializedPushDeviceRecord,
   PushDeviceRecord,
 } from '../models/PushDeviceRecord';
-import { NotificationClicked } from '../models/Notification';
-import { RawPushSubscription } from '../models/RawPushSubscription';
-import { OutcomesConfig } from '../models/Outcomes';
+import {NotificationClicked} from '../models/Notification';
+import {RawPushSubscription} from '../models/RawPushSubscription';
+import {OutcomesConfig} from '../models/Outcomes';
 import OutcomesHelper from './shared/OutcomesHelper';
 import {
   cancelableTimeout,
   CancelableTimeoutPromise,
 } from './sw/CancelableTimeout';
-import { OSServiceWorkerFields } from '../service-worker/types';
+import {OSServiceWorkerFields} from '../service-worker/types';
 import Utils from '../context/shared/utils/Utils';
-import { SecondaryChannelManager } from '../managers/channelManager/shared/SecondaryChannelManager';
+import {SecondaryChannelManager} from '../managers/channelManager/shared/SecondaryChannelManager';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -46,10 +46,8 @@ export default class ServiceWorkerHelper {
     sdkVersion: number,
   ): string {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
-    const appIdAsQueryParam = Utils.encodeHashAsUriComponent({ appId });
-    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({
-      sdkVersion,
-    });
+    const appIdAsQueryParam = Utils.encodeHashAsUriComponent({appId});
+    const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({sdkVersion});
     return `${fullPath}?${appIdAsQueryParam}?${sdkVersionAsQueryParam}`;
   }
 
@@ -346,5 +344,5 @@ export interface ServiceWorkerManagerConfig {
    * Describes how much of the origin the service worker controls.
    * This is currently always "/".
    */
-  registrationOptions: { scope: string };
+  registrationOptions: {scope: string};
 }

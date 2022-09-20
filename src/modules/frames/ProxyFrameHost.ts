@@ -1,15 +1,15 @@
 import Environment from '../../Environment';
 import Event from '../../Event';
-import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
+import {MessengerMessageEvent} from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import {
   timeoutPromise,
   triggerNotificationPermissionChanged,
   deepCopy,
 } from '../../utils';
-import { ServiceWorkerActiveState } from '../../helpers/ServiceWorkerHelper';
+import {ServiceWorkerActiveState} from '../../helpers/ServiceWorkerHelper';
 import Log from '../../libraries/Log';
-import { PageVisibilityRequest } from '../../models/Session';
+import {PageVisibilityRequest} from '../../models/Session';
 
 interface Reply {
   data: any;
@@ -183,13 +183,13 @@ export default class ProxyFrameHost implements Disposable {
 
   onRemoteRetriggerEvent(message: MessengerMessageEvent) {
     // e.g. { eventName: 'subscriptionChange', eventData: true}
-    const { eventName, eventData } = message.data as any;
+    const {eventName, eventData} = message.data as any;
     Event.trigger(eventName, eventData, message.source);
     return false;
   }
 
   onRemoteNotificationPermissionChanged(message: MessengerMessageEvent) {
-    const { forceUpdatePermission } = message.data as any;
+    const {forceUpdatePermission} = message.data as any;
     triggerNotificationPermissionChanged(forceUpdatePermission);
     return false;
   }
@@ -262,7 +262,7 @@ export default class ProxyFrameHost implements Disposable {
     return result;
   }
 
-  onAreYouVisibleRequest(event: { data: PageVisibilityRequest }) {
+  onAreYouVisibleRequest(event: {data: PageVisibilityRequest}) {
     Log.debug('onAreYouVisibleRequest page', event);
     const response = {
       timestamp: event.data.timestamp,

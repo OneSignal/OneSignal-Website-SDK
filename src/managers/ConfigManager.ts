@@ -1,6 +1,6 @@
-import { AppUserConfig, AppConfig, ServerAppConfig } from '../models/AppConfig';
+import {AppUserConfig, AppConfig, ServerAppConfig} from '../models/AppConfig';
 import OneSignalApi from '../OneSignalApi';
-import { ConfigHelper } from '../helpers/ConfigHelper';
+import {ConfigHelper} from '../helpers/ConfigHelper';
 
 /**
  * Handles downloading settings from OneSignal and performing any other initialization-related tasks.

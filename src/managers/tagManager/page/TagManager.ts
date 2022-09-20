@@ -1,8 +1,8 @@
 import Log from '../../../libraries/Log';
-import { TagsObjectForApi, TagsObjectWithBoolean } from '../../../models/Tags';
+import {TagsObjectForApi, TagsObjectWithBoolean} from '../../../models/Tags';
 import TagUtils from '../../../utils/TagUtils';
-import { ContextInterface } from '../../../models/Context';
-import { ITagManager } from '../types';
+import {ContextInterface} from '../../../models/Context';
+import {ITagManager} from '../types';
 
 /**
  * Manages tags for the TaggingContainer
