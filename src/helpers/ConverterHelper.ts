@@ -69,7 +69,7 @@ export class ConverterHelper {
       promptOptions.slidedown = {};
     }
 
-    const {acceptButtonText, cancelButtonText, actionMessage} =
+    const { acceptButtonText, cancelButtonText, actionMessage } =
       promptOptions.slidedown;
 
     // we may have supported both of these keys in the past (with and without "Text" postfix)

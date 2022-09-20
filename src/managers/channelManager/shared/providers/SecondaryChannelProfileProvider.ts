@@ -1,5 +1,5 @@
-import {DeliveryPlatformKind} from '../../../../models/DeliveryPlatformKind';
-import {SecondaryChannelProfile} from '../../../../models/SecondaryChannelProfile';
+import { DeliveryPlatformKind } from '../../../../models/DeliveryPlatformKind';
+import { SecondaryChannelProfile } from '../../../../models/SecondaryChannelProfile';
 
 // Interface to do the following operations on a SecondaryChannelProfile
 // * New based on parameters

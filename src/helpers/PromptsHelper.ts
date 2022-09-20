@@ -1,4 +1,4 @@
-import {SlidedownOptionsVersion1} from '../../src/models/AppConfig';
+import { SlidedownOptionsVersion1 } from '../../src/models/AppConfig';
 import {
   DelayedPromptType,
   SlidedownPromptOptions,

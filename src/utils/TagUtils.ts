@@ -3,7 +3,7 @@ import {
   TagsObjectWithBoolean,
   TagCategory,
 } from '../models/Tags';
-import {deepCopy} from '../../src/utils';
+import { deepCopy } from '../../src/utils';
 
 export default class TagUtils {
   static convertTagsApiToBooleans(

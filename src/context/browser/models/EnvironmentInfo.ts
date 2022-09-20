@@ -1,4 +1,4 @@
-import {Browser} from './Browser';
+import { Browser } from './Browser';
 
 // for runtime environment info
 export interface EnvironmentInfo {

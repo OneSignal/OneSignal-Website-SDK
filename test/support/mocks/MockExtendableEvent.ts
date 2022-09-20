@@ -1,14 +1,13 @@
-import { MockEvent } from "./MockEvent";
+import { MockEvent } from './MockEvent';
 
-export class MockExtendableEvent extends MockEvent implements ExtendableEvent  {
+export class MockExtendableEvent extends MockEvent implements ExtendableEvent {
+  private _lastWaitUntilPromise?: Promise<any>;
 
-    private _lastWaitUntilPromise?: Promise<any>;
+  get lastWaitUntilPromise(): Promise<any> | undefined {
+    return this._lastWaitUntilPromise;
+  }
 
-    get lastWaitUntilPromise(): Promise<any> | undefined {
-        return this._lastWaitUntilPromise;
-    }
-
-    waitUntil(f: Promise<any>): void {
-        this._lastWaitUntilPromise = f;
-    }
+  waitUntil(f: Promise<any>): void {
+    this._lastWaitUntilPromise = f;
+  }
 }

@@ -1,8 +1,8 @@
-import {AppConfig} from '../models/AppConfig';
-import {EnvironmentKind} from '../models/EnvironmentKind';
+import { AppConfig } from '../models/AppConfig';
+import { EnvironmentKind } from '../models/EnvironmentKind';
 import ProxyFrameHost from '../modules/frames/ProxyFrameHost';
 import SdkEnvironment from './SdkEnvironment';
-import {Utils} from '../context/shared/utils/Utils';
+import { Utils } from '../context/shared/utils/Utils';
 
 export default class AltOriginManager {
   constructor() {}

@@ -1,4 +1,4 @@
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import SdkEnvironment from './SdkEnvironment';
 
 /**

@@ -1,6 +1,6 @@
 // NOTE: This is in the lib folder, no OneSignal specific code should be added here
 
-import nock, { Interceptor } from "nock";
+import nock, { Interceptor } from 'nock';
 
 type NockResultFunction = (result: NockRequestResult) => void;
 
@@ -24,7 +24,7 @@ export interface NockScopeWithResultPromise {
   result: Promise<NockRequestResult>;
 }
 
-type NockInterceptMethods = "post" | "put" | "get";
+type NockInterceptMethods = 'post' | 'put' | 'get';
 
 interface NockOptions {
   reply: NockResponse;
@@ -54,38 +54,41 @@ export class NockHelper {
 
     const nockScopePostPlayer = nock(options.baseUrl);
 
-    NockHelper.performInterceptFunction(nockScopePostPlayer, options.path, options.method)
-      .reply(options.reply.status, (uri: string, requestBody: any) => {
-        requestBodyPromiseResolve({
-          request: {
-            url: uri,
-            body: JSON.parse(requestBody)
-          },
-          response: {
-            status: options.reply.status,
-            body: options.reply.body
-          }
-        });
-        return options.reply.body;
+    NockHelper.performInterceptFunction(
+      nockScopePostPlayer,
+      options.path,
+      options.method,
+    ).reply(options.reply.status, (uri: string, requestBody: any) => {
+      requestBodyPromiseResolve({
+        request: {
+          url: uri,
+          body: JSON.parse(requestBody),
+        },
+        response: {
+          status: options.reply.status,
+          body: options.reply.body,
+        },
       });
+      return options.reply.body;
+    });
 
     return {
       nockScope: nockScopePostPlayer,
-      result: requestBodyPromise
+      result: requestBodyPromise,
     };
   }
 
   private static performInterceptFunction(
     nockScope: nock.Scope,
     url: string,
-    type: NockInterceptMethods
+    type: NockInterceptMethods,
   ): Interceptor {
-    switch(type) {
-      case "post":
+    switch (type) {
+      case 'post':
         return nockScope.post(url);
-      case "put":
+      case 'put':
         return nockScope.put(url);
-      case  "get":
+      case 'get':
         return nockScope.get(url);
     }
   }

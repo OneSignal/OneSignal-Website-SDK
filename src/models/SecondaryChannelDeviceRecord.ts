@@ -1,6 +1,6 @@
 import NotImplementedError from '../errors/NotImplementedError';
-import {DeliveryPlatformKind} from './DeliveryPlatformKind';
-import {DeviceRecord} from './DeviceRecord';
+import { DeliveryPlatformKind } from './DeliveryPlatformKind';
+import { DeviceRecord } from './DeviceRecord';
 
 /**
  * Describes a secondary channel device record, such as an email.

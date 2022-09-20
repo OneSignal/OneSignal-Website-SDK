@@ -1,8 +1,8 @@
 import Log from '../libraries/Log';
 import OneSignalUtils from '../utils/OneSignalUtils';
-import {ContextInterface} from '../models/Context';
+import { ContextInterface } from '../models/Context';
 import MainHelper from '../helpers/MainHelper';
-import {ResourceLoadState} from '../services/DynamicResourceLoader';
+import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import Slidedown from '../slidedown/Slidedown';
 import {
   DelayedPromptOptions,
@@ -10,17 +10,17 @@ import {
   DelayedPromptType,
   SlidedownPromptOptions,
 } from '../models/Prompts';
-import {DismissHelper} from '../helpers/DismissHelper';
+import { DismissHelper } from '../helpers/DismissHelper';
 import InitHelper from '../helpers/InitHelper';
 import {
   CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
   SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS,
 } from '../config/index';
-import {EnvironmentInfoHelper} from '../context/browser/helpers/EnvironmentInfoHelper';
-import {awaitableTimeout} from '../utils/AwaitableTimeout';
+import { EnvironmentInfoHelper } from '../context/browser/helpers/EnvironmentInfoHelper';
+import { awaitableTimeout } from '../utils/AwaitableTimeout';
 import PromptsHelper from '../helpers/PromptsHelper';
 import bowser from 'bowser';
-import {DismissPrompt} from '../models/Dismiss';
+import { DismissPrompt } from '../models/Dismiss';
 import OneSignalEvent from '../Event';
 
 export interface AutoPromptOptions {
@@ -42,8 +42,8 @@ export class PromptsManager {
   }
 
   private shouldForceSlidedownOverNative(): boolean {
-    const {environmentInfo} = OneSignal;
-    const {browserType, browserVersion, requiresUserInteraction} =
+    const { environmentInfo } = OneSignal;
+    const { browserType, browserVersion, requiresUserInteraction } =
       environmentInfo;
 
     return (
@@ -143,7 +143,7 @@ export class PromptsManager {
       return;
     }
 
-    const {requiresUserInteraction} =
+    const { requiresUserInteraction } =
       EnvironmentInfoHelper.getEnvironmentInfo();
     if (requiresUserInteraction && type === DelayedPromptType.Native) {
       type = DelayedPromptType.Push; // Push Slidedown for cases where user interaction is needed
@@ -193,7 +193,7 @@ export class PromptsManager {
   }
 
   private async internalShowSlidedownPrompt(
-    options: AutoPromptOptions = {force: false},
+    options: AutoPromptOptions = { force: false },
   ): Promise<void> {
     OneSignalUtils.logMethodCall('internalShowSlidedownPrompt');
 
@@ -313,7 +313,7 @@ export class PromptsManager {
       );
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      const {type} = OneSignal.slidedown.options as SlidedownPromptOptions;
+      const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
@@ -375,7 +375,7 @@ export class PromptsManager {
       case DelayedPromptType.Email:
       case DelayedPromptType.Sms:
       case DelayedPromptType.SmsAndEmail:
-        const {userConfig} = this.context.appConfig;
+        const { userConfig } = this.context.appConfig;
         const options = PromptsHelper.getFirstSlidedownPromptOptionsWithType(
           userConfig.promptOptions?.slidedown?.prompts || [],
           type,

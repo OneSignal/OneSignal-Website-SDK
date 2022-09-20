@@ -3,20 +3,20 @@ import {
   NotSubscribedReason,
 } from '../../../errors/NotSubscribedError';
 import Log from '../../../libraries/Log';
-import {EmailProfile} from '../../../models/EmailProfile';
-import {SecondaryChannelProfile} from '../../../models/SecondaryChannelProfile';
+import { EmailProfile } from '../../../models/EmailProfile';
+import { SecondaryChannelProfile } from '../../../models/SecondaryChannelProfile';
 import OneSignalApi from '../../../OneSignalApi';
 import Database from '../../../services/Database';
 import {
   SecondaryChannel,
   SecondaryChannelWithSynchronizerEvents,
 } from './SecondaryChannel';
-import {SecondaryChannelIdentifierUpdater} from './updaters/SecondaryChannelIdentifierUpdater';
-import {SecondaryChannelTagsUpdater} from './updaters/SecondaryChannelTagsUpdater';
-import {SecondaryChannelExternalUserIdUpdater} from './updaters/SecondaryChannelExternalUserIdUpdater';
-import {SecondaryChannelFocusUpdater} from './updaters/SecondaryChannelFocusUpdater';
-import {SecondaryChannelSessionUpdater} from './updaters/SecondaryChannelSessionUpdater';
-import {TagsObject} from '../../../models/Tags';
+import { SecondaryChannelIdentifierUpdater } from './updaters/SecondaryChannelIdentifierUpdater';
+import { SecondaryChannelTagsUpdater } from './updaters/SecondaryChannelTagsUpdater';
+import { SecondaryChannelExternalUserIdUpdater } from './updaters/SecondaryChannelExternalUserIdUpdater';
+import { SecondaryChannelFocusUpdater } from './updaters/SecondaryChannelFocusUpdater';
+import { SecondaryChannelSessionUpdater } from './updaters/SecondaryChannelSessionUpdater';
+import { TagsObject } from '../../../models/Tags';
 import Event from '../../../Event';
 
 export class SecondaryChannelEmail
@@ -39,7 +39,7 @@ export class SecondaryChannelEmail
     }
 
     // 2. Logout only applies if we a de-linking email from a push record.
-    const {deviceId} = await Database.getSubscription();
+    const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
       Log.warn(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return false;
@@ -61,7 +61,7 @@ export class SecondaryChannelEmail
     identifier: string,
     authHash?: string,
   ): Promise<string | null | undefined> {
-    const {profileProvider} = this.secondaryChannelIdentifierUpdater;
+    const { profileProvider } = this.secondaryChannelIdentifierUpdater;
     const emailProfileBefore = await profileProvider.getProfile();
     const profile = await this.secondaryChannelIdentifierUpdater.setIdentifier(
       identifier,
@@ -91,7 +91,7 @@ export class SecondaryChannelEmail
     existingEmailProfile: SecondaryChannelProfile,
     newEmailProfile: SecondaryChannelProfile,
   ): Promise<void> {
-    const {deviceId} = await Database.getSubscription();
+    const { deviceId } = await Database.getSubscription();
     // If we are subscribed to web push
     const isExistingPushRecordSaved = deviceId;
     // And if we previously saved an email ID and it's different from the new returned ID

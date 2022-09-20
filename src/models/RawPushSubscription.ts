@@ -1,4 +1,4 @@
-import {Serializable} from './Serializable';
+import { Serializable } from './Serializable';
 
 export class RawPushSubscription implements Serializable {
   /**

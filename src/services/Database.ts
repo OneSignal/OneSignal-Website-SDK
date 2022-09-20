@@ -1,24 +1,24 @@
 import Emitter from '../libraries/Emitter';
 import IndexedDb from './IndexedDb';
 
-import {AppConfig} from '../models/AppConfig';
-import {AppState, ClickedNotifications} from '../models/AppState';
+import { AppConfig } from '../models/AppConfig';
+import { AppState, ClickedNotifications } from '../models/AppState';
 import {
   NotificationReceived,
   NotificationClicked,
 } from '../models/Notification';
-import {ServiceWorkerState} from '../models/ServiceWorkerState';
-import {Subscription} from '../models/Subscription';
-import {TestEnvironmentKind} from '../models/TestEnvironmentKind';
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
-import {BundleEmail, EmailProfile} from '../models/EmailProfile';
-import {Session, ONESIGNAL_SESSION_KEY} from '../models/Session';
+import { ServiceWorkerState } from '../models/ServiceWorkerState';
+import { Subscription } from '../models/Subscription';
+import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { BundleEmail, EmailProfile } from '../models/EmailProfile';
+import { Session, ONESIGNAL_SESSION_KEY } from '../models/Session';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import Utils from '../context/shared/utils/Utils';
 import Log from '../libraries/Log';
-import {SentUniqueOutcome} from '../models/Outcomes';
-import {BundleSMS, SMSProfile} from '../models/SMSProfile';
+import { SentUniqueOutcome } from '../models/Outcomes';
+import { BundleSMS, SMSProfile } from '../models/SMSProfile';
 
 enum DatabaseEventName {
   SET,
@@ -88,7 +88,7 @@ export default class Database {
         else return null;
       case 'NotificationOpened':
         if (result && key)
-          return {data: result.data, timestamp: result.timestamp};
+          return { data: result.data, timestamp: result.timestamp };
         else if (result && !key) return result;
         else return null;
       default:
@@ -171,7 +171,7 @@ export default class Database {
       ) {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_PUT,
-          [{table: table, keypath: keypath}],
+          [{ table: table, keypath: keypath }],
           (reply: any) => {
             if (
               reply.data ===
@@ -208,7 +208,7 @@ export default class Database {
       return new Promise<void>((resolve, reject) => {
         OneSignal.proxyFrameHost.message(
           OneSignal.POSTMAM_COMMANDS.REMOTE_DATABASE_REMOVE,
-          [{table: table, keypath: keypath}],
+          [{ table: table, keypath: keypath }],
           (reply: any) => {
             if (
               reply.data ===
@@ -260,7 +260,7 @@ export default class Database {
     if (externalIdToSave === emptyString) {
       await this.remove('Ids', 'externalUserId');
     } else {
-      await this.put('Ids', {type: 'externalUserId', id: externalIdToSave});
+      await this.put('Ids', { type: 'externalUserId', id: externalIdToSave });
     }
 
     if (authHashToSave === emptyString) {
@@ -275,13 +275,16 @@ export default class Database {
 
   async setAppConfig(appConfig: AppConfig): Promise<void> {
     if (appConfig.appId)
-      await this.put('Ids', {type: 'appId', id: appConfig.appId});
+      await this.put('Ids', { type: 'appId', id: appConfig.appId });
     if (appConfig.subdomain)
-      await this.put('Options', {key: 'subdomain', value: appConfig.subdomain});
+      await this.put('Options', {
+        key: 'subdomain',
+        value: appConfig.subdomain,
+      });
     if (appConfig.httpUseOneSignalCom === true)
-      await this.put('Options', {key: 'httpUseOneSignalCom', value: true});
+      await this.put('Options', { key: 'httpUseOneSignalCom', value: true });
     else if (appConfig.httpUseOneSignalCom === false)
-      await this.put('Options', {key: 'httpUseOneSignalCom', value: false});
+      await this.put('Options', { key: 'httpUseOneSignalCom', value: false });
     if (appConfig.vapidPublicKey)
       await this.put('Options', {
         key: 'vapidPublicKey',
@@ -404,7 +407,7 @@ export default class Database {
   }
 
   async setDeviceId(deviceId: string | null): Promise<void> {
-    await this.put('Ids', {type: 'userId', id: deviceId});
+    await this.put('Ids', { type: 'userId', id: deviceId });
   }
 
   async setSubscription(subscription: Subscription) {
@@ -470,12 +473,12 @@ export default class Database {
 
   async setSMSProfile(profile: SMSProfile): Promise<void> {
     if (profile) {
-      await this.put('Ids', {type: 'smsProfile', id: profile.serialize()});
+      await this.put('Ids', { type: 'smsProfile', id: profile.serialize() });
     }
   }
 
   async setProvideUserConsent(consent: boolean): Promise<void> {
-    await this.put('Options', {key: 'userConsent', value: consent});
+    await this.put('Options', { key: 'userConsent', value: consent });
   }
 
   async getProvideUserConsent(): Promise<boolean> {

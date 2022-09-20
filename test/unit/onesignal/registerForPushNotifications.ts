@@ -1,8 +1,11 @@
-import "../../support/polyfills/polyfills";
+import '../../support/polyfills/polyfills';
 import test from 'ava';
 import sinon, { SinonSandbox } from 'sinon';
-import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import InitHelper from "../../../src/helpers/InitHelper";
+import {
+  TestEnvironment,
+  HttpHttpsEnvironment,
+} from '../../support/sdk/TestEnvironment';
+import InitHelper from '../../../src/helpers/InitHelper';
 import Event from '../../../src/Event';
 
 let sandbox: SinonSandbox;
@@ -20,11 +23,13 @@ test.afterEach(function () {
   sandbox.restore();
 });
 
-test('registerForPushNotifications: before OneSignal.initialized', async t => {
+test('registerForPushNotifications: before OneSignal.initialized', async (t) => {
   (global as any).OneSignal.initialized = false;
   (global as any).OneSignal._initCalled = false;
 
-  const spy = sandbox.stub(InitHelper, 'registerForPushNotifications').resolves();
+  const spy = sandbox
+    .stub(InitHelper, 'registerForPushNotifications')
+    .resolves();
   const promise = OneSignal.registerForPushNotifications();
 
   t.is(spy.notCalled, true);
@@ -34,11 +39,13 @@ test('registerForPushNotifications: before OneSignal.initialized', async t => {
   t.is(spy.calledOnce, true);
 });
 
-test('registerForPushNotifications: after OneSignal.initialized', async t => {
+test('registerForPushNotifications: after OneSignal.initialized', async (t) => {
   (global as any).OneSignal.initialized = true;
   (global as any).OneSignal._initCalled = false;
 
-  const spy = sandbox.stub(InitHelper, 'registerForPushNotifications').resolves();
+  const spy = sandbox
+    .stub(InitHelper, 'registerForPushNotifications')
+    .resolves();
   await OneSignal.registerForPushNotifications();
   t.is(spy.calledOnce, true);
 });

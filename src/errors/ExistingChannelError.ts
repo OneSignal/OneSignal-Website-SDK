@@ -1,4 +1,4 @@
-import {DelayedPromptType} from '../models/Prompts';
+import { DelayedPromptType } from '../models/Prompts';
 import OneSignalError from './OneSignalError';
 
 export default class ExistingChannelError extends OneSignalError {

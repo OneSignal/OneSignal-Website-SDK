@@ -17,4 +17,4 @@ const Solarized = {
   GREEN: '#859900',
 };
 
-export {Solarized};
+export { Solarized };

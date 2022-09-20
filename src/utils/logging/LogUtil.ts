@@ -1,5 +1,5 @@
-import {Solarized} from '../colors/Solarized';
-import {InvalidArgumentError} from '../../errors/InvalidArgumentError';
+import { Solarized } from '../colors/Solarized';
+import { InvalidArgumentError } from '../../errors/InvalidArgumentError';
 
 enum LogStyle {
   PlainText,
@@ -49,4 +49,4 @@ class LogUtil {
   }
 }
 
-export {LogUtil};
+export { LogUtil };

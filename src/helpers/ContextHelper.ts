@@ -1,12 +1,12 @@
-import {ServiceWorkerManager} from '../managers/ServiceWorkerManager';
+import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import {
   SubscriptionManager,
   SubscriptionManagerConfig,
 } from '../managers/SubscriptionManager';
-import {AppConfig} from '../models/AppConfig';
+import { AppConfig } from '../models/AppConfig';
 import Path from '../models/Path';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import {ContextSWInterface} from '../models/ContextSW';
+import { ContextSWInterface } from '../models/ContextSW';
 
 export class ContextHelper {
   public static getServiceWorkerManager(
@@ -17,7 +17,7 @@ export class ContextHelper {
     const envPrefix = SdkEnvironment.getBuildEnvPrefix();
     const serviceWorkerManagerConfig = {
       workerPath: new Path(`/${envPrefix}OneSignalSDKWorker.js`),
-      registrationOptions: {scope: '/'},
+      registrationOptions: { scope: '/' },
     };
 
     if (config.userConfig) {

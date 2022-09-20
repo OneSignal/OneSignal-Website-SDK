@@ -2,10 +2,10 @@ import bowser from 'bowser';
 
 import Environment from '../Environment';
 import NotImplementedError from '../errors/NotImplementedError';
-import {DeliveryPlatformKind} from './DeliveryPlatformKind';
-import {Serializable} from './Serializable';
-import {SubscriptionStateKind} from './SubscriptionStateKind';
-import {OneSignalUtils} from '../utils/OneSignalUtils';
+import { DeliveryPlatformKind } from './DeliveryPlatformKind';
+import { Serializable } from './Serializable';
+import { SubscriptionStateKind } from './SubscriptionStateKind';
+import { OneSignalUtils } from '../utils/OneSignalUtils';
 
 export interface FlattenedDeviceRecord {
   device_type: DeliveryPlatformKind;

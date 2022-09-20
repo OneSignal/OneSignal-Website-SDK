@@ -2,7 +2,7 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import {NotificationActionButton} from './NotificationActionButton';
+import { NotificationActionButton } from './NotificationActionButton';
 import Utils from '../context/shared/utils/Utils';
 
 export class Notification {

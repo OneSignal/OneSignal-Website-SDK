@@ -1,8 +1,8 @@
 import bowser from 'bowser';
-import {EnvironmentInfo} from '../models/EnvironmentInfo';
-import {Browser} from '../models/Browser';
-import {OneSignalUtils} from '../../../utils/OneSignalUtils';
-import {isMacOSSafariInIframe} from '../utils/BrowserSupportsPush';
+import { EnvironmentInfo } from '../models/EnvironmentInfo';
+import { Browser } from '../models/Browser';
+import { OneSignalUtils } from '../../../utils/OneSignalUtils';
+import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/utils/Utils';
 
 /**

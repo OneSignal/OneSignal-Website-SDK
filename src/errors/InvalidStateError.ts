@@ -1,5 +1,5 @@
 import OneSignalError from './OneSignalError';
-import {PermissionPromptType} from '../models/PermissionPromptType';
+import { PermissionPromptType } from '../models/PermissionPromptType';
 
 export enum InvalidStateReason {
   MissingAppId,

@@ -1,4 +1,4 @@
-import {OutcomeAttributionType} from './Outcomes';
+import { OutcomeAttributionType } from './Outcomes';
 
 export default interface OutcomeProps {
   type: OutcomeAttributionType;

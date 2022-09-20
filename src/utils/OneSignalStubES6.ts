@@ -1,7 +1,7 @@
 // NOTE: This is used with the OneSignalSDK.js shim
 // Careful if adding imports, ES5 targets can't clean up functions never called.
 
-import {OneSignalStub, PossiblePredefinedOneSignal} from './OneSignalStub';
+import { OneSignalStub, PossiblePredefinedOneSignal } from './OneSignalStub';
 
 export class OneSignalStubES6 extends OneSignalStub<OneSignalStubES6> {
   // @Override
@@ -47,9 +47,13 @@ export class OneSignalStubES6 extends OneSignalStub<OneSignalStubES6> {
   ): Promise<any> {
     let delayedPromise: DelayedPromise<any> | undefined = undefined;
     const promise = new Promise((resolve, reject) => {
-      delayedPromise = {resolve, reject};
+      delayedPromise = { resolve, reject };
     });
-    thisObj.directFunctionCallsArray.push({functionName, delayedPromise, args});
+    thisObj.directFunctionCallsArray.push({
+      functionName,
+      delayedPromise,
+      args,
+    });
     return promise;
   }
 }

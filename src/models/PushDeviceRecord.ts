@@ -1,9 +1,9 @@
 import bowser from 'bowser';
 
 import NotImplementedError from '../errors/NotImplementedError';
-import {RawPushSubscription} from './RawPushSubscription';
-import {SubscriptionStateKind} from './SubscriptionStateKind';
-import {DeviceRecord, FlattenedDeviceRecord} from './DeviceRecord';
+import { RawPushSubscription } from './RawPushSubscription';
+import { SubscriptionStateKind } from './SubscriptionStateKind';
+import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
 
 export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
   identifier?: string | null;

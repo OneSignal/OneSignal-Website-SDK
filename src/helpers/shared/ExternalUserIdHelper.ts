@@ -1,4 +1,4 @@
-import {DeviceRecord} from '../../models/DeviceRecord';
+import { DeviceRecord } from '../../models/DeviceRecord';
 import Database from '../../services/Database';
 
 export class ExternalUserIdHelper {

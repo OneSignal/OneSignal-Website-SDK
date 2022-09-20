@@ -1,5 +1,5 @@
 import OneSignalEvent from '../Event';
-import {addCssClass, contains, once, removeCssClass} from '../utils';
+import { addCssClass, contains, once, removeCssClass } from '../utils';
 import AnimatedElement from './AnimatedElement';
 import Log from '../libraries/Log';
 import OneSignal from '../OneSignal';

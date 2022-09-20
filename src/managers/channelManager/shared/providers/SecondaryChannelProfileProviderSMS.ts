@@ -1,7 +1,7 @@
-import {DeliveryPlatformKind} from '../../../../models/DeliveryPlatformKind';
-import {SMSProfile} from '../../../../models/SMSProfile';
+import { DeliveryPlatformKind } from '../../../../models/DeliveryPlatformKind';
+import { SMSProfile } from '../../../../models/SMSProfile';
 import Database from '../../../../services/Database';
-import {SecondaryChannelProfileProviderBase} from './SecondaryChannelProfileProviderBase';
+import { SecondaryChannelProfileProviderBase } from './SecondaryChannelProfileProviderBase';
 
 export class SecondaryChannelProfileProviderSMS extends SecondaryChannelProfileProviderBase {
   deviceType = DeliveryPlatformKind.SMS;

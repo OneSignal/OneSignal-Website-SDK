@@ -1,25 +1,25 @@
 import PushPermissionNotGrantedError from '../errors/PushPermissionNotGrantedError';
-import {PushPermissionNotGrantedErrorReason} from '../errors/PushPermissionNotGrantedError';
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
+import { PushPermissionNotGrantedErrorReason } from '../errors/PushPermissionNotGrantedError';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import EventHelper from './EventHelper';
 import {
   InvalidStateError,
   InvalidStateReason,
 } from '../errors/InvalidStateError';
-import {Subscription} from '../models/Subscription';
-import {NotificationPermission} from '../models/NotificationPermission';
-import {RawPushSubscription} from '../models/RawPushSubscription';
-import {SubscriptionStrategyKind} from '../models/SubscriptionStrategyKind';
+import { Subscription } from '../models/Subscription';
+import { NotificationPermission } from '../models/NotificationPermission';
+import { RawPushSubscription } from '../models/RawPushSubscription';
+import { SubscriptionStrategyKind } from '../models/SubscriptionStrategyKind';
 import Log from '../libraries/Log';
-import {ContextSWInterface} from '../models/ContextSW';
+import { ContextSWInterface } from '../models/ContextSW';
 import SdkEnvironment from '../managers/SdkEnvironment';
-import {PermissionUtils} from '../utils/PermissionUtils';
+import { PermissionUtils } from '../utils/PermissionUtils';
 import LocalStorage from '../utils/LocalStorage';
-import {SessionOrigin} from '../models/Session';
+import { SessionOrigin } from '../models/Session';
 import MainHelper from './MainHelper';
-import {PushDeviceRecord} from '../models/PushDeviceRecord';
-import {EnvironmentInfo} from '../context/browser/models/EnvironmentInfo';
-import {Browser} from '../context/browser/models/Browser';
+import { PushDeviceRecord } from '../models/PushDeviceRecord';
+import { EnvironmentInfo } from '../context/browser/models/EnvironmentInfo';
+import { Browser } from '../context/browser/models/Browser';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -185,7 +185,7 @@ export default class SubscriptionHelper {
   ): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
-    const {deviceToken: existingDeviceToken} =
+    const { deviceToken: existingDeviceToken } =
       window.safari.pushNotification.permission(safariWebId);
     subscription.existingSafariDeviceToken = existingDeviceToken;
 

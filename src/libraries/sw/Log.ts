@@ -1,4 +1,4 @@
-import {OSServiceWorkerFields} from '../../service-worker/types';
+import { OSServiceWorkerFields } from '../../service-worker/types';
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 

@@ -1,5 +1,5 @@
-import {PushDeviceRecord} from '../../models/PushDeviceRecord';
-import {SessionOrigin} from '../../models/Session';
+import { PushDeviceRecord } from '../../models/PushDeviceRecord';
+import { SessionOrigin } from '../../models/Session';
 
 export interface ISessionManager {
   upsertSession: (

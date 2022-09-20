@@ -19,18 +19,18 @@ export default class MockNotification implements Notification {
   onshow: ((this: Notification, ev: Event) => any) | null;
   readonly tag: string;
   readonly title: string;
-  static permission: NotificationPermission = "default";
+  static permission: NotificationPermission = 'default';
 
   constructor(title: string, options?: NotificationOptions) {
     this.title = title;
     this.data = options && options.data;
     this.actions = [];
-    this.body = "";
-    this.dir = "auto";
-    this.icon = "";
-    this.image = "";
-    this.badge = "";
-    this.lang = "";
+    this.body = '';
+    this.dir = 'auto';
+    this.icon = '';
+    this.image = '';
+    this.badge = '';
+    this.lang = '';
     this.renotify = false;
     this.requireInteraction = false;
     this.silent = false;
@@ -40,25 +40,31 @@ export default class MockNotification implements Notification {
     this.onclose = null;
     this.onerror = null;
     this.onshow = null;
-    this.tag = "";
+    this.tag = '';
   }
 
   addEventListener<K extends keyof NotificationEventMap>(
     type: K,
     listener: (this: Notification, ev: NotificationEventMap[K]) => any,
-    options?: boolean | AddEventListenerOptions): void;
+    options?: boolean | AddEventListenerOptions,
+  ): void;
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions): void;
+    options?: boolean | AddEventListenerOptions,
+  ): void;
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions): void;
-  addEventListener(_type: any, _listener: any, _options?: boolean | AddEventListenerOptions): void {
-  }
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    _type: any,
+    _listener: any,
+    _options?: boolean | AddEventListenerOptions,
+  ): void {}
 
-  close(): void { }
+  close(): void {}
 
   dispatchEvent(_evt: Event): boolean {
     return false;
@@ -67,21 +73,27 @@ export default class MockNotification implements Notification {
   removeEventListener<K extends keyof NotificationEventMap>(
     type: K,
     listener: (this: Notification, ev: NotificationEventMap[K]) => any,
-    options?: boolean | EventListenerOptions): void;
+    options?: boolean | EventListenerOptions,
+  ): void;
   removeEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
-    options?: boolean | EventListenerOptions): void;
+    options?: boolean | EventListenerOptions,
+  ): void;
   removeEventListener(
     type: string,
     listener?: EventListenerOrEventListenerObject | null,
-    options?: EventListenerOptions | boolean): void;
+    options?: EventListenerOptions | boolean,
+  ): void;
   removeEventListener(
     _type: any,
     _listener?: any,
-    _options?: boolean | EventListenerOptions): void { }
-  
-  static async requestPermission(callback?: NotificationPermissionCallback | undefined): Promise<NotificationPermission> {
+    _options?: boolean | EventListenerOptions,
+  ): void {}
+
+  static async requestPermission(
+    callback?: NotificationPermissionCallback | undefined,
+  ): Promise<NotificationPermission> {
     if (callback) {
       callback(MockNotification.permission);
     }

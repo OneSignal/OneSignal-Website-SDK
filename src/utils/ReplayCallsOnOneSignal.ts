@@ -1,4 +1,4 @@
-import {OneSignalStubES6} from './OneSignalStubES6';
+import { OneSignalStubES6 } from './OneSignalStubES6';
 import Log from '../libraries/Log';
 
 export class ReplayCallsOnOneSignal {

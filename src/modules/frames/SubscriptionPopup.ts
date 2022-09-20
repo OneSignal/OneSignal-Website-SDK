@@ -1,5 +1,5 @@
 import SdkEnvironment from '../../managers/SdkEnvironment';
-import {MessengerMessageEvent} from '../../models/MessengerMessageEvent';
+import { MessengerMessageEvent } from '../../models/MessengerMessageEvent';
 import Postmam from '../../Postmam';
 import RemoteFrame from './RemoteFrame';
 import Log from '../../libraries/Log';

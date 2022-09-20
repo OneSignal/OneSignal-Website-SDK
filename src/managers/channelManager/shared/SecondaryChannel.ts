@@ -1,4 +1,4 @@
-import {TagsObject} from '../../../models/Tags';
+import { TagsObject } from '../../../models/Tags';
 
 // Interface provided outside of this module.
 //   Example: OneSignal.ts as a consumer.

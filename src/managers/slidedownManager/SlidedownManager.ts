@@ -1,14 +1,14 @@
-import {TagsObjectForApi, TagsObjectWithBoolean} from '../../models/Tags';
+import { TagsObjectForApi, TagsObjectWithBoolean } from '../../models/Tags';
 import TaggingContainer from '../../slidedown/TaggingContainer';
 import TagUtils from '../../utils/TagUtils';
-import {ContextInterface} from '../../models/Context';
-import {DelayedPromptType} from '../../models/Prompts';
+import { ContextInterface } from '../../models/Context';
+import { DelayedPromptType } from '../../models/Prompts';
 import Slidedown, {
   manageNotifyButtonStateWhileSlidedownShows,
 } from '../../slidedown/Slidedown';
-import {AutoPromptOptions} from '../PromptsManager';
+import { AutoPromptOptions } from '../PromptsManager';
 import Log from '../../libraries/Log';
-import {CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS} from '../../config';
+import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS } from '../../config';
 import {
   NotSubscribedError,
   NotSubscribedReason,
@@ -17,21 +17,21 @@ import PermissionMessageDismissedError from '../../errors/PermissionMessageDismi
 import PushPermissionNotGrantedError, {
   PushPermissionNotGrantedErrorReason,
 } from '../../errors/PushPermissionNotGrantedError';
-import {NotificationPermission} from '../../models/NotificationPermission';
-import {OneSignalUtils} from '../../utils/OneSignalUtils';
+import { NotificationPermission } from '../../models/NotificationPermission';
+import { OneSignalUtils } from '../../utils/OneSignalUtils';
 import ChannelCaptureContainer from '../../slidedown/ChannelCaptureContainer';
 import {
   ChannelCaptureError,
   InvalidChannelInputField,
 } from '../../errors/ChannelCaptureError';
-import InitHelper, {RegisterOptions} from '../../helpers/InitHelper';
+import InitHelper, { RegisterOptions } from '../../helpers/InitHelper';
 import LocalStorage from '../../utils/LocalStorage';
-import {DismissHelper} from '../../helpers/DismissHelper';
+import { DismissHelper } from '../../helpers/DismissHelper';
 import PromptsHelper from '../../helpers/PromptsHelper';
 import ConfirmationToast from '../../slidedown/ConfirmationToast';
-import {awaitableTimeout} from '../../utils/AwaitableTimeout';
-import {DismissPrompt} from '../../models/Dismiss';
-import {SecondaryChannelManager} from '../channelManager/shared/SecondaryChannelManager';
+import { awaitableTimeout } from '../../utils/AwaitableTimeout';
+import { DismissPrompt } from '../../models/Dismiss';
+import { SecondaryChannelManager } from '../channelManager/shared/SecondaryChannelManager';
 import Database from '../../services/Database';
 import AlreadySubscribedError from '../../errors/AlreadySubscribedError';
 import ExistingChannelError from '../../errors/ExistingChannelError';
@@ -135,7 +135,7 @@ export class SlidedownManager {
 
   private registerForPush(): void {
     const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-    const options: RegisterOptions = {autoAccept, slidedown: true};
+    const options: RegisterOptions = { autoAccept, slidedown: true };
     InitHelper.registerForPushNotifications(options);
   }
 
@@ -244,7 +244,7 @@ export class SlidedownManager {
   }
 
   private async showConfirmationToast(): Promise<void> {
-    const {confirmMessage} = OneSignal.slidedown.options.text;
+    const { confirmMessage } = OneSignal.slidedown.options.text;
     await awaitableTimeout(1000);
     const confirmationToast = new ConfirmationToast(confirmMessage);
     await confirmationToast.show();
@@ -327,7 +327,7 @@ export class SlidedownManager {
   /* P U B L I C */
 
   public async handleAllowClick(): Promise<void> {
-    const {slidedown} = OneSignal;
+    const { slidedown } = OneSignal;
     const slidedownType: DelayedPromptType = slidedown.options.type;
 
     if (slidedown.isShowingFailureState) {

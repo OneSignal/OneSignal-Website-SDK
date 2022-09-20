@@ -2,7 +2,7 @@ import SdkEnvironment from '../managers/SdkEnvironment';
 import Database from '../services/Database';
 import TimedLocalStorage from '../modules/TimedLocalStorage';
 import Log from '../libraries/Log';
-import {isUsingSubscriptionWorkaround} from '../utils';
+import { isUsingSubscriptionWorkaround } from '../utils';
 import {
   DismissPrompt,
   DismissCountKey,
@@ -84,7 +84,7 @@ export class DismissHelper {
       `(${SdkEnvironment.getWindowEnv().toString()}) OneSignal: User dismissed the ${type} ` +
         `notification prompt; reprompt after ${dismissDays} days.`,
     );
-    await Database.put('Options', {key: countKey, value: dismissCount});
+    await Database.put('Options', { key: countKey, value: dismissCount });
 
     const dismissMinutes = dismissDays * 24 * 60;
     return TimedLocalStorage.setItem(timeKey, 'dismissed', dismissMinutes);

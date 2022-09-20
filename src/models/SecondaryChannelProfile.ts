@@ -1,4 +1,4 @@
-import {SerializableGeneric} from './Serializable';
+import { SerializableGeneric } from './Serializable';
 
 export interface SecondaryChannelProfile {
   /**

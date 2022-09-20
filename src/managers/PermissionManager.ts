@@ -4,7 +4,7 @@ import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import {NotificationPermission} from '../models/NotificationPermission';
+import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
 
@@ -132,7 +132,7 @@ export default class PermissionManager {
     return new Promise<NotificationPermission>((resolve) => {
       OneSignal.proxyFrameHost.message(
         OneSignal.POSTMAM_COMMANDS.REMOTE_NOTIFICATION_PERMISSION,
-        {safariWebId: safariWebId},
+        { safariWebId: safariWebId },
         (reply: any) => {
           const remoteNotificationPermission = reply.data;
           resolve(remoteNotificationPermission);

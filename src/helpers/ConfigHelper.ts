@@ -5,8 +5,8 @@ import {
   ConfigIntegrationKind,
   ServerAppConfig,
 } from '../models/AppConfig';
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
-import {SdkInitError, SdkInitErrorKind} from '../errors/SdkInitError';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
+import { SdkInitError, SdkInitErrorKind } from '../errors/SdkInitError';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import Utils from '../context/shared/utils/Utils';
@@ -23,7 +23,7 @@ import {
 } from '../models/Prompts';
 import TagUtils from '../../src/utils/TagUtils';
 import PromptsHelper from './PromptsHelper';
-import {ConverterHelper} from './ConverterHelper';
+import { ConverterHelper } from './ConverterHelper';
 
 export enum IntegrationConfigurationKind {
   /**
@@ -105,9 +105,9 @@ export class ConfigHelper {
     switch (integration) {
       case ConfigIntegrationKind.Custom:
       case ConfigIntegrationKind.WordPress:
-        return {configuration: IntegrationConfigurationKind.JavaScript};
+        return { configuration: IntegrationConfigurationKind.JavaScript };
       default:
-        return {configuration: IntegrationConfigurationKind.Dashboard};
+        return { configuration: IntegrationConfigurationKind.Dashboard };
     }
   }
 
@@ -245,7 +245,7 @@ export class ConfigHelper {
     wholeUserConfig: AppUserConfig,
     isUsingSubscriptionWorkaround: boolean = false,
   ): AppUserConfigPromptOptions | undefined {
-    let customlinkUser: AppUserConfigCustomLinkOptions = {enabled: false};
+    let customlinkUser: AppUserConfigCustomLinkOptions = { enabled: false };
     if (promptOptions && promptOptions.customlink) {
       customlinkUser = promptOptions.customlink;
     }
@@ -362,7 +362,7 @@ export class ConfigHelper {
           };
 
           if (promptOption.categories) {
-            const {categories} = promptOption;
+            const { categories } = promptOption;
             promptOption.categories = TagUtils.limitCategoriesToMaxCount(
               categories,
               MAX_CATEGORIES,
@@ -372,7 +372,7 @@ export class ConfigHelper {
           return promptOption;
         });
     } else {
-      promptOptionsConfig.slidedown = {prompts: []};
+      promptOptionsConfig.slidedown = { prompts: [] };
       promptOptionsConfig.slidedown.prompts = [
         CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS,
       ];
@@ -419,7 +419,7 @@ export class ConfigHelper {
           cancelButton: SERVER_CONFIG_DEFAULTS_SLIDEDOWN.cancelButton,
         };
         promptOptionsConfig.slidedown.prompts = [
-          {type: DelayedPromptType.Push, autoPrompt: true, text},
+          { type: DelayedPromptType.Push, autoPrompt: true, text },
         ];
       } else {
         //enable native prompt & make it autoPrompt
@@ -471,7 +471,7 @@ export class ConfigHelper {
           timeDelay: SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS.timeDelay,
         };
 
-    const {prompts} = staticPrompts.slidedown;
+    const { prompts } = staticPrompts.slidedown;
 
     return {
       autoPrompt:
@@ -647,7 +647,7 @@ export class ConfigHelper {
 
         const fallbackServiceWorkerParam = isTopLevelServiceWorkerParamDefined
           ? OneSignal.SERVICE_WORKER_PARAM
-          : {scope: '/'};
+          : { scope: '/' };
         const fallbackServiceWorkerPath = isTopLevelServiceWorkerPathDefined
           ? OneSignal.SERVICE_WORKER_PATH
           : 'OneSignalSDKWorker.js';

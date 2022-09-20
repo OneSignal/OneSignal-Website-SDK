@@ -1,12 +1,12 @@
-import {RegisterOptions} from '../helpers/InitHelper';
+import { RegisterOptions } from '../helpers/InitHelper';
 import Log from '../libraries/Log';
-import {ResourceLoadState} from '../services/DynamicResourceLoader';
+import { ResourceLoadState } from '../services/DynamicResourceLoader';
 import {
   CUSTOM_LINK_CSS_CLASSES,
   CUSTOM_LINK_CSS_SELECTORS,
 } from '../slidedown/constants';
-import {addCssClass} from '../utils';
-import {AppUserConfigCustomLinkOptions} from '../models/Prompts';
+import { addCssClass } from '../utils';
+import { AppUserConfigCustomLinkOptions } from '../models/Prompts';
 import LocalStorage from '../utils/LocalStorage';
 
 export class CustomLinkManager {
@@ -148,7 +148,7 @@ export class CustomLinkManager {
     } else {
       if (!CustomLinkManager.isOptedOut()) {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = {autoAccept};
+        const options: RegisterOptions = { autoAccept };
         await OneSignal.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
         if (

@@ -12,24 +12,24 @@ import {
   NotSubscribedError,
   NotSubscribedReason,
 } from './errors/NotSubscribedError';
-import {SdkInitError, SdkInitErrorKind} from './errors/SdkInitError';
+import { SdkInitError, SdkInitErrorKind } from './errors/SdkInitError';
 import Event from './Event';
 import EventHelper from './helpers/EventHelper';
 import HttpHelper from './helpers/HttpHelper';
-import InitHelper, {RegisterOptions} from './helpers/InitHelper';
+import InitHelper, { RegisterOptions } from './helpers/InitHelper';
 import MainHelper from './helpers/MainHelper';
 import SubscriptionHelper from './helpers/SubscriptionHelper';
 import LimitStore from './LimitStore';
 import AltOriginManager from './managers/AltOriginManager';
 import LegacyManager from './managers/LegacyManager';
 import SdkEnvironment from './managers/SdkEnvironment';
-import {AppConfig, AppUserConfig} from './models/AppConfig';
+import { AppConfig, AppUserConfig } from './models/AppConfig';
 import Context from './models/Context';
-import {Notification} from './models/Notification';
-import {NotificationActionButton} from './models/NotificationActionButton';
-import {NotificationPermission} from './models/NotificationPermission';
-import {WindowEnvironmentKind} from './models/WindowEnvironmentKind';
-import {UpdatePlayerOptions} from './models/UpdatePlayerOptions';
+import { Notification } from './models/Notification';
+import { NotificationActionButton } from './models/NotificationActionButton';
+import { NotificationPermission } from './models/NotificationPermission';
+import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
+import { UpdatePlayerOptions } from './models/UpdatePlayerOptions';
 import ProxyFrame from './modules/frames/ProxyFrame';
 import ProxyFrameHost from './modules/frames/ProxyFrameHost';
 import SubscriptionModal from './modules/frames/SubscriptionModal';
@@ -48,25 +48,25 @@ import {
   isValidEmail,
   logMethodCall,
 } from './utils';
-import {ValidatorUtils} from './utils/ValidatorUtils';
-import {DeviceRecord} from './models/DeviceRecord';
+import { ValidatorUtils } from './utils/ValidatorUtils';
+import { DeviceRecord } from './models/DeviceRecord';
 import TimedLocalStorage from './modules/TimedLocalStorage';
-import {SecondaryChannelDeviceRecord} from './models/SecondaryChannelDeviceRecord';
-import Emitter, {EventHandler} from './libraries/Emitter';
+import { SecondaryChannelDeviceRecord } from './models/SecondaryChannelDeviceRecord';
+import Emitter, { EventHandler } from './libraries/Emitter';
 import Log from './libraries/Log';
 import ConfigManager from './managers/ConfigManager';
 import OneSignalUtils from './utils/OneSignalUtils';
-import {ProcessOneSignalPushCalls} from './utils/ProcessOneSignalPushCalls';
-import {AutoPromptOptions} from './managers/PromptsManager';
-import {EnvironmentInfoHelper} from './context/browser/helpers/EnvironmentInfoHelper';
-import {EnvironmentInfo} from './context/browser/models/EnvironmentInfo';
-import {SessionManager} from './managers/sessionManager/page/SessionManager';
+import { ProcessOneSignalPushCalls } from './utils/ProcessOneSignalPushCalls';
+import { AutoPromptOptions } from './managers/PromptsManager';
+import { EnvironmentInfoHelper } from './context/browser/helpers/EnvironmentInfoHelper';
+import { EnvironmentInfo } from './context/browser/models/EnvironmentInfo';
+import { SessionManager } from './managers/sessionManager/page/SessionManager';
 import OutcomesHelper from './helpers/shared/OutcomesHelper';
-import {OutcomeAttributionType} from './models/Outcomes';
-import {AppUserConfigNotifyButton, DelayedPromptType} from './models/Prompts';
+import { OutcomeAttributionType } from './models/Outcomes';
+import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
-import {AuthHashOptionsValidatorHelper} from './helpers/page/AuthHashOptionsValidatorHelper';
-import {TagsObject} from './models/Tags';
+import { AuthHashOptionsValidatorHelper } from './helpers/page/AuthHashOptionsValidatorHelper';
+import { TagsObject } from './models/Tags';
 
 export default class OneSignal {
   /**
@@ -74,7 +74,7 @@ export default class OneSignal {
    * @PublicApi
    */
   static async setDefaultNotificationUrl(url: string) {
-    if (!ValidatorUtils.isValidUrl(url, {allowNull: true}))
+    if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultNotificationUrl', url);
@@ -470,14 +470,14 @@ export default class OneSignal {
   static async getTags(callback?: Action<any>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getTags', callback);
-    const {appId} = await Database.getAppConfig();
-    const {deviceId} = await Database.getSubscription();
+    const { appId } = await Database.getAppConfig();
+    const { deviceId } = await Database.getSubscription();
     if (!deviceId) {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
       return null;
     }
-    const {tags} = await OneSignalApi.getPlayer(appId, deviceId);
+    const { tags } = await OneSignalApi.getPlayer(appId, deviceId);
     executeCallback(callback, tags);
     return tags;
   }
@@ -490,7 +490,7 @@ export default class OneSignal {
     value: any,
     callback?: Action<Object>,
   ): Promise<Object | null> {
-    const tag = {} as {[key: string]: any};
+    const tag = {} as { [key: string]: any };
     tag[key] = value;
     return await OneSignal.sendTags(tag, callback);
   }
@@ -541,7 +541,7 @@ export default class OneSignal {
       // TODO: Throw an error here in future v2; for now it may break existing client implementations.
       Log.info(new InvalidArgumentError('tags', InvalidArgumentReason.Empty));
     }
-    const tagsToSend = {} as {[key: string]: string};
+    const tagsToSend = {} as { [key: string]: string };
     for (const tag of tags) {
       tagsToSend[tag] = '';
     }
@@ -634,7 +634,7 @@ export default class OneSignal {
   }> {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getIdsAvailable', callback);
-    const {deviceId, subscriptionToken} = await Database.getSubscription();
+    const { deviceId, subscriptionToken } = await Database.getSubscription();
     const bundle = {
       userId: deviceId,
       registrationId: subscriptionToken,
@@ -679,9 +679,9 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('setSubscription', newSubscription);
     const appConfig = await Database.getAppConfig();
-    const {appId} = appConfig;
+    const { appId } = appConfig;
     const subscription = await Database.getSubscription();
-    const {deviceId} = subscription;
+    const { deviceId } = subscription;
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!ValidatorUtils.isValidBoolean(newSubscription))
@@ -725,7 +725,7 @@ export default class OneSignal {
     callback?: Action<boolean | undefined | null>,
   ): Promise<boolean | undefined | null> {
     logMethodCall('isOptedOut', callback);
-    const {optedOut} = await Database.getSubscription();
+    const { optedOut } = await Database.getSubscription();
     executeCallback(callback, optedOut);
     return optedOut;
   }
@@ -777,7 +777,7 @@ export default class OneSignal {
     await awaitOneSignalInitAndSupported();
     logMethodCall('getSMSId', callback);
     const profile = await Database.getSMSProfile();
-    const {subscriptionId} = profile;
+    const { subscriptionId } = profile;
     executeCallback(callback, subscriptionId);
     return subscriptionId;
   }
@@ -866,7 +866,7 @@ export default class OneSignal {
     if (!ValidatorUtils.isValidUrl(url))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     if (
-      !ValidatorUtils.isValidUrl(icon, {allowEmpty: true, requireHttps: true})
+      !ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true })
     )
       throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
 
@@ -874,8 +874,8 @@ export default class OneSignal {
       await OneSignalApi.sendNotification(
         appConfig.appId,
         [subscription.deviceId],
-        {en: title},
-        {en: message},
+        { en: title },
+        { en: message },
         url,
         icon,
         data,
@@ -993,7 +993,7 @@ export default class OneSignal {
     }
 
     // all notifs in attribution window
-    const {notificationIds} = outcomeAttribution;
+    const { notificationIds } = outcomeAttribution;
     // only new notifs that ought to be attributed
     const newNotifsToAttributeWithOutcome =
       await outcomesHelper.getNotifsToAttributeWithUniqueOutcome(
@@ -1079,7 +1079,7 @@ export default class OneSignal {
    * slash). This would allow pages to function correctly as not to block the service worker ready call, which would
    * hang indefinitely if we requested root scope registration but the service was only available in a child scope.
    */
-  static SERVICE_WORKER_PARAM: {scope: string} = {scope: '/'};
+  static SERVICE_WORKER_PARAM: { scope: string } = { scope: '/' };
   static _LOGGING = false;
   static LOGGING = false;
   static _initCalled = false;

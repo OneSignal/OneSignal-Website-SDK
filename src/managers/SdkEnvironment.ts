@@ -1,11 +1,11 @@
-import {EnvironmentKind} from '../models/EnvironmentKind';
-import {TestEnvironmentKind} from '../models/TestEnvironmentKind';
-import {WindowEnvironmentKind} from '../models/WindowEnvironmentKind';
+import { EnvironmentKind } from '../models/EnvironmentKind';
+import { TestEnvironmentKind } from '../models/TestEnvironmentKind';
+import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
 import {
   InvalidArgumentError,
   InvalidArgumentReason,
 } from '../errors/InvalidArgumentError';
-import {IntegrationKind} from '../models/IntegrationKind';
+import { IntegrationKind } from '../models/IntegrationKind';
 import Environment from '../Environment';
 import OneSignalUtils from '../utils/OneSignalUtils';
 
