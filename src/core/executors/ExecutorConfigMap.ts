@@ -1,5 +1,5 @@
 import { ExecutorResult } from "../models/ExecutorResult";
-import { OSExecutorConfigMap } from "../models/OSExecutorConfig";
+import { ExecutorConfigMap as ExecutorConfigMap } from "../models/ExecutorConfig";
 import { ModelName } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 
@@ -62,7 +62,7 @@ function updateSubscription<Model>(operation: Operation<Model>): ExecutorResult 
   };
 }
 
-export const OS_EXECUTOR_CONFIG_MAP: OSExecutorConfigMap = {
+export const EXECUTOR_CONFIG_MAP: ExecutorConfigMap = {
   [ModelName.Identity]: {
     modelName: ModelName.Identity,
     add: addIdentity,

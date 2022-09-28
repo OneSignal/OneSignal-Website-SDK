@@ -1,11 +1,11 @@
-import OSExecutorBase from "./OSExecutorBase";
+import ExecutorBase from "./ExecutorBase";
 import { Operation } from "../operationRepo/Operation";
 import { CoreChangeType } from "../models/CoreChangeType";
-import { OSExecutorConfig } from "../models/OSExecutorConfig";
+import { ExecutorConfig } from "../models/ExecutorConfig";
 import { ModelName } from "../models/SupportedModels";
 
-export class OSPropertiesExecutor<Model> extends OSExecutorBase<Model> {
-  constructor(executorConfig: OSExecutorConfig<Model>) {
+export class PropertiesExecutor<Model> extends ExecutorBase<Model> {
+  constructor(executorConfig: ExecutorConfig<Model>) {
     super(executorConfig);
   }
 

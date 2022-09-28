@@ -1,7 +1,7 @@
 import { OSModel } from "./OSModel";
 import { OSModelUpdatedArgs } from "./OSModelUpdatedArgs";
 import Subscribable from "../Subscribable";
-import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/OSModelStoreChange";
+import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/ModelStoreChange";
 
 export class OSModelStore<Model>
   extends Subscribable<ModelStoreChange<Model>>

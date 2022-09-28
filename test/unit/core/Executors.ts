@@ -2,9 +2,9 @@ import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import ModelCache from "../../../src/core/caching/ModelCache";
 import CoreModule from "../../../src/core/CoreModule";
-import { OSIdentityExecutor } from "../../../src/core/executors/OSIdentityExecutor";
-import { OSPropertiesExecutor } from "../../../src/core/executors/OSPropertiesExecutor";
-import { OSSubscriptionExecutor } from "../../../src/core/executors/OSSubscriptionExecutor";
+import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
+import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
+import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { ModelName } from "../../../src/core/models/SupportedModels";
@@ -29,8 +29,8 @@ test("Subscriptions executor flushes deltas at end of `processDeltaQueue`", asyn
   const core = new CoreModule();
   await core.init();
 
-  const processDeltaQueueSpy = sinonSandbox.spy(OSSubscriptionExecutor.prototype, "processDeltaQueue");
-  const flushDeltasSpy = sinonSandbox.spy(OSSubscriptionExecutor.prototype as any, "_flushDeltas");
+  const processDeltaQueueSpy = sinonSandbox.spy(SubscriptionExecutor.prototype, "processDeltaQueue");
+  const flushDeltasSpy = sinonSandbox.spy(SubscriptionExecutor.prototype as any, "_flushDeltas");
 
   core.modelRepo?.broadcast({
     changeType: CoreChangeType.Add,
@@ -48,8 +48,8 @@ test("Identity executor flushes deltas at end of `processDeltaQueue`", async t =
   const core = new CoreModule();
   await core.init();
 
-  const processDeltaQueueSpy = sinonSandbox.spy(OSIdentityExecutor.prototype, "processDeltaQueue");
-  const flushDeltasSpy = sinonSandbox.spy(OSIdentityExecutor.prototype as any, "_flushDeltas");
+  const processDeltaQueueSpy = sinonSandbox.spy(IdentityExecutor.prototype, "processDeltaQueue");
+  const flushDeltasSpy = sinonSandbox.spy(IdentityExecutor.prototype as any, "_flushDeltas");
 
   core.modelRepo?.broadcast({
     changeType: CoreChangeType.Update,
@@ -67,8 +67,8 @@ test("User Properties executor flushes deltas at end of `processDeltaQueue`", as
   const core = new CoreModule();
   await core.init();
 
-  const processDeltaQueueSpy = sinonSandbox.spy(OSPropertiesExecutor.prototype, "processDeltaQueue");
-  const flushDeltasSpy = sinonSandbox.spy(OSPropertiesExecutor.prototype as any, "_flushDeltas");
+  const processDeltaQueueSpy = sinonSandbox.spy(PropertiesExecutor.prototype, "processDeltaQueue");
+  const flushDeltasSpy = sinonSandbox.spy(PropertiesExecutor.prototype as any, "_flushDeltas");
 
   core.modelRepo?.broadcast({
     changeType: CoreChangeType.Update,
