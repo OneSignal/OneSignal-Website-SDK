@@ -1,12 +1,12 @@
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
-import { OSExecutorConfig } from "../models/OSExecutorConfig";
+import { ExecutorConfig } from "../models/ExecutorConfig";
 import { Operation } from "../operationRepo/Operation";
 import { isModelDelta } from "../utils/typePredicates";
-import OSExecutorBase from "./OSExecutorBase";
+import ExecutorBase from "./ExecutorBase";
 
-export class OSSubscriptionExecutor<Model> extends OSExecutorBase<Model> {
-  constructor(executorConfig: OSExecutorConfig<Model>) {
+export class SubscriptionExecutor<Model> extends ExecutorBase<Model> {
+  constructor(executorConfig: ExecutorConfig<Model>) {
     super(executorConfig);
   }
 

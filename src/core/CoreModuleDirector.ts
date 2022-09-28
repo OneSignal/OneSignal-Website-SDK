@@ -1,7 +1,7 @@
 import Log from "../shared/libraries/Log";
 import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
-import { OSModelStoresMap } from "./models/OSModelStoresMap";
+import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 
@@ -44,8 +44,8 @@ export class CoreModuleDirector {
     return modelStores.pushSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
-  private async getModelStores(): Promise<OSModelStoresMap<SupportedModel>> {
+  private async getModelStores(): Promise<ModelStoresMap<SupportedModel>> {
     await this.initPromise;
-    return (this.core.modelRepo?.modelStores as OSModelStoresMap<SupportedModel>);
+    return (this.core.modelRepo?.modelStores as ModelStoresMap<SupportedModel>);
   }
 }
