@@ -2,12 +2,12 @@ import ModelCache from "../caching/ModelCache";
 import Subscribable from "../Subscribable";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
-import { OSModelStoresMap } from "../models/OSModelStoresMap";
+import { ModelStoresMap } from "../models/ModelStoresMap";
 import { SupportedModel, ModelName } from "../models/SupportedModels";
-import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/OSModelStoreChange";
+import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/ModelStoreChange";
 
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
-  constructor(private modelCache: ModelCache, public modelStores: OSModelStoresMap<SupportedModel>) {
+  constructor(private modelCache: ModelCache, public modelStores: ModelStoresMap<SupportedModel>) {
     super();
     Object.keys(modelStores).forEach(modelName => {
       modelStores[modelName as ModelName].subscribe(this.processModelChange.bind(this));

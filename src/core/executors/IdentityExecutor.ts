@@ -1,13 +1,13 @@
 import { CoreChangeType } from "../models/CoreChangeType";
 import { PropertyDelta } from "../models/CoreDeltas";
-import { OSExecutorConfig } from "../models/OSExecutorConfig";
+import { ExecutorConfig } from "../models/ExecutorConfig";
 import { ModelName } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 import { isPropertyDelta } from "../utils/typePredicates";
-import OSExecutorBase from "./OSExecutorBase";
+import ExecutorBase from "./ExecutorBase";
 
-export class OSIdentityExecutor<Model> extends OSExecutorBase<Model> {
-  constructor(executorConfig: OSExecutorConfig<Model>) {
+export class IdentityExecutor<Model> extends ExecutorBase<Model> {
+  constructor(executorConfig: ExecutorConfig<Model>) {
     super(executorConfig);
   }
 
