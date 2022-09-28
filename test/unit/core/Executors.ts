@@ -9,15 +9,13 @@ import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
+import { stubModelCache } from "./_helpers";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
   await TestEnvironment.stubDomEnvironment();
-  sinonSandbox.stub(ModelCache.prototype, "load").resolves({});
-  sinonSandbox.stub(ModelCache.prototype, "add").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "remove").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "update").resolves();
+  stubModelCache(sinonSandbox);
 });
 
 test.afterEach(() => {
