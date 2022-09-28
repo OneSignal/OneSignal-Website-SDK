@@ -45,8 +45,8 @@ export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
     return { modelId, modelName, ...this.data };
   }
 
-  static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
+  static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
     const { modelId: id, modelName, ...data } = encodedModel;
-    return new OSModel(modelName, id, data);
+    return new OSModel<Model>(modelName as ModelName, id, data as unknown as Model);
   }
 }
