@@ -2,7 +2,7 @@ import test from "ava";
 import { generateNewSubscription } from "./_helpers";
 import sinon, { SinonSandbox } from "sinon";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
-import { SubscriptionType } from "../../../src/core/models/SubscriptionModels";
+import { SubscriptionModel, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
@@ -15,10 +15,11 @@ test("`Set` function updates data", async t => {
 });
 
 test("`Set` function broadcasts update event", async t => {
-  const broadcastSpy = sinonSandbox.spy(OSModel.prototype as any, "broadcast");
   const newSub = generateNewSubscription();
+  newSub.subscribe(() => {
+    t.pass();
+  });
   newSub.set("rooted", true);
-  t.true(broadcastSpy.calledOnce);
 });
 
 test("`Hydrate` function updates data", async t => {
@@ -49,10 +50,12 @@ test("`Decode` function returns decoded model", async t => {
     id: "123",
     token: "myToken",
   };
-  const decodedSub = OSModel.decode(encodedSub);
-  t.deepEqual(decodedSub, new OSModel(ModelName.EmailSubscriptions, "333333", {
+  const decodedSub = OSModel.decode<SubscriptionModel>(encodedSub);
+
+  const model: SubscriptionModel = {
     type: SubscriptionType.Email,
     id: "123",
     token: "myToken",
-  }));
+  };
+  t.deepEqual(decodedSub, new OSModel(ModelName.EmailSubscriptions, "333333", model));
 });

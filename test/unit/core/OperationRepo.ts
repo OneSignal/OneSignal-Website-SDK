@@ -1,24 +1,23 @@
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
-import ModelCache from "../../../src/core/caching/ModelCache";
 import CoreModule from "../../../src/core/CoreModule";
 import { ModelRepo } from "../../../src/core/modelRepo/ModelRepo";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { IdentityModel } from "../../../src/core/models/IdentityModel";
-import { ModelName } from "../../../src/core/models/SupportedModels";
+import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
 import { OperationRepo } from "../../../src/core/operationRepo/OperationRepo";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
+import { passIfBroadcastNTimes, stubModelCache } from "./_helpers";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
+let broadcastCount: number;
 
 test.beforeEach(async () => {
   await TestEnvironment.stubDomEnvironment();
-  sinonSandbox.stub(ModelCache.prototype, "load").resolves({});
-  sinonSandbox.stub(ModelCache.prototype, "add").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "remove").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "update").resolves();
+  stubModelCache(sinonSandbox);
+  broadcastCount = 0;
 });
 
 test.afterEach(() => {
@@ -44,7 +43,10 @@ test("Model repo delta broadcast is received and processed by operation repo", a
   const { modelRepo, operationRepo } = core;
   const executor = operationRepo?.executorStore[ModelName.EmailSubscriptions];
 
-  const broadcastSpy = sinonSandbox.spy(ModelRepo.prototype, "broadcast");
+  modelRepo?.subscribe(() => {
+    passIfBroadcastNTimes(t, 1, broadcastCount);
+  });
+
   const processDeltaSpy = sinonSandbox.spy(OperationRepo.prototype as any, "processDelta");
 
   modelRepo?.broadcast({
@@ -54,7 +56,6 @@ test("Model repo delta broadcast is received and processed by operation repo", a
 
   clock.tick(1001);
 
-  t.true(broadcastSpy.calledOnce);
   t.true(processDeltaSpy.calledOnce);
   t.is(executor?.operationQueue.length, 1);
   t.is(executor?.deltaQueue.length, 0);
@@ -67,7 +68,10 @@ test("Add Subscriptions: Multiple delta broadcasts -> two operations of change t
   const { modelRepo, operationRepo } = core;
   const executor = operationRepo?.executorStore[ModelName.EmailSubscriptions];
 
-  const broadcastSpy = sinonSandbox.spy(ModelRepo.prototype, "broadcast");
+  modelRepo?.subscribe(() => {
+    passIfBroadcastNTimes(t, 2, broadcastCount);
+  });
+
   const processDeltaSpy = sinonSandbox.spy(OperationRepo.prototype as any, "processDelta");
 
   modelRepo?.broadcast({
@@ -81,7 +85,6 @@ test("Add Subscriptions: Multiple delta broadcasts -> two operations of change t
 
   clock.tick(1001);
 
-  t.true(broadcastSpy.calledTwice);
   t.true(processDeltaSpy.calledTwice);
   t.is(executor?.operationQueue.length, 2);
   t.is(executor?.deltaQueue.length, 0);
@@ -94,7 +97,10 @@ test("Update Identity: Multiple delta broadcasts -> one operation of change type
   const { modelRepo, operationRepo } = core;
   const executor = operationRepo?.executorStore[ModelName.Identity];
 
-  const broadcastSpy = sinonSandbox.spy(ModelRepo.prototype, "broadcast");
+  modelRepo?.subscribe(() => {
+    passIfBroadcastNTimes(t, 2, broadcastCount);
+  });
+
   const processDeltaSpy = sinonSandbox.spy(OperationRepo.prototype as any, "processDelta");
 
   const delta1: CoreDelta<IdentityModel> = {
@@ -113,12 +119,11 @@ test("Update Identity: Multiple delta broadcasts -> one operation of change type
     newValue: "myNewAlias2",
   };
 
-  modelRepo?.broadcast(delta1);
-  modelRepo?.broadcast(delta2);
+  modelRepo?.broadcast(delta1 as CoreDelta<SupportedModel>);
+  modelRepo?.broadcast(delta2 as CoreDelta<SupportedModel>);
 
   clock.tick(1001);
 
-  t.true(broadcastSpy.calledTwice);
   t.true(processDeltaSpy.calledTwice);
   t.is(executor?.operationQueue.length, 1);
   t.is(executor?.deltaQueue.length, 0);
@@ -136,7 +141,9 @@ test("Update User Properties -> one operation of change type: update", async t =
   const { modelRepo, operationRepo } = core;
   const executor = operationRepo?.executorStore[ModelName.Properties];
 
-  const broadcastSpy = sinonSandbox.spy(ModelRepo.prototype, "broadcast");
+  modelRepo?.subscribe(() => {
+    passIfBroadcastNTimes(t, 2, broadcastCount);
+  });
   const processDeltaSpy = sinonSandbox.spy(OperationRepo.prototype as any, "processDelta");
 
   const delta1: CoreDelta<IdentityModel> = {
@@ -155,12 +162,11 @@ test("Update User Properties -> one operation of change type: update", async t =
     newValue: { tag1: "tag1" },
   };
 
-  modelRepo?.broadcast(delta1);
-  modelRepo?.broadcast(delta2);
+  modelRepo?.broadcast(delta1 as CoreDelta<SupportedModel>);
+  modelRepo?.broadcast(delta2 as CoreDelta<SupportedModel>);
 
   clock.tick(1001);
 
-  t.true(broadcastSpy.calledTwice);
   t.true(processDeltaSpy.calledTwice);
   t.is(executor?.operationQueue.length, 1);
   t.is(executor?.deltaQueue.length, 0);
