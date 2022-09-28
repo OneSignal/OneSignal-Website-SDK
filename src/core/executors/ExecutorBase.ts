@@ -2,10 +2,10 @@ import OperationCache from "../caching/OperationCache";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
 import { ExecutorResult } from "../models/ExecutorResult";
-import { OSExecutorConfig } from "../models/OSExecutorConfig";
+import { ExecutorConfig } from "../models/ExecutorConfig";
 import { Operation } from "../operationRepo/Operation";
 
-export default abstract class OSExecutorBase<Model> {
+export default abstract class ExecutorBase<Model> {
   protected _deltaQueue: CoreDelta<Model>[] = [];
   protected _operationQueue: Operation<Model>[] = [];
 
@@ -16,18 +16,18 @@ export default abstract class OSExecutorBase<Model> {
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
 
-  constructor(executorConfig: OSExecutorConfig<Model>) {
+  constructor(executorConfig: ExecutorConfig<Model>) {
     setInterval(() => {
       if (this._deltaQueue.length > 0) {
         this.processDeltaQueue.call(this);
       }
-    }, OSExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
+    }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
       if (this._operationQueue.length > 0) {
         this._processOperationQueue.call(this);
       }
-    }, OSExecutorBase.OPERATIONS_BATCH_PROCESSING_TIME * 1_000);
+    }, ExecutorBase.OPERATIONS_BATCH_PROCESSING_TIME * 1_000);
 
     this._executeAdd = executorConfig.add;
     this._executeUpdate = executorConfig.update;
