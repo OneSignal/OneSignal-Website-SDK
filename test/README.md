@@ -72,3 +72,13 @@ Run these from `Terminal` > `New Terminal` in VSCode.
    - e.g: `yarn test:noWatch test/unit/context/sw/ServiceWorker.ts -m "onPushReceived - Ensure undefined payload does not show"`
 
 ![image](https://user-images.githubusercontent.com/645861/111320621-69fc0200-8624-11eb-80cd-bedf8c57a063.png)
+
+## Troubleshooting
+### `env: node: No such file or directory` (debugger doesn't attach)
+If you are on a Mac using something like iTerm and Zsh, change your Explorer Kind setting to `external` in your VSCode settings ([see thread](https://github.com/jest-community/vscode-jest/issues/105#issuecomment-642732699)).
+
+If you used `nvm` to install your node version, you may need to add the following to your zshrc or bashrc file:
+```
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+```
