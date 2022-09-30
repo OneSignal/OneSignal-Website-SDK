@@ -50,6 +50,7 @@ import LocalStorage from "../shared/utils/LocalStorage";
 import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
+import NotificationsNamespace from "./NotificationsNamespace";
 
 export default class OneSignal {
   /**
@@ -726,6 +727,10 @@ export default class OneSignal {
       notificationIds: newNotifsToAttributeWithOutcome,
     });
   }
+
+  /* NEW USER MODEL CHANGES */
+  static notifications = new NotificationsNamespace();
+  /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = Environment.version();

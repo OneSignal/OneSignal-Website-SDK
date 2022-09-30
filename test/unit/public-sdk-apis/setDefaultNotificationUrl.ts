@@ -7,23 +7,23 @@ import OneSignal from "../../../src/onesignal/OneSignal";
 
 test("url cannot be null",
      Macros.expectInvalidArgumentError,
-     OneSignal.setDefaultUrl,
+     OneSignal.notifications.setDefaultUrl,
      null
 );
 
 test("url cannot be empty string",
      Macros.expectInvalidArgumentError,
-     OneSignal.setDefaultUrl,
+     OneSignal.notifications.setDefaultUrl,
      '');
 
 test("url cannot be missing protocol",
      Macros.expectInvalidArgumentError,
-     OneSignal.setDefaultUrl,
+     OneSignal.notifications.setDefaultUrl,
      'test.com');
 
 test("valid url can be set and retrieved", async t => {
   await TestEnvironment.initialize();
-  await OneSignal.setDefaultUrl("https://test.com");
+  await OneSignal.notifications.setDefaultUrl("https://test.com");
   const appState = await Database.getAppState();
   t.is(appState.defaultNotificationUrl, 'https://test.com');
 });
