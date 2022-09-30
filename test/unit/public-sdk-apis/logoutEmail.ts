@@ -2,7 +2,7 @@ import "../../support/polyfills/polyfills";
 import test, { ExecutionContext } from "ava";
 import Database from '../../../src/shared/services/Database';
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 import { Subscription } from '../../../src/shared/models/Subscription';
 
 import nock from 'nock';
