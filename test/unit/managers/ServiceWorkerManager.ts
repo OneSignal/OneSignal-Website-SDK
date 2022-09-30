@@ -14,7 +14,7 @@ import Context from '../../../src/page/models/Context';
 import SdkEnvironment from "../../../src/shared/managers/SdkEnvironment";
 import { WindowEnvironmentKind } from "../../../src/shared/models/WindowEnvironmentKind";
 
-import OneSignal from '../../../src/OneSignal';
+import OneSignal from '../../../src/onesignal/OneSignal';
 import Random from '../../support/tester/Random';
 import {
   WorkerMessenger,

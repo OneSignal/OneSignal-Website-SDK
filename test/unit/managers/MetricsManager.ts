@@ -1,7 +1,7 @@
 import '../../support/polyfills/polyfills';
 import test from 'ava';
 import { TestEnvironment, HttpHttpsEnvironment } from '../../support/sdk/TestEnvironment';
-import OneSignal from '../../../src/OneSignal';
+import OneSignal from '../../../src/onesignal/OneSignal';
 
 import Context from '../../../src/page/models/Context';
 import timemachine from "timemachine";

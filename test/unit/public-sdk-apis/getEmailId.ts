@@ -1,7 +1,7 @@
 import "../../support/polyfills/polyfills";
 import test from "ava";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 import { EmailProfile } from "../../../src/shared/models/EmailProfile";
 import Random from "../../support/tester/Random";

@@ -42,7 +42,7 @@ import ConfigManager from "../../../src/page/managers/ConfigManager";
 import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 // NodeJS.Global
 declare var global: any;

@@ -1,7 +1,7 @@
 import "../../support/polyfills/polyfills";
 import anyTest, { TestInterface } from "ava";
 import { TestEnvironment, HttpHttpsEnvironment, TestEnvironmentConfig } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 import sinon, { SinonStub } from 'sinon';
 import Bell from "../../../src/page/bell/Bell";
 import MockLauncher from "../../support/mocks/MockLauncher";
