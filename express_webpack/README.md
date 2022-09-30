@@ -98,6 +98,27 @@ You may want to run the Web SDK Sandbox with the configuration `dev-dev`. You wi
 
 4. Remove the `$PREFIX` var from the `publish.sh` script for all map files
 
+### Running on [ngrok](https://ngrok.com/)
+**Problem:**
+you need a quick and easy way to test your changes on a different machine or share the sandbox environment with others.
+
+**Solution:**
+ngrok is a programmable reverse proxy that lets you instantly serve your localhost environment to the web.
+
+#### Steps:
+1. Serve your localhost via ngrok:
+```
+ngrok http https://localhost:4001
+```
+2. Modify public files to use the displayed ngrok url instead of localhost (e.g: service worker file, index file)
+```
+importScripts("https://651d-72-109-246-88.ngrok.io/sdks/Dev-OneSignalSDKWorker.js");
+```
+3. Build the SDK in your sandbox environment:
+```
+yarn build:dev-prod -b 651d-72-109-246-88.ngrok.io --no-port
+```
+
 ## Troubleshooting
 ### Custom origin mismatch
 Check the network tab in the browser dev tools to see what origin the SDK is using for network calls. If you set the `-a` flag origin to something other than `onesignal.com` but it is still using that, make sure you are using the correct build command. For example, if you set the origin to `staging.onesignal.com` you should *not* be using the `dev-prod` environment since the `prod` will result in the ignoring of the custom origin parameter. The fix in this case would be to use `dev-stag`.
