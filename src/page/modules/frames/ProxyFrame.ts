@@ -218,7 +218,7 @@ export default class ProxyFrame extends RemoteFrame {
         and the server side.
       */
       // Set a flag remotely to prevent notifications from being sent
-      await OneSignal.disable(true);
+      await OneSignal.notifications.disable(true);
       // Orphan the subscription by removing data stored about it
       // This causes our SDK to think we're no longer subscribed on this frame
       await OneSignal.database.rebuild();
