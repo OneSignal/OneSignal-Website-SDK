@@ -130,7 +130,7 @@ export class CustomLinkManager {
 
   private async handleClick(element: HTMLElement): Promise<void> {
     if (CustomLinkManager.isPushEnabled()) {
-      await OneSignal.disable(true);
+      await OneSignal.notifications.disable(true);
       await this.setTextFromPushStatus(element);
     } else {
       if (!CustomLinkManager.isOptedOut()) {
@@ -143,7 +143,7 @@ export class CustomLinkManager {
         }
         return;
       }
-      await OneSignal.disable(false);
+      await OneSignal.notifications.disable(false);
       // once subscribed, prevent unsubscribe by hiding customlinks
       if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();

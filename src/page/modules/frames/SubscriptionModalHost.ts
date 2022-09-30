@@ -105,7 +105,7 @@ export default class SubscriptionModalHost implements Disposable {
     MainHelper.triggerCustomPromptClicked('granted');
     Log.debug('Calling setSubscription(true)');
     await SubscriptionHelper.registerForPush();
-    await OneSignal.disable(false);
+    await OneSignal.notifications.disable(false);
   }
 
   onModalRejected(_: MessengerMessageEvent) {
