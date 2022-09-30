@@ -56,7 +56,7 @@ export default class OneSignal {
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
    */
-  static async setDefaultNotificationUrl(url: string) {
+  static async setDefaultUrl(url: string) {
     if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
@@ -141,7 +141,7 @@ export default class OneSignal {
    * Returns true if the current browser supports web push.
    * @PublicApi
    */
-  static isPushNotificationsSupported(): boolean {
+  static isPushSupported(): boolean {
     logMethodCall('isPushNotificationsSupported');
     /*
       Push notification support is checked in the initial entry code. If in an unsupported environment, a stubbed empty
@@ -371,7 +371,7 @@ export default class OneSignal {
    *           has been obtained, with one of 'default', 'granted', or 'denied'.
    * @PublicApi
    */
-  public static async getNotificationPermission(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
+  public static async getPermissionStatus(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
     await awaitOneSignalInitAndSupported();
     return OneSignal.privateGetNotificationPermission(onComplete);
   }

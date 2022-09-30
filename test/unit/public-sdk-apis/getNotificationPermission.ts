@@ -17,7 +17,7 @@ test.beforeEach(async t => {
 
 test("getNotificationPermission when awaited should not return a Promise", async t => {
   await TestEnvironment.initialize();
-  const permission = await OneSignal.getNotificationPermission();
+  const permission = await OneSignal.getPermissionStatus();
   t.false(permission as any instanceof Promise);
   t.true(permission === "default" ||
     permission === "granted" ||
@@ -26,7 +26,7 @@ test("getNotificationPermission when awaited should not return a Promise", async
 
 test.cb("getNotificationPermission callback should not return a Promise", t => {
   TestEnvironment.initialize().then(() => {
-    OneSignal.getNotificationPermission((permission: any) => {
+    OneSignal.getPermissionStatus((permission: any) => {
       t.false(permission instanceof Promise);
       t.true(permission === "default" ||
         permission === "granted" ||
