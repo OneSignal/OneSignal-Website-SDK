@@ -42,7 +42,7 @@ export default class MainHelper {
   }
 
   /**
-   * If the user has manually opted out of notifications (OneSignal.setSubscription), returns -2; otherwise returns 1.
+   * If the user has manually opted out of notifications (OneSignal.disable), returns -2; otherwise returns 1.
    * @param isOptedIn The result of OneSignal.getSubscription().
    */
   static getNotificationTypeFromOptIn(isOptedIn: boolean | null) {
