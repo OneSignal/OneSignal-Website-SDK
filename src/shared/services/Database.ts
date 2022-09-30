@@ -1,21 +1,22 @@
 import Emitter from "../libraries/Emitter";
 import IndexedDb from "./IndexedDb";
 
+import { AppConfig } from "../models/AppConfig";
+import { AppState, ClickedNotifications } from "../models/AppState";
+import { NotificationReceived, NotificationClicked } from "../models/Notification";
+import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { BundleEmail, EmailProfile } from "../models/EmailProfile";
+import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalUtils from "../utils/OneSignalUtils";
-import Utils from "../context/Utils";
+import Log from "../libraries/Log";
 import { SentUniqueOutcome } from '../models/Outcomes';
 import { BundleSMS, SMSProfile } from "../models/SMSProfile";
-import { NotificationClicked, NotificationReceived } from "../models/Notification";
-import { Session, ONESIGNAL_SESSION_KEY } from "../models/Session";
-import Log from "../libraries/Log";
-import { AppConfig } from "../models/AppConfig";
-import { AppState, ClickedNotifications } from "../models/AppState";
-import { ServiceWorkerState } from "../models/ServiceWorkerState";
+import { ModelName } from "../../core/models/SupportedModels";
+import Utils from "../context/Utils";
 
 enum DatabaseEventName {
   SET
@@ -29,7 +30,7 @@ interface DatabaseResult {
 }
 
 export type OneSignalDbTable = "Options" | "Ids" | "NotificationOpened" | "Sessions" |
-  "NotificationOpened" | "NotificationReceived" | "NotificationClicked" | "SentUniqueOutcome";
+  "NotificationOpened" | "NotificationReceived" | "NotificationClicked" | "SentUniqueOutcome" |  ModelName;
 
 export default class Database {
 

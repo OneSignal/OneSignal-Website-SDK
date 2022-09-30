@@ -27,7 +27,7 @@ export default class LocalStorage {
     }
 
     public static getStoredPermission(): NotificationPermission {
-        var permission = localStorage.getItem(PermissionManager.STORED_PERMISSION_KEY) || "default";
+        const permission = localStorage.getItem(PermissionManager.STORED_PERMISSION_KEY) || "default";
         switch(permission) {
             case "granted":
                 return NotificationPermission.Granted;

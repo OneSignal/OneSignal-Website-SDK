@@ -1,6 +1,7 @@
 
+import { ModelName } from '../../core/models/SupportedModels';
+import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
-import Utils from "../context/Utils";
 import Log from '../libraries/Log';
 
 const DATABASE_VERSION = 3;
@@ -115,6 +116,13 @@ export default class IndexedDb {
     if (event.oldVersion < 3) {
       db.createObjectStore("SentUniqueOutcome", { keyPath: "outcomeName" });
     }
+    if (event.oldVersion < 4) {
+      db.createObjectStore(ModelName.Identity, { keyPath: "modelId" });
+      db.createObjectStore(ModelName.Properties, { keyPath: "modelId" });
+      db.createObjectStore(ModelName.PushSubscriptions, { keyPath: "modelId" });
+      db.createObjectStore(ModelName.SmsSubscriptions, { keyPath: "modelId" });
+      db.createObjectStore(ModelName.EmailSubscriptions, { keyPath: "modelId" });
+    }
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
       OneSignal._isNewVisitor = true;
@@ -122,7 +130,8 @@ export default class IndexedDb {
   }
 
   /**
-   * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table (if key is not specified).
+   * Asynchronously retrieves the value of the key at the table (if key is specified), or the entire table
+   * (if key is not specified).
    * @param table The table to retrieve the value from.
    * @param key The key in the table to retrieve the value of. Leave blank to get the entire table.
    * @returns {Promise} Returns a promise that fulfills when the value(s) are available.
@@ -205,7 +214,8 @@ export default class IndexedDb {
   }
 
   /**
-   * Asynchronously removes the specified key from the table, or if the key is not specified, removes all keys in the table.
+   * Asynchronously removes the specified key from the table, or if the key is not specified, removes
+   * all keys in the table.
    * @returns {Promise} Returns a promise containing a key that is fulfilled when deletion is completed.
    */
   public async remove(table: string, key?: string) {
