@@ -43,7 +43,7 @@ export class SlidedownManager {
   /* P R I V A T E */
 
   private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
-    const permissionDenied = await OneSignal.privateGetNotificationPermission() === NotificationPermission.Denied;
+    const permissionDenied = await OneSignal.notifications.getPermissionStatus() === NotificationPermission.Denied;
     const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
     const notOptedOut = await OneSignal.privateGetSubscription();
     let wasDismissed: boolean;

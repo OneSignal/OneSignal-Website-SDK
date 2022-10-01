@@ -16,7 +16,7 @@ export class PermissionUtils {
     }
     PermissionUtils.executing = true;
 
-    const newPermission = await OneSignal.privateGetNotificationPermission();
+    const newPermission = await OneSignal.notifications.getPermissionStatus();
     const previousPermission = await Database.get('Options', 'notificationPermission');
 
     const shouldBeUpdated = newPermission !== previousPermission || updateIfIdentical;

@@ -94,7 +94,7 @@ export class SubscriptionManager {
           Subscribing is only possible on the top-level frame, so there's no permission ambiguity
           here.
         */
-        if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied)
+        if ((await OneSignal.notifications.getPermissionStatus()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
 
         if (Environment.useSafariLegacyPush()) {
