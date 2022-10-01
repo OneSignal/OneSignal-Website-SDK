@@ -89,9 +89,6 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "showSmsSlidedown");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "showEmailSlidedown");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "showSmsAndEmailSlidedown");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "getNotificationPermission");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "setDefaultTitle");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "setDefaultNotificationUrl");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "syncHashedEmail");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getIdsAvailable");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getTags");
@@ -100,11 +97,9 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "deleteTag");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "deleteTags");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "addListenerForNotificationOpened");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "setSubscription");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getRegistrationId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getSubscription");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "sendSelfNotification");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setEmail");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "logoutEmail");
@@ -113,7 +108,6 @@ test("correctly stubs all methods for ES5", async t => {
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "removeExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getExternalUserId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
-  assertES5PromiseMethodIsCalled(t, oneSignalStub, "isOptedOut");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getEmailId");
   assertES5PromiseMethodIsCalled(t, oneSignalStub, "getSMSId");
 });
@@ -168,9 +162,6 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "showSmsSlidedown");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "showEmailSlidedown");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "showSmsAndEmailSlidedown");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "getNotificationPermission");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "setDefaultTitle");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "setDefaultNotificationUrl");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "syncHashedEmail");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getIdsAvailable");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getTags");
@@ -179,11 +170,9 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "deleteTag");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "deleteTags");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "addListenerForNotificationOpened");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "setSubscription");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getRegistrationId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getSubscription");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "sendSelfNotification");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setEmail");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "setSMSNumber");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "logoutEmail");
@@ -192,7 +181,6 @@ test("correctly stubs all methods for ES6", async t => {
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "removeExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getExternalUserId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "provideUserConsent");
-  assertES6PromiseMethodIsCalled(t, oneSignalStub, "isOptedOut");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getEmailId");
   assertES6PromiseMethodIsCalled(t, oneSignalStub, "getSMSId");
 });
