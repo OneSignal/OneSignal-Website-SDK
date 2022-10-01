@@ -455,7 +455,7 @@ test("Existing OneSignal array before OneSignalSDK.js loaded ES5", async t => {
   let didCallFunction = false;
   const preExistingArray = [() => {
     didCallFunction = true;
-    (<any>window).OneSignal.setDefaultNotificationUrl("test");
+    (<any>window).OneSignal.showNativePrompt();
   }];
   (<any>window).OneSignal = preExistingArray;
 
