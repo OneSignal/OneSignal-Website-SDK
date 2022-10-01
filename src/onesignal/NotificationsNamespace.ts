@@ -87,7 +87,6 @@ export default class NotificationsNamespace {
    */
   async isOptedOut(callback?: Action<boolean | undefined | null>):
     Promise<boolean | undefined | null> {
-    await awaitOneSignalInitAndSupported();
     logMethodCall('isOptedOut', callback);
     const { optedOut } = await Database.getSubscription();
     executeCallback(callback, optedOut);
@@ -102,7 +101,6 @@ export default class NotificationsNamespace {
    * @PublicApi
    */
   async getPermissionStatus(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
-    await awaitOneSignalInitAndSupported();
     const permission = await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.config!.safariWebId
       );
