@@ -10,6 +10,7 @@ import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidS
 import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall, executeCallback } from "../shared/utils/utils";
+import OneSignalError from "../../src/shared/errors/OneSignalError";
 
 export default class NotificationsNamespace {
   /**
@@ -101,6 +102,10 @@ export default class NotificationsNamespace {
    * @PublicApi
    */
   async getPermissionStatus(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
+    if (!OneSignal.context) {
+      throw new OneSignalError(`OneSignal.context is undefined. Make sure to call OneSignal.init() before calling getPermissionStatus().`);
+    }
+
     const permission = await OneSignal.context.permissionManager.getNotificationPermission(
         OneSignal.config!.safariWebId
       );
