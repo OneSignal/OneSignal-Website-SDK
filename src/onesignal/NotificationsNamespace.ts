@@ -150,4 +150,13 @@ export default class NotificationsNamespace {
     EventHelper.onInternalSubscriptionSet(subscription.optedOut);
     EventHelper.checkAndTriggerSubscriptionChanged();
   }
+
+  /**
+   * Shows a native browser prompt.
+   * @PublicApi
+   */
+   public static async requestPermission(): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowNativePrompt();
+  }
 }

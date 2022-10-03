@@ -261,15 +261,6 @@ export default class OneSignal {
   }
 
   /**
-   * Shows a native browser prompt.
-   * @PublicApi
-   */
-  public static async showNativePrompt(): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowNativePrompt();
-  }
-
-  /**
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */
