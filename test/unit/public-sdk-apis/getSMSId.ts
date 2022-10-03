@@ -1,6 +1,6 @@
 import test from "ava";
 import  { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import OneSignal from "../../../src/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 import { SMSProfile } from "../../../src/shared/models/SMSProfile";
 import Random from "../../support/tester/Random";

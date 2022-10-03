@@ -1,85 +1,58 @@
 import bowser from "bowser";
-import { AuthHashOptionsValidatorHelper } from "./page/helpers/AuthHashOptionsValidatorHelper";
-import { EnvironmentInfoHelper } from "./page/helpers/EnvironmentInfoHelper";
-import AltOriginManager from "./page/managers/AltOriginManager";
-import ConfigManager from "./page/managers/ConfigManager";
-import LegacyManager from "./page/managers/LegacyManager";
-import { AutoPromptOptions } from "./page/managers/PromptsManager";
-import Context from "./page/models/Context";
-import { EnvironmentInfo } from "./page/models/EnvironmentInfo";
-import { NotificationActionButton } from "./page/models/NotificationActionButton";
-import { SecondaryChannelDeviceRecord } from "./shared/models/SecondaryChannelDeviceRecord";
-import { TagsObject } from "./page/models/Tags";
-import ProxyFrame from "./page/modules/frames/ProxyFrame";
-import ProxyFrameHost from "./page/modules/frames/ProxyFrameHost";
-import SubscriptionModal from "./page/modules/frames/SubscriptionModal";
-import SubscriptionModalHost from "./page/modules/frames/SubscriptionModalHost";
-import SubscriptionPopup from "./page/modules/frames/SubscriptionPopup";
-import SubscriptionPopupHost from "./page/modules/frames/SubscriptionPopupHost";
-import TimedLocalStorage from "./page/modules/TimedLocalStorage";
-import Slidedown from "./page/slidedown/Slidedown";
-import { ProcessOneSignalPushCalls } from "./page/utils/ProcessOneSignalPushCalls";
-import { ValidatorUtils } from "./page/utils/ValidatorUtils";
-import OneSignalApi from "./shared/api/OneSignalApi";
-import { InvalidArgumentError, InvalidArgumentReason } from "./shared/errors/InvalidArgumentError";
-import { InvalidStateError, InvalidStateReason } from "./shared/errors/InvalidStateError";
-import { NotSubscribedError, NotSubscribedReason } from "./shared/errors/NotSubscribedError";
-import { SdkInitError, SdkInitErrorKind } from "./shared/errors/SdkInitError";
-import Environment from "./shared/helpers/Environment";
-import EventHelper from "./shared/helpers/EventHelper";
-import HttpHelper from "./shared/helpers/HttpHelper";
-import InitHelper, { RegisterOptions } from "./shared/helpers/InitHelper";
-import MainHelper from "./shared/helpers/MainHelper";
-import OutcomesHelper from "./shared/helpers/OutcomesHelper";
-import SubscriptionHelper from "./shared/helpers/SubscriptionHelper";
-import Emitter, { EventHandler } from "./shared/libraries/Emitter";
-import Log from "./shared/libraries/Log";
-import SdkEnvironment from "./shared/managers/SdkEnvironment";
-import { SessionManager } from "./shared/managers/sessionManager/SessionManager";
-import { AppUserConfig, AppConfig } from "./shared/models/AppConfig";
-import { DeviceRecord } from "./shared/models/DeviceRecord";
-import { NotificationPermission } from "./shared/models/NotificationPermission";
-import { OutcomeAttributionType } from "./shared/models/Outcomes";
-import { DelayedPromptType, AppUserConfigNotifyButton } from "./shared/models/Prompts";
-import { UpdatePlayerOptions } from "./shared/models/UpdatePlayerOptions";
-import { WindowEnvironmentKind } from "./shared/models/WindowEnvironmentKind";
-import Database from "./shared/services/Database";
-import IndexedDb from "./shared/services/IndexedDb";
-import LimitStore from "./shared/services/LimitStore";
-import LocalStorage from "./shared/utils/LocalStorage";
-import OneSignalUtils from "./shared/utils/OneSignalUtils";
-import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "./shared/utils/utils";
-import OneSignalEvent from "./shared/services/OneSignalEvent";
+import { AuthHashOptionsValidatorHelper } from "../page/helpers/AuthHashOptionsValidatorHelper";
+import { EnvironmentInfoHelper } from "../page/helpers/EnvironmentInfoHelper";
+import AltOriginManager from "../page/managers/AltOriginManager";
+import ConfigManager from "../page/managers/ConfigManager";
+import LegacyManager from "../page/managers/LegacyManager";
+import { AutoPromptOptions } from "../page/managers/PromptsManager";
+import Context from "../page/models/Context";
+import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
+import { NotificationActionButton } from "../page/models/NotificationActionButton";
+import { SecondaryChannelDeviceRecord } from "../shared/models/SecondaryChannelDeviceRecord";
+import { TagsObject } from "../page/models/Tags";
+import ProxyFrame from "../page/modules/frames/ProxyFrame";
+import ProxyFrameHost from "../page/modules/frames/ProxyFrameHost";
+import SubscriptionModal from "../page/modules/frames/SubscriptionModal";
+import SubscriptionModalHost from "../page/modules/frames/SubscriptionModalHost";
+import SubscriptionPopup from "../page/modules/frames/SubscriptionPopup";
+import SubscriptionPopupHost from "../page/modules/frames/SubscriptionPopupHost";
+import TimedLocalStorage from "../page/modules/TimedLocalStorage";
+import Slidedown from "../page/slidedown/Slidedown";
+import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCalls";
+import { ValidatorUtils } from "../page/utils/ValidatorUtils";
+import OneSignalApi from "../shared/api/OneSignalApi";
+import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
+import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
+import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
+import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
+import Environment from "../shared/helpers/Environment";
+import EventHelper from "../shared/helpers/EventHelper";
+import HttpHelper from "../shared/helpers/HttpHelper";
+import InitHelper, { RegisterOptions } from "../shared/helpers/InitHelper";
+import MainHelper from "../shared/helpers/MainHelper";
+import OutcomesHelper from "../shared/helpers/OutcomesHelper";
+import SubscriptionHelper from "../shared/helpers/SubscriptionHelper";
+import Emitter, { EventHandler } from "../shared/libraries/Emitter";
+import Log from "../shared/libraries/Log";
+import SdkEnvironment from "../shared/managers/SdkEnvironment";
+import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
+import { AppUserConfig, AppConfig } from "../shared/models/AppConfig";
+import { DeviceRecord } from "../shared/models/DeviceRecord";
+import { NotificationPermission } from "../shared/models/NotificationPermission";
+import { OutcomeAttributionType } from "../shared/models/Outcomes";
+import { DelayedPromptType, AppUserConfigNotifyButton } from "../shared/models/Prompts";
+import { UpdatePlayerOptions } from "../shared/models/UpdatePlayerOptions";
+import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
+import Database from "../shared/services/Database";
+import IndexedDb from "../shared/services/IndexedDb";
+import LimitStore from "../shared/services/LimitStore";
+import LocalStorage from "../shared/utils/LocalStorage";
+import OneSignalUtils from "../shared/utils/OneSignalUtils";
+import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "../shared/utils/utils";
+import OneSignalEvent from "../shared/services/OneSignalEvent";
+import NotificationsNamespace from "./NotificationsNamespace";
 
 export default class OneSignal {
-  /**
-   * Pass in the full URL of the default page you want to open when a notification is clicked.
-   * @PublicApi
-   */
-  static async setDefaultNotificationUrl(url: string) {
-    if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
-      throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('setDefaultNotificationUrl', url);
-    const appState = await Database.getAppState();
-    appState.defaultNotificationUrl = url;
-    await Database.setAppState(appState);
-  }
-
-  /**
-   * Sets the default title to display on notifications. Will default to the site name provided
-   * on the dashboard if you don't call this.
-   * @remarks Either DB value defaultTitle or pageTitle is used when showing a notification title.
-   * @PublicApi
-   */
-  static async setDefaultTitle(title: string) {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('setDefaultTitle', title);
-    const appState = await Database.getAppState();
-    appState.defaultNotificationTitle = title;
-    await Database.setAppState(appState);
-  }
-
   /**
    * @PublicApi
    */
@@ -135,19 +108,6 @@ export default class OneSignal {
   static async logoutSMS() {
     await awaitOneSignalInitAndSupported();
     return await this.context.secondaryChannelManager.sms.logout();
-  }
-
-  /**
-   * Returns true if the current browser supports web push.
-   * @PublicApi
-   */
-  static isPushNotificationsSupported(): boolean {
-    logMethodCall('isPushNotificationsSupported');
-    /*
-      Push notification support is checked in the initial entry code. If in an unsupported environment, a stubbed empty
-      version of the SDK will be loaded instead. This file will only be loaded if push notifications are supported.
-     */
-    return true;
   }
 
   static async initializeConfig(options: AppUserConfig) {
@@ -301,15 +261,6 @@ export default class OneSignal {
   }
 
   /**
-   * Shows a native browser prompt.
-   * @PublicApi
-   */
-  public static async showNativePrompt(): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowNativePrompt();
-  }
-
-  /**
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */
@@ -362,29 +313,6 @@ export default class OneSignal {
       });
     } else
       return await InitHelper.registerForPushNotifications(options);
-  }
-
-  /**
-   * Returns a promise that resolves to the browser's current notification permission as
-   *    'default', 'granted', or 'denied'.
-   * @param callback A callback function that will be called when the browser's current notification permission
-   *           has been obtained, with one of 'default', 'granted', or 'denied'.
-   * @PublicApi
-   */
-  public static async getNotificationPermission(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
-    await awaitOneSignalInitAndSupported();
-    return OneSignal.privateGetNotificationPermission(onComplete);
-  }
-
-  static async privateGetNotificationPermission(onComplete?: Function): Promise<NotificationPermission> {
-    const permission = await OneSignal.context.permissionManager.getNotificationPermission(
-        OneSignal.config!.safariWebId
-      );
-
-    if (onComplete)
-      onComplete(permission);
-
-    return permission;
   }
 
   /**
@@ -560,58 +488,6 @@ export default class OneSignal {
   }
 
   /**
-   * @PublicApi
-   */
-  static async setSubscription(newSubscription: boolean): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('setSubscription', newSubscription);
-    const appConfig = await Database.getAppConfig();
-    const { appId } = appConfig;
-    const subscription = await Database.getSubscription();
-    const { deviceId } = subscription;
-    if (!appConfig.appId)
-      throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!ValidatorUtils.isValidBoolean(newSubscription))
-      throw new InvalidArgumentError('newSubscription', InvalidArgumentReason.Malformed);
-    if (!deviceId) {
-      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return;
-    }
-    const options : UpdatePlayerOptions = {
-      notification_types: MainHelper.getNotificationTypeFromOptIn(newSubscription)
-    };
-
-    const authHash = await Database.getExternalUserIdAuthHash();
-    if (!!authHash) {
-      options.external_user_id_auth_hash = authHash;
-    }
-
-    subscription.optedOut = !newSubscription;
-    await OneSignalApi.updatePlayer(appId, deviceId, options);
-    await Database.setSubscription(subscription);
-    EventHelper.onInternalSubscriptionSet(subscription.optedOut);
-    EventHelper.checkAndTriggerSubscriptionChanged();
-  }
-
-  /**
-   * @PendingPublicApi
-   */
-  static async isOptedOut(callback?: Action<boolean | undefined | null>):
-    Promise<boolean | undefined | null> {
-    await awaitOneSignalInitAndSupported();
-    return OneSignal.internalIsOptedOut(callback);
-  }
-
-  static async internalIsOptedOut(callback?: Action<boolean | undefined | null>):
-    Promise<boolean | undefined | null> {
-    logMethodCall('isOptedOut', callback);
-    const { optedOut } = await Database.getSubscription();
-    executeCallback(callback, optedOut);
-    return optedOut;
-  }
-
-  /**
    * Returns a promise that resolves once the manual subscription override has been set.
    * @private
    * @PendingPublicApi
@@ -621,7 +497,7 @@ export default class OneSignal {
     logMethodCall('optOut', doOptOut, callback);
     if (!ValidatorUtils.isValidBoolean(doOptOut))
       throw new InvalidArgumentError('doOptOut', InvalidArgumentReason.Malformed);
-    await OneSignal.setSubscription(!doOptOut);
+    await OneSignal.notifications.disable(!doOptOut);
     executeCallback(callback);
   }
 
@@ -700,34 +576,6 @@ export default class OneSignal {
     const subscriptionStatus = !subscription.optedOut;
     executeCallback(callback, subscriptionStatus);
     return subscriptionStatus;
-  }
-
-  /**
-   * @PublicApi
-   */
-  static async sendSelfNotification(title: string = 'OneSignal Test Message',
-                              message: string = 'This is an example notification.',
-                              url: string = `${new URL(location.href).origin}?_osp=do_not_open`,
-                              icon: URL,
-                              data: Map<String, any>,
-                              buttons: Array<NotificationActionButton>): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
-    const appConfig = await Database.getAppConfig();
-    const subscription = await Database.getSubscription();
-    if (!appConfig.appId)
-      throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!(await OneSignal.isPushNotificationsEnabled()))
-      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
-    if (!ValidatorUtils.isValidUrl(url))
-      throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
-    if (!ValidatorUtils.isValidUrl(icon, { allowEmpty: true, requireHttps: true }))
-      throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
-
-    if (subscription.deviceId) {
-      await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], { en : title }, { en : message },
-                                               url, icon, data, buttons);
-    }
   }
 
   /**
@@ -835,6 +683,10 @@ export default class OneSignal {
       notificationIds: newNotifsToAttributeWithOutcome,
     });
   }
+
+  /* NEW USER MODEL CHANGES */
+  static notifications = new NotificationsNamespace();
+  /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
   static VERSION = Environment.version();
