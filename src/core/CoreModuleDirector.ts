@@ -1,9 +1,11 @@
 import Log from "../shared/libraries/Log";
 import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
+import { IdentityModel } from "./models/IdentityModel";
 import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
+import { UserPropertiesModel } from "./models/UserPropertiesModel";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -43,6 +45,22 @@ export class CoreModuleDirector {
     const modelStores = await this.getModelStores();
     return modelStores.pushSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
+
+  public async getIdentityModel(): Promise<OSModel<IdentityModel>> {
+    await this.initPromise;
+    const modelStores = await this.getModelStores();
+    const modelKeys = Object.keys(modelStores.identity.models);
+    return modelStores.identity.models[modelKeys[0]] as OSModel<IdentityModel>;
+  }
+
+  public async getPropertiesModel(): Promise<OSModel<UserPropertiesModel>> {
+    await this.initPromise;
+    const modelStores = await this.getModelStores();
+    const modelKeys = Object.keys(modelStores.properties.models);
+    return modelStores.properties.models[modelKeys[0]] as OSModel<UserPropertiesModel>;
+  }
+
+  /* P R I V A T E */
 
   private async getModelStores(): Promise<ModelStoresMap<SupportedModel>> {
     await this.initPromise;
