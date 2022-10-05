@@ -7,7 +7,6 @@ import LegacyManager from "../page/managers/LegacyManager";
 import { AutoPromptOptions } from "../page/managers/PromptsManager";
 import Context from "../page/models/Context";
 import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
-import { NotificationActionButton } from "../page/models/NotificationActionButton";
 import { SecondaryChannelDeviceRecord } from "../shared/models/SecondaryChannelDeviceRecord";
 import { TagsObject } from "../page/models/Tags";
 import ProxyFrame from "../page/modules/frames/ProxyFrame";
@@ -22,7 +21,6 @@ import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCal
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
 import OneSignalApi from "../shared/api/OneSignalApi";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
 import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
 import Environment from "../shared/helpers/Environment";
@@ -41,7 +39,6 @@ import { DeviceRecord } from "../shared/models/DeviceRecord";
 import { NotificationPermission } from "../shared/models/NotificationPermission";
 import { OutcomeAttributionType } from "../shared/models/Outcomes";
 import { DelayedPromptType, AppUserConfigNotifyButton } from "../shared/models/Prompts";
-import { UpdatePlayerOptions } from "../shared/models/UpdatePlayerOptions";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
 import Database from "../shared/services/Database";
 import IndexedDb from "../shared/services/IndexedDb";
@@ -762,7 +759,6 @@ export default class OneSignal {
   static SecondaryChannelDeviceRecord = SecondaryChannelDeviceRecord;
 
   static notificationPermission = NotificationPermission;
-
 
   /**
    * Used by Rails-side HTTP popup. Must keep the same name.
