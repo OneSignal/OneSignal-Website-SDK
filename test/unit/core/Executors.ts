@@ -1,6 +1,5 @@
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
-import ModelCache from "../../../src/core/caching/ModelCache";
 import CoreModule from "../../../src/core/CoreModule";
 import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
 import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";

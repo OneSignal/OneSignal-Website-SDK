@@ -23,11 +23,11 @@ export class OSModelStore<Model>
       this.broadcast(new ModelStoreAdded(model.id, model, noRemoteSync));
     }
 
-    public remove(id: string, noRemoteSync?: boolean): void {
-      const modelCopy = JSON.stringify(this.models[id]);
-      delete this.models[id];
-      this.unsubscribeCallbacks[id]();
-      this.broadcast(new ModelStoreRemoved(id, JSON.parse(modelCopy), noRemoteSync));
+    public remove(modelId: string, noRemoteSync?: boolean): void {
+      const modelCopy = JSON.stringify(this.models[modelId]);
+      delete this.models[modelId];
+      this.unsubscribeCallbacks[modelId]();
+      this.broadcast(new ModelStoreRemoved(modelId, JSON.parse(modelCopy), noRemoteSync));
     }
 
     private subscribeUpdateListener(model: OSModel<Model>, noRemoteSync?: boolean): void {
