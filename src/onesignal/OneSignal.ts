@@ -48,8 +48,9 @@ import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
-import CoreModule from "src/core/CoreModule";
-import { CoreModuleDirector } from "src/core/CoreModuleDirector";
+import CoreModule from "../../src/core/CoreModule";
+import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
+import UserNamespace from "./UserNamespace";
 
 export default class OneSignal {
   /**
@@ -693,6 +694,7 @@ export default class OneSignal {
   static core: CoreModule;
   static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
+  static user : UserNamespace;
   /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
