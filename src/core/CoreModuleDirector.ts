@@ -21,9 +21,9 @@ export class CoreModuleDirector {
     modelStores[modelName].add(model);
   }
 
-  public async remove(modelName: ModelName, id: string): Promise<void> {
+  public async remove(modelName: ModelName, modelId: string): Promise<void> {
     const modelStores = await this.getModelStores();
-    modelStores[modelName].remove(id);
+    modelStores[modelName].remove(modelId);
   }
 
   public async getEmailSubscriptionModels(): Promise<{ [key: string]: OSModel<SupportedSubscription> }> {

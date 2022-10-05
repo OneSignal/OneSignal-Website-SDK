@@ -2,7 +2,7 @@ import { OSModelUpdatedArgs } from "./OSModelUpdatedArgs";
 import Subscribable from "../Subscribable";
 import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
-import { SupportedModel, ModelName } from "../models/SupportedModels";
+import { ModelName } from "../models/SupportedModels";
 
 export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
   public id: string;
