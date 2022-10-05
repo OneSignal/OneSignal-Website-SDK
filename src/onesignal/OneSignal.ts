@@ -48,6 +48,8 @@ import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
+import CoreModule from "src/core/CoreModule";
+import { CoreModuleDirector } from "src/core/CoreModuleDirector";
 
 export default class OneSignal {
   /**
@@ -107,6 +109,11 @@ export default class OneSignal {
     return await this.context.secondaryChannelManager.sms.logout();
   }
 
+  static async initializeCoreModule() {
+    OneSignal.core = new CoreModule();
+    OneSignal.coreDirector = new CoreModuleDirector(OneSignal.core);
+  }
+
   static async initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
@@ -126,6 +133,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
+    await OneSignal.initializeCoreModule();
 
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
@@ -682,6 +690,8 @@ export default class OneSignal {
   }
 
   /* NEW USER MODEL CHANGES */
+  static core: CoreModule;
+  static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
   /* END NEW USER MODEL CHANGES */
 
