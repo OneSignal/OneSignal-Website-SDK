@@ -40,10 +40,11 @@ export class CoreModuleDirector {
     return modelStores.smsSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
-  public async getPushSubscriptionModels(): Promise<{ [key: string]: OSModel<SupportedSubscription> }> {
+  public async getPushSubscriptionModels(): Promise<OSModel<SupportedSubscription> | undefined> {
     await this.initPromise;
     const modelStores = await this.getModelStores();
-    return modelStores.pushSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
+    const key = Object.keys(modelStores.pushSubscriptions.models)[0];
+    return modelStores.pushSubscriptions.models[key] as OSModel<SupportedSubscription>;
   }
 
   public async getIdentityModel(): Promise<OSModel<IdentityModel>> {
