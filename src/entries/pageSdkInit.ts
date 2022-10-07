@@ -22,7 +22,7 @@ function oneSignalSdkInit() {
   // Load OneSignal's web SDK
   const predefinedOneSignal: OneSignalStubES6 | object[] | undefined | null = (<any>window).OneSignal;
 
-  (<any>window).OneSignal = require('../OneSignal').default;
+  (<any>window).OneSignal = require('../onesignal/OneSignal').default;
 
   ReplayCallsOnOneSignal.doReplay(predefinedOneSignal);
 }
