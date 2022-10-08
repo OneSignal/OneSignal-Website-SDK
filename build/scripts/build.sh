@@ -66,7 +66,17 @@ echo "Unknown options -> ${POSITIONAL}"
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # build local SW file for dev env
-./build/scripts/buildServiceWorker.sh $BUILD_ORIGIN
+if [ "$NO_DEV_PORT" = false ]; then
+  if [ "$HTTPS" = true ]; then
+      PORT=":4001"
+  else
+      PORT=":4000"
+  fi
+else
+  PORT=""
+fi
+
+./build/scripts/buildServiceWorker.sh $BUILD_ORIGIN $PORT
 
 ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT yarn transpile:sources
 ENV=$ENV API=$API BUILD_ORIGIN=$BUILD_ORIGIN API_ORIGIN=$API_ORIGIN HTTPS=$HTTPS NO_DEV_PORT=$NO_DEV_PORT yarn bundle-sw
