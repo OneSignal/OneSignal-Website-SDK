@@ -18,19 +18,17 @@ export class OSModelStore<Model>
       });
     }
 
-    public add(model: OSModel<Model>, noRemoteSync?: boolean): void {
-      logMethodCall("OSModelStore.add", { model });
+    public add(model: OSModel<Model>): void {
       this.subscribeUpdateListener(model);
       this.models[model.modelId] = model;
-      this.broadcast(new ModelStoreAdded(model.modelId, model, noRemoteSync));
+      this.broadcast(new ModelStoreAdded(model.modelId, model));
     }
 
-    public remove(modelId: string, noRemoteSync?: boolean): void {
-      logMethodCall("OSModelStore.remove", { modelId });
+    public remove(modelId: string): void {
       const modelCopy = JSON.stringify(this.models[modelId]);
       delete this.models[modelId];
       this.unsubscribeCallbacks[modelId]();
-      this.broadcast(new ModelStoreRemoved(modelId, JSON.parse(modelCopy), noRemoteSync));
+      this.broadcast(new ModelStoreRemoved(modelId, JSON.parse(modelCopy)));
     }
 
     private subscribeUpdateListener(model: OSModel<Model>): void {
