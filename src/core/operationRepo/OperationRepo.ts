@@ -2,6 +2,7 @@ import { ModelRepo } from "../modelRepo/ModelRepo";
 import { ExecutorStore } from "../executors/ExecutorStore";
 import { CoreDelta } from "../models/CoreDeltas";
 import { SupportedModel } from "../models/SupportedModels";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export class OperationRepo {
   public executorStore: ExecutorStore;
@@ -15,6 +16,7 @@ export class OperationRepo {
   }
 
   private processDelta(delta: CoreDelta<SupportedModel>): void {
+    logMethodCall("processDelta", { delta });
     const { modelName } = delta.model;
     this.executorStore[modelName]?.enqueueDelta(delta);
   }

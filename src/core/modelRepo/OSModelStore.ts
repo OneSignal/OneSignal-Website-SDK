@@ -19,12 +19,14 @@ export class OSModelStore<Model>
     }
 
     public add(model: OSModel<Model>, noRemoteSync?: boolean): void {
+      logMethodCall("OSModelStore.add", { model });
       this.subscribeUpdateListener(model);
       this.models[model.modelId] = model;
       this.broadcast(new ModelStoreAdded(model.modelId, model, noRemoteSync));
     }
 
     public remove(modelId: string, noRemoteSync?: boolean): void {
+      logMethodCall("OSModelStore.remove", { modelId });
       const modelCopy = JSON.stringify(this.models[modelId]);
       delete this.models[modelId];
       this.unsubscribeCallbacks[modelId]();

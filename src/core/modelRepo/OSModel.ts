@@ -4,6 +4,7 @@ import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
 import { ModelName } from "../models/SupportedModels";
 import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../models/ModelStoreChange";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   public modelId: string;
@@ -21,6 +22,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * Results in a broadcasted update event.
    */
   public set(property: StringKeys<Model>, newValue: any): void {
+    logMethodCall("set", { property, newValue });
     let oldValue;
 
     if (this.data) {
@@ -37,6 +39,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * To be called when updating the data with a remote sync.
    */
   public hydrate(data: Model): void {
+    logMethodCall("hydrate", { data });
     this.data = data;
     this.broadcast(new ModelStoreHydrated(this.modelId, this));
   }
@@ -49,6 +52,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   }
 
   static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
+    logMethodCall("decode", { encodedModel });
     const { modelId: id, modelName, ...data } = encodedModel;
     return new OSModel<Model>(modelName as ModelName, id, data as unknown as Model);
   }
