@@ -4,7 +4,7 @@ export default class OperationCache {
   static enqueue<Model>(operation: Operation<Model>): void {
     const fromCache = localStorage.getItem("operationCache");
     const operations: { [key: string]: any } = fromCache ? JSON.parse(fromCache) : {};
-    operations[operation.id] = operation;
+    operations[operation.operationId] = operation;
     localStorage.setItem("operationCache", JSON.stringify(operations));
   }
 

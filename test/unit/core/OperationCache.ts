@@ -20,7 +20,7 @@ test("Remove operation from cache -> operation queue -1", async t => {
   const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   OperationCache.enqueue(operation);
   t.is(OperationCache.getOperations().length, 1);
-  OperationCache.delete(operation.id);
+  OperationCache.delete(operation.operationId);
   t.is(OperationCache.getOperations().length, 0);
 });
 
