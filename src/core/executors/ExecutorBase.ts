@@ -105,11 +105,11 @@ export default abstract class ExecutorBase<Model> {
       let res: ExecutorResult = { success: false, retriable: true };
 
       if (operation?.changeType === CoreChangeType.Add) {
-        res = this._executeAdd?.call(operation);
+        res = this._executeAdd?.call(this, operation);
       } else if (operation?.changeType === CoreChangeType.Remove) {
-        res = this._executeRemove?.call(operation);
+        res = this._executeRemove?.call(this, operation);
       } else if (operation?.changeType === CoreChangeType.Update) {
-        res = this._executeUpdate?.call(operation);
+        res = this._executeUpdate?.call(this, operation);
       }
       // HYDRATE
       if (res.success) {
