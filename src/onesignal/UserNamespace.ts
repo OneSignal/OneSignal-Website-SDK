@@ -36,7 +36,7 @@ export default class UserNamespace {
     logMethodCall('addAliases', { aliases });
     aliases.forEach(async alias => {
       const identityModel = await this.coreDirector.getIdentityModel();
-      identityModel.set(alias.label, alias.id);
+      identityModel?.set(alias.label, alias.id);
     });
   }
 
@@ -49,7 +49,7 @@ export default class UserNamespace {
     logMethodCall('removeAliases', { aliases });
     aliases.forEach(async alias => {
       const identityModel = await this.coreDirector.getIdentityModel();
-      identityModel.set(alias, undefined);
+      identityModel?.set(alias, undefined);
     });
   }
 
@@ -127,7 +127,7 @@ export default class UserNamespace {
   public addTags(tags: {[key: string]: string}): void {
     logMethodCall('addTags', { tags });
     this.coreDirector.getPropertiesModel().then(propertiesModel => {
-      propertiesModel.set('tags', tags);
+      propertiesModel?.set('tags', tags);
     }).catch(e => {
       throw e;
     });
@@ -141,7 +141,7 @@ export default class UserNamespace {
   public removeTags(tagKeys: string[]): void {
     logMethodCall('removeTags', { tagKeys });
     this.coreDirector.getPropertiesModel().then(propertiesModel => {
-      const tags = propertiesModel.data?.tags;
+      const tags = propertiesModel?.data?.tags;
 
       if (tags) {
         tagKeys.forEach(tagKey => {
@@ -152,5 +152,13 @@ export default class UserNamespace {
     }).catch(e => {
       throw e;
     });
+  }
+
+  public sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): void {
+    // TO DO
+  }
+
+  public sendUniqueOutcome(outcomeName: string): void {
+    // TO DO
   }
 }
