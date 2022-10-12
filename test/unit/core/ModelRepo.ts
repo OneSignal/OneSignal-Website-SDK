@@ -1,4 +1,4 @@
-import test, { ExecutionContext } from "ava";
+import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import CoreModule from "../../../src/core/CoreModule";
 import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";

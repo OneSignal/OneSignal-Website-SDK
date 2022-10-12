@@ -22,10 +22,16 @@ export function generateNewSubscription() {
 export function getMockDeltas(): CoreDelta<SupportedModel>[] {
   return [
     {
-      model: new OSModel(ModelName.Identity, "0000000000"),
+      model: getDummyIdentityOSModel(),
       changeType: CoreChangeType.Add,
     }
   ];
+}
+
+const dummyIdentityModel = new OSModel<SupportedModel>(ModelName.Identity, "123");
+
+export function getDummyIdentityOSModel(): OSModel<SupportedModel> {
+  return dummyIdentityModel;
 }
 
 export function stubModelCache(sinonSandbox: SinonSandbox) {

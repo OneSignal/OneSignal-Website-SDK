@@ -43,6 +43,8 @@ import OneSignalApiBase from "../../../src/shared/api/OneSignalApiBase";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
 import OneSignal from "../../../src/onesignal/OneSignal";
+import CoreModule from "../../../src/core/CoreModule";
+import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
 
 // NodeJS.Global
 declare var global: any;
@@ -389,6 +391,7 @@ export class TestEnvironment {
     OneSignal.environmentInfo = EnvironmentInfoHelper.getEnvironmentInfo();
     OneSignal.context = new Context(fakeMergedConfig);
     OneSignal.config = fakeMergedConfig;
+    OneSignal.coreDirector = new CoreModuleDirector(new CoreModule());
   }
 
   static getFakeAppConfig(appId: string = APP_ID): AppConfig {

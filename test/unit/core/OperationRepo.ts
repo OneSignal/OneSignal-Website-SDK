@@ -130,7 +130,7 @@ test("Update Identity: Multiple delta broadcasts -> one operation of change type
 
   const operation = executor?.operationQueue[0];
   t.is(operation?.changeType, CoreChangeType.Add); // adding identity since old value was ""
-  t.is(operation?.model.modelName, ModelName.Identity);
+  t.is(operation?.model?.modelName, ModelName.Identity);
   t.deepEqual(operation?.payload, { myAlias: "myNewAlias", myAlias2: "myNewAlias2" });
 });
 
@@ -173,6 +173,6 @@ test("Update User Properties -> one operation of change type: update", async t =
 
   const operation = executor?.operationQueue[0];
   t.is(operation?.changeType, CoreChangeType.Update);
-  t.is(operation?.model.modelName, ModelName.Properties);
+  t.is(operation?.model?.modelName, ModelName.Properties);
   t.deepEqual(operation?.payload, { tags: { tag1: "tag1", tag2: "tag2" } });
 });
