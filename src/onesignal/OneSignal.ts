@@ -110,9 +110,11 @@ export default class OneSignal {
     return await this.context.secondaryChannelManager.sms.logout();
   }
 
-  static async initializeCoreModule() {
-    OneSignal.core = new CoreModule();
-    OneSignal.coreDirector = new CoreModuleDirector(OneSignal.core);
+  static async initializeCoreModuleAndUserNamespace() {
+    const core = new CoreModule();
+    OneSignal.coreDirector = new CoreModuleDirector(core);
+    OneSignal.user = new UserNamespace(OneSignal.coreDirector);
+    await OneSignal.user.userLoaded;
   }
 
   static async initializeConfig(options: AppUserConfig) {
@@ -134,11 +136,11 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
-    await OneSignal.initializeCoreModule();
 
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal.initializeConfig(options);
+    await OneSignal.initializeCoreModuleAndUserNamespace();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
@@ -691,7 +693,6 @@ export default class OneSignal {
   }
 
   /* NEW USER MODEL CHANGES */
-  static core: CoreModule;
   static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
   static user : UserNamespace;
