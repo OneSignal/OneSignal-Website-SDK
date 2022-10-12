@@ -1,7 +1,8 @@
 import { OSModel } from "./OSModel";
-import { OSModelUpdatedArgs } from "./OSModelUpdatedArgs";
 import Subscribable from "../Subscribable";
-import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/ModelStoreChange";
+import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated, ModelStoreHydrated } from "../models/ModelStoreChange";
+import { CoreChangeType } from "../models/CoreChangeType";
+import { isOSModel, isOSModelUpdatedArgs } from "../utils/typePredicates";
 
 export class OSModelStore<Model>
   extends Subscribable<ModelStoreChange<Model>>
@@ -30,9 +31,15 @@ export class OSModelStore<Model>
       this.broadcast(new ModelStoreRemoved(modelId, JSON.parse(modelCopy), noRemoteSync));
     }
 
-    private subscribeUpdateListener(model: OSModel<Model>, noRemoteSync?: boolean): void {
-      this.unsubscribeCallbacks[model.id] = model.subscribe((changedArgs: OSModelUpdatedArgs<Model>) => {
-        this.broadcast(new ModelStoreUpdated(model.id, changedArgs, noRemoteSync));
+    private subscribeUpdateListener(model: OSModel<Model>): void {
+      this.unsubscribeCallbacks[model.modelId] = model.subscribe((change: ModelStoreChange<Model>) => {
+        const { payload } = change;
+
+        if (change.type === CoreChangeType.Update && isOSModelUpdatedArgs<Model>(payload)) {
+          this.broadcast(new ModelStoreUpdated(model.modelId, payload));
+        } else if (change.type === CoreChangeType.Hydrate && isOSModel<Model>(payload)) {
+          this.broadcast(new ModelStoreHydrated(model.modelId, payload));
+        }
       });
   }
 }

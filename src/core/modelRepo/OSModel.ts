@@ -3,6 +3,7 @@ import Subscribable from "../Subscribable";
 import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
 import { ModelName } from "../models/SupportedModels";
+import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../models/ModelStoreChange";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   public modelId: string;
@@ -27,7 +28,8 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
       this.data[property] = newValue;
     }
 
-    this.broadcast(new OSModelUpdatedArgs(this, property, oldValue, newValue));
+    const change = new ModelStoreUpdated(this.modelId, new OSModelUpdatedArgs(this, property, oldValue, newValue));
+    this.broadcast(change);
   }
 
   /**
@@ -36,6 +38,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    */
   public hydrate(data: Model): void {
     this.data = data;
+    this.broadcast(new ModelStoreHydrated(this.modelId, this));
   }
 
 
