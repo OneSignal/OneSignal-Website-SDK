@@ -1,19 +1,20 @@
+import OneSignal from "../../onesignal/OneSignal";
 import { OSModel } from "../modelRepo/OSModel";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
-import { ModelName } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { isPropertyDelta, isPureObject } from "../utils/typePredicates";
 
 export class Operation<Model> {
   operationId: string;
-  readonly payload: {[key: string]: any};
-  readonly model: OSModel<Model>;
-  readonly timestamp: number;
+  timestamp: number;
+  payload?: {[key: string]: any};
+  model?: OSModel<Model>;
 
-  constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas: CoreDelta<Model>[]) {
+  constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas?: CoreDelta<Model>[]) {
     this.operationId = Math.random().toString(36).substring(2);
-    this.payload = this.getPayload(deltas);
-    this.model = deltas[0].model;
+    this.payload = deltas ? this.getPayload(deltas) : undefined;
+    this.model = deltas ? deltas[0].model : undefined;
     this.timestamp = Date.now();
   }
 
@@ -57,5 +58,21 @@ export class Operation<Model> {
       }
     });
     return result;
+  }
+
+  static async fromJSON(json: any): Promise<Operation<SupportedModel> | void> {
+    const { operationId, payload, modelName, changeType, timestamp } = json;
+    const model = await OneSignal.coreDirector.getModelByTypeAndId(modelName, payload.modelId);
+
+    if (!!model) {
+      const operation = new Operation<SupportedModel>(changeType, modelName);
+      operation.model = model;
+      operation.operationId = operationId;
+      operation.timestamp = timestamp;
+      operation.payload = payload;
+      return operation;
+    } else {
+      throw new Error("Could not find model");
+    }
   }
 }

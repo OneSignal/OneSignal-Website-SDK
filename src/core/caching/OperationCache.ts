@@ -1,4 +1,5 @@
 import { logMethodCall } from "../../shared/utils/utils";
+import { SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 
 export default class OperationCache {
@@ -10,10 +11,21 @@ export default class OperationCache {
     localStorage.setItem("operationCache", JSON.stringify(operations));
   }
 
-  static getOperations<Model>(): Operation<Model>[] {
+  static async getOperations(): Promise<Operation<SupportedModel>[]> {
     logMethodCall("OperationCache.getOperations");
     const fromCache = localStorage.getItem("operationCache");
-    const operations: Operation<Model>[] = fromCache ? Object.values(JSON.parse(fromCache)) : [];
+    const rawOperations: Operation<SupportedModel>[] = fromCache ? Object.values(JSON.parse(fromCache)) : [];
+    const operations: Operation<SupportedModel>[] = [];
+
+    for (let i = 0; i < rawOperations.length; i++) {
+      const rawOperation = rawOperations[i];
+
+      // return an operation object with correct refernces (in particular reference to the model)
+      const operation = await Operation.fromJSON(rawOperation);
+      if (operation) {
+        operations.push(operation as Operation<SupportedModel>);
+      }
+    }
     return operations.sort((a, b) => a.timestamp - b.timestamp);
   }
 
