@@ -52,7 +52,7 @@ test("Remove subscription -> -1 subscription model in model store", async t => {
 
   await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
   t.is(Object.keys(emailSubModels).length, 1);
-  await coreDirector.remove(ModelName.EmailSubscriptions, newSub.id);
+  await coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
   t.is(Object.keys(emailSubModels).length, 0);
   t.true(processModelRemovedSpy.calledOnce);
 });
@@ -65,7 +65,7 @@ test("Update model properties -> change is processed correctly", async t => {
   t.true(processModelUpdatedSpy.calledOnce);
 
   const emailSubModels = await coreDirector.getEmailSubscriptionModels();
-  const emailModel = emailSubModels[newSub.id];
+  const emailModel = emailSubModels[newSub.modelId];
   t.is(emailModel.data?.rooted, true);
 });
 
@@ -86,7 +86,7 @@ test("Remove subscription -> delta is broadcasted twice", async t => {
   });
   const newSub = generateNewSubscription();
   await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
-  await coreDirector.remove(ModelName.EmailSubscriptions, newSub.id);
+  await coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
 });
 
 test("Update model properties -> delta is broadcasted twice", async t => {
@@ -116,14 +116,14 @@ test("Remove subscription -> delta is broadcasted with correct change type and p
       t.is(delta.changeType, CoreChangeType.Add);
       t.deepEqual(delta.model, newSub as OSModel<SupportedModel>);
       t.is(delta.model.modelName, newSub.modelName);
-      t.is(delta.model.id, newSub.id);
+      t.is(delta.model.modelId, newSub.modelId);
     } else if (broadcastCount === 2) {
       t.is(delta.changeType, CoreChangeType.Remove);
     }
   });
 
   await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
-  await coreDirector.remove(ModelName.EmailSubscriptions, newSub.id);
+  await coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
 });
 
 test("Update model properties -> delta is broadcasted with correct change type and payload", async t => {
