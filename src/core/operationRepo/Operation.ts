@@ -62,7 +62,7 @@ export class Operation<Model> {
 
   static async fromJSON(json: any): Promise<Operation<SupportedModel> | void> {
     const { operationId, payload, modelName, changeType, timestamp } = json;
-    const model = await OneSignal.coreDirector.getModelByTypeAndId(modelName, payload.modelId);
+    const model = await OneSignal.coreDirector?.getModelByTypeAndId(modelName, payload?.modelId);
 
     if (!!model) {
       const operation = new Operation<SupportedModel>(changeType, modelName);
@@ -72,7 +72,7 @@ export class Operation<Model> {
       operation.payload = payload;
       return operation;
     } else {
-      throw new Error("Could not find model");
+      throw new Error("Could not find model. Is OneSignal initialized?");
     }
   }
 }
