@@ -5,13 +5,13 @@ import { ModelName } from "../models/SupportedModels";
 import { isPropertyDelta, isPureObject } from "../utils/typePredicates";
 
 export class Operation<Model> {
-  readonly id: string;
+  operationId: string;
   readonly payload: {[key: string]: any};
   readonly model: OSModel<Model>;
   readonly timestamp: number;
 
   constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas: CoreDelta<Model>[]) {
-    this.id = Math.random().toString(36).substring(2);
+    this.operationId = Math.random().toString(36).substring(2);
     this.payload = this.getPayload(deltas);
     this.model = deltas[0].model;
     this.timestamp = Date.now();

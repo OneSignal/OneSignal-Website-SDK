@@ -107,6 +107,7 @@ export default abstract class ExecutorBase<Model> {
       if (res.success) {
         operation?.model.hydrate(res.result);
         OperationCache.delete(operation?.id);
+        OperationCache.delete(operation?.operationId);
       } else {
         // TO DO: handle retry logic
         this._enqueueOperation(operation);
