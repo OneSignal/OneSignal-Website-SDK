@@ -1,13 +1,13 @@
 import { CoreChangeType } from "../models/CoreChangeType";
 import { PropertyDelta } from "../models/CoreDeltas";
 import { ExecutorConfig } from "../models/ExecutorConfig";
-import { ModelName } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 import { isPropertyDelta } from "../utils/typePredicates";
 import ExecutorBase from "./ExecutorBase";
 
-export class IdentityExecutor<Model> extends ExecutorBase<Model> {
-  constructor(executorConfig: ExecutorConfig<Model>) {
+export class IdentityExecutor extends ExecutorBase {
+  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
     super(executorConfig);
   }
 
@@ -16,9 +16,9 @@ export class IdentityExecutor<Model> extends ExecutorBase<Model> {
       return;
     }
 
-    const addDeltas: PropertyDelta<Model>[] = [];
-    const removeDeltas: PropertyDelta<Model>[] = [];
-    const updateDeltas: PropertyDelta<Model>[] = [];
+    const addDeltas: PropertyDelta<SupportedModel>[] = [];
+    const removeDeltas: PropertyDelta<SupportedModel>[] = [];
+    const updateDeltas: PropertyDelta<SupportedModel>[] = [];
 
     this._deltaQueue.forEach(delta => {
       if (!isPropertyDelta(delta)) {
@@ -37,7 +37,7 @@ export class IdentityExecutor<Model> extends ExecutorBase<Model> {
     });
 
     if (addDeltas.length > 0) {
-      this._enqueueOperation(new Operation(CoreChangeType.Add, ModelName.Identity, addDeltas));
+      this._enqueueOperation(new Operation<SupportedModel>(CoreChangeType.Add, ModelName.Identity, addDeltas));
     }
     if (removeDeltas.length > 0) {
       this._enqueueOperation(new Operation(CoreChangeType.Remove, ModelName.Identity, removeDeltas));

@@ -1,12 +1,13 @@
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
 import { ExecutorConfig } from "../models/ExecutorConfig";
+import { SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 import { isModelDelta } from "../utils/typePredicates";
 import ExecutorBase from "./ExecutorBase";
 
-export class SubscriptionExecutor<Model> extends ExecutorBase<Model> {
-  constructor(executorConfig: ExecutorConfig<Model>) {
+export class SubscriptionExecutor extends ExecutorBase {
+  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
     super(executorConfig);
   }
 
@@ -27,25 +28,26 @@ export class SubscriptionExecutor<Model> extends ExecutorBase<Model> {
     this._flushDeltas();
   }
 
-  private separateDeltasByChangeType(deltas: CoreDelta<Model>[]): { [key: string]: CoreDelta<Model>[] } {
-    const deltasByChangeType: Partial<{[key in CoreChangeType]: CoreDelta<Model>[]}> = {
-      [CoreChangeType.Add]: [],
-      [CoreChangeType.Remove]: [],
-      [CoreChangeType.Update]: []
-    };
+  private separateDeltasByChangeType(deltas: CoreDelta<SupportedModel>[]):
+    { [key: string]: CoreDelta<SupportedModel>[] } {
+      const deltasByChangeType: Partial<{[key in CoreChangeType]: CoreDelta<SupportedModel>[]}> = {
+        [CoreChangeType.Add]: [],
+        [CoreChangeType.Remove]: [],
+        [CoreChangeType.Update]: []
+      };
 
-    deltas.forEach(delta => {
-      if (!deltasByChangeType[delta.changeType]) {
-        deltasByChangeType[delta.changeType] = [];
-      }
-      deltasByChangeType[delta.changeType]?.push(delta);
-    });
+      deltas.forEach(delta => {
+        if (!deltasByChangeType[delta.changeType]) {
+          deltasByChangeType[delta.changeType] = [];
+        }
+        deltasByChangeType[delta.changeType]?.push(delta);
+      });
 
-    return deltasByChangeType;
-  }
+      return deltasByChangeType;
+    }
 
-  private separateDeltasByModelId(): CoreDelta<Model>[][] {
-    const deltasByModelId: {[key: string]: CoreDelta<Model>[]} = {};
+  private separateDeltasByModelId(): CoreDelta<SupportedModel>[][] {
+    const deltasByModelId: {[key: string]: CoreDelta<SupportedModel>[]} = {};
 
     this._deltaQueue.forEach(delta => {
       if (!isModelDelta(delta)) {

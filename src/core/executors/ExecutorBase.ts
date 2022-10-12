@@ -5,19 +5,20 @@ import { ExecutorResult } from "../models/ExecutorResult";
 import { ExecutorConfig } from "../models/ExecutorConfig";
 import { Operation } from "../operationRepo/Operation";
 import { logMethodCall } from "../../shared/utils/utils";
+import { SupportedModel } from "../models/SupportedModels";
 
-export default abstract class ExecutorBase<Model> {
-  protected _deltaQueue: CoreDelta<Model>[] = [];
-  protected _operationQueue: Operation<Model>[] = [];
+export default abstract class ExecutorBase {
+  protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
+  protected _operationQueue: Operation<SupportedModel>[] = [];
 
-  protected _executeAdd?: (operation: Operation<Model>) => ExecutorResult;
-  protected _executeUpdate?: (operation: Operation<Model>) => ExecutorResult;
-  protected _executeRemove?: (operation: Operation<Model>) => ExecutorResult;
+  protected _executeAdd?: (operation: Operation<SupportedModel>) => ExecutorResult;
+  protected _executeUpdate?: (operation: Operation<SupportedModel>) => ExecutorResult;
+  protected _executeRemove?: (operation: Operation<SupportedModel>) => ExecutorResult;
 
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
 
-  constructor(executorConfig: ExecutorConfig<Model>) {
+  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
     setInterval(() => {
       if (this._deltaQueue.length > 0) {
         this.processDeltaQueue.call(this);
@@ -37,20 +38,20 @@ export default abstract class ExecutorBase<Model> {
 
   abstract processDeltaQueue(): void;
 
-  public enqueueDelta(delta: CoreDelta<Model>): void {
+  public enqueueDelta(delta: CoreDelta<SupportedModel>): void {
     logMethodCall("ExecutorBase.enqueueDelta", { delta });
     this._deltaQueue.push(delta);
   }
 
-  public get deltaQueue(): CoreDelta<Model>[] {
+  public get deltaQueue(): CoreDelta<SupportedModel>[] {
     return this._deltaQueue;
   }
 
-  public get operationQueue(): Operation<Model>[] {
+  public get operationQueue(): Operation<SupportedModel>[] {
     return this._operationQueue;
   }
 
-  protected _enqueueOperation(operation: Operation<Model>): void {
+  protected _enqueueOperation(operation: Operation<SupportedModel>): void {
     logMethodCall("ExecutorBase.enqueueOperation", { operation });
     this._operationQueue.push(operation);
   }
@@ -114,8 +115,7 @@ export default abstract class ExecutorBase<Model> {
       // HYDRATE
       if (res.success) {
         if (res.result) {
-          // TO DO: prepare result for hydration
-          operation.model?.hydrate(res.result);
+          operation.model?.hydrate(res.result as SupportedModel);
         }
         OperationCache.delete(operation?.operationId);
       } else {
