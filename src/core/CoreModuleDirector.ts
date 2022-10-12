@@ -61,7 +61,7 @@ export class CoreModuleDirector {
     return modelStores.pushSubscriptions.models[key] as OSModel<SupportedSubscription>;
   }
 
-  public async getIdentityModel(): Promise<OSModel<IdentityModel>> {
+  public async getIdentityModel(): Promise<OSModel<IdentityModel> | undefined> {
     logMethodCall("CoreModuleDirector.getIdentityModel");
     await this.initPromise;
     const modelStores = await this.getModelStores();
@@ -69,7 +69,7 @@ export class CoreModuleDirector {
     return modelStores.identity.models[modelKeys[0]] as OSModel<IdentityModel>;
   }
 
-  public async getPropertiesModel(): Promise<OSModel<UserPropertiesModel>> {
+  public async getPropertiesModel(): Promise<OSModel<UserPropertiesModel> | undefined> {
     logMethodCall("CoreModuleDirector.getPropertiesModel");
     await this.initPromise;
     const modelStores = await this.getModelStores();
