@@ -53,7 +53,6 @@ export default abstract class ExecutorBase<Model> {
   protected _enqueueOperation(operation: Operation<Model>): void {
     logMethodCall("ExecutorBase.enqueueOperation", { operation });
     this._operationQueue.push(operation);
-    OperationCache.enqueue(operation);
   }
 
   protected _flushDeltas(): void {
@@ -87,19 +86,22 @@ export default abstract class ExecutorBase<Model> {
     return finalChangeType;
   }
 
-  protected _processOperationQueue(): void {
-    this._operationQueue = [...OperationCache.getOperations<Model>(), ...this._operationQueue];
-    const clonedOperationQueue = JSON.parse(JSON.stringify(this._operationQueue));
+  protected async _processOperationQueue(): Promise<void> {
+    const cachedOperations = await OperationCache.getOperations();
+    this._operationQueue = [...cachedOperations, ...this._operationQueue];
 
-    while (clonedOperationQueue.length > 0) {
-      const operation = clonedOperationQueue.shift();
-      this._operationQueue.shift(); // move in sync with clonedOperationQueue
+    while (this._operationQueue.length > 0) {
+      const operation = this._operationQueue.shift();
 
-      // tells typescript compiler that operation is not undefined to avoid TS errors below
-      if (!operation) {
-        continue;
+      if (operation) {
+        OperationCache.enqueue(operation);
+        this._processOperation(operation, 5);
       }
+    }
+  }
 
+  private _processOperation(operation: Operation<SupportedModel>, retry: number): void {
+    logMethodCall("ExecutorBase._processOperation", { operation, retry });
       let res: ExecutorResult = { success: false, retriable: true };
 
       if (operation?.changeType === CoreChangeType.Add) {
@@ -111,13 +113,14 @@ export default abstract class ExecutorBase<Model> {
       }
       // HYDRATE
       if (res.success) {
-        operation?.model.hydrate(res.result);
-        OperationCache.delete(operation?.id);
+        if (res.result) {
+          // TO DO: prepare result for hydration
+          operation.model?.hydrate(res.result);
+        }
         OperationCache.delete(operation?.operationId);
       } else {
         // TO DO: handle retry logic
-        this._enqueueOperation(operation);
+        this._processOperation(operation, retry - 1);
       }
-    }
   }
 }
