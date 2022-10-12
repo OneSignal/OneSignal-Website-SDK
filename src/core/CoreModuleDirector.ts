@@ -31,6 +31,14 @@ export class CoreModuleDirector {
     modelStores[modelName].remove(modelId);
   }
 
+  public async getModelByTypeAndId(modelName: ModelName, modelId: string):
+    Promise<OSModel<SupportedModel> | undefined> {
+      logMethodCall("CoreModuleDirector.getModelByTypeAndId", { modelName, modelId });
+      await this.initPromise;
+      const modelStores = await this.getModelStores();
+      return modelStores[modelName].models[modelId];
+  }
+
   public async getEmailSubscriptionModels(): Promise<{ [key: string]: OSModel<SupportedSubscription> }> {
     logMethodCall("CoreModuleDirector.getEmailSubscriptionModels");
     await this.initPromise;
