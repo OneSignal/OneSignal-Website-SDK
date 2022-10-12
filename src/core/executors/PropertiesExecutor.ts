@@ -2,10 +2,10 @@ import ExecutorBase from "./ExecutorBase";
 import { Operation } from "../operationRepo/Operation";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { ExecutorConfig } from "../models/ExecutorConfig";
-import { ModelName } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 
-export class PropertiesExecutor<Model> extends ExecutorBase<Model> {
-  constructor(executorConfig: ExecutorConfig<Model>) {
+export class PropertiesExecutor extends ExecutorBase {
+  constructor(executorConfig: ExecutorConfig<SupportedModel>) {
     super(executorConfig);
   }
 
