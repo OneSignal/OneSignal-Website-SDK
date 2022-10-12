@@ -1,13 +1,22 @@
 import test from "ava";
+import sinon, { SinonSandbox } from "sinon";
+import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
 import OperationCache from "../../../src/core/caching/OperationCache";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 import { Operation } from "../../../src/core/operationRepo/Operation";
 import { TestEnvironment } from "../../support/sdk/TestEnvironment";
-import { getMockDeltas } from "./_helpers";
+import { getDummyIdentityOSModel, getMockDeltas } from "./_helpers";
+
+const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 
 test.beforeEach(async () => {
+  sinon.useFakeTimers();
   await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+  sinonSandbox.stub(CoreModuleDirector.prototype, "getModelByTypeAndId").callsFake(() => {
+    return getDummyIdentityOSModel();
+  });
 });
 
 test("Add operation to cache -> operation queue +1", async t => {
