@@ -41,12 +41,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     this.modelCache.add(payload.modelName, payload);
 
     // broadcast deltas
-    if (!noRemoteSync) {
-      this.broadcast({
-        model: payload,
-        changeType: CoreChangeType.Add,
-      });
-    }
+    this.broadcast({
+      model: payload,
+      changeType: CoreChangeType.Add,
+    });
   }
 
   private processModelRemoved(modelStoreChange: ModelStoreChange<SupportedModel>): void {
@@ -57,13 +55,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     this.modelCache.remove(payload.modelName, id);
 
     // broadcast deltas
-    if (!noRemoteSync) {
-      this.broadcast({
-        model: payload,
-        changeType: CoreChangeType.Remove,
-      });
-    }
-
+    this.broadcast({
+      model: payload,
+      changeType: CoreChangeType.Remove,
+    });
   }
 
   private processModelUpdated(modelStoreChange: ModelStoreChange<SupportedModel>): void {
@@ -74,7 +69,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     this.modelCache.update(payload.model.modelName, id, payload.property, payload.newValue);
 
     // broadcast deltas
-    if (!noRemoteSync && payload.oldValue !== payload.newValue) {
+    if (payload.oldValue !== payload.newValue) {
       const delta = {
         model: payload.model,
         changeType: CoreChangeType.Update,

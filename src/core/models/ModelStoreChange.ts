@@ -11,17 +11,19 @@ export interface ModelStoreChange<Model> {
 
 export class ModelStoreAdded<Model> implements ModelStoreChange<Model> {
   type: CoreChangeType.Add = CoreChangeType.Add;
-  constructor(public modelId: string, public payload: OSModel<Model>, public noRemoteSync: boolean = false) {}
+  noRemoteSync: boolean = false;
+  constructor(public modelId: string, public payload: OSModel<Model>) {}
 }
 
 export class ModelStoreRemoved<Model> implements ModelStoreChange<Model> {
   type: CoreChangeType.Remove = CoreChangeType.Remove;
-  constructor(public modelId: string, public payload: OSModel<Model>, public noRemoteSync: boolean = false) {}
+  noRemoteSync: boolean = false;
+  constructor(public modelId: string, public payload: OSModel<Model>) {}
 }
 
 export class ModelStoreUpdated<Model> implements ModelStoreChange<Model> {
   type: CoreChangeType.Update = CoreChangeType.Update;
-  constructor(public id: string, public payload: OSModelUpdatedArgs<Model>, public noRemoteSync: boolean = false) {}
+  noRemoteSync: boolean = false;
   constructor(public modelId: string, public payload: OSModelUpdatedArgs<Model>) {}
 }
 
