@@ -35,7 +35,8 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   private processModelAdded(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    const { payload, noRemoteSync } = modelStoreChange as ModelStoreAdded<SupportedModel>;
+    logMethodCall("processModelAdded", { modelStoreChange });
+    const { payload } = modelStoreChange as ModelStoreAdded<SupportedModel>;
 
     // sync to cache
     this.modelCache.add(payload.modelName, payload);
@@ -48,7 +49,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   private processModelRemoved(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    const { id, payload, noRemoteSync } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
+    logMethodCall("processModelRemoved", { modelStoreChange });
     const { modelId: id, payload } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
 
     // sync to cache
@@ -62,7 +63,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   private processModelUpdated(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    const { id, payload, noRemoteSync } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
+    logMethodCall("processModelUpdated", { modelStoreChange });
     const { modelId: id, payload } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
 
     // sync to cache
