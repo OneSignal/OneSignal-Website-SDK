@@ -52,7 +52,7 @@ export class SubscriptionExecutor<Model> extends ExecutorBase<Model> {
         return;
       }
 
-      const modelId = delta.model.id;
+      const modelId = delta.model.modelId;
 
       if (!deltasByModelId[modelId]) {
         deltasByModelId[modelId] = [];

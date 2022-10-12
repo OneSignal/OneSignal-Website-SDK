@@ -4,13 +4,13 @@ import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
 import { ModelName } from "../models/SupportedModels";
 
-export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
-  public id: string;
+export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
+  public modelId: string;
   public data?: Model;
 
-  constructor(public modelName: ModelName, id?: string, data?: Model) {
+  constructor(public modelName: ModelName, modelId?: string, data?: Model) {
     super();
-    this.id = id ?? Math.random().toString(36).substring(2);
+    this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;
     this.data = data;
   }
@@ -40,7 +40,7 @@ export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
 
 
   public encode(): EncodedModel {
-    const modelId = this.id as string;
+    const modelId = this.modelId as string;
     const modelName = this.modelName;
     return { modelId, modelName, ...this.data };
   }
