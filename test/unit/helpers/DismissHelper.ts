@@ -16,6 +16,7 @@ import { DismissTimeKey } from "../../../src/page/models/Dismiss";
 import Slidedown from "../../../src/page/slidedown/Slidedown";
 import { AutoPromptOptions } from "../../../src/page/managers/PromptsManager";
 import TimedLocalStorage from "../../../src/page/modules/TimedLocalStorage";
+import OneSignal from "../../../src/onesignal/OneSignal";
 
 const sinonSandbox: SinonSandbox = sinon.sandbox.create();
 const testHelper = new SlidedownPromptingTestHelper(sinonSandbox);
@@ -25,7 +26,9 @@ const minimalSmsAndEmailOptions       = testHelper.getMinimalSmsAndEmailOptions(
 const minimalCategorySlidedownOptions = testHelper.getMinimalCategorySlidedownOptions();
 
 test.beforeEach(() => {
-    mockGetIcon();
+  sinon.useFakeTimers();
+  mockGetIcon();
+  sinonSandbox.stub(OneSignal, "initializeCoreModuleAndUserNamespace").resolves();
 });
 
 test.afterEach(function (_t: ExecutionContext) {
@@ -40,7 +43,7 @@ const testConfig: TestEnvironmentConfig = {
     integration: ConfigIntegrationKind.Custom,
     permission: NotificationPermission.Default,
     pushIdentifier: 'granted',
-    stubSetTimeout: true
+    stubSetTimeout: true,
 };
 
 test("push slidedown shown, on dismiss, mark push prompt as dismissed", async t => {
