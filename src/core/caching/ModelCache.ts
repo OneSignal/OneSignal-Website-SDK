@@ -4,6 +4,7 @@ import EncodedModel from "./EncodedModel";
 import { StringIndexable } from "../models/StringIndexable";
 import { ModelName, SupportedModel } from "../models/SupportedModels";
 import Database from "../../shared/services/Database";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export default class ModelCache {
   private _mutexPromise: Promise<void> = Promise.resolve();
@@ -15,6 +16,7 @@ export default class ModelCache {
    * @param model
    */
   async add<Model>(modelName: ModelName, model: OSModel<Model>): Promise<void> {
+    logMethodCall("ModelCache.add", { modelName, model });
     const encoded = model.encode();
     const modelsObject = { ...encoded };
     await Database.put(modelName, modelsObject);
@@ -26,6 +28,7 @@ export default class ModelCache {
    * @param modelId
    */
   async remove(modelName: ModelName, modelId: string): Promise<void> {
+    logMethodCall("ModelCache.remove", { modelName, modelId });
     await Database.remove(modelName, modelId);
   }
 
@@ -85,6 +88,7 @@ export default class ModelCache {
    * @param modelId
    */
   async get(modelName: ModelName, modelId: string): Promise<EncodedModel | undefined> {
+    logMethodCall("ModelCache.get", { modelName, modelId });
     try {
       return await Database.get(modelName, modelId);
     } catch (e) {
@@ -97,6 +101,7 @@ export default class ModelCache {
    * @param modelName
    */
   async getCachedEncodedModels(modelName: ModelName): Promise<EncodedModel[]> {
+    logMethodCall("ModelCache.getCachedEncodedModels", { modelName });
     return await Database.getAll(modelName);
   }
 
@@ -105,6 +110,7 @@ export default class ModelCache {
    * @param modelName
    */
   async getAndDecodeModelsWithModelName(modelName: ModelName): Promise<OSModel<SupportedModel>[] | void> {
+    logMethodCall("ModelCache.getAndDecodeModelsWithModelName", { modelName });
     const models = await this.getCachedEncodedModels(modelName);
 
     if (Object.keys(models).length === 0) {

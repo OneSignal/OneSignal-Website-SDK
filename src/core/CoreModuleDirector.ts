@@ -1,3 +1,4 @@
+import { logMethodCall } from "../shared/utils/utils";
 import Log from "../shared/libraries/Log";
 import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
@@ -19,28 +20,33 @@ export class CoreModuleDirector {
   }
 
   public async add(modelName: ModelName, model: OSModel<SupportedModel>): Promise<void> {
+    logMethodCall("CoreModuleDirector.add", { modelName, model });
     const modelStores = await this.getModelStores();
     modelStores[modelName].add(model);
   }
 
   public async remove(modelName: ModelName, modelId: string): Promise<void> {
+    logMethodCall("CoreModuleDirector.remove", { modelName, modelId });
     const modelStores = await this.getModelStores();
     modelStores[modelName].remove(modelId);
   }
 
   public async getEmailSubscriptionModels(): Promise<{ [key: string]: OSModel<SupportedSubscription> }> {
+    logMethodCall("CoreModuleDirector.getEmailSubscriptionModels");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     return modelStores.emailSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
   public async getSmsSubscriptionModels(): Promise<{ [key: string]: OSModel<SupportedSubscription> }> {
+    logMethodCall("CoreModuleDirector.getSmsSubscriptionModels");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     return modelStores.smsSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
   public async getPushSubscriptionModels(): Promise<OSModel<SupportedSubscription> | undefined> {
+    logMethodCall("CoreModuleDirector.getPushSubscriptionModels");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     const key = Object.keys(modelStores.pushSubscriptions.models)[0];
@@ -48,6 +54,7 @@ export class CoreModuleDirector {
   }
 
   public async getIdentityModel(): Promise<OSModel<IdentityModel>> {
+    logMethodCall("CoreModuleDirector.getIdentityModel");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     const modelKeys = Object.keys(modelStores.identity.models);
@@ -55,6 +62,7 @@ export class CoreModuleDirector {
   }
 
   public async getPropertiesModel(): Promise<OSModel<UserPropertiesModel>> {
+    logMethodCall("CoreModuleDirector.getPropertiesModel");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     const modelKeys = Object.keys(modelStores.properties.models);

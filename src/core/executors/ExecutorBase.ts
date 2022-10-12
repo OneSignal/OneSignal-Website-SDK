@@ -4,6 +4,7 @@ import { CoreDelta } from "../models/CoreDeltas";
 import { ExecutorResult } from "../models/ExecutorResult";
 import { ExecutorConfig } from "../models/ExecutorConfig";
 import { Operation } from "../operationRepo/Operation";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export default abstract class ExecutorBase<Model> {
   protected _deltaQueue: CoreDelta<Model>[] = [];
@@ -37,6 +38,7 @@ export default abstract class ExecutorBase<Model> {
   abstract processDeltaQueue(): void;
 
   public enqueueDelta(delta: CoreDelta<Model>): void {
+    logMethodCall("ExecutorBase.enqueueDelta", { delta });
     this._deltaQueue.push(delta);
   }
 
@@ -49,19 +51,23 @@ export default abstract class ExecutorBase<Model> {
   }
 
   protected _enqueueOperation(operation: Operation<Model>): void {
+    logMethodCall("ExecutorBase.enqueueOperation", { operation });
     this._operationQueue.push(operation);
     OperationCache.enqueue(operation);
   }
 
   protected _flushDeltas(): void {
+    logMethodCall("ExecutorBase._flushDeltas");
     this._deltaQueue = [];
   }
 
   protected _flushOperations(): void {
+    logMethodCall("ExecutorBase._flushOperations");
     this._operationQueue = [];
   }
 
   protected _getChangeType(oldValue: any, newValue: any): CoreChangeType {
+    logMethodCall("ExecutorBase._getChangeType", { oldValue, newValue });
     const wasPropertyAdded = !oldValue && !!newValue;
     const wasPropertyRemoved = !!oldValue && !newValue;
     const wasPropertyUpdated = oldValue !== newValue && !!newValue && !!oldValue;

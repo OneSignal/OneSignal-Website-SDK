@@ -5,6 +5,7 @@ import { CoreDelta } from "../models/CoreDeltas";
 import { ModelStoresMap } from "../models/ModelStoresMap";
 import { SupportedModel, ModelName } from "../models/SupportedModels";
 import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated, ModelStoreHydrated } from "../models/ModelStoreChange";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   constructor(private modelCache: ModelCache, public modelStores: ModelStoresMap<SupportedModel>) {
@@ -15,6 +16,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   private processModelChange(modelStoreChange: ModelStoreChange<SupportedModel>): void {
+    logMethodCall("processModelChange", { modelStoreChange });
     if (modelStoreChange.type === CoreChangeType.Add) {
       this.processModelAdded(modelStoreChange);
     }
@@ -85,6 +87,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   processModelHydrated(modelStoreChange: ModelStoreChange<SupportedModel>) {
+    logMethodCall("processModelHydrated", { modelStoreChange });
     const { modelId: id, payload } = modelStoreChange as ModelStoreHydrated<SupportedModel>;
 
     // sync to cache

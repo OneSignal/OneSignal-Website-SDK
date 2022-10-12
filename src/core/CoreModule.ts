@@ -3,6 +3,7 @@ import { ModelRepo } from "./modelRepo/ModelRepo";
 import { OperationRepo } from "./operationRepo/OperationRepo";
 import { OSModelStoreFactory } from "./modelRepo/OSModelStoreFactory";
 import Log from "../shared/libraries/Log";
+import { logMethodCall } from "../shared/utils/utils";
 
 export default class CoreModule {
   public modelRepo?: ModelRepo;
@@ -32,6 +33,7 @@ export default class CoreModule {
   }
 
   public async init(){
+    logMethodCall("CoreModule.init");
     await this.initPromise;
   }
 }
