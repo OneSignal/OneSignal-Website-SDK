@@ -28,7 +28,7 @@ export class SubscriptionExecutor<Model> extends ExecutorBase<Model> {
   }
 
   private separateDeltasByChangeType(deltas: CoreDelta<Model>[]): { [key: string]: CoreDelta<Model>[] } {
-    const deltasByChangeType: {[key in CoreChangeType]: CoreDelta<Model>[]} = {
+    const deltasByChangeType: Partial<{[key in CoreChangeType]: CoreDelta<Model>[]}> = {
       [CoreChangeType.Add]: [],
       [CoreChangeType.Remove]: [],
       [CoreChangeType.Update]: []
@@ -38,7 +38,7 @@ export class SubscriptionExecutor<Model> extends ExecutorBase<Model> {
       if (!deltasByChangeType[delta.changeType]) {
         deltasByChangeType[delta.changeType] = [];
       }
-      deltasByChangeType[delta.changeType].push(delta);
+      deltasByChangeType[delta.changeType]?.push(delta);
     });
 
     return deltasByChangeType;

@@ -24,3 +24,9 @@ export class ModelStoreUpdated<Model> implements ModelStoreChange<Model> {
   constructor(public id: string, public payload: OSModelUpdatedArgs<Model>, public noRemoteSync: boolean = false) {}
   constructor(public modelId: string, public payload: OSModelUpdatedArgs<Model>) {}
 }
+
+export class ModelStoreHydrated<Model> implements ModelStoreChange<Model> {
+  type: CoreChangeType.Hydrate = CoreChangeType.Hydrate;
+  noRemoteSync: boolean = true;
+  constructor(public modelId: string, public payload: OSModel<Model>) {}
+}

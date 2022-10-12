@@ -4,7 +4,7 @@ import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
 import { ModelStoresMap } from "../models/ModelStoresMap";
 import { SupportedModel, ModelName } from "../models/SupportedModels";
-import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/ModelStoreChange";
+import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated, ModelStoreHydrated } from "../models/ModelStoreChange";
 
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   constructor(private modelCache: ModelCache, public modelStores: ModelStoresMap<SupportedModel>) {
@@ -25,6 +25,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
 
     if (modelStoreChange.type === CoreChangeType.Update) {
       this.processModelUpdated(modelStoreChange);
+    }
+
+    if (modelStoreChange.type === CoreChangeType.Hydrate) {
+      this.processModelHydrated(modelStoreChange);
     }
   }
 
@@ -78,6 +82,14 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
       };
       this.broadcast(delta);
     }
+  }
+
+  processModelHydrated(modelStoreChange: ModelStoreChange<SupportedModel>) {
+    const { modelId: id, payload } = modelStoreChange as ModelStoreHydrated<SupportedModel>;
+
+    // sync to cache
+    this.modelCache.remove(payload.modelName, id);
+    this.modelCache.add(payload.modelName, payload);
   }
 
   /* S T A T I C */
