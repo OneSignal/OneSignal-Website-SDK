@@ -40,9 +40,11 @@ function updateUserProperties<Model>(operation: Operation<Model>): ExecutorResul
 /* S U B S C R I P T I O N S */
 function addSubscription<Model>(operation: Operation<Model>): ExecutorResult {
   console.log("addSubscription");
+
   return {
     success: true,
-    retriable: true
+    retriable: true,
+    result: { ...operation.model?.data, rooted: true, enabled: true }
   };
 }
 
