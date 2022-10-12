@@ -12,15 +12,15 @@ export class OSModelStore<Model>
     constructor(modelArray: OSModel<Model>[] = []) {
       super();
       modelArray.forEach(model => {
-        this.models[model.id] = model;
+        this.models[model.modelId] = model;
         this.subscribeUpdateListener(model);
       });
     }
 
     public add(model: OSModel<Model>, noRemoteSync?: boolean): void {
       this.subscribeUpdateListener(model);
-      this.models[model.id] = model;
-      this.broadcast(new ModelStoreAdded(model.id, model, noRemoteSync));
+      this.models[model.modelId] = model;
+      this.broadcast(new ModelStoreAdded(model.modelId, model, noRemoteSync));
     }
 
     public remove(modelId: string, noRemoteSync?: boolean): void {

@@ -45,6 +45,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
 
   private processModelRemoved(modelStoreChange: ModelStoreChange<SupportedModel>): void {
     const { id, payload, noRemoteSync } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
+    const { modelId: id, payload } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
 
     // sync to cache
     this.modelCache.remove(payload.modelName, id);
@@ -61,6 +62,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
 
   private processModelUpdated(modelStoreChange: ModelStoreChange<SupportedModel>): void {
     const { id, payload, noRemoteSync } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
+    const { modelId: id, payload } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
 
     // sync to cache
     this.modelCache.update(payload.model.modelName, id, payload.property, payload.newValue);
