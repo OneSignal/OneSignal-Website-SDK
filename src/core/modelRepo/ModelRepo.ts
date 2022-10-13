@@ -50,10 +50,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
 
   private processModelRemoved(modelStoreChange: ModelStoreChange<SupportedModel>): void {
     logMethodCall("processModelRemoved", { modelStoreChange });
-    const { modelId: id, payload } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
+    const { modelId, payload } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
 
     // sync to cache
-    this.modelCache.remove(payload.modelName, id);
+    this.modelCache.remove(payload.modelName, modelId);
 
     // broadcast deltas
     this.broadcast({
@@ -64,10 +64,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
 
   private processModelUpdated(modelStoreChange: ModelStoreChange<SupportedModel>): void {
     logMethodCall("processModelUpdated", { modelStoreChange });
-    const { modelId: id, payload } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
+    const { modelId, payload } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
 
     // sync to cache
-    this.modelCache.update(payload.model.modelName, id, payload.property, payload.newValue);
+    this.modelCache.update(payload.model.modelName, modelId, payload.property, payload.newValue);
 
     // broadcast deltas
     if (payload.oldValue !== payload.newValue) {
@@ -84,10 +84,10 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
 
   processModelHydrated(modelStoreChange: ModelStoreChange<SupportedModel>) {
     logMethodCall("processModelHydrated", { modelStoreChange });
-    const { modelId: id, payload } = modelStoreChange as ModelStoreHydrated<SupportedModel>;
+    const { modelId, payload } = modelStoreChange as ModelStoreHydrated<SupportedModel>;
 
     // sync to cache
-    this.modelCache.remove(payload.modelName, id);
+    this.modelCache.remove(payload.modelName, modelId);
     this.modelCache.add(payload.modelName, payload);
   }
 
