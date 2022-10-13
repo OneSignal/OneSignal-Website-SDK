@@ -102,26 +102,25 @@ export default abstract class ExecutorBase {
     }
   }
 
-  private _processOperation(operation: Operation<SupportedModel>, retry: number): void {
-    logMethodCall("ExecutorBase._processOperation", { operation, retry });
-      let res: ExecutorResult = { success: false, retriable: true };
+  private _processOperation(operation: Operation<SupportedModel>, retries: number): void {
+    logMethodCall("ExecutorBase._processOperation", { operation, retries });
+    let res: ExecutorResult = { success: false, retriable: true };
 
-      if (operation?.changeType === CoreChangeType.Add) {
-        res = this._executeAdd?.call(this, operation);
-      } else if (operation?.changeType === CoreChangeType.Remove) {
-        res = this._executeRemove?.call(this, operation);
-      } else if (operation?.changeType === CoreChangeType.Update) {
-        res = this._executeUpdate?.call(this, operation);
+    if (operation?.changeType === CoreChangeType.Add) {
+      res = this._executeAdd?.call(this, operation);
+    } else if (operation?.changeType === CoreChangeType.Remove) {
+      res = this._executeRemove?.call(this, operation);
+    } else if (operation?.changeType === CoreChangeType.Update) {
+      res = this._executeUpdate?.call(this, operation);
+    }
+    // HYDRATE
+    if (res.success) {
+      if (res.result) {
+        operation.model?.hydrate(res.result as SupportedModel);
       }
-      // HYDRATE
-      if (res.success) {
-        if (res.result) {
-          operation.model?.hydrate(res.result as SupportedModel);
-        }
-        OperationCache.delete(operation?.operationId);
-      } else {
-        // TO DO: handle retry logic
-        this._processOperation(operation, retry - 1);
-      }
+      OperationCache.delete(operation?.operationId);
+    } else {
+      this._processOperation(operation, retries - 1);
+    }
   }
 }
