@@ -17,6 +17,7 @@ export default abstract class ExecutorBase {
 
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
+  static RETRY_COUNT = 5;
 
   constructor(executorConfig: ExecutorConfig<SupportedModel>) {
     setInterval(() => {
@@ -96,7 +97,7 @@ export default abstract class ExecutorBase {
 
       if (operation) {
         OperationCache.enqueue(operation);
-        this._processOperation(operation, 5);
+        this._processOperation(operation, ExecutorBase.RETRY_COUNT);
       }
     }
   }
