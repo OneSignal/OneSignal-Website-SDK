@@ -20,7 +20,7 @@ const tests = process.env.TESTS;
 const sdkVersion = process.env.npm_package_config_sdkVersion;
 
 async function getStylesheetsHash() {
-  const styleSheetsPath = "src/stylesheets";
+  const styleSheetsPath = "src/page/stylesheets";
 
   return await new Promise((resolve, reject) => {
     dir.files(styleSheetsPath, async (err, files) => {
