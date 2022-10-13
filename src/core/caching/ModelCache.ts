@@ -4,14 +4,19 @@ import EncodedModel from "./EncodedModel";
 import { StringIndexable } from "../models/StringIndexable";
 import { ModelName, SupportedModel } from "../models/SupportedModels";
 import Database from "../../shared/services/Database";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export default class ModelCache {
+  private _mutexPromise: Promise<void> = Promise.resolve();
+  private _mutexLocked: boolean = false;
+
   /**
    * Add an entire model to the cache
    * @param modelName
    * @param model
    */
   async add<Model>(modelName: ModelName, model: OSModel<Model>): Promise<void> {
+    logMethodCall("ModelCache.add", { modelName, model });
     const encoded = model.encode();
     const modelsObject = { ...encoded };
     await Database.put(modelName, modelsObject);
@@ -23,6 +28,7 @@ export default class ModelCache {
    * @param modelId
    */
   async remove(modelName: ModelName, modelId: string): Promise<void> {
+    logMethodCall("ModelCache.remove", { modelName, modelId });
     await Database.remove(modelName, modelId);
   }
 
@@ -34,14 +40,27 @@ export default class ModelCache {
    * @param value
    */
   async update(modelName: ModelName, modelId: string, key: string, value: any): Promise<void> {
-    const model = await this.get(modelName, modelId);
-    if (!model) {
-      throw new Error("ModelCache: Attempting to update a model that does not exist");
+    if (this._mutexLocked) {
+      await this._mutexPromise;
     }
-    if (model) {
-      model[key] = value;
-      await Database.put(modelName, model);
-    }
+
+    this._mutexLocked = true;
+    this._mutexPromise = new Promise(async (resolve, reject) => {
+      logMethodCall("ModelCache.update", { modelName, modelId, key, value });
+      const model = await this.get(modelName, modelId);
+
+      if (!model) {
+        reject("ModelCache: Attempting to update a model that does not exist");
+      }
+      if (model) {
+        model[key] = value;
+        await Database.put(modelName, model);
+        this._mutexLocked = false;
+        resolve();
+      }
+
+      setTimeout(reject.bind(this, "Database promise never resolved."), 10000);
+    });
   }
 
   /**
@@ -49,6 +68,7 @@ export default class ModelCache {
    * @param modelNames
    */
   async load(modelNames: ModelName[]): Promise<{[key: string]: OSModel<SupportedModel>[]}> {
+    logMethodCall("ModelCache.load", { modelNames });
     const allCachedOSModels: StringIndexable = {};
 
     for (let i=0; i<modelNames.length; i++) {
@@ -68,6 +88,7 @@ export default class ModelCache {
    * @param modelId
    */
   async get(modelName: ModelName, modelId: string): Promise<EncodedModel | undefined> {
+    logMethodCall("ModelCache.get", { modelName, modelId });
     try {
       return await Database.get(modelName, modelId);
     } catch (e) {
@@ -80,6 +101,7 @@ export default class ModelCache {
    * @param modelName
    */
   async getCachedEncodedModels(modelName: ModelName): Promise<EncodedModel[]> {
+    logMethodCall("ModelCache.getCachedEncodedModels", { modelName });
     return await Database.getAll(modelName);
   }
 
@@ -88,6 +110,7 @@ export default class ModelCache {
    * @param modelName
    */
   async getAndDecodeModelsWithModelName(modelName: ModelName): Promise<OSModel<SupportedModel>[] | void> {
+    logMethodCall("ModelCache.getAndDecodeModelsWithModelName", { modelName });
     const models = await this.getCachedEncodedModels(modelName);
 
     if (Object.keys(models).length === 0) {

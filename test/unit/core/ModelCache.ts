@@ -4,14 +4,20 @@ import ModelCache from "../../../src/core/caching/ModelCache";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { IdentityModel } from "../../../src/core/models/IdentityModel";
 import { SubscriptionType, SupportedSubscription } from "../../../src/core/models/SubscriptionModels";
-import { ModelName } from "../../../src/core/models/SupportedModels";
+import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
 import Database from "../../../src/shared/services/Database";
+import sinon from "sinon";
 
 const MODEL_ID = '0000000000';
 const MODEL_ID_2 = '1111111111';
 
-test("model cache: add model -> added to IndexedDB", async t => {
+test.beforeEach(async () => {
+  sinon.useFakeTimers();
   await TestEnvironment.initialize();
+  TestEnvironment.mockInternalOneSignal();
+});
+
+test("model cache: add model -> added to IndexedDB", async t => {
   const modelCache = new ModelCache();
   const data = { myAlias: "myAliasId" };
   const model = new OSModel(ModelName.Identity, MODEL_ID, data);
@@ -21,7 +27,6 @@ test("model cache: add model -> added to IndexedDB", async t => {
 });
 
 test("model cache: add multiple models -> added to IndexedDB", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const data = { myAlias: "myAliasId" };
   const model = new OSModel(ModelName.Identity, MODEL_ID, data);
@@ -36,7 +41,6 @@ test("model cache: add multiple models -> added to IndexedDB", async t => {
 });
 
 test("model cache: update model -> updated in IndexedDB", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const data = { myAlias: "myAliasId" };
   const model = new OSModel(ModelName.Identity, MODEL_ID, data);
@@ -48,7 +52,6 @@ test("model cache: update model -> updated in IndexedDB", async t => {
 });
 
 test("model cache: remove model -> removed from IndexedDB", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const data = { myAlias: "myAliasId" };
   const model = new OSModel(ModelName.Identity, MODEL_ID, data);
@@ -59,42 +62,38 @@ test("model cache: remove model -> removed from IndexedDB", async t => {
 });
 
 test("decode all models with model name: no models -> returns undefined", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const result = await modelCache.getAndDecodeModelsWithModelName(ModelName.Identity);
   t.deepEqual(result, undefined);
 });
 
 test("decode all models with model name: one model -> returns model", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const data = {
     onesignalId: "00000000-0000-0000-0000-000000000000",
     myAlias: "myAliasId"
   };
-  const model = new OSModel<IdentityModel>(ModelName.Identity, MODEL_ID, data);
+  const model = new OSModel<SupportedModel>(ModelName.Identity, MODEL_ID, data);
   await modelCache.add(ModelName.Identity, model);
   const result = await modelCache.getAndDecodeModelsWithModelName(ModelName.Identity);
   t.deepEqual(result, [model]);
 });
 
 test("decode all models with model name: multiple models -> returns models", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const data = {
     onesignalId: "00000000-0000-0000-0000-000000000000",
     myAlias: "myAliasId"
   };
-  const model = new OSModel<IdentityModel>(ModelName.Identity, MODEL_ID, data);
+  const model = new OSModel<SupportedModel>(ModelName.Identity, MODEL_ID, data);
   await modelCache.add(ModelName.Identity, model);
-  const model2 = new OSModel<IdentityModel>(ModelName.Identity, MODEL_ID_2, data);
+  const model2 = new OSModel<SupportedModel>(ModelName.Identity, MODEL_ID_2, data);
   await modelCache.add(ModelName.Identity, model2);
   const result = await modelCache.getAndDecodeModelsWithModelName(ModelName.Identity);
   t.deepEqual(result, [model, model2]);
 });
 
 test("decode all models with model name: multiple models with different model names -> returns models with correct model name", async t => {
-  await TestEnvironment.initialize();
   const modelCache = new ModelCache();
   const identityData = {
     onesignalId: "00000000-0000-0000-0000-000000000000",

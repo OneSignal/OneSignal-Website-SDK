@@ -3,14 +3,16 @@ import Subscribable from "../Subscribable";
 import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
 import { ModelName } from "../models/SupportedModels";
+import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../models/ModelStoreChange";
+import { logMethodCall } from "../../shared/utils/utils";
 
-export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
-  public id: string;
+export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
+  public modelId: string;
   public data?: Model;
 
-  constructor(public modelName: ModelName, id?: string, data?: Model) {
+  constructor(public modelName: ModelName, modelId?: string, data?: Model) {
     super();
-    this.id = id ?? Math.random().toString(36).substring(2);
+    this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;
     this.data = data;
   }
@@ -20,6 +22,7 @@ export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
    * Results in a broadcasted update event.
    */
   public set(property: StringKeys<Model>, newValue: any): void {
+    logMethodCall("set", { property, newValue });
     let oldValue;
 
     if (this.data) {
@@ -27,7 +30,8 @@ export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
       this.data[property] = newValue;
     }
 
-    this.broadcast(new OSModelUpdatedArgs(this, property, oldValue, newValue));
+    const change = new ModelStoreUpdated(this.modelId, new OSModelUpdatedArgs(this, property, oldValue, newValue));
+    this.broadcast(change);
   }
 
   /**
@@ -35,17 +39,20 @@ export class OSModel<Model> extends Subscribable<OSModelUpdatedArgs<Model>> {
    * To be called when updating the data with a remote sync.
    */
   public hydrate(data: Model): void {
+    logMethodCall("hydrate", { data });
     this.data = data;
+    this.broadcast(new ModelStoreHydrated(this.modelId, this));
   }
 
 
   public encode(): EncodedModel {
-    const modelId = this.id as string;
+    const modelId = this.modelId as string;
     const modelName = this.modelName;
     return { modelId, modelName, ...this.data };
   }
 
   static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
+    logMethodCall("decode", { encodedModel });
     const { modelId: id, modelName, ...data } = encodedModel;
     return new OSModel<Model>(modelName as ModelName, id, data as unknown as Model);
   }

@@ -4,7 +4,8 @@ import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
 import { ModelStoresMap } from "../models/ModelStoresMap";
 import { SupportedModel, ModelName } from "../models/SupportedModels";
-import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated } from "../models/ModelStoreChange";
+import { ModelStoreChange, ModelStoreAdded, ModelStoreRemoved, ModelStoreUpdated, ModelStoreHydrated } from "../models/ModelStoreChange";
+import { logMethodCall } from "../../shared/utils/utils";
 
 export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   constructor(private modelCache: ModelCache, public modelStores: ModelStoresMap<SupportedModel>) {
@@ -15,6 +16,7 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
   }
 
   private processModelChange(modelStoreChange: ModelStoreChange<SupportedModel>): void {
+    logMethodCall("processModelChange", { modelStoreChange });
     if (modelStoreChange.type === CoreChangeType.Add) {
       this.processModelAdded(modelStoreChange);
     }
@@ -26,47 +28,49 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
     if (modelStoreChange.type === CoreChangeType.Update) {
       this.processModelUpdated(modelStoreChange);
     }
+
+    if (modelStoreChange.type === CoreChangeType.Hydrate) {
+      this.processModelHydrated(modelStoreChange);
+    }
   }
 
   private processModelAdded(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    const { payload, noRemoteSync } = modelStoreChange as ModelStoreAdded<SupportedModel>;
+    logMethodCall("processModelAdded", { modelStoreChange });
+    const { payload } = modelStoreChange as ModelStoreAdded<SupportedModel>;
 
     // sync to cache
     this.modelCache.add(payload.modelName, payload);
 
     // broadcast deltas
-    if (!noRemoteSync) {
-      this.broadcast({
-        model: payload,
-        changeType: CoreChangeType.Add,
-      });
-    }
+    this.broadcast({
+      model: payload,
+      changeType: CoreChangeType.Add,
+    });
   }
 
   private processModelRemoved(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    const { id, payload, noRemoteSync } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
+    logMethodCall("processModelRemoved", { modelStoreChange });
+    const { modelId, payload } = modelStoreChange as ModelStoreRemoved<SupportedModel>;
 
     // sync to cache
-    this.modelCache.remove(payload.modelName, id);
+    this.modelCache.remove(payload.modelName, modelId);
 
     // broadcast deltas
-    if (!noRemoteSync) {
-      this.broadcast({
-        model: payload,
-        changeType: CoreChangeType.Remove,
-      });
-    }
-
+    this.broadcast({
+      model: payload,
+      changeType: CoreChangeType.Remove,
+    });
   }
 
   private processModelUpdated(modelStoreChange: ModelStoreChange<SupportedModel>): void {
-    const { id, payload, noRemoteSync } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
+    logMethodCall("processModelUpdated", { modelStoreChange });
+    const { modelId, payload } = modelStoreChange as ModelStoreUpdated<SupportedModel>;
 
     // sync to cache
-    this.modelCache.update(payload.model.modelName, id, payload.property, payload.newValue);
+    this.modelCache.update(payload.model.modelName, modelId, payload.property, payload.newValue);
 
     // broadcast deltas
-    if (!noRemoteSync && payload.oldValue !== payload.newValue) {
+    if (payload.oldValue !== payload.newValue) {
       const delta = {
         model: payload.model,
         changeType: CoreChangeType.Update,
@@ -76,6 +80,15 @@ export class ModelRepo extends Subscribable<CoreDelta<SupportedModel>> {
       };
       this.broadcast(delta);
     }
+  }
+
+  processModelHydrated(modelStoreChange: ModelStoreChange<SupportedModel>) {
+    logMethodCall("processModelHydrated", { modelStoreChange });
+    const { modelId, payload } = modelStoreChange as ModelStoreHydrated<SupportedModel>;
+
+    // sync to cache
+    this.modelCache.remove(payload.modelName, modelId);
+    this.modelCache.add(payload.modelName, payload);
   }
 
   /* S T A T I C */
