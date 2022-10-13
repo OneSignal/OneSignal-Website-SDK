@@ -49,7 +49,7 @@ export default class UserNamespace {
     });
   }
 
-  public async addEmail(email: string): Promise<void> {
+  public addEmail(email: string): void {
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -89,7 +89,7 @@ export default class UserNamespace {
       modelIds.forEach(async modelId => {
         const model = emailSubscriptions[modelId];
         if (model.data?.token === email) {
-          await this.coreDirector.remove(ModelName.EmailSubscriptions, modelId);
+          this.coreDirector.remove(ModelName.EmailSubscriptions, modelId);
         }
       });
     }).catch(e => {
@@ -103,7 +103,7 @@ export default class UserNamespace {
       modelIds.forEach(async modelId => {
         const model = smsSubscriptions[modelId];
         if (model.data?.token === smsNumber) {
-          await this.coreDirector.remove(ModelName.SmsSubscriptions, modelId);
+          this.coreDirector.remove(ModelName.SmsSubscriptions, modelId);
         }
       });
     }).catch(e => {
