@@ -7,7 +7,6 @@ import LegacyManager from "../page/managers/LegacyManager";
 import { AutoPromptOptions } from "../page/managers/PromptsManager";
 import Context from "../page/models/Context";
 import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
-import { NotificationActionButton } from "../page/models/NotificationActionButton";
 import { SecondaryChannelDeviceRecord } from "../shared/models/SecondaryChannelDeviceRecord";
 import { TagsObject } from "../page/models/Tags";
 import ProxyFrame from "../page/modules/frames/ProxyFrame";
@@ -22,7 +21,6 @@ import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCal
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
 import OneSignalApi from "../shared/api/OneSignalApi";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
 import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
 import Environment from "../shared/helpers/Environment";
@@ -41,7 +39,6 @@ import { DeviceRecord } from "../shared/models/DeviceRecord";
 import { NotificationPermission } from "../shared/models/NotificationPermission";
 import { OutcomeAttributionType } from "../shared/models/Outcomes";
 import { DelayedPromptType, AppUserConfigNotifyButton } from "../shared/models/Prompts";
-import { UpdatePlayerOptions } from "../shared/models/UpdatePlayerOptions";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
 import Database from "../shared/services/Database";
 import IndexedDb from "../shared/services/IndexedDb";
@@ -51,6 +48,9 @@ import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
+import CoreModule from "../../src/core/CoreModule";
+import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
+import UserNamespace from "./UserNamespace";
 
 export default class OneSignal {
   /**
@@ -110,6 +110,11 @@ export default class OneSignal {
     return await this.context.secondaryChannelManager.sms.logout();
   }
 
+  static async initializeCoreModule() {
+    OneSignal.core = new CoreModule();
+    OneSignal.coreDirector = new CoreModuleDirector(OneSignal.core);
+  }
+
   static async initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
@@ -129,6 +134,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
+    await OneSignal.initializeCoreModule();
 
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
@@ -685,7 +691,10 @@ export default class OneSignal {
   }
 
   /* NEW USER MODEL CHANGES */
+  static core: CoreModule;
+  static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
+  static user : UserNamespace;
   /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
@@ -762,7 +771,6 @@ export default class OneSignal {
   static SecondaryChannelDeviceRecord = SecondaryChannelDeviceRecord;
 
   static notificationPermission = NotificationPermission;
-
 
   /**
    * Used by Rails-side HTTP popup. Must keep the same name.
