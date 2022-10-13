@@ -10,6 +10,8 @@ export default class User {
   constructor(
     public identity?: OSModel<IdentityModel>,
     public userProperties?: OSModel<UserPropertiesModel>,
+    // TO DO: explore option to consolidate into a single subscriptions property
+    // Might have to make changes to avoid iteration to find correct model we want to modify
     public pushSubscriptions?: OSModel<SupportedSubscription>,
     public smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
     public emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
