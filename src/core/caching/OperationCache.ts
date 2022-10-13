@@ -20,10 +20,15 @@ export default class OperationCache {
     for (let i = 0; i < rawOperations.length; i++) {
       const rawOperation = rawOperations[i];
 
-      // return an operation object with correct refernces (in particular reference to the model)
-      const operation = await Operation.fromJSON(rawOperation);
-      if (operation) {
-        operations.push(operation as Operation<SupportedModel>);
+      try {
+        // return an operation object with correct refernces (in particular reference to the model)
+        const operation = await Operation.fromJSON(rawOperation);
+
+        if (operation) {
+          operations.push(operation as Operation<SupportedModel>);
+        }
+      } catch (e) {
+        console.error(`Could not parse operation ${rawOperation.operationId} from cache`, e);
       }
     }
     return operations.sort((a, b) => a.timestamp - b.timestamp);
