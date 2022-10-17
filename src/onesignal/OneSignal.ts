@@ -189,44 +189,6 @@ export default class OneSignal {
   /**
    * @PublicApi
    */
-  public static async setExternalUserId(externalUserId: string | undefined | null , authHash?: string): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall("setExternalUserId");
-
-    await OneSignal.privateSetExternalUserId(externalUserId, authHash);
-  }
-
-  private static async privateSetExternalUserId(
-    externalUserId: string | undefined | null,
-    authHash?: string,
-  ): Promise<void> {
-    AuthHashOptionsValidatorHelper.throwIfInvalidAuthHash(authHash, "authHash");
-    await OneSignal.database.setExternalUserId(externalUserId, authHash);
-    await OneSignal.context.updateManager.sendExternalUserIdUpdate(externalUserId, authHash);
-  }
-
-   /**
-   * @PublicApi
-   */
-  public static async getExternalUserId(): Promise<string | undefined | null> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall("getExternalUserId");
-    return await OneSignal.database.getExternalUserId();
-  }
-
-  /**
-   * @PublicApi
-   */
-  public static async removeExternalUserId(): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall("removeExternalUserId");
-
-    await OneSignal.privateSetExternalUserId(undefined);
-  }
-
-  /**
-   * @PublicApi
-   */
   static async addListenerForNotificationOpened(callback?: Action<Notification>) {
     await awaitOneSignalInitAndSupported();
     logMethodCall('addListenerForNotificationOpened', callback);
