@@ -194,24 +194,6 @@ export default class OneSignal {
   }
 
   /**
-   * Prompts the user to subscribe using the remote local notification workaround for HTTP sites.
-   * @PublicApi
-   */
-  public static async showHttpPermissionRequest(options?: AutoPromptOptions): Promise<any> {
-    Log.debug('Called showHttpPermissionRequest(), redirecting to HTTP prompt.');
-
-    OneSignal.showHttpPrompt(options).catch(e => Log.info(e));
-  }
-
-  /**
-   * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
-   * @PublicApi
-   */
-  public static async showHttpPrompt(options?: AutoPromptOptions) {
-    await OneSignal.showSlidedownPrompt(options);
-  }
-
-  /**
    * Prompts the user to subscribe.
    * @PublicApi
    */
