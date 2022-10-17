@@ -201,24 +201,6 @@ export default class OneSignal {
   }
 
   /**
-   * @PublicApi
-   * @Deprecated
-   */
-  static async getIdsAvailable(
-    callback?: Action<{userId: string | undefined | null, registrationId: string | undefined | null}>):
-    Promise<{userId: string | undefined | null, registrationId: string | undefined | null}> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('getIdsAvailable', callback);
-    const { deviceId, subscriptionToken } = await Database.getSubscription();
-    const bundle = {
-      userId: deviceId,
-      registrationId: subscriptionToken
-    };
-    executeCallback(callback, bundle);
-    return bundle;
-  }
-
-  /**
    * Returns a promise that resolves to true if all required conditions
    * for push messaging are met; otherwise resolves to false.
    * @param callback A callback function that will be called when the current subscription status has been obtained.
