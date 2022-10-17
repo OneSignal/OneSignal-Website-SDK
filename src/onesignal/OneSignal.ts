@@ -212,15 +212,6 @@ export default class OneSignal {
   }
 
 
-  public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
-    await OneSignal.context.promptsManager.internalShowCategorySlidedown({
-      ...options,
-      isInUpdateMode: isPushEnabled
-    });
-  }
-
   public static async showSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSmsSlidedown({
