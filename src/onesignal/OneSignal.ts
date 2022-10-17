@@ -53,63 +53,6 @@ import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 
 export default class OneSignal {
-  /**
-   * @PublicApi
-   */
-  static async setEmail(email: string, options?: SetEmailOptions): Promise<string|null> {
-    if (!email) {
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
-    }
-    if (!isValidEmail(email)) {
-      throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
-    }
-
-    const authHash = AuthHashOptionsValidatorHelper.throwIfInvalidAuthHashOptions(
-      options,
-      ["identifierAuthHash", "emailAuthHash"]
-    );
-
-    logMethodCall('setEmail', email, options);
-    await awaitOneSignalInitAndSupported();
-
-    return await this.context.secondaryChannelManager.email.setIdentifier(email, authHash);
-  }
-
-  /**
-   * @PublicApi
-   */
-  static async setSMSNumber(smsNumber: string, options?: SetSMSOptions): Promise<string | null> {
-    if (!smsNumber) {
-      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
-    }
-
-    const authHash = AuthHashOptionsValidatorHelper.throwIfInvalidAuthHashOptions(
-      options,
-      ["identifierAuthHash"]
-    );
-
-    logMethodCall('setSMSNumber', smsNumber, options);
-    await awaitOneSignalInitAndSupported();
-
-    return await this.context.secondaryChannelManager.sms.setIdentifier(smsNumber, authHash);
-  }
-
-  /**
-   * @PublicApi
-   */
-  static async logoutEmail() {
-    await awaitOneSignalInitAndSupported();
-    return await this.context.secondaryChannelManager.email.logout();
-  }
-
-  /**
-   * @PublicApi
-   */
-  static async logoutSMS() {
-    await awaitOneSignalInitAndSupported();
-    return await this.context.secondaryChannelManager.sms.logout();
-  }
-
   static async initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
