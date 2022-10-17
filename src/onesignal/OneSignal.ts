@@ -1,14 +1,11 @@
 import bowser from "bowser";
-import { AuthHashOptionsValidatorHelper } from "../page/helpers/AuthHashOptionsValidatorHelper";
 import { EnvironmentInfoHelper } from "../page/helpers/EnvironmentInfoHelper";
 import AltOriginManager from "../page/managers/AltOriginManager";
 import ConfigManager from "../page/managers/ConfigManager";
 import LegacyManager from "../page/managers/LegacyManager";
-import { AutoPromptOptions } from "../page/managers/PromptsManager";
 import Context from "../page/models/Context";
 import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
 import { SecondaryChannelDeviceRecord } from "../shared/models/SecondaryChannelDeviceRecord";
-import { TagsObject } from "../page/models/Tags";
 import ProxyFrame from "../page/modules/frames/ProxyFrame";
 import ProxyFrameHost from "../page/modules/frames/ProxyFrameHost";
 import SubscriptionModal from "../page/modules/frames/SubscriptionModal";
@@ -18,15 +15,12 @@ import SubscriptionPopupHost from "../page/modules/frames/SubscriptionPopupHost"
 import TimedLocalStorage from "../page/modules/TimedLocalStorage";
 import Slidedown from "../page/slidedown/Slidedown";
 import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCalls";
-import { ValidatorUtils } from "../page/utils/ValidatorUtils";
 import OneSignalApi from "../shared/api/OneSignalApi";
-import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
 import Environment from "../shared/helpers/Environment";
 import EventHelper from "../shared/helpers/EventHelper";
 import HttpHelper from "../shared/helpers/HttpHelper";
-import InitHelper, { RegisterOptions } from "../shared/helpers/InitHelper";
+import InitHelper from "../shared/helpers/InitHelper";
 import MainHelper from "../shared/helpers/MainHelper";
 import OutcomesHelper from "../shared/helpers/OutcomesHelper";
 import SubscriptionHelper from "../shared/helpers/SubscriptionHelper";
@@ -36,16 +30,14 @@ import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
 import { AppUserConfig, AppConfig } from "../shared/models/AppConfig";
 import { DeviceRecord } from "../shared/models/DeviceRecord";
-import { NotificationPermission } from "../shared/models/NotificationPermission";
 import { OutcomeAttributionType } from "../shared/models/Outcomes";
-import { DelayedPromptType, AppUserConfigNotifyButton } from "../shared/models/Prompts";
+import { AppUserConfigNotifyButton } from "../shared/models/Prompts";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
 import Database from "../shared/services/Database";
 import IndexedDb from "../shared/services/IndexedDb";
 import LimitStore from "../shared/services/LimitStore";
-import LocalStorage from "../shared/utils/LocalStorage";
 import OneSignalUtils from "../shared/utils/OneSignalUtils";
-import { awaitOneSignalInitAndSupported, logMethodCall, isValidEmail, getConsoleStyle, executeCallback } from "../shared/utils/utils";
+import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
 import CoreModule from "../../src/core/CoreModule";
@@ -658,8 +650,6 @@ export default class OneSignal {
   static checkAndWipeUserSubscription = function () { };
   static DeviceRecord = DeviceRecord;
   static SecondaryChannelDeviceRecord = SecondaryChannelDeviceRecord;
-
-  static notificationPermission = NotificationPermission;
 
   /**
    * Used by Rails-side HTTP popup. Must keep the same name.
