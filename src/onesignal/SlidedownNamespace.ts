@@ -22,4 +22,24 @@ export default class SlidedownNamespace {
     });
   }
 
+  static async showSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowSmsSlidedown({
+      ...options,
+    });
+  }
+
+  static async showEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowEmailSlidedown({
+      ...options,
+    });
+  }
+
+  static async showSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
+      ...options,
+    });
+  }
 }
