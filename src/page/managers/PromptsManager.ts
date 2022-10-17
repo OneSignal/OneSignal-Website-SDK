@@ -241,7 +241,11 @@ export class PromptsManager {
       OneSignalEvent.trigger(OneSignal.EVENTS.TEST_FINISHED_ALLOW_CLICK_HANDLING);
     });
     OneSignal.emitter.on(Slidedown.EVENTS.CANCEL_CLICK, () => {
-      const { type } = OneSignal.slidedown.options as SlidedownPromptOptions;
+      if (!this.context.slidedownManager.slidedown) {
+        return;
+      }
+
+      const type = this.context.slidedownManager.slidedown?.options.type;
       switch (type) {
         case DelayedPromptType.Push:
         case DelayedPromptType.Category:
