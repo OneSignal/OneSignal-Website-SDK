@@ -51,6 +51,7 @@ import NotificationsNamespace from "./NotificationsNamespace";
 import CoreModule from "../../src/core/CoreModule";
 import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
+import SlidedownNamespace from "./SlidedownNamespace";
 
 export default class OneSignal {
   static async initializeCoreModuleAndUserNamespace() {
@@ -581,6 +582,7 @@ export default class OneSignal {
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
+  static slidedown = new SlidedownNamespace();
   static user : UserNamespace;
   /* END NEW USER MODEL CHANGES */
 
