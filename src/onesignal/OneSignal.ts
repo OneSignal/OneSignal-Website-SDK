@@ -13,7 +13,6 @@ import SubscriptionModalHost from "../page/modules/frames/SubscriptionModalHost"
 import SubscriptionPopup from "../page/modules/frames/SubscriptionPopup";
 import SubscriptionPopupHost from "../page/modules/frames/SubscriptionPopupHost";
 import TimedLocalStorage from "../page/modules/TimedLocalStorage";
-import Slidedown from "../page/slidedown/Slidedown";
 import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCalls";
 import OneSignalApi from "../shared/api/OneSignalApi";
 import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
@@ -456,7 +455,6 @@ export default class OneSignal {
   static database = Database;
   static event = OneSignalEvent;
   static browser = bowser;
-  static slidedown: Slidedown | null = null;
   static log = Log;
   static api = OneSignalApi;
   static indexedDb = IndexedDb;
