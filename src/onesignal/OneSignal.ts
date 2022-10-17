@@ -44,6 +44,7 @@ import CoreModule from "../../src/core/CoreModule";
 import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
+import LocalStorage from "../shared/utils/LocalStorage";
 
 export default class OneSignal {
   static async initializeCoreModuleAndUserNamespace() {
@@ -92,7 +93,7 @@ export default class OneSignal {
       return;
     }
 
-    if (OneSignal.config.userConfig.requiresUserPrivacyConsent) {
+    if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getRequiresPrivacyConsent()) {
       const providedConsent = await Database.getProvideUserConsent();
       if (!providedConsent) {
         OneSignal.pendingInit = true;
@@ -180,10 +181,14 @@ export default class OneSignal {
    * Call after user accepts your user consent agreement
    * @PublicApi
    */
-  public static async provideUserConsent(consent: boolean): Promise<void> {
+  static async setPrivacyConsent(consent: boolean): Promise<void> {
     await Database.setProvideUserConsent(consent);
     if (consent && OneSignal.pendingInit)
       await OneSignal.delayedInit();
+  }
+
+  static async setRequiresPrivacyConsent(requiresConsent: boolean): Promise<void> {
+    LocalStorage.setRequiresPrivacyConsent(requiresConsent);
   }
 
   /**
