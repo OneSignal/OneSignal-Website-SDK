@@ -187,22 +187,6 @@ export default class OneSignal {
   }
 
   /**
-   * Prompts the user to subscribe.
-   * @PublicApi
-   */
-  static async registerForPushNotifications(options?: RegisterOptions): Promise<void> {
-    if (!OneSignal.initialized) {
-      await new Promise<void>((resolve, _reject) => {
-        OneSignal.emitter.once(OneSignal.EVENTS.SDK_INITIALIZED, async () => {
-          await InitHelper.registerForPushNotifications(options);
-          return resolve();
-        });
-      });
-    } else
-      return await InitHelper.registerForPushNotifications(options);
-  }
-
-  /**
    * @PublicApi
    */
   static async getTags(callback?: Action<any>) {
