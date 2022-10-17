@@ -11,6 +11,7 @@ import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSub
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall, executeCallback } from "../shared/utils/utils";
 import OneSignalError from "../../src/shared/errors/OneSignalError";
+import OneSignal from "./OneSignal";
 
 export default class NotificationsNamespace {
   /**
@@ -155,7 +156,7 @@ export default class NotificationsNamespace {
    * Shows a native browser prompt.
    * @PublicApi
    */
-   public static async requestPermission(): Promise<void> {
+   static async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
