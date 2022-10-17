@@ -1,3 +1,4 @@
+import LocalStorage from "../shared/utils/LocalStorage";
 import { AutoPromptOptions } from "../page/managers/PromptsManager";
 import { DelayedPromptType } from "../shared/models/Prompts";
 import { awaitOneSignalInitAndSupported } from "../shared/utils/utils";
@@ -11,4 +12,14 @@ export default class SlidedownNamespace {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
   }
+
+   static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
+    await OneSignal.context.promptsManager.internalShowCategorySlidedown({
+      ...options,
+      isInUpdateMode: isPushEnabled
+    });
+  }
+
 }
