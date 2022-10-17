@@ -211,14 +211,6 @@ export default class OneSignal {
     await OneSignal.showSlidedownPrompt(options);
   }
 
-  /**
-   * Shows a sliding modal prompt on the page for users.
-   * @PublicApi
-   */
-  public static async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
-  }
 
   public static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
