@@ -8,12 +8,12 @@ export default class SlidedownNamespace {
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
    */
-  static async showSlidedownPrompt(options?: AutoPromptOptions): Promise<void> {
+  async promptPush(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
   }
 
-   static async showCategorySlidedown(options?: AutoPromptOptions): Promise<void> {
+   async promptPushCategories(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
     await OneSignal.context.promptsManager.internalShowCategorySlidedown({
@@ -22,21 +22,21 @@ export default class SlidedownNamespace {
     });
   }
 
-  static async showSmsSlidedown(options?: AutoPromptOptions): Promise<void> {
+  async promptSms(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSmsSlidedown({
       ...options,
     });
   }
 
-  static async showEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+  async promptEmail(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowEmailSlidedown({
       ...options,
     });
   }
 
-  static async showSmsAndEmailSlidedown(options?: AutoPromptOptions): Promise<void> {
+  async promptSmsAndEmail(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
       ...options,
