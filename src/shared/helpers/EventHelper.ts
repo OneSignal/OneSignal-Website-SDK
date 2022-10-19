@@ -65,7 +65,7 @@ export default class EventHelper {
       Log.debug('Not showing welcome notification because user has previously subscribed.');
       return;
     }
-    const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
+    const welcome_notification_opts = OneSignal.config?.userConfig.welcomeNotification;
     const welcome_notification_disabled =
       welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
 
