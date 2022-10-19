@@ -5,6 +5,7 @@ import Log from '../libraries/Log';
 import { Utils } from "../../shared/context/Utils";
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../utils/utils';
 import OutcomeProps from '../models/OutcomeProps';
+import OneSignal from '../../onesignal/OneSignal';
 
 const SEND_OUTCOME = "sendOutcome";
 const SEND_UNIQUE_OUTCOME = "sendUniqueOutcome";
@@ -61,7 +62,7 @@ export default class OutcomesHelper {
 
     await awaitOneSignalInitAndSupported();
 
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    const isSubscribed = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     if (!isSubscribed) {
       Log.warn("Reporting outcomes is supported only for subscribed users.");
       return false;
