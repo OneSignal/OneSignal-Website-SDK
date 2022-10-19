@@ -148,15 +148,19 @@ export default class NotificationsNamespace {
     subscription.optedOut = disabled;
     await OneSignalApi.updatePlayer(appId, deviceId, options);
     await Database.setSubscription(subscription);
-    EventHelper.onInternalSubscriptionSet(subscription.optedOut);
-    EventHelper.checkAndTriggerSubscriptionChanged();
+    EventHelper.onInternalSubscriptionSet(subscription.optedOut).catch(e => {
+      Log.error(e);
+    });
+    EventHelper.checkAndTriggerSubscriptionChanged().catch(e => {
+      Log.error(e);
+    });
   }
 
   /**
    * Shows a native browser prompt.
    * @PublicApi
    */
-   static async requestPermission(): Promise<void> {
+   async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }
