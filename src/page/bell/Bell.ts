@@ -18,7 +18,7 @@ import Log from '../../shared/libraries/Log';
 import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from '../../shared/models/Prompts';
 import OneSignal from '../../onesignal/OneSignal';
 
-var logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
+const logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
 type BellState = 'uninitialized' | 'subscribed' | 'unsubscribed' | 'blocked';
 
@@ -228,12 +228,16 @@ export default class Bell {
           this.message.contentType = Message.TYPES.TIP;
           resolve();
         }
-      }).then(() => {
+      })
+      .then(() => {
           return this.message.show();
-        })
-        .then(() => {
+      })
+      .then(() => {
           this.hovering = false;
-        });
+      })
+      .catch(err => {
+          Log.error(err);
+      });
     });
 
     OneSignal.emitter.on(Bell.EVENTS.HOVERED, () => {
@@ -249,9 +253,10 @@ export default class Bell {
 
       if (this.hovering) {
         this.hovering = false;
-        // Hovering still being true here happens on mobile where the message could still be showing (i.e. animating) when a HOVERED event fires
-        // In other words, you tap on mobile, HOVERING fires, and then HOVERED fires immediately after because of the way mobile click events work
-        // Basically only happens if HOVERING and HOVERED fire within a few milliseconds of each other
+        // Hovering still being true here happens on mobile where the message could still be showing (i.e. animating)
+        // when a HOVERED event fires. In other words, you tap on mobile, HOVERING fires, and then HOVERED fires
+        // immediately after because of the way mobile click events work. Basically only happens if HOVERING and HOVERED
+        // fire within a few milliseconds of each other
         this.message.waitUntilShown()
           .then(() => delay(Message.TIMEOUT))
           .then(() => this.message.hide())
@@ -296,6 +301,8 @@ export default class Bell {
           bellState = Bell.STATES.UNSUBSCRIBED;
         }
         this.setState(bellState, this._ignoreSubscriptionState);
+      }).catch(e => {
+        Log.error(e);
       });
     });
 
@@ -334,7 +341,7 @@ export default class Bell {
       addCssClass(this.launcher.selector, 'onesignal-bell-launcher-bottom-right');
     }
     else {
-      throw new Error('Invalid OneSignal notify button position ' + this.options.position);
+      throw new Error(`Invalid OneSignal notify button position ${this.options.position}`);
     }
 
     if (this.options.theme === 'default') {
@@ -344,7 +351,7 @@ export default class Bell {
       addCssClass(this.launcher.selector, 'onesignal-bell-launcher-theme-inverse');
     }
     else {
-      throw new Error('Invalid OneSignal notify button theme ' + this.options.theme);
+      throw new Error(`Invalid OneSignal notify button theme ${this.options.theme}`);
     }
   }
 
@@ -389,7 +396,8 @@ export default class Bell {
     const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const doNotPrompt = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
-    // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
+    // Resize to small instead of specified size if enabled, otherwise there's a jerking motion
+    // where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
     const resizeTo = (isPushEnabled ? 'small' : (this.options.size || this.DEFAULT_SIZE));
     await this.launcher.resize(resizeTo);
 
@@ -413,7 +421,7 @@ export default class Bell {
       .then(() => {
         if (isUsingSubscriptionWorkaround() &&
           doNotPrompt !== true && !isPushEnabled &&
-          (OneSignal.config.userConfig.promptOptions.autoPrompt === true) &&
+          (OneSignal.config?.userConfig.promptOptions?.autoPrompt === true) &&
           !MainHelper.isHttpPromptAlreadyShown()
         ) {
           Log.debug('Not showing notify button because slidedown will be shown.');
@@ -568,6 +576,9 @@ export default class Bell {
       if (permission === NotificationPermission.Denied) {
         this.setState(Bell.STATES.BLOCKED);
       }
+    })
+    .catch(e => {
+      Log.error(e);
     });
   }
 
