@@ -25,6 +25,7 @@ import { SecondaryChannelManager } from "../../../shared/managers/channelManager
 import { DelayedPromptType } from "../../../shared/models/Prompts";
 import { AutoPromptOptions } from "../PromptsManager";
 import OneSignalError from "../../../shared/errors/OneSignalError";
+import { NotSubscribedError, NotSubscribedReason } from "../../../shared/errors/NotSubscribedError";
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -45,8 +46,7 @@ export class SlidedownManager {
 
   private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
     const permissionDenied = await OneSignal.notifications.getPermissionStatus() === NotificationPermission.Denied;
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
-    const notOptedOut = await OneSignal.privateGetSubscription();
+    const isSubscribed = await this.context.subscriptionManager.isPushNotificationsEnabled();
     let wasDismissed: boolean;
 
     const slidedownType = options.slidedownPromptOptions?.type;
@@ -70,10 +70,6 @@ export class SlidedownManager {
       }
 
       wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
-
-      if (!notOptedOut) {
-        throw new NotSubscribedError(NotSubscribedReason.OptedOut);
-      }
 
       if (permissionDenied) {
         Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));

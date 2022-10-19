@@ -12,6 +12,7 @@ import Database from '../services/Database';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import OneSignalEvent from '../services/OneSignalEvent';
+import OneSignal from '../../onesignal/OneSignal';
 
 export default class MainHelper {
 
@@ -34,7 +35,7 @@ export default class MainHelper {
 
     const existingUser = await OneSignal.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
     if (currentPermission === NotificationPermission.Granted && existingUser) {
-      const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+      const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
       return  isPushEnabled ? SubscriptionStateKind.Subscribed : SubscriptionStateKind.MutedByApi;
     }
 
