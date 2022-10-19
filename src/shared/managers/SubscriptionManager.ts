@@ -57,6 +57,15 @@ export class SubscriptionManager {
   }
 
   /**
+   * Returns a promise that resolves to true if all required conditions for push messaging are met; otherwise, false.
+   * @returns {Promise<boolean>}
+   */
+  public async isPushNotificationsEnabled(): Promise<boolean> {
+    const subscriptionState = await this.getSubscriptionState();
+    return subscriptionState.subscribed && !subscriptionState.optedOut;
+  }
+
+  /**
    * Subscribes for a web push subscription.
    *
    * This method is aware of different subscription environments like subscribing from a webpage,
