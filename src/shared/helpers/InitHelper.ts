@@ -105,7 +105,7 @@ export default class InitHelper {
       await InitHelper.handleAutoResubscribe(isOptedOut);
     }
 
-    const isSubscribed = await OneSignal.privateIsPushNotificationsEnabled();
+    const isSubscribed = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     // saves isSubscribed to localStorage. used for require user interaction functionality
     LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
 
@@ -206,7 +206,7 @@ export default class InitHelper {
   /** Helper methods */
 
   public static async storeInitialValues() {
-    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const notificationPermission = await OneSignal.notifications.getPermissionStatus();
     const isOptedOut = await OneSignal.notifications.isOptedOut();
     LimitStore.put('subscription.optedOut', isOptedOut);

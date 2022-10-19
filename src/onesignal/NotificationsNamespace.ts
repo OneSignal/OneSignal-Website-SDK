@@ -71,7 +71,7 @@ export default class NotificationsNamespace {
     const subscription = await Database.getSubscription();
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!(await OneSignal.isPushNotificationsEnabled()))
+    if (!(await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()))
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     if (!ValidatorUtils.isValidUrl(url))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);

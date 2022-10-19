@@ -16,6 +16,7 @@ import { DismissHelper } from '../../shared/helpers/DismissHelper';
 import MainHelper from '../../shared/helpers/MainHelper';
 import Log from '../../shared/libraries/Log';
 import { AppUserConfigNotifyButton, BellSize, BellPosition, BellText } from '../../shared/models/Prompts';
+import OneSignal from '../../onesignal/OneSignal';
 
 var logoSvg = `<svg class="onesignal-bell-svg" xmlns="http://www.w3.org/2000/svg" width="99.7" height="99.7" viewBox="0 0 99.7 99.7"><circle class="background" cx="49.9" cy="49.9" r="49.9"/><path class="foreground" d="M50.1 66.2H27.7s-2-.2-2-2.1c0-1.9 1.7-2 1.7-2s6.7-3.2 6.7-5.5S33 52.7 33 43.3s6-16.6 13.2-16.6c0 0 1-2.4 3.9-2.4 2.8 0 3.8 2.4 3.8 2.4 7.2 0 13.2 7.2 13.2 16.6s-1 11-1 13.3c0 2.3 6.7 5.5 6.7 5.5s1.7.1 1.7 2c0 1.8-2.1 2.1-2.1 2.1H50.1zm-7.2 2.3h14.5s-1 6.3-7.2 6.3-7.3-6.3-7.3-6.3z"/><ellipse class="stroke" cx="49.9" cy="49.9" rx="37.4" ry="36.9"/></svg>`;
 
@@ -385,8 +386,7 @@ export default class Bell {
     // Add visual elements
     addDomElement(this.button.selector, 'beforeend', logoSvg);
 
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
-    const notOptedOut = await OneSignal.getSubscription();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const doNotPrompt = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
 
     // Resize to small instead of specified size if enabled, otherwise there's a jerking motion where the bell, at a different size than small, jerks sideways to go from large -> small or medium -> small
@@ -402,9 +402,8 @@ export default class Bell {
     Log.info('Showing the notify button.');
 
     await (isPushEnabled ? this.launcher.inactivate() : nothing())
-      .then(() => OneSignal.getSubscription())
-      .then((isNotOptedOut: boolean) => {
-        if ((isPushEnabled || !isNotOptedOut) && this.dialog.notificationIcons === null) {
+      .then(() => {
+        if ((isPushEnabled) && this.dialog.notificationIcons === null) {
           return MainHelper.getNotificationIcons().then(icons => {
             this.dialog.notificationIcons = icons;
           });
@@ -413,7 +412,6 @@ export default class Bell {
       .then(() => delay(this.options.showLauncherAfter || 0))
       .then(() => {
         if (isUsingSubscriptionWorkaround() &&
-          notOptedOut &&
           doNotPrompt !== true && !isPushEnabled &&
           (OneSignal.config.userConfig.promptOptions.autoPrompt === true) &&
           !MainHelper.isHttpPromptAlreadyShown()
@@ -562,7 +560,7 @@ export default class Bell {
    */
   updateState() {
     Promise.all([
-      OneSignal.privateIsPushNotificationsEnabled(),
+      OneSignal.context.subscriptionManager.isPushNotificationsEnabled(),
       OneSignal.notifications.getPermissionStatus()
     ])
     .then(([isEnabled, permission]) => {
