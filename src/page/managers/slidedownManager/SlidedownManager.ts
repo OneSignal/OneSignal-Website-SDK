@@ -46,8 +46,10 @@ export class SlidedownManager {
 
   private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
     const permissionDenied = await OneSignal.notifications.getPermissionStatus() === NotificationPermission.Denied;
-    const isSubscribed = await this.context.subscriptionManager.isPushNotificationsEnabled();
     let wasDismissed: boolean;
+
+    const subscriptionInfo: PushSubscriptionState = await OneSignal.subscriptionManager.getSubscriptionState();
+    const { subscribed, optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;
 
@@ -59,7 +61,7 @@ export class SlidedownManager {
 
     // applies to both push and category slidedown types
     if (isSlidedownPushDependent) {
-      if (isSubscribed) {
+      if (subscribed) {
         // applies to category slidedown type only
         if (options.isInUpdateMode) {
           return true;
@@ -70,6 +72,10 @@ export class SlidedownManager {
       }
 
       wasDismissed = DismissHelper.wasPromptOfTypeDismissed(DismissPrompt.Push);
+
+      if (optedOut) {
+        throw new NotSubscribedError(NotSubscribedReason.OptedOut);
+      }
 
       if (permissionDenied) {
         Log.info(new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked));
