@@ -187,10 +187,6 @@ export default class OneSignal {
       await OneSignal.delayedInit();
   }
 
-  static async getPrivacyConsent(): Promise<boolean> {
-    return await Database.getProvideUserConsent();
-  }
-
   static async setRequiresPrivacyConsent(requiresConsent: boolean): Promise<void> {
     LocalStorage.setRequiresPrivacyConsent(requiresConsent);
   }
