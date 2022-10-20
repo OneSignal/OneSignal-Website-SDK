@@ -29,7 +29,6 @@ import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
 import { AppUserConfig, AppConfig } from "../shared/models/AppConfig";
 import { DeviceRecord } from "../shared/models/DeviceRecord";
-import { NotificationPermission } from "../shared/models/NotificationPermission";
 import { OutcomeAttributionType } from "../shared/models/Outcomes";
 import { AppUserConfigNotifyButton } from "../shared/models/Prompts";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
