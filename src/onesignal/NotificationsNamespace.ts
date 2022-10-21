@@ -11,6 +11,7 @@ import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSub
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall, executeCallback } from "../shared/utils/utils";
 import OneSignalError from "../../src/shared/errors/OneSignalError";
+import OneSignal from "./OneSignal";
 
 export default class NotificationsNamespace {
   /**
@@ -70,7 +71,7 @@ export default class NotificationsNamespace {
     const subscription = await Database.getSubscription();
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!(await OneSignal.isPushNotificationsEnabled()))
+    if (!(await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()))
       throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
     if (!ValidatorUtils.isValidUrl(url))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
@@ -147,15 +148,19 @@ export default class NotificationsNamespace {
     subscription.optedOut = disabled;
     await OneSignalApi.updatePlayer(appId, deviceId, options);
     await Database.setSubscription(subscription);
-    EventHelper.onInternalSubscriptionSet(subscription.optedOut);
-    EventHelper.checkAndTriggerSubscriptionChanged();
+    EventHelper.onInternalSubscriptionSet(subscription.optedOut).catch(e => {
+      Log.error(e);
+    });
+    EventHelper.checkAndTriggerSubscriptionChanged().catch(e => {
+      Log.error(e);
+    });
   }
 
   /**
    * Shows a native browser prompt.
    * @PublicApi
    */
-   public static async requestPermission(): Promise<void> {
+   async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
   }

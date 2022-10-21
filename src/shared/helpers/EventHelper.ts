@@ -23,7 +23,7 @@ export default class EventHelper {
     OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: ContextSWInterface = OneSignal.context;
     const subscriptionState = await context.subscriptionManager.getSubscriptionState();
-    const isPushEnabled = await OneSignal.privateIsPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const appState = await Database.getAppState();
     const { lastKnownPushEnabled } = appState;
     const didStateChange = (
@@ -68,7 +68,7 @@ export default class EventHelper {
       const { deviceId } = await Database.getSubscription();
       const { appId } = await Database.getAppConfig();
 
-      const welcome_notification_opts = OneSignal.config.userConfig.welcomeNotification;
+      const welcome_notification_opts = OneSignal.config?.userConfig.welcomeNotification;
       const welcome_notification_disabled =
         welcome_notification_opts !== undefined && welcome_notification_opts['disable'] === true;
       let title =
