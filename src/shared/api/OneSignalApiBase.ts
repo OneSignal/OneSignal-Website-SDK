@@ -5,7 +5,7 @@ import Log from "../libraries/Log";
 import SdkEnvironment from "../managers/SdkEnvironment";
 
 type Headers = any[] & {[key: string]: any};
-type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE";
+type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export class OneSignalApiBase {
   static get(action: string, data?: any, headers?: Headers | undefined) {
@@ -22,6 +22,10 @@ export class OneSignalApiBase {
 
   static delete(action: string, data?: any, headers?: Headers | undefined) {
     return OneSignalApiBase.call('DELETE', action, data, headers);
+  }
+
+  static patch(action: string, data?: any, headers?: Headers | undefined) {
+    return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
   private static call(method: SupportedMethods, action: string, data: any, headers: Headers | undefined): Promise<any> {
