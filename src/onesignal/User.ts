@@ -22,7 +22,8 @@ export default class User {
     }
 
     if (!userProperties) {
-      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, undefined, {
+      // TO DO: fix user id
+      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, "123", undefined, {
         language: Environment.getLanguage(),
         timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
@@ -36,7 +37,7 @@ export default class User {
       onesignalId: "123", // mock data
     };
 
-    this.identity = new OSModel<IdentityModel>(ModelName.Identity, undefined, data);
+    this.identity = new OSModel<IdentityModel>(ModelName.Identity, data.onesignalId, undefined, data);
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>);
 
     // TO DO: populate subscription models also
