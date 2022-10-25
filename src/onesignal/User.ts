@@ -1,9 +1,9 @@
-import Environment from "../../src/shared/helpers/Environment";
-import { OSModel } from "../../src/core/modelRepo/OSModel";
-import { IdentityModel } from "../../src/core/models/IdentityModel";
-import { SupportedSubscription } from "../../src/core/models/SubscriptionModels";
-import { ModelName, SupportedModel } from "../../src/core/models/SupportedModels";
-import { UserPropertiesModel } from "../../src/core/models/UserPropertiesModel";
+import Environment from "../shared/helpers/Environment";
+import { OSModel } from "../core/modelRepo/OSModel";
+import { IdentityModel } from "../core/models/IdentityModel";
+import { SupportedSubscription } from "../core/models/SubscriptionModels";
+import { ModelName, SupportedModel } from "../core/models/SupportedModels";
+import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
 import OneSignal from "./OneSignal";
 import Log from "../shared/libraries/Log";
 
