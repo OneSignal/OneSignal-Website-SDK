@@ -16,9 +16,8 @@ export class IdentityExecutor extends ExecutorBase {
       return;
     }
 
-    const addDeltas: PropertyDelta<SupportedModel>[] = [];
+    const addAndUpdatedDeltas: PropertyDelta<SupportedModel>[] = [];
     const removeDeltas: PropertyDelta<SupportedModel>[] = [];
-    const updateDeltas: PropertyDelta<SupportedModel>[] = [];
 
     this._deltaQueue.forEach(delta => {
       if (!isPropertyDelta(delta)) {
@@ -27,23 +26,20 @@ export class IdentityExecutor extends ExecutorBase {
 
       const deltaChangeType = this._getChangeType(delta.oldValue, delta.newValue);
 
-      if (deltaChangeType === CoreChangeType.Add) {
-        addDeltas.push(delta);
+      if (deltaChangeType === CoreChangeType.Add || deltaChangeType === CoreChangeType.Update) {
+        addAndUpdatedDeltas.push(delta);
       } else if (deltaChangeType === CoreChangeType.Remove) {
         removeDeltas.push(delta);
-      } else if (deltaChangeType === CoreChangeType.Update) {
-        updateDeltas.push(delta);
       }
     });
 
-    if (addDeltas.length > 0) {
-      this._enqueueOperation(new Operation<SupportedModel>(CoreChangeType.Add, ModelName.Identity, addDeltas));
+    if (addAndUpdatedDeltas.length > 0) {
+      this._enqueueOperation(
+        new Operation<SupportedModel>(CoreChangeType.Add, ModelName.Identity, addAndUpdatedDeltas)
+        );
     }
     if (removeDeltas.length > 0) {
       this._enqueueOperation(new Operation(CoreChangeType.Remove, ModelName.Identity, removeDeltas));
-    }
-    if (updateDeltas.length > 0) {
-      this._enqueueOperation(new Operation(CoreChangeType.Update, ModelName.Identity, updateDeltas));
     }
 
     this._flushDeltas();
