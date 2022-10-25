@@ -6,14 +6,17 @@ import { Operation } from "../operationRepo/Operation";
 import { logMethodCall } from "../../shared/utils/utils";
 import { SupportedModel } from "../models/SupportedModels";
 import ExecutorResult from "./ExecutorResult";
+import Log from "../../shared/libraries/Log";
+
+const RETRY_AFTER = 5_000;
 
 export default abstract class ExecutorBase {
   protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
   protected _operationQueue: Operation<SupportedModel>[] = [];
 
-  protected _executeAdd?: (operation: Operation<SupportedModel>) => ExecutorResult;
-  protected _executeUpdate?: (operation: Operation<SupportedModel>) => ExecutorResult;
-  protected _executeRemove?: (operation: Operation<SupportedModel>) => ExecutorResult;
+  protected _executeAdd?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
+  protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
+  protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
 
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
@@ -97,21 +100,24 @@ export default abstract class ExecutorBase {
 
       if (operation) {
         OperationCache.enqueue(operation);
-        this._processOperation(operation, ExecutorBase.RETRY_COUNT);
+        // TO DO: check if online. no point in trying to execute if offline
+        this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(err => {
+          Log.error(err);
+        });
       }
     }
   }
 
-  private _processOperation(operation: Operation<SupportedModel>, retries: number): void {
+  private async _processOperation(operation: Operation<SupportedModel>, retries: number): Promise<void> {
     logMethodCall("ExecutorBase._processOperation", { operation, retries });
     let res: ExecutorResult = { success: false, retriable: true };
 
     if (operation?.changeType === CoreChangeType.Add) {
-      res = this._executeAdd?.call(this, operation);
+      res = await this._executeAdd?.call(this, operation);
     } else if (operation?.changeType === CoreChangeType.Remove) {
-      res = this._executeRemove?.call(this, operation);
+      res = await this._executeRemove?.call(this, operation);
     } else if (operation?.changeType === CoreChangeType.Update) {
-      res = this._executeUpdate?.call(this, operation);
+      res = await this._executeUpdate?.call(this, operation);
     }
     // HYDRATE
     if (res.success) {
@@ -120,7 +126,16 @@ export default abstract class ExecutorBase {
       }
       OperationCache.delete(operation?.operationId);
     } else {
-      this._processOperation(operation, retries - 1);
+      if (res.retriable && retries > 0) {
+        setTimeout(() => {
+          this._processOperation(operation, retries - 1)
+            .catch(err => {
+              Log.error(err);
+            });
+        }, RETRY_AFTER);
+      } else {
+        OperationCache.delete(operation?.operationId);
+      }
     }
   }
 }
