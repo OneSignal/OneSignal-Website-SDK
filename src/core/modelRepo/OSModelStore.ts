@@ -18,10 +18,15 @@ export class OSModelStore<Model>
       });
     }
 
-    public add(model: OSModel<Model>): void {
+    public add(model: OSModel<Model>, propagate: boolean): void {
       this.subscribeUpdateListener(model);
       this.models[model.modelId] = model;
-      this.broadcast(new ModelStoreAdded(model.modelId, model));
+
+      if (propagate) {
+        this.broadcast(new ModelStoreAdded(model.modelId, model));
+      } else {
+        this.broadcast(new ModelStoreHydrated(model.modelId, model));
+      }
     }
 
     public remove(modelId: string): void {
