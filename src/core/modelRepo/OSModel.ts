@@ -8,10 +8,8 @@ import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   modelId: string;
-  data?: Model;
 
-  // TO DO: flip modelId and data args
-  constructor(public modelName: ModelName, public onesignalId?: string, modelId?: string, data?: Model) {
+  constructor(public modelName: ModelName, public data?: Model, modelId?: string, public onesignalId?: string) {
     super();
     this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;
@@ -56,6 +54,6 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
     logMethodCall("decode", { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
-    return new OSModel<Model>(modelName as ModelName, onesignalId, modelId, data as unknown as Model);
+    return new OSModel<Model>(modelName as ModelName, data as unknown as Model, modelId, onesignalId);
   }
 }

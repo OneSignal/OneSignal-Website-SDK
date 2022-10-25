@@ -56,5 +56,5 @@ test("`Decode` function returns decoded model", async t => {
     id: "123",
     token: "myToken",
   };
-  t.deepEqual(decodedSub, new OSModel(ModelName.EmailSubscriptions, model, undefined, MODEL_ID));
+  t.deepEqual(decodedSub, new OSModel(ModelName.EmailSubscriptions, model, MODEL_ID));
 });

@@ -1,7 +1,7 @@
 import { OSModel } from "../../src/core/modelRepo/OSModel";
 import { ModelName, SupportedModel } from "../../src/core/models/SupportedModels";
 import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
-import { SubscriptionType } from "../../src/core/models/SubscriptionModels";
+import { FutureSubscriptionModel, SubscriptionModel, SubscriptionType } from "../../src/core/models/SubscriptionModels";
 import { InvalidArgumentError, InvalidArgumentReason } from "../../src/shared/errors/InvalidArgumentError";
 import { isValidEmail, logMethodCall } from "../../src/shared/utils/utils";
 import User from "./User";
@@ -91,10 +91,13 @@ export default class UserNamespace {
       // user has loaded so it should be defined
       const onesignalId = this.currentUser?.identity?.onesignalId as string;
 
-      const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, onesignalId, undefined, {
+      const subscription: FutureSubscriptionModel = {
         type: SubscriptionType.Email,
         token: email,
-      });
+      };
+
+      const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, subscription);
+      newSubscription.setOneSignalId(onesignalId);
 
       this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
         throw e;
@@ -114,10 +117,13 @@ export default class UserNamespace {
       // user has loaded so it should be defined
       const onesignalId = this.currentUser?.identity?.onesignalId as string;
 
-      const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, onesignalId, undefined, {
+      const subscription: FutureSubscriptionModel = {
         type: SubscriptionType.SMS,
         token: sms,
-      });
+      };
+
+      const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, subscription);
+      newSubscription.setOneSignalId(onesignalId);
 
       this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
         throw e;

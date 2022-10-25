@@ -17,7 +17,6 @@ export function generateNewSubscription() {
       id: '123', // subscription id
       token: "myToken",
     },
-    undefined,
     MODEL_ID,
     );
 }
@@ -31,7 +30,7 @@ export function getMockDeltas(): CoreDelta<SupportedModel>[] {
   ];
 }
 
-const dummyIdentityModel = new OSModel<SupportedModel>(ModelName.Identity, undefined, undefined, "123");
+const dummyIdentityModel = new OSModel<SupportedModel>(ModelName.Identity, undefined, "123");
 
 export function getDummyIdentityOSModel(): OSModel<SupportedModel> {
   return dummyIdentityModel;
