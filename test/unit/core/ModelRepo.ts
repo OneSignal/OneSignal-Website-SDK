@@ -40,7 +40,7 @@ test("Add subscription -> +1 subscription model in model store", async t => {
   }
 
   t.is(Object.keys(emailSubModels).length, 0);
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
   t.is(Object.keys(emailSubModels).length, 1);
   t.true(processModelAddedSpy.calledOnce);
 });
@@ -50,7 +50,7 @@ test("Remove subscription -> -1 subscription model in model store", async t => {
   const newSub = generateNewSubscription();
   const emailSubModels = await coreDirector.getEmailSubscriptionModels();
 
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
   t.is(Object.keys(emailSubModels).length, 1);
   await coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
   t.is(Object.keys(emailSubModels).length, 0);
@@ -60,7 +60,7 @@ test("Remove subscription -> -1 subscription model in model store", async t => {
 test("Update model properties -> change is processed correctly", async t => {
   const processModelUpdatedSpy = sinonSandbox.spy(ModelRepo.prototype as any, "processModelUpdated");
   const newSub = generateNewSubscription();
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
   newSub.set("rooted", true); // trigger model update
   t.true(processModelUpdatedSpy.calledOnce);
 
@@ -76,7 +76,7 @@ test("Add subscription -> delta is broadcasted once", async t => {
     passIfBroadcastNTimes(t, 1, broadcastCount);
   });
   const newSub = generateNewSubscription();
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
 });
 
 test("Remove subscription -> delta is broadcasted twice", async t => {
@@ -85,7 +85,7 @@ test("Remove subscription -> delta is broadcasted twice", async t => {
     passIfBroadcastNTimes(t, 2, broadcastCount);
   });
   const newSub = generateNewSubscription();
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
   await coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
 });
 
@@ -95,7 +95,7 @@ test("Update model properties -> delta is broadcasted twice", async t => {
     passIfBroadcastNTimes(t, 2, broadcastCount);
   });
   const newSub = generateNewSubscription();
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
   newSub.set("rooted", true); // trigger model update
 });
 
@@ -105,7 +105,7 @@ test("Add subscription -> delta is broadcasted with correct change type and payl
     t.is(delta.changeType, CoreChangeType.Add);
     t.deepEqual(delta.model, newSub as OSModel<SupportedModel>);
   });
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
 });
 
 test("Remove subscription -> delta is broadcasted with correct change type and payload", async t => {
@@ -122,13 +122,13 @@ test("Remove subscription -> delta is broadcasted with correct change type and p
     }
   });
 
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
   await coreDirector.remove(ModelName.EmailSubscriptions, newSub.modelId);
 });
 
 test("Update model properties -> delta is broadcasted with correct change type and payload", async t => {
   const newSub = generateNewSubscription();
-  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>);
+  await coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, false);
 
   core.modelRepo?.subscribe(delta => {
     if (isPropertyDelta(delta)) {

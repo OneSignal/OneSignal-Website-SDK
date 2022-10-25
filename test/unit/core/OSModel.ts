@@ -1,11 +1,10 @@
 import test from "ava";
 import { generateNewSubscription } from "./_helpers";
-import sinon, { SinonSandbox } from "sinon";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { SubscriptionModel, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 
-const sinonSandbox: SinonSandbox = sinon.sandbox.create();
+const MODEL_ID = "0000000000";
 
 test("`Set` function updates data", async t => {
   const newSub = generateNewSubscription();
@@ -34,7 +33,7 @@ test("`Encode` function returns encoded model", async t => {
   const newSub = generateNewSubscription();
   const encodedSub = newSub.encode();
   t.deepEqual(encodedSub, {
-    modelId: "333333",
+    modelId: MODEL_ID,
     modelName: ModelName.EmailSubscriptions,
     type: SubscriptionType.Email,
     id: "123",
@@ -44,7 +43,7 @@ test("`Encode` function returns encoded model", async t => {
 
 test("`Decode` function returns decoded model", async t => {
   const encodedSub = {
-    modelId: "333333",
+    modelId: MODEL_ID,
     modelName: ModelName.EmailSubscriptions,
     type: SubscriptionType.Email,
     id: "123",
@@ -57,5 +56,5 @@ test("`Decode` function returns decoded model", async t => {
     id: "123",
     token: "myToken",
   };
-  t.deepEqual(decodedSub, new OSModel(ModelName.EmailSubscriptions, "333333", model));
+  t.deepEqual(decodedSub, new OSModel(ModelName.EmailSubscriptions, model, undefined, MODEL_ID));
 });
