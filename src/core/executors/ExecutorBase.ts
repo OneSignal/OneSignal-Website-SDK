@@ -1,11 +1,11 @@
 import OperationCache from "../caching/OperationCache";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
-import { ExecutorResult } from "../models/ExecutorResult";
 import { ExecutorConfig } from "../models/ExecutorConfig";
 import { Operation } from "../operationRepo/Operation";
 import { logMethodCall } from "../../shared/utils/utils";
 import { SupportedModel } from "../models/SupportedModels";
+import ExecutorResult from "./ExecutorResult";
 
 export default abstract class ExecutorBase {
   protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
