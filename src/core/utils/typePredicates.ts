@@ -1,6 +1,8 @@
 import { OSModel } from "../modelRepo/OSModel";
 import { OSModelUpdatedArgs } from "../modelRepo/OSModelUpdatedArgs";
 import { CoreDelta, PropertyDelta, ModelDelta } from "../models/CoreDeltas";
+import { IdentityModel } from "../models/IdentityModel";
+import { SubscriptionModel } from "../models/SubscriptionModels";
 
 export function isPropertyDelta<Model>(delta: CoreDelta<Model>): delta is PropertyDelta<Model> {
   return (delta as PropertyDelta<Model>).property !== undefined;
@@ -20,4 +22,12 @@ export function isOSModel<Model>(obj: any): obj is OSModel<Model> {
 
 export function isOSModelUpdatedArgs<Model>(obj: any): obj is OSModelUpdatedArgs<Model> {
   return obj !== null && typeof obj === "object" && obj.constructor === OSModelUpdatedArgs;
+}
+
+export function isIdentityObject(obj: any): obj is IdentityModel {
+  return obj.onesignalId !== undefined;
+}
+
+export function isFutureSubscriptionObject(obj: any): obj is SubscriptionModel {
+  return obj.type !== undefined;
 }
