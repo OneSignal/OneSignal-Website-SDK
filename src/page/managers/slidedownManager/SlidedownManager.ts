@@ -48,7 +48,7 @@ export class SlidedownManager {
     const permissionDenied = await OneSignal.notifications.getPermissionStatus() === NotificationPermission.Denied;
     let wasDismissed: boolean;
 
-    const subscriptionInfo: PushSubscriptionState = await OneSignal.subscriptionManager.getSubscriptionState();
+    const subscriptionInfo: PushSubscriptionState = await OneSignal.context.subscriptionManager.getSubscriptionState();
     const { subscribed, optedOut } = subscriptionInfo;
 
     const slidedownType = options.slidedownPromptOptions?.type;
