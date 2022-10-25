@@ -7,5 +7,6 @@ import { ModelName } from "../models/SupportedModels";
 export default interface EncodedModel {
   modelId: string;
   modelName: ModelName;
+  onesignalId?: string;
   [key: string]: unknown;
 }

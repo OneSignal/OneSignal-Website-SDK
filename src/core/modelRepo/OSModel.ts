@@ -7,10 +7,11 @@ import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../mode
 import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
-  public modelId: string;
-  public data?: Model;
+  modelId: string;
+  data?: Model;
 
-  constructor(public modelName: ModelName, modelId?: string, data?: Model) {
+  // TO DO: flip modelId and data args
+  constructor(public modelName: ModelName, public onesignalId?: string, modelId?: string, data?: Model) {
     super();
     this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;
@@ -48,12 +49,13 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   public encode(): EncodedModel {
     const modelId = this.modelId as string;
     const modelName = this.modelName;
-    return { modelId, modelName, ...this.data };
+    const onesignalId = this.onesignalId;
+    return { modelId, modelName, onesignalId, ...this.data };
   }
 
   static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
     logMethodCall("decode", { encodedModel });
-    const { modelId: id, modelName, ...data } = encodedModel;
-    return new OSModel<Model>(modelName as ModelName, id, data as unknown as Model);
+    const { modelId, modelName, onesignalId, ...data } = encodedModel;
+    return new OSModel<Model>(modelName as ModelName, onesignalId, modelId, data as unknown as Model);
   }
 }
