@@ -5,6 +5,7 @@ import { SupportedSubscription } from "../../src/core/models/SubscriptionModels"
 import { ModelName, SupportedModel } from "../../src/core/models/SupportedModels";
 import { UserPropertiesModel } from "../../src/core/models/UserPropertiesModel";
 import OneSignal from "./OneSignal";
+import Log from "../shared/libraries/Log";
 
 export default class User {
   constructor(
@@ -27,7 +28,10 @@ export default class User {
         language: Environment.getLanguage(),
         timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>);
+      OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)
+        .catch(e => {
+          Log.error(e);
+        });
     }
   }
 
@@ -38,7 +42,9 @@ export default class User {
     };
 
     this.identity = new OSModel<IdentityModel>(ModelName.Identity, data.onesignalId, undefined, data);
-    OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>);
+    OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
+      Log.error(e);
+    });
 
     // TO DO: populate subscription models also
   }

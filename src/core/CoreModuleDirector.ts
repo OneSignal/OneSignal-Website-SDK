@@ -19,10 +19,10 @@ export class CoreModuleDirector {
     });
   }
 
-  public async add(modelName: ModelName, model: OSModel<SupportedModel>): Promise<void> {
+  public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean): Promise<void> {
     logMethodCall("CoreModuleDirector.add", { modelName, model });
     const modelStores = await this.getModelStores();
-    modelStores[modelName].add(model);
+    modelStores[modelName].add(model, propagate);
   }
 
   public async remove(modelName: ModelName, modelId: string): Promise<void> {
