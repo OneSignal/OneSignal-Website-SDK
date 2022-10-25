@@ -7,16 +7,19 @@ import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { SupportedSubscription, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
 import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
 
+const MODEL_ID = '0000000000';
+
 export function generateNewSubscription() {
   return new OSModel<SupportedSubscription>(
     ModelName.EmailSubscriptions,
-    // model id
-    "333333",
     {
       type: SubscriptionType.Email,
       id: '123', // subscription id
       token: "myToken",
-    });
+    },
+    undefined,
+    MODEL_ID,
+    );
 }
 
 export function getMockDeltas(): CoreDelta<SupportedModel>[] {
@@ -28,7 +31,7 @@ export function getMockDeltas(): CoreDelta<SupportedModel>[] {
   ];
 }
 
-const dummyIdentityModel = new OSModel<SupportedModel>(ModelName.Identity, "123");
+const dummyIdentityModel = new OSModel<SupportedModel>(ModelName.Identity, undefined, undefined, "123");
 
 export function getDummyIdentityOSModel(): OSModel<SupportedModel> {
   return dummyIdentityModel;
