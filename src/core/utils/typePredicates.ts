@@ -3,12 +3,11 @@ import { OSModelUpdatedArgs } from "../modelRepo/OSModelUpdatedArgs";
 import { CoreDelta, PropertyDelta, ModelDelta } from "../models/CoreDeltas";
 
 export function isPropertyDelta<Model>(delta: CoreDelta<Model>): delta is PropertyDelta<Model> {
-  return (delta as PropertyDelta<Model>).newValue !== undefined &&
-    (delta as PropertyDelta<Model>).property !== undefined;
+  return (delta as PropertyDelta<Model>).property !== undefined;
 }
 
 export function isModelDelta<Model>(delta: CoreDelta<Model>): delta is ModelDelta<Model> {
-  return (delta as ModelDelta<Model>).model !== undefined;
+  return (delta as ModelDelta<Model>).model !== undefined && (delta as PropertyDelta<Model>).property === undefined;
 }
 
 export function isPureObject(obj: any): obj is Object {
