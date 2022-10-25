@@ -87,12 +87,19 @@ export default class UserNamespace {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
 
-    const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, undefined, {
-      type: SubscriptionType.Email,
-      token: email,
-    });
+    this.userLoaded.then(() => {
+      // user has loaded so it should be defined
+      const onesignalId = this.currentUser?.identity?.onesignalId as string;
 
-    this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription).catch(e => {
+      const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, onesignalId, undefined, {
+        type: SubscriptionType.Email,
+        token: email,
+      });
+
+      this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
+        throw e;
+      });
+    }).catch(e => {
       throw e;
     });
   }
@@ -103,12 +110,19 @@ export default class UserNamespace {
       throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
     }
 
-    const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, undefined, {
-      type: SubscriptionType.SMS,
-      token: sms,
-    });
+    this.userLoaded.then(() => {
+      // user has loaded so it should be defined
+      const onesignalId = this.currentUser?.identity?.onesignalId as string;
 
-    this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription).catch(e => {
+      const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, onesignalId, undefined, {
+        type: SubscriptionType.SMS,
+        token: sms,
+      });
+
+      this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
+        throw e;
+      });
+    }).catch(e => {
       throw e;
     });
   }
