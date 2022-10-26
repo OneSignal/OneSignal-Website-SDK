@@ -49,7 +49,7 @@ test("`Decode` function returns decoded model", async t => {
     id: "123",
     token: "myToken",
   };
-  const decodedSub = OSModel.decode<SubscriptionModel>(encodedSub);
+  const decodedSub = OSModel.decode(encodedSub) as OSModel<SubscriptionModel>;
 
   const model: SubscriptionModel = {
     type: SubscriptionType.Email,

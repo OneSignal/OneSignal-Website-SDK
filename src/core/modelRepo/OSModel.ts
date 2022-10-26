@@ -2,20 +2,32 @@ import { OSModelUpdatedArgs } from "./OSModelUpdatedArgs";
 import Subscribable from "../Subscribable";
 import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
-import { ModelName } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../models/ModelStoreChange";
 import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   modelId: string;
   onesignalId?: string;
+  awaitOneSignalIdAvailable: Promise<void>;
 
+  private onesignalIdAvailableCallback?: () => void;
 
   constructor(public modelName: ModelName, public data?: Model, modelId?: string) {
     super();
     this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;
     this.data = data;
+
+    this.awaitOneSignalIdAvailable = new Promise<void>(resolve => {
+      this.onesignalIdAvailableCallback = resolve;
+    });
+  }
+
+  public setOneSignalId(onesignalId?: string): void {
+    logMethodCall("setOneSignalId", { onesignalId });
+    this.onesignalId = onesignalId;
+    this.onesignalIdAvailableCallback?.();
   }
 
   /**
@@ -53,9 +65,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     return { modelId, modelName, onesignalId, ...this.data };
   }
 
-  static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
+  static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
     logMethodCall("decode", { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
-    return new OSModel<Model>(modelName as ModelName, data as unknown as Model, modelId, onesignalId);
+    const decodedModel = new OSModel<SupportedModel>(modelName as ModelName, data, modelId);
+    decodedModel.setOneSignalId(onesignalId);
+    return decodedModel;
   }
 }
