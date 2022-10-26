@@ -28,7 +28,8 @@ export default class User {
         timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       // TO DO: fix user id
-      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties, undefined, "123");
+      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties);
+      this.userProperties.setOneSignalId("123");
       OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)
         .catch(e => {
           Log.error(e);
