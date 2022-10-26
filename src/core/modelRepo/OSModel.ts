@@ -8,8 +8,10 @@ import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   modelId: string;
+  onesignalId?: string;
 
-  constructor(public modelName: ModelName, public data?: Model, modelId?: string, public onesignalId?: string) {
+
+  constructor(public modelName: ModelName, public data?: Model, modelId?: string) {
     super();
     this.modelId = modelId ?? Math.random().toString(36).substring(2);
     this.modelName = modelName;
