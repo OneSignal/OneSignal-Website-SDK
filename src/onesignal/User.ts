@@ -8,6 +8,8 @@ import OneSignal from "./OneSignal";
 import Log from "../shared/libraries/Log";
 
 export default class User {
+  awaitOneSignalIdAvailable: Promise<void> = new Promise<void>(() => {});
+
   constructor(
     public identity?: OSModel<IdentityModel>,
     public userProperties?: OSModel<UserPropertiesModel>,
@@ -22,18 +24,9 @@ export default class User {
       this.createNewUser();
     }
 
+    // initialize user properties
     if (!userProperties) {
-      const properties = {
-        language: Environment.getLanguage(),
-        timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      };
-      // TO DO: fix user id
-      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties);
-      this.userProperties.setOneSignalId("123");
-      OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)
-        .catch(e => {
-          Log.error(e);
-        });
+      this.createUserProperties();
     }
   }
 
@@ -45,10 +38,30 @@ export default class User {
 
     this.identity = new OSModel<IdentityModel>(ModelName.Identity, data, undefined);
     this.identity.setOneSignalId(data.onesignalId);
+
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);
     });
 
+    // copy the onesignal id promise to the user
+    this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
+
     // TO DO: populate subscription models also
+  }
+
+  private createUserProperties(): void {
+    const properties = {
+      language: Environment.getLanguage(),
+      timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+
+    this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties);
+    // TO DO: fix user id
+    this.userProperties.setOneSignalId("123");
+
+    OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)
+      .catch(e => {
+        Log.error(e);
+      });
   }
 }
