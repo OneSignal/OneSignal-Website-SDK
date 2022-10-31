@@ -2,20 +2,40 @@ import { OSModelUpdatedArgs } from "./OSModelUpdatedArgs";
 import Subscribable from "../Subscribable";
 import EncodedModel from "../caching/EncodedModel";
 import { StringKeys } from "../models/StringKeys";
-import { ModelName } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../models/ModelStoreChange";
 import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
-  modelId: string;
   data?: Model;
+  modelId: string;
 
-  // TO DO: flip modelId and data args
-  constructor(public modelName: ModelName, public onesignalId?: string, modelId?: string, data?: Model) {
-    super();
-    this.modelId = modelId ?? Math.random().toString(36).substring(2);
-    this.modelName = modelName;
-    this.data = data;
+  onesignalId?: string;
+  awaitOneSignalIdAvailable: Promise<void>;
+  onesignalIdAvailableCallback?: () => void;
+
+  constructor(
+    readonly modelName: ModelName,
+    data?: Model,
+    modelId?: string
+    ) {
+      super();
+      this.modelId = modelId ?? Math.random().toString(36).substring(2);
+      this.modelName = modelName;
+      this.data = data;
+
+      this.awaitOneSignalIdAvailable = new Promise<void>(resolve => {
+        this.onesignalIdAvailableCallback = resolve;
+      });
+  }
+
+  public setOneSignalId(onesignalId?: string): void {
+    logMethodCall("setOneSignalId", { onesignalId });
+    this.onesignalId = onesignalId;
+
+    if (onesignalId) {
+      this.onesignalIdAvailableCallback?.();
+    }
   }
 
   /**
@@ -53,9 +73,17 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     return { modelId, modelName, onesignalId, ...this.data };
   }
 
-  static decode<Model>(encodedModel: EncodedModel): OSModel<Model> {
+  static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
     logMethodCall("decode", { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
-    return new OSModel<Model>(modelName as ModelName, onesignalId, modelId, data as unknown as Model);
+
+    const decodedModel = new OSModel<SupportedModel>(
+      modelName as ModelName,
+      data,
+      modelId
+    );
+
+    decodedModel.setOneSignalId(onesignalId);
+    return decodedModel;
   }
 }
