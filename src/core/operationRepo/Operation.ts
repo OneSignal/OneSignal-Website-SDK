@@ -8,7 +8,7 @@ import { isPropertyDelta, isPureObject } from "../utils/typePredicates";
 export class Operation<Model> {
   operationId: string;
   timestamp: number;
-  payload?: {[key: string]: any};
+  payload?: Partial<SupportedModel>;
   model?: OSModel<Model>;
 
   constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas?: CoreDelta<Model>[]) {
