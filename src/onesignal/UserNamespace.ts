@@ -29,11 +29,25 @@ export default class UserNamespace {
 
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
+
+    if (!label) {
+      throw new InvalidArgumentError('label', InvalidArgumentReason.Empty,);
+    }
+
+    if (!id) {
+      throw new InvalidArgumentError('id', InvalidArgumentReason.Empty,);
+    }
+
     this.addAliases([{ label, id }]);
   }
 
   public addAliases(aliases: { label: string; id: string; }[]): void {
     logMethodCall('addAliases', { aliases });
+
+    if (!aliases || aliases.length === 0) {
+      throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
+    }
+
     aliases.forEach(async alias => {
       const identityModel = await this.coreDirector.getIdentityModel();
       identityModel?.set(alias.label, alias.id);
@@ -42,11 +56,21 @@ export default class UserNamespace {
 
   public removeAlias(label: string): void {
     logMethodCall('removeAlias', { label });
+
+    if (!label) {
+      throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
+    }
+
     this.removeAliases([label]);
   }
 
   public removeAliases(aliases: string[]): void {
     logMethodCall('removeAliases', { aliases });
+
+    if (!aliases || aliases.length === 0) {
+      throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
+    }
+
     aliases.forEach(async alias => {
       const identityModel = await this.coreDirector.getIdentityModel();
       identityModel?.set(alias, undefined);
@@ -63,12 +87,19 @@ export default class UserNamespace {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Malformed);
     }
 
-    const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, undefined, {
-      type: SubscriptionType.Email,
-      token: email,
-    });
+    this.userLoaded.then(() => {
+      // user has loaded so it should be defined
+      const onesignalId = this.currentUser?.identity?.onesignalId as string;
 
-    this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription).catch(e => {
+      const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, onesignalId, undefined, {
+        type: SubscriptionType.Email,
+        token: email,
+      });
+
+      this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
+        throw e;
+      });
+    }).catch(e => {
       throw e;
     });
   }
@@ -79,18 +110,30 @@ export default class UserNamespace {
       throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
     }
 
-    const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, undefined, {
-      type: SubscriptionType.SMS,
-      token: sms,
-    });
+    this.userLoaded.then(() => {
+      // user has loaded so it should be defined
+      const onesignalId = this.currentUser?.identity?.onesignalId as string;
 
-    this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription).catch(e => {
+      const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, onesignalId, undefined, {
+        type: SubscriptionType.SMS,
+        token: sms,
+      });
+
+      this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
+        throw e;
+      });
+    }).catch(e => {
       throw e;
     });
   }
 
   public removeEmail(email: string): void {
     logMethodCall('removeEmail', { email });
+
+    if (!email) {
+      throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
+    }
+
     this.coreDirector.getEmailSubscriptionModels().then(emailSubscriptions => {
       const modelIds = Object.keys(emailSubscriptions);
       modelIds.forEach(async modelId => {
@@ -106,6 +149,11 @@ export default class UserNamespace {
 
   public removeSms(smsNumber: string): void {
     logMethodCall('removeSms', { smsNumber });
+
+    if (!smsNumber) {
+      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
+    }
+
     this.coreDirector.getSmsSubscriptionModels().then(smsSubscriptions => {
       const modelIds = Object.keys(smsSubscriptions);
       modelIds.forEach(async modelId => {
@@ -121,11 +169,21 @@ export default class UserNamespace {
 
   public addTag(key: string, value: string): void {
     logMethodCall('addTag', { key, value });
+
+    if (!key) {
+      throw new InvalidArgumentError('key', InvalidArgumentReason.Empty);
+    }
+
     this.addTags({ [key]: value });
   }
 
   public addTags(tags: {[key: string]: string}): void {
     logMethodCall('addTags', { tags });
+
+    if (!tags) {
+      throw new InvalidArgumentError('tags', InvalidArgumentReason.Empty);
+    }
+
     this.coreDirector.getPropertiesModel().then(propertiesModel => {
       propertiesModel?.set('tags', tags);
     }).catch(e => {
@@ -135,11 +193,21 @@ export default class UserNamespace {
 
   public removeTag(tagKey: string): void {
     logMethodCall('removeTag', { tagKey });
+
+    if (!tagKey) {
+      throw new InvalidArgumentError('tagKey', InvalidArgumentReason.Empty);
+    }
+
     this.removeTags([tagKey]);
   }
 
   public removeTags(tagKeys: string[]): void {
     logMethodCall('removeTags', { tagKeys });
+
+    if (!tagKeys || tagKeys.length === 0) {
+      throw new InvalidArgumentError('tagKeys', InvalidArgumentReason.Empty);
+    }
+
     this.coreDirector.getPropertiesModel().then(propertiesModel => {
       const tags = propertiesModel?.data?.tags;
 

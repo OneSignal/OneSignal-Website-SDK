@@ -1,10 +1,11 @@
-import Environment from "../../src/shared/helpers/Environment";
-import { OSModel } from "../../src/core/modelRepo/OSModel";
-import { IdentityModel } from "../../src/core/models/IdentityModel";
-import { SupportedSubscription } from "../../src/core/models/SubscriptionModels";
-import { ModelName, SupportedModel } from "../../src/core/models/SupportedModels";
-import { UserPropertiesModel } from "../../src/core/models/UserPropertiesModel";
+import Environment from "../shared/helpers/Environment";
+import { OSModel } from "../core/modelRepo/OSModel";
+import { IdentityModel } from "../core/models/IdentityModel";
+import { SupportedSubscription } from "../core/models/SubscriptionModels";
+import { ModelName, SupportedModel } from "../core/models/SupportedModels";
+import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
 import OneSignal from "./OneSignal";
+import Log from "../shared/libraries/Log";
 
 export default class User {
   constructor(
@@ -22,11 +23,15 @@ export default class User {
     }
 
     if (!userProperties) {
-      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, undefined, {
+      // TO DO: fix user id
+      this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, "123", undefined, {
         language: Environment.getLanguage(),
         timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>);
+      OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)
+        .catch(e => {
+          Log.error(e);
+        });
     }
   }
 
@@ -36,8 +41,10 @@ export default class User {
       onesignalId: "123", // mock data
     };
 
-    this.identity = new OSModel<IdentityModel>(ModelName.Identity, undefined, data);
-    OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>);
+    this.identity = new OSModel<IdentityModel>(ModelName.Identity, data.onesignalId, undefined, data);
+    OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
+      Log.error(e);
+    });
 
     // TO DO: populate subscription models also
   }
