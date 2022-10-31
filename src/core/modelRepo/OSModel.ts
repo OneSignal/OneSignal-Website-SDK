@@ -7,27 +7,35 @@ import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../mode
 import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
+  data?: Model;
   modelId: string;
+
   onesignalId?: string;
   awaitOneSignalIdAvailable: Promise<void>;
+  onesignalIdAvailableCallback?: () => void;
 
-  private onesignalIdAvailableCallback?: () => void;
+  constructor(
+    readonly modelName: ModelName,
+    data?: Model,
+    modelId?: string
+    ) {
+      super();
+      this.modelId = modelId ?? Math.random().toString(36).substring(2);
+      this.modelName = modelName;
+      this.data = data;
 
-  constructor(public modelName: ModelName, public data?: Model, modelId?: string) {
-    super();
-    this.modelId = modelId ?? Math.random().toString(36).substring(2);
-    this.modelName = modelName;
-    this.data = data;
-
-    this.awaitOneSignalIdAvailable = new Promise<void>(resolve => {
-      this.onesignalIdAvailableCallback = resolve;
-    });
+      this.awaitOneSignalIdAvailable = new Promise<void>(resolve => {
+        this.onesignalIdAvailableCallback = resolve;
+      });
   }
 
   public setOneSignalId(onesignalId?: string): void {
     logMethodCall("setOneSignalId", { onesignalId });
     this.onesignalId = onesignalId;
-    this.onesignalIdAvailableCallback?.();
+
+    if (onesignalId) {
+      this.onesignalIdAvailableCallback?.();
+    }
   }
 
   /**
@@ -68,7 +76,13 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
     logMethodCall("decode", { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
-    const decodedModel = new OSModel<SupportedModel>(modelName as ModelName, data, modelId);
+
+    const decodedModel = new OSModel<SupportedModel>(
+      modelName as ModelName,
+      data,
+      modelId
+    );
+
     decodedModel.setOneSignalId(onesignalId);
     return decodedModel;
   }
