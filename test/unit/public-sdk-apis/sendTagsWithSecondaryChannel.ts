@@ -25,9 +25,9 @@ test("sendTags after email, makes PUT call to update Email record", async t => {
   // 3. Nock out push player setting tags, ignore it
   NockOneSignalHelper.nockPlayerPut(pushPlayerId);
 
-  // 4. Call OneSignal.sendTags and ensure email is updated
+  // 4. Call OneSignal.user.addTags and ensure email is updated
   const tagsUpdateOnEmail = NockOneSignalHelper.nockPlayerPut(emailPlayerId);
-  await OneSignal.sendTags(TEST_TAGS);
+  await OneSignal.user.addTags(TEST_TAGS);
 
   t.deepEqual(
     (await tagsUpdateOnEmail.result).request.body,
@@ -45,8 +45,8 @@ test("sendTags before email, makes PUT call to update Email record", async t => 
   // 2. Nock out push player tag setting, ignore it
   NockOneSignalHelper.nockPlayerPut(pushPlayerId);
 
-  // 3. Call OneSignal.sendTags
-  OneSignal.sendTags(TEST_TAGS);
+  // 3. Call OneSignal.user.addTags
+  OneSignal.user.addTags(TEST_TAGS);
 
   // 4. Nock out parent_player_id update for push player, ignore it
   // TODO: This is repeated again here. Can we just ignore all player PUT requests to the push player?
