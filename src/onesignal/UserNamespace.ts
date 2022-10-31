@@ -1,17 +1,22 @@
-import { OSModel } from "../../src/core/modelRepo/OSModel";
-import { ModelName, SupportedModel } from "../../src/core/models/SupportedModels";
-import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
-import { FutureSubscriptionModel, SubscriptionType } from "../../src/core/models/SubscriptionModels";
-import { InvalidArgumentError, InvalidArgumentReason } from "../../src/shared/errors/InvalidArgumentError";
-import { isValidEmail, logMethodCall } from "../../src/shared/utils/utils";
+import { OSModel } from "../core/modelRepo/OSModel";
+import { ModelName, SupportedModel } from "../core/models/SupportedModels";
+import { CoreModuleDirector } from "../core/CoreModuleDirector";
+import { FutureSubscriptionModel, SubscriptionType } from "../core/models/SubscriptionModels";
+import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
+import { isValidEmail, logMethodCall } from "../shared/utils/utils";
 import User from "./User";
+import OneSignalError from "../shared/errors/OneSignalError";
 
 export default class UserNamespace {
   private currentUser?: User;
   public userLoaded: Promise<void>;
 
   constructor(private coreDirector: CoreModuleDirector) {
-    this.userLoaded = new Promise(async (resolve, reject) => {
+    this.userLoaded = this.loadUser();
+  }
+
+  private async loadUser(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
       try {
         this.currentUser = new User(
           await this.coreDirector.getIdentityModel(),
@@ -20,12 +25,35 @@ export default class UserNamespace {
           await this.coreDirector.getSmsSubscriptionModels(),
           await this.coreDirector.getEmailSubscriptionModels(),
         );
+
         resolve();
       } catch (e) {
         reject(e);
       }
     });
   }
+
+  private async updateModelWithCurrentUserOneSignalId(model: OSModel<SupportedModel>): Promise<void> {
+    // silences typescript error below
+    if (!this.currentUser) {
+      throw new OneSignalError('User not loaded');
+    }
+
+    if (!this.currentUser.identity) {
+      throw new OneSignalError('User identity not loaded');
+    }
+
+    // wait for the user to be loaded
+    await this.userLoaded;
+
+    // wait for the user's onesignal id to be loaded
+    await this.currentUser.awaitOneSignalIdAvailable;
+
+    const { onesignalId } = this.currentUser.identity;
+    model.setOneSignalId(onesignalId);
+  }
+
+  /* P U B L I C   A P I  */
 
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
@@ -97,11 +125,7 @@ export default class UserNamespace {
       throw e;
     });
 
-    this.userLoaded.then(() => {
-      // user has loaded so it should be defined
-      const onesignalId = this.currentUser?.identity?.onesignalId as string;
-      newSubscription.setOneSignalId(onesignalId);
-    }).catch(e => {
+    this.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
       throw e;
     });
   }
@@ -123,11 +147,7 @@ export default class UserNamespace {
       throw e;
     });
 
-    this.userLoaded.then(() => {
-      // user has loaded so it should be defined
-      const onesignalId = this.currentUser?.identity?.onesignalId as string;
-      newSubscription.setOneSignalId(onesignalId);
-    }).catch(e => {
+    this.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
       throw e;
     });
   }
@@ -144,7 +164,9 @@ export default class UserNamespace {
       modelIds.forEach(async modelId => {
         const model = emailSubscriptions[modelId];
         if (model.data?.token === email) {
-          this.coreDirector.remove(ModelName.EmailSubscriptions, modelId);
+          this.coreDirector.remove(ModelName.EmailSubscriptions, modelId).catch(e => {
+            throw e;
+          });
         }
       });
     }).catch(e => {
@@ -164,7 +186,9 @@ export default class UserNamespace {
       modelIds.forEach(async modelId => {
         const model = smsSubscriptions[modelId];
         if (model.data?.token === smsNumber) {
-          this.coreDirector.remove(ModelName.SmsSubscriptions, modelId);
+          this.coreDirector.remove(ModelName.SmsSubscriptions, modelId).catch(e => {
+            throw e;
+          });
         }
       });
     }).catch(e => {
