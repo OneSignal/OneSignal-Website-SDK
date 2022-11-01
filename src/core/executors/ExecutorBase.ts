@@ -18,6 +18,8 @@ export default abstract class ExecutorBase {
   protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
   protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
 
+  private onlineStatus: boolean = true;
+
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
   static RETRY_COUNT = 5;
@@ -34,6 +36,9 @@ export default abstract class ExecutorBase {
         this._processOperationQueue.call(this);
       }
     }, ExecutorBase.OPERATIONS_BATCH_PROCESSING_TIME * 1_000);
+
+    window.addEventListener("online", this._onNetworkChange.bind(this, true));
+    window.addEventListener("offline", this._onNetworkChange.bind(this, false));
 
     this._executeAdd = executorConfig.add;
     this._executeUpdate = executorConfig.update;
@@ -100,10 +105,12 @@ export default abstract class ExecutorBase {
 
       if (operation) {
         OperationCache.enqueue(operation);
-        // TO DO: check if online. no point in trying to execute if offline
-        this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(err => {
-          Log.error(err);
-        });
+
+        if (this.onlineStatus) {
+          this._processOperation(operation, ExecutorBase.RETRY_COUNT).catch(err => {
+            Log.error(err);
+          });
+        }
       }
     }
   }
@@ -136,6 +143,15 @@ export default abstract class ExecutorBase {
       } else {
         OperationCache.delete(operation?.operationId);
       }
+    }
+  }
+
+  private _onNetworkChange(online: boolean): void {
+    logMethodCall("ExecutorBase._onNetworkChange", { online });
+    this.onlineStatus = online;
+
+    if (online) {
+      this._processOperationQueue.call(this);
     }
   }
 }
