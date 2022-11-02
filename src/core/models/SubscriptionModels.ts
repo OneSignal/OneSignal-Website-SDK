@@ -23,8 +23,6 @@ export interface FutureSubscriptionModel {
   token?: string; // maps to legacy player.identifier
   enabled?: boolean;
   notification_types?: number;
-  session_time?: number;
-  session_counts?: number;
   sdk?: string;
   device_model?: string;
   device_os?: string;
