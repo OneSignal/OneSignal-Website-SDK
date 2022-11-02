@@ -41,7 +41,17 @@ export default class User {
     };
 
     this.identity = new OSModel<IdentityModel>(ModelName.Identity, data, undefined);
+
+    // set the onesignal id on the OSModel class-level property
     this.identity.setOneSignalId(data.onesignalId);
+
+    /**
+     * Set the onesignal id on the OSModel `data` property
+     * To keep the `OSModel` class model-agnostic, we do not want to add any Identity Model-specific code in the
+     * `setOneSignalId` function.Therefore, we must manually set the onesignal id on the `data` property as well
+     */
+    // TO DO: cover with unit test
+    this.identity.data["onesignalId"] = data.onesignalId;
 
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);
