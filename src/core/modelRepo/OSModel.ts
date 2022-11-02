@@ -29,6 +29,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
       });
   }
 
+  /**
+   * Sets the class-level onesignalId property.
+   * IMPORTANT: this function does not update the model's `data` property.
+   * @param onesignalId - The OneSignal ID to set.
+   */
   public setOneSignalId(onesignalId?: string): void {
     logMethodCall("setOneSignalId", { onesignalId });
     this.onesignalId = onesignalId;
@@ -65,7 +70,10 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     this.broadcast(new ModelStoreHydrated(this.modelId, this));
   }
 
-
+  /**
+   * Prepares model for storage in IndexedDB via ModelCache.
+   * @returns An encoded version of the model.
+   */
   public encode(): EncodedModel {
     const modelId = this.modelId as string;
     const modelName = this.modelName;
@@ -73,6 +81,11 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     return { modelId, modelName, onesignalId, ...this.data };
   }
 
+  /**
+   * Creates a new OSModel of type `modelName` from an encoded model with same `data` and `modelId`.
+   * @param encodedModel - An encoded model from IndexedDB.
+   * @returns OSModel object
+   */
   static decode(encodedModel: EncodedModel): OSModel<SupportedModel> {
     logMethodCall("decode", { encodedModel });
     const { modelId, modelName, onesignalId, ...data } = encodedModel;
