@@ -19,10 +19,14 @@ export default class User {
     public smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
     public emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
   ) {
-    // initialize new user
+
+    // if not loaded from cache, initialize new user
     if (!identity) {
-      this.createNewUser();
+      identity = this.createNewUser();
     }
+
+    // copy the onesignal id promise to the user
+    this.awaitOneSignalIdAvailable = identity.awaitOneSignalIdAvailable;
 
     // initialize user properties
     if (!userProperties) {
@@ -30,7 +34,7 @@ export default class User {
     }
   }
 
-  private createNewUser(): void {
+  private createNewUser(): OSModel<IdentityModel> {
     // TO DO: create user and get fresh onesignalId
     const data = {
       onesignalId: "123", // mock data
@@ -43,10 +47,8 @@ export default class User {
       Log.error(e);
     });
 
-    // copy the onesignal id promise to the user
-    this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
-
     // TO DO: populate subscription models also
+    return this.identity;
   }
 
   private createUserProperties(): void {
