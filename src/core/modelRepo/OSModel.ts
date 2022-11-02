@@ -7,7 +7,7 @@ import { ModelStoreChange, ModelStoreHydrated, ModelStoreUpdated } from "../mode
 import { logMethodCall } from "../../shared/utils/utils";
 
 export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
-  data?: Model;
+  data: Model;
   modelId: string;
 
   onesignalId?: string;
@@ -16,7 +16,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
 
   constructor(
     readonly modelName: ModelName,
-    data?: Model,
+    data: Model,
     modelId?: string
     ) {
       super();
