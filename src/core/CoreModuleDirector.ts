@@ -66,7 +66,7 @@ export class CoreModuleDirector {
     return modelStores.smsSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
-  public async getPushSubscriptionModels(): Promise<OSModel<SupportedSubscription> | undefined> {
+  public async getPushSubscriptionModel(): Promise<OSModel<SupportedSubscription> | undefined> {
     logMethodCall("CoreModuleDirector.getPushSubscriptionModels");
     await this.initPromise;
     const modelStores = await this.getModelStores();

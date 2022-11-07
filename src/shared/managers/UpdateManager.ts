@@ -173,7 +173,7 @@ export class UpdateManager {
     }
 
     if (deviceId) {
-      return await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
+      await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, payload);
     }
   }
 

@@ -21,7 +21,7 @@ export default class UserNamespace {
         this._currentUser = User.createOrGetInstance(
           await this.coreDirector.getIdentityModel(),
           await this.coreDirector.getPropertiesModel(),
-          await this.coreDirector.getPushSubscriptionModels(),
+          await this.coreDirector.getPushSubscriptionModel(),
           await this.coreDirector.getSmsSubscriptionModels(),
           await this.coreDirector.getEmailSubscriptionModels(),
         );
