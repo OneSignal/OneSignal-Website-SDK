@@ -14,9 +14,9 @@ export default abstract class ExecutorBase {
   protected _deltaQueue: CoreDelta<SupportedModel>[] = [];
   protected _operationQueue: Operation<SupportedModel>[] = [];
 
-  protected _executeAdd?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
-  protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
-  protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult>;
+  protected _executeAdd?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
+  protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
+  protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
 
   private onlineStatus: boolean = true;
 
@@ -117,7 +117,9 @@ export default abstract class ExecutorBase {
 
   private async _processOperation(operation: Operation<SupportedModel>, retries: number): Promise<void> {
     logMethodCall("ExecutorBase._processOperation", { operation, retries });
-    let res: ExecutorResult = { success: false, retriable: true };
+
+
+    let res: ExecutorResult<SupportedModel> = { success: false, retriable: true };
 
     if (operation?.changeType === CoreChangeType.Add) {
       res = await this._executeAdd?.call(this, operation);
