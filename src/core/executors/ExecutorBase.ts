@@ -118,6 +118,8 @@ export default abstract class ExecutorBase {
   private async _processOperation(operation: Operation<SupportedModel>, retries: number): Promise<void> {
     logMethodCall("ExecutorBase._processOperation", { operation, retries });
 
+    // TO DO: fix optional model object. should always be defined on operation
+    await operation.model?.awaitOneSignalIdAvailable;
 
     let res: ExecutorResult<SupportedModel> = { success: false, retriable: true };
 
