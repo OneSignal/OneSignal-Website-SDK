@@ -1,4 +1,4 @@
-import OneSignalError from "src/shared/errors/OneSignalError";
+import OneSignalError from "../../shared/errors/OneSignalError";
 import { IdentityModel } from "../models/IdentityModel";
 import { SubscriptionModel } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";

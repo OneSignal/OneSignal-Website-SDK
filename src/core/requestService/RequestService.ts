@@ -15,7 +15,7 @@ export class RequestService {
    * @param alias - alias label & id
    * @returns user properties object, identity object, and subscription objects
    */
-  static getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static async getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
     return OneSignalApiBase.get(`user/by/${alias.label}/${alias.id}`);
   }
 

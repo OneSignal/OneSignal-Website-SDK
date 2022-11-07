@@ -52,14 +52,14 @@ import { IdentityModel } from "../core/models/IdentityModel";
 import { SupportedSubscription } from "../core/models/SubscriptionModels";
 
 export default class OneSignal {
-  private static async initializeCoreModuleAndUserNamespace() {
+  private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
     OneSignal.user = new UserNamespace(OneSignal.coreDirector);
     await OneSignal.user.userLoaded;
   }
 
-  private static async initializeConfig(options: AppUserConfig) {
+  private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
@@ -170,8 +170,8 @@ export default class OneSignal {
 
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
-    await OneSignal.initializeConfig(options);
-    await OneSignal.initializeCoreModuleAndUserNamespace();
+    await OneSignal._initializeConfig(options);
+    await OneSignal._initializeCoreModuleAndUserNamespace();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");

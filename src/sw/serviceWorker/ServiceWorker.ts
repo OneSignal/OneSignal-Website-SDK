@@ -344,16 +344,16 @@ export class ServiceWorker {
    * @param notification A JSON object containing notification details.
    * @returns {Promise}
    */
-  static async sendConfirmedDelivery(notification: any): Promise<Response | null> {
+  static async sendConfirmedDelivery(notification: any): Promise<void> {
     if (!notification)
-      return null;
+      return;
 
     if (!ServiceWorker.browserSupportsConfirmedDelivery())
       return null;
 
     // Received receipts enabled?
     if (notification.rr !== "y")
-      return null;
+      return;
 
     const appId = await ServiceWorker.getAppId();
     const { deviceId } = await Database.getSubscription();
@@ -362,7 +362,7 @@ export class ServiceWorker {
     // In rare case we don't have it we can still report as confirmed to backend to increment count
     const hasRequiredParams = !!(appId && notification.id);
     if (!hasRequiredParams) {
-      return null;
+      return;
     }
 
     // JSON.stringify() does not include undefined values
@@ -378,7 +378,7 @@ export class ServiceWorker {
     })`, Utils.getConsoleStyle('code'));
 
     await awaitableTimeout(Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000));
-    return await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
+    await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
   }
 
   /**

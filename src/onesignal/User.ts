@@ -9,9 +9,9 @@ import Log from "../shared/libraries/Log";
 
 export default class User {
   identified: boolean = false;
-  awaitOneSignalIdAvailable: Promise<void> | undefined = new Promise<void>(() => {});
+  awaitOneSignalIdAvailable?: Promise<void> = new Promise<void>(() => {});
 
-  static singletonInstance: User | undefined = undefined;
+  static singletonInstance?: User = undefined;
 
   private constructor(
     public identity?: OSModel<IdentityModel>,
