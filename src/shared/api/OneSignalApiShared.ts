@@ -48,8 +48,8 @@ export default class OneSignalApiShared {
     const serializedDeviceRecord = deviceRecord.serialize();
     Utils.enforceAppId(serializedDeviceRecord.app_id);
     const response = await OneSignalApiBase.post(`players`, serializedDeviceRecord);
-    if (response && response.success)
-      return response.id;
+    if (response && response.result.success)
+      return response.result.id;
     return null;
   }
 
@@ -61,7 +61,7 @@ export default class OneSignalApiShared {
       parent_player_id: emailProfile.subscriptionId,
       identifier_auth_hash: emailProfile.identifierAuthHash ? emailProfile.identifierAuthHash : undefined
     });
-    if (response && response.success) {
+    if (response && response.result.success) {
       return true;
     } else {
       return false;
@@ -77,9 +77,9 @@ export default class OneSignalApiShared {
       Utils.enforceAppId(serializedDeviceRecord.app_id);
       Utils.enforcePlayerId(userId);
       const response = await OneSignalApiBase.post(`players/${userId}/on_session`, serializedDeviceRecord);
-      if (response.id) {
+      if (response?.result.id) {
         // A new user ID can be returned
-        return response.id;
+        return response?.result.id;
       } else {
         return userId;
       }

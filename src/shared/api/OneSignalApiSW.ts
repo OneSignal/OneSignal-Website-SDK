@@ -9,8 +9,9 @@ import { OneSignalApiBase } from "./OneSignalApiBase";
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
     Utils.enforceAppId(appId);
-    return await new Promise<ServerAppConfig>((resolve, _reject) => {
-      resolve(OneSignalApiBase.get(`sync/${appId}/web`, null));
+    return await new Promise<ServerAppConfig>(async (resolve, _reject) => {
+      const response = await OneSignalApiBase.get(`sync/${appId}/web`, null);
+      resolve(response?.result);
     });
   }
 
@@ -50,11 +51,11 @@ export class OneSignalApiSW {
     serializedDeviceRecord: FlattenedDeviceRecord,
   ): Promise<string> {
     const funcToExecute = async () => {
-      const response = await OneSignalApiBase.post(
-        `players/${userId}/on_session`, serializedDeviceRecord);
-      if (response.id) {
+      const response = await OneSignalApiBase.post(`players/${userId}/on_session`, serializedDeviceRecord);
+
+      if (response?.result.id) {
         // A new user ID can be returned
-        return response.id;
+        return response?.result.id;
       } else {
         return userId;
       }
