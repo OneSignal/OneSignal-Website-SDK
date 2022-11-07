@@ -1,7 +1,10 @@
-import { logMethodCall } from "src/shared/utils/utils";
+import OneSignalApiBaseResult from "../../shared/api/OneSignalApiBaseResult";
+import { logMethodCall } from "../../shared/utils/utils";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import ExecutorResult from "../executors/ExecutorResult";
+import { IdentityModel } from "../models/IdentityModel";
 import { Operation } from "../operationRepo/Operation";
+import { isIdentityObject } from "../utils/typePredicates";
 import { processIdentityOperation } from "./helpers";
 import { RequestService } from "./RequestService";
 
@@ -10,22 +13,16 @@ import { RequestService } from "./RequestService";
  * These static functions are what are ultimately invoked by the operation processing logic in the Executor class
  */
 export default class IdentityRequests {
-  static async addIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult> {
+  static async addIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("addIdentity", operation);
 
     const { identity, aliasPair } = processIdentityOperation(operation);
 
-    try {
-      const result = await RequestService.identifyUser(aliasPair, identity);
-
-      return new ExecutorResult(true, true, result);
-    } catch (e) {
-      return new ExecutorResult(false, true);
-    }
+    const response = await RequestService.identifyUser(aliasPair, identity);
+    return this._processIdentityResponse(response);
   }
 
-
-  static async removeIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult> {
+  static async removeIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("removeIdentity", operation);
 
     if (!operation.payload) {
@@ -40,12 +37,24 @@ export default class IdentityRequests {
 
     const { aliasPair } = processIdentityOperation(operation);
 
-    try {
-      const result = await RequestService.deleteAlias(aliasPair, labelToRemove);
+    const response = await RequestService.deleteAlias(aliasPair, labelToRemove);
+    return this._processIdentityResponse(response);
+  }
 
-      return new ExecutorResult(true, true, result);
-    } catch (e) {
-      return new ExecutorResult(false, true);
+  private static _processIdentityResponse(response?: OneSignalApiBaseResult): ExecutorResult<IdentityModel> {
+    if (!response) {
+      throw new OneSignalError("processIdentityResponse: response is not defined");
     }
+
+    const { status, result } = response;
+
+    if (!isIdentityObject(result)) {
+      throw new OneSignalError(`processIdentityResponse: result ${result} is not an identity object`);
+    }
+
+    if (status >= 200 && status < 300) {
+      return new ExecutorResult(true, true, result);
+    }
+    return new ExecutorResult(false, true);
   }
 }

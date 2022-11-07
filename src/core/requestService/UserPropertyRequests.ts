@@ -11,7 +11,7 @@ import { RequestService } from "./RequestService";
  * These static functions are what are ultimately invoked by the operation processing logic in the Executor class
  */
 export default class UserPropertyRequests {
-  static async updateUserProperties<Model>(operation: Operation<Model>): Promise<ExecutorResult> {
+  static async updateUserProperties<Model>(operation: Operation<Model>): Promise<ExecutorResult<UserPropertiesModel>> {
     logMethodCall("UserPropertyRequests.updateUserProperties", operation);
 
     const propertiesModel = operation.model;
@@ -32,17 +32,25 @@ export default class UserPropertyRequests {
     // TO DO: get refreshDeviceMetaData from session service
     const refreshDeviceMetaData = true;
 
-    try {
-      const result = await RequestService.updateUser(aliasPair, {
-        properties,
-        refresh_device_metadata: refreshDeviceMetaData,
-        // TO DO: this would just be the session data, link into session service
-        deltas: operation.payload as Partial<UserPropertiesModel>
-      });
+    const response = await RequestService.updateUser(aliasPair, {
+      properties,
+      refresh_device_metadata: refreshDeviceMetaData,
+      // TO DO: this would just be the session data, link into session service
+      deltas: operation.payload as Partial<UserPropertiesModel>
+    });
+    return this._processUserPropertyResponse(response);
+  }
 
-      return new ExecutorResult(true, true, result);
-    } catch (e) {
-      return new ExecutorResult(false, true);
+  private static _processUserPropertyResponse(response?: any): ExecutorResult<UserPropertiesModel> {
+    if (!response) {
+      throw new Error("processUserPropertyResponse: response is not defined");
     }
+
+    const { status } = response;
+
+    if (status >= 200 && status < 300) {
+      return new ExecutorResult(true, true, response);
+    }
+    return new ExecutorResult(false, true);
   }
 }

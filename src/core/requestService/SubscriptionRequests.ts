@@ -1,5 +1,6 @@
 import { logMethodCall } from "../../shared/utils/utils";
 import ExecutorResult from "../executors/ExecutorResult";
+import { SupportedSubscription } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";
 import { processSubscriptionOperation } from "./helpers";
 import { RequestService } from "./RequestService";
@@ -9,45 +10,43 @@ import { RequestService } from "./RequestService";
  * These static functions are what are ultimately invoked by the operation processing logic in the Executor class
  */
 export default class SubscriptionRequests {
-  static async addSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult> {
+  static async addSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult<SupportedSubscription>> {
     logMethodCall("SubscriptionRequests.addSubscription", operation);
 
     const { subscription, aliasPair } = processSubscriptionOperation(operation);
 
-    try {
-      const result = await RequestService.createSubscription(aliasPair, subscription);
-
-      return new ExecutorResult(true, true, result);
-    } catch (e) {
-      return new ExecutorResult(false, true);
-    }
+    const response = await RequestService.createSubscription(aliasPair, subscription);
+    return this._processSubscriptionResponse(response);
   }
 
-  static async removeSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult> {
+  static async removeSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult<SupportedSubscription>> {
     logMethodCall("SubscriptionRequests.removeSubscription", operation);
 
     const { subscriptionId } = processSubscriptionOperation(operation);
 
-    try {
-      await RequestService.deleteSubscription(subscriptionId);
-
-      return new ExecutorResult(true, true);
-    } catch (e) {
-      return new ExecutorResult(false, true);
-    }
+    const response = await RequestService.deleteSubscription(subscriptionId);
+    return this._processSubscriptionResponse(response);
   }
 
-  static async updateSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult> {
+  static async updateSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult<SupportedSubscription>> {
     logMethodCall("SubscriptionRequests.updateSubscription", operation);
 
     const { subscription, subscriptionId } = processSubscriptionOperation(operation);
 
-    try {
-      const result = await RequestService.updateSubscription(subscriptionId, subscription);
+    const response = await RequestService.updateSubscription(subscriptionId, subscription);
+    return this._processSubscriptionResponse(response);
+  }
 
-      return new ExecutorResult(true, true, result);
-    } catch (e) {
-      return new ExecutorResult(false, true);
+  private static _processSubscriptionResponse(response?: any): ExecutorResult<SupportedSubscription> {
+    if (!response) {
+      throw new Error("processSubscriptionResponse: response is not defined");
     }
+
+    const { status, result } = response;
+
+    if (status >= 200 && status < 300) {
+      return new ExecutorResult(true, true, result);
+    }
+    return new ExecutorResult(false, true);
   }
 }
