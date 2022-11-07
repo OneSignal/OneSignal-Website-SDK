@@ -39,7 +39,7 @@ import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
-import CoreModule from "../../src/core/CoreModule";
+import CoreModule from "../core/CoreModule";
 import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
@@ -52,14 +52,14 @@ import { IdentityModel } from "../core/models/IdentityModel";
 import { SupportedSubscription } from "../core/models/SubscriptionModels";
 
 export default class OneSignal {
-  static async initializeCoreModuleAndUserNamespace() {
+  private static async initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
     OneSignal.user = new UserNamespace(OneSignal.coreDirector);
     await OneSignal.user.userLoaded;
   }
 
-  static async initializeConfig(options: AppUserConfig) {
+  private static async initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
