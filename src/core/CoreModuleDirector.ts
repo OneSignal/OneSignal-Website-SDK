@@ -7,6 +7,7 @@ import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
+import User from "../onesignal/User";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -18,6 +19,18 @@ export class CoreModuleDirector {
       Log.error(e);
     });
   }
+
+  /* L O G I N */
+
+  public async resetUser(): Promise<void> {
+    this.core.resetModelRepo();
+
+    const user = User.createOrGetInstance();
+    user.flushModelReferences();
+    await user.setupNewUser(true);
+  }
+
+  /* O P E R A T I O N S */
 
   public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean): Promise<void> {
     logMethodCall("CoreModuleDirector.add", { modelName, model });

@@ -4,6 +4,7 @@ import { OperationRepo } from "./operationRepo/OperationRepo";
 import { OSModelStoreFactory } from "./modelRepo/OSModelStoreFactory";
 import Log from "../shared/libraries/Log";
 import { logMethodCall } from "../shared/utils/utils";
+import { SupportedModel } from "./models/SupportedModels";
 
 export default class CoreModule {
   public modelRepo?: ModelRepo;
@@ -35,5 +36,11 @@ export default class CoreModule {
   public async init(){
     logMethodCall("CoreModule.init");
     await this.initPromise;
+  }
+
+  public resetModelRepo() {
+    logMethodCall("CoreModule.resetModelRepo");
+    const modelStores = OSModelStoreFactory.build<SupportedModel>();
+    this.modelRepo = new ModelRepo(this.modelCache, modelStores);
   }
 }
