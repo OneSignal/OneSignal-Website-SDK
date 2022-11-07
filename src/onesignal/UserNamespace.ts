@@ -8,23 +8,24 @@ import User from "./User";
 import OneSignalError from "../shared/errors/OneSignalError";
 
 export default class UserNamespace {
-  private currentUser?: User;
+  private _currentUser?: User;
   public userLoaded: Promise<void>;
 
   constructor(private coreDirector: CoreModuleDirector) {
-    this.userLoaded = this.loadUser();
+    this.userLoaded = this._loadUser();
   }
 
-  private async loadUser(): Promise<void> {
+  private async _loadUser(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        this.currentUser = new User(
+        this._currentUser = User.createOrGetInstance(
           await this.coreDirector.getIdentityModel(),
           await this.coreDirector.getPropertiesModel(),
           await this.coreDirector.getPushSubscriptionModels(),
           await this.coreDirector.getSmsSubscriptionModels(),
           await this.coreDirector.getEmailSubscriptionModels(),
         );
+        await this._currentUser.setupNewUser();
 
         resolve();
       } catch (e) {
@@ -33,13 +34,13 @@ export default class UserNamespace {
     });
   }
 
-  private async updateModelWithCurrentUserOneSignalId(model: OSModel<SupportedModel>): Promise<void> {
+  private async _updateModelWithCurrentUserOneSignalId(model: OSModel<SupportedModel>): Promise<void> {
     // silences typescript error below
-    if (!this.currentUser) {
+    if (!this._currentUser) {
       throw new OneSignalError('User not loaded');
     }
 
-    if (!this.currentUser.identity) {
+    if (!this._currentUser.identity) {
       throw new OneSignalError('User identity not loaded');
     }
 
@@ -47,9 +48,9 @@ export default class UserNamespace {
     await this.userLoaded;
 
     // wait for the user's onesignal id to be loaded
-    await this.currentUser.awaitOneSignalIdAvailable;
+    await this._currentUser.awaitOneSignalIdAvailable;
 
-    const { onesignalId } = this.currentUser.identity;
+    const { onesignalId } = this._currentUser.identity;
     model.setOneSignalId(onesignalId);
   }
 
@@ -125,7 +126,7 @@ export default class UserNamespace {
       throw e;
     });
 
-    this.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
+    this._updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
       throw e;
     });
   }
@@ -147,7 +148,7 @@ export default class UserNamespace {
       throw e;
     });
 
-    this.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
+    this._updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
       throw e;
     });
   }
