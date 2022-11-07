@@ -87,6 +87,7 @@ export class OneSignalApiBase {
     return undefined;
   }
 
+  /** TO DO: remove for user model */
   private static identifyError(error: any) {
     if (!error || !error.errors) {
       return 'no-error';
