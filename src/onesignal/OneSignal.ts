@@ -44,6 +44,12 @@ import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
 import LocalStorage from "../shared/utils/LocalStorage";
+import AliasPair from "../core/requestService/AliasPair";
+import { RequestService } from "../core/requestService/RequestService";
+import OneSignalError from "../shared/errors/OneSignalError";
+import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
+import { IdentityModel } from "../core/models/IdentityModel";
+import { SupportedSubscription } from "../core/models/SubscriptionModels";
 
 export default class OneSignal {
   static async initializeCoreModuleAndUserNamespace() {
@@ -64,6 +70,95 @@ export default class OneSignal {
 
     OneSignal.context = new Context(appConfig);
     OneSignal.config = OneSignal.context.appConfig;
+  }
+
+  /**
+   * Login user
+   * @PublicApi
+   *
+   * When logging in, we must set a new blank temporary user that will be able to hold potential changes following the
+   * login call (e.g: addTag) while we wait for the result of the login call (in particular the final `onesignal_id`).
+   *
+   * After the call completes, we should fetch the user and hydrate the models with updated data.
+   *
+   * Finally, we should transfer the push subscription if the `externalId` already exists on the target login user.
+   *
+   *          anon -> identified   |   identified -> identified
+   *          -------------------------------------------------
+   *  success: fetch user data     |   fetch user data
+   *                               |   transfer push subscription
+   *                               |   merge users (v2)
+   *          -------------------------------------------------
+   *  failure: fetch user data     |   fetch user data
+   *           transfer push sub   |   transfer push subscription
+   *           merge users (v2)    |   merge users (v2)
+   *
+   * @param externalId - The external user ID to set
+   * @param token - The JWT auth token to use when setting the external user ID
+   */
+  static async login(externalId: string, token?: string): Promise<void> {
+    logMethodCall('login', { externalId, token });
+
+    // TO DO: set the JWT token
+
+    const identity = await this.coreDirector.getIdentityModel();
+
+    if (!identity) {
+      throw new OneSignalError("Login failed: no identity found");
+    }
+
+    const isIdentified = identity.data.externalId !== undefined;
+
+    // clear user model references to allow other model changes to enqueue while login is in progress
+    await this.coreDirector.resetUser();
+
+    const aliasPair = new AliasPair("externalId", externalId);
+
+    try {
+      const identifyUserResponse = await RequestService.identifyUser(aliasPair, identity.data);
+
+      if (!!identifyUserResponse) {
+        const { status: identifyUserStatus, result: identifyUserResult } = identifyUserResponse;
+
+        // fetch
+        const getUserResponse = await RequestService.getUser(
+          new AliasPair("onesignalId", identifyUserResult.onesignalId)
+          );
+        const getUserResult = getUserResponse?.result as {
+          properties: UserPropertiesModel,
+          identity: IdentityModel,
+          subscriptions: SupportedSubscription[]
+        };
+
+        // success
+        if (identifyUserStatus === 200) {
+          if (isIdentified) {
+            // transfer push subscription
+            const subscriptionId: string = "00000000-0000-0000-0000-000000000000"; // TO DO: get subscription ID
+            // TO DO: confirm we should delete orphan
+            await RequestService.transferSubscription(subscriptionId, getUserResult.identity, false);
+
+            // TODO: handle merging of users
+          }
+
+          return;
+        }
+
+        // external id already exists
+        if (identifyUserStatus === 403) {
+          Log.info(`Provided label, id pair exists on another user`);
+          // transfer push subscription
+          const subscriptionId: string = "00000000-0000-0000-0000-000000000000"; // TO DO: get subscription ID
+          // TO DO: confirm we should delete orphan
+          await RequestService.transferSubscription(subscriptionId, getUserResult.identity, false);
+
+          // TODO: handle merging of users
+          return;
+        }
+      }
+    } catch (e) {
+      Log.error(e);
+    }
   }
 
   /**
