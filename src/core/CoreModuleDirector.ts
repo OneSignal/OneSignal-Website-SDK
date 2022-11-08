@@ -8,6 +8,7 @@ import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
+import GetUserResult from "./models/GetUserResult";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -28,6 +29,42 @@ export class CoreModuleDirector {
     const user = User.createOrGetInstance();
     user.flushModelReferences();
     await user.setupNewUser(true);
+  }
+
+  public async hydrateUser(user: GetUserResult): Promise<void> {
+    logMethodCall("CoreModuleDirector.hydrateUser", { user });
+    await this.initPromise;
+    const identity = await this.getIdentityModel();
+    const properties = await this.getPropertiesModel();
+
+    identity?.hydrate(user.identity);
+    properties?.hydrate(user.properties);
+
+    this._hydrateSubscriptions(user.subscriptions).catch(e => {
+      Log.error(`Error hydrating subscriptions: ${e}`);
+    });
+  }
+
+  private async _hydrateSubscriptions(subscriptions: SupportedSubscription[]): Promise<void> {
+    logMethodCall("CoreModuleDirector._hydrateSubscriptions", { subscriptions });
+    await this.initPromise;
+    const modelStores = await this.getModelStores();
+
+    const getModelName = (subscription: SupportedSubscription) => {
+      if (subscription.type === "Email") {
+        return ModelName.EmailSubscriptions;
+      } else if (subscription.type === "SMS") {
+        return ModelName.SmsSubscriptions;
+      } else {
+        return ModelName.PushSubscriptions;
+      }
+    };
+
+    subscriptions.forEach(subscription => {
+      const modelName = getModelName(subscription);
+      const model = new OSModel<SupportedModel>(modelName, subscription);
+      modelStores[modelName].add(model, true);
+    });
   }
 
   /* O P E R A T I O N S */
