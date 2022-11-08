@@ -205,7 +205,7 @@ class MockOneSignal implements IOneSignal {
 test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params", async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.sendTags(...) directly like a site developer would
+  // Call OneSignal.user.addTags(...) directly like a site developer would
   const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
 
   // Set our fake mock to as window.OneSignal
@@ -317,7 +317,7 @@ class MockOneSignalWithPromiseControl {
 test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.sendTags(...) directly like a site developer may have done
+  // Call OneSignal.user.addTags(...) directly like a site developer may have done
   const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
 
   // Set our fake mock to as window.OneSignal
@@ -341,7 +341,7 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", 
 test("Test ReplayCallsOnOneSignal replays ES6 calls executing reject promise", async t => {
   // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.sendTags(...) directly like a site developer may have done
+  // Call OneSignal.user.addTags(...) directly like a site developer may have done
   const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
 
   // Set our fake mock to as window.OneSignal
