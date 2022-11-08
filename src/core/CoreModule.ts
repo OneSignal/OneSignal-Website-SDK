@@ -42,5 +42,6 @@ export default class CoreModule {
     logMethodCall("CoreModule.resetModelRepo");
     const modelStores = OSModelStoreFactory.build<SupportedModel>();
     this.modelRepo = new ModelRepo(this.modelCache, modelStores);
+    this.operationRepo?.setModelRepoAndResubscribe(this.modelRepo);
   }
 }
