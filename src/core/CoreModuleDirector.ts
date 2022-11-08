@@ -40,13 +40,23 @@ export class CoreModuleDirector {
     identity?.hydrate(user.identity);
     properties?.hydrate(user.properties);
 
-    this._hydrateSubscriptions(user.subscriptions).catch(e => {
+    const { onesignalId } = user.identity;
+
+    identity?.setOneSignalId(onesignalId);
+    properties?.setOneSignalId(onesignalId);
+
+    this._hydrateSubscriptions(user.subscriptions, onesignalId).catch(e => {
       Log.error(`Error hydrating subscriptions: ${e}`);
     });
   }
 
-  private async _hydrateSubscriptions(subscriptions: SupportedSubscription[]): Promise<void> {
+  private async _hydrateSubscriptions(subscriptions: SupportedSubscription[], onesignalId: string): Promise<void> {
     logMethodCall("CoreModuleDirector._hydrateSubscriptions", { subscriptions });
+
+    if (!subscriptions) {
+      return;
+    }
+
     await this.initPromise;
     const modelStores = await this.getModelStores();
 
@@ -63,6 +73,7 @@ export class CoreModuleDirector {
     subscriptions.forEach(subscription => {
       const modelName = getModelName(subscription);
       const model = new OSModel<SupportedModel>(modelName, subscription);
+      model.setOneSignalId(onesignalId);
       modelStores[modelName].add(model, true);
     });
   }
