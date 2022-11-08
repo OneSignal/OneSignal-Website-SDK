@@ -50,6 +50,7 @@ import OneSignalError from "../shared/errors/OneSignalError";
 import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
 import { IdentityModel } from "../core/models/IdentityModel";
 import { SupportedSubscription } from "../core/models/SubscriptionModels";
+import GetUserResult from "src/core/models/GetUserResult";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -124,11 +125,12 @@ export default class OneSignal {
         const getUserResponse = await RequestService.getUser(
           new AliasPair("onesignalId", identifyUserResult.onesignalId)
           );
-        const getUserResult = getUserResponse?.result as {
-          properties: UserPropertiesModel,
-          identity: IdentityModel,
-          subscriptions: SupportedSubscription[]
-        };
+        const getUserResult: GetUserResult = getUserResponse?.result;
+
+        // hydrate models
+        this.coreDirector.hydrateUser(getUserResult).catch(e => {
+          Log.error("Error hydrating user after login", e);
+        });
 
         // success
         if (identifyUserStatus === 200) {
