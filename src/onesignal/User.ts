@@ -19,10 +19,14 @@ export default class User {
     public smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
     public emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
   ) {
-    // initialize new user
+
+    // if not loaded from cache, initialize new user
     if (!identity) {
-      this.createNewUser();
+      identity = this.createNewUser();
     }
+
+    // copy the onesignal id promise to the user
+    this.awaitOneSignalIdAvailable = identity.awaitOneSignalIdAvailable;
 
     // initialize user properties
     if (!userProperties) {
@@ -30,23 +34,31 @@ export default class User {
     }
   }
 
-  private createNewUser(): void {
+  private createNewUser(): OSModel<IdentityModel> {
     // TO DO: create user and get fresh onesignalId
     const data = {
       onesignalId: "123", // mock data
     };
 
     this.identity = new OSModel<IdentityModel>(ModelName.Identity, data, undefined);
+
+    // set the onesignal id on the OSModel class-level property
     this.identity.setOneSignalId(data.onesignalId);
+
+    /**
+     * Set the onesignal id on the OSModel `data` property
+     * To keep the `OSModel` class model-agnostic, we do not want to add any Identity Model-specific code in the
+     * `setOneSignalId` function.Therefore, we must manually set the onesignal id on the `data` property as well
+     */
+    // TO DO: cover with unit test
+    this.identity.data["onesignalId"] = data.onesignalId;
 
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);
     });
 
-    // copy the onesignal id promise to the user
-    this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
-
     // TO DO: populate subscription models also
+    return this.identity;
   }
 
   private createUserProperties(): void {

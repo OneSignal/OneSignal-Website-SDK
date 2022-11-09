@@ -61,12 +61,12 @@ export class Operation<Model> {
   }
 
   static async fromJSON(json: any): Promise<Operation<SupportedModel> | void> {
-    const { operationId, payload, modelName, changeType, timestamp } = json;
-    const model = await OneSignal.coreDirector?.getModelByTypeAndId(modelName, payload?.modelId);
+    const { operationId, payload, modelName, changeType, timestamp, model } = json;
+    const osModel = await OneSignal.coreDirector?.getModelByTypeAndId(modelName, model.modelId);
 
-    if (!!model) {
+    if (!!osModel) {
       const operation = new Operation<SupportedModel>(changeType, modelName);
-      operation.model = model;
+      operation.model = osModel;
       operation.operationId = operationId;
       operation.timestamp = timestamp;
       operation.payload = payload;
