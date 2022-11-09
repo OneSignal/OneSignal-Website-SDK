@@ -48,7 +48,7 @@ export default class UserPropertyRequests {
 
     const { status } = response;
 
-    if (status === 200) {
+    if (status >= 200 && status < 300) {
       return new ExecutorResult(true, true, response);
     }
     return new ExecutorResult(false, true);
