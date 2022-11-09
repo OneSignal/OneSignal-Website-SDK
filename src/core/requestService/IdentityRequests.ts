@@ -52,7 +52,7 @@ export default class IdentityRequests {
       throw new OneSignalError(`processIdentityResponse: result ${result} is not an identity object`);
     }
 
-    if (status === 200) {
+    if (status >= 200 && status < 300) {
       return new ExecutorResult(true, true, result);
     }
     return new ExecutorResult(false, true);

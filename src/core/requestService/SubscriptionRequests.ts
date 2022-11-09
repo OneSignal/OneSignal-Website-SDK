@@ -44,7 +44,7 @@ export default class SubscriptionRequests {
 
     const { status, result } = response;
 
-    if (status === 200) {
+    if (status >= 200 && status < 300) {
       return new ExecutorResult(true, true, result);
     }
     return new ExecutorResult(false, true);
