@@ -6,6 +6,7 @@ import { FutureSubscriptionModel, SubscriptionModel } from "../models/Subscripti
 import { isIdentityObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
 import { UpdateUserPayload } from "./UpdateUserPayload";
+import UserData from "../models/UserData";
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
