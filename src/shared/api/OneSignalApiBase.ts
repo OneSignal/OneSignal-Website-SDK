@@ -71,30 +71,10 @@ export class OneSignalApiBase {
     const { status } = response;
     const json = await response.json();
 
-      return {
-        result: json,
-        status
-      };
-
-    const error = OneSignalApiBase.identifyError(json);
-    if (error === 'no-user-id-error') {
-      // TODO: This returns undefined
-    } else {
-      return Promise.reject(json);
-    }
-  }
-
-  /** TO DO: remove for user model */
-  private static identifyError(error: any) {
-    if (!error || !error.errors) {
-      return 'no-error';
-    }
-    const errors = error.errors;
-    if (Utils.contains(errors, 'No user with this id found') ||
-        Utils.contains(errors, 'Could not find app_id for given player id.')) {
-      return 'no-user-id-error';
-    }
-    return 'unknown-error';
+    return {
+      result: json,
+      status
+    };
   }
 }
 
