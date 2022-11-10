@@ -1,3 +1,4 @@
+import Log from "../../shared/libraries/Log";
 import { logMethodCall } from "../../shared/utils/utils";
 import { SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
@@ -21,14 +22,15 @@ export default class OperationCache {
       const rawOperation = rawOperations[i];
 
       try {
-        // return an operation object with correct refernces (in particular reference to the model)
-        const operation = await Operation.fromJSON(rawOperation);
+        // return an operation object with correct references (in particular reference to the model)
+        const operation = await Operation.getInstanceWithModelReference(rawOperation);
 
         if (operation) {
           operations.push(operation as Operation<SupportedModel>);
         }
       } catch (e) {
-        console.error(`Could not parse operation ${rawOperation.operationId} from cache`, e);
+        Log.error(`Could not parse operation ${rawOperation.operationId} from cache`, e);
+        this.delete(rawOperation.operationId);
       }
     }
     return operations.sort((a, b) => a.timestamp - b.timestamp);
