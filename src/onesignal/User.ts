@@ -112,6 +112,7 @@ export default class User {
     }
 
     this.identity = new OSModel<IdentityModel>(ModelName.Identity, data, undefined);
+    this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
 
     /**
      * If we are not creating a local temp user, we should set the real id on the identity model
