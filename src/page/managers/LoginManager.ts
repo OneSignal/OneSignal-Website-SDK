@@ -32,17 +32,17 @@ export default class LoginManager {
     const properties = await OneSignal.coreDirector.getPropertiesModel();
     const subscriptions = await OneSignal.coreDirector.getAllSubscriptionsModels();
 
-    const requestBody: Partial<UserData> = {};
-    requestBody.identity = identity?.data;
-    requestBody.properties = properties?.data;
-    requestBody.subscriptions = subscriptions?.map(subscription => subscription.data);
+    const userData: Partial<UserData> = {};
+    userData.identity = identity?.data;
+    userData.properties = properties?.data;
+    userData.subscriptions = subscriptions?.map(subscription => subscription.data);
 
-    return requestBody as UserData;
+    return userData as UserData;
   }
 
-  static async upsertUser(requestBody: UserData): Promise<UserData> {
+  static async upsertUser(userData: UserData): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser");
-    const response = await RequestService.createUser(requestBody);
+    const response = await RequestService.createUser(userData);
     const result = response?.result;
     const status = response?.status;
 
