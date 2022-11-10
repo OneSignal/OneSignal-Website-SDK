@@ -2,10 +2,10 @@ import { IdentityModel } from "./IdentityModel";
 import { SupportedSubscription } from "./SubscriptionModels";
 import { UserPropertiesModel } from "./UserPropertiesModel";
 
-type GetUserResult = {
+type UserData = {
   properties: UserPropertiesModel,
   identity: IdentityModel,
   subscriptions: SupportedSubscription[]
 };
 
-export default GetUserResult;
+export default UserData;
