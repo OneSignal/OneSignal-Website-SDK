@@ -1,4 +1,4 @@
-import OneSignalApiBaseResult from "../../shared/api/OneSignalApiBaseResult";
+import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 import { logMethodCall } from "../../shared/utils/utils";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import ExecutorResult from "../executors/ExecutorResult";
@@ -41,7 +41,7 @@ export default class IdentityRequests {
     return this._processIdentityResponse(response);
   }
 
-  private static _processIdentityResponse(response?: OneSignalApiBaseResult): ExecutorResult<IdentityModel> {
+  private static _processIdentityResponse(response?: OneSignalApiBaseResponse): ExecutorResult<IdentityModel> {
     if (!response) {
       throw new OneSignalError("processIdentityResponse: response is not defined");
     }

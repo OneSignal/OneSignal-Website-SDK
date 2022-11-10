@@ -2,35 +2,35 @@ import Utils from "../context/Utils";
 import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApiError";
 import Environment from "../helpers/Environment";
 import SdkEnvironment from "../managers/SdkEnvironment";
-import OneSignalApiBaseResult from "./OneSignalApiBaseResult";
+import OneSignalApiBaseResponse from "./OneSignalApiBaseResponse";
 
 type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export class OneSignalApiBase {
-  static get(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static get(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
 
-  static post(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static post(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.call('POST', action, data, headers);
   }
 
-  static put(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static put(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.call('PUT', action, data, headers);
   }
 
   static delete(action: string, data?: any, headers?: Headers | undefined):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse | undefined> {
       return OneSignalApiBase.call('DELETE', action, data, headers);
   }
 
-  static patch(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static patch(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
   private static call(method: SupportedMethods, action: string, data: any, headers: Headers | undefined):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse | undefined> {
       if (method === "GET") {
         if (action.indexOf("players") > -1 && action.indexOf("app_id=") === -1) {
           console.error("Calls to player api are not permitted without app_id");
@@ -66,7 +66,7 @@ export class OneSignalApiBase {
       return OneSignalApiBase.executeFetch(url, contents);
   }
 
-  private static async executeFetch(url: string, contents: RequestInit): Promise<OneSignalApiBaseResult | undefined> {
+  private static async executeFetch(url: string, contents: RequestInit): Promise<OneSignalApiBaseResponse | undefined> {
     const response = await fetch(url, contents);
     const { status } = response;
     const json = await response.json();

@@ -1,4 +1,4 @@
-import OneSignalApiBaseResult from "../../shared/api/OneSignalApiBaseResult";
+import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import OneSignalApiBase from "../../shared/api/OneSignalApiBase";
 import { IdentityModel } from "../models/IdentityModel";
@@ -11,7 +11,7 @@ import UserData from "../models/UserData";
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
 
-  static createUser(requestBody: UserData): Promise<OneSignalApiBaseResult | undefined> {
+  static createUser(requestBody: UserData): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.post(`user`, requestBody);
   }
 
@@ -20,7 +20,7 @@ export class RequestService {
    * @param alias - alias label & id
    * @returns user properties object, identity object, and subscription objects
    */
-  static getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static getUser(alias: AliasPair): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.get(`user/by/${alias.label}/${alias.id}`);
   }
 
@@ -31,7 +31,7 @@ export class RequestService {
    * @param refreshDeviceMetaData - if true, updates ip, country, & last active
    * @returns properties object
    */
-  static updateUser(alias: AliasPair, payload: UpdateUserPayload): Promise<OneSignalApiBaseResult | undefined> {
+  static updateUser(alias: AliasPair, payload: UpdateUserPayload): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.patch(`user/by/${alias.label}/${alias.id}`, payload);
   }
 
@@ -39,7 +39,7 @@ export class RequestService {
    * Removes the user identified by the given alias pair, and all subscriptions and aliases
    * @param alias - alias label & id
    */
-  static deleteUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static deleteUser(alias: AliasPair): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.delete(`user/by/${alias.label}/${alias.id}`);
   }
 
@@ -51,7 +51,7 @@ export class RequestService {
    * @param identity - identity object
    * @returns identity object
    */
-  static identifyUser(alias: AliasPair, identity: IdentityModel): Promise<OneSignalApiBaseResult | undefined> {
+  static identifyUser(alias: AliasPair, identity: IdentityModel): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.put(`user/by/${alias.label}/${alias.id}/identity`, {
       identity
     });
@@ -62,7 +62,7 @@ export class RequestService {
    * @param alias - alias label & id
    * @returns identity object
    */
-  static getUserIdentity(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static getUserIdentity(alias: AliasPair): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.get(`user/by/${alias.label}/${alias.id}/identity`);
   }
 
@@ -72,7 +72,7 @@ export class RequestService {
    * @param labelToRemove - alias label to remove
    * @returns identity object
    */
-  static deleteAlias(alias: AliasPair, labelToRemove: string): Promise<OneSignalApiBaseResult | undefined> {
+  static deleteAlias(alias: AliasPair, labelToRemove: string): Promise<OneSignalApiBaseResponse | undefined> {
     const identity = OneSignalApiBase.delete(`user/by/${alias.label}/${alias.id}/identity/${labelToRemove}`);
 
     if (isIdentityObject(identity)) {
@@ -91,7 +91,7 @@ export class RequestService {
    * @returns subscription object
    */
   static createSubscription(alias: AliasPair, subscription: FutureSubscriptionModel):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse | undefined> {
       return OneSignalApiBase.post(`user/by/${alias.label}/${alias.id}/subscription`, subscription);
   }
 
@@ -102,7 +102,7 @@ export class RequestService {
    * @returns subscription object
    */
   static updateSubscription(subscriptionId: string, subscription: Partial<SubscriptionModel>):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse | undefined> {
       return OneSignalApiBase.patch(`subscriptions/${subscriptionId}`, subscription);
   }
 
@@ -111,7 +111,7 @@ export class RequestService {
    * Creates an "orphan" user record if the user has no other subscriptions.
    * @param subscriptionId - subscription id
    */
-  static deleteSubscription(subscriptionId: string): Promise<OneSignalApiBaseResult | undefined> {
+  static deleteSubscription(subscriptionId: string): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.delete(`subscriptions/${subscriptionId}`);
   }
 
@@ -120,7 +120,7 @@ export class RequestService {
    * @param subscriptionId - subscription id
    * @returns identity object
    */
-  static fetchAliasesForSubscription(subscriptionId: string): Promise<OneSignalApiBaseResult | undefined> {
+  static fetchAliasesForSubscription(subscriptionId: string): Promise<OneSignalApiBaseResponse | undefined> {
     return OneSignalApiBase.get(`subscriptions/${subscriptionId}/identity`);
   }
 
@@ -131,7 +131,7 @@ export class RequestService {
    * @returns identity object
    */
   static identifyUserForSubscription(subscriptionId: string, identity: IdentityModel):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse | undefined> {
       return OneSignalApiBase.put(`user/by/subscriptions/${subscriptionId}/identity`, identity);
   }
 
@@ -148,7 +148,7 @@ export class RequestService {
   static transferSubscription(
     subscriptionId: string,
     identity: IdentityModel,
-    retainPreviousOwner: boolean): Promise<OneSignalApiBaseResult | undefined> {
+    retainPreviousOwner: boolean): Promise<OneSignalApiBaseResponse | undefined> {
       return OneSignalApiBase.put(`subscriptions/${subscriptionId}/owner`, {
         identity,
         retain_previous_owner: retainPreviousOwner
