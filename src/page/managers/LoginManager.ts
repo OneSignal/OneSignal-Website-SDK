@@ -113,9 +113,25 @@ export default class LoginManager {
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
     logMethodCall("LoginManager.fetchAndHydrate");
 
+    /* TO DO: uncomment
     const fetchUserResponse = await RequestService.getUser(
       new AliasPair("onesignalId", onesignalId)
     );
+    */
+    const fetchUserResponse = {
+      result: {
+        identity: {
+          onesignalId,
+          externalId: "99999",
+        },
+        properties: {
+          tags: {
+            tag1: "tag1",
+          },
+        },
+        subscriptions: [],
+      },
+    };
 
     await OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result).catch(e => {
       Log.error("Error hydrating user models", e);
