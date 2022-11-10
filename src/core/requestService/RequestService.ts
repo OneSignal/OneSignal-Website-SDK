@@ -10,6 +10,10 @@ import { UpdateUserPayload } from "./UpdateUserPayload";
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
 
+  static async createUser(requestBody: UserData): Promise<OneSignalApiBaseResult | undefined> {
+    return OneSignalApiBase.post(`user`, requestBody);
+  }
+
   /**
    * Returns the user's properties, aliases, and subscriptions
    * @param alias - alias label & id
