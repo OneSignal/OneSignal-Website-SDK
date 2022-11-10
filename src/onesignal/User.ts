@@ -1,6 +1,6 @@
 import Environment from "../shared/helpers/Environment";
 import { OSModel } from "../core/modelRepo/OSModel";
-import { IdentityModel } from "../core/models/IdentityModel";
+import { SupportedIdentity } from "../core/models/IdentityModel";
 import { SupportedSubscription } from "../core/models/SubscriptionModels";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
@@ -14,7 +14,7 @@ export default class User {
   static singletonInstance?: User = undefined;
 
   private constructor(
-    public identity?: OSModel<IdentityModel>,
+    public identity?: OSModel<SupportedIdentity>,
     public userProperties?: OSModel<UserPropertiesModel>,
     // TO DO: explore option to consolidate into a single subscriptions property
     // Might have to make changes to avoid iteration to find correct model we want to modify
@@ -41,7 +41,7 @@ export default class User {
    * @returns - User singleton
    */
   static createOrGetInstance(
-    identity?: OSModel<IdentityModel>,
+    identity?: OSModel<SupportedIdentity>,
     userProperties?: OSModel<UserPropertiesModel>,
     pushSubscriptions?: OSModel<SupportedSubscription>,
     smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
@@ -96,13 +96,11 @@ export default class User {
    * @param isTemporaryLocal - used when creating a local-only user while logging in
    * @returns identity model
    */
-  private async _createAnonymousUser(isTemporaryLocal?: boolean): Promise<OSModel<IdentityModel>> {
+  private async _createAnonymousUser(isTemporaryLocal?: boolean): Promise<OSModel<SupportedIdentity>> {
     let data;
 
     if (isTemporaryLocal) {
-      data = {
-        onesignalId: "123", // mock data
-      };
+      data = {};
     } else {
       // TO DO: create user with HTTP request and get fresh onesignalId
       data = {
@@ -111,7 +109,7 @@ export default class User {
       };
     }
 
-    this.identity = new OSModel<IdentityModel>(ModelName.Identity, data, undefined);
+    this.identity = new OSModel<SupportedIdentity>(ModelName.Identity, data);
     this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
 
     /**
