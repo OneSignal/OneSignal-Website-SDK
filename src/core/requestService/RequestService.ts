@@ -11,7 +11,7 @@ import UserData from "../models/UserData";
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
 
-  static async createUser(requestBody: UserData): Promise<OneSignalApiBaseResult | undefined> {
+  static createUser(requestBody: UserData): Promise<OneSignalApiBaseResult | undefined> {
     return OneSignalApiBase.post(`user`, requestBody);
   }
 
@@ -20,7 +20,7 @@ export class RequestService {
    * @param alias - alias label & id
    * @returns user properties object, identity object, and subscription objects
    */
-  static async getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
     return OneSignalApiBase.get(`user/by/${alias.label}/${alias.id}`);
   }
 
@@ -51,8 +51,8 @@ export class RequestService {
    * @param identity - identity object
    * @returns identity object
    */
-  static async identifyUser(alias: AliasPair, identity: IdentityModel): Promise<OneSignalApiBaseResult | undefined> {
-    return await OneSignalApiBase.put(`user/by/${alias.label}/${alias.id}/identity`, {
+  static identifyUser(alias: AliasPair, identity: IdentityModel): Promise<OneSignalApiBaseResult | undefined> {
+    return OneSignalApiBase.put(`user/by/${alias.label}/${alias.id}/identity`, {
       identity
     });
   }
@@ -62,7 +62,7 @@ export class RequestService {
    * @param alias - alias label & id
    * @returns identity object
    */
-  static async getUserIdentity(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static getUserIdentity(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
     return OneSignalApiBase.get(`user/by/${alias.label}/${alias.id}/identity`);
   }
 

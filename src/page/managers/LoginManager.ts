@@ -19,7 +19,7 @@ export default class LoginManager {
     identityOSModel.set('externalId', externalId, false);
   }
 
-  static isIdentified(identity: IdentityModel): boolean{
+  static isIdentified(identity: IdentityModel): boolean {
     logMethodCall("LoginManager.isIdentified");
 
     return identity.externalId !== undefined;
@@ -71,8 +71,7 @@ export default class LoginManager {
     if (identifyResponseStatus && identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
       Log.info("identifyUser succeeded");
     } else if (identifyResponseStatus === 409) {
-      Log.warn("identifyUser failed: externalId already exists");
-      Log.info("Attempting to transfer push subscription...");
+      Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
 
       const subscriptionId = ""; // TO DO: get subscriptionId
       const retainPreviousOwner = false;
@@ -90,6 +89,8 @@ export default class LoginManager {
       }
     }
 
+    // TO DO: if 409s, we may include an error in the result and not just the identity object of existing owner of alias
+    // so we need to make sure to get the identity object from the result correctly
     const identityResult = identifyUserResponse?.result;
     return { identity: identityResult };
   }
