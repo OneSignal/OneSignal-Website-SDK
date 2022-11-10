@@ -39,21 +39,23 @@ import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
-import CoreModule from "../../src/core/CoreModule";
+import CoreModule from "../core/CoreModule";
 import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
 import LocalStorage from "../shared/utils/LocalStorage";
+import OneSignalError from "../shared/errors/OneSignalError";
+import LoginManager from "../page/managers/LoginManager";
 
 export default class OneSignal {
-  static async initializeCoreModuleAndUserNamespace() {
+  private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
     OneSignal.user = new UserNamespace(OneSignal.coreDirector);
     await OneSignal.user.userLoaded;
   }
 
-  static async initializeConfig(options: AppUserConfig) {
+  private static async _initializeConfig(options: AppUserConfig) {
     const appConfig = await new ConfigManager().getAppConfig(options);
     Log.debug(`OneSignal: Final web app config: %c${JSON.stringify(appConfig, null, 4)}`, getConsoleStyle('code'));
 
@@ -67,6 +69,75 @@ export default class OneSignal {
   }
 
   /**
+   * Login user
+   * @PublicApi
+   *
+   * When logging in, we must set a new blank temporary user that will be able to hold potential changes following the
+   * login call (e.g: addTag) while we wait for the result of the login call (in particular the final `onesignal_id`).
+   *
+   * After the call completes, we should fetch the user and hydrate the models with updated data.
+   *
+   * Finally, we should transfer the push subscription if the `externalId` already exists on the target login user.
+   *
+   *          anon -> identified   |   identified -> identified
+   *          -------------------------------------------------
+   *  success: fetch user data     |   fetch user data
+   *                               |   transfer push subscription
+   *                               |   merge users (v2)
+   *          -------------------------------------------------
+   *  failure: fetch user data     |   fetch user data
+   *           transfer push sub   |   transfer push subscription
+   *           merge users (v2)    |   merge users (v2)
+   *
+   * @param externalId - The external user ID to set
+   * @param token - The JWT auth token to use when setting the external user ID
+   */
+  static async login(externalId: string, token?: string): Promise<void> {
+    logMethodCall('login', { externalId, token });
+
+    try {
+      // TO DO: set JWT token
+
+      const identityModel = await this.coreDirector.getIdentityModel();
+      const currentExternalId = identityModel?.data?.externalId;
+
+      // if the current externalId is the same as the one we're trying to set, do nothing
+      if (currentExternalId === externalId) {
+        Log.debug('Login: External ID already set, skipping login');
+        return;
+      }
+
+      if (!identityModel) {
+        throw new OneSignalError('Login: No identity model found');
+      }
+
+      const isIdentified = LoginManager.isIdentified(identityModel.data);
+
+      // set the external id on the user locally
+      LoginManager.setExternalId(identityModel, externalId);
+
+      const userData = await LoginManager.getAllUserData();
+      await this.coreDirector.resetUser();
+
+      LoginManager.identifyOrUpsertUser(userData, isIdentified).then(async result => {
+        const { identity } = result;
+        const onesignalId = identity?.onesignalId;
+
+        if (!onesignalId) {
+          throw new OneSignalError('Login: No OneSignal ID found');
+        }
+        await LoginManager.fetchAndHydrate(onesignalId);
+      })
+      .catch(error => {
+        throw new OneSignalError(`Login: Error while identifying or upserting user: ${error}`);
+      });
+    } catch (e) {
+      Log.error(e);
+      throw e;
+    }
+  }
+
+  /**
    * Initializes the SDK, called by the developer.
    * @PublicApi
    */
@@ -75,8 +146,8 @@ export default class OneSignal {
 
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
-    await OneSignal.initializeConfig(options);
-    await OneSignal.initializeCoreModuleAndUserNamespace();
+    await OneSignal._initializeConfig(options);
+    await OneSignal._initializeCoreModuleAndUserNamespace();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
