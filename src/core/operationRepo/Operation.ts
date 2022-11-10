@@ -1,3 +1,4 @@
+import OneSignalError from "src/shared/errors/OneSignalError";
 import OneSignal from "../../onesignal/OneSignal";
 import { OSModel } from "../modelRepo/OSModel";
 import { CoreChangeType } from "../models/CoreChangeType";
@@ -60,19 +61,23 @@ export class Operation<Model> {
     return result;
   }
 
-  static async fromJSON(json: any): Promise<Operation<SupportedModel> | void> {
-    const { operationId, payload, modelName, changeType, timestamp, model } = json;
-    const osModel = await OneSignal.coreDirector?.getModelByTypeAndId(modelName, model.modelId);
+  static async getInstanceWithModelReference(rawOperation: Operation<SupportedModel>):
+    Promise<Operation<SupportedModel> | void> {
+      const { operationId, payload, modelName, changeType, timestamp, model } = rawOperation;
+      if (!model) {
+        throw new OneSignalError("Operation.fromJSON: model is undefined");
+      }
+      const osModel = await OneSignal.coreDirector?.getModelByTypeAndId(modelName, model.modelId);
 
-    if (!!osModel) {
-      const operation = new Operation<SupportedModel>(changeType, modelName);
-      operation.model = osModel;
-      operation.operationId = operationId;
-      operation.timestamp = timestamp;
-      operation.payload = payload;
-      return operation;
-    } else {
-      throw new Error("Could not find model. Is OneSignal initialized?");
-    }
+      if (!!osModel) {
+        const operation = new Operation<SupportedModel>(changeType, modelName);
+        operation.model = osModel;
+        operation.operationId = operationId;
+        operation.timestamp = timestamp;
+        operation.payload = payload;
+        return operation;
+      } else {
+        throw new Error("Could not find model. Is OneSignal initialized?");
+      }
   }
 }
