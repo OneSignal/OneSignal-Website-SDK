@@ -1,5 +1,5 @@
-import Utils from "../context/Utils";
 import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApiError";
+import OneSignalError from "../errors/OneSignalError";
 import Environment from "../helpers/Environment";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import OneSignalApiBaseResponse from "./OneSignalApiBaseResponse";
@@ -67,14 +67,18 @@ export class OneSignalApiBase {
   }
 
   private static async executeFetch(url: string, contents: RequestInit): Promise<OneSignalApiBaseResponse> {
-    const response = await fetch(url, contents);
-    const { status } = response;
-    const json = await response.json();
+    try {
+      const response = await fetch(url, contents);
+      const { status } = response;
+      const json = await response.json();
 
-    return {
-      result: json,
-      status
-    };
+      return {
+        result: json,
+        status
+      };
+    } catch (e) {
+      throw new OneSignalError(`OneSignalApiBase: failed to execute HTTP call: ${e}`);
+    }
   }
 }
 
