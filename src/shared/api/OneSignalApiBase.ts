@@ -71,12 +71,10 @@ export class OneSignalApiBase {
     const { status } = response;
     const json = await response.json();
 
-    if (status >= 200 && status < 300) {
       return {
         result: json,
         status
       };
-    }
 
     const error = OneSignalApiBase.identifyError(json);
     if (error === 'no-user-id-error') {
@@ -84,7 +82,6 @@ export class OneSignalApiBase {
     } else {
       return Promise.reject(json);
     }
-    return undefined;
   }
 
   /** TO DO: remove for user model */
