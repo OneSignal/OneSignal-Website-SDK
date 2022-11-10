@@ -44,13 +44,8 @@ import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
 import LocalStorage from "../shared/utils/LocalStorage";
-import AliasPair from "../core/requestService/AliasPair";
-import { RequestService } from "../core/requestService/RequestService";
 import OneSignalError from "../shared/errors/OneSignalError";
-import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
-import { IdentityModel } from "../core/models/IdentityModel";
-import { SupportedSubscription } from "../core/models/SubscriptionModels";
-import GetUserResult from "src/core/models/GetUserResult";
+import LoginManager from "../page/managers/LoginManager";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -100,66 +95,45 @@ export default class OneSignal {
   static async login(externalId: string, token?: string): Promise<void> {
     logMethodCall('login', { externalId, token });
 
-    // TO DO: set the JWT token
-
-    const identity = await this.coreDirector.getIdentityModel();
-
-    if (!identity) {
-      throw new OneSignalError("Login failed: no identity found");
-    }
-
-    const isIdentified = identity.data.externalId !== undefined;
-
-    // clear user model references to allow other model changes to enqueue while login is in progress
-    await this.coreDirector.resetUser();
-
-    const aliasPair = new AliasPair("externalId", externalId);
-
     try {
-      const identifyUserResponse = await RequestService.identifyUser(aliasPair, identity.data);
+      // TO DO: set JWT token
 
-      if (!!identifyUserResponse) {
-        const { status: identifyUserStatus, result: identifyUserResult } = identifyUserResponse;
+      const identityModel = await this.coreDirector.getIdentityModel();
+      const currentExternalId = identityModel?.data?.externalId;
 
-        // fetch
-        const getUserResponse = await RequestService.getUser(
-          new AliasPair("onesignalId", identifyUserResult.onesignalId)
-          );
-        const getUserResult: GetUserResult = getUserResponse?.result;
-
-        // hydrate models
-        this.coreDirector.hydrateUser(getUserResult).catch(e => {
-          Log.error("Error hydrating user after login", e);
-        });
-
-        // success
-        if (identifyUserStatus === 200) {
-          if (isIdentified) {
-            // transfer push subscription
-            const subscriptionId: string = "00000000-0000-0000-0000-000000000000"; // TO DO: get subscription ID
-            // TO DO: confirm we should delete orphan
-            await RequestService.transferSubscription(subscriptionId, getUserResult.identity, false);
-
-            // TODO: handle merging of users
-          }
-
-          return;
-        }
-
-        // external id already exists
-        if (identifyUserStatus === 403) {
-          Log.info(`Provided label, id pair exists on another user`);
-          // transfer push subscription
-          const subscriptionId: string = "00000000-0000-0000-0000-000000000000"; // TO DO: get subscription ID
-          // TO DO: confirm we should delete orphan
-          await RequestService.transferSubscription(subscriptionId, getUserResult.identity, false);
-
-          // TODO: handle merging of users
-          return;
-        }
+      // if the current externalId is the same as the one we're trying to set, do nothing
+      if (currentExternalId === externalId) {
+        Log.debug('Login: External ID already set, skipping login');
+        return;
       }
+
+      if (!identityModel) {
+        throw new OneSignalError('Login: No identity model found');
+      }
+
+      const isIdentified = LoginManager.isIdentified(identityModel.data);
+
+      // set the external id on the user locally
+      LoginManager.setExternalId(identityModel, externalId);
+
+      const userData = await LoginManager.getAllUserData();
+      await this.coreDirector.resetUser();
+
+      LoginManager.identifyOrUpsertUser(userData, isIdentified).then(async result => {
+        const { identity } = result;
+        const onesignalId = identity?.onesignalId;
+
+        if (!onesignalId) {
+          throw new OneSignalError('Login: No OneSignal ID found');
+        }
+        await LoginManager.fetchAndHydrate(onesignalId);
+      })
+      .catch(error => {
+        throw new OneSignalError(`Login: Error while identifying or upserting user: ${error}`);
+      });
     } catch (e) {
       Log.error(e);
+      throw e;
     }
   }
 
