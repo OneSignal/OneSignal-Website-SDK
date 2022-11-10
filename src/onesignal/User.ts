@@ -129,7 +129,7 @@ export default class User {
      * `setOneSignalId` function. Therefore, we must manually set the onesignal id on the `data` property as well
      */
     // TO DO: cover with unit test
-    this.identity.data["onesignalId"] = data.onesignalId;
+    this.identity.data.onesignalId = data.onesignalId;
 
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);
