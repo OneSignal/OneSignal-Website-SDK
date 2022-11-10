@@ -47,7 +47,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
    * We use this method to update the model data.
    * Results in a broadcasted update event.
    */
-  public set(property: StringKeys<Model>, newValue: any): void {
+  public set(property: StringKeys<Model>, newValue: any, propagate: boolean = true): void {
     logMethodCall("set", { property, newValue });
     let oldValue;
 
@@ -56,8 +56,10 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
       this.data[property] = newValue;
     }
 
-    const change = new ModelStoreUpdated(this.modelId, new OSModelUpdatedArgs(this, property, oldValue, newValue));
-    this.broadcast(change);
+    if (propagate) {
+      const change = new ModelStoreUpdated(this.modelId, new OSModelUpdatedArgs(this, property, oldValue, newValue));
+      this.broadcast(change);
+    }
   }
 
   /**

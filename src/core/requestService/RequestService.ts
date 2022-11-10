@@ -6,17 +6,35 @@ import { FutureSubscriptionModel, SubscriptionModel } from "../models/Subscripti
 import { isIdentityObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
 import { UpdateUserPayload } from "./UpdateUserPayload";
+import UserData from "../models/UserData";
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
+
+  static async createUser(requestBody: UserData): Promise<OneSignalApiBaseResult | undefined> {
+    return OneSignalApiBase.post(`user`, requestBody);
+  }
 
   /**
    * Returns the user's properties, aliases, and subscriptions
    * @param alias - alias label & id
    * @returns user properties object, identity object, and subscription objects
    */
-  static getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+  static async getUser(alias: AliasPair): Promise<OneSignalApiBaseResult | undefined> {
+    return {
+      status: 200,
+      result: {
+        identity: {
+          onesignalId: "1234",
+        },
+        properties: {
+        },
+        subscriptions: [],
+      }
+    };
+    /*
     return OneSignalApiBase.get(`user/by/${alias.label}/${alias.id}`);
+    */
   }
 
   /**
@@ -47,9 +65,17 @@ export class RequestService {
    * @returns identity object
    */
   static async identifyUser(alias: AliasPair, identity: IdentityModel): Promise<OneSignalApiBaseResult | undefined> {
+    return {
+      status: 200,
+      result: {
+        onesignalId: "1234",
+      }
+    };
+    /*
     return await OneSignalApiBase.put(`user/by/${alias.label}/${alias.id}/identity`, {
       identity
     });
+    */
   }
 
   /**

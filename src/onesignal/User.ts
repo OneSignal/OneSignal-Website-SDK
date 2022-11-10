@@ -112,6 +112,7 @@ export default class User {
     }
 
     this.identity = new OSModel<IdentityModel>(ModelName.Identity, data, undefined);
+    this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
 
     /**
      * If we are not creating a local temp user, we should set the real id on the identity model
@@ -129,7 +130,7 @@ export default class User {
      * `setOneSignalId` function. Therefore, we must manually set the onesignal id on the `data` property as well
      */
     // TO DO: cover with unit test
-    this.identity.data["onesignalId"] = data.onesignalId;
+    this.identity.data.onesignalId = data.onesignalId;
 
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);

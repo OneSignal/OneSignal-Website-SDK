@@ -8,7 +8,7 @@ import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
-import GetUserResult from "./models/GetUserResult";
+import UserData from "./models/UserData";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -31,7 +31,7 @@ export class CoreModuleDirector {
     await user.setupNewUser(true);
   }
 
-  public async hydrateUser(user: GetUserResult): Promise<void> {
+  public async hydrateUser(user: UserData): Promise<void> {
     logMethodCall("CoreModuleDirector.hydrateUser", { user });
     await this.initPromise;
     const identity = await this.getIdentityModel();
@@ -136,6 +136,19 @@ export class CoreModuleDirector {
     const modelStores = await this.getModelStores();
     const modelKeys = Object.keys(modelStores.properties.models);
     return modelStores.properties.models[modelKeys[0]] as OSModel<UserPropertiesModel>;
+  }
+
+  public async getAllSubscriptionsModels(): Promise<OSModel<SupportedSubscription>[]> {
+    logMethodCall("CoreModuleDirector.getAllSubscriptionsModels");
+    await this.initPromise;
+    const emailSubscriptions = await this.getEmailSubscriptionModels();
+    const smsSubscriptions = await this.getSmsSubscriptionModels();
+    const pushSubscription = await this.getPushSubscriptionModel();
+
+    const subscriptions = Object.values(emailSubscriptions)
+      .concat(Object.values(smsSubscriptions))
+      .concat(pushSubscription ? [pushSubscription] : []);
+    return subscriptions;
   }
 
   /* P R I V A T E */
