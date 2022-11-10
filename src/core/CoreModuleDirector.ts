@@ -138,6 +138,19 @@ export class CoreModuleDirector {
     return modelStores.properties.models[modelKeys[0]] as OSModel<UserPropertiesModel>;
   }
 
+  public async getAllSubscriptionsModels(): Promise<OSModel<SupportedSubscription>[]> {
+    logMethodCall("CoreModuleDirector.getAllSubscriptionsModels");
+    await this.initPromise;
+    const emailSubscriptions = await this.getEmailSubscriptionModels();
+    const smsSubscriptions = await this.getSmsSubscriptionModels();
+    const pushSubscription = await this.getPushSubscriptionModel();
+
+    const subscriptions = Object.values(emailSubscriptions)
+      .concat(Object.values(smsSubscriptions))
+      .concat(pushSubscription ? [pushSubscription] : []);
+    return subscriptions;
+  }
+
   /* P R I V A T E */
 
   private async getModelStores(): Promise<ModelStoresMap<SupportedModel>> {
