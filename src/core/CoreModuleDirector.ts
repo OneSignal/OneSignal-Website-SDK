@@ -8,7 +8,7 @@ import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
-import GetUserResult from "./models/GetUserResult";
+import UserData from "./models/UserData";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -31,7 +31,7 @@ export class CoreModuleDirector {
     await user.setupNewUser(true);
   }
 
-  public async hydrateUser(user: GetUserResult): Promise<void> {
+  public async hydrateUser(user: UserData): Promise<void> {
     logMethodCall("CoreModuleDirector.hydrateUser", { user });
     await this.initPromise;
     const identity = await this.getIdentityModel();
