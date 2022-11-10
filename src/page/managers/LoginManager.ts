@@ -94,12 +94,12 @@ export default class LoginManager {
     return { identity: identityResult };
   }
 
-  static async identifyOrUpsertUser(userData: UserData): Promise<Partial<UserData>> {
+  static async identifyOrUpsertUser(userData: UserData, isIdentified: boolean): Promise<Partial<UserData>> {
     logMethodCall("LoginManager.identifyOrUpsertUser");
 
     let result: Partial<UserData>;
 
-    if (LoginManager.isIdentified(userData.identity)) {
+    if (isIdentified) {
       // if started off identified, create a new user
       result = await LoginManager.upsertUser(userData);
     } else {

@@ -111,15 +111,18 @@ export default class OneSignal {
         throw new OneSignalError('Login: No identity model found');
       }
 
+      const isIdentified = LoginManager.isIdentified(identityModel.data);
+
       // set the external id on the user locally
       LoginManager.setExternalId(identityModel, externalId);
 
       const userData = await LoginManager.getAllUserData();
       await this.coreDirector.resetUser();
 
-      LoginManager.identifyOrUpsertUser(userData).then(async result => {
+      LoginManager.identifyOrUpsertUser(userData, isIdentified).then(async result => {
         const { identity } = result;
         const onesignalId = identity?.onesignalId;
+
         if (!onesignalId) {
           throw new OneSignalError('Login: No OneSignal ID found');
         }
