@@ -9,6 +9,7 @@ import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
 import UserData from "./models/UserData";
+import OneSignalError from "../shared/errors/OneSignalError";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -41,6 +42,10 @@ export class CoreModuleDirector {
     properties?.hydrate(user.properties);
 
     const { onesignalId } = user.identity;
+
+    if (!onesignalId) {
+      throw new OneSignalError("OneSignal ID is missing from user data");
+    }
 
     identity?.setOneSignalId(onesignalId);
     properties?.setOneSignalId(onesignalId);

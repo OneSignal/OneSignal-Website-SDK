@@ -32,8 +32,8 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
 
   return {
     subscription,
+    aliasPair: new AliasPair("onesignalId", subscriptionOSModel.onesignalId),
     subscriptionId,
-    aliasPair: new AliasPair("onesignalId", subscriptionOSModel.onesignalId)
   };
 }
 
