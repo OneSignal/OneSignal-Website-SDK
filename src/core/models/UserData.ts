@@ -1,10 +1,10 @@
-import { IdentityModel } from "./IdentityModel";
+import { SupportedIdentity } from "./IdentityModel";
 import { SupportedSubscription } from "./SubscriptionModels";
 import { UserPropertiesModel } from "./UserPropertiesModel";
 
 type UserData = {
   properties: UserPropertiesModel,
-  identity: IdentityModel,
+  identity: SupportedIdentity,
   subscriptions: SupportedSubscription[]
 };
 

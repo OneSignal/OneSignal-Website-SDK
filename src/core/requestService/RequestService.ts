@@ -1,7 +1,7 @@
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import OneSignalApiBase from "../../shared/api/OneSignalApiBase";
-import { IdentityModel } from "../models/IdentityModel";
+import { IdentityModel, SupportedIdentity } from "../models/IdentityModel";
 import { FutureSubscriptionModel, SubscriptionModel } from "../models/SubscriptionModels";
 import { isIdentityObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
@@ -51,7 +51,7 @@ export class RequestService {
    * @param identity - identity object
    * @returns identity object
    */
-  static identifyUser(alias: AliasPair, identity: IdentityModel): Promise<OneSignalApiBaseResponse>{
+  static identifyUser(alias: AliasPair, identity: SupportedIdentity): Promise<OneSignalApiBaseResponse>{
     return OneSignalApiBase.put(`user/by/${alias.label}/${alias.id}/identity`, {
       identity
     });
@@ -147,7 +147,7 @@ export class RequestService {
    */
   static transferSubscription(
     subscriptionId: string,
-    identity: IdentityModel,
+    identity: SupportedIdentity,
     retainPreviousOwner: boolean): Promise<OneSignalApiBaseResponse>{
       return OneSignalApiBase.put(`subscriptions/${subscriptionId}/owner`, {
         identity,
