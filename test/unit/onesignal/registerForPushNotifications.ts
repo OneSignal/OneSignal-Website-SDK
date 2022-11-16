@@ -39,6 +39,6 @@ test('registerForPushNotifications: after OneSignal.initialized', async t => {
   (global as any).OneSignal._initCalled = false;
 
   const spy = sandbox.stub(InitHelper, 'registerForPushNotifications').resolves();
-  await OneSignal.registerForPushNotifications();
+  await InitHelper.registerForPushNotifications();
   t.is(spy.calledOnce, true);
 });
