@@ -148,7 +148,7 @@ export default class EventHelper {
     }
   }
 
-  static triggerSubscriptionChanged(to) {
+  static triggerSubscriptionChanged(to: boolean) {
     OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
   }
 

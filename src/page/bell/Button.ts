@@ -4,6 +4,7 @@ import ActiveAnimatedElement from "./ActiveAnimatedElement";
 import Bell from "./Bell";
 import LimitStore from "../../shared/services/LimitStore";
 import Message from "./Message";
+import InitHelper from "../../shared/helpers/InitHelper";
 
 
 export default class Button extends ActiveAnimatedElement {
@@ -25,26 +26,26 @@ export default class Button extends ActiveAnimatedElement {
         this.onHovering();
         this.onTap();
       }, { passive: true });
-  
+
       element.addEventListener('mouseenter', () => {
         this.onHovering();
       });
-  
+
       element.addEventListener('mouseleave', () => {
         this.onHovered();
       });
       element.addEventListener('touchmove', () => {
         this.onHovered();
       }, { passive: true });
-  
+
       element.addEventListener('mousedown', () => {
         this.onTap();
       });
-  
+
       element.addEventListener('mouseup', () => {
         this.onEndTap();
       });
-  
+
       element.addEventListener('click', () => {
         this.onHovered();
         this.onClick();
@@ -94,7 +95,7 @@ export default class Button extends ActiveAnimatedElement {
       }
       else {
         // The user is actually subscribed, register him for notifications
-        OneSignal.registerForPushNotifications();
+        InitHelper.registerForPushNotifications();
         this.bell._ignoreSubscriptionState = true;
         OneSignal.emitter.once(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, () => {
           this.bell.message.display(
@@ -114,7 +115,7 @@ export default class Button extends ActiveAnimatedElement {
     else if (this.bell.blocked) {
       if (isUsingSubscriptionWorkaround()) {
         // Show the HTTP popup so users can re-allow notifications
-        OneSignal.registerForPushNotifications();
+        InitHelper.registerForPushNotifications();
       } else {
         this.bell.launcher.activateIfInactive().then(() => {
           this.bell.showDialogProcedure();

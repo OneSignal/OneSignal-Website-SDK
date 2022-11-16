@@ -35,7 +35,7 @@ export class RawPushSubscription implements Serializable {
       if (!!this.existingW3cPushSubscription.w3cEndpoint !== !!this.w3cEndpoint) {
         return true;
       }
-      if (!!this.existingW3cPushSubscription.w3cEndpoint && !!this.w3cEndpoint && 
+      if (!!this.existingW3cPushSubscription.w3cEndpoint && !!this.w3cEndpoint &&
         this.existingW3cPushSubscription.w3cEndpoint.toString() !== this.w3cEndpoint.toString()) {
           return true;
       }

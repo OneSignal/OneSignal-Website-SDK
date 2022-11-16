@@ -4,6 +4,7 @@ import { SubscriptionStateKind } from './SubscriptionStateKind';
 import { DeviceRecord, FlattenedDeviceRecord } from './DeviceRecord';
 import Environment from '../Environment';
 
+// TO DO: deprecate in favor of FuturePushSubscriptionRecord.ts
 export interface SerializedPushDeviceRecord extends FlattenedDeviceRecord {
   identifier?: string | null;
   web_auth?: string;

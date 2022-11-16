@@ -19,7 +19,7 @@ export default class IdentityRequests {
     const { identity, aliasPair } = processIdentityOperation(operation);
 
     const response = await RequestService.identifyUser(aliasPair, identity);
-    return this._processIdentityResponse(response);
+    return IdentityRequests._processIdentityResponse(response);
   }
 
   static async removeIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
@@ -38,7 +38,7 @@ export default class IdentityRequests {
     const { aliasPair } = processIdentityOperation(operation);
 
     const response = await RequestService.deleteAlias(aliasPair, labelToRemove);
-    return this._processIdentityResponse(response);
+    return IdentityRequests._processIdentityResponse(response);
   }
 
   private static _processIdentityResponse(response?: OneSignalApiBaseResponse): ExecutorResult<IdentityModel> {

@@ -147,6 +147,7 @@ export default class OneSignal {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
+    // TODO: move into delayedInit
     await OneSignal._initializeCoreModuleAndUserNamespace();
 
     if (!OneSignal.config) {
@@ -356,7 +357,7 @@ export default class OneSignal {
     // only new notifs that ought to be attributed
     const newNotifsToAttributeWithOutcome = await outcomesHelper.getNotifsToAttributeWithUniqueOutcome(notificationIds);
 
-    if(!outcomesHelper.shouldSendUnique(outcomeAttribution, newNotifsToAttributeWithOutcome)) {
+    if (!outcomesHelper.shouldSendUnique(outcomeAttribution, newNotifsToAttributeWithOutcome)) {
       Log.warn(`'${outcomeName}' was already reported for all notifications.`);
       return;
     }
@@ -371,7 +372,7 @@ export default class OneSignal {
   static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
   static slidedown = new SlidedownNamespace();
-  static user : UserNamespace;
+  static user: UserNamespace;
   /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
@@ -405,7 +406,7 @@ export default class OneSignal {
   static indexedDb = IndexedDb;
   static mainHelper = MainHelper;
   static subscriptionHelper = SubscriptionHelper;
-  static httpHelper =  HttpHelper;
+  static httpHelper = HttpHelper;
   static eventHelper = EventHelper;
   static initHelper = InitHelper;
   private static pendingInit: boolean = true;

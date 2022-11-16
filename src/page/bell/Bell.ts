@@ -175,6 +175,9 @@ export default class Bell {
         })
         .then(() => {
           return this.updateState();
+        })
+        .catch(e => {
+          throw e;
         });
     });
 
