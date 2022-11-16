@@ -25,11 +25,7 @@ export interface FutureSubscriptionModel {
   notification_types?: number;
   sdk?: string;
   device_model?: string;
-  device_os?: string;
-  rooted?: boolean;
-  test_type?: number;
-  app_version?: string;
-  net_type?: number;
+  device_os?: number;
   web_auth?: string;
   web_p256?: string;
 }
