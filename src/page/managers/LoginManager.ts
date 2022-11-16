@@ -6,10 +6,10 @@ import { RequestService } from "../../core/requestService/RequestService";
 import AliasPair from "../../core/requestService/AliasPair";
 import Log from "../../shared/libraries/Log";
 import { OSModel } from "../../core/modelRepo/OSModel";
-import { IdentityModel } from "../../core/models/IdentityModel";
+import { SupportedIdentity } from "../../core/models/IdentityModel";
 
 export default class LoginManager {
-  static setExternalId(identityOSModel: OSModel<IdentityModel>, externalId: string): void {
+  static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
     logMethodCall("LoginManager.setExternalId", { externalId });
 
     if (!identityOSModel) {
@@ -19,7 +19,7 @@ export default class LoginManager {
     identityOSModel.set('externalId', externalId, false);
   }
 
-  static isIdentified(identity: IdentityModel): boolean {
+  static isIdentified(identity: SupportedIdentity): boolean {
     logMethodCall("LoginManager.isIdentified");
 
     return identity.externalId !== undefined;
@@ -55,7 +55,7 @@ export default class LoginManager {
     return result;
   }
 
-  static async identifyUser(identity: IdentityModel): Promise<Partial<UserData>> {
+  static async identifyUser(identity: SupportedIdentity): Promise<Partial<UserData>> {
     logMethodCall("LoginManager.identifyUser", { identity });
 
     const { externalId } = identity;

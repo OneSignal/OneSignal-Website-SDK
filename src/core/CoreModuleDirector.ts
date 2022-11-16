@@ -2,7 +2,7 @@ import { logMethodCall } from "../shared/utils/utils";
 import Log from "../shared/libraries/Log";
 import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
-import { IdentityModel } from "./models/IdentityModel";
+import { SupportedIdentity } from "./models/IdentityModel";
 import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
@@ -122,12 +122,12 @@ export class CoreModuleDirector {
     return modelStores.pushSubscriptions.models[key] as OSModel<SupportedSubscription>;
   }
 
-  public async getIdentityModel(): Promise<OSModel<IdentityModel> | undefined> {
+  public async getIdentityModel(): Promise<OSModel<SupportedIdentity> | undefined> {
     logMethodCall("CoreModuleDirector.getIdentityModel");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     const modelKeys = Object.keys(modelStores.identity.models);
-    return modelStores.identity.models[modelKeys[0]] as OSModel<IdentityModel>;
+    return modelStores.identity.models[modelKeys[0]] as OSModel<SupportedIdentity>;
   }
 
   public async getPropertiesModel(): Promise<OSModel<UserPropertiesModel> | undefined> {
