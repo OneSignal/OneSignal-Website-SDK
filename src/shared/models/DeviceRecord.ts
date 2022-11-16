@@ -63,7 +63,7 @@ export abstract class DeviceRecord implements Serializable {
     const browser = OneSignalUtils.redetectBrowserUserAgent();
 
     if (this.isSafari()) {
-      return DeliveryPlatformKind.Safari;
+      return DeliveryPlatformKind.SafariLegacy;
     } else if (browser.firefox) {
       return DeliveryPlatformKind.Firefox;
     } else if (browser.msedge) {
