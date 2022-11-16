@@ -366,12 +366,10 @@ export class SubscriptionManager {
         case NotificationPermission.Default:
           Log.debug('Exiting subscription and not registering worker because the permission was dismissed.');
           OneSignal._sessionInitAlreadyRunning = false;
-          OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Dismissed);
         case NotificationPermission.Denied:
           Log.debug('Exiting subscription and not registering worker because the permission was blocked.');
           OneSignal._sessionInitAlreadyRunning = false;
-          OneSignal._isRegisteringForPush = false;
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
       }
     }
