@@ -6,10 +6,13 @@ import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/In
 import { isValidEmail, logMethodCall } from "../shared/utils/utils";
 import User from "./User";
 import OneSignalError from "../shared/errors/OneSignalError";
+import PushSubscriptionNamespace from "./PushSubscriptionNamespace";
 
 export default class UserNamespace {
   private _currentUser?: User;
   public userLoaded: Promise<void>;
+
+  readonly pushSubscription = new PushSubscriptionNamespace();
 
   constructor(private coreDirector: CoreModuleDirector) {
     this.userLoaded = this._loadUser();
