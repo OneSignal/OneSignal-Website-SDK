@@ -28,6 +28,11 @@ import SubscriptionError, { SubscriptionErrorReason } from "../errors/Subscripti
 import Log from "../libraries/Log";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import OneSignalApiShared from "../api/OneSignalApiShared";
+import OneSignal from "../../onesignal/OneSignal";
+import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
+import { OSModel } from "../../core/modelRepo/OSModel";
+import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
+import User from "../../onesignal/User";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -119,6 +124,13 @@ export class SubscriptionManager {
 
         } else {
           rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
+          const pushModel = new OSModel<SupportedModel>(
+            ModelName.PushSubscriptions,
+            new FuturePushSubscriptionRecord(rawPushSubscription)
+          );
+          const user = User.createOrGetInstance();
+          pushModel.setOneSignalId(user.identity?.onesignalId);
+          await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel);
         }
         break;
       default:

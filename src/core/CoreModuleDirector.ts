@@ -80,7 +80,7 @@ export class CoreModuleDirector {
 
   /* O P E R A T I O N S */
 
-  public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean): Promise<void> {
+  public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean = true): Promise<void> {
     logMethodCall("CoreModuleDirector.add", { modelName, model });
     const modelStores = await this.getModelStores();
     modelStores[modelName].add(model, propagate);
