@@ -147,8 +147,7 @@ export default class User {
     this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties);
 
     if (!isTemporaryLocal) {
-      // TO DO: fix user id
-      this.userProperties.setOneSignalId("00000000-0000-0000-0000-000000000000");
+      this.userProperties.setOneSignalId(this.identity?.onesignalId);
     }
 
     OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)
