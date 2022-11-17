@@ -1,36 +1,36 @@
-import Utils from "../context/Utils";
 import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApiError";
+import OneSignalError from "../errors/OneSignalError";
 import Environment from "../helpers/Environment";
 import SdkEnvironment from "../managers/SdkEnvironment";
-import OneSignalApiBaseResult from "./OneSignalApiBaseResult";
+import OneSignalApiBaseResponse from "./OneSignalApiBaseResponse";
 
 type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export class OneSignalApiBase {
-  static get(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static get(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
 
-  static post(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static post(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('POST', action, data, headers);
   }
 
-  static put(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static put(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PUT', action, data, headers);
   }
 
   static delete(action: string, data?: any, headers?: Headers | undefined):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse> {
       return OneSignalApiBase.call('DELETE', action, data, headers);
   }
 
-  static patch(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResult | undefined> {
+  static patch(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
   private static call(method: SupportedMethods, action: string, data: any, headers: Headers | undefined):
-    Promise<OneSignalApiBaseResult | undefined> {
+    Promise<OneSignalApiBaseResponse> {
       if (method === "GET") {
         if (action.indexOf("players") > -1 && action.indexOf("app_id=") === -1) {
           console.error("Calls to player api are not permitted without app_id");
@@ -66,38 +66,19 @@ export class OneSignalApiBase {
       return OneSignalApiBase.executeFetch(url, contents);
   }
 
-  private static async executeFetch(url: string, contents: RequestInit): Promise<OneSignalApiBaseResult | undefined> {
-    const response = await fetch(url, contents);
-    const { status } = response;
-    const json = await response.json();
+  private static async executeFetch(url: string, contents: RequestInit): Promise<OneSignalApiBaseResponse> {
+    try {
+      const response = await fetch(url, contents);
+      const { status } = response;
+      const json = await response.json();
 
-    if (status >= 200 && status < 300) {
       return {
         result: json,
         status
       };
+    } catch (e) {
+      throw new OneSignalError(`OneSignalApiBase: failed to execute HTTP call: ${e}`);
     }
-
-    const error = OneSignalApiBase.identifyError(json);
-    if (error === 'no-user-id-error') {
-      // TODO: This returns undefined
-    } else {
-      return Promise.reject(json);
-    }
-    return undefined;
-  }
-
-  /** TO DO: remove for user model */
-  private static identifyError(error: any) {
-    if (!error || !error.errors) {
-      return 'no-error';
-    }
-    const errors = error.errors;
-    if (Utils.contains(errors, 'No user with this id found') ||
-        Utils.contains(errors, 'Could not find app_id for given player id.')) {
-      return 'no-user-id-error';
-    }
-    return 'unknown-error';
   }
 }
 
