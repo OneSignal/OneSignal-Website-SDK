@@ -6,7 +6,6 @@ import { OutcomesConfig } from "../models/Outcomes";
 import { cancelableTimeout, CancelableTimeoutPromise } from '../../sw/helpers/CancelableTimeout';
 import Utils from "../context/Utils";
 import OutcomesHelper from "./OutcomesHelper";
-import { SecondaryChannelManager } from "../managers/channelManager/SecondaryChannelManager";
 import { OSServiceWorkerFields } from "../../sw/serviceWorker/types";
 import { NotificationClicked } from "../models/Notification";
 import { SessionOrigin, initializeNewSession, SessionStatus, Session } from "../models/Session";
@@ -183,10 +182,7 @@ export default class ServiceWorkerHelper {
       ]);
     }
 
-    // There isn't a OneSignal Global context to pull from so creating a new
-    //   SecondaryChannelManager instance.
-    const secondaryChannelManager = new SecondaryChannelManager();
-    await secondaryChannelManager.synchronizer.onSession();
+    // TO DO: send on sesion call
   }
 
   public static async finalizeSession(
@@ -209,10 +205,8 @@ export default class ServiceWorkerHelper {
         session.deviceType,
         attribution
       );
-      // There isn't a OneSignal Global context to pull from so creating a new
-      //   SecondaryChannelManager instance.
-      const secondaryChannelManager = new SecondaryChannelManager();
-      await secondaryChannelManager.synchronizer.onFocus(session.accumulatedDuration);
+
+      // TO DO: send on_focus call
     }
 
     await Promise.all([
