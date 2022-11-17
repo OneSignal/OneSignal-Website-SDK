@@ -14,7 +14,6 @@ import TagManager from '../managers/tagManager/TagManager';
 import { ITagManager } from '../managers/tagManager/types';
 import { ISlidedownManager } from '../managers/slidedownManager/types';
 import { SlidedownManager } from '../managers/slidedownManager/SlidedownManager';
-import { SecondaryChannelManager } from '../../shared/managers/channelManager/SecondaryChannelManager';
 import { AppConfig } from '../../shared/models/AppConfig';
 import MetricsManager from '../managers/MetricsManager';
 import { PromptsManager } from '../managers/PromptsManager';
@@ -42,14 +41,12 @@ export default class Context implements ContextInterface {
   public sessionManager: ISessionManager;
   public tagManager: ITagManager;
   public slidedownManager: ISlidedownManager;
-  public secondaryChannelManager: SecondaryChannelManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
     if (typeof OneSignal !== "undefined" && !!OneSignal.environmentInfo) {
       this.environmentInfo = OneSignal.environmentInfo;
     }
-    this.secondaryChannelManager = new SecondaryChannelManager();
     this.subscriptionManager = ContextHelper.getSubscriptionManager(this);
     this.serviceWorkerManager = ContextHelper.getServiceWorkerManager(this);
     this.pageViewManager = new PageViewManager();
@@ -58,7 +55,7 @@ export default class Context implements ContextInterface {
     this.updateManager = new UpdateManager(this);
     this.sessionManager = new SessionManager(this);
     this.tagManager = new TagManager(this);
-    this.slidedownManager = new SlidedownManager(this, this.secondaryChannelManager);
+    this.slidedownManager = new SlidedownManager(this);
     this.promptsManager = new PromptsManager(this);
     this.dynamicResourceLoader = new DynamicResourceLoader();
     this.metricsManager = new MetricsManager(appConfig.metrics.enable, appConfig.metrics.mixpanelReportingToken);

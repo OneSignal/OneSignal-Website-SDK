@@ -8,7 +8,6 @@ import ContextHelper from "../helpers/ContextHelper";
 import { UpdateManager } from "../managers/UpdateManager";
 import { ISessionManager } from "../managers/sessionManager/types";
 import { SessionManager } from "../../sw/managers/sessionManager/SessionManager";
-import { SecondaryChannelManager } from '../managers/channelManager/SecondaryChannelManager';
 
 
 // TODO: Ideally this file should only import classes used by ServiceWorker.ts.
@@ -24,7 +23,6 @@ export interface ContextSWInterface {
   permissionManager: PermissionManager;
   workerMessenger: WorkerMessenger;
   updateManager: UpdateManager;
-  secondaryChannelManager: SecondaryChannelManager;
 }
 
 export default class ContextSW implements ContextSWInterface {
@@ -36,7 +34,6 @@ export default class ContextSW implements ContextSWInterface {
   public permissionManager: PermissionManager;
   public workerMessenger: WorkerMessenger;
   public updateManager: UpdateManager;
-  public secondaryChannelManager: SecondaryChannelManager;
 
   constructor(appConfig: AppConfig) {
     this.appConfig = appConfig;
@@ -47,6 +44,5 @@ export default class ContextSW implements ContextSWInterface {
     this.permissionManager = new PermissionManager();
     this.workerMessenger = new WorkerMessenger(this);
     this.updateManager = new UpdateManager(this);
-    this.secondaryChannelManager = new SecondaryChannelManager();
   }
 }

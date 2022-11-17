@@ -21,7 +21,6 @@ import { DismissHelper } from "../../../shared/helpers/DismissHelper";
 import InitHelper, { RegisterOptions } from "../../../shared/helpers/InitHelper";
 import PromptsHelper from "../../../shared/helpers/PromptsHelper";
 import Log from "../../../shared/libraries/Log";
-import { SecondaryChannelManager } from "../../../shared/managers/channelManager/SecondaryChannelManager";
 import { DelayedPromptType } from "../../../shared/models/Prompts";
 import { AutoPromptOptions } from "../PromptsManager";
 import OneSignalError from "../../../shared/errors/OneSignalError";
@@ -35,7 +34,6 @@ export class SlidedownManager {
 
   constructor(
     context: ContextInterface,
-    private readonly secondaryChannelManager: SecondaryChannelManager
     ) {
     this.context = context;
     this.slidedownQueue = [];

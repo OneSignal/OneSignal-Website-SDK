@@ -132,13 +132,6 @@ export class UpdateManager {
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
     };
 
-    // 1. Update any secondary channels such as email with external_user_id
-    // Not awaiting as this may never complete, as promise only completes if we have a player record for each channel.
-    /* tslint:disable:no-floating-promises */
-    this.context.secondaryChannelManager.synchronizer.setExternalUserId(
-      payload.external_user_id,
-      payload.external_user_id_auth_hash
-    );
     /* tslint:enable:no-floating-promises */
 
     // 2. Update push player with external_user_id
@@ -149,8 +142,6 @@ export class UpdateManager {
   }
 
   public async sendTagsUpdate(tags: TagsObject<any>): Promise<void> {
-    this.context.secondaryChannelManager.synchronizer.setTags(tags);
-
     const options: UpdatePlayerOptions = { tags };
     const authHash = await Database.getExternalUserIdAuthHash();
     if (!!authHash) {
