@@ -92,10 +92,10 @@ export type WorkerMessengerPayload = Serializable | number | string | object | b
  */
 export class WorkerMessenger {
 
-  private context: ContextSWInterface;
+  private context?: ContextSWInterface;
   private replies: WorkerMessengerReplyBuffer;
 
-  constructor(context: ContextSWInterface,
+  constructor(context?: ContextSWInterface,
               replies: WorkerMessengerReplyBuffer = new WorkerMessengerReplyBuffer()) {
     this.context = context;
     this.replies = replies;
