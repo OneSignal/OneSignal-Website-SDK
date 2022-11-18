@@ -88,7 +88,7 @@ export class ServiceWorker {
    */
   static get workerMessenger(): WorkerMessenger {
     if (!(self as any).workerMessenger) {
-      (self as any).workerMessenger = new WorkerMessenger(null);
+      (self as any).workerMessenger = new WorkerMessenger();
     }
     return (self as any).workerMessenger;
   }
