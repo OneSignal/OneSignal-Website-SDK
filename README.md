@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/OneSignal/OneSignal-Website-SDK.svg?branch=master)](https://travis-ci.org/OneSignal/OneSignal-Website-SDK)
-
 <p align="center">
   <img src="https://media.onesignal.com/cms/Website%20Layout/logo-red.svg"/>
   <br/>
