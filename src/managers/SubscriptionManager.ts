@@ -582,7 +582,9 @@ export class SubscriptionManager {
     Log.debug('[Subscription Manager] Subscribing to web push with these options:', subscriptionOptions);
     try {
       const existingSubscription = await pushManager.getSubscription();
-      return [await pushManager.subscribe(subscriptionOptions), !existingSubscription];
+      const subscription = await pushManager.subscribe(subscriptionOptions);
+      window.pushManagerCall = async () => { await pushManager.subscribe(subscriptionOptions); };
+      return [subscription, !existingSubscription];
     } catch (e) {
       if (e.name == "InvalidStateError") {
         // This exception is thrown if the key for the existing applicationServerKey is different,
