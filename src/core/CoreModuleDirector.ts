@@ -10,6 +10,7 @@ import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
 import UserData from "./models/UserData";
 import OneSignalError from "../shared/errors/OneSignalError";
+import OneSignal from "../onesignal/OneSignal";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -30,6 +31,7 @@ export class CoreModuleDirector {
     const user = User.createOrGetInstance();
     user.flushModelReferences();
     await user.setupNewUser(true);
+    await OneSignal.user.pushSubscription._resubscribeToPushModelChanges();
   }
 
   public async hydrateUser(user: UserData): Promise<void> {
