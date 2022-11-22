@@ -1,14 +1,14 @@
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { IdentityModel } from "../models/IdentityModel";
-import { SubscriptionModel } from "../models/SubscriptionModels";
+import { SupportedSubscription } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";
-import { isIdentityObject, isFutureSubscriptionObject } from "../utils/typePredicates";
+import { isIdentityObject, isFutureSubscriptionObject, isCompleteSubscriptionObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
 
 export function processSubscriptionOperation<Model>(operation: Operation<Model>): {
-  subscription: SubscriptionModel;
-  subscriptionId: string;
+  subscription: SupportedSubscription;
   aliasPair: AliasPair;
+  subscriptionId?: string;
 } {
   const subscriptionOSModel = operation.model;
   const subscription = subscriptionOSModel?.data;
@@ -23,7 +23,10 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
     throw new OneSignalError(`processSubscriptionModel: bad subscription object: ${subscription}`);
   }
 
-  const subscriptionId = subscription.id;
+  let subscriptionId;
+  if (isCompleteSubscriptionObject(subscription)) {
+    subscriptionId = subscription?.id;
+  }
 
   // fixes typescript errors
   if (!subscriptionOSModel.onesignalId) {

@@ -1,3 +1,4 @@
+import OneSignalError from "../../shared/errors/OneSignalError";
 import { logMethodCall } from "../../shared/utils/utils";
 import ExecutorResult from "../executors/ExecutorResult";
 import { SupportedSubscription } from "../models/SubscriptionModels";
@@ -24,6 +25,10 @@ export default class SubscriptionRequests {
 
     const { subscriptionId } = processSubscriptionOperation(operation);
 
+    if (!subscriptionId) {
+      throw new OneSignalError("removeSubscription: subscriptionId is not defined");
+    }
+
     const response = await RequestService.deleteSubscription(subscriptionId);
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
@@ -32,6 +37,10 @@ export default class SubscriptionRequests {
     logMethodCall("SubscriptionRequests.updateSubscription", operation);
 
     const { subscription, subscriptionId } = processSubscriptionOperation(operation);
+
+    if (!subscriptionId) {
+      throw new OneSignalError("updateSubscription: subscriptionId is not defined");
+    }
 
     const response = await RequestService.updateSubscription(subscriptionId, subscription);
     return SubscriptionRequests._processSubscriptionResponse(response);
