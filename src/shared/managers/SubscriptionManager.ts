@@ -33,6 +33,9 @@ import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
 import { OSModel } from "../../core/modelRepo/OSModel";
 import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
 import User from "../../onesignal/User";
+import { FutureSubscriptionModel, SupportedSubscription } from "../../core/models/SubscriptionModels";
+import { StringKeys } from "../../core/models/StringKeys";
+import OneSignalError from "../errors/OneSignalError";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -124,13 +127,7 @@ export class SubscriptionManager {
 
         } else {
           rawPushSubscription = await this.subscribeFcmFromPage(subscriptionStrategy);
-          const pushModel = new OSModel<SupportedModel>(
-            ModelName.PushSubscriptions,
-            new FuturePushSubscriptionRecord(rawPushSubscription)
-          );
-          const user = User.createOrGetInstance();
-          pushModel.setOneSignalId(user.identity?.onesignalId);
-          await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel);
+          await this._updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
         }
         break;
       default:
@@ -138,6 +135,42 @@ export class SubscriptionManager {
     }
 
     return rawPushSubscription;
+  }
+
+  private async _updatePushSubscriptionModelWithRawSubscription(rawPushSubscription: RawPushSubscription) {
+    let pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+
+    if (!pushModel) {
+      // new subscription
+      pushModel = new OSModel<SupportedSubscription>(
+        ModelName.PushSubscriptions,
+        new FuturePushSubscriptionRecord(rawPushSubscription).serialize()
+      );
+
+      const user = User.createOrGetInstance();
+      pushModel.setOneSignalId(user.identity?.onesignalId);
+      await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>);
+      return;
+    } else {
+      // resubscribing. update existing push subscription model
+      const serializedSubscriptionRecord = new FuturePushSubscriptionRecord(rawPushSubscription).serialize();
+      const keys = Object.keys(serializedSubscriptionRecord) as StringKeys<FutureSubscriptionModel>[];
+
+      for (let i=0; i<keys.length; i++) {
+        const key = keys[i];
+        pushModel.set(key, serializedSubscriptionRecord[key]);
+      }
+    }
+  }
+
+  async updatePushSubscriptionNotificationTypes(notificationTypes: number): Promise<void> {
+    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    if (!pushModel) {
+      throw new OneSignalError(
+        `Cannot update notification_types for push subscription model because it does not exist.`
+        );
+    }
+    pushModel.set("notification_types", notificationTypes);
   }
 
   /**
@@ -224,12 +257,6 @@ export class SubscriptionManager {
       throw new NotImplementedError();
     } else if (strategy === UnsubscriptionStrategy.MarkUnsubscribed) {
       if (SdkEnvironment.getWindowEnv() === WindowEnvironmentKind.ServiceWorker) {
-        const { deviceId } = await Database.getSubscription();
-
-        await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-          notification_types: SubscriptionStateKind.MutedByApi
-        });
-
         await Database.put('Options', { key: 'optedOut', value: true });
       } else {
         throw new NotImplementedError();
