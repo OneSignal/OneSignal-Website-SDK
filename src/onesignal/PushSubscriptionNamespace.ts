@@ -1,14 +1,15 @@
+import { ModelStoreChange } from "../core/models/ModelStoreChange";
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
-import OneSignalApi from "../shared/api/OneSignalApi";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
-import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import EventHelper from "../shared/helpers/EventHelper";
 import MainHelper from "../shared/helpers/MainHelper";
 import Log from "../shared/libraries/Log";
-import { UpdatePlayerOptions } from "../shared/models/UpdatePlayerOptions";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
+import OneSignal from "./OneSignal";
+import { SubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
+import { isModelStoreHydratedObject } from "../core/utils/typePredicates";
 
 export default class PushSubscriptionNamespace {
   private _id?: string | null;
@@ -22,41 +23,86 @@ export default class PushSubscriptionNamespace {
     }).catch(e => {
       Log.error(e);
     });
+
+    this._subscribeToPushModelChanges();
   }
 
-  async disabled(disabled: boolean): Promise<void> {
+  get id(): string | null | undefined {
+    return this._id;
+  }
+
+  get token(): string | null | undefined {
+    return this._token;
+  }
+
+  get optedIn(): boolean {
+    return this._optedIn;
+  }
+
+  async optIn(): Promise<void> {
+    logMethodCall('optIn');
     await awaitOneSignalInitAndSupported();
-    logMethodCall('disable', disabled);
+    this._optedIn = true;
+    // TO DO: prompt for permission if needed
+    await this._enable(true);
+  }
+
+  async optOut(): Promise<void> {
+    logMethodCall('optOut');
+    await awaitOneSignalInitAndSupported();
+    this._optedIn = false;
+    await this._enable(false);
+  }
+
+  /**
+   * Resubscribes this namespace to the push model changes.
+   * Should be called when the user and/or core module is reset.
+   */
+  async _resubscribeToPushModelChanges(): Promise<void> {
+    await this._subscribeToPushModelChanges();
+  }
+
+  /* P R I V A T E */
+
+  private async _enable(enabled: boolean): Promise<void> {
+    await awaitOneSignalInitAndSupported();
+    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     const appConfig = await Database.getAppConfig();
-    const { appId } = appConfig;
     const subscription = await Database.getSubscription();
-    const { deviceId } = subscription;
-    if (!appConfig.appId)
+
+    if (!appConfig.appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!ValidatorUtils.isValidBoolean(disabled))
-      throw new InvalidArgumentError('disabled', InvalidArgumentReason.Malformed);
-    if (!deviceId) {
-      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return;
     }
-    const options : UpdatePlayerOptions = {
-      notification_types: MainHelper.getNotificationTypeFromOptIn(!disabled)
-    };
-
-    const authHash = await Database.getExternalUserIdAuthHash();
-    if (!!authHash) {
-      options.external_user_id_auth_hash = authHash;
+    if (!ValidatorUtils.isValidBoolean(enabled)) {
+      throw new InvalidArgumentError('enabled', InvalidArgumentReason.Malformed);
     }
 
-    subscription.optedOut = disabled;
-    await OneSignalApi.updatePlayer(appId, deviceId, options);
+    if (pushModel) {
+      const notificationTypes = MainHelper.getNotificationTypeFromOptIn(enabled);
+      pushModel.set("notification_types", notificationTypes);
+    }
+
+    subscription.optedOut = !enabled;
     await Database.setSubscription(subscription);
     EventHelper.onInternalSubscriptionSet(subscription.optedOut).catch(e => {
       Log.error(e);
     });
     EventHelper.checkAndTriggerSubscriptionChanged().catch(e => {
       Log.error(e);
+    });
+  }
+
+  private async _subscribeToPushModelChanges(): Promise<void> {
+    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    if (!pushModel) {
+      return;
+    }
+    pushModel.subscribe((modelStoreChange: ModelStoreChange<SupportedSubscription>): void => {
+      if (isModelStoreHydratedObject<SubscriptionModel>(modelStoreChange)) {
+        // only update if we are hydrating entire model
+        this._id = modelStoreChange.payload.data.id;
+        return;
+      }
     });
   }
 

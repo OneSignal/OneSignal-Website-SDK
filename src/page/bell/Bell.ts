@@ -159,7 +159,7 @@ export default class Bell {
     OneSignal.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
-      OneSignal.notifications.disable(false)
+      OneSignal.user.pushSubscription.optIn()
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
           return this.dialog.hide();
@@ -183,7 +183,7 @@ export default class Bell {
 
     OneSignal.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
-      OneSignal.notifications.disable(true)
+      OneSignal.user.pushSubscription.optOut()
         .then(() => {
           this.dialog.unsubscribeButton.disabled = false;
           return this.dialog.hide();
