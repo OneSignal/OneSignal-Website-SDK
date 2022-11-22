@@ -22,6 +22,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     this.type = this._getSubscriptionType();
     // TO DO: enabled
     // this.enabled = true;
+    this.notificationTypes = 1;
     this.sdk = __VERSION__;
     this.deviceModel = navigator.platform;
     this.deviceOs = isNaN(environment.browserVersion) ? -1 : environment.browserVersion;
