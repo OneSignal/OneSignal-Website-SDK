@@ -19,7 +19,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     const environment = EnvironmentInfoHelper.getEnvironmentInfo();
 
     this.token = this._getToken(rawPushSubscription);
-    this.type = this._getSubscriptionType();
+    this.type = FuturePushSubscriptionRecord.getSubscriptionType();
     // TO DO: enabled
     // this.enabled = true;
     this.notificationTypes = 1;
@@ -37,7 +37,23 @@ export default class FuturePushSubscriptionRecord implements Serializable {
       subscription.w3cEndpoint.toString() : undefined;
   }
 
-  private _getSubscriptionType(): SubscriptionType {
+  serialize(): FutureSubscriptionModel {
+    return {
+      type: this.type,
+      token: this.token,
+      enabled: this.enabled,
+      notification_types: this.notificationTypes,
+      sdk: this.sdk,
+      device_model: this.deviceModel,
+      device_os: this.deviceOs,
+      web_auth: this.webAuth,
+      web_p256: this.webp256,
+    };
+  }
+
+  /* S T A T I C */
+
+  static getSubscriptionType(): SubscriptionType {
     const browser = OneSignalUtils.redetectBrowserUserAgent();
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
@@ -53,19 +69,5 @@ export default class FuturePushSubscriptionRecord implements Serializable {
       return SubscriptionType.WindowPush;
     }
     return SubscriptionType.ChromePush;
-  }
-
-  serialize(): FutureSubscriptionModel {
-    return {
-      type: this.type,
-      token: this.token,
-      enabled: this.enabled,
-      notification_types: this.notificationTypes,
-      sdk: this.sdk,
-      device_model: this.deviceModel,
-      device_os: this.deviceOs,
-      web_auth: this.webAuth,
-      web_p256: this.webp256,
-    };
   }
 }
