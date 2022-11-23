@@ -46,6 +46,7 @@ import SlidedownNamespace from "./SlidedownNamespace";
 import LocalStorage from "../shared/utils/LocalStorage";
 import OneSignalError from "../shared/errors/OneSignalError";
 import LoginManager from "../page/managers/LoginManager";
+import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -101,6 +102,13 @@ export default class OneSignal {
       const identityModel = await this.coreDirector.getIdentityModel();
       const currentExternalId = identityModel?.data?.externalId;
 
+      const pushSubModel = await this.coreDirector.getPushSubscriptionModel();
+      let currentPushSubscriptionId;
+
+      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
+        currentPushSubscriptionId = pushSubModel.data.id;
+      }
+
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
         Log.debug('Login: External ID already set, skipping login');
@@ -119,7 +127,7 @@ export default class OneSignal {
       const userData = await LoginManager.getAllUserData();
       await this.coreDirector.resetUserWithSetting(true);
 
-      LoginManager.identifyOrUpsertUser(userData, isIdentified).then(async result => {
+      LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
         const { identity } = result;
         const onesignalId = identity?.onesignalId;
 
@@ -135,6 +143,11 @@ export default class OneSignal {
       Log.error(e);
       throw e;
     }
+  }
+
+  static async logout(): Promise<void> {
+    logMethodCall('logout');
+    await this.coreDirector.resetUserWithSetting(false);
   }
 
   /**
