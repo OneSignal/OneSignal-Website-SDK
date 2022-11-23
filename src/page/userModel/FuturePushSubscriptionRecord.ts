@@ -42,6 +42,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     if (browser.firefox) {
       return SubscriptionType.FirefoxPush;
     }
+    // TO DO: update to use feature detection
     if (browser.safari && browser.version >= 16) {
       return SubscriptionType.SafariPush;
     }

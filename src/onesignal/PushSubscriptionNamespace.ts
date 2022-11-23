@@ -9,22 +9,32 @@ import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
 import OneSignal from "./OneSignal";
 import { SubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
-import { isModelStoreHydratedObject } from "../core/utils/typePredicates";
+import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../core/utils/typePredicates";
 
 export default class PushSubscriptionNamespace {
   private _id?: string | null;
   private _token?: string | null;
-  private _optedIn: boolean = false;
+  private _optedIn?: boolean;
 
   constructor() {
     Database.getSubscription().then(subscription => {
-      this._optedIn = !subscription.optedOut;
+      this._optedIn = subscription.optedOut;
       this._token = subscription.subscriptionToken;
     }).catch(e => {
       Log.error(e);
     });
 
-    this._subscribeToPushModelChanges();
+    OneSignal.coreDirector.getPushSubscriptionModel().then(pushModel => {
+      if (pushModel && isCompleteSubscriptionObject(pushModel.data)) {
+        this._id = pushModel.data.id;
+      }
+    }).catch(e => {
+      Log.error(e);
+    });
+
+    this._subscribeToPushModelChanges().catch(e => {
+      Log.error(e);
+    });
   }
 
   get id(): string | null | undefined {
@@ -36,14 +46,22 @@ export default class PushSubscriptionNamespace {
   }
 
   get optedIn(): boolean {
-    return this._optedIn;
+    return this._optedIn || false;
   }
 
   async optIn(): Promise<void> {
     logMethodCall('optIn');
     await awaitOneSignalInitAndSupported();
     this._optedIn = true;
-    // TO DO: prompt for permission if needed
+
+    const permissionStatus = await OneSignal.notifications.getPermissionStatus();
+
+    if (permissionStatus !== 'granted') {
+      // TO DO: use user-config options prompting method
+      await OneSignal.notifications.requestPermission();
+      return;
+    }
+
     await this._enable(true);
   }
 
@@ -68,7 +86,7 @@ export default class PushSubscriptionNamespace {
     await awaitOneSignalInitAndSupported();
     const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
     const appConfig = await Database.getAppConfig();
-    const subscription = await Database.getSubscription();
+    const subscriptionFromDb = await Database.getSubscription();
 
     if (!appConfig.appId) {
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
@@ -82,9 +100,9 @@ export default class PushSubscriptionNamespace {
       pushModel.set("notification_types", notificationTypes);
     }
 
-    subscription.optedOut = !enabled;
-    await Database.setSubscription(subscription);
-    EventHelper.onInternalSubscriptionSet(subscription.optedOut).catch(e => {
+    subscriptionFromDb.optedOut = !enabled;
+    await Database.setSubscription(subscriptionFromDb);
+    EventHelper.onInternalSubscriptionSet(subscriptionFromDb.optedOut).catch(e => {
       Log.error(e);
     });
     EventHelper.checkAndTriggerSubscriptionChanged().catch(e => {

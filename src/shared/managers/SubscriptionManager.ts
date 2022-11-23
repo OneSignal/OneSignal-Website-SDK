@@ -162,7 +162,9 @@ export class SubscriptionManager {
 
       for (let i=0; i<keys.length; i++) {
         const key = keys[i];
-        pushModel.set(key, serializedSubscriptionRecord[key]);
+        if (serializedSubscriptionRecord[key]) {
+          pushModel.set(key, serializedSubscriptionRecord[key]);
+        }
       }
     }
   }
