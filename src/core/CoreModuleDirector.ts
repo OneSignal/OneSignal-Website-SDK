@@ -25,12 +25,16 @@ export class CoreModuleDirector {
 
   /* L O G I N */
 
-  public async resetUser(): Promise<void> {
-    this.core.resetModelRepo();
+  /**
+   * Reset user - used to reset user data when user logs in and out
+   * @param isTempUser - used when creating a local-only temporary user while logging in
+   */
+  public async resetUserWithSetting(isTempUser: boolean): Promise<void> {
+    await this.core.resetModelRepoAndCache();
 
     const user = User.createOrGetInstance();
     user.flushModelReferences();
-    await user.setupNewUser(true);
+    await user.setupNewUser(isTempUser);
     await OneSignal.user.pushSubscription._resubscribeToPushModelChanges();
   }
 
