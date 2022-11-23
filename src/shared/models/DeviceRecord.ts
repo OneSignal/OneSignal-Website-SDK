@@ -7,6 +7,7 @@ import OneSignalUtils from '../utils/OneSignalUtils';
 import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 
+// TO DO: deprecate after user-model if possible
 export interface FlattenedDeviceRecord {
   device_type: DeliveryPlatformKind;
   language: string;
