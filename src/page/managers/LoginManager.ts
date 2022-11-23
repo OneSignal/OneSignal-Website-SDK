@@ -41,7 +41,7 @@ export default class LoginManager {
   }
 
   static async upsertUser(userData: UserData): Promise<UserData> {
-    logMethodCall("LoginManager.upsertUser");
+    logMethodCall("LoginManager.upsertUser", { userData });
     const response = await RequestService.createUser(userData);
     const result = response?.result;
     const status = response?.status;
@@ -55,9 +55,10 @@ export default class LoginManager {
     return result;
   }
 
-  static async identifyUser(identity: SupportedIdentity): Promise<Partial<UserData>> {
-    logMethodCall("LoginManager.identifyUser", { identity });
+  static async identifyUser(userData: UserData, pushSubscriptionId?: string): Promise<Partial<UserData>> {
+    logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
 
+    const { identity } = userData;
     const { externalId } = identity;
 
     if (!identity || !externalId) {
@@ -70,13 +71,12 @@ export default class LoginManager {
     const identifyResponseStatus = identifyUserResponse?.status;
     if (identifyResponseStatus && identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
       Log.info("identifyUser succeeded");
-    } else if (identifyResponseStatus === 409) {
+    } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
 
-      const subscriptionId = ""; // TO DO: get subscriptionId
       const retainPreviousOwner = false;
       const transferResponse = await RequestService.transferSubscription(
-        subscriptionId,
+        pushSubscriptionId,
         identity,
         retainPreviousOwner
       );
@@ -95,23 +95,24 @@ export default class LoginManager {
     return { identity: identityResult };
   }
 
-  static async identifyOrUpsertUser(userData: UserData, isIdentified: boolean): Promise<Partial<UserData>> {
-    logMethodCall("LoginManager.identifyOrUpsertUser");
+  static async identifyOrUpsertUser(userData: UserData, isIdentified: boolean, subscriptionId?: string)
+    : Promise<Partial<UserData>> {
+    logMethodCall("LoginManager.identifyOrUpsertUser", { userData, isIdentified, subscriptionId });
 
-    let result: Partial<UserData>;
+      let result: Partial<UserData>;
 
-    if (isIdentified) {
-      // if started off identified, create a new user
-      result = await LoginManager.upsertUser(userData);
-    } else {
-      // promoting anonymous user to identified user
-      result = await LoginManager.identifyUser(userData.identity);
-    }
-    return result;
+      if (isIdentified) {
+        // if started off identified, create a new user
+        result = await LoginManager.upsertUser(userData);
+      } else {
+        // promoting anonymous user to identified user
+        result = await LoginManager.identifyUser(userData, subscriptionId);
+      }
+      return result;
   }
 
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
-    logMethodCall("LoginManager.fetchAndHydrate");
+    logMethodCall("LoginManager.fetchAndHydrate", { onesignalId });
 
     /* TO DO: uncomment
     const fetchUserResponse = await RequestService.getUser(
