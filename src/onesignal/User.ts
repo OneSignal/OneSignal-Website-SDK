@@ -18,7 +18,7 @@ export default class User {
     public userProperties?: OSModel<UserPropertiesModel>,
     // TO DO: explore option to consolidate into a single subscriptions property
     // Might have to make changes to avoid iteration to find correct model we want to modify
-    public pushSubscriptions?: OSModel<SupportedSubscription>,
+    public pushSubscription?: OSModel<SupportedSubscription>,
     public smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
     public emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
   ) {
@@ -70,7 +70,7 @@ export default class User {
   public flushModelReferences(): void {
     this.identity = undefined;
     this.userProperties = undefined;
-    this.pushSubscriptions = undefined;
+    this.pushSubscription = undefined;
     this.smsSubscriptions = undefined;
     this.emailSubscriptions = undefined;
   }
@@ -88,7 +88,7 @@ export default class User {
     // initialize user properties
     if (!this.userProperties) {
       this._createUserProperties(isTemporaryLocal);
-   }
+    }
   }
 
   /**
@@ -147,8 +147,7 @@ export default class User {
     this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties);
 
     if (!isTemporaryLocal) {
-      // TO DO: fix user id
-      this.userProperties.setOneSignalId("00000000-0000-0000-0000-000000000000");
+      this.userProperties.setOneSignalId(this.identity?.onesignalId);
     }
 
     OneSignal.coreDirector.add(ModelName.Properties, this.userProperties as OSModel<SupportedModel>, false)

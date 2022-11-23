@@ -47,13 +47,6 @@ export default class SubscriptionHelper {
       return null;
     }
 
-    if (typeof OneSignal !== "undefined") {
-      if (OneSignal._isRegisteringForPush)
-        return null;
-      else
-        OneSignal._isRegisteringForPush = true;
-    }
-
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
@@ -141,13 +134,8 @@ export default class SubscriptionHelper {
         );
         break;
       default:
-        if (typeof OneSignal !== "undefined")
-          OneSignal._isRegisteringForPush = false;
         throw new InvalidStateError(InvalidStateReason.UnsupportedEnvironment);
     }
-
-    if (typeof OneSignal !== "undefined")
-      OneSignal._isRegisteringForPush = false;
 
     return subscription;
   }

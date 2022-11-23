@@ -2,7 +2,7 @@ import { ResourceLoadState } from "../../page/services/DynamicResourceLoader";
 import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from "../slidedown/constants";
 import { addCssClass } from "../utils/utils";
 import LocalStorage from "../utils/LocalStorage";
-import { RegisterOptions } from "../helpers/InitHelper";
+import InitHelper, { RegisterOptions } from "../helpers/InitHelper";
 import Log from "../libraries/Log";
 import { AppUserConfigCustomLinkOptions } from "../models/Prompts";
 
@@ -130,20 +130,20 @@ export class CustomLinkManager {
 
   private async handleClick(element: HTMLElement): Promise<void> {
     if (CustomLinkManager.isPushEnabled()) {
-      await OneSignal.notifications.disable(true);
+      await OneSignal.user.pushSubscription.optOut();
       await this.setTextFromPushStatus(element);
     } else {
       if (!CustomLinkManager.isOptedOut()) {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
         const options: RegisterOptions = { autoAccept };
-        await OneSignal.registerForPushNotifications(options);
+        await InitHelper.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
         if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
           this.hideCustomLinkContainers();
         }
         return;
       }
-      await OneSignal.notifications.disable(false);
+      await OneSignal.user.pushSubscription.optIn();
       // once subscribed, prevent unsubscribe by hiding customlinks
       if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
         this.hideCustomLinkContainers();

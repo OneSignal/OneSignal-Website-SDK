@@ -35,7 +35,7 @@ export default class SubscriptionModalHost implements Disposable {
    * forever for the first handshake message.
    */
   async load(): Promise<void> {
-    const isPushEnabled = await OneSignal.isPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const notificationPermission = await OneSignal.notifications.getPermissionStatus();
     this.url = SdkEnvironment.getOneSignalApiUrl();
     this.url.pathname = 'webPushModal';
@@ -105,7 +105,7 @@ export default class SubscriptionModalHost implements Disposable {
     MainHelper.triggerCustomPromptClicked('granted');
     Log.debug('Calling setSubscription(true)');
     await SubscriptionHelper.registerForPush();
-    await OneSignal.notifications.disable(false);
+    await OneSignal.user.pushSubscription.optIn();
   }
 
   onModalRejected(_: MessengerMessageEvent) {

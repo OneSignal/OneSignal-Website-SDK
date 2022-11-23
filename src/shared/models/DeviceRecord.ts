@@ -7,6 +7,7 @@ import OneSignalUtils from '../utils/OneSignalUtils';
 import { DeliveryPlatformKind } from './DeliveryPlatformKind';
 import { SubscriptionStateKind } from './SubscriptionStateKind';
 
+// TO DO: deprecate after user-model if possible
 export interface FlattenedDeviceRecord {
   device_type: DeliveryPlatformKind;
   language: string;
@@ -63,7 +64,7 @@ export abstract class DeviceRecord implements Serializable {
     const browser = OneSignalUtils.redetectBrowserUserAgent();
 
     if (this.isSafari()) {
-      return DeliveryPlatformKind.Safari;
+      return DeliveryPlatformKind.SafariLegacy;
     } else if (browser.firefox) {
       return DeliveryPlatformKind.Firefox;
     } else if (browser.msedge) {

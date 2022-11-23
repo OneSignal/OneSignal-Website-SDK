@@ -38,7 +38,7 @@ export default class UserPropertyRequests {
       // TO DO: this would just be the session data, link into session service
       deltas: operation.payload as Partial<UserPropertiesModel>
     });
-    return this._processUserPropertyResponse(response);
+    return UserPropertyRequests._processUserPropertyResponse(response);
   }
 
   private static _processUserPropertyResponse(response?: any): ExecutorResult<UserPropertiesModel> {

@@ -118,45 +118,6 @@ export default class NotificationsNamespace {
   }
 
   /**
-   * @PublicApi
-   */
-  async disable(disabled: boolean): Promise<void> {
-    await awaitOneSignalInitAndSupported();
-    logMethodCall('disable', disabled);
-    const appConfig = await Database.getAppConfig();
-    const { appId } = appConfig;
-    const subscription = await Database.getSubscription();
-    const { deviceId } = subscription;
-    if (!appConfig.appId)
-      throw new InvalidStateError(InvalidStateReason.MissingAppId);
-    if (!ValidatorUtils.isValidBoolean(disabled))
-      throw new InvalidArgumentError('disabled', InvalidArgumentReason.Malformed);
-    if (!deviceId) {
-      // TODO: Throw an error here in future v2; for now it may break existing client implementations.
-      Log.info(new NotSubscribedError(NotSubscribedReason.NoDeviceId));
-      return;
-    }
-    const options : UpdatePlayerOptions = {
-      notification_types: MainHelper.getNotificationTypeFromOptIn(!disabled)
-    };
-
-    const authHash = await Database.getExternalUserIdAuthHash();
-    if (!!authHash) {
-      options.external_user_id_auth_hash = authHash;
-    }
-
-    subscription.optedOut = disabled;
-    await OneSignalApi.updatePlayer(appId, deviceId, options);
-    await Database.setSubscription(subscription);
-    EventHelper.onInternalSubscriptionSet(subscription.optedOut).catch(e => {
-      Log.error(e);
-    });
-    EventHelper.checkAndTriggerSubscriptionChanged().catch(e => {
-      Log.error(e);
-    });
-  }
-
-  /**
    * Shows a native browser prompt.
    * @PublicApi
    */

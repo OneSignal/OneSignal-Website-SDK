@@ -30,11 +30,17 @@ export default class EventHelper {
       lastKnownPushEnabled === null ||
       isPushEnabled !== lastKnownPushEnabled
     );
-    if (!didStateChange) return;
+    if (!didStateChange) {
+      return;
+    }
     Log.info(
       `The user's subscription state changed from ` +
         `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
     );
+    // update notification_types via core module
+    const newNotificationTypes = subscriptionState.optedOut ? -2 : 1;
+    await context.subscriptionManager.updatePushSubscriptionNotificationTypes(newNotificationTypes);
+
     LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
     await Database.setAppState(appState);
@@ -136,7 +142,7 @@ export default class EventHelper {
     }
   }
 
-  static triggerSubscriptionChanged(to) {
+  static triggerSubscriptionChanged(to: boolean) {
     OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
   }
 

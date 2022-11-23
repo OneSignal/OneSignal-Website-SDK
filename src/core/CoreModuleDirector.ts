@@ -2,13 +2,15 @@ import { logMethodCall } from "../shared/utils/utils";
 import Log from "../shared/libraries/Log";
 import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
-import { IdentityModel } from "./models/IdentityModel";
+import { SupportedIdentity } from "./models/IdentityModel";
 import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
 import UserData from "./models/UserData";
+import OneSignalError from "../shared/errors/OneSignalError";
+import OneSignal from "../onesignal/OneSignal";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -29,6 +31,7 @@ export class CoreModuleDirector {
     const user = User.createOrGetInstance();
     user.flushModelReferences();
     await user.setupNewUser(true);
+    await OneSignal.user.pushSubscription._resubscribeToPushModelChanges();
   }
 
   public async hydrateUser(user: UserData): Promise<void> {
@@ -41,6 +44,10 @@ export class CoreModuleDirector {
     properties?.hydrate(user.properties);
 
     const { onesignalId } = user.identity;
+
+    if (!onesignalId) {
+      throw new OneSignalError("OneSignal ID is missing from user data");
+    }
 
     identity?.setOneSignalId(onesignalId);
     properties?.setOneSignalId(onesignalId);
@@ -80,7 +87,7 @@ export class CoreModuleDirector {
 
   /* O P E R A T I O N S */
 
-  public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean): Promise<void> {
+  public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean = true): Promise<void> {
     logMethodCall("CoreModuleDirector.add", { modelName, model });
     const modelStores = await this.getModelStores();
     modelStores[modelName].add(model, propagate);
@@ -122,12 +129,12 @@ export class CoreModuleDirector {
     return modelStores.pushSubscriptions.models[key] as OSModel<SupportedSubscription>;
   }
 
-  public async getIdentityModel(): Promise<OSModel<IdentityModel> | undefined> {
+  public async getIdentityModel(): Promise<OSModel<SupportedIdentity> | undefined> {
     logMethodCall("CoreModuleDirector.getIdentityModel");
     await this.initPromise;
     const modelStores = await this.getModelStores();
     const modelKeys = Object.keys(modelStores.identity.models);
-    return modelStores.identity.models[modelKeys[0]] as OSModel<IdentityModel>;
+    return modelStores.identity.models[modelKeys[0]] as OSModel<SupportedIdentity>;
   }
 
   public async getPropertiesModel(): Promise<OSModel<UserPropertiesModel> | undefined> {
