@@ -1,11 +1,14 @@
 import Environment from "../shared/helpers/Environment";
 import { OSModel } from "../core/modelRepo/OSModel";
 import { SupportedIdentity } from "../core/models/IdentityModel";
-import { SupportedSubscription } from "../core/models/SubscriptionModels";
+import { FutureSubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
 import OneSignal from "./OneSignal";
 import Log from "../shared/libraries/Log";
+import { RequestService } from "../core/requestService/RequestService";
+import UserData from "../core/models/UserData";
+import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
 
 export default class User {
   identified: boolean = false;
@@ -77,32 +80,40 @@ export default class User {
 
   /**
    * Sets up a new user
-   * @param isTemporaryLocal - used when creating a local-only temporary user while logging in
+   * @param isTempUser - used when creating a local-only temporary user while logging in
    */
-  public async setupNewUser(isTemporaryLocal?: boolean): Promise<void> {
-    // if not loaded from cache, initialize new user
-    if (!this.identity) {
-      this.identity = await this._createAnonymousUser(isTemporaryLocal);
-    }
+  public async setupNewUser(isTempUser?: boolean): Promise<void> {
+    try {
+      // if not loaded from cache, initialize new user
+      if (!this.identity) {
+        this.identity = await this._createAnonymousUser(isTempUser);
+      }
 
-    // initialize user properties
-    if (!this.userProperties) {
-      this._createUserProperties(isTemporaryLocal);
+      // initialize user properties
+      if (!this.userProperties) {
+        this._createUserProperties(isTempUser);
+      }
+    } catch (e) {
+      Log.error(`Error setting up new user: ${e}`);
     }
   }
 
   /**
    * Creates a new anonymous user
-   * @param isTemporaryLocal - used when creating a local-only user while logging in
+   * @param isTempUser - used when creating a local-only user while logging in
    * @returns identity model
    */
-  private async _createAnonymousUser(isTemporaryLocal?: boolean): Promise<OSModel<SupportedIdentity>> {
+  private async _createAnonymousUser(isTempUser?: boolean): Promise<OSModel<SupportedIdentity>> {
     let data;
 
-    if (isTemporaryLocal) {
+    if (isTempUser) {
       data = {};
     } else {
-      // TO DO: create user with HTTP request and get fresh onesignalId
+      const userData = await this._generateUserDataPayload();
+      // TO DO: uncomment
+      // const response = await RequestService.createUser(userData);
+
+      // TO DO: get identity model from response
       data = {
         // real uuid
         onesignalId: "00000000-0000-0000-0000-000000000000", // for now, use mock data
@@ -117,7 +128,7 @@ export default class User {
      * This will resolve the awaitOneSignalIdAvailable promises on user and models to indicate
      * that the user is now identified
      */
-    if (!isTemporaryLocal) {
+    if (!isTempUser) {
       // set the onesignal id on the OSModel class-level property
       this.identity.setOneSignalId(data.onesignalId);
     }
@@ -134,19 +145,13 @@ export default class User {
       Log.error(e);
     });
 
-    // TO DO: populate subscription models also
     return this.identity;
   }
 
-  private _createUserProperties(isTemporaryLocal?: boolean): void {
-    const properties = {
-      language: Environment.getLanguage(),
-      timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    };
+  private _createUserProperties(isTempUser?: boolean): void {
+    this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, this._generateUserPropertiesData());
 
-    this.userProperties = new OSModel<UserPropertiesModel>(ModelName.Properties, properties);
-
-    if (!isTemporaryLocal) {
+    if (!isTempUser) {
       this.userProperties.setOneSignalId(this.identity?.onesignalId);
     }
 
@@ -155,4 +160,43 @@ export default class User {
         Log.error(e);
       });
   }
+
+
+  private async _generateUserDataPayload(): Promise<Partial<UserData>> {
+    const properties = this._generateUserPropertiesData();
+    const pushData = await this._generatePushDataFromExistingSubscription();
+
+    let subscriptions;
+
+    if (pushData) {
+      subscriptions = [pushData];
+    }
+
+    return {
+      properties,
+      subscriptions,
+    };
+  }
+
+  private async _generatePushDataFromExistingSubscription(): Promise<FutureSubscriptionModel | undefined> {
+    const { token } = OneSignal.user.pushSubscription;
+    const permissionStatus = await OneSignal.notifications.getPermissionStatus();
+
+    if (permissionStatus !== 'granted' || !token) {
+      return undefined;
+    }
+
+    return {
+      type: FuturePushSubscriptionRecord.getSubscriptionType(),
+      token,
+    };
+  }
+
+  private _generateUserPropertiesData(): UserPropertiesModel {
+    return {
+      language: Environment.getLanguage(),
+      timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+  }
+
 }
