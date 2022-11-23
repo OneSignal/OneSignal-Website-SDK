@@ -117,7 +117,7 @@ export default class OneSignal {
       LoginManager.setExternalId(identityModel, externalId);
 
       const userData = await LoginManager.getAllUserData();
-      await this.coreDirector.resetUser();
+      await this.coreDirector.resetUserWithSetting(true);
 
       LoginManager.identifyOrUpsertUser(userData, isIdentified).then(async result => {
         const { identity } = result;

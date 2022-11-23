@@ -38,8 +38,9 @@ export default class CoreModule {
     await this.initPromise;
   }
 
-  public resetModelRepo() {
+  public async resetModelRepoAndCache() {
     logMethodCall("CoreModule.resetModelRepo");
+    await this.modelCache.reset();
     const modelStores = OSModelStoreFactory.build<SupportedModel>();
     this.modelRepo = new ModelRepo(this.modelCache, modelStores);
     this.operationRepo?.setModelRepoAndResubscribe(this.modelRepo);

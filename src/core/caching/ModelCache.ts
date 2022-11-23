@@ -119,4 +119,13 @@ export default class ModelCache {
 
     return models.map(OSModel.decode);
   }
+
+  async reset(): Promise<void> {
+    logMethodCall("ModelCache.reset");
+    const removePromises: Promise<unknown>[] = [];
+    Object.values(ModelName).forEach(async (modelName: ModelName) => {
+      removePromises.push(Database.singletonInstance.remove(modelName));
+    });
+    await Promise.all(removePromises);
+  }
 }
