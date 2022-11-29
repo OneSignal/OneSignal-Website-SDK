@@ -17,9 +17,10 @@ export class RequestService {
    * @param requestMetadata - { appId }
    * @param requestBody - The user's properties, identity, and subscriptions
    */
-  static createUser(requestMetadata: RequestMetadata, requestBody: UserData): Promise<OneSignalApiBaseResponse> {
-    const { appId } = requestMetadata;
-    return OneSignalApiBase.post(`${appId}/user`, requestBody);
+  static createUser(requestMetadata: RequestMetadata, requestBody: Partial<UserData>)
+    : Promise<OneSignalApiBaseResponse> {
+      const { appId } = requestMetadata;
+      return OneSignalApiBase.post(`${appId}/user`, requestBody);
   }
 
   /**
