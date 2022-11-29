@@ -7,6 +7,7 @@ import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject } from "../utils/typePredicates";
 import { processIdentityOperation } from "./helpers";
 import { RequestService } from "./RequestService";
+import MainHelper from "../../shared/helpers/MainHelper";
 
 /**
  * This class contains logic for all the Identity model related requests that can be made to the OneSignal API
@@ -15,10 +16,11 @@ import { RequestService } from "./RequestService";
 export default class IdentityRequests {
   static async addIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("addIdentity", operation);
+    const appId = await MainHelper.getAppId();
 
     const { identity, aliasPair } = processIdentityOperation(operation);
 
-    const response = await RequestService.identifyUser(aliasPair, identity);
+    const response = await RequestService.identifyUser({ appId }, aliasPair, identity);
     return IdentityRequests._processIdentityResponse(response);
   }
 
@@ -33,11 +35,11 @@ export default class IdentityRequests {
       throw new OneSignalError("removeIdentity: operation.payload must have exactly one key");
     }
 
+    const appId = await MainHelper.getAppId();
     const labelToRemove = Object.keys(operation.payload)[0];
-
     const { aliasPair } = processIdentityOperation(operation);
 
-    const response = await RequestService.deleteAlias(aliasPair, labelToRemove);
+    const response = await RequestService.deleteAlias({ appId }, aliasPair, labelToRemove);
     return IdentityRequests._processIdentityResponse(response);
   }
 

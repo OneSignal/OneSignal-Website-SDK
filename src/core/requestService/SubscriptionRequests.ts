@@ -1,3 +1,4 @@
+import MainHelper from "../../shared/helpers/MainHelper";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { logMethodCall } from "../../shared/utils/utils";
 import ExecutorResult from "../executors/ExecutorResult";
@@ -14,9 +15,10 @@ export default class SubscriptionRequests {
   static async addSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult<SupportedSubscription>> {
     logMethodCall("SubscriptionRequests.addSubscription", operation);
 
+    const appId = await MainHelper.getAppId();
     const { subscription, aliasPair } = processSubscriptionOperation(operation);
 
-    const response = await RequestService.createSubscription(aliasPair, subscription);
+    const response = await RequestService.createSubscription({ appId }, aliasPair, subscription);
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
@@ -28,8 +30,9 @@ export default class SubscriptionRequests {
     if (!subscriptionId) {
       throw new OneSignalError("removeSubscription: subscriptionId is not defined");
     }
+    const appId = await MainHelper.getAppId();
 
-    const response = await RequestService.deleteSubscription(subscriptionId);
+    const response = await RequestService.deleteSubscription({ appId }, subscriptionId);
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
@@ -41,8 +44,9 @@ export default class SubscriptionRequests {
     if (!subscriptionId) {
       throw new OneSignalError("updateSubscription: subscriptionId is not defined");
     }
+    const appId = await MainHelper.getAppId();
 
-    const response = await RequestService.updateSubscription(subscriptionId, subscription);
+    const response = await RequestService.updateSubscription({ appId }, subscriptionId, subscription);
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 

@@ -5,6 +5,7 @@ import { UserPropertiesModel } from "../models/UserPropertiesModel";
 import { Operation } from "../operationRepo/Operation";
 import AliasPair from "./AliasPair";
 import { RequestService } from "./RequestService";
+import MainHelper from "../../shared/helpers/MainHelper";
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
@@ -32,7 +33,8 @@ export default class UserPropertyRequests {
     // TO DO: get refreshDeviceMetaData from session service
     const refreshDeviceMetaData = true;
 
-    const response = await RequestService.updateUser(aliasPair, {
+    const appId = await MainHelper.getAppId();
+    const response = await RequestService.updateUser({ appId }, aliasPair, {
       properties,
       refresh_device_metadata: refreshDeviceMetaData,
       // TO DO: this would just be the session data, link into session service
