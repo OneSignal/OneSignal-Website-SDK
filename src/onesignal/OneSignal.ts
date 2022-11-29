@@ -188,6 +188,15 @@ export default class OneSignal {
     await OneSignal.delayedInit();
   }
 
+  /**
+   * Initializes OneSignal with the given app id and no additional user options
+   * @param appId - The OneSignal app ID
+   */
+  static async setAppId(appId: string) {
+    logMethodCall('setAppId', { appId });
+    await OneSignal.init({ appId });
+  }
+
   private static async delayedInit(): Promise<void> {
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
