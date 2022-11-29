@@ -28,7 +28,7 @@ export default class UserNamespace {
           await this.coreDirector.getSmsSubscriptionModels(),
           await this.coreDirector.getEmailSubscriptionModels(),
         );
-        await this._currentUser.setupNewUser();
+        await this._currentUser.setupNewUser(true);
 
         resolve();
       } catch (e) {
@@ -125,7 +125,9 @@ export default class UserNamespace {
     };
     const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, subscription);
 
-    this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
+    this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).then(() => {
+      this._currentUser?.sendUserCreate();
+    }).catch(e => {
       throw e;
     });
 
@@ -147,7 +149,9 @@ export default class UserNamespace {
 
     const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, subscription);
 
-    this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
+    this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).then(() => {
+      this._currentUser?.sendUserCreate();
+    }).catch(e => {
       throw e;
     });
 

@@ -148,8 +148,12 @@ export class SubscriptionManager {
       );
 
       const user = User.createOrGetInstance();
-      pushModel.setOneSignalId(user.identity?.onesignalId);
-      await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>);
+      if (user.identified) {
+        pushModel.setOneSignalId(user.identity?.onesignalId);
+      }
+      // don't propagate since we will be including the subscription in the user create call
+      await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
+      await user.sendUserCreate();
       return;
     } else {
       // resubscribing. update existing push subscription model
