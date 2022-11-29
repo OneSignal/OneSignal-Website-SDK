@@ -215,4 +215,13 @@ export default class MainHelper {
     const subscription = await OneSignal.database.getSubscription();
     return subscription.deviceId || undefined;
   }
+
+  static async getCurrentPushToken(): Promise<string | undefined> {
+    const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
+    if (!registration) {
+      return undefined;
+    }
+    const subscription = await registration.pushManager.getSubscription();
+    return subscription?.endpoint;
+  }
 }
