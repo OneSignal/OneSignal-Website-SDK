@@ -7,6 +7,7 @@ import AliasPair from "../../core/requestService/AliasPair";
 import Log from "../../shared/libraries/Log";
 import { OSModel } from "../../core/modelRepo/OSModel";
 import { SupportedIdentity } from "../../core/models/IdentityModel";
+import MainHelper from "../../shared/helpers/MainHelper";
 
 export default class LoginManager {
   static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
@@ -41,8 +42,9 @@ export default class LoginManager {
   }
 
   static async upsertUser(userData: UserData): Promise<UserData> {
-    logMethodCall("LoginManager.upsertUser", { userData });
-    const response = await RequestService.createUser(userData);
+    logMethodCall("LoginManager.upsertUser");
+    const appId = await MainHelper.getAppId();
+    const response = await RequestService.createUser({ appId }, userData);
     const result = response?.result;
     const status = response?.status;
 
@@ -65,8 +67,9 @@ export default class LoginManager {
       throw new OneSignalError("identifyUser failed: no identity found");
     }
 
+    const appId = await MainHelper.getAppId();
     const aliasPair = new AliasPair("externalId", externalId);
-    const identifyUserResponse = await RequestService.identifyUser(aliasPair, identity);
+    const identifyUserResponse = await RequestService.identifyUser({ appId }, aliasPair, identity);
 
     const identifyResponseStatus = identifyUserResponse?.status;
     if (identifyResponseStatus && identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
@@ -76,6 +79,7 @@ export default class LoginManager {
 
       const retainPreviousOwner = false;
       const transferResponse = await RequestService.transferSubscription(
+        { appId },
         pushSubscriptionId,
         identity,
         retainPreviousOwner
