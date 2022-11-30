@@ -31,7 +31,7 @@ export class RequestService {
    */
   static getUser(requestMetadata: RequestMetadata, alias: AliasPair): Promise<OneSignalApiBaseResponse> {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.get(`${appId}/user/by/${alias.label}/${alias.id}`);
+    return OneSignalApiBase.get(`${appId}/users/by/${alias.label}/${alias.id}`);
   }
 
   /**
@@ -68,11 +68,11 @@ export class RequestService {
    * @param alias - alias label & id
    * @param identity - identity label & id
    */
-  static identifyUser(requestMetadata: RequestMetadata, alias: AliasPair, identity: SupportedIdentity)
+  static addAlias(requestMetadata: RequestMetadata, alias: AliasPair, identity: SupportedIdentity)
     : Promise<OneSignalApiBaseResponse>
     {
       const { appId } = requestMetadata;
-      return OneSignalApiBase.put(`${appId}/user/by/${alias.label}/${alias.id}/identity`, {
+      return OneSignalApiBase.patch(`${appId}/user/by/${alias.label}/${alias.id}/identity`, {
         identity
       });
   }
@@ -128,7 +128,7 @@ export class RequestService {
       });
 
       const { appId } = requestMetadata;
-      return OneSignalApiBase.post(`${appId}/user/by/${alias.label}/${alias.id}/subscription`, subscription);
+      return OneSignalApiBase.post(`${appId}/users/by/${alias.label}/${alias.id}/subscription`, subscription);
   }
 
 
@@ -179,7 +179,7 @@ export class RequestService {
   static identifyUserForSubscription(requestMetadata: RequestMetadata, subscriptionId: string, identity: IdentityModel):
     Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      return OneSignalApiBase.put(`${appId}/user/by/subscriptions/${subscriptionId}/identity`, identity);
+      return OneSignalApiBase.patch(`${appId}/user/by/subscriptions/${subscriptionId}/identity`, identity);
   }
 
   /**
@@ -198,7 +198,7 @@ export class RequestService {
     identity: SupportedIdentity,
     retainPreviousOwner: boolean): Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      return OneSignalApiBase.put(`${appId}/subscriptions/${subscriptionId}/owner`, {
+      return OneSignalApiBase.patch(`${appId}/subscriptions/${subscriptionId}/owner`, {
         identity,
         retain_previous_owner: retainPreviousOwner
       });
