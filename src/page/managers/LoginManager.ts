@@ -26,6 +26,7 @@ export default class LoginManager {
     return identity.externalId !== undefined;
   }
 
+  // TO DO: dedupe from similar function in User.ts
   static async getAllUserData(): Promise<UserData> {
     logMethodCall("LoginManager.getAllUserData");
 

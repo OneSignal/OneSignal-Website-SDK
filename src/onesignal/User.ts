@@ -1,6 +1,6 @@
 import Environment from "../shared/helpers/Environment";
 import { OSModel } from "../core/modelRepo/OSModel";
-import { SupportedIdentity } from "../core/models/IdentityModel";
+import { IdentityModel, SupportedIdentity } from "../core/models/IdentityModel";
 import { FutureSubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
@@ -9,6 +9,9 @@ import Log from "../shared/libraries/Log";
 import { RequestService } from "../core/requestService/RequestService";
 import UserData from "../core/models/UserData";
 import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
+import MainHelper from "../shared/helpers/MainHelper";
+import { isIdentityObject } from "../core/utils/typePredicates";
+import OneSignalError from "../shared/errors/OneSignalError";
 
 export default class User {
   identified: boolean = false;
@@ -98,6 +101,37 @@ export default class User {
     }
   }
 
+  async sendUserCreate(): Promise<IdentityModel | void> {
+    if (this.identified) {
+      return;
+    }
+
+    try {
+      await this._refreshModels();
+      const appId = await MainHelper.getAppId();
+      const userData = await this._generateUserDataPayload();
+      const response = await RequestService.createUser({ appId }, userData);
+      const userDataResponse: UserData = response.result;
+      await OneSignal.coreDirector.hydrateUser(userDataResponse);
+    } catch (e) {
+      Log.error(`Error sending user create: ${e}`);
+    }
+  }
+
+  private async _refreshModels(): Promise<void> {
+    const identityModel = await OneSignal.coreDirector.getIdentityModel();
+    const userPropertiesModel = await OneSignal.coreDirector.getPropertiesModel();
+    const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const emailSubscriptions = await OneSignal.coreDirector.getEmailSubscriptionModels();
+    const smsSubscriptions = await OneSignal.coreDirector.getSmsSubscriptionModels();
+
+    this.identity = identityModel;
+    this.userProperties = userPropertiesModel;
+    this.pushSubscription = pushSubscription;
+    this.emailSubscriptions = emailSubscriptions;
+    this.smsSubscriptions = smsSubscriptions;
+  }
+
   /**
    * Creates a new anonymous user
    * @param isTempUser - used when creating a local-only user while logging in
@@ -109,9 +143,8 @@ export default class User {
     if (isTempUser) {
       data = {};
     } else {
-      const userData = await this._generateUserDataPayload();
       // TO DO: uncomment
-      // const response = await RequestService.createUser(userData);
+      // const response = await this.sendUserCreate();
 
       // TO DO: get identity model from response
       data = {
@@ -162,33 +195,25 @@ export default class User {
   }
 
 
+  /**
+   * Generates the user data payload to send to the server on user create
+   * @returns user data payload
+   */
   private async _generateUserDataPayload(): Promise<Partial<UserData>> {
-    const properties = this._generateUserPropertiesData();
-    const pushData = await this._generatePushDataFromExistingSubscription();
-
-    let subscriptions;
-
-    if (pushData) {
-      subscriptions = [pushData];
-    }
+    const pushSub = this.pushSubscription ? [this.pushSubscription.data] : [];
+    const emailSubs = this.emailSubscriptions ?
+      Object.values(this.emailSubscriptions).map(subscription => subscription.data) : [];
+    const smsSubs = this.smsSubscriptions ?
+      Object.values(this.smsSubscriptions).map(subscription => subscription.data) : [];
 
     return {
-      properties,
-      subscriptions,
-    };
-  }
-
-  private async _generatePushDataFromExistingSubscription(): Promise<FutureSubscriptionModel | undefined> {
-    const { token } = OneSignal.user.pushSubscription;
-    const permissionStatus = await OneSignal.notifications.getPermissionStatus();
-
-    if (permissionStatus !== 'granted' || !token) {
-      return undefined;
-    }
-
-    return {
-      type: FuturePushSubscriptionRecord.getSubscriptionType(),
-      token,
+      identity: this.identity?.data,
+      properties: this.userProperties?.data,
+      subscriptions: [
+        ...pushSub,
+        ...emailSubs,
+        ...smsSubs,
+      ],
     };
   }
 
@@ -198,5 +223,4 @@ export default class User {
       timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
   }
-
 }

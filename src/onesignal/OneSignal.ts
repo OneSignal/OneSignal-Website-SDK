@@ -100,14 +100,12 @@ export default class OneSignal {
       // TO DO: set JWT token
 
       const identityModel = await this.coreDirector.getIdentityModel();
-      const currentExternalId = identityModel?.data?.externalId;
 
-      const pushSubModel = await this.coreDirector.getPushSubscriptionModel();
-      let currentPushSubscriptionId;
-
-      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
-        currentPushSubscriptionId = pushSubModel.data.id;
+      if (!identityModel) {
+        throw new OneSignalError('Login: No identity model found');
       }
+
+      const currentExternalId = identityModel?.data?.externalId;
 
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
@@ -115,8 +113,11 @@ export default class OneSignal {
         return;
       }
 
-      if (!identityModel) {
-        throw new OneSignalError('Login: No identity model found');
+      const pushSubModel = await this.coreDirector.getPushSubscriptionModel();
+      let currentPushSubscriptionId;
+
+      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
+        currentPushSubscriptionId = pushSubModel.data.id;
       }
 
       const isIdentified = LoginManager.isIdentified(identityModel.data);
