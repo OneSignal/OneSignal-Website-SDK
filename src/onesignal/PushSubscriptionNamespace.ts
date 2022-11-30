@@ -35,6 +35,10 @@ export default class PushSubscriptionNamespace {
     this._subscribeToPushModelChanges().catch(e => {
       Log.error(e);
     });
+
+    OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async () => {
+      this._token = await MainHelper.getCurrentPushToken();
+    });
   }
 
   get id(): string | null | undefined {
