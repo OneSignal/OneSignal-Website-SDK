@@ -21,13 +21,13 @@ export default class LoginManager {
   }
 
   static isIdentified(identity: SupportedIdentity): boolean {
-    logMethodCall("LoginManager.isIdentified");
+    logMethodCall("LoginManager.isIdentified", { identity });
 
     return identity.externalId !== undefined;
   }
 
   static async getAllUserData(): Promise<UserData> {
-    logMethodCall("LoginManager.getAllUserModels");
+    logMethodCall("LoginManager.getAllUserData");
 
     const identity = await OneSignal.coreDirector.getIdentityModel();
     const properties = await OneSignal.coreDirector.getPropertiesModel();
@@ -42,7 +42,7 @@ export default class LoginManager {
   }
 
   static async upsertUser(userData: UserData): Promise<UserData> {
-    logMethodCall("LoginManager.upsertUser");
+    logMethodCall("LoginManager.upsertUser", { userData });
     const appId = await MainHelper.getAppId();
     const response = await RequestService.createUser({ appId }, userData);
     const result = response?.result;
@@ -69,7 +69,7 @@ export default class LoginManager {
 
     const appId = await MainHelper.getAppId();
     const aliasPair = new AliasPair("externalId", externalId);
-    const identifyUserResponse = await RequestService.identifyUser({ appId }, aliasPair, identity);
+    const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
 
     const identifyResponseStatus = identifyUserResponse?.status;
     if (identifyResponseStatus && identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
