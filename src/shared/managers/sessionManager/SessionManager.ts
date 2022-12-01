@@ -41,13 +41,13 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (
-      this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
-        !this.context.environmentInfo.isUsingSubscriptionWorkaround
+      this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
+        !this.context.environmentInfo?.isUsingSubscriptionWorkaround
     ) {
       Log.debug("Notify SW to upsert session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionUpsert, payload);
-    } else if (this.context.environmentInfo.canTalkToServiceWorker &&
-        this.context.environmentInfo.isUsingSubscriptionWorkaround) {
+    } else if (this.context.environmentInfo?.canTalkToServiceWorker &&
+        this.context.environmentInfo?.isUsingSubscriptionWorkaround) {
       Log.debug("Notify iframe to notify SW to upsert session");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_UPSERT, payload);
     } else { // http w/o our iframe
@@ -75,13 +75,13 @@ export class SessionManager implements ISessionManager {
       outcomesConfig: this.context.appConfig.userConfig.outcomes!,
     };
     if (
-      this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
-        !this.context.environmentInfo.isUsingSubscriptionWorkaround
+      this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
+        !this.context.environmentInfo?.isUsingSubscriptionWorkaround
     ) {
       Log.debug("Notify SW to deactivate session");
       await this.context.workerMessenger.unicast(WorkerMessengerCommand.SessionDeactivate, payload);
-    } else if (this.context.environmentInfo.canTalkToServiceWorker &&
-        this.context.environmentInfo.isUsingSubscriptionWorkaround) {
+    } else if (this.context.environmentInfo?.canTalkToServiceWorker &&
+        this.context.environmentInfo?.isUsingSubscriptionWorkaround) {
       Log.debug("Notify SW to deactivate session");
       await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
     } else { // http w/o our iframe
@@ -220,37 +220,35 @@ export class SessionManager implements ISessionManager {
     }
 
     if (
-      this.context.environmentInfo.isBrowserAndSupportsServiceWorkers ||
-      this.context.environmentInfo.isUsingSubscriptionWorkaround
+      this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers ||
+      this.context.environmentInfo?.isUsingSubscriptionWorkaround
     ) {
-      if (!this.context.environmentInfo.canTalkToServiceWorker) {
+      if (!this.context.environmentInfo?.canTalkToServiceWorker) {
         this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
         OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
       } else {
         this.setupSessionEventListeners();
       }
     } else if (
-      !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
-      !this.context.environmentInfo.isUsingSubscriptionWorkaround
+      !this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
+      !this.context.environmentInfo?.isUsingSubscriptionWorkaround
     ) {
       this.onSessionSent = sessionOrigin === SessionOrigin.PlayerCreate;
       OneSignal.emitter.emit(OneSignal.EVENTS.SESSION_STARTED);
     }
-
-    await sessionPromise;
   }
 
   setupSessionEventListeners(): void {
     // Only want these events if it's using subscription workaround
     if (
-      !this.context.environmentInfo.isBrowserAndSupportsServiceWorkers &&
-      !this.context.environmentInfo.isUsingSubscriptionWorkaround
+      !this.context.environmentInfo?.isBrowserAndSupportsServiceWorkers &&
+      !this.context.environmentInfo?.isUsingSubscriptionWorkaround
     ) {
       Log.debug("Not setting session event listeners. No service worker possible.");
       return;
     }
 
-    if (!this.context.environmentInfo.canTalkToServiceWorker) {
+    if (!this.context.environmentInfo?.canTalkToServiceWorker) {
       Log.debug("Not setting session event listeners. Can't talk to ServiceWorker due being hosted on an HTTP page.");
       return;
     }
@@ -328,7 +326,7 @@ export class SessionManager implements ISessionManager {
     }
 
     if (deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
-      OneSignal.config.enableOnSession !== true) {
+      OneSignal.config?.enableOnSession !== true) {
       return;
     }
 
