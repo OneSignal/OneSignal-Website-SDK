@@ -20,7 +20,16 @@ export default class IdentityRequests {
 
     const { identity, aliasPair } = processIdentityOperation(operation);
 
-    const response = await RequestService.addAlias({ appId }, aliasPair, identity);
+    // TO DO: uncomment
+    // const response = await RequestService.identifyUser(aliasPair, identity);
+    // MOCK RESPONSE
+    const response = {
+      status: 200,
+      result: {
+        id: "22222222-2222-2222-2222-222222222222",
+        ...identity,
+      }
+    };
     return IdentityRequests._processIdentityResponse(response);
   }
 

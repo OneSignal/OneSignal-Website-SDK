@@ -1,7 +1,7 @@
 import Environment from "../shared/helpers/Environment";
 import { OSModel } from "../core/modelRepo/OSModel";
 import { IdentityModel, SupportedIdentity } from "../core/models/IdentityModel";
-import { FutureSubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
+import { SubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { UserPropertiesModel } from "../core/models/UserPropertiesModel";
 import OneSignal from "./OneSignal";
@@ -110,9 +110,26 @@ export default class User {
       await this._refreshModels();
       const appId = await MainHelper.getAppId();
       const userData = await this._generateUserDataPayload();
+      /* TO DO: uncomment
       const response = await RequestService.createUser({ appId }, userData);
       const userDataResponse: UserData = response.result;
-      await OneSignal.coreDirector.hydrateUser(userDataResponse);
+      */
+
+      // TO DO: comment out mock
+      // start here
+      if (userData.identity) {
+        userData.identity.onesignalId = "55555555-5555-5555-5555-555555555555";
+      }
+      if (userData.subscriptions) {
+        (userData.subscriptions[0] as SubscriptionModel).id = "22222222-2222-2222-2222-222222222222";
+      }
+      // end here
+
+      // TO DO: comment out mock
+      await OneSignal.coreDirector.hydrateUser(userData as UserData);
+
+      // TO DO: uncomment
+      // await OneSignal.coreDirector.hydrateUser(userDataResponse);
     } catch (e) {
       Log.error(`Error sending user create: ${e}`);
     }
