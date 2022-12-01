@@ -3,12 +3,13 @@ import { FutureSubscriptionModel, SubscriptionType } from "../../core/models/Sub
 import { EnvironmentInfoHelper } from "../helpers/EnvironmentInfoHelper";
 import { RawPushSubscription } from "src/shared/models/RawPushSubscription";
 import OneSignalUtils from "../../shared/utils/OneSignalUtils";
+import { SubscriptionStateKind } from "../../shared/models/SubscriptionStateKind";
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionType;
   readonly token?: string; // maps to legacy player.identifier
   readonly enabled?: boolean;
-  readonly notificationTypes?: number;
+  readonly notificationTypes?: SubscriptionStateKind;
   readonly sdk: string;
   readonly deviceModel: string;
   readonly deviceOs: number;
@@ -22,7 +23,7 @@ export default class FuturePushSubscriptionRecord implements Serializable {
     this.type = FuturePushSubscriptionRecord.getSubscriptionType();
     // TO DO: enabled
     // this.enabled = true;
-    this.notificationTypes = 1;
+    this.notificationTypes = SubscriptionStateKind.Subscribed;
     this.sdk = __VERSION__;
     this.deviceModel = navigator.platform;
     this.deviceOs = isNaN(environment.browserVersion) ? -1 : environment.browserVersion;

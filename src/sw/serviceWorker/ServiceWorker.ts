@@ -30,6 +30,7 @@ import OneSignalApiSW from "../../../src/shared/api/OneSignalApiSW";
 import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from "../../../src/shared/libraries/WorkerMessenger";
 import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
+import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -956,7 +957,7 @@ export class ServiceWorker {
     appId: string | undefined | null,
     deviceId: string | undefined,
     notificationData: any,
-    deviceType: number): Promise<void> {
+    deviceType: DeliveryPlatformKind): Promise<void> {
 
     if (!notificationData.id) {
       console.error("No notification id, skipping networks calls to report open!");
