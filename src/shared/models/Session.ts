@@ -43,12 +43,10 @@ interface BaseSessionPayload {
   outcomesConfig: OutcomesConfig;
 }
 
-export interface UpsertSessionPayload extends BaseSessionPayload {
-  deviceRecord: SerializedPushDeviceRecord;
-}
-
-export interface DeactivateSessionPayload extends BaseSessionPayload {
-  deviceRecord?: SerializedPushDeviceRecord;
+export interface UpsertOrDeactivateSessionPayload extends BaseSessionPayload {
+  appId: string;
+  onesignalId: string;
+  subscriptionId: string;
 }
 
 export interface PageVisibilityRequest {
