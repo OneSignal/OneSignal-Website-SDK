@@ -1,7 +1,6 @@
 import Log from "../../sw/libraries/Log";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import Database from "../services/Database";
-import { SerializedPushDeviceRecord, PushDeviceRecord } from "../models/PushDeviceRecord";
 import { OutcomesConfig } from "../models/Outcomes";
 import { cancelableTimeout, CancelableTimeoutPromise } from '../../sw/helpers/CancelableTimeout';
 import Utils from "../context/Utils";
@@ -11,7 +10,6 @@ import { NotificationClicked } from "../models/Notification";
 import { SessionOrigin, initializeNewSession, SessionStatus, Session } from "../models/Session";
 import OneSignalApiSW from "../api/OneSignalApiSW";
 import Path from "../models/Path";
-import { RawPushSubscription } from "../models/RawPushSubscription";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -32,26 +30,17 @@ export default class ServiceWorkerHelper {
   }
 
   public static async upsertSession(
+    appId: string,
+    onesignalId: string,
+    subscriptionId: string,
     sessionThresholdInSeconds: number, sendOnFocusEnabled: boolean,
-    deviceRecord: SerializedPushDeviceRecord, deviceId: string | undefined, sessionOrigin: SessionOrigin,
-    outcomesConfig: OutcomesConfig
+    sessionOrigin: SessionOrigin, outcomesConfig: OutcomesConfig
   ): Promise<void> {
-    if (!deviceId) {
-      Log.error("No deviceId provided for new session.");
-      return;
-    }
-
-    if (!deviceRecord.app_id) {
-      Log.error("No appId provided for new session.");
-      return;
-    }
-
     const existingSession = await Database.getCurrentSession();
 
     if (!existingSession) {
-      const appId = deviceRecord.app_id;
       const session: Session = initializeNewSession(
-        { deviceId, appId, deviceType:deviceRecord.device_type }
+        { appId }
       );
 
       // if there is a record about a clicked notification in our database, attribute session to it.
@@ -61,7 +50,13 @@ export default class ServiceWorkerHelper {
       }
 
       await Database.upsertSession(session);
-      await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
+      await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
+        appId,
+        onesignalId,
+        subscriptionId,
+        sessionOrigin,
+        session
+      );
       return;
     }
 
@@ -89,18 +84,33 @@ export default class ServiceWorkerHelper {
     }
 
     // If failed to report/clean-up last time, we can attempt to try again here.
-
     // TODO: Possibly check that it's not unreasonably long.
     // TODO: Or couple with periodic ping for better results.
-    await ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig);
-
-    const session = initializeNewSession({ deviceId, appId: deviceRecord.app_id, deviceType:deviceRecord.device_type });
+    await ServiceWorkerHelper.finalizeSession(
+      appId,
+      onesignalId,
+      subscriptionId,
+      existingSession,
+      sendOnFocusEnabled,
+      outcomesConfig
+    );
+    const session: Session = initializeNewSession({ appId });
     await Database.upsertSession(session);
-    await ServiceWorkerHelper.sendOnSessionCallIfNecessary(sessionOrigin, deviceRecord, deviceId, session);
+    await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
+      appId,
+      onesignalId,
+      subscriptionId,
+      sessionOrigin,
+      session
+    );
   }
 
   public static async deactivateSession(
-    thresholdInSeconds: number, sendOnFocusEnabled: boolean,
+    appId: string,
+    onesignalId: string,
+    subscriptionId: string,
+    thresholdInSeconds: number,
+    sendOnFocusEnabled: boolean,
     outcomesConfig: OutcomesConfig
   ): Promise<CancelableTimeoutPromise | undefined> {
     const existingSession = await Database.getCurrentSession();
@@ -110,6 +120,15 @@ export default class ServiceWorkerHelper {
       return undefined;
     }
 
+    const finalizeSession = () => ServiceWorkerHelper.finalizeSession(
+      appId,
+      onesignalId,
+      subscriptionId,
+      existingSession,
+      sendOnFocusEnabled,
+      outcomesConfig
+    );
+
     /**
      * For 2 subsequent deactivate requests we need to make sure there is an active finalization timeout.
      * Timer gets cleaned up before figuring out it's activate or deactivate.
@@ -117,7 +136,7 @@ export default class ServiceWorkerHelper {
      */
     if (existingSession.status === SessionStatus.Inactive) {
       return cancelableTimeout(
-        () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig),
+        finalizeSession,
         thresholdInSeconds
       );
     }
@@ -140,7 +159,7 @@ export default class ServiceWorkerHelper {
     existingSession.status = SessionStatus.Inactive;
 
     const cancelableFinalize = cancelableTimeout(
-      () => ServiceWorkerHelper.finalizeSession(existingSession, sendOnFocusEnabled, outcomesConfig),
+      finalizeSession,
       thresholdInSeconds
     );
 
@@ -154,14 +173,17 @@ export default class ServiceWorkerHelper {
    * when player create call occurs, e.g. first subscribed or re-subscribed cases after clearing cookies,
    * since player#create call updates last_session field on player.
    */
-  public static async sendOnSessionCallIfNecessary(
-    sessionOrigin: SessionOrigin, deviceRecord: SerializedPushDeviceRecord,
-    deviceId: string, session: Session
-  ) {
+  public static async sendOnSessionCallIfNotPlayerCreate(
+    appId: string,
+    onesignalId: string,
+    subscriptionId: string,
+    sessionOrigin: SessionOrigin,
+    session: Session) {
     if (sessionOrigin === SessionOrigin.PlayerCreate) {
       return;
     }
 
+    /* TO DO: will need update token for Safari 16 migration path
     if (!deviceRecord.identifier) {
       const subscription = await self.registration.pushManager.getSubscription();
       if (subscription) {
@@ -170,23 +192,21 @@ export default class ServiceWorkerHelper {
         deviceRecord.identifier = fullDeviceRecord.identifier;
       }
     }
+    */
 
-    const newPlayerId = await OneSignalApiSW.updateUserSession(deviceId, deviceRecord);
-    // If the returned player id is different, save the new id to indexed db and update session
-    if (newPlayerId !== deviceId) {
-      session.deviceId = newPlayerId;
-      await Promise.all([
-        Database.setDeviceId(newPlayerId),
-        Database.upsertSession(session),
-        Database.resetSentUniqueOutcomes()
-      ]);
-    }
+    await OneSignalApiSW.updateUserSession(appId, onesignalId, subscriptionId);
 
-    // TO DO: send on sesion call
+    Database.upsertSession(session);
+    Database.resetSentUniqueOutcomes();
   }
 
   public static async finalizeSession(
-    session: Session, sendOnFocusEnabled: boolean, outcomesConfig: OutcomesConfig
+    appId: string,
+    onesignalId: string,
+    subscriptionId: string,
+    session: Session,
+    sendOnFocusEnabled: boolean,
+    outcomesConfig: OutcomesConfig
   ): Promise<void> {
     Log.debug(
       "Finalize session",
@@ -199,14 +219,13 @@ export default class ServiceWorkerHelper {
       const attribution = await OutcomesHelper.getAttribution(outcomesConfig);
       Log.debug("send on_focus with attribution", attribution);
       await OneSignalApiSW.sendSessionDuration(
-        session.appId,
-        session.deviceId,
+        appId,
+        onesignalId,
+        subscriptionId,
         session.accumulatedDuration,
         session.deviceType,
         attribution
       );
-
-      // TO DO: send on_focus call
     }
 
     await Promise.all([

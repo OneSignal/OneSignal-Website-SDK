@@ -217,7 +217,7 @@ export class ServiceWorker {
 
         const timestamp = payload.timestamp;
         if (self.clientsStatus.timestamp !== timestamp) { return; }
-        
+
         self.clientsStatus.receivedResponsesCount++;
         if (payload.focused) {
           self.clientsStatus.hasAnyActiveSessions = true;
@@ -417,16 +417,22 @@ export class ServiceWorker {
   ) {
     if (hasAnyActiveSessions) {
       await ServiceWorkerHelper.upsertSession(
+        options.appId,
+        options.onesignalId,
+        options.subscriptionId,
         options.sessionThreshold,
         options.enableSessionDuration,
-        options.deviceRecord!,
-        options.deviceId,
         options.sessionOrigin,
         options.outcomesConfig
       );
     } else {
       const cancelableFinalize = await ServiceWorkerHelper.deactivateSession(
-        options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig
+        options.appId,
+        options.onesignalId,
+        options.subscriptionId,
+        options.sessionThreshold,
+        options.enableSessionDuration,
+        options.outcomesConfig
       );
       if (cancelableFinalize) {
         self.cancel = cancelableFinalize.cancel;
