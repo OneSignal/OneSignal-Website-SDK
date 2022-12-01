@@ -1,3 +1,4 @@
+import AliasPair from "src/core/requestService/AliasPair";
 import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApiError";
 import TimeoutError from "../errors/TimeoutError";
 
@@ -177,6 +178,16 @@ export class Utils {
   public static enforcePlayerId(playerId: string | undefined | null): void {
     if (!playerId) {
       throw new Error("Player id cannot be empty");
+    }
+  }
+
+  public static enforceAlias(aliasPair: AliasPair): void {
+    if (!aliasPair.label) {
+      throw new Error("Alias label cannot be empty");
+    }
+
+    if (!aliasPair.id) {
+      throw new Error("Alias id cannot be empty");
     }
   }
 
