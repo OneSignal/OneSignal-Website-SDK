@@ -1,8 +1,11 @@
+import AliasPair from "../../core/requestService/AliasPair";
+import { RequestService } from "../../core/requestService/RequestService";
+import { UpdateUserPayload } from "../../core/requestService/UpdateUserPayload";
 import Utils from "../context/Utils";
 import Log from "../libraries/Log";
 import { ServerAppConfig } from "../models/AppConfig";
-import { FlattenedDeviceRecord } from "../models/DeviceRecord";
-import { OutcomeAttribution, OutcomeAttributionType } from "../models/Outcomes";
+import { DeliveryPlatformKind } from "../models/DeliveryPlatformKind";
+import { OutcomeAttribution } from "../models/Outcomes";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 
@@ -19,7 +22,11 @@ export class OneSignalApiSW {
    * Given a GCM or Firefox subscription endpoint or Safari device token, returns the user ID from OneSignal's server.
    * Used if the user clears his or her IndexedDB database and we need the user ID again.
    */
-  static getUserIdFromSubscriptionIdentifier(appId: string, deviceType: number, identifier: string): Promise<string> {
+  static getUserIdFromSubscriptionIdentifier(
+    appId: string,
+    deviceType: DeliveryPlatformKind,
+    identifier: string
+    ): Promise<string> {
     // Calling POST /players with an existing identifier returns us that player ID
     Utils.enforceAppId(appId);
     return OneSignalApiBase.post("players", {
@@ -46,49 +53,75 @@ export class OneSignalApiSW {
     return await Utils.enforceAppIdAndPlayerId(appId, playerId, funcToExecute);
   }
 
+  /**
+   *  Main on_session call
+   * @returns
+   */
   public static async updateUserSession(
-    userId: string,
-    serializedDeviceRecord: FlattenedDeviceRecord,
-  ): Promise<string> {
-    const funcToExecute = async () => {
-      const response = await OneSignalApiBase.post(`players/${userId}/on_session`, serializedDeviceRecord);
+    appId: string,
+    onesignalId: string,
+    subscriptionId: string,
+  ): Promise<void> {
 
-      if (response?.result.id) {
-        // A new user ID can be returned
-        return response?.result.id;
-      } else {
-        return userId;
+    const aliasPair = new AliasPair("onesignalId", onesignalId);
+    // TO DO: in future, we should aggregate session count in case network call fails
+    const updateUserPayload: UpdateUserPayload = {
+      refresh_device_metadata: true,
+      deltas: {
+        session_count: 1,
       }
     };
-    return await Utils.enforceAppIdAndPlayerId(serializedDeviceRecord.app_id, userId, funcToExecute);
+
+
+    Utils.enforceAppId(appId);
+    Utils.enforceAlias(aliasPair);
+    try {
+      await RequestService.updateUser({ appId, subscriptionId }, aliasPair, updateUserPayload);
+    } catch (e) {
+      Log.debug("Error updating user session:", e);
+    }
   }
 
   public static async sendSessionDuration(
-    appId: string, deviceId: string, sessionDuration: number, deviceType: number, attribution: OutcomeAttribution
+    appId: string,
+    onesignalId: string,
+    subscriptionId: string,
+    sessionDuration: number,
+    deviceType: DeliveryPlatformKind,
+    attribution: OutcomeAttribution
   ): Promise<void> {
-    const funcToExecute = async () => {
-      const payload: any = {
-        app_id: appId,
-        type: 1,
-        state: "ping",
-        active_time: sessionDuration,
-        device_type: deviceType,
-      };
-      switch (attribution.type) {
-        case OutcomeAttributionType.Direct:
-          payload.direct = true;
-          payload.notification_ids = attribution.notificationIds;
-          break;
-        case OutcomeAttributionType.Indirect:
-          payload.direct = false;
-          payload.notification_ids = attribution.notificationIds;
-          break;
-        default:
-          break;
+
+    const updateUserPayload: UpdateUserPayload = {
+      refresh_device_metadata: true,
+      deltas: {
+        session_time: sessionDuration,
       }
-      await OneSignalApiBase.post(`players/${deviceId}/on_focus`, payload);
     };
-    Utils.enforceAppIdAndPlayerId(appId, deviceId, funcToExecute);
+
+    const aliasPair = new AliasPair("onesignalId", onesignalId);
+
+    try {
+      await RequestService.updateUser({ appId, subscriptionId }, aliasPair, updateUserPayload);
+    } catch (e) {
+      Log.debug("Error sending session duration:", e);
+    }
+
+    // TO DO: outcome attribution, make rest call to `/measure` endpoint
+    // device_type will be used for outcomes
+    /* TO DO: outcome attribution
+    switch (attribution.type) {
+      case OutcomeAttributionType.Direct:
+        payload.direct = true;
+        payload.notification_ids = attribution.notificationIds;
+        break;
+      case OutcomeAttributionType.Indirect:
+        payload.direct = false;
+        payload.notification_ids = attribution.notificationIds;
+        break;
+      default:
+        break;
+    }
+    */
   }
 }
 
