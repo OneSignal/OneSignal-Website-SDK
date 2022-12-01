@@ -238,7 +238,7 @@ export default class InitHelper {
     ) {
       try {
         await OneSignal.context.serviceWorkerManager.establishServiceWorkerChannel();
-      } catch (e) { 
+      } catch (e) {
         Log.error(e);
       }
     }
