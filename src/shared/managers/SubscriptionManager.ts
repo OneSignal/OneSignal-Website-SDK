@@ -36,6 +36,7 @@ import User from "../../onesignal/User";
 import { FutureSubscriptionModel, SupportedSubscription } from "../../core/models/SubscriptionModels";
 import { StringKeys } from "../../core/models/StringKeys";
 import OneSignalError from "../errors/OneSignalError";
+import { SessionOrigin } from "../models/Session";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -209,24 +210,15 @@ export class SubscriptionManager {
       pushSubscription = RawPushSubscription.deserialize(pushSubscription);
     }
 
-    const deviceRecord: PushDeviceRecord = PushDeviceRecord.createFromPushSubscription(
-      this.config.appId,
-      pushSubscription,
-      subscriptionState
-    );
-
-    let newDeviceId: string | undefined = undefined;
     if (await this.isAlreadyRegisteredWithOneSignal()) {
-      await this.context.updateManager.sendPushDeviceRecordUpdate(deviceRecord);
+      await this.context.updateManager.sendPushDeviceRecordUpdate();
     } else {
-      newDeviceId = await this.context.updateManager.sendPlayerCreate(deviceRecord);
-      if (newDeviceId) {
-        await this.associateSubscriptionWithEmail(newDeviceId);
-      }
+      this.context.sessionManager.upsertSession(SessionOrigin.PlayerCreate);
     }
 
     const subscription = await Database.getSubscription();
-    subscription.deviceId = newDeviceId;
+    // User Model: TO DO: Remove this once we have a better way to determine if the user is subscribed
+    subscription.deviceId = "99999999-9999-9999-9999-999999999999";
     subscription.optedOut = false;
     if (pushSubscription) {
       if (Environment.useSafariLegacyPush()) {
