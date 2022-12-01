@@ -116,11 +116,11 @@ export class ServiceWorker {
       switch(data.command) {
         case WorkerMessengerCommand.SessionUpsert:
           Log.debug("[Service Worker] Received SessionUpsert", payload);
-          ServiceWorker.debounceRefreshSession(event, payload as UpsertSessionPayload);
+          ServiceWorker.debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
           break;
         case WorkerMessengerCommand.SessionDeactivate:
           Log.debug("[Service Worker] Received SessionDeactivate", payload);
-          ServiceWorker.debounceRefreshSession(event, payload as DeactivateSessionPayload);
+          ServiceWorker.debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
           break;
         default:
           return;
@@ -413,7 +413,7 @@ export class ServiceWorker {
 
   static async updateSessionBasedOnHasActive(
     event: ExtendableMessageEvent,
-    hasAnyActiveSessions: boolean, options: DeactivateSessionPayload
+    hasAnyActiveSessions: boolean, options: UpsertOrDeactivateSessionPayload
   ) {
     if (hasAnyActiveSessions) {
       await ServiceWorkerHelper.upsertSession(
@@ -435,7 +435,7 @@ export class ServiceWorker {
     }
   }
 
-  static async refreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload): Promise<void> {
+  static async refreshSession(event: ExtendableMessageEvent, options: UpsertOrDeactivateSessionPayload): Promise<void> {
     Log.debug("[Service Worker] refreshSession");
     /**
      * if https -> getActiveClients -> check for the first focused
@@ -467,7 +467,7 @@ export class ServiceWorker {
   static async checkIfAnyClientsFocusedAndUpdateSession(
     event: ExtendableMessageEvent,
     windowClients: ReadonlyArray<Client>,
-    sessionInfo: DeactivateSessionPayload
+    sessionInfo: UpsertOrDeactivateSessionPayload
   ): Promise<void> {
     const timestamp = new Date().getTime();
     self.clientsStatus = {
@@ -498,7 +498,7 @@ export class ServiceWorker {
     event.waitUntil(getClientStatusesCancelable.promise);
   }
 
-  static debounceRefreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload) {
+  static debounceRefreshSession(event: ExtendableMessageEvent, options: UpsertOrDeactivateSessionPayload) {
     Log.debug("[Service Worker] debounceRefreshSession", options);
 
     if (self.cancel) {
