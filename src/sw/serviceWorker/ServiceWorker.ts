@@ -20,8 +20,7 @@ import { cancelableTimeout } from "../helpers/CancelableTimeout";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
 import { NotificationReceived, NotificationClicked } from "../../shared/models/Notification";
 import {
-  UpsertSessionPayload,
-  DeactivateSessionPayload,
+  UpsertOrDeactivateSessionPayload,
   PageVisibilityResponse,
   PageVisibilityRequest,
   SessionStatus
