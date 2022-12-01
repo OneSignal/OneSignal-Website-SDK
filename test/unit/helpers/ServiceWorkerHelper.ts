@@ -38,7 +38,7 @@ test("sendOnSessionCallIfNecessary, for push player", async t => {
   const onSessionNockPromise = NockOneSignalHelper.nockPlayerOnSession(pushPlayerId);
 
   // 4. Kick off on_session call
-  await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+  await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
     SessionOrigin.PlayerOnSession,
     pushDeviceRecord.serialize(),
     pushPlayerId,
@@ -90,7 +90,7 @@ test("sendOnSessionCallIfNecessary, for email player", async t => {
 
   // 4. Kick off on_session call.
   //    NOTE: This is ALWAYS expects a push player record by pre-existing design.
-  await ServiceWorkerHelper.sendOnSessionCallIfNecessary(
+  await ServiceWorkerHelper.sendOnSessionCallIfNotPlayerCreate(
     SessionOrigin.PlayerOnSession,
     pushDeviceRecord.serialize(),
     pushPlayerId,
