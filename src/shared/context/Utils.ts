@@ -1,4 +1,4 @@
-import AliasPair from "src/core/requestService/AliasPair";
+import AliasPair from "../../core/requestService/AliasPair";
 import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApiError";
 import TimeoutError from "../errors/TimeoutError";
 

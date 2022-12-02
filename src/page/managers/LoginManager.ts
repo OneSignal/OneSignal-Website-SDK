@@ -78,7 +78,6 @@ export default class LoginManager {
     } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
       Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
 
-      const appId = await MainHelper.getAppId();
       const retainPreviousOwner = false;
       const transferResponse = await RequestService.transferSubscription(
         { appId },
