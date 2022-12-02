@@ -4,7 +4,7 @@ import CoreModule from "./CoreModule";
 import { OSModel } from "./modelRepo/OSModel";
 import { SupportedIdentity } from "./models/IdentityModel";
 import { ModelStoresMap } from "./models/ModelStoresMap";
-import { SupportedSubscription } from "./models/SubscriptionModels";
+import { SubscriptionModel, SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
 import User from "../onesignal/User";
@@ -44,24 +44,28 @@ export class CoreModuleDirector {
     const identity = await this.getIdentityModel();
     const properties = await this.getPropertiesModel();
 
-    identity?.hydrate(user.identity);
-    properties?.hydrate(user.properties);
-
     const { onesignalId } = user.identity;
 
     if (!onesignalId) {
       throw new OneSignalError("OneSignal ID is missing from user data");
     }
 
+    // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
     identity?.setOneSignalId(onesignalId);
     properties?.setOneSignalId(onesignalId);
 
-    this._hydrateSubscriptions(user.subscriptions, onesignalId).catch(e => {
+    // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
+    identity?.hydrate(user.identity);
+    properties?.hydrate(user.properties);
+
+    // subscriptions are duplicable, so we hydrate them separately
+    // when hydrating, we should have the full subscription object (i.e. include ID from server)
+    this._hydrateSubscriptions(user.subscriptions as SubscriptionModel[], onesignalId).catch(e => {
       Log.error(`Error hydrating subscriptions: ${e}`);
     });
   }
 
-  private async _hydrateSubscriptions(subscriptions: SupportedSubscription[], onesignalId: string): Promise<void> {
+  private async _hydrateSubscriptions(subscriptions: SubscriptionModel[], onesignalId: string): Promise<void> {
     logMethodCall("CoreModuleDirector._hydrateSubscriptions", { subscriptions });
 
     if (!subscriptions) {
@@ -81,11 +85,25 @@ export class CoreModuleDirector {
       }
     };
 
-    subscriptions.forEach(subscription => {
+    subscriptions.forEach(async subscription => {
       const modelName = getModelName(subscription);
-      const model = new OSModel<SupportedModel>(modelName, subscription);
-      model.setOneSignalId(onesignalId);
-      modelStores[modelName].add(model, true);
+      /* We use the token to identify the model because the subscription ID is not set until the server responds.
+       * So when we initially hydrate after init, we may already have a push model with a token, but no ID.
+       * We don't want to create a new model in this case, so we use the token to identify the model.
+       */
+      const existingSubscription = !!subscription.token ?
+        await this.getSubscriptionOfTypeWithToken(modelName, subscription.token) :
+        undefined;
+
+      if (existingSubscription) {
+        // set onesignalId on existing subscription *before* hydrating so that the onesignalId is updated in model cache
+        existingSubscription.setOneSignalId(onesignalId);
+        existingSubscription.hydrate(subscription);
+      } else {
+        const model = new OSModel<SupportedModel>(modelName, subscription);
+        model.setOneSignalId(onesignalId);
+        modelStores[modelName].add(model, true);
+      }
     });
   }
 
@@ -102,6 +120,8 @@ export class CoreModuleDirector {
     const modelStores = await this.getModelStores();
     modelStores[modelName].remove(modelId);
   }
+
+  /* G E T T E R S */
 
   public async getModelByTypeAndId(modelName: ModelName, modelId: string):
     Promise<OSModel<SupportedModel> | undefined> {
@@ -160,6 +180,26 @@ export class CoreModuleDirector {
       .concat(Object.values(smsSubscriptions))
       .concat(pushSubscription ? [pushSubscription] : []);
     return subscriptions;
+  }
+
+  public async getSubscriptionOfTypeWithToken(type: ModelName, token: string):
+    Promise<OSModel<SupportedSubscription> | undefined>
+    {
+      logMethodCall("CoreModuleDirector.getSubscriptionOfTypeWithToken", { type, token });
+      await this.initPromise;
+      switch (type) {
+        case ModelName.EmailSubscriptions:
+          const emailSubscriptions = await this.getEmailSubscriptionModels();
+          return Object.values(emailSubscriptions).find(subscription => subscription.data.token === token);
+        case ModelName.SmsSubscriptions:
+          const smsSubscriptions = await this.getSmsSubscriptionModels();
+          return Object.values(smsSubscriptions).find(subscription => subscription.data.token === token);
+        case ModelName.PushSubscriptions:
+          const pushSubscription = await this.getPushSubscriptionModel();
+          return pushSubscription && pushSubscription.data.token === token ? pushSubscription : undefined;
+        default:
+          return undefined;
+      }
   }
 
   /* P R I V A T E */
