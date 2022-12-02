@@ -194,10 +194,11 @@ export default class ServiceWorkerHelper {
     }
     */
 
-    await OneSignalApiSW.updateUserSession(appId, onesignalId, subscriptionId);
-
     Database.upsertSession(session);
     Database.resetSentUniqueOutcomes();
+
+    // USER MODEL TO DO: handle potential 404 - user does not exist
+    await OneSignalApiSW.updateUserSession(appId, onesignalId, subscriptionId);
   }
 
   public static async finalizeSession(
