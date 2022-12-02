@@ -1,5 +1,6 @@
+import { DeliveryPlatformKind } from "./DeliveryPlatformKind";
+import { DeviceRecord } from "./DeviceRecord";
 import { OutcomesConfig } from "./Outcomes";
-import { SerializedPushDeviceRecord } from "./PushDeviceRecord";
 
 export enum SessionStatus {
   Active = "active",
@@ -21,8 +22,7 @@ export enum SessionOrigin {
 export interface Session {
   sessionKey: string;
   appId: string;
-  deviceId: string;
-  deviceType: number;
+  deviceType: DeliveryPlatformKind;
   startTimestamp: number;
   accumulatedDuration: number;
   notificationId: string | null; // for direct clicks
@@ -31,10 +31,9 @@ export interface Session {
   lastActivatedTimestamp: number;
 }
 
-type NewSessionOptions = Partial<Session> & {deviceId: string; appId: string, deviceType: number;};
+type NewSessionOptions = Partial<Session> & { appId: string };
 
 interface BaseSessionPayload {
-  deviceId?: string;
   sessionThreshold: number;
   enableSessionDuration: boolean;
   sessionOrigin: SessionOrigin;
@@ -43,12 +42,10 @@ interface BaseSessionPayload {
   outcomesConfig: OutcomesConfig;
 }
 
-export interface UpsertSessionPayload extends BaseSessionPayload {
-  deviceRecord: SerializedPushDeviceRecord;
-}
-
-export interface DeactivateSessionPayload extends BaseSessionPayload {
-  deviceRecord?: SerializedPushDeviceRecord;
+export interface UpsertOrDeactivateSessionPayload extends BaseSessionPayload {
+  appId: string;
+  onesignalId: string;
+  subscriptionId: string;
 }
 
 export interface PageVisibilityRequest {
@@ -65,12 +62,12 @@ export function initializeNewSession(options: NewSessionOptions): Session {
   const currentTimestamp = new Date().getTime();
   const sessionKey = options && options.sessionKey || ONESIGNAL_SESSION_KEY;
   const notificationId = (options && options.notificationId) || null;
+  const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
   return {
     sessionKey,
     appId: options.appId,
-    deviceId: options.deviceId,
-    deviceType: options.deviceType,
+    deviceType,
     startTimestamp: currentTimestamp,
     accumulatedDuration: 0,
     notificationId,

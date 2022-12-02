@@ -20,8 +20,7 @@ import { cancelableTimeout } from "../helpers/CancelableTimeout";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
 import { NotificationReceived, NotificationClicked } from "../../shared/models/Notification";
 import {
-  UpsertSessionPayload,
-  DeactivateSessionPayload,
+  UpsertOrDeactivateSessionPayload,
   PageVisibilityResponse,
   PageVisibilityRequest,
   SessionStatus
@@ -31,6 +30,7 @@ import OneSignalApiSW from "../../../src/shared/api/OneSignalApiSW";
 import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from "../../../src/shared/libraries/WorkerMessenger";
 import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
+import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -88,7 +88,7 @@ export class ServiceWorker {
    */
   static get workerMessenger(): WorkerMessenger {
     if (!(self as any).workerMessenger) {
-      (self as any).workerMessenger = new WorkerMessenger(null);
+      (self as any).workerMessenger = new WorkerMessenger();
     }
     return (self as any).workerMessenger;
   }
@@ -116,11 +116,11 @@ export class ServiceWorker {
       switch(data.command) {
         case WorkerMessengerCommand.SessionUpsert:
           Log.debug("[Service Worker] Received SessionUpsert", payload);
-          ServiceWorker.debounceRefreshSession(event, payload as UpsertSessionPayload);
+          ServiceWorker.debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
           break;
         case WorkerMessengerCommand.SessionDeactivate:
           Log.debug("[Service Worker] Received SessionDeactivate", payload);
-          ServiceWorker.debounceRefreshSession(event, payload as DeactivateSessionPayload);
+          ServiceWorker.debounceRefreshSession(event, payload as UpsertOrDeactivateSessionPayload);
           break;
         default:
           return;
@@ -217,7 +217,7 @@ export class ServiceWorker {
 
         const timestamp = payload.timestamp;
         if (self.clientsStatus.timestamp !== timestamp) { return; }
-        
+
         self.clientsStatus.receivedResponsesCount++;
         if (payload.focused) {
           self.clientsStatus.hasAnyActiveSessions = true;
@@ -413,20 +413,26 @@ export class ServiceWorker {
 
   static async updateSessionBasedOnHasActive(
     event: ExtendableMessageEvent,
-    hasAnyActiveSessions: boolean, options: DeactivateSessionPayload
+    hasAnyActiveSessions: boolean, options: UpsertOrDeactivateSessionPayload
   ) {
     if (hasAnyActiveSessions) {
       await ServiceWorkerHelper.upsertSession(
+        options.appId,
+        options.onesignalId,
+        options.subscriptionId,
         options.sessionThreshold,
         options.enableSessionDuration,
-        options.deviceRecord!,
-        options.deviceId,
         options.sessionOrigin,
         options.outcomesConfig
       );
     } else {
       const cancelableFinalize = await ServiceWorkerHelper.deactivateSession(
-        options.sessionThreshold, options.enableSessionDuration, options.outcomesConfig
+        options.appId,
+        options.onesignalId,
+        options.subscriptionId,
+        options.sessionThreshold,
+        options.enableSessionDuration,
+        options.outcomesConfig
       );
       if (cancelableFinalize) {
         self.cancel = cancelableFinalize.cancel;
@@ -435,7 +441,7 @@ export class ServiceWorker {
     }
   }
 
-  static async refreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload): Promise<void> {
+  static async refreshSession(event: ExtendableMessageEvent, options: UpsertOrDeactivateSessionPayload): Promise<void> {
     Log.debug("[Service Worker] refreshSession");
     /**
      * if https -> getActiveClients -> check for the first focused
@@ -467,7 +473,7 @@ export class ServiceWorker {
   static async checkIfAnyClientsFocusedAndUpdateSession(
     event: ExtendableMessageEvent,
     windowClients: ReadonlyArray<Client>,
-    sessionInfo: DeactivateSessionPayload
+    sessionInfo: UpsertOrDeactivateSessionPayload
   ): Promise<void> {
     const timestamp = new Date().getTime();
     self.clientsStatus = {
@@ -498,7 +504,7 @@ export class ServiceWorker {
     event.waitUntil(getClientStatusesCancelable.promise);
   }
 
-  static debounceRefreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload) {
+  static debounceRefreshSession(event: ExtendableMessageEvent, options: UpsertOrDeactivateSessionPayload) {
     Log.debug("[Service Worker] debounceRefreshSession", options);
 
     if (self.cancel) {
@@ -941,7 +947,7 @@ export class ServiceWorker {
     appId: string | undefined | null,
     deviceId: string | undefined,
     notificationData: any,
-    deviceType: number): Promise<void> {
+    deviceType: DeliveryPlatformKind): Promise<void> {
 
     if (!notificationData.id) {
       console.error("No notification id, skipping networks calls to report open!");

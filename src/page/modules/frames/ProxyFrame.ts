@@ -8,7 +8,7 @@ import RemoteFrame from './RemoteFrame';
 import Context from '../../models/Context';
 import { WorkerMessengerCommand } from "../../../shared/libraries/WorkerMessenger";
 import { DismissPrompt } from '../../models/Dismiss';
-import { UpsertSessionPayload, DeactivateSessionPayload, PageVisibilityResponse } from '../../../shared/models/Session';
+import { UpsertOrDeactivateSessionPayload, PageVisibilityResponse } from '../../../shared/models/Session';
 import { DismissHelper } from '../../../shared/helpers/DismissHelper';
 import InitHelper from '../../../shared/helpers/InitHelper';
 import Log from '../../../shared/libraries/Log';
@@ -264,14 +264,14 @@ export default class ProxyFrame extends RemoteFrame {
 
   async onSessionUpsert(message: MessengerMessageEvent) {
     const context: Context = OneSignal.context;
-    const payload = message.data as UpsertSessionPayload;
+    const payload = message.data as UpsertOrDeactivateSessionPayload;
     context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionUpsert, payload);
     message.reply(true);
   }
 
   async onSessionDeactivate(message: MessengerMessageEvent) {
     const context: Context = OneSignal.context;
-    const payload = message.data as DeactivateSessionPayload;
+    const payload = message.data as UpsertOrDeactivateSessionPayload;
     context.workerMessenger.directPostMessageToSW(
       WorkerMessengerCommand.SessionDeactivate, payload);
     message.reply(true);

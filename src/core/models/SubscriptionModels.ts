@@ -1,3 +1,4 @@
+import { SubscriptionStateKind } from "../../shared/models/SubscriptionStateKind";
 
 export type SupportedSubscription = SubscriptionModel | FutureSubscriptionModel;
 
@@ -22,7 +23,7 @@ export interface FutureSubscriptionModel {
   type: SubscriptionType;
   token?: string; // maps to legacy player.identifier
   enabled?: boolean;
-  notification_types?: number;
+  notification_types?: SubscriptionStateKind;
   sdk?: string;
   device_model?: string;
   device_os?: number;

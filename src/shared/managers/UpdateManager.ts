@@ -13,6 +13,8 @@ import { ExternalUserIdHelper } from "../helpers/ExternalUserIdHelper";
 import { TagsObject } from "../../page/models/Tags";
 import { SessionOrigin } from '../models/Session';
 import OneSignalApiShared from '../api/OneSignalApiShared';
+import OneSignal from '../../onesignal/OneSignal';
+import User from '../../onesignal/User';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -28,41 +30,23 @@ export class UpdateManager {
     return (await Database.getSubscription()).deviceId != null;
   }
 
-  private async getDeviceId(): Promise<string> {
-    const { deviceId } = await Database.getSubscription();
-    if (!deviceId) {
-      throw new NotSubscribedError(NotSubscribedReason.NoDeviceId);
-    }
-    return deviceId;
-  }
-
   private async createDeviceRecord(): Promise<PushDeviceRecord> {
     return MainHelper.createDeviceRecord(this.context.appConfig.appId);
   }
 
-  public async sendPushDeviceRecordUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
-    const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!existingUser) {
-      Log.debug("Not sending the update because user is not registered with OneSignal (no device id)");
+  public async sendPushDeviceRecordUpdate(): Promise<void> {
+    if (!User.singletonInstance?.identified) {
+      Log.debug("Not sending the update because user is not registered with OneSignal (no onesignal_id)");
       return;
     }
 
-    const deviceId = await this.getDeviceId();
-    if (!deviceRecord) {
-      deviceRecord = await this.createDeviceRecord();
-    }
-    if (this.onSessionSent) {
-      await OneSignalApiShared.updatePlayer(this.context.appConfig.appId, deviceId, {
-        notification_types: SubscriptionStateKind.Subscribed,
-        ...deviceRecord.serialize(),
-      });
-    } else {
-      await this.sendOnSessionUpdate(deviceRecord);
+    if (!this.onSessionSent) {
+      await this.sendOnSessionUpdate();
     }
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  public async sendOnSessionUpdate(deviceRecord?: PushDeviceRecord): Promise<void> {
+  public async sendOnSessionUpdate(): Promise<void> {
     if (this.onSessionSent) {
       return;
     }
@@ -77,13 +61,10 @@ export class UpdateManager {
       return;
     }
 
-    const deviceId = await this.getDeviceId();
-    if (!deviceRecord) {
-      deviceRecord = await this.createDeviceRecord();
-    }
+    const subscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
 
-    if (deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
-      OneSignal.config.enableOnSession !== true) {
+    if (subscriptionModel?.data.notification_types !== SubscriptionStateKind.Subscribed &&
+      OneSignal.config?.enableOnSession !== true) {
       return;
     }
 
@@ -91,7 +72,7 @@ export class UpdateManager {
       // Not sending on_session here but from SW instead.
 
       // Not awaiting here on purpose
-      this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerOnSession);
+      this.context.sessionManager.upsertSession(SessionOrigin.PlayerOnSession);
       this.onSessionSent = true;
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
@@ -106,7 +87,7 @@ export class UpdateManager {
         Log.info("Subscribed to web push and registered with OneSignal", deviceRecord, deviceId);
         this.onSessionSent = true;
         // Not awaiting here on purpose
-        this.context.sessionManager.upsertSession(deviceId, deviceRecord, SessionOrigin.PlayerCreate);
+        this.context.sessionManager.upsertSession(SessionOrigin.PlayerCreate);
         return deviceId;
       }
       Log.error(`Failed to create user.`);
@@ -132,13 +113,6 @@ export class UpdateManager {
       external_user_id_auth_hash: Utils.getValueOrDefault(authHash, undefined)
     };
 
-    // 1. Update any secondary channels such as email with external_user_id
-    // Not awaiting as this may never complete, as promise only completes if we have a player record for each channel.
-    /* tslint:disable:no-floating-promises */
-    this.context.secondaryChannelManager.synchronizer.setExternalUserId(
-      payload.external_user_id,
-      payload.external_user_id_auth_hash
-    );
     /* tslint:enable:no-floating-promises */
 
     // 2. Update push player with external_user_id
@@ -149,8 +123,6 @@ export class UpdateManager {
   }
 
   public async sendTagsUpdate(tags: TagsObject<any>): Promise<void> {
-    this.context.secondaryChannelManager.synchronizer.setTags(tags);
-
     const options: UpdatePlayerOptions = { tags };
     const authHash = await Database.getExternalUserIdAuthHash();
     if (!!authHash) {
