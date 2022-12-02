@@ -52,11 +52,4 @@ export default class OneSignalApi {
   static async logoutEmail(appConfig: AppConfig, emailProfile: EmailProfile, deviceId: string): Promise<boolean> {
     return await OneSignalApiShared.logoutEmail(appConfig, emailProfile, deviceId);
   }
-
-  static async updateUserSession(
-    userId: string,
-    deviceRecord: DeviceRecord,
-  ): Promise<string> {
-    return await OneSignalApiShared.updateUserSession(userId, deviceRecord);
-  }
 }
