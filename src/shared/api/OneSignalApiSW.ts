@@ -1,3 +1,5 @@
+import { OutcomeRequestData } from "../../page/models/OutcomeRequestData";
+import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
 import AliasPair from "../../core/requestService/AliasPair";
 import { RequestService } from "../../core/requestService/RequestService";
 import { UpdateUserPayload } from "../../core/requestService/UpdateUserPayload";
@@ -5,9 +7,10 @@ import Utils from "../context/Utils";
 import Log from "../libraries/Log";
 import { ServerAppConfig } from "../models/AppConfig";
 import { DeliveryPlatformKind } from "../models/DeliveryPlatformKind";
-import { OutcomeAttribution } from "../models/Outcomes";
+import { OutcomeAttribution, OutcomeAttributionType } from "../models/Outcomes";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { OneSignalApiBase } from "./OneSignalApiBase";
+import OneSignalApiShared from "./OneSignalApiShared";
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
@@ -87,7 +90,6 @@ export class OneSignalApiSW {
     onesignalId: string,
     subscriptionId: string,
     sessionDuration: number,
-    deviceType: DeliveryPlatformKind,
     attribution: OutcomeAttribution
   ): Promise<void> {
 
@@ -100,28 +102,26 @@ export class OneSignalApiSW {
 
     const aliasPair = new AliasPair("onesignalId", onesignalId);
 
+    const outcomePayload: OutcomeRequestData = {
+      id: "os__session_duration",
+      app_id: appId,
+      session_time: sessionDuration,
+      notification_ids: attribution.notificationIds,
+      subscription: {
+        id: subscriptionId,
+        type: FuturePushSubscriptionRecord.getSubscriptionType(),
+      },
+      onesignal_id: onesignalId
+    };
+
+    outcomePayload.direct = attribution.type === OutcomeAttributionType.Direct ? true : false;
+
     try {
       await RequestService.updateUser({ appId, subscriptionId }, aliasPair, updateUserPayload);
+      await OneSignalApiShared.sendOutcome(outcomePayload);
     } catch (e) {
       Log.debug("Error sending session duration:", e);
     }
-
-    // TO DO: outcome attribution, make rest call to `/measure` endpoint
-    // device_type will be used for outcomes
-    /* TO DO: outcome attribution
-    switch (attribution.type) {
-      case OutcomeAttributionType.Direct:
-        payload.direct = true;
-        payload.notification_ids = attribution.notificationIds;
-        break;
-      case OutcomeAttributionType.Indirect:
-        payload.direct = false;
-        payload.notification_ids = attribution.notificationIds;
-        break;
-      default:
-        break;
-    }
-    */
   }
 }
 
