@@ -224,7 +224,6 @@ export default class ServiceWorkerHelper {
         onesignalId,
         subscriptionId,
         session.accumulatedDuration,
-        session.deviceType,
         attribution
       );
     }
