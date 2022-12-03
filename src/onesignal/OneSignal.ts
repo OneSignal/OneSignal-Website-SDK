@@ -47,6 +47,7 @@ import LocalStorage from "../shared/utils/LocalStorage";
 import OneSignalError from "../shared/errors/OneSignalError";
 import LoginManager from "../page/managers/LoginManager";
 import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
+import { SessionNamespace } from "./SessionNamespace";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -321,71 +322,11 @@ export default class OneSignal {
     return this.emitter.once(event, listener);
   }
 
-  public static async sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): Promise<void> {
-    const config = OneSignal.config!.userConfig.outcomes;
-    if (!config) {
-      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
-      return;
-    }
-
-    const outcomesHelper = new OutcomesHelper(OneSignal.config!.appId, config, outcomeName, false);
-    if (typeof outcomeWeight !== "undefined" && typeof outcomeWeight !== "number") {
-      Log.error("Outcome weight can only be a number if present.");
-      return;
-    }
-
-    if (!await outcomesHelper.beforeOutcomeSend()) {
-      return;
-    }
-
-    const outcomeAttribution = await outcomesHelper.getAttribution();
-
-    await outcomesHelper.send({
-      type: outcomeAttribution.type,
-      notificationIds: outcomeAttribution.notificationIds,
-      weight: outcomeWeight
-    });
-  }
-
-  public static async sendUniqueOutcome(outcomeName: string): Promise<void> {
-    const config = OneSignal.config!.userConfig.outcomes;
-    if (!config) {
-      Log.error(`Could not send ${outcomeName}. No outcomes config found.`);
-      return;
-    }
-
-    const outcomesHelper = new OutcomesHelper(OneSignal.config!.appId, config, outcomeName, true);
-
-    if (!await outcomesHelper.beforeOutcomeSend()) {
-      return;
-    }
-    const outcomeAttribution = await outcomesHelper.getAttribution();
-
-    if (outcomeAttribution.type === OutcomeAttributionType.NotSupported) {
-      Log.warn("You are on a free plan. Please upgrade to use this functionality.");
-      return;
-    }
-
-    // all notifs in attribution window
-    const { notificationIds } = outcomeAttribution;
-    // only new notifs that ought to be attributed
-    const newNotifsToAttributeWithOutcome = await outcomesHelper.getNotifsToAttributeWithUniqueOutcome(notificationIds);
-
-    if (!outcomesHelper.shouldSendUnique(outcomeAttribution, newNotifsToAttributeWithOutcome)) {
-      Log.warn(`'${outcomeName}' was already reported for all notifications.`);
-      return;
-    }
-
-    await outcomesHelper.send({
-      type: outcomeAttribution.type,
-      notificationIds: newNotifsToAttributeWithOutcome,
-    });
-  }
-
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;
   static notifications = new NotificationsNamespace();
   static slidedown = new SlidedownNamespace();
+  static session = new SessionNamespace();
   static user: UserNamespace;
   /* END NEW USER MODEL CHANGES */
 
