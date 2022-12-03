@@ -258,12 +258,4 @@ export default class UserNamespace {
       throw e;
     });
   }
-
-  public sendOutcome(outcomeName: string, outcomeWeight?: number | undefined): void {
-    // TO DO
-  }
-
-  public sendUniqueOutcome(outcomeName: string): void {
-    // TO DO
-  }
 }
