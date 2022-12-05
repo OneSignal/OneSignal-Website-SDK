@@ -1,4 +1,5 @@
-import OneSignalError from "src/shared/errors/OneSignalError";
+import OneSignalError from "../../shared/errors/OneSignalError";
+import Database from "../../shared/services/Database";
 import OneSignal from "../../onesignal/OneSignal";
 import { OSModel } from "../modelRepo/OSModel";
 import { CoreChangeType } from "../models/CoreChangeType";
@@ -11,12 +12,18 @@ export class Operation<Model> {
   timestamp: number;
   payload?: Partial<SupportedModel>;
   model?: OSModel<Model>;
+  jwtTokenAvailable: Promise<void>;
+  jwtToken?: string | null;
 
   constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas?: CoreDelta<Model>[]) {
     this.operationId = Math.random().toString(36).substring(2);
     this.payload = deltas ? this.getPayload(deltas) : undefined;
     this.model = deltas ? deltas[0].model : undefined;
     this.timestamp = Date.now();
+    this.jwtTokenAvailable = new Promise<void>(async resolve => {
+      this.jwtToken = await Database.getJWTToken();
+      resolve();
+    });
   }
 
   private getPayload(deltas: CoreDelta<Model>[]): any {
@@ -75,6 +82,8 @@ export class Operation<Model> {
         operation.operationId = operationId;
         operation.timestamp = timestamp;
         operation.payload = payload;
+        operation.jwtToken = rawOperation.jwtToken;
+        operation.jwtTokenAvailable = Promise.resolve();
         return operation;
       } else {
         throw new Error("Could not find model. Is OneSignal initialized?");

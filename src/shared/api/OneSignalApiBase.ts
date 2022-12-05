@@ -2,34 +2,34 @@ import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApi
 import OneSignalError from "../errors/OneSignalError";
 import Environment from "../helpers/Environment";
 import SdkEnvironment from "../managers/SdkEnvironment";
+import { APIHeaders } from "../models/APIHeaders";
 import OneSignalApiBaseResponse from "./OneSignalApiBaseResponse";
 
-type Headers = any[] & {[key: string]: any};
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export class OneSignalApiBase {
-  static get(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
+  static get(action: string, data?: any, headers?: APIHeaders | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('GET', action, data, headers);
   }
 
-  static post(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
+  static post(action: string, data?: any, headers?: APIHeaders | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('POST', action, data, headers);
   }
 
-  static put(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
+  static put(action: string, data?: any, headers?: APIHeaders | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PUT', action, data, headers);
   }
 
-  static delete(action: string, data?: any, headers?: Headers | undefined):
+  static delete(action: string, data?: any, headers?: APIHeaders | undefined):
     Promise<OneSignalApiBaseResponse> {
       return OneSignalApiBase.call('DELETE', action, data, headers);
   }
 
-  static patch(action: string, data?: any, headers?: Headers | undefined): Promise<OneSignalApiBaseResponse> {
+  static patch(action: string, data?: any, headers?: APIHeaders | undefined): Promise<OneSignalApiBaseResponse> {
     return OneSignalApiBase.call('PATCH', action, data, headers);
   }
 
-  private static call(method: SupportedMethods, action: string, data: any, headers: Headers | undefined):
+  private static call(method: SupportedMethods, action: string, data: any, headers: APIHeaders | undefined):
     Promise<OneSignalApiBaseResponse> {
       if (method === "GET") {
         if (action.indexOf("players") > -1 && action.indexOf("app_id=") === -1) {

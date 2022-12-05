@@ -91,7 +91,9 @@ export default class OneSignal {
     logMethodCall('login', { externalId, token });
 
     try {
-      // TO DO: set JWT token
+      if (token) {
+        await Database.setJWTToken(token);
+      }
 
       const identityModel = await this.coreDirector.getIdentityModel();
 
