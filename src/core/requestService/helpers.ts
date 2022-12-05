@@ -1,3 +1,4 @@
+import Database from "../../shared/services/Database";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { IdentityModel } from "../models/IdentityModel";
 import { SupportedSubscription } from "../models/SubscriptionModels";
@@ -64,3 +65,12 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   };
 }
 
+export async function getJWTHeaderIfIdentityVerificationEnabled(): Promise<{ "Authorization": string }[] | undefined> {
+  if (OneSignal.config?.userConfig?.identityVerificationEnabled) {
+    const jwtToken = await Database.getJWTToken();
+    return [{
+      Authorization: `Bearer ${jwtToken}`
+    }];
+  }
+  return;
+}
