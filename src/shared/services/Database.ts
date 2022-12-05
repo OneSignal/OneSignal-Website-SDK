@@ -350,6 +350,14 @@ export default class Database {
     }
   }
 
+  async setJWTToken(token: string): Promise<void> {
+    await this.put("Ids", { type: "jwtToken", id: token });
+  }
+
+  async getJWTToken(): Promise<string | null> {
+    return await this.get<string>("Ids", "jwtToken");
+  }
+
   async getEmailProfile(): Promise<EmailProfile> {
     const profileJson = await this.get<BundleEmail>("Ids", "emailProfile");
     if (profileJson) {
@@ -508,6 +516,14 @@ export default class Database {
 
   static async getSubscription(): Promise<Subscription> {
     return await Database.singletonInstance.getSubscription();
+  }
+
+  static async setJWTToken(token: string) {
+    return await Database.singletonInstance.setJWTToken(token);
+  }
+
+  static async getJWTToken(): Promise<string | null> {
+    return await Database.singletonInstance.getJWTToken();
   }
 
   static async setProvideUserConsent(consent: boolean): Promise<void> {
