@@ -5,7 +5,6 @@ import ConfigManager from "../page/managers/ConfigManager";
 import LegacyManager from "../page/managers/LegacyManager";
 import Context from "../page/models/Context";
 import { EnvironmentInfo } from "../page/models/EnvironmentInfo";
-import { SecondaryChannelDeviceRecord } from "../shared/models/SecondaryChannelDeviceRecord";
 import ProxyFrame from "../page/modules/frames/ProxyFrame";
 import ProxyFrameHost from "../page/modules/frames/ProxyFrameHost";
 import SubscriptionModal from "../page/modules/frames/SubscriptionModal";
@@ -14,27 +13,21 @@ import SubscriptionPopup from "../page/modules/frames/SubscriptionPopup";
 import SubscriptionPopupHost from "../page/modules/frames/SubscriptionPopupHost";
 import TimedLocalStorage from "../page/modules/TimedLocalStorage";
 import { ProcessOneSignalPushCalls } from "../page/utils/ProcessOneSignalPushCalls";
-import OneSignalApi from "../shared/api/OneSignalApi";
 import { SdkInitError, SdkInitErrorKind } from "../shared/errors/SdkInitError";
 import Environment from "../shared/helpers/Environment";
 import EventHelper from "../shared/helpers/EventHelper";
 import HttpHelper from "../shared/helpers/HttpHelper";
 import InitHelper from "../shared/helpers/InitHelper";
 import MainHelper from "../shared/helpers/MainHelper";
-import OutcomesHelper from "../shared/helpers/OutcomesHelper";
-import SubscriptionHelper from "../shared/helpers/SubscriptionHelper";
 import Emitter, { EventHandler } from "../shared/libraries/Emitter";
 import Log from "../shared/libraries/Log";
 import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
 import { AppUserConfig, AppConfig } from "../shared/models/AppConfig";
 import { DeviceRecord } from "../shared/models/DeviceRecord";
-import { OutcomeAttributionType } from "../shared/models/Outcomes";
 import { AppUserConfigNotifyButton } from "../shared/models/Prompts";
 import { WindowEnvironmentKind } from "../shared/models/WindowEnvironmentKind";
 import Database from "../shared/services/Database";
-import IndexedDb from "../shared/services/IndexedDb";
-import LimitStore from "../shared/services/LimitStore";
 import OneSignalUtils from "../shared/utils/OneSignalUtils";
 import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
@@ -187,10 +180,10 @@ export default class OneSignal {
       }
     }
 
-    await OneSignal.delayedInit();
+    await OneSignal._delayedInit();
   }
 
-  private static async delayedInit(): Promise<void> {
+  private static async _delayedInit(): Promise<void> {
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();
@@ -270,7 +263,7 @@ export default class OneSignal {
   static async setPrivacyConsent(consent: boolean): Promise<void> {
     await Database.setProvideUserConsent(consent);
     if (consent && OneSignal.pendingInit)
-      await OneSignal.delayedInit();
+      await OneSignal._delayedInit();
   }
 
   static async setRequiresPrivacyConsent(requiresConsent: boolean): Promise<void> {
@@ -335,14 +328,8 @@ export default class OneSignal {
   static _VERSION = Environment.version();
   static sdkEnvironment = SdkEnvironment;
   static environmentInfo?: EnvironmentInfo;
-  static _notificationOpenedCallbacks = [];
-  static _idsAvailable_callback = [];
-  static _defaultLaunchURL = null;
   static config: AppConfig | null = null;
   static _sessionInitAlreadyRunning = false;
-  static _isNotificationEnabledCallback = [];
-  static _subscriptionSet = true;
-  static modalUrl = null;
   static _windowWidth = 650;
   static _windowHeight = 568;
   static _isNewVisitor = false;
@@ -351,19 +338,10 @@ export default class OneSignal {
   static initialized = false;
   static _didLoadITILibrary = false;
   static notifyButton: AppUserConfigNotifyButton | null = null;
-  static store = LimitStore;
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
-  static browser = bowser;
   static log = Log;
-  static api = OneSignalApi;
-  static indexedDb = IndexedDb;
-  static mainHelper = MainHelper;
-  static subscriptionHelper = SubscriptionHelper;
-  static httpHelper = HttpHelper;
-  static eventHelper = EventHelper;
-  static initHelper = InitHelper;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;
@@ -398,9 +376,7 @@ export default class OneSignal {
   static _initCalled = false;
   static __initAlreadyCalled = false;
   static context: Context;
-  static checkAndWipeUserSubscription = function () { };
   static DeviceRecord = DeviceRecord;
-  static SecondaryChannelDeviceRecord = SecondaryChannelDeviceRecord;
 
   /**
    * Used by Rails-side HTTP popup. Must keep the same name.
