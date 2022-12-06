@@ -121,6 +121,7 @@ export class SubscriptionManager {
 
         if (SubscriptionManager.isSafari()) {
           rawPushSubscription = await this.subscribeSafari();
+          await this._updatePushSubscriptionModelWithRawSubscription(rawPushSubscription);
           /* Now that permissions have been granted, install the service worker */
           Log.info("Installing SW on Safari");
           try {
