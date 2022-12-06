@@ -1,18 +1,19 @@
 import { ContextInterface } from "../../../page/models/Context";
-import { PushDeviceRecord } from "../../models/PushDeviceRecord";
 import { WorkerMessengerCommand } from "../../libraries/WorkerMessenger";
 import { OneSignalUtils } from "../../utils/OneSignalUtils";
 import { SubscriptionStateKind } from "../../models/SubscriptionStateKind";
-import Database from "../../services/Database";
 import { ISessionManager } from "./types";
 import { SessionOrigin, UpsertOrDeactivateSessionPayload } from "../../models/Session";
 import MainHelper from "../../helpers/MainHelper";
 import Log from "../../libraries/Log";
-import OneSignalApiShared from "../../api/OneSignalApiShared";
 import OneSignal from "../../../onesignal/OneSignal";
 import { isCompleteSubscriptionObject } from "../../../core/utils/typePredicates";
 import OneSignalError from "../../../shared/errors/OneSignalError";
 import User from "../../../onesignal/User";
+import { RequestService } from "../../../core/requestService/RequestService";
+import AliasPair from "../../../core/requestService/AliasPair";
+import { UpdateUserPayload } from "../../../core/requestService/UpdateUserPayload";
+import Utils from "../../../shared/context/Utils";
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
@@ -305,45 +306,54 @@ export class SessionManager implements ISessionManager {
   }
 
   // If user has been subscribed before, send the on_session update to our backend on the first page view.
-  async sendOnSessionUpdateFromPage(deviceRecord?: PushDeviceRecord): Promise<void> {
-    if (this.onSessionSent) {
+  async sendOnSessionUpdateFromPage(): Promise<void> {
+    const earlyReturn = this.onSessionSent || !this.context.pageViewManager.isFirstPageView();
+
+    if (earlyReturn) {
       return;
     }
 
-    if (!this.context.pageViewManager.isFirstPageView()) {
+    const identityModel = await OneSignal.coreDirector.getIdentityModel();
+    const onesignalId = identityModel?.data?.id;
+
+    if (!onesignalId) {
+      Log.debug("Not sending the on session because user is not registered with OneSignal (no onesignal id)");
       return;
     }
 
-    const existingUser = await this.context.subscriptionManager.isAlreadyRegisteredWithOneSignal();
-    if (!existingUser) {
-      Log.debug("Not sending the on session because user is not registered with OneSignal (no device id)");
-      return;
-    }
-
-    const deviceId = await MainHelper.getDeviceId();
-    if (!deviceRecord) {
-      deviceRecord = await MainHelper.createDeviceRecord(this.context.appConfig.appId);
-    }
-
-    if (deviceRecord.subscriptionState !== SubscriptionStateKind.Subscribed &&
+    const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
+    if (pushSubscription?.data.notification_types !== SubscriptionStateKind.Subscribed &&
       OneSignal.config?.enableOnSession !== true) {
       return;
     }
 
-    try {
-      const newPlayerId = await OneSignalApiShared.updateUserSession(deviceId!, deviceRecord);
-      this.onSessionSent = true;
+    let subscriptionId;
+    if (isCompleteSubscriptionObject(pushSubscription?.data)) {
+      subscriptionId = pushSubscription?.data.id;
+    }
 
-      // If the returned player id is different, save the new id.
-      if (newPlayerId !== deviceId) {
-        const subscription = await Database.getSubscription();
-        subscription.deviceId = newPlayerId;
-        await Database.setSubscription(subscription);
+
+    try {
+      const aliasPair = new AliasPair("onesignalId", onesignalId);
+      // TO DO: in future, we should aggregate session count in case network call fails
+      const updateUserPayload: UpdateUserPayload = {
+        refresh_device_metadata: true,
+        deltas: {
+          session_count: 1,
+        }
+      };
+
+      const appId = await MainHelper.getAppId();
+      Utils.enforceAppId(appId);
+      Utils.enforceAlias(aliasPair);
+      try {
+        await RequestService.updateUser({ appId, subscriptionId }, aliasPair, updateUserPayload);
+        this.onSessionSent = true;
+      } catch (e) {
+        Log.debug("Error updating user session:", e);
       }
     } catch(e) {
       Log.error(`Failed to update user session. Error "${e.message}" ${e.stack}`);
     }
-
-    // TO DO: send on_session from page
   }
 }
