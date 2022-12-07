@@ -12,7 +12,6 @@ import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { Subscription } from "../models/Subscription";
 import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
-import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { IntegrationKind } from "../models/IntegrationKind";
 

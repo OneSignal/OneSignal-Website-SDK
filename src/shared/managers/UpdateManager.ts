@@ -1,6 +1,5 @@
 import { SubscriptionStateKind } from '../models/SubscriptionStateKind';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import { NotSubscribedError, NotSubscribedReason } from "../errors/NotSubscribedError";
 import MainHelper from '../helpers/MainHelper';
 import Database from "../services/Database";
 import Log from "../libraries/Log";
@@ -15,6 +14,8 @@ import { SessionOrigin } from '../models/Session';
 import OneSignalApiShared from '../api/OneSignalApiShared';
 import OneSignal from '../../onesignal/OneSignal';
 import User from '../../onesignal/User';
+import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
+import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';
 
 export class UpdateManager {
   private context: ContextSWInterface;
@@ -151,47 +152,71 @@ export class UpdateManager {
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeDirect");
-    const deviceRecord = await this.createDeviceRecord();
-    const outcomeRequestData: OutcomeRequestData = {
-      app_id: appId,
-      id: outcomeName,
-      device_type: deviceRecord.deliveryPlatform,
-      notification_ids: notificationIds,
-      direct: true,
-    };
-    if (value !== undefined) {
-      outcomeRequestData.weight = value;
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+
+    if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
+      const outcomeRequestData: OutcomeRequestData = {
+        id: outcomeName,
+        app_id: appId,
+        notification_ids: notificationIds,
+        direct: true,
+        subscription: {
+          id: pushSubscriptionModel.data.id,
+          type: FuturePushSubscriptionRecord.getSubscriptionType()
+        }
+      };
+      if (value !== undefined) {
+        outcomeRequestData.weight = value;
+      }
+      await OneSignalApiShared.sendOutcome(outcomeRequestData);
+      return;
     }
-    await OneSignalApiShared.sendOutcome(outcomeRequestData);
+    Log.warn(`Send outcome aborted because pushSubscriptionModel is not available.`);
   }
 
   public async sendOutcomeInfluenced(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeInfluenced");
-    const deviceRecord = await this.createDeviceRecord();
-    const outcomeRequestData: OutcomeRequestData = {
-      app_id: appId,
-      id: outcomeName,
-      device_type: deviceRecord.deliveryPlatform,
-      notification_ids: notificationIds,
-      direct: false,
-    };
-    if (value !== undefined) {
-      outcomeRequestData.weight = value;
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+
+    if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
+      const outcomeRequestData: OutcomeRequestData = {
+        id: outcomeName,
+        app_id: appId,
+        notification_ids: notificationIds,
+        direct: false,
+        subscription: {
+          id: pushSubscriptionModel.data.id,
+          type: FuturePushSubscriptionRecord.getSubscriptionType()
+        }
+      };
+      if (value !== undefined) {
+        outcomeRequestData.weight = value;
+      }
+      await OneSignalApiShared.sendOutcome(outcomeRequestData);
+      return;
     }
-    await OneSignalApiShared.sendOutcome(outcomeRequestData);
+    Log.warn(`Send outcome aborted because pushSubscriptionModel is not available.`);
   }
 
   public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeUnattributed");
-    const deviceRecord = await this.createDeviceRecord();
-    const outcomeRequestData: OutcomeRequestData = {
-      app_id: appId,
-      id: outcomeName,
-      device_type: deviceRecord.deliveryPlatform,
-    };
-    if (value !== undefined) {
-      outcomeRequestData.weight = value;
+    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+
+    if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
+      const outcomeRequestData: OutcomeRequestData = {
+        id: outcomeName,
+        app_id: appId,
+        subscription: {
+          id: pushSubscriptionModel.data.id,
+          type: FuturePushSubscriptionRecord.getSubscriptionType()
+        }
+      };
+      if (value !== undefined) {
+        outcomeRequestData.weight = value;
+      }
+      await OneSignalApiShared.sendOutcome(outcomeRequestData);
+      return;
     }
-    await OneSignalApiShared.sendOutcome(outcomeRequestData);
+    Log.warn(`Send outcome aborted because pushSubscriptionModel is not available.`);
   }
 }
