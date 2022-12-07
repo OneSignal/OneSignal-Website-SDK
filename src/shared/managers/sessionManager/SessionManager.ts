@@ -113,66 +113,76 @@ export class SessionManager implements ISessionManager {
     if (!User.singletonInstance?.identified) {
       return;
     }
-    const visibilityState = document.visibilityState;
-    const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+
+    try {
+      const visibilityState = document.visibilityState;
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
 
 
-    if (visibilityState === "visible") {
-      this.setupOnFocusAndOnBlurForSession();
+      if (visibilityState === "visible") {
+        this.setupOnFocusAndOnBlurForSession();
 
-      Log.debug("handleVisibilityChange", "visible", `hasFocus: ${document.hasFocus()}`);
+        Log.debug("handleVisibilityChange", "visible", `hasFocus: ${document.hasFocus()}`);
 
-      if (document.hasFocus()) {
-        await this.notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin.VisibilityVisible);
+        if (document.hasFocus()) {
+          await this.notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin.VisibilityVisible);
+        }
+        return;
       }
-      return;
+
+      if (visibilityState === "hidden") {
+        Log.debug("handleVisibilityChange", "hidden");
+        if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
+          window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
+          OneSignal.cache.isFocusEventSetup = false;
+        }
+        if (OneSignal.cache.blurHandler && OneSignal.cache.isBlurEventSetup) {
+          window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
+          OneSignal.cache.isBlurEventSetup = false;
+        }
+
+        await this.notifySWToDeactivateSession(onesignalId, subscriptionId, SessionOrigin.VisibilityHidden);
+        return;
+      }
+
+      // it should never be anything else at this point
+      Log.warn("Unhandled visibility state happened", visibilityState);
+    } catch (e) {
+      Log.error("Error handling visibility change:", e);
     }
-
-    if (visibilityState === "hidden") {
-      Log.debug("handleVisibilityChange", "hidden");
-      if (OneSignal.cache.focusHandler && OneSignal.cache.isFocusEventSetup) {
-        window.removeEventListener("focus", OneSignal.cache.focusHandler, true);
-        OneSignal.cache.isFocusEventSetup = false;
-      }
-      if (OneSignal.cache.blurHandler && OneSignal.cache.isBlurEventSetup) {
-        window.removeEventListener("blur", OneSignal.cache.blurHandler, true);
-        OneSignal.cache.isBlurEventSetup = false;
-      }
-
-      await this.notifySWToDeactivateSession(onesignalId, subscriptionId, SessionOrigin.VisibilityHidden);
-      return;
-    }
-
-    // it should never be anything else at this point
-    Log.warn("Unhandled visibility state happened", visibilityState);
   }
 
   async handleOnBeforeUnload(): Promise<void> {
     if (!User.singletonInstance?.identified) {
       return;
     }
-    // don't have much time on before unload
-    // have to skip adding device record to the payload
-    const isHttps = OneSignalUtils.isHttps();
-    const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
-    const payload: UpsertOrDeactivateSessionPayload = {
-      appId: this.context.appConfig.appId,
-      onesignalId,
-      subscriptionId,
-      sessionThreshold: this.context.appConfig.sessionThreshold!,
-      enableSessionDuration: this.context.appConfig.enableSessionDuration!,
-      sessionOrigin: SessionOrigin.BeforeUnload,
-      isHttps,
-      isSafari: OneSignalUtils.isSafari(),
-      outcomesConfig: this.context.appConfig.userConfig.outcomes!,
-    };
 
-    if (isHttps) {
-      Log.debug("Notify SW to deactivate session (beforeunload)");
-      this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
-    } else {
-      Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
-      await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+    try {
+      // don't have much time on before unload
+      // have to skip adding device record to the payload
+      const isHttps = OneSignalUtils.isHttps();
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      const payload: UpsertOrDeactivateSessionPayload = {
+        appId: this.context.appConfig.appId,
+        onesignalId,
+        subscriptionId,
+        sessionThreshold: this.context.appConfig.sessionThreshold!,
+        enableSessionDuration: this.context.appConfig.enableSessionDuration!,
+        sessionOrigin: SessionOrigin.BeforeUnload,
+        isHttps,
+        isSafari: OneSignalUtils.isSafari(),
+        outcomesConfig: this.context.appConfig.userConfig.outcomes!,
+      };
+
+      if (isHttps) {
+        Log.debug("Notify SW to deactivate session (beforeunload)");
+        this.context.workerMessenger.directPostMessageToSW(WorkerMessengerCommand.SessionDeactivate, payload);
+      } else {
+        Log.debug("Notify iframe to notify SW to deactivate session (beforeunload)");
+        await OneSignal.proxyFrameHost.runCommand(OneSignal.POSTMAM_COMMANDS.SESSION_DEACTIVATE, payload);
+      }
+    } catch (e) {
+      Log.error("Error handling onbeforeunload:", e);
     }
   }
 
@@ -181,17 +191,22 @@ export class SessionManager implements ISessionManager {
     if (!User.singletonInstance?.identified) {
       return;
     }
-    /**
-     * Firefox has 2 focus events with different targets (document and window).
-     * While Chrome only has one on window.
-     * Target check is important to avoid double-firing of the event.
-     */
-    if (e.target !== window) {
-      return;
-    }
 
-    const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
-    await this.notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin.Focus);
+    try {
+      /**
+       * Firefox has 2 focus events with different targets (document and window).
+       * While Chrome only has one on window.
+       * Target check is important to avoid double-firing of the event.
+       */
+      if (e.target !== window) {
+        return;
+      }
+
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this.notifySWToUpsertSession(onesignalId, subscriptionId, SessionOrigin.Focus);
+    } catch (e) {
+      Log.error("Error handling focus:", e);
+    }
   }
 
   async handleOnBlur(e: Event): Promise<void> {
@@ -199,17 +214,22 @@ export class SessionManager implements ISessionManager {
     if (!User.singletonInstance?.identified) {
       return;
     }
-    /**
-     * Firefox has 2 focus events with different targets (document and window).
-     * While Chrome only has one on window.
-     * Target check is important to avoid double-firing of the event.
-     */
-    if (e.target !== window) {
-      return;
-    }
 
-    const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
-    await this.notifySWToDeactivateSession(onesignalId, subscriptionId, SessionOrigin.Blur);
+    try {
+      /**
+       * Firefox has 2 focus events with different targets (document and window).
+       * While Chrome only has one on window.
+       * Target check is important to avoid double-firing of the event.
+       */
+      if (e.target !== window) {
+        return;
+      }
+
+      const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
+      await this.notifySWToDeactivateSession(onesignalId, subscriptionId, SessionOrigin.Blur);
+    } catch (e) {
+      Log.error("Error handling blur:", e);
+    }
   }
 
   async upsertSession(
