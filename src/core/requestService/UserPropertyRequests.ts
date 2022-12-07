@@ -30,15 +30,9 @@ export default class UserPropertyRequests {
 
     const aliasPair = new AliasPair("onesignal_id", propertiesModel.onesignalId);
 
-    // TO DO: get refreshDeviceMetaData from session service
-    const refreshDeviceMetaData = true;
-
     const appId = await MainHelper.getAppId();
     const response = await RequestService.updateUser({ appId }, aliasPair, {
       properties,
-      refresh_device_metadata: refreshDeviceMetaData,
-      // TO DO: this would just be the session data, link into session service
-      deltas: operation.payload as Partial<UserPropertiesModel>
     });
     return UserPropertyRequests._processUserPropertyResponse(response);
   }
