@@ -40,29 +40,33 @@ export class CoreModuleDirector {
 
   public async hydrateUser(user: UserData): Promise<void> {
     logMethodCall("CoreModuleDirector.hydrateUser", { user });
-    await this.initPromise;
-    const identity = await this.getIdentityModel();
-    const properties = await this.getPropertiesModel();
+    try {
+      await this.initPromise;
+      const identity = await this.getIdentityModel();
+      const properties = await this.getPropertiesModel();
 
-    const { onesignalId } = user.identity;
+      const { onesignal_id: onesignalId } = user.identity;
 
-    if (!onesignalId) {
-      throw new OneSignalError("OneSignal ID is missing from user data");
+      if (!onesignalId) {
+        throw new OneSignalError("OneSignal ID is missing from user data");
+      }
+
+      // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
+      identity?.setOneSignalId(onesignalId);
+      properties?.setOneSignalId(onesignalId);
+
+      // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
+      identity?.hydrate(user.identity);
+      properties?.hydrate(user.properties);
+
+      // subscriptions are duplicable, so we hydrate them separately
+      // when hydrating, we should have the full subscription object (i.e. include ID from server)
+      this._hydrateSubscriptions(user.subscriptions as SubscriptionModel[], onesignalId).catch(e => {
+        throw new OneSignalError(`Error hydrating subscriptions: ${e}`);
+      });
+    } catch (e) {
+      Log.error(`Error hydrating user: ${e}`);
     }
-
-    // set OneSignal ID *before* hydrating models so that the onesignalId is also updated in model cache
-    identity?.setOneSignalId(onesignalId);
-    properties?.setOneSignalId(onesignalId);
-
-    // identity and properties models are always single, so we hydrate immediately (i.e. replace existing data)
-    identity?.hydrate(user.identity);
-    properties?.hydrate(user.properties);
-
-    // subscriptions are duplicable, so we hydrate them separately
-    // when hydrating, we should have the full subscription object (i.e. include ID from server)
-    this._hydrateSubscriptions(user.subscriptions as SubscriptionModel[], onesignalId).catch(e => {
-      Log.error(`Error hydrating subscriptions: ${e}`);
-    });
   }
 
   private async _hydrateSubscriptions(subscriptions: SubscriptionModel[], onesignalId: string): Promise<void> {
