@@ -334,7 +334,7 @@ export class SessionManager implements ISessionManager {
 
 
     try {
-      const aliasPair = new AliasPair("onesignalId", onesignalId);
+      const aliasPair = new AliasPair("onesignal_id", onesignalId);
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: UpdateUserPayload = {
         refresh_device_metadata: true,

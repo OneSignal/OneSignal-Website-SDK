@@ -28,7 +28,7 @@ export default class UserPropertyRequests {
       throw new OneSignalError(`updateUserProperty: missing onesignalId: ${propertiesModel}`);
     }
 
-    const aliasPair = new AliasPair("onesignalId", propertiesModel.onesignalId);
+    const aliasPair = new AliasPair("onesignal_id", propertiesModel.onesignalId);
 
     // TO DO: get refreshDeviceMetaData from session service
     const refreshDeviceMetaData = true;
