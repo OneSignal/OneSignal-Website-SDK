@@ -8,34 +8,32 @@ class OneSignal {
 }
 
 /**  Customer's page Example code */
-// 1. Customer addes page SDK to their site
-//   * It async so it wouldn't be loaded when we access it.
-// <script defer  src="https://onesignal.com/sdks/v2/OneSignalPageSDK.js">
+// 1. Customer adds OneSignal pageSDK to their site.
+//   * Defer loading the .js file, delays until DOM is fully load
+// <script defer src="https://onesignal.com/sdks/v16/OneSignalPageSDK.js">
 
 // 2. Since OneSignalDeferred isn't defined yet we do the async/defer trick of makging an array.
 window.OneSignalDeferred = window.OneSignalDeferred || [];
+// Function runs if the OneSignal SDK supports the browser. 
 window.OneSignalDeferred.push(
-  // No entry here is means { supportedBrowser: true }, only run function if browser supports the OneSignal SDK
   function(oneSignal: OneSignal) {
     oneSignal.init({ appId: "..." });
-    oneSignal.user.login("myId");
+    oneSignal.User.login("myId");
 });
 
-window.OneSignalDeferred.push([
-  { supportedBrowser: false },
-  // Function runs only if browser doesn't support the OneSignal SDK
-  function() {
-    // Run code make changes to site if needed.
+window.OneSignalDeferred.push({
+  conditions: { supportsBrowser: false },
+  perform: function() {
+    // Take any actions needed if the browser is NOT supported by the OneSignal SDK.
   }
-]);
+});
 
-window.OneSignalDeferred.push([
-  { pushSupported: false },
-  // Function runs only if browser doesn't support push
-  function() {
-    // Run code make changes to site if needed.
+window.OneSignalDeferred.push({
+  conditions: { supportsPush: false },
+  perform: function() {
+    // Take any actions needed if Web Push Notifications are NOT supported by the browser.
   }
-]);
+});
 
-// NOTE: pushSupported and supportedBrowser would be the same for now, until we can make our SDK not require the pushAPI.
+// NOTE: supportsBrowser and supportsPush would be the same for now, until we can make our SDK not require the pushAPI.
 //         * Could be useful for iOS devices (pre-web push support) but they want to collect Email and SMS
