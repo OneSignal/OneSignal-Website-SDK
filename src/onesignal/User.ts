@@ -138,22 +138,19 @@ export default class User {
    * @returns identity model
    */
   private async _createAnonymousUser(isTempUser?: boolean): Promise<OSModel<SupportedIdentity>> {
-    let data;
+    let identityModel;
 
     if (isTempUser) {
-      data = {};
+      identityModel = {};
     } else {
-      // TO DO: uncomment
-      // const response = await this.sendUserCreate();
+      identityModel = await this.sendUserCreate();
 
-      // TO DO: get identity model from response
-      data = {
-        // real uuid
-        onesignalId: "00000000-0000-0000-0000-000000000000", // for now, use mock data
-      };
+      if (!isIdentityObject(identityModel)) {
+        throw new OneSignalError("Invalid user create response");
+      }
     }
 
-    this.identity = new OSModel<SupportedIdentity>(ModelName.Identity, data);
+    this.identity = new OSModel<SupportedIdentity>(ModelName.Identity, identityModel);
     this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
 
     /**
@@ -163,7 +160,7 @@ export default class User {
      */
     if (!isTempUser) {
       // set the onesignal id on the OSModel class-level property
-      this.identity.setOneSignalId(data.onesignalId);
+      this.identity.setOneSignalId(identityModel.onesignalId);
     }
 
     /**
@@ -172,7 +169,7 @@ export default class User {
      * `setOneSignalId` function. Therefore, we must manually set the onesignal id on the `data` property as well
      */
     // TO DO: cover with unit test
-    this.identity.data.onesignalId = data.onesignalId;
+    this.identity.data.onesignalId = identityModel.onesignalId;
 
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);

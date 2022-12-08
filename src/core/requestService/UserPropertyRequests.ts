@@ -28,17 +28,11 @@ export default class UserPropertyRequests {
       throw new OneSignalError(`updateUserProperty: missing onesignalId: ${propertiesModel}`);
     }
 
-    const aliasPair = new AliasPair("onesignalId", propertiesModel.onesignalId);
-
-    // TO DO: get refreshDeviceMetaData from session service
-    const refreshDeviceMetaData = true;
+    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
 
     const appId = await MainHelper.getAppId();
     const response = await RequestService.updateUser({ appId }, aliasPair, {
       properties,
-      refresh_device_metadata: refreshDeviceMetaData,
-      // TO DO: this would just be the session data, link into session service
-      deltas: operation.payload as Partial<UserPropertiesModel>
     });
     return UserPropertyRequests._processUserPropertyResponse(response);
   }
