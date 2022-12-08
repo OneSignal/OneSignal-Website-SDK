@@ -8,7 +8,6 @@ import AliasPair from "./AliasPair";
 import { UpdateUserPayload } from "./UpdateUserPayload";
 import UserData from "../models/UserData";
 import { RequestMetadata } from "../models/RequestMetadata";
-import { getJWTHeaderIfIdentityVerificationEnabled } from "./helpers";
 
 export class RequestService {
   /* U S E R   O P E R A T I O N S */
@@ -21,8 +20,7 @@ export class RequestService {
   static async createUser(requestMetadata: RequestMetadata, requestBody: Partial<UserData>)
     : Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
-      return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, jwtHeader);
+      return OneSignalApiBase.post(`apps/${appId}/users`, requestBody, requestMetadata.jwtHeader);
   }
 
   /**
@@ -33,8 +31,7 @@ export class RequestService {
    */
   static async getUser(requestMetadata: RequestMetadata, alias: AliasPair): Promise<OneSignalApiBaseResponse> {
     const { appId } = requestMetadata;
-    const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
-    return OneSignalApiBase.get(`apps/${appId}/users/by/${alias.label}/${alias.id}`, jwtHeader);
+    return OneSignalApiBase.get(`apps/${appId}/users/by/${alias.label}/${alias.id}`, requestMetadata.jwtHeader);
   }
 
   /**
@@ -49,17 +46,16 @@ export class RequestService {
     : Promise<OneSignalApiBaseResponse>
     {
       const { appId, subscriptionId } = requestMetadata;
-      const subscriptionHeader = subscriptionId ? [{ "OneSignal-Subscription-Id": subscriptionId }] : undefined;
-      const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
+      const subscriptionHeader = subscriptionId ? { "OneSignal-Subscription-Id": subscriptionId } : undefined;
 
-      const headers = [];
+      let headers = {};
 
       if (subscriptionHeader) {
-        headers.push(...subscriptionHeader);
+        headers = { ...headers, ...subscriptionHeader };
       }
 
-      if (jwtHeader) {
-        headers.push(...jwtHeader);
+      if (requestMetadata.jwtHeader) {
+        headers = { ...headers, ...requestMetadata.jwtHeader };
       }
 
       return OneSignalApiBase.patch(`apps/${appId}/users/by/${alias.label}/${alias.id}`, payload, headers);
@@ -72,8 +68,7 @@ export class RequestService {
    */
   static async deleteUser(requestMetadata: RequestMetadata, alias: AliasPair): Promise<OneSignalApiBaseResponse> {
     const { appId } = requestMetadata;
-    const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
-    return OneSignalApiBase.delete(`apps/${appId}/users/by/${alias.label}/${alias.id}`, jwtHeader);
+    return OneSignalApiBase.delete(`apps/${appId}/users/by/${alias.label}/${alias.id}`, requestMetadata.jwtHeader);
   }
 
   /* I D E N T I T Y   O P E R A T I O N S */
@@ -88,11 +83,10 @@ export class RequestService {
     : Promise<OneSignalApiBaseResponse>
     {
       const { appId } = requestMetadata;
-      const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
       return OneSignalApiBase.patch(
         `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
         { identity },
-        jwtHeader
+        requestMetadata.jwtHeader
       );
   }
 
@@ -103,8 +97,10 @@ export class RequestService {
    */
   static async getUserIdentity(requestMetadata: RequestMetadata, alias: AliasPair): Promise<OneSignalApiBaseResponse> {
     const { appId } = requestMetadata;
-    const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
-    return OneSignalApiBase.get(`apps/${appId}/users/by/${alias.label}/${alias.id}/identity`, jwtHeader);
+    return OneSignalApiBase.get(
+      `apps/${appId}/users/by/${alias.label}/${alias.id}/identity`,
+      requestMetadata.jwtHeader
+    );
   }
 
   /**
@@ -117,10 +113,9 @@ export class RequestService {
   : Promise<OneSignalApiBaseResponse>
   {
     const { appId } = requestMetadata;
-    const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
     const identity = OneSignalApiBase.delete(
       `${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
-      jwtHeader
+      requestMetadata.jwtHeader
       );
 
     if (isIdentityObject(identity)) {
@@ -144,11 +139,10 @@ export class RequestService {
     subscription: FutureSubscriptionModel):
     Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
       return OneSignalApiBase.post(
         `${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
         subscription,
-        jwtHeader
+        requestMetadata.jwtHeader
       );
   }
 
@@ -203,7 +197,11 @@ export class RequestService {
     identity: IdentityModel):
     Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      return OneSignalApiBase.patch(`apps/${appId}/users/by/subscriptions/${subscriptionId}/identity`, identity);
+      return OneSignalApiBase.patch(
+        `apps/${appId}/users/by/subscriptions/${subscriptionId}/identity`,
+        identity,
+        requestMetadata.jwtHeader
+      );
   }
 
   /**
@@ -222,10 +220,9 @@ export class RequestService {
     identity: SupportedIdentity,
     retainPreviousOwner: boolean): Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      const jwtHeader = await getJWTHeaderIfIdentityVerificationEnabled();
       return OneSignalApiBase.patch(`apps/${appId}/subscriptions/${subscriptionId}/owner`, {
         identity,
         retain_previous_owner: retainPreviousOwner
-      }, jwtHeader);
+      }, requestMetadata.jwtHeader);
     }
 }
