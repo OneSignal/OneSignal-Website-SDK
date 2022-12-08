@@ -35,7 +35,7 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
 
   return {
     subscription,
-    aliasPair: new AliasPair("onesignal_id", subscriptionOSModel.onesignalId),
+    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, subscriptionOSModel.onesignalId),
     subscriptionId,
   };
 }
@@ -60,7 +60,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
   return {
     identity,
-    aliasPair: new AliasPair("onesignal_id", onesignalId)
+    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
   };
 }
 

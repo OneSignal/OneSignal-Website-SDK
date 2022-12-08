@@ -28,7 +28,7 @@ export default class UserPropertyRequests {
       throw new OneSignalError(`updateUserProperty: missing onesignalId: ${propertiesModel}`);
     }
 
-    const aliasPair = new AliasPair("onesignal_id", propertiesModel.onesignalId);
+    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
 
     const appId = await MainHelper.getAppId();
     const response = await RequestService.updateUser({ appId }, aliasPair, {
