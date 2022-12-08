@@ -69,7 +69,7 @@ export default class LoginManager {
     }
 
     const appId = await MainHelper.getAppId();
-    const aliasPair = new AliasPair("externalId", externalId);
+    const aliasPair = new AliasPair(AliasPair.EXTERNAL_ID, externalId);
     const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
 
     const identifyResponseStatus = identifyUserResponse?.status;
@@ -121,7 +121,7 @@ export default class LoginManager {
 
     const fetchUserResponse = await RequestService.getUser(
       { appId: await MainHelper.getAppId() },
-      new AliasPair("onesignal_id", onesignalId)
+      new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
     );
 
     await OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result).catch(e => {

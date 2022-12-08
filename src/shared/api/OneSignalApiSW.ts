@@ -66,7 +66,7 @@ export class OneSignalApiSW {
     subscriptionId: string,
   ): Promise<void> {
 
-    const aliasPair = new AliasPair("onesignal_id", onesignalId);
+    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
     // TO DO: in future, we should aggregate session count in case network call fails
     const updateUserPayload: UpdateUserPayload = {
       refresh_device_metadata: true,
@@ -100,7 +100,7 @@ export class OneSignalApiSW {
       }
     };
 
-    const aliasPair = new AliasPair("onesignal_id", onesignalId);
+    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
 
     const outcomePayload: OutcomeRequestData = {
       id: "os__session_duration",
