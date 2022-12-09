@@ -7,21 +7,21 @@ import OneSignal from "../../../src/onesignal/OneSignal";
 
 test("title can be null", async t => {
   await TestEnvironment.initialize();
-  await OneSignal.notifications.setDefaultTitle(null);
+  await OneSignal.Notifications.setDefaultTitle(null);
   const appState = await Database.getAppState();
   t.is(appState.defaultNotificationTitle, null);
 });
 
 test("title can be empty", async t => {
   await TestEnvironment.initialize();
-  await OneSignal.notifications.setDefaultTitle('');
+  await OneSignal.Notifications.setDefaultTitle('');
   const appState = await Database.getAppState();
   t.is(appState.defaultNotificationTitle, '');
 });
 
 test("title can be some text", async t => {
   await TestEnvironment.initialize();
-  await OneSignal.notifications.setDefaultTitle('My notification title');
+  await OneSignal.Notifications.setDefaultTitle('My notification title');
   const appState = await Database.getAppState();
   t.is(appState.defaultNotificationTitle, 'My notification title');
 });
