@@ -1,9 +1,11 @@
+import Database from "../../shared/services/Database";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { IdentityModel } from "../models/IdentityModel";
 import { SupportedSubscription } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject, isFutureSubscriptionObject, isCompleteSubscriptionObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
+import { APIHeaders } from "../../shared/models/APIHeaders";
 
 export function processSubscriptionOperation<Model>(operation: Operation<Model>): {
   subscription: SupportedSubscription;
@@ -64,3 +66,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   };
 }
 
+export async function getJWTHeader(): Promise<APIHeaders | undefined> {
+  const jwtToken = await Database.getJWTToken();
+  return !!jwtToken ? { Authorization: `Bearer ${jwtToken}` } : undefined;
+}
