@@ -35,7 +35,7 @@ export class CoreModuleDirector {
     const user = User.createOrGetInstance();
     user.flushModelReferences();
     await user.setupNewUser(isTempUser);
-    await OneSignal.user.pushSubscription._resubscribeToPushModelChanges();
+    await OneSignal.User.pushSubscription._resubscribeToPushModelChanges();
   }
 
   public async hydrateUser(user: UserData): Promise<void> {
