@@ -58,11 +58,11 @@ export default class PushSubscriptionNamespace {
     await awaitOneSignalInitAndSupported();
     this._optedIn = true;
 
-    const permissionStatus = await OneSignal.notifications.getPermissionStatus();
+    const permissionStatus = await OneSignal.Notifications.getPermissionStatus();
 
     if (permissionStatus !== 'granted') {
       // TO DO: use user-config options prompting method
-      await OneSignal.notifications.requestPermission();
+      await OneSignal.Notifications.requestPermission();
       return;
     }
 

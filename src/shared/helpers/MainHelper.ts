@@ -71,7 +71,7 @@ export default class MainHelper {
 
   static async checkAndTriggerNotificationPermissionChanged() {
     const previousPermission = await Database.get('Options', 'notificationPermission');
-    const currentPermission = await OneSignal.notifications.getPermissionStatus();
+    const currentPermission = await OneSignal.Notifications.getPermissionStatus();
     if (previousPermission !== currentPermission) {
       await PermissionUtils.triggerNotificationPermissionChanged();
       await Database.put('Options', {
