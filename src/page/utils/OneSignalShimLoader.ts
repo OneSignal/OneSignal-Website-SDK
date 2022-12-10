@@ -54,12 +54,6 @@ export class OneSignalShimLoader {
       );
       return;
     }
-
-    // Stub out all OneSignal functions with an implementation that save all params.
-    // OneSignalPageSDKES6.js will load soon and the function calls will be replayed from pageSdkInit.ts
-    // This is done regardless if document.currentScript.async is true as window.OneSignal needs to be available
-    //   for those who use script.onload = function() { } to add OneSignalSDK.js
-    (<any>window).OneSignal = new OneSignalStubES6(predefinedOneSignal);
   }
 
   // Stub out all functions with default values.
