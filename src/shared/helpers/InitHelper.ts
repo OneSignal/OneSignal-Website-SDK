@@ -93,7 +93,7 @@ export default class InitHelper {
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = await OneSignal.notifications.isOptedOut();
+    const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
     // saves isOptedOut to localStorage. used for require user interaction functionality
     LocalStorage.setIsOptedOut(!!isOptedOut);
 
@@ -208,7 +208,7 @@ export default class InitHelper {
   public static async storeInitialValues() {
     const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const notificationPermission = await OneSignal.notifications.getPermissionStatus();
-    const isOptedOut = await OneSignal.notifications.isOptedOut();
+    const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
     LimitStore.put('subscription.optedOut', isOptedOut);
     await Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
     await Database.put('Options', {
