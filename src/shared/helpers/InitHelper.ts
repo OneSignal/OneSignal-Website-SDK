@@ -207,7 +207,7 @@ export default class InitHelper {
 
   public static async storeInitialValues() {
     const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    const notificationPermission = await OneSignal.notifications.getPermissionStatus();
+    const notificationPermission = await OneSignal.Notifications.getPermissionStatus();
     const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
     LimitStore.put('subscription.optedOut', isOptedOut);
     await Database.put('Options', { key: 'isPushEnabled', value: isPushEnabled });
