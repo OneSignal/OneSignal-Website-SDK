@@ -366,15 +366,6 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls executing reject promise", a
   t.plan(2);
 });
 
-class MockOneSignalWithPublicProperties {
-  public currentLogLevel: string | undefined;
-  public log = {
-    setLevel: (level: string): void => {
-      this.currentLogLevel = level;
-    }
-  };
-}
-
 test("Expect Promise to never resolve for ES5 stubs", async t => {
   // Setup an OneSignalStubES5 instance like the OneSignalSDK.js Shim does.
   const oneSignalStub = new OneSignalStubES5();

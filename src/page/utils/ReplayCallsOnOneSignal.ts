@@ -30,9 +30,6 @@ export class ReplayCallsOnOneSignal {
   }
 
   private static processAsES6Stub(stubOneSignal: OneSignalStubES6) {
-    if (stubOneSignal.currentLogLevel)
-      OneSignal.log.setLevel(stubOneSignal.currentLogLevel);
-
     // 1. Process any array defined BEFORE stubOneSignal was loaded
     if (stubOneSignal.preExistingArray) {
       ReplayCallsOnOneSignal.processAsArray(stubOneSignal.preExistingArray);
