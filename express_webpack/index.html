@@ -31,11 +31,10 @@
     const appId = getUrlQueryParam('app_id');
     var OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
-      OneSignal.SERVICE_WORKER_PARAM = { scope: "/" + SERVICE_WORKER_PATH };
-      OneSignal.SERVICE_WORKER_PATH = SERVICE_WORKER_PATH + "OneSignalSDKWorker.js";
-
       OneSignal.init({
           appId,
+          serviceWorkerParam: { scope: "/" + SERVICE_WORKER_PATH },
+          serviceWorkerPath: SERVICE_WORKER_PATH + "OneSignalSDKWorker.js",
           notifyButton: {
               enable: true
           },

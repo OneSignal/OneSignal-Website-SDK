@@ -367,9 +367,6 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls executing reject promise", a
 });
 
 class MockOneSignalWithPublicProperties {
-  public SERVICE_WORKER_PATH: string | undefined;
-  public SERVICE_WORKER_PARAM: { scope: string } | undefined;
-
   public currentLogLevel: string | undefined;
   public log = {
     setLevel: (level: string): void => {
@@ -377,24 +374,6 @@ class MockOneSignalWithPublicProperties {
     }
   };
 }
-
-test("Make sure property field transfer over", async t => {
-  const oneSignalStub = new OneSignalStubES6();
-  oneSignalStub.SERVICE_WORKER_PATH = "SERVICE_WORKER_UPDATER_PATH";
-  oneSignalStub.SERVICE_WORKER_PARAM = { scope: "scope" };
-  oneSignalStub.log.setLevel("trace");
-
-  const mockOneSignal = new MockOneSignalWithPublicProperties();
-
-  (global as any).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  t.is(mockOneSignal.SERVICE_WORKER_PATH, "SERVICE_WORKER_UPDATER_PATH");
-  t.is(mockOneSignal.currentLogLevel, "trace");
-  t.deepEqual(mockOneSignal.SERVICE_WORKER_PARAM, { scope: "scope" });
-});
 
 test("Expect Promise to never resolve for ES5 stubs", async t => {
   // Setup an OneSignalStubES5 instance like the OneSignalSDK.js Shim does.

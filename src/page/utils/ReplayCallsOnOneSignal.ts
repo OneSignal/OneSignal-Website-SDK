@@ -30,15 +30,8 @@ export class ReplayCallsOnOneSignal {
   }
 
   private static processAsES6Stub(stubOneSignal: OneSignalStubES6) {
-    // Transfer properties set;
-    if (stubOneSignal.SERVICE_WORKER_PATH)
-      OneSignal.SERVICE_WORKER_PATH = stubOneSignal.SERVICE_WORKER_PATH;
-
     if (stubOneSignal.currentLogLevel)
       OneSignal.log.setLevel(stubOneSignal.currentLogLevel);
-
-    if (stubOneSignal.SERVICE_WORKER_PARAM)
-      OneSignal.SERVICE_WORKER_PARAM = stubOneSignal.SERVICE_WORKER_PARAM;
 
     // 1. Process any array defined BEFORE stubOneSignal was loaded
     if (stubOneSignal.preExistingArray) {
