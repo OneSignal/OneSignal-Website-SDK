@@ -8,13 +8,6 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
 
   [key: string]: any;
 
-  public currentLogLevel: string | undefined;
-  public log = {
-    setLevel: (level: string): void => {
-      this.currentLogLevel = level;
-    }
-  };
-
   private static FUNCTION_LIST_TO_STUB = [
     "on",
     "off",
