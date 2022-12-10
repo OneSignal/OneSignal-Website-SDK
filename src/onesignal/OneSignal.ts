@@ -46,8 +46,8 @@ export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
-    OneSignal.user = new UserNamespace(OneSignal.coreDirector);
-    await OneSignal.user.userLoaded;
+    OneSignal.User = new UserNamespace(OneSignal.coreDirector);
+    await OneSignal.User.userLoaded;
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
@@ -322,7 +322,7 @@ export default class OneSignal {
   static notifications = new NotificationsNamespace();
   static slidedown = new SlidedownNamespace();
   static session = new SessionNamespace();
-  static user: UserNamespace;
+  static User: UserNamespace;
   /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;

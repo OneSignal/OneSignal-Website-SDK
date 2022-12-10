@@ -220,14 +220,14 @@ export class SlidedownManager {
     if (!email) {
       return;
     }
-    OneSignal.user.addEmail(email);
+    OneSignal.User.addEmail(email);
   }
 
   private updateSMS(sms?: string): void {
     if (!sms) {
       return;
     }
-    OneSignal.user.addSms(sms);
+    OneSignal.User.addSms(sms);
   }
 
   private async showConfirmationToast(): Promise<void> {

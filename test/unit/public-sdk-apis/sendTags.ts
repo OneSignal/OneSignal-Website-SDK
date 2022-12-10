@@ -101,7 +101,7 @@ test("sendTags sends to email record and push record with email auth hash", asyn
   await Database.setEmailProfile(emailProfile);
   expectPushRecordTagUpdateRequest(t, emailProfile.subscriptionId, emailProfile.identifierAuthHash);
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
-  await OneSignal.user.addTags(t.context.simpleTags);
+  await OneSignal.User.addTags(t.context.simpleTags);
 });
 
 test("sendTags sends to email record and push record without email auth hash", async t => {
@@ -120,7 +120,7 @@ test("sendTags sends to email record and push record without email auth hash", a
   await Database.setEmailProfile(emailProfile);
   expectPushRecordTagUpdateRequest(t, emailProfile.subscriptionId, emailProfile.identifierAuthHash);
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
-  await OneSignal.user.addTags(t.context.simpleTags);
+  await OneSignal.User.addTags(t.context.simpleTags);
 });
 
 test("sendTags sends to push record only without email", async t => {
@@ -134,5 +134,5 @@ test("sendTags sends to push record only without email", async t => {
   await Database.setEmailProfile(new EmailProfile());
 
   expectPushRecordTagUpdateRequest(t, subscription.deviceId, undefined);
-  await OneSignal.user.addTags(t.context.simpleTags);
+  await OneSignal.User.addTags(t.context.simpleTags);
 });
