@@ -36,6 +36,7 @@ import { FutureSubscriptionModel, SupportedSubscription } from "../../core/model
 import { StringKeys } from "../../core/models/StringKeys";
 import OneSignalError from "../errors/OneSignalError";
 import { SessionOrigin } from "../models/Session";
+import { executeCallback, logMethodCall } from "../utils/utils";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -71,6 +72,14 @@ export class SubscriptionManager {
   public async isPushNotificationsEnabled(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
     return subscriptionState.subscribed && !subscriptionState.optedOut;
+  }
+
+  async isOptedOut(callback?: Action<boolean | undefined | null>):
+    Promise<boolean | undefined | null> {
+      logMethodCall('isOptedOut', callback);
+      const { optedOut } = await Database.getSubscription();
+      executeCallback(callback, optedOut);
+      return optedOut;
   }
 
   /**
