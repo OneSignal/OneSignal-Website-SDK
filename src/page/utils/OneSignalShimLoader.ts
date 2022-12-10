@@ -41,10 +41,6 @@ export class OneSignalShimLoader {
     }
   }
 
-  private static isServiceWorkerRuntime(): boolean {
-    return (typeof window === "undefined");
-  }
-
   private static addOneSignalPageES6SDKStub(): void {
     const predefinedOneSignal: PossiblePredefinedOneSignal = (<any>window).OneSignal;
     const oneSignalIsArray = Array.isArray(predefinedOneSignal);
@@ -75,14 +71,7 @@ export class OneSignalShimLoader {
   }
 
   public static start(): void {
-    // Check if someone setup OneSignal before we instructed them to use "OneSignalSDKWorker.js"
-    //    instead of "OneSignal.js" for importScripts();
-    if (OneSignalShimLoader.isServiceWorkerRuntime()) {
-      (<ServiceWorkerGlobalScope><any>self).importScripts(
-        `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDKWorker.js?v=${OneSignalShimLoader.VERSION}`
-      );
-    }
-    else if (isPushNotificationsSupported()) {
+    if (isPushNotificationsSupported()) {
       OneSignalShimLoader.addScriptToPage(
         `${OneSignalShimLoader.getPathAndPrefix()}OneSignalPageSDKES6.js?v=${OneSignalShimLoader.VERSION}`
       );
