@@ -36,7 +36,7 @@ export default class SubscriptionModalHost implements Disposable {
    */
   async load(): Promise<void> {
     const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    const notificationPermission = await OneSignal.notifications.getPermissionStatus();
+    const notificationPermission = await OneSignal.Notifications.getPermissionStatus();
     this.url = SdkEnvironment.getOneSignalApiUrl();
     this.url.pathname = 'webPushModal';
     this.url.search = `${MainHelper.getPromptOptionsQueryString()}&id=${this.appId}&httpsPrompt=true&pushEnabled=${isPushEnabled}&permissionBlocked=${(notificationPermission as any) === 'denied'}&promptType=modal`;

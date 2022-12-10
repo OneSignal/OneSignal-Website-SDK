@@ -43,7 +43,8 @@ export default class MainHelper {
   }
 
   /**
-   * If the user has manually opted out of notifications (OneSignal.notifications.disable), returns -2; otherwise returns 1.
+   * If the user has manually opted out of notifications (OneSignal.User.PushSubscription.optOut),
+   * returns -2; otherwise returns 1.
    * @param isOptedIn The result of OneSignal.getSubscription().
    */
   static getNotificationTypeFromOptIn(isOptedIn: boolean | null) {
@@ -71,7 +72,7 @@ export default class MainHelper {
 
   static async checkAndTriggerNotificationPermissionChanged() {
     const previousPermission = await Database.get('Options', 'notificationPermission');
-    const currentPermission = await OneSignal.notifications.getPermissionStatus();
+    const currentPermission = await OneSignal.Notifications.getPermissionStatus();
     if (previousPermission !== currentPermission) {
       await PermissionUtils.triggerNotificationPermissionChanged();
       await Database.put('Options', {
