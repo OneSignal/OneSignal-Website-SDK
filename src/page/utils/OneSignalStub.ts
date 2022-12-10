@@ -5,8 +5,6 @@ export type PossiblePredefinedOneSignal = Array<Object[] | Function> | undefined
 
 export abstract class OneSignalStub<T> implements IndexableByString<any> {
   public VERSION = (typeof __VERSION__) === "undefined" ? 1 : Number(__VERSION__);
-  public SERVICE_WORKER_PATH: string | undefined;
-  public SERVICE_WORKER_PARAM: { scope: string } | undefined;
 
   [key: string]: any;
 
