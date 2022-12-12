@@ -158,7 +158,7 @@ export class SubscriptionManager {
       );
 
       const user = User.createOrGetInstance();
-      if (user.identified) {
+      if (user.hasOneSignalId) {
         pushModel.setOneSignalId(user.identity?.onesignalId);
       }
       // don't propagate since we will be including the subscription in the user create call
