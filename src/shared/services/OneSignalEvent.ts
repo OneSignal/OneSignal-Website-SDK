@@ -38,7 +38,7 @@ const RETRIGGER_REMOTE_EVENTS = [
   'dbSet',
   'register',
   'willDisplay', // notification
-  'notificationDismiss',
+  'dismiss', // notification
   'notificationClick',
   'permissionPromptDisplay',
   'testWouldDisplay',
