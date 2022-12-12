@@ -13,7 +13,7 @@ import { isIdentityObject } from "../core/utils/typePredicates";
 import OneSignalError from "../shared/errors/OneSignalError";
 
 export default class User {
-  identified: boolean = false;
+  hasOneSignalId: boolean = false;
   awaitOneSignalIdAvailable?: Promise<void> = new Promise<void>(() => {});
 
   static singletonInstance?: User = undefined;
@@ -32,7 +32,7 @@ export default class User {
     this.awaitOneSignalIdAvailable = identity?.awaitOneSignalIdAvailable;
 
     this.awaitOneSignalIdAvailable?.then(() => {
-      this.identified = true;
+      this.hasOneSignalId = true;
     });
   }
 

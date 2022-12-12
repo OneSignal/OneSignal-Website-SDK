@@ -110,7 +110,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleVisibilityChange(): Promise<void> {
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -153,7 +153,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleOnBeforeUnload(): Promise<void> {
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -188,7 +188,7 @@ export class SessionManager implements ISessionManager {
 
   async handleOnFocus(e: Event): Promise<void> {
     Log.debug("handleOnFocus", e);
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -211,7 +211,7 @@ export class SessionManager implements ISessionManager {
 
   async handleOnBlur(e: Event): Promise<void> {
     Log.debug("handleOnBlur", e);
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -235,7 +235,7 @@ export class SessionManager implements ISessionManager {
   async upsertSession(
     sessionOrigin: SessionOrigin
   ): Promise<void> {
-    if (User.singletonInstance?.identified) {
+    if (User.singletonInstance?.hasOneSignalId) {
       const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(onesignalId, subscriptionId, sessionOrigin);
     }

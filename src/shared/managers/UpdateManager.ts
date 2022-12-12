@@ -36,7 +36,7 @@ export class UpdateManager {
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       Log.debug("Not sending the update because user is not registered with OneSignal (no onesignal_id)");
       return;
     }
