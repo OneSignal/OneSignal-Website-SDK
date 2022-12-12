@@ -266,13 +266,12 @@ export class ServiceWorker {
                 // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
-                notificationEventPromiseFns.push((notif => {
+                notificationEventPromiseFns.push((async notif => {
+                  await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, notif).catch(e => Log.error(e));
+                  ServiceWorker.executeWebhooks('notification.willDisplay', notif);
+
                   return ServiceWorker.displayNotification(notif)
-                      .then(() => {
-                        return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e));
-                      })
-                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif)
-                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e)));
+                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e));
                 }).bind(null, notification));
               }
 

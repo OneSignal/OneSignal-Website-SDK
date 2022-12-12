@@ -408,7 +408,7 @@ export default class OneSignal {
     /**
      * Occurs when a notification is displayed.
      */
-    NOTIFICATION_DISPLAYED: 'notificationDisplay',
+    NOTIFICATION_WILL_DISPLAY: 'willDisplay',
     /**
      * Occurs when a notification is dismissed by the user either clicking 'X' or clearing all notifications
      * (available in Android). This event is NOT called if the user clicks the notification's body or any of the

@@ -711,7 +711,7 @@ export class TestEnvironment {
           corsEnable: false,
           notificationClickedHook: undefined,
           notificationDismissedHook: undefined,
-          notificationDisplayedHook: undefined,
+          notificationWillDisplayHook: undefined,
         },
         integration: {
           kind: configIntegrationKind
@@ -869,7 +869,7 @@ export class TestEnvironment {
       persistNotification: false,
       webhooks: {
         cors: true,
-        'notification.displayed': 'https://fake-config.com/notification-displayed',
+        'notification.willDisplay': 'https://fake-config.com/notification-displayed',
         'notification.clicked': 'https://fake-config.com/notification-clicked',
         'notification.dismissed': 'https://fake-config.com/notification-dismissed',
       },

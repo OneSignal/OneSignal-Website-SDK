@@ -114,7 +114,7 @@ export interface AppUserConfigWelcomeNotification {
 
 export interface AppUserConfigWebhooks {
   cors: boolean | undefined;
-  'notification.displayed': string | undefined;
+  'notification.willDisplay': string | undefined;
   'notification.clicked': string | undefined;
   'notification.dismissed': string | undefined;
 }
@@ -246,7 +246,7 @@ export interface ServerAppConfig {
       corsEnable?: boolean;
       notificationClickedHook?: string;
       notificationDismissedHook?: string;
-      notificationDisplayedHook?: string;
+      notificationWillDisplayHook?: string;
     };
     integration: {
       kind: ConfigIntegrationKind;

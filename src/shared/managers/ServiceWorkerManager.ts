@@ -253,9 +253,9 @@ export class ServiceWorkerManager {
     const workerMessenger = this.context.workerMessenger;
     workerMessenger.off();
 
-    workerMessenger.on(WorkerMessengerCommand.NotificationDisplayed, async data => {
+    workerMessenger.on(WorkerMessengerCommand.NotificationWillDisplay, async data => {
       Log.debug(location.origin, 'Received notification display event from service worker.');
-      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_DISPLAYED, data);
+      await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_WILL_DISPLAY, data);
     });
 
     workerMessenger.on(WorkerMessengerCommand.NotificationClicked, async data => {

@@ -19,7 +19,7 @@ export enum WorkerMessengerCommand {
   AmpSubscriptionState = "amp-web-push-subscription-state",
   AmpSubscribe = "amp-web-push-subscribe",
   AmpUnsubscribe = "amp-web-push-unsubscribe",
-  NotificationDisplayed = 'notification.displayed',
+  NotificationWillDisplay = 'notification.willDisplay',
   NotificationClicked = 'notification.clicked',
   NotificationDismissed = 'notification.dismissed',
   RedirectPage = 'command.redirect',
