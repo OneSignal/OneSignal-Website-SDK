@@ -285,38 +285,6 @@ export default class OneSignal {
     ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
-  /**
-   * Used to subscribe to OneSignal events such as "subscriptionChange"
-   * Fires each time the event occurs
-   * @param event - Event name to subscribe to
-   * @param listener - Listener to fire when event happens
-   * @PublicApi
-   */
-  static on(event: string, listener: EventHandler): Emitter {
-    return this.emitter.on(event, listener);
-  }
-
-  /**
-   * Used to un-subscribe from OneSignal events such as "subscriptionChange"
-   * @param event - Event name to un-subscribe from
-   * @param listener - Event listener to remove from the collection for a specified event
-   * @PublicApi
-   */
-  static off(event: string, listener: EventHandler): Emitter {
-    return this.emitter.off(event, listener);
-  }
-
-  /**
-   * Used to subscribe to OneSignal events such as "subscriptionChange"
-   * Fires only once
-   * @param event - Event name to subscribe to
-   * @param listener - Listener to fire when event happens
-   * @PublicApi
-   */
-  static once(event: string, listener: EventHandler): Emitter {
-    return this.emitter.once(event, listener);
-  }
-
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;
   static Notifications = new NotificationsNamespace();
