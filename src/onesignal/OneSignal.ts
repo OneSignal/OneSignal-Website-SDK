@@ -414,7 +414,7 @@ export default class OneSignal {
      * (available in Android). This event is NOT called if the user clicks the notification's body or any of the
      * action buttons.
      */
-    NOTIFICATION_DISMISSED: 'notificationDismiss',
+    NOTIFICATION_DISMISSED: 'dismiss',
     /**
      * New event replacing legacy addNotificationOpenedHandler(). Used when the notification was clicked.
      */
