@@ -394,7 +394,7 @@ export default class OneSignal {
      * This event is used for both HTTP and HTTPS sites and occurs after the user actually grants notification
      * permissions for the site. Occurs before the user is actually subscribed to push notifications.
      */
-    NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
+    NATIVE_PROMPT_PERMISSIONCHANGED: 'permissionChange',
     /**
      * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
      * and activated and the user is eligible to receive push notifications at any point after this.
