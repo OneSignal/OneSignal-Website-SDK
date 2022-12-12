@@ -8,8 +8,14 @@ import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
 import OneSignalError from "../../src/shared/errors/OneSignalError";
 import OneSignal from "./OneSignal";
+import { EventListenerBase } from "../page/userModel/EventListenerBase";
+import NotificationEventName from "../page/models/NotificationEventName";
 
-export default class NotificationsNamespace {
+export default class NotificationsNamespace extends EventListenerBase {
+  constructor() {
+    super();
+  }
+
   /**
    * Pass in the full URL of the default page you want to open when a notification is clicked.
    * @PublicApi
@@ -109,5 +115,29 @@ export default class NotificationsNamespace {
    async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
     await OneSignal.context.promptsManager.internalShowNativePrompt();
+  }
+
+  /* Function overloads */
+  addEventListener(event: NotificationEventName.Click, listener: (obj: StructuredNotification) => void): void;
+  addEventListener(event: NotificationEventName.WillDisplay, listener: (obj: StructuredNotification) => void): void;
+  addEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
+  addEventListener(event: NotificationEventName.PermissionChange,
+    listener: (obj: { to: NotificationPermission }) => void): void;
+  addEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
+
+  addEventListener(event: string, listener: (obj: any) => void): void {
+    OneSignal.emitter.on(event, listener);
+  }
+
+  /* Function overloads */
+  removeEventListener(event: NotificationEventName.Click, listener: (obj: StructuredNotification) => void): void;
+  removeEventListener(event: NotificationEventName.WillDisplay, listener: (obj: StructuredNotification) => void): void;
+  removeEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
+  removeEventListener(event: NotificationEventName.PermissionChange,
+    listener: (obj: { to: NotificationPermission }) => void): void;
+  removeEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
+
+  removeEventListener(event: string, listener: (obj: any) => void): void {
+    OneSignal.emitter.off(event, listener);
   }
 }
