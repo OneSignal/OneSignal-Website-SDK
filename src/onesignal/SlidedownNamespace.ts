@@ -3,8 +3,13 @@ import { AutoPromptOptions } from "../page/managers/PromptsManager";
 import { DelayedPromptType } from "../shared/models/Prompts";
 import { awaitOneSignalInitAndSupported } from "../shared/utils/utils";
 import OneSignal from "./OneSignal";
+import { EventListenerBase } from "../page/userModel/EventListenerBase";
 
-export default class SlidedownNamespace {
+export default class SlidedownNamespace extends EventListenerBase {
+  constructor() {
+    super();
+  }
+
   /**
    * Shows a sliding modal prompt on the page for users.
    * @PublicApi
@@ -42,5 +47,13 @@ export default class SlidedownNamespace {
     await OneSignal.context.promptsManager.internalShowSmsAndEmailSlidedown({
       ...options,
     });
+  }
+
+  addEventListener(event: "slidedownShown", listener: (wasShown: boolean) => void): void {
+    OneSignal.emitter.on(event, listener);
+  }
+
+  removeEventListener(event: "slidedownShown", listener: (wasShown: boolean) => void): void {
+    OneSignal.emitter.off(event, listener);
   }
 }
