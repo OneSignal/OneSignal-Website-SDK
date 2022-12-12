@@ -9,6 +9,7 @@ import LocalStorage from '../utils/LocalStorage';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import PromptsHelper from './PromptsHelper';
 import OneSignalEvent from "../services/OneSignalEvent";
+import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -44,7 +45,14 @@ export default class EventHelper {
     LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
     await Database.setAppState(appState);
-    EventHelper.triggerSubscriptionChanged(isPushEnabled);
+
+    // TO DO:
+    const change: SubscriptionChangeEvent = {
+      previous: {},
+      current: {}
+    };
+
+    EventHelper.triggerSubscriptionChanged(change);
   }
 
   static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
@@ -154,8 +162,8 @@ export default class EventHelper {
     }
   }
 
-  static triggerSubscriptionChanged(to: boolean) {
-    OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, to);
+  static triggerSubscriptionChanged(change: SubscriptionChangeEvent) {
+    OneSignalEvent.trigger(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, change);
   }
 
   /**
