@@ -125,7 +125,7 @@ export default class UserNamespace {
     };
     const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, subscription);
 
-    if (User.singletonInstance?.identified) {
+    if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.didCreateUser) {
       // existing user
       this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
         throw e;
@@ -157,7 +157,7 @@ export default class UserNamespace {
 
     const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, subscription);
 
-    if (User.singletonInstance?.identified) {
+    if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.didCreateUser) {
       // existing user
       this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
         throw e;
