@@ -114,7 +114,7 @@ export class RequestService {
   {
     const { appId } = requestMetadata;
     const identity = OneSignalApiBase.delete(
-      `${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
+      `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
       requestMetadata.jwtHeader
       );
 
@@ -140,7 +140,7 @@ export class RequestService {
     Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
       return OneSignalApiBase.post(
-        `${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
+        `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
         subscription,
         requestMetadata.jwtHeader
       );
