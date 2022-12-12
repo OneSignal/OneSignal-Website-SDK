@@ -10,13 +10,16 @@ import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/u
 import OneSignal from "./OneSignal";
 import { SubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
 import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../core/utils/typePredicates";
+import { EventListenerBase } from "../page/userModel/EventListenerBase";
+import SubscriptionChangeEvent from "../page/models/SubscriptionChangeEvent";
 
-export default class PushSubscriptionNamespace {
+export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;
   private _token?: string | null;
   private _optedIn?: boolean;
 
   constructor() {
+    super();
     Database.getSubscription().then(subscription => {
       this._optedIn = subscription.optedOut;
       this._token = subscription.subscriptionToken;
@@ -76,6 +79,14 @@ export default class PushSubscriptionNamespace {
     await this._enable(false);
   }
 
+  addEventListener(event: "subscriptionChange", listener: (change: SubscriptionChangeEvent) => void): void {
+    OneSignal.emitter.on(event, listener);
+  }
+
+  removeEventListener(event: "subscriptionChange", listener: (change: SubscriptionChangeEvent) => void): void {
+    OneSignal.emitter.off(event, listener);
+  }
+
   /**
    * Resubscribes this namespace to the push model changes.
    * Should be called when the user and/or core module is reset.
@@ -127,9 +138,4 @@ export default class PushSubscriptionNamespace {
       }
     });
   }
-
-  /*
-  TO DO:
-  on(event: 'subscriptionChange', listener: (isSubscribed: boolean) => void): void;
-  */
 }
