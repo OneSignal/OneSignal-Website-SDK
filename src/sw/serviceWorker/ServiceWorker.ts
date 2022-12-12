@@ -543,7 +543,7 @@ export class ServiceWorker {
    * @param rawNotification The raw notification JSON returned from OneSignal's server.
    */
   static buildStructuredNotificationObject(rawNotification) {
-    const notification: any = {
+    const notification: StructuredNotification = {
       id: rawNotification.custom.i,
       heading: rawNotification.title,
       content: rawNotification.alert,
