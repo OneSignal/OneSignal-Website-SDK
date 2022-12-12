@@ -37,7 +37,7 @@ const RETRIGGER_REMOTE_EVENTS = [
   'notificationPermissionChange',
   'dbSet',
   'register',
-  'notificationDisplay',
+  'willDisplay', // notification
   'notificationDismiss',
   'notificationClick',
   'permissionPromptDisplay',
