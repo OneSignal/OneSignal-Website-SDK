@@ -418,7 +418,7 @@ export default class OneSignal {
     /**
      * New event replacing legacy addNotificationOpenedHandler(). Used when the notification was clicked.
      */
-    NOTIFICATION_CLICKED: 'notificationClick',
+    NOTIFICATION_CLICKED: 'click',
     /**
      * Occurs after the document ready event fires and, for HTTP sites, the iFrame to subdomain.onesignal.com has
      * loaded.
