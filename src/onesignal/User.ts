@@ -15,6 +15,8 @@ import OneSignalError from "../shared/errors/OneSignalError";
 export default class User {
   hasOneSignalId: boolean = false;
   awaitOneSignalIdAvailable?: Promise<void> = new Promise<void>(() => {});
+  isCreatingUser: boolean = false;
+  didCreateUser: boolean = false;
 
   static singletonInstance?: User = undefined;
 
@@ -101,9 +103,11 @@ export default class User {
   }
 
   async sendUserCreate(): Promise<IdentityModel | void> {
-    if (this.identified) {
+    if (this.didCreateUser || this.isCreatingUser) {
       return;
     }
+
+    this.isCreatingUser = true;
 
     try {
       await this._refreshModels();
@@ -112,6 +116,8 @@ export default class User {
       const response = await RequestService.createUser({ appId }, userData);
       const userDataResponse: UserData = response.result;
       await OneSignal.coreDirector.hydrateUser(userDataResponse);
+      this.didCreateUser = true;
+      this.isCreatingUser = false;
     } catch (e) {
       Log.error(`Error sending user create: ${e}`);
     }
