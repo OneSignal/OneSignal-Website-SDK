@@ -39,7 +39,7 @@ const RETRIGGER_REMOTE_EVENTS = [
   'register',
   'willDisplay', // notification
   'dismiss', // notification
-  'notificationClick',
+  'click', // notification
   'permissionPromptDisplay',
   'testWouldDisplay',
   'testInitOptionDisabled',
