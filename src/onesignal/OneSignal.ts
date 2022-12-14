@@ -42,6 +42,8 @@ import LoginManager from "../page/managers/LoginManager";
 import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 import { SessionNamespace } from "./SessionNamespace";
 
+export type OneSignalDeferredLoadedCallback = (onesignal: OneSignal) => void;
+
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
@@ -273,15 +275,14 @@ export default class OneSignal {
   }
 
   /**
-   * Used to load OneSignal asynchronously from a webpage
-   * Allows asynchronous function queuing while the SDK loads in the browser with <script src="..." async/>
+   * Used to load OneSignal asynchronously / deferred from a webpage
+   * Allows asynchronous function queuing while the SDK loads in the browser with <script src="..." async or defer />
    * @PublicApi
-   * @param item - Ether a function or an arry with a OneSignal function name followed by it's parameters
+   * @param item - A function to be executed if the browser supports the OneSignal SDK
    * @Example
-   *  OneSignal.push(["functionName", param1, param2]);
-   *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
+   *  OneSignalDeferred.push(function(onesignal) { onesignal.functionName(param1, param2); });
    */
-  static push(item: Function | object[]) {
+  static push(item: OneSignalDeferredLoadedCallback) {
     ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
