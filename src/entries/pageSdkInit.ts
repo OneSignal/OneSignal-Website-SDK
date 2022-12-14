@@ -5,7 +5,6 @@
 
 import { incrementSdkLoadCount, getSdkLoadCount } from "../shared/utils/utils";
 import { ReplayCallsOnOneSignal } from "../page/utils/ReplayCallsOnOneSignal";
-import { OneSignalStubES6 } from "../page/utils/OneSignalStubES6";
 import Log from "../shared/libraries/Log";
 
 function oneSignalSdkInit() {
@@ -20,11 +19,13 @@ function oneSignalSdkInit() {
 
   // We're running in the host page, iFrame of the host page, or popup window
   // Load OneSignal's web SDK
-  const predefinedOneSignal: OneSignalStubES6 | object[] | undefined | null = (<any>window).OneSignal;
+  // TODO: A new iFrame and popup window pages probably need to be created for this major release?
 
+  // TODO: We might be able to remove this down the line but reasons to keep for now:
+  //         * Number of internal SDK code expects window.OneSignal
+  //         * Keep JS console usage easier for debugging / testing.
   (<any>window).OneSignal = require('../onesignal/OneSignal').default;
-
-  ReplayCallsOnOneSignal.doReplay(predefinedOneSignal);
+  ReplayCallsOnOneSignal.processOneSignalDeferredArray((<any>window).OneSignalDeferred);
 }
 
 // Only if running on page in browser

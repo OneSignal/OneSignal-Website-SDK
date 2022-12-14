@@ -3,7 +3,7 @@ import OneSignalError from "../../shared/errors/OneSignalError";
 export class ProcessOneSignalPushCalls {
   public static processItem(oneSignalInstance: IOneSignal, item: Function | object[]) {
     if (typeof(item) === "function")
-      item();
+      item(oneSignalInstance);
     else if (Array.isArray(item)) {
       if (item.length == 0)
         throw new OneSignalError("Empty array is not valid!");
