@@ -6,6 +6,7 @@ import { SupportedSubscription } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";
 import { processSubscriptionOperation } from "./helpers";
 import { RequestService } from "./RequestService";
+import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 
 /**
  * This class contains logic for all the Subscription model related requests that can be made to the OneSignal API
@@ -50,16 +51,18 @@ export default class SubscriptionRequests {
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
-  private static _processSubscriptionResponse(response?: any): ExecutorResult<SupportedSubscription> {
-    if (!response) {
-      throw new Error("processSubscriptionResponse: response is not defined");
-    }
+  private static _processSubscriptionResponse(response?: OneSignalApiBaseResponse):
+    ExecutorResult<SupportedSubscription> {
+      if (!response) {
+        throw new Error("processSubscriptionResponse: response is not defined");
+      }
 
-    const { status, result } = response;
+      const { status, result } = response;
 
-    if (status >= 200 && status < 300) {
-      return new ExecutorResult(true, true, result);
-    }
-    return new ExecutorResult(false, true);
+      if (status >= 200 && status < 300) {
+        // TO DO: format response correctly
+        return new ExecutorResult<SupportedSubscription>(true, true, result);
+      }
+      return new ExecutorResult(false, true);
   }
 }
