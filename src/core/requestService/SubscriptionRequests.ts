@@ -19,7 +19,7 @@ export default class SubscriptionRequests {
     const appId = await MainHelper.getAppId();
     const { subscription, aliasPair } = processSubscriptionOperation(operation);
 
-    const response = await RequestService.createSubscription({ appId }, aliasPair, subscription);
+    const response = await RequestService.createSubscription({ appId }, aliasPair, { subscription });
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
