@@ -12,7 +12,7 @@ import { SinonSandbox } from "sinon";
 import sinon from 'sinon';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 import Log from "../../../src/sw/libraries/Log";
-import OneSignal from "../../../src/onesignal/OneSignal";
+import OneSignal, { OneSignalDeferredLoadedCallback } from "../../../src/onesignal/OneSignal";
 
 // TODO: We still need some tests like this, but they will be much different. Testing to ensure the
 //       OneSignalDeferred functions work.
@@ -193,7 +193,7 @@ test("correctly stubs all methods for ES6", async t => {
 class MockOneSignal implements IOneSignal {
   public lastSendTags: IndexableByString<string> = {};
 
-  push(item: Function | object[]): void {
+  push(item: OneSignalDeferredLoadedCallback): void {
     ProcessOneSignalPushCalls.processItem(this, item);
   }
 
