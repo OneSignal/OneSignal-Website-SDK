@@ -19,9 +19,9 @@
     }
 
     const appId = getUrlQueryParam('app_id');
-    var OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-      OneSignal.init({ 
+    var OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(onesignal) {
+      onesignal.init({ 
         appId,
         serviceWorkerParam: { scope: "/" + SERVICE_WORKER_PATH },
         serviceWorkerPath: SERVICE_WORKER_PATH + "OneSignalSDKWorker.js",

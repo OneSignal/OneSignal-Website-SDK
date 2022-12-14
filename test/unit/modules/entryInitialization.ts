@@ -12,6 +12,10 @@ import { SinonSandbox } from "sinon";
 import sinon from 'sinon';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
 import Log from "../../../src/sw/libraries/Log";
+import OneSignal from "../../../src/onesignal/OneSignal";
+
+// TODO: We still need some tests like this, but they will be much different. Testing to ensure the
+//       OneSignalDeferred functions work.
 
 let sandbox: SinonSandbox;
 
@@ -202,33 +206,18 @@ class MockOneSignal implements IOneSignal {
   }
 }
 
-test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params", async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
-  const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.User.addTags(...) directly like a site developer would
-  const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignal();
-  (global as any).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  // Ensure our mock's sendTags got called correctly.
-  t.deepEqual(mockOneSignal.lastSendTags, { key: "value" });
-
-  // And the promise we resolved.
-  await sendTagsPromise;
-});
-
-
-test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using push with function", async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
-  const oneSignalStub = new OneSignalStubES6();
+test("Test ReplayCallsOnOneSignal fires functions ", async t => {
+  // Setup OneSignalDeferred, as an array as a customer would
+  const onesignalDeferred = [];
   // Call OneSignal.push(function(){}) like a site developer should be doing.
-  const sendTagsPromise = (oneSignalStub as any).push(async function () {
-    await (oneSignalStub as any).sendTag("key", "value");
+
+  let delayedPromise: DelayedPromise<any> | undefined = undefined;
+  const promise = new Promise((resolve, reject) => {
+    delayedPromise = { resolve, reject };
+  });
+
+  onesignalDeferred.push(async function(_onesignal: OneSignal) {
+    delayedPromise!.resolve();
   });
 
   // Set our fake mock to as window.OneSignal
@@ -236,67 +225,10 @@ test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using p
   (global as any).OneSignal = mockOneSignal;
 
   // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
+  ReplayCallsOnOneSignal.processOneSignalDeferredArray(onesignalDeferred);
 
-  // Ensure our mock's sendTags got called correctly.
-  t.deepEqual(mockOneSignal.lastSendTags, { key: "value" });
-
-  // And the promise we resolved.
-  await sendTagsPromise;
-});
-
-test("Test ReplayCallsOnOneSignal replays ES6 calls with expected params using push with params list", async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
-  const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.push([]]) like a site developer should be doing.
-  const sendTagsPromise = (oneSignalStub as any).push(["sendTag", "key1", "value2"]);
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignal();
-  (global as any).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  // Ensure our mock's sendTags got called correctly.
-  t.deepEqual(mockOneSignal.lastSendTags, { key1: "value2" });
-
-  // And the promise we resolved.
-  await sendTagsPromise;
-});
-
-test(`Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with ` +
-  `expected params with a function`, async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does, taking in any predefined window.OneSignal
-  const oneSignalStub = new OneSignalStubES6([() => {
-    (<any>global).OneSignal.sendTag("key", "value");
-  }]);
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignal();
-  (<any>global).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  // Ensure our mock's sendTags got called correctly.
-  t.deepEqual(mockOneSignal.lastSendTags, { key: "value" });
-});
-
-test(`Test ReplayCallsOnOneSignal replays ES6 calls from preExistingArray with ` +
-  `expected params using push with params list`, async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
-  const oneSignalStub = new OneSignalStubES6([["sendTag", "key1", "value2"]]);
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignal();
-  (<any>global).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  // Ensure our mock's sendTags got called correctly.
-  t.deepEqual(mockOneSignal.lastSendTags, { key1: "value2" });
+  // Ensure our function gets called.
+  await promise;
 });
 
 class MockOneSignalWithPromiseControl {
@@ -313,58 +245,6 @@ class MockOneSignalWithPromiseControl {
     });
   }
 }
-
-test("Test ReplayCallsOnOneSignal replays ES6 calls executing resolve promise", async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
-  const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.User.addTags(...) directly like a site developer may have done
-  const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignalWithPromiseControl();
-  mockOneSignal.resolveValue = "resolveValue";
-  (global as any).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  sendTagsPromise.then((value: string) => {
-      t.is(value, "resolveValue");
-    });
-
-  await sendTagsPromise;
-
-  // Make sure 1 assert is made for the then
-  t.plan(1);
-});
-
-test("Test ReplayCallsOnOneSignal replays ES6 calls executing reject promise", async t => {
-  // Setup an OneSignalStubES6 instance like the OneSignalSDK.js Shim does.
-  const oneSignalStub = new OneSignalStubES6();
-  // Call OneSignal.User.addTags(...) directly like a site developer may have done
-  const sendTagsPromise = (oneSignalStub as any).sendTag("key", "value");
-
-  // Set our fake mock to as window.OneSignal
-  const mockOneSignal = new MockOneSignalWithPromiseControl();
-  mockOneSignal.rejectValue = "rejectValue";
-  (global as any).OneSignal = mockOneSignal;
-
-  // Replay function calls we called on the stub on our mock
-  ReplayCallsOnOneSignal.doReplay(oneSignalStub);
-
-  sendTagsPromise.catch((value: string) => {
-    t.is(value, "rejectValue");
-  });
-
-  try {
-    await sendTagsPromise;
-  } catch (e) {
-    t.is(e, "rejectValue");
-  }
-
-  // Make sure 2 asserts are made, one for the local catch and the other on the await
-  t.plan(2);
-});
 
 test("Expect Promise to never resolve for ES5 stubs", async t => {
   // Setup an OneSignalStubES5 instance like the OneSignalSDK.js Shim does.

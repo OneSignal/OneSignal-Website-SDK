@@ -31,6 +31,7 @@ interface Window {
 
 
 declare var OneSignal: any;
+declare var OneSignalDeferred: any;
 
 
 // These __*__ variables are defined from Webpack to change resulting JS
