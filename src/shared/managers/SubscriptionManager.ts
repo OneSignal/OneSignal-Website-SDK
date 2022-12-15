@@ -169,7 +169,7 @@ export class SubscriptionManager {
       await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
       const identity = await user.sendUserCreate();
       if (identity) {
-        pushModel.setOneSignalId(identity?.onesignalId);
+        pushModel.setOneSignalId(identity?.onesignal_id);
       }
       return;
     } else {
