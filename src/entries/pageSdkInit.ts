@@ -1,5 +1,5 @@
 /**
- * This is OneSignalPageSDKES6.js (ES6)
+ * This is OneSignalSDK.page.es6.js(ES6)
  * Loaded from OneSignalSDK.page.js only if the browser supports push.
  */
 

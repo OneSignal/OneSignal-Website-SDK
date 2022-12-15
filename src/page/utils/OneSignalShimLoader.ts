@@ -40,7 +40,7 @@ export class OneSignalShimLoader {
 
   private static loadFullPageSDK(): void {
     OneSignalShimLoader.addScriptToPage(
-      `${OneSignalShimLoader.getPathAndPrefix()}OneSignalPageSDKES6.js?v=${OneSignalShimLoader.VERSION}`
+      `${OneSignalShimLoader.getPathAndPrefix()}OneSignalSDK.page.es6.js?v=${OneSignalShimLoader.VERSION}`
     );
   }
 
