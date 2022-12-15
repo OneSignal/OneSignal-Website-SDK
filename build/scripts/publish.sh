@@ -16,8 +16,8 @@ pwd
 
 mkdir build/releases
 
-cp build/bundles/OneSignalSDK.js build/releases/$PREFIX"OneSignalSDK.js"
-cp build/bundles/OneSignalSDK.js.map build/releases/$PREFIX"OneSignalSDK.js.map"
+cp build/bundles/OneSignalSDK.page.js build/releases/$PREFIX"OneSignalSDK.page.js"
+cp build/bundles/OneSignalSDK.page.js.map build/releases/$PREFIX"OneSignalSDK.page.js.map"
 cp build/bundles/OneSignalPageSDKES6.js build/releases/$PREFIX"OneSignalPageSDKES6.js"
 cp build/bundles/OneSignalPageSDKES6.js.map build/releases/$PREFIX"OneSignalPageSDKES6.js.map"
 
