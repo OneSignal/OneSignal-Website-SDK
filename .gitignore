@@ -13,8 +13,8 @@ build/size-analysis.html
 *.key
 *.crt
 yarn-error.log
-dist/Dev-OneSignalSDK.js
-dist/Dev-OneSignalSDK.js.map
+dist/Dev-OneSignalSDK.page.js
+dist/Dev-OneSignalSDK.page.js.map
 .vscode/**
 !.vscode/launch.json
 
