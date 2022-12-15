@@ -17,7 +17,7 @@ export default class LoginManager {
       throw new OneSignalError('login: no identity model found');
     }
 
-    identityOSModel.set('externalId', externalId, false);
+    identityOSModel.set('external_id', externalId, false);
   }
 
   static isIdentified(identity: SupportedIdentity): boolean {
@@ -95,7 +95,7 @@ export default class LoginManager {
 
     // TO DO: if 409s, we may include an error in the result and not just the identity object of existing owner of alias
     // so we need to make sure to get the identity object from the result correctly
-    const identityResult = identifyUserResponse?.result;
+    const identityResult = identifyUserResponse?.result?.identity;
     return { identity: identityResult };
   }
 
