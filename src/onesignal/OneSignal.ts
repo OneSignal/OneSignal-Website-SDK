@@ -41,6 +41,7 @@ import OneSignalError from "../shared/errors/OneSignalError";
 import LoginManager from "../page/managers/LoginManager";
 import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 import { SessionNamespace } from "./SessionNamespace";
+import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -273,15 +274,14 @@ export default class OneSignal {
   }
 
   /**
-   * Used to load OneSignal asynchronously from a webpage
-   * Allows asynchronous function queuing while the SDK loads in the browser with <script src="..." async/>
+   * Used to load OneSignal asynchronously / deferred from a webpage
+   * Allows asynchronous function queuing while the SDK loads in the browser with <script src="..." async or defer />
    * @PublicApi
-   * @param item - Ether a function or an arry with a OneSignal function name followed by it's parameters
+   * @param item - A function to be executed if the browser supports the OneSignal SDK
    * @Example
-   *  OneSignal.push(["functionName", param1, param2]);
-   *  OneSignal.push(function() { OneSignal.functionName(param1, param2); });
+   *  OneSignalDeferred.push(function(onesignal) { onesignal.functionName(param1, param2); });
    */
-  static push(item: Function | object[]) {
+  static push(item: OneSignalDeferredLoadedCallback) {
     ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
@@ -354,25 +354,6 @@ export default class OneSignal {
   static proxyFrame: ProxyFrame;
   static emitter: Emitter = new Emitter();
   static cache: any = {};
-
-  /**
-   * The additional path to the worker file.
-   *
-   * Usually just the filename (in case the file is named differently), but also supports cases where the folder
-   * is different.
-   *
-   * However, the init options 'path' should be used to specify the folder path instead since service workers will not
-   * auto-update correctly on HTTPS site load if the config init options 'path' is not set.
-   */
-  static SERVICE_WORKER_PATH = 'OneSignalSDKWorker.js';
-
-  /**
-   * By default, the service worker is expected to be accessible at the root scope. If the service worker is only
-   * available with in a sub-directory, SERVICE_WORKER_PARAM must be changed to the sub-directory (with a trailing
-   * slash). This would allow pages to function correctly as not to block the service worker ready call, which would
-   * hang indefinitely if we requested root scope registration but the service was only available in a child scope.
-   */
-  static SERVICE_WORKER_PARAM: { scope: string } = { scope: '/' };
   static _LOGGING = false;
   static LOGGING = false;
   static _initCalled = false;
