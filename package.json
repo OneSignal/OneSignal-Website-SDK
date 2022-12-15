@@ -146,7 +146,7 @@
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDKStyles.css",
+      "path": "./build/bundles/OneSignalSDK.page.styles.css",
       "maxSize": "9 kB",
       "compression": "gzip"
     }
