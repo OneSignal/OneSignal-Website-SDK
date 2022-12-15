@@ -43,7 +43,7 @@ export class SlidedownManager {
   /* P R I V A T E */
 
   private async checkIfSlidedownShouldBeShown(options: AutoPromptOptions): Promise<boolean> {
-    const permissionDenied = await OneSignal.notifications.getPermissionStatus() === NotificationPermission.Denied;
+    const permissionDenied = await OneSignal.Notifications.getPermissionStatus() === NotificationPermission.Denied;
     let wasDismissed: boolean;
 
     const subscriptionInfo: PushSubscriptionState = await OneSignal.context.subscriptionManager.getSubscriptionState();
@@ -220,14 +220,14 @@ export class SlidedownManager {
     if (!email) {
       return;
     }
-    OneSignal.user.addEmail(email);
+    OneSignal.User.addEmail(email);
   }
 
   private updateSMS(sms?: string): void {
     if (!sms) {
       return;
     }
-    OneSignal.user.addSms(sms);
+    OneSignal.User.addSms(sms);
   }
 
   private async showConfirmationToast(): Promise<void> {

@@ -12,7 +12,7 @@ export default class UserNamespace {
   private _currentUser?: User;
   public userLoaded: Promise<void>;
 
-  readonly pushSubscription = new PushSubscriptionNamespace();
+  readonly PushSubscription = new PushSubscriptionNamespace();
 
   constructor(private coreDirector: CoreModuleDirector) {
     this.userLoaded = this._loadUser();

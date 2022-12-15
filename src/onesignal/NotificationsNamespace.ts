@@ -1,7 +1,3 @@
-import EventHelper from "../shared/helpers/EventHelper";
-import MainHelper from "../shared/helpers/MainHelper";
-import Log from "../shared/libraries/Log";
-import { UpdatePlayerOptions } from "../shared/models/UpdatePlayerOptions";
 import { NotificationActionButton } from "../page/models/NotificationActionButton";
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
 import OneSignalApi from "../shared/api/OneSignalApi";
@@ -9,7 +5,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/In
 import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
 import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import Database from "../shared/services/Database";
-import { awaitOneSignalInitAndSupported, logMethodCall, executeCallback } from "../shared/utils/utils";
+import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
 import OneSignalError from "../../src/shared/errors/OneSignalError";
 import OneSignal from "./OneSignal";
 
@@ -82,17 +78,6 @@ export default class NotificationsNamespace {
       await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], { en : title }, { en : message },
                                                url, icon, data, buttons);
     }
-  }
-
-  /**
-   * @PublicApi
-   */
-  async isOptedOut(callback?: Action<boolean | undefined | null>):
-    Promise<boolean | undefined | null> {
-    logMethodCall('isOptedOut', callback);
-    const { optedOut } = await Database.getSubscription();
-    executeCallback(callback, optedOut);
-    return optedOut;
   }
 
   /**

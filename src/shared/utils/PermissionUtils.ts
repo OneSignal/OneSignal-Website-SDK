@@ -3,7 +3,7 @@ import OneSignalEvent from '../services/OneSignalEvent';
 
 export class PermissionUtils {
   public static async triggerNotificationPermissionChanged(updateIfIdentical = false) {
-    const newPermission = await OneSignal.notifications.getPermissionStatus();
+    const newPermission = await OneSignal.Notifications.getPermissionStatus();
     const previousPermission = await Database.get('Options', 'notificationPermission');
 
     const shouldBeUpdated = newPermission !== previousPermission || updateIfIdentical;

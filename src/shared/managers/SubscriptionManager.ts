@@ -36,6 +36,7 @@ import { FutureSubscriptionModel, SupportedSubscription } from "../../core/model
 import { StringKeys } from "../../core/models/StringKeys";
 import OneSignalError from "../errors/OneSignalError";
 import { SessionOrigin } from "../models/Session";
+import { executeCallback, logMethodCall } from "../utils/utils";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -77,6 +78,14 @@ export class SubscriptionManager {
     return subscriptionState.subscribed && !subscriptionState.optedOut;
   }
 
+  async isOptedOut(callback?: Action<boolean | undefined | null>):
+    Promise<boolean | undefined | null> {
+      logMethodCall('isOptedOut', callback);
+      const { optedOut } = await Database.getSubscription();
+      executeCallback(callback, optedOut);
+      return optedOut;
+  }
+
   /**
    * Subscribes for a web push subscription.
    *
@@ -115,7 +124,7 @@ export class SubscriptionManager {
           Subscribing is only possible on the top-level frame, so there's no permission ambiguity
           here.
         */
-        if ((await OneSignal.notifications.getPermissionStatus()) === NotificationPermission.Denied)
+        if ((await OneSignal.Notifications.getPermissionStatus()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
 
         if (SubscriptionManager.isSafari()) {

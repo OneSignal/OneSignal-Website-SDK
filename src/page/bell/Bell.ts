@@ -159,7 +159,7 @@ export default class Bell {
     OneSignal.emitter.on(Bell.EVENTS.SUBSCRIBE_CLICK, () => {
       this.dialog.subscribeButton.disabled = true;
       this._ignoreSubscriptionState = true;
-      OneSignal.user.pushSubscription.optIn()
+      OneSignal.User.PushSubscription.optIn()
         .then(() => {
           this.dialog.subscribeButton.disabled = false;
           return this.dialog.hide();
@@ -183,7 +183,7 @@ export default class Bell {
 
     OneSignal.emitter.on(Bell.EVENTS.UNSUBSCRIBE_CLICK, () => {
       this.dialog.unsubscribeButton.disabled = true;
-      OneSignal.user.pushSubscription.optOut()
+      OneSignal.User.PushSubscription.optOut()
         .then(() => {
           this.dialog.unsubscribeButton.disabled = false;
           return this.dialog.hide();
@@ -294,7 +294,7 @@ export default class Bell {
         }
       }
 
-      OneSignal.notifications.getPermissionStatus((permission: NotificationPermission) => {
+      OneSignal.Notifications.getPermissionStatus((permission: NotificationPermission) => {
         let bellState: BellState;
         if (isSubscribed) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -572,7 +572,7 @@ export default class Bell {
   updateState() {
     Promise.all([
       OneSignal.context.subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal.notifications.getPermissionStatus()
+      OneSignal.Notifications.getPermissionStatus()
     ])
     .then(([isEnabled, permission]) => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);

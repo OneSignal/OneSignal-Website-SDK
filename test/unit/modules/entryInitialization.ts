@@ -60,6 +60,7 @@ test("Test ReplayCallsOnOneSignal fires functions ", async t => {
 
   // Set our fake mock to as window.OneSignal
   const mockOneSignal = new MockOneSignal();
+
   (global as any).OneSignal = mockOneSignal;
 
   // Replay function calls we called on the stub on our mock
@@ -70,6 +71,7 @@ test("Test ReplayCallsOnOneSignal fires functions ", async t => {
 });
 
 test("OneSignalSDK.js add OneSignalPageSDKES6 script tag on a browser supports push", async t => {
+
   setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
   // Setup spy for OneSignalShimLoader.addScriptToPage
   const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
