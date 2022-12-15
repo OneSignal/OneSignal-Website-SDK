@@ -53,7 +53,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
     throw new OneSignalError(`processIdentityModel: bad identity object: ${identity}`);
   }
 
-  const { onesignalId } = identity;
+  const { onesignal_id: onesignalId } = identity;
 
   // fixes typescript errors
   if (!onesignalId) {

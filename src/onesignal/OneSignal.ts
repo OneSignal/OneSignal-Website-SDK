@@ -102,7 +102,7 @@ export default class OneSignal {
         throw new OneSignalError('Login: No identity model found');
       }
 
-      const currentExternalId = identityModel?.data?.externalId;
+      const currentExternalId = identityModel?.data?.external_id;
 
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
@@ -127,7 +127,7 @@ export default class OneSignal {
 
       LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
         const { identity } = result;
-        const onesignalId = identity?.onesignalId;
+        const onesignalId = identity?.onesignal_id;
 
         if (!onesignalId) {
           throw new OneSignalError('Login: No OneSignal ID found');
