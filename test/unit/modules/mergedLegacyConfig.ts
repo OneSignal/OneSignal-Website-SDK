@@ -27,13 +27,13 @@ test('should not overwrite a provided service worker parameters', async t => {
     {
       path: '/existing-path',
       serviceWorkerParam: { scope: '/existing-path' },
-      serviceWorkerPath: '/existing-path/OneSignalSDKWorker.js',
+      serviceWorkerPath: '/existing-path/OneSignalSDK.sw.js',
     },
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
   t.is(result.userConfig.path, '/existing-path');
   t.deepEqual(result.userConfig.serviceWorkerParam, { scope: '/existing-path' });
-  t.is(result.userConfig.serviceWorkerPath, '/existing-path/OneSignalSDKWorker.js');
+  t.is(result.userConfig.serviceWorkerPath, '/existing-path/OneSignalSDK.sw.js');
 });
 
 test('should assign the default service worker registration params if not provided', async t => {
@@ -68,7 +68,7 @@ test('should assign the default service worker A filename if not provided', asyn
     {},
     TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
   );
-  t.is(result.userConfig.serviceWorkerPath, 'OneSignalSDKWorker.js');
+  t.is(result.userConfig.serviceWorkerPath, 'OneSignalSDK.sw.js');
 });
 
 test("should not use server's subdomain if subdomain not specified in user config on HTTPS site", async t => {
