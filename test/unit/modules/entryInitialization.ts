@@ -9,7 +9,8 @@ import { OneSignalShimLoader } from "../../../src/page/utils/OneSignalShimLoader
 import { SinonSandbox } from "sinon";
 import sinon from 'sinon';
 import { setupBrowserWithPushAPIWithVAPIDEnv } from "../../support/tester/utils";
-import OneSignal, { OneSignalDeferredLoadedCallback } from "../../../src/onesignal/OneSignal";
+import OneSignal from "../../../src/onesignal/OneSignal";
+import { OneSignalDeferredLoadedCallback } from "../../../src/page/models/OneSignalDeferredLoadedCallback";
 
 // TODO: We still need some tests like this, but they will be much different. Testing to ensure the
 //       OneSignalDeferred functions work.

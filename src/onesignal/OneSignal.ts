@@ -41,8 +41,7 @@ import OneSignalError from "../shared/errors/OneSignalError";
 import LoginManager from "../page/managers/LoginManager";
 import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 import { SessionNamespace } from "./SessionNamespace";
-
-export type OneSignalDeferredLoadedCallback = (onesignal: OneSignal) => void;
+import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {

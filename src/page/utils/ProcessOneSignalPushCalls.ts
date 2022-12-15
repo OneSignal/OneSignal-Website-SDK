@@ -1,4 +1,4 @@
-import { OneSignalDeferredLoadedCallback } from "../../../src/onesignal/OneSignal";
+import { OneSignalDeferredLoadedCallback } from "../../page/models/OneSignalDeferredLoadedCallback";
 import OneSignalError from "../../shared/errors/OneSignalError";
 
 export class ProcessOneSignalPushCalls {
