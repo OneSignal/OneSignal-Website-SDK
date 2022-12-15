@@ -7,11 +7,11 @@ export class OneSignalShimLoader {
 
   private static VERSION = (typeof __VERSION__) === "undefined" ? 1 : Number(__VERSION__);
 
-  // NOTE: scripts added won't start executing until
   private static addScriptToPage(url: string): void {
     const scriptElement = document.createElement('script');
     scriptElement.src = url;
-    scriptElement.async = true;
+    // Using defer over async; async timing is inconsistent and may interrupt DOM rendering
+    scriptElement.defer = true;
     document.head.appendChild(scriptElement);
   }
 
