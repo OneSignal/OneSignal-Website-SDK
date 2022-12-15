@@ -391,7 +391,7 @@ export default class InitHelper {
     );
 
     const webhookOptions = OneSignal.config.userConfig.webhooks;
-    ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(event => {
+    ['notification.willDisplay', 'notification.clicked', 'notification.dismissed'].forEach(event => {
       if (webhookOptions && webhookOptions[event]) {
         opPromises.push(Database.put('Options', { key: `webhooks.${event}`, value: webhookOptions[event] }));
       } else {

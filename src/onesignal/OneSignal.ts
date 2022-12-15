@@ -285,38 +285,6 @@ export default class OneSignal {
     ProcessOneSignalPushCalls.processItem(OneSignal, item);
   }
 
-  /**
-   * Used to subscribe to OneSignal events such as "subscriptionChange"
-   * Fires each time the event occurs
-   * @param event - Event name to subscribe to
-   * @param listener - Listener to fire when event happens
-   * @PublicApi
-   */
-  static on(event: string, listener: EventHandler): Emitter {
-    return this.emitter.on(event, listener);
-  }
-
-  /**
-   * Used to un-subscribe from OneSignal events such as "subscriptionChange"
-   * @param event - Event name to un-subscribe from
-   * @param listener - Event listener to remove from the collection for a specified event
-   * @PublicApi
-   */
-  static off(event: string, listener: EventHandler): Emitter {
-    return this.emitter.off(event, listener);
-  }
-
-  /**
-   * Used to subscribe to OneSignal events such as "subscriptionChange"
-   * Fires only once
-   * @param event - Event name to subscribe to
-   * @param listener - Listener to fire when event happens
-   * @PublicApi
-   */
-  static once(event: string, listener: EventHandler): Emitter {
-    return this.emitter.once(event, listener);
-  }
-
   /* NEW USER MODEL CHANGES */
   static coreDirector: CoreModuleDirector;
   static Notifications = new NotificationsNamespace();
@@ -426,7 +394,7 @@ export default class OneSignal {
      * This event is used for both HTTP and HTTPS sites and occurs after the user actually grants notification
      * permissions for the site. Occurs before the user is actually subscribed to push notifications.
      */
-    NATIVE_PROMPT_PERMISSIONCHANGED: 'notificationPermissionChange',
+    NATIVE_PROMPT_PERMISSIONCHANGED: 'permissionChange',
     /**
      * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
      * and activated and the user is eligible to receive push notifications at any point after this.
@@ -440,17 +408,17 @@ export default class OneSignal {
     /**
      * Occurs when a notification is displayed.
      */
-    NOTIFICATION_DISPLAYED: 'notificationDisplay',
+    NOTIFICATION_WILL_DISPLAY: 'willDisplay',
     /**
      * Occurs when a notification is dismissed by the user either clicking 'X' or clearing all notifications
      * (available in Android). This event is NOT called if the user clicks the notification's body or any of the
      * action buttons.
      */
-    NOTIFICATION_DISMISSED: 'notificationDismiss',
+    NOTIFICATION_DISMISSED: 'dismiss',
     /**
      * New event replacing legacy addNotificationOpenedHandler(). Used when the notification was clicked.
      */
-    NOTIFICATION_CLICKED: 'notificationClick',
+    NOTIFICATION_CLICKED: 'click',
     /**
      * Occurs after the document ready event fires and, for HTTP sites, the iFrame to subdomain.onesignal.com has
      * loaded.

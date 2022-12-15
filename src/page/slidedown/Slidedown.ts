@@ -264,11 +264,11 @@ export default class Slidedown {
 
   static get EVENTS() {
     return {
-      ALLOW_CLICK: 'popoverAllowClick',
-      CANCEL_CLICK: 'popoverCancelClick',
-      SHOWN: 'popoverShown',
-      CLOSED: 'popoverClosed',
-      QUEUED: 'popoverQueued'
+      ALLOW_CLICK: 'slidedownAllowClick',
+      CANCEL_CLICK: 'slidedownCancelClick',
+      SHOWN: 'slidedownShown',
+      CLOSED: 'slidedownClosed',
+      QUEUED: 'slidedownQueued',
     };
   }
 }
