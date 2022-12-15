@@ -1,7 +1,7 @@
 type StructuredNotification = {
-  id?: string;
+  id: string;
+  content: string;
   heading?: string;
-  content?: string;
   url?: string;
   data?: object;
   rr?: string;
