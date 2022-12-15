@@ -118,7 +118,10 @@ export class OneSignalApiSW {
 
     try {
       await RequestService.updateUser({ appId, subscriptionId }, aliasPair, updateUserPayload);
-      await OneSignalApiShared.sendOutcome(outcomePayload);
+
+      if (outcomePayload.notification_ids && outcomePayload.notification_ids.length > 0) {
+        await OneSignalApiShared.sendOutcome(outcomePayload);
+      }
     } catch (e) {
       Log.debug("Error sending session duration:", e);
     }
