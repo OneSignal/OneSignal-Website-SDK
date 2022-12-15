@@ -1,4 +1,4 @@
-// This is used by the OneSignalSDK.js shim
+// This is used by the OneSignalSDK.page.js shim
 // DO NOT add other imports since it is an ES5 target and dead code imports can't be clean up.
 
 // Checks if the browser supports push notifications by checking if specific
