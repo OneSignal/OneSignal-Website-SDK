@@ -20,7 +20,7 @@ async function getWebpackPlugins() {
   const plugins = [
     new CheckerPlugin(),
       new webpack.optimize.ModuleConcatenationPlugin(),
-      new ExtractTextPlugin("OneSignalSDKStyles.css"),
+      new ExtractTextPlugin("OneSignalSDK.page.styles.css"),
       new webpack.DefinePlugin({
         __BUILD_TYPE__: JSON.stringify(env),
         __BUILD_ORIGIN__: JSON.stringify(buildOrigin),

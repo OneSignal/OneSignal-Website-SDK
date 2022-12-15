@@ -305,7 +305,7 @@ export default class SdkEnvironment {
   }
 
   public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {
-    const baseFileName = "OneSignalSDKStyles.css";
+    const baseFileName = "OneSignalSDK.page.styles.css";
 
     switch (buildEnv) {
       case EnvironmentKind.Development:
