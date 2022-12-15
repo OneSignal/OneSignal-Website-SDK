@@ -7,7 +7,7 @@ import { incrementSdkLoadCount, getSdkLoadCount } from "../shared/utils/utils";
 import { ReplayCallsOnOneSignal } from "../page/utils/ReplayCallsOnOneSignal";
 import Log from "../shared/libraries/Log";
 
-function oneSignalSdkInit() {
+function onesignalSdkInit() {
   incrementSdkLoadCount();
   if (getSdkLoadCount() > 1) {
     Log.warn(`OneSignal: The web push SDK is included more than once. For optimal performance, please include our ` +
@@ -27,7 +27,4 @@ function oneSignalSdkInit() {
   (<any>window).OneSignal = require('../onesignal/OneSignal').default;
   ReplayCallsOnOneSignal.processOneSignalDeferredArray((<any>window).OneSignalDeferred);
 }
-
-// Only if running on page in browser
-if (typeof window !== "undefined")
-  oneSignalSdkInit();
+onesignalSdkInit();
