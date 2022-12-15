@@ -536,7 +536,7 @@ export class TestEnvironment {
           serviceWorker: {
             customizationEnabled: false,
             path: "/",
-            workerName: "OneSignalSDKWorker.js",
+            workerName: "OneSignalSDK.sw.js",
             registrationScope: "/",
           },
           welcomeNotification: {

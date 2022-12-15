@@ -70,7 +70,7 @@ async function generateWebpackConfig() {
     target: 'web',
     entry: {
       'OneSignalSDK.page.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
-      'OneSignalSDKWorker.js': path.resolve('build/ts-to-es6/src/entries/worker.js'),
+      'OneSignalSDK.sw.js': path.resolve('build/ts-to-es6/src/entries/worker.js'),
       'OneSignalSDK.page.styles.css': path.resolve('src/entries/stylesheet.scss'),
     },
     output: {

@@ -141,7 +141,7 @@
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDKWorker.js",
+      "path": "./build/bundles/OneSignalSDK.sw.js",
       "maxSize": "42 kB",
       "compression": "gzip"
     },

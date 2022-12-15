@@ -21,8 +21,8 @@ cp build/bundles/OneSignalSDK.page.js.map build/releases/$PREFIX"OneSignalSDK.pa
 cp build/bundles/OneSignalSDK.page.es6.js build/releases/$PREFIX"OneSignalSDK.page.es6.js"
 cp build/bundles/OneSignalSDK.page.es6.js.map build/releases/$PREFIX"OneSignalSDK.page.es6.js.map"
 
-cp build/bundles/OneSignalSDKWorker.js build/releases/$PREFIX"OneSignalSDKWorker.js"
-cp build/bundles/OneSignalSDKWorker.js.map build/releases/$PREFIX"OneSignalSDKWorker.js.map"
+cp build/bundles/OneSignalSDK.sw.js build/releases/$PREFIX"OneSignalSDK.sw.js"
+cp build/bundles/OneSignalSDK.sw.js.map build/releases/$PREFIX"OneSignalSDK.sw.js.map"
 
 cp build/bundles/OneSignalSDK.page.styles.css build/releases/$PREFIX"OneSignalSDK.page.styles.css"
 cp build/bundles/OneSignalSDK.page.styles.css.map build/releases/$PREFIX"OneSignalSDK.page.styles.css.map"

@@ -11,7 +11,7 @@ export class ContextHelper {
 
     const envPrefix = SdkEnvironment.getBuildEnvPrefix();
     const serviceWorkerManagerConfig = {
-      workerPath: new Path(`/${envPrefix}OneSignalSDKWorker.js`),
+      workerPath: new Path(`/${envPrefix}OneSignalSDK.sw.js`),
       registrationOptions: { scope: '/' }
     };
 
