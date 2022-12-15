@@ -3,7 +3,7 @@
 <!-- Some sites use this HTML base tag to change the origin for all relative links.
     Ensure OneSignal SDK correctly handles this. -->
 <base href="https://www.example.com/">
-<script src="https://localhost:4001/sdks/Dev-OneSignalSDK.js" async=""></script>
+<script src="https://localhost:4001/sdks/Dev-OneSignalSDK.js" defer></script>
 <script>
     const SERVICE_WORKER_PATH = "push/onesignal/";
 
@@ -21,13 +21,12 @@
     }
 
     const appId = getUrlQueryParam('app_id');
-    var OneSignal = window.OneSignal || [];
-    OneSignal.push(function() {
-      OneSignal.SERVICE_WORKER_PARAM = { scope: "/" + SERVICE_WORKER_PATH };
-      OneSignal.SERVICE_WORKER_PATH = SERVICE_WORKER_PATH + "OneSignalSDKWorker.js";
-
-      OneSignal.init({
+    var OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(onesignal) {
+       onesignal.init({
           appId,
+          serviceWorkerParam: { scope: "/" + SERVICE_WORKER_PATH },
+          serviceWorkerPath: SERVICE_WORKER_PATH + "OneSignalSDKWorker.js",
           notifyButton: {
               enable: true
           },
@@ -101,48 +100,48 @@
     });
 
     function sendUniqueOutcome() {
-        OneSignal.push(function() {
+        OneSignalDeferred.push(function(onesignal) {
             const outcomeName = document.querySelector('#unique_outcome_name').value;
-            OneSignal.sendUniqueOutcome(outcomeName);
+            onesignal.sendUniqueOutcome(outcomeName);
         });
     }
 
     function sendOutcome() {
-        OneSignal.push(function() {
+        OneSignalDeferred.push(function(onesignal) {
             const outcomeName = document.querySelector('#outcome_name').value;
-            OneSignal.sendOutcome(outcomeName);
+            onesignal.sendOutcome(outcomeName);
         });
     }
 
     function sendOutcomeWithWeight() {
-        OneSignal.push(function() {
+        OneSignalDeferred.push(function(onesignal) {
             const outcomeName = document.querySelector('#outcome_name').value;
             const outcomeWeight = parseFloat(document.querySelector('#outcome_weight').value);
-            OneSignal.sendOutcome(outcomeName, outcomeWeight);
+            onesignal.sendOutcome(outcomeName, outcomeWeight);
         });
     }
 
     function showCategorySlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showCategorySlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.showCategorySlidedown();
         })
     }
 
     function showSmsSlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showSmsSlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.showSmsSlidedown();
         })
     }
 
     function showEmailSlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showEmailSlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.showEmailSlidedown();
         })
     }
 
     function showSmsAndEmailSlidedown() {
-        OneSignal.push(function() {
-            OneSignal.showSmsAndEmailSlidedown();
+        OneSignalDeferred.push(function(onesignal) {
+            onesignal.showSmsAndEmailSlidedown();
         })
     }
 

@@ -480,15 +480,8 @@ export class ConfigHelper {
           Ignores dashboard configuration and uses code-based configuration only.
           Except injecting some default values for prompts.
         */
-        const isTopLevelServiceWorkerParamDefined = typeof OneSignal !== 'undefined' &&
-          !!OneSignal.SERVICE_WORKER_PARAM;
-        const isTopLevelServiceWorkerPathDefined = typeof OneSignal !== 'undefined' &&
-          !!OneSignal.SERVICE_WORKER_PATH;
-
-        const fallbackServiceWorkerParam = isTopLevelServiceWorkerParamDefined ?
-          OneSignal.SERVICE_WORKER_PARAM : { scope: '/' };
-        const fallbackServiceWorkerPath = isTopLevelServiceWorkerPathDefined ?
-          OneSignal.SERVICE_WORKER_PATH : 'OneSignalSDKWorker.js';
+        const defaultServiceWorkerParam = { scope: '/' };
+        const defaultServiceWorkerPath = 'OneSignalSDKWorker.js';
 
         const config = {
           ...userConfig,
@@ -500,9 +493,9 @@ export class ConfigHelper {
           ),
           ...{
             serviceWorkerParam: !!userConfig.serviceWorkerParam ?
-              userConfig.serviceWorkerParam : fallbackServiceWorkerParam,
+              userConfig.serviceWorkerParam : defaultServiceWorkerParam,
             serviceWorkerPath: !!userConfig.serviceWorkerPath ?
-              userConfig.serviceWorkerPath : fallbackServiceWorkerPath,
+              userConfig.serviceWorkerPath : defaultServiceWorkerPath,
             path: !!userConfig.path ? userConfig.path : '/'
           },
           outcomes: {

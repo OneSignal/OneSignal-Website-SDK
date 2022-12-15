@@ -71,24 +71,6 @@ test('should assign the default service worker A filename if not provided', asyn
   t.is(result.userConfig.serviceWorkerPath, 'OneSignalSDKWorker.js');
 });
 
-test('should not overwrite a provided service worker A filename', async t => {
-  await TestEnvironment.initialize({
-    initOptions: {
-      httpPermissionRequest: {
-        enable: true
-      }
-    },
-    httpOrHttps: HttpHttpsEnvironment.Http
-  });
-
-  OneSignal.SERVICE_WORKER_PATH = 'CustomWorkerA.js';
-  const result = new ConfigManager().getMergedConfig(
-    {},
-    TestEnvironment.getFakeServerAppConfig(ConfigIntegrationKind.Custom)
-  );
-  t.is(result.userConfig.serviceWorkerPath, 'CustomWorkerA.js');
-});
-
 test("should not use server's subdomain if subdomain not specified in user config on HTTPS site", async t => {
   await TestEnvironment.initialize({
     initOptions: {
