@@ -136,7 +136,7 @@
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalPageSDKES6.js",
+      "path": "./build/bundles/OneSignalSDK.page.es6.js",
       "maxSize": "72 kB",
       "compression": "gzip"
     },
