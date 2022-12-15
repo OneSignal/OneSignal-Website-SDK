@@ -111,7 +111,7 @@ async function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
-      'OneSignalSDK.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
+      'OneSignalSDK.page.js': path.resolve('build/ts-to-es6/src/entries/sdk.js'),
       'OneSignalSDKStyles.css': path.resolve('src/entries/stylesheet.scss')
     },
     output: {
@@ -140,8 +140,7 @@ async function generateWebpackConfig() {
                 'PushNotSupportedError',
                 'PushPermissionNotGrantedError',
                 'SdkInitError',
-                'TimeoutError',
-                'OneSignalStubES6'
+                'TimeoutError'
               ]
             } : false,
             output: {

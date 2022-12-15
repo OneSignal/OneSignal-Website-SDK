@@ -69,7 +69,7 @@ test("Test ReplayCallsOnOneSignal fires functions ", async t => {
   await promise;
 });
 
-test("OneSignalSDK.js add OneSignalPageSDKES6 script tag on a browser supports push", async t => {
+test("OneSignalSDK.page.js add OneSignalSDK.page.es6.js script tag on a browser supports push", async t => {
   setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
   // Setup spy for OneSignalShimLoader.addScriptToPage
   const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
@@ -78,7 +78,7 @@ test("OneSignalSDK.js add OneSignalPageSDKES6 script tag on a browser supports p
   t.is(addScriptToPageSpy.callCount, 1);
 });
 
-test("OneSignalSDK.js is loaded on a page on a browser that does NOT support push", async t => {
+test("OneSignalSDK.page.js is loaded on a page on a browser that does NOT support push", async t => {
   // Setup spy for OneSignalShimLoader.addScriptToPage
   const addScriptToPageSpy = sandbox.spy(OneSignalShimLoader, <any>'addScriptToPage');
 
@@ -88,7 +88,7 @@ test("OneSignalSDK.js is loaded on a page on a browser that does NOT support pus
   t.is(addScriptToPageSpy.callCount, 0);
 });
 
-test("OneSignalSDK.js load from service worker context that supports push", async t => {
+test("OneSignalSDK.page.js load from service worker context that supports push", async t => {
   sandbox.stub((<any>global), "window").value(undefined);
   setupBrowserWithPushAPIWithVAPIDEnv(sandbox);
 
