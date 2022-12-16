@@ -113,15 +113,10 @@ export class RequestService {
   : Promise<OneSignalApiBaseResponse>
   {
     const { appId } = requestMetadata;
-    const identity = OneSignalApiBase.delete(
-      `${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
+    return OneSignalApiBase.delete(
+      `apps/${appId}/users/by/${alias.label}/${alias.id}/identity/${labelToRemove}`,
       requestMetadata.jwtHeader
       );
-
-    if (isIdentityObject(identity)) {
-      return identity;
-    }
-    throw new OneSignalError("`deleteAlias` returned an invalid identity object");
   }
 
   /* S U B S C R I P T I O N   O P E R A T I O N S */

@@ -3,7 +3,6 @@ import { CoreDelta } from "../models/CoreDeltas";
 import { ExecutorConfig } from "../models/ExecutorConfig";
 import { SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
-import { isModelDelta } from "../utils/typePredicates";
 import ExecutorBase from "./ExecutorBase";
 
 export class SubscriptionExecutor extends ExecutorBase {
@@ -15,7 +14,7 @@ export class SubscriptionExecutor extends ExecutorBase {
     const modelSpecificDeltasArrays = this.separateDeltasByModelId();
 
     modelSpecificDeltasArrays.forEach(deltasArray => {
-      const changeSpecificDeltas: IndexableByString<any> = this.separateDeltasByChangeType(deltasArray);
+      const changeSpecificDeltas = this.separateDeltasByChangeType(deltasArray);
 
       Object.keys(changeSpecificDeltas).forEach((changeType: string) => {
         const deltas = changeSpecificDeltas[changeType];
@@ -46,15 +45,12 @@ export class SubscriptionExecutor extends ExecutorBase {
       return deltasByChangeType;
     }
 
+  // TO DO: unit test
   private separateDeltasByModelId(): CoreDelta<SupportedModel>[][] {
     const deltasByModelId: {[key: string]: CoreDelta<SupportedModel>[]} = {};
 
     this._deltaQueue.forEach(delta => {
-      if (!isModelDelta(delta)) {
-        return;
-      }
-
-      const modelId = delta.model.modelId;
+      const { modelId } = delta.model;
 
       if (!deltasByModelId[modelId]) {
         deltasByModelId[modelId] = [];

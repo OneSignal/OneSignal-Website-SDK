@@ -62,7 +62,7 @@ export default class SubscriptionRequests {
       const subscription = result.subscription;
 
       if (status >= 200 && status < 300) {
-        if (!isCompleteSubscriptionObject(subscription)) {
+        if (subscription && !isCompleteSubscriptionObject(subscription)) {
           throw new OneSignalError(`processSubscriptionResponse: bad subscription object: ${subscription}`);
         }
 
