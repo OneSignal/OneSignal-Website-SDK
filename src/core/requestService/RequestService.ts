@@ -136,11 +136,11 @@ export class RequestService {
   static async createSubscription(
     requestMetadata: RequestMetadata,
     alias: AliasPair,
-    subscription: FutureSubscriptionModel):
+    subscription: { subscription: FutureSubscriptionModel }):
     Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
       return OneSignalApiBase.post(
-        `${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
+        `apps/${appId}/users/by/${alias.label}/${alias.id}/subscriptions`,
         subscription,
         requestMetadata.jwtHeader
       );
