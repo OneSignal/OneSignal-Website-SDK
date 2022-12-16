@@ -308,7 +308,7 @@ export default class SdkEnvironment {
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
 
-    return new URL(`${origin}/sdks`);
+    return new URL(`${origin}/sdks/web/v16`);
   }
 
   public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {

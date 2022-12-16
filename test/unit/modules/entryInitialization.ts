@@ -99,5 +99,5 @@ test("OneSignalSDK.page.js load from service worker context that supports push",
   OneSignalShimLoader.start();
 
   // Ensure we load the worker build of the SDK with self.importScripts(<string>)
-  t.true(importScriptsSpy.getCall(0).calledWithExactly("https://cdn.onesignal.com/sdks/OneSignalSDK.sw.js?v=1"));
+  t.true(importScriptsSpy.getCall(0).calledWithExactly("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js?v=1"));
 });

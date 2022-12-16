@@ -18,7 +18,7 @@ export class OneSignalShimLoader {
   // Same logic from SdkEnvironment
   private static getPathAndPrefix(): string {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
-    const productionOrigin = "https://cdn.onesignal.com/sdks/";
+    const productionOrigin = "https://cdn.onesignal.com/sdks/web/v16/";
 
     if (typeof __BUILD_TYPE__ === "undefined") {
       return productionOrigin;
@@ -30,9 +30,9 @@ export class OneSignalShimLoader {
 
     switch(__BUILD_TYPE__){
       case "development":
-        return __NO_DEV_PORT__ ? `${protocol}://${buildOrigin}/sdks/Dev-` : `${protocol}://${buildOrigin}:${port}/sdks/Dev-`;
+        return __NO_DEV_PORT__ ? `${protocol}://${buildOrigin}/sdks/web/v16/Dev-` : `${protocol}://${buildOrigin}:${port}/sdks/web/v16/Dev-`;
       case "staging":
-        return `https://${buildOrigin}/sdks/Staging-`;
+        return `https://${buildOrigin}/sdks/web/v16/Staging-`;
       default:
         return productionOrigin;
     }
