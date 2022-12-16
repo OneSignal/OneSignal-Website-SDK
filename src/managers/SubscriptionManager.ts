@@ -583,7 +583,7 @@ export class SubscriptionManager {
     try {
       const existingSubscription = await pushManager.getSubscription();
       const subscription = await pushManager.subscribe(subscriptionOptions);
-      window.pushManagerCall = async () => { await pushManager.subscribe(subscriptionOptions); };
+      // window.pushManagerCall = async () => { await pushManager.subscribe(subscriptionOptions); };
       return [subscription, !existingSubscription];
     } catch (e) {
       if (e.name == "InvalidStateError") {
