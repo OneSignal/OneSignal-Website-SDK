@@ -14,7 +14,9 @@ import OneSignalError from "../shared/errors/OneSignalError";
 
 export default class User {
   hasOneSignalId: boolean = false;
-  awaitOneSignalIdAvailable?: Promise<void> = new Promise<void>(() => {});
+  onesignalId?: string;
+  awaitOneSignalIdAvailable?: Promise<string>;
+  isCreatingUser: boolean = false;
 
   static singletonInstance?: User = undefined;
 
@@ -28,12 +30,7 @@ export default class User {
     public emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
   ) {
 
-    // copy the onesignal id promise to the user
-    this.awaitOneSignalIdAvailable = identity?.awaitOneSignalIdAvailable;
-
-    this.awaitOneSignalIdAvailable?.then(() => {
-      this.hasOneSignalId = true;
-    });
+    this._copyOneSignalIdPromiseFromIdentityModel();
   }
 
   /**
@@ -85,6 +82,10 @@ export default class User {
    * @param isTempUser - used when creating a local-only temporary user while logging in
    */
   public async setupNewUser(isTempUser?: boolean): Promise<void> {
+    this.hasOneSignalId = false;
+    this.awaitOneSignalIdAvailable = undefined;
+    this.isCreatingUser = false;
+
     try {
       // if not loaded from cache, initialize new user
       if (!this.identity) {
@@ -101,9 +102,11 @@ export default class User {
   }
 
   async sendUserCreate(): Promise<IdentityModel | void> {
-    if (this.identified) {
+    if (this.hasOneSignalId || this.isCreatingUser) {
       return;
     }
+
+    this.isCreatingUser = true;
 
     try {
       await this._refreshModels();
@@ -112,6 +115,7 @@ export default class User {
       const response = await RequestService.createUser({ appId }, userData);
       const userDataResponse: UserData = response.result;
       await OneSignal.coreDirector.hydrateUser(userDataResponse);
+      this.isCreatingUser = false;
     } catch (e) {
       Log.error(`Error sending user create: ${e}`);
     }
@@ -120,7 +124,7 @@ export default class User {
   private async _refreshModels(): Promise<void> {
     const identityModel = await OneSignal.coreDirector.getIdentityModel();
     const userPropertiesModel = await OneSignal.coreDirector.getPropertiesModel();
-    const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
     const emailSubscriptions = await OneSignal.coreDirector.getEmailSubscriptionModels();
     const smsSubscriptions = await OneSignal.coreDirector.getSmsSubscriptionModels();
 
@@ -150,7 +154,7 @@ export default class User {
     }
 
     this.identity = new OSModel<SupportedIdentity>(ModelName.Identity, identityModel);
-    this.awaitOneSignalIdAvailable = this.identity.awaitOneSignalIdAvailable;
+    this._copyOneSignalIdPromiseFromIdentityModel();
 
     /**
      * If we are not creating a local temp user, we should set the real id on the identity model
@@ -218,5 +222,15 @@ export default class User {
       language: Environment.getLanguage(),
       timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
+  }
+
+  private _copyOneSignalIdPromiseFromIdentityModel() {
+    // copy the onesignal id promise to the user
+    this.awaitOneSignalIdAvailable = this.identity?.awaitOneSignalIdAvailable;
+
+    this.awaitOneSignalIdAvailable?.then((onesignalId: string) => {
+      this.hasOneSignalId = true;
+      this.onesignalId = onesignalId;
+    });
   }
 }
