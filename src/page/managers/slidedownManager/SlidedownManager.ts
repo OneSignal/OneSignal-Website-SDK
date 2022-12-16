@@ -25,6 +25,7 @@ import { DelayedPromptType } from "../../../shared/models/Prompts";
 import { AutoPromptOptions } from "../PromptsManager";
 import OneSignalError from "../../../shared/errors/OneSignalError";
 import { NotSubscribedError, NotSubscribedReason } from "../../../shared/errors/NotSubscribedError";
+import OneSignal from "../../../onesignal/OneSignal";
 
 export class SlidedownManager {
   private context: ContextInterface;
@@ -277,7 +278,8 @@ export class SlidedownManager {
       if (options.isInUpdateMode) {
         taggingContainer.load();
         // updating. pull remote tags.
-        const existingTags = await OneSignal.getTags() as TagsObjectForApi;
+        const propertiesOSModel = await OneSignal.coreDirector.getPropertiesModel();
+        const existingTags = propertiesOSModel?.data.tags as TagsObjectForApi;
         this.context.tagManager.storeRemotePlayerTags(existingTags);
         tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
       } else {
