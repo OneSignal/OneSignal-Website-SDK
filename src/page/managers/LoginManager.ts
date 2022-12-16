@@ -78,6 +78,8 @@ export default class LoginManager {
       Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
 
       const retainPreviousOwner = false;
+      // only accepts one alias, so remove onesignal_id leaving only external_id
+      delete identity.onesignal_id;
       const transferResponse = await RequestService.transferSubscription(
         { appId },
         pushSubscriptionId,
@@ -85,17 +87,18 @@ export default class LoginManager {
         retainPreviousOwner
       );
       const transferResponseStatus = transferResponse?.status;
+      const tansferResult = transferResponse?.result;
 
       if (transferResponseStatus && transferResponseStatus >= 200 && transferResponseStatus < 300) {
         Log.info("transferSubscription succeeded");
+        const transferResultIdentity = tansferResult?.identity;
+        return { identity: transferResultIdentity };
       } else {
-        Log.warn("transferSubscription failed");
+        throw new OneSignalError(`transferSubscription failed: ${JSON.stringify(tansferResult)}}`);
       }
     }
 
-    // TO DO: if 409s, we may include an error in the result and not just the identity object of existing owner of alias
-    // so we need to make sure to get the identity object from the result correctly
-    const identityResult = identifyUserResponse?.result;
+    const identityResult = identifyUserResponse?.result?.identity;
     return { identity: identityResult };
   }
 
