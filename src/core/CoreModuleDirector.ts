@@ -107,7 +107,7 @@ export class CoreModuleDirector {
       } else {
         const model = new OSModel<SupportedModel>(modelName, subscription);
         model.setOneSignalId(onesignalId);
-        modelStores[modelName].add(model, true);
+        modelStores[modelName].add(model, false); // don't propagate to server
       }
     });
   }
