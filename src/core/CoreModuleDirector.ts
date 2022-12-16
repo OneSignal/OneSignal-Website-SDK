@@ -11,6 +11,7 @@ import User from "../onesignal/User";
 import UserData from "./models/UserData";
 import OneSignalError from "../shared/errors/OneSignalError";
 import OneSignal from "../onesignal/OneSignal";
+import MainHelper from "../shared/helpers/MainHelper";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -152,9 +153,13 @@ export class CoreModuleDirector {
   public async getPushSubscriptionModel(): Promise<OSModel<SupportedSubscription> | undefined> {
     logMethodCall("CoreModuleDirector.getPushSubscriptionModels");
     await this.initPromise;
-    const modelStores = await this.getModelStores();
-    const key = Object.keys(modelStores.pushSubscriptions.models)[0];
-    return modelStores.pushSubscriptions.models[key] as OSModel<SupportedSubscription>;
+    const pushToken = await MainHelper.getCurrentPushToken();
+
+    if (!pushToken) {
+      Log.warn("No push token found, returning undefined from getPushSubscriptionModel()");
+      return;
+    }
+    return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, pushToken);
   }
 
   public async getIdentityModel(): Promise<OSModel<SupportedIdentity> | undefined> {
