@@ -73,7 +73,7 @@ test("loadIfNew called twice should not load the same stylesheet or script more 
   const resourceLoadAttempts = [];
   for (let i = 0; i < 5; i++) {
     resourceLoadAttempts.push(
-      dynamicResourceLoader.loadIfNew(ResourceType.Stylesheet, new URL('https://cdn.onesignal.com/sdks/OneSignalSDK.page.styles.css'))
+      dynamicResourceLoader.loadIfNew(ResourceType.Stylesheet, new URL('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css'))
     );
   }
   await Promise.all(resourceLoadAttempts);
@@ -81,7 +81,7 @@ test("loadIfNew called twice should not load the same stylesheet or script more 
 
   t.not(Object.keys(cache).length, 5);
   t.is(Object.keys(cache).length, 1);
-  t.is(Object.keys(cache)[0], 'https://cdn.onesignal.com/sdks/OneSignalSDK.page.styles.css');
+  t.is(Object.keys(cache)[0], 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.styles.css');
 });
 
 test("load successfully fetches and installs stylesheet", async t => {

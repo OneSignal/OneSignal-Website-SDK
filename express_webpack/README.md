@@ -58,12 +58,12 @@ If no custom origins are set, defaults will be used: `localhost` for build and `
 ```
 yarn build:dev-prod -b texas
 ```
-This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://onesignal.com/api/v1/apps/<app>`
+This sets the BUILD environment origin to `texas` which will result in SDK files being fetched from `https://texas:4001/sdks/web/v##/` and the API environment origin to production which will make all onesignal api calls to the production origin `https://onesignal.com/api/v1/apps/<app>`
 
 ```
 yarn build:dev-dev -b localhost -a texas
 ```
-This sets the BUILD environment origin to `localhost` which will result in SDK files being fetched from `https://localhost:4001/sdks/` and the API environment origin to the default `https://texas:3001/api/v1/apps/<app_id>`
+This sets the BUILD environment origin to `localhost` which will result in SDK files being fetched from `https://localhost:4001/sdks/web/v##/` and the API environment origin to the default `https://texas:3001/api/v1/apps/<app_id>`
 
 ### HTTP
 All builds default to `https` unless `--http` is passed to the end of the build command...
