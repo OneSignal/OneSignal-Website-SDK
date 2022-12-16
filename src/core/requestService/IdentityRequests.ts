@@ -49,13 +49,14 @@ export default class IdentityRequests {
     }
 
     const { status, result } = response;
-
-    if (!isIdentityObject(result)) {
-      throw new OneSignalError(`processIdentityResponse: result ${result} is not an identity object`);
-    }
+    const { identity } = result;
 
     if (status >= 200 && status < 300) {
-      return new ExecutorResult(true, true, result);
+      if (!isIdentityObject(identity)) {
+        throw new OneSignalError(`processIdentityResponse: result ${identity} is not an identity object`);
+      }
+
+      return new ExecutorResult(true, true, identity);
     }
     return new ExecutorResult(false, true);
   }

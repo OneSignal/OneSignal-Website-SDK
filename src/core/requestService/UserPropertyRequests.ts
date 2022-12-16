@@ -6,6 +6,7 @@ import { Operation } from "../operationRepo/Operation";
 import AliasPair from "./AliasPair";
 import { RequestService } from "./RequestService";
 import MainHelper from "../../shared/helpers/MainHelper";
+import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
@@ -37,16 +38,17 @@ export default class UserPropertyRequests {
     return UserPropertyRequests._processUserPropertyResponse(response);
   }
 
-  private static _processUserPropertyResponse(response?: any): ExecutorResult<UserPropertiesModel> {
-    if (!response) {
-      throw new Error("processUserPropertyResponse: response is not defined");
-    }
+  private static _processUserPropertyResponse(response?: OneSignalApiBaseResponse):
+    ExecutorResult<UserPropertiesModel> {
+      if (!response) {
+        throw new Error("processUserPropertyResponse: response is not defined");
+      }
 
-    const { status } = response;
+      const { status, result } = response;
 
-    if (status >= 200 && status < 300) {
-      return new ExecutorResult(true, true, response);
-    }
-    return new ExecutorResult(false, true);
+      if (status >= 200 && status < 300) {
+        return new ExecutorResult(true, true, result?.properties);
+      }
+      return new ExecutorResult(false, true);
   }
 }
