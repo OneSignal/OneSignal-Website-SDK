@@ -19,7 +19,7 @@ import EventHelper from "../shared/helpers/EventHelper";
 import HttpHelper from "../shared/helpers/HttpHelper";
 import InitHelper from "../shared/helpers/InitHelper";
 import MainHelper from "../shared/helpers/MainHelper";
-import Emitter, { EventHandler } from "../shared/libraries/Emitter";
+import Emitter from "../shared/libraries/Emitter";
 import Log from "../shared/libraries/Log";
 import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
@@ -110,7 +110,7 @@ export default class OneSignal {
         return;
       }
 
-      const pushSubModel = await this.coreDirector.getPushSubscriptionModel();
+      const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
       let currentPushSubscriptionId;
 
       if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
