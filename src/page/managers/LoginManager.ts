@@ -17,13 +17,13 @@ export default class LoginManager {
       throw new OneSignalError('login: no identity model found');
     }
 
-    identityOSModel.set('externalId', externalId, false);
+    identityOSModel.set('external_id', externalId, false);
   }
 
   static isIdentified(identity: SupportedIdentity): boolean {
     logMethodCall("LoginManager.isIdentified", { identity });
 
-    return identity.externalId !== undefined;
+    return identity.external_id !== undefined;
   }
 
   // TO DO: dedupe from similar function in User.ts
@@ -62,14 +62,13 @@ export default class LoginManager {
     logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
 
     const { identity } = userData;
-    const { externalId } = identity;
 
-    if (!identity || !externalId) {
+    if (!identity || !identity.onesignal_id) {
       throw new OneSignalError("identifyUser failed: no identity found");
     }
 
     const appId = await MainHelper.getAppId();
-    const aliasPair = new AliasPair(AliasPair.EXTERNAL_ID, externalId);
+    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, identity.onesignal_id);
     const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
 
     const identifyResponseStatus = identifyUserResponse?.status;

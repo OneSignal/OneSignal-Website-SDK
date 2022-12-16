@@ -159,7 +159,7 @@ export default class User {
      */
     if (!isTempUser) {
       // set the onesignal id on the OSModel class-level property
-      this.identity.setOneSignalId(identityModel.onesignalId);
+      this.identity.setOneSignalId(identityModel.onesignal_id);
     }
 
     /**
@@ -168,7 +168,7 @@ export default class User {
      * `setOneSignalId` function. Therefore, we must manually set the onesignal id on the `data` property as well
      */
     // TO DO: cover with unit test
-    this.identity.data.onesignalId = identityModel.onesignalId;
+    this.identity.data.onesignal_id = identityModel.onesignal_id;
 
     OneSignal.coreDirector.add(ModelName.Identity, this.identity as OSModel<SupportedModel>, false).catch(e => {
       Log.error(e);

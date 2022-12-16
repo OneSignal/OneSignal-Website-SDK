@@ -1,9 +1,9 @@
 export interface IdentityModel extends FutureIdentityModel {
-  onesignalId: string;
+  onesignal_id: string;
 }
 
 export interface FutureIdentityModel {
-  externalId?: string;
+  external_id?: string;
   [key: string]: string | undefined;
 }
 
