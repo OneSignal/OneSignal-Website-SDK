@@ -23,8 +23,6 @@ jobs:
         run: npm install -g yarn
       - name: "[Setup] Install dependencies"
         run: yarn
-      - name: "[Test] Run all tests"
-        run: yarn test:CI
       - name: "[Build] Staging"
         env:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
