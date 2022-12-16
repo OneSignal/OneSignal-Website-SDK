@@ -392,7 +392,7 @@ export default class Database {
     await this.put("Options", { key: "userConsent", value: consent });
   }
 
-  async getProvideUserConsent(): Promise<boolean> {
+  async getConsentGiven(): Promise<boolean> {
     return await this.get<boolean>("Options", "userConsent");
   }
 
@@ -526,12 +526,12 @@ export default class Database {
     return await Database.singletonInstance.getJWTToken();
   }
 
-  static async setProvideUserConsent(consent: boolean): Promise<void> {
+  static async setConsentGiven(consent: boolean): Promise<void> {
     return await Database.singletonInstance.setProvideUserConsent(consent);
   }
 
-  static async getProvideUserConsent(): Promise<boolean> {
-    return await Database.singletonInstance.getProvideUserConsent();
+  static async getConsentGiven(): Promise<boolean> {
+    return await Database.singletonInstance.getConsentGiven();
   }
 
   static async setServiceWorkerState(workerState: ServiceWorkerState) {

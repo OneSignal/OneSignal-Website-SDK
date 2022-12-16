@@ -176,7 +176,7 @@ export default class OneSignal {
     }
 
     if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired()) {
-      const providedConsent = await Database.getProvideUserConsent();
+      const providedConsent = await Database.getConsentGiven();
       if (!providedConsent) {
         OneSignal.pendingInit = true;
         return;
@@ -263,8 +263,8 @@ export default class OneSignal {
    * Call after user accepts your user consent agreement
    * @PublicApi
    */
-  static async setPrivacyConsent(consent: boolean): Promise<void> {
-    await Database.setProvideUserConsent(consent);
+  static async setConsentGiven(consent: boolean): Promise<void> {
+    await Database.setConsentGiven(consent);
     if (consent && OneSignal.pendingInit)
       await OneSignal._delayedInit();
   }
