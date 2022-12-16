@@ -7,11 +7,11 @@ const PAGE_VIEWS = "os_pageViews";
 const REQUIRES_PRIVACY_CONSENT = "requiresPrivacyConsent";
 
 export default class LocalStorage {
-  static setRequiresPrivacyConsent(value: boolean): void {
+  static setConsentRequired(value: boolean): void {
     localStorage.setItem(REQUIRES_PRIVACY_CONSENT, value.toString());
   }
 
-  static getRequiresPrivacyConsent(): boolean {
+  static getConsentRequired(): boolean {
     return localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === "true";
   }
 
