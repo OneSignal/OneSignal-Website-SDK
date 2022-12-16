@@ -175,7 +175,7 @@ export default class OneSignal {
       return;
     }
 
-    if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getRequiresPrivacyConsent()) {
+    if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired()) {
       const providedConsent = await Database.getProvideUserConsent();
       if (!providedConsent) {
         OneSignal.pendingInit = true;
@@ -269,8 +269,8 @@ export default class OneSignal {
       await OneSignal._delayedInit();
   }
 
-  static async setRequiresPrivacyConsent(requiresConsent: boolean): Promise<void> {
-    LocalStorage.setRequiresPrivacyConsent(requiresConsent);
+  static async setConsentRequired(requiresConsent: boolean): Promise<void> {
+    LocalStorage.setConsentRequired(requiresConsent);
   }
 
   /**
