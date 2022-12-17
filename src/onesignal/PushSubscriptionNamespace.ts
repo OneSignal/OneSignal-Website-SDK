@@ -99,7 +99,6 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
 
   private async _enable(enabled: boolean): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
     const appConfig = await Database.getAppConfig();
     const subscriptionFromDb = await Database.getSubscription();
 
@@ -108,11 +107,6 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     }
     if (!ValidatorUtils.isValidBoolean(enabled)) {
       throw new InvalidArgumentError('enabled', InvalidArgumentReason.Malformed);
-    }
-
-    if (pushModel) {
-      const notificationTypes = MainHelper.getNotificationTypeFromOptIn(enabled);
-      pushModel.set("notification_types", notificationTypes);
     }
 
     subscriptionFromDb.optedOut = !enabled;
