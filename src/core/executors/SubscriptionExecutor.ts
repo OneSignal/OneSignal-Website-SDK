@@ -1,7 +1,8 @@
+import OperationCache from "../caching/OperationCache";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
 import { ExecutorConfig } from "../models/ExecutorConfig";
-import { SupportedModel } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 import ExecutorBase from "./ExecutorBase";
 
@@ -10,7 +11,7 @@ export class SubscriptionExecutor extends ExecutorBase {
     super(executorConfig);
   }
 
-  public processDeltaQueue(): void {
+  processDeltaQueue(): void {
     const modelSpecificDeltasArrays = this.separateDeltasByModelId();
 
     modelSpecificDeltasArrays.forEach(deltasArray => {
@@ -25,6 +26,14 @@ export class SubscriptionExecutor extends ExecutorBase {
     });
 
     this._flushDeltas();
+  }
+
+  async getOperationsFromCache(): Promise<Operation<SupportedModel>[]> {
+    const smsOperations = await OperationCache.getOperationsWithModelName(ModelName.SmsSubscriptions);
+    const emailOperations = await OperationCache.getOperationsWithModelName(ModelName.EmailSubscriptions);
+    const pushSubOperations = await OperationCache.getOperationsWithModelName(ModelName.PushSubscriptions);
+
+    return [...smsOperations, ...emailOperations, ...pushSubOperations];
   }
 
   private separateDeltasByChangeType(deltas: CoreDelta<SupportedModel>[]):

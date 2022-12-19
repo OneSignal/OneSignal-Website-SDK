@@ -22,17 +22,17 @@ test.beforeEach(async () => {
 test("Add operation to cache -> operation queue +1", async t => {
   const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   OperationCache.enqueue(operation);
-  const operations = await OperationCache.getOperations();
+  const operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 1);
 });
 
 test("Remove operation from cache -> operation queue -1", async t => {
   const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   OperationCache.enqueue(operation);
-  let operations = await OperationCache.getOperations();
+  let operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 1);
   OperationCache.delete(operation.operationId);
-  operations = await OperationCache.getOperations();
+  operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 0);
 });
 
@@ -40,10 +40,10 @@ test("Add multiple operations to cache -> operation queue +2", async t => {
   const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   const operation2 = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   OperationCache.enqueue(operation);
-  let operations = await OperationCache.getOperations();
+  let operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 1);
   OperationCache.enqueue(operation2);
-  operations = await OperationCache.getOperations();
+  operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 2);
 });
 
@@ -51,12 +51,12 @@ test("Flush operation cache -> operation queue 0", async t => {
   const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   const operation2 = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
   OperationCache.enqueue(operation);
-  let operations = await OperationCache.getOperations();
+  let operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 1);
   OperationCache.enqueue(operation2);
-  operations = await OperationCache.getOperations();
+  operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 2);
   OperationCache.flushOperations();
-  operations = await OperationCache.getOperations();
+  operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
   t.is(operations.length, 0);
 });
