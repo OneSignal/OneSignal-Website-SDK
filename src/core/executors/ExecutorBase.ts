@@ -96,8 +96,10 @@ export default abstract class ExecutorBase {
     return finalChangeType;
   }
 
+  abstract getOperationsFromCache(): Promise<Operation<SupportedModel>[]>;
+
   protected async _processOperationQueue(): Promise<void> {
-    const cachedOperations = await OperationCache.getOperations();
+    const cachedOperations = await this.getOperationsFromCache();
     this._operationQueue = [...cachedOperations, ...this._operationQueue];
 
     while (this._operationQueue.length > 0) {

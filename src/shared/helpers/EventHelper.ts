@@ -73,7 +73,7 @@ export default class EventHelper {
 
     const prompts = OneSignal.context.appConfig.userConfig.promptOptions?.slidedown?.prompts;
     if (PromptsHelper.isCategorySlidedownConfigured(prompts)) {
-      await OneSignal.context.tagManager.sendTags(false);
+      await OneSignal.context.tagManager.sendTags();
     }
   }
 

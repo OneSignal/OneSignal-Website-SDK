@@ -1,3 +1,4 @@
+import OperationCache from "../caching/OperationCache";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { PropertyDelta } from "../models/CoreDeltas";
 import { ExecutorConfig } from "../models/ExecutorConfig";
@@ -11,7 +12,7 @@ export class IdentityExecutor extends ExecutorBase {
     super(executorConfig);
   }
 
-  public processDeltaQueue(): void {
+  processDeltaQueue(): void {
     if (this._deltaQueue.length === 0) {
       return;
     }
@@ -43,5 +44,9 @@ export class IdentityExecutor extends ExecutorBase {
     }
 
     this._flushDeltas();
+  }
+
+  async getOperationsFromCache(): Promise<Operation<SupportedModel>[]> {
+      return await OperationCache.getOperationsWithModelName(ModelName.Identity);
   }
 }
