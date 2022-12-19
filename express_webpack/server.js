@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
     res.sendFile(HTML_FILE);
 })
 
-app.get('/sdks/:file', (req, res) => {
+app.get('/sdks/web/v16/:file', (req, res) => {
     res.sendFile(SDK_FILES + req.params.file);
 });
 

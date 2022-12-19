@@ -243,7 +243,7 @@ export default class SdkEnvironment {
    * service worker.
    *
    * For example, in staging the registered service worker filename is
-   * Staging-OneSignalSDKWorker.js.
+   * Staging-OneSignalSDK.sw.js.
    */
   public static getBuildEnvPrefix(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
     switch (buildEnv) {
@@ -301,11 +301,11 @@ export default class SdkEnvironment {
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
 
-    return new URL(`${origin}/sdks`);
+    return new URL(`${origin}/sdks/web/v16`);
   }
 
   public static getOneSignalCssFileName(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): string {
-    const baseFileName = "OneSignalSDKStyles.css";
+    const baseFileName = "OneSignalSDK.page.styles.css";
 
     switch (buildEnv) {
       case EnvironmentKind.Development:

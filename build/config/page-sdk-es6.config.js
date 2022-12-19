@@ -20,7 +20,7 @@ async function getWebpackPlugins() {
   const plugins = [
     new CheckerPlugin(),
       new webpack.optimize.ModuleConcatenationPlugin(),
-      new ExtractTextPlugin("OneSignalSDKStyles.css"),
+      new ExtractTextPlugin("OneSignalSDK.page.styles.css"),
       new webpack.DefinePlugin({
         __BUILD_TYPE__: JSON.stringify(env),
         __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
@@ -73,7 +73,7 @@ async function generateWebpackConfig() {
   return {
     target: 'web',
     entry: {
-      'OneSignalPageSDKES6.js': path.resolve('build/ts-to-es6/src/entries/pageSdkInit.js'),
+      'OneSignalSDK.page.es6.js': path.resolve('build/ts-to-es6/src/entries/pageSdkInit.js'),
     },
     output: {
       path: path.resolve('build/bundles'),

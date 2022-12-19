@@ -124,22 +124,22 @@
   },
   "bundlesize": [
     {
-      "path": "./build/bundles/OneSignalSDK.js",
+      "path": "./build/bundles/OneSignalSDK.page.js",
       "maxSize": "3 kB",
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalPageSDKES6.js",
+      "path": "./build/bundles/OneSignalSDK.page.es6.js",
       "maxSize": "72 kB",
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDKWorker.js",
+      "path": "./build/bundles/OneSignalSDK.sw.js",
       "maxSize": "42 kB",
       "compression": "gzip"
     },
     {
-      "path": "./build/bundles/OneSignalSDKStyles.css",
+      "path": "./build/bundles/OneSignalSDK.page.styles.css",
       "maxSize": "9 kB",
       "compression": "gzip"
     }

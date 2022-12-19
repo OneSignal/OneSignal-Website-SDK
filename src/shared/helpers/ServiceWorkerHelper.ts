@@ -248,11 +248,11 @@ export default class ServiceWorkerHelper {
 
 export enum ServiceWorkerActiveState {
   /**
-   * OneSignalSDKWorker.js, or the equivalent custom file name, is active.
+   * OneSignalSDK.sw.js, or the equivalent custom file name, is active.
    */
   OneSignalWorker = 'OneSignal Worker',
   /**
-   * A service worker is active, but it is not OneSignalSDKWorker.js
+   * A service worker is active, but it is not OneSignalSDK.sw.js
    * (or the equivalent custom file names as provided by user config).
    */
   ThirdParty = '3rd Party',
@@ -270,7 +270,7 @@ export enum ServiceWorkerActiveState {
 
 export interface ServiceWorkerManagerConfig {
   /**
-   * The path and filename of the "main" worker (e.g. '/OneSignalSDKWorker.js');
+   * The path and filename of the "main" worker (e.g. '/OneSignalSDK.sw.js');
    */
   workerPath: Path;
   /**
