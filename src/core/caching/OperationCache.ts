@@ -1,6 +1,6 @@
 import Log from "../../shared/libraries/Log";
 import { logMethodCall } from "../../shared/utils/utils";
-import { SupportedModel } from "../models/SupportedModels";
+import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { Operation } from "../operationRepo/Operation";
 
 export default class OperationCache {
@@ -12,7 +12,7 @@ export default class OperationCache {
     localStorage.setItem("operationCache", JSON.stringify(operations));
   }
 
-  static async getOperations(): Promise<Operation<SupportedModel>[]> {
+  static async getOperationsWithModelName(modelName: ModelName): Promise<Operation<SupportedModel>[]> {
     logMethodCall("OperationCache.getOperations");
     const fromCache = localStorage.getItem("operationCache");
     const rawOperations: Operation<SupportedModel>[] = fromCache ? Object.values(JSON.parse(fromCache)) : [];
@@ -33,7 +33,8 @@ export default class OperationCache {
         this.delete(rawOperation.operationId);
       }
     }
-    return operations.sort((a, b) => a.timestamp - b.timestamp);
+    const sorted = operations.sort((a, b) => a.timestamp - b.timestamp);
+    return sorted.filter(operation => operation.modelName === modelName);
   }
 
   static delete(id: string): void {
