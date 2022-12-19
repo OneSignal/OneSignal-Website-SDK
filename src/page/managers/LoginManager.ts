@@ -29,6 +29,7 @@ export default class LoginManager {
   static async upsertUser(userData: UserData): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
     const appId = await MainHelper.getAppId();
+    this.prepareIdentityForUpsert(userData);
     const response = await RequestService.createUser({ appId }, userData);
     const result = response?.result;
     const status = response?.status;
@@ -113,5 +114,27 @@ export default class LoginManager {
     await OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result).catch(e => {
       Log.error("Error hydrating user models", e);
     });
+  }
+
+  /**
+   * identity object should only contain external_id
+   * if logging in from identified user a to identified user b, the identity object would
+   * otherwise contain any existing user a aliases
+   */
+  static prepareIdentityForUpsert(userData: UserData): void {
+    logMethodCall("LoginManager.prepareIdentityForUpsert", { userData });
+
+    const { identity } = userData;
+    if (!identity) {
+      throw new OneSignalError("prepareIdentityForUpsert failed: no identity found");
+    }
+
+    const { external_id } = identity;
+    if (!external_id) {
+      throw new OneSignalError("prepareIdentityForUpsert failed: no external_id found");
+    }
+
+    const newIdentity = { external_id };
+    userData.identity = newIdentity;
   }
 }
