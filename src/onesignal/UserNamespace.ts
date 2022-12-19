@@ -15,7 +15,7 @@ export default class UserNamespace {
     this._currentUser?.addAlias(label, id);
   }
 
-  public addAliases(aliases: { label: string; id: string }[]): void {
+  public addAliases(aliases: { [key: string]: string }): void {
     this._currentUser?.addAliases(aliases);
   }
 

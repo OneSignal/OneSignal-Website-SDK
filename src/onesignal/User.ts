@@ -49,19 +49,19 @@ export default class User {
       throw new InvalidArgumentError('id', InvalidArgumentReason.Empty,);
     }
 
-    this.addAliases([{ label, id }]);
+    this.addAliases({ [label]: id });
   }
 
-  public addAliases(aliases: { label: string; id: string; }[]): void {
+  public addAliases(aliases: { [key: string]: string }): void {
     logMethodCall('addAliases', { aliases });
 
-    if (!aliases || aliases.length === 0) {
+    if (!aliases || Object.keys(aliases).length === 0) {
       throw new InvalidArgumentError('aliases', InvalidArgumentReason.Empty);
     }
 
-    aliases.forEach(async alias => {
+    Object.keys(aliases).forEach(async label => {
       const identityModel = await OneSignal.coreDirector.getIdentityModel();
-      identityModel?.set(alias.label, alias.id);
+      identityModel?.set(label, aliases[label]);
     });
   }
 
