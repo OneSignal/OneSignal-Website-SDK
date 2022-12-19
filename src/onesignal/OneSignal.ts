@@ -33,7 +33,7 @@ import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
 import CoreModule from "../core/CoreModule";
-import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
+import { CoreModuleDirector } from "../core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
 import LocalStorage from "../shared/utils/LocalStorage";
