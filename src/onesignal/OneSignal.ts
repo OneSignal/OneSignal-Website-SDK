@@ -42,6 +42,9 @@ import LoginManager from "../page/managers/LoginManager";
 import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 import { SessionNamespace } from "./SessionNamespace";
 import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
+import UserDirector from "./UserDirector";
+import { ModelName, SupportedModel } from "../core/models/SupportedModels";
+import { OSModel } from "../core/modelRepo/OSModel";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -122,7 +125,9 @@ export default class OneSignal {
       LoginManager.setExternalId(identityModel, externalId);
 
       const userData = await UserDirector.getAllUserData();
-      await this.coreDirector.resetUserWithSetting(true);
+      await this.coreDirector.resetModelRepoAndCache();
+      await UserDirector.initializeUser(true);
+      await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
 
       LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
         const { identity } = result;
@@ -144,7 +149,13 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
-    await this.coreDirector.resetUserWithSetting(false);
+    UserDirector.resetUserMetaProperties();
+    const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
+    await this.coreDirector.resetModelRepoAndCache();
+    // add the push subscription model back to the repo since we need at least 1 sub to create a new user
+    await this.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
+    await UserDirector.initializeUser(false);
+    await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
   }
 
   /**

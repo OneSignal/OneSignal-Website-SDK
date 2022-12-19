@@ -7,10 +7,8 @@ import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SubscriptionModel, SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
-import User from "../onesignal/User";
 import UserData from "./models/UserData";
 import OneSignalError from "../shared/errors/OneSignalError";
-import OneSignal from "../onesignal/OneSignal";
 import MainHelper from "../shared/helpers/MainHelper";
 import { RawPushSubscription } from "../shared/models/RawPushSubscription";
 import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
@@ -44,17 +42,8 @@ export class CoreModuleDirector {
     await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
   }
 
-  /**
-   * Reset user - used to reset user data when user logs in and out
-   * @param isTempUser - used when creating a local-only temporary user while logging in
-   */
-  public async resetUserWithSetting(isTempUser: boolean): Promise<void> {
+  public async resetModelRepoAndCache(): Promise<void> {
     await this.core.resetModelRepoAndCache();
-
-    const user = User.createOrGetInstance();
-    user.flushModelReferences();
-    await user.setupNewUser(isTempUser);
-    await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
   }
 
   public async hydrateUser(user: UserData): Promise<void> {
