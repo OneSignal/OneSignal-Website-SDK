@@ -17,12 +17,12 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
 
   // fixes typescript errors
   if (!subscriptionOSModel) {
-    throw new OneSignalError(`processSubscriptionModel: bad subscription OSModel<SubscriptionModel>: ${subscriptionOSModel}`);
+    throw new OneSignalError(`processSubscriptionModel: bad subscription OSModel<SubscriptionModel>: ${JSON.stringify(subscriptionOSModel)}`);
   }
 
   // fixes typescript errors
   if (!isFutureSubscriptionObject(subscription)) {
-    throw new OneSignalError(`processSubscriptionModel: bad subscription object: ${subscription}`);
+    throw new OneSignalError(`processSubscriptionModel: bad subscription object: ${JSON.stringify(subscription)}`);
   }
 
   let subscriptionId;
@@ -32,7 +32,7 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
 
   // fixes typescript errors
   if (!subscriptionOSModel.onesignalId) {
-    throw new OneSignalError(`processSubscriptionModel: missing onesignalId: ${subscriptionOSModel}`);
+    throw new OneSignalError(`processSubscriptionModel: missing onesignalId: ${JSON.stringify(subscriptionOSModel)}`);
   }
 
   return {
@@ -50,14 +50,14 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
   // fixes typescript errors
   if (!isIdentityObject(identity)) {
-    throw new OneSignalError(`processIdentityModel: bad identity object: ${identity}`);
+    throw new OneSignalError(`processIdentityModel: bad identity object: ${JSON.stringify(identity)}`);
   }
 
   const { onesignal_id: onesignalId } = identity;
 
   // fixes typescript errors
   if (!onesignalId) {
-    throw new OneSignalError(`processIdentityModel: missing onesignalId: ${identity}`);
+    throw new OneSignalError(`processIdentityModel: missing onesignalId: ${JSON.stringify(identity)}`);
   }
 
   return {

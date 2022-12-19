@@ -33,7 +33,7 @@ import { logMethodCall, getConsoleStyle } from "../shared/utils/utils";
 import OneSignalEvent from "../shared/services/OneSignalEvent";
 import NotificationsNamespace from "./NotificationsNamespace";
 import CoreModule from "../core/CoreModule";
-import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
+import { CoreModuleDirector } from "../core/CoreModuleDirector";
 import UserNamespace from "./UserNamespace";
 import SlidedownNamespace from "./SlidedownNamespace";
 import LocalStorage from "../shared/utils/LocalStorage";
@@ -42,13 +42,15 @@ import LoginManager from "../page/managers/LoginManager";
 import { isCompleteSubscriptionObject } from "../core/utils/typePredicates";
 import { SessionNamespace } from "./SessionNamespace";
 import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
+import UserDirector from "./UserDirector";
+import { ModelName, SupportedModel } from "../core/models/SupportedModels";
+import { OSModel } from "../core/modelRepo/OSModel";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
-    OneSignal.User = new UserNamespace(OneSignal.coreDirector);
-    await OneSignal.User.userLoaded;
+    OneSignal.User = new UserNamespace();
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
@@ -122,8 +124,10 @@ export default class OneSignal {
       // set the external id on the user locally
       LoginManager.setExternalId(identityModel, externalId);
 
-      const userData = await LoginManager.getAllUserData();
-      await this.coreDirector.resetUserWithSetting(true);
+      const userData = await UserDirector.getAllUserData();
+      await this.coreDirector.resetModelRepoAndCache();
+      await UserDirector.initializeUser(true);
+      await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
 
       LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
         const { identity } = result;
@@ -145,7 +149,13 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
-    await this.coreDirector.resetUserWithSetting(false);
+    UserDirector.resetUserMetaProperties();
+    const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
+    await this.coreDirector.resetModelRepoAndCache();
+    // add the push subscription model back to the repo since we need at least 1 sub to create a new user
+    await this.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
+    await UserDirector.initializeUser(false);
+    await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
   }
 
   /**
@@ -158,8 +168,6 @@ export default class OneSignal {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
-    // TODO: move into delayedInit
-    await OneSignal._initializeCoreModuleAndUserNamespace();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
@@ -187,6 +195,7 @@ export default class OneSignal {
   }
 
   private static async _delayedInit(): Promise<void> {
+    await OneSignal._initializeCoreModuleAndUserNamespace();
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();

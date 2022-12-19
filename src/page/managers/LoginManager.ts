@@ -26,22 +26,6 @@ export default class LoginManager {
     return identity.external_id !== undefined;
   }
 
-  // TO DO: dedupe from similar function in User.ts
-  static async getAllUserData(): Promise<UserData> {
-    logMethodCall("LoginManager.getAllUserData");
-
-    const identity = await OneSignal.coreDirector.getIdentityModel();
-    const properties = await OneSignal.coreDirector.getPropertiesModel();
-    const subscriptions = await OneSignal.coreDirector.getAllSubscriptionsModels();
-
-    const userData: Partial<UserData> = {};
-    userData.identity = identity?.data;
-    userData.properties = properties?.data;
-    userData.subscriptions = subscriptions?.map(subscription => subscription.data);
-
-    return userData as UserData;
-  }
-
   static async upsertUser(userData: UserData): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
     const appId = await MainHelper.getAppId();

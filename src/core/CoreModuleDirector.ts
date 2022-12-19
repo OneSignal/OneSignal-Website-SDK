@@ -7,11 +7,13 @@ import { ModelStoresMap } from "./models/ModelStoresMap";
 import { SubscriptionModel, SupportedSubscription } from "./models/SubscriptionModels";
 import { ModelName, SupportedModel } from "./models/SupportedModels";
 import { UserPropertiesModel } from "./models/UserPropertiesModel";
-import User from "../onesignal/User";
 import UserData from "./models/UserData";
 import OneSignalError from "../shared/errors/OneSignalError";
-import OneSignal from "../onesignal/OneSignal";
 import MainHelper from "../shared/helpers/MainHelper";
+import { RawPushSubscription } from "../shared/models/RawPushSubscription";
+import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
+import User from "../onesignal/User";
+import OneSignal from "../onesignal/OneSignal";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -24,19 +26,24 @@ export class CoreModuleDirector {
     });
   }
 
-  /* L O G I N */
-
-  /**
-   * Reset user - used to reset user data when user logs in and out
-   * @param isTempUser - used when creating a local-only temporary user while logging in
-   */
-  public async resetUserWithSetting(isTempUser: boolean): Promise<void> {
-    await this.core.resetModelRepoAndCache();
+  public async generatePushSubscriptionModel(rawPushSubscription: RawPushSubscription): Promise<void> {
+    logMethodCall("CoreModuleDirector.generatePushSubscriptionModel", { rawPushSubscription });
+    // new subscription
+    const pushModel = new OSModel<SupportedSubscription>(
+      ModelName.PushSubscriptions,
+      new FuturePushSubscriptionRecord(rawPushSubscription).serialize()
+    );
 
     const user = User.createOrGetInstance();
-    user.flushModelReferences();
-    await user.setupNewUser(isTempUser);
-    await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
+    if (user.hasOneSignalId) {
+      pushModel.setOneSignalId(user.onesignalId);
+    }
+    // don't propagate since we will be including the subscription in the user create call
+    await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
+  }
+
+  public async resetModelRepoAndCache(): Promise<void> {
+    await this.core.resetModelRepoAndCache();
   }
 
   public async hydrateUser(user: UserData): Promise<void> {
