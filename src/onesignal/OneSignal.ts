@@ -47,8 +47,7 @@ export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
     OneSignal.coreDirector = new CoreModuleDirector(core);
-    OneSignal.User = new UserNamespace(OneSignal.coreDirector);
-    await OneSignal.User.userLoaded;
+    OneSignal.User = new UserNamespace();
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
