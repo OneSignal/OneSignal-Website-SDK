@@ -1,9 +1,7 @@
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
-import OneSignalError from "../../shared/errors/OneSignalError";
 import OneSignalApiBase from "../../shared/api/OneSignalApiBase";
 import { IdentityModel, SupportedIdentity } from "../models/IdentityModel";
 import { FutureSubscriptionModel, SubscriptionModel } from "../models/SubscriptionModels";
-import { isIdentityObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
 import { UpdateUserPayload } from "./UpdateUserPayload";
 import UserData from "../models/UserData";
