@@ -157,8 +157,6 @@ export default class OneSignal {
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
-    // TODO: move into delayedInit
-    await OneSignal._initializeCoreModuleAndUserNamespace();
 
     if (!OneSignal.config) {
       throw new Error("OneSignal config not initialized!");
@@ -186,6 +184,7 @@ export default class OneSignal {
   }
 
   private static async _delayedInit(): Promise<void> {
+    await OneSignal._initializeCoreModuleAndUserNamespace();
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();
