@@ -28,15 +28,13 @@ import Log from "../libraries/Log";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import OneSignalApiShared from "../api/OneSignalApiShared";
 import OneSignal from "../../onesignal/OneSignal";
-import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
-import { OSModel } from "../../core/modelRepo/OSModel";
 import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
-import User from "../../onesignal/User";
-import { FutureSubscriptionModel, SupportedSubscription } from "../../core/models/SubscriptionModels";
+import { FutureSubscriptionModel } from "../../core/models/SubscriptionModels";
 import { StringKeys } from "../../core/models/StringKeys";
 import OneSignalError from "../errors/OneSignalError";
 import { SessionOrigin } from "../models/Session";
 import { executeCallback, logMethodCall } from "../utils/utils";
+import UserDirector from "../../onesignal/UserDirector";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -148,24 +146,13 @@ export class SubscriptionManager {
   }
 
   private async _updatePushSubscriptionModelWithRawSubscription(rawPushSubscription: RawPushSubscription) {
-    let pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (!pushModel) {
-      // new subscription
-      pushModel = new OSModel<SupportedSubscription>(
-        ModelName.PushSubscriptions,
-        new FuturePushSubscriptionRecord(rawPushSubscription).serialize()
-      );
-
-      const user = User.createOrGetInstance();
-      if (user.hasOneSignalId) {
-        pushModel.setOneSignalId(user.identity?.onesignalId);
-      }
-      // don't propagate since we will be including the subscription in the user create call
-      await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
-      const identity = await user.sendUserCreate();
-      if (identity) {
-        pushModel.setOneSignalId(identity?.onesignal_id);
+      await OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
+      const userData = await UserDirector.createUserOnServer();
+      if (userData) {
+        await OneSignal.coreDirector.hydrateUser(userData);
       }
       return;
     } else {
