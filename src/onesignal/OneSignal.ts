@@ -122,7 +122,7 @@ export default class OneSignal {
       // set the external id on the user locally
       LoginManager.setExternalId(identityModel, externalId);
 
-      const userData = await LoginManager.getAllUserData();
+      const userData = await UserDirector.getAllUserData();
       await this.coreDirector.resetUserWithSetting(true);
 
       LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
