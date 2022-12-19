@@ -11,8 +11,8 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
   modelId: string;
 
   onesignalId?: string;
-  awaitOneSignalIdAvailable: Promise<void>;
-  onesignalIdAvailableCallback?: () => void;
+  awaitOneSignalIdAvailable: Promise<string>;
+  onesignalIdAvailableCallback?: (onesignalId: string) => void;
 
   constructor(
     readonly modelName: ModelName,
@@ -24,7 +24,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
       this.modelName = modelName;
       this.data = data;
 
-      this.awaitOneSignalIdAvailable = new Promise<void>(resolve => {
+      this.awaitOneSignalIdAvailable = new Promise<string>(resolve => {
         this.onesignalIdAvailableCallback = resolve;
       });
   }
@@ -39,7 +39,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
     this.onesignalId = onesignalId;
 
     if (onesignalId) {
-      this.onesignalIdAvailableCallback?.();
+      this.onesignalIdAvailableCallback?.(onesignalId);
     }
   }
 

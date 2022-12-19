@@ -36,7 +36,7 @@ export class UpdateManager {
   }
 
   public async sendPushDeviceRecordUpdate(): Promise<void> {
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       Log.debug("Not sending the update because user is not registered with OneSignal (no onesignal_id)");
       return;
     }
@@ -62,7 +62,7 @@ export class UpdateManager {
       return;
     }
 
-    const subscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const subscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (subscriptionModel?.data.notification_types !== SubscriptionStateKind.Subscribed &&
       OneSignal.config?.enableOnSession !== true) {
@@ -152,7 +152,7 @@ export class UpdateManager {
 
   public async sendOutcomeDirect(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeDirect");
-    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
       const outcomeRequestData: OutcomeRequestData = {
@@ -176,7 +176,7 @@ export class UpdateManager {
 
   public async sendOutcomeInfluenced(appId: string, notificationIds: string[], outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeInfluenced");
-    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
       const outcomeRequestData: OutcomeRequestData = {
@@ -200,7 +200,7 @@ export class UpdateManager {
 
   public async sendOutcomeUnattributed(appId: string, outcomeName: string, value?: number) {
     logMethodCall("sendOutcomeUnattributed");
-    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (pushSubscriptionModel && isCompleteSubscriptionObject(pushSubscriptionModel?.data)) {
       const outcomeRequestData: OutcomeRequestData = {

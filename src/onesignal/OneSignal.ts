@@ -19,7 +19,7 @@ import EventHelper from "../shared/helpers/EventHelper";
 import HttpHelper from "../shared/helpers/HttpHelper";
 import InitHelper from "../shared/helpers/InitHelper";
 import MainHelper from "../shared/helpers/MainHelper";
-import Emitter, { EventHandler } from "../shared/libraries/Emitter";
+import Emitter from "../shared/libraries/Emitter";
 import Log from "../shared/libraries/Log";
 import SdkEnvironment from "../shared/managers/SdkEnvironment";
 import { SessionManager } from "../shared/managers/sessionManager/SessionManager";
@@ -102,7 +102,7 @@ export default class OneSignal {
         throw new OneSignalError('Login: No identity model found');
       }
 
-      const currentExternalId = identityModel?.data?.externalId;
+      const currentExternalId = identityModel?.data?.external_id;
 
       // if the current externalId is the same as the one we're trying to set, do nothing
       if (currentExternalId === externalId) {
@@ -110,7 +110,7 @@ export default class OneSignal {
         return;
       }
 
-      const pushSubModel = await this.coreDirector.getPushSubscriptionModel();
+      const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
       let currentPushSubscriptionId;
 
       if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
@@ -127,7 +127,7 @@ export default class OneSignal {
 
       LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
         const { identity } = result;
-        const onesignalId = identity?.onesignalId;
+        const onesignalId = identity?.onesignal_id;
 
         if (!onesignalId) {
           throw new OneSignalError('Login: No OneSignal ID found');

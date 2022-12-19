@@ -93,7 +93,7 @@ export class SessionManager implements ISessionManager {
 
   async _getOneSignalAndSubscriptionIds(): Promise<{ onesignalId: string; subscriptionId: string }> {
     const identityModel = await OneSignal.coreDirector.getIdentityModel();
-    const pushSubscriptionModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
       throw new OneSignalError("Abort _getOneSignalAndSubscriptionIds: no identity");
@@ -110,7 +110,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleVisibilityChange(): Promise<void> {
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -153,7 +153,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async handleOnBeforeUnload(): Promise<void> {
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -188,7 +188,7 @@ export class SessionManager implements ISessionManager {
 
   async handleOnFocus(e: Event): Promise<void> {
     Log.debug("handleOnFocus", e);
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -211,7 +211,7 @@ export class SessionManager implements ISessionManager {
 
   async handleOnBlur(e: Event): Promise<void> {
     Log.debug("handleOnBlur", e);
-    if (!User.singletonInstance?.identified) {
+    if (!User.singletonInstance?.hasOneSignalId) {
       return;
     }
 
@@ -235,7 +235,7 @@ export class SessionManager implements ISessionManager {
   async upsertSession(
     sessionOrigin: SessionOrigin
   ): Promise<void> {
-    if (User.singletonInstance?.identified) {
+    if (User.singletonInstance?.hasOneSignalId) {
       const { onesignalId, subscriptionId } = await this._getOneSignalAndSubscriptionIds();
       await this.notifySWToUpsertSession(onesignalId, subscriptionId, sessionOrigin);
     }
@@ -341,7 +341,7 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    const pushSubscription = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
     if (pushSubscription?.data.notification_types !== SubscriptionStateKind.Subscribed &&
       OneSignal.config?.enableOnSession !== true) {
       return;

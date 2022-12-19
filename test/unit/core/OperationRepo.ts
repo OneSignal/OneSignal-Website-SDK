@@ -1,7 +1,6 @@
 import test from "ava";
 import sinon, { SinonSandbox } from "sinon";
 import CoreModule from "../../../src/core/CoreModule";
-import { ModelRepo } from "../../../src/core/modelRepo/ModelRepo";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { CoreDelta } from "../../../src/core/models/CoreDeltas";

@@ -46,18 +46,22 @@ export default class EventHelper {
     appState.lastKnownPushEnabled = isPushEnabled;
     await Database.setAppState(appState);
 
-    // TO DO:
+    // TO DO: should use id and token. will require more changes to save previous state
     const change: SubscriptionChangeEvent = {
-      previous: {},
-      current: {}
+      previous: {
+        enabled: !isPushEnabled,
+      },
+      current: {
+        enabled: isPushEnabled,
+      }
     };
 
     EventHelper.triggerSubscriptionChanged(change);
   }
 
-  static async _onSubscriptionChanged(newSubscriptionState: boolean | undefined) {
-    EventHelper.onSubscriptionChanged_showWelcomeNotification(newSubscriptionState);
-    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(newSubscriptionState);
+  static async _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
+    EventHelper.onSubscriptionChanged_showWelcomeNotification(change?.current.enabled);
+    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(change?.current.enabled);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
     EventHelper.onSubscriptionChanged_updateCustomLink();
   }

@@ -30,7 +30,7 @@ export function isModelStoreHydratedObject<Model>(obj: any): obj is ModelStoreHy
 }
 
 export function isIdentityObject(obj: any): obj is IdentityModel {
-  return obj.onesignalId !== undefined;
+  return obj.onesignal_id !== undefined;
 }
 
 export function isFutureSubscriptionObject(obj: any): obj is FutureSubscriptionModel {

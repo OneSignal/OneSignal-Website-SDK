@@ -152,7 +152,7 @@ export class SubscriptionManager {
   }
 
   private async _updatePushSubscriptionModelWithRawSubscription(rawPushSubscription: RawPushSubscription) {
-    let pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    let pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (!pushModel) {
       // new subscription
@@ -162,12 +162,15 @@ export class SubscriptionManager {
       );
 
       const user = User.createOrGetInstance();
-      if (user.identified) {
+      if (user.hasOneSignalId) {
         pushModel.setOneSignalId(user.identity?.onesignalId);
       }
       // don't propagate since we will be including the subscription in the user create call
       await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
-      await user.sendUserCreate();
+      const identity = await user.sendUserCreate();
+      if (identity) {
+        pushModel.setOneSignalId(identity?.onesignal_id);
+      }
       return;
     } else {
       // resubscribing. update existing push subscription model
@@ -184,7 +187,7 @@ export class SubscriptionManager {
   }
 
   async updatePushSubscriptionNotificationTypes(notificationTypes: number): Promise<void> {
-    const pushModel = await OneSignal.coreDirector.getPushSubscriptionModel();
+    const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
     if (!pushModel) {
       throw new OneSignalError(
         `Cannot update notification_types for push subscription model because it does not exist.`

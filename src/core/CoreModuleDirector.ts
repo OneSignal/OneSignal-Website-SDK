@@ -11,6 +11,7 @@ import User from "../onesignal/User";
 import UserData from "./models/UserData";
 import OneSignalError from "../shared/errors/OneSignalError";
 import OneSignal from "../onesignal/OneSignal";
+import MainHelper from "../shared/helpers/MainHelper";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -106,7 +107,7 @@ export class CoreModuleDirector {
       } else {
         const model = new OSModel<SupportedModel>(modelName, subscription);
         model.setOneSignalId(onesignalId);
-        modelStores[modelName].add(model, true);
+        modelStores[modelName].add(model, false); // don't propagate to server
       }
     });
   }
@@ -149,12 +150,30 @@ export class CoreModuleDirector {
     return modelStores.smsSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
   }
 
-  public async getPushSubscriptionModel(): Promise<OSModel<SupportedSubscription> | undefined> {
-    logMethodCall("CoreModuleDirector.getPushSubscriptionModels");
+  /**
+   * Returns all push subscription models, including push subscriptions from other browsers.
+   */
+  public async getAllPushSubscriptionModels(): Promise<{ [key: string]: OSModel<SupportedSubscription> }> {
+    logMethodCall("CoreModuleDirector.getAllPushSubscriptionModels");
     await this.initPromise;
     const modelStores = await this.getModelStores();
-    const key = Object.keys(modelStores.pushSubscriptions.models)[0];
-    return modelStores.pushSubscriptions.models[key] as OSModel<SupportedSubscription>;
+    return modelStores.pushSubscriptions.models as { [key: string]: OSModel<SupportedSubscription> };
+  }
+
+  /**
+   * Gets the current push subscription model for the current browser.
+   * @returns The push subscription model for the current browser, or undefined if no push subscription exists.
+   */
+  public async getCurrentPushSubscriptionModel(): Promise<OSModel<SupportedSubscription> | undefined> {
+    logMethodCall("CoreModuleDirector.getPushSubscriptionModel");
+    await this.initPromise;
+    const pushToken = await MainHelper.getCurrentPushToken();
+
+    if (!pushToken) {
+      Log.warn("No push token found, returning undefined from getPushSubscriptionModel()");
+      return undefined;
+    }
+    return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, pushToken);
   }
 
   public async getIdentityModel(): Promise<OSModel<SupportedIdentity> | undefined> {
@@ -178,7 +197,7 @@ export class CoreModuleDirector {
     await this.initPromise;
     const emailSubscriptions = await this.getEmailSubscriptionModels();
     const smsSubscriptions = await this.getSmsSubscriptionModels();
-    const pushSubscription = await this.getPushSubscriptionModel();
+    const pushSubscription = await this.getCurrentPushSubscriptionModel();
 
     const subscriptions = Object.values(emailSubscriptions)
       .concat(Object.values(smsSubscriptions))
@@ -199,8 +218,8 @@ export class CoreModuleDirector {
           const smsSubscriptions = await this.getSmsSubscriptionModels();
           return Object.values(smsSubscriptions).find(subscription => subscription.data.token === token);
         case ModelName.PushSubscriptions:
-          const pushSubscription = await this.getPushSubscriptionModel();
-          return pushSubscription && pushSubscription.data.token === token ? pushSubscription : undefined;
+          const pushSubscriptions = await this.getAllPushSubscriptionModels();
+          return Object.values(pushSubscriptions).find(subscription => subscription.data.token === token);
         default:
           return undefined;
       }

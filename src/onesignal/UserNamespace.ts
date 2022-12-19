@@ -24,7 +24,7 @@ export default class UserNamespace {
         this._currentUser = User.createOrGetInstance(
           await this.coreDirector.getIdentityModel(),
           await this.coreDirector.getPropertiesModel(),
-          await this.coreDirector.getPushSubscriptionModel(),
+          await this.coreDirector.getCurrentPushSubscriptionModel(),
           await this.coreDirector.getSmsSubscriptionModels(),
           await this.coreDirector.getEmailSubscriptionModels(),
         );
@@ -125,11 +125,20 @@ export default class UserNamespace {
     };
     const newSubscription = new OSModel<SupportedModel>(ModelName.EmailSubscriptions, subscription);
 
-    this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).then(() => {
-      this._currentUser?.sendUserCreate();
-    }).catch(e => {
-      throw e;
-    });
+    if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.hasOneSignalId) {
+      // existing user
+      newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
+        throw e;
+      });
+    } else {
+      // new user
+      this.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, false).then(() => {
+        this._currentUser?.sendUserCreate();
+      }).catch(e => {
+        throw e;
+      });
+    }
 
     this._updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
       throw e;
@@ -149,11 +158,20 @@ export default class UserNamespace {
 
     const newSubscription = new OSModel<SupportedModel>(ModelName.SmsSubscriptions, subscription);
 
-    this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).then(() => {
-      this._currentUser?.sendUserCreate();
-    }).catch(e => {
-      throw e;
-    });
+    if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.hasOneSignalId) {
+      // existing user
+      newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
+      this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
+        throw e;
+      });
+    } else {
+      // new user
+      this.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, false).then(() => {
+        this._currentUser?.sendUserCreate();
+      }).catch(e => {
+        throw e;
+      });
+    }
 
     this._updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
       throw e;
