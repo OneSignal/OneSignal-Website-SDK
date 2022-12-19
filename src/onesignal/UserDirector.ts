@@ -1,0 +1,138 @@
+import { OSModel } from "../core/modelRepo/OSModel";
+import { SupportedIdentity } from "../core/models/IdentityModel";
+import { ModelName, SupportedModel } from "../core/models/SupportedModels";
+import UserData from "../core/models/UserData";
+import Environment from "../shared/helpers/Environment";
+import MainHelper from "../shared/helpers/MainHelper";
+import Log from "../shared/libraries/Log";
+import { logMethodCall } from "../shared/utils/utils";
+import User from "./User";
+import OneSignal from "./OneSignal";
+import { RequestService } from "../core/requestService/RequestService";
+
+export default class UserDirector {
+  static async initializeUser(isTemporary?: boolean): Promise<void> {
+    logMethodCall('initializeUser', { isTemporary });
+
+    const existingIdentity = await OneSignal.coreDirector.getIdentityModel();
+    const existingProperties = await OneSignal.coreDirector.getPropertiesModel();
+    const existingUser = !!existingIdentity && !!existingProperties;
+
+    if (existingUser) {
+      Log.debug('User already exists, skipping initialization.');
+      return;
+    }
+
+    UserDirector.createUserPropertiesModel();
+    await UserDirector.createAnonymousUser(isTemporary);
+  }
+
+  static resetUserMetaProperties() {
+    const user = User.createOrGetInstance();
+    user.hasOneSignalId = false;
+    user.awaitOneSignalIdAvailable = undefined;
+    user.isCreatingUser = false;
+  }
+
+  static async createAnonymousUser(isTemporary?: boolean): Promise<void> {
+    let identity;
+
+    if (isTemporary) {
+      identity = {};
+    } else {
+      const userData = await UserDirector.createUserOnServer();
+
+      if (userData) {
+        identity = userData.identity;
+        await OneSignal.coreDirector.hydrateUser(userData);
+      } else {
+        return;
+      }
+    }
+
+    const identityOSModel = new OSModel<SupportedIdentity>(ModelName.Identity, identity);
+    identityOSModel.setOneSignalId(identity.onesignal_id);
+
+    OneSignal.coreDirector.add(ModelName.Identity, identityOSModel as OSModel<SupportedModel>, false)
+    .then(() => {
+      UserDirector.copyOneSignalIdPromiseFromIdentityModel()
+      .catch((e: Error) => {
+          Log.error(e);
+      });
+    })
+    .catch((e: Error) => {
+        Log.error(e);
+    });
+  }
+
+  static createUserPropertiesModel(): OSModel<SupportedIdentity> {
+    const properties = {
+      language: Environment.getLanguage(),
+      timezone_id: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+
+    const propertiesOSModel = new OSModel<SupportedIdentity>(ModelName.Properties, properties);
+
+    OneSignal.coreDirector.add(ModelName.Properties, propertiesOSModel as OSModel<SupportedModel>, false)
+    .catch((e: Error) => {
+        Log.error(e);
+    });
+
+    return propertiesOSModel;
+  }
+
+  static async createUserOnServer(): Promise<UserData | void> {
+    const user = User.createOrGetInstance();
+
+    if (user.isCreatingUser) {
+      return;
+    }
+
+    user.isCreatingUser = true;
+
+    try {
+      const appId = await MainHelper.getAppId();
+      const userData = await UserDirector.getAllUserData();
+      const response = await RequestService.createUser({ appId }, userData);
+      user.isCreatingUser = false;
+      return response.result as UserData;
+    } catch (e) {
+      Log.error(e);
+    }
+  }
+
+  static async getAllUserData(): Promise<UserData> {
+    logMethodCall("LoginManager.getAllUserData");
+
+    const identity = await OneSignal.coreDirector.getIdentityModel();
+    const properties = await OneSignal.coreDirector.getPropertiesModel();
+    const subscriptions = await OneSignal.coreDirector.getAllSubscriptionsModels();
+
+    const userData: Partial<UserData> = {};
+    userData.identity = identity?.data;
+    userData.properties = properties?.data;
+    userData.subscriptions = subscriptions?.map(subscription => subscription.data);
+
+    return userData as UserData;
+  }
+
+  static async copyOneSignalIdPromiseFromIdentityModel() {
+    const user = User.createOrGetInstance();
+    // copy the onesignal id promise to the user
+    const identity = await OneSignal.coreDirector.getIdentityModel();
+    user.awaitOneSignalIdAvailable = identity?.awaitOneSignalIdAvailable;
+
+    user.awaitOneSignalIdAvailable?.then((onesignalId: string) => {
+      user.hasOneSignalId = true;
+      user.onesignalId = onesignalId;
+    });
+  }
+
+  static async updateModelWithCurrentUserOneSignalId(model: OSModel<SupportedModel>): Promise<void> {
+    const user = User.createOrGetInstance();
+    // wait for the user's onesignal id to be loaded
+    await user.awaitOneSignalIdAvailable;
+
+    model.setOneSignalId(user.onesignalId);
+  }
+}
