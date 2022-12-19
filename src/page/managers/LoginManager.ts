@@ -95,10 +95,10 @@ export default class LoginManager {
 
       if (isIdentified) {
         // if started off identified, create a new user
-        result = await LoginManager.upsertUser(userData);
+        result = await this.upsertUser(userData);
       } else {
         // promoting anonymous user to identified user
-        result = await LoginManager.identifyUser(userData, subscriptionId);
+        result = await this.identifyUser(userData, subscriptionId);
       }
       return result;
   }
