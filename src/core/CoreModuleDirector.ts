@@ -12,6 +12,10 @@ import UserData from "./models/UserData";
 import OneSignalError from "../shared/errors/OneSignalError";
 import OneSignal from "../onesignal/OneSignal";
 import MainHelper from "../shared/helpers/MainHelper";
+import { RawPushSubscription } from "../shared/models/RawPushSubscription";
+import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
+import User from "../onesignal/User";
+import OneSignal from "../onesignal/OneSignal";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -24,7 +28,21 @@ export class CoreModuleDirector {
     });
   }
 
-  /* L O G I N */
+  public async generatePushSubscriptionModel(rawPushSubscription: RawPushSubscription): Promise<void> {
+    logMethodCall("CoreModuleDirector.generatePushSubscriptionModel", { rawPushSubscription });
+    // new subscription
+    const pushModel = new OSModel<SupportedSubscription>(
+      ModelName.PushSubscriptions,
+      new FuturePushSubscriptionRecord(rawPushSubscription).serialize()
+    );
+
+    const user = User.createOrGetInstance();
+    if (user.hasOneSignalId) {
+      pushModel.setOneSignalId(user.onesignalId);
+    }
+    // don't propagate since we will be including the subscription in the user create call
+    await OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushModel as OSModel<SupportedModel>, false);
+  }
 
   /**
    * Reset user - used to reset user data when user logs in and out
