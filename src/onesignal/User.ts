@@ -20,43 +20,23 @@ export default class User {
 
   static singletonInstance?: User = undefined;
 
-  private constructor(
-    public identity?: OSModel<SupportedIdentity>,
-    public userProperties?: OSModel<UserPropertiesModel>,
-    // TO DO: explore option to consolidate into a single subscriptions property
-    // Might have to make changes to avoid iteration to find correct model we want to modify
-    public pushSubscription?: OSModel<SupportedSubscription>,
-    public smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
-    public emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
-  ) {
-
-    this._copyOneSignalIdPromiseFromIdentityModel();
-  }
-
   /**
    * Creates a user singleton
-   * @param identity - identity model
-   * @param userProperties - user properties model
-   * @param pushSubscriptions - push subscription model
-   * @param smsSubscriptions - sms subscription models
-   * @param emailSubscriptions - email subscription models
    * @returns - User singleton
    */
-  static createOrGetInstance(
-    identity?: OSModel<SupportedIdentity>,
-    userProperties?: OSModel<UserPropertiesModel>,
-    pushSubscriptions?: OSModel<SupportedSubscription>,
-    smsSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
-    emailSubscriptions?: { [key: string]: OSModel<SupportedSubscription> },
-  ): User {
+  static createOrGetInstance(): User {
     if (!User.singletonInstance) {
-      User.singletonInstance = new User(
-        identity,
-        userProperties,
-        pushSubscriptions,
-        smsSubscriptions,
-        emailSubscriptions,
-      );
+      User.singletonInstance = new User();
+      UserDirector.initializeUser(true)
+        .then(() => {
+          UserDirector.copyOneSignalIdPromiseFromIdentityModel()
+            .catch((e: Error) => {
+              console.error(e);
+            });
+        })
+        .catch((e: Error) => {
+          console.error(e);
+        });
     }
 
     return User.singletonInstance;
