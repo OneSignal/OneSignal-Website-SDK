@@ -21,11 +21,11 @@ export default class OneSignalApiShared {
     return OneSignalApiBase.put(`players/${playerId}`, { app_id: appId, ...options });
   }
 
-  static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {
+  static sendNotification(appId: string, onesignalId: string, titles, contents, url, icon, data, buttons) {
     var params = {
       app_id: appId,
       contents: contents,
-      include_player_ids: playerIds,
+      include_aliases: { onesignalId: [onesignalId] },
       isAnyWeb: true,
       data: data,
       web_buttons: buttons

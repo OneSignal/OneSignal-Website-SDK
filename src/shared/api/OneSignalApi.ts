@@ -17,8 +17,8 @@ export default class OneSignalApi {
     return OneSignalApiShared.updatePlayer(appId, playerId, options);
   }
 
-  static sendNotification(appId: string, playerIds: Array<string>, titles, contents, url, icon, data, buttons) {
-    return OneSignalApiShared.sendNotification(appId, playerIds, titles, contents, url, icon, data, buttons);
+  static sendNotification(appId: string, onesignalId: string, titles, contents, url, icon, data, buttons) {
+    return OneSignalApiShared.sendNotification(appId, onesignalId, titles, contents, url, icon, data, buttons);
   }
 
   static jsonpLib(url: string, fn: Function) {

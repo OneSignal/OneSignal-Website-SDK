@@ -83,7 +83,14 @@ export default class EventHelper {
       return;
     }
     if (isSubscribed === true) {
-      const { deviceId } = await Database.getSubscription();
+      const identity = await OneSignal.coreDirector.getIdentityModel();
+      const onesignalId = identity?.onesignalId;
+
+      if (!onesignalId) {
+        Log.debug('Not showing welcome notification because user has no onesignalId.');
+        return;
+      }
+
       const { appId } = await Database.getAppConfig();
 
       const welcome_notification_opts = OneSignal.config?.userConfig.welcomeNotification;
@@ -114,7 +121,7 @@ export default class EventHelper {
         Log.debug('Sending welcome notification.');
         OneSignalApiShared.sendNotification(
           appId,
-          [deviceId],
+          onesignalId,
           { en: title },
           { en: message },
           url,

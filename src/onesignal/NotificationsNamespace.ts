@@ -10,6 +10,7 @@ import OneSignalError from "../../src/shared/errors/OneSignalError";
 import OneSignal from "./OneSignal";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import NotificationEventName from "../page/models/NotificationEventName";
+import Log from "../shared/libraries/Log";
 
 export default class NotificationsNamespace extends EventListenerBase {
   constructor() {
@@ -71,6 +72,14 @@ export default class NotificationsNamespace extends EventListenerBase {
     logMethodCall('sendSelfNotification', title, message, url, icon, data, buttons);
     const appConfig = await Database.getAppConfig();
     const subscription = await Database.getSubscription();
+    const identity = await OneSignal.coreDirector.getIdentityModel();
+    const onesignalId = identity?.onesignalId;
+
+    if (!onesignalId) {
+      Log.error('Cancel sendSelfPush: no onesignalId found.');
+      return;
+    }
+
     if (!appConfig.appId)
       throw new InvalidStateError(InvalidStateReason.MissingAppId);
     if (!(await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()))
@@ -81,7 +90,7 @@ export default class NotificationsNamespace extends EventListenerBase {
       throw new InvalidArgumentError('icon', InvalidArgumentReason.Malformed);
 
     if (subscription.deviceId) {
-      await OneSignalApi.sendNotification(appConfig.appId, [subscription.deviceId], { en : title }, { en : message },
+      await OneSignalApi.sendNotification(appConfig.appId, onesignalId, { en : title }, { en : message },
                                                url, icon, data, buttons);
     }
   }
