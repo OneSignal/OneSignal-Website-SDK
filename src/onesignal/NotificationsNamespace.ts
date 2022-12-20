@@ -58,9 +58,8 @@ export default class NotificationsNamespace extends EventListenerBase {
     return true;
   }
 
-  /**
-   * @PublicApi
-   */
+
+  /*
   async sendSelfPush(title: string = 'OneSignal Test Message',
                               message: string = 'This is an example notification.',
                               url: string = `${new URL(location.href).origin}?_osp=do_not_open`,
@@ -85,6 +84,7 @@ export default class NotificationsNamespace extends EventListenerBase {
                                                url, icon, data, buttons);
     }
   }
+  */
 
   /**
    * Returns a promise that resolves to the browser's current notification permission as
