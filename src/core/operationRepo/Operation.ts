@@ -69,7 +69,7 @@ export class Operation<Model> {
   }
 
   static async getInstanceWithModelReference(rawOperation: Operation<SupportedModel>):
-    Promise<Operation<SupportedModel> | void> {
+    Promise<Operation<SupportedModel> | undefined> {
       const { operationId, payload, modelName, changeType, timestamp, model } = rawOperation;
       if (!model) {
         throw new OneSignalError("Operation.fromJSON: model is undefined");
@@ -86,7 +86,7 @@ export class Operation<Model> {
         operation.jwtTokenAvailable = Promise.resolve();
         return operation;
       } else {
-        throw new Error("Could not find model. Is OneSignal initialized?");
+        throw new Error(`Could not find model with id ${model.modelId} of type ${modelName}. Maybe user logged out?`);
       }
   }
 }
