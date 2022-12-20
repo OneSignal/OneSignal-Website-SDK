@@ -23,8 +23,8 @@
 
     const appId = getUrlQueryParam('app_id');
     var OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(function(onesignal) {
-       onesignal.init({
+    OneSignalDeferred.push(async function(onesignal) {
+      await onesignal.init({
           appId,
           serviceWorkerParam: { scope: "/" + SERVICE_WORKER_PATH },
           serviceWorkerPath: SERVICE_WORKER_PATH + "OneSignalSDK.sw.js",
@@ -101,6 +101,9 @@
               }
           }
         });
+        onesignal.User.PushSubscription.addEventListener('subscriptionChange', function (event) {
+          showEventAlert('subscriptionChange', { event });
+        });
     });
 
     /* E V E N T   L I S T E N E R S */
@@ -137,13 +140,6 @@
     OneSignalDeferred.push(function(onesignal) {
       onesignal.Slidedown.addEventListener('slidedownShown', function (event) {
         showEventAlert('slidedownShown', { event });
-      });
-    });
-
-    // subscriptionChange
-    OneSignalDeferred.push(function(onesignal) {
-      onesignal.User.PushSubscription.addEventListener('subscriptionChange', function (event) {
-        showEventAlert('subscriptionChange', { event });
       });
     });
 
