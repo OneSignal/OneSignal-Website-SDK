@@ -94,6 +94,9 @@ export default class OneSignal {
     logMethodCall('login', { externalId, token });
 
     try {
+      // before, logging in, process anything waiting in the delta queue so it's not lost
+      this.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
+
       if (token) {
         await Database.setJWTToken(token);
       }
@@ -149,6 +152,8 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
+    // before, logging out, process anything waiting in the delta queue so it's not lost
+    this.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
     UserDirector.resetUserMetaProperties();
     const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
     await this.coreDirector.resetModelRepoAndCache();

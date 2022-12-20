@@ -119,6 +119,12 @@ export class CoreModuleDirector {
     });
   }
 
+  // call processDeltaQueue on all executors immediately
+  public forceDeltaQueueProcessingOnAllExecutors(): void {
+    logMethodCall("CoreModuleDirector.forceDeltaQueueProcessingOnAllExecutors");
+    this.core.forceDeltaQueueProcessingOnAllExecutors();
+  }
+
   /* O P E R A T I O N S */
 
   public async add(modelName: ModelName, model: OSModel<SupportedModel>, propagate: boolean = true): Promise<void> {

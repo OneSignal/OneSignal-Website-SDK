@@ -7,13 +7,20 @@ type ExecutorStoreInterface = {
   [key in ModelName]?: OSExecutor;
 };
 
-export class ExecutorStore implements ExecutorStoreInterface {
-  [key: string]: OSExecutor;
+export class ExecutorStore {
+  store: ExecutorStoreInterface = {};
 
   constructor() {
     Object.values(ModelName).forEach(modelName => {
       const config = EXECUTOR_CONFIG_MAP[modelName as ModelName];
-      this[modelName] = ExecutorFactory.build(config);
+      this.store[modelName] = ExecutorFactory.build(config);
+    });
+  }
+
+  // call processDeltaQueue on all executors immediately
+  public forceDeltaQueueProcessingOnAllExecutors(): void {
+    Object.values(this.store).forEach(executor => {
+      executor.processDeltaQueue();
     });
   }
 }
