@@ -178,7 +178,7 @@ await OneSignal.Notifications.requestPermission();
 | `sync`     | `isPushSupported`     | Returns true if the current browser supports web push.                                                                                                                                  |                                                                                                                                                                  |
 | `async`    | `getPermissionStatus` | Returns the browser's current notification permission.                                                                                                                                  | `onComplete` (Action<NotificationPermission>)                                                                                                                    |
 | `async`    | `requestPermission`   | Requests push notifications permission via the native browser prompt.                                                                                                                   |                                                                                                                                                                  |
-| `sync`     | `addEventListener`    | Adds an event listener for the following events:<br><br>- `click`<br>- `willDisplay`<br>- `dismiss`<br>- `permissionPromptDisplay`<br>- `permissionChange`<br>    - argument type: bool | - `<event>` (string)<br>- `(arg: <type>) => {}` (callback)                                                                                                       |
+| `sync`     | `addEventListener`    | Adds an event listener for the following events:<br><br>- `click`<br>- `willDisplay`<br>- `dismiss`<br>- `permissionPromptDisplay`<br>- `permissionChange`*<br> * argument type: bool | - `<event>` (string)<br>- `(arg: <type>) => {}` (callback)                                                                                                       |
 | `sync`     | `removeEventListener` | Removes the event listener.                                                                                                                                                             | `() => {}` (the event listener you want to remove)                                                                                                               |
 
 
@@ -219,6 +219,18 @@ OneSignal.User.PushSubscription.optIn();
 | `sync`     | `addEventListener()`    | Adds an event listener for the `subscriptionChange` event.                                    | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
 | `sync`     | `removeEventListener()` | Removes an event listener for the `subscriptionChange` event.                                 | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
 
+# Limitations
+
+## December 2022
+### Version 16 (alpha)
+* HTTP environments are not supported.
+* AMP environments are not supported.
+* Identity verification is not functional.
+* Outcomes are not functional.
+* Switching between users via `login()` and `logout()` is unsafe.
+* Any User namespace calls must be invoked **after** initialization (async). Example: `OneSignal.User.addTag("tag", "2");
+* Subscriptions are not updated when calling `optIn()` and `optOut()` on the backend.
+
 # Glossary
 
 **OneSignal user**
@@ -231,8 +243,7 @@ OneSignal.User.PushSubscription.optIn();
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*(noun) lowercase*
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An end-user of an application using the OneSignal service. They may or may 
-not have a subscription.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An end-user of an application using the OneSignal service. They may or may not have a subscription.
 
 **user ID**
 
