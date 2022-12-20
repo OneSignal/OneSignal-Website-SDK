@@ -49,7 +49,9 @@ export default abstract class ExecutorBase {
 
   public enqueueDelta(delta: CoreDelta<SupportedModel>): void {
     logMethodCall("ExecutorBase.enqueueDelta", { delta });
-    this._deltaQueue.push(delta);
+    // deep copy (snapshot)
+    const deltaCopy = JSON.parse(JSON.stringify(delta));
+    this._deltaQueue.push(deltaCopy);
   }
 
   public get deltaQueue(): CoreDelta<SupportedModel>[] {
@@ -136,7 +138,9 @@ export default abstract class ExecutorBase {
     // HYDRATE
     if (res.success) {
       if (res.result) {
-        operation.model?.hydrate(res.result as SupportedModel);
+        // since we took a snapshot of the operation, we get a new instance with the correct model reference
+        const operationInstance = await Operation.getInstanceWithModelReference(operation);
+        operationInstance?.model?.hydrate(res.result as SupportedModel);
       }
       OperationCache.delete(operation?.operationId);
     } else {
