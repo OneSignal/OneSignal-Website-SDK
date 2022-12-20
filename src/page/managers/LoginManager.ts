@@ -46,7 +46,7 @@ export default class LoginManager {
   static async identifyUser(userData: UserData, pushSubscriptionId?: string): Promise<Partial<UserData>> {
     logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
 
-    const { identity } = userData;
+    let { identity } = userData;
 
     if (!identity || !identity.onesignal_id) {
       throw new OneSignalError("identifyUser failed: no identity found");
@@ -63,8 +63,9 @@ export default class LoginManager {
       Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
 
       const retainPreviousOwner = false;
-      // only accepts one alias, so remove onesignal_id leaving only external_id
-      delete identity.onesignal_id;
+      // only accepts one alias, so remove other aliases only leaving external_id
+      this.prepareIdentityForUpsert(userData);
+      identity = userData.identity;
       const transferResponse = await RequestService.transferSubscription(
         { appId },
         pushSubscriptionId,
