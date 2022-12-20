@@ -45,4 +45,9 @@ export default class CoreModule {
     this.modelRepo = new ModelRepo(this.modelCache, modelStores);
     this.operationRepo?.setModelRepoAndResubscribe(this.modelRepo);
   }
+
+  // call processDeltaQueue on all executors immediately
+  public forceDeltaQueueProcessingOnAllExecutors(): void {
+    this.operationRepo?.forceDeltaQueueProcessingOnAllExecutors();
+  }
 }
