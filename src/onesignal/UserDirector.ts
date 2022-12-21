@@ -7,7 +7,6 @@ import MainHelper from "../shared/helpers/MainHelper";
 import Log from "../shared/libraries/Log";
 import { logMethodCall } from "../shared/utils/utils";
 import User from "./User";
-import OneSignal from "./OneSignal";
 import { RequestService } from "../core/requestService/RequestService";
 
 export default class UserDirector {

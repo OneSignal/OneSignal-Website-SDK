@@ -1,6 +1,5 @@
 import { OSModel } from "../core/modelRepo/OSModel";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
-import OneSignal from "./OneSignal";
 import { FutureSubscriptionModel, SubscriptionType } from "../core/models/SubscriptionModels";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 import { logMethodCall, isValidEmail } from "../shared/utils/utils";

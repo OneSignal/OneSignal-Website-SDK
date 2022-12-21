@@ -25,7 +25,6 @@ import { DelayedPromptType } from "../../../shared/models/Prompts";
 import { AutoPromptOptions } from "../PromptsManager";
 import OneSignalError from "../../../shared/errors/OneSignalError";
 import { NotSubscribedError, NotSubscribedReason } from "../../../shared/errors/NotSubscribedError";
-import OneSignal from "../../../onesignal/OneSignal";
 
 export class SlidedownManager {
   private context: ContextInterface;

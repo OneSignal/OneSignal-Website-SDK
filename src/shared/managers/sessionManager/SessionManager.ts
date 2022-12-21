@@ -6,7 +6,6 @@ import { ISessionManager } from "./types";
 import { SessionOrigin, UpsertOrDeactivateSessionPayload } from "../../models/Session";
 import MainHelper from "../../helpers/MainHelper";
 import Log from "../../libraries/Log";
-import OneSignal from "../../../onesignal/OneSignal";
 import { isCompleteSubscriptionObject } from "../../../core/utils/typePredicates";
 import OneSignalError from "../../../shared/errors/OneSignalError";
 import User from "../../../onesignal/User";
