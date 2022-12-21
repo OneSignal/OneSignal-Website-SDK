@@ -25,6 +25,9 @@ function onesignalSdkInit() {
   //         * Number of internal SDK code expects window.OneSignal
   //         * Keep JS console usage easier for debugging / testing.
   (<any>window).OneSignal = require('../onesignal/OneSignal').default;
-  ReplayCallsOnOneSignal.processOneSignalDeferredArray((<any>window).OneSignalDeferred);
+
+  const existingOneSignalDeferred = (<any>window).OneSignalDeferred;
+  (<any>window).OneSignalDeferred = require('../onesignal/OneSignalDeferred').default;
+  ReplayCallsOnOneSignal.processOneSignalDeferredArray(existingOneSignalDeferred);
 }
 onesignalSdkInit();
