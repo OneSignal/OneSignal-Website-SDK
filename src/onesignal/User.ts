@@ -243,13 +243,13 @@ export default class User {
     }
 
     OneSignal.coreDirector.getPropertiesModel().then(propertiesModel => {
-      const tags = propertiesModel?.data?.tags;
+      const tagsCopy = JSON.parse(JSON.stringify(propertiesModel?.data?.tags));
 
-      if (tags) {
+      if (tagsCopy) {
         tagKeys.forEach(tagKey => {
-          delete tags[tagKey];
+          tagsCopy[tagKey] = "";
         });
-        propertiesModel.set('tags', tags);
+        propertiesModel?.set('tags', tagsCopy);
       }
     }).catch(e => {
       throw e;
