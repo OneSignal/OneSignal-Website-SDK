@@ -1,6 +1,5 @@
 import OneSignalError from "../../shared/errors/OneSignalError";
 import Database from "../../shared/services/Database";
-import OneSignal from "../../onesignal/OneSignal";
 import { OSModel } from "../modelRepo/OSModel";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";

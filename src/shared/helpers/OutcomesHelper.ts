@@ -5,7 +5,6 @@ import Log from '../libraries/Log';
 import { Utils } from "../../shared/context/Utils";
 import { logMethodCall, awaitOneSignalInitAndSupported } from '../utils/utils';
 import OutcomeProps from '../models/OutcomeProps';
-import OneSignal from '../../onesignal/OneSignal';
 
 const SEND_OUTCOME = "sendOutcome";
 const SEND_UNIQUE_OUTCOME = "sendUniqueOutcome";

@@ -27,7 +27,6 @@ import SubscriptionError, { SubscriptionErrorReason } from "../errors/Subscripti
 import Log from "../libraries/Log";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import OneSignalApiShared from "../api/OneSignalApiShared";
-import OneSignal from "../../onesignal/OneSignal";
 import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
 import { FutureSubscriptionModel } from "../../core/models/SubscriptionModels";
 import { StringKeys } from "../../core/models/StringKeys";
