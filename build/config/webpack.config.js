@@ -162,7 +162,7 @@ async function generateWebpackConfig() {
 }
 
 async function getStylesheetsHash() {
-  const styleSheetsPath = 'src/stylesheets';
+  const styleSheetsPath = 'src/page/stylesheets';
 
   return await new Promise((resolve, reject) => {
     dir.files(styleSheetsPath, async (err, files) => {
