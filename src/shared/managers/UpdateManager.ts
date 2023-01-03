@@ -12,7 +12,6 @@ import { ExternalUserIdHelper } from "../helpers/ExternalUserIdHelper";
 import { TagsObject } from "../../page/models/Tags";
 import { SessionOrigin } from '../models/Session';
 import OneSignalApiShared from '../api/OneSignalApiShared';
-import OneSignal from '../../onesignal/OneSignal';
 import User from '../../onesignal/User';
 import FuturePushSubscriptionRecord from '../../page/userModel/FuturePushSubscriptionRecord';
 import { isCompleteSubscriptionObject } from '../../core/utils/typePredicates';

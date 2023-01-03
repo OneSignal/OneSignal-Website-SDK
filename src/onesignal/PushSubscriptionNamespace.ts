@@ -7,7 +7,6 @@ import MainHelper from "../shared/helpers/MainHelper";
 import Log from "../shared/libraries/Log";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
-import OneSignal from "./OneSignal";
 import { SubscriptionModel, SupportedSubscription } from "../core/models/SubscriptionModels";
 import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../core/utils/typePredicates";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";

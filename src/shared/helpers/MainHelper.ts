@@ -12,7 +12,6 @@ import Database from '../services/Database';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import OneSignalEvent from '../services/OneSignalEvent';
-import OneSignal from '../../onesignal/OneSignal';
 
 export default class MainHelper {
 
