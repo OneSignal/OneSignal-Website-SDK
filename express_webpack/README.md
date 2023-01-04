@@ -106,18 +106,12 @@ you need a quick and easy way to test your changes on a different machine or sha
 ngrok is a programmable reverse proxy that lets you instantly serve your localhost environment to the web.
 
 #### Steps:
-1. Serve your localhost via ngrok:
+1. Start the ngrok script.
 ```
-ngrok http https://localhost:4001
+yarn ngrok
 ```
-2. Modify public files to use the displayed ngrok url instead of localhost (e.g: service worker file, index file)
-```
-importScripts("https://651d-72-109-246-88.ngrok.io/sdks/Dev-OneSignalSDKWorker.js");
-```
-3. Build the SDK in your sandbox environment:
-```
-yarn build:dev-prod -b 651d-72-109-246-88.ngrok.io --no-port
-```
+2. Modify index.html file to use the newly created ngrok origin.
+3. Update your app settings via the dashboard to use the newly created ngrok origin.
 
 ## Troubleshooting
 ### Custom origin mismatch
