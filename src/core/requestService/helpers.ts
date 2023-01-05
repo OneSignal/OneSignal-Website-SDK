@@ -54,6 +54,9 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   }
 
   const { onesignal_id: onesignalId } = identity;
+  // delete onesignal_id from identity object, backend expects it to be in the URI only
+  const identityCopy = JSON.parse(JSON.stringify(identity));
+  delete identityCopy['onesignal_id'];
 
   // fixes typescript errors
   if (!onesignalId) {
@@ -61,7 +64,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   }
 
   return {
-    identity,
+    identity: identityCopy,
     aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
   };
 }
