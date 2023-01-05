@@ -102,7 +102,7 @@ export default class OneSignal {
         await Database.setJWTToken(token);
       }
 
-      const identityModel = await this.coreDirector.getIdentityModel();
+      const identityModel = this.coreDirector.getIdentityModel();
 
       if (!identityModel) {
         throw new OneSignalError('Login: No identity model found');
@@ -159,7 +159,7 @@ export default class OneSignal {
     const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
     await this.coreDirector.resetModelRepoAndCache();
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    await this.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
+    this.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
     await UserDirector.initializeUser(false);
     await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
   }

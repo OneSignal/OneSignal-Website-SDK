@@ -148,10 +148,10 @@ export class SubscriptionManager {
     const pushModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (!pushModel) {
-      await OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
+      OneSignal.coreDirector.generatePushSubscriptionModel(rawPushSubscription);
       const userData = await UserDirector.createUserOnServer();
       if (userData) {
-        await OneSignal.coreDirector.hydrateUser(userData);
+        OneSignal.coreDirector.hydrateUser(userData);
       }
       return;
     } else {
