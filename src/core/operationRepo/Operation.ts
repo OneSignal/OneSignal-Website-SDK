@@ -73,7 +73,7 @@ export class Operation<Model> {
       if (!model) {
         throw new OneSignalError("Operation.fromJSON: model is undefined");
       }
-      const osModel = await OneSignal.coreDirector?.getModelByTypeAndId(modelName, model.modelId);
+      const osModel = OneSignal.coreDirector?.getModelByTypeAndId(modelName, model.modelId);
 
       if (!!osModel) {
         const operation = new Operation<SupportedModel>(changeType, modelName);

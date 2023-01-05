@@ -114,9 +114,7 @@ export default class LoginManager {
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
     );
 
-    await OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result).catch(e => {
-      Log.error("Error hydrating user models", e);
-    });
+    OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);
   }
 
   /**

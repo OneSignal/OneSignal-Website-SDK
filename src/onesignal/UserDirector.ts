@@ -13,8 +13,8 @@ export default class UserDirector {
   static async initializeUser(isTemporary?: boolean): Promise<void> {
     logMethodCall('initializeUser', { isTemporary });
 
-    const existingIdentity = await OneSignal.coreDirector.getIdentityModel();
-    const existingProperties = await OneSignal.coreDirector.getPropertiesModel();
+    const existingIdentity = OneSignal.coreDirector.getIdentityModel();
+    const existingProperties = OneSignal.coreDirector.getPropertiesModel();
     const existingUser = !!existingIdentity && !!existingProperties;
 
     if (existingUser) {
@@ -43,7 +43,7 @@ export default class UserDirector {
 
       if (userData) {
         identity = userData.identity;
-        await OneSignal.coreDirector.hydrateUser(userData);
+        OneSignal.coreDirector.hydrateUser(userData);
       } else {
         return;
       }
@@ -52,16 +52,8 @@ export default class UserDirector {
     const identityOSModel = new OSModel<SupportedIdentity>(ModelName.Identity, identity);
     identityOSModel.setOneSignalId(identity.onesignal_id);
 
-    OneSignal.coreDirector.add(ModelName.Identity, identityOSModel as OSModel<SupportedModel>, false)
-    .then(() => {
-      UserDirector.copyOneSignalIdPromiseFromIdentityModel()
-      .catch((e: Error) => {
-          Log.error(e);
-      });
-    })
-    .catch((e: Error) => {
-        Log.error(e);
-    });
+    OneSignal.coreDirector.add(ModelName.Identity, identityOSModel as OSModel<SupportedModel>, false);
+    await this.copyOneSignalIdPromiseFromIdentityModel();
   }
 
   static createUserPropertiesModel(): OSModel<SupportedIdentity> {
@@ -72,10 +64,7 @@ export default class UserDirector {
 
     const propertiesOSModel = new OSModel<SupportedIdentity>(ModelName.Properties, properties);
 
-    OneSignal.coreDirector.add(ModelName.Properties, propertiesOSModel as OSModel<SupportedModel>, false)
-    .catch((e: Error) => {
-        Log.error(e);
-    });
+    OneSignal.coreDirector.add(ModelName.Properties, propertiesOSModel as OSModel<SupportedModel>, false);
 
     return propertiesOSModel;
   }
@@ -103,8 +92,8 @@ export default class UserDirector {
   static async getAllUserData(): Promise<UserData> {
     logMethodCall("LoginManager.getAllUserData");
 
-    const identity = await OneSignal.coreDirector.getIdentityModel();
-    const properties = await OneSignal.coreDirector.getPropertiesModel();
+    const identity = OneSignal.coreDirector.getIdentityModel();
+    const properties = OneSignal.coreDirector.getPropertiesModel();
     const subscriptions = await OneSignal.coreDirector.getAllSubscriptionsModels();
 
     const userData: Partial<UserData> = {};
@@ -118,7 +107,7 @@ export default class UserDirector {
   static async copyOneSignalIdPromiseFromIdentityModel() {
     const user = User.createOrGetInstance();
     // copy the onesignal id promise to the user
-    const identity = await OneSignal.coreDirector.getIdentityModel();
+    const identity = OneSignal.coreDirector.getIdentityModel();
     user.awaitOneSignalIdAvailable = identity?.awaitOneSignalIdAvailable;
 
     user.awaitOneSignalIdAvailable?.then((onesignalId: string) => {

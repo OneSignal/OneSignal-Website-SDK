@@ -59,7 +59,7 @@ export default class User {
     }
 
     Object.keys(aliases).forEach(async label => {
-      const identityModel = await OneSignal.coreDirector.getIdentityModel();
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(label, aliases[label]);
     });
   }
@@ -82,7 +82,7 @@ export default class User {
     }
 
     aliases.forEach(async alias => {
-      const identityModel = await OneSignal.coreDirector.getIdentityModel();
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(alias, undefined);
     });
   }
@@ -106,16 +106,11 @@ export default class User {
     if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.hasOneSignalId) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
-      OneSignal.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true).catch(e => {
-        throw e;
-      });
+      OneSignal.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, true);
     } else {
       // new user
-      OneSignal.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, false).then(() => {
-        UserDirector.createUserOnServer();
-      }).catch(e => {
-        throw e;
-      });
+      OneSignal.coreDirector.add(ModelName.EmailSubscriptions, newSubscription, false);
+      UserDirector.createUserOnServer();
     }
 
     UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
@@ -139,16 +134,11 @@ export default class User {
     if (User.singletonInstance?.isCreatingUser || User.singletonInstance?.hasOneSignalId) {
       // existing user
       newSubscription.setOneSignalId(User.singletonInstance?.onesignalId);
-      OneSignal.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true).catch(e => {
-        throw e;
-      });
+      OneSignal.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, true);
     } else {
       // new user
-      OneSignal.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, false).then(() => {
-        UserDirector.createUserOnServer();
-      }).catch(e => {
-        throw e;
-      });
+      OneSignal.coreDirector.add(ModelName.SmsSubscriptions, newSubscription, false);
+      UserDirector.createUserOnServer();
     }
 
     UserDirector.updateModelWithCurrentUserOneSignalId(newSubscription).catch(e => {
@@ -163,18 +153,13 @@ export default class User {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
 
-    OneSignal.coreDirector.getEmailSubscriptionModels().then(emailSubscriptions => {
-      const modelIds = Object.keys(emailSubscriptions);
-      modelIds.forEach(async modelId => {
-        const model = emailSubscriptions[modelId];
-        if (model.data?.token === email) {
-          OneSignal.coreDirector.remove(ModelName.EmailSubscriptions, modelId).catch(e => {
-            throw e;
-          });
-        }
-      });
-    }).catch(e => {
-      throw e;
+    const emailSubscriptions = OneSignal.coreDirector.getEmailSubscriptionModels();
+    const modelIds = Object.keys(emailSubscriptions);
+    modelIds.forEach(async modelId => {
+      const model = emailSubscriptions[modelId];
+      if (model.data?.token === email) {
+        OneSignal.coreDirector.remove(ModelName.EmailSubscriptions, modelId);
+      }
     });
   }
 
@@ -185,18 +170,13 @@ export default class User {
       throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
     }
 
-    OneSignal.coreDirector.getSmsSubscriptionModels().then(smsSubscriptions => {
-      const modelIds = Object.keys(smsSubscriptions);
-      modelIds.forEach(async modelId => {
-        const model = smsSubscriptions[modelId];
-        if (model.data?.token === smsNumber) {
-          OneSignal.coreDirector.remove(ModelName.SmsSubscriptions, modelId).catch(e => {
-            throw e;
-          });
-        }
-      });
-    }).catch(e => {
-      throw e;
+    const smsSubscriptions = OneSignal.coreDirector.getSmsSubscriptionModels();
+    const modelIds = Object.keys(smsSubscriptions);
+    modelIds.forEach(async modelId => {
+      const model = smsSubscriptions[modelId];
+      if (model.data?.token === smsNumber) {
+        OneSignal.coreDirector.remove(ModelName.SmsSubscriptions, modelId);
+      }
     });
   }
 
@@ -217,11 +197,8 @@ export default class User {
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Empty);
     }
 
-    OneSignal.coreDirector.getPropertiesModel().then(propertiesModel => {
-      propertiesModel?.set('tags', tags);
-    }).catch(e => {
-      throw e;
-    });
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    propertiesModel?.set('tags', tags);
   }
 
   public removeTag(tagKey: string): void {
@@ -241,17 +218,14 @@ export default class User {
       throw new InvalidArgumentError('tagKeys', InvalidArgumentReason.Empty);
     }
 
-    OneSignal.coreDirector.getPropertiesModel().then(propertiesModel => {
-      const tagsCopy = JSON.parse(JSON.stringify(propertiesModel?.data?.tags));
+    const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    const tagsCopy = JSON.parse(JSON.stringify(propertiesModel?.data?.tags));
 
-      if (tagsCopy) {
-        tagKeys.forEach(tagKey => {
-          tagsCopy[tagKey] = "";
-        });
-        propertiesModel?.set('tags', tagsCopy);
-      }
-    }).catch(e => {
-      throw e;
-    });
+    if (tagsCopy) {
+      tagKeys.forEach(tagKey => {
+        tagsCopy[tagKey] = "";
+      });
+      propertiesModel?.set('tags', tagsCopy);
+    }
   }
 }
