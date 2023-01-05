@@ -17,7 +17,7 @@ export class Operation<Model> {
   constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas?: CoreDelta<Model>[]) {
     this.operationId = Math.random().toString(36).substring(2);
     this.payload = deltas ? this.getPayload(deltas) : undefined;
-    this.model = deltas ? deltas[0].model : undefined;
+    this.model = deltas ? deltas[deltas.length-1].model : undefined;
     this.timestamp = Date.now();
     this.jwtTokenAvailable = new Promise<void>(async resolve => {
       this.jwtToken = await Database.getJWTToken();
