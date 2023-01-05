@@ -49,6 +49,7 @@ import { OSModel } from "../core/modelRepo/OSModel";
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
+    await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
     OneSignal.User = new UserNamespace();
   }
