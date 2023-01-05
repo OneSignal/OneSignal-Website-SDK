@@ -152,7 +152,7 @@ export class RequestService {
     subscription: Partial<SubscriptionModel>)
     : Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
-      return OneSignalApiBase.patch(`apps/${appId}/subscriptions/${subscriptionId}`, subscription);
+      return OneSignalApiBase.patch(`apps/${appId}/subscriptions/${subscriptionId}`, { subscription });
   }
 
   /**
@@ -192,7 +192,7 @@ export class RequestService {
       const { appId } = requestMetadata;
       return OneSignalApiBase.patch(
         `apps/${appId}/users/by/subscriptions/${subscriptionId}/identity`,
-        identity,
+        { identity },
         requestMetadata.jwtHeader
       );
   }
@@ -214,7 +214,7 @@ export class RequestService {
     retainPreviousOwner: boolean): Promise<OneSignalApiBaseResponse> {
       const { appId } = requestMetadata;
       return OneSignalApiBase.patch(`apps/${appId}/subscriptions/${subscriptionId}/owner`, {
-        identity,
+        identity: { ...identity },
         retain_previous_owner: retainPreviousOwner
       }, requestMetadata.jwtHeader);
     }
