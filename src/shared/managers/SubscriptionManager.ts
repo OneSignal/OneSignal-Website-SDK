@@ -176,6 +176,12 @@ export class SubscriptionManager {
         );
     }
     pushModel.set("notification_types", notificationTypes);
+
+    if (notificationTypes === 1) {
+      pushModel.set('enabled', true);
+    } else if (notificationTypes === -2) {
+      pushModel.set('enabled', false);
+    }
   }
 
   /**
