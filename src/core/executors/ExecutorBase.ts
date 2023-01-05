@@ -49,7 +49,11 @@ export default abstract class ExecutorBase {
 
   public enqueueDelta(delta: CoreDelta<SupportedModel>): void {
     logMethodCall("ExecutorBase.enqueueDelta", { delta });
-    // deep copy (snapshot)
+    /**
+     * deep copy (snapshot)
+     * if we add alias and then login to a user, we want to ensure that the external id of the
+     * login call doesn't get included in the add alias call so this helps keep the changes separate
+     */
     const deltaCopy = JSON.parse(JSON.stringify(delta));
     this._deltaQueue.push(deltaCopy);
   }
