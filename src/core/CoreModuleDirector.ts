@@ -18,13 +18,8 @@ import OneSignal from "../onesignal/OneSignal";
 /* Contains OneSignal User-Model-specific logic*/
 
 export class CoreModuleDirector {
-  private initPromise: Promise<void>;
 
-  constructor(private core: CoreModule) {
-    this.initPromise = core.initPromise.then(() => {}).catch(e => {
-      Log.error(e);
-    });
-  }
+  constructor(private core: CoreModule) {}
 
   public async generatePushSubscriptionModel(rawPushSubscription: RawPushSubscription): Promise<void> {
     logMethodCall("CoreModuleDirector.generatePushSubscriptionModel", { rawPushSubscription });
