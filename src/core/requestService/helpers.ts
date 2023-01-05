@@ -11,6 +11,7 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
   subscription: SupportedSubscription;
   aliasPair: AliasPair;
   subscriptionId?: string;
+  payload?: Partial<SupportedSubscription>
 } {
   const subscriptionOSModel = operation.model;
   const subscription = subscriptionOSModel?.data;
@@ -25,20 +26,21 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
     throw new OneSignalError(`processSubscriptionModel: bad subscription object: ${JSON.stringify(subscription)}`);
   }
 
-  let subscriptionId;
-  if (isCompleteSubscriptionObject(subscription)) {
-    subscriptionId = subscription?.id;
-  }
-
   // fixes typescript errors
   if (!subscriptionOSModel.onesignalId) {
     throw new OneSignalError(`processSubscriptionModel: missing onesignalId: ${JSON.stringify(subscriptionOSModel)}`);
+  }
+
+  let subscriptionId;
+  if (isCompleteSubscriptionObject(subscription)) {
+    subscriptionId = subscription?.id;
   }
 
   return {
     subscription,
     aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, subscriptionOSModel.onesignalId),
     subscriptionId,
+    payload: operation.payload as Partial<SupportedSubscription>
   };
 }
 
