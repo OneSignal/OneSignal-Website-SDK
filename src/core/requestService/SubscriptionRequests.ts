@@ -41,14 +41,19 @@ export default class SubscriptionRequests {
   static async updateSubscription<Model>(operation: Operation<Model>): Promise<ExecutorResult<SupportedSubscription>> {
     logMethodCall("SubscriptionRequests.updateSubscription", operation);
 
-    const { subscription, subscriptionId } = processSubscriptionOperation(operation);
+    const { payload, subscriptionId } = processSubscriptionOperation(operation);
 
     if (!subscriptionId) {
       throw new OneSignalError("updateSubscription: subscriptionId is not defined");
     }
+
+    if (!payload) {
+      throw new OneSignalError("updateSubscription: payload is not defined");
+    }
+
     const appId = await MainHelper.getAppId();
 
-    const response = await RequestService.updateSubscription({ appId }, subscriptionId, subscription);
+    const response = await RequestService.updateSubscription({ appId }, subscriptionId, payload);
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 

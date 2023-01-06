@@ -11,6 +11,7 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
   subscription: SupportedSubscription;
   aliasPair: AliasPair;
   subscriptionId?: string;
+  payload?: Partial<SupportedSubscription>
 } {
   const subscriptionOSModel = operation.model;
   const subscription = subscriptionOSModel?.data;
@@ -25,20 +26,21 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
     throw new OneSignalError(`processSubscriptionModel: bad subscription object: ${JSON.stringify(subscription)}`);
   }
 
-  let subscriptionId;
-  if (isCompleteSubscriptionObject(subscription)) {
-    subscriptionId = subscription?.id;
-  }
-
   // fixes typescript errors
   if (!subscriptionOSModel.onesignalId) {
     throw new OneSignalError(`processSubscriptionModel: missing onesignalId: ${JSON.stringify(subscriptionOSModel)}`);
+  }
+
+  let subscriptionId;
+  if (isCompleteSubscriptionObject(subscription)) {
+    subscriptionId = subscription?.id;
   }
 
   return {
     subscription,
     aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, subscriptionOSModel.onesignalId),
     subscriptionId,
+    payload: operation.payload as Partial<SupportedSubscription>
   };
 }
 
@@ -54,6 +56,9 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   }
 
   const { onesignal_id: onesignalId } = identity;
+  // delete onesignal_id from identity object, backend expects it to be in the URI only
+  const identityCopy = JSON.parse(JSON.stringify(identity));
+  delete identityCopy['onesignal_id'];
 
   // fixes typescript errors
   if (!onesignalId) {
@@ -61,7 +66,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   }
 
   return {
-    identity,
+    identity: identityCopy,
     aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
   };
 }
