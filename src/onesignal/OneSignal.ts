@@ -45,10 +45,12 @@ import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferre
 import UserDirector from "./UserDirector";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { OSModel } from "../core/modelRepo/OSModel";
+import UserData from "../core/models/UserData";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
     const core = new CoreModule();
+    await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
     OneSignal.User = new UserNamespace();
   }
@@ -101,7 +103,7 @@ export default class OneSignal {
         await Database.setJWTToken(token);
       }
 
-      const identityModel = await this.coreDirector.getIdentityModel();
+      const identityModel = this.coreDirector.getIdentityModel();
 
       if (!identityModel) {
         throw new OneSignalError('Login: No identity model found');
@@ -127,7 +129,21 @@ export default class OneSignal {
       // set the external id on the user locally
       LoginManager.setExternalId(identityModel, externalId);
 
-      const userData = await UserDirector.getAllUserData();
+      let userData: Partial<UserData>;
+      const pushSubscription = await this.coreDirector.getCurrentPushSubscriptionModel();
+      if (!isIdentified) {
+        userData = await UserDirector.getAllUserData();
+      } else {
+        userData = {
+          identity: {
+            external_id: externalId,
+          }
+        };
+
+        if (pushSubscription) {
+          userData.subscriptions = [pushSubscription.data];
+        }
+      }
       await this.coreDirector.resetModelRepoAndCache();
       await UserDirector.initializeUser(true);
       await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
@@ -158,7 +174,7 @@ export default class OneSignal {
     const pushSubModel = await this.coreDirector.getCurrentPushSubscriptionModel();
     await this.coreDirector.resetModelRepoAndCache();
     // add the push subscription model back to the repo since we need at least 1 sub to create a new user
-    await this.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
+    this.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
     await UserDirector.initializeUser(false);
     await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
   }

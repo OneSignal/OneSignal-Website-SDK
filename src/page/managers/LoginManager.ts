@@ -26,7 +26,7 @@ export default class LoginManager {
     return identity.external_id !== undefined;
   }
 
-  static async upsertUser(userData: UserData): Promise<UserData> {
+  static async upsertUser(userData: Partial<UserData>): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
     const appId = await MainHelper.getAppId();
     this.prepareIdentityForUpsert(userData);
@@ -50,7 +50,7 @@ export default class LoginManager {
 
     // only accepts one alias, so remove other aliases only leaving external_id
     this.prepareIdentityForUpsert(userData);
-    let { identity } = userData;
+    const { identity } = userData;
 
     if (!identity || !onesignalId) {
       throw new OneSignalError("identifyUser failed: no identity found");
@@ -67,7 +67,6 @@ export default class LoginManager {
       Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
 
       const retainPreviousOwner = false;
-      identity = userData.identity;
       const transferResponse = await RequestService.transferSubscription(
         { appId },
         pushSubscriptionId,
@@ -90,18 +89,19 @@ export default class LoginManager {
     return { identity: identityResult };
   }
 
-  static async identifyOrUpsertUser(userData: UserData, isIdentified: boolean, subscriptionId?: string)
+  static async identifyOrUpsertUser(userData: Partial<UserData>, isIdentified: boolean, subscriptionId?: string)
     : Promise<Partial<UserData>> {
     logMethodCall("LoginManager.identifyOrUpsertUser", { userData, isIdentified, subscriptionId });
 
       let result: Partial<UserData>;
 
       if (isIdentified) {
-        // if started off identified, create a new user
+        // if started off identified, upsert a user
         result = await this.upsertUser(userData);
       } else {
         // promoting anonymous user to identified user
-        result = await this.identifyUser(userData, subscriptionId);
+        // from user data, we only use identity (and we remove all aliases except external_id)
+        result = await this.identifyUser(userData as UserData, subscriptionId);
       }
       return result;
   }
@@ -114,9 +114,7 @@ export default class LoginManager {
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
     );
 
-    await OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result).catch(e => {
-      Log.error("Error hydrating user models", e);
-    });
+    OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);
   }
 
   /**
@@ -124,7 +122,7 @@ export default class LoginManager {
    * if logging in from identified user a to identified user b, the identity object would
    * otherwise contain any existing user a aliases
    */
-  static prepareIdentityForUpsert(userData: UserData): void {
+  static prepareIdentityForUpsert(userData: Partial<UserData>): void {
     logMethodCall("LoginManager.prepareIdentityForUpsert", { userData });
 
     const { identity } = userData;

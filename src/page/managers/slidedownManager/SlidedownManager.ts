@@ -277,7 +277,7 @@ export class SlidedownManager {
       if (options.isInUpdateMode) {
         taggingContainer.load();
         // updating. pull remote tags.
-        const propertiesOSModel = await OneSignal.coreDirector.getPropertiesModel();
+        const propertiesOSModel = OneSignal.coreDirector.getPropertiesModel();
         const existingTags = propertiesOSModel?.data.tags as TagsObjectForApi;
         this.context.tagManager.storeRemotePlayerTags(existingTags);
         tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);

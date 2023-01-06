@@ -91,7 +91,7 @@ export class SessionManager implements ISessionManager {
   }
 
   async _getOneSignalAndSubscriptionIds(): Promise<{ onesignalId: string; subscriptionId: string }> {
-    const identityModel = await OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
     const pushSubscriptionModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
 
     if (!identityModel || !identityModel.onesignalId) {
@@ -332,7 +332,7 @@ export class SessionManager implements ISessionManager {
       return;
     }
 
-    const identityModel = await OneSignal.coreDirector.getIdentityModel();
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
     const onesignalId = identityModel?.data?.id;
 
     if (!onesignalId) {
