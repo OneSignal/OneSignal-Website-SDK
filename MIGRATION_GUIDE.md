@@ -221,15 +221,17 @@ OneSignal.User.PushSubscription.optIn();
 
 # Limitations
 
-## December 2022
+## January 2023
 ### Version 16 (alpha)
+It is recommended this version is used **only** in development and staging envrionments.
+* Switching between users via `login()` and `logout()` is unsafe. **Please stick to single user testing.**
+* Any User namespace calls must be invoked **after** initialization (async). Example: `OneSignal.User.addTag("tag", "2");`
+* Aliases will be available in a future release,
 * HTTP environments are not supported.
 * AMP environments are not supported.
 * Identity verification is not functional.
 * Outcomes are not functional.
-* Switching between users via `login()` and `logout()` is unsafe.
-* Any User namespace calls must be invoked **after** initialization (async). Example: `OneSignal.User.addTag("tag", "2");
-* Subscriptions are not updated when calling `optIn()` and `optOut()` on the backend.
+
 
 # Glossary
 
