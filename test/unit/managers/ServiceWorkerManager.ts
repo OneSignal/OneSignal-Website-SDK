@@ -177,7 +177,7 @@ test('installWorker() installs worker A with the correct file name and query par
 
     const serviceWorker = MockServiceWorkerContainerWithAPIBan.getControllerForTests();
     t.true(serviceWorker!.scriptURL.endsWith(
-      `/Worker.js?appId=${OneSignal.context.appConfig.appId}?sdkVersion=1`)
+      `/Worker.js?appId=${OneSignal.context.appConfig.appId}&sdkVersion=1`)
     );
 });
 
@@ -233,7 +233,7 @@ test('installWorker() installs worker 1 -> simulate SDK upgrade -> install worke
 
   const appConfig = OneSignal.context.appConfig;
   const registerOptions =  { scope: `${location.origin}/` };
-  const serviceWorker2Path = `${location.origin}/Worker.js?appId=${appConfig.appId}?sdkVersion=2`;
+  const serviceWorker2Path = `${location.origin}/Worker.js?appId=${appConfig.appId}&sdkVersion=2`;
 
   // 4. Ensure we installed ServiceWorker 2
   let spyCall = spy.getCall(0);
@@ -279,7 +279,7 @@ test('installWorker() installs Worker new scope when it changes', async t => {
   const appId = OneSignal.context.appConfig.appId;
   t.deepEqual(spyRegister.getCalls().map(call => call.args), [
     [
-      `https://localhost:3001/Worker.js?appId=${appId}?sdkVersion=1`,
+      `https://localhost:3001/Worker.js?appId=${appId}&sdkVersion=1`,
       { scope: 'https://localhost:3001/push/onesignal/' }
     ]
   ]);
@@ -306,7 +306,7 @@ test('Service worker register URL correct when service worker path is an absolut
   await manager.installWorker();
 
   sandbox.assert.alwaysCalledWithExactly(serviceWorkerStub,
-    `${location.origin}/Worker.js?appId=${OneSignal.context.appConfig.appId}?sdkVersion=1`,
+    `${location.origin}/Worker.js?appId=${OneSignal.context.appConfig.appId}&sdkVersion=1`,
     { scope: `${location.origin}/` }
   );
   t.pass();
