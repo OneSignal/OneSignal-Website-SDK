@@ -29,7 +29,7 @@ export default class ServiceWorkerHelper {
     const fullPath = new URL(workerFullPath, OneSignalUtils.getBaseUrl()).href;
     const appIdAsQueryParam      = Utils.encodeHashAsUriComponent({ appId });
     const sdkVersionAsQueryParam = Utils.encodeHashAsUriComponent({ sdkVersion });
-    return `${fullPath}?${appIdAsQueryParam}?${sdkVersionAsQueryParam}`;
+    return `${fullPath}?${appIdAsQueryParam}&${sdkVersionAsQueryParam}`;
   }
 
   public static async upsertSession(
