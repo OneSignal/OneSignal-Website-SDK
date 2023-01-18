@@ -8,6 +8,7 @@ import Log from "../../shared/libraries/Log";
 import { OSModel } from "../../core/modelRepo/OSModel";
 import { SupportedIdentity } from "../../core/models/IdentityModel";
 import MainHelper from "../../shared/helpers/MainHelper";
+import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
 
 export default class LoginManager {
   static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
@@ -36,8 +37,13 @@ export default class LoginManager {
 
     if (status && status >= 200 && status < 300) {
       Log.info("Successfully created user", result);
-    } else {
-      Log.error("Error creating user", result);
+    } else if (status && status >= 400 && status < 500) {
+      Log.error("Malformed request", result);
+    } else if (status && status >= 500) {
+      // retry indefinitely
+      Log.error("Server error. Retrying...");
+      await awaitableTimeout(1000);
+      return this.upsertUser(userData);
     }
 
     return result;
@@ -83,6 +89,13 @@ export default class LoginManager {
       } else {
         throw new OneSignalError(`transferSubscription failed: ${JSON.stringify(tansferResult)}}`);
       }
+    } else if (identifyResponseStatus >= 400 && identifyResponseStatus < 500) {
+      throw new OneSignalError(`identifyUser: malformed request: ${JSON.stringify(identifyUserResponse?.result)}`);
+    } else if (identifyResponseStatus >= 500) {
+      // retry indefinitely
+      Log.error("identifyUser failed: server error. Retrying...");
+      await awaitableTimeout(1000);
+      return this.identifyUser(userData, pushSubscriptionId);
     }
 
     const identityResult = identifyUserResponse?.result?.identity;
