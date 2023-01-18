@@ -124,22 +124,6 @@ export default class LoginManager {
       return { identity: identityResult };
   }
 
-  static async identifyOrUpsertUser(userData: Partial<UserData>, isIdentified: boolean, subscriptionId?: string)
-    : Promise<Partial<UserData>> {
-      logMethodCall("LoginManager.identifyOrUpsertUser", { userData, isIdentified, subscriptionId });
-      let result: Partial<UserData>;
-
-      if (isIdentified) {
-        // if started off identified, upsert a user
-        result = await this.upsertUser(userData);
-      } else {
-        // promoting anonymous user to identified user
-        // from user data, we only use identity (and we remove all aliases except external_id)
-        result = await this.identifyUser(userData as UserData, subscriptionId);
-      }
-      return result;
-  }
-
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
     logMethodCall("LoginManager.fetchAndHydrate", { onesignalId });
 
