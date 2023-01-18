@@ -172,4 +172,34 @@ export default class LoginManager {
     const newIdentity = { external_id };
     userData.identity = newIdentity;
   }
+
+  /**
+   * Transfer subscription when identifyUser fails with 409
+   * @param appId
+   * @param pushSubscriptionId
+   * @param identity
+   * @returns Promise<Partial<UserData>>
+   */
+  static async transferSubscription(appId: string, pushSubscriptionId: string, identity: SupportedIdentity):
+    Promise<Partial<UserData>> {
+      Log.info(`identifyUser failed: externalId already exists. Attempting to transfer push subscription...`);
+
+      const retainPreviousOwner = false;
+      const transferResponse = await RequestService.transferSubscription(
+        { appId },
+        pushSubscriptionId,
+        identity,
+        retainPreviousOwner
+      );
+      const transferResponseStatus = transferResponse?.status;
+      const tansferResult = transferResponse?.result;
+
+      if (transferResponseStatus && transferResponseStatus >= 200 && transferResponseStatus < 300) {
+        Log.info("transferSubscription succeeded");
+        const transferResultIdentity = tansferResult?.identity;
+        return { identity: transferResultIdentity };
+      } else {
+        throw new OneSignalError(`transferSubscription failed: ${JSON.stringify(tansferResult)}}`);
+      }
+  }
 }
