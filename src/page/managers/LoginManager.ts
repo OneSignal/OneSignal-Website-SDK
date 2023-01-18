@@ -29,7 +29,7 @@ export default class LoginManager {
   static async upsertUser(userData: Partial<UserData>): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
     const appId = await MainHelper.getAppId();
-    this.prepareIdentityForUpsert(userData);
+    this.stripAliasesOtherThanExternalId(userData);
     const response = await RequestService.createUser({ appId }, userData);
     const result = response?.result;
     const status = response?.status;
@@ -49,7 +49,7 @@ export default class LoginManager {
     const { onesignal_id: onesignalId } = userData.identity;
 
     // only accepts one alias, so remove other aliases only leaving external_id
-    this.prepareIdentityForUpsert(userData);
+    this.stripAliasesOtherThanExternalId(userData);
     const { identity } = userData;
 
     if (!identity || !onesignalId) {
@@ -91,8 +91,7 @@ export default class LoginManager {
 
   static async identifyOrUpsertUser(userData: Partial<UserData>, isIdentified: boolean, subscriptionId?: string)
     : Promise<Partial<UserData>> {
-    logMethodCall("LoginManager.identifyOrUpsertUser", { userData, isIdentified, subscriptionId });
-
+      logMethodCall("LoginManager.identifyOrUpsertUser", { userData, isIdentified, subscriptionId });
       let result: Partial<UserData>;
 
       if (isIdentified) {
@@ -122,7 +121,7 @@ export default class LoginManager {
    * if logging in from identified user a to identified user b, the identity object would
    * otherwise contain any existing user a aliases
    */
-  static prepareIdentityForUpsert(userData: Partial<UserData>): void {
+  static stripAliasesOtherThanExternalId(userData: Partial<UserData>): void {
     logMethodCall("LoginManager.prepareIdentityForUpsert", { userData });
 
     const { identity } = userData;
