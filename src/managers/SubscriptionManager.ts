@@ -30,6 +30,7 @@ import NotImplementedError from "../errors/NotImplementedError";
 import { PermissionUtils } from "../utils/PermissionUtils";
 import { base64ToUint8Array } from "../utils/Encoding";
 import { ContextSWInterface } from '../models/ContextSW';
+import OneSignalApiBase from "../OneSignalApiBase";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -534,6 +535,14 @@ export class SubscriptionManager {
     const [newPushSubscription, isNewSubscription] =
       await SubscriptionManager.doPushSubscribe(pushManager, this.getVapidKeyForBrowser());
 
+    // If Safari 16+, we need to unsubscribe the user from the old push subscription if it exists
+    const safariDeviceToken = window.safari?.pushNotification?.permission(OneSignal.config.safariWebId).deviceToken;
+    if (bowser.safari && safariDeviceToken) {
+      // see https://apple.co/3XHNuGB for info on this call
+      // handled internally here https://bit.ly/3WqIMvX
+      await OneSignalApiBase.delete(`safari/v2/devices/${safariDeviceToken}/registrations/${this.config.safariWebId}`);
+    }
+
     // Update saved create and expired times
     await SubscriptionManager.updateSubscriptionTime(isNewSubscription, newPushSubscription.expirationTime);
 
@@ -583,7 +592,6 @@ export class SubscriptionManager {
     try {
       const existingSubscription = await pushManager.getSubscription();
       const subscription = await pushManager.subscribe(subscriptionOptions);
-      // window.pushManagerCall = async () => { await pushManager.subscribe(subscriptionOptions); };
       return [subscription, !existingSubscription];
     } catch (e) {
       if (e.name == "InvalidStateError") {
