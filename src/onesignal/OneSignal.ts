@@ -69,6 +69,14 @@ export default class OneSignal {
   }
 
   /**
+   * @PublicApi
+   * @param logLevel - string
+   */
+  static setLogLevel(logLevel: string) {
+    Log.setLevel(logLevel);
+  }
+
+  /**
    * Login user
    * @PublicApi
    *
@@ -341,7 +349,6 @@ export default class OneSignal {
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
-  static log = Log;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;
