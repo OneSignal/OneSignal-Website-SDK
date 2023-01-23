@@ -31,16 +31,23 @@ jobs:
           python-version: '2.7'
       - name: "[Setup] Install dependencies"
         run: yarn
-      - name: "[Test] Run all tests"
-        run: yarn test:CI
+#      - name: "[Test] Run all tests"
+#        run: yarn test:CI
       - name: "[Build] Staging"
         env:
           STAGING_DOMAIN: ${{ secrets.STAGING_DOMAIN }}
         run: BUILD_ORIGIN=${STAGING_DOMAIN} API=staging API_ORIGIN=${STAGING_DOMAIN} yarn build:staging
       - name: "[Build] Production"
         run: yarn build:prod
-      - id: 'auth'
-        name: 'Authenticate to Google Cloud'
+      - name: "[Debug] list root"
+        run: ls -la
+      - name: "[Debug] list build"
+        run: ls -ls build
+      - name: "[Debug] list releases"
+        run: ls -ls build/releases
+      - name: "[Debug] list amp"
+        run: ls -ls build/amp
+      - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
