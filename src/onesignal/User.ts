@@ -198,6 +198,7 @@ export default class User {
     }
 
     const propertiesModel = OneSignal.coreDirector.getPropertiesModel();
+    tags = { ...propertiesModel?.data?.tags, ...tags };
     propertiesModel?.set('tags', tags);
   }
 
