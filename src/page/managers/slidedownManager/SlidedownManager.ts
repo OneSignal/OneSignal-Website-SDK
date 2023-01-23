@@ -278,8 +278,6 @@ export class SlidedownManager {
       const existingTags = propertiesOSModel?.data.tags as TagsObjectForApi;
 
       if (options.isInUpdateMode && existingTags) {
-        taggingContainer.load();
-        // updating. pull remote tags.
         this.context.tagManager.storeRemotePlayerTags(existingTags);
         tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
       } else {
