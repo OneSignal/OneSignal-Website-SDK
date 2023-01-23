@@ -1,7 +1,10 @@
 name: Build SDK Files & GCS Upload
 
 on:
-  workflow_dispatch:
+#  workflow_dispatch:
+  pull_request:
+    branches:
+      - "migrate_sdk_to_gcs"
 
 jobs:
   test_build_deploy:
