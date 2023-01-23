@@ -54,13 +54,13 @@ jobs:
       - name: "[Deploy] Upload SDK Files to GCS"
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
-          path: 'build/releases/*'
+          path: 'build/releases'
           destination: 'sdk-builds-persistence-onesignal/websdk/${{ github.sha }}'
           parent: false
 
       - name: "[Deploy] Upload AMP SDK Files to GCS"
         uses: 'google-github-actions/upload-cloud-storage@v1'
         with:
-          path: 'build/amp/*'
+          path: 'build/amp'
           destination: 'sdk-builds-persistence-onesignal/websdk/${{ github.sha }}'
           parent: false
