@@ -14,13 +14,13 @@ export function isMacOSSafariInIframe(): boolean {
   navigator.platform === "MacIntel"; // isMacOS
 }
 
-function supportsSafariPush(): boolean {
+export function supportsSafariPush(): boolean {
   return (window.safari && typeof window.safari.pushNotification !== "undefined") ||
           isMacOSSafariInIframe();
 }
 
 // Does the browser support the standard Push API
-function supportsVapidPush(): boolean {
+export function supportsVapidPush(): boolean {
   return typeof PushSubscriptionOptions !== "undefined" &&
          PushSubscriptionOptions.prototype.hasOwnProperty("applicationServerKey");
 }
