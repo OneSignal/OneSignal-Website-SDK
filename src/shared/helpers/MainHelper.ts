@@ -12,6 +12,7 @@ import Database from '../services/Database';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import OneSignalEvent from '../services/OneSignalEvent';
+import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
 
 export default class MainHelper {
 
@@ -216,11 +217,19 @@ export default class MainHelper {
     return subscription.deviceId || undefined;
   }
 
+  // TO DO: unit test
   static async getCurrentPushToken(): Promise<string | undefined> {
+    // legacy safari (<16)
+    if (window.safari && !supportsVapidPush()) {
+      const safariToken = window.safari?.pushNotification?.permission(OneSignal.config.safariWebId).deviceToken;
+      return safariToken?.toLowerCase() || undefined;
+    }
+
     const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
     if (!registration) {
       return undefined;
     }
+
     const subscription = await registration.pushManager.getSubscription();
     return subscription?.endpoint;
   }
