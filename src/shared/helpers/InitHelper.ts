@@ -106,8 +106,8 @@ export default class InitHelper {
     }
 
     const isSubscribed = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
-    // saves isSubscribed to localStorage. used for require user interaction functionality
-    LocalStorage.setIsPushNotificationsEnabled(!!isSubscribed);
+    // saves isSubscribed to IndexedDb. used for require user interaction functionality
+    await Database.setIsPushEnabled(!!isSubscribed);
 
     if (OneSignal.config.userConfig.promptOptions.autoPrompt && !isOptedOut) {
       OneSignal.context.promptsManager.spawnAutoPrompts();
