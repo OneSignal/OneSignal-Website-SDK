@@ -260,13 +260,17 @@ export default class Database {
     return state;
   }
 
+  async setIsPushEnabled(enabled: boolean): Promise<void> {
+    await this.put("Options", { key: "isPushEnabled", value: enabled });
+  }
+
   async setAppState(appState: AppState) {
     if (appState.defaultNotificationUrl)
       await this.put("Options", { key: "defaultUrl", value: appState.defaultNotificationUrl });
     if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
       await this.put("Options", { key: "defaultTitle", value: appState.defaultNotificationTitle });
     if (appState.lastKnownPushEnabled != null)
-      await this.put("Options", { key: "isPushEnabled", value: appState.lastKnownPushEnabled });
+      await this.setIsPushEnabled(appState.lastKnownPushEnabled);
     if (appState.clickedNotifications) {
       const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
       for (const url of clickedNotificationUrls) {
@@ -480,6 +484,10 @@ export default class Database {
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
     return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
+  }
+
+  static async setIsPushEnabled(enabled: boolean): Promise<void> {
+    return Database.singletonInstance.setIsPushEnabled(enabled);
   }
 
   public static async getCurrentSession(): Promise<Session | null> {
