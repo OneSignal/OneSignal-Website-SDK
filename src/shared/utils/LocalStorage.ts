@@ -7,28 +7,17 @@ const PAGE_VIEWS = "os_pageViews";
 const REQUIRES_PRIVACY_CONSENT = "requiresPrivacyConsent";
 
 export default class LocalStorage {
+  static removeLegacySubscriptionOptions(): void {
+    localStorage.removeItem(IS_OPTED_OUT);
+    localStorage.removeItem(IS_PUSH_NOTIFICATIONS_ENABLED);
+  }
+
   static setConsentRequired(value: boolean): void {
     localStorage.setItem(REQUIRES_PRIVACY_CONSENT, value.toString());
   }
 
   static getConsentRequired(): boolean {
     return localStorage.getItem(REQUIRES_PRIVACY_CONSENT) === "true";
-  }
-
-  public static getIsOptedOut(): boolean {
-    return localStorage.getItem(IS_OPTED_OUT) === "true";
-  }
-
-  public static getIsPushNotificationsEnabled(): boolean {
-    return localStorage.getItem(IS_PUSH_NOTIFICATIONS_ENABLED) === "true";
-  }
-
-  public static setIsOptedOut(value: boolean): void {
-    localStorage.setItem(IS_OPTED_OUT, value.toString());
-  }
-
-  public static setIsPushNotificationsEnabled(value: boolean): void {
-    localStorage.setItem(IS_PUSH_NOTIFICATIONS_ENABLED, value.toString());
   }
 
   public static setStoredPermission(value: NotificationPermission): void {
