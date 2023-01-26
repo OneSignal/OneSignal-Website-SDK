@@ -43,7 +43,7 @@ export default class EventHelper {
     const newNotificationTypes = subscriptionState.optedOut ? -2 : 1;
     await context.subscriptionManager.updatePushSubscriptionNotificationTypes(newNotificationTypes);
 
-    LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
+    await Database.setIsPushEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
     await Database.setAppState(appState);
 
