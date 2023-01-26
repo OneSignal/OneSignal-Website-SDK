@@ -107,7 +107,7 @@ export default class RemoteFrame implements Disposable {
   }
 
   async subscribe() {
-    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     const windowCreator = opener || parent;
 
     if (!isPushEnabled) {

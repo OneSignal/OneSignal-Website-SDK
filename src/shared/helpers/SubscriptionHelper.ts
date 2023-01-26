@@ -14,13 +14,12 @@ import { EnvironmentInfo } from '../../page/models/EnvironmentInfo';
 import { SessionOrigin } from '../models/Session';
 import { Browser } from '../models/Browser';
 import { PushDeviceRecord } from '../models/PushDeviceRecord';
-import LocalStorage from '../utils/LocalStorage';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import MainHelper from './MainHelper';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
-    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     return await SubscriptionHelper.internalRegisterForPush(isPushEnabled);
   }
 

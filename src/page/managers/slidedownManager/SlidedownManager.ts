@@ -126,7 +126,7 @@ export class SlidedownManager {
     const tags = TaggingContainer.getValuesFromTaggingContainer();
     this.context.tagManager.storeTagValuesToUpdate(tags);
 
-    const isPushEnabled: boolean = LocalStorage.getIsPushNotificationsEnabled();
+    const isPushEnabled: boolean = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     if (isPushEnabled) {
       // already subscribed, send tags immediately
       this.slidedown.setSaveState();
