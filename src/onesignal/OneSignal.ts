@@ -193,6 +193,8 @@ export default class OneSignal {
   static async init(options: AppUserConfig) {
     logMethodCall('init');
 
+    LocalStorage.removeLegacySubscriptionOptions();
+
     await InitHelper.polyfillSafariFetch();
     InitHelper.errorIfInitAlreadyCalled();
     await OneSignal._initializeConfig(options);
