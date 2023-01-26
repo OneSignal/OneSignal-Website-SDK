@@ -10,6 +10,14 @@ import { SupportedIdentity } from "../../core/models/IdentityModel";
 import MainHelper from "../../shared/helpers/MainHelper";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
 
+const RETRY_BACKOFF: { [key: number]: number } = {
+  5: 10_000,
+  4: 20_000,
+  3: 30_000,
+  2: 30_000,
+  1: 30_000,
+};
+
 export default class LoginManager {
   static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
     logMethodCall("LoginManager.setExternalId", { externalId });
@@ -43,64 +51,72 @@ export default class LoginManager {
       return result;
   }
 
-  static async upsertUser(userData: Partial<UserData>): Promise<UserData> {
+  static async upsertUser(userData: Partial<UserData>, retry: number = 5): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
+
+    if (retry === 0) {
+      throw new OneSignalError("Login: upsertUser failed: max retries reached");
+    }
+
     const appId = await MainHelper.getAppId();
     this.stripAliasesOtherThanExternalId(userData);
     const response = await RequestService.createUser({ appId }, userData);
     const result = response?.result;
     const status = response?.status;
 
-    if (status && status >= 200 && status < 300) {
+    if (status >= 200 && status < 300) {
       Log.info("Successfully created user", result);
-    } else if (status && status >= 400 && status < 500) {
+    } else if (status >= 400 && status < 500) {
       Log.error("Malformed request", result);
-    } else if (status && status >= 500) {
-      // retry indefinitely
+    } else if (status >= 500) {
       Log.error("Server error. Retrying...");
-      await awaitableTimeout(1000);
-      return this.upsertUser(userData);
+      await awaitableTimeout(RETRY_BACKOFF[retry]);
+      return this.upsertUser(userData, retry - 1);
     }
 
     return result;
   }
 
-  static async identifyUser(userData: UserData, pushSubscriptionId?: string): Promise<Partial<UserData>> {
-    logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
+  static async identifyUser(userData: UserData, pushSubscriptionId?: string, retry: number = 5):
+    Promise<Partial<UserData>> {
+      logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
 
-    const { onesignal_id: onesignalId } = userData.identity;
+      if (retry === 0) {
+        throw new OneSignalError("Login: identifyUser failed: max retries reached");
+      }
 
-    // only accepts one alias, so remove other aliases only leaving external_id
-    this.stripAliasesOtherThanExternalId(userData);
+      const { onesignal_id: onesignalId } = userData.identity;
 
-    const { identity } = userData;
+      // only accepts one alias, so remove other aliases only leaving external_id
+      this.stripAliasesOtherThanExternalId(userData);
 
-    if (!identity || !onesignalId) {
-      throw new OneSignalError("identifyUser failed: no identity found");
-    }
+      const { identity } = userData;
 
-    const appId = await MainHelper.getAppId();
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+      if (!identity || !onesignalId) {
+        throw new OneSignalError("identifyUser failed: no identity found");
+      }
 
-    // identify user
-    const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
-    const identifyResponseStatus = identifyUserResponse?.status;
+      const appId = await MainHelper.getAppId();
+      const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
 
-    if (identifyResponseStatus && identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
-      Log.info("identifyUser succeeded");
-    } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
-      return await this.transferSubscription(appId, pushSubscriptionId, identity);
-    } else if (identifyResponseStatus >= 400 && identifyResponseStatus < 500) {
-      throw new OneSignalError(`identifyUser: malformed request: ${JSON.stringify(identifyUserResponse?.result)}`);
-    } else if (identifyResponseStatus >= 500) {
-      // retry indefinitely
-      Log.error("identifyUser failed: server error. Retrying...");
-      await awaitableTimeout(1000);
-      return this.identifyUser(userData, pushSubscriptionId);
-    }
+      // identify user
+      const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
+      const identifyResponseStatus = identifyUserResponse?.status;
 
-    const identityResult = identifyUserResponse?.result?.identity;
-    return { identity: identityResult };
+      if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
+        Log.info("identifyUser succeeded");
+      } else if (identifyResponseStatus === 409 && pushSubscriptionId) {
+        return await this.transferSubscription(appId, pushSubscriptionId, identity);
+      } else if (identifyResponseStatus >= 400 && identifyResponseStatus < 500) {
+        throw new OneSignalError(`identifyUser: malformed request: ${JSON.stringify(identifyUserResponse?.result)}`);
+      } else if (identifyResponseStatus >= 500) {
+        Log.error("identifyUser failed: server error. Retrying...");
+        await awaitableTimeout(RETRY_BACKOFF[retry]);
+        return this.identifyUser(userData, pushSubscriptionId, retry - 1);
+      }
+
+      const identityResult = identifyUserResponse?.result?.identity;
+      return { identity: identityResult };
   }
 
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
