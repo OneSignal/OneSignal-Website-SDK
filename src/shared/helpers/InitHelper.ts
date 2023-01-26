@@ -95,7 +95,9 @@ export default class InitHelper {
      */
     const isOptedOut = await OneSignal.context.subscriptionManager.isOptedOut();
     // saves isOptedOut to localStorage. used for require user interaction functionality
-    LocalStorage.setIsOptedOut(!!isOptedOut);
+    const subscription = await Database.getSubscription();
+    subscription.optedOut = isOptedOut;
+    await Database.setSubscription(subscription);
 
     /**
      * Auto-resubscribe is working only on HTTPS (and in safari)
@@ -149,7 +151,8 @@ export default class InitHelper {
      * We don't want to resubscribe if the user is opted out, and we can't check on HTTP, because the promise will
      * prevent the popup from opening.
      */
-    const isOptedOut = LocalStorage.getIsOptedOut();
+    const subscription = await Database.getSubscription();
+    const isOptedOut = subscription.optedOut;
     if (!isOptedOut) {
       await SubscriptionHelper.registerForPush();
     }
