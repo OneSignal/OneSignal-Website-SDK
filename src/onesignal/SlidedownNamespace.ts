@@ -19,9 +19,9 @@ export default class SlidedownNamespace extends EventListenerBase {
     await OneSignal.context.promptsManager.internalShowParticularSlidedown(DelayedPromptType.Push, options);
   }
 
-   async promptPushCategories(options?: AutoPromptOptions): Promise<void> {
+  async promptPushCategories(options?: AutoPromptOptions): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    const isPushEnabled = LocalStorage.getIsPushNotificationsEnabled();
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     await OneSignal.context.promptsManager.internalShowCategorySlidedown({
       ...options,
       isInUpdateMode: isPushEnabled

@@ -1,7 +1,6 @@
 import { ResourceLoadState } from "../../page/services/DynamicResourceLoader";
 import { CUSTOM_LINK_CSS_CLASSES, CUSTOM_LINK_CSS_SELECTORS } from "../slidedown/constants";
 import { addCssClass } from "../utils/utils";
-import LocalStorage from "../utils/LocalStorage";
 import InitHelper, { RegisterOptions } from "../helpers/InitHelper";
 import Log from "../libraries/Log";
 import { AppUserConfigCustomLinkOptions } from "../models/Prompts";
@@ -23,8 +22,8 @@ export class CustomLinkManager {
     }
 
     Log.info("OneSignal: initializing customlink");
-
-    if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    if (!this.config?.unsubscribeEnabled && isPushEnabled) {
       this.hideCustomLinkContainers();
       return;
     }
@@ -58,7 +57,7 @@ export class CustomLinkManager {
         addCssClass(explanation, this.config.size);
       }
 
-      if (CustomLinkManager.isPushEnabled()) {
+      if (await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()) {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
         addCssClass(explanation, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
@@ -87,7 +86,7 @@ export class CustomLinkManager {
         addCssClass(subscribeButton, this.config.style);
       }
 
-      if (CustomLinkManager.isPushEnabled()) {
+      if (await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()) {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.subscribed);
       } else {
         addCssClass(subscribeButton, CUSTOM_LINK_CSS_CLASSES.state.unsubscribed);
@@ -129,23 +128,24 @@ export class CustomLinkManager {
   }
 
   private async handleClick(element: HTMLElement): Promise<void> {
-    if (CustomLinkManager.isPushEnabled()) {
+    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    if (isPushEnabled) {
       await OneSignal.User.PushSubscription.optOut();
       await this.setTextFromPushStatus(element);
     } else {
-      if (!CustomLinkManager.isOptedOut()) {
+      if (!isPushEnabled) {
         const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
         const options: RegisterOptions = { autoAccept };
         await InitHelper.registerForPushNotifications(options);
         // once subscribed, prevent unsubscribe by hiding customlinks
-        if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
+        if (!this.config?.unsubscribeEnabled && isPushEnabled) {
           this.hideCustomLinkContainers();
         }
         return;
       }
       await OneSignal.User.PushSubscription.optIn();
       // once subscribed, prevent unsubscribe by hiding customlinks
-      if (!this.config?.unsubscribeEnabled && CustomLinkManager.isPushEnabled()) {
+      if (!this.config?.unsubscribeEnabled && isPushEnabled) {
         this.hideCustomLinkContainers();
       }
     }
@@ -153,13 +153,13 @@ export class CustomLinkManager {
 
   private async setTextFromPushStatus(element: HTMLElement): Promise<void> {
     if (this.config?.text?.subscribe) {
-      if (!CustomLinkManager.isPushEnabled()) {
+      if (!await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()) {
         element.textContent = this.config.text.subscribe;
       }
     }
 
     if (this.config?.text?.unsubscribe) {
-      if (CustomLinkManager.isPushEnabled()) {
+      if (await OneSignal.context.subscriptionManager.isPushNotificationsEnabled()) {
         element.textContent = this.config.text.unsubscribe;
       }
     }
@@ -181,13 +181,5 @@ export class CustomLinkManager {
   get customlinkContainerElements(): HTMLElement[] {
     const containers = document.querySelectorAll<HTMLElement>(CUSTOM_LINK_CSS_SELECTORS.containerSelector);
     return Array.prototype.slice.call(containers);
-  }
-
-  static isPushEnabled(): boolean {
-    return LocalStorage.getIsPushNotificationsEnabled();
-  }
-
-  static isOptedOut(): boolean {
-    return LocalStorage.getIsOptedOut();
   }
 }
