@@ -133,21 +133,12 @@ export class CustomLinkManager {
       await OneSignal.User.PushSubscription.optOut();
       await this.setTextFromPushStatus(element);
     } else {
-      if (!isPushEnabled) {
-        const autoAccept = !OneSignal.environmentInfo.requiresUserInteraction;
-        const options: RegisterOptions = { autoAccept };
-        await InitHelper.registerForPushNotifications(options);
-        // once subscribed, prevent unsubscribe by hiding customlinks
-        if (!this.config?.unsubscribeEnabled && isPushEnabled) {
-          this.hideCustomLinkContainers();
-        }
-        return;
-      }
       await OneSignal.User.PushSubscription.optIn();
       // once subscribed, prevent unsubscribe by hiding customlinks
-      if (!this.config?.unsubscribeEnabled && isPushEnabled) {
+      if (!this.config?.unsubscribeEnabled) {
         this.hideCustomLinkContainers();
       }
+      return;
     }
   }
 
