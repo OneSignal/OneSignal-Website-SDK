@@ -114,7 +114,13 @@ export default class NotificationsNamespace extends EventListenerBase {
    */
    async requestPermission(): Promise<void> {
     await awaitOneSignalInitAndSupported();
-    await OneSignal.context.promptsManager.internalShowNativePrompt();
+    const requiresUserInteraction = OneSignal.environmentInfo?.requiresUserInteraction;
+    if (!requiresUserInteraction) {
+      await OneSignal.context.promptsManager.internalShowNativePrompt();
+      return;
+    }
+
+    await OneSignal.Slidedown.promptPush();
   }
 
   /* Function overloads */
