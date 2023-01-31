@@ -168,6 +168,13 @@ export default class OneSignal {
 
   static async logout(): Promise<void> {
     logMethodCall('logout');
+    // check if user is already logged out
+    const identityModel = this.coreDirector.getIdentityModel();
+    if (!identityModel || !identityModel.data || !identityModel.data.external_id) {
+      Log.debug('Logout: User is not logged in, skipping logout');
+      return;
+    }
+
     // before, logging out, process anything waiting in the delta queue so it's not lost
     this.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
     UserDirector.resetUserMetaProperties();
