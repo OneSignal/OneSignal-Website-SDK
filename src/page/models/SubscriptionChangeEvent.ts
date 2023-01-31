@@ -1,8 +1,12 @@
-import { SubscriptionModel } from "../../core/models/SubscriptionModels";
+type PushSubscriptionNamespaceProperties = {
+  id: string | null | undefined;
+  token: string | null | undefined;
+  optedIn: boolean;
+};
 
 type SubscriptionChangeEvent = {
-  previous: Partial<SubscriptionModel>;
-  current: Partial<SubscriptionModel>;
+  previous: PushSubscriptionNamespaceProperties;
+  current: PushSubscriptionNamespaceProperties;
 };
 
 export default SubscriptionChangeEvent;
