@@ -5,11 +5,13 @@ import { ContextSWInterface } from '../models/ContextSW';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import BrowserUtils from '../utils/BrowserUtils';
-import LocalStorage from '../utils/LocalStorage';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import PromptsHelper from './PromptsHelper';
 import OneSignalEvent from "../services/OneSignalEvent";
 import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
+import MainHelper from './MainHelper';
+import { OSModel } from '../../core/modelRepo/OSModel';
+import { SubscriptionModel } from '../../core/models/SubscriptionModels';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -43,17 +45,26 @@ export default class EventHelper {
     const newNotificationTypes = subscriptionState.optedOut ? -2 : 1;
     await context.subscriptionManager.updatePushSubscriptionNotificationTypes(newNotificationTypes);
 
+    const currentPushToken = await MainHelper.getCurrentPushToken();
+    const pushModel: OSModel<SubscriptionModel> = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionId = pushModel.data?.id;
+
     await Database.setIsPushEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
+    appState.lastKnownPushToken = currentPushToken;
+    appState.lastKnownPushId = pushSubscriptionId;
     await Database.setAppState(appState);
 
-    // TO DO: should use id and token. will require more changes to save previous state
     const change: SubscriptionChangeEvent = {
       previous: {
-        enabled: !isPushEnabled,
+        id: appState.lastKnownPushId,
+        token: appState.lastKnownPushToken,
+        optedIn: lastKnownPushEnabled,
       },
       current: {
-        enabled: isPushEnabled,
+        id: pushSubscriptionId,
+        token: currentPushToken,
+        optedIn: isPushEnabled,
       }
     };
 
