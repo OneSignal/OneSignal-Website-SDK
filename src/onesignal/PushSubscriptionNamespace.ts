@@ -11,6 +11,7 @@ import { SubscriptionModel, SupportedSubscription } from "../core/models/Subscri
 import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../core/utils/typePredicates";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import SubscriptionChangeEvent from "../page/models/SubscriptionChangeEvent";
+import { OSModel } from "../core/modelRepo/OSModel";
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;
@@ -26,13 +27,14 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       Log.error(e);
     });
 
-    OneSignal.coreDirector.getCurrentPushSubscriptionModel().then(pushModel => {
-      if (pushModel && isCompleteSubscriptionObject(pushModel.data)) {
-        this._id = pushModel.data.id;
-      }
-    }).catch(e => {
-      Log.error(e);
-    });
+    OneSignal.coreDirector.getCurrentPushSubscriptionModel()
+      .then((pushModel: OSModel<SupportedSubscription> | undefined) => {
+        if (pushModel && isCompleteSubscriptionObject(pushModel.data)) {
+          this._id = pushModel.data.id;
+        }
+      }).catch(e => {
+        Log.error(e);
+      });
 
     this._subscribeToPushModelChanges().catch(e => {
       Log.error(e);
