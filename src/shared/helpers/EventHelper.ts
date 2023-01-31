@@ -73,12 +73,12 @@ export default class EventHelper {
 
   static async _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
     // EventHelper.onSubscriptionChanged_showWelcomeNotification(change?.current.enabled);
-    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(change?.current.enabled);
+    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
     EventHelper.onSubscriptionChanged_updateCustomLink();
   }
 
-  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed: boolean | undefined) {
+  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: boolean | null) {
     if (isSubscribed !== true) {
       return;
     }
