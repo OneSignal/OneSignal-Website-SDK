@@ -9,14 +9,7 @@ import { OSModel } from "../../core/modelRepo/OSModel";
 import { SupportedIdentity } from "../../core/models/IdentityModel";
 import MainHelper from "../../shared/helpers/MainHelper";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
-
-const RETRY_BACKOFF: { [key: number]: number } = {
-  5: 10_000,
-  4: 20_000,
-  3: 30_000,
-  2: 30_000,
-  1: 30_000,
-};
+import { RETRY_BACKOFF } from "../../shared/api/RetryBackoff";
 
 export default class LoginManager {
   static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
