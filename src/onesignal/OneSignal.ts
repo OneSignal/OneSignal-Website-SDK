@@ -105,6 +105,7 @@ export default class OneSignal {
       }
 
       const identityModel = this.coreDirector.getIdentityModel();
+      const onesignalIdBackup = identityModel?.onesignalId;
 
       if (!identityModel) {
         throw new OneSignalError('Login: No identity model found');
@@ -157,9 +158,14 @@ export default class OneSignal {
           throw new OneSignalError('Login: No OneSignal ID found');
         }
         await LoginManager.fetchAndHydrate(onesignalId);
-      })
-      .catch(error => {
-        throw new OneSignalError(`Login: Error while identifying or upserting user: ${error}`);
+      }).catch(error => {
+        Log.error(`Login: Error while identifying or upserting user: ${error}`);
+        if (onesignalIdBackup) {
+          Log.info('Login: Failed to login, reverting to anonymous user');
+          LoginManager.fetchAndHydrate(onesignalIdBackup).catch(error => {
+            Log.error(`Login: Error while reverting to anonymous user: ${error}`);
+          });
+        }
       });
     } catch (e) {
       Log.error(e);
