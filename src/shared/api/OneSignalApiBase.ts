@@ -1,9 +1,12 @@
 import { OneSignalApiError, OneSignalApiErrorKind } from "../errors/OneSignalApiError";
 import OneSignalError from "../errors/OneSignalError";
 import Environment from "../helpers/Environment";
+import Log from "../libraries/Log";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import { APIHeaders } from "../models/APIHeaders";
+import { awaitableTimeout } from "../utils/AwaitableTimeout";
 import OneSignalApiBaseResponse from "./OneSignalApiBaseResponse";
+import { RETRY_BACKOFF } from "./RetryBackoff";
 
 type SupportedMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -66,20 +69,29 @@ export class OneSignalApiBase {
       return OneSignalApiBase.executeFetch(url, contents);
   }
 
-  private static async executeFetch(url: string, contents: RequestInit): Promise<OneSignalApiBaseResponse> {
-    try {
-      const response = await fetch(url, contents);
-      const { status } = response;
-      const json = await response.json();
+  private static async executeFetch(url: string, contents: RequestInit, retry: number = 5):
+    Promise<OneSignalApiBaseResponse> {
+      if (retry === 0) {
+        return Promise.reject(new OneSignalApiError(OneSignalApiErrorKind.RetryLimitReached));
+      }
+      try {
+        const response = await fetch(url, contents);
+        const { status } = response;
+        const json = await response.json();
 
-      return {
-        result: json,
-        status
-      };
-    } catch (e) {
-      throw new OneSignalError(`OneSignalApiBase: failed to execute HTTP call: ${e}`);
+        return {
+          result: json,
+          status
+        };
+      } catch (e) {
+        if (e.name === 'TypeError') {
+          await awaitableTimeout(RETRY_BACKOFF[retry]);
+          Log.error(`OneSignal: Network timed out while calling ${url}. Retrying...`);
+          return OneSignalApiBase.executeFetch(url, contents, retry - 1);
+        }
+        throw new OneSignalError(`OneSignalApiBase: failed to execute HTTP call: ${e}`);
+      }
     }
-  }
 }
 
 export default OneSignalApiBase;
