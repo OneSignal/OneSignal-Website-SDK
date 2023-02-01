@@ -46,6 +46,7 @@ import UserDirector from "./UserDirector";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { OSModel } from "../core/modelRepo/OSModel";
 import UserData from "../core/models/UserData";
+import DebugNamespace from "./DebugNamesapce";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -320,6 +321,7 @@ export default class OneSignal {
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
   static User: UserNamespace;
+  static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
@@ -340,7 +342,6 @@ export default class OneSignal {
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
-  static log = Log;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;
