@@ -52,7 +52,11 @@ export default class LoginManager {
     }
 
     const appId = await MainHelper.getAppId();
+    const userDataCopy = JSON.parse(JSON.stringify(userData));
+
+    // only accepts one alias, so remove other aliases only leaving external_id
     this.stripAliasesOtherThanExternalId(userData);
+
     const response = await RequestService.createUser({ appId }, userData);
     const result = response?.result;
     const status = response?.status;
@@ -64,7 +68,7 @@ export default class LoginManager {
     } else if (status >= 500) {
       Log.error("Server error. Retrying...");
       await awaitableTimeout(RETRY_BACKOFF[retry]);
-      return this.upsertUser(userData, retry - 1);
+      return this.upsertUser(userDataCopy, retry - 1);
     }
 
     return result;
@@ -79,6 +83,7 @@ export default class LoginManager {
       }
 
       const { onesignal_id: onesignalId } = userData.identity;
+      const userDataCopy = JSON.parse(JSON.stringify(userData));
 
       // only accepts one alias, so remove other aliases only leaving external_id
       this.stripAliasesOtherThanExternalId(userData);
@@ -94,7 +99,7 @@ export default class LoginManager {
 
       // identify user
       const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
-      const identifyResponseStatus = identifyUserResponse?.status;
+      const identifyResponseStatus = 500;
 
       if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
         Log.info("identifyUser succeeded");
@@ -105,7 +110,7 @@ export default class LoginManager {
       } else if (identifyResponseStatus >= 500) {
         Log.error("identifyUser failed: server error. Retrying...");
         await awaitableTimeout(RETRY_BACKOFF[retry]);
-        return this.identifyUser(userData, pushSubscriptionId, retry - 1);
+        return this.identifyUser(userDataCopy, pushSubscriptionId, retry - 1);
       }
 
       const identityResult = identifyUserResponse?.result?.identity;
