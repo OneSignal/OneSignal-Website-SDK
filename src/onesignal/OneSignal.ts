@@ -162,7 +162,6 @@ export default class OneSignal {
       });
     } catch (e) {
       Log.error(e);
-      throw e;
     }
   }
 
