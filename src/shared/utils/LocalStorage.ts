@@ -7,6 +7,10 @@ const PAGE_VIEWS = "os_pageViews";
 const REQUIRES_PRIVACY_CONSENT = "requiresPrivacyConsent";
 
 export default class LocalStorage {
+  /**
+   * Used in OneSignal initialization to dedupe local storage subscription options already being saved to IndexedDB.
+   * We will eventually be able to remove this function.
+   */
   static removeLegacySubscriptionOptions(): void {
     localStorage.removeItem(IS_OPTED_OUT);
     localStorage.removeItem(IS_PUSH_NOTIFICATIONS_ENABLED);
