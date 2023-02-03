@@ -64,7 +64,7 @@ export default class EventHelper {
         id: lastKnownPushId,
         token: lastKnownPushToken,
         // default to true if not stored yet
-        optedIn: lastKnownOptedIn || true,
+        optedIn: lastKnownOptedIn ?? true,
       },
       current: {
         id: pushSubscriptionId,
