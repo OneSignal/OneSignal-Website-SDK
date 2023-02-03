@@ -14,6 +14,13 @@ class AppState {
      */
     lastKnownPushEnabled: boolean | undefined;
 
+    lastKnownPushToken: string | undefined;
+
+    lastKnownPushId: string | undefined;
+
+    // default true
+    lastKnownOptedIn: boolean = true;
+
     clickedNotifications: ClickedNotifications | undefined;
 }
 

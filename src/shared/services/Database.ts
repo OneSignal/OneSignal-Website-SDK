@@ -257,7 +257,16 @@ export default class Database {
     state.defaultNotificationTitle = await this.get<string>("Options", "defaultTitle");
     state.lastKnownPushEnabled = await this.get<boolean>("Options", "isPushEnabled");
     state.clickedNotifications = await this.get<ClickedNotifications>("NotificationOpened");
+    // lastKnown<PushId|PushToken|OptedIn> are used to track changes to the user's subscription
+    // state. Displayed in the `current` & `previous` fields of the `subscriptionChange` event.
+    state.lastKnownPushId = await this.get<string>("Options", "lastPushId");
+    state.lastKnownPushToken = await this.get<string>("Options", "lastPushToken");
+    state.lastKnownOptedIn = await this.get<boolean>("Options", "lastOptedIn");
     return state;
+  }
+
+  async setIsPushEnabled(enabled: boolean): Promise<void> {
+    await this.put("Options", { key: "isPushEnabled", value: enabled });
   }
 
   async setAppState(appState: AppState) {
@@ -266,7 +275,13 @@ export default class Database {
     if (appState.defaultNotificationTitle || appState.defaultNotificationTitle === "")
       await this.put("Options", { key: "defaultTitle", value: appState.defaultNotificationTitle });
     if (appState.lastKnownPushEnabled != null)
-      await this.put("Options", { key: "isPushEnabled", value: appState.lastKnownPushEnabled });
+      await this.setIsPushEnabled(appState.lastKnownPushEnabled);
+    if (appState.lastKnownPushId != null)
+      await this.put("Options", { key: "lastPushId", value: appState.lastKnownPushId });
+    if (appState.lastKnownPushToken != null)
+      await this.put("Options", { key: "lastPushToken", value: appState.lastKnownPushToken });
+    if (appState.lastKnownOptedIn != null)
+      await this.put("Options", { key: "lastOptedIn", value: appState.lastKnownOptedIn });
     if (appState.clickedNotifications) {
       const clickedNotificationUrls = Object.keys(appState.clickedNotifications);
       for (const url of clickedNotificationUrls) {
@@ -480,6 +495,10 @@ export default class Database {
   // START: Static mappings to instance methods
   static async on(...args: any[]) {
     return Database.singletonInstance.emitter.on.apply(Database.singletonInstance.emitter, args);
+  }
+
+  static async setIsPushEnabled(enabled: boolean): Promise<void> {
+    return Database.singletonInstance.setIsPushEnabled(enabled);
   }
 
   public static async getCurrentSession(): Promise<Session | null> {

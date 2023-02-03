@@ -5,11 +5,13 @@ import { ContextSWInterface } from '../models/ContextSW';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
 import BrowserUtils from '../utils/BrowserUtils';
-import LocalStorage from '../utils/LocalStorage';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import PromptsHelper from './PromptsHelper';
 import OneSignalEvent from "../services/OneSignalEvent";
 import SubscriptionChangeEvent from '../../page/models/SubscriptionChangeEvent';
+import MainHelper from './MainHelper';
+import { OSModel } from '../../core/modelRepo/OSModel';
+import { SubscriptionModel } from '../../core/models/SubscriptionModels';
 
 export default class EventHelper {
   static onNotificationPermissionChange() {
@@ -24,9 +26,13 @@ export default class EventHelper {
     OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: ContextSWInterface = OneSignal.context;
     const subscriptionState = await context.subscriptionManager.getSubscriptionState();
-    const isPushEnabled = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    // isPushEnabled = subscribed && is not opted out
+    const isPushEnabled: boolean = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
+    // isOptedIn = native permission granted && is not opted out
+    const isOptedIn: boolean = await OneSignal.context.subscriptionManager.isOptedIn();
+
     const appState = await Database.getAppState();
-    const { lastKnownPushEnabled } = appState;
+    const { lastKnownPushEnabled, lastKnownPushId, lastKnownPushToken, lastKnownOptedIn } = appState;
     const didStateChange = (
       lastKnownPushEnabled === null ||
       isPushEnabled !== lastKnownPushEnabled
@@ -42,17 +48,28 @@ export default class EventHelper {
     const newNotificationTypes = subscriptionState.optedOut ? -2 : 1;
     await context.subscriptionManager.updatePushSubscriptionNotificationTypes(newNotificationTypes);
 
-    LocalStorage.setIsPushNotificationsEnabled(isPushEnabled);
+    const currentPushToken = await MainHelper.getCurrentPushToken();
+    const pushModel: OSModel<SubscriptionModel> = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const pushSubscriptionId = pushModel.data?.id;
+
+    await Database.setIsPushEnabled(isPushEnabled);
     appState.lastKnownPushEnabled = isPushEnabled;
+    appState.lastKnownPushToken = currentPushToken;
+    appState.lastKnownPushId = pushSubscriptionId;
+    appState.lastKnownOptedIn = isOptedIn;
     await Database.setAppState(appState);
 
-    // TO DO: should use id and token. will require more changes to save previous state
     const change: SubscriptionChangeEvent = {
       previous: {
-        enabled: !isPushEnabled,
+        id: lastKnownPushId,
+        token: lastKnownPushToken,
+        // default to true if not stored yet
+        optedIn: lastKnownOptedIn || true,
       },
       current: {
-        enabled: isPushEnabled,
+        id: pushSubscriptionId,
+        token: currentPushToken,
+        optedIn: isOptedIn,
       }
     };
 
@@ -61,12 +78,12 @@ export default class EventHelper {
 
   static async _onSubscriptionChanged(change: SubscriptionChangeEvent | undefined) {
     // EventHelper.onSubscriptionChanged_showWelcomeNotification(change?.current.enabled);
-    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(change?.current.enabled);
+    EventHelper.onSubscriptionChanged_sendCategorySlidedownTags(change?.current?.optedIn);
     EventHelper.onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate();
     EventHelper.onSubscriptionChanged_updateCustomLink();
   }
 
-  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed: boolean | undefined) {
+  private static async onSubscriptionChanged_sendCategorySlidedownTags(isSubscribed?: boolean | null) {
     if (isSubscribed !== true) {
       return;
     }
