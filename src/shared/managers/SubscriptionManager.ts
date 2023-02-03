@@ -71,6 +71,23 @@ export class SubscriptionManager {
     return subscriptionState.subscribed && !subscriptionState.optedOut;
   }
 
+  /**
+   * isOptedIn - true if the user has granted permission and has not opted out.
+   * IMPORTANT: This method is not the same as isPushNotificationsEnabled(). isPushNotificationsEnabled() represents
+   * the current state of the user's subscription, while isOptedIn() represents the user's intention.
+   * @returns {Promise<boolean>}
+   */
+  async isOptedIn(): Promise<boolean> {
+    const subscriptionState = await this.getSubscriptionState();
+    const permission = await OneSignal.Notifications.getPermissionStatus();
+    return permission === 'granted' && !subscriptionState.optedOut;
+  }
+
+  /**
+   * Legacy method for determining if the user is subscribed.
+   * @param callback
+   * @returns
+   */
   async isOptedOut(callback?: Action<boolean | undefined | null>):
     Promise<boolean | undefined | null> {
       logMethodCall('isOptedOut', callback);
