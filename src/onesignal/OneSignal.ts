@@ -46,6 +46,7 @@ import UserDirector from "./UserDirector";
 import { ModelName, SupportedModel } from "../core/models/SupportedModels";
 import { OSModel } from "../core/modelRepo/OSModel";
 import UserData from "../core/models/UserData";
+import DebugNamespace from "./DebugNamesapce";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -104,6 +105,7 @@ export default class OneSignal {
       }
 
       const identityModel = this.coreDirector.getIdentityModel();
+      const onesignalIdBackup = identityModel?.onesignalId;
 
       if (!identityModel) {
         throw new OneSignalError('Login: No identity model found');
@@ -156,13 +158,17 @@ export default class OneSignal {
           throw new OneSignalError('Login: No OneSignal ID found');
         }
         await LoginManager.fetchAndHydrate(onesignalId);
-      })
-      .catch(error => {
-        throw new OneSignalError(`Login: Error while identifying or upserting user: ${error}`);
+      }).catch(error => {
+        Log.error(`Login: Error while identifying or upserting user: ${error}`);
+        if (onesignalIdBackup) {
+          Log.info('Login: Failed to login, reverting to anonymous user');
+          LoginManager.fetchAndHydrate(onesignalIdBackup).catch(error => {
+            Log.error(`Login: Error while reverting to anonymous user: ${error}`);
+          });
+        }
       });
     } catch (e) {
       Log.error(e);
-      throw e;
     }
   }
 
@@ -328,6 +334,7 @@ export default class OneSignal {
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
   static User: UserNamespace;
+  static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
 
   static __doNotShowWelcomeNotification: boolean;
@@ -348,7 +355,6 @@ export default class OneSignal {
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
-  static log = Log;
   private static pendingInit: boolean = true;
 
   static subscriptionPopup: SubscriptionPopup;

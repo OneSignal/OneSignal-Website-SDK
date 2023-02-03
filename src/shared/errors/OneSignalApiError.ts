@@ -1,7 +1,8 @@
 import OneSignalError from "./OneSignalError";
 
 export enum OneSignalApiErrorKind {
-  MissingAppId
+  MissingAppId,
+  RetryLimitReached
 }
 
 export class OneSignalApiError extends OneSignalError {
@@ -12,6 +13,9 @@ export class OneSignalApiError extends OneSignalError {
     switch (reason) {
       case OneSignalApiErrorKind.MissingAppId:
         errorMessage = 'The API call is missing an app ID.';
+        break;
+      case OneSignalApiErrorKind.RetryLimitReached:
+        errorMessage = 'The API call has reached the retry limit.';
         break;
     }
 
