@@ -18,6 +18,9 @@ class AppState {
 
     lastKnownPushId: string | undefined;
 
+    // default true
+    lastKnownOptedIn: boolean = true;
+
     clickedNotifications: ClickedNotifications | undefined;
 }
 
