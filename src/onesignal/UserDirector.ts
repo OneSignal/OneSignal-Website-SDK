@@ -8,6 +8,7 @@ import Log from "../shared/libraries/Log";
 import { logMethodCall } from "../shared/utils/utils";
 import User from "./User";
 import { RequestService } from "../core/requestService/RequestService";
+import { SupportedSubscription } from "../core/models/SubscriptionModels";
 
 export default class UserDirector {
   static async initializeUser(isTemporary?: boolean): Promise<void> {
@@ -94,7 +95,7 @@ export default class UserDirector {
 
     const identity = OneSignal.coreDirector.getIdentityModel();
     const properties = OneSignal.coreDirector.getPropertiesModel();
-    const subscriptions = await OneSignal.coreDirector.getAllSubscriptionsModels();
+    const subscriptions: OSModel<SupportedSubscription>[] = await OneSignal.coreDirector.getAllSubscriptionsModels();
 
     const userData: Partial<UserData> = {};
     userData.identity = identity?.data;

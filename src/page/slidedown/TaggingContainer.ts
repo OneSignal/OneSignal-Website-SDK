@@ -36,6 +36,9 @@ export default class TaggingContainer {
         removeDomElement(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
     }
 
+    /**
+     * No longer used as of user model changes, but may be useful in the future
+     */
     public load(): void {
         const loadingContainer = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.loadingContainer}`);
         const allowButton = getDomElementOrStub(`#${SLIDEDOWN_CSS_IDS.allowButton}`) as HTMLButtonElement;

@@ -274,15 +274,14 @@ export class SlidedownManager {
         throw new Error("Categories not defined");
       }
 
-      if (options.isInUpdateMode) {
-        taggingContainer.load();
-        // updating. pull remote tags.
-        const propertiesOSModel = OneSignal.coreDirector.getPropertiesModel();
-        const existingTags = propertiesOSModel?.data.tags as TagsObjectForApi;
+      const propertiesOSModel = OneSignal.coreDirector.getPropertiesModel();
+      const existingTags = propertiesOSModel?.data.tags as TagsObjectForApi;
+
+      if (options.isInUpdateMode && existingTags) {
         this.context.tagManager.storeRemotePlayerTags(existingTags);
         tagsForComponent = TagUtils.convertTagsApiToBooleans(existingTags);
       } else {
-        // first subscription
+        // first subscription or no existing tags
         TagUtils.markAllTagsAsSpecified(categories, true);
       }
 
