@@ -1,7 +1,7 @@
 type PushSubscriptionNamespaceProperties = {
   id: string | null | undefined;
   token: string | null | undefined;
-  optedIn: boolean | null | undefined;
+  optedIn: boolean;
 };
 
 type SubscriptionChangeEvent = {
