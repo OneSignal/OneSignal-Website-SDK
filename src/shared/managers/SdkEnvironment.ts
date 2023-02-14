@@ -280,6 +280,13 @@ export default class SdkEnvironment {
     }
   }
 
+  /**
+   * Returns the URL object pointing to our static resources location
+   */
+  public static getOneSignalStaticResourcesUrl(): URL {
+    return new URL('https://media.onesignal.com/web-sdk');
+  }
+
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
     const buildOrigin = (typeof __BUILD_ORIGIN__ !== "undefined") ? __BUILD_ORIGIN__ || "localhost" : "localhost";
     const isHttps = (typeof __IS_HTTPS__ !== "undefined") ? __IS_HTTPS__ : true;
