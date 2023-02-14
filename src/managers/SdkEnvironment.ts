@@ -39,7 +39,7 @@ export default class SdkEnvironment {
 
   /**
    * Returns development staging, or production.
-   * 
+   *
    * Refers to which API environment should be used. These constants are set when building the SDK
    */
   public static getApiEnv(): EnvironmentKind {
@@ -121,7 +121,7 @@ export default class SdkEnvironment {
           (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
           return IntegrationKind.Secure;
         }
-        
+
         /* The case of HTTP and not using a proxy origin isn't possible, because the SDK will throw
         an initialization error stating a proxy origin is required for HTTP sites. */
         return IntegrationKind.InsecureProxy;
@@ -278,6 +278,13 @@ export default class SdkEnvironment {
       default:
         throw new InvalidArgumentError('buildEnv', InvalidArgumentReason.EnumOutOfRange);
     }
+  }
+
+  /**
+   * Returns the URL object pointing to our static resources location
+   */
+  public static getOneSignalStaticResourcesUrl(): URL {
+    return new URL('https://media.onesignal.com/web-sdk');
   }
 
   public static getOneSignalResourceUrlPath(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()): URL {
