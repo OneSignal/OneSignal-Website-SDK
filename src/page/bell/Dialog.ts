@@ -91,7 +91,7 @@ export default class Dialog extends AnimatedElement {
 
           let instructionsHtml = '';
           if (imageUrl) {
-            imageUrl = SdkEnvironment.getOneSignalApiUrl().origin + imageUrl;
+            imageUrl = SdkEnvironment.getOneSignalStaticResourcesUrl() + imageUrl;
             instructionsHtml = `<a href="${imageUrl}" target="_blank"><img src="${imageUrl}"></a></div>`;
           }
 
