@@ -91,7 +91,6 @@
     "sass-loader": "^6.0.6",
     "sinon": "^2.4.1",
     "svgo": "^0.7.2",
-    "text-encoding": "^0.6.4",
     "timemachine": "^0.3.0",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.1.1",
