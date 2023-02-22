@@ -1,0 +1,14 @@
+# Jest Customizations
+This directory includes changes used for extending Jest to do things like stub and spy on private functions.
+
+Followed instructions from [here](https://spin.atomicobject.com/2020/01/30/jest-add-custom-functions/).
+
+To add more custom testing functions, add them to `jest/jest.setupt.ts` and `jest.d.ts`.
+
+## API
+### `stub`
+Used to stub a class function with the given return value.
+
+```ts
+test.stub(MyClass.prototype, 'myFunction', {});
+```
