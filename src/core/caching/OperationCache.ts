@@ -29,7 +29,7 @@ export default class OperationCache {
           operations.push(operation as Operation<SupportedModel>);
         }
       } catch (e) {
-        Log.error(`Could not parse operation ${rawOperation.operationId} from cache`, e);
+        Log.warn(`Could not parse operation ${rawOperation.operationId} from cache`, e);
         this.delete(rawOperation.operationId);
       }
     }
