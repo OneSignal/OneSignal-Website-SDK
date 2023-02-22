@@ -193,7 +193,7 @@ export class WorkerMessenger {
     Log.debug(`(${location.origin}) [Worker Messenger] Page is now listening for messages.`);
   }
 
-  onWorkerMessageReceivedFromPage(event: ServiceWorkerMessageEvent) {
+  onWorkerMessageReceivedFromPage(event: ExtendableMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */
@@ -236,7 +236,7 @@ export class WorkerMessenger {
   message topic. If no one is listening to the message, it is discarded;
   otherwise, the listener callback is executed.
   */
-  onPageMessageReceivedFromServiceWorker(event: ServiceWorkerMessageEvent) {
+  onPageMessageReceivedFromServiceWorker(event: ExtendableMessageEvent) {
     const data: WorkerMessengerMessage = event.data;
 
     /* If this message doesn't contain our expected fields, discard the message */

@@ -54,7 +54,6 @@ export class SubscriptionExecutor extends ExecutorBase {
       return deltasByChangeType;
     }
 
-  // TO DO: unit test
   private separateDeltasByModelId(): CoreDelta<SupportedModel>[][] {
     const deltasByModelId: {[key: string]: CoreDelta<SupportedModel>[]} = {};
 

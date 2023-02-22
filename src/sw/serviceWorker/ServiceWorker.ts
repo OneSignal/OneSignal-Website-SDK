@@ -13,7 +13,7 @@ import { ConfigHelper } from "../../shared/helpers/ConfigHelper";
 import { OneSignalUtils } from "../../shared/utils/OneSignalUtils";
 import { Utils } from "../../shared/context/Utils";
 import {
-  OSWindowClient, OSServiceWorkerFields
+  OSWindowClient, OSServiceWorkerFields, SubscriptionChangeEvent
 } from "./types";
 import ServiceWorkerHelper from "../../shared/helpers/ServiceWorkerHelper";
 import { cancelableTimeout } from "../helpers/CancelableTimeout";
@@ -101,8 +101,8 @@ export class ServiceWorker {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
-    self.addEventListener('pushsubscriptionchange', (event: PushSubscriptionChangeEvent) => {
-      event.waitUntil(ServiceWorker.onPushSubscriptionChange(event));
+    self.addEventListener('pushsubscriptionchange', (event: Event) => {
+      (event as FetchEvent).waitUntil(ServiceWorker.onPushSubscriptionChange(event as unknown as SubscriptionChangeEvent));
     });
 
 
@@ -1015,7 +1015,7 @@ export class ServiceWorker {
     event.waitUntil(self.clients.claim());
   }
 
-  static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
+  static async onPushSubscriptionChange(event: SubscriptionChangeEvent) {
     Log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     const appId = await ServiceWorker.getAppId();

@@ -16,3 +16,8 @@ export interface OSServiceWorkerFields {
   clientsStatus?: ClientStatus;
   cancel?: () => void;
 }
+
+export interface SubscriptionChangeEvent {
+  oldSubscription: PushSubscription | null;
+  newSubscription: PushSubscription | null;
+}

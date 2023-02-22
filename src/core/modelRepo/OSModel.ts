@@ -23,6 +23,7 @@ export class OSModel<Model> extends Subscribable<ModelStoreChange<Model>> {
       this.modelId = modelId ?? Math.random().toString(36).substring(2);
       this.modelName = modelName;
       this.data = data;
+      this.onesignalId = undefined;
 
       this.awaitOneSignalIdAvailable = new Promise<string>(resolve => {
         this.onesignalIdAvailableCallback = resolve;

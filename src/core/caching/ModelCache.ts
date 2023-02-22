@@ -90,6 +90,7 @@ export default class ModelCache {
   async get(modelName: ModelName, modelId: string): Promise<EncodedModel | undefined> {
     logMethodCall("ModelCache.get", { modelName, modelId });
     try {
+      await this._mutexPromise;
       return await Database.get(modelName, modelId);
     } catch (e) {
       return undefined;

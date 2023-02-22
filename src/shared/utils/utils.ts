@@ -206,15 +206,6 @@ export function timeoutPromise(promise: Promise<any>, milliseconds: number): Pro
   return Utils.timeoutPromise(promise, milliseconds);
 }
 
-export function when(condition: Action<boolean>, promiseIfTrue: Promise<any> | undefined,
-  promiseIfFalse: Promise<any> | undefined) {
-  if (promiseIfTrue === undefined)
-    promiseIfTrue = nothing();
-  if (promiseIfFalse === undefined)
-    promiseIfFalse = nothing();
-  return (condition ? promiseIfTrue : promiseIfFalse);
-}
-
 /**
  * Returns true if match is in string; otherwise, returns false.
  */
@@ -309,8 +300,8 @@ export function unsubscribeFromPush() {
                 }
                 return serviceWorker;
               })
-              .then(registration => registration.pushManager)
-              .then(pushManager => pushManager.getSubscription())
+              .then((registration: ServiceWorkerRegistration ) => registration.pushManager)
+              .then((pushManager: PushManager) => pushManager.getSubscription())
               .then((subscription: any) => {
                 if (subscription) {
                   return subscription.unsubscribe();
