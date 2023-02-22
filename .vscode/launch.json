@@ -10,6 +10,7 @@
       "args": ["${fileBasenameNoExtension}", "--config", "jest.config.js"],
       "console": "integratedTerminal",
       "disableOptimisticBPs": true,
+      "runtimeExecutable": "/Users/rodrigo/.nvm/versions/node/v14.20.1/bin/node",
       "windows": {
         "program": "${workspaceFolder}/node_modules/jest/bin/jest"
       }
