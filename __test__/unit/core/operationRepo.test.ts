@@ -1,3 +1,4 @@
+import { DELTA_QUEUE_TIME_ADVANCE } from "../../support/constants";
 import ModelCache from "../../../src/core/caching/ModelCache";
 import CoreModule from "../../../src/core/CoreModule";
 import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
@@ -123,7 +124,7 @@ describe('OperationRepo tests', () => {
     modelRepo?.broadcast(delta2 as CoreDelta<SupportedModel>);
 
     // advance enough to process all deltas but not enough to process operation queue
-    jest.advanceTimersByTime(1001);
+    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     // check process operation queue not called. we may change processing intervals in future
     expect(processOperationQueueSpy).toHaveBeenCalledTimes(0);
@@ -167,7 +168,7 @@ describe('OperationRepo tests', () => {
     modelRepo?.broadcast(delta2 as CoreDelta<SupportedModel>);
 
     // advance enough to process all deltas but not enough to process operation queue
-    jest.advanceTimersByTime(1001);
+    jest.advanceTimersByTime(DELTA_QUEUE_TIME_ADVANCE);
 
     // check process operation queue not called. we may change processing intervals in future
     expect(processOperationQueueSpy).toHaveBeenCalledTimes(0);
