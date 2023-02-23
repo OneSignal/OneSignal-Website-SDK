@@ -1,4 +1,4 @@
-import { DispatchEventUtil } from "../utils/DispatchEventUtil";
+import { DispatchEventUtil } from "../../utils/DispatchEventUtil";
 import { MockServiceWorker } from "./MockServiceWorker";
 import { MockServiceWorkerRegistration } from "./MockServiceWorkerRegistration";
 
@@ -14,7 +14,7 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
   get ready(): Promise<ServiceWorkerRegistration> {
     return new Promise<ServiceWorkerRegistration>(resolve => (resolve(new MockServiceWorkerRegistration())));
   }
-  
+
   set oncontrollerchange(event: ((this: ServiceWorkerContainer, ev: Event) => any) | null) {
   }
 
@@ -116,5 +116,4 @@ export abstract class MockServiceWorkerContainer implements ServiceWorkerContain
   mockUnregister(scope: string) {
     this.serviceWorkerRegistrations.delete(scope);
   }
-
 }

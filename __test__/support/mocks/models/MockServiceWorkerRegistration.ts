@@ -56,6 +56,4 @@ export class MockServiceWorkerRegistration implements ServiceWorkerRegistration 
   update(): Promise<void> {
     return undefined;
   }
-
 }
-
