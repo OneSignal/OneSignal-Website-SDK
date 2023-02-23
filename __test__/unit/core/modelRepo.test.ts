@@ -75,7 +75,7 @@ describe('ModelRepo tests', () => {
   /* D E L T A S */
   test('ModelRepo add subscription -> delta is broadcasted once', (done: jest.DoneCallback) => {
     core.modelRepo?.subscribe(() => {
-      broadcastCount+=1;
+      broadcastCount += 1;
       passIfBroadcastNTimes(1, broadcastCount, done);
     });
     const newSub = generateNewSubscription();
@@ -86,7 +86,7 @@ describe('ModelRepo tests', () => {
     const newSub = generateNewSubscription();
 
     core.modelRepo?.subscribe(() => {
-      broadcastCount+=1;
+      broadcastCount += 1;
       passIfBroadcastNTimes(2, broadcastCount, done);
     });
 
