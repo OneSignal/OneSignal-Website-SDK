@@ -4,6 +4,10 @@ test.stub = (obj: any, method: string, returnValue?: any) => {
   return stub;
 };
 
+test.fail = () => {
+  expect(true).toBe(false);
+}
+
 // workaround for open upstream issue: https://github.com/inrupt/solid-client-authn-js/issues/1676
 import { TextEncoder, TextDecoder } from 'util';
 (global as any).TextEncoder = TextEncoder;
