@@ -12,3 +12,9 @@ Used to stub a class function with the given return value.
 ```ts
 test.stub(MyClass.prototype, 'myFunction', {});
 ```
+
+### `fail`
+Jest does not have a way to force fail a function.
+```ts
+test.fail();
+```
