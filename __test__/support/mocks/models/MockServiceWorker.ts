@@ -1,4 +1,4 @@
-import NotImplementedError from "../../../../../src/shared/errors/NotImplementedError";
+import NotImplementedError from "../../../../src/shared/errors/NotImplementedError";
 
 export class MockServiceWorker implements ServiceWorker {
   scriptURL: string;

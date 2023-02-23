@@ -1,4 +1,4 @@
-import Random from "../../../tester/Random";
+import Random from "../../utils/Random";
 import { MockPushManager } from "./MockPushManager";
 
 /**
