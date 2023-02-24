@@ -1,15 +1,11 @@
-import { ExecutionContext } from "ava";
-import { SinonSandbox } from "sinon";
-import ModelCache from "../../../src/core/caching/ModelCache";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { SupportedSubscription, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
 import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
 
-const MODEL_ID = '0000000000';
 
-export function generateNewSubscription() {
+export function generateNewSubscription(modelId = '0000000000') {
   return new OSModel<SupportedSubscription>(
     ModelName.EmailSubscriptions,
     {
@@ -17,7 +13,7 @@ export function generateNewSubscription() {
       id: '123', // subscription id
       token: "myToken",
     },
-    MODEL_ID,
+    modelId,
     );
 }
 
@@ -30,21 +26,12 @@ export function getMockDeltas(): CoreDelta<SupportedModel>[] {
   ];
 }
 
-const dummyIdentityModel = new OSModel<SupportedModel>(ModelName.Identity, undefined, "123");
-
 export function getDummyIdentityOSModel(): OSModel<SupportedModel> {
-  return dummyIdentityModel;
+  return new OSModel<SupportedModel>(ModelName.Identity, {}, "123");
 }
 
-export function stubModelCache(sinonSandbox: SinonSandbox) {
-  sinonSandbox.stub(ModelCache.prototype, "load").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "add").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "remove").resolves();
-  sinonSandbox.stub(ModelCache.prototype, "update").resolves();
-}
-
-export const passIfBroadcastNTimes = (t: ExecutionContext, target: number, broadcastCount: number) => {
+export const passIfBroadcastNTimes = (target: number, broadcastCount: number, pass: () => void) => {
   if (broadcastCount === target) {
-    t.pass();
+    pass();
   }
 };

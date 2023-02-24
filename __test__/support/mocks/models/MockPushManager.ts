@@ -39,5 +39,4 @@ export class MockPushManager implements PushManager {
     }
     this.subscription = null;
   }
-
 }

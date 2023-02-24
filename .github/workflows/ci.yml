@@ -18,7 +18,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Use Python 2.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: '2.7'
       - name: "[Setup] Install dependencies"
         run: yarn
-      - name: "[Test] Run all tests"
-        run: yarn test:CI
+      - name: "[Test] Run linters"
+        continue-on-error: true
+        run: yarn lint
+      - name: "[Test] Run all jest tests"
+        run: yarn jest
