@@ -219,6 +219,8 @@ export default class OneSignal {
       return;
     }
 
+    await OneSignal._initializeCoreModuleAndUserNamespace();
+
     if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired()) {
       const providedConsent = await Database.getConsentGiven();
       if (!providedConsent) {
@@ -231,7 +233,6 @@ export default class OneSignal {
   }
 
   private static async _delayedInit(): Promise<void> {
-    await OneSignal._initializeCoreModuleAndUserNamespace();
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();
