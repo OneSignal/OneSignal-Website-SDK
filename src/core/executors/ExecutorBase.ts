@@ -7,6 +7,8 @@ import { logMethodCall } from "../../shared/utils/utils";
 import { SupportedModel } from "../models/SupportedModels";
 import ExecutorResult from "./ExecutorResult";
 import Log from "../../shared/libraries/Log";
+import Database from "../../shared/services/Database";
+import LocalStorage from "../../shared/utils/LocalStorage";
 
 const RETRY_AFTER = 5_000;
 
@@ -105,6 +107,13 @@ export default abstract class ExecutorBase {
   abstract getOperationsFromCache(): Promise<Operation<SupportedModel>[]>;
 
   protected async _processOperationQueue(): Promise<void> {
+    const consentRequired = OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
+    const consentGiven = await Database.getConsentGiven();
+
+    if (consentRequired && !consentGiven) {
+      return;
+    }
+
     const cachedOperations = await this.getOperationsFromCache();
     this._operationQueue = [...cachedOperations, ...this._operationQueue];
 
