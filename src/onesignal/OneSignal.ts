@@ -96,6 +96,13 @@ export default class OneSignal {
   static async login(externalId: string, token?: string): Promise<void> {
     logMethodCall('login', { externalId, token });
 
+    const consentRequired = OneSignal.config?.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
+    const consentGiven = await Database.getConsentGiven();
+
+    if (consentRequired && !consentGiven) {
+      throw new OneSignalError('Login: Consent required but not given, skipping login');
+    }
+
     try {
       // before, logging in, process anything waiting in the delta queue so it's not lost
       this.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
