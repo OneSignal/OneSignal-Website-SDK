@@ -96,6 +96,13 @@ export default class OneSignal {
   static async login(externalId: string, token?: string): Promise<void> {
     logMethodCall('login', { externalId, token });
 
+    const consentRequired = OneSignal.config?.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
+    const consentGiven = await Database.getConsentGiven();
+
+    if (consentRequired && !consentGiven) {
+      throw new OneSignalError('Login: Consent required but not given, skipping login');
+    }
+
     try {
       // before, logging in, process anything waiting in the delta queue so it's not lost
       this.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
@@ -219,6 +226,8 @@ export default class OneSignal {
       return;
     }
 
+    await OneSignal._initializeCoreModuleAndUserNamespace();
+
     if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired()) {
       const providedConsent = await Database.getConsentGiven();
       if (!providedConsent) {
@@ -231,7 +240,6 @@ export default class OneSignal {
   }
 
   private static async _delayedInit(): Promise<void> {
-    await OneSignal._initializeCoreModuleAndUserNamespace();
     OneSignal.pendingInit = false;
     // Ignore Promise as doesn't return until the service worker becomes active.
     OneSignal.context.workerMessenger.listen();
