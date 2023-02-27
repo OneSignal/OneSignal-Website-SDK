@@ -1,16 +1,16 @@
-import Database from "../../src/shared/services/Database";
-import Random from "./utils/Random";
-import Emitter from "../../src/shared/libraries/Emitter";
+import Database from "../../../src/shared/services/Database";
+import Random from "../utils/Random";
+import Emitter from "../../../src/shared/libraries/Emitter";
 import { TestEnvironmentConfig } from "./TestEnvironment";
-import MockNotification from "./mocks/MockNotification";
+import MockNotification from "../mocks/MockNotification";
 import { DOMWindow, JSDOM, ResourceLoader } from "jsdom";
-import OneSignal from "../../src/onesignal/OneSignal";
-import { CUSTOM_LINK_CSS_CLASSES } from "../../src/shared/slidedown/constants";
-import { getSlidedownElement } from "../../src/page/slidedown/SlidedownElement";
+import OneSignal from "../../../src/onesignal/OneSignal";
+import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
+import { getSlidedownElement } from "../../../src/page/slidedown/SlidedownElement";
 import DOMStorage from "dom-storage";
-import { MockServiceWorkerContainerWithAPIBan } from "./mocks/models/MockServiceWorkerContainerWithAPIBan";
-import { HttpHttpsEnvironment } from "./models/HttpHttpsEnvironment";
-import BrowserUserAgent from "./models/BrowserUserAgent";
+import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
+import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
+import BrowserUserAgent from "../models/BrowserUserAgent";
 
 declare var global: any;
 

@@ -1,7 +1,7 @@
 import ModelCache from "../../../src/core/caching/ModelCache";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { ModelName } from "../../../src/core/models/SupportedModels";
-import { TestEnvironment } from "../../support/TestEnvironment";
+import { TestEnvironment } from "../../support/environment/TestEnvironment";
 
 describe('ModelCache tests', () => {
   beforeEach(() => {

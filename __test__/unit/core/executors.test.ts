@@ -1,4 +1,4 @@
-import { TestEnvironment } from "../../support/TestEnvironment";
+import { TestEnvironment } from "../../support/environment/TestEnvironment";
 import ModelCache from "../../../src/core/caching/ModelCache";
 import CoreModule from "../../../src/core/CoreModule";
 import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
