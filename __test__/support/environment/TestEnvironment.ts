@@ -1,12 +1,12 @@
-import CoreModule from "../../src/core/CoreModule";
-import { CoreModuleDirector } from "../../src/core/CoreModuleDirector";
-import SdkEnvironment from "../../src/shared/managers/SdkEnvironment";
-import { AppUserConfig } from "../../src/shared/models/AppConfig";
-import { TestEnvironmentKind } from "../../src/shared/models/TestEnvironmentKind";
-import BrowserUserAgent from "./models/BrowserUserAgent";
-import { initOSGlobals, resetDatabase, stubDomEnvironment, stubNotification } from "./TestEnvironmentHelpers";
-import { HttpHttpsEnvironment } from "./models/HttpHttpsEnvironment";
-import OperationCache from "../../src/core/caching/OperationCache";
+import CoreModule from "../../../src/core/CoreModule";
+import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
+import SdkEnvironment from "../../../src/shared/managers/SdkEnvironment";
+import { AppUserConfig, ConfigIntegrationKind, ServerAppConfig } from "../../../src/shared/models/AppConfig";
+import { TestEnvironmentKind } from "../../../src/shared/models/TestEnvironmentKind";
+import BrowserUserAgent from "../models/BrowserUserAgent";
+import { resetDatabase, initOSGlobals, stubDomEnvironment, stubNotification } from "./TestEnvironmentHelpers";
+import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
+import OperationCache from "../../../src/core/caching/OperationCache";
 import "fake-indexeddb/auto";
 
 declare var global: any;
