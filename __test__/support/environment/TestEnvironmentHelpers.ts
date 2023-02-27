@@ -11,6 +11,7 @@ import DOMStorage from "dom-storage";
 import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import BrowserUserAgent from "../models/BrowserUserAgent";
+import TestContext from "./TestContext";
 
 declare var global: any;
 
@@ -22,7 +23,7 @@ export function resetDatabase() {
 
 export function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
-  global.OneSignal.config = config.initOptions ? config.initOptions : {};
+  global.OneSignal.config = TestContext.getFakeMergedConfig(config);
   global.OneSignal.initialized = true;
   global.OneSignal.coreDirector = config.coreDirector;
   global.OneSignal.emitter = new Emitter();
