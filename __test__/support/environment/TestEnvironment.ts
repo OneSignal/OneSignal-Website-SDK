@@ -8,6 +8,7 @@ import { resetDatabase, initOSGlobals, stubDomEnvironment, stubNotification } fr
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import OperationCache from "../../../src/core/caching/OperationCache";
 import "fake-indexeddb/auto";
+import { RecursivePartial } from "../../../src/shared/context/Utils";
 
 declare var global: any;
 
@@ -22,6 +23,8 @@ export interface TestEnvironmentConfig {
   userAgent?: BrowserUserAgent;
   coreDirector?: CoreModuleDirector;
   httpOrHttps?: HttpHttpsEnvironment;
+  overrideServerConfig?: RecursivePartial<ServerAppConfig>;
+  integration?: ConfigIntegrationKind;
 }
 
 export class TestEnvironment {
