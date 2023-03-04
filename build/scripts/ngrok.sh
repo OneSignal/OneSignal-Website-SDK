@@ -1,47 +1,94 @@
 #!/bin/bash
 
-# Check if ngrok is installed
-if ! [ -x "$(command -v ngrok)" ]; then
-  echo 'ngrok is not installed.'
-  echo 'Please install ngrok to use this script.'
-  exit 1
-fi
+startNgrokHTTPSForwarding() {
+    processesIncludeNgrok=$(ps aux | grep ngrok | wc -l)
+    if [ $processesIncludeNgrok -gt 3 ]; then
+        existing_url=$(cat ngrok_last_url)
+        echo "ngrok is already running on at: $existing_url"
+        echo -e "run 'killall ngrok' if you want a new URL or it isn't working.\n"
+        retval=$existing_url
+        return
+    fi
 
-echo 'ngrok is installed. Continuing with script execution.'
+    # Start ngrok
+    rm ngrok.log
+    ngrok http https://localhost:4001 --log=ngrok.log > /dev/null &
+    echo "starting ngrok..."
 
-# Kill any existing ngrok processes
-killall ngrok
+    # Wait for ngrok to start
+    sleep 5
 
-# Start ngrok
-ngrok http https://localhost:4001 --log=ngrok.log > /dev/null &
-echo "starting ngrok..."
+    # Get the ngrok url
+    read -r rawurl < <(grep -o "https://[^ ]*\.ngrok\.io" ngrok.log)
+    url=$(echo $rawurl | sed 's/https:\/\///')
+    echo "ngrok url: $url"
+    rm -f ngrok_last_url
+    echo $url > ngrok_last_url
+    echo ""
 
-# Wait for ngrok to start
-sleep 5
+    retval=$url
+    return
+}
 
-# Get the ngrok url
-read -r rawurl < <(grep -o "https://[^ ]*\.ngrok\.io" ngrok.log)
-url=$(echo $rawurl | sed 's/https:\/\///')
-echo "ngrok url: $url"
+buildSDK() {
+    local url=${1}
 
-rm ngrok.log
+    # Build the service worker file
+    echo "Building service worker files"
+    ./build/scripts/buildServiceWorker.sh $url
 
-# Build the service worker file
-echo "building service worker file"
-./build/scripts/buildServiceWorker.sh $url
+    # Build the SDK
+    echo -e "Building SDK with build origin $url\n"
+    # If you want to test with staging, change to build:dev-stag and add -a MY_API_URL
+    docker-compose exec onesignal-web-sdk-dev yarn build:dev-prod -b $url --no-port
 
-# Build the SDK
-echo "building SDK with build origin $url"
-docker-compose exec onesignal-web-sdk-dev yarn build:dev-prod -b $url --no-port
-echo "Done."
-
-echo "Last step: update the SDK script src to https://$url/sdks/Dev-OneSignalSDK.js"
+    echo -e "BuildSDK() Done.\n"
+}
 
 # Open the ngrok url in your default browser
-if [ -x "$(command -v open)" ]; then
-    # macOS
-    open "https://$url"
-else
-    # Linux
-    xdg-open "https://$url"
-fi
+openBrowserToUrl() {
+    local url=${1}
+
+    if [ -x "$(command -v open)" ]; then
+        # macOS
+        open $url
+    else
+        # Linux
+        xdg-open $url
+    fi
+}
+
+updateSiteUrlNoteToUserAndOpenTestSite() {
+    local url=${1}
+
+    echo -e "Open your default browser to $url"
+
+    echo -e \
+        "#############################\n" \
+        "NOTE: Last Step:\n" \
+        "Open your browser to" \
+        "https://dashboard.onesignal.com/apps/{{ONESIGNAL_APP_ID_HERE}}/settings/webpush/configure\n" \
+        "then update your site URL to https://$url/\n" \
+        "#############################\n"
+
+    openBrowserToUrl "https://$url"
+}
+
+checkIfNgrokIsInstalled() {
+    # Check if ngrok is installed
+    if ! [ -x "$(command -v ngrok)" ]; then
+      echo 'ngrok is not installed.'
+      echo 'Please install ngrok to use this script.'
+      exit 1
+    fi
+
+    echo -e 'ngrok is installed. Continuing with script execution.\n'
+}
+
+checkIfNgrokIsInstalled
+
+startNgrokHTTPSForwarding
+url=$retval
+
+buildSDK $url
+updateSiteUrlNoteToUserAndOpenTestSite $url
