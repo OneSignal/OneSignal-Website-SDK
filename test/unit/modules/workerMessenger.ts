@@ -4,6 +4,8 @@ import { WorkerMessenger, WorkerMessengerCommand } from '../../../src/libraries/
 import ContextSW from '../../../src/models/ContextSW';
 import test from "ava";
 import Random from "../../support/tester/Random";
+import SWLog from "../../../src/libraries/SWLog";
+import { buildWorkerMessagingCommandHandlers, applyWorkerMessagingCommandHandlers } from "../../../src/service-worker/WorkerMessengerCommandHandling";
 
 
 test('service worker should gracefully handle unexpected page messages', async t => {
@@ -83,3 +85,47 @@ test(
     t.pass();
   }
 );
+
+test(
+  'service worker should accept SetLogging commands',
+  async t => {
+    await TestEnvironment.initializeForServiceWorker({
+      url: new URL(`https://site.com/service-worker.js?a=1&b=2&appId=${Random.getRandomUuid()}&c=3`)
+    });
+
+    SWLog.resetConsole();
+    const defaultConsole = SWLog.singletonConsole;
+
+    t.false(SWLog.enabled);
+    t.deepEqual(defaultConsole, SWLog.consoles.null);
+
+    const appConfig = TestEnvironment.getFakeAppConfig();
+    const context = new ContextSW(appConfig);
+    const workerMessenger = new WorkerMessenger(context);
+
+    /* We should be guaranteed a MessageEvent with at least an `event.data` property. */
+    const data: any = {
+      data: {
+        command: WorkerMessengerCommand.SetLogging,
+        payload: {
+          shouldLog: true
+        }
+      }
+    };
+
+    const messageHandlers = buildWorkerMessagingCommandHandlers(workerMessenger);
+    applyWorkerMessagingCommandHandlers(workerMessenger, messageHandlers);
+    workerMessenger.listen();
+
+    try {
+      workerMessenger.onWorkerMessageReceivedFromPage(data);
+    } catch (e) {
+      t.fail("message function raised exception:" + e);
+    }
+
+    t.true(SWLog.enabled);
+    t.notDeepEqual(SWLog.singletonConsole, defaultConsole);
+    t.pass();
+  }
+);
+

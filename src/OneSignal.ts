@@ -58,6 +58,7 @@ import { AppUserConfigNotifyButton, DelayedPromptType } from './models/Prompts';
 import LocalStorage from './utils/LocalStorage';
 import { AuthHashOptionsValidatorHelper } from './helpers/page/AuthHashOptionsValidatorHelper';
 import { TagsObject } from './models/Tags';
+import { WorkerMessengerCommand } from './libraries/WorkerMessenger';
 
 export default class OneSignal {
   /**
@@ -842,6 +843,13 @@ export default class OneSignal {
       type: outcomeAttribution.type,
       notificationIds: newNotifsToAttributeWithOutcome,
     });
+  }
+
+  public static async setSWLogging(enable: boolean): Promise<void> {
+    OneSignal.context.workerMessenger.directPostMessageToSW(
+      WorkerMessengerCommand.SetLogging,
+      { shouldLog: !!enable }
+    );
   }
 
   static __doNotShowWelcomeNotification: boolean;

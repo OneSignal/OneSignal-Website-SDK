@@ -1,4 +1,4 @@
-import Log from "../../libraries/sw/Log";
+import SWLog from "../../libraries/SWLog";
 
 export interface CancelableTimeoutPromise {
   cancel: () => void;
@@ -6,7 +6,7 @@ export interface CancelableTimeoutPromise {
 }
 
 const doNothing = () => {
-  Log.debug("Do nothing");
+  SWLog.debug("Do nothing");
 };
 
 export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds: number): CancelableTimeoutPromise {
@@ -25,15 +25,15 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
           await callback();
           resolve();
         } catch(e) {
-          Log.error("Failed to execute callback", e);
+          SWLog.error("Failed to execute callback", e);
           reject();
         }
-      }, 
+      },
       delayInMilliseconds);
-    
+
     clearTimeoutHandle = () => {
-      Log.debug("Cancel called");
-      self.clearTimeout(timerId); 
+      SWLog.debug("Cancel called");
+      self.clearTimeout(timerId);
       if (!startedExecution) {
         resolve();
       }
@@ -41,7 +41,7 @@ export function cancelableTimeout(callback: () => Promise<void>, delayInSeconds:
   });
 
   if (!clearTimeoutHandle) {
-    Log.warn("clearTimeoutHandle was not assigned.");
+    SWLog.warn("clearTimeoutHandle was not assigned.");
     return {
       promise,
       cancel: doNothing,

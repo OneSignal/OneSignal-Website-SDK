@@ -7,16 +7,15 @@ import OneSignalApiBase from "../OneSignalApiBase";
 import OneSignalApiSW from "../OneSignalApiSW";
 import Database from "../services/Database";
 
-import { UnsubscriptionStrategy } from "../models/UnsubscriptionStrategy";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { SubscriptionStrategyKind } from "../models/SubscriptionStrategyKind";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import {
   UpsertSessionPayload, DeactivateSessionPayload,
-  PageVisibilityRequest, PageVisibilityResponse, SessionStatus
+  PageVisibilityRequest, SessionStatus
 } from "../models/Session";
-import Log from "../libraries/sw/Log";
+import SWLog from "../libraries/SWLog";
 import { ConfigHelper } from "../helpers/ConfigHelper";
 import { OneSignalUtils } from "../utils/OneSignalUtils";
 import { Utils } from "../context/shared/utils/Utils";
@@ -28,6 +27,7 @@ import { NotificationReceived, NotificationClicked } from "../models/Notificatio
 import { cancelableTimeout } from "../helpers/sw/CancelableTimeout";
 import { DeviceRecord } from '../models/DeviceRecord';
 import { awaitableTimeout } from "../utils/AwaitableTimeout";
+import { applyWorkerMessagingCommandHandlers, buildWorkerMessagingCommandHandlers } from "./WorkerMessengerCommandHandling";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -60,7 +60,7 @@ export class ServiceWorker {
   }
 
   static get log() {
-    return Log;
+    return SWLog;
   }
 
   /**
@@ -112,11 +112,11 @@ export class ServiceWorker {
 
       switch(data.command) {
         case WorkerMessengerCommand.SessionUpsert:
-          Log.debug("[Service Worker] Received SessionUpsert", payload);
+          SWLog.debug("[Service Worker] Received SessionUpsert", payload);
           ServiceWorker.debounceRefreshSession(event, payload as UpsertSessionPayload);
           break;
         case WorkerMessengerCommand.SessionDeactivate:
-          Log.debug("[Service Worker] Received SessionDeactivate", payload);
+          SWLog.debug("[Service Worker] Received SessionDeactivate", payload);
           ServiceWorker.debounceRefreshSession(event, payload as DeactivateSessionPayload);
           break;
         default:
@@ -136,14 +136,16 @@ export class ServiceWorker {
 
       Also see: https://github.com/w3c/ServiceWorker/issues/1156
     */
-    Log.debug('Setting up message listeners.');
+    SWLog.debug('Setting up message listeners.');
     // self.addEventListener('message') is statically added inside the listen() method
     ServiceWorker.workerMessenger.listen();
     // Install messaging event handlers for page <-> service worker communication
-    ServiceWorker.setupMessageListeners();
+
+    const messageHandlers = buildWorkerMessagingCommandHandlers(this.workerMessenger);
+    applyWorkerMessagingCommandHandlers(ServiceWorker.workerMessenger, messageHandlers);
   }
 
-  static async getAppId(): Promise<string> {
+  public static async getAppId(): Promise<string> {
     if (self.location.search) {
       const match = self.location.search.match(/appId=([0-9a-z-]+)&?/i);
       // Successful regex matches are at position 1
@@ -156,89 +158,13 @@ export class ServiceWorker {
     return appId;
   }
 
-  static setupMessageListeners() {
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.WorkerVersion, _ => {
-      Log.debug('[Service Worker] Received worker version message.');
-      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.WorkerVersion, Environment.version());
-    });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.Subscribe, async (appConfigBundle: any) => {
-      const appConfig = appConfigBundle;
-      Log.debug('[Service Worker] Received subscribe message.');
-      const context = new ContextSW(appConfig);
-      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
-      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
-      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.Subscribe, subscription.serialize());
-    });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.SubscribeNew, async (appConfigBundle: any) => {
-      const appConfig = appConfigBundle;
-      Log.debug('[Service Worker] Received subscribe new message.');
-      const context = new ContextSW(appConfig);
-      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
-      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
-      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.SubscribeNew, subscription.serialize());
-    });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscriptionState, async (_appConfigBundle: any) => {
-      Log.debug('[Service Worker] Received AMP subscription state message.');
-      const pushSubscription = await self.registration.pushManager.getSubscription();
-      if (!pushSubscription) {
-        await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, false);
-      } else {
-        const permission = await self.registration.pushManager.permissionState(pushSubscription.options);
-        const { optedOut } = await Database.getSubscription();
-        const isSubscribed = !!pushSubscription && permission === "granted" && optedOut !== true;
-        await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscriptionState, isSubscribed);
-      }
-    });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpSubscribe, async () => {
-      Log.debug('[Service Worker] Received AMP subscribe message.');
-      const appId = await ServiceWorker.getAppId();
-      const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
-      const context = new ContextSW(appConfig);
-      const rawSubscription = await context.subscriptionManager.subscribe(SubscriptionStrategyKind.ResubscribeExisting);
-      const subscription = await context.subscriptionManager.registerSubscription(rawSubscription);
-      await Database.put('Ids', { type: 'appId', id: appId });
-      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpSubscribe, subscription.deviceId);
-    });
-    ServiceWorker.workerMessenger.on(WorkerMessengerCommand.AmpUnsubscribe, async () => {
-      Log.debug('[Service Worker] Received AMP unsubscribe message.');
-      const appId = await ServiceWorker.getAppId();
-      const appConfig = await ConfigHelper.getAppConfig({ appId }, OneSignalApiSW.downloadServerAppConfig);
-      const context = new ContextSW(appConfig);
-      await context.subscriptionManager.unsubscribe(UnsubscriptionStrategy.MarkUnsubscribed);
-      ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.AmpUnsubscribe, null);
-    });
-    ServiceWorker.workerMessenger.on(
-      WorkerMessengerCommand.AreYouVisibleResponse, async (payload: PageVisibilityResponse) => {
-        Log.debug('[Service Worker] Received response for AreYouVisible', payload);
-        if (!self.clientsStatus) { return; }
-
-        const timestamp = payload.timestamp;
-        if (self.clientsStatus.timestamp !== timestamp) { return; }
-        
-        self.clientsStatus.receivedResponsesCount++;
-        if (payload.focused) {
-          self.clientsStatus.hasAnyActiveSessions = true;
-        }
-      }
-    );
-    ServiceWorker.workerMessenger.on(
-      WorkerMessengerCommand.SetLogging, async (payload: {shouldLog: boolean}) => {
-        if (payload.shouldLog) {
-          self.shouldLog = true;
-        } else {
-          self.shouldLog = undefined;
-        }
-      }
-    );
-  }
-
   /**
    * Occurs when a push message is received.
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
    * notifications.
    */
   static onPushReceived(event: PushEvent): void {
-    Log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
+    SWLog.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
@@ -249,7 +175,7 @@ export class ServiceWorker {
               const appId = await ServiceWorker.getAppId();
 
               for (const rawNotification of notifications) {
-                Log.debug('Raw Notification from OneSignal:', rawNotification);
+                SWLog.debug('Raw Notification from OneSignal:', rawNotification);
                 const notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
                 const notificationReceived: NotificationReceived = {
@@ -266,10 +192,10 @@ export class ServiceWorker {
                 notificationEventPromiseFns.push((notif => {
                   return ServiceWorker.displayNotification(notif)
                       .then(() => {
-                        return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => Log.error(e));
+                        return ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDisplayed, notif).catch(e => SWLog.error(e));
                       })
                       .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif)
-                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => Log.error(e)));
+                      .then(() => ServiceWorker.sendConfirmedDelivery(notif)).catch(e => SWLog.error(e)));
                 }).bind(null, notification));
               }
 
@@ -278,9 +204,9 @@ export class ServiceWorker {
                }, Promise.resolve());
             })
             .catch(e => {
-              Log.debug('Failed to display a notification:', e);
+              SWLog.debug('Failed to display a notification:', e);
               if (ServiceWorker.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
-                Log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
+                SWLog.debug('Because we have just unsubscribed from notifications, we will not show anything.');
                 return undefined;
               }
             })
@@ -329,7 +255,7 @@ export class ServiceWorker {
         'Content-Type': 'application/json'
       };
     }
-    Log.debug(
+    SWLog.debug(
       `Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${webhookTargetUrl}`,
       Utils.getConsoleStyle('code'), ':', postData
     );
@@ -367,7 +293,7 @@ export class ServiceWorker {
       device_type: DeviceRecord.prototype.getDeliveryPlatform()
     };
 
-    Log.debug(`Called %csendConfirmedDelivery(${
+    SWLog.debug(`Called %csendConfirmedDelivery(${
       JSON.stringify(notification, null, 4)
     })`, Utils.getConsoleStyle('code'));
 
@@ -433,7 +359,7 @@ export class ServiceWorker {
   }
 
   static async refreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload): Promise<void> {
-    Log.debug("[Service Worker] refreshSession");
+    SWLog.debug("[Service Worker] refreshSession");
     /**
      * if https -> getActiveClients -> check for the first focused
      * unfortunately, not enough for safari, it always returns false for focused state of a client
@@ -451,7 +377,7 @@ export class ServiceWorker {
         await ServiceWorker.checkIfAnyClientsFocusedAndUpdateSession(event, windowClients, options);
       } else {
         const hasAnyActiveSessions: boolean = windowClients.some(w => (w as WindowClient).focused);
-        Log.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
+        SWLog.debug("[Service Worker] isHttps hasAnyActiveSessions", hasAnyActiveSessions);
         await ServiceWorker.updateSessionBasedOnHasActive(event, hasAnyActiveSessions, options);
       }
       return;
@@ -485,7 +411,7 @@ export class ServiceWorker {
       if (!self.clientsStatus) { return; }
       if (self.clientsStatus.timestamp !== timestamp) { return; }
 
-      Log.debug("updateSessionBasedOnHasActive", self.clientsStatus);
+      SWLog.debug("updateSessionBasedOnHasActive", self.clientsStatus);
       await ServiceWorker.updateSessionBasedOnHasActive(event,
         self.clientsStatus.hasAnyActiveSessions, sessionInfo);
       self.clientsStatus = undefined;
@@ -496,7 +422,7 @@ export class ServiceWorker {
   }
 
   static debounceRefreshSession(event: ExtendableMessageEvent, options: DeactivateSessionPayload) {
-    Log.debug("[Service Worker] debounceRefreshSession", options);
+    SWLog.debug("[Service Worker] debounceRefreshSession", options);
 
     if (self.cancel) {
       self.cancel();
@@ -605,7 +531,7 @@ export class ServiceWorker {
    * @param notification A structured notification object.
    */
   static async displayNotification(notification, overrides?) {
-    Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
+    SWLog.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
     const defaultTitle = await ServiceWorker._getTitle();
@@ -714,10 +640,10 @@ export class ServiceWorker {
    * Supported on: Chrome 50+ only
    */
   static onNotificationClosed(event) {
-    Log.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
+    SWLog.debug(`Called %conNotificationClosed(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
     const notification = event.notification.data;
 
-    ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => Log.error(e));
+    ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationDismissed, notification).catch(e => SWLog.error(e));
     event.waitUntil(
         ServiceWorker.executeWebhooks('notification.dismissed', notification)
     );
@@ -762,7 +688,7 @@ export class ServiceWorker {
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
   static async onNotificationClicked(event: NotificationEventInit) {
-    Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
+    SWLog.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
@@ -796,7 +722,7 @@ export class ServiceWorker {
       url: launchUrl,
       timestamp: new Date().getTime(),
     };
-    Log.info("NotificationClicked", notificationClicked);
+    SWLog.info("NotificationClicked", notificationClicked);
     saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
@@ -812,7 +738,7 @@ export class ServiceWorker {
           await Database.upsertSession(existingSession);
         }
       } catch(e) {
-        Log.error("Failed to save clicked notification.", e);
+        SWLog.error("Failed to save clicked notification.", e);
       }
     })(notificationClicked);
 
@@ -845,7 +771,7 @@ export class ServiceWorker {
       try {
         clientOrigin = new URL(clientUrl).origin;
       } catch (e) {
-        Log.error(`Failed to get the HTTP site's actual origin:`, e);
+        SWLog.error(`Failed to get the HTTP site's actual origin:`, e);
       }
       let launchOrigin = null;
       try {
@@ -863,7 +789,7 @@ export class ServiceWorker {
               if (client instanceof WindowClient)
                 await client.focus();
             } catch (e) {
-              Log.error("Failed to focus:", client, e);
+              SWLog.error("Failed to focus:", client, e);
             }
         } else {
           /*
@@ -874,38 +800,38 @@ export class ServiceWorker {
            */
           if (client['isSubdomainIframe']) {
             try {
-              Log.debug('Client is subdomain iFrame. Attempting to focus() client.');
+              SWLog.debug('Client is subdomain iFrame. Attempting to focus() client.');
               if (client instanceof WindowClient)
                 await client.focus();
             } catch (e) {
-              Log.error("Failed to focus:", client, e);
+              SWLog.error("Failed to focus:", client, e);
             }
             if (notificationOpensLink) {
-              Log.debug(`Redirecting HTTP site to ${launchUrl}.`);
+              SWLog.debug(`Redirecting HTTP site to ${launchUrl}.`);
               await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
               ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.RedirectPage, launchUrl, client);
             } else {
-              Log.debug('Not navigating because link is special.');
+              SWLog.debug('Not navigating because link is special.');
             }
           }
           else if (client instanceof WindowClient && client.navigate) {
             try {
-              Log.debug('Client is standard HTTPS site. Attempting to focus() client.');
+              SWLog.debug('Client is standard HTTPS site. Attempting to focus() client.');
               if (client instanceof WindowClient)
                 await client.focus();
             } catch (e) {
-              Log.error("Failed to focus:", client, e);
+              SWLog.error("Failed to focus:", client, e);
             }
             try {
               if (notificationOpensLink) {
-                Log.debug(`Redirecting HTTPS site to (${launchUrl}).`);
+                SWLog.debug(`Redirecting HTTPS site to (${launchUrl}).`);
                 await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
                 await client.navigate(launchUrl);
               } else {
-                Log.debug('Not navigating because link is special.');
+                SWLog.debug('Not navigating because link is special.');
               }
             } catch (e) {
-              Log.error("Failed to navigate:", client, launchUrl, e);
+              SWLog.error("Failed to navigate:", client, launchUrl, e);
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
@@ -968,11 +894,11 @@ export class ServiceWorker {
    * @param url May not be well-formed.
    */
   static async openUrl(url: string): Promise<Client | null> {
-    Log.debug('Opening notification URL:', url);
+    SWLog.debug('Opening notification URL:', url);
     try {
       return await self.clients.openWindow(url);
     } catch (e) {
-      Log.warn(`Failed to open the URL '${url}':`, e);
+      SWLog.warn(`Failed to open the URL '${url}':`, e);
       return null;
     }
   }
@@ -987,12 +913,12 @@ export class ServiceWorker {
    * @param event
    */
   static onServiceWorkerActivated(event: ExtendableEvent) {
-    Log.info(`OneSignal Service Worker activated (version ${Environment.version()})`);
+    SWLog.info(`OneSignal Service Worker activated (version ${Environment.version()})`);
     event.waitUntil(self.clients.claim());
   }
 
   static async onPushSubscriptionChange(event: PushSubscriptionChangeEvent) {
-    Log.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
+    SWLog.debug(`Called %conPushSubscriptionChange(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     const appId = await ServiceWorker.getAppId();
     if (!appId) {
@@ -1107,7 +1033,7 @@ export class ServiceWorker {
 
     const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
     if (isValidPayload) {
-      Log.debug("Received a valid encrypted push payload.");
+      SWLog.debug("Received a valid encrypted push payload.");
       return Promise.resolve([event.data.json()]);
     }
 
@@ -1132,11 +1058,11 @@ export class ServiceWorker {
           OneSignalUtils.isValidUuid(payload.custom.i)) {
         return true;
       } else {
-        Log.debug('isValidPushPayload: Valid JSON but missing notification UUID:', payload);
+        SWLog.debug('isValidPushPayload: Valid JSON but missing notification UUID:', payload);
         return false;
       }
     } catch (e) {
-      Log.debug('isValidPushPayload: Parsing to JSON failed with:', e);
+      SWLog.debug('isValidPushPayload: Parsing to JSON failed with:', e);
       return false;
     }
   }

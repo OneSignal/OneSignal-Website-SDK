@@ -64,7 +64,8 @@ export abstract class OneSignalStub<T> implements IndexableByString<any> {
     "isOptedOut",
     "getEmailId",
     "getSMSId",
-    "sendOutcome"
+    "sendOutcome",
+    "setSWLogging",
   ];
 
   public abstract isPushNotificationsSupported(): boolean;
