@@ -37,5 +37,11 @@ echo "Done."
 
 echo "Last step: update the SDK script src to https://$url/sdks/Dev-OneSignalSDK.js"
 
-# Open the ngrok url
-open "https://$url"
+# Open the ngrok url in your default browser
+if [ -x "$(command -v open)" ]; then
+    # macOS
+    open "https://$url"
+else
+    # Linux
+    xdg-open "https://$url"
+fi
