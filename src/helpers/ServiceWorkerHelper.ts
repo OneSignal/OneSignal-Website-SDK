@@ -169,6 +169,8 @@ export default class ServiceWorkerHelper {
         const rawPushSubscription = RawPushSubscription.setFromW3cSubscription(subscription);
         const fullDeviceRecord = new PushDeviceRecord(rawPushSubscription).serialize();
         deviceRecord.identifier = fullDeviceRecord.identifier;
+        deviceRecord.web_p256 = fullDeviceRecord.web_p256;
+        deviceRecord.web_auth = fullDeviceRecord.web_auth;
       }
     }
 
