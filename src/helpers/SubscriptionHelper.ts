@@ -16,7 +16,7 @@ import { SessionOrigin } from "../models/Session";
 import MainHelper from "./MainHelper";
 import { PushDeviceRecord } from "../models/PushDeviceRecord";
 import { EnvironmentInfo } from "../context/browser/models/EnvironmentInfo";
-import { Browser } from "../context/browser/models/Browser";
+import { supportsVapidPush, supportsSafariPush } from '../context/browser/utils/BrowserSupportsPush';
 
 export default class SubscriptionHelper {
   public static async registerForPush(): Promise<Subscription | null> {
@@ -180,17 +180,20 @@ export default class SubscriptionHelper {
   static async getRawPushSubscription(
     environmentInfo: EnvironmentInfo, safariWebId: string
   ):Promise<RawPushSubscription | null> {
-    if (environmentInfo.browserType === Browser.Safari) {
-      return SubscriptionHelper.getRawPushSubscriptionForSafari(safariWebId);
-    }
-
     if (environmentInfo.isUsingSubscriptionWorkaround) {
+      Log.info("getRawPushSubscription:isUsingSubscriptionWorkaround");
       return SubscriptionHelper.getRawPushSubscriptionWhenUsingSubscriptionWorkaround();
     }
 
-    if (environmentInfo.isBrowserAndSupportsServiceWorkers) {
+    if (supportsVapidPush()) {
       const registration = await OneSignal.context.serviceWorkerManager.getRegistration();
+      Log.info("getRawPushSubscription:supportsVapidPush():", registration);
       return await SubscriptionHelper.getRawPushSubscriptionFromServiceWorkerRegistration(registration);
+    }
+
+    if (supportsSafariPush()) {
+      Log.info("getRawPushSubscription:supportsSafariPush():");
+      return SubscriptionHelper.getRawPushSubscriptionForSafari(safariWebId);
     }
 
     return null;

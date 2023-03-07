@@ -14,7 +14,7 @@ export function isMacOSSafariInIframe(): boolean {
   navigator.platform === "MacIntel"; // isMacOS
 }
 
-function supportsSafariPush(): boolean {
+export function supportsSafariPush(): boolean {
   return (window.safari && typeof window.safari.pushNotification !== "undefined") ||
           isMacOSSafariInIframe();
 }
