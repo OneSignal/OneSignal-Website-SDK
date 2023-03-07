@@ -537,10 +537,14 @@ export class SubscriptionManager {
 
     // If Safari 16+, we need to unsubscribe the user from the old push subscription if it exists
     const safariDeviceToken = window.safari?.pushNotification?.permission(OneSignal.config.safariWebId).deviceToken;
-    if (bowser.safari && safariDeviceToken) {
+    if (safariDeviceToken) {
       // see https://apple.co/3XHNuGB for info on this call
       // handled internally here https://bit.ly/3WqIMvX
-      await OneSignalApiBase.delete(`safari/v2/devices/${safariDeviceToken}/registrations/${this.config.safariWebId}`);
+      try {
+        await OneSignalApiBase.delete(`safari/v2/devices/${safariDeviceToken}/registrations/${this.config.safariWebId}`);
+      } catch (e) {
+        Log.warn("Could not unsubscribe old Safari push token due error but continuing: ", e);
+      }
     }
 
     // Update saved create and expired times
