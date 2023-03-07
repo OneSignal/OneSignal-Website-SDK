@@ -77,25 +77,35 @@ export default class LoginManager {
       }
       await OneSignal.coreDirector.resetModelRepoAndCache();
       await UserDirector.initializeUser(true);
-      await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
 
-      LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId).then(async result => {
-        const { identity } = result;
-        const onesignalId = identity?.onesignal_id;
+      // use optional chaining to prevent errors if the namespace is not initialized (e.g. in unit tests)
+      await OneSignal.User?.PushSubscription?._resubscribeToPushModelChanges();
 
-        if (!onesignalId) {
-          throw new OneSignalError('Login: No OneSignal ID found');
-        }
-        await LoginManager.fetchAndHydrate(onesignalId);
-      }).catch(error => {
-        Log.error(`Login: Error while identifying or upserting user: ${error}`);
+      let result;
+
+      try {
+        result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+      } catch (e) {
+        Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
+        // if the login fails, restore the old user data
         if (onesignalIdBackup) {
-          Log.info('Login: Failed to login, reverting to anonymous user');
-          LoginManager.fetchAndHydrate(onesignalIdBackup).catch(error => {
-            Log.error(`Login: Error while reverting to anonymous user: ${error}`);
-          });
+          Log.debug('Login: Restoring old user data');
+
+          try {
+            await LoginManager.fetchAndHydrate(onesignalIdBackup);
+          } catch (e) {
+            Log.error(`Login: Error while restoring old user data: ${e.message}`);
+          }
         }
-      });
+        throw e;
+      }
+      const { identity } = result;
+      const onesignalId = identity?.onesignal_id;
+
+      if (!onesignalId) {
+        throw new OneSignalError('Login: No OneSignal ID found');
+      }
+      await LoginManager.fetchAndHydrate(onesignalId);
     } catch (e) {
       Log.error(e);
     }
