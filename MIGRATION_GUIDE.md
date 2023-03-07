@@ -219,6 +219,17 @@ OneSignal.User.PushSubscription.optIn();
 | `sync`     | `addEventListener()`    | Adds an event listener for the `subscriptionChange` event.                                    | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
 | `sync`     | `removeEventListener()` | Removes an event listener for the `subscriptionChange` event.                                 | - `event` ("subscriptionChange")<br>- `listener` ((change: SubscriptionChangeEvent) => void) |
 
+### Debug Namespace
+
+Example:
+```js
+OneSignal.Debug.setLogLevel(“trace”);
+```
+
+| Function Name   | Description                                    | Argument List                        |
+| --------------- | ---------------------------------------------- | ------------------------------------ |
+| `setLogLevel`      | Turns on logging with the given log level.                                    | `setLogLevel: string`<br>- `"trace"`<br>- `"debug"`<br>- `"info"`<br>- `"warn"`<br>- `"error"` |
+
 # Limitations
 
 ## January 2023
