@@ -1,3 +1,36 @@
+# Basic Test
+Here is a basic test file template.
+
+```ts
+import { TestEnvironment } from "../../support/environment/TestEnvironment";
+
+// mock an entire file
+jest.mock("../../../src/MyFile");
+
+describe('My tests', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    TestEnvironment.initialize();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  test('This is a test description', () => {});
+});
+
+```
+
+# Common Usages
+## Suppress Internal Logging
+Your test may result in an error being printed but the test still succeeds. To suppress logs, you can mock the entire Log file.
+
+```ts
+// suppress all internal logging
+jest.mock("../../../src/shared/libraries/Log");
+```
+
 # Jest Customizations
 This directory includes changes used for extending Jest to do things like stub and spy on private functions.
 
@@ -7,7 +40,7 @@ To add more custom testing functions, add them to `jest/jest.setupt.ts` and `jes
 
 ## API
 ### `stub`
-Used to stub a class function with the given return value.
+Used to stub a class function with the given mock return value.
 
 ```ts
 test.stub(MyClass.prototype, 'myFunction', {});
@@ -18,3 +51,13 @@ Jest does not have a way to force fail a function.
 ```ts
 test.fail();
 ```
+
+### `nock`
+Mocks all HTTP requests by replacing the `fetch` function. If omitted, the status defaults to 200.
+```ts
+test.nock({}, 404)
+```
+
+# Troubleshooting
+## `jest.spyOn()` vs `test.stub()`
+`test.stub()`'s internal implementation is the same as `jest.spyOn()` with the difference that the `stub` function has the option to set the mock return value. **Warning**: setting the mock return value can change the behavior of nested functions. For example, if an outer function calls a function you expect to be called once -- and you set a mock return value on the outer function, your test comparison may fail.

@@ -7,6 +7,7 @@ declare namespace jest {
      * @param returnValue The value to return.
      */
     stub: (obj: any, method: string, returnValue?: any) => jest.SpyInstance<any>;
-    fail: () => void;
+    fail: (message?: string) => void;
+    nock: (responseBody: any, status?: number) => void;
   }
 }
