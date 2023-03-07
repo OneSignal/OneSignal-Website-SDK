@@ -162,7 +162,7 @@ export default class LoginManager {
       return result;
   }
 
-  static async upsertUser(userData: Partial<UserData>, retry: number = 5): Promise<UserData> {
+  static async upsertUser(userData: Partial<UserData>, retry = 5): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
 
     if (retry === 0) {
@@ -192,7 +192,7 @@ export default class LoginManager {
     return result;
   }
 
-  static async identifyUser(userData: UserData, pushSubscriptionId?: string, retry: number = 5):
+  static async identifyUser(userData: UserData, pushSubscriptionId?: string, retry = 5):
     Promise<Partial<UserData>> {
       logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
 
