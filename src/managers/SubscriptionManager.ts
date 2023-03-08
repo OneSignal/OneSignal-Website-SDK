@@ -541,7 +541,10 @@ export class SubscriptionManager {
       // see https://apple.co/3XHNuGB for info on this call
       // handled internally here https://bit.ly/3WqIMvX
       try {
-        await OneSignalApiBase.delete(`safari/v2/devices/${safariDeviceToken}/registrations/${this.config.safariWebId}`);
+        await OneSignalApiBase.delete(
+          `safari/v2/devices/${safariDeviceToken}/registrations/${this.config.safariWebId}`,
+          { app_id: this.config.appId }
+        );
       } catch (e) {
         Log.warn("Could not unsubscribe old Safari push token due error but continuing: ", e);
       }
