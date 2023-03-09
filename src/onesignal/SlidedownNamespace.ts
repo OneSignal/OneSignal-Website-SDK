@@ -1,4 +1,3 @@
-import LocalStorage from "../shared/utils/LocalStorage";
 import { AutoPromptOptions } from "../page/managers/PromptsManager";
 import { DelayedPromptType } from "../shared/models/Prompts";
 import { awaitOneSignalInitAndSupported } from "../shared/utils/utils";
