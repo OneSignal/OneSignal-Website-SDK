@@ -4,10 +4,13 @@ import PushSubscriptionNamespace from "./PushSubscriptionNamespace";
 export default class UserNamespace {
   private _currentUser?: User;
 
-  readonly PushSubscription = new PushSubscriptionNamespace();
+  public PushSubscription = new PushSubscriptionNamespace(false);
 
-  constructor() {
-    this._currentUser = User.createOrGetInstance();
+  constructor(initialize = true) {
+    if (initialize) {
+      this._currentUser = User.createOrGetInstance();
+      this.PushSubscription = new PushSubscriptionNamespace();
+    }
   }
 
   /* P U B L I C   A P I  */
