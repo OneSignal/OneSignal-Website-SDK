@@ -14,7 +14,7 @@ export default class Environment {
   // Prefer Legacy Safari if API is available over VAPID until Safari
   // fixes issues with it.
   public static useSafariLegacyPush(): boolean {
-    return window.safari?.pushNotification != undefined
+    return this.isBrowser() && window.safari?.pushNotification != undefined
   }
 
   // This is the counter part to useSafariLegacyPush(); as it notes only use
