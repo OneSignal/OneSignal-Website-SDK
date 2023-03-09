@@ -18,8 +18,12 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
   private _token?: string | null;
   private _optedIn?: boolean;
 
-  constructor() {
+  constructor(initialize = true) {
     super();
+    if (!initialize) {
+      return;
+    }
+
     Database.getSubscription().then(subscription => {
       this._optedIn = subscription.optedOut;
       this._token = subscription.subscriptionToken;

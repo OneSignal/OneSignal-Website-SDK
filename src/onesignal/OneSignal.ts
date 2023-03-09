@@ -244,7 +244,7 @@ export default class OneSignal {
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
-  static User: UserNamespace;
+  static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
 
