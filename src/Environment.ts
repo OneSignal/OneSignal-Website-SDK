@@ -1,6 +1,7 @@
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import bowser from 'bowser';
+import { supportsVapidPush } from './context/browser/utils/BrowserSupportsPush';
 
 export default class Environment {
   /**
@@ -10,8 +11,16 @@ export default class Environment {
     return typeof window !== 'undefined';
   }
 
-  public static isSafari(): boolean {
-    return Environment.isBrowser() && bowser.safari;
+  // Prefer Legacy Safari if API is available over VAPID until Safari
+  // fixes issues with it.
+  public static useSafariLegacyPush(): boolean {
+    return window.safari?.pushNotification != undefined
+  }
+
+  // This is the counter part to useSafariLegacyPush(); as it notes only use
+  // Safari VAPID if it doesn't have legacy Safari push.
+  public static useSafariVapidPush(): boolean {
+    return bowser.safari && supportsVapidPush() && !this.useSafariLegacyPush();
   }
 
   public static version() {

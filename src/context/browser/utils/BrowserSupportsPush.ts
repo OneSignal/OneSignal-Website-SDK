@@ -20,7 +20,7 @@ function supportsSafariPush(): boolean {
 }
 
 // Does the browser support the standard Push API
-function supportsVapidPush(): boolean {
+export function supportsVapidPush(): boolean {
   return typeof PushSubscriptionOptions !== "undefined" &&
          PushSubscriptionOptions.prototype.hasOwnProperty("applicationServerKey");
 }
