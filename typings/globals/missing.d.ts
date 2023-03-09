@@ -1,19 +1,21 @@
 /**
  * START: window.safari definition
- * https://developer.apple.com/documentation/safariextensions
+ * Types and names collected from:
+ *   - https://developer.apple.com/documentation/safariextensions/safariremotenotification
+ *   - https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html
  */
 interface SafariRemoteNotificationPermission {
-  readonly deviceToken: string | null | undefined;
-  readonly permission: string;
+  readonly deviceToken: string | null;
+  readonly permission: "default" | "granted" | "denied";
 }
 
 interface SafariRemoteNotification {
-  permission(bundleIdentifier: string): SafariRemoteNotificationPermission;
+  permission(websitePushID: string): SafariRemoteNotificationPermission;
   requestPermission(
     webAPIURL: string,
-    websiteIdentifier: string,
-    queryParameterDictionary: any,
-    callback: Function
+    websitePushID: string,
+    queryParameterDictionary: unknown,
+    callback: (permissionData: SafariRemoteNotificationPermission) => void
   ): void;
 }
 
