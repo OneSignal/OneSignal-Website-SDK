@@ -5,4 +5,5 @@ export enum DeliveryPlatformKind {
   Email = 11,
   Edge = 12,
   SMS = 14,
+  SafariVapid = 17,
 }
