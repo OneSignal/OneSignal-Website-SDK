@@ -20,3 +20,6 @@ dist/Dev-OneSignalSDK.js.map
 
 coverage
 .nyc_output
+
+ngrok_last_url
+ngrok.log
