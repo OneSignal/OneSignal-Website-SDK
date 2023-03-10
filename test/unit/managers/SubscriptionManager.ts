@@ -12,7 +12,7 @@ import Context from '../../../src/models/Context';
 import { SubscriptionManager, SubscriptionManagerConfig } from '../../../src/managers/SubscriptionManager';
 import { base64ToUint8Array, arrayBufferToBase64 } from '../../../src/utils/Encoding';
 import Random from '../../support/tester/Random';
-import { setBrowser } from '../../support/tester/browser';
+import { setBrowser, setUserAgent } from '../../support/tester/browser';
 import { SubscriptionStrategyKind } from "../../../src/models/SubscriptionStrategyKind";
 import { RawPushSubscription } from '../../../src/models/RawPushSubscription';
 import { IntegrationKind } from '../../../src/models/IntegrationKind';
@@ -26,6 +26,10 @@ import { Subscription } from "../../../src/models/Subscription";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
+import { setupSafariWithPushEnv } from '../modules/browserSupport';
+import Environment from '../../../src/Environment';
+import { NotificationPermission } from '../../../src/models/NotificationPermission';
+import OneSignalApiBase from '../../../src/OneSignalApiBase';
 
 const sandbox: SinonSandbox= sinon.sandbox.create();
 
@@ -342,6 +346,54 @@ test("registerSubscription without an existing subsription sends player create",
   const args = playerCreateSpy.getCall(0).args;
   t.is(args.length, 1);
   t.deepEqual(args[0], deviceRecord);
+});
+
+test('safari 16 registers vapidly', async t => {
+  setupSafariWithPushEnv()
+  sandbox.stub(Environment, "isNonVapidSafari").returns(false);
+  const subscribeFromPageWithVapidSpy = sandbox.stub(SubscriptionManager.prototype as any, 'subscribeFromPageWithVapid');
+
+  await OneSignal.context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+
+  t.is(subscribeFromPageWithVapidSpy.calledOnce, true);
+});
+
+test('safari 16 with an old push subscription unsubscribes the old one', async t => {
+  setupSafariWithPushEnv()
+  const vapidKeys = generateVapidKeys();
+
+  await testCase(
+    t,
+    BrowserUserAgent.SafariVapidSupported,
+    vapidKeys.uniquePublic,
+    vapidKeys.sharedPublic,
+    SubscriptionStrategyKind.SubscribeNew,
+    null,
+    null
+  );
+
+  const deleteSpy = sandbox.spy(OneSignalApiBase, "delete");
+  sandbox.stub(Environment, "isNonVapidSafari").returns(false);
+  await OneSignal.context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+
+  t.is(deleteSpy.calledOnce, true);
+});
+
+test('safari <16 registers down the legacy safari-only path', async t => {
+  setupSafariWithPushEnv()
+  setUserAgent(BrowserUserAgent.SafariSupportedMac);
+  setBrowser(BrowserUserAgent.SafariSupportedMac);
+
+  sandbox.stub(Environment, "isNonVapidSafari").returns(true);
+  sandbox.stub(OneSignal, "privateGetNotificationPermission").resolves(NotificationPermission.Granted);
+
+  const subscribeSafariSpy = sandbox.stub(SubscriptionManager.prototype as any, "subscribeSafari").resolves();
+  const subscribeFromPageWithVapidSpy = sandbox.stub(SubscriptionManager.prototype as any, 'subscribeFromPageWithVapid');
+
+  await OneSignal.context.subscriptionManager.subscribe(SubscriptionStrategyKind.SubscribeNew);
+
+  t.is(subscribeFromPageWithVapidSpy.calledOnce, false);
+  t.is(subscribeSafariSpy.calledOnce, true);
 });
 
 test('device ID is available after register event', async t => {

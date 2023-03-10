@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "OneSignal Sandbox WebSDK WebApp",
+  "short_name": "OSWebAppSandbox",
+  "display": "standalone",
+  "background_color": "#ff0000",
+  "description": "Add this WebApp to your iOS 16.4 homescreen then open it to test WebPush!"
+}

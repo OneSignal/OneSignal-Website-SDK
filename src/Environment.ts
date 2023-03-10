@@ -1,6 +1,7 @@
 import SdkEnvironment from './managers/SdkEnvironment';
 import { WindowEnvironmentKind } from './models/WindowEnvironmentKind';
 import bowser from 'bowser';
+import { supportsVapidPush } from './context/browser/utils/BrowserSupportsPush';
 
 export default class Environment {
   /**
@@ -12,6 +13,10 @@ export default class Environment {
 
   public static isSafari(): boolean {
     return Environment.isBrowser() && bowser.safari;
+  }
+
+  public static isNonVapidSafari(): boolean {
+    return this.isSafari() && !supportsVapidPush();
   }
 
   public static version() {
@@ -34,7 +39,8 @@ export default class Environment {
       const languageSubtags = languageTag.split('-');
       if (languageSubtags[0] == 'zh') {
         // The language is zh-?
-        // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional); OneSignal only supports these two Chinese variants
+        // We must categorize the language as either zh-Hans (simplified) or zh-Hant (traditional);
+        // OneSignal only supports these two Chinese variants
         for (const traditionalSubtag of Environment.TRADITIONAL_CHINESE_LANGUAGE_TAG) {
           if (languageSubtags.indexOf(traditionalSubtag) !== -1) {
             return 'zh-Hant';
