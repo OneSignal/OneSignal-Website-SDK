@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- This Web Application Manifest is required for iOS 16.4 WebPush -->
+<link rel="manifest" href="manifest.json" />
+
 <!-- Some sites use this HTML base tag to change the origin for all relative links.
     Ensure OneSignal SDK correctly handles this. -->
-<base href="https://www.example.com/">
+<!-- NOTE: This does not work with the relative pathed manifest.json above. -->
+<!--<base href="https://www.example.com/"> -->
 <script src="sdks/Dev-OneSignalSDK.js" defer=""></script>
 <script>
     // NOTE: Uncomment and open site in Safari on macOS 13+ to simulate
