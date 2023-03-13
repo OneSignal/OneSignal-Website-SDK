@@ -57,10 +57,6 @@ export class SubscriptionManager {
     this.config = config;
   }
 
-  static isSafari(): boolean {
-    return Environment.isSafari();
-  }
-
   /**
    * Subscribes for a web push subscription.
    *
@@ -102,7 +98,7 @@ export class SubscriptionManager {
         if ((await OneSignal.privateGetNotificationPermission()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
 
-        if (SubscriptionManager.isSafari()) {
+        if (Environment.useSafariLegacyPush()) {
           rawPushSubscription = await this.subscribeSafari();
           /* Now that permissions have been granted, install the service worker */
           Log.info("Installing SW on Safari");
@@ -174,7 +170,7 @@ export class SubscriptionManager {
     subscription.deviceId = newDeviceId;
     subscription.optedOut = false;
     if (pushSubscription) {
-      if (SubscriptionManager.isSafari()) {
+      if (Environment.useSafariLegacyPush()) {
         subscription.subscriptionToken = pushSubscription.safariDeviceToken;
       } else {
         subscription.subscriptionToken = pushSubscription.w3cEndpoint ? pushSubscription.w3cEndpoint.toString() : null;
@@ -680,8 +676,8 @@ export class SubscriptionManager {
    * Returns an object describing the user's actual push subscription state and opt-out status.
    */
   public async getSubscriptionState(): Promise<PushSubscriptionState> {
-    /* Safari should always return Secure because HTTP doesn't apply on Safari */
-    if (SubscriptionManager.isSafari()) {
+    /* Safari Legacy supports HTTP so we don't have to use the subdomain workaround. */
+    if (Environment.useSafariLegacyPush()) {
       return this.getSubscriptionStateForSecure();
     }
 
@@ -727,7 +723,7 @@ export class SubscriptionManager {
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
     const { deviceId, optedOut } = await Database.getSubscription();
 
-    if (SubscriptionManager.isSafari()) {
+    if (Environment.useSafariLegacyPush()) {
       const subscriptionState: SafariRemoteNotificationPermission =
         window.safari.pushNotification.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(

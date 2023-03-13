@@ -3,8 +3,12 @@
 <!-- Some sites use this HTML base tag to change the origin for all relative links.
     Ensure OneSignal SDK correctly handles this. -->
 <base href="https://www.example.com/">
-<script src="sdks/Dev-OneSignalSDK.js" async=""></script>
+<script src="sdks/Dev-OneSignalSDK.js" defer=""></script>
 <script>
+    // NOTE: Uncomment and open site in Safari on macOS 13+ to simulate
+    // a similar JS API as an iOS 16.4 WebApp.
+    // window.safari = undefined;
+
     const SERVICE_WORKER_PATH = "push/onesignal/";
 
     function getUrlQueryParam(name) {

@@ -54,16 +54,14 @@ export abstract class DeviceRecord implements Serializable {
     // Unimplemented properties are appId, subscriptionState, and subscription
   }
 
-  isSafari(): boolean {
-    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
-  }
-
   getDeliveryPlatform(): DeliveryPlatformKind {
     // For testing purposes, allows changing the browser user agent
     const browser = OneSignalUtils.redetectBrowserUserAgent();
-
-    if (this.isSafari()) {
-      return DeliveryPlatformKind.Safari;
+  
+    if (Environment.useSafariLegacyPush()) {
+      return DeliveryPlatformKind.SafariLegacy;
+    } else if (Environment.useSafariVapidPush()) {
+      return DeliveryPlatformKind.SafariVapid;
     } else if (browser.firefox) {
       return DeliveryPlatformKind.Firefox;
     } else if (browser.msedge) {

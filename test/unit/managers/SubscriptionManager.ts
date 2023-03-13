@@ -26,6 +26,7 @@ import { Subscription } from "../../../src/models/Subscription";
 import { PushDeviceRecord } from "../../../src/models/PushDeviceRecord";
 import { MockPushManager } from "../../support/mocks/service-workers/models/MockPushManager";
 import { MockPushSubscription } from "../../support/mocks/service-workers/models/MockPushSubscription";
+import Environment from '../../../src/Environment';
 
 const sandbox: SinonSandbox= sinon.sandbox.create();
 
@@ -292,7 +293,7 @@ test("registerSubscription with an existing subsription sends player update", as
 
   sandbox.stub(Database, "getSubscription").resolves({ deviceId } as Subscription);
   sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
-  sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+  sandbox.stub(Environment, "useSafariLegacyPush").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
   const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
@@ -329,7 +330,7 @@ test("registerSubscription without an existing subsription sends player create",
   sandbox.stub(Database, "getSubscription").resolves({ } as Subscription);
   sandbox.stub(subscriptionManager, "associateSubscriptionWithEmail").resolves();
   sandbox.stub(PushDeviceRecord, "createFromPushSubscription").returns(deviceRecord);
-  sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+  sandbox.stub(Environment, "useSafariLegacyPush").returns(false);
   sandbox.stub(Database, "setSubscription").resolves();
 
   const playerUpdateSpy = sandbox.stub(OneSignal.context.updateManager, "sendPushDeviceRecordUpdate");
@@ -734,7 +735,7 @@ test(
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error403);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(Environment, "useSafariLegacyPush").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
@@ -760,7 +761,7 @@ test(
     const error403 = new ServiceWorkerRegistrationError(403, "403 Forbidden");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error403);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(Environment, "useSafariLegacyPush").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
@@ -786,7 +787,7 @@ test(
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").rejects(error404);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(Environment, "useSafariLegacyPush").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
@@ -812,7 +813,7 @@ test(
     const error404 = new ServiceWorkerRegistrationError(404, "404 Not Found");
     sandbox.stub(serviceWorkerManager, "installWorker").throws(error404);
     sandbox.stub(SdkEnvironment, "getWindowEnv").returns(WindowEnvironmentKind.Host);
-    sandbox.stub(SubscriptionManager, "isSafari").returns(false);
+    sandbox.stub(Environment, "useSafariLegacyPush").returns(false);
 
     const smSpyRegisterFailed = sandbox.spy(subscriptionManager, "registerFailedSubscription");
     const smSpyRegister = sandbox.spy(subscriptionManager, "registerSubscription");
