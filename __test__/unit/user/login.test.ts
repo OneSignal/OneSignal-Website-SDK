@@ -7,7 +7,7 @@ import { setupLoginStubs } from "../../support/helpers/login";
 import { RequestService } from "../../../src/core/requestService/RequestService";
 import { getDummyIdentityOSModel } from "../../support/helpers/core";
 import { ModelName } from "../../../src/core/models/SupportedModels";
-import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
+import { DUMMY_EXTERNAL_ID, DUMMY_EXTERNAL_ID_2, DUMMY_ONESIGNAL_ID } from "../../support/constants";
 
 // suppress all internal logging
 jest.mock("../../../src/shared/libraries/Log");
@@ -50,7 +50,7 @@ describe('Login tests', () => {
     }));
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
-    await LoginManager.login("rodrigo");
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
 
     expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(1);
   });
@@ -75,17 +75,19 @@ describe('Login tests', () => {
   test('If there is anything on the delta queue, it gets processed before login', async () => {
     await TestEnvironment.initialize({ useMockIdentityModel: true });
     setupLoginStubs();
+    const external_id = DUMMY_EXTERNAL_ID;
     test.stub(LoginManager, 'identifyOrUpsertUser', Promise.resolve({
       identity: {
-        external_id: DUMMY_EXTERNAL_ID,
-        onesignal_id: "1234567890",
+        external_id,
+        onesignal_id: DUMMY_ONESIGNAL_ID,
       }
     }));
 
     const forceProcessSpy = jest.spyOn(CoreModuleDirector.prototype, 'forceDeltaQueueProcessingOnAllExecutors');
 
-    await LoginManager.login(DUMMY_EXTERNAL_ID);
+    await LoginManager.login(external_id);
 
+    // TO DO: test the order of operations (force process deltas should occur at beginning of login process)
     expect(forceProcessSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -93,7 +95,7 @@ describe('Login tests', () => {
     setupLoginStubs();
     await TestEnvironment.initialize();
     const identityModel = getDummyIdentityOSModel();
-    test.nock({}, 200);
+    test.nock({});
 
     // to upsert, the user must already be identified (have an external_id)
     identityModel.set("external_id", "pavel");
@@ -107,8 +109,7 @@ describe('Login tests', () => {
     await LoginManager.login(DUMMY_EXTERNAL_ID);
 
     // get result of identifyOrUpsertUser
-    const result = identifyOrUpsertUserSpy.mock.results[0].value;
-    await result;
+    await identifyOrUpsertUserSpy.mock.results[0].value;
 
     // second argument to createUser is the payload object
     const payload = createUserSpy.mock.calls[0][1];
@@ -125,23 +126,21 @@ describe('Login tests', () => {
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
     });
-    test.nock({}, 200)
+    test.nock({})
 
     const identifyOrUpsertUserSpy = jest.spyOn(LoginManager, 'identifyOrUpsertUser');
     const identifyUserSpy = jest.spyOn(RequestService, 'addAlias');
 
-    await LoginManager.login("rodrigo");
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
 
     // get result of identifyOrUpsertUser
-    const result = identifyOrUpsertUserSpy.mock.results[0].value;
-
-    await result;
+    await identifyOrUpsertUserSpy.mock.results[0].value;
 
     // second argument to identifyUser is the payload object
     const identity = identifyUserSpy.mock.calls[0][2];
 
     if (identity) {
-      expect(Object.keys(identity).length).toBe(1);
+      expect(JSON.parse(JSON.stringify(identity))).toEqual({ external_id: DUMMY_EXTERNAL_ID });
     } else {
       test.fail("Payload does not contain identity");
     }
@@ -158,10 +157,11 @@ describe('Login tests', () => {
 
     test.nock({}, 409);
 
-    await LoginManager.login("rodrigo");
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
 
     expect(transferSubscriptionSpy).toHaveBeenCalledTimes(1);
   });
+
   test('If login fails, we fetch and hydrate the previous user', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
@@ -174,11 +174,12 @@ describe('Login tests', () => {
     test.nock({}, 400);
 
     try {
-      await LoginManager.login("rodrigo");
+      await LoginManager.login(DUMMY_EXTERNAL_ID);
       test.fail("Should have thrown an error");
     } catch (e) {
       expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
     }
   });
+
   test('If login with JWT token, save it to the database', async () => {});
 });

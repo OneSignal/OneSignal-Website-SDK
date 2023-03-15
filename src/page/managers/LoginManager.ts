@@ -81,10 +81,14 @@ export default class LoginManager {
       // use optional chaining to prevent errors if the namespace is not initialized (e.g. in unit tests)
       await OneSignal.User?.PushSubscription?._resubscribeToPushModelChanges();
 
-      let result;
-
       try {
-        result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+        const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+        const onesignalId = result?.identity?.onesignal_id;
+
+        if (!onesignalId) {
+          throw new OneSignalError('Login: No OneSignal ID found');
+        }
+        await LoginManager.fetchAndHydrate(onesignalId);
       } catch (e) {
         Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
         // if the login fails, restore the old user data
@@ -99,13 +103,6 @@ export default class LoginManager {
         }
         throw e;
       }
-      const { identity } = result;
-      const onesignalId = identity?.onesignal_id;
-
-      if (!onesignalId) {
-        throw new OneSignalError('Login: No OneSignal ID found');
-      }
-      await LoginManager.fetchAndHydrate(onesignalId);
     } catch (e) {
       Log.error(e);
     }
