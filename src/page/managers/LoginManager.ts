@@ -85,6 +85,12 @@ export default class LoginManager {
 
       try {
         result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+        const onesignalId = result?.identity?.onesignal_id;
+
+        if (!onesignalId) {
+          throw new OneSignalError('Login: No OneSignal ID found');
+        }
+        await LoginManager.fetchAndHydrate(onesignalId);
       } catch (e) {
         Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
         // if the login fails, restore the old user data
@@ -99,13 +105,6 @@ export default class LoginManager {
         }
         throw e;
       }
-      const { identity } = result;
-      const onesignalId = identity?.onesignal_id;
-
-      if (!onesignalId) {
-        throw new OneSignalError('Login: No OneSignal ID found');
-      }
-      await LoginManager.fetchAndHydrate(onesignalId);
     } catch (e) {
       Log.error(e);
     }
