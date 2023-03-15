@@ -3,7 +3,7 @@ import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { SupportedSubscription, SubscriptionType } from "../../../src/core/models/SubscriptionModels";
-import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
+import { ModelName } from "../../../src/core/models/SupportedModels";
 import { DUMMY_MODEL_ID, DUMMY_PUSH_TOKEN, DUMMY_SUBSCRIPTION_ID } from "../constants";
 
 
@@ -19,10 +19,10 @@ export function generateNewSubscription(modelId = '0000000000') {
     );
 }
 
-export function getMockDeltas(): CoreDelta<SupportedModel>[] {
+export function getMockDeltas(): CoreDelta<SupportedIdentity>[] {
   return [
     {
-      model: getDummyIdentityOSModel() as OSModel<SupportedModel>,
+      model: getDummyIdentityOSModel(),
       changeType: CoreChangeType.Add,
     }
   ];
