@@ -13,6 +13,7 @@ import { generateNewSubscription } from "../../support/helpers/core";
 // class mocks
 jest.mock('../../../src/core/caching/ModelCache');
 jest.mock('../../../src/core/operationRepo/Operation');
+jest.mock('../../../src/core/caching/OperationCache');
 
 describe('Executor tests', () => {
 
