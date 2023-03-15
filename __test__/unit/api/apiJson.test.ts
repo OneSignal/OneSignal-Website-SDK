@@ -3,184 +3,101 @@ import OneSignal from "../../../src/onesignal/OneSignal";
 import { OneSignalWithIndex } from "./OneSignalWithIndex";
 import { isAsyncFunction } from "../../support/helpers/api";
 
-describe('API matches spec file', () => {
-  test('Check top-level OneSignal API', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
+const matchNestedNamespaces = (api: any, parentObject: IndexableByString<any>, namespaceName: string) => {
+  const nestedNamespaces = api[namespaceName]?.namespaces;
 
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
+  if (!nestedNamespaces) return;
 
-    // Check if all namespaces are present in the SDK
-    for (const name of api.OneSignal.namespaces) {
-      expect(OneSignalWithIndex[name]).toBeDefined();
+  // Check if all (nested) namespaces are present in the SDK
+  for (const name of nestedNamespaces) {
+    expect(parentObject[namespaceName][name]).toBeDefined();
+  }
+}
+
+const matchNestedFunctions = (api: any, parentObject: IndexableByString<any>, namespaceName: string) => {
+  const nestedFunctions = api[namespaceName]?.functions;
+
+  if (!nestedFunctions) return;
+
+  // Check if all functions are present in the SDK
+  for (const func of nestedFunctions) {
+    const { name, isAsync, args } = func;
+    expect(typeof parentObject[namespaceName][name]).toBe('function');
+    expect(parentObject[namespaceName][name].length).toBe(args.length);
+
+    // for each argument, check the name and type
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
+      expect(parentObject[namespaceName][name].toString()).toContain(arg.name);
+      // to do: check the type
     }
 
-    // Check if all functions are present in the SDK
-    for (const func of api.OneSignal.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex[name]).toBe('function');
-      expect(OneSignalWithIndex[name].length).toBe(args.length);
+    if (isAsync) {
+      expect(isAsyncFunction(parentObject[namespaceName][name])).toBe(true);
+    }
+  }
+}
 
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
+const matchApiToSpec = async (parent: object, namespace: string) => {
+  const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
+  const api = JSON.parse(rawJson);
 
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex[name])).toBe(true);
-      }
+  matchNestedNamespaces(api, parent, namespace);
+  matchNestedFunctions(api, parent, namespace);
+};
+
+describe('API matches spec file', () => {
+  let OneSignalWithIndex: OneSignalWithIndex;
+
+  beforeAll(() => {
+    OneSignalWithIndex = OneSignal as OneSignalWithIndex;
+  });
+
+  test('Check top-level OneSignal API', async () => {
+    try {
+      await matchApiToSpec({ OneSignal: OneSignalWithIndex }, 'OneSignal');
+    } catch (e) {
+      test.fail(e.message);
     }
   });
 
   test('Check Slidedown namespace', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
-
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-
-    // Check if all functions are present in the SDK
-    for (const func of api.Slidedown.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex.Slidedown[name]).toBe('function');
-      expect(OneSignalWithIndex.Slidedown[name].length).toBe(args.length);
-
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex.Slidedown[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
-
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex.Slidedown[name])).toBe(true);
-      }
+    try {
+      await matchApiToSpec(OneSignalWithIndex, 'Slidedown');
+    } catch (e) {
+      test.fail(e.message);
     }
   });
 
-  test('Check Notification namespace', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
-
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-
-    // Check if all functions are present in the SDK
-    for (const func of api.Notifications.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex.Notifications[name]).toBe('function');
-      expect(OneSignalWithIndex.Notifications[name].length).toBe(args.length);
-
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex.Notifications[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex.Notifications[name])).toBe(true);
-      }
+  test('Check Notifications namespace', async () => {
+    try {
+      await matchApiToSpec(OneSignalWithIndex, 'Notifications');
+    } catch (e) {
+      test.fail(e.message);
     }
   });
 
   test('Check Session namespace', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
-
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-
-    // Check if all functions are present in the SDK
-    for (const func of api.Session.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex.Session[name]).toBe('function');
-      expect(OneSignalWithIndex.Session[name].length).toBe(args.length);
-
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex.Session[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex.Session[name])).toBe(true);
-      }
-    }
-  });
-
-  test('Check Debug namespace', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
-
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-
-    // Check if all functions are present in the SDK
-    for (const func of api.Debug.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex.Debug[name]).toBe('function');
-      expect(OneSignalWithIndex.Debug[name].length).toBe(args.length);
-
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex.Debug[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex.Debug[name])).toBe(true);
-      }
+    try {
+      await matchApiToSpec(OneSignalWithIndex, 'Session');
+    } catch (e) {
+      test.fail(e.message);
     }
   });
 
   test('Check User namespace', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
-
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-
-    // Check if all namespaces are present in the SDK
-    for (const name of api.User.namespaces) {
-      expect(OneSignalWithIndex.User[name]).toBeDefined();
-    }
-
-    // Check if all functions are present in the SDK
-    for (const func of api.User.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex.User[name]).toBe('function');
-      expect(OneSignalWithIndex.User[name].length).toBe(args.length);
-
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex.User[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex.User[name])).toBe(true);
-      }
+    try {
+      await matchApiToSpec(OneSignalWithIndex, 'User');
+    } catch (e) {
+      test.fail(e.message);
     }
   });
 
   test('Check PushSubscription namespace', async () => {
-    const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
-    const api = JSON.parse(rawJson);
-
-    const OneSignalWithIndex = OneSignal as OneSignalWithIndex;
-
-    // Check if all functions are present in the SDK
-    for (const func of api.PushSubscription.functions) {
-      const { name, isAsync, args } = func;
-      expect(typeof OneSignalWithIndex.User.PushSubscription[name]).toBe('function');
-      expect(OneSignalWithIndex.User.PushSubscription[name].length).toBe(args.length);
-
-      // for each argument, check the name and type
-      for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-        expect(OneSignalWithIndex.User.PushSubscription[name].toString()).toContain(arg.name);
-        // to do: check the type
-      }
-      if (isAsync) {
-        expect(isAsyncFunction(OneSignalWithIndex.User.PushSubscription[name])).toBe(true);
-      }
+    try {
+      await matchApiToSpec(OneSignalWithIndex['User'], 'PushSubscription');
+    } catch (e) {
+      test.fail(e.message);
     }
   });
 });

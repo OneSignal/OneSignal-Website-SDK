@@ -85,11 +85,11 @@ export default class OneSignal {
    *           merge users (v2)    |   merge users (v2)
    *
    * @param externalId - The external user ID to set
-   * @param token - The JWT auth token to use when setting the external user ID
+   * @param jwtToken - The JWT auth token to use when setting the external user ID
    */
-  static async login(externalId: string, token?: string): Promise<void> {
-    logMethodCall('login', { externalId, token });
-    LoginManager.login(externalId, token);
+  static async login(externalId: string, jwtToken?: string): Promise<void> {
+    logMethodCall('login', { externalId, jwtToken });
+    LoginManager.login(externalId, jwtToken);
   }
 
   static async logout(): Promise<void> {
