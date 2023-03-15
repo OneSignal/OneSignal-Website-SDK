@@ -4,7 +4,7 @@ import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 import { Operation } from "../../../src/core/operationRepo/Operation";
 import { getDummyIdentityOSModel, getMockDeltas } from "../../support/helpers/core";
-import { TestEnvironment } from "../../support/TestEnvironment";
+import { TestEnvironment } from "../../support/environment/TestEnvironment";
 
 describe('OperationCache: operation results in correct operation queue result', () => {
   beforeEach(async () => {

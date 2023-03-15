@@ -1,18 +1,22 @@
-import Database from "../../src/shared/services/Database";
-import Random from "./utils/Random";
-import Emitter from "../../src/shared/libraries/Emitter";
+import Database from "../../../src/shared/services/Database";
+import Random from "../utils/Random";
+import Emitter from "../../../src/shared/libraries/Emitter";
 import { TestEnvironmentConfig } from "./TestEnvironment";
-import MockNotification from "./mocks/MockNotification";
+import MockNotification from "../mocks/MockNotification";
 import { DOMWindow, JSDOM, ResourceLoader } from "jsdom";
-import OneSignal from "../../src/onesignal/OneSignal";
-import { CUSTOM_LINK_CSS_CLASSES } from "../../src/shared/slidedown/constants";
-import { getSlidedownElement } from "../../src/page/slidedown/SlidedownElement";
+import OneSignal from "../../../src/onesignal/OneSignal";
+import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
+import { getSlidedownElement } from "../../../src/page/slidedown/SlidedownElement";
 import DOMStorage from "dom-storage";
-import { MockServiceWorkerContainerWithAPIBan } from "./mocks/models/MockServiceWorkerContainerWithAPIBan";
-import { HttpHttpsEnvironment } from "./models/HttpHttpsEnvironment";
-import BrowserUserAgent from "./models/BrowserUserAgent";
+import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
+import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
+import BrowserUserAgent from "../models/BrowserUserAgent";
+import TestContext from "./TestContext";
+import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
+import CoreModule from "../../../src/core/CoreModule";
+import Context from "../../../src/page/models/Context";
 
-declare var global: any;
+declare const global: any;
 
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random
@@ -20,11 +24,14 @@ export function resetDatabase() {
   Database.databaseInstanceName = Random.getRandomString(10);
 }
 
-export function initOSGlobals(config: TestEnvironmentConfig = {}) {
+export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
+  const core = new CoreModule();
+  await core.init();
   global.OneSignal = OneSignal;
-  global.OneSignal.config = config.initOptions ? config.initOptions : {};
+  global.OneSignal.config = TestContext.getFakeMergedConfig(config);
+  global.OneSignal.context = new Context(global.OneSignal.config);
   global.OneSignal.initialized = true;
-  global.OneSignal.coreDirector = config.coreDirector;
+  global.OneSignal.coreDirector = new CoreModuleDirector(core);
   global.OneSignal.emitter = new Emitter();
 
   return global.OneSignal;

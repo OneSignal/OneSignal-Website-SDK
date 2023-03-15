@@ -10,8 +10,123 @@ import { SupportedIdentity } from "../../core/models/IdentityModel";
 import MainHelper from "../../shared/helpers/MainHelper";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
 import { RETRY_BACKOFF } from "../../shared/api/RetryBackoff";
+import { isCompleteSubscriptionObject } from "../../core/utils/typePredicates";
+import UserDirector from "../../onesignal/UserDirector";
+import Database from "../../shared/services/Database";
+import LocalStorage from "../../shared/utils/LocalStorage";
+import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
 
 export default class LoginManager {
+  static async login(externalId: string, token?: string): Promise<void> {
+    const consentRequired = OneSignal.config?.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
+    const consentGiven = await Database.getConsentGiven();
+
+    if (consentRequired && !consentGiven) {
+      throw new OneSignalError('Login: Consent required but not given, skipping login');
+    }
+
+    try {
+      // before, logging in, process anything waiting in the delta queue so it's not lost
+      OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
+
+      if (token) {
+        await Database.setJWTToken(token);
+      }
+
+      const identityModel = OneSignal.coreDirector.getIdentityModel();
+      const onesignalIdBackup = identityModel?.onesignalId;
+
+      if (!identityModel) {
+        throw new OneSignalError('Login: No identity model found');
+      }
+
+      const currentExternalId = identityModel?.data?.external_id;
+
+      // if the current externalId is the same as the one we're trying to set, do nothing
+      if (currentExternalId === externalId) {
+        Log.debug('Login: External ID already set, skipping login');
+        return;
+      }
+
+      const pushSubModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+      let currentPushSubscriptionId;
+
+      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
+        currentPushSubscriptionId = pushSubModel.data.id;
+      }
+
+      const isIdentified = LoginManager.isIdentified(identityModel.data);
+
+      // set the external id on the user locally
+      LoginManager.setExternalId(identityModel, externalId);
+
+      let userData: Partial<UserData>;
+      const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+      if (!isIdentified) {
+        userData = await UserDirector.getAllUserData();
+      } else {
+        userData = {
+          identity: {
+            external_id: externalId,
+          }
+        };
+
+        if (pushSubscription) {
+          userData.subscriptions = [pushSubscription.data];
+        }
+      }
+      await OneSignal.coreDirector.resetModelRepoAndCache();
+      await UserDirector.initializeUser(true);
+
+      // use optional chaining to prevent errors if the namespace is not initialized (e.g. in unit tests)
+      await OneSignal.User?.PushSubscription?._resubscribeToPushModelChanges();
+
+      try {
+        const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+        const onesignalId = result?.identity?.onesignal_id;
+
+        if (!onesignalId) {
+          throw new OneSignalError('Login: No OneSignal ID found');
+        }
+        await LoginManager.fetchAndHydrate(onesignalId);
+      } catch (e) {
+        Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
+        // if the login fails, restore the old user data
+        if (onesignalIdBackup) {
+          Log.debug('Login: Restoring old user data');
+
+          try {
+            await LoginManager.fetchAndHydrate(onesignalIdBackup);
+          } catch (e) {
+            Log.error(`Login: Error while restoring old user data: ${e.message}`);
+          }
+        }
+        throw e;
+      }
+    } catch (e) {
+      Log.error(e);
+    }
+  }
+
+  static async logout(): Promise<void> {
+    // check if user is already logged out
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    if (!identityModel || !identityModel.data || !identityModel.data.external_id) {
+      Log.debug('Logout: User is not logged in, skipping logout');
+      return;
+    }
+
+    // before, logging out, process anything waiting in the delta queue so it's not lost
+    OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
+    UserDirector.resetUserMetaProperties();
+    const pushSubModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    await OneSignal.coreDirector.resetModelRepoAndCache();
+    // add the push subscription model back to the repo since we need at least 1 sub to create a new user
+    OneSignal.coreDirector.add(ModelName.PushSubscriptions, pushSubModel as OSModel<SupportedModel>, false);
+    await UserDirector.initializeUser(false);
+    await OneSignal.User.PushSubscription._resubscribeToPushModelChanges();
+  }
+
   static setExternalId(identityOSModel: OSModel<SupportedIdentity>, externalId: string): void {
     logMethodCall("LoginManager.setExternalId", { externalId });
 
@@ -44,7 +159,7 @@ export default class LoginManager {
       return result;
   }
 
-  static async upsertUser(userData: Partial<UserData>, retry: number = 5): Promise<UserData> {
+  static async upsertUser(userData: Partial<UserData>, retry = 5): Promise<UserData> {
     logMethodCall("LoginManager.upsertUser", { userData });
 
     if (retry === 0) {
@@ -74,7 +189,7 @@ export default class LoginManager {
     return result;
   }
 
-  static async identifyUser(userData: UserData, pushSubscriptionId?: string, retry: number = 5):
+  static async identifyUser(userData: UserData, pushSubscriptionId?: string, retry = 5):
     Promise<Partial<UserData>> {
       logMethodCall("LoginManager.identifyUser", { userData, pushSubscriptionId });
 
