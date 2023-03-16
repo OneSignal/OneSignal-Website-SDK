@@ -9,11 +9,11 @@ import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
 import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
 import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { generateNewSubscription } from "../../support/helpers/core";
+import 'jest-localstorage-mock';
 
 // class mocks
 jest.mock('../../../src/core/caching/ModelCache');
 jest.mock('../../../src/core/operationRepo/Operation');
-jest.mock('../../../src/core/caching/OperationCache');
 
 describe('Executor tests', () => {
 

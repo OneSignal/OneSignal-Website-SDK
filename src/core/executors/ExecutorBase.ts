@@ -27,15 +27,19 @@ export default abstract class ExecutorBase {
   static RETRY_COUNT = 5;
 
   constructor(executorConfig: ExecutorConfig<SupportedModel>) {
+    let isCalled = false;
+    let isCalled2 = false;
     setInterval(() => {
-      if (this._deltaQueue.length > 0) {
+      if (this._deltaQueue.length > 0 && !isCalled) {
         this.processDeltaQueue.call(this);
+        isCalled = true;
       }
     }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
-      if (this._operationQueue.length > 0) {
+      if (this._operationQueue.length > 0 && !isCalled2) {
         this._processOperationQueue.call(this);
+        isCalled2 = true;
       }
     }, ExecutorBase.OPERATIONS_BATCH_PROCESSING_TIME * 1_000);
 
