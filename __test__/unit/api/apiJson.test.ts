@@ -2,6 +2,9 @@ import { ReaderManager } from "../../support/managers/ReaderManager";
 import OneSignal from "../../../src/onesignal/OneSignal";
 import { OneSignalWithIndex } from "./OneSignalWithIndex";
 import { isAsyncFunction } from "../../support/helpers/api";
+import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
+import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
+import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
 
 const matchNestedNamespaces = (api: any, parentObject: IndexableByString<any>, namespaceName: string) => {
   const nestedNamespaces = api[namespaceName]?.namespaces;
@@ -51,6 +54,9 @@ describe('API matches spec file', () => {
 
   beforeAll(() => {
     OneSignalWithIndex = OneSignal as OneSignalWithIndex;
+    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
   });
 
   test('Check top-level OneSignal API', async () => {

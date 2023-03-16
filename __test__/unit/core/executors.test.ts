@@ -20,7 +20,14 @@ describe('Executor tests', () => {
   beforeEach(() => {
     TestEnvironment.initialize();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
     jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.resetModules();
   });
 
   /* F L U S H */
