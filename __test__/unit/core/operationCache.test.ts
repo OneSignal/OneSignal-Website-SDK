@@ -15,6 +15,10 @@ describe('OperationCache: operation results in correct operation queue result', 
     jest.runOnlyPendingTimers();
   });
 
+  afterAll(() => {
+    jest.resetModules();
+  });
+
   test('Add operation to cache -> operation queue +1', async () => {
     const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     OperationCache.enqueue(operation);

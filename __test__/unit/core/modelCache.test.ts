@@ -10,6 +10,10 @@ describe('ModelCache tests', () => {
     TestEnvironment.initialize();
   });
 
+  afterAll(() => {
+    jest.resetModules();
+  });
+
   test('ModelCache adds model to IndexedDB', async () => {
     const modelCache = new ModelCache();
     const model = new OSModel(ModelName.Identity, {id: 'test'});

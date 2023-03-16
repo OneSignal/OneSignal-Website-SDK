@@ -3,6 +3,8 @@ module.exports = async () => {
   return {
     verbose: true,
     preset: "ts-jest",
+    forceExit: true,
+    bail: true,
     testEnvironment: "jsdom",
     // Run these files after jest has been
     // installed in the environment

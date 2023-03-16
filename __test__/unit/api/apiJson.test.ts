@@ -59,6 +59,10 @@ describe('API matches spec file', () => {
     test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
   });
 
+  afterAll(() => {
+    jest.resetModules();
+  });
+
   test('Check top-level OneSignal API', async () => {
     try {
       await matchApiToSpec({ OneSignal: OneSignalWithIndex }, 'OneSignal');

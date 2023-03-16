@@ -33,6 +33,10 @@ describe('ModelRepo tests', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(() => {
+    jest.resetModules();
+  });
+
   test('ModelRepo add subscription -> +1 subscription model in model store', async () => {
     const processModelAddedSpy = jest.spyOn(ModelRepo.prototype as any, 'processModelAdded');
     const newSub = generateNewSubscription();

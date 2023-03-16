@@ -35,6 +35,10 @@ describe('OperationRepo tests', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(() => {
+    jest.resetModules();
+  });
+
   test('OperationRepo executor store has executor for each model name', async () => {
     const { operationRepo } = core;
     const executorStore = operationRepo?.executorStore;
