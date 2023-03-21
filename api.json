@@ -421,7 +421,7 @@
         "args": [
           {
             "name": "event",
-            "type": "string",
+            "type": "'subscriptionChange'",
             "optional": false
           },
           {
@@ -438,7 +438,7 @@
         "args": [
           {
             "name": "event",
-            "type": "string",
+            "type": "'subscriptionChange'",
             "optional": false
           },
           {
