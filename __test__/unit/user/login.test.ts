@@ -7,7 +7,7 @@ import { setupLoginStubs } from "../../support/helpers/login";
 import { RequestService } from "../../../src/core/requestService/RequestService";
 import { getDummyIdentityOSModel } from "../../support/helpers/core";
 import { ModelName } from "../../../src/core/models/SupportedModels";
-import { DUMMY_EXTERNAL_ID, DUMMY_EXTERNAL_ID_2, DUMMY_ONESIGNAL_ID } from "../../support/constants";
+import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
 
 // suppress all internal logging
 jest.mock("../../../src/shared/libraries/Log");

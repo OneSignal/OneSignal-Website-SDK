@@ -1,9 +1,13 @@
+import { StringIndexable } from "../../core/models/StringIndexable";
+
 export default class Log {
-  static debug: Function;
-  static trace: Function;
-  static info: Function;
-  static warn: Function;
-  static error: Function;
+  static [key: string]: any;
+
+  static debug: (...args: any[]) => void;
+  static trace: (...args: any[]) => void;
+  static info: (...args: any[]) => void;
+  static warn: (...args: any[]) => void;
+  static error: (...args: any[]) => void;
 
   private static proxyMethodsCreated?: boolean;
 
@@ -55,8 +59,8 @@ export default class Log {
       error: "error"
     };
     for (const nativeMethod of Object.keys(methods)) {
-      const nativeMethodExists = typeof console[nativeMethod] !== "undefined";
-      const methodToMapTo = methods[nativeMethod];
+      const nativeMethodExists = typeof (console as StringIndexable)[nativeMethod] !== "undefined";
+      const methodToMapTo = (methods as IndexableByString<string>)[nativeMethod];
       const shouldMap = nativeMethodExists &&
         (
           (typeof __LOGGING__ !== "undefined" && __LOGGING__ === true) ||
@@ -65,9 +69,9 @@ export default class Log {
         );
 
       if (shouldMap) {
-        Log[methodToMapTo] = console[nativeMethod].bind(console);
+        Log[methodToMapTo] = (console as StringIndexable)[nativeMethod].bind(console);
       } else {
-        Log[methodToMapTo] = function() {};
+        Log[methodToMapTo] = () => { return; };
       }
     }
   }
