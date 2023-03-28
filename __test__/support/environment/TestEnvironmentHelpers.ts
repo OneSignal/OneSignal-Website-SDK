@@ -163,7 +163,7 @@ function onVirtualDomResourceRequested(resource: any, callback: (arg1: any, arg2
     return resource.defaultFetch(callback);
   }
 }
-*/
+
 
 function onVirtualDomDelayedResourceRequested(resource: any, callback: () => any) {
   const pathname = resource.url.pathname;
@@ -178,3 +178,4 @@ function onVirtualDomDelayedResourceRequested(resource: any, callback: () => any
     }
   };
 }
+*/

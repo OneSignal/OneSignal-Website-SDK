@@ -46,6 +46,9 @@ export default class SubscriptionHelper {
       return null;
     }
 
+    const windowCreator = opener || parent;
+    let rawSubscription: RawPushSubscription | undefined;
+
     switch (SdkEnvironment.getWindowEnv()) {
       case WindowEnvironmentKind.Host:
       case WindowEnvironmentKind.OneSignalSubscriptionModal:
@@ -65,8 +68,6 @@ export default class SubscriptionHelper {
         /*
           This is the code for the HTTP popup.
          */
-        const windowCreator = opener || parent;
-        let rawSubscription: RawPushSubscription;
 
         // Update the stored permission first, so we know the real value even if the user closes the
         // popup
@@ -118,7 +119,7 @@ export default class SubscriptionHelper {
         OneSignal.subscriptionPopup.message(
           OneSignal.POSTMAM_COMMANDS.FINISH_REMOTE_REGISTRATION,
           {
-            rawPushSubscription: rawSubscription.serialize()
+            rawPushSubscription: rawSubscription?.serialize()
           },
           (message: any) => {
             if (message.data.progress === true) {
@@ -142,6 +143,9 @@ export default class SubscriptionHelper {
   static getRawPushSubscriptionForSafari(safariWebId: string): RawPushSubscription {
     const subscription = new RawPushSubscription();
 
+    if (!window.safari || !window.safari.pushNotification) {
+      throw new InvalidStateError(InvalidStateReason.UnsupportedBrowser);
+    }
     const { deviceToken: existingDeviceToken } = window.safari.pushNotification.permission(safariWebId);
     subscription.existingSafariDeviceToken = existingDeviceToken;
 

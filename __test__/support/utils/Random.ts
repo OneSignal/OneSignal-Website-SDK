@@ -22,7 +22,7 @@ export default class Random {
   public static getRandomArray(length: number, exclusiveMax: number, inclusiveMin: number) {
     return new Array(length)
       .fill(0)
-      .map(n => Math.floor(Math.random() * (exclusiveMax - inclusiveMin) + inclusiveMin));
+      .map(() => Math.floor(Math.random() * (exclusiveMax - inclusiveMin) + inclusiveMin));
   }
 
   public static getRandomUuid(): string {

@@ -10,6 +10,7 @@ export enum InvalidStateReason {
   MissingDomElement,
   ServiceWorkerNotActivated,
   NoProxyFrame,
+  UnsupportedBrowser
 }
 
 export class InvalidStateError extends OneSignalError {
@@ -20,12 +21,12 @@ export class InvalidStateError extends OneSignalError {
     permissionPromptType: PermissionPromptType
   }) {
     let errorMessage;
+    let extraInfo = '';
     switch (reason) {
       case InvalidStateReason.MissingAppId:
         errorMessage =`Missing required app ID.`;
         break;
       case InvalidStateReason.RedundantPermissionMessage:
-        let extraInfo = '';
         if (extra && extra.permissionPromptType)
           extraInfo = `(${PermissionPromptType[extra.permissionPromptType]})`;
         errorMessage = `Another permission message ${extraInfo} is being displayed.`;
