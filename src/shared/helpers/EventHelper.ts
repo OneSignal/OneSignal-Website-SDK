@@ -1,10 +1,8 @@
-import OneSignalApiShared from '../api/OneSignalApiShared';
 import Log from '../libraries/Log';
 import { CustomLinkManager } from '../managers/CustomLinkManager';
 import { ContextSWInterface } from '../models/ContextSW';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
-import BrowserUtils from '../utils/BrowserUtils';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import PromptsHelper from './PromptsHelper';
 import OneSignalEvent from "../services/OneSignalEvent";
@@ -94,6 +92,7 @@ export default class EventHelper {
     }
   }
 
+  /*
   private static async onSubscriptionChanged_showWelcomeNotification(isSubscribed: boolean | undefined) {
     if (OneSignal.__doNotShowWelcomeNotification) {
       Log.debug('Not showing welcome notification because user has previously subscribed.');
@@ -147,6 +146,7 @@ export default class EventHelper {
       }
     }
   }
+  */
 
   private static async onSubscriptionChanged_evaluateNotifyButtonDisplayPredicate() {
     if (!OneSignal.config.userConfig.notifyButton)

@@ -20,11 +20,11 @@ interface Reply {
 export default class ProxyFrameHost implements Disposable {
 
   public url: URL;
-  private element: HTMLIFrameElement;
-  private messenger: Postmam;
+  private element?: HTMLIFrameElement;
+  private messenger?: Postmam;
 
   // Promise to track whether the frame has finished loading
-  private loadPromise: {
+  private loadPromise?: {
     promise: Promise<void>,
     resolver: Function,
     rejector: Function
