@@ -1,5 +1,5 @@
 class ServiceWorkerState {
-  workerVersion: number;
+  workerVersion?: number;
 }
 
 export { ServiceWorkerState };

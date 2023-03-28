@@ -1,3 +1,4 @@
+import { StringIndexable } from "../../core/models/StringIndexable";
 import { TagCategory } from "../../page/models/Tags";
 
 export enum DelayedPromptType {
@@ -78,7 +79,7 @@ export interface AppUserConfigCustomLinkOptions extends BasePromptOptions {
   };
 }
 
-export interface AppUserConfigPromptOptions {
+export interface AppUserConfigPromptOptions extends StringIndexable {
   autoPrompt?: boolean;
   subscribeText?: string;
   showGraphic?: boolean;
@@ -123,7 +124,7 @@ export interface BellText {
 export interface AppUserConfigNotifyButton {
   options?: AppUserConfigNotifyButton;
   enable: boolean;
-  displayPredicate?: Function | null | undefined;
+  displayPredicate?: () => any | null | undefined;
   size?: BellSize;
   position?: BellPosition;
   offset?: { bottom: string; left: string; right: string };

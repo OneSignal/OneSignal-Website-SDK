@@ -7,6 +7,7 @@ import { DOMWindow, JSDOM, ResourceLoader } from "jsdom";
 import OneSignal from "../../../src/onesignal/OneSignal";
 import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
 import { getSlidedownElement } from "../../../src/page/slidedown/SlidedownElement";
+import DOMStorage from "dom-storage";
 import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import BrowserUserAgent from "../models/BrowserUserAgent";
@@ -92,10 +93,10 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
 
   const windowDef = dom.window;
   // Node has its own console; overwriting it will cause issues
-  delete (windowDef as any)['console'];
+  delete windowDef['console'];
   (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainerWithAPIBan();
-  (windowDef as any).localStorage = new DOMStorage(null);
-  (windowDef as any).sessionStorage = new DOMStorage(null);
+  (windowDef as any).localStorage = new DOMStorage();
+  (windowDef as any).sessionStorage = new DOMStorage();
   // (windowDef as any).TextEncoder = TextEncoder;
   // (windowDef as any).TextDecoder = TextDecoder;
   (windowDef as any).isSecureContext = isSecureContext;
@@ -116,7 +117,7 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   return dom;
 }
 
-function addCustomEventPolyfill(windowDef) {
+function addCustomEventPolyfill(windowDef: DOMWindow) {
   function CustomEvent(event: any, params: any) {
     params = params || { bubbles: false, cancelable: false, detail: undefined };
     const evt = document.createEvent( 'CustomEvent' );
@@ -131,6 +132,7 @@ function addCustomEventPolyfill(windowDef) {
 /**
  * Intercepts requests to our virtual DOM to return fake responses.
  */
+/*
 function onVirtualDomResourceRequested(resource: any, callback: (arg1: any, arg2?: string) => any) {
   const pathname = resource.url.pathname;
   if (pathname.startsWith('https://test.node/scripts/')) {
@@ -161,6 +163,7 @@ function onVirtualDomResourceRequested(resource: any, callback: (arg1: any, arg2
     return resource.defaultFetch(callback);
   }
 }
+*/
 
 function onVirtualDomDelayedResourceRequested(resource: any, callback: () => any) {
   const pathname = resource.url.pathname;

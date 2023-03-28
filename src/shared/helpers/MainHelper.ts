@@ -13,6 +13,7 @@ import OneSignalUtils from '../utils/OneSignalUtils';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import OneSignalEvent from '../services/OneSignalEvent';
 import { supportsVapidPush } from '../../page/utils/BrowserSupportsPush';
+import { StringIndexable } from '../../core/models/StringIndexable';
 
 export default class MainHelper {
 
@@ -128,9 +129,9 @@ export default class MainHelper {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
     let promptOptionsStr = '';
     if (promptOptions) {
-      const hash = MainHelper.getPromptOptionsPostHash();
+      const hash: StringIndexable = MainHelper.getPromptOptionsPostHash();
       for (const key of Object.keys(hash)) {
-        var value = hash[key];
+        const value = hash[key];
         promptOptionsStr += '&' + key + '=' + value;
       }
     }
@@ -139,8 +140,9 @@ export default class MainHelper {
 
   static getPromptOptionsPostHash() {
     const promptOptions = MainHelper.getFullscreenPermissionMessageOptions(OneSignal.config.userConfig.promptOptions);
+    const hash: StringIndexable = {};
     if (promptOptions) {
-      var legacyParams = {
+      const legacyParams: StringIndexable = {
         exampleNotificationTitleDesktop: 'exampleNotificationTitle',
         exampleNotificationMessageDesktop: 'exampleNotificationMessage',
         exampleNotificationTitleMobile: 'exampleNotificationTitle',
@@ -152,7 +154,7 @@ export default class MainHelper {
           promptOptions[legacyParamValue] = promptOptions[legacyParamKey];
         }
       }
-      var allowedPromptOptions = [
+      const allowedPromptOptions = [
         'autoAcceptTitle',
         'siteName',
         'autoAcceptTitle',
@@ -166,11 +168,11 @@ export default class MainHelper {
         'cancelButton',
         'timeout'
       ];
-      var hash = {};
-      for (var i = 0; i < allowedPromptOptions.length; i++) {
-        var key = allowedPromptOptions[i];
-        var value = promptOptions[key];
-        var encoded_value = encodeURIComponent(value);
+
+      for (let i = 0; i < allowedPromptOptions.length; i++) {
+        const key = allowedPromptOptions[i];
+        const value = promptOptions[key];
+        const encoded_value = encodeURIComponent(value);
         if (value || value === false || value === '') {
           hash[key] = encoded_value;
         }
@@ -179,7 +181,7 @@ export default class MainHelper {
     return hash;
   }
 
-  static triggerCustomPromptClicked(clickResult) {
+  static triggerCustomPromptClicked(clickResult: 'granted' | 'denied') {
     OneSignalEvent.trigger(OneSignal.EVENTS.CUSTOM_PROMPT_CLICKED, {
       result: clickResult
     });
@@ -195,7 +197,7 @@ export default class MainHelper {
   }
 
   static async createDeviceRecord(
-    appId: string, includeSubscription: boolean = false): Promise<PushDeviceRecord> {
+    appId: string, includeSubscription = false): Promise<PushDeviceRecord> {
     let subscription: RawPushSubscription | undefined;
     if (includeSubscription) {
       // TODO: refactor to replace config with dependency injection
