@@ -13,7 +13,6 @@ import { OperationRepo } from "../../../src/core/operationRepo/OperationRepo";
 import { generateNewSubscription, passIfBroadcastNTimes } from "../../support/helpers/core";
 
 let core: CoreModule;
-let coreDirector: CoreModuleDirector;
 let broadcastCount = 0;
 
 // class mocks
@@ -26,7 +25,7 @@ describe('OperationRepo tests', () => {
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
     jest.useFakeTimers();
     core = new CoreModule();
-    coreDirector = new CoreModuleDirector(core);
+    new CoreModuleDirector(core);
     await core.init();
     broadcastCount = 0;
   });

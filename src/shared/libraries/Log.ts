@@ -5,7 +5,7 @@ export default class Log {
   static warn: Function;
   static error: Function;
 
-  private static proxyMethodsCreated: boolean;
+  private static proxyMethodsCreated?: boolean;
 
   private static shouldLog(): boolean {
     try {
