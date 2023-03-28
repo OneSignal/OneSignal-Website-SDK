@@ -7,7 +7,6 @@ import { DOMWindow, JSDOM, ResourceLoader } from "jsdom";
 import OneSignal from "../../../src/onesignal/OneSignal";
 import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
 import { getSlidedownElement } from "../../../src/page/slidedown/SlidedownElement";
-import DOMStorage from "dom-storage";
 import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import BrowserUserAgent from "../models/BrowserUserAgent";
