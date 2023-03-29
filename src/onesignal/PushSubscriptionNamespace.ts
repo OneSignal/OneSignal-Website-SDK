@@ -12,24 +12,22 @@ import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../cor
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import SubscriptionChangeEvent from "../page/models/SubscriptionChangeEvent";
 import { OSModel } from "../core/modelRepo/OSModel";
+import { Subscription } from "../shared/models/Subscription";
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;
   private _token?: string | null;
   private _optedIn?: boolean;
 
-  constructor(initialize = true) {
+  constructor(initialize: boolean, subscription?: Subscription) {
     super();
-    if (!initialize) {
+    if (!initialize || !subscription) {
+      Log.warn(`PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${subscription}`);
       return;
     }
 
-    Database.getSubscription().then(subscription => {
-      this._optedIn = subscription.optedOut;
-      this._token = subscription.subscriptionToken;
-    }).catch(e => {
-      Log.error(e);
-    });
+    this._optedIn = subscription.optedOut;
+    this._token = subscription.subscriptionToken;
 
     OneSignal.coreDirector.getCurrentPushSubscriptionModel()
       .then((pushModel: OSModel<SupportedSubscription> | undefined) => {
