@@ -1,13 +1,17 @@
 import User from "./User";
 import PushSubscriptionNamespace from "./PushSubscriptionNamespace";
+import { Subscription } from "../shared/models/Subscription";
 
 export default class UserNamespace {
   private _currentUser?: User;
 
-  readonly PushSubscription = new PushSubscriptionNamespace();
+  readonly PushSubscription = new PushSubscriptionNamespace(false);
 
-  constructor() {
-    this._currentUser = User.createOrGetInstance();
+  constructor(initialize: boolean, subscription?: Subscription, permission?: NotificationPermission) {
+    if (initialize) {
+      this._currentUser = User.createOrGetInstance();
+      this.PushSubscription = new PushSubscriptionNamespace(true, subscription, permission);
+    }
   }
 
   /* P U B L I C   A P I  */

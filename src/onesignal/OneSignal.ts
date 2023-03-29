@@ -40,9 +40,6 @@ import LocalStorage from "../shared/utils/LocalStorage";
 import LoginManager from "../page/managers/LoginManager";
 import { SessionNamespace } from "./SessionNamespace";
 import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
-import UserDirector from "./UserDirector";
-import { ModelName, SupportedModel } from "../core/models/SupportedModels";
-import { OSModel } from "../core/modelRepo/OSModel";
 import DebugNamespace from "./DebugNamesapce";
 
 export default class OneSignal {
@@ -50,7 +47,9 @@ export default class OneSignal {
     const core = new CoreModule();
     await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
-    OneSignal.User = new UserNamespace();
+    const subscription = await Database.getSubscription();
+    const permission = await OneSignal.Notifications.getPermissionStatus();
+    OneSignal.User = new UserNamespace(true, subscription, permission);
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
@@ -244,7 +243,7 @@ export default class OneSignal {
   static Notifications = new NotificationsNamespace();
   static Slidedown = new SlidedownNamespace();
   static Session = new SessionNamespace();
-  static User: UserNamespace;
+  static User = new UserNamespace(false);
   static Debug = new DebugNamespace();
   /* END NEW USER MODEL CHANGES */
 
@@ -266,7 +265,7 @@ export default class OneSignal {
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
-  private static pendingInit: boolean = true;
+  private static pendingInit = true;
 
   static subscriptionPopup: SubscriptionPopup;
   static subscriptionPopupHost: SubscriptionPopupHost;

@@ -12,20 +12,24 @@ import { isCompleteSubscriptionObject, isModelStoreHydratedObject } from "../cor
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import SubscriptionChangeEvent from "../page/models/SubscriptionChangeEvent";
 import { OSModel } from "../core/modelRepo/OSModel";
+import { Subscription } from "../shared/models/Subscription";
 
 export default class PushSubscriptionNamespace extends EventListenerBase {
   private _id?: string | null;
   private _token?: string | null;
   private _optedIn?: boolean;
+  private _permission?: NotificationPermission;
 
-  constructor() {
+  constructor(initialize: boolean, subscription?: Subscription, permission?: NotificationPermission) {
     super();
-    Database.getSubscription().then(subscription => {
-      this._optedIn = subscription.optedOut;
-      this._token = subscription.subscriptionToken;
-    }).catch(e => {
-      Log.error(e);
-    });
+    if (!initialize || !subscription) {
+      Log.warn(`PushSubscriptionNamespace: skipping initialization. One or more required params are falsy: initialize: ${initialize}, subscription: ${subscription}`);
+      return;
+    }
+
+    this._optedIn = !subscription.optedOut;
+    this._permission = permission;
+    this._token = subscription.subscriptionToken;
 
     OneSignal.coreDirector.getCurrentPushSubscriptionModel()
       .then((pushModel: OSModel<SupportedSubscription> | undefined) => {
@@ -43,6 +47,10 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     OneSignal.emitter.on(OneSignal.EVENTS.SUBSCRIPTION_CHANGED, async () => {
       this._token = await MainHelper.getCurrentPushToken();
     });
+
+    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, async (event: { to: NotificationPermission }) => {
+      this._permission = event.to;
+    });
   }
 
   get id(): string | null | undefined {
@@ -54,7 +62,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
   }
 
   get optedIn(): boolean {
-    return this._optedIn || false;
+    return !!this._optedIn && this._permission === 'granted';
   }
 
   async optIn(): Promise<void> {
