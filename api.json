@@ -461,7 +461,7 @@
       },
       {
         "name": "optedIn",
-        "type": "boolean"
+        "type": "boolean | undefined"
       }
     ]
   }
