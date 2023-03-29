@@ -26,7 +26,7 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
       return;
     }
 
-    this._optedIn = subscription.optedOut;
+    this._optedIn = !subscription.optedOut;
     this._token = subscription.subscriptionToken;
 
     OneSignal.coreDirector.getCurrentPushSubscriptionModel()
