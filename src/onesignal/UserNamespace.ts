@@ -7,10 +7,10 @@ export default class UserNamespace {
 
   readonly PushSubscription = new PushSubscriptionNamespace(false);
 
-  constructor(initialize: boolean, subscription?: Subscription) {
+  constructor(initialize: boolean, subscription?: Subscription, permission?: NotificationPermission) {
     if (initialize) {
       this._currentUser = User.createOrGetInstance();
-      this.PushSubscription = new PushSubscriptionNamespace(true, subscription);
+      this.PushSubscription = new PushSubscriptionNamespace(true, subscription, permission);
     }
   }
 
