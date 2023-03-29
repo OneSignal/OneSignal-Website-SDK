@@ -40,9 +40,6 @@ import LocalStorage from "../shared/utils/LocalStorage";
 import LoginManager from "../page/managers/LoginManager";
 import { SessionNamespace } from "./SessionNamespace";
 import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
-import UserDirector from "./UserDirector";
-import { ModelName, SupportedModel } from "../core/models/SupportedModels";
-import { OSModel } from "../core/modelRepo/OSModel";
 import DebugNamespace from "./DebugNamesapce";
 
 export default class OneSignal {
@@ -266,7 +263,7 @@ export default class OneSignal {
   static environment = Environment;
   static database = Database;
   static event = OneSignalEvent;
-  private static pendingInit: boolean = true;
+  private static pendingInit = true;
 
   static subscriptionPopup: SubscriptionPopup;
   static subscriptionPopupHost: SubscriptionPopupHost;
