@@ -48,7 +48,8 @@ export default class OneSignal {
     await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
     const subscription = await Database.getSubscription();
-    OneSignal.User = new UserNamespace(true, subscription);
+    const permission = await OneSignal.Notifications.getPermissionStatus();
+    OneSignal.User = new UserNamespace(true, subscription, permission);
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
