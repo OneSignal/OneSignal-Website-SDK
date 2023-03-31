@@ -49,6 +49,11 @@ export default class UserPropertyRequests {
       if (status >= 200 && status < 300) {
         return new ExecutorResult(true, true, result?.properties);
       }
+
+      if (status >= 400 && status < 500) {
+        return new ExecutorResult(false, false);
+      }
+
       return new ExecutorResult(false, true);
   }
 }

@@ -58,6 +58,12 @@ export default class IdentityRequests {
 
       return new ExecutorResult(true, true, identity);
     }
+
+    // shouldn't impact login since doesn't go through core module (special 409 case)
+    if (status >= 400 && status < 500) {
+      return new ExecutorResult(false, false);
+    }
+
     return new ExecutorResult(false, true);
   }
 }
