@@ -345,6 +345,9 @@ export class ServiceWorker {
     if (!notification)
       return null;
 
+    if (!ServiceWorker.browserSupportsConfirmedDelivery())
+      return null;
+
     // Received receipts enabled?
     if (notification.rr !== "y")
       return null;
@@ -373,6 +376,19 @@ export class ServiceWorker {
 
     await awaitableTimeout(Math.floor(Math.random() * MAX_CONFIRMED_DELIVERY_DELAY * 1_000));
     return await OneSignalApiBase.put(`notifications/${notification.id}/report_received`, postData);
+  }
+
+  /**
+   * Confirmed Delivery isn't supported on Safari since they are very strict about the amount
+   * of time you have to finish the onpush event. Spending to much time in the onpush event
+   * will cause the push endpoint to become revoked!, causing the device to stop receiving pushes!
+   *
+   * iPadOS 16.4 it was observed to be only about 10 secounds.
+   * macOS 13.3 didn't seem to have this restriction when testing up to a 25 secound delay, however
+   * to be safe we are disabling it for all Safari browsers.
+  */
+  static browserSupportsConfirmedDelivery(): boolean {
+    return !bowser.safari
   }
 
   /**
