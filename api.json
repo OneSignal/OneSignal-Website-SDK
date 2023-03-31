@@ -397,6 +397,59 @@
           }
         ],
         "returnType": "void"
+      },
+      {
+        "name": "addTag",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "key",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "addTags",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "tags",
+            "type": "{ [key: string]: string }",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeTag",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "key",
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
+      },
+      {
+        "name": "removeTags",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "keys",
+            "type": "string[]",
+            "optional": false
+          }
+        ],
+        "returnType": "void"
       }
     ],
     "namespaces": ["PushSubscription"]
