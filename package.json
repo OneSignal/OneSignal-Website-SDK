@@ -6,7 +6,7 @@
     "@types/intl-tel-input": "^17.0.1",
     "bowser": "github:OneSignal/bowser#fix-android8-opr6-build-detection",
     "jsonp": "github:OneSignal/jsonp#onesignal",
-    "node-sass": "^4.9.0",
+    "node-sass": "^8.0.0",
     "npm-css": "https://registry.npmjs.org/npm-css/-/npm-css-0.2.3.tgz",
     "postcss-discard-comments": "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-2.0.4.tgz",
     "postcss-filter-plugins": "https://registry.npmjs.org/postcss-filter-plugins/-/postcss-filter-plugins-2.0.2.tgz",
