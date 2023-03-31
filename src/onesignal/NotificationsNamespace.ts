@@ -1,9 +1,5 @@
-import { NotificationActionButton } from "../page/models/NotificationActionButton";
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
-import OneSignalApi from "../shared/api/OneSignalApi";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
-import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
 import OneSignalError from "../../src/shared/errors/OneSignalError";
@@ -21,6 +17,16 @@ export default class NotificationsNamespace extends EventListenerBase {
    * @PublicApi
    */
   async setDefaultUrl(url: string) {
+    logMethodCall('setDefaultUrl', url);
+
+    if (typeof url === 'undefined') {
+      throw new InvalidArgumentError('url', InvalidArgumentReason.Empty);
+    }
+
+    if (typeof url !== 'string') {
+      throw new InvalidArgumentError('url', InvalidArgumentReason.WrongType);
+    }
+
     if (!ValidatorUtils.isValidUrl(url, { allowNull: true }))
       throw new InvalidArgumentError('url', InvalidArgumentReason.Malformed);
     await awaitOneSignalInitAndSupported();
@@ -37,8 +43,17 @@ export default class NotificationsNamespace extends EventListenerBase {
    * @PublicApi
    */
   async setDefaultTitle(title: string) {
-    await awaitOneSignalInitAndSupported();
     logMethodCall('setDefaultTitle', title);
+
+    if (typeof title === 'undefined') {
+      throw new InvalidArgumentError('title', InvalidArgumentReason.Empty);
+    }
+
+    if (typeof title !== 'string') {
+      throw new InvalidArgumentError('title', InvalidArgumentReason.WrongType);
+    }
+
+    await awaitOneSignalInitAndSupported();
     const appState = await Database.getAppState();
     appState.defaultNotificationTitle = title;
     await Database.setAppState(appState);
