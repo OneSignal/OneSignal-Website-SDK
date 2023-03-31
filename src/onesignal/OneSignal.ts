@@ -41,6 +41,7 @@ import LoginManager from "../page/managers/LoginManager";
 import { SessionNamespace } from "./SessionNamespace";
 import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
 import DebugNamespace from "./DebugNamesapce";
+import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 
 export default class OneSignal {
   private static async _initializeCoreModuleAndUserNamespace() {
@@ -91,6 +92,19 @@ export default class OneSignal {
    */
   static async login(externalId: string, token?: string): Promise<void> {
     logMethodCall('login', { externalId, token });
+
+    if (typeof externalId === 'undefined') {
+      throw new InvalidArgumentError('externalId', InvalidArgumentReason.Empty);
+    }
+
+    if (typeof externalId !== 'string') {
+      throw new InvalidArgumentError('externalId', InvalidArgumentReason.WrongType);
+    }
+
+    if (typeof token !== 'string') {
+      throw new InvalidArgumentError('token', InvalidArgumentReason.WrongType);
+    }
+
     LoginManager.login(externalId, token);
   }
 
@@ -217,12 +231,32 @@ export default class OneSignal {
    * @PublicApi
    */
   static async setConsentGiven(consent: boolean): Promise<void> {
+    logMethodCall('setConsentGiven', { consent });
+
+    if (typeof consent === 'undefined') {
+      throw new InvalidArgumentError('consent', InvalidArgumentReason.Empty);
+    }
+
+    if (typeof consent !== 'boolean') {
+      throw new InvalidArgumentError('consent', InvalidArgumentReason.WrongType);
+    }
+
     await Database.setConsentGiven(consent);
     if (consent && OneSignal.pendingInit)
       await OneSignal._delayedInit();
   }
 
   static async setConsentRequired(requiresConsent: boolean): Promise<void> {
+    logMethodCall('setConsentRequired', { requiresConsent });
+
+    if (typeof requiresConsent === 'undefined') {
+      throw new InvalidArgumentError('requiresConsent', InvalidArgumentReason.Empty);
+    }
+
+    if (typeof requiresConsent !== 'boolean') {
+      throw new InvalidArgumentError('requiresConsent', InvalidArgumentReason.WrongType);
+    }
+
     LocalStorage.setConsentRequired(requiresConsent);
   }
 
