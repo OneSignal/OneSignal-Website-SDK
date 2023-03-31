@@ -73,6 +73,11 @@ export default class SubscriptionRequests {
 
         return new ExecutorResult<SupportedSubscription>(true, true, subscription);
       }
+
+      if (status >= 400 && status < 500) {
+        return new ExecutorResult(false, false);
+      }
+
       return new ExecutorResult(false, true);
   }
 }
