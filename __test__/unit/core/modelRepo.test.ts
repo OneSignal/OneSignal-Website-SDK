@@ -15,7 +15,6 @@ let coreDirector: CoreModuleDirector;
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/core/caching/ModelCache');
 jest.mock('../../../src/core/operationRepo/Operation');
 
 describe('ModelRepo tests', () => {

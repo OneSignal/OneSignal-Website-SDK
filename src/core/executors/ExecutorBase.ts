@@ -20,26 +20,22 @@ export default abstract class ExecutorBase {
   protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
   protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
 
-  private onlineStatus: boolean = true;
+  private onlineStatus = true;
 
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;
   static RETRY_COUNT = 5;
 
   constructor(executorConfig: ExecutorConfig<SupportedModel>) {
-    let isCalled = false;
-    let isCalled2 = false;
     setInterval(() => {
-      if (this._deltaQueue.length > 0 && !isCalled) {
+      if (this._deltaQueue.length > 0) {
         this.processDeltaQueue.call(this);
-        isCalled = true;
       }
     }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
-      if (this._operationQueue.length > 0 && !isCalled2) {
+      if (this._operationQueue.length > 0) {
         this._processOperationQueue.call(this);
-        isCalled2 = true;
       }
     }, ExecutorBase.OPERATIONS_BATCH_PROCESSING_TIME * 1_000);
 
