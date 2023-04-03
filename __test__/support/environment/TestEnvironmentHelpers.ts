@@ -24,14 +24,14 @@ export function resetDatabase() {
 }
 
 export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
-  const core = new CoreModule();
-  await core.init();
   global.OneSignal = OneSignal;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
   global.OneSignal.context = new Context(global.OneSignal.config);
   global.OneSignal.initialized = true;
-  global.OneSignal.coreDirector = new CoreModuleDirector(core);
   global.OneSignal.emitter = new Emitter();
+  const core = new CoreModule();
+  await core.init();
+  global.OneSignal.coreDirector = new CoreModuleDirector(core);
 
   return global.OneSignal;
 }

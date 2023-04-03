@@ -12,7 +12,6 @@ import { generateNewSubscription } from "../../support/helpers/core";
 import 'jest-localstorage-mock';
 
 // class mocks
-jest.mock('../../../src/core/caching/ModelCache');
 jest.mock('../../../src/core/operationRepo/Operation');
 
 describe('Executor tests', () => {

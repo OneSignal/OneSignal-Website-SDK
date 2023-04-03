@@ -17,7 +17,6 @@ let coreDirector: CoreModuleDirector;
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/core/caching/ModelCache');
 jest.mock('../../../src/onesignal/OneSignal')
 jest.mock('../../../src/shared/services/Database')
 
