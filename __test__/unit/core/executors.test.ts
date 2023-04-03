@@ -10,13 +10,18 @@ import { ModelName, SupportedModel } from "../../../src/core/models/SupportedMod
 import { CoreDelta } from "../../../src/core/models/CoreDeltas";
 import { generateNewSubscription } from "../../support/helpers/core";
 import 'jest-localstorage-mock';
+import ExecutorBase from "../../../src/core/executors/ExecutorBase";
 
 // class mocks
 jest.mock('../../../src/core/operationRepo/Operation');
 
 describe('Executor tests', () => {
 
+  let spyProcessOperationQueue: jest.SpyInstance<void, [(() => Promise<void>)], any> | jest.SpyInstance<void>
+
   beforeEach(() => {
+    spyProcessOperationQueue = jest.spyOn(ExecutorBase.prototype as any, '_processOperationQueue');
+
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
     test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
@@ -25,7 +30,10 @@ describe('Executor tests', () => {
     TestEnvironment.initialize();
   });
 
-  afterAll(() => {
+  afterAll(async () => {
+    jest.runOnlyPendingTimers();
+    await Promise.all(spyProcessOperationQueue.mock.results.map(element => { return element.value }));
+
     jest.resetModules();
   });
 
