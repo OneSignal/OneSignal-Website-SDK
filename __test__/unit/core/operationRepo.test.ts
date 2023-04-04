@@ -1,7 +1,5 @@
 import { DELTA_QUEUE_TIME_ADVANCE } from "../../support/constants";
 import ModelCache from "../../../src/core/caching/ModelCache";
-import CoreModule from "../../../src/core/CoreModule";
-import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
 import ExecutorBase from "../../../src/core/executors/ExecutorBase";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { CoreChangeType } from "../../../src/core/models/CoreChangeType";
@@ -11,32 +9,40 @@ import { ModelName, SupportedModel } from "../../../src/core/models/SupportedMod
 import { UserPropertiesModel } from "../../../src/core/models/UserPropertiesModel";
 import { OperationRepo } from "../../../src/core/operationRepo/OperationRepo";
 import { generateNewSubscription, passIfBroadcastNTimes } from "../../support/helpers/core";
+import { TestEnvironment } from "../../support/environment/TestEnvironment";
 
-let core: CoreModule;
-let coreDirector: CoreModuleDirector;
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/core/caching/ModelCache');
-jest.mock('../../../src/onesignal/OneSignal')
+jest.mock('../../../src/shared/services/Database')
 
 describe('OperationRepo tests', () => {
 
+  let spyProcessOperationQueue: jest.SpyInstance<void, [(() => Promise<void>)], any> | jest.SpyInstance<void>;
+
   beforeEach(async () => {
+    spyProcessOperationQueue = jest.spyOn(ExecutorBase.prototype as any, '_processOperationQueue');
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    test.nock({
+      onesignal_id: '123',
+    })
     jest.useFakeTimers();
-    core = new CoreModule();
-    coreDirector = new CoreModuleDirector(core);
-    await core.init();
+    TestEnvironment.initialize();
     broadcastCount = 0;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    jest.runOnlyPendingTimers();
+    await Promise.all(spyProcessOperationQueue.mock.results.map(element => { return element.value }));
     jest.clearAllMocks();
   });
 
+  afterAll(() => {
+    jest.resetModules();
+  });
+
   test('OperationRepo executor store has executor for each model name', async () => {
-    const { operationRepo } = core;
+    const { operationRepo } = OneSignal.coreDirector.core;
     const executorStore = operationRepo?.executorStore;
     Object.values(ModelName).forEach(modelName => {
       const executor = executorStore?.store ? executorStore.store[modelName] : null;
@@ -45,7 +51,7 @@ describe('OperationRepo tests', () => {
   });
 
   test('Model repo delta broadcast is received and processed by operation repo', (done: jest.DoneCallback) => {
-    const { modelRepo, operationRepo } = core;
+    const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
 
     modelRepo?.subscribe(() => {
@@ -68,7 +74,7 @@ describe('OperationRepo tests', () => {
   });
 
   test('Add Subscriptions: multiple delta broadcasts -> two operations of change type: add', (done: jest.DoneCallback) => {
-    const { modelRepo, operationRepo } = core;
+    const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.EmailSubscriptions];
 
     const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
@@ -92,7 +98,7 @@ describe('OperationRepo tests', () => {
   });
 
   test('Update Identity -> one operation of change type: update', (done: jest.DoneCallback) => {
-    const { modelRepo, operationRepo } = core;
+    const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Identity];
 
     const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
@@ -142,7 +148,7 @@ describe('OperationRepo tests', () => {
   });
 
   test('Update User Properties: -> one operation of change type: update', (done: jest.DoneCallback) => {
-    const { modelRepo, operationRepo } = core;
+    const { modelRepo, operationRepo } = OneSignal.coreDirector.core;
     const executor = operationRepo?.executorStore.store[ModelName.Properties];
 
     const processDeltaSpy = jest.spyOn(OperationRepo.prototype as any, "_processDelta");
