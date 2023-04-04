@@ -7,7 +7,6 @@ import { DOMWindow, JSDOM, ResourceLoader } from "jsdom";
 import OneSignal from "../../../src/onesignal/OneSignal";
 import { CUSTOM_LINK_CSS_CLASSES } from "../../../src/shared/slidedown/constants";
 import { getSlidedownElement } from "../../../src/page/slidedown/SlidedownElement";
-import DOMStorage from "dom-storage";
 import { MockServiceWorkerContainerWithAPIBan } from "../mocks/models/MockServiceWorkerContainerWithAPIBan";
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import BrowserUserAgent from "../models/BrowserUserAgent";
@@ -25,14 +24,14 @@ export function resetDatabase() {
 }
 
 export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
-  const core = new CoreModule();
-  await core.init();
   global.OneSignal = OneSignal;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
   global.OneSignal.context = new Context(global.OneSignal.config);
   global.OneSignal.initialized = true;
-  global.OneSignal.coreDirector = new CoreModuleDirector(core);
   global.OneSignal.emitter = new Emitter();
+  const core = new CoreModule();
+  await core.init();
+  global.OneSignal.coreDirector = new CoreModuleDirector(core);
 
   return global.OneSignal;
 }
@@ -95,8 +94,6 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   // Node has its own console; overwriting it will cause issues
   delete (windowDef as any)['console'];
   (windowDef as any).navigator.serviceWorker = new MockServiceWorkerContainerWithAPIBan();
-  (windowDef as any).localStorage = new DOMStorage(null);
-  (windowDef as any).sessionStorage = new DOMStorage(null);
   // (windowDef as any).TextEncoder = TextEncoder;
   // (windowDef as any).TextDecoder = TextDecoder;
   (windowDef as any).isSecureContext = isSecureContext;
