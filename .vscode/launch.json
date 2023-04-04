@@ -6,14 +6,10 @@
       "request": "launch",
       "name": "Jest: current file",
       //"env": { "NODE_ENV": "test" },
-      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest --detectOpenHandles --runInBand --unhandled-rejections=strict",
       "args": ["${fileBasenameNoExtension}", "--config", "jest.config.js"],
       "console": "integratedTerminal",
-      "disableOptimisticBPs": true,
       "runtimeExecutable": "/Users/rodrigo/.nvm/versions/node/v14.20.1/bin/node",
-      "windows": {
-        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
-      }
     }
   ]
 }

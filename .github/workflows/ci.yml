@@ -28,4 +28,4 @@ jobs:
         continue-on-error: true
         run: yarn lint
       - name: "[Test] Run all jest tests"
-        run: yarn jest
+        run: yarn test
