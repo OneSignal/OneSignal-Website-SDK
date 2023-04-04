@@ -1,3 +1,6 @@
+import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
+import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
+import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
 import ModelCache from "../../../src/core/caching/ModelCache";
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { ModelName } from "../../../src/core/models/SupportedModels";
@@ -7,7 +10,14 @@ describe('ModelCache tests', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
     TestEnvironment.initialize();
+  });
+
+  afterAll(() => {
+    jest.resetModules();
   });
 
   test('ModelCache adds model to IndexedDB', async () => {

@@ -1,3 +1,4 @@
+import OneSignalUtils from "../../../src/shared/utils/OneSignalUtils";
 import ModelCache from "../../../src/core/caching/ModelCache";
 import CoreModule from "../../../src/core/CoreModule";
 import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
@@ -15,13 +16,13 @@ let coreDirector: CoreModuleDirector;
 let broadcastCount = 0;
 
 // class mocks
-jest.mock('../../../src/core/caching/ModelCache');
 jest.mock('../../../src/core/operationRepo/Operation');
 
 describe('ModelRepo tests', () => {
 
   beforeEach(async () => {
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    test.stub(OneSignalUtils, 'isUsingSubscriptionWorkaround', () => false);
     jest.useFakeTimers();
     core = new CoreModule();
     coreDirector = new CoreModuleDirector(core);
@@ -31,6 +32,10 @@ describe('ModelRepo tests', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.resetModules();
   });
 
   test('ModelRepo add subscription -> +1 subscription model in model store', async () => {
@@ -158,11 +163,10 @@ describe('ModelRepo tests', () => {
   test('ModelRepo hydrate model -> model is synced to the model cache', () => {
     const newSub = generateNewSubscription();
 
-    // this add is also detected by the spy
-    coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, true);
-
     const modelCacheRemoveSpy = jest.spyOn(ModelCache.prototype as any, 'remove');
     const modelCacheAddSpy = jest.spyOn(ModelCache.prototype as any, 'add');
+
+    coreDirector.add(ModelName.EmailSubscriptions, newSub as OSModel<SupportedModel>, true);
 
     newSub.hydrate({
       id: 'myId',
