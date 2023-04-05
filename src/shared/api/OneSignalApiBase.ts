@@ -69,7 +69,7 @@ export class OneSignalApiBase {
       return OneSignalApiBase.executeFetch(url, contents);
   }
 
-  private static async executeFetch(url: string, contents: RequestInit, retry: number = 5):
+  private static async executeFetch(url: string, contents: RequestInit, retry = 5):
     Promise<OneSignalApiBaseResponse> {
       if (retry === 0) {
         return Promise.reject(new OneSignalApiError(OneSignalApiErrorKind.RetryLimitReached));
@@ -78,6 +78,11 @@ export class OneSignalApiBase {
         const response = await fetch(url, contents);
         const { status } = response;
         const json = await response.json();
+
+        if (status === 401 && json.code === "auth-3") {
+          // JWT token expired
+          OneSignal.emitter.emit(OneSignal.EVENTS.JWT_EXPIRED);
+        }
 
         return {
           result: json,
