@@ -336,6 +336,8 @@ export default class OneSignal {
   };
 
   static EVENTS = {
+    /** Occurs when the JWT token expires */
+    JWT_EXPIRED: 'jwtExpired',
     /**
      * Occurs when the user clicks the "Continue" or "No Thanks" button on the HTTP popup or HTTPS modal prompt.
      * For HTTP sites (and HTTPS sites using the modal prompt), this event is fired before the native permission
