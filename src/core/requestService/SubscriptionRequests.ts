@@ -4,7 +4,7 @@ import { logMethodCall } from "../../shared/utils/utils";
 import ExecutorResult from "../executors/ExecutorResult";
 import { SupportedSubscription } from "../models/SubscriptionModels";
 import { Operation } from "../operationRepo/Operation";
-import { processSubscriptionOperation } from "./helpers";
+import { getJWTHeader, processSubscriptionOperation } from "./helpers";
 import { RequestService } from "./RequestService";
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
 import { isCompleteSubscriptionObject } from "../utils/typePredicates";
@@ -18,9 +18,10 @@ export default class SubscriptionRequests {
     logMethodCall("SubscriptionRequests.addSubscription", operation);
 
     const appId = await MainHelper.getAppId();
+    const jwtHeader = await getJWTHeader();
     const { subscription, aliasPair } = processSubscriptionOperation(operation);
 
-    const response = await RequestService.createSubscription({ appId }, aliasPair, { subscription });
+    const response = await RequestService.createSubscription({ appId, jwtHeader }, aliasPair, { subscription });
     return SubscriptionRequests._processSubscriptionResponse(response);
   }
 
