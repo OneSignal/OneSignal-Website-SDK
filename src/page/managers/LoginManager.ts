@@ -15,6 +15,7 @@ import UserDirector from "../../onesignal/UserDirector";
 import Database from "../../shared/services/Database";
 import LocalStorage from "../../shared/utils/LocalStorage";
 import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
+import { getJWTHeader } from "../../core/requestService/helpers";
 
 export default class LoginManager {
   static async login(externalId: string, token?: string): Promise<void> {
@@ -167,12 +168,13 @@ export default class LoginManager {
     }
 
     const appId = await MainHelper.getAppId();
+    const jwtHeader = await getJWTHeader();
     const userDataCopy = JSON.parse(JSON.stringify(userData));
 
     // only accepts one alias, so remove other aliases only leaving external_id
     this.stripAliasesOtherThanExternalId(userData);
 
-    const response = await RequestService.createUser({ appId }, userData);
+    const response = await RequestService.createUser({ appId, jwtHeader }, userData);
     const result = response?.result;
     const status = response?.status;
 
@@ -210,10 +212,11 @@ export default class LoginManager {
       }
 
       const appId = await MainHelper.getAppId();
+      const jwtHeader = await getJWTHeader();
       const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
 
       // identify user
-      const identifyUserResponse = await RequestService.addAlias({ appId }, aliasPair, identity);
+      const identifyUserResponse = await RequestService.addAlias({ appId, jwtHeader }, aliasPair, identity);
       const identifyResponseStatus = identifyUserResponse?.status;
 
       if (identifyResponseStatus >= 200 && identifyResponseStatus < 300) {
@@ -235,8 +238,11 @@ export default class LoginManager {
   static async fetchAndHydrate(onesignalId: string): Promise<void> {
     logMethodCall("LoginManager.fetchAndHydrate", { onesignalId });
 
+    const appId = await MainHelper.getAppId();
+    const jwtHeader = getJWTHeader();
+
     const fetchUserResponse = await RequestService.getUser(
-      { appId: await MainHelper.getAppId() },
+      { appId, jwtHeader },
       new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
     );
 
