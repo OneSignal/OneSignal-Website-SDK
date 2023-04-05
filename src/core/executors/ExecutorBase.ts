@@ -20,7 +20,7 @@ export default abstract class ExecutorBase {
   protected _executeUpdate?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
   protected _executeRemove?: (operation: Operation<SupportedModel>) => Promise<ExecutorResult<SupportedModel>>;
 
-  private onlineStatus: boolean = true;
+  private onlineStatus = true;
 
   static DELTAS_BATCH_PROCESSING_TIME = 1;
   static OPERATIONS_BATCH_PROCESSING_TIME = 5;

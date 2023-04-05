@@ -1,9 +1,5 @@
-import { NotificationActionButton } from "../page/models/NotificationActionButton";
 import { ValidatorUtils } from "../page/utils/ValidatorUtils";
-import OneSignalApi from "../shared/api/OneSignalApi";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
-import { InvalidStateError, InvalidStateReason } from "../shared/errors/InvalidStateError";
-import { NotSubscribedError, NotSubscribedReason } from "../shared/errors/NotSubscribedError";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
 import OneSignalError from "../../src/shared/errors/OneSignalError";
