@@ -7,6 +7,7 @@ import AliasPair from "./AliasPair";
 import { RequestService } from "./RequestService";
 import MainHelper from "../../shared/helpers/MainHelper";
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
+import { getJWTHeader } from "./helpers";
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
@@ -32,7 +33,8 @@ export default class UserPropertyRequests {
     const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
 
     const appId = await MainHelper.getAppId();
-    const response = await RequestService.updateUser({ appId }, aliasPair, {
+    const jwtHeader = await getJWTHeader();
+    const response = await RequestService.updateUser({ appId, jwtHeader }, aliasPair, {
       properties,
     });
     return UserPropertyRequests._processUserPropertyResponse(response);

@@ -5,7 +5,7 @@ import ExecutorResult from "../executors/ExecutorResult";
 import { IdentityModel } from "../models/IdentityModel";
 import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject } from "../utils/typePredicates";
-import { processIdentityOperation } from "./helpers";
+import { getJWTHeader, processIdentityOperation } from "./helpers";
 import { RequestService } from "./RequestService";
 import MainHelper from "../../shared/helpers/MainHelper";
 
@@ -17,10 +17,11 @@ export default class IdentityRequests {
   static async addIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("addIdentity", operation);
     const appId = await MainHelper.getAppId();
+    const jwtHeader = await getJWTHeader();
 
     const { identity, aliasPair } = processIdentityOperation(operation);
 
-    const response = await RequestService.addAlias({ appId }, aliasPair, identity);
+    const response = await RequestService.addAlias({ appId, jwtHeader }, aliasPair, identity);
     return IdentityRequests._processIdentityResponse(response);
   }
 
@@ -36,10 +37,11 @@ export default class IdentityRequests {
     }
 
     const appId = await MainHelper.getAppId();
+    const jwtHeader = await getJWTHeader();
     const labelToRemove = Object.keys(operation.payload)[0];
     const { aliasPair } = processIdentityOperation(operation);
 
-    const response = await RequestService.deleteAlias({ appId }, aliasPair, labelToRemove);
+    const response = await RequestService.deleteAlias({ appId, jwtHeader }, aliasPair, labelToRemove);
     return IdentityRequests._processIdentityResponse(response);
   }
 
