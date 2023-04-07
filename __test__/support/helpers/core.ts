@@ -28,8 +28,8 @@ export function getMockDeltas(): CoreDelta<SupportedIdentity>[] {
   ];
 }
 
-export function getDummyIdentityOSModel(): OSModel<SupportedIdentity> {
-  return new OSModel<SupportedIdentity>(ModelName.Identity, {}, DUMMY_MODEL_ID);
+export function getDummyIdentityOSModel(modelId = DUMMY_MODEL_ID): OSModel<SupportedIdentity> {
+  return new OSModel<SupportedIdentity>(ModelName.Identity, {}, modelId);
 }
 
 export function getDummyPushSubscriptionOSModel(): OSModel<SupportedSubscription> {

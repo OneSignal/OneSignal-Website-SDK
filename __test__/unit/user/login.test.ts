@@ -7,7 +7,10 @@ import { setupLoginStubs } from "../../support/helpers/login";
 import { RequestService } from "../../../src/core/requestService/RequestService";
 import { getDummyIdentityOSModel } from "../../support/helpers/core";
 import { ModelName } from "../../../src/core/models/SupportedModels";
-import { DUMMY_EXTERNAL_ID, DUMMY_EXTERNAL_ID_2, DUMMY_ONESIGNAL_ID } from "../../support/constants";
+import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
+import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
+import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
+import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
 
 // suppress all internal logging
 jest.mock("../../../src/shared/libraries/Log");
@@ -16,6 +19,9 @@ describe('Login tests', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
+    test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
   });
 
   afterEach(() => {
