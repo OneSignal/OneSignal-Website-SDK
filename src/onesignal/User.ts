@@ -6,10 +6,10 @@ import { logMethodCall, isValidEmail } from "../shared/utils/utils";
 import UserDirector from "./UserDirector";
 
 export default class User {
-  hasOneSignalId: boolean = false;
+  hasOneSignalId = false;
   onesignalId?: string;
   awaitOneSignalIdAvailable?: Promise<string>;
-  isCreatingUser: boolean = false;
+  isCreatingUser = false;
 
   static singletonInstance?: User = undefined;
 
@@ -40,12 +40,20 @@ export default class User {
   public addAlias(label: string, id: string): void {
     logMethodCall('addAlias', { label, id });
 
+    if (typeof label !== 'string') {
+      throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
+    }
+
+    if (typeof id !== 'string') {
+      throw new InvalidArgumentError('id', InvalidArgumentReason.WrongType);
+    }
+
     if (!label) {
-      throw new InvalidArgumentError('label', InvalidArgumentReason.Empty,);
+      throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
     }
 
     if (!id) {
-      throw new InvalidArgumentError('id', InvalidArgumentReason.Empty,);
+      throw new InvalidArgumentError('id', InvalidArgumentReason.Empty);
     }
 
     this.addAliases({ [label]: id });
@@ -59,6 +67,12 @@ export default class User {
     }
 
     Object.keys(aliases).forEach(async label => {
+      if (typeof label !== 'string') {
+        throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
+      }
+    });
+
+    Object.keys(aliases).forEach(async label => {
       const identityModel = OneSignal.coreDirector.getIdentityModel();
       identityModel?.set(label, aliases[label]);
     });
@@ -66,6 +80,10 @@ export default class User {
 
   public removeAlias(label: string): void {
     logMethodCall('removeAlias', { label });
+
+    if (typeof label !== 'string') {
+      throw new InvalidArgumentError('label', InvalidArgumentReason.WrongType);
+    }
 
     if (!label) {
       throw new InvalidArgumentError('label', InvalidArgumentReason.Empty);
@@ -89,6 +107,11 @@ export default class User {
 
   public addEmail(email: string): void {
     logMethodCall('addEmail', { email });
+
+    if (typeof email !== 'string') {
+      throw new InvalidArgumentError('email', InvalidArgumentReason.WrongType);
+    }
+
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -120,6 +143,11 @@ export default class User {
 
   public addSms(sms: string): void {
     logMethodCall('addSms', { sms });
+
+    if (typeof sms !== 'string') {
+      throw new InvalidArgumentError('sms', InvalidArgumentReason.WrongType);
+    }
+
     if (!sms) {
       throw new InvalidArgumentError('sms', InvalidArgumentReason.Empty);
     }
@@ -149,6 +177,10 @@ export default class User {
   public removeEmail(email: string): void {
     logMethodCall('removeEmail', { email });
 
+    if (typeof email !== 'string') {
+      throw new InvalidArgumentError('email', InvalidArgumentReason.WrongType);
+    }
+
     if (!email) {
       throw new InvalidArgumentError('email', InvalidArgumentReason.Empty);
     }
@@ -165,6 +197,10 @@ export default class User {
 
   public removeSms(smsNumber: string): void {
     logMethodCall('removeSms', { smsNumber });
+
+    if (typeof smsNumber !== 'string') {
+      throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.WrongType);
+    }
 
     if (!smsNumber) {
       throw new InvalidArgumentError('smsNumber', InvalidArgumentReason.Empty);
@@ -183,8 +219,20 @@ export default class User {
   public addTag(key: string, value: string): void {
     logMethodCall('addTag', { key, value });
 
+    if (typeof key !== 'string') {
+      throw new InvalidArgumentError('key', InvalidArgumentReason.WrongType);
+    }
+
+    if (typeof value !== 'string') {
+      throw new InvalidArgumentError('value', InvalidArgumentReason.WrongType);
+    }
+
     if (!key) {
       throw new InvalidArgumentError('key', InvalidArgumentReason.Empty);
+    }
+
+    if (!value) {
+      throw new InvalidArgumentError('value', InvalidArgumentReason.Empty, "Did you mean to call removeTag?");
     }
 
     this.addTags({ [key]: value });
@@ -192,6 +240,10 @@ export default class User {
 
   public addTags(tags: {[key: string]: string}): void {
     logMethodCall('addTags', { tags });
+
+    if (typeof tags !== 'object') {
+      throw new InvalidArgumentError('tags', InvalidArgumentReason.WrongType);
+    }
 
     if (!tags) {
       throw new InvalidArgumentError('tags', InvalidArgumentReason.Empty);
@@ -205,7 +257,11 @@ export default class User {
   public removeTag(tagKey: string): void {
     logMethodCall('removeTag', { tagKey });
 
-    if (!tagKey) {
+    if (typeof tagKey !== 'string') {
+      throw new InvalidArgumentError('tagKey', InvalidArgumentReason.WrongType);
+    }
+
+    if (typeof tagKey === 'undefined') {
       throw new InvalidArgumentError('tagKey', InvalidArgumentReason.Empty);
     }
 
