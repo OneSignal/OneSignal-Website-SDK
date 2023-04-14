@@ -56,23 +56,23 @@ Use the new script import on both your pages and your Service Worker file.
 
 From:
 ```html
-<script src="https://onesignal.com/sdks/OneSignalSDK.js" async/>
+<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async/>
 ```
 
 To:
 ```html
-<script src="https://onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 ```
 ### Service Worker
 
 From:
 ```js
-importScripts("https://onesignal.com/sdks/OneSignalSDKWorker.js");
+importScripts("https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js");
 ```
 
 To:
 ```js
-importScripts("https://onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
+importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 ```
 
 
