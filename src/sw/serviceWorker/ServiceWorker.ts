@@ -798,7 +798,6 @@ export class ServiceWorker {
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
-    let saveNotificationClickedPromise: Promise<void> | undefined;
     const notificationClicked: NotificationClicked = {
       notificationId: data.id,
       action: data.action,
@@ -807,7 +806,7 @@ export class ServiceWorker {
       timestamp: new Date().getTime(),
     };
     Log.info("NotificationClicked", notificationClicked);
-    saveNotificationClickedPromise = (async notificationClicked => {
+    const saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
         if (existingSession && existingSession.status === SessionStatus.Active) {
