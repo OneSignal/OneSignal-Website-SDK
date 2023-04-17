@@ -146,7 +146,7 @@ export default class OneSignal {
 
     await OneSignal._initializeCoreModuleAndOSNamespaces();
 
-    if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired()) {
+    if (LocalStorage.getConsentRequired()) {
       const providedConsent = await Database.getConsentGiven();
       if (!providedConsent) {
         OneSignal.pendingInit = true;

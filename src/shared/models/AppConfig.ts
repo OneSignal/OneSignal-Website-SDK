@@ -100,7 +100,6 @@ export interface AppUserConfig {
   notificationClickHandlerMatch?: NotificationClickMatchBehavior;
   notificationClickHandlerAction?: NotificationClickActionBehavior;
   allowLocalhostAsSecureOrigin?: boolean;
-  requiresUserPrivacyConsent?: boolean;
   pageUrl?: string;
   outcomes?: OutcomesConfig;
 }

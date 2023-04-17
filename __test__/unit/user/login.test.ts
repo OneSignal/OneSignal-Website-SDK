@@ -11,6 +11,7 @@ import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
 import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
 import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
 import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
+import LocalStorage from "../../../src/shared/utils/LocalStorage";
 
 // suppress all internal logging
 jest.mock("../../../src/shared/libraries/Log");
@@ -31,8 +32,8 @@ describe('Login tests', () => {
   test('If privacy consent is required but not given, do not login', async () => {
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
-      userConfig: { requiresUserPrivacyConsent: true }
     });
+    LocalStorage.setConsentRequired(true);
 
     test.stub(Database, "getConsentGiven", Promise.resolve(false));
 
