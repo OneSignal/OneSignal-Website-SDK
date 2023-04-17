@@ -17,7 +17,7 @@ export default class IndexedDb {
   }
 
   private open(databaseName: string): Promise<IDBDatabase> {
-    return new Promise<IDBDatabase>(resolve => {
+    return new Promise<IDBDatabase>((resolve, reject) => {
       let request: IDBOpenDBRequest | undefined = undefined;
       try {
         // Open algorithm: https://www.w3.org/TR/IndexedDB/#h-opening
@@ -25,15 +25,23 @@ export default class IndexedDb {
       } catch (e) {
         // Errors should be thrown on the request.onerror event, but just in case Firefox throws additional errors
         // for profile schema too high
+        Log.error(e);
       }
       if (!request) {
-        return null;
+        reject(new Error('Unable to create IDBOpenDBRequest object'));
+        return;
       }
       request.onerror = this.onDatabaseOpenError;
       request.onblocked = this.onDatabaseOpenBlocked;
       request.onupgradeneeded = this.onDatabaseUpgradeNeeded;
-      request.onsuccess = () => {
-        this.database = request.result;
+      request.onsuccess = (event: Event) => {
+        const target = event?.target as IDBOpenDBRequest;
+        this.database = target?.result;
+
+        if (!this.database) {
+          reject(new Error('Unable to get IDBDatabase object'));
+        }
+
         this.database.onerror = this.onDatabaseError;
         this.database.onversionchange = this.onDatabaseVersionChange;
         resolve(this.database);

@@ -5,7 +5,6 @@ import BrowserUserAgent from "../models/BrowserUserAgent";
 import { resetDatabase, initOSGlobals, stubDomEnvironment, stubNotification } from "./TestEnvironmentHelpers";
 import { HttpHttpsEnvironment } from "../models/HttpHttpsEnvironment";
 import OperationCache from "../../../src/core/caching/OperationCache";
-import "fake-indexeddb/auto";
 import { RecursivePartial } from "../../../src/shared/context/Utils";
 import { ModelName } from "../../../src/core/models/SupportedModels";
 import { getDummyIdentityOSModel, getDummyPushSubscriptionOSModel } from "../helpers/core";
