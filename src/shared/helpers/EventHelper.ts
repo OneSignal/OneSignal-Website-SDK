@@ -221,6 +221,7 @@ export default class EventHelper {
         const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
         if (minutesSinceNotificationClicked > 5) return;
       }
+
       OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
     }
 

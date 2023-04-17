@@ -126,8 +126,9 @@ export default class NotificationsNamespace extends EventListenerBase {
         OneSignal.config!.safariWebId
       );
 
-    if (onComplete)
+    if (onComplete) {
       onComplete(permission);
+    }
 
     return permission;
   }
