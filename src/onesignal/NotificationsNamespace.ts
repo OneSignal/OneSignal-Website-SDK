@@ -6,6 +6,7 @@ import OneSignalError from "../../src/shared/errors/OneSignalError";
 import OneSignal from "./OneSignal";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import NotificationEventName from "../page/models/NotificationEventName";
+import { NotificationClicked } from "../../src/shared/models/Notification";
 
 export default class NotificationsNamespace extends EventListenerBase {
   constructor(private _permissionNative?: NotificationPermission) {
@@ -147,7 +148,7 @@ export default class NotificationsNamespace extends EventListenerBase {
   }
 
   /* Function overloads */
-  addEventListener(event: NotificationEventName.Click, listener: (obj: StructuredNotification) => void): void;
+  addEventListener(event: NotificationEventName.Click, listener: (obj: NotificationClicked) => void): void;
   addEventListener(event: NotificationEventName.WillDisplay, listener: (obj: StructuredNotification) => void): void;
   addEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
   addEventListener(event: NotificationEventName.PermissionChange,
@@ -159,7 +160,7 @@ export default class NotificationsNamespace extends EventListenerBase {
   }
 
   /* Function overloads */
-  removeEventListener(event: NotificationEventName.Click, listener: (obj: StructuredNotification) => void): void;
+  removeEventListener(event: NotificationEventName.Click, listener: (event: NotificationClicked) => void): void;
   removeEventListener(event: NotificationEventName.WillDisplay, listener: (obj: StructuredNotification) => void): void;
   removeEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
   removeEventListener(event: NotificationEventName.PermissionChange,

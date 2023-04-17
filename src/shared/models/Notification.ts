@@ -85,6 +85,7 @@ export interface NotificationReceived {
 
 export interface NotificationClicked {
     notificationId: string;
+    action: string;
     appId: string;
     url: string;
     timestamp: number;
