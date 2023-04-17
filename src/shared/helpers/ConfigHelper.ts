@@ -463,7 +463,6 @@ export class ConfigHelper {
             serverConfig.config.notificationBehavior.click.action : undefined,
           allowLocalhostAsSecureOrigin: serverConfig.config.setupBehavior ?
             serverConfig.config.setupBehavior.allowLocalhostAsSecureOrigin : undefined,
-          requiresUserPrivacyConsent: userConfig.requiresUserPrivacyConsent,
           outcomes: {
             direct: serverConfig.config.outcomes.direct,
             indirect: {
