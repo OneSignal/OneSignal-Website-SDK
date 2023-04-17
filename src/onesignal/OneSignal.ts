@@ -47,13 +47,14 @@ import { ONESIGNAL_EVENTS } from "./OneSignalEvents";
 export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
 
-  private static async _initializeCoreModuleAndUserNamespace() {
+  private static async _initializeCoreModuleAndOSNamespaces() {
     const core = new CoreModule();
     await core.initPromise;
     OneSignal.coreDirector = new CoreModuleDirector(core);
     const subscription = await Database.getSubscription();
     const permission = await OneSignal.Notifications.getPermissionStatus();
     OneSignal.User = new UserNamespace(true, subscription, permission);
+    this.Notifications = new NotificationsNamespace(permission);
   }
 
   private static async _initializeConfig(options: AppUserConfig) {
@@ -143,7 +144,7 @@ export default class OneSignal {
       return;
     }
 
-    await OneSignal._initializeCoreModuleAndUserNamespace();
+    await OneSignal._initializeCoreModuleAndOSNamespaces();
 
     if (OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired()) {
       const providedConsent = await Database.getConsentGiven();
