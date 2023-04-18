@@ -1,17 +1,16 @@
 import OneSignalError from "../../shared/errors/OneSignalError";
-import Database from "../../shared/services/Database";
 import { OSModel } from "../modelRepo/OSModel";
 import { CoreChangeType } from "../models/CoreChangeType";
 import { CoreDelta } from "../models/CoreDeltas";
 import { ModelName, SupportedModel } from "../models/SupportedModels";
 import { isPropertyDelta, isPureObject } from "../utils/typePredicates";
+import LocalStorage from "../../shared/utils/LocalStorage";
 
 export class Operation<Model> {
   operationId: string;
   timestamp: number;
   payload?: Partial<SupportedModel>;
   model?: OSModel<Model>;
-  jwtTokenAvailable: Promise<void>;
   jwtToken?: string | null;
 
   constructor(readonly changeType: CoreChangeType, readonly modelName: ModelName, deltas?: CoreDelta<Model>[]) {
@@ -19,10 +18,7 @@ export class Operation<Model> {
     this.payload = deltas ? this.getPayload(deltas) : undefined;
     this.model = deltas ? deltas[deltas.length-1].model : undefined;
     this.timestamp = Date.now();
-    this.jwtTokenAvailable = new Promise<void>(async resolve => {
-      this.jwtToken = await Database.getJWTToken();
-      resolve();
-    });
+    this._setJwtToken();
   }
 
   private getPayload(deltas: CoreDelta<Model>[]): any {
@@ -67,9 +63,23 @@ export class Operation<Model> {
     return result;
   }
 
+  /**
+   * This method is used to set the jwtToken for the operation.
+   * When the operation is created, we set the JWT token from the local storage.
+   */
+  private _setJwtToken(): void {
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+    const currentExternalId = identityModel?.data?.external_id;
+
+    if (currentExternalId) {
+      const jwt = LocalStorage.getJWTForExternalId(currentExternalId);
+      this.jwtToken = jwt;
+    }
+  }
+
   static async getInstanceWithModelReference(rawOperation: Operation<SupportedModel>):
     Promise<Operation<SupportedModel> | undefined> {
-      const { operationId, payload, modelName, changeType, timestamp, model } = rawOperation;
+      const { operationId, payload, modelName, changeType, timestamp, model, jwtToken } = rawOperation;
       if (!model) {
         throw new OneSignalError("Operation.fromJSON: model is undefined");
       }
@@ -81,8 +91,7 @@ export class Operation<Model> {
         operation.operationId = operationId;
         operation.timestamp = timestamp;
         operation.payload = payload;
-        operation.jwtToken = rawOperation.jwtToken;
-        operation.jwtTokenAvailable = Promise.resolve();
+        operation.jwtToken = jwtToken;
         return operation;
       } else {
         throw new Error(`Could not find model with id ${model.modelId} of type ${modelName}. Maybe user logged out?`);
