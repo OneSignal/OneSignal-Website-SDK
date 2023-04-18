@@ -6,6 +6,7 @@ import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject, isFutureSubscriptionObject, isCompleteSubscriptionObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
 import { APIHeaders } from "../../shared/models/APIHeaders";
+import { SupportedModel } from "../models/SupportedModels";
 
 export function processSubscriptionOperation<Model>(operation: Operation<Model>): {
   subscription: SupportedSubscription;
@@ -71,7 +72,29 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   };
 }
 
-export async function getJWTHeader(): Promise<APIHeaders | undefined> {
-  const jwtToken = await Database.getJWTToken();
+export async function getJWTHeader(jwtToken?: string | null): Promise<APIHeaders | undefined> {
   return !!jwtToken ? { Authorization: `Bearer ${jwtToken}` } : undefined;
+}
+
+export function getExternalIdFromJwt(jwtToken?: string | null): string | undefined {
+  if (!jwtToken) {
+    return undefined;
+  }
+
+  const payload = jwtToken.split('.')[1];
+  const decodedPayload = base64Decode(payload);
+  const parsedPayload = JSON.parse(decodedPayload);
+  return parsedPayload.external_id;
+}
+
+function base64Decode(base64: string): string {
+  const binaryString = atob(base64.replace('-', '+').replace('_', '/'));
+  const bytes = new Uint8Array(binaryString.length);
+
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  const decoder = new TextDecoder();
+  return decoder.decode(bytes);
 }
