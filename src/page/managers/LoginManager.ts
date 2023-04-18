@@ -18,7 +18,7 @@ import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
 import { getJWTHeader } from "../../core/requestService/helpers";
 
 export default class LoginManager {
-  static async login(externalId: string, token?: string): Promise<void> {
+  static async login(externalId: string, jwtToken?: string): Promise<void> {
     const consentRequired = OneSignal.config?.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
@@ -30,8 +30,8 @@ export default class LoginManager {
       // before, logging in, process anything waiting in the delta queue so it's not lost
       OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
 
-      if (token) {
-        await Database.setJWTToken(token);
+      if (jwtToken) {
+        LocalStorage.setJWTForExternalId(externalId, jwtToken);
       }
 
       const identityModel = OneSignal.coreDirector.getIdentityModel();
