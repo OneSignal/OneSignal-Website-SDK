@@ -11,6 +11,7 @@ import { OutcomeAttribution, OutcomeAttributionType } from "../models/Outcomes";
 import { SubscriptionStateKind } from "../models/SubscriptionStateKind";
 import { OneSignalApiBase } from "./OneSignalApiBase";
 import OneSignalApiShared from "./OneSignalApiShared";
+import AliasType from "../../core/requestService/AliasType";
 
 export class OneSignalApiSW {
   static async downloadServerAppConfig(appId: string): Promise<ServerAppConfig> {
@@ -66,7 +67,7 @@ export class OneSignalApiSW {
     subscriptionId: string,
   ): Promise<void> {
 
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalId);
     // TO DO: in future, we should aggregate session count in case network call fails
     const updateUserPayload: UpdateUserPayload = {
       refresh_device_metadata: true,
@@ -100,7 +101,7 @@ export class OneSignalApiSW {
       }
     };
 
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+    const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalId);
 
     const outcomePayload: OutcomeRequestData = {
       id: "os__session_duration",

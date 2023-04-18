@@ -10,6 +10,7 @@ import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse"
 import { getJWTHeader, jwtExpired } from "./helpers";
 import { SupportedModel } from "../models/SupportedModels";
 import { OSModel } from "../modelRepo/OSModel";
+import AliasType from "./AliasType";
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
@@ -32,7 +33,7 @@ export default class UserPropertyRequests {
       throw new OneSignalError(`updateUserProperty: missing onesignalId: ${propertiesModel}`);
     }
 
-    const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
+    const aliasPair = new AliasPair(AliasType.OneSignalId, propertiesModel.onesignalId);
 
     const appId = await MainHelper.getAppId();
     const jwtHeader = await getJWTHeader(operation.jwtToken);

@@ -13,10 +13,11 @@ import { RequestService } from "../../../core/requestService/RequestService";
 import AliasPair from "../../../core/requestService/AliasPair";
 import { UpdateUserPayload } from "../../../core/requestService/UpdateUserPayload";
 import Utils from "../../../shared/context/Utils";
+import AliasType from "../../../core/requestService/AliasType";
 
 export class SessionManager implements ISessionManager {
   private context: ContextInterface;
-  private onSessionSent: boolean = false;
+  private onSessionSent = false;
 
   constructor(context: ContextInterface) {
     this.context = context;
@@ -353,7 +354,7 @@ export class SessionManager implements ISessionManager {
 
 
     try {
-      const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+      const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalId);
       // TO DO: in future, we should aggregate session count in case network call fails
       const updateUserPayload: UpdateUserPayload = {
         refresh_device_metadata: true,

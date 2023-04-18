@@ -16,6 +16,7 @@ import Database from "../../shared/services/Database";
 import LocalStorage from "../../shared/utils/LocalStorage";
 import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
 import { getJWTHeader } from "../../core/requestService/helpers";
+import AliasType from "../../core/requestService/AliasType";
 
 export default class LoginManager {
   static async login(externalId: string, jwtToken?: string): Promise<void> {
@@ -213,7 +214,7 @@ export default class LoginManager {
 
       const appId = await MainHelper.getAppId();
       const jwtHeader = await getJWTHeader();
-      const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId);
+      const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalId);
 
       // identify user
       const identifyUserResponse = await RequestService.addAlias({ appId, jwtHeader }, aliasPair, identity);
@@ -243,7 +244,7 @@ export default class LoginManager {
 
     const fetchUserResponse = await RequestService.getUser(
       { appId, jwtHeader },
-      new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
+      new AliasPair(AliasType.OneSignalId, onesignalId)
     );
 
     OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);

@@ -7,6 +7,7 @@ import AliasPair from "./AliasPair";
 import { APIHeaders } from "../../shared/models/APIHeaders";
 import ExecutorResult from "../executors/ExecutorResult";
 import { UserJwtExpiredEvent } from "../../page/models/UserJwtExpiredEvent";
+import AliasType from "./AliasType";
 
 export function processSubscriptionOperation<Model>(operation: Operation<Model>): {
   subscription: SupportedSubscription;
@@ -39,7 +40,7 @@ export function processSubscriptionOperation<Model>(operation: Operation<Model>)
 
   return {
     subscription,
-    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, subscriptionOSModel.onesignalId),
+    aliasPair: new AliasPair(AliasType.OneSignalId, subscriptionOSModel.onesignalId),
     subscriptionId,
     payload: operation.payload as Partial<SupportedSubscription>
   };
@@ -68,7 +69,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
   return {
     identity: identityCopy,
-    aliasPair: new AliasPair(AliasPair.ONESIGNAL_ID, onesignalId)
+    aliasPair: new AliasPair(AliasType.OneSignalId, onesignalId)
   };
 }
 
