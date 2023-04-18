@@ -5,27 +5,28 @@ import ExecutorResult from "../executors/ExecutorResult";
 import { IdentityModel } from "../models/IdentityModel";
 import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject } from "../utils/typePredicates";
-import { getJWTHeader, processIdentityOperation } from "./helpers";
+import { getJWTHeader, jwtExpired, processIdentityOperation } from "./helpers";
 import { RequestService } from "./RequestService";
 import MainHelper from "../../shared/helpers/MainHelper";
+import { SupportedModel } from "../models/SupportedModels";
 
 /**
  * This class contains logic for all the Identity model related requests that can be made to the OneSignal API
  * These static functions are what are ultimately invoked by the operation processing logic in the Executor class
  */
 export default class IdentityRequests {
-  static async addIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
+  static async addIdentity(operation: Operation<SupportedModel>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("addIdentity", operation);
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader();
+    const jwtHeader = await getJWTHeader(operation.jwtToken);
 
     const { identity, aliasPair } = processIdentityOperation(operation);
 
     const response = await RequestService.addAlias({ appId, jwtHeader }, aliasPair, identity);
-    return IdentityRequests._processIdentityResponse(response);
+    return IdentityRequests._processIdentityResponse(operation, response);
   }
 
-  static async removeIdentity<Model>(operation: Operation<Model>): Promise<ExecutorResult<IdentityModel>> {
+  static async removeIdentity(operation: Operation<SupportedModel>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("removeIdentity", operation);
 
     if (!operation.payload) {
@@ -42,10 +43,10 @@ export default class IdentityRequests {
     const { aliasPair } = processIdentityOperation(operation);
 
     const response = await RequestService.deleteAlias({ appId, jwtHeader }, aliasPair, labelToRemove);
-    return IdentityRequests._processIdentityResponse(response);
+    return IdentityRequests._processIdentityResponse(operation, response);
   }
 
-  private static _processIdentityResponse(response?: OneSignalApiBaseResponse): ExecutorResult<IdentityModel> {
+  private static _processIdentityResponse(operation: Operation<SupportedModel>, response?: OneSignalApiBaseResponse): ExecutorResult<IdentityModel> {
     if (!response) {
       throw new OneSignalError("processIdentityResponse: response is not defined");
     }
@@ -59,6 +60,10 @@ export default class IdentityRequests {
       }
 
       return new ExecutorResult(true, true, identity);
+    }
+
+    if (status === 401 && result.code === 'auth-3') {
+      return jwtExpired(operation.jwtToken);
     }
 
     // shouldn't impact login since doesn't go through core module (special 409 case)

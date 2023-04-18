@@ -1,4 +1,3 @@
-import Database from "../../shared/services/Database";
 import OneSignalError from "../../shared/errors/OneSignalError";
 import { IdentityModel } from "../models/IdentityModel";
 import { SupportedSubscription } from "../models/SubscriptionModels";
@@ -6,7 +5,8 @@ import { Operation } from "../operationRepo/Operation";
 import { isIdentityObject, isFutureSubscriptionObject, isCompleteSubscriptionObject } from "../utils/typePredicates";
 import AliasPair from "./AliasPair";
 import { APIHeaders } from "../../shared/models/APIHeaders";
-import { SupportedModel } from "../models/SupportedModels";
+import ExecutorResult from "../executors/ExecutorResult";
+import { UserJwtExpiredEvent } from "../../page/models/UserJwtExpiredEvent";
 
 export function processSubscriptionOperation<Model>(operation: Operation<Model>): {
   subscription: SupportedSubscription;
@@ -74,6 +74,22 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
 export async function getJWTHeader(jwtToken?: string | null): Promise<APIHeaders | undefined> {
   return !!jwtToken ? { Authorization: `Bearer ${jwtToken}` } : undefined;
+}
+
+export function jwtExpired<Model>(jwtToken?: string | null): ExecutorResult<Model> {
+  const externalId = getExternalIdFromJwt(jwtToken);
+
+  if (!externalId) {
+    throw new OneSignalError("Could not get external id from expired JWT");
+  }
+
+  const event: UserJwtExpiredEvent = {
+    externalId
+  }
+
+  OneSignal.emitter.emit(OneSignal.EVENTS.JWT_EXPIRED, event);
+
+  return new ExecutorResult(false, false);
 }
 
 export function getExternalIdFromJwt(jwtToken?: string | null): string | undefined {

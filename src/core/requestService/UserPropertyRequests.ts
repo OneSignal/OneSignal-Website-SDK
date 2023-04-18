@@ -7,17 +7,19 @@ import AliasPair from "./AliasPair";
 import { RequestService } from "./RequestService";
 import MainHelper from "../../shared/helpers/MainHelper";
 import OneSignalApiBaseResponse from "../../shared/api/OneSignalApiBaseResponse";
-import { getJWTHeader } from "./helpers";
+import { getJWTHeader, jwtExpired } from "./helpers";
+import { SupportedModel } from "../models/SupportedModels";
+import { OSModel } from "../modelRepo/OSModel";
 
 /**
  * This class contains logic for all the UserProperty model related requests that can be made to the OneSignal API
  * These static functions are what are ultimately invoked by the operation processing logic in the Executor class
  */
 export default class UserPropertyRequests {
-  static async updateUserProperties<Model>(operation: Operation<Model>): Promise<ExecutorResult<UserPropertiesModel>> {
+  static async updateUserProperties(operation: Operation<SupportedModel>): Promise<ExecutorResult<UserPropertiesModel>> {
     logMethodCall("UserPropertyRequests.updateUserProperties", operation);
 
-    const propertiesModel = operation.model;
+    const propertiesModel = operation.model as OSModel<UserPropertiesModel>;
     const properties = propertiesModel?.data;
 
     // fixes typescript errors
@@ -33,14 +35,14 @@ export default class UserPropertyRequests {
     const aliasPair = new AliasPair(AliasPair.ONESIGNAL_ID, propertiesModel.onesignalId);
 
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader();
+    const jwtHeader = await getJWTHeader(operation.jwtToken);
     const response = await RequestService.updateUser({ appId, jwtHeader }, aliasPair, {
       properties,
     });
-    return UserPropertyRequests._processUserPropertyResponse(response);
+    return UserPropertyRequests._processUserPropertyResponse(operation, response);
   }
 
-  private static _processUserPropertyResponse(response?: OneSignalApiBaseResponse):
+  private static _processUserPropertyResponse(operation: Operation<SupportedModel>, response?: OneSignalApiBaseResponse):
     ExecutorResult<UserPropertiesModel> {
       if (!response) {
         throw new Error("processUserPropertyResponse: response is not defined");
@@ -50,6 +52,10 @@ export default class UserPropertyRequests {
 
       if (status >= 200 && status < 300) {
         return new ExecutorResult(true, true, result?.properties);
+      }
+
+      if (status === 401 && result.code === 'auth-3') {
+        return jwtExpired(operation.jwtToken);
       }
 
       if (status >= 400 && status < 500) {
