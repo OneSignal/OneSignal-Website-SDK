@@ -137,7 +137,6 @@ export default abstract class ExecutorBase {
 
     // TO DO: fix optional model object. should always be defined on operation
     await operation.model?.awaitOneSignalIdAvailable;
-    await operation.jwtTokenAvailable;
 
     let res: ExecutorResult<SupportedModel> = { success: false, retriable: true };
 
