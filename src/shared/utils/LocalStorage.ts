@@ -5,6 +5,7 @@ const IS_OPTED_OUT = "isOptedOut";
 const IS_PUSH_NOTIFICATIONS_ENABLED = "isPushNotificationsEnabled";
 const PAGE_VIEWS = "os_pageViews";
 const REQUIRES_PRIVACY_CONSENT = "requiresPrivacyConsent";
+const JWT_MAP = "jwtMap";
 
 export default class LocalStorage {
   /**
@@ -46,5 +47,22 @@ export default class LocalStorage {
 
   public static getLocalPageViewCount(): number {
     return Number(localStorage.getItem(PAGE_VIEWS));
+  }
+
+  public static setJWTForExternalId(externalId: string, jwt: string): void {
+    const rawJwtMap = localStorage.getItem(JWT_MAP);
+    const jwtMapObject = rawJwtMap ? JSON.parse(rawJwtMap) : {};
+    jwtMapObject[externalId] = jwt;
+    localStorage.setItem(JWT_MAP, JSON.stringify(jwtMapObject));
+  }
+
+  public static getJWTForExternalId(externalId?: string): string | undefined {
+    if (!externalId) {
+      return undefined;
+    }
+
+    const rawJwtMap = localStorage.getItem(JWT_MAP);
+    const jwtMapObject = rawJwtMap ? JSON.parse(rawJwtMap) : {};
+    return jwtMapObject[externalId];
   }
 }
