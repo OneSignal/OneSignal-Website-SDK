@@ -65,15 +65,9 @@ To:
 ```
 ### Service Worker
 
-From:
-```js
-importScripts("https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js");
-```
+Download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11278471/OneSignalSDK-v16-ServiceWorker.zip) and place it next to the original OneSignalSDKWorker.js file.
 
-To:
-```js
-importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
-```
+**DO NOT DELETE** the original OneSignalSDKWorker.js file.
 
 
 ## 2. OneSignal Usages
@@ -231,6 +225,13 @@ OneSignal.Debug.setLogLevel(“trace”);
 | `setLogLevel`      | Turns on logging with the given log level.                                    | `setLogLevel: string`<br>- `"trace"`<br>- `"debug"`<br>- `"info"`<br>- `"warn"`<br>- `"error"` |
 
 # Limitations
+## April 2023
+## Version 16 (beta)
+Please test thoroughly prior to production use.
+* Any User namespace calls must be invoked **after** initialization (async). Example: `OneSignal.User.addTag("tag", "2");`
+* HTTP environments are not supported.
+* AMP environments are not supported.
+* Identity verification is not functional.
 
 ## January 2023
 ### Version 16 (alpha)
