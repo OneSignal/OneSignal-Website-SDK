@@ -96,7 +96,7 @@ export function getExternalIdFromJwt(jwtToken?: string | null): string | undefin
   const payload = jwtToken.split('.')[1];
   const decodedPayload = base64Decode(payload);
   const parsedPayload = JSON.parse(decodedPayload);
-  return parsedPayload.external_id;
+  return parsedPayload?.identity?.external_id;
 }
 
 function base64Decode(base64: string): string {
