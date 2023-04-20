@@ -85,12 +85,13 @@ export default class LoginManager {
 
       try {
         const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
-        const onesignalId = result?.identity?.onesignal_id;
+        const externalIdResult = result?.identity?.external_id;
 
-        if (!onesignalId) {
-          throw new OneSignalError('Login: No OneSignal ID found');
+        if (!externalIdResult) {
+          throw new OneSignalError('Login: No external_id found in result');
         }
-        await LoginManager.fetchAndHydrate(onesignalId);
+        const aliasPair = new AliasPair(AliasType.ExternalId, externalIdResult);
+        await LoginManager.fetchAndHydrate(aliasPair);
       } catch (e) {
         Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
         // if the login fails, restore the old user data
@@ -98,7 +99,8 @@ export default class LoginManager {
           Log.debug('Login: Restoring old user data');
 
           try {
-            await LoginManager.fetchAndHydrate(onesignalIdBackup);
+            const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalIdBackup);
+            await LoginManager.fetchAndHydrate(aliasPair);
           } catch (e) {
             Log.error(`Login: Error while restoring old user data: ${e.message}`);
           }
@@ -169,7 +171,13 @@ export default class LoginManager {
     }
 
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader();
+    const jwtToken = LocalStorage.getJWTForExternalId(userData.identity?.external_id);
+
+    let jwtHeader;
+
+    if (jwtToken) {
+      jwtHeader = getJWTHeader(jwtToken);
+    }
     const userDataCopy = JSON.parse(JSON.stringify(userData));
 
     // only accepts one alias, so remove other aliases only leaving external_id
@@ -213,7 +221,12 @@ export default class LoginManager {
       }
 
       const appId = await MainHelper.getAppId();
-      const jwtHeader = await getJWTHeader();
+      const jwtToken = LocalStorage.getJWTForExternalId(userData.identity?.external_id);
+      let jwtHeader;
+
+      if (jwtToken) {
+        jwtHeader = getJWTHeader(jwtToken);
+      }
       const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalId);
 
       // identify user
@@ -236,15 +249,23 @@ export default class LoginManager {
       return { identity: identityResult };
   }
 
-  static async fetchAndHydrate(onesignalId: string): Promise<void> {
-    logMethodCall("LoginManager.fetchAndHydrate", { onesignalId });
+  static async fetchAndHydrate(aliasPair: AliasPair): Promise<void> {
+    logMethodCall("LoginManager.fetchAndHydrate", {aliasPair });
 
     const appId = await MainHelper.getAppId();
-    const jwtHeader = getJWTHeader();
+    let jwtHeader;
+
+    if (aliasPair.label === AliasType.ExternalId) {
+      const jwtToken = LocalStorage.getJWTForExternalId(aliasPair.id);
+
+      if (jwtToken) {
+        jwtHeader = getJWTHeader(jwtToken);
+      }
+    }
 
     const fetchUserResponse = await RequestService.getUser(
       { appId, jwtHeader },
-      new AliasPair(AliasType.OneSignalId, onesignalId)
+      aliasPair
     );
 
     OneSignal.coreDirector.hydrateUser(fetchUserResponse?.result);
