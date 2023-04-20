@@ -58,6 +58,54 @@
           }
         ],
         "returnType": "Promise<void>"
+      },
+      {
+        "name": "refreshUserJwt",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "externalId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "jwtToken",
+            "type": "string",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "addEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "'jwtExpired'",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(obj: any) => void",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "removeEventListener",
+        "isAsync": false,
+        "args": [
+          {
+            "name": "event",
+            "type": "'jwtExpired'",
+            "optional": false
+          },
+          {
+            "name": "listener",
+            "type": "(obj: any) => void",
+            "optional": false
+          }
+        ]
       }
     ],
     "namespaces": ["Slidedown", "Notifications", "Session", "User", "Debug"]

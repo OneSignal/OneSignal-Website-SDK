@@ -41,6 +41,8 @@ import LoginManager from "../page/managers/LoginManager";
 import { SessionNamespace } from "./SessionNamespace";
 import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferredLoadedCallback";
 import DebugNamespace from "./DebugNamesapce";
+import OneSignalClassEventMap from "./OneSignalClassEventMap";
+import { Listener } from "../page/models/Listener";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 
 export default class OneSignal {
@@ -111,6 +113,53 @@ export default class OneSignal {
   static async logout(): Promise<void> {
     logMethodCall('logout');
     LoginManager.logout();
+  }
+
+  /**
+   * @PublicApi
+   * @param jwtToken
+   */
+  static refreshUserJwt(externalId: string, jwtToken: string): void {
+    logMethodCall('refreshUserJwt');
+    LocalStorage.setJWTForExternalId(externalId, jwtToken);
+  }
+
+  /**
+   * @PublicApi
+   * @param eventName
+   * @param listener
+   */
+  static addEventListener<E extends keyof OneSignalClassEventMap>(eventName: string, listener: Listener<OneSignalClassEventMap[E]>): void {
+    logMethodCall('addEventListener', { eventName, listener });
+
+    if (!eventName) {
+      throw new InvalidArgumentError('eventName', InvalidArgumentReason.Empty);
+    }
+
+    if (!listener) {
+      throw new InvalidArgumentError('callback', InvalidArgumentReason.Empty);
+    }
+
+    OneSignal.emitter.on(eventName, listener);
+  }
+
+  /**
+   * @PublicApi
+   * @param eventName
+   * @param callback
+   */
+  static removeEventListener<E extends keyof OneSignalClassEventMap>(eventName: string, listener: Listener<OneSignalClassEventMap[E]>): void {
+    logMethodCall('removeEventListener', { eventName, listener });
+
+    if (!eventName) {
+      throw new InvalidArgumentError('eventName', InvalidArgumentReason.Empty);
+    }
+
+    if (!listener) {
+      throw new InvalidArgumentError('listener', InvalidArgumentReason.Empty);
+    }
+
+    OneSignal.emitter.off(eventName, listener);
   }
 
   /**
