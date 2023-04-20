@@ -19,7 +19,12 @@ export default class SubscriptionRequests {
     logMethodCall("SubscriptionRequests.addSubscription", operation);
 
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader(operation.jwtToken);
+
+    let jwtHeader;
+    if (operation.jwtToken) {
+      jwtHeader = getJWTHeader(operation.jwtToken);
+    }
+
     const { subscription, aliasPair } = processSubscriptionOperation(operation);
 
     const response = await RequestService.createSubscription({ appId, jwtHeader }, aliasPair, { subscription });

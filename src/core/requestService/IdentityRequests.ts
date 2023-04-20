@@ -18,7 +18,11 @@ export default class IdentityRequests {
   static async addIdentity(operation: Operation<SupportedModel>): Promise<ExecutorResult<IdentityModel>> {
     logMethodCall("addIdentity", operation);
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader(operation.jwtToken);
+    let jwtHeader;
+
+    if (operation.jwtToken) {
+      jwtHeader = getJWTHeader(operation.jwtToken);
+    }
 
     const { identity, aliasPair } = processIdentityOperation(operation);
 
@@ -38,7 +42,12 @@ export default class IdentityRequests {
     }
 
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader();
+    let jwtHeader;
+
+    if (operation.jwtToken) {
+      jwtHeader = getJWTHeader(operation.jwtToken);
+    }
+
     const labelToRemove = Object.keys(operation.payload)[0];
     const { aliasPair } = processIdentityOperation(operation);
 

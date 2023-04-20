@@ -36,7 +36,11 @@ export default class UserPropertyRequests {
     const aliasPair = new AliasPair(AliasType.OneSignalId, propertiesModel.onesignalId);
 
     const appId = await MainHelper.getAppId();
-    const jwtHeader = await getJWTHeader(operation.jwtToken);
+    let jwtHeader;
+
+    if (operation.jwtToken) {
+      jwtHeader = getJWTHeader(operation.jwtToken);
+    }
     const response = await RequestService.updateUser({ appId, jwtHeader }, aliasPair, {
       properties,
     });

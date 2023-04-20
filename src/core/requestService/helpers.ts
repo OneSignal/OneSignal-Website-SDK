@@ -54,7 +54,7 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
 
   // fixes typescript errors
   if (!isIdentityObject(identity)) {
-    throw new OneSignalError(`processIdentityModel: bad identity object: ${JSON.stringify(identity)}`);
+    throw new OneSignalError(`processIdentityModel: no onesignal_id: ${JSON.stringify(identity)}`);
   }
 
   const { onesignal_id: onesignalId } = identity;
@@ -62,19 +62,14 @@ export function processIdentityOperation<Model>(operation: Operation<Model>): {
   const identityCopy = JSON.parse(JSON.stringify(identity));
   delete identityCopy['onesignal_id'];
 
-  // fixes typescript errors
-  if (!onesignalId) {
-    throw new OneSignalError(`processIdentityModel: missing onesignalId: ${JSON.stringify(identity)}`);
-  }
-
   return {
     identity: identityCopy,
     aliasPair: new AliasPair(AliasType.OneSignalId, onesignalId)
   };
 }
 
-export async function getJWTHeader(jwtToken?: string | null): Promise<APIHeaders | undefined> {
-  return !!jwtToken ? { Authorization: `Bearer ${jwtToken}` } : undefined;
+export function getJWTHeader(jwtToken: string): APIHeaders {
+  return { Authorization: `Bearer ${jwtToken}` };
 }
 
 export function jwtExpired<Model>(jwtToken?: string | null): ExecutorResult<Model> {
