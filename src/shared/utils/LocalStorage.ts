@@ -1,5 +1,6 @@
 import { NotificationPermission } from '../models/NotificationPermission';
 import PermissionManager from '../managers/PermissionManager';
+import UserData from '../../core/models/UserData';
 
 const IS_OPTED_OUT = "isOptedOut";
 const IS_PUSH_NOTIFICATIONS_ENABLED = "isPushNotificationsEnabled";
@@ -64,5 +65,17 @@ export default class LocalStorage {
     const rawJwtMap = localStorage.getItem(JWT_MAP);
     const jwtMapObject = rawJwtMap ? JSON.parse(rawJwtMap) : {};
     return jwtMapObject[externalId];
+  }
+
+  public static setLastValidUser(data: UserData): void {
+    localStorage.setItem("lastValidUser", JSON.stringify(data));
+  }
+
+  static getLastValidUser(): UserData | null {
+    const json = localStorage.getItem("lastValidUser")
+    if (!json) {
+      return null;
+    }
+    return JSON.parse(json) as UserData;
   }
 }

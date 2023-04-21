@@ -10,7 +10,7 @@ import { SupportedIdentity } from "../../core/models/IdentityModel";
 import MainHelper from "../../shared/helpers/MainHelper";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
 import { RETRY_BACKOFF } from "../../shared/api/RetryBackoff";
-import { isCompleteSubscriptionObject } from "../../core/utils/typePredicates";
+import { isCompleteSubscriptionObject, isIdentityObject } from "../../core/utils/typePredicates";
 import UserDirector from "../../onesignal/UserDirector";
 import Database from "../../shared/services/Database";
 import LocalStorage from "../../shared/utils/LocalStorage";
@@ -27,88 +27,85 @@ export default class LoginManager {
       throw new OneSignalError('Login: Consent required but not given, skipping login');
     }
 
+    // before, logging in, process anything waiting in the delta queue so it's not lost
+    OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
+
+    if (jwtToken) {
+      LocalStorage.setJWTForExternalId(externalId, jwtToken);
+    }
+
+    const identityModel = OneSignal.coreDirector.getIdentityModel();
+
+    let lastValidUser;
+    if (isIdentityObject(identityModel?.data)) {
+      // back up the last valid user data
+      lastValidUser = await UserDirector.getAllUserData();
+      LocalStorage.setLastValidUser(lastValidUser);
+    }
+
+    if (!identityModel) {
+      throw new OneSignalError('Login: No identity model found');
+    }
+
+    const currentExternalId = identityModel?.data?.external_id;
+
+    // if the current externalId is the same as the one we're trying to set, do nothing
+    if (currentExternalId === externalId) {
+      Log.debug('Login: External ID already set, skipping login');
+      return;
+    }
+
+    const pushSubModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    let currentPushSubscriptionId;
+
+    if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
+      currentPushSubscriptionId = pushSubModel.data.id;
+    }
+
+    const isIdentified = LoginManager.isIdentified(identityModel.data);
+
+    // set the external id on the user locally
+    LoginManager.setExternalId(identityModel, externalId);
+
+    let userData: Partial<UserData>;
+    const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    if (!isIdentified) {
+      userData = await UserDirector.getAllUserData();
+    } else {
+      userData = {
+        identity: {
+          external_id: externalId,
+        }
+      };
+
+      if (pushSubscription) {
+        userData.subscriptions = [pushSubscription.data];
+      }
+    }
+    await OneSignal.coreDirector.resetModelRepoAndCache();
+    await UserDirector.initializeUser(true);
+
+    // use optional chaining to prevent errors if the namespace is not initialized (e.g. in unit tests)
+    await OneSignal.User?.PushSubscription?._resubscribeToPushModelChanges();
+
     try {
-      // before, logging in, process anything waiting in the delta queue so it's not lost
-      OneSignal.coreDirector.forceDeltaQueueProcessingOnAllExecutors();
+      const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
+      const externalIdResult = result?.identity?.external_id;
 
-      if (jwtToken) {
-        LocalStorage.setJWTForExternalId(externalId, jwtToken);
+      if (!externalIdResult) {
+        throw new OneSignalError('Login: No external_id found in result');
       }
-
-      const identityModel = OneSignal.coreDirector.getIdentityModel();
-      const onesignalIdBackup = identityModel?.onesignalId;
-
-      if (!identityModel) {
-        throw new OneSignalError('Login: No identity model found');
-      }
-
-      const currentExternalId = identityModel?.data?.external_id;
-
-      // if the current externalId is the same as the one we're trying to set, do nothing
-      if (currentExternalId === externalId) {
-        Log.debug('Login: External ID already set, skipping login');
-        return;
-      }
-
-      const pushSubModel = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
-      let currentPushSubscriptionId;
-
-      if (pushSubModel && isCompleteSubscriptionObject(pushSubModel.data)) {
-        currentPushSubscriptionId = pushSubModel.data.id;
-      }
-
-      const isIdentified = LoginManager.isIdentified(identityModel.data);
-
-      // set the external id on the user locally
-      LoginManager.setExternalId(identityModel, externalId);
-
-      let userData: Partial<UserData>;
-      const pushSubscription = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
-      if (!isIdentified) {
-        userData = await UserDirector.getAllUserData();
-      } else {
-        userData = {
-          identity: {
-            external_id: externalId,
-          }
-        };
-
-        if (pushSubscription) {
-          userData.subscriptions = [pushSubscription.data];
-        }
-      }
-      await OneSignal.coreDirector.resetModelRepoAndCache();
-      await UserDirector.initializeUser(true);
-
-      // use optional chaining to prevent errors if the namespace is not initialized (e.g. in unit tests)
-      await OneSignal.User?.PushSubscription?._resubscribeToPushModelChanges();
-
-      try {
-        const result = await LoginManager.identifyOrUpsertUser(userData, isIdentified, currentPushSubscriptionId);
-        const externalIdResult = result?.identity?.external_id;
-
-        if (!externalIdResult) {
-          throw new OneSignalError('Login: No external_id found in result');
-        }
-        const aliasPair = new AliasPair(AliasType.ExternalId, externalIdResult);
-        await LoginManager.fetchAndHydrate(aliasPair);
-      } catch (e) {
-        Log.error(`Login: Error while identifying/upserting user: ${e.message}`);
-        // if the login fails, restore the old user data
-        if (onesignalIdBackup) {
-          Log.debug('Login: Restoring old user data');
-
-          try {
-            const aliasPair = new AliasPair(AliasType.OneSignalId, onesignalIdBackup);
-            await LoginManager.fetchAndHydrate(aliasPair);
-          } catch (e) {
-            Log.error(`Login: Error while restoring old user data: ${e.message}`);
-          }
-        }
-        throw e;
-      }
+      const aliasPair = new AliasPair(AliasType.ExternalId, externalIdResult);
+      await LoginManager.fetchAndHydrate(aliasPair);
     } catch (e) {
-      Log.error(e);
+      lastValidUser = LocalStorage.getLastValidUser();
+
+      if (lastValidUser) {
+        Log.debug('Login: Restoring last valid user data');
+        OneSignal.coreDirector.hydrateUser(lastValidUser);
+      }
+
+      throw new OneSignalError(`Login: Error while identifying/upserting user: ${e.message}`);
     }
   }
 

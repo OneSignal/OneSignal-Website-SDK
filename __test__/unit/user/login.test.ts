@@ -11,6 +11,7 @@ import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
 import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
 import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
 import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
+import LocalStorage from "../../../src/shared/utils/LocalStorage";
 
 // suppress all internal logging
 jest.mock("../../../src/shared/libraries/Log");
@@ -159,7 +160,12 @@ describe('Login tests', () => {
       useMockPushSubscriptionModel: true
     });
 
-    const transferSubscriptionSpy = jest.spyOn(LoginManager, 'transferSubscription');
+    const mockUserData = {
+      identity: {
+        external_id: DUMMY_EXTERNAL_ID,
+      }
+    };
+    const transferSubscriptionSpy = test.stub(LoginManager, 'transferSubscription', Promise.resolve(mockUserData));
 
     test.nock({}, 409);
 
@@ -168,14 +174,43 @@ describe('Login tests', () => {
     expect(transferSubscriptionSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('If login fails, we fetch and hydrate the previous user', async () => {
+  test('If we login with a valid identity object, we back up the user as last valid user', async () => {
     setupLoginStubs();
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
       useMockPushSubscriptionModel: true
     });
 
-    const fetchAndHydrateSpy = jest.spyOn(LoginManager, 'fetchAndHydrate');
+    const backupUserSpy = jest.spyOn(LocalStorage, 'setLastValidUser');
+
+    test.nock({
+      identity: {
+        external_id: DUMMY_EXTERNAL_ID,
+        onesignal_id: DUMMY_ONESIGNAL_ID
+      }
+    });
+
+    await LoginManager.login(DUMMY_EXTERNAL_ID);
+
+    expect(backupUserSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('If login fails, we hydrate the last valid user', async () => {
+    setupLoginStubs();
+    await TestEnvironment.initialize({
+      useMockIdentityModel: true,
+      useMockPushSubscriptionModel: true
+    });
+
+    const mockLastValidUser = {
+      identity: {
+        external_id: DUMMY_EXTERNAL_ID,
+        onesignal_id: DUMMY_ONESIGNAL_ID
+      }
+    };
+
+    const hydrateUserSpy = test.stub(CoreModuleDirector.prototype, 'hydrateUser');
+    const getLastValidUserSpy = test.stub(LocalStorage, 'getLastValidUser', mockLastValidUser);
 
     test.nock({}, 400);
 
@@ -183,9 +218,8 @@ describe('Login tests', () => {
       await LoginManager.login(DUMMY_EXTERNAL_ID);
       test.fail("Should have thrown an error");
     } catch (e) {
-      expect(fetchAndHydrateSpy).toHaveBeenCalledTimes(1);
+      expect(getLastValidUserSpy).toHaveBeenCalledTimes(1);
+      expect(hydrateUserSpy).toHaveBeenCalledTimes(1);
     }
   });
-
-  test('If login with JWT token, save it to the database', async () => {});
 });
