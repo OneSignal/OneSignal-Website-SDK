@@ -29,7 +29,7 @@ export class RequestService {
    */
   static async getUser(requestMetadata: RequestMetadata, alias: AliasPair): Promise<OneSignalApiBaseResponse> {
     const { appId } = requestMetadata;
-    return OneSignalApiBase.get(`apps/${appId}/users/by/${alias.label}/${alias.id}`, requestMetadata.jwtHeader);
+    return OneSignalApiBase.get(`apps/${appId}/users/by/${alias.label}/${alias.id}`, null, requestMetadata.jwtHeader);
   }
 
   /**
