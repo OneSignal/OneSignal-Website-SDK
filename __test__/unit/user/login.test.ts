@@ -7,7 +7,7 @@ import { setupLoginStubs } from "../../support/helpers/login";
 import { RequestService } from "../../../src/core/requestService/RequestService";
 import { getDummyIdentityOSModel } from "../../support/helpers/core";
 import { ModelName } from "../../../src/core/models/SupportedModels";
-import { DUMMY_EXTERNAL_ID, DUMMY_ONESIGNAL_ID } from "../../support/constants";
+import { DUMMY_EXTERNAL_ID, DUMMY_EXTERNAL_ID_2, DUMMY_ONESIGNAL_ID } from "../../support/constants";
 import { IdentityExecutor } from "../../../src/core/executors/IdentityExecutor";
 import { PropertiesExecutor } from "../../../src/core/executors/PropertiesExecutor";
 import { SubscriptionExecutor } from "../../../src/core/executors/SubscriptionExecutor";
@@ -38,7 +38,7 @@ describe('Login tests', () => {
     test.stub(Database, "getConsentGiven", Promise.resolve(false));
 
     try {
-      await LoginManager.login("rodrigo");
+      await LoginManager.login(DUMMY_EXTERNAL_ID);
       test.fail("Should have thrown an error");
     } catch (e) {
       expect(e.message).toBe('Login: Consent required but not given, skipping login');
@@ -52,7 +52,7 @@ describe('Login tests', () => {
     const identifyOrUpsertUserSpy = test.stub(LoginManager, 'identifyOrUpsertUser', Promise.resolve({
       identity: {
         external_id: DUMMY_EXTERNAL_ID,
-        onesignal_id: "1234567890",
+        onesignal_id: DUMMY_ONESIGNAL_ID,
       }
     }));
 
@@ -69,12 +69,12 @@ describe('Login tests', () => {
     const identifyOrUpsertUserSpy = test.stub(LoginManager, 'identifyOrUpsertUser', Promise.resolve({
       identity: {
         external_id: DUMMY_EXTERNAL_ID,
-        onesignal_id: "1234567890",
+        onesignal_id: DUMMY_ONESIGNAL_ID,
       }
     }));
 
     await LoginManager.login(DUMMY_EXTERNAL_ID);
-    await LoginManager.login("rodrigo2");
+    await LoginManager.login(DUMMY_EXTERNAL_ID_2);
 
     expect(identifyOrUpsertUserSpy).toHaveBeenCalledTimes(2);
   });
@@ -102,7 +102,12 @@ describe('Login tests', () => {
     setupLoginStubs();
     await TestEnvironment.initialize();
     const identityModel = getDummyIdentityOSModel();
-    test.nock({});
+    test.nock({
+      identity: {
+        external_id: DUMMY_EXTERNAL_ID,
+        onesignal_id: DUMMY_ONESIGNAL_ID,
+      }
+    });
 
     // to upsert, the user must already be identified (have an external_id)
     identityModel.set("external_id", "pavel");
@@ -133,7 +138,12 @@ describe('Login tests', () => {
     await TestEnvironment.initialize({
       useMockIdentityModel: true,
     });
-    test.nock({})
+    test.nock({
+      identity: {
+        external_id: DUMMY_EXTERNAL_ID,
+        onesignal_id: DUMMY_ONESIGNAL_ID,
+      }
+    })
 
     const identifyOrUpsertUserSpy = jest.spyOn(LoginManager, 'identifyOrUpsertUser');
     const identifyUserSpy = jest.spyOn(RequestService, 'addAlias');
