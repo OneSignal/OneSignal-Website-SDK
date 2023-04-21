@@ -20,6 +20,7 @@ describe('Login tests', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    test.stub(LoginManager, "fetchAndHydrate", Promise.resolve({}));
     test.stub(PropertiesExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
     test.stub(IdentityExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));
     test.stub(SubscriptionExecutor.prototype, 'getOperationsFromCache', Promise.resolve([]));

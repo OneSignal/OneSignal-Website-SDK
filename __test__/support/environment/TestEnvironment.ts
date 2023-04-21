@@ -28,6 +28,7 @@ export interface TestEnvironmentConfig {
   integration?: ConfigIntegrationKind;
   useMockIdentityModel?: boolean;
   useMockPushSubscriptionModel?: boolean;
+  initUser?: boolean;
 }
 
 export class TestEnvironment {

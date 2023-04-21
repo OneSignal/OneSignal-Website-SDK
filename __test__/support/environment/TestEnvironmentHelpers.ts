@@ -14,6 +14,7 @@ import TestContext from "./TestContext";
 import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
 import CoreModule from "../../../src/core/CoreModule";
 import Context from "../../../src/page/models/Context";
+import UserNamespace from "../../../src/onesignal/UserNamespace";
 
 declare const global: any;
 
@@ -32,6 +33,10 @@ export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   const core = new CoreModule();
   await core.init();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
+
+  if (config.initUser) {
+    global.OneSignal.User = new UserNamespace(true);
+  }
 
   return global.OneSignal;
 }

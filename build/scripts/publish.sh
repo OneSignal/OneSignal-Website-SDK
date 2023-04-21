@@ -17,15 +17,15 @@ pwd
 mkdir build/releases
 
 cp build/bundles/OneSignalSDK.page.js build/releases/$PREFIX"OneSignalSDK.page.js"
-cp build/bundles/OneSignalSDK.page.js.map build/releases/$PREFIX"OneSignalSDK.page.js.map"
+cp build/bundles/OneSignalSDK.page.js.map build/releases/"OneSignalSDK.page.js.map"
 cp build/bundles/OneSignalSDK.page.es6.js build/releases/$PREFIX"OneSignalSDK.page.es6.js"
-cp build/bundles/OneSignalSDK.page.es6.js.map build/releases/$PREFIX"OneSignalSDK.page.es6.js.map"
+cp build/bundles/OneSignalSDK.page.es6.js.map build/releases/"OneSignalSDK.page.es6.js.map"
 
 cp build/bundles/OneSignalSDK.sw.js build/releases/$PREFIX"OneSignalSDK.sw.js"
-cp build/bundles/OneSignalSDK.sw.js.map build/releases/$PREFIX"OneSignalSDK.sw.js.map"
+cp build/bundles/OneSignalSDK.sw.js.map build/releases/"OneSignalSDK.sw.js.map"
 
 cp build/bundles/OneSignalSDK.page.styles.css build/releases/$PREFIX"OneSignalSDK.page.styles.css"
-cp build/bundles/OneSignalSDK.page.styles.css.map build/releases/$PREFIX"OneSignalSDK.page.styles.css.map"
+cp build/bundles/OneSignalSDK.page.styles.css.map build/releases/"OneSignalSDK.page.styles.css.map"
 
 if [ "$ENV" = "staging" ]; then
   sed -i 's/sourceMappingURL=OneSignal/sourceMappingURL=Staging-OneSignal/' build/releases/Staging-*.js
