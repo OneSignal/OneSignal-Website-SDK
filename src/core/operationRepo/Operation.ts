@@ -67,8 +67,8 @@ export class Operation<Model> {
     return result;
   }
 
-  static async getInstanceWithModelReference(rawOperation: Operation<SupportedModel>):
-    Promise<Operation<SupportedModel> | undefined> {
+  static getInstanceWithModelReference(rawOperation: Operation<SupportedModel>):
+    Operation<SupportedModel> | undefined {
       const { operationId, payload, modelName, changeType, timestamp, model } = rawOperation;
       if (!model) {
         throw new OneSignalError("Operation.fromJSON: model is undefined");
