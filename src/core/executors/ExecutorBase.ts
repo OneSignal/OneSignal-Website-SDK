@@ -48,6 +48,7 @@ export default abstract class ExecutorBase {
   }
 
   abstract processDeltaQueue(): void;
+  abstract getOperationsFromCache(): Operation<SupportedModel>[];
 
   public enqueueDelta(delta: CoreDelta<SupportedModel>): void {
     logMethodCall("ExecutorBase.enqueueDelta", { delta });
@@ -103,8 +104,6 @@ export default abstract class ExecutorBase {
 
     return finalChangeType;
   }
-
-  abstract getOperationsFromCache(): Promise<Operation<SupportedModel>[]>;
 
   protected async _processOperationQueue(): Promise<void> {
     const consentRequired = OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();

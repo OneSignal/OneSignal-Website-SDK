@@ -12,7 +12,7 @@ export default class OperationCache {
     localStorage.setItem("operationCache", JSON.stringify(operations));
   }
 
-  static async getOperationsWithModelName(modelName: ModelName): Promise<Operation<SupportedModel>[]> {
+  static getOperationsWithModelName(modelName: ModelName): Operation<SupportedModel>[] {
     logMethodCall("OperationCache.getOperations");
     const fromCache = localStorage.getItem("operationCache");
     const rawOperations: Operation<SupportedModel>[] = fromCache ? Object.values(JSON.parse(fromCache)) : [];
@@ -23,7 +23,7 @@ export default class OperationCache {
 
       try {
         // return an operation object with correct references (in particular reference to the model)
-        const operation = await Operation.getInstanceWithModelReference(rawOperation);
+        const operation = Operation.getInstanceWithModelReference(rawOperation);
 
         if (operation) {
           operations.push(operation as Operation<SupportedModel>);

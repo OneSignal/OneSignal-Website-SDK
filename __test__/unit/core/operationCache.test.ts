@@ -22,17 +22,17 @@ describe('OperationCache: operation results in correct operation queue result', 
   test('Add operation to cache -> operation queue +1', async () => {
     const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     OperationCache.enqueue(operation);
-    const operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    const operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(1);
   });
 
   test('Remove operation from cache -> operation queue -1', async () => {
     const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     OperationCache.enqueue(operation);
-    const operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    const operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(1);
     OperationCache.delete(operation.operationId);
-    const operations2 = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    const operations2 = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations2.length).toBe(0);
   });
 
@@ -40,10 +40,10 @@ describe('OperationCache: operation results in correct operation queue result', 
     const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     const operation2 = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     OperationCache.enqueue(operation);
-    let operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    let operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(1);
     OperationCache.enqueue(operation2);
-    operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(2);
   });
 
@@ -51,13 +51,13 @@ describe('OperationCache: operation results in correct operation queue result', 
     const operation = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     const operation2 = new Operation(CoreChangeType.Add, ModelName.Identity, getMockDeltas());
     OperationCache.enqueue(operation);
-    let operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    let operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(1);
     OperationCache.enqueue(operation2);
-    operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(2);
     OperationCache.flushOperations();
-    operations = await OperationCache.getOperationsWithModelName(ModelName.Identity);
+    operations = OperationCache.getOperationsWithModelName(ModelName.Identity);
     expect(operations.length).toBe(0);
   });
 });

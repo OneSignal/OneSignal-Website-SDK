@@ -28,10 +28,10 @@ export class SubscriptionExecutor extends ExecutorBase {
     this._flushDeltas();
   }
 
-  async getOperationsFromCache(): Promise<Operation<SupportedModel>[]> {
-    const smsOperations = await OperationCache.getOperationsWithModelName(ModelName.SmsSubscriptions);
-    const emailOperations = await OperationCache.getOperationsWithModelName(ModelName.EmailSubscriptions);
-    const pushSubOperations = await OperationCache.getOperationsWithModelName(ModelName.PushSubscriptions);
+  getOperationsFromCache(): Operation<SupportedModel>[] {
+    const smsOperations = OperationCache.getOperationsWithModelName(ModelName.SmsSubscriptions);
+    const emailOperations = OperationCache.getOperationsWithModelName(ModelName.EmailSubscriptions);
+    const pushSubOperations = OperationCache.getOperationsWithModelName(ModelName.PushSubscriptions);
 
     return [...smsOperations, ...emailOperations, ...pushSubOperations];
   }
