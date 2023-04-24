@@ -34,6 +34,9 @@ export default abstract class ExecutorBase {
     }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
+      const cachedOperations = this.getOperationsFromCache();
+      this._operationQueue = [...cachedOperations, ...this._operationQueue];
+
       if (this._operationQueue.length > 0) {
         this._processOperationQueue.call(this);
       }
@@ -112,9 +115,6 @@ export default abstract class ExecutorBase {
     if (consentRequired && !consentGiven) {
       return;
     }
-
-    const cachedOperations = await this.getOperationsFromCache();
-    this._operationQueue = [...cachedOperations, ...this._operationQueue];
 
     while (this._operationQueue.length > 0) {
       const operation = this._operationQueue.shift();
