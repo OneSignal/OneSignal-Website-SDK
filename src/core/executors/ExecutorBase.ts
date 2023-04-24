@@ -34,6 +34,7 @@ export default abstract class ExecutorBase {
     }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
+      Log.debug("OneSignal: checking for operations to process from cache");
       const cachedOperations = this.getOperationsFromCache();
       this._operationQueue = [...cachedOperations, ...this._operationQueue];
 

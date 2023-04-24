@@ -13,7 +13,6 @@ export default class OperationCache {
   }
 
   static getOperationsWithModelName(modelName: ModelName): Operation<SupportedModel>[] {
-    logMethodCall("OperationCache.getOperations");
     const fromCache = localStorage.getItem("operationCache");
     const rawOperations: Operation<SupportedModel>[] = fromCache ? Object.values(JSON.parse(fromCache)) : [];
     const operations: Operation<SupportedModel>[] = [];
