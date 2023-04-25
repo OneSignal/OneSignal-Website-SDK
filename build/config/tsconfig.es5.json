@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "importHelpers": false,
-    "module": "ES5",
+    "module": "commonjs",
     "noEmitHelpers": false,
     "outDir": "../bundles",
     "sourceRoot": "../..",
@@ -12,4 +12,3 @@
     "mapRoot": "build/ts-to-es6"
   }
 }
-
