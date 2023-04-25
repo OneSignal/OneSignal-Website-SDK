@@ -2,7 +2,6 @@ const webpack = require('webpack');
 const path = require('path');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TerserPlugin = require('terser-webpack-plugin');
-const { CheckerPlugin } = require('awesome-typescript-loader');
 
 const env = process.env.ENV || "production";
 const buildOrigin = process.env.BUILD_ORIGIN || "localhost";
@@ -15,9 +14,8 @@ const noDevPort = process.env.NO_DEV_PORT;
 const tests = process.env.TESTS;
 const sdkVersion = process.env.npm_package_config_sdkVersion;
 
-async function getWebpackPlugins() {
+function getWebpackPlugins() {
   const plugins = [
-    new CheckerPlugin(),
     new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.DefinePlugin({
       __BUILD_TYPE__: JSON.stringify(env),
@@ -115,9 +113,9 @@ async function generateWebpackConfig() {
           exclude: /node_modules/,
           use: [
             {
-              loader: "awesome-typescript-loader",
+              loader: "ts-loader",
               options: {
-                configFileName: "build/config/tsconfig.es6.json"
+                configFile: "build/config/tsconfig.es6.json"
               }
             },
           ]
@@ -133,7 +131,7 @@ async function generateWebpackConfig() {
       ]
     },
     devtool: "source-map",
-    plugins: await getWebpackPlugins(),
+    plugins: getWebpackPlugins(),
   }
 }
 
