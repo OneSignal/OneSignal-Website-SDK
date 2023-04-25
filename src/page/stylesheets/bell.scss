@@ -94,9 +94,9 @@ $sizes: (
                 @each $size-name, $size-amount in $sizes {
                     $arrow-size: ceil($size-amount * 0.20625);
                     @if $position == 'bottom-left' {
-                        $transform-origin-x-offset: #{ceil($size-amount / 2)};
+                        $transform-origin-x-offset: #{ceil($size-amount * 0.5)};
                     } @else if $position == 'bottom-right' {
-                        $transform-origin-x-offset: #{$launcher-width - (ceil($size-amount / 2))};
+                        $transform-origin-x-offset: #{$launcher-width - (ceil($size-amount * 0.5))};
                     }
 
                     &.onesignal-bell-launcher-#{$size-name} {
@@ -114,11 +114,11 @@ $sizes: (
                             transform-origin: #{$leftOrRight} bottom;
 
                             &:before {
-                                #{$leftOrRight}: #{ceil(($size-amount / 2)) - 5 - ($dialog-border-width + (ceil($arrow-size / 2)))};
+                                #{$leftOrRight}: #{ceil(($size-amount * 0.5)) - 5 - ($dialog-border-width + (ceil($arrow-size * 0.5)))};
                             }
 
                             &:after {
-                                #{$leftOrRight}: #{ceil(($size-amount / 2)) - 5 - ceil(($arrow-size / 2))};
+                                #{$leftOrRight}: #{ceil(($size-amount * 0.5)) - 5 - ceil(($arrow-size * 0.5))};
                             }
                         }
                     }
