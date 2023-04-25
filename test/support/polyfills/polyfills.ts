@@ -15,12 +15,12 @@ global.btoa = function(str: string | Buffer) {
   if (str instanceof Buffer)
     buffer = str;
   else
-    buffer = new Buffer(str.toString(), 'binary');
+    buffer = Buffer.from(str.toString(), 'binary'); // Use Buffer.from() instead of new Buffer()
 
   return buffer.toString('base64');
 };
 global.atob = function(str: string) {
-  return new Buffer(str, 'base64').toString('binary');
+  return Buffer.from(str, 'base64').toString('binary'); // Use Buffer.from() instead of new Buffer()
 };
 
 // Add any methods from ServiceWorkerGlobalScope to NodeJS's global if they don't exist already
