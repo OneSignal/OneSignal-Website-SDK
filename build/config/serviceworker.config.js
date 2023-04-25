@@ -1,7 +1,7 @@
 const webpack = require('webpack');
 const path = require('path');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const { CheckerPlugin } = require('awesome-typescript-loader');
 
 const env = process.env.ENV || "production";
@@ -80,9 +80,8 @@ async function generateWebpackConfig() {
     mode: isProdBuild ? "production" : "development",
     optimization: {
        minimizer: [
-        new UglifyJsPlugin({
-          sourceMap: true,
-          uglifyOptions: {
+        new TerserPlugin({
+          terserOptions: {
             sourceMap: true,
             compress: {
               drop_console: false,
