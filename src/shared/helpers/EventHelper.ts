@@ -183,7 +183,7 @@ export default class EventHelper {
    * subdomain.onesignal.com URL.
    */
   static async fireStoredNotificationClicks(url: string = document.URL) {
-    async function fireEventWithNotification(clickedNotificationInfo) {
+    async function fireEventWithNotification(clickedNotificationInfo: { url: string, data: any, timestamp: number }) {
       // Remove the notification from the recently clicked list
       // Once this page processes this retroactively provided clicked event, nothing should get the same event
       const appState = await Database.getAppState();
@@ -209,6 +209,7 @@ export default class EventHelper {
         const minutesSinceNotificationClicked = (Date.now() - timestamp) / 1000 / 60;
         if (minutesSinceNotificationClicked > 5) return;
       }
+
       OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, notification);
     }
 

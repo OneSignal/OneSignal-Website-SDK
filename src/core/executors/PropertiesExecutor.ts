@@ -19,7 +19,7 @@ export class PropertiesExecutor extends ExecutorBase {
     this._flushDeltas();
   }
 
-  async getOperationsFromCache(): Promise<Operation<SupportedModel>[]> {
-    return await OperationCache.getOperationsWithModelName(ModelName.Properties);
+  getOperationsFromCache(): Operation<SupportedModel>[] {
+    return OperationCache.getOperationsWithModelName(ModelName.Properties);
   }
 }

@@ -46,7 +46,7 @@ export class IdentityExecutor extends ExecutorBase {
     this._flushDeltas();
   }
 
-  async getOperationsFromCache(): Promise<Operation<SupportedModel>[]> {
-      return await OperationCache.getOperationsWithModelName(ModelName.Identity);
+  getOperationsFromCache(): Operation<SupportedModel>[] {
+      return OperationCache.getOperationsWithModelName(ModelName.Identity);
   }
 }

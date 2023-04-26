@@ -18,7 +18,7 @@ import { ModelName, SupportedModel } from "../../core/models/SupportedModels";
 
 export default class LoginManager {
   static async login(externalId: string, token?: string): Promise<void> {
-    const consentRequired = OneSignal.config?.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
+    const consentRequired = LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
 
     if (consentRequired && !consentGiven) {

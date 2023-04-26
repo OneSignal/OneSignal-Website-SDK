@@ -6,10 +6,19 @@ import OneSignalError from "../../src/shared/errors/OneSignalError";
 import OneSignal from "./OneSignal";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import NotificationEventName from "../page/models/NotificationEventName";
+import { NotificationClicked } from "../../src/shared/models/Notification";
 
 export default class NotificationsNamespace extends EventListenerBase {
-  constructor() {
+  constructor(private _permissionNative?: NotificationPermission) {
     super();
+
+    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (permission: NotificationPermission) => {
+      this._permissionNative = permission;
+    });
+  }
+
+  get permissionNative(): NotificationPermission | undefined {
+    return this._permissionNative;
   }
 
   /**
@@ -117,8 +126,9 @@ export default class NotificationsNamespace extends EventListenerBase {
         OneSignal.config!.safariWebId
       );
 
-    if (onComplete)
+    if (onComplete) {
       onComplete(permission);
+    }
 
     return permission;
   }
@@ -139,11 +149,11 @@ export default class NotificationsNamespace extends EventListenerBase {
   }
 
   /* Function overloads */
-  addEventListener(event: NotificationEventName.Click, listener: (obj: StructuredNotification) => void): void;
+  addEventListener(event: NotificationEventName.Click, listener: (obj: NotificationClicked) => void): void;
   addEventListener(event: NotificationEventName.WillDisplay, listener: (obj: StructuredNotification) => void): void;
   addEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
   addEventListener(event: NotificationEventName.PermissionChange,
-    listener: (obj: { to: NotificationPermission }) => void): void;
+    listener: (permission: boolean) => void): void;
   addEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
 
   addEventListener(event: string, listener: (obj: any) => void): void {
@@ -151,11 +161,11 @@ export default class NotificationsNamespace extends EventListenerBase {
   }
 
   /* Function overloads */
-  removeEventListener(event: NotificationEventName.Click, listener: (obj: StructuredNotification) => void): void;
+  removeEventListener(event: NotificationEventName.Click, listener: (event: NotificationClicked) => void): void;
   removeEventListener(event: NotificationEventName.WillDisplay, listener: (obj: StructuredNotification) => void): void;
   removeEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
   removeEventListener(event: NotificationEventName.PermissionChange,
-    listener: (obj: { to: NotificationPermission }) => void): void;
+    listener: (permission: boolean) => void): void;
   removeEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
 
   removeEventListener(event: string, listener: (obj: any) => void): void {

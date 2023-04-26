@@ -34,6 +34,10 @@ export default abstract class ExecutorBase {
     }, ExecutorBase.DELTAS_BATCH_PROCESSING_TIME * 1_000);
 
     setInterval(() => {
+      Log.debug("OneSignal: checking for operations to process from cache");
+      const cachedOperations = this.getOperationsFromCache();
+      this._operationQueue = [...cachedOperations, ...this._operationQueue];
+
       if (this._operationQueue.length > 0) {
         this._processOperationQueue.call(this);
       }
@@ -48,6 +52,7 @@ export default abstract class ExecutorBase {
   }
 
   abstract processDeltaQueue(): void;
+  abstract getOperationsFromCache(): Operation<SupportedModel>[];
 
   public enqueueDelta(delta: CoreDelta<SupportedModel>): void {
     logMethodCall("ExecutorBase.enqueueDelta", { delta });
@@ -104,8 +109,6 @@ export default abstract class ExecutorBase {
     return finalChangeType;
   }
 
-  abstract getOperationsFromCache(): Promise<Operation<SupportedModel>[]>;
-
   protected async _processOperationQueue(): Promise<void> {
     const consentRequired = OneSignal.config.userConfig.requiresUserPrivacyConsent || LocalStorage.getConsentRequired();
     const consentGiven = await Database.getConsentGiven();
@@ -113,9 +116,6 @@ export default abstract class ExecutorBase {
     if (consentRequired && !consentGiven) {
       return;
     }
-
-    const cachedOperations = await this.getOperationsFromCache();
-    this._operationQueue = [...cachedOperations, ...this._operationQueue];
 
     while (this._operationQueue.length > 0) {
       const operation = this._operationQueue.shift();

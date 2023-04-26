@@ -775,11 +775,12 @@ export class ServiceWorker {
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
 
-    const notificationData = event.notification.data;
+    const { data } = event.notification;
 
     // Chrome 48+: Get the action button that was clicked
-    if (event.action)
-      notificationData.action = event.action;
+    if (event.action) {
+      data.action = event.action;
+    }
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
@@ -792,20 +793,20 @@ export class ServiceWorker {
     if (actionPreference)
       notificationClickHandlerAction = actionPreference;
 
-    const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(notificationData);
+    const launchUrl: string = await ServiceWorker.getNotificationUrlToOpen(data);
     const notificationOpensLink: boolean = ServiceWorker.shouldOpenNotificationUrl(launchUrl);
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
-    let saveNotificationClickedPromise: Promise<void> | undefined;
     const notificationClicked: NotificationClicked = {
-      notificationId: notificationData.id,
+      notificationId: data.id,
+      action: data.action,
       appId,
       url: launchUrl,
       timestamp: new Date().getTime(),
     };
     Log.info("NotificationClicked", notificationClicked);
-    saveNotificationClickedPromise = (async notificationClicked => {
+    const saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
         if (existingSession && existingSession.status === SessionStatus.Active) {
@@ -827,7 +828,7 @@ export class ServiceWorker {
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
     const { deviceId } = await Database.getSubscription();
-    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, notificationData, deviceType);
+    const convertedAPIRequests = ServiceWorker.sendConvertedAPIRequests(appId, deviceId, data, deviceType);
 
     /*
      Check if we can focus on an existing tab instead of opening a new url.
@@ -866,7 +867,7 @@ export class ServiceWorker {
         if ((client['isSubdomainIframe'] && clientUrl === launchUrl) ||
             (!client['isSubdomainIframe'] && client.url === launchUrl) ||
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
-          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notificationData, client);
+          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, data, client);
             try {
               if (client instanceof WindowClient)
                 await client.focus();
@@ -890,7 +891,7 @@ export class ServiceWorker {
             }
             if (notificationOpensLink) {
               Log.debug(`Redirecting HTTP site to ${launchUrl}.`);
-              await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
+              await Database.put("NotificationOpened", { url: launchUrl, data, timestamp: Date.now() });
               ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.RedirectPage, launchUrl, client);
             } else {
               Log.debug('Not navigating because link is special.');
@@ -907,7 +908,7 @@ export class ServiceWorker {
             try {
               if (notificationOpensLink) {
                 Log.debug(`Redirecting HTTPS site to (${launchUrl}).`);
-                await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
+                await Database.put("NotificationOpened", { url: launchUrl, data, timestamp: Date.now() });
                 await client.navigate(launchUrl);
               } else {
                 Log.debug('Not navigating because link is special.');
@@ -917,7 +918,7 @@ export class ServiceWorker {
             }
           } else {
             // If client.navigate() isn't available, we have no other option but to open a new tab to the URL.
-            await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
+            await Database.put("NotificationOpened", { url: launchUrl, data, timestamp: Date.now() });
             await ServiceWorker.openUrl(launchUrl);
           }
         }
@@ -927,7 +928,7 @@ export class ServiceWorker {
     }
 
     if (notificationOpensLink && !doNotOpenLink) {
-      await Database.put("NotificationOpened", { url: launchUrl, data: notificationData, timestamp: Date.now() });
+      await Database.put("NotificationOpened", { url: launchUrl, data, timestamp: Date.now() });
       await ServiceWorker.openUrl(launchUrl);
     }
     if (saveNotificationClickedPromise) {
