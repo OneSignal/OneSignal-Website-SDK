@@ -1,7 +1,5 @@
-import { Timestamp } from "./Timestamp";
-
 export interface ClickedNotifications {
-    [key: string]: [Notification, Timestamp];
+    [key: string]: { url: string; data: any; timestamp: number; };
 }
 
 class AppState {
