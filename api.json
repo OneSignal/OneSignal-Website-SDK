@@ -146,6 +146,12 @@
         ],
         "returnType": "void"
       }
+    ],
+    "properties": [
+      {
+        "name": "permissionNative",
+        "type": "'granted' | 'denied' | 'default'"
+      }
     ]
   },
   "Slidedown": {
