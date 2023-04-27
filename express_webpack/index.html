@@ -112,6 +112,9 @@
         onesignal.User.PushSubscription.addEventListener('subscriptionChange', function (event) {
           showEventAlert('subscriptionChange', { event });
         });
+        onesignal.Notifications.addEventListener('click', event => {
+          showEventAlert('click', { event });
+        });
     });
 
     /* E V E N T   L I S T E N E R S */
