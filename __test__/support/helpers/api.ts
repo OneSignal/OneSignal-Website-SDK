@@ -21,6 +21,25 @@ export const getFunctionSignature = (func: () => any) => {
   return match ? match[0] : null;
 }
 
+export const matchNestedProperties = (api: any, parentObject: IndexableByString<any>, namespaceName: string) => {
+  const nestedProperties = api[namespaceName]?.properties;
+
+  if (!nestedProperties) return;
+
+  // Get the prototype of the class
+  const classPrototype = Object.getPrototypeOf(parentObject[namespaceName]);
+
+  // Check if all properties are present in the SDK
+  for (const prop of nestedProperties) {
+    const propertyDescriptor = Object.getOwnPropertyDescriptor(classPrototype, prop.name);
+    const isPropertyDefined = propertyDescriptor && (propertyDescriptor.value !== undefined || propertyDescriptor.get !== undefined);
+
+    if (!isPropertyDefined) {
+      throw new Error(`Property ${prop.name} for namespace ${namespaceName} not found`);
+    }
+  }
+}
+
 export const matchNestedNamespaces = (api: any, parentObject: IndexableByString<any>, namespaceName: string) => {
   const nestedNamespaces = api[namespaceName]?.namespaces;
 
@@ -61,6 +80,7 @@ export const matchApiToSpec = async (parent: object, namespace: string) => {
   const rawJson = await ReaderManager.readFile(__dirname + '/../../../api.json');
   const api = JSON.parse(rawJson);
 
+  matchNestedProperties(api, parent, namespace);
   matchNestedNamespaces(api, parent, namespace);
   matchNestedFunctions(api, parent, namespace);
 };
