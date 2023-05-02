@@ -102,7 +102,7 @@ export class ServiceWorker {
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
-    self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
+    self.addEventListener('notificationclick', (event: NotificationEvent) => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
     self.addEventListener('pushsubscriptionchange', (event: Event) => {
       (event as FetchEvent).waitUntil(ServiceWorker.onPushSubscriptionChange(event as unknown as SubscriptionChangeEvent));
     });
@@ -556,7 +556,7 @@ export class ServiceWorker {
       image: rawNotification.image,
       tag: rawNotification.tag,
       badge: rawNotification.badge,
-      vibrate: rawNotification.vibrate
+      vibrate: Number(rawNotification.vibrate)
     };
 
     // Add action buttons
@@ -634,9 +634,9 @@ export class ServiceWorker {
     Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
-    const defaultTitle = await ServiceWorker._getTitle();
+    const defaultTitle: string = await ServiceWorker._getTitle();
     // Use the default icon if one isn't provided
-    const defaultIcon = await Database.get('Options', 'defaultIcon');
+    const defaultIcon: string = await Database.get('Options', 'defaultIcon');
     // Get option of whether we should leave notification displaying indefinitely
     const persistNotification = await Database.get('Options', 'persistNotification');
     // Get app ID for tag value
@@ -787,7 +787,7 @@ export class ServiceWorker {
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
-  static async onNotificationClicked(event: NotificationEventInit) {
+  static async onNotificationClicked(event: NotificationEvent) {
     Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     // Close the notification first here, before we do anything that might fail
@@ -836,7 +836,7 @@ export class ServiceWorker {
         // upgrade existing session to be directly attributed to the notif
         // if it results in re-focusing the site
         if (existingSession) {
-          existingSession.notificationId = notificationClicked.notificationId;
+          existingSession.notificationId = notificationClicked.notification.id as string | null;
           await Database.upsertSession(existingSession);
         }
       } catch(e) {
@@ -1105,9 +1105,9 @@ export class ServiceWorker {
   /**
    * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
    */
-  static _getTitle() {
+  static _getTitle(): Promise<string> {
     return new Promise(resolve => {
-      Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
+      Promise.all([Database.get<string>('Options', 'defaultTitle'), Database.get<string>('Options', 'pageTitle')])
         .then(([defaultTitle, pageTitle]) => {
           if (defaultTitle !== null) {
             resolve(defaultTitle);
@@ -1152,7 +1152,7 @@ export class ServiceWorker {
    * Otherwise returns false.
    * @param rawData The raw PushMessageData from the push event's event.data, not already parsed to JSON.
    */
-  static isValidPushPayload(rawData) {
+  static isValidPushPayload(rawData: PushMessageData) {
     try {
       const payload: RawNotificationPayload = rawData.json();
       if (payload &&
