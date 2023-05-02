@@ -63,7 +63,7 @@ export function isPushNotificationsSupported() {
   }
 
   if (browser.ios || (<any>browser).ipod || (<any>browser).iphone || (<any>browser).ipad)
-    return false;
+    return true;
 
   if (browser.msie)
     return false;
