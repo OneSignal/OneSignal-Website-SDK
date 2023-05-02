@@ -88,11 +88,11 @@ export default class PushSubscriptionNamespace extends EventListenerBase {
     await this._enable(false);
   }
 
-  addEventListener(event: "subscriptionChange", listener: (change: SubscriptionChangeEvent) => void): void {
+  addEventListener(event: "change", listener: (change: SubscriptionChangeEvent) => void): void {
     OneSignal.emitter.on(event, listener);
   }
 
-  removeEventListener(event: "subscriptionChange", listener: (change: SubscriptionChangeEvent) => void): void {
+  removeEventListener(event: "change", listener: (change: SubscriptionChangeEvent) => void): void {
     OneSignal.emitter.off(event, listener);
   }
 
