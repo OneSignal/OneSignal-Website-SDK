@@ -31,6 +31,7 @@ import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from 
 import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
+import { RawNotificationPayload } from "../../shared/models/RawNotificationPayload";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
@@ -245,13 +246,13 @@ export class ServiceWorker {
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
-            .then(async (notifications: any) => {
+            .then(async (rawNotificationsArray: RawNotificationPayload[]) => {
               //Display push notifications in the order we received them
               const notificationEventPromiseFns = [];
               const notificationReceivedPromises: Promise<void>[] = [];
               const appId = await ServiceWorker.getAppId();
 
-              for (const rawNotification of notifications) {
+              for (const rawNotification of rawNotificationsArray) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
                 const notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
@@ -1125,7 +1126,7 @@ export class ServiceWorker {
    * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
    * an array is returned for backwards compatibility with the rest of the service worker plumbing.
      */
-  static parseOrFetchNotifications(event) {
+  static parseOrFetchNotifications(event: PushEvent): Promise<RawNotificationPayload[]> {
     if (!event || !event.data) {
       return Promise.reject("Missing event.data on push payload!");
     }
@@ -1133,7 +1134,8 @@ export class ServiceWorker {
     const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
     if (isValidPayload) {
       Log.debug("Received a valid encrypted push payload.");
-      return Promise.resolve([event.data.json()]);
+      const payload: RawNotificationPayload = event.data.json();
+      return Promise.resolve([payload]);
     }
 
     /*
@@ -1150,7 +1152,7 @@ export class ServiceWorker {
    */
   static isValidPushPayload(rawData) {
     try {
-      const payload = rawData.json();
+      const payload: RawNotificationPayload = rawData.json();
       if (payload &&
           payload.custom &&
           payload.custom.i &&
