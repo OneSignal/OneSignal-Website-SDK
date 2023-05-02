@@ -83,6 +83,7 @@ export interface NotificationReceived {
     timestamp: number;
 }
 
+// used to store click info in IndexedDB
 export interface NotificationClicked {
     notificationId: string;
     action: string;
