@@ -6,7 +6,7 @@ import { cancelableTimeout, CancelableTimeoutPromise } from '../../sw/helpers/Ca
 import Utils from "../context/Utils";
 import OutcomesHelper from "./OutcomesHelper";
 import { OSServiceWorkerFields } from "../../sw/serviceWorker/types";
-import { NotificationClicked } from "../models/Notification";
+import { NotificationClicked } from "../models/OSNotification";
 import { SessionOrigin, initializeNewSession, SessionStatus, Session } from "../models/Session";
 import OneSignalApiSW from "../api/OneSignalApiSW";
 import Path from "../models/Path";

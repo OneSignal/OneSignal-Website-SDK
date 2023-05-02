@@ -2,7 +2,7 @@ import Utils from '../context/Utils';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { NotificationActionButton } from '../../page/models/NotificationActionButton';
 
-export class Notification {
+export class OSNotification {
     public id?: string;
     public title?: string;
     public body?: string;
@@ -15,7 +15,7 @@ export class Notification {
     public renotify?: true;
     public actions?: Array<NotificationActionButton>;
 
-    constructor(title: string, options?: Notification) {
+    constructor(title: string, options?: OSNotification) {
       this.title = title;
       if (options) {
         this.id = options.id;
@@ -38,7 +38,7 @@ export class Notification {
       icon = "https://onesignal.com/images/notification_logo.png",
       data = {}
     } = {}) {
-        return new Notification(title, {
+        return new OSNotification(title, {
             icon: icon,
             body: body,
             url: url,
@@ -46,11 +46,11 @@ export class Notification {
         });
     }
 
-    static createFromPushPayload(payload: any): Notification {
+    static createFromPushPayload(payload: any): OSNotification {
         if (!payload) {
             throw new InvalidArgumentError('payload', InvalidArgumentReason.Empty);
         }
-        const notification = new Notification(payload.title, {
+        const notification = new OSNotification(payload.title, {
             id: payload.custom.i,
             title: payload.title,
             body: payload.alert,
