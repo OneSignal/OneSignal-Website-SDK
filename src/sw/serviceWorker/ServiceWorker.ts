@@ -18,7 +18,7 @@ import {
 import ServiceWorkerHelper from "../../shared/helpers/ServiceWorkerHelper";
 import { cancelableTimeout } from "../helpers/CancelableTimeout";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
-import { NotificationReceived, NotificationClicked } from "../../shared/models/Notification";
+import { NotificationReceived } from "../../shared/models/OSNotification";
 import {
   UpsertOrDeactivateSessionPayload,
   PageVisibilityResponse,
