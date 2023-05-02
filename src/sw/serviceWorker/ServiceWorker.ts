@@ -794,12 +794,7 @@ export class ServiceWorker {
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
 
-    const { data } = event.notification;
-
-    // Chrome 48+: Get the action button that was clicked
-    if (event.action) {
-      data.action = event.action;
-    }
+    const data = event.notification.data as OSNotificationDataPayload;
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
@@ -821,7 +816,7 @@ export class ServiceWorker {
       notification: data,
       result: {
         url: data.url,
-        actionId: event.action,
+        actionId: event.action, // get action id directly from event
       }
     }
 
