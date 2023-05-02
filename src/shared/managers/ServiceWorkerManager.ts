@@ -305,7 +305,7 @@ export class ServiceWorkerManager {
           // Least likely to modify, since modifying this property changes the page's URL
           url = location.href;
         }
-        await Database.put('NotificationOpened', { url: url, data: data, timestamp: Date.now() });
+        await Database.put('NotificationOpened', { url, data, timestamp: Date.now() });
       }
       else
         await OneSignalEvent.trigger(OneSignal.EVENTS.NOTIFICATION_CLICKED, data);

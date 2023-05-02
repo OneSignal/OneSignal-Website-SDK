@@ -34,7 +34,7 @@ import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
 import { NotificationClickEvent } from "../../page/models/NotificationEvent";
 import { RawNotificationPayload } from "../../shared/models/RawNotificationPayload";
 
-declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
+declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
 
@@ -650,8 +650,9 @@ export class ServiceWorker {
     extra.persistNotification = persistNotification !== false;
 
     // Allow overriding some values
-    if (!overrides)
+    if (!overrides) {
       overrides = {};
+    }
     notification = { ...notification, ...overrides };
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
