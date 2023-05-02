@@ -31,6 +31,7 @@ import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from 
 import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
+import { NotificationClickEvent } from "../../page/models/NotificationEvent";
 import { RawNotificationPayload } from "../../shared/models/RawNotificationPayload";
 
 declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
@@ -815,14 +816,15 @@ export class ServiceWorker {
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
-    const notificationClicked: NotificationClicked = {
-      notificationId: data.id,
-      action: data.action,
-      appId,
-      url: launchUrl,
-      timestamp: new Date().getTime(),
-    };
-    Log.info("NotificationClicked", notificationClicked);
+    const notificationClickEvent: NotificationClickEvent = {
+      notification: data,
+      result: {
+        url: data.url,
+        actionId: event.action,
+      }
+    }
+
+    Log.info("NotificationClicked", notificationClickEvent);
     const saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
@@ -840,7 +842,7 @@ export class ServiceWorker {
       } catch(e) {
         Log.error("Failed to save clicked notification.", e);
       }
-    })(notificationClicked);
+    })(notificationClickEvent);
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
@@ -884,7 +886,7 @@ export class ServiceWorker {
         if ((client['isSubdomainIframe'] && clientUrl === launchUrl) ||
             (!client['isSubdomainIframe'] && client.url === launchUrl) ||
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
-          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, data, client);
+          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notificationClickEvent, client);
             try {
               if (client instanceof WindowClient)
                 await client.focus();
