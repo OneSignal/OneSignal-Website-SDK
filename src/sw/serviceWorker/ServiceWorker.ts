@@ -266,7 +266,7 @@ export class ServiceWorker {
                 // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
-                notificationEventPromiseFns.push((async notif => {
+                notificationEventPromiseFns.push((async (notif: OSNotificationDataPayload) => {
                   await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, notif).catch(e => Log.error(e));
                   ServiceWorker.executeWebhooks('notification.willDisplay', notif);
 
@@ -542,8 +542,8 @@ export class ServiceWorker {
    * Constructed in onPushReceived, and passed along to other event handlers.
    * @param rawNotification The raw notification JSON returned from OneSignal's server.
    */
-  static buildStructuredNotificationObject(rawNotification) {
-    const notification: StructuredNotification = {
+  static buildStructuredNotificationObject(rawNotification: RawNotificationPayload): OSNotificationDataPayload {
+    const notification: OSNotificationDataPayload = {
       id: rawNotification.custom.i,
       heading: rawNotification.title,
       content: rawNotification.alert,
@@ -569,7 +569,7 @@ export class ServiceWorker {
                                   });
       }
     }
-    return Utils.trimUndefined(notification);
+    return Utils.trimUndefined(notification) as OSNotificationDataPayload;
   }
 
   /**
@@ -628,7 +628,7 @@ export class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static async displayNotification(notification, overrides?) {
+  static async displayNotification(notification: OSNotificationDataPayload, overrides?: object) {
     Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided

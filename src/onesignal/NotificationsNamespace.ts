@@ -151,7 +151,7 @@ export default class NotificationsNamespace extends EventListenerBase {
   /* Function overloads */
   addEventListener(event: NotificationEventName.Click, listener: (obj: NotificationClickResult) => void): void;
   addEventListener(event: NotificationEventName.ForegroundWillDisplay, listener: (obj: NotificationForegroundWillDisplayEvent) => void): void;
-  addEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
+  addEventListener(event: NotificationEventName.Dismiss, listener: (obj: OSNotificationDataPayload) => void): void;
   addEventListener(event: NotificationEventName.PermissionChange,
     listener: (permission: boolean) => void): void;
   addEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
@@ -163,7 +163,7 @@ export default class NotificationsNamespace extends EventListenerBase {
   /* Function overloads */
   removeEventListener(event: NotificationEventName.Click, listener: (event: NotificationClickResult) => void): void;
   removeEventListener(event: NotificationEventName.ForegroundWillDisplay, listener: (obj: OSNotificationDataPayload) => void): void;
-  removeEventListener(event: NotificationEventName.Dismiss, listener: (obj: StructuredNotification) => void): void;
+  removeEventListener(event: NotificationEventName.Dismiss, listener: (obj: OSNotificationDataPayload) => void): void;
   removeEventListener(event: NotificationEventName.PermissionChange,
     listener: (permission: boolean) => void): void;
   removeEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
