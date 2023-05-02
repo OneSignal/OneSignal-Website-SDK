@@ -1,6 +1,6 @@
 enum NotificationEventName {
   Click = "click",
-  WillDisplay = "willDisplay",
+  ForegroundWillDisplay = "foregroundWillDisplay",
   Dismiss = "dismiss",
   PermissionChange = "permissionChange",
   PermissionPromptDisplay = "permissionPromptDisplay"

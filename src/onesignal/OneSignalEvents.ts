@@ -24,7 +24,7 @@ export const ONESIGNAL_EVENTS = {
   /**
    * Occurs when a notification is displayed.
    */
-  NOTIFICATION_WILL_DISPLAY: 'willDisplay',
+  NOTIFICATION_WILL_DISPLAY: 'foregroundWillDisplay',
   /**
    * Occurs when a notification is dismissed by the user either clicking 'X' or clearing all notifications
    * (available in Android). This event is NOT called if the user clicks the notification's body or any of the
