@@ -1,4 +1,20 @@
-type StructuredNotification = {
+/**
+ * the data payload on the notification event notification object
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/NotificationEvent
+ *
+ * @example
+ * NotificationEvent {
+ *  action: "action"
+ *  notification: Notification {
+ *    actions: (2) [{…}, {…}]
+ *    badge: ""
+ *    body: "Test Message"
+ *    data: {…}  <------ this is the OSNotificationDataPayload payload
+ *  }
+ * }
+ */
+
+ type OSNotificationDataPayload = {
   id: string;
   content: string;
   heading?: string;
@@ -9,13 +25,10 @@ type StructuredNotification = {
   image?: string;
   tag?: string;
   badge?: string;
-  vibrate?: string;
+  vibrate?: VibratePattern;
   buttons?: NotificationButtonData[];
 };
 
-type NotificationButtonData = {
-  action?: string;
-  title?: string;
-  icon?: string;
-  url?: string;
+interface NotificationButtonData extends NotificationAction {
+  url: string;
 };
