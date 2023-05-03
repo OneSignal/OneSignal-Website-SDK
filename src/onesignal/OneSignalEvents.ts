@@ -15,7 +15,7 @@ export const ONESIGNAL_EVENTS = {
    * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
    * and activated and the user is eligible to receive push notifications at any point after this.
    */
-  SUBSCRIPTION_CHANGED: 'subscriptionChange',
+  SUBSCRIPTION_CHANGED: 'change',
   /**
    * Occurs after a POST call to OneSignal's server to send the welcome notification has completed. The actual
    * notification arrives shortly after.
