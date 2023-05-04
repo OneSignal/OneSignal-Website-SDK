@@ -16,7 +16,6 @@ const sdkVersion = process.env.npm_package_config_sdkVersion;
 
 function getWebpackPlugins() {
   const plugins = [
-    new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.DefinePlugin({
       __BUILD_TYPE__: JSON.stringify(env),
       __BUILD_ORIGIN__: JSON.stringify(buildOrigin),

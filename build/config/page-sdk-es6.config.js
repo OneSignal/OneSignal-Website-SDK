@@ -19,7 +19,6 @@ const sdkVersion = process.env.npm_package_config_sdkVersion;
 async function getWebpackPlugins() {
   const plugins = [
     new MiniCssExtractPlugin({ filename: 'OneSignalSDK.page.styles.css' }),
-    new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.DefinePlugin({
       __BUILD_TYPE__: JSON.stringify(env),
       __BUILD_ORIGIN__: JSON.stringify(buildOrigin),
