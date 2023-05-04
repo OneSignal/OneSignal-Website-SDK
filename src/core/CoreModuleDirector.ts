@@ -14,6 +14,7 @@ import { RawPushSubscription } from "../shared/models/RawPushSubscription";
 import FuturePushSubscriptionRecord from "../page/userModel/FuturePushSubscriptionRecord";
 import User from "../onesignal/User";
 import OneSignal from "../onesignal/OneSignal";
+import Database from "../shared/services/Database";
 
 /* Contains OneSignal User-Model-specific logic*/
 
@@ -166,11 +167,16 @@ export class CoreModuleDirector {
   // TO DO: make synchronous by making getting the current push token synchronous
   public async getCurrentPushSubscriptionModel(): Promise<OSModel<SupportedSubscription> | undefined> {
     logMethodCall("CoreModuleDirector.getPushSubscriptionModel");
-    const pushToken = await MainHelper.getCurrentPushToken();
+    let pushToken = await MainHelper.getCurrentPushToken();
 
     if (!pushToken) {
-      Log.warn("No push token found, returning undefined from getPushSubscriptionModel()");
-      return undefined;
+      const appState = await Database.getAppState();
+      pushToken = appState.lastKnownPushToken;
+
+      if (!pushToken) {
+        Log.debug("No push token found, returning undefined");
+        return undefined;
+      }
     }
     return this.getSubscriptionOfTypeWithToken(ModelName.PushSubscriptions, pushToken);
   }
