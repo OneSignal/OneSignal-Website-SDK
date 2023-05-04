@@ -782,15 +782,14 @@ export class SubscriptionManager {
   }
 
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
-    const { deviceId, optedOut } = await Database.getSubscription();
+    const { optedOut } = await Database.getSubscription();
 
     if (Environment.useSafariLegacyPush()) {
       const subscriptionState: SafariRemoteNotificationPermission =
         window.safari.pushNotification.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(
         subscriptionState.permission === "granted" &&
-        subscriptionState.deviceToken &&
-        deviceId
+        subscriptionState.deviceToken
       );
 
       return {
@@ -827,7 +826,6 @@ export class SubscriptionManager {
      */
 
     const isPushEnabled = !!(
-      deviceId &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
     );
