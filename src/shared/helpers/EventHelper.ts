@@ -25,7 +25,6 @@ export default class EventHelper {
   static async checkAndTriggerSubscriptionChanged() {
     OneSignalUtils.logMethodCall('checkAndTriggerSubscriptionChanged');
     const context: ContextSWInterface = OneSignal.context;
-    const subscriptionState = await context.subscriptionManager.getSubscriptionState();
     // isPushEnabled = subscribed && is not opted out
     const isPushEnabled: boolean = await OneSignal.context.subscriptionManager.isPushNotificationsEnabled();
     // isOptedIn = native permission granted && is not opted out
@@ -42,10 +41,10 @@ export default class EventHelper {
     }
     Log.info(
       `The user's subscription state changed from ` +
-        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${subscriptionState.subscribed}`
+        `${lastKnownPushEnabled === null ? '(not stored)' : lastKnownPushEnabled} ⟶ ${isPushEnabled}`
     );
     // update notification_types via core module
-    const newNotificationTypes = subscriptionState.optedOut ? -2 : 1;
+    const newNotificationTypes = isOptedIn ? 1 : -2;
     await context.subscriptionManager.updatePushSubscriptionNotificationTypes(newNotificationTypes);
 
     const currentPushToken = await MainHelper.getCurrentPushToken();
