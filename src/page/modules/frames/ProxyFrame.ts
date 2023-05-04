@@ -249,8 +249,6 @@ export default class ProxyFrame extends RemoteFrame {
   }
 
   async onProcessExpiringSubscriptions(message: MessengerMessageEvent) {
-    const context: Context = OneSignal.context;
-    const result = await InitHelper.processExpiringSubscriptions();
     message.reply(OneSignal.POSTMAM_COMMANDS.REMOTE_OPERATION_COMPLETE);
     return false;
   }
