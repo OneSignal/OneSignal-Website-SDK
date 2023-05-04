@@ -4,7 +4,7 @@ import Utils from '../context/Utils';
 import Emitter from '../libraries/Emitter';
 import Log from '../libraries/Log';
 
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 export default class IndexedDb {
 
@@ -122,6 +122,9 @@ export default class IndexedDb {
       db.createObjectStore(ModelName.PushSubscriptions, { keyPath: "modelId" });
       db.createObjectStore(ModelName.SmsSubscriptions, { keyPath: "modelId" });
       db.createObjectStore(ModelName.EmailSubscriptions, { keyPath: "modelId" });
+    }
+    if (event.oldVersion < 5) {
+      // Make sure to update the database version at the top of the file
     }
     // Wrap in conditional for tests
     if (typeof OneSignal !== "undefined") {
