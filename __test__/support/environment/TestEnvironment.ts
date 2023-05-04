@@ -17,6 +17,7 @@ declare var global: any;
 export interface TestEnvironmentConfig {
   userConfig?: AppUserConfig;
   initOptions?: any;
+  initUserAndPushSubscription?: boolean;   // default: false - initializes User & PushSubscription in UserNamespace (e.g. creates an anonymous user)
   environment?: string;
   permission?: NotificationPermission;
   addPrompts?: boolean;
