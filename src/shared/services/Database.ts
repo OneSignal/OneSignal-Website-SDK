@@ -3,7 +3,7 @@ import IndexedDb from "./IndexedDb";
 
 import { AppConfig } from "../models/AppConfig";
 import { AppState, ClickedNotifications } from "../models/AppState";
-import { NotificationReceived, NotificationClicked } from "../models/Notification";
+import { NotificationReceived, NotificationClicked } from "../models/OSNotification";
 import { ServiceWorkerState } from "../models/ServiceWorkerState";
 import { Subscription } from "../models/Subscription";
 import { TestEnvironmentKind } from "../models/TestEnvironmentKind";

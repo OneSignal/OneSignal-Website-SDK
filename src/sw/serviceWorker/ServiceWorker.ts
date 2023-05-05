@@ -18,7 +18,7 @@ import {
 import ServiceWorkerHelper from "../../shared/helpers/ServiceWorkerHelper";
 import { cancelableTimeout } from "../helpers/CancelableTimeout";
 import { awaitableTimeout } from "../../shared/utils/AwaitableTimeout";
-import { NotificationReceived, NotificationClicked } from "../../shared/models/Notification";
+import { NotificationReceived } from "../../shared/models/OSNotification";
 import {
   UpsertOrDeactivateSessionPayload,
   PageVisibilityResponse,
@@ -31,8 +31,10 @@ import { WorkerMessenger, WorkerMessengerMessage, WorkerMessengerCommand } from 
 import { DeviceRecord } from "../../../src/shared/models/DeviceRecord";
 import { RawPushSubscription } from "../../../src/shared/models/RawPushSubscription";
 import { DeliveryPlatformKind } from "../../shared/models/DeliveryPlatformKind";
+import { NotificationClickEvent } from "../../page/models/NotificationEvent";
+import { RawNotificationPayload } from "../../shared/models/RawNotificationPayload";
 
-declare var self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
+declare const self: ServiceWorkerGlobalScope & OSServiceWorkerFields;
 
 const MAX_CONFIRMED_DELIVERY_DELAY = 25;
 
@@ -100,7 +102,7 @@ export class ServiceWorker {
     self.addEventListener('activate', ServiceWorker.onServiceWorkerActivated);
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
-    self.addEventListener('notificationclick', event => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
+    self.addEventListener('notificationclick', (event: NotificationEvent) => event.waitUntil(ServiceWorker.onNotificationClicked(event)));
     self.addEventListener('pushsubscriptionchange', (event: Event) => {
       (event as FetchEvent).waitUntil(ServiceWorker.onPushSubscriptionChange(event as unknown as SubscriptionChangeEvent));
     });
@@ -245,13 +247,13 @@ export class ServiceWorker {
 
     event.waitUntil(
         ServiceWorker.parseOrFetchNotifications(event)
-            .then(async (notifications: any) => {
+            .then(async (rawNotificationsArray: RawNotificationPayload[]) => {
               //Display push notifications in the order we received them
               const notificationEventPromiseFns = [];
               const notificationReceivedPromises: Promise<void>[] = [];
               const appId = await ServiceWorker.getAppId();
 
-              for (const rawNotification of notifications) {
+              for (const rawNotification of rawNotificationsArray) {
                 Log.debug('Raw Notification from OneSignal:', rawNotification);
                 const notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
@@ -266,7 +268,7 @@ export class ServiceWorker {
                 // Probably should have it's own error handling but not blocking the rest of the execution?
 
                 // Never nest the following line in a callback from the point of entering from retrieveNotifications
-                notificationEventPromiseFns.push((async notif => {
+                notificationEventPromiseFns.push((async (notif: OSNotificationDataPayload) => {
                   await ServiceWorker.workerMessenger.broadcast(WorkerMessengerCommand.NotificationWillDisplay, notif).catch(e => Log.error(e));
                   ServiceWorker.executeWebhooks('notification.willDisplay', notif);
 
@@ -526,8 +528,8 @@ export class ServiceWorker {
    * Constructed in onPushReceived, and passed along to other event handlers.
    * @param rawNotification The raw notification JSON returned from OneSignal's server.
    */
-  static buildStructuredNotificationObject(rawNotification) {
-    const notification: StructuredNotification = {
+  static buildStructuredNotificationObject(rawNotification: RawNotificationPayload): OSNotificationDataPayload {
+    const notification: OSNotificationDataPayload = {
       id: rawNotification.custom.i,
       heading: rawNotification.title,
       content: rawNotification.alert,
@@ -538,7 +540,7 @@ export class ServiceWorker {
       image: rawNotification.image,
       tag: rawNotification.tag,
       badge: rawNotification.badge,
-      vibrate: rawNotification.vibrate
+      vibrate: Number(rawNotification.vibrate)
     };
 
     // Add action buttons
@@ -553,7 +555,7 @@ export class ServiceWorker {
                                   });
       }
     }
-    return Utils.trimUndefined(notification);
+    return Utils.trimUndefined(notification) as OSNotificationDataPayload;
   }
 
   /**
@@ -612,13 +614,13 @@ export class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static async displayNotification(notification, overrides?) {
+  static async displayNotification(notification: OSNotificationDataPayload, overrides?: object) {
     Log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, Utils.getConsoleStyle('code'), notification);
 
     // Use the default title if one isn't provided
-    const defaultTitle = await ServiceWorker._getTitle();
+    const defaultTitle: string = await ServiceWorker._getTitle();
     // Use the default icon if one isn't provided
-    const defaultIcon = await Database.get('Options', 'defaultIcon');
+    const defaultIcon: string = await Database.get('Options', 'defaultIcon');
     // Get option of whether we should leave notification displaying indefinitely
     const persistNotification = await Database.get('Options', 'persistNotification');
     // Get app ID for tag value
@@ -632,8 +634,9 @@ export class ServiceWorker {
     extra.persistNotification = persistNotification !== false;
 
     // Allow overriding some values
-    if (!overrides)
+    if (!overrides) {
       overrides = {};
+    }
     notification = { ...notification, ...overrides };
 
     ServiceWorker.ensureNotificationResourcesHttps(notification);
@@ -769,18 +772,13 @@ export class ServiceWorker {
    * Occurs when the notification's body or action buttons are clicked. Does not occur if the notification is
    * dismissed by clicking the 'X' icon. See the notification close event for the dismissal event.
    */
-  static async onNotificationClicked(event: NotificationEventInit) {
+  static async onNotificationClicked(event: NotificationEvent) {
     Log.debug(`Called %conNotificationClicked(${JSON.stringify(event, null, 4)}):`, Utils.getConsoleStyle('code'), event);
 
     // Close the notification first here, before we do anything that might fail
     event.notification.close();
 
-    const { data } = event.notification;
-
-    // Chrome 48+: Get the action button that was clicked
-    if (event.action) {
-      data.action = event.action;
-    }
+    const data = event.notification.data as OSNotificationDataPayload;
 
     let notificationClickHandlerMatch = 'exact';
     let notificationClickHandlerAction = 'navigate';
@@ -798,14 +796,15 @@ export class ServiceWorker {
     const appId = await ServiceWorker.getAppId();
     const deviceType = DeviceRecord.prototype.getDeliveryPlatform();
 
-    const notificationClicked: NotificationClicked = {
-      notificationId: data.id,
-      action: data.action,
-      appId,
-      url: launchUrl,
-      timestamp: new Date().getTime(),
-    };
-    Log.info("NotificationClicked", notificationClicked);
+    const notificationClickEvent: NotificationClickEvent = {
+      notification: data,
+      result: {
+        url: data.url,
+        actionId: event.action, // get action id directly from event
+      }
+    }
+
+    Log.info("NotificationClicked", notificationClickEvent);
     const saveNotificationClickedPromise = (async notificationClicked => {
       try {
         const existingSession = await Database.getCurrentSession();
@@ -817,13 +816,13 @@ export class ServiceWorker {
         // upgrade existing session to be directly attributed to the notif
         // if it results in re-focusing the site
         if (existingSession) {
-          existingSession.notificationId = notificationClicked.notificationId;
+          existingSession.notificationId = notificationClicked.notification.id as string | null;
           await Database.upsertSession(existingSession);
         }
       } catch(e) {
         Log.error("Failed to save clicked notification.", e);
       }
-    })(notificationClicked);
+    })(notificationClickEvent);
 
     // Start making REST API requests BEFORE self.clients.openWindow is called.
     // It will cause the service worker to stop on Chrome for Android when site is added to the home screen.
@@ -867,7 +866,7 @@ export class ServiceWorker {
         if ((client['isSubdomainIframe'] && clientUrl === launchUrl) ||
             (!client['isSubdomainIframe'] && client.url === launchUrl) ||
           (notificationClickHandlerAction === 'focus' && clientOrigin === launchOrigin)) {
-          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, data, client);
+          ServiceWorker.workerMessenger.unicast(WorkerMessengerCommand.NotificationClicked, notificationClickEvent, client);
             try {
               if (client instanceof WindowClient)
                 await client.focus();
@@ -1086,9 +1085,9 @@ export class ServiceWorker {
   /**
    * Returns a promise that is fulfilled with either the default title from the database (first priority) or the page title from the database (alternate result).
    */
-  static _getTitle() {
+  static _getTitle(): Promise<string> {
     return new Promise(resolve => {
-      Promise.all([Database.get('Options', 'defaultTitle'), Database.get('Options', 'pageTitle')])
+      Promise.all([Database.get<string>('Options', 'defaultTitle'), Database.get<string>('Options', 'pageTitle')])
         .then(([defaultTitle, pageTitle]) => {
           if (defaultTitle !== null) {
             resolve(defaultTitle);
@@ -1109,7 +1108,7 @@ export class ServiceWorker {
    * @returns An array of notifications. The new web push protocol will only ever contain one notification, however
    * an array is returned for backwards compatibility with the rest of the service worker plumbing.
      */
-  static parseOrFetchNotifications(event) {
+  static parseOrFetchNotifications(event: PushEvent): Promise<RawNotificationPayload[]> {
     if (!event || !event.data) {
       return Promise.reject("Missing event.data on push payload!");
     }
@@ -1117,7 +1116,8 @@ export class ServiceWorker {
     const isValidPayload = ServiceWorker.isValidPushPayload(event.data);
     if (isValidPayload) {
       Log.debug("Received a valid encrypted push payload.");
-      return Promise.resolve([event.data.json()]);
+      const payload: RawNotificationPayload = event.data.json();
+      return Promise.resolve([payload]);
     }
 
     /*
@@ -1132,9 +1132,9 @@ export class ServiceWorker {
    * Otherwise returns false.
    * @param rawData The raw PushMessageData from the push event's event.data, not already parsed to JSON.
    */
-  static isValidPushPayload(rawData) {
+  static isValidPushPayload(rawData: PushMessageData) {
     try {
-      const payload = rawData.json();
+      const payload: RawNotificationPayload = rawData.json();
       if (payload &&
           payload.custom &&
           payload.custom.i &&

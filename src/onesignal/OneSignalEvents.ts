@@ -15,7 +15,7 @@ export const ONESIGNAL_EVENTS = {
    * Occurs after the user is officially subscribed to push notifications. The service worker is fully registered
    * and activated and the user is eligible to receive push notifications at any point after this.
    */
-  SUBSCRIPTION_CHANGED: 'subscriptionChange',
+  SUBSCRIPTION_CHANGED: 'change',
   /**
    * Occurs after a POST call to OneSignal's server to send the welcome notification has completed. The actual
    * notification arrives shortly after.
@@ -24,7 +24,7 @@ export const ONESIGNAL_EVENTS = {
   /**
    * Occurs when a notification is displayed.
    */
-  NOTIFICATION_WILL_DISPLAY: 'willDisplay',
+  NOTIFICATION_WILL_DISPLAY: 'foregroundWillDisplay',
   /**
    * Occurs when a notification is dismissed by the user either clicking 'X' or clearing all notifications
    * (available in Android). This event is NOT called if the user clicks the notification's body or any of the

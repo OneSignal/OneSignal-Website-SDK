@@ -1,5 +1,5 @@
 import { OutcomesConfig, OutcomeAttribution, OutcomeAttributionType, SentUniqueOutcome } from '../models/Outcomes';
-import { NotificationClicked, NotificationReceived } from '../models/Notification';
+import { NotificationClicked, NotificationReceived } from '../models/OSNotification';
 import Database from "../services/Database";
 import Log from '../libraries/Log';
 import { Utils } from "../../shared/context/Utils";
