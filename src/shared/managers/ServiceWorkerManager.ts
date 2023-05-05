@@ -353,7 +353,7 @@ export class ServiceWorkerManager {
    * We have a couple different models of installing service workers:
    *
    * a) Originally, we provided users with two worker files:
-   * OneSignalSDK.sw.js and OneSignalSDKUpdaterWorker.js. Two workers were
+   * OneSignalSDKWorker.js and OneSignalSDKUpdaterWorker.js. Two workers were
    * provided so each could be swapped with the other when the worker needed to
    * update. The contents of both workers were identical; only the filenames
    * were different, which is enough to update the worker.
@@ -363,22 +363,22 @@ export class ServiceWorkerManager {
    * version as a query parameter. This is enough for the browser to detect a
    * change and re-install the worker.
    *
-   * b) With AMP web push, users specify the worker file OneSignalSDK.sw.js
+   * b) With AMP web push, users specify the worker file OneSignalSDKWorker.js
    * with an app ID parameter ?appId=12345. AMP web push
    * is vendor agnostic and doesn't know about OneSignal, so all relevant
    * information has to be passed to the service worker, which is the only
    * vendor-specific file.
    *
    * If AMP web push sees another worker like OneSignalSDKUpdaterWorker.js (deprecated), or
-   * even the same OneSignalSDK.sw.js without the app ID query parameter, the
+   * even the same OneSignalSDKWorker.js without the app ID query parameter, the
    * user is considered unsubscribed.
    *
    * c) Due to b's restriction, we must always install
-   * OneSignalSDK.sw.js?appId=xxx. We also have to appropriately handle the
+   * OneSignalSDKWorker.js?appId=xxx. We also have to appropriately handle the
    * legacy case:
    *
    *    c-1) Where developers running progressive web apps force-register
-   *    OneSignalSDK.sw.js
+   *    OneSignalSDKWorker.js
    *
    * Actually, users can customize the file names of the Service Worker but
    * it's up to them to be consistent with their naming. For AMP web push, users

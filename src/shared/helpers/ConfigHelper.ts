@@ -480,7 +480,7 @@ export class ConfigHelper {
           Except injecting some default values for prompts.
         */
         const defaultServiceWorkerParam = { scope: '/' };
-        const defaultServiceWorkerPath = 'OneSignalSDK.sw.js';
+        const defaultServiceWorkerPath = 'OneSignalSDKWorker.js';
 
         const config = {
           ...userConfig,
