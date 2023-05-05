@@ -14,6 +14,9 @@ import TestContext from "./TestContext";
 import { CoreModuleDirector } from "../../../src/core/CoreModuleDirector";
 import CoreModule from "../../../src/core/CoreModule";
 import Context from "../../../src/page/models/Context";
+import NotificationsNamespace from "../../../src/onesignal/NotificationsNamespace";
+import UserNamespace from "../../../src/onesignal/UserNamespace";
+import { ONESIGNAL_EVENTS } from "../../../src/onesignal/OneSignalEvents";
 
 declare const global: any;
 
@@ -25,6 +28,7 @@ export function resetDatabase() {
 
 export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   global.OneSignal = OneSignal;
+  global.OneSignal.EVENTS = ONESIGNAL_EVENTS;
   global.OneSignal.config = TestContext.getFakeMergedConfig(config);
   global.OneSignal.context = new Context(global.OneSignal.config);
   global.OneSignal.initialized = true;
@@ -32,6 +36,8 @@ export async function initOSGlobals(config: TestEnvironmentConfig = {}) {
   const core = new CoreModule();
   await core.init();
   global.OneSignal.coreDirector = new CoreModuleDirector(core);
+  global.OneSignal.User = new UserNamespace(!!config.initUserAndPushSubscription); // TO DO: pass in subscription, and permission
+  global.OneSignal.Notifications = new NotificationsNamespace(config.permission);
 
   return global.OneSignal;
 }
