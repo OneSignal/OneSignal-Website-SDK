@@ -243,7 +243,7 @@ export default class SdkEnvironment {
    * service worker.
    *
    * For example, in staging the registered service worker filename is
-   * Staging-OneSignalSDK.sw.js.
+   * Staging-OneSignalSDKWorker.js.
    */
   public static getBuildEnvPrefix(buildEnv: EnvironmentKind = SdkEnvironment.getBuildEnv()) : string {
     switch (buildEnv) {

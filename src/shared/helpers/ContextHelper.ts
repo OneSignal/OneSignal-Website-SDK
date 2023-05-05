@@ -1,6 +1,5 @@
 import { ServiceWorkerManager } from '../managers/ServiceWorkerManager';
 import { SubscriptionManager, SubscriptionManagerConfig } from '../managers/SubscriptionManager';
-import SdkEnvironment from '../managers/SdkEnvironment';
 import { ContextSWInterface } from "../models/ContextSW";
 import { AppConfig } from '../models/AppConfig';
 import Path from '../models/Path';
@@ -9,9 +8,8 @@ export class ContextHelper {
   public static getServiceWorkerManager(context: ContextSWInterface): ServiceWorkerManager {
     const config: AppConfig = context.appConfig;
 
-    const envPrefix = SdkEnvironment.getBuildEnvPrefix();
     const serviceWorkerManagerConfig = {
-      workerPath: new Path(`/${envPrefix}OneSignalSDK.sw.js`),
+      workerPath: new Path(`OneSignalSDKWorker.js`),
       registrationOptions: { scope: '/' }
     };
 
