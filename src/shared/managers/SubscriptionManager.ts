@@ -34,8 +34,8 @@ import OneSignalError from "../errors/OneSignalError";
 import { SessionOrigin } from "../models/Session";
 import { executeCallback, logMethodCall } from "../utils/utils";
 import UserDirector from "../../onesignal/UserDirector";
-import { OSModel } from "src/core/modelRepo/OSModel";
-import { isCompleteSubscriptionObject } from "src/core/utils/typePredicates";
+import { OSModel } from "../../core/modelRepo/OSModel";
+import { isCompleteSubscriptionObject } from "../../core/utils/typePredicates";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
