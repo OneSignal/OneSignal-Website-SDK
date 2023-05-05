@@ -10,7 +10,7 @@ export class ContextHelper {
 
     const serviceWorkerManagerConfig = {
       workerPath: new Path(`OneSignalSDKWorker.js`),
-      registrationOptions: { scope: '/' }
+      registrationOptions: { scope: '/push/onesignal/' }
     };
 
     if (config.userConfig) {

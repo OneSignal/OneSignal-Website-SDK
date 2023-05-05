@@ -479,7 +479,7 @@ export class ConfigHelper {
           Ignores dashboard configuration and uses code-based configuration only.
           Except injecting some default values for prompts.
         */
-        const defaultServiceWorkerParam = { scope: '/' };
+        const defaultServiceWorkerParam = { scope: '/push/onesignal/' };
         const defaultServiceWorkerPath = 'OneSignalSDKWorker.js';
 
         const config = {
