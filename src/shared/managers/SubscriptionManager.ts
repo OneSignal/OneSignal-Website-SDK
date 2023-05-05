@@ -793,8 +793,8 @@ export class SubscriptionManager {
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
     const { optedOut, subscriptionToken } = await Database.getSubscription();
 
-    const pushSubscriptionOSModel: OSModel<SupportedSubscription> = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
-    const isValidPushSubscription = isCompleteSubscriptionObject(pushSubscriptionOSModel) && !!pushSubscriptionOSModel.onesignalId;
+    const pushSubscriptionOSModel: OSModel<SupportedSubscription> | undefined = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const isValidPushSubscription = isCompleteSubscriptionObject(pushSubscriptionOSModel?.data) && !!pushSubscriptionOSModel?.onesignalId;
 
     if (SubscriptionManager.isSafari()) {
       const subscriptionState: SafariRemoteNotificationPermission | undefined =
