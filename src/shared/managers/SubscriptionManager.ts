@@ -28,12 +28,14 @@ import Log from "../libraries/Log";
 import { RawPushSubscription } from "../models/RawPushSubscription";
 import OneSignalApiShared from "../api/OneSignalApiShared";
 import FuturePushSubscriptionRecord from "../../page/userModel/FuturePushSubscriptionRecord";
-import { FutureSubscriptionModel } from "../../core/models/SubscriptionModels";
+import { FutureSubscriptionModel, SupportedSubscription } from "../../core/models/SubscriptionModels";
 import { StringKeys } from "../../core/models/StringKeys";
 import OneSignalError from "../errors/OneSignalError";
 import { SessionOrigin } from "../models/Session";
 import { executeCallback, logMethodCall } from "../utils/utils";
 import UserDirector from "../../onesignal/UserDirector";
+import { OSModel } from "src/core/modelRepo/OSModel";
+import { isCompleteSubscriptionObject } from "src/core/utils/typePredicates";
 
 export interface SubscriptionManagerConfig {
   safariWebId?: string;
@@ -782,14 +784,19 @@ export class SubscriptionManager {
   }
 
   private async getSubscriptionStateForSecure(): Promise<PushSubscriptionState> {
-    const { optedOut } = await Database.getSubscription();
+    const { optedOut, subscriptionToken } = await Database.getSubscription();
+
+    const pushSubscriptionOSModel: OSModel<SupportedSubscription> = await OneSignal.coreDirector.getCurrentPushSubscriptionModel();
+    const isValidPushSubscription = isCompleteSubscriptionObject(pushSubscriptionOSModel) && !!pushSubscriptionOSModel.onesignalId;
 
     if (Environment.useSafariLegacyPush()) {
-      const subscriptionState: SafariRemoteNotificationPermission =
-        window.safari.pushNotification.permission(this.config.safariWebId);
+      const subscriptionState: SafariRemoteNotificationPermission | undefined =
+        window.safari?.pushNotification?.permission(this.config.safariWebId);
       const isSubscribedToSafari = !!(
-        subscriptionState.permission === "granted" &&
-        subscriptionState.deviceToken
+        isValidPushSubscription &&
+        subscriptionToken &&
+        subscriptionState?.permission === "granted" &&
+        subscriptionState?.deviceToken
       );
 
       return {
@@ -826,6 +833,8 @@ export class SubscriptionManager {
      */
 
     const isPushEnabled = !!(
+      isValidPushSubscription &&
+      subscriptionToken &&
       notificationPermission === NotificationPermission.Granted &&
       isWorkerActive
     );
