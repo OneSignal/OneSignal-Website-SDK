@@ -147,7 +147,7 @@ export class WorkerMessenger {
   public async directPostMessageToSW(command: WorkerMessengerCommand, payload?: WorkerMessengerPayload): Promise<void> {
     Log.debug(`[Worker Messenger] [Page -> SW] Direct command '${command.toString()}' to service worker.`);
 
-    const workerRegistration = await this.context.serviceWorkerManager.getRegistration();
+    const workerRegistration = await this.context?.serviceWorkerManager.getRegistration();
     if (!workerRegistration) {
       Log.error("`[Worker Messenger] [Page -> SW] Could not get ServiceWorkerRegistration to postMessage!");
       return;
