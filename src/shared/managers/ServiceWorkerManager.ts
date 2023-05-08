@@ -105,10 +105,16 @@ export class ServiceWorkerManager {
 
   // Check if the ServiceWorker file name is ours or a third party's
   private swActiveStateByFileName(fileName?: string | null): ServiceWorkerActiveState {
-    if (!fileName)
+    if (!fileName) {
       return ServiceWorkerActiveState.None;
-    if (fileName == this.config.workerPath.getFileName())
+    }
+    const isValidOSWorker =
+      fileName == this.config.workerPath.getFileName() ||
+      fileName == 'OneSignalSDK.sw.js'; // For backwards compatibility with temporary v16 user model beta filename (remove after 5/5/24 deprecation)
+
+    if (isValidOSWorker) {
       return ServiceWorkerActiveState.OneSignalWorker;
+    }
     return ServiceWorkerActiveState.ThirdParty;
   }
 
@@ -353,7 +359,7 @@ export class ServiceWorkerManager {
    * We have a couple different models of installing service workers:
    *
    * a) Originally, we provided users with two worker files:
-   * OneSignalSDK.sw.js and OneSignalSDKUpdaterWorker.js. Two workers were
+   * OneSignalSDKWorker.js and OneSignalSDKUpdaterWorker.js. Two workers were
    * provided so each could be swapped with the other when the worker needed to
    * update. The contents of both workers were identical; only the filenames
    * were different, which is enough to update the worker.
@@ -363,22 +369,22 @@ export class ServiceWorkerManager {
    * version as a query parameter. This is enough for the browser to detect a
    * change and re-install the worker.
    *
-   * b) With AMP web push, users specify the worker file OneSignalSDK.sw.js
+   * b) With AMP web push, users specify the worker file OneSignalSDKWorker.js
    * with an app ID parameter ?appId=12345. AMP web push
    * is vendor agnostic and doesn't know about OneSignal, so all relevant
    * information has to be passed to the service worker, which is the only
    * vendor-specific file.
    *
    * If AMP web push sees another worker like OneSignalSDKUpdaterWorker.js (deprecated), or
-   * even the same OneSignalSDK.sw.js without the app ID query parameter, the
+   * even the same OneSignalSDKWorker.js without the app ID query parameter, the
    * user is considered unsubscribed.
    *
    * c) Due to b's restriction, we must always install
-   * OneSignalSDK.sw.js?appId=xxx. We also have to appropriately handle the
+   * OneSignalSDKWorker.js?appId=xxx. We also have to appropriately handle the
    * legacy case:
    *
    *    c-1) Where developers running progressive web apps force-register
-   *    OneSignalSDK.sw.js
+   *    OneSignalSDKWorker.js
    *
    * Actually, users can customize the file names of the Service Worker but
    * it's up to them to be consistent with their naming. For AMP web push, users
@@ -415,17 +421,54 @@ export class ServiceWorkerManager {
       // If we are inside the popup and service worker fails to register, it's not developer's fault.
       // No need to report it to the api then.
       const env = SdkEnvironment.getWindowEnv();
-      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup)
+      if (env === WindowEnvironmentKind.OneSignalSubscriptionPopup) {
         throw error;
+      }
 
-      const response = await fetch(workerHref);
-      if (response.status === 403 || response.status === 404)
-        throw new ServiceWorkerRegistrationError(response.status, response.statusText);
-
-      throw error;
+      await this.fallbackToUserModelBetaWorker();
     }
     Log.debug(`[Service Worker Installation] Service worker installed.`);
 
     await this.establishServiceWorkerChannel();
+  }
+
+  async fallbackToUserModelBetaWorker() {
+    const BETA_WORKER_NAME = 'OneSignalSDK.sw.js';
+
+    const configWithBetaWorkerName: ServiceWorkerManagerConfig = {
+      workerPath: new Path(`/${BETA_WORKER_NAME}`),
+      registrationOptions: this.config.registrationOptions,
+    };
+
+    const workerHref = ServiceWorkerHelper.getServiceWorkerHref(
+      configWithBetaWorkerName,
+      this.context.appConfig.appId,
+      Environment.version()
+    );
+
+    const scope = `${OneSignalUtils.getBaseUrl()}${this.config.registrationOptions.scope}`;
+
+    Log.info(`[Service Worker Installation] Attempting to install v16 Beta Worker ${workerHref} ${scope}.`);
+
+    try {
+      await navigator.serviceWorker.register(workerHref, { scope });
+
+      const DEPRECATION_ERROR = `
+        [Service Worker Installation] Successfully installed v16 Beta Worker.
+        Deprecation warning: support for the v16 beta worker name of ${BETA_WORKER_NAME}
+        will be removed May 5 2024. We have decided to keep the v15 name.
+        To avoid breaking changes for your users, please host both worker files:
+        OneSignalSDK.sw.js & OneSignalSDKWorker.js.
+      `;
+
+      Log.error(DEPRECATION_ERROR);
+    } catch (error) {
+      const response = await fetch(workerHref);
+      if (response.status === 403 || response.status === 404) {
+        throw new ServiceWorkerRegistrationError(response.status, response.statusText);
+      }
+
+      throw error;
+    }
   }
 }
