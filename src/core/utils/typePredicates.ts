@@ -14,29 +14,29 @@ export function isModelDelta<Model>(delta: CoreDelta<Model>): delta is ModelDelt
 }
 
 export function isPureObject(obj: any): obj is Object {
-  return obj !== null && typeof obj === "object" && obj.constructor === Object;
+  return obj !== null && typeof obj === "object" && obj?.constructor === Object;
 }
 
 export function isOSModel<Model>(obj: any): obj is OSModel<Model> {
-  return obj !== null && typeof obj === "object" && obj.constructor === OSModel;
+  return obj !== null && typeof obj === "object" && obj?.constructor === OSModel;
 }
 
 export function isOSModelUpdatedArgs<Model>(obj: any): obj is OSModelUpdatedArgs<Model> {
-  return obj !== null && typeof obj === "object" && obj.constructor === OSModelUpdatedArgs;
+  return obj !== null && typeof obj === "object" && obj?.constructor === OSModelUpdatedArgs;
 }
 
 export function isModelStoreHydratedObject<Model>(obj: any): obj is ModelStoreHydrated<Model> {
-  return obj !== null && typeof obj === "object" && obj.constructor === ModelStoreHydrated;
+  return obj !== null && typeof obj === "object" && obj?.constructor === ModelStoreHydrated;
 }
 
 export function isIdentityObject(obj: any): obj is IdentityModel {
-  return obj.onesignal_id !== undefined;
+  return obj?.onesignal_id !== undefined;
 }
 
 export function isFutureSubscriptionObject(obj: any): obj is FutureSubscriptionModel {
-  return obj.type !== undefined;
+  return obj?.type !== undefined;
 }
 
 export function isCompleteSubscriptionObject(obj: any): obj is SubscriptionModel {
-  return obj.type !== undefined && obj.id !== undefined;
+  return obj?.type !== undefined && obj?.id !== undefined;
 }
