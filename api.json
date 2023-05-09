@@ -115,15 +115,16 @@
       {
         "name": "addEventListener",
         "isAsync": false,
+        "genericTypeParameter": "<K extends NotificationEventName>",
         "args": [
           {
             "name": "event",
-            "type": "NotificationEventName",
+            "type": "K",
             "optional": false
           },
           {
             "name": "listener",
-            "type": "(obj: any) => void",
+            "type": "(obj: NotificationEventTypeMap[K]) => void",
             "optional": false
           }
         ],
@@ -132,15 +133,16 @@
       {
         "name": "removeEventListener",
         "isAsync": false,
+        "genericTypeParameter": "<K extends NotificationEventName>",
         "args": [
           {
             "name": "event",
-            "type": "NotificationEventName",
+            "type": "K",
             "optional": false
           },
           {
             "name": "listener",
-            "type": "(obj: any) => void",
+            "type": "(obj: NotificationEventTypeMap[K]) => void",
             "optional": false
           }
         ],
@@ -480,7 +482,7 @@
         "args": [
           {
             "name": "event",
-            "type": "'subscriptionChange'",
+            "type": "'change'",
             "optional": false
           },
           {
