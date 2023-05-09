@@ -11,6 +11,7 @@ describe('Notification Types are set correctly on subscription change', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
     test.stub(ModelCache.prototype, 'load', Promise.resolve({}));
+    // temporary: remove when we fix default environment being Safari
     test.stub(SubscriptionManager, 'isSafari', false)
     test.stub(MainHelper, 'getCurrentPushToken', DUMMY_PUSH_TOKEN);
   });
