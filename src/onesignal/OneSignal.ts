@@ -105,7 +105,7 @@ export default class OneSignal {
       throw new InvalidArgumentError('externalId', InvalidArgumentReason.WrongType);
     }
 
-    if (typeof jwtToken !== 'string') {
+    if (!!jwtToken && typeof jwtToken !== 'string') {
       throw new InvalidArgumentError('token', InvalidArgumentReason.WrongType);
     }
 
