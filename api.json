@@ -95,18 +95,6 @@
         "returnType": "boolean"
       },
       {
-        "name": "getPermissionStatus",
-        "isAsync": true,
-        "args": [
-          {
-            "name": "onComplete",
-            "type": "Action<NotificationPermission>",
-            "optional": false
-          }
-        ],
-        "returnType": "Promise<NotificationPermission>"
-      },
-      {
         "name": "requestPermission",
         "isAsync": true,
         "args":[],
@@ -152,7 +140,11 @@
     "properties": [
       {
         "name": "permissionNative",
-        "type": "'granted' | 'denied' | 'default'"
+        "type": "NotificationPermission"
+      },
+      {
+        "name": "permission",
+        "type": "boolean | undefined"
       }
     ]
   },

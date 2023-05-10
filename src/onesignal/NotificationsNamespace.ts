@@ -2,24 +2,33 @@ import { ValidatorUtils } from "../page/utils/ValidatorUtils";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 import Database from "../shared/services/Database";
 import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/utils";
-import OneSignalError from "../../src/shared/errors/OneSignalError";
 import OneSignal from "./OneSignal";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import NotificationEventName from "../page/models/NotificationEventName";
 import { NotificationClickResult, NotificationForegroundWillDisplayEvent } from "../page/models/NotificationEvent";
+import { NotificationPermission } from "../shared/models/NotificationPermission";
 import NotificationEventTypeMap from "src/page/models/NotificationEventTypeMap";
 
 export default class NotificationsNamespace extends EventListenerBase {
+  private _permission?: boolean;
+
   constructor(private _permissionNative?: NotificationPermission) {
     super();
 
-    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (permission: NotificationPermission) => {
-      this._permissionNative = permission;
+    this._permission = _permissionNative === NotificationPermission.Granted;
+
+    OneSignal.emitter.on(OneSignal.EVENTS.NATIVE_PROMPT_PERMISSIONCHANGED, (permissionNative: NotificationPermission) => {
+      this._permissionNative = permissionNative;
+      this._permission = permissionNative === NotificationPermission.Granted;
     });
   }
 
   get permissionNative(): NotificationPermission | undefined {
     return this._permissionNative;
+  }
+
+  get permission(): boolean | undefined {
+    return this._permission;
   }
 
   /**
@@ -110,29 +119,6 @@ export default class NotificationsNamespace extends EventListenerBase {
     }
   }
   */
-
-  /**
-   * Returns a promise that resolves to the browser's current notification permission as
-   *    'default', 'granted', or 'denied'.
-   * @param callback A callback function that will be called when the browser's current notification permission
-   *           has been obtained, with one of 'default', 'granted', or 'denied'.
-   * @PublicApi
-   */
-  async getPermissionStatus(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
-    if (!OneSignal.context) {
-      throw new OneSignalError(`OneSignal.context is undefined. Make sure to call OneSignal.init() before calling getPermissionStatus().`);
-    }
-
-    const permission = await OneSignal.context.permissionManager.getNotificationPermission(
-        OneSignal.config!.safariWebId
-      );
-
-    if (onComplete) {
-      onComplete(permission);
-    }
-
-    return permission;
-  }
 
   /**
    * Shows a native browser prompt.
