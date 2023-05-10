@@ -3,6 +3,7 @@ import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidAr
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from './SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
+import OneSignalError from '../errors/OneSignalError';
 import Environment from '../../src/Environment';
 
 /**
@@ -20,21 +21,16 @@ export default class PermissionManager {
    *    'default', 'granted', or 'denied'.
    * @param callback A callback function that will be called when the browser's current notification permission
    *           has been obtained, with one of 'default', 'granted', or 'denied'.
-   * @PublicApi
    */
-     async getPermissionStatus(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
+     async getPermissionStatus(): Promise<NotificationPermission> {
       if (!OneSignal.context) {
         throw new OneSignalError(`OneSignal.context is undefined. Make sure to call OneSignal.init() before calling getPermissionStatus().`);
       }
-  
+
       const permission = await OneSignal.context.permissionManager.getNotificationPermission(
           OneSignal.config!.safariWebId
         );
-  
-      if (onComplete) {
-        onComplete(permission);
-      }
-  
+
       return permission;
     }
 
