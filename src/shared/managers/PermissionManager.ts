@@ -15,6 +15,29 @@ export default class PermissionManager {
     return 'storedNotificationPermission';
   }
 
+    /**
+   * Returns a promise that resolves to the browser's current notification permission as
+   *    'default', 'granted', or 'denied'.
+   * @param callback A callback function that will be called when the browser's current notification permission
+   *           has been obtained, with one of 'default', 'granted', or 'denied'.
+   * @PublicApi
+   */
+     async getPermissionStatus(onComplete?: Action<NotificationPermission>): Promise<NotificationPermission> {
+      if (!OneSignal.context) {
+        throw new OneSignalError(`OneSignal.context is undefined. Make sure to call OneSignal.init() before calling getPermissionStatus().`);
+      }
+  
+      const permission = await OneSignal.context.permissionManager.getNotificationPermission(
+          OneSignal.config!.safariWebId
+        );
+  
+      if (onComplete) {
+        onComplete(permission);
+      }
+  
+      return permission;
+    }
+
   /**
    * Returns an interpreted version of the browser's notification permission.
    *
