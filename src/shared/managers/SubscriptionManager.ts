@@ -85,7 +85,7 @@ export class SubscriptionManager {
    */
   async isOptedIn(): Promise<boolean> {
     const subscriptionState = await this.getSubscriptionState();
-    const permission = await OneSignal.Notifications.getPermissionStatus();
+    const permission = await OneSignal.context.permissionManager.getPermissionStatus();
     return permission === 'granted' && !subscriptionState.optedOut;
   }
 
@@ -140,7 +140,7 @@ export class SubscriptionManager {
           Subscribing is only possible on the top-level frame, so there's no permission ambiguity
           here.
         */
-        if ((await OneSignal.Notifications.getPermissionStatus()) === NotificationPermission.Denied)
+        if ((await OneSignal.context.permissionManager.getPermissionStatus()) === NotificationPermission.Denied)
           throw new PushPermissionNotGrantedError(PushPermissionNotGrantedErrorReason.Blocked);
 
         if (SubscriptionManager.isSafari()) {

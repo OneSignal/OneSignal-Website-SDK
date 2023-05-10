@@ -294,7 +294,7 @@ export default class Bell {
         }
       }
 
-      OneSignal.Notifications.getPermissionStatus((permission: NotificationPermission) => {
+      OneSignal.context.permissionManager.getPermissionStatus((permission: NotificationPermission) => {
         let bellState: BellState;
         if (isSubscribed.current.optedIn) {
           bellState = Bell.STATES.SUBSCRIBED;
@@ -572,7 +572,7 @@ export default class Bell {
   updateState() {
     Promise.all([
       OneSignal.context.subscriptionManager.isPushNotificationsEnabled(),
-      OneSignal.Notifications.getPermissionStatus()
+      OneSignal.context.permissionManager.getPermissionStatus()
     ])
     .then(([isEnabled, permission]) => {
       this.setState(isEnabled ? Bell.STATES.SUBSCRIBED : Bell.STATES.UNSUBSCRIBED);
