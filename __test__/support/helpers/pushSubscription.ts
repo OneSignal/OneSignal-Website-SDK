@@ -1,7 +1,7 @@
 import { OSModel } from "../../../src/core/modelRepo/OSModel";
 import { ModelName, SupportedModel } from "../../../src/core/models/SupportedModels";
-import { getDummyPushSubscriptionOSModel } from "../../support/helpers/core";
-import { TestEnvironment } from "../../support/environment/TestEnvironment";
+import { getDummyPushSubscriptionOSModel } from "./core";
+import { TestEnvironment } from "../environment/TestEnvironment";
 
 export async function initializeWithPermission(permission: NotificationPermission) {
   const mockNotification = {
