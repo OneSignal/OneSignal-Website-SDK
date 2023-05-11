@@ -5,9 +5,8 @@ import { awaitOneSignalInitAndSupported, logMethodCall } from "../shared/utils/u
 import OneSignal from "./OneSignal";
 import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import NotificationEventName from "../page/models/NotificationEventName";
-import { NotificationClickResult, NotificationForegroundWillDisplayEvent } from "../page/models/NotificationEvent";
 import { NotificationPermission } from "../shared/models/NotificationPermission";
-import NotificationEventTypeMap from "src/page/models/NotificationEventTypeMap";
+import NotificationEventTypeMap from "../page/models/NotificationEventTypeMap";
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
