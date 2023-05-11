@@ -26,7 +26,7 @@ export default class NotificationsNamespace extends EventListenerBase {
     return this._permissionNative;
   }
 
-  get permission(): boolean | undefined {
+  get permission(): boolean {
     return this._permission;
   }
 
