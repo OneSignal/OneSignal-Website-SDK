@@ -144,7 +144,7 @@
       },
       {
         "name": "permission",
-        "type": "boolean | undefined"
+        "type": "boolean"
       }
     ]
   },

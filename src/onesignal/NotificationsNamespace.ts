@@ -10,7 +10,7 @@ import { NotificationPermission } from "../shared/models/NotificationPermission"
 import NotificationEventTypeMap from "src/page/models/NotificationEventTypeMap";
 
 export default class NotificationsNamespace extends EventListenerBase {
-  private _permission?: boolean;
+  private _permission: boolean;
 
   constructor(private _permissionNative?: NotificationPermission) {
     super();
