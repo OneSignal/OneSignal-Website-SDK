@@ -7,6 +7,7 @@ import { EventListenerBase } from "../page/userModel/EventListenerBase";
 import NotificationEventName from "../page/models/NotificationEventName";
 import { NotificationClickResult, NotificationForegroundWillDisplayEvent } from "../page/models/NotificationEvent";
 import { NotificationPermission } from "../shared/models/NotificationPermission";
+import NotificationEventTypeMap from "src/page/models/NotificationEventTypeMap";
 
 export default class NotificationsNamespace extends EventListenerBase {
   private _permission: boolean;
@@ -134,27 +135,11 @@ export default class NotificationsNamespace extends EventListenerBase {
     await OneSignal.Slidedown.promptPush();
   }
 
-  /* Function overloads */
-  addEventListener(event: NotificationEventName.Click, listener: (obj: NotificationClickResult) => void): void;
-  addEventListener(event: NotificationEventName.ForegroundWillDisplay, listener: (obj: NotificationForegroundWillDisplayEvent) => void): void;
-  addEventListener(event: NotificationEventName.Dismiss, listener: (obj: OSNotificationDataPayload) => void): void;
-  addEventListener(event: NotificationEventName.PermissionChange,
-    listener: (permission: boolean) => void): void;
-  addEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
-
-  addEventListener(event: string, listener: (obj: any) => void): void {
+  addEventListener<K extends NotificationEventName>(event: K, listener: (obj: NotificationEventTypeMap[K]) => void): void {
     OneSignal.emitter.on(event, listener);
   }
 
-  /* Function overloads */
-  removeEventListener(event: NotificationEventName.Click, listener: (event: NotificationClickResult) => void): void;
-  removeEventListener(event: NotificationEventName.ForegroundWillDisplay, listener: (obj: OSNotificationDataPayload) => void): void;
-  removeEventListener(event: NotificationEventName.Dismiss, listener: (obj: OSNotificationDataPayload) => void): void;
-  removeEventListener(event: NotificationEventName.PermissionChange,
-    listener: (permission: boolean) => void): void;
-  removeEventListener(event: NotificationEventName.PermissionPromptDisplay, listener: () => void): void;
-
-  removeEventListener(event: string, listener: (obj: any) => void): void {
+  removeEventListener<K extends NotificationEventName>(event: K, listener: (obj: NotificationEventTypeMap[K]) => void): void {
     OneSignal.emitter.off(event, listener);
   }
 }
