@@ -65,7 +65,7 @@ To:
 ```
 ### Service Worker
 
-Download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11278471/OneSignalSDK-v16-ServiceWorker.zip) and place it next to the original OneSignalSDKWorker.js file.
+Download the new [service worker file](https://github.com/OneSignal/OneSignal-Website-SDK/files/11480764/OneSignalSDK-v16-ServiceWorker.zip) and place it next to the original OneSignalSDKWorker.js file.
 
 **DO NOT DELETE** the original OneSignalSDKWorker.js file.
 
