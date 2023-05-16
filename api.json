@@ -491,7 +491,7 @@
         "args": [
           {
             "name": "event",
-            "type": "'subscriptionChange'",
+            "type": "'change'",
             "optional": false
           },
           {
