@@ -1,4 +1,5 @@
-import bowser from 'bowser';
+import { Browser } from "../../shared/models/Browser";
+import bowserCastle from 'bowser-castle';
 import { Serializable } from '../../page/models/Serializable';
 
 import NotImplementedError from '../errors/NotImplementedError';
@@ -47,7 +48,7 @@ export abstract class DeviceRecord implements Serializable {
     this.language = Environment.getLanguage();
     this.timezone = new Date().getTimezoneOffset() * -60;
     this.timezoneId = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const browserVersion = parseInt(String(bowser.version), 10);
+    const browserVersion = parseInt(String(bowserCastle().version), 10);
     this.browserVersion = isNaN(browserVersion) ? -1 : browserVersion;
     this.deviceModel = navigator.platform;
     this.sdkVersion = Environment.version().toString();
@@ -56,18 +57,15 @@ export abstract class DeviceRecord implements Serializable {
   }
 
   isSafari(): boolean {
-    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+    return bowserCastle().name === Browser.Safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
   }
 
   getDeliveryPlatform(): DeliveryPlatformKind {
-    // For testing purposes, allows changing the browser user agent
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-
     if (this.isSafari()) {
       return DeliveryPlatformKind.SafariLegacy;
-    } else if (browser.firefox) {
+    } else if (bowserCastle().name === Browser.Firefox) {
       return DeliveryPlatformKind.Firefox;
-    } else if (browser.msedge) {
+    } else if (bowserCastle().name === Browser.Edge) {
       return DeliveryPlatformKind.Edge;
     } else {
       return DeliveryPlatformKind.ChromeLike;

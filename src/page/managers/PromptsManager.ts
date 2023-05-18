@@ -1,4 +1,4 @@
-import bowser from "bowser";
+import bowserCastle from 'bowser-castle';
 import OneSignalEvent from "../../shared/services/OneSignalEvent";
 import { ResourceLoadState } from "../services/DynamicResourceLoader";
 import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../../shared/config/constants";
@@ -38,7 +38,7 @@ export class PromptsManager {
       const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
 
       return (
-          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowserCastle().tablet || bowserCastle().mobile)) ||
           requiresUserInteraction
         );
   }

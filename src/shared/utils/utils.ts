@@ -5,9 +5,10 @@ import { OneSignalUtils } from './OneSignalUtils';
 import { PermissionUtils } from './PermissionUtils';
 import { BrowserUtils } from './BrowserUtils';
 import { Utils } from "../context/Utils";
-import bowser from 'bowser';
+import { Browser } from "../../shared/models/Browser";
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
+import bowserCastle from 'bowser-castle';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -392,9 +393,9 @@ export function getPlatformNotificationIcon(notificationIcons: NotificationIcons
   if (!notificationIcons)
     return 'default-icon';
 
-  if (bowser.safari && notificationIcons.safari)
+  if (bowserCastle().name === Browser.Safari && notificationIcons.safari)
     return notificationIcons.safari;
-  else if (bowser.firefox && notificationIcons.firefox)
+  else if (bowserCastle().name === Browser.Firefox && notificationIcons.firefox)
     return notificationIcons.firefox;
 
   return notificationIcons.chrome ||

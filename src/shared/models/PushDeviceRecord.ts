@@ -1,4 +1,5 @@
-import bowser from 'bowser';
+import { Browser } from "../../shared/models/Browser";
+import bowserCastle from 'bowser-castle';
 
 import NotImplementedError from '../errors/NotImplementedError';
 import { RawPushSubscription } from './RawPushSubscription';
@@ -30,7 +31,7 @@ export class PushDeviceRecord extends DeviceRecord {
     const serializedBundle: SerializedPushDeviceRecord = super.serialize();
 
     if (this.subscription) {
-      serializedBundle.identifier = bowser.safari ?
+      serializedBundle.identifier = bowserCastle().name === Browser.Safari ?
         this.subscription.safariDeviceToken :
         this.subscription.w3cEndpoint ? this.subscription.w3cEndpoint.toString() : null;
       serializedBundle.web_auth = this.subscription.w3cAuth;
