@@ -1,5 +1,3 @@
-import bowser from "bowser";
-
 import Environment from "../../shared/helpers/Environment";
 import ContextSW from "../../shared/models/ContextSW";
 import Database from "../../shared/services/Database";
@@ -73,13 +71,6 @@ export class ServiceWorker {
    */
   static get database() {
     return Database;
-  }
-
-  /**
-   * Describes the current browser name and version.
-   */
-  static get browser() {
-    return bowser;
   }
 
   /**
