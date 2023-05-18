@@ -45,7 +45,7 @@ export class TestEnvironment {
       identityModel.setOneSignalId(DUMMY_ONESIGNAL_ID);
       // set on the model data
       identityModel.set("onesignal_id", DUMMY_ONESIGNAL_ID);
-      OneSignal.coreDirector.add(ModelName.Identity,identityModel, false);
+      OneSignal.coreDirector.add(ModelName.Identity, identityModel, false);
     }
 
     if (config.useMockPushSubscriptionModel) {

@@ -145,7 +145,7 @@ export class Utils {
    * e.g: "10.01.30" becomes "10.01"
    * @param version - version number we want to check
    */
-  public static parseVersionString(version: string | number): number {
+  public static parseVersionString(version: string): number {
     const osVersionParts = version.toString().split(".");
     const majorVersion = Utils.padStart(osVersionParts[0], 2, "0");
     let minorVersion: string;
