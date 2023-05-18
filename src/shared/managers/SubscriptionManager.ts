@@ -1,4 +1,5 @@
-import bowser from "bowser";
+import { Browser } from "../../shared/models/Browser";
+import bowserCastle from 'bowser-castle';
 
 import Database from "../services/Database";
 import Environment from "../helpers/Environment";
@@ -41,7 +42,7 @@ export interface SubscriptionManagerConfig {
   safariWebId?: string;
   appId: string;
   /**
-   * The VAPID public key to use for Chrome-like browsers, including Opera and Yandex browser.
+   * The VAPID public key to use for Chrome-like browsers, including Opera and Yandex bowserCastle.
    */
   vapidPublicKey: string;
   /**
@@ -476,7 +477,7 @@ export class SubscriptionManager {
 
     const swRegistration = (<ServiceWorkerGlobalScope><any>self).registration;
 
-    if (!swRegistration.active && !bowser.firefox) {
+    if (!swRegistration.active && !(bowserCastle().name === Browser.Firefox)) {
       throw new InvalidStateError(InvalidStateReason.ServiceWorkerNotActivated);
       /*
         Or should we wait for the service worker to be ready?
@@ -507,7 +508,7 @@ export class SubscriptionManager {
     // Specifically return undefined instead of null if the key isn't available
     let key = undefined;
 
-    if (bowser.firefox) {
+    if (bowserCastle().name === Browser.Firefox) {
       /*
         Firefox uses VAPID for application identification instead of
         authentication, and so all apps share an identification key.

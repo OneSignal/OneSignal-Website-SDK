@@ -1,4 +1,4 @@
-import bowser from "bowser";
+import bowserCastle from 'bowser-castle';
 import { EnvironmentInfoHelper } from "../page/helpers/EnvironmentInfoHelper";
 import AltOriginManager from "../page/managers/AltOriginManager";
 import ConfigManager from "../page/managers/ConfigManager";
@@ -43,6 +43,7 @@ import { OneSignalDeferredLoadedCallback } from "../page/models/OneSignalDeferre
 import DebugNamespace from "./DebugNamesapce";
 import { InvalidArgumentError, InvalidArgumentReason } from "../shared/errors/InvalidArgumentError";
 import { ONESIGNAL_EVENTS } from "./OneSignalEvents";
+import { Browser } from "../shared/models/Browser";
 
 export default class OneSignal {
   static EVENTS = ONESIGNAL_EVENTS;
@@ -134,7 +135,7 @@ export default class OneSignal {
       throw new Error("OneSignal config not initialized!");
     }
 
-    if (bowser.safari && !OneSignal.config.safariWebId) {
+    if (bowserCastle().name === Browser.Safari && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't
@@ -379,4 +380,4 @@ LegacyManager.ensureBackwardsCompatibility(OneSignal);
 Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
   ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
-Log.debug(`Browser Environment: ${bowser.name} ${bowser.version}`);
+Log.debug(`Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`);

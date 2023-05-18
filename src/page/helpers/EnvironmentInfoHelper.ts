@@ -1,9 +1,10 @@
-import bowser from "bowser";
 import { EnvironmentInfo } from '../models/EnvironmentInfo';
 import { Browser } from '../../shared/models/Browser';
 import { OneSignalUtils } from '../../shared/utils/OneSignalUtils';
 import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/context/Utils';
+import Bowser from "bowser";
+import bowserCastle from 'bowser-castle';
 
 /**
  * EnvironmentInfoHelper is used to save page ("browser") context environment information to
@@ -25,14 +26,13 @@ export class EnvironmentInfoHelper {
     }
 
     private static getBrowser(): Browser {
-        if (bowser.chrome) { return Browser.Chrome; }
-        if (bowser.msedge) { return Browser.Edge; }
-        if (bowser.opera) { return Browser.Opera; }
-        if (bowser.firefox) { return Browser.Firefox; }
-        // use existing safari detection to be consistent
-        if (this.isMacOSSafari()) { return Browser.Safari; }
+      if (this.isMacOSSafari()) { return Browser.Safari; }
+      // if bowserCastle().name is in Broser enum, return it
+      if (bowserCastle().name && bowserCastle().name in Browser) {
+          return bowserCastle().name as Browser;
+      }
 
-        return Browser.Other;
+      return Browser.Other;
     }
 
     // NOTE: Returns false in a ServiceWorker context
@@ -45,7 +45,12 @@ export class EnvironmentInfoHelper {
     }
 
     private static getBrowserVersion(): number {
-        return Utils.parseVersionString(bowser.version);
+      if (!bowserCastle().version) {
+        // throw new Error("bowserCastle().version is not defined");
+        return 0;
+      }
+
+      return Utils.parseVersionString(bowserCastle().version);
     }
 
     private static isHttps(): boolean {
@@ -74,8 +79,9 @@ export class EnvironmentInfoHelper {
         return false;
     }
 
-    private static getOsVersion(): string|number {
-        return bowser.osversion;
+    private static getOsVersion(): string {
+        const osInfo = Bowser.getParser(window.navigator.userAgent).getOS();
+        return osInfo.version ?? 'Unknown';
     }
 
     private static canTalkToServiceWorker(): boolean {

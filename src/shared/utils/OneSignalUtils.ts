@@ -1,9 +1,11 @@
-import bowser, { IBowser } from "bowser";
 import SdkEnvironment from "../managers/SdkEnvironment";
 import Environment from "../helpers/Environment";
 import { WindowEnvironmentKind } from "../models/WindowEnvironmentKind";
 import { Utils } from "../context/Utils";
 import Log from "../libraries/Log";
+import { Browser } from "../../shared/models/Browser";
+import Bowser from "bowser";
+import bowserCastle from 'bowser-castle';
 
 export class OneSignalUtils {
   public static getBaseUrl() {
@@ -42,7 +44,7 @@ export class OneSignalUtils {
         `(${windowEnv.toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
       );
     }
-    if (bowser.safari) {
+    if (bowserCastle().name === Browser.Safari) {
       return false;
     }
 
@@ -57,7 +59,7 @@ export class OneSignalUtils {
     subdomain: string | undefined,
     allowLocalhostAsSecureOrigin: boolean | undefined
   ): boolean {
-    if (bowser.safari) {
+    if (bowserCastle().name === Browser.Safari) {
       return false;
     }
 
@@ -73,12 +75,8 @@ export class OneSignalUtils {
     );
   }
 
-  public static redetectBrowserUserAgent(): IBowser {
-    // During testing, the browser object may be initialized before the userAgent is injected
-    if (bowser.name === "" && bowser.version === "") {
-      return bowser._detect(navigator.userAgent);
-    }
-    return bowser;
+  public static redetectBrowserUserAgent(): Bowser.Parser.Details {
+    return Bowser.getParser(window.navigator.userAgent).getBrowser();
   }
 
   /**

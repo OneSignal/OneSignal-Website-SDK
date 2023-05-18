@@ -1,9 +1,10 @@
 import OneSignalUtils from '../utils/OneSignalUtils';
-import bowser from 'bowser';
 import { InvalidArgumentError, InvalidArgumentReason } from '../errors/InvalidArgumentError';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from './SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
+import { Browser } from "../../shared/models/Browser";
+import bowserCastle from 'bowser-castle';
 import OneSignalError from '../errors/OneSignalError';
 
 /**
@@ -88,7 +89,7 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   public async getReportedNotificationPermission(safariWebId?: string): Promise<NotificationPermission>{
-    if (bowser.safari)
+    if (bowserCastle().name === Browser.Safari)
       return PermissionManager.getSafariNotificationPermission(safariWebId);
 
     // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
@@ -106,13 +107,13 @@ export default class PermissionManager {
   }
 
   /**
-   * Returns the Safari browser's notification permission as reported by the browser.
+   * Returns the Safari browser's notification permission as reported by the bowserCastle.
    *
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   private static getSafariNotificationPermission(safariWebId?: string): NotificationPermission {
     if (safariWebId)
-      return window.safari.pushNotification.permission(safariWebId).permission as NotificationPermission;
+      return window.safari?.pushNotification?.permission(safariWebId).permission as NotificationPermission;
     throw new InvalidArgumentError('safariWebId', InvalidArgumentReason.Empty);
   }
 
@@ -159,10 +160,10 @@ export default class PermissionManager {
    */
   public async isPermissionEnvironmentAmbiguous(permission: NotificationPermission): Promise<boolean> {
     // For testing purposes, allows changing the browser user agent
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
+    OneSignalUtils.redetectBrowserUserAgent();
 
-    return (!browser.safari &&
-            !browser.firefox &&
+    return (!(bowserCastle().name === Browser.Safari) &&
+            !(bowserCastle().name === Browser.Firefox) &&
             permission === NotificationPermission.Denied &&
             (
               this.isCurrentFrameContextCrossOrigin() ||

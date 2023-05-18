@@ -1,4 +1,4 @@
-import bowser from 'bowser';
+import bowserCastle from 'bowser-castle';
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import {
   addCssClass,
@@ -40,7 +40,7 @@ export default class ConfirmationToast {
     this.container.appendChild(dialogContainer);
 
     // Animate it in depending on environment
-    addCssClass(this.container, bowser.mobile ? SLIDEDOWN_CSS_CLASSES.slideUp : SLIDEDOWN_CSS_CLASSES.slideDown);
+    addCssClass(this.container, bowserCastle().mobile ? SLIDEDOWN_CSS_CLASSES.slideUp : SLIDEDOWN_CSS_CLASSES.slideDown);
 
     ConfirmationToast.triggerSlidedownEvent(ConfirmationToast.EVENTS.SHOWN);
   }

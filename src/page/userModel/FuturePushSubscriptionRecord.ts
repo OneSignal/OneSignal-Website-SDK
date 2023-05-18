@@ -4,6 +4,8 @@ import { EnvironmentInfoHelper } from "../helpers/EnvironmentInfoHelper";
 import { RawPushSubscription } from "src/shared/models/RawPushSubscription";
 import OneSignalUtils from "../../shared/utils/OneSignalUtils";
 import { SubscriptionStateKind } from "../../shared/models/SubscriptionStateKind";
+import { Browser } from "../../shared/models/Browser";
+import bowserCastle from 'bowser-castle';
 
 export default class FuturePushSubscriptionRecord implements Serializable {
   readonly type: SubscriptionType;
@@ -33,8 +35,8 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   }
 
   private _getToken(subscription: RawPushSubscription): string | undefined {
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-    const isLegacySafari = browser.safari && browser.version < 16;
+    OneSignalUtils.redetectBrowserUserAgent();
+    const isLegacySafari = bowserCastle().name === Browser.Safari && bowserCastle().version && bowserCastle().version < '16';
     return isLegacySafari ? subscription.safariDeviceToken : subscription.w3cEndpoint ?
       subscription.w3cEndpoint.toString() : undefined;
   }
@@ -56,18 +58,18 @@ export default class FuturePushSubscriptionRecord implements Serializable {
   /* S T A T I C */
 
   static getSubscriptionType(): SubscriptionType {
-    const browser = OneSignalUtils.redetectBrowserUserAgent();
-    if (browser.firefox) {
+    OneSignalUtils.redetectBrowserUserAgent();
+    if (bowserCastle().name === Browser.Firefox) {
       return SubscriptionType.FirefoxPush;
     }
     // TO DO: update to use feature detection
-    if (browser.safari && browser.version >= 16) {
+    if (bowserCastle().name === Browser.Safari && bowserCastle().version && bowserCastle().version >= '16') {
       return SubscriptionType.SafariPush;
     }
-    if (browser.safari && browser.version < 16) {
+    if (bowserCastle().name === Browser.Safari && bowserCastle().version && bowserCastle().version < '16') {
       return SubscriptionType.SafariLegacyPush;
     }
-    if (browser.msedge) {
+    if (bowserCastle().name === Browser.Edge) {
       return SubscriptionType.WindowPush;
     }
     return SubscriptionType.ChromePush;
