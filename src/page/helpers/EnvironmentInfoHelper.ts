@@ -46,8 +46,7 @@ export class EnvironmentInfoHelper {
 
     private static getBrowserVersion(): number {
       if (!bowserCastle().version) {
-        // throw new Error("bowserCastle().version is not defined");
-        return 0;
+        throw new Error("bowserCastle().version is not defined");
       }
 
       return Utils.parseVersionString(bowserCastle().version);
