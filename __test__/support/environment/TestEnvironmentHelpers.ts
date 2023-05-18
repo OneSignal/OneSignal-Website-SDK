@@ -17,8 +17,26 @@ import Context from "../../../src/page/models/Context";
 import NotificationsNamespace from "../../../src/onesignal/NotificationsNamespace";
 import UserNamespace from "../../../src/onesignal/UserNamespace";
 import { ONESIGNAL_EVENTS } from "../../../src/onesignal/OneSignalEvents";
+import bowserCastle from "bowser-castle";
+import Bowser from "bowser";
 
 declare const global: any;
+
+export function mockUserAgent(config: TestEnvironmentConfig = {}): void {
+  jest.mock('bowser-castle', () => {
+    return jest.fn();
+  });
+
+  (bowserCastle as jest.Mock).mockImplementation(() => {
+    const browserInfo = Bowser.getParser(config.userAgent ?? BrowserUserAgent.Default);
+    return {
+      mobile: browserInfo.getPlatformType(true) === "mobile",
+      tablet: browserInfo.getPlatformType(true) === "tablet",
+      name: browserInfo.getBrowserName().toLowerCase(),
+      version: browserInfo.getBrowserVersion(),
+    };
+  });
+}
 
 export function resetDatabase() {
   // Erase and reset IndexedDb database name to something random
@@ -89,6 +107,7 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   // global document object must be defined for `getSlidedownElement` to work correctly.
   // this line initializes the document object
   const dom = new JSDOM(html, {
+    userAgent: config.userAgent ? config.userAgent : BrowserUserAgent.Default,
     resources: resourceLoader,
     url: url,
     contentType: 'text/html',
