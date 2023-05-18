@@ -17,6 +17,7 @@ import Context from "../../../src/page/models/Context";
 import NotificationsNamespace from "../../../src/onesignal/NotificationsNamespace";
 import UserNamespace from "../../../src/onesignal/UserNamespace";
 import { ONESIGNAL_EVENTS } from "../../../src/onesignal/OneSignalEvents";
+import { AppConfig } from "../../../src/shared/models/AppConfig";
 
 declare const global: any;
 
@@ -89,6 +90,7 @@ export async function stubDomEnvironment(config: TestEnvironmentConfig) {
   // global document object must be defined for `getSlidedownElement` to work correctly.
   // this line initializes the document object
   const dom = new JSDOM(html, {
+    userAgent: config.userAgent ? config.userAgent : BrowserUserAgent.Default,
     resources: resourceLoader,
     url: url,
     contentType: 'text/html',
