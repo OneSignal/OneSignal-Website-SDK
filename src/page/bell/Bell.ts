@@ -448,7 +448,7 @@ export default class Bell {
   }
 
   patchSafariSvgFilterBug() {
-    if (!(bowser.safari && Number(bowserCastle().version) >= 9.1)) {
+    if (!(bowserCastle().name == 'safari' && Number(bowserCastle().version) >= 9.1)) {
       const bellShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0.35));`;
       const badgeShadow = `drop-shadow(0 2px 4px rgba(34,36,38,0));`;
       const dialogShadow = `drop-shadow(0px 2px 2px rgba(34,36,38,.15));`;
@@ -456,7 +456,7 @@ export default class Bell {
       this.badge.element.setAttribute('style', `filter: ${badgeShadow}; -webkit-filter: ${badgeShadow};`);
       this.dialog.element.setAttribute('style', `filter: ${dialogShadow}; -webkit-filter: ${dialogShadow};`);
     }
-    if (bowser.safari) {
+    if (bowserCastle().name == 'safari') {
       this.badge.element.setAttribute('style', `display: none;`);
     }
   }

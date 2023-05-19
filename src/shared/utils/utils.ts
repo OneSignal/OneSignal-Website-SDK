@@ -8,6 +8,7 @@ import { Utils } from "../context/Utils";
 import bowser from 'bowser';
 import TimeoutError from '../errors/TimeoutError';
 import Log from '../libraries/Log';
+import { bowserCastle } from './bowserCastle';
 
 export function isArray(variable: any) {
   return Object.prototype.toString.call(variable) === '[object Array]';
@@ -392,9 +393,9 @@ export function getPlatformNotificationIcon(notificationIcons: NotificationIcons
   if (!notificationIcons)
     return 'default-icon';
 
-  if (bowser.safari && notificationIcons.safari)
+  if (bowserCastle().name == 'safari' && notificationIcons.safari)
     return notificationIcons.safari;
-  else if (bowser.firefox && notificationIcons.firefox)
+  else if (bowserCastle().name === 'firefox' && notificationIcons.firefox)
     return notificationIcons.firefox;
 
   return notificationIcons.chrome ||

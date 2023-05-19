@@ -1,4 +1,3 @@
-import bowser from 'bowser';
 import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { AppConfig } from '../models/AppConfig';
@@ -26,6 +25,7 @@ import { getConsoleStyle, once, triggerNotificationPermissionChanged } from '../
 import Environment from './Environment';
 import OneSignalEvent from '../services/OneSignalEvent';
 import ProxyFrameHost from '../../page/modules/frames/ProxyFrameHost';
+import { bowserCastle } from '../utils/bowserCastle';
 
 declare var OneSignal: any;
 
@@ -456,7 +456,7 @@ export default class InitHelper {
 
   public static async polyfillSafariFetch() {
     // If Safari - add 'fetch' pollyfill if it isn't already added.
-    if (bowser.safari && typeof window.fetch == 'undefined') {
+    if (bowserCastle().name == 'safari' && typeof window.fetch == 'undefined') {
       Log.debug('Loading fetch polyfill for Safari..');
       try {
         await new DynamicResourceLoader().loadFetchPolyfill();

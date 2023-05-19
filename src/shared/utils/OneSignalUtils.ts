@@ -43,7 +43,7 @@ export class OneSignalUtils {
         `(${windowEnv.toString()}) isUsingSubscriptionWorkaround() cannot be called until OneSignal.config exists.`
       );
     }
-    if (bowser.safari) {
+    if (bowserCastle().name == 'safari') {
       return false;
     }
 
@@ -58,7 +58,7 @@ export class OneSignalUtils {
     subdomain: string | undefined,
     allowLocalhostAsSecureOrigin: boolean | undefined
   ): boolean {
-    if (bowser.safari) {
+    if (bowserCastle().name == 'safari') {
       return false;
     }
 

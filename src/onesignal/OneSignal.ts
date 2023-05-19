@@ -1,4 +1,3 @@
-import bowser from "bowser";
 import { EnvironmentInfoHelper } from "../page/helpers/EnvironmentInfoHelper";
 import AltOriginManager from "../page/managers/AltOriginManager";
 import ConfigManager from "../page/managers/ConfigManager";
@@ -136,7 +135,7 @@ export default class OneSignal {
       throw new Error("OneSignal config not initialized!");
     }
 
-    if (bowser.safari && !OneSignal.config.safariWebId) {
+    if (bowserCastle().name == 'safari' && !OneSignal.config.safariWebId) {
       /**
        * Don't throw an error for missing Safari config; many users set up
        * support on Chrome/Firefox and don't intend to support Safari but don't

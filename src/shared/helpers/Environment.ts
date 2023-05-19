@@ -1,6 +1,6 @@
 import SdkEnvironment from '../managers/SdkEnvironment';
 import { WindowEnvironmentKind } from '../models/WindowEnvironmentKind';
-import bowser from 'bowser';
+import { bowserCastle } from '../utils/bowserCastle';
 import { supportsVapidPush } from './context/browser/utils/BrowserSupportsPush';
 
 export default class Environment {
@@ -20,7 +20,7 @@ export default class Environment {
   // This is the counter part to useSafariLegacyPush(); as it notes only use
   // Safari VAPID if it doesn't have legacy Safari push.
   public static useSafariVapidPush(): boolean {
-    return bowser.safari && supportsVapidPush() && !this.useSafariLegacyPush();
+    return bowserCastle().name == 'safari' && supportsVapidPush() && !this.useSafariLegacyPush();
   }
 
   public static version() {
