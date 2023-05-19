@@ -124,6 +124,7 @@ export default class OneSignal {
    */
   static async init(options: AppUserConfig) {
     logMethodCall('init');
+    Log.debug(`Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`);
 
     LocalStorage.removeLegacySubscriptionOptions();
 
@@ -380,4 +381,3 @@ LegacyManager.ensureBackwardsCompatibility(OneSignal);
 Log.info(`%cOneSignal Web SDK loaded (version ${OneSignal._VERSION},
   ${SdkEnvironment.getWindowEnv().toString()} environment).`, getConsoleStyle('bold'));
 Log.debug(`Current Page URL: ${typeof location === "undefined" ? "NodeJS" : location.href}`);
-Log.debug(`Browser Environment: ${bowserCastle().name} ${bowserCastle().version}`);
