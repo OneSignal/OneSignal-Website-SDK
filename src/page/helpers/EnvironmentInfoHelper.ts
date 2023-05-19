@@ -4,6 +4,7 @@ import { Browser } from '../../shared/models/Browser';
 import { OneSignalUtils } from '../../shared/utils/OneSignalUtils';
 import { isMacOSSafariInIframe } from '../utils/BrowserSupportsPush';
 import Utils from '../../shared/context/Utils';
+import { bowserCastle } from "../../shared/utils/bowserCastle";
 
 /**
  * EnvironmentInfoHelper is used to save page ("browser") context environment information to
@@ -45,7 +46,7 @@ export class EnvironmentInfoHelper {
     }
 
     private static getBrowserVersion(): number {
-        return Utils.parseVersionString(bowser.version);
+        return Utils.parseVersionString(bowserCastle().version);
     }
 
     private static isHttps(): boolean {

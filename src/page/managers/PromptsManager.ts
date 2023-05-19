@@ -1,4 +1,3 @@
-import bowser from "bowser";
 import OneSignalEvent from "../../shared/services/OneSignalEvent";
 import { ResourceLoadState } from "../services/DynamicResourceLoader";
 import { CONFIG_DEFAULTS_SLIDEDOWN_OPTIONS, SERVER_CONFIG_DEFAULTS_PROMPT_DELAYS } from "../../shared/config/constants";
@@ -14,6 +13,7 @@ import { EnvironmentInfoHelper } from "../helpers/EnvironmentInfoHelper";
 import { ContextInterface } from "../models/Context";
 import { DismissPrompt } from "../models/Dismiss";
 import Slidedown from "../slidedown/Slidedown";
+import { bowserCastle } from "../../shared/utils/bowserCastle";
 
 export interface AutoPromptOptions {
   force?: boolean;
@@ -38,7 +38,7 @@ export class PromptsManager {
       const { browserType, browserVersion, requiresUserInteraction } = environmentInfo;
 
       return (
-          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowser.tablet || bowser.mobile)) ||
+          (browserType === "chrome" && Number(browserVersion) >= 63 && (bowserCastle().tablet || bowserCastle().mobile)) ||
           requiresUserInteraction
         );
   }

@@ -1,5 +1,3 @@
-import bowser from 'bowser';
-
 import OneSignalEvent from '../../shared/services/OneSignalEvent';
 import MainHelper from '../../shared/helpers/MainHelper';
 import {
@@ -22,6 +20,7 @@ import ChannelCaptureContainer from './ChannelCaptureContainer';
 import PromptsHelper from '../../shared/helpers/PromptsHelper';
 import { SlidedownPromptOptions, DelayedPromptType } from '../../shared/models/Prompts';
 import { InvalidChannelInputField } from '../errors/ChannelCaptureError';
+import { bowserCastle } from '../../shared/utils/bowserCastle';
 
 export default class Slidedown {
   public options: SlidedownPromptOptions;
@@ -109,7 +108,7 @@ export default class Slidedown {
       this.container.appendChild(dialogContainer);
 
       // Animate it in depending on environment
-      addCssClass(this.container, bowser.mobile ? SLIDEDOWN_CSS_CLASSES.slideUp : SLIDEDOWN_CSS_CLASSES.slideDown);
+      addCssClass(this.container, bowserCastle().mobile ? SLIDEDOWN_CSS_CLASSES.slideUp : SLIDEDOWN_CSS_CLASSES.slideDown);
 
       // Add click event handlers
       this.allowButton.addEventListener('click', this.onSlidedownAllowed.bind(this));
