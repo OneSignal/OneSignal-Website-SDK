@@ -19,7 +19,6 @@ import SubscriptionPopupHost from '../../page/modules/frames/SubscriptionPopupHo
 import { DynamicResourceLoader } from '../../page/services/DynamicResourceLoader';
 import Database from '../services/Database';
 import LimitStore from '../services/LimitStore';
-import LocalStorage from '../utils/LocalStorage';
 import OneSignalUtils from '../utils/OneSignalUtils';
 import { getConsoleStyle, once, triggerNotificationPermissionChanged } from '../utils/utils';
 import Environment from './Environment';
