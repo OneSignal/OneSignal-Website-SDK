@@ -57,7 +57,7 @@ export abstract class DeviceRecord implements Serializable {
   }
 
   isSafari(): boolean {
-    return bowser.safari && window.safari !== undefined && window.safari.pushNotification !== undefined;
+    return bowserCastle().name == 'safari' && window.safari !== undefined && window.safari.pushNotification !== undefined;
   }
 
   getDeliveryPlatform(): DeliveryPlatformKind {

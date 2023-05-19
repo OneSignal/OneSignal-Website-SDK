@@ -5,6 +5,7 @@ import { NotificationPermission } from '../models/NotificationPermission';
 import SdkEnvironment from './SdkEnvironment';
 import LocalStorage from '../utils/LocalStorage';
 import OneSignalError from '../errors/OneSignalError';
+import { bowserCastle } from '../utils/bowserCastle';
 
 /**
  * A permission manager to consolidate the different quirks of obtaining and evaluating permissions
@@ -88,7 +89,7 @@ export default class PermissionManager {
    * @param safariWebId The Safari web ID necessary to access the permission state on Safari.
    */
   public async getReportedNotificationPermission(safariWebId?: string): Promise<NotificationPermission>{
-    if (bowser.safari)
+    if (bowserCastle().name == 'safari')
       return PermissionManager.getSafariNotificationPermission(safariWebId);
 
     // Is this web push setup using subdomain.os.tc or subdomain.onesignal.com?
